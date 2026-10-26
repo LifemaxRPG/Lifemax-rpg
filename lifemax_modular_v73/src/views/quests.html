@@ -1,0 +1,89 @@
+<section id="view-quests" class="view quest-os">
+        <div class="qos-heading">
+          <div class="qos-head-copy">
+            <div class="qos-eyebrow"><span class="qos-live-dot"></span> THE ADVENTURE CONTINUES</div>
+            <h2>Quest Board<span class="qos-title-point">.</span></h2>
+            <p>Real-life objectives. Meaningful progress. Every finished quest moves your story forward.</p>
+          </div>
+          <button class="qos-newquest" onclick="showCustomQuest()"><i data-px="plus" data-s="18"></i> <span>New quest</span></button>
+        </div>
+
+        <div class="qos-hero">
+          <div class="qos-hero-copy">
+            <div class="qos-season"><span class="qos-diamond"></span> YOUR ADVENTURE LOG <span class="qos-signal">LIVE</span></div>
+            <h3>Small victories.<br><em>Epic momentum.</em></h3>
+            <p>Every quest is another step toward the character you are becoming.</p>
+            <div class="qos-hero-progress">
+              <div class="qos-progress-label"><span>Today's progress</span><strong id="qosDailyProgress">0 / 0</strong></div>
+              <div class="qos-progress-track"><div class="qos-progress-fill" id="qosDailyFill"></div></div>
+              <div class="qos-progress-caption"><span id="qosMotivation">Your next quest is waiting.</span><span id="qosDailyPct">0%</span></div>
+            </div>
+          </div>
+          <div class="qos-scene" aria-hidden="true">
+            <svg class="qos-scene-art" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <defs><linearGradient id="qosSky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#253c60"/><stop offset="1" stop-color="#14233b"/></linearGradient><linearGradient id="qosGlint" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#f2d58d"/><stop offset="1" stop-color="#bc9253"/></linearGradient></defs>
+              <path d="M20 202V78H42V54H80V42H258V54H280V78H302V202Z" fill="url(#qosSky)" opacity=".32"/>
+              <g fill="#8fb9e9" opacity=".88"><path d="M37 45h5v14h-5zM32 50h15v4H32zM279 62h5v14h-5zM274 67h15v4h-15zM238 21h4v12h-4zM234 25h12v4h-12z"/></g>
+              <g fill="#b4cee3" opacity=".4"><path d="M79 103h15v4H79zM232 111h21v4h-21zM55 144h14v3H55zM265 145h12v3h-12z"/></g>
+              <path d="M36 211h256v15H36z" fill="#17273b"/>
+              <path d="M62 211V181h30v-34h30v-34h28V88h20v-14h20v14h19v25h28v34h30v34h30v30z" fill="#324965"/>
+              <path d="M83 211v-31h28v-34h25v-32h28V95h24v19h27v32h23v34h28v31z" fill="#4f6c86"/>
+              <path d="M113 211v-47h26v-32h25v-22h24v22h25v32h25v47z" fill="#637e92"/>
+              <path d="M145 211v-40h20v-29h20v29h20v40z" fill="#25364e"/>
+              <path d="M151 211v-34h16v-27h15v27h16v34z" fill="#10283d"/>
+              <path d="M157 182h30v29h-30z" fill="#08192b"/>
+              <path d="M170 175h4v37h-4z" fill="#9bbcd1" opacity=".46"/>
+              <g fill="#ddba78"><path d="M83 185h8v8h-8zM95 185h8v8h-8zM240 185h8v8h-8zM252 185h8v8h-8z"/></g>
+              <path d="M171 36h24v10h11v32h-11v10h-48V78h-11V46h11V36z" fill="#101d31"/>
+              <path d="M155 43h31v35h-31z" fill="url(#qosGlint)"/>
+              <path d="M160 48h21v5h-21zM160 56h17v4h-17z" fill="#fff1bf" opacity=".85"/>
+              <path d="M171 25h6v15h-6zM164 27h20v6h-20z" fill="#d7ddec"/>
+              <path d="M160 61h22v7h-22z" fill="#bd9151"/>
+              <path d="M21 225h278v7H21z" fill="#375472"/>
+              <path d="M44 232h230v5H44z" fill="#213953"/>
+              <g opacity=".5" fill="#f8db98"><path d="M43 94h6v6h-6zM266 99h5v5h-5zM96 59h5v5h-5z"/></g>
+            </svg>
+            <div class="qos-scene-caption">YOUR JOURNEY / CHAPTER ONE</div>
+          </div>
+        </div>
+
+        <div class="qos-stats" aria-label="Quest progress summary">
+          <div class="qos-stat"><span class="qos-stat-icon"><i data-px="flag" data-s="18"></i></span><span class="qos-stat-data"><small>ACTIVE TODAY</small><strong id="qosDailyTotal">0</strong></span></div>
+          <div class="qos-stat"><span class="qos-stat-icon qos-stat-week"><i data-px="calendar" data-s="18"></i></span><span class="qos-stat-data"><small>WEEKLY QUESTS</small><strong id="qosWeeklyTotal">0</strong></span></div>
+          <div class="qos-stat"><span class="qos-stat-icon qos-stat-xp"><i data-px="trophy" data-s="18"></i></span><span class="qos-stat-data"><small>XP AVAILABLE</small><strong id="qosAvailableXP">0</strong></span></div>
+        </div>
+
+        <div class="qos-main-grid">
+          <div class="qos-missions">
+            <div class="qos-board-section card">
+              <div class="qos-section-head"><div class="qos-section-identity"><div class="qos-badge-icon"><i data-px="sun" data-s="18"></i></div><div><div class="qos-section-kicker">01 / TODAY'S PRIORITIES</div><h3>Daily missions</h3></div></div><span class="qos-section-count" id="qosDailyCount">0 quests</span></div>
+              <div id="dailyQuests" class="qos-mission-list"></div>
+            </div>
+            <div class="qos-board-section card">
+              <div class="qos-section-head"><div class="qos-section-identity"><div class="qos-badge-icon qos-icon-purple"><i data-px="calendar" data-s="18"></i></div><div><div class="qos-section-kicker">02 / BUILD MOMENTUM</div><h3>Weekly missions</h3></div></div><span class="qos-section-count" id="qosWeeklyCount">0 quests</span></div>
+              <div id="weeklyQuests" class="qos-mission-list"></div>
+            </div>
+            <div class="qos-board-section card" id="nutritionCard" style="display:none">
+              <div class="qos-section-head"><div class="qos-section-identity"><div class="qos-badge-icon qos-icon-mint"><i data-px="heart" data-s="18"></i></div><div><div class="qos-section-kicker">03 / FUEL THE JOURNEY</div><h3>Nutrition missions</h3></div></div><span class="qos-section-count" id="qosNutritionCount">0 quests</span></div>
+              <div id="nutritionQuests" class="qos-mission-list"></div>
+            </div>
+          </div>
+          <aside class="qos-sidebar">
+            <div class="qos-side-card card" id="customQuestCard" style="display:none">
+              <div class="qos-section-kicker">CREATE YOUR OWN</div><h3>New quest</h3>
+              <div class="formgrid"><div class="field full"><label for="newQuestName">Quest name</label><input id="newQuestName" placeholder="A goal worth pursuing"></div><div class="field"><label for="newQuestCadence">Cadence</label><select id="newQuestCadence"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="epic">Epic / one-time</option></select></div><div class="field"><label for="newQuestXP">XP reward</label><input id="newQuestXP" type="number" min="1" max="500" value="25"></div></div>
+              <div class="qos-form-actions"><button class="btn" onclick="createQuest()">Create quest</button><button class="btn secondary" onclick="hideCustomQuest()">Cancel</button></div>
+            </div>
+            <div class="qos-side-card card">
+              <div class="qos-aside-top"><div class="qos-section-kicker">RECOGNITION</div><span class="qos-aside-detail" id="badgeCount"></span></div>
+              <h3>Badge collection</h3><p class="qos-aside-desc">Proof of your milestones. Earned, never handed out.</p>
+              <div id="badges" class="qos-badges"></div>
+            </div>
+            <div class="qos-side-card card">
+              <div class="qos-section-kicker">THE LONG GAME</div><h3>Epic milestones</h3><p class="qos-aside-desc">The biggest achievements take more than a day.</p>
+              <div id="achievements" class="qos-epics"></div>
+            </div>
+          </aside>
+        </div>
+        <div class="qos-celebration" id="qosCelebration" aria-live="polite" aria-atomic="true" hidden></div>
+      </section>

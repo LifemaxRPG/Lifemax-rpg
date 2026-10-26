@@ -1,0 +1,35 @@
+<section id="view-media" class="view">
+        <div class="pagehead">
+          <div><div class="eyebrow">YOUR PERSONAL LIBRARY</div><h2>Media library</h2><p>Reading list, courses, and audiobooks. Attach .m4b/.m4a files to play in-app — stored on this device.</p></div>
+          <button class="btn" onclick="showMediaForm()">＋ Add media</button>
+        </div>
+        <div class="grid stats" style="margin-bottom:14px">
+          <div class="card"><div class="statlabel">Total saved</div><div class="statvalue" id="mediaTotal">0</div><div class="statfoot">Items in your library</div></div>
+          <div class="card"><div class="statlabel">Finished</div><div class="statvalue" id="mediaFinished">0</div><div class="statfoot">Completed items</div></div>
+          <div class="card"><div class="statlabel">In progress</div><div class="statvalue" id="mediaProgress">0</div><div class="statfoot">Currently working through</div></div>
+          <div class="card"><div class="statlabel">Completion</div><div class="statvalue" id="mediaPct">0%</div><div class="xpbar" style="margin-top:8px"><div class="xpfill" id="mediaBar" style="width:0%"></div></div></div>
+        </div>
+        <div class="card" id="mediaFormCard" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px"><h3 id="mediaFormTitle" style="margin:0">Add to your library</h3><button class="btn small secondary" onclick="hideMediaForm()">Cancel</button></div>
+          <form id="mediaForm" onsubmit="saveMediaItem(event)">
+            <input id="mediaEditId" type="hidden">
+            <div class="formgrid">
+              <div class="field"><label for="mediaTitle">Title *</label><input id="mediaTitle" required maxlength="160" placeholder="Book, article, course, podcast…"></div>
+              <div class="field"><label for="mediaType">Type</label><select id="mediaType"><option>Book</option><option>Audiobook</option><option>Article</option><option>Course</option><option>Podcast</option><option>Video</option><option>Documentary</option><option>Other</option></select></div>
+              <div class="field"><label for="mediaCreator">Author / creator (optional)</label><input id="mediaCreator" maxlength="120" placeholder="Who made it?"></div>
+              <div class="field"><label for="mediaStatus">Status</label><select id="mediaStatus"><option value="unread">Want to read / watch</option><option value="progress">In progress</option><option value="finished">Finished</option></select></div>
+              <div class="field full"><label for="mediaLink">Link (optional)</label><input id="mediaLink" type="url" maxlength="500" placeholder="https://…"></div>
+              <div class="field full"><label for="mediaNotes">Notes (optional)</label><textarea id="mediaNotes" rows="2" maxlength="1000" placeholder="Why it's on your list, key takeaways, or where you left off…"></textarea></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" type="submit">Save item</button><button class="btn secondary" type="button" onclick="hideMediaForm()">Cancel</button></div>
+          </form>
+        </div>
+        <div class="card">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
+            <div class="field" style="flex:1;min-width:180px"><label for="mediaSearch">Search library</label><input id="mediaSearch" type="search" placeholder="Search titles, creators, notes…" oninput="renderMedia()"></div>
+            <div class="field" style="min-width:155px"><label for="mediaFilter">Show</label><select id="mediaFilter" onchange="renderMedia()"><option value="all">Everything</option><option value="unread">Want to read / watch</option><option value="progress">In progress</option><option value="finished">Finished</option></select></div>
+            <div class="field" style="min-width:135px"><label for="mediaTypeFilter">Media type</label><select id="mediaTypeFilter" onchange="renderMedia()"><option value="all">All types</option><option>Book</option><option>Audiobook</option><option>Article</option><option>Course</option><option>Podcast</option><option>Video</option><option>Documentary</option><option>Other</option></select></div>
+          </div>
+          <div id="mediaList"></div>
+        </div>
+      </section>

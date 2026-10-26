@@ -1,0 +1,44 @@
+<section id="view-settings" class="view">
+        <div class="pagehead"><div><div class="eyebrow">RULES & DATA</div><h2>Settings & data</h2><p>Hard rules when you want them. Data stays in this browser unless you export it.</p></div></div>
+        <div class="card" style="margin-bottom:14px">
+          <h3>Appearance</h3>
+          <div class="settingsline"><div style="flex:1"><strong>Light mode</strong><div class="muted" style="font-size:12px">Switch between the dark and light appearance. This only changes how the app looks.</div></div><input id="lightModeToggle" type="checkbox" class="check" onchange="setLightMode(this.checked)" aria-label="Enable light mode"></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <h3>Character profile</h3>
+          <p class="muted" style="font-size:12px;margin-top:-5px">Name, build, and profile picture stay on this device.</p>
+          <div style="display:flex;align-items:center;gap:14px;margin:14px 0 16px">
+            <div class="avatar" id="charAvatar" title="Change profile picture" onclick="document.getElementById('avatarFile').click()"></div>
+            <div>
+              <strong>Profile picture</strong>
+              <div class="muted" style="font-size:12px;margin:2px 0 8px">Cropped to a square. Stays in this browser.</div>
+              <button class="btn small secondary" onclick="document.getElementById('avatarFile').click()">Upload photo</button>
+              <button class="btn small secondary" onclick="removeAvatar()">Remove</button>
+              <input id="avatarFile" type="file" accept="image/*" style="display:none" onchange="avatarPicked(event)">
+            </div>
+          </div>
+          <div class="formgrid">
+            <div class="field"><label for="characterName">Character name</label><input id="characterName" maxlength="40" placeholder="The Life Architect"></div>
+            <div class="field"><label for="characterBuild">Current build</label><select id="characterBuild"><option>The Life Architect</option><option>Athlete</option><option>Entrepreneur</option><option>Scholar</option><option>Explorer</option><option>Balanced Build</option><option>Custom Build</option></select></div>
+            <div class="field"><label for="characterWeight">Weight (lb)</label><input id="characterWeight" type="number" min="1" max="1400" step="0.1" placeholder="e.g. 175"></div>
+            <div class="field"><label for="characterHeightFt">Height</label><div style="display:flex;gap:8px"><input id="characterHeightFt" type="number" min="1" max="8" placeholder="ft" aria-label="Height feet"><input id="characterHeightIn" type="number" min="0" max="11" placeholder="in" aria-label="Height inches"></div></div>
+          </div>
+          <div style="margin-top:12px"><button class="btn" onclick="saveCharacter()">Save character</button></div>
+        </div>
+        <div class="card" style="margin-bottom:14px"><h3>Decay system</h3><p class="muted" style="font-size:12px;margin-top:-5px">After the grace period with no training, the attribute loses XP daily. Skill XP does not decay. Turn this off only if you want a softer game.</p><div class="settingsline"><div style="flex:1"><strong>Enable decay</strong></div><input id="decayOn" type="checkbox" class="check"></div><div class="formgrid" style="margin-top:12px"><div class="field"><label>Grace period (days, 1–14)</label><input id="decayGrace" type="number" min="1" max="14"></div><div class="field"><label>Daily loss (% of attribute XP, 1–10)</label><input id="decayRate" type="number" min="1" max="10"></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveDecay()">Save decay settings</button><button class="btn secondary" onclick="resetTips()">Show tips again</button></div></div>
+                <div class="card" style="margin-bottom:14px" id="devModeCard">
+          <h3>Developer mode</h3>
+          <p class="muted" style="font-size:12px;margin-top:-5px">Testing tools. When on, each attribute sheet gains a test activity that awards +2 levels for that attribute only.</p>
+          <div class="settingsline"><div style="flex:1"><strong>Enable developer mode</strong><div class="muted" style="font-size:12px">Adds “Dev: +2 levels” under every attribute’s activity list, and test buttons for the cat (Cat → Developer).</div></div><input id="devModeOn" type="checkbox" class="check" onchange="toggleDevMode(this.checked)"></div>
+          <div id="devModeTools" style="display:none;margin-top:10px">
+            <div class="note">Open <strong>Character → any attribute</strong> (or Overview attribute cards). At the top of the list you’ll see <strong>Dev: +2 levels</strong> and <strong>Dev: +1 level</strong> for that attribute only.</div>
+            <div><button class="btn" type="button" id="devChatBtn" style="margin-top:10px" onclick="openDevChat()">Open Dev chat</button><div class="muted" style="font-size:12px;margin-top:6px">A shared notes thread for Claude, ChatGPT, Grok and you.</div></div>
+            <button class="btn secondary" type="button" style="margin-top:10px" onclick="luckResetToday()">Reset today's luck roll</button>
+            <div style="margin-top:12px"><div class="muted" style="font-size:12px;margin-bottom:6px">Switch class (testing). Ends your current plan and swaps in that class's quests. XP stays.</div><div style="display:flex;gap:8px"><select id="devClassSel" style="flex:1"><option value="athlete">Athlete</option><option value="scholar">Scholar</option></select><button class="btn secondary" type="button" onclick="devSwitchClass()">Switch</button></div></div>
+            <button class="btn secondary" type="button" style="margin-top:10px" onclick="previewOnboarding()">▶ Preview start screen</button>
+            <div class="muted" style="font-size:12px;margin-top:6px">Opens the class selector. Pick a different class and tap the button to switch to it (ends your current plan, XP stays). Closing without switching changes nothing.</div>
+          </div>
+        </div>
+<div class="grid two-col"><div class="card"><h3>XP rules</h3><p class="muted" style="font-size:12px;margin-top:-5px">Edit the base XP for each activity. Changes apply to future logs.</p><div id="xpRules"></div><button class="btn" style="margin-top:12px" onclick="saveRules()">Save XP rules</button><button class="btn secondary" style="margin:12px 0 0 7px" onclick="resetRules()">Reset defaults</button></div>
+        <div class="card"><h3>Data management</h3><div class="settingsline"><div><strong>Export backup</strong><div class="muted" style="font-size:12px">Download all activities, stats, quests and settings.</div></div><button class="btn small secondary" onclick="exportData()">Export JSON</button></div><div class="settingsline"><div><strong>Export report</strong><div class="muted" style="font-size:12px">A readable summary of your character, stats and full history.</div></div><div style="display:flex;gap:6px"><button class="btn small secondary" onclick="exportReport('doc')">Word</button><button class="btn small secondary" onclick="exportReport('txt')">Text</button></div></div><div class="settingsline"><div><strong>Import backup</strong><div class="muted" style="font-size:12px">Restore a previously exported Life Max file.</div></div><button class="btn small secondary" onclick="document.getElementById('importFile').click()">Import JSON</button><input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></div><div class="settingsline"><div><strong>Reset demo data</strong><div class="muted" style="font-size:12px">Restore the starter profile and sample quests.</div></div><button class="btn small secondary" onclick="resetDemo()">Reset</button></div><div class="settingsline"><div><strong class="danger">Delete all local data</strong><div class="muted" style="font-size:12px">Permanently clear this browser's Life Max save.</div></div><button class="btn small" style="background:var(--red)" onclick="deleteAll()">Delete</button></div><div class="note" style="margin-top:15px">Prototype privacy: data is stored locally in this browser using localStorage. It is not a secure account system or cloud backup. Anyone using this browser profile may be able to access it. Export a backup before clearing browser data.</div></div></div>
+      </section>

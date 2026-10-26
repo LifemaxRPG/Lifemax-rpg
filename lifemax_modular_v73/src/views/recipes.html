@@ -1,0 +1,5 @@
+<section id="view-recipes" class="view">
+        <div class="pagehead"><div><div class="eyebrow">FUEL YOUR BUILD</div><h2>Recipes</h2><p>Recipes from the Fit to Win Athlete Cookbook. Nutrition values are shown as printed in the cookbook; recipe variations may change them. Class-plan recipes are marked (est.) and use estimated nutrition.</p></div><button class="btn" onclick="navigate('meals')">＋ Log a meal</button></div>
+        <div class="card" style="margin-bottom:14px"><div class="field"><label for="recipeSearch">Find a recipe</label><input id="recipeSearch" type="search" placeholder="Search recipes or ingredients…" oninput="renderRecipes()"></div><div class="formgrid" style="margin-top:10px"><div class="field"><label for="recipeCategory">Category</label><select id="recipeCategory" onchange="renderRecipes()"><option value="all">All recipes</option><option>Breakfast</option><option>Pre-workout</option><option>Post-workout</option><option>Lunch & dinner</option></select></div></div></div>
+        <div id="recipesList" class="grid two-col"></div>
+      </section>

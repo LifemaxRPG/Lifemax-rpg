@@ -1,0 +1,24 @@
+<section id="view-character" class="view">
+        <div class="card ch-hero">
+          <div class="ch-emblem" id="chEmblem"></div>
+          <div class="ch-avatar">
+            <svg class="ch-ring" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="chRingG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7ab0ff"/><stop offset="1" stop-color="#c58bff"/></linearGradient></defs><circle class="ch-ring-bg" cx="60" cy="60" r="54"/><circle class="ch-ring-fg" id="chRing" cx="60" cy="60" r="54" transform="rotate(-90 60 60)"/></svg>
+            <div id="characterMainAvatar" class="character-main-avatar" aria-label="Character profile picture"></div>
+            <div class="ch-lv" id="chLvBadge">LV 1</div>
+          </div>
+          <h2 id="characterMainName">The Life Architect</h2>
+          <div class="ch-title" id="chTitle"></div>
+          <div class="ch-xpline"><div class="ch-xptext"><span id="chXpText"></span><span id="chXpTo"></span></div><div class="xpbar"><div class="xpfill" id="chXpBar" style="width:0%"></div></div><div class="ch-next" id="chNext"></div></div>
+          <div class="ch-chips" id="chChips"></div>
+          <div class="character-physical"><span><small>WEIGHT</small><strong id="characterWeightDisplay">—</strong></span><span class="character-stat-divider"></span><span><small>BMI</small><strong id="characterBmiDisplay">—</strong></span></div>
+        </div>
+        <div class="card ch-card">
+          <div class="ch-head"><h3>Build shape</h3><div class="ch-seg"><button type="button" id="chSegNow" class="on" onclick="chSetCmp(false)">Now</button><button type="button" id="chSegWk" onclick="chSetCmp(true)">vs last week</button></div></div>
+          <div class="ch-ins" id="chIns"></div>
+          <div class="ch-radar ch-in" id="chRadar"></div>
+          <div class="ch-cmpnote" id="chCmpNote" style="display:none"></div>
+          <div id="chDetail"></div>
+        </div>
+        <div class="card ch-card"><div class="ch-head"><h3>Eight core attributes</h3></div><div class="ch-sort" id="chSort"></div><div class="ch-attrs" id="allAttrs"></div><p class="muted" style="font-size:11.5px;margin:12px 0 0">★ marks your class focus. Customize how you earn XP in Settings.</p></div>
+        <div class="grid two-col" style="margin-top:14px"><div class="card"><h3>Skill progression</h3><p class="muted" style="font-size:12px;margin-top:-5px">Practice level is logged effort only. Gaps in training show up over time.</p><div id="skillsList" class="skill-list"></div></div><div class="card"><h3>Real-world benchmarks</h3><p class="muted" style="font-size:12px;margin-top:-5px">Optional metrics you choose to track.</p><div class="field"><label>Benchmark name</label><input id="benchName" placeholder="e.g. 5K run time"></div><div class="field" style="margin-top:10px"><label>Current result</label><input id="benchValue" placeholder="e.g. 28:30"></div><div style="margin-top:10px"><button class="btn secondary" onclick="addBenchmark()">＋ Add benchmark</button></div><div id="benchmarks" style="margin-top:15px"></div></div></div>
+      </section>

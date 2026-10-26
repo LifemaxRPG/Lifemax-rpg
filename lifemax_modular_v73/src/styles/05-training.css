@@ -1,0 +1,373 @@
+/* ============================================================
+   Guided workout — v74 visual overhaul (Claude)
+   One exercise per screen, thumb-zone dock, giant target number.
+   Uses the app's theme tokens, so dark/light and accent changes carry over.
+   Markup: src/runtime/segments/22-runtime.js (gwrRender / gwrV60Body / gwrLauncher).
+   Older .gwr-* rules in 04-nutrition.css still define the overlay base (#guidedWorkout,
+   .open, .gwr-art animation) and are intentionally left alone.
+   ============================================================ */
+#guidedWorkout{--gx-on:#0b1020;--gx-pad:20px;background:var(--bg)}
+html.light-theme #guidedWorkout{--gx-on:#ffffff}
+#guidedWorkout .gx-shell{position:relative;height:100%;height:100dvh;max-width:560px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+#guidedWorkout button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+#guidedWorkout button:focus-visible,#guidedWorkout select:focus-visible,#guidedWorkout input:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:2px}
+
+/* Top bar */
+#guidedWorkout .gx-top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px}
+#guidedWorkout .gx-top-btn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:600 14px/1 var(--font)}
+#guidedWorkout .gx-top-btn svg{width:14px;height:14px;flex:none}
+#guidedWorkout .gx-top-btn.is-icon{width:44px;padding:0}
+#guidedWorkout .gx-top-btn.is-icon svg{width:16px;height:16px}
+#guidedWorkout .gx-top-title{flex:1;min-width:0;text-align:center;line-height:1.25}
+#guidedWorkout .gx-top-title strong{display:block;font:650 14px/1.25 var(--font);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#guidedWorkout .gx-top-title span{display:block;font:500 13px/1.25 var(--font);color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Route: one segment per exercise, width proportional to its set count */
+#guidedWorkout .gx-route{display:flex;gap:4px;padding:2px 16px 0}
+#guidedWorkout .gx-route i{position:relative;display:block;height:6px;min-width:6px;border-radius:3px;background:var(--panel3);overflow:hidden}
+#guidedWorkout .gx-route i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--f,0%);background:var(--good);border-radius:inherit}
+#guidedWorkout .gx-route i.is-current{background:color-mix(in srgb,var(--accent) 28%,var(--panel3))}
+#guidedWorkout .gx-route i.is-current::after{background:var(--accent)}
+#guidedWorkout .gx-route i.is-skipped{background:repeating-linear-gradient(135deg,var(--panel3) 0 3px,transparent 3px 6px)}
+
+/* Screen frame: scrolling body + fixed dock */
+#guidedWorkout .gx-screen{flex:1;min-height:0;display:flex;flex-direction:column}
+#guidedWorkout .gx-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:22px var(--gx-pad) 18px}
+#guidedWorkout .gx-dock{flex:none;padding:12px var(--gx-pad) calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line-soft);background:var(--bg)}
+#guidedWorkout .gx-btn.primary{display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;padding:0 20px;border:0;border-radius:16px;background:var(--accent);color:var(--gx-on);font:750 18px/1 var(--font);letter-spacing:-.01em;box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 50%,#000);transition:transform .08s ease,box-shadow .08s ease}
+#guidedWorkout .gx-btn.primary:active{transform:translateY(3px);box-shadow:0 0 0 color-mix(in srgb,var(--accent) 50%,#000)}
+#guidedWorkout .gx-dock-row{display:flex;justify-content:center;gap:6px;margin-top:4px}
+#guidedWorkout .gx-link{min-height:44px;padding:0 14px;border:0;border-radius:10px;background:none;color:var(--muted);font:600 14px/1 var(--font)}
+#guidedWorkout .gx-link:active{color:var(--text);background:var(--panel)}
+#guidedWorkout .gx-dock-note{margin:10px 0 2px;text-align:center;font:500 13px/1.4 var(--font);color:var(--muted)}
+
+/* Exercise header */
+#guidedWorkout .gx-step{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:0 0 6px;font:500 13px/1.35 var(--font);color:var(--muted)}
+#guidedWorkout .gx-live{display:inline-flex;align-items:center;gap:6px;color:var(--good);font-weight:650}
+#guidedWorkout .gx-live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:gxPulse 1.4s ease-in-out infinite}
+#guidedWorkout .gx-ex{display:flex;align-items:flex-start;gap:14px}
+#guidedWorkout .gx-ex-text{flex:1;min-width:0}
+#guidedWorkout .gx-ex-name{margin:0;font:800 clamp(26px,7.4vw,34px)/1.06 var(--font);letter-spacing:-.025em;color:var(--text);overflow-wrap:anywhere}
+#guidedWorkout .gx-ex-rx{margin:8px 0 0;font:500 15px/1.4 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-portrait{flex:none;width:92px;height:76px;display:grid;place-items:center;overflow:hidden;border-radius:14px;border:1px solid var(--line-soft);background:var(--panel)}
+#guidedWorkout .gx-portrait .gwr-art{display:block;width:100%;height:100%;filter:none;transform:scale(1.3) translateY(-4%)}
+#guidedWorkout .gx-sets{display:flex;align-items:center;gap:12px;margin-top:18px}
+#guidedWorkout .gx-sets>span{flex:none;font:650 13px/1 var(--font);color:var(--text-dim);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-pips{flex:1;display:flex;gap:5px}
+#guidedWorkout .gx-pips i{flex:1;height:10px;border-radius:3px;background:var(--panel3)}
+#guidedWorkout .gx-pips i.is-done{background:var(--good)}
+#guidedWorkout .gx-pips i.is-current{background:color-mix(in srgb,var(--accent) 25%,var(--panel3));box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* The target: the one loud thing on the screen */
+#guidedWorkout .gx-hero{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:30px 0 4px}
+#guidedWorkout .gx-hero strong{font:800 clamp(92px,31vw,136px)/.88 var(--font);letter-spacing:-.055em;color:var(--text);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-hero span{font:650 20px/1 var(--font);color:var(--muted)}
+#guidedWorkout .gx-hero.is-check{flex-direction:column;align-items:center;gap:12px}
+#guidedWorkout .gx-hero.is-check strong{display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--good-dim);color:var(--good)}
+#guidedWorkout .gx-hero.is-check span{font-size:16px;color:var(--text-dim)}
+#guidedWorkout .gx-last{margin:10px 0 0;text-align:center;font:500 14px/1.4 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-cue{margin:26px 0 0;padding:14px 16px;border-radius:14px;border:1px solid var(--line-soft);background:var(--panel);font:400 14px/1.5 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-cue b{display:block;margin-bottom:3px;font:700 13px/1.3 var(--font);color:var(--text)}
+
+/* Logging steppers */
+#guidedWorkout .gx-fields{display:grid;gap:16px;margin-top:24px}
+#guidedWorkout .gx-stepper label{display:block;margin:0 0 8px;font:650 14px/1.3 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-stepper-row{display:grid;grid-template-columns:64px minmax(0,1fr) 64px;gap:8px}
+#guidedWorkout .gx-stepper-row button{min-height:72px;border-radius:16px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:500 30px/1 var(--font)}
+#guidedWorkout .gx-stepper-row button:active{background:var(--panel3)}
+#guidedWorkout .gx-stepper input{width:100%;min-width:0;height:72px;min-height:72px;margin:0;padding:0 6px;box-sizing:border-box;border-radius:16px;border:2px solid var(--line);background:var(--bg-elev);color:var(--text);text-align:center;font:800 40px/1 var(--font);font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield;box-shadow:none}
+#guidedWorkout .gx-stepper input::placeholder{font-size:18px;font-weight:600;color:var(--muted2)}
+#guidedWorkout .gx-stepper input:focus{border-color:var(--accent);outline:none}
+#guidedWorkout .gx-stepper input::-webkit-outer-spin-button,#guidedWorkout .gx-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* Timer ring (r=72 is fixed: gwrTick uses its 452.39 circumference) */
+#guidedWorkout .gx-ringbox{display:grid;place-items:center;margin:24px 0 6px}
+#guidedWorkout .gx-ring{position:relative;width:min(68vw,264px);aspect-ratio:1}
+#guidedWorkout .gx-ring svg{display:block;width:100%;height:100%}
+#guidedWorkout .gx-ring-track{stroke:var(--panel3)}
+#guidedWorkout .gx-ring-fill{stroke:var(--accent);transition:stroke-dashoffset .3s linear}
+#guidedWorkout .gx-ring.is-rest .gx-ring-fill{stroke:var(--good)}
+#guidedWorkout .gx-ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+#guidedWorkout .gx-ring-label strong{font:800 clamp(44px,14vw,58px)/1 var(--font);letter-spacing:-.03em;color:var(--text);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-ring-label span{font:500 13px/1.2 var(--font);color:var(--muted)}
+
+/* Timed set review */
+#guidedWorkout .gx-confirm{display:flex;flex-direction:column;align-items:center;gap:8px;margin:34px 0 0;text-align:center}
+#guidedWorkout .gx-confirm-mark{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--good-dim);color:var(--good)}
+#guidedWorkout .gx-confirm strong{font:800 64px/1 var(--font);letter-spacing:-.04em;color:var(--text);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-confirm>span:last-child{max-width:30ch;font:500 15px/1.4 var(--font);color:var(--text-dim)}
+
+/* Rest */
+#guidedWorkout .gx-rest-tag{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 0;font:650 16px/1.3 var(--font);color:var(--text)}
+#guidedWorkout .gx-rest-tag svg{color:var(--gold);animation:gxFlicker 1.1s steps(2) infinite}
+#guidedWorkout .gx-adjust{display:flex;justify-content:center;gap:10px;margin-top:6px}
+#guidedWorkout .gx-adjust button{min-height:44px;min-width:92px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:650 15px/1 var(--font);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-next{display:flex;align-items:center;gap:14px;margin-top:26px;padding:12px;border-radius:16px;border:1px solid var(--line-soft);background:var(--panel)}
+#guidedWorkout .gx-next .gx-portrait{width:76px;height:62px;background:var(--bg-elev)}
+#guidedWorkout .gx-next>div:last-child{min-width:0}
+#guidedWorkout .gx-next span{display:block;font:500 12px/1.3 var(--font);color:var(--muted)}
+#guidedWorkout .gx-next strong{display:block;margin-top:1px;font:700 17px/1.2 var(--font);color:var(--text)}
+#guidedWorkout .gx-next small{display:block;margin-top:3px;font:500 13px/1.35 var(--font);color:var(--text-dim)}
+
+/* Intro */
+#guidedWorkout .gx-title{margin:0;font:800 clamp(30px,8.6vw,40px)/1.04 var(--font);letter-spacing:-.03em;color:var(--text);overflow-wrap:anywhere}
+#guidedWorkout .gx-summary{display:flex;margin:22px 0 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+#guidedWorkout .gx-summary>div{flex:1;min-width:0;padding:14px 0}
+#guidedWorkout .gx-summary>div+div{padding-left:16px;border-left:1px solid var(--line-soft)}
+#guidedWorkout .gx-summary strong{display:block;font:800 26px/1.05 var(--font);letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-summary span{display:block;margin-top:4px;font:500 13px/1.2 var(--font);color:var(--muted)}
+#guidedWorkout .gx-summary .is-xp strong{color:var(--gold)}
+#guidedWorkout .gx-select{display:block;margin-top:20px}
+#guidedWorkout .gx-select span{display:block;margin-bottom:8px;font:650 14px/1.3 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-select select{width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:500 15px/1.2 var(--font)}
+#guidedWorkout .gx-log{list-style:none;margin:20px 0 0;padding:0}
+#guidedWorkout .gx-log li{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:12px;row-gap:2px;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+#guidedWorkout .gx-log li:last-child{border-bottom:0}
+#guidedWorkout .gx-log-n{grid-row:span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--panel2);font:700 13px/1 var(--font);color:var(--text-dim);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-log-name{font:650 15px/1.3 var(--font);color:var(--text)}
+#guidedWorkout .gx-log-name em{font-style:normal;font-weight:500;font-size:13px;color:var(--muted)}
+#guidedWorkout .gx-log-rx{font:400 13px/1.35 var(--font);color:var(--muted)}
+#guidedWorkout .gx-log li.is-done .gx-log-n{background:var(--good-dim);color:var(--good)}
+
+/* Complete */
+#guidedWorkout .is-complete .gx-body{text-align:center}
+#guidedWorkout .gx-trophy{display:grid;place-items:center;width:96px;height:96px;margin:18px auto 16px}
+#guidedWorkout .gx-trophy.is-partial{border-radius:50%;background:var(--accent-dim);color:var(--accent)}
+#guidedWorkout .gx-trophy-art{width:96px;height:96px;image-rendering:pixelated}
+#guidedWorkout .is-complete .gx-note{max-width:32ch;margin:10px auto 0;font:500 15px/1.45 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-xp{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:24px 0 6px}
+#guidedWorkout .gx-xp strong{font:800 clamp(64px,20vw,88px)/1 var(--font);letter-spacing:-.045em;color:var(--gold);font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-xp span{font:750 22px/1 var(--font);color:var(--gold)}
+#guidedWorkout .is-complete .gx-summary>div+div{padding-left:0}
+
+/* ============================================================
+   v75 AAA reward layer. Particles draw on #gwrFxCanvas (22-runtime.js, GWX);
+   these rules choreograph the DOM half. Overlays are always cinematic-dark,
+   in both themes, so gold and glow read the same everywhere.
+   ============================================================ */
+/* Route strip: fill animates, glint sweeps on arrival */
+#guidedWorkout .gx-route i::after{transition:width .5s cubic-bezier(.2,.9,.3,1)}
+#guidedWorkout .gx-route i::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);transform:translateX(-110%);pointer-events:none}
+#guidedWorkout .gx-route i.gx-glint{animation:gxSegPop .5s cubic-bezier(.2,1.6,.4,1)}
+#guidedWorkout .gx-route i.gx-glint::before{animation:gxGlint .65s ease-out .05s}
+@keyframes gxSegPop{40%{transform:scaleY(2.1);box-shadow:0 0 14px var(--good)}}
+@keyframes gxGlint{to{transform:translateX(110%)}}
+
+/* Set logged: chip drops in under the route, rest ring charges */
+#guidedWorkout .gx-setchip{position:absolute;z-index:65;left:50%;top:calc(76px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:8px;padding:9px 16px 9px 12px;border-radius:999px;background:#0f1a14;border:1px solid color-mix(in srgb,var(--good) 60%,transparent);color:#eafff3;font:700 14px/1 var(--font);box-shadow:0 10px 30px #0008,0 0 24px color-mix(in srgb,var(--good) 30%,transparent);pointer-events:none;animation:gxChip 1.7s cubic-bezier(.2,1.2,.4,1) both}
+#guidedWorkout .gx-setchip svg{width:16px;height:16px;color:var(--good)}
+@keyframes gxChip{0%{opacity:0;transform:translate(-50%,-18px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.04)}20%{transform:translate(-50%,0) scale(1)}82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-10px)}}
+#guidedWorkout .gx-just-logged .gx-rest-tag{animation:gxTagBack .5s ease-out 1.55s both}
+@keyframes gxTagBack{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#guidedWorkout .gx-ring.gx-ring-charge svg{animation:gxRingCharge .7s cubic-bezier(.2,1.3,.4,1) both}
+#guidedWorkout .gx-ring.gx-ring-charge .gx-ring-label{animation:gxRingLabel .6s ease-out .1s both}
+@keyframes gxRingCharge{0%{transform:scale(.82) rotate(-25deg);opacity:.2;filter:drop-shadow(0 0 0 transparent)}60%{transform:scale(1.04) rotate(0);opacity:1;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--good) 60%,transparent))}100%{transform:none;filter:drop-shadow(0 0 0 transparent)}}
+@keyframes gxRingLabel{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Next exercise arrives: name wipes in, art slides in on a light streak, pips build, number counts up */
+#guidedWorkout .gx-in-new .gx-step{animation:gxRise .45s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .gx-in-new .gx-ex-name{animation:gxWipe .6s cubic-bezier(.7,0,.2,1) .06s both}
+#guidedWorkout .gx-in-new .gx-ex-rx{animation:gxRise .5s cubic-bezier(.2,.9,.3,1) .22s both}
+#guidedWorkout .gx-in-new .gx-portrait{position:relative;animation:gxSlideIn .6s cubic-bezier(.2,1.1,.3,1) .1s both}
+#guidedWorkout .gx-in-new .gx-portrait::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);transform:translateX(-120%);animation:gxStreak .7s ease-out .45s}
+#guidedWorkout .gx-in-new .gx-pips i,#guidedWorkout .gx-in-set .gx-pips i.is-current{animation:gxPip .42s cubic-bezier(.2,1.6,.4,1) calc(.28s + var(--i,0) * 70ms) both}
+#guidedWorkout .gx-in-new .gx-sets>span{animation:gxRise .4s ease-out .4s both}
+#guidedWorkout .gx-in-new .gx-hero{animation:gxHero .7s cubic-bezier(.2,1.3,.4,1) .2s both}
+#guidedWorkout .gx-in-new .gx-last,#guidedWorkout .gx-in-new .gx-cue{animation:gxRise .5s ease-out .5s both}
+#guidedWorkout .gx-in-new .gx-dock{animation:gxRise .4s ease-out .12s both}
+#guidedWorkout .gx-in-set .gx-hero strong{animation:gxNudge .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes gxRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes gxWipe{from{clip-path:inset(0 100% 0 0);transform:translateX(-12px)}to{clip-path:inset(0 0 0 0);transform:none}}
+@keyframes gxSlideIn{from{opacity:0;transform:translateX(60px) rotate(6deg) scale(.85)}to{opacity:1;transform:none}}
+@keyframes gxStreak{to{transform:translateX(120%)}}
+@keyframes gxPip{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
+@keyframes gxHero{from{opacity:0;transform:scale(.6);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes gxNudge{40%{transform:scale(1.08)}}
+
+/* Exercise cleared: crest slams in, rays turn, title rises, then the card flies into the route strip */
+#guidedWorkout .gx-clear{position:absolute;inset:0;z-index:75;display:grid;place-items:center;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#guidedWorkout .gx-clear-dim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(16,20,31,.97),rgba(3,5,10,.99) 70%);animation:gxFadeIn .25s ease-out both}
+#guidedWorkout .gx-clear.is-leaving .gx-clear-dim{animation:gxFadeOut .45s ease-in both}
+#guidedWorkout .gx-clear-card{position:relative;display:flex;flex-direction:column;align-items:center;max-width:88%;text-align:center;color:#fff}
+#guidedWorkout .gx-clear-rays{position:absolute;left:50%;top:58px;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,210,122,.20) 0deg 7deg,transparent 7deg 22deg);-webkit-mask-image:radial-gradient(circle,#000 8%,transparent 62%);mask-image:radial-gradient(circle,#000 8%,transparent 62%);pointer-events:none;animation:gxRaysIn .6s ease-out .25s both,gxSpin 14s linear infinite}
+#guidedWorkout .gx-clear-emblem{position:relative;width:116px;height:116px;filter:drop-shadow(0 0 22px rgba(255,210,122,.55)) drop-shadow(0 10px 18px #000a);animation:gxSlam .52s cubic-bezier(.3,0,.2,1) both}
+#guidedWorkout .gx-clear-emblem svg{width:100%;height:100%;image-rendering:pixelated}
+#guidedWorkout .gx-clear-kicker{margin:18px 0 0;font:700 14px/1.2 var(--font);color:#ffd27a;animation:gxRise .4s ease-out .42s both}
+#guidedWorkout .gx-clear-title{margin:6px 0 0;font:850 clamp(30px,9vw,44px)/1.05 var(--font);letter-spacing:-.03em;color:#fff;text-shadow:0 0 28px rgba(255,210,122,.35);perspective:400px}
+#guidedWorkout .gx-w{display:inline-block;white-space:nowrap}
+#guidedWorkout .gx-clear-title .gx-w>span,#guidedWorkout .gx-v-title .gx-w>span{display:inline-block;animation:gxLetter .5s cubic-bezier(.2,1.4,.4,1) calc(.38s + var(--i) * 26ms) both}
+#guidedWorkout .gx-clear-stats{display:flex;justify-content:center;gap:26px;margin-top:20px;animation:gxRise .4s ease-out .6s both}
+#guidedWorkout .gx-clear-stats strong,#guidedWorkout .gx-v-stats strong{display:block;font:800 28px/1 var(--font);color:#fff;font-variant-numeric:tabular-nums}
+#guidedWorkout .gx-clear-stats span,#guidedWorkout .gx-v-stats span{display:block;margin-top:5px;font:500 13px/1 var(--font);color:#9aa6bb}
+#guidedWorkout .gx-clear-next{margin-top:26px;padding:12px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);animation:gxSlideUp .5s cubic-bezier(.2,1.2,.4,1) 1s both}
+#guidedWorkout .gx-clear-next span{display:block;font:500 12px/1.2 var(--font);color:#9aa6bb}
+#guidedWorkout .gx-clear-next strong{display:block;margin-top:2px;font:700 16px/1.25 var(--font);color:#fff}
+@keyframes gxSlam{0%{opacity:0;transform:scale(2.8) rotate(-12deg);filter:blur(10px)}55%{opacity:1;transform:scale(.9) rotate(2deg);filter:blur(0) drop-shadow(0 0 30px rgba(255,210,122,.9))}72%{transform:scale(1.07)}100%{transform:none}}
+@keyframes gxRaysIn{from{opacity:0;transform:scale(.4)}to{opacity:1}}
+@keyframes gxSpin{to{rotate:360deg}}
+@keyframes gxLetter{from{opacity:0;transform:translateY(.55em) rotateX(80deg)}to{opacity:1;transform:none}}
+@keyframes gxSlideUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes gxFadeOut{to{opacity:0}}
+
+/* Workout complete: beam, rising trophy with a shine pass, XP counter, confetti cannons */
+#guidedWorkout .gx-victory{position:absolute;inset:0;z-index:80;display:grid;place-items:center;overflow:hidden;background:#04060b;cursor:pointer;animation:gxFadeIn .12s ease-out both}
+#guidedWorkout .gx-victory.is-leaving{animation:gxFadeOut .42s ease-in both}
+#guidedWorkout .gx-v-beam{position:absolute;left:50%;top:0;width:3px;height:46%;margin-left:-1.5px;background:linear-gradient(#fff0,#fff 40%,#ffd27a);transform-origin:top;animation:gxBeam 1.1s cubic-bezier(.6,0,.2,1) .05s both;filter:drop-shadow(0 0 8px #ffd27a)}
+#guidedWorkout .gx-v-rays{position:absolute;left:50%;top:32%;width:760px;height:760px;margin:-380px 0 0 -380px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,210,122,.17) 0deg 6deg,transparent 6deg 18deg),radial-gradient(circle,rgba(255,210,122,.32),transparent 45%);-webkit-mask-image:radial-gradient(circle,#000 6%,transparent 64%);mask-image:radial-gradient(circle,#000 6%,transparent 64%);pointer-events:none;animation:gxRaysIn .9s ease-out .5s both,gxSpin 22s linear infinite}
+#guidedWorkout .gx-v-stage{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;max-width:420px;padding:0 20px;text-align:center;color:#fff}
+#guidedWorkout .gx-v-trophy{position:relative;width:148px;height:148px;filter:drop-shadow(0 0 30px rgba(255,210,122,.5)) drop-shadow(0 16px 20px #000c);animation:gxTrophy .9s cubic-bezier(.2,1.25,.35,1) .45s both}
+#guidedWorkout .gx-v-trophy svg{width:100%;height:100%;image-rendering:pixelated}
+#guidedWorkout .gx-v-shine{position:absolute;inset:0;-webkit-mask-size:100% 100%;mask-size:100% 100%;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.95) 48%,transparent 60%);background-size:300% 100%;background-position:120% 0;animation:gxShine 1.1s ease-in-out 1s both,gxShine 1.1s ease-in-out 3.6s both}
+#guidedWorkout .gx-v-title{margin:22px 0 0;font:850 clamp(30px,9vw,46px)/1.08 var(--font);letter-spacing:-.035em;color:#fff;text-shadow:0 0 30px rgba(255,210,122,.35);perspective:400px}
+#guidedWorkout .gx-v-title .gx-w>span{animation-delay:calc(1s + var(--i) * 32ms)}
+#guidedWorkout .gx-v-xp{display:flex;align-items:baseline;gap:8px;margin-top:14px;animation:gxRise .4s ease-out 1.35s both}
+#guidedWorkout .gx-v-xp strong{font:850 clamp(64px,21vw,92px)/1 var(--font);letter-spacing:-.045em;color:#ffd27a;font-variant-numeric:tabular-nums;text-shadow:0 0 26px rgba(255,190,80,.45)}
+#guidedWorkout .gx-v-xp span{font:800 24px/1 var(--font);color:#ffd27a}
+#guidedWorkout .gx-v-xp.is-landed strong{animation:gxXpLand .6s cubic-bezier(.2,1.6,.4,1)}
+#guidedWorkout .gx-v-stats{display:flex;justify-content:center;gap:28px;margin-top:22px;animation:gxRise .45s ease-out 2.4s both}
+#guidedWorkout .gx-v-skip{margin:30px 0 0;font:500 13px/1 var(--font);color:#7e8aa0;animation:gxFadeIn .6s ease-out 3.2s both}
+@keyframes gxBeam{0%{transform:scaleY(0);opacity:1}55%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1) scaleX(30);opacity:0}}
+@keyframes gxTrophy{0%{opacity:0;transform:translateY(90px) scale(.5)}100%{opacity:1;transform:none}}
+@keyframes gxShine{from{background-position:120% 0}to{background-position:-60% 0}}
+@keyframes gxXpLand{40%{transform:scale(1.18);text-shadow:0 0 50px rgba(255,210,122,.9)}}
+
+/* Complete screen reveal after the victory sequence (and straight away for partial sessions) */
+#guidedWorkout .gx-reveal .gx-body>*{animation:gxRise .5s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .gx-reveal .gx-body>*:nth-child(2){animation-delay:.06s}
+#guidedWorkout .gx-reveal .gx-body>*:nth-child(3){animation-delay:.12s}
+#guidedWorkout .gx-reveal .gx-body>*:nth-child(4){animation-delay:.18s}
+#guidedWorkout .gx-reveal .gx-body>*:nth-child(5){animation-delay:.24s}
+#guidedWorkout .gx-reveal .gx-dock{animation:gxRise .5s ease-out .3s both}
+
+/* Route sheet (markup in 21-runtime.js: gwrQuickReview) */
+#guidedWorkout .gwr-v60-queue-backdrop{position:absolute;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:#0009;animation:gxFadeIn .18s ease both}
+#guidedWorkout .gwr-v60-queue-panel{width:100%;max-width:560px;max-height:82dvh;display:flex;flex-direction:column;box-sizing:border-box;padding:18px 20px calc(14px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0;border:1px solid var(--line);border-bottom:0;background:var(--bg-elev);animation:gxSheet .24s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .gwr-v60-queue-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+#guidedWorkout .gwr-v60-queue-top small{display:none}
+#guidedWorkout .gwr-v60-queue-top h3{margin:0;font:800 20px/1.2 var(--font);letter-spacing:-.02em;color:var(--text)}
+#guidedWorkout .gwr-v60-queue-top button{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--text);font:400 24px/1 var(--font)}
+#guidedWorkout .gwr-v60-queue-list{flex:1;min-height:0;overflow-y:auto;margin:0 -4px 14px;padding:0 4px}
+#guidedWorkout .gwr-v60-queue-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 8px;border-radius:12px}
+#guidedWorkout .gwr-v60-queue-row+.gwr-v60-queue-row{border-top:1px solid var(--line-soft)}
+#guidedWorkout .gwr-v60-queue-row.is-current{background:var(--accent-dim);border-color:transparent}
+#guidedWorkout .gwr-v60-queue-row.is-current+.gwr-v60-queue-row{border-color:transparent}
+#guidedWorkout .gwr-v60-queue-row>b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--panel2);font:700 12px/1 var(--font);color:var(--text-dim)}
+#guidedWorkout .gwr-v60-queue-row.is-current>b{background:var(--accent);color:var(--gx-on)}
+#guidedWorkout .gwr-v60-queue-row>span{font:600 15px/1.3 var(--font);color:var(--text)}
+#guidedWorkout .gwr-v60-queue-row>small{font:600 13px/1 var(--font);color:var(--muted);font-variant-numeric:tabular-nums}
+#guidedWorkout .gwr-v60-queue-panel .gwr-v60-btn.main::first-letter{text-transform:uppercase}
+#guidedWorkout .gwr-v60-queue-panel .gwr-v60-btn.main{display:block;text-transform:lowercase;width:100%;min-height:56px;border:0;border-radius:16px;background:var(--accent);color:var(--gx-on);font:750 17px/1 var(--font)}
+
+/* Launcher card on the Plan page (outside the overlay) */
+.gx-launch{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:14px 14px 14px 16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel)}
+.gx-launch.is-resume{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
+.gx-launch-icon{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--accent-dim);color:var(--accent-strong)}
+.gx-launch-text{flex:1;min-width:0}
+.gx-launch-text strong{display:block;font:700 16px/1.25 var(--font);color:var(--text)}
+.gx-launch-text span{display:block;margin-top:2px;font:500 13px/1.35 var(--font);color:var(--muted)}
+.gx-launch-btn{flex:none;min-height:44px;min-width:84px;padding:0 18px;border:0;border-radius:12px;background:var(--accent);color:#0b1020;font:750 15px/1 var(--font);cursor:pointer}
+html.light-theme .gx-launch-btn{color:#fff}
+.gx-launch-btn:disabled{background:var(--panel3);color:var(--muted);cursor:not-allowed}
+.gx-launch-btn:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:2px}
+
+/* Short phones */
+@media(max-height:700px){
+ #guidedWorkout .gx-body{padding-top:16px}
+ #guidedWorkout .gx-hero{margin-top:18px}
+ #guidedWorkout .gx-hero strong{font-size:clamp(76px,24vw,104px)}
+ #guidedWorkout .gx-ring{width:min(56vw,210px)}
+ #guidedWorkout .gx-cue{margin-top:18px}
+ #guidedWorkout .gx-stepper-row button,#guidedWorkout .gx-stepper input{min-height:62px;height:62px}
+ #guidedWorkout .gx-btn.primary{min-height:56px}
+}
+
+@keyframes gxPulse{50%{opacity:.35}}
+@keyframes gxFlicker{50%{transform:translateY(-1px) scaleY(1.08)}}
+@keyframes gxFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes gxSheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+
+@media(prefers-reduced-motion:reduce){
+ #guidedWorkout .gx-in-new *,#guidedWorkout .gx-in-set *,#guidedWorkout .gx-just-logged *,#guidedWorkout .gx-reveal *,#guidedWorkout .gx-route i,#guidedWorkout .gx-route i::before,#guidedWorkout .gx-ring-charge *{animation:none!important}
+ #guidedWorkout .gx-live::before,#guidedWorkout .gx-rest-tag svg,#guidedWorkout .gx-ring-fill,#guidedWorkout .gwr-v60-queue-backdrop,#guidedWorkout .gwr-v60-queue-panel,#guidedWorkout .gx-btn.primary{animation:none!important;transition:none!important}
+}
+html.reduce-motion #guidedWorkout .gx-live::before,html.reduce-motion #guidedWorkout .gx-rest-tag svg,html.reduce-motion #guidedWorkout .gx-ring-fill,html.reduce-motion #guidedWorkout .gwr-v60-queue-backdrop,html.reduce-motion #guidedWorkout .gwr-v60-queue-panel{animation:none!important;transition:none!important}
+html.reduce-motion #guidedWorkout .gx-in-new *,html.reduce-motion #guidedWorkout .gx-in-set *,html.reduce-motion #guidedWorkout .gx-reveal *,html.reduce-motion #guidedWorkout .gx-ring-charge *{animation:none!important}
+
+/* ============================================================
+   v76 motion polish: phase-to-phase transitions, final countdown,
+   tap ripples, overlay open, intro list stagger.
+   ============================================================ */
+#guidedWorkout .gx-screen.gx-ghost{position:absolute;left:0;right:0;z-index:4;background:var(--bg);pointer-events:none;animation:gxGhostOut .36s cubic-bezier(.4,0,.2,1) both}
+#guidedWorkout .gx-screen.gx-ghost .gx-dock{visibility:hidden}
+#guidedWorkout .gx-screen.gx-ghost *{animation:none!important}
+#guidedWorkout .gx-enter .gx-body{animation:gxEnter .46s cubic-bezier(.2,.9,.3,1) .04s both}
+@keyframes gxGhostOut{to{opacity:0;transform:translateX(-28px) scale(.985);filter:blur(2px)}}
+@keyframes gxEnter{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+#guidedWorkout .gx-ring.is-final .gx-ring-fill{stroke:#ffd27a;filter:drop-shadow(0 0 10px rgba(255,210,122,.7))}
+#guidedWorkout .gx-ring.is-final.is-work .gx-ring-fill{stroke:var(--accent);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 70%,transparent))}
+#guidedWorkout .gx-ring.is-final .gx-ring-label strong{color:#ffd27a}
+#guidedWorkout .gx-ring.is-final.is-work .gx-ring-label strong{color:var(--accent-strong)}
+#guidedWorkout .gx-ring.is-final svg{animation:gxBeat 1s ease-in-out infinite}
+@keyframes gxBeat{0%,100%{transform:scale(1)}12%{transform:scale(1.035)}}
+#guidedWorkout .gx-btn.primary,#guidedWorkout .gx-adjust button,#guidedWorkout .gx-stepper-row button,#guidedWorkout .gx-top-btn{position:relative;overflow:hidden;isolation:isolate}
+#guidedWorkout .gx-ripple{position:absolute;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.42),rgba(255,255,255,0) 62%);transform:scale(0);pointer-events:none;animation:gxRipple .6s cubic-bezier(.2,.8,.3,1) both}
+html.light-theme #guidedWorkout .gx-adjust .gx-ripple,html.light-theme #guidedWorkout .gx-stepper-row .gx-ripple,html.light-theme #guidedWorkout .gx-top-btn .gx-ripple{background:radial-gradient(circle,color-mix(in srgb,var(--accent) 30%,transparent),transparent 62%)}
+@keyframes gxRipple{to{transform:scale(1);opacity:0}}
+#guidedWorkout.gx-opening .gx-shell{animation:gxOpen .55s cubic-bezier(.2,.9,.3,1) both}
+@keyframes gxOpen{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+#guidedWorkout .is-intro .gx-title,#guidedWorkout .is-intro .gx-summary,#guidedWorkout .is-intro .gx-select{animation:gxRise .5s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .is-intro .gx-summary{animation-delay:.08s}
+#guidedWorkout .is-intro .gx-select{animation-delay:.14s}
+#guidedWorkout .is-intro .gx-log li{animation:gxRise .45s cubic-bezier(.2,.9,.3,1) calc(.2s + var(--i,0) * 45ms) both}
+@media(prefers-reduced-motion:reduce){#guidedWorkout .gx-ghost{display:none}#guidedWorkout .gx-enter *,#guidedWorkout .is-intro *,#guidedWorkout.gx-opening .gx-shell,#guidedWorkout .gx-ring.is-final svg{animation:none!important}}
+html.reduce-motion #guidedWorkout .gx-enter *,html.reduce-motion #guidedWorkout .is-intro *,html.reduce-motion #guidedWorkout .gx-ring.is-final svg{animation:none!important}
+
+/* v77: personal records + hold-to-repeat steppers */
+#guidedWorkout .gx-setchip.is-record{background:#211a0c;border-color:rgba(255,210,122,.75);color:#fff4d6;box-shadow:0 10px 30px #0008,0 0 30px rgba(255,190,80,.4);animation-duration:2.6s}
+#guidedWorkout .gx-setchip.is-record svg{color:#ffd27a}
+#guidedWorkout .gx-clear-record{margin:12px 0 0;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,210,122,.6);background:rgba(255,210,122,.12);font:750 14px/1.2 var(--font);color:#ffd27a;animation:gxRecord .6s cubic-bezier(.2,1.6,.4,1) .75s both}
+@keyframes gxRecord{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:none}}
+#guidedWorkout .gx-stepper-row button{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+/* v78: cinematic banners (halfway, last exercise) + rep-motion pixel art */
+#guidedWorkout .gx-banner{position:absolute;inset:0;z-index:72;pointer-events:none;overflow:hidden;animation:gxBannerLife 2.1s linear both}
+#guidedWorkout .gx-bar{position:absolute;left:0;right:0;height:13vh;background:#000;animation:gxBarIn .35s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .gx-bar.top{top:0;transform-origin:top}
+#guidedWorkout .gx-bar.bottom{bottom:0;transform-origin:bottom}
+#guidedWorkout .gx-band{position:absolute;left:-10%;right:-10%;top:50%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 12%;background:linear-gradient(90deg,transparent,rgba(8,10,16,.985) 14%,rgba(8,10,16,.985) 86%,transparent);border-top:1px solid rgba(255,210,122,.55);border-bottom:1px solid rgba(255,210,122,.55);transform:translateY(-50%) skewY(-4deg);overflow:hidden;animation:gxBandIn .5s cubic-bezier(.2,1.1,.3,1) .12s both}
+#guidedWorkout .gx-band strong{font:900 italic clamp(34px,10.5vw,52px)/1 var(--font);letter-spacing:-.035em;color:#fff;text-shadow:0 0 28px rgba(255,210,122,.5);transform:skewY(4deg)}
+#guidedWorkout .gx-band strong .gx-w>span{display:inline-block;animation:gxLetterX .45s cubic-bezier(.2,1.3,.4,1) calc(.22s + var(--i) * 24ms) both}
+#guidedWorkout .gx-band>span{font:650 15px/1.2 var(--font);color:#ffd27a;transform:skewY(4deg);animation:gxRise .4s ease-out .5s both}
+#guidedWorkout .gx-streak{position:absolute;top:0;bottom:0;width:40%;left:-40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:gxStreakX .8s ease-out .3s both}
+#guidedWorkout .gx-banner.is-boss .gx-band{border-color:rgba(255,120,80,.75);background:linear-gradient(90deg,transparent,rgba(30,8,6,.985) 14%,rgba(30,8,6,.985) 86%,transparent)}
+#guidedWorkout .gx-banner.is-boss .gx-band strong{text-shadow:0 0 30px rgba(255,110,70,.65)}
+#guidedWorkout .gx-banner.is-boss .gx-band>span{color:#ffb08a}
+@keyframes gxBannerLife{0%,82%{opacity:1}100%{opacity:0}}
+@keyframes gxBarIn{from{transform:scaleY(0)}to{transform:none}}
+@keyframes gxBandIn{from{opacity:0;transform:translateY(-50%) skewY(-4deg) scaleY(0)}to{opacity:1;transform:translateY(-50%) skewY(-4deg)}}
+@keyframes gxLetterX{from{opacity:0;transform:translateX(40px) skewX(-18deg)}to{opacity:1;transform:none}}
+@keyframes gxStreakX{to{left:110%}}
+/* Last exercise screen gets a warmer accent on its route segment and name */
+#guidedWorkout .gx-boss .gx-ex-name{text-shadow:0 0 22px rgba(255,120,80,.35)}
+/* Pixel figure performs reps while a set or timer is live */
+#guidedWorkout .is-active .gx-portrait .gwr-art-motion,#guidedWorkout .is-timing .gx-portrait .gwr-art-motion{animation:gxRep 1.5s cubic-bezier(.45,0,.55,1) infinite}
+#guidedWorkout .is-active .gx-portrait,#guidedWorkout .is-timing .gx-portrait{border-color:color-mix(in srgb,var(--good) 45%,var(--line-soft));box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 12%,transparent)}
+@keyframes gxRep{0%,100%{transform:translateY(0)}45%{transform:translateY(5px) scaleY(.94)}55%{transform:translateY(5px) scaleY(.94)}}
+@media(prefers-reduced-motion:reduce){#guidedWorkout .gx-banner{display:none}#guidedWorkout .gx-portrait .gwr-art-motion{animation:none!important}}
+html.reduce-motion #guidedWorkout .gx-portrait .gwr-art-motion{animation:none!important}
+
+/* v79: animated exercise demonstrations */
+#guidedWorkout button.gx-portrait{position:relative;padding:0;width:104px;height:86px;cursor:pointer;background:radial-gradient(ellipse at 50% 85%,color-mix(in srgb,var(--accent) 14%,var(--panel)),var(--panel) 70%)}
+#guidedWorkout .gx-portrait .gx-demo-art{transform:none}
+#guidedWorkout .gx-portrait-play{position:absolute;right:5px;bottom:5px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--gx-on);box-shadow:0 2px 8px #0006}
+#guidedWorkout .gx-portrait-play svg{width:9px;height:9px;margin-left:1px;shape-rendering:crispEdges}
+#guidedWorkout button.gx-portrait:active{transform:scale(.96)}
+#guidedWorkout .gx-next button.gx-portrait{width:80px;height:66px}
+#guidedWorkout .gx-demo{position:absolute;inset:0;z-index:62;display:flex;align-items:flex-end;justify-content:center;background:#000a;animation:gxFadeIn .2s ease both}
+#guidedWorkout .gx-demo-panel{width:100%;max-width:560px;box-sizing:border-box;padding:16px 20px calc(16px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0;border:1px solid var(--line);border-bottom:0;background:var(--bg-elev);animation:gxSheet .3s cubic-bezier(.2,.9,.3,1) both}
+#guidedWorkout .gx-demo-stage{display:grid;place-items:center;aspect-ratio:160/118;max-height:42dvh;margin:0 auto 14px;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 50% 92%,color-mix(in srgb,var(--accent) 22%,#121722),#0b0e15 72%)}
+#guidedWorkout .gx-demo-stage .gx-demo-art{width:100%;height:100%}
+#guidedWorkout .gx-demo-kicker{margin:0;font:600 13px/1.2 var(--font);color:var(--accent-strong)}
+#guidedWorkout .gx-demo-panel h3{margin:4px 0 0;font:800 24px/1.15 var(--font);letter-spacing:-.02em;color:var(--text)}
+#guidedWorkout .gx-demo-rx{margin:6px 0 0;font:500 15px/1.4 var(--font);color:var(--text-dim)}
+#guidedWorkout .gx-demo-cue{margin:12px 0 16px;font:400 14px/1.5 var(--font);color:var(--text-dim)}

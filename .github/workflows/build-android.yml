@@ -1,0 +1,58 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, claude/github-android-app-d3wlth]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Copy newest single-file build into the web folder
+        run: |
+          mkdir -p android-wrapper/www
+          latest=$(ls -v lifemax_modular_v73/dist/Life_Max_RPG_v*.html | tail -1)
+          echo "Using $latest"
+          cp "$latest" android-wrapper/www/index.html
+
+      - name: Create Android project
+        working-directory: android-wrapper
+        run: |
+          npm install
+          npx cap add android
+          python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android-wrapper/android
+        run: ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LifeMax-RPG-apk
+          path: android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish to a GitHub Release (easy phone download)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk LifeMax-RPG.apk
+          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          gh release create latest LifeMax-RPG.apk --repo "$GITHUB_REPOSITORY" \
+            --title "LifeMax RPG (latest build)" \
+            --notes "Debug APK built from commit $GITHUB_SHA" --target "$GITHUB_SHA"
+    permissions:
+      contents: write

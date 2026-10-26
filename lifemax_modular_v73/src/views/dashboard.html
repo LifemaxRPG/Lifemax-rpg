@@ -1,0 +1,37 @@
+<section id="view-dashboard" class="view active">
+        <div class="ov-head"><div style="min-width:0"><div class="ov-eyebrow" id="ovDate"></div><h1 id="ovHello">Welcome back</h1></div><div class="ov-head-r"><button type="button" class="ov-editbtn" id="ovEditBtn" onclick="ovEditOpen()" aria-label="Edit the Overview: reorder or hide tiles"><i data-px="grid" data-s="12"></i>Edit</button><div class="ov-crest" id="ovCrest"></div></div></div>
+        <div class="ov-edit" id="ovEdit" hidden></div>
+        <div class="ov-tiles" id="ovTiles">
+        <div class="ov-tile" data-tile="plan"><div class="ov-plan" id="ovPlan" hidden></div></div>
+        <div class="ov-tile" data-tile="next"><div class="card ov-card" id="ovNext"></div></div>
+        <div class="ov-tile" data-tile="hero"><div class="card ov-hero" id="ovHero"></div></div>
+        <div class="ov-tile" data-tile="attrs"><div class="card ov-card" id="ovAttrs"></div></div>
+        <div class="ov-tile" data-tile="week"><div class="card ov-card" id="ovWeek"></div></div>
+        <div class="ov-tile" data-tile="cat"><div class="ov-duo ov-cattile" id="ovDuo"><div class="card pet-peek" id="petPeek" onclick="navigate('pet')"></div></div></div>
+        <div class="ov-tile" data-tile="luck"><div class="ov-duo solo"><div class="card ov-luck" id="ovLuck"></div></div></div>
+        <div class="ov-tile" data-tile="recent"><div class="card ov-card" id="ovRecent"></div></div>
+        </div>
+        <div id="ovLegacy" hidden>
+
+        <div class="pagehead"><div><div class="eyebrow" id="todayLabel">YOUR JOURNEY</div><h2>Character overview</h2><p>Your life is the game. What you train grows. What you ignore fades.</p></div><button class="btn secondary" onclick="navigate('character')">View character →</button></div>
+        <div class="hero">
+          <div class="card hero-main"><div class="avatar" id="heroAvatar" title="Open character sheet" onclick="navigate('character')"></div><div class="eyebrow" id="heroTitle">CURRENT BUILD · CUSTOMIZABLE</div><h2 id="heroName">The Life Architect</h2><p id="heroQuote">Consistent training compounds. Neglect shows up in the numbers.</p><div class="levelrow"><div class="levelbadge" id="heroLevel">1</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px;font-weight:750;font-size:13px;margin-bottom:7px"><span>Character Level</span><span id="heroXP">0 XP</span></div><div class="xpbar"><div class="xpfill" id="heroBar" style="width:0%"></div></div><div class="xptext"><span id="heroProgress">0 / 250 XP to next level</span><span id="heroPercent">0%</span></div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:17px"><span class="tag"><i data-px="star"></i> <span id="achievementCount">0</span> achievements</span><span class="tag"><i data-px="bolt"></i> <span id="totalActivities">0</span> activities logged</span><span class="tag" title="Streak allows one miss; untrained attributes still decay"><i data-px="flame"></i> <span id="streakCount">0</span> day streak</span><span class="tag" id="visitTag"></span><span class="tag" id="actTag"></span></div></div>
+          <div class="card dailyfocus"><div><div class="eyebrow">TODAY'S MOMENTUM</div><div class="focusbig" id="todayXP">0 XP earned</div><p class="muted" style="font-size:12px;margin:0">XP follows work. Skip the work and the relevant stats fall behind.</p></div><div id="dailyMini"><div class="minirow"><span>Activities logged</span><strong>0</strong></div><div class="minirow"><span>Quests completed</span><strong>0</strong></div><div class="minirow"><span>Active skills</span><strong>0</strong></div></div><button class="btn secondary" style="width:100%;margin-top:14px" onclick="navigate('quests')">Review today's quests →</button></div>
+        </div>
+        <div class="grid stats">
+          <div class="card"><div class="statlabel">Total XP earned</div><div class="statvalue" id="totalXPStat">0</div><div class="statfoot">Across all domains</div></div>
+          <div class="card"><div class="statlabel">Strongest attribute</div><div class="statvalue" style="font-size:20px" id="strongestStat">—</div><div class="statfoot">Your current edge</div></div>
+          <div class="card"><div class="statlabel">Skills practiced</div><div class="statvalue" id="skillsStat">0</div><div class="statfoot">Started or progressing</div></div>
+          <div class="card"><div class="statlabel">Quests completed</div><div class="statvalue" id="questsStat">0</div><div class="statfoot">Milestones, not streaks</div></div>
+        </div>
+        <div id="luckCard"></div>
+        
+          <div class="card" style="margin-bottom:14px"><h3>Last 7 days · XP</h3><div class="bars" id="weekBars"></div></div>
+        <div class="card" style="margin-bottom:14px"><h3>Decay watch</h3><p class="muted" style="font-size:12px;margin-top:-5px">Stop training an attribute and it loses XP after the grace period. No free rides.</p><div id="decayWatch"></div></div>
+        <div class="grid two-col">
+          <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h3>Core attributes</h3><button class="btn small secondary" onclick="navigate('character')">All attributes</button></div><div class="attrgrid" id="dashboardAttrs"></div></div>
+          <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h3>Recent activity</h3><button class="btn small secondary" onclick="navigate('history')">View history</button></div><div id="recentActivities"></div></div>
+        </div>
+      
+        </div>
+      </section>
