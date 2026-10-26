@@ -1,111 +1,89 @@
-/* ---------- v104 · Scrub bar: slide a thumb along the bottom bar to glide through every tab ----------
-   One position (a fractional tab index) drives everything: the strip centres on it, a pill sits under it,
-   icons swell like a dock around it, and a bubble names the tab. Dragging moves it with the finger
-   (a full-width swipe covers all the tabs); letting go snaps to the nearest tab with a little momentum.
-   Tapping a tab works as before. Phones only (<= 860px wide). */
-const LMA_SCRUB={nw:66,vel:.11,hyst:.14,live:120};
-const lmaScrub={pos:0,target:0,mag:0,magT:0,raf:0,last:0,drag:null,items:[],cur:0,timer:0,hold:0,sb:null,track:null,pill:null,bub:null,block:0};
+/* ---------- v105 · Bottom bar: static, with a highlight that slides to the chosen tab ----------
+   Slide a thumb along the bar to run through the tabs (a full-width swipe covers them all). The highlight and the bar's
+   scroll follow your finger; the page switches when you pause on a tab and when you let go. Tapping a tab works as before.
+   Phones only (<= 860px wide). The page-to-page animation is lmaNavTo in 34-navigation.js. */
+const LMA_SCRUB={slop:8,pause:240,gain:.92};
+const lmaScrub={sb:null,pill:null,items:[],drag:null,sel:0,timer:0,block:0,raf:0,want:null};
 const lmaScrubOn=()=>!!(window.matchMedia&&matchMedia('(max-width:860px)').matches);
-function lmaScrubItems(){const S=lmaScrub;S.items=S.track?[...S.track.querySelectorAll('.navbtn[data-view]')].filter(b=>getComputedStyle(b).display!=='none'):[];return S.items}
+function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>getComputedStyle(b).display!=='none'):[];return S.items}
 function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
-function lmaScrubRender(){
- const S=lmaScrub;if(!S.sb||!lmaScrubOn())return;
- const W=S.sb.clientWidth,nw=LMA_SCRUB.nw,m=S.mag,amp=.15+.45*m;
- S.track.style.transform='translate3d('+(W/2-(S.pos+.5)*nw).toFixed(2)+'px,0,0)';
- S.pill.style.transform='translate3d('+(S.pos*nw+4).toFixed(2)+'px,0,0)';
- const near=Math.round(S.pos);
- for(let i=0;i<S.items.length;i++){
-  const b=S.items[i],d=Math.abs(i-S.pos),k=Math.max(0,1-d/1.7),k2=k*k,ico=b.firstElementChild;
-  if(ico)ico.style.transform='translate3d(0,'+(-amp*k2*20).toFixed(2)+'px,0) scale('+(1+amp*k2).toFixed(3)+')';
-  b.style.opacity=(1-m*(1-(.45+.55*Math.min(1,k*1.6)))).toFixed(3);
-  b.classList.toggle('scrub-near',i===near);
- }
+/* put the highlight under tab i; keep that tab in view */
+function lmaScrubShow(i,instant){
+ const S=lmaScrub,b=S.items[i];if(!b||!S.pill||!lmaScrubOn())return;
+ S.sel=i;
+ const w=Math.max(40,b.offsetWidth-8);
+ if(instant){S.pill.style.transition='none'}
+ S.pill.style.width=w+'px';S.pill.style.transform='translate3d('+(b.offsetLeft+4)+'px,0,0)';
+ if(instant){void S.pill.offsetWidth;S.pill.style.transition=''}
+ S.want=Math.max(0,Math.min(S.sb.scrollWidth-S.sb.clientWidth,b.offsetLeft+b.offsetWidth/2-S.sb.clientWidth/2));
+ if(instant)S.sb.scrollLeft=S.want;else lmaScrubFollow();
 }
-function lmaScrubTick(t){
- const S=lmaScrub;S.raf=0;
- const dt=Math.min(.05,Math.max(.001,(t-(S.last||t))/1000));S.last=t;
- if(S.drag)S.pos+=(S.drag.pos-S.pos)*(1-Math.exp(-dt*40));
- else S.pos+=(S.target-S.pos)*(1-Math.exp(-dt*12));
- S.mag+=(S.magT-S.mag)*(1-Math.exp(-dt*12));
- lmaScrubRender();
- if(S.drag||Math.abs(S.target-S.pos)>.002||Math.abs(S.magT-S.mag)>.004)S.raf=requestAnimationFrame(lmaScrubTick);
- else{S.pos=S.target;S.mag=S.magT;S.last=0;lmaScrubRender()}
+/* the bar glides to keep the highlighted tab centred */
+function lmaScrubFollow(){
+ const S=lmaScrub;if(S.raf)return;
+ const step=()=>{
+  S.raf=0;if(S.want==null)return;
+  const d=S.want-S.sb.scrollLeft;
+  if(Math.abs(d)<1){S.sb.scrollLeft=S.want;return}
+  S.sb.scrollLeft+=d*.22;S.raf=requestAnimationFrame(step);
+ };
+ S.raf=requestAnimationFrame(step);
 }
-function lmaScrubGo(){if(!lmaScrub.raf)lmaScrub.raf=requestAnimationFrame(lmaScrubTick)}
-function lmaScrubBubble(show,text){
- const b=lmaScrub.bub;if(!b)return;
- if(text!=null)b.textContent=text;
- b.classList.toggle('show',!!show);
-}
-/* switch to the tab at idx, sliding the page in from the side it lies on */
-function lmaScrubCommit(idx){
- const S=lmaScrub,btn=S.items[idx];if(!btn)return;
- const from=lmaView(),fi=lmaScrubIndex(from);
- if(btn.dataset.view===from)return;
- const skip=lmaNavSkip;lmaNavSkip=true;
- try{btn.click()}finally{lmaNavSkip=skip}
- const v=document.querySelector('.view.active');
- if(v&&!document.documentElement.classList.contains('reduce-motion')){
-  v.classList.remove('vslide-l','vslide-r');void v.offsetWidth;
-  v.classList.add(idx>=fi?'vslide-r':'vslide-l');
-  v.addEventListener('animationend',function f(e){if(e.target===v){v.classList.remove('vslide-l','vslide-r');v.removeEventListener('animationend',f)}});
- }
- window.scrollTo(0,0);
-}
+function lmaScrubSync(v){const S=lmaScrub;if(!S.sb||S.drag&&S.drag.moved)return;lmaScrubItems();const i=lmaScrubIndex(v||lmaView());if(i>=0)lmaScrubShow(i)}
 function lmaScrubInit(){
  const S=lmaScrub,sb=document.querySelector('.sidebar');
  if(!sb||S.sb)return;
- S.sb=sb;
- const track=document.createElement('div');track.className='navtrack';
- S.pill=document.createElement('div');S.pill.className='navpill';track.appendChild(S.pill);
- [...sb.querySelectorAll('.navbtn')].forEach(b=>track.appendChild(b));
- sb.insertBefore(track,sb.firstChild);S.track=track;
- S.bub=document.createElement('div');S.bub.className='navbubble';S.bub.setAttribute('aria-hidden','true');document.body.appendChild(S.bub);
+ S.sb=sb;S.pill=document.createElement('div');S.pill.className='navpill';sb.insertBefore(S.pill,sb.firstChild);
  lmaScrubItems();
- const idx=Math.max(0,lmaScrubIndex(lmaView()));S.pos=S.target=S.cur=idx;lmaScrubRender();
+ const i0=lmaScrubIndex(lmaView());if(i0>=0)lmaScrubShow(i0,true);
  sb.addEventListener('touchstart',e=>{
   if(!lmaScrubOn()||e.touches.length!==1)return;
   const t=e.touches[0];lmaScrubItems();
-  S.drag={x0:t.clientX,y0:t.clientY,start:S.pos,pos:S.pos,moved:false,lx:t.clientX,lt:performance.now(),v:0,from:lmaView(),W:Math.max(200,sb.clientWidth)};
-  S.cur=Math.round(S.pos);
+  S.drag={x0:t.clientX,y0:t.clientY,start:Math.max(0,lmaScrubIndex(lmaView())),pos:0,moved:false,from:lmaView(),W:Math.max(200,sb.clientWidth)};
+  S.drag.pos=S.drag.start;
  },{passive:true});
  sb.addEventListener('touchmove',e=>{
   const d=S.drag;if(!d||e.touches.length!==1)return;
   const t=e.touches[0],dx=t.clientX-d.x0,n=S.items.length;
-  if(!d.moved){if(Math.abs(dx)<8&&Math.abs(t.clientY-d.y0)<24)return;if(Math.abs(t.clientY-d.y0)>Math.abs(dx)*1.5){S.drag=null;return}d.moved=true;S.magT=1;lmaScrubBubble(true,(S.items[S.cur]||{}).textContent);haptic(8)}
-  e.preventDefault();
-  const per=d.W*.92/Math.max(1,n-1),now=performance.now();
-  d.pos=Math.min(n-1,Math.max(0,d.start-dx/per));
-  const dt=now-d.lt;if(dt>8){d.v=d.v*.6+((d.lx-t.clientX)/per/(dt/1000))*.4;d.lx=t.clientX;d.lt=now}
-  if(Math.abs(d.pos-S.cur)>.5+LMA_SCRUB.hyst){
-   S.cur=Math.round(d.pos);haptic(6);lmaScrubBubble(true,(S.items[S.cur]||{}).textContent);
-   clearTimeout(S.timer);S.timer=setTimeout(()=>lmaScrubCommit(S.cur),LMA_SCRUB.live);
+  if(!d.moved){
+   if(Math.abs(dx)<LMA_SCRUB.slop)return;
+   if(Math.abs(t.clientY-d.y0)>Math.abs(dx)*1.5){S.drag=null;return}
+   d.moved=true;haptic(8);
   }
-  lmaScrubGo();
+  e.preventDefault();
+  const per=d.W*LMA_SCRUB.gain/Math.max(1,n-1);
+  d.pos=Math.min(n-1,Math.max(0,d.start-dx/per));
+  const i=Math.round(d.pos);
+  if(i!==S.sel){
+   lmaScrubShow(i);haptic(6);
+   clearTimeout(S.timer);S.timer=setTimeout(()=>{if(S.drag&&S.drag.moved)lmaNavTo(S.items[S.sel].dataset.view,{skip:true})},LMA_SCRUB.pause);
+  }
  },{passive:false});
  const end=()=>{
   const d=S.drag;if(!d)return;S.drag=null;
+  clearTimeout(S.timer);
   if(!d.moved)return;
-  clearTimeout(S.timer);S.block=Date.now();
-  const n=S.items.length,tgt=Math.min(n-1,Math.max(0,Math.round(d.pos+d.v*LMA_SCRUB.vel)));
-  S.target=tgt;S.cur=tgt;S.magT=0;lmaScrubBubble(false);
-  lmaScrubCommit(tgt);
-  if(lmaView()!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
-  lmaScrubGo();
+  S.block=Date.now();
+  const b=S.items[S.sel];if(!b)return;
+  if(b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true});
+  if(b.dataset.view!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
  };
  sb.addEventListener('touchend',end,{passive:true});
  sb.addEventListener('touchcancel',end,{passive:true});
- document.addEventListener('click',e=>{if(Date.now()-S.block<350&&e.target.closest&&e.target.closest('.sidebar')){e.stopPropagation();e.preventDefault()}},true);
- window.addEventListener('resize',()=>{lmaScrubItems();lmaScrubRender()});
+ /* a tap on a tab: same destination, with the page animation; swallow the click that ends a scrub */
+ document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('.sidebar .navbtn[data-view]');if(!b)return;
+  if(Date.now()-S.block<400){e.stopPropagation();e.preventDefault();return}
+  if(!lmaScrubOn())return;
+  e.stopPropagation();e.preventDefault();
+  lmaNavTo(b.dataset.view);
+ },true);
+ window.addEventListener('resize',()=>lmaScrubSync());
 }
 (function lmaScrubBoot(){
  const _nav=navigate;
- navigate=function(v){
-  const r=_nav.apply(this,arguments);
-  try{const S=lmaScrub;if(S.sb&&!S.drag){const i=lmaScrubIndex(v);if(i>=0){S.target=S.cur=i;lmaScrubGo()}}}catch(e){}
-  return r;
- };
- const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[scrub nav]',e)}};
+ navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v)}catch(e){}return r};
+ const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
- setTimeout(()=>{try{lmaScrubItems();const i=lmaScrubIndex(lmaView());if(i>=0&&!lmaScrub.drag){lmaScrub.target=lmaScrub.pos=lmaScrub.cur=i;lmaScrubRender()}}catch(e){}},1200);
+ setTimeout(()=>{try{lmaScrubSync()}catch(e){}},1200);
 })();

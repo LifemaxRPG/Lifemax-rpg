@@ -3,12 +3,24 @@
 const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
 let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
-function lmaGoView(v){
+function lmaTabIndex(v){return lmaTabList().findIndex(b=>b.dataset.view===v)}
+const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+/* go to a tab, with the page area sliding across when the browser can do it. opts.skip: do not record it in Back history */
+function lmaNavTo(v,opts){
  const el=document.getElementById('view-'+v);if(!el)return false;
- lmaNavSkip=true;
- try{navigate(v);if(el.classList.contains('lmf-feature')&&window.LifeMaxFeatures)LifeMaxFeatures.open(v)}finally{lmaNavSkip=false}
+ const from=lmaView();
+ const run=()=>{
+  const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
+  try{navigate(v);if(el.classList.contains('lmf-feature')&&window.LifeMaxFeatures)LifeMaxFeatures.open(v)}finally{lmaNavSkip=sk}
+  window.scrollTo(0,0);
+ };
+ if(!from||from===v||!lmaVTok()){run();return true}
+ const a=lmaTabIndex(from),b=lmaTabIndex(v),root=document.documentElement;
+ root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
+ try{const t=document.startViewTransition(run),done=()=>{delete root.dataset.vt};t.finished.then(done,done)}catch(e){delete root.dataset.vt;run()}
  return true;
 }
+function lmaGoView(v){return lmaNavTo(v,{skip:true})}
 /* the topmost open popup, as {close()} or null */
 function lmaTopOverlay(){
  const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];

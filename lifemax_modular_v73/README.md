@@ -325,5 +325,5 @@ New Overview tile "App shortcuts": a scrolling row of your Apps-tab shortcuts us
 ## v103 — launch update check retries
 If the check at launch fails (e.g. no network yet) it retries after 15 s, 45 s and 2 min, and Settings → App updates shows the error instead of staying silent.
 
-## v104 — Scrub bar navigation (phones)
-The bottom bar is now a floating glass capsule. Slide a thumb along it and the tabs glide past (a full-width swipe covers all 14): the strip centres on your finger's position, a pill follows, icons swell like a dock, a bubble names the tab, light haptic ticks mark each tab, and the page switches live with a short slide in from the side it lies on. Release snaps to the nearest tab with a little momentum. Tapping still works; Back returns to where the scrub started. `src/runtime/segments/42-scrubnav.js`.
+## v105 — Bottom bar simplified; animated screen changes
+The v104 scrub bar was too busy and unreliable. The bar is the plain docked bar again with a simple highlight that slides to the chosen tab. Slide a thumb along it to run through the tabs: the highlight and the bar follow your finger, the page switches when you pause on a tab and when you let go (not on every tab you pass, so nothing heavy re-renders mid-swipe). Screen changes (tab taps, scrubbing, swipe, Back) use the View Transitions API: the page area slides, scales and softens in the direction of travel while the top and bottom bars stay put. `lmaNavTo` in `34-navigation.js`, bar in `42-scrubnav.js`.

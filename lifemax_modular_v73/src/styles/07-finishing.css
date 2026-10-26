@@ -69,26 +69,29 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .ova-app img,.ova-add i{width:48px;height:48px;border-radius:12px;object-fit:cover}
 .ova-add i{display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);font-style:normal;font-size:24px;color:var(--muted)}
 .ova-app span{font-size:11px;line-height:1.15;max-width:62px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* v104 · Scrub bar (phones): a floating glass capsule; slide a thumb along it to glide through the tabs */
-.navtrack{display:contents}.navpill,.navbubble{display:none}
+/* v105 · Bottom bar: static, a simple highlight slides to the chosen tab; slide a thumb along it to scrub through the tabs */
+.navpill{display:none}
 @media(max-width:860px){
-  :root{--nav-h:84px}
-  .sidebar{left:10px;right:10px;bottom:calc(8px + var(--safe-b));height:64px;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:26px;
-    background:rgba(18,21,28,.74);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 10px 34px #0008,inset 0 1px 0 #ffffff12;touch-action:none;display:block}
-  .sidebar::before,.sidebar::after{content:"";position:absolute;top:0;bottom:0;width:30px;z-index:2;pointer-events:none}
-  .sidebar::before{left:0;background:linear-gradient(90deg,rgba(18,21,28,.95),transparent)}
-  .sidebar::after{right:0;background:linear-gradient(270deg,rgba(18,21,28,.95),transparent)}
-  .navtrack{display:flex;position:relative;height:100%;width:max-content;will-change:transform;align-items:stretch}
-  .navpill{display:block;position:absolute;left:0;top:7px;bottom:7px;width:58px;border-radius:20px;background:var(--accent-dim);box-shadow:inset 0 0 0 1px #ffffff10,0 0 18px -4px var(--accent);will-change:transform}
-  .sidebar .navbtn{position:relative;z-index:1;flex:0 0 66px;width:66px;min-width:0;max-width:none;height:100%;padding:8px 0 6px;margin:0;border-radius:0;background:none!important;justify-content:center;gap:4px;color:var(--muted);font-size:9.5px;font-weight:550;transition:color .2s}
-  .sidebar .navbtn .ico{animation:none!important;will-change:transform}
-  .sidebar .navbtn:active{transform:none}
-  .sidebar .navbtn.scrub-near,.sidebar .navbtn.active{color:var(--accent-strong)}
-  .navbubble{display:block;position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) - 4px);z-index:31;padding:7px 16px;border-radius:99px;background:rgba(28,32,42,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--text);font-size:14px;font-weight:650;box-shadow:0 6px 24px #0007,inset 0 0 0 1px #ffffff14;opacity:0;transform:translate(-50%,10px) scale(.92);transition:opacity .16s,transform .22s var(--ease-out);pointer-events:none;white-space:nowrap}
-  .navbubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
-  .view.vslide-r{animation:vSlideR .28s var(--ease-out)}.view.vslide-l{animation:vSlideL .28s var(--ease-out)}
+  .sidebar{touch-action:none;scrollbar-width:none}
+  .sidebar::-webkit-scrollbar{display:none}
+  .navpill{display:block;position:absolute;left:0;top:6px;bottom:calc(6px + var(--safe-b));width:64px;border-radius:10px;background:var(--accent-dim);pointer-events:none;z-index:0;transition:transform .26s cubic-bezier(.3,.8,.3,1),width .26s cubic-bezier(.3,.8,.3,1)}
+  .sidebar .navbtn{position:relative;z-index:1;background:none!important}
+  .sidebar .navbtn.active{background:none!important}
 }
-@keyframes vSlideR{from{opacity:.0;transform:translate3d(34px,0,0)}to{opacity:1;transform:none}}
-@keyframes vSlideL{from{opacity:.0;transform:translate3d(-34px,0,0)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.view.vslide-r,.view.vslide-l{animation:none!important}}
+/* Screen changes: the page area slides, scales and softens between tabs; the top bar and the bottom bar stay put */
+.content{view-transition-name:page}
+@media(max-width:860px){.sidebar{view-transition-name:navbar}}
+::view-transition-group(root){animation:none}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-group(navbar){animation:none}
+::view-transition-old(navbar){display:none}::view-transition-new(navbar){animation:none}
+::view-transition-group(page){animation:none}
+::view-transition-old(page),::view-transition-new(page){mix-blend-mode:normal;transform-origin:50% 40%}
+html[data-vt=fwd]::view-transition-old(page){animation:vtOutL .34s cubic-bezier(.4,0,.6,1) both}
+html[data-vt=fwd]::view-transition-new(page){animation:vtInR .5s cubic-bezier(.16,1,.3,1) both}
+html[data-vt=back]::view-transition-old(page){animation:vtOutR .34s cubic-bezier(.4,0,.6,1) both}
+html[data-vt=back]::view-transition-new(page){animation:vtInL .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes vtOutL{to{opacity:0;transform:translate3d(-16%,0,0) scale(.94);filter:blur(6px)}}
+@keyframes vtOutR{to{opacity:0;transform:translate3d(16%,0,0) scale(.94);filter:blur(6px)}}
+@keyframes vtInR{from{opacity:0;transform:translate3d(22%,0,0) scale(1.04);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes vtInL{from{opacity:0;transform:translate3d(-22%,0,0) scale(1.04);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
