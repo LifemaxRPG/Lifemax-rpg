@@ -23,10 +23,25 @@ xml = re.sub(r'android:launchMode="[^"]*"', 'android:launchMode="singleTask"', x
 xml = xml.replace(
     "<application",
     '<queries>\n        <intent>\n            <action android:name="android.intent.action.MAIN" />\n'
-    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n    </queries>\n\n'
-    '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n\n    <application',
+    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n        <package android:name="com.google.android.apps.healthdata" />\n    </queries>\n\n'
+    '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n'
+    '    <uses-permission android:name="android.permission.health.READ_EXERCISE" />\n'
+    '    <uses-permission android:name="android.permission.health.READ_STEPS" />\n'
+    '    <uses-permission android:name="android.permission.health.READ_SLEEP" />\n'
+    '    <uses-permission android:name="android.permission.health.READ_WEIGHT" />\n\n    <application',
     1,
 )
 
-assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml, "manifest patch failed"
+# Health Connect asks the app for a page that explains why it wants the data, and a "permission usage" entry point
+xml = xml.replace(
+    "</application>",
+    '    <activity-alias android:name=".PermissionsRationaleActivity" android:exported="true" android:targetActivity=".MainActivity">\n'
+    '            <intent-filter>\n                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />\n            </intent-filter>\n'
+    '        </activity-alias>\n'
+    '        <activity-alias android:name="ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".MainActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">\n'
+    '            <intent-filter>\n                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />\n                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />\n            </intent-filter>\n'
+    '        </activity-alias>\n    </application>',
+    1,
+)
+assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

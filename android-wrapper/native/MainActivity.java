@@ -22,6 +22,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(FileSaverPlugin.class);
         registerPlugin(UpdaterPlugin.class);
         registerPlugin(BackupFolderPlugin.class);
+        registerPlugin(HealthSyncPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Draw edge to edge, then keep the page clear of the status bar, camera cut-out,

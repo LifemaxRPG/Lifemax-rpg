@@ -1797,6 +1797,29 @@
     "petRigQ",
     "petRigSrcPixels"
    ]
+  },
+  {
+   "file": "src/runtime/segments/39-health.js",
+   "bytes": 9819,
+   "statement_count": 12,
+   "tags": [
+    "android",
+    "health"
+   ],
+   "symbols": [
+    "LMA_HC_RECOVERY",
+    "LMA_HC_SRC",
+    "LMA_HEALTH_TYPES",
+    "lmaHcNice",
+    "lmaHcSrc",
+    "lmaHealthAsk",
+    "lmaHealthAward",
+    "lmaHealthBusy",
+    "lmaHealthCfg",
+    "lmaHealthRender",
+    "lmaHealthSet",
+    "lmaHealthSync"
+   ]
   }
  ]
 }
