@@ -3436,6 +3436,12 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .hs-list{list-style:none;margin:0;padding:0}.hs-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}.hs-list li:last-child{border:0}
 .hs-list small{display:block;color:var(--muted);font-size:12px}.hs-list span{font-weight:650;white-space:nowrap}
 .hs-spark{width:100%;height:40px;margin:6px 0}
+
+.updpop{position:fixed;inset:0;z-index:5000;background:rgba(4,6,12,.62);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px}
+.updpop-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:360px;width:100%;box-shadow:0 12px 40px #0009}
+.updpop-card h3{margin:0 0 8px}.updpop-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.45}
+.updpop-btns{display:flex;gap:10px;justify-content:flex-end}
+.updpop-bar{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;flex:1}.updpop-bar i{display:block;height:100%;background:#34d399;transition:width .3s}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.1.0 */
@@ -13360,6 +13366,7 @@ function lmaTopOverlay(){
  const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
  if(q('#onboarding.show,#tutorial.show'))return {close(){}}; /* swallow Back during first-run screens */
  const full=q('#petRoomFullscreen.is-open');if(full)return {close(){petRoomFullscreenClose()}};
+ const up=q('.updpop');if(up)return {close(){up.remove()}};
  const hs=q('.hsheet');if(hs)return {close(){hs.remove()}};
  const as=all('.apps-sheet').pop();
  if(as)return {close(){const b=as.querySelector('[data-k="__close"],[data-act="close"]');b?b.click():as.remove()}};
@@ -13455,7 +13462,7 @@ async function lmaCheckUpdate(silent){
   const r=await U.check();lmaUpd.info=r;
   lmaUpd.state=r.latest>r.current&&r.apk?'available':'latest';
   lmaLoad().updChecked=Date.now();lmaSave();
-  if(silent&&lmaUpd.state==='available')toast('Update available · Settings → App updates');
+  if(silent&&lmaUpd.state==='available')lmaUpdPopOpen();
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent)lmaUpd.state='idle'}
  lmaRenderUpdates();
 }
@@ -13469,7 +13476,31 @@ async function lmaInstallUpdate(){
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}
  lmaRenderUpdates();
 }
+/* the pop-up offered at launch when a newer build exists; "Later" hides it until the app is next opened */
+let lmaUpdLater=0;
+function lmaUpdPopOpen(){
+ const i=lmaUpd.info;if(!i||lmaUpdLater===i.latest||document.querySelector('.updpop'))return;
+ if(document.querySelector('#onboarding.show,#tutorial.show')){setTimeout(lmaUpdPopOpen,15000);return}
+ const o=document.createElement('div');o.className='updpop';o.setAttribute('role','dialog');o.setAttribute('aria-label','Update available');
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-up]');if(!b)return;
+  if(b.dataset.up==='later'){lmaUpdLater=lmaUpd.info.latest;o.remove()}
+  else if(b.dataset.up==='go')lmaInstallUpdate();
+  else if(b.dataset.up==='close')o.remove()});
+ document.body.appendChild(o);lmaUpdPopRender();
+}
+function lmaUpdPopRender(){
+ const o=document.querySelector('.updpop');if(!o)return;
+ const u=lmaUpd,i=u.info||{};
+ let body,btns;
+ if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
+ else if(u.state==='opened'){body='Android’s installer is open. Tap Update there to finish.';btns='<button class="btn" data-up="close">OK</button>'}
+ else if(u.state==='permission'){body='Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.';btns='<button class="btn" data-up="go">Update</button><button class="btn secondary" data-up="later">Later</button>'}
+ else if(u.state==='error'){body='Could not update: '+esc(u.err);btns='<button class="btn" data-up="go">Try again</button><button class="btn secondary" data-up="later">Later</button>'}
+ else{body='A newer build of LifeMax RPG (build '+esc(i.latest)+') is ready. You have build '+esc(i.current)+'. Your data stays as it is.';btns='<button class="btn" data-up="go">Update now</button><button class="btn secondary" data-up="later">Later</button>'}
+ o.innerHTML='<div class="updpop-card"><h3>Update available</h3><p>'+body+'</p><div class="updpop-btns">'+btns+'</div></div>';
+}
 function lmaRenderUpdates(){
+ try{lmaUpdPopRender()}catch(e){}
  if(!document.getElementById('lmaUpdBody'))return;
  if(!lmaNative()){lmaSetHtml('lmaUpdBody','<div class="note">Updates are managed inside the Android app.</div>');return}
  const u=lmaUpd,i=u.info,cur=i?i.current:'';
@@ -13529,8 +13560,9 @@ function lmaRenderBackup(){
   lmaRenderUpdates();lmaRenderBackup();
   if(!lmaNative())return;
   if(lmaBackupDue())lmaRunBackup(false);
-  if(Date.now()-(lmaLoad().updChecked||0)>12*3600e3)lmaCheckUpdate(true);
- },12000);
+  lmaCheckUpdate(true);
+ },4000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lmaNative()&&Date.now()-(lmaLoad().updChecked||0)>30*60e3)lmaCheckUpdate(true)});
 })();
 /* v92 · Paychecks: work shifts from Life Director become pending pay when they end, and move into the
    account when payday arrives. Data lives in state.money (pay, jobs, pending, seen), so backups carry it. */

@@ -55,3 +55,9 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .hs-list{list-style:none;margin:0;padding:0}.hs-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}.hs-list li:last-child{border:0}
 .hs-list small{display:block;color:var(--muted);font-size:12px}.hs-list span{font-weight:650;white-space:nowrap}
 .hs-spark{width:100%;height:40px;margin:6px 0}
+
+.updpop{position:fixed;inset:0;z-index:5000;background:rgba(4,6,12,.62);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px}
+.updpop-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:360px;width:100%;box-shadow:0 12px 40px #0009}
+.updpop-card h3{margin:0 0 8px}.updpop-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.45}
+.updpop-btns{display:flex;gap:10px;justify-content:flex-end}
+.updpop-bar{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;flex:1}.updpop-bar i{display:block;height:100%;background:#34d399;transition:width .3s}

@@ -315,3 +315,6 @@ Home-screen widget showing the chrono dial. The web app draws the plain dial off
 
 ## v100 — Expanded Health page
 Tapping the Overview "Activity today" tile opens a full Health page and starts a sync: today's steps and goal bar, 30-day step chart with goal line (7-day average, best day, goal days), the week's workouts, last nights of sleep, weight with trend. Back closes it. Sync now button inside.
+
+## v101 — Update pop-up at launch
+The app checks for a newer build a few seconds after every launch (and when you return after 30+ minutes) and shows an "Update available" pop-up with Update now / Later. Later hides it until the next launch. Back closes it.

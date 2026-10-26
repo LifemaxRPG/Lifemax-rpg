@@ -12,7 +12,7 @@ async function lmaCheckUpdate(silent){
   const r=await U.check();lmaUpd.info=r;
   lmaUpd.state=r.latest>r.current&&r.apk?'available':'latest';
   lmaLoad().updChecked=Date.now();lmaSave();
-  if(silent&&lmaUpd.state==='available')toast('Update available · Settings → App updates');
+  if(silent&&lmaUpd.state==='available')lmaUpdPopOpen();
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent)lmaUpd.state='idle'}
  lmaRenderUpdates();
 }
@@ -26,7 +26,31 @@ async function lmaInstallUpdate(){
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}
  lmaRenderUpdates();
 }
+/* the pop-up offered at launch when a newer build exists; "Later" hides it until the app is next opened */
+let lmaUpdLater=0;
+function lmaUpdPopOpen(){
+ const i=lmaUpd.info;if(!i||lmaUpdLater===i.latest||document.querySelector('.updpop'))return;
+ if(document.querySelector('#onboarding.show,#tutorial.show')){setTimeout(lmaUpdPopOpen,15000);return}
+ const o=document.createElement('div');o.className='updpop';o.setAttribute('role','dialog');o.setAttribute('aria-label','Update available');
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-up]');if(!b)return;
+  if(b.dataset.up==='later'){lmaUpdLater=lmaUpd.info.latest;o.remove()}
+  else if(b.dataset.up==='go')lmaInstallUpdate();
+  else if(b.dataset.up==='close')o.remove()});
+ document.body.appendChild(o);lmaUpdPopRender();
+}
+function lmaUpdPopRender(){
+ const o=document.querySelector('.updpop');if(!o)return;
+ const u=lmaUpd,i=u.info||{};
+ let body,btns;
+ if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
+ else if(u.state==='opened'){body='Android’s installer is open. Tap Update there to finish.';btns='<button class="btn" data-up="close">OK</button>'}
+ else if(u.state==='permission'){body='Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.';btns='<button class="btn" data-up="go">Update</button><button class="btn secondary" data-up="later">Later</button>'}
+ else if(u.state==='error'){body='Could not update: '+esc(u.err);btns='<button class="btn" data-up="go">Try again</button><button class="btn secondary" data-up="later">Later</button>'}
+ else{body='A newer build of LifeMax RPG (build '+esc(i.latest)+') is ready. You have build '+esc(i.current)+'. Your data stays as it is.';btns='<button class="btn" data-up="go">Update now</button><button class="btn secondary" data-up="later">Later</button>'}
+ o.innerHTML='<div class="updpop-card"><h3>Update available</h3><p>'+body+'</p><div class="updpop-btns">'+btns+'</div></div>';
+}
 function lmaRenderUpdates(){
+ try{lmaUpdPopRender()}catch(e){}
  if(!document.getElementById('lmaUpdBody'))return;
  if(!lmaNative()){lmaSetHtml('lmaUpdBody','<div class="note">Updates are managed inside the Android app.</div>');return}
  const u=lmaUpd,i=u.info,cur=i?i.current:'';
@@ -86,6 +110,7 @@ function lmaRenderBackup(){
   lmaRenderUpdates();lmaRenderBackup();
   if(!lmaNative())return;
   if(lmaBackupDue())lmaRunBackup(false);
-  if(Date.now()-(lmaLoad().updChecked||0)>12*3600e3)lmaCheckUpdate(true);
- },12000);
+  lmaCheckUpdate(true);
+ },4000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lmaNative()&&Date.now()-(lmaLoad().updChecked||0)>30*60e3)lmaCheckUpdate(true)});
 })();

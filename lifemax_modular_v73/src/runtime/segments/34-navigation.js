@@ -14,6 +14,7 @@ function lmaTopOverlay(){
  const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
  if(q('#onboarding.show,#tutorial.show'))return {close(){}}; /* swallow Back during first-run screens */
  const full=q('#petRoomFullscreen.is-open');if(full)return {close(){petRoomFullscreenClose()}};
+ const up=q('.updpop');if(up)return {close(){up.remove()}};
  const hs=q('.hsheet');if(hs)return {close(){hs.remove()}};
  const as=all('.apps-sheet').pop();
  if(as)return {close(){const b=as.querySelector('[data-k="__close"],[data-act="close"]');b?b.click():as.remove()}};
