@@ -264,7 +264,9 @@ function petDevMorphSet(set){
   const p=petData();if(!p){toast('Adopt a cat first');return}const d=petDnaOf(p);petMorphFill(d);
   for(const k in set){if(k==='bob')continue;const a=set[k]>0?'+':'-';PET_QTL[k].loci.forEach(function(l){d.g[l[0]]=[a,a]})}
   if(set.bob!=null)d.g.Tb=set.bob?['tb','tb']:['T','T'];
-  PET_DNA_C=null;petDnaRender(true);petBreedRefresh();toast('Shape set');
+  PET_DNA_C=null;petDnaRender(true);petBreedRefresh();
+  const m=petDnaPheno(d).morph,kid=petGrowIdx(p)>=0;
+  toast('Ears '+m.em.toFixed(1)+'× · tail '+m.tl.toFixed(1)+'× · legs '+m.lg.toFixed(1)+'× · body '+m.bl.toFixed(1)+'×'+(kid?' (a kitten shows about half until it is grown)':''));
 }
 petDevTest('Shape: very long ears',function(){petDevMorphSet({em:1})},'v94');
 petDevTest('Shape: tiny ears',function(){petDevMorphSet({em:-1})},'v94');

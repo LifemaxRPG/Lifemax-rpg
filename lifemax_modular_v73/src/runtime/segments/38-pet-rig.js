@@ -149,9 +149,9 @@ function petRigFrame(rt,sh,kind,anim,f,morph,pose,meta){
     if(C.size>600)C.delete(C.keys().next().value);C.set(key,hit);return hit;
   }catch(e){console.warn('[pet rig]',e);return null}
 }
-/* a kitten shows its proportions in step with how grown it is: day 0 has none of them, day 30 all */
+/* a kitten shows its proportions from the start, half strength on day 0 and full strength on day 30 */
 function petRigGrown(m,g){
-  if(g>=1)return m;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};
+  if(g>=1)return m;g=0.5+0.5*g;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};
   ['em','ew','tl','lg','bl','wk'].forEach(function(k){o[k]=one(m[k])});if(m.bob)o.tl=m.tl;return o;
 }
 /* the draw hook used by petDrawCat (17): kind says which sheet is being drawn: adult, st0-st5 (kitten stages), depth or dst0-dst5 (front/back views) */

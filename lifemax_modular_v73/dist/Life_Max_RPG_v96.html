@@ -13892,7 +13892,9 @@ function petDevMorphSet(set){
   const p=petData();if(!p){toast('Adopt a cat first');return}const d=petDnaOf(p);petMorphFill(d);
   for(const k in set){if(k==='bob')continue;const a=set[k]>0?'+':'-';PET_QTL[k].loci.forEach(function(l){d.g[l[0]]=[a,a]})}
   if(set.bob!=null)d.g.Tb=set.bob?['tb','tb']:['T','T'];
-  PET_DNA_C=null;petDnaRender(true);petBreedRefresh();toast('Shape set');
+  PET_DNA_C=null;petDnaRender(true);petBreedRefresh();
+  const m=petDnaPheno(d).morph,kid=petGrowIdx(p)>=0;
+  toast('Ears '+m.em.toFixed(1)+'× · tail '+m.tl.toFixed(1)+'× · legs '+m.lg.toFixed(1)+'× · body '+m.bl.toFixed(1)+'×'+(kid?' (a kitten shows about half until it is grown)':''));
 }
 petDevTest('Shape: very long ears',function(){petDevMorphSet({em:1})},'v94');
 petDevTest('Shape: tiny ears',function(){petDevMorphSet({em:-1})},'v94');
@@ -14053,9 +14055,9 @@ function petRigFrame(rt,sh,kind,anim,f,morph,pose,meta){
     if(C.size>600)C.delete(C.keys().next().value);C.set(key,hit);return hit;
   }catch(e){console.warn('[pet rig]',e);return null}
 }
-/* a kitten shows its proportions in step with how grown it is: day 0 has none of them, day 30 all */
+/* a kitten shows its proportions from the start, half strength on day 0 and full strength on day 30 */
 function petRigGrown(m,g){
-  if(g>=1)return m;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};
+  if(g>=1)return m;g=0.5+0.5*g;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};
   ['em','ew','tl','lg','bl','wk'].forEach(function(k){o[k]=one(m[k])});if(m.bob)o.tl=m.tl;return o;
 }
 /* the draw hook used by petDrawCat (17): kind says which sheet is being drawn: adult, st0-st5 (kitten stages), depth or dst0-dst5 (front/back views) */
