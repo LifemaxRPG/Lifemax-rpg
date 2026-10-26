@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v121 — mic button in the top bar
+
+The floating microphone button is gone. The mic now sits in the top bar next to Settings and looks like it; it pulses while listening.
+
 ## v120 — voice appointments on the inner ring
 
 A meeting or appointment set by voice now draws on the dial's inner ring with your other plan items (blue arc), instead of the outer ring that is reserved for sleep, work and travel. Life Director 1.9.1.

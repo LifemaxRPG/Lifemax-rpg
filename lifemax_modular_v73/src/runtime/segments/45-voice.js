@@ -427,10 +427,10 @@ function lmvEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.classN
 let lmvUI=null;
 function lmvBuildUI(){
  if(lmvUI)return;
- const fab=lmvEl('button','lmv-fab');fab.type='button';fab.setAttribute('aria-label','Voice');fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+ const fab=lmvEl('button','btn secondary topgear lmv-fab');fab.type='button';fab.title='Voice';fab.setAttribute('aria-label','Voice');fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
  fab.addEventListener('click',function(){lmvHudOpen(true);if(lmvListening)lmvStopListening().then(lmvRender);else lmvListen()});
  const hud=lmvEl('div','lmv-hud');hud.setAttribute('role','dialog');hud.setAttribute('aria-label','Voice');
- document.body.appendChild(fab);document.body.appendChild(hud);
+ const gear=document.querySelector('.top-actions .topgear');if(gear&&gear.parentNode)gear.parentNode.insertBefore(fab,gear);else document.body.appendChild(fab);document.body.appendChild(hud);
  fab.style.display='none';
  lmvUI={fab:fab,hud:hud,open:false};
 }

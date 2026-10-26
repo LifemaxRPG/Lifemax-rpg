@@ -3510,11 +3510,10 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 .ov-go{margin-left:auto;font-size:26px;line-height:1;color:var(--muted)}
 
 /* v117 · LifeMax Voice */
-.lmv-fab{display:none}.lmv-hud{display:none}
+.lmv-hud{display:none}
 @media(max-width:860px){
-  .lmv-fab{display:flex;position:fixed;right:16px;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);z-index:28;width:52px;height:52px;border-radius:50%;align-items:center;justify-content:center;border:1px solid #ffffff22;background:var(--accent);color:#fff;box-shadow:0 10px 26px -8px var(--accent),0 2px 8px #0006;cursor:pointer}
-  .lmv-fab svg{width:24px;height:24px}.lmv-fab.lmv-live{animation:lmvPulse 1.2s ease-in-out infinite}
-  @keyframes lmvPulse{50%{box-shadow:0 0 0 12px color-mix(in srgb,var(--accent) 25%,transparent)}}
+  .lmv-fab svg{width:18px;height:18px}.lmv-fab.lmv-live{color:var(--accent);animation:lmvPulse 1.2s ease-in-out infinite}
+  @keyframes lmvPulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}}
   .lmv-hud{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + var(--safe-b) + 76px);z-index:30;padding:14px 16px;border-radius:20px;background:rgba(22,25,34,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:0 18px 50px #000a;max-height:60vh;overflow:auto;transform:translateY(12px);opacity:0;pointer-events:none;transition:opacity .18s,transform .22s var(--ease-out)}
   .lmv-hud.on{display:block;opacity:1;transform:none;pointer-events:auto}
 }
@@ -15417,10 +15416,10 @@ function lmvEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.classN
 let lmvUI=null;
 function lmvBuildUI(){
  if(lmvUI)return;
- const fab=lmvEl('button','lmv-fab');fab.type='button';fab.setAttribute('aria-label','Voice');fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+ const fab=lmvEl('button','btn secondary topgear lmv-fab');fab.type='button';fab.title='Voice';fab.setAttribute('aria-label','Voice');fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
  fab.addEventListener('click',function(){lmvHudOpen(true);if(lmvListening)lmvStopListening().then(lmvRender);else lmvListen()});
  const hud=lmvEl('div','lmv-hud');hud.setAttribute('role','dialog');hud.setAttribute('aria-label','Voice');
- document.body.appendChild(fab);document.body.appendChild(hud);
+ const gear=document.querySelector('.top-actions .topgear');if(gear&&gear.parentNode)gear.parentNode.insertBefore(fab,gear);else document.body.appendChild(fab);document.body.appendChild(hud);
  fab.style.display='none';
  lmvUI={fab:fab,hud:hud,open:false};
 }
