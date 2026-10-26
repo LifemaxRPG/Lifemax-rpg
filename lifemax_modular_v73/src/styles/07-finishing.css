@@ -28,3 +28,15 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 #lmaSwipeHint{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);padding:7px 16px;border-radius:999px;background:var(--panel3,#232933);color:var(--text,#eef1f6);border:1px solid var(--line,#2c3340);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:9000}
 #lmaSwipeHint.show{opacity:.96;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){#lmaSwipeHint{transition:none}}
+
+/* v97 · Overview: activity today */
+.ov-health .ov-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.ovh-steps{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ovh-steps b{font-size:30px;font-weight:750;letter-spacing:-.5px}.ovh-steps span{color:var(--muted);font-size:13px}.ovh-steps small{color:var(--muted);font-size:12px;text-align:right}
+.ovh-bar{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;margin:6px 0 10px}.ovh-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#34d39988,#34d399);transition:width .6s ease}
+.ovh-days{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;height:56px;margin-bottom:10px}
+.ovh-days>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
+.ovh-days i{display:block;width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:var(--panel3)}.ovh-days .now i{background:#34d399}
+.ovh-days small{font-size:10px;color:var(--muted)}
+.ovh-chips{display:flex;flex-wrap:wrap;gap:8px}.ovh-chip{flex:1 1 90px;background:var(--panel2);border-radius:12px;padding:8px 10px}
+.ovh-chip span{display:block;font-size:11px;color:var(--muted)}.ovh-chip b{font-size:14px}
