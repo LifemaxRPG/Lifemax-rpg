@@ -14,11 +14,12 @@ const LMA_HC_SRC={'com.sec.android.app.shealth':'Samsung Health','com.google.and
 function lmaHcSrc(p){return LMA_HC_SRC[p]||(p?p.split('.').slice(-1)[0]:'')}
 /* the same XP rules as the Log activity screen, without the form */
 function lmaHealthAward(o){
- const r=rules[o.type]||rules.custom;
+ const r=o.rule||rules[o.type]||rules.custom;
  const day=new Date(o.at).toLocaleDateString('en-CA');
- let total=o.xp!=null?o.xp:Math.max(0,Math.round(r.base*Math.min(3,Math.max(0.4,o.duration/30))));
- const same=state.activities.filter(function(a){return a.type===o.type&&String(a.date||'').slice(0,10)===day}).length;
- const xp=Math.max(1,Math.round(total*(same>=5?.25:same>=3?.5:1)));
+ const total=o.xp!=null?o.xp:Math.max(0,Math.round(r.base*ecoDur(o.duration)));
+ const ec=ecoAward(o.type,total,o.duration,{day:day});
+ if(ec.xp<=0)return 0;
+ const xp=ec.xp;
  const p=o.primary||r.primary,sec=o.secondary===undefined?r.secondary:o.secondary;
  let pXP=xp,sXP=0;if(sec&&sec!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}
  const act={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type:o.type,name:o.name,icon:r.icon,duration:o.duration||0,quality:1,skill:o.skill||r.skill,primary:p,secondary:sec,xp:xp,
@@ -35,10 +36,12 @@ async function lmaHealthSync(manual){
   if(st.sdk!=='available'){H.msg=st.sdk==='update'?'Health Connect needs an update from the Play Store.':'Health Connect is not available on this phone.';return}
   const want=LMA_HEALTH_TYPES.filter(function(t){return H[t[0]]}).map(function(t){return t[2]}),has=function(n){return H.granted.indexOf(n)>=0};
   if(want.some(function(n){return !has(n)})&&!want.some(has)){H.msg='Allow access to start syncing.';return}
+  let exAll=[];
   const now=Date.now(),from=Math.max(H.since||0,now-3*86400e3),sum={ex:0,steps:0,sleep:0,xp:0},snap={at:now},day0=new Date();day0.setHours(0,0,0,0);
   if(!H.since)H.since=now-2*86400e3;
   if(H.ex&&has('exercise')){
    const r=await P.readExercise({from:now-7*86400e3,to:now});
+   exAll=r.sessions||[];
    snap.exList=(r.sessions||[]).filter(function(s){return s.end<=now&&s.end-s.start>=5*60e3}).sort(function(a,b){return b.start-a.start}).slice(0,12).map(function(s){return {start:s.start,end:s.end,name:s.title||lmaHcNice(String(s.type)),src:s.origin?lmaHcSrc(s.origin):''}});
    const td=(r.sessions||[]).filter(function(s){return s.start>=day0.getTime()&&s.end<=now&&s.end-s.start>=5*60e3});
    snap.ex={count:td.length,min:td.reduce(function(a,s){return a+Math.round((s.end-s.start)/60000)},0)};
@@ -46,6 +49,8 @@ async function lmaHealthSync(manual){
     const key='x'+s.id,min=Math.round((s.end-s.start)/60000);
     if(H.seen[key]||s.end>now||min<5||s.start<from)continue;
     const t=String(s.type),kind=LMA_HC_RECOVERY.test(t)?'recovery':LMA_HC_STRENGTH.test(t)?'strength':'running',nice=s.title||lmaHcNice(t);
+    /* a workout you already logged by hand within two hours is not paid twice */
+    if(state.activities.some(function(a){return a.src!=='health'&&a.type===kind&&Math.abs(new Date(a.date).getTime()-s.start)<=2*3600e3})){H.seen[key]=s.end;continue}
     const xp=lmaHealthAward({type:kind,name:nice+(s.origin?' · '+lmaHcSrc(s.origin):''),duration:min,at:s.start,hc:key,skill:kind==='running'?lmaHcNice(t.replace(/_treadmill|_stationary|_machine|_open_water|_pool/,'')):undefined,note:'Imported from Health Connect'});
     H.seen[key]=s.end;sum.ex++;sum.xp+=xp;if(s.origin)H.src=lmaHcSrc(s.origin);
    }
@@ -56,8 +61,14 @@ async function lmaHealthSync(manual){
    for(const d of r.days||[]){
     if(d.date===today){H.today={date:d.date,count:d.count};continue}      /* a day counts once it is over */
     const key='p'+d.date;if(H.seen[key]||d.count<2000||d.date<sinceDay)continue;
-    const xp=lmaHealthAward({type:'custom',name:'Daily steps: '+d.count.toLocaleString(),duration:0,at:d.date+'T20:00:00',hc:key,skill:'Walking',primary:'endurance',secondary:'discipline',xp:Math.round(Math.min(d.count,15000)/1000*3),note:'Imported from Health Connect'});
-    H.seen[key]=Date.parse(d.date+'T23:59:00');sum.steps++;sum.xp+=xp;
+    /* steps already paid as a run do not count twice; an absurd count with no workout is capped */
+    const dayEx=exAll.filter(function(e){return new Date(e.start).toLocaleDateString('en-CA')===d.date});
+    const cardio=dayEx.filter(function(e){return !LMA_HC_RECOVERY.test(String(e.type))&&!LMA_HC_STRENGTH.test(String(e.type))}).reduce(function(m,e){return m+Math.max(0,(e.end-e.start)/60000)},0);
+    let eff=d.count;if(eff>35000&&!dayEx.length)eff=8000;eff-=Math.round(cardio)*100;
+    H.seen[key]=Date.parse(d.date+'T23:59:00');
+    if(eff<4000)continue;
+    const xp=lmaHealthAward({type:'steps',rule:{icon:'target',skill:'Walking',primary:'endurance',secondary:''},name:'Daily steps: '+d.count.toLocaleString(),duration:0,at:d.date+'T20:00:00',hc:key,skill:'Walking',primary:'endurance',secondary:'',xp:Math.min(15,Math.round((eff-2000)/1000*1.5)),note:'Imported from Health Connect'});
+    sum.steps++;sum.xp+=xp;
    }
   }
   if(H.sleep&&has('sleep')){
@@ -65,11 +76,19 @@ async function lmaHealthSync(manual){
    const last=(r.sessions||[]).filter(function(s){return s.end<=now}).sort(function(a,b){return b.end-a.end})[0];
    if(last)snap.sleep={min:Math.round((last.end-last.start)/60000),end:last.end};
    snap.nights=(r.sessions||[]).filter(function(s){return s.end<=now&&s.end-s.start>=3*3.6e6}).sort(function(a,b){return a.end-b.end}).slice(-7).map(function(s){return {end:s.end,min:Math.round((s.end-s.start)/60000)}});
+   /* only the longest sleep ending on each day pays; a night with a workout in the middle of it does not */
+   const best={};
+   for(const s of r.sessions||[]){const d=new Date(s.end).toLocaleDateString('en-CA');if(s.end<=now&&(!best[d]||s.end-s.start>best[d].end-best[d].start))best[d]=s}
    for(const s of r.sessions||[]){
     const key='z'+s.id,hrs=(s.end-s.start)/3.6e6;
     if(H.seen[key]||s.end>now||hrs<3||s.end<from)continue;
-    const h=Math.floor(hrs),m=Math.round((hrs-h)*60),xp=lmaHealthAward({type:'recovery',name:'Sleep: '+h+'h '+String(m).padStart(2,'0')+'m',duration:hrs>=7?90:hrs>=6?60:hrs>=4.5?40:30,at:s.end,hc:key,skill:'Sleep',note:'Imported from Health Connect'});
-    H.seen[key]=s.end;sum.sleep++;sum.xp+=xp;
+    H.seen[key]=s.end;
+    if(best[new Date(s.end).toLocaleDateString('en-CA')]!==s)continue;
+    const busy=exAll.some(function(e){return e.start<s.end-30*60e3&&e.end>s.start+30*60e3})||state.activities.some(function(a){const t=new Date(a.date).getTime();return a.src!=='health'&&t>s.start+30*60e3&&t<s.end-30*60e3});
+    const pts=hrs<5.5||hrs>12||busy?0:hrs<6.5?8:hrs<7.5?12:hrs<=9.5?15:12;
+    if(!pts)continue;
+    const h=Math.floor(hrs),m=Math.round((hrs-h)*60),xp=lmaHealthAward({type:'sleep',rule:{icon:'moon',skill:'Sleep',primary:'wellbeing',secondary:''},name:'Sleep: '+h+'h '+String(m).padStart(2,'0')+'m',duration:0,at:s.end,hc:key,skill:'Sleep',primary:'wellbeing',secondary:'',xp:pts,note:'Imported from Health Connect'});
+    sum.sleep++;sum.xp+=xp;
    }
   }
   if(H.wt&&has('weight')){

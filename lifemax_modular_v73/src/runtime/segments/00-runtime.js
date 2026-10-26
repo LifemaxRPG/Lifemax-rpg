@@ -10,15 +10,15 @@ const ATTRS=[
  {id:'wellbeing',name:'Wellbeing & Recovery',short:'Wellbeing',icon:'moon'}
 ];
 const DEFAULT_RULES={
- reading:{name:'Focused reading / study',icon:'book',base:20,skill:'Knowledge',primary:'intelligence',secondary:'discipline',desc:'Practice focused learning'},
+ reading:{name:'Focused reading / study',icon:'book',base:24,skill:'Knowledge',primary:'intelligence',secondary:'discipline',desc:'Practice focused learning'},
  business:{name:'Focused business work',icon:'briefcase',base:25,skill:'Entrepreneurship',primary:'business',secondary:'discipline',desc:'Build something valuable'},
- strength:{name:'Strength workout',icon:'dumbbell',base:32,skill:'Lifting',primary:'physique',secondary:'discipline',desc:'Strength and resistance training'},
- running:{name:'Run / cardio',icon:'heart',base:27,skill:'Running',primary:'endurance',secondary:'discipline',desc:'Cardio or running session'},
- language:{name:'Language practice',icon:'chat',base:20,skill:'Spanish',primary:'intelligence',secondary:'social',desc:'Build a language skill'},
- recovery:{name:'Sleep / recovery routine',icon:'moon',base:16,skill:'Recovery Routine',primary:'wellbeing',secondary:'discipline',desc:'Complete a planned recovery routine'},
- practical:{name:'Practical skill practice',icon:'mountain',base:23,skill:'Practical Skills',primary:'adventure',secondary:'intelligence',desc:'Practice a useful hands-on skill'},
- task:{name:'Difficult planned task',icon:'target',base:15,skill:'Execution',primary:'discipline',secondary:'',desc:'Follow through on a meaningful task'},
- custom:{name:'Custom activity',icon:'star',base:20,skill:'Custom Skill',primary:'discipline',secondary:'',desc:'Your own activity'}
+ strength:{name:'Strength workout',icon:'dumbbell',base:28,skill:'Lifting',primary:'physique',secondary:'discipline',desc:'Strength and resistance training'},
+ running:{name:'Run / cardio',icon:'heart',base:26,skill:'Running',primary:'endurance',secondary:'wellbeing',desc:'Cardio or running session'},
+ language:{name:'Language practice',icon:'chat',base:24,skill:'Spanish',primary:'intelligence',secondary:'social',desc:'Build a language skill'},
+ recovery:{name:'Sleep / recovery routine',icon:'moon',base:16,skill:'Recovery Routine',primary:'wellbeing',secondary:'endurance',desc:'Complete a planned recovery routine'},
+ practical:{name:'Practical skill practice',icon:'mountain',base:24,skill:'Practical Skills',primary:'adventure',secondary:'intelligence',desc:'Practice a useful hands-on skill'},
+ task:{name:'Difficult planned task',icon:'target',base:20,skill:'Execution',primary:'discipline',secondary:'business',desc:'Follow through on a meaningful task'},
+ custom:{name:'Custom activity',icon:'star',base:20,skill:'Custom Skill',primary:'adventure',secondary:'',desc:'Your own activity'}
 };
 const defaultQuests=[
 {id:'q1',name:'Learn for 20 minutes',desc:'Focused study or reading. Show up or the attribute stalls.',cadence:'daily',xp:15,kind:'learning'},

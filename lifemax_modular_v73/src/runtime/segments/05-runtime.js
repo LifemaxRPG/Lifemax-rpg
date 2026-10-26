@@ -2,7 +2,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 ['activityType','duration','quality','skillName','primaryAttr','secondaryAttr'].forEach(id=>document.addEventListener('input',e=>{if(e.target.id===id)updatePreview()}));
 
 let prevSnap=null;
-const TITLES=[[1,'Novice'],[3,'Apprentice'],[5,'Adept'],[8,'Veteran'],[12,'Master'],[18,'Grandmaster'],[25,'Legend']];
+const TITLES=[[1,'Novice'],[3,'Apprentice'],[5,'Adept'],[8,'Veteran'],[12,'Master'],[18,'Grandmaster'],[25,'Legend'],[35,'Paragon'],[50,'Mythic'],[75,'Sovereign'],[100,'Ascended']];
 function titleFor(l){let t=TITLES[0][1];TITLES.forEach(x=>{if(l>=x[0])t=x[1]});return t}
 function snapshot(){return {c:characterLevel().level,a:ATTRS.map(a=>attrLevel(a.id).level),x:ATTRS.map(a=>attrXP(a.id)),t:totalXP()}}
 function checkLevelUps(){const cur=snapshot(),p=prevSnap;prevSnap=cur;if(!p||!p.x)return;
@@ -10,7 +10,7 @@ function checkLevelUps(){const cur=snapshot(),p=prevSnap;prevSnap=cur;if(!p||!p.
  const delta=gains.reduce((n,g)=>n+g.xp,0);if(delta>1500)return;
  if(delta>0)celebrateXP(delta,gains);
  if(cur.c>p.c||ups.length)setTimeout(()=>showLevelUp({charLevel:cur.c>p.c?cur.c:null,from:p.c,attrs:ups}),delta>0?950:0)}
-function streak(){const set=new Set(state.activities.map(activityDate));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
+function streak(){const set=new Set(state.activities.filter(a=>!ecoPassive(a)).map(activityDate));Object.keys(state.restDays||{}).forEach(k=>set.add(k));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
 const BADGES=[
 {id:'first',icon:'bolt',name:'First Step',desc:'Log your first activity',t:()=>state.activities.length>=1},
 {id:'ten',icon:'star',name:'Getting Going',desc:'Log 10 activities',t:()=>state.activities.length>=10},
@@ -40,12 +40,13 @@ function renderExtras(){renderFxSettings();document.documentElement.classList.to
  
 }
 
-function getDecay(){return {on:true,grace:3,rate:2,...(state.decay||{})}}
+function getDecay(){return {on:true,grace:4,rate:3,...(state.decay||{})}}
 function dayNum(k){const p=k.split('-').map(Number);return Math.round(Date.UTC(p[0],p[1]-1,p[2])/864e5)}
-function lastTrained(id){let best=null;state.activities.forEach(a=>{if(a.primary===id||a.secondary===id){const k=activityDate(a);if(!best||k>best)best=k}});return best}
+function lastTrained(id){let best=null;state.activities.forEach(a=>{if(ecoPassive(a))return;if(a.primary===id||a.secondary===id){const k=activityDate(a);if(!best||k>best)best=k}});return best}
 function applyDecay(){const d=getDecay();if(!d.on)return false;state.decayApplied=state.decayApplied||{};state.decayLog=state.decayLog||[];const today=dayNum(getToday());let changed=false;
  ATTRS.forEach(a=>{const lt=lastTrained(a.id);if(!lt)return;const from=Math.max(dayNum(lt)+d.grace+1,(state.decayApplied[a.id]||0)+1);let lost=0;
-  for(let n=from;n<=today;n++){const xp=attrXP(a.id);if(xp<=0)break;const l=Math.min(xp,Math.max(1,Math.round(xp*d.rate/100)));state.attrXP[a.id]=xp-l;lost+=l}
+  for(let n=from;n<=today;n++){if(ecoRestDay(ecoDayKey(n)))continue;const xp=attrXP(a.id);if(xp<=0)break;const lv=levelData(xp);if(lv.into<=0)break;const l=Math.min(lv.into,Math.max(1,Math.min(15,Math.round(xpForLevel(lv.level)*d.rate/100))));state.attrXP[a.id]=xp-l;lost+=l}
+  if(lost>0&&today-dayNum(lt)>=7)state.restedXP=Math.min(ECO.restedCap,(Number(state.restedXP)||0)+Math.round(lost*ECO.restedRate));
   if(today>=from)state.decayApplied[a.id]=today;
   if(lost>0){changed=true;state.decayTotal=state.decayTotal||{};state.decayTotal[a.id]=(state.decayTotal[a.id]||0)+lost;state.decayLog.unshift({date:getToday(),attr:a.id,xp:lost})}});
  state.decayLog=state.decayLog.slice(0,30);return changed}
@@ -54,13 +55,13 @@ function renderDecay(){const d=getDecay(),today=dayNum(getToday());
   if(!lt){status='Not trained yet';sub='—'}else{const idle=today-dayNum(lt);sub=idle===0?'trained today':idle+' day'+(idle>1?'s':'')+' ago';
    if(!d.on){status='Decay off'}
    else if(idle<=d.grace){const left=d.grace-idle+1;status=`Decay starts in ${left} day${left>1?'s':''}`;col=left<=2?'var(--gold)':'var(--accent2)'}
-   else if(xp<=0){status='Nothing left to lose'}
-   else{status=`Decaying ~${Math.max(1,Math.round(xp*d.rate/100))} XP/day`;col='var(--red)'}}
+   else if(xp<=0||levelData(xp).into<=0){status='Level is safe'}
+   else{status=`Decaying ~${Math.min(levelData(xp).into,Math.max(1,Math.min(15,Math.round(xpForLevel(levelData(xp).level)*d.rate/100))))} XP/day`;col='var(--red)'}}
   return `<div class="minirow"><span>${px(a.icon)} <strong>${a.short}</strong> <small>LV ${attrLevel(a.id).level} · ${sub}</small></span><span style="color:${col};font-size:12px;font-weight:650">${status}</span></div>`}).join('');
  const log=(state.decayLog||[]).slice(0,4).map(e=>{const a=ATTRS.find(x=>x.id===e.attr);return `<div class="minirow"><small>${e.date} · ${a?a.short:e.attr}</small><span style="color:var(--red);font-size:12px">−${e.xp} XP</span></div>`}).join('');
- document.getElementById('decayWatch').innerHTML=rows+(log?'<div style="margin-top:12px;font-size:11px;color:var(--muted);letter-spacing:.6px">RECENT DECAY</div>'+log:'');
+ const rest=ecoRestDay(getToday()),left=ECO.restPerWeek-ecoRestUsed(),pool=Math.round(state.restedXP||0);document.getElementById('decayWatch').innerHTML=rows+'<div class="minirow" style="margin-top:10px"><span><strong>Rest day</strong> <small>'+(rest?'today is a rest day':left+' left this week')+(pool?' · '+pool+' rested XP ready (+50% on your next sessions)':'')+'</small></span>'+(rest||left<=0?'':'<button class="btn small secondary" onclick="ecoTakeRest()">Take today off</button>')+'</div>'+(log?'<div style="margin-top:12px;font-size:11px;color:var(--muted);letter-spacing:.6px">RECENT DECAY</div>'+log:'');
  const on=document.getElementById('decayOn');if(on&&document.activeElement!==document.getElementById('decayGrace')){on.checked=d.on;document.getElementById('decayGrace').value=d.grace;document.getElementById('decayRate').value=d.rate}}
-function saveDecay(){const c=(v,lo,hi,df)=>Math.min(hi,Math.max(lo,Number(v)||df));state.decay={on:document.getElementById('decayOn').checked,grace:c(document.getElementById('decayGrace').value,1,14,3),rate:c(document.getElementById('decayRate').value,1,10,2)};save();toast('Decay settings saved')}
+function saveDecay(){const c=(v,lo,hi,df)=>Math.min(hi,Math.max(lo,Number(v)||df));state.decay={on:document.getElementById('decayOn').checked,grace:c(document.getElementById('decayGrace').value,1,14,4),rate:c(document.getElementById('decayRate').value,1,10,3)};save();toast('Decay settings saved')}
 function ago(ms){const m=Math.floor(ms/6e4);if(m<1)return 'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<48)return h+'h '+(m%60)+'m ago';return Math.floor(h/24)+'d '+(h%24)+'h ago'}
 function markVisit(){try{const now=Date.now(),last=state.lastVisit||0;if(!last||now-last>30*6e4)state.prevVisit=last||null;state.lastVisit=now;state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
 function renderTime(){const v=document.getElementById('visitTag'),a=document.getElementById('actTag');if(!v||!a)return;const now=Date.now();
@@ -163,9 +164,11 @@ function addTx(){const amt=Math.round((parseFloat(document.getElementById('txAmo
  const type=document.getElementById('txType').value,note=document.getElementById('txNote').value.trim(),iso=new Date().toISOString();
  if(type==='withdraw'&&amt>moneyBalance()){toast('Not enough in the account');return}
  const tx={id:'tx_'+Date.now(),type,amount:amt,note,date:iso};let xp=0;
- if(type==='deposit'&&state.activities.filter(a=>a.type==='money'&&activityDate(a)===getToday()).length<3&&!state.activities.some(a=>a.link==='business.transfer-money-into-savings'&&activityDate(a)===getToday())){xp=Math.min(60,Math.max(5,Math.round(amt/10)));
-  const act={id:'act_'+Date.now(),type:'money',name:'Deposit '+fmt(amt),icon:'coin',duration:0,skill:'Saving',primary:'business',secondary:'',xp,date:iso,notes:note,xpSplit:[{attr:'business',xp}]};
-  state.activities.push(act);state.attrXP.business=(state.attrXP.business||0)+xp;state.skillXP.Saving=(state.skillXP.Saving||0)+xp;tx.actId=act.id}
+ if(type==='deposit'){const bal=moneyBalance(),peak=Math.max(Number(M().peakBalance)||0,bal),net=Math.max(0,bal+amt-peak);M().peakBalance=Math.max(peak,bal+amt);
+  const wk=new Date();wk.setDate(wk.getDate()-6);const wks=wk.toLocaleDateString('en-CA'),moneyActs=state.activities.filter(a=>a.type==='money'),weekXP=moneyActs.filter(a=>activityDate(a)>=wks).reduce((n,a)=>n+(Number(a.xp)||0),0),doneToday=moneyActs.some(a=>activityDate(a)===getToday())||state.activities.some(a=>a.link==='business.transfer-money-into-savings'&&activityDate(a)===getToday());
+  if(!doneToday&&net>=ECO.depositMin){xp=Math.min(ECO.depositCapDay,Math.max(5,Math.round(net/10)),Math.max(0,ECO.depositCapWeek-weekXP));xp=xp>0?ecoCap(ecoRestedTake(xp),getToday()):0}
+  if(xp>0){const pX=Math.round(xp*.7),sX=xp-pX;const act={id:'act_'+Date.now(),type:'money',name:'Deposit '+fmt(amt),icon:'coin',duration:0,skill:'Saving',primary:'business',secondary:'discipline',xp,date:iso,notes:note,xpSplit:[{attr:'business',xp:pX},{attr:'discipline',xp:sX}]};
+  state.activities.push(act);state.attrXP.business=(state.attrXP.business||0)+pX;state.attrXP.discipline=(state.attrXP.discipline||0)+sX;state.skillXP.Saving=(state.skillXP.Saving||0)+xp;tx.actId=act.id}}
  M().tx.push(tx);document.getElementById('txAmount').value='';document.getElementById('txNote').value='';save();toast(type==='deposit'?`Deposit recorded${xp?' · +'+xp+' XP':''}`:'Withdrawal recorded')}
 function deleteTx(id){const m=M(),t=m.tx.find(x=>x.id===id);if(!t||!confirm('Remove this transaction? Any XP it earned is removed too.'))return;
  if(t.actId){const a=state.activities.find(x=>x.id===t.actId);if(a){state.attrXP.business=Math.max(0,(state.attrXP.business||0)-a.xp);state.skillXP.Saving=Math.max(0,(state.skillXP.Saving||0)-a.xp);if(!state.skillXP.Saving)delete state.skillXP.Saving;state.activities=state.activities.filter(x=>x.id!==t.actId)}}

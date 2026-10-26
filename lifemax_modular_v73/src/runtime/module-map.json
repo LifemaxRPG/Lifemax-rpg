@@ -1871,6 +1871,34 @@
     "lmaScrubSync",
     "lmaScrubInit"
    ]
+  },
+  {
+   "file": "src/runtime/segments/43-economy.js",
+   "bytes": 5577,
+   "statement_count": 20,
+   "tags": [
+    "economy",
+    "xp"
+   ],
+   "symbols": [
+    "ECO",
+    "ECO_OLD_RULES",
+    "charXpForLevel",
+    "charCumXP",
+    "ecoPassive",
+    "ecoDayKey",
+    "ecoActsOn",
+    "ecoDur",
+    "ecoDayXP",
+    "ecoRestedTake",
+    "ecoCap",
+    "ecoAward",
+    "ecoQuestXP",
+    "ecoRestDay",
+    "ecoRestUsed",
+    "ecoTakeRest",
+    "ecoMigrate"
+   ]
   }
  ]
 }
