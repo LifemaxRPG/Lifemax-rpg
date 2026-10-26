@@ -155,7 +155,7 @@ function reportDoc(){const r=buildReport();const tbl=(h,rows)=>rows.length?`<tab
 @media(prefers-reduced-motion:reduce){.plan-week,.plan-day-tile,.plan-cycle-line span{transition:none}}
 
 </style></head><body><h1>${esc(r.name)}</h1><p class="sub">${esc(r.build)} &middot; Life Max RPG report &middot; ${esc(r.date)}</p><h2>Summary</h2>${tbl(['Stat','Value'],r.summary)}${r.sections.map(x=>`<h2>${x[0]}</h2>${tbl(x[1],x[2])}`).join('')}</body></html>`}
-function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufeff'+reportText();const blob=new Blob([content],{type:doc?'application/msword':'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='life-max-report-'+getToday()+(doc?'.doc':'.txt');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast(doc?'Word report exported':'Text report exported')}
+function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufeff'+reportText();lmaDownload(content,'life-max-report-'+getToday()+(doc?'.doc':'.txt'),doc?'application/msword':'text/plain',doc?'Word report':'Text report')}
 function M(){if(!state.money)state.money={account:'',start:0,goal:0,tx:[]};return state.money}
 function fmt(n){return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n)}
 function moneyBalance(){const m=M();return Math.round(((Number(m.start)||0)+m.tx.reduce((s,t)=>s+(t.type==='deposit'?t.amount:-t.amount),0))*100)/100}

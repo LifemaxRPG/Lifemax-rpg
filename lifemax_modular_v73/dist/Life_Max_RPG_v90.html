@@ -4070,7 +4070,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
     <div class="onb-progress" id="onbProgress" aria-label="Setup progress"><span class="active"></span><span></span><span></span><span></span><span></span><span></span></div>
     <div class="onb-kicker" id="onbKicker">A new chapter begins</div>
     <div class="onb-stepstage" id="onbStepStage">
-      <section class="onb-step active" data-step="0"><h1 class="onb-title" id="onbTitle">Welcome. What’s your name?</h1><p class="onb-copy">Every great journey starts somewhere. Let’s make this one yours.</p><div class="onb-field full"><label for="onbName">YOUR NAME</label><input id="onbName" maxlength="40" autocomplete="nickname" placeholder="What should we call you?" onkeydown="if(event.key==='Enter'){event.preventDefault();nextOnboardingStep()}"></div></section>
+      <section class="onb-step active" data-step="0"><h1 class="onb-title" id="onbTitle">Welcome. What’s your name?</h1><p class="onb-copy">Every great journey starts somewhere. Let’s make this one yours.</p><div class="onb-field full"><label for="onbName">YOUR NAME</label><input id="onbName" maxlength="40" autocomplete="nickname" placeholder="What should we call you?" onkeydown="if(event.key==='Enter'){event.preventDefault();nextOnboardingStep()}"></div><div class="onb-field full" style="margin-top:18px"><label>ALREADY HAVE A BACKUP?</label><button type="button" class="btn secondary" id="onbImportBtn" onclick="document.getElementById('onbImportFile').click()">Import a backup</button><input id="onbImportFile" type="file" style="display:none" onchange="importData(event,true)"></div></section>
       <section class="onb-step" data-step="1"><h1 class="onb-title">How old are you?</h1><p class="onb-copy">Just the basics. Your profile is yours to shape as you go.</p><div class="onb-field full"><label for="onbAge">AGE <span class="onb-optional">· OPTIONAL</span></label><input id="onbAge" type="number" min="13" max="120" inputmode="numeric" placeholder="Your age" onkeydown="if(event.key==='Enter'){event.preventDefault();nextOnboardingStep()}"></div></section>
       <section class="onb-step" data-step="2"><h1 class="onb-title">What’s your weight?</h1><p class="onb-copy">A starting point, not a judgment. You can update this any time.</p><div class="onb-field full"><label for="onbWeight">WEIGHT IN POUNDS <span class="onb-optional">· OPTIONAL</span></label><input id="onbWeight" type="number" min="1" max="1400" step="0.1" inputmode="decimal" placeholder="e.g. 175" onkeydown="if(event.key==='Enter'){event.preventDefault();nextOnboardingStep()}"></div></section>
       <section class="onb-step" data-step="3"><h1 class="onb-title">How tall are you?</h1><p class="onb-copy">This helps your character sheet calculate a few useful stats.</p><div class="onb-field full"><label>HEIGHT <span class="onb-optional">· OPTIONAL</span></label><div class="onb-measure"><input id="onbHeightFt" type="number" min="1" max="8" inputmode="numeric" placeholder="Feet" aria-label="Height in feet"><input id="onbHeightIn" type="number" min="0" max="11" inputmode="numeric" placeholder="Inches" aria-label="Height in inches"></div></div></section>
@@ -4979,8 +4979,8 @@ function addBenchmark(){const name=document.getElementById('benchName').value.tr
 function deleteBenchmark(i){state.benchmarks.splice(i,1);save();toast('Benchmark removed')}
 function saveRules(){Object.keys(rules).forEach(id=>{const el=document.getElementById('rule-'+id);if(el)rules[id].base=Math.min(200,Math.max(1,Number(el.value)||1))});save();toast('XP rules saved')}
 function resetRules(){rules=structuredClone(DEFAULT_RULES);save();toast('Default XP rules restored')}
-function exportData(){const data={app:'Life Max RPG Prototype',version:1,exportedAt:new Date().toISOString(),state,rules};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='life-max-backup-'+getToday()+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')}
-function importData(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);const imported=data.state||data;if(!imported.activities||!imported.attrXP)throw new Error('Invalid backup');state={...freshState(),...imported};prevSnap=null;rules={...structuredClone(DEFAULT_RULES),...(data.rules||state.customRules||{})};save();toast('Backup imported')}catch(err){alert('Could not import this file. Please choose a Life Max JSON backup.')}e.target.value=''};reader.readAsText(file)}
+function exportData(){const data={app:'Life Max RPG Prototype',version:1,exportedAt:new Date().toISOString(),state,rules,extras:lmaBackupExtras()};lmaDownload(JSON.stringify(data,null,2),'life-max-backup-'+getToday()+'.json','application/json','Backup')}
+function importData(e,fromOnboarding){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);const imported=data.state||data;if(!imported.activities||!imported.attrXP)throw new Error('Invalid backup');state={...freshState(),...imported};if(fromOnboarding===true)state.onboardingComplete=true;prevSnap=null;rules={...structuredClone(DEFAULT_RULES),...(data.rules||state.customRules||{})};save();const more=lmaRestoreExtras(data.extras);toast('Backup imported');if(more||fromOnboarding===true)setTimeout(()=>location.reload(),500)}catch(err){alert('Could not import this file. Please choose a Life Max JSON backup.')}e.target.value=''};reader.readAsText(file)}
 function resetDemo(){if(!confirm('Reset to a clean starter profile? This replaces the current local data. Export a backup first if needed.'))return;state=freshState();rules=structuredClone(DEFAULT_RULES);save();toast('Starter profile restored')}
 function deleteAll(){if(!confirm('Delete all Life Max data saved in this browser? This cannot be undone. Export a backup first if needed.'))return;localStorage.removeItem(STORE);state=freshState();rules=structuredClone(DEFAULT_RULES);save();toast('Local data cleared')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -5140,7 +5140,7 @@ function reportDoc(){const r=buildReport();const tbl=(h,rows)=>rows.length?`<tab
 @media(prefers-reduced-motion:reduce){.plan-week,.plan-day-tile,.plan-cycle-line span{transition:none}}
 
 </style></head><body><h1>${esc(r.name)}</h1><p class="sub">${esc(r.build)} &middot; Life Max RPG report &middot; ${esc(r.date)}</p><h2>Summary</h2>${tbl(['Stat','Value'],r.summary)}${r.sections.map(x=>`<h2>${x[0]}</h2>${tbl(x[1],x[2])}`).join('')}</body></html>`}
-function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufeff'+reportText();const blob=new Blob([content],{type:doc?'application/msword':'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='life-max-report-'+getToday()+(doc?'.doc':'.txt');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast(doc?'Word report exported':'Text report exported')}
+function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufeff'+reportText();lmaDownload(content,'life-max-report-'+getToday()+(doc?'.doc':'.txt'),doc?'application/msword':'text/plain',doc?'Word report':'Text report')}
 function M(){if(!state.money)state.money={account:'',start:0,goal:0,tx:[]};return state.money}
 function fmt(n){return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n)}
 function moneyBalance(){const m=M();return Math.round(((Number(m.start)||0)+m.tx.reduce((s,t)=>s+(t.type==='deposit'?t.amount:-t.amount),0))*100)/100}
@@ -13250,6 +13250,20 @@ async function lmaRenderSettings(){
  h+='<div style="margin-top:12px"><button class="btn secondary" onclick="lmaTestNotification()">Send a test reminder</button></div>';
  h+='<div class="muted" style="font-size:12px;margin-top:8px">Reminders are rescheduled whenever you open the app, check something off or change your plan, and cover the next three days.</div>';
  host.innerHTML=h;
+}
+/* ---------- saving files and backups ---------- */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{const v=localStorage.getItem(k);if(typeof v==='string')o[k]=v}catch(e){}}return o}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
+/* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
+async function lmaDownload(text,filename,mime,label){
+ const FS=lmaPlugin('FileSaver');
+ if(FS){
+  try{const r=await FS.saveFile({name:filename,mime:mime,text:text});toast(r&&r.saved?(label||'File')+' saved':'Save cancelled');return !!(r&&r.saved)}
+  catch(e){toast('Could not save: '+String((e&&e.message)||e).slice(0,90));return false}
+ }
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast((label||'File')+' exported');return true;
 }
 /* ---------- wiring ---------- */
 (function lmaBoot(){

@@ -162,6 +162,20 @@ async function lmaRenderSettings(){
  h+='<div class="muted" style="font-size:12px;margin-top:8px">Reminders are rescheduled whenever you open the app, check something off or change your plan, and cover the next three days.</div>';
  host.innerHTML=h;
 }
+/* ---------- saving files and backups ---------- */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{const v=localStorage.getItem(k);if(typeof v==='string')o[k]=v}catch(e){}}return o}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
+/* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
+async function lmaDownload(text,filename,mime,label){
+ const FS=lmaPlugin('FileSaver');
+ if(FS){
+  try{const r=await FS.saveFile({name:filename,mime:mime,text:text});toast(r&&r.saved?(label||'File')+' saved':'Save cancelled');return !!(r&&r.saved)}
+  catch(e){toast('Could not save: '+String((e&&e.message)||e).slice(0,90));return false}
+ }
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=filename;a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast((label||'File')+' exported');return true;
+}
 /* ---------- wiring ---------- */
 (function lmaBoot(){
  const _save=save;save=function(){const r=_save.apply(this,arguments);lmaSoon();return r};
