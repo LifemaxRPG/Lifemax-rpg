@@ -312,3 +312,6 @@ New Overview tile (Android app only, movable in Overview edit): today's steps wi
 
 ## v99 — Life Director dial widget (Android)
 Home-screen widget showing the chrono dial. The web app draws the plain dial off screen to a PNG (`LifeDirector.widgetSnapshot`, run when you leave the app and every ~10 min while open); the native `LifeDialWidget` adds the shaded past, the moving hand and the centre text (on now / up next) and redraws every ~10 minutes. Tapping it opens Life Director. Add it from Settings → Home-screen widget (or the launcher's widget list). Native side: `LifeDialWidget.java`, `WidgetBridgePlugin.java`, `res/layout/widget_dial.xml`, `res/xml/lifemax_dial_widget_info.xml`.
+
+## v100 — Expanded Health page
+Tapping the Overview "Activity today" tile opens a full Health page and starts a sync: today's steps and goal bar, 30-day step chart with goal line (7-day average, best day, goal days), the week's workouts, last nights of sleep, weight with trend. Back closes it. Sync now button inside.

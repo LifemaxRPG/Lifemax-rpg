@@ -40,3 +40,18 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .ovh-days small{font-size:10px;color:var(--muted)}
 .ovh-chips{display:flex;flex-wrap:wrap;gap:8px}.ovh-chip{flex:1 1 90px;background:var(--panel2);border-radius:12px;padding:8px 10px}
 .ovh-chip span{display:block;font-size:11px;color:var(--muted)}.ovh-chip b{font-size:14px}
+
+.ov-health{position:relative}.ovh-more{margin-top:10px;font-size:12px;color:var(--muted);text-align:right}
+.hsheet{position:fixed;inset:0;z-index:4000;background:var(--bg);display:flex;flex-direction:column}
+.hsheet header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.hsheet header h2{margin:0;font-size:18px}.hs-body{flex:1;overflow-y:auto;padding:14px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.hs-body .card{margin:0}.hs-body h3{margin:0 0 8px}
+.hs-big{display:flex;align-items:baseline;gap:8px}.hs-big b{font-size:38px;font-weight:750;letter-spacing:-.8px}.hs-big span{color:var(--muted)}
+.hs-chart{position:relative;display:flex;align-items:flex-end;gap:2px;height:100px;margin:6px 0 10px}
+.hs-chart>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.hs-chart i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--panel3)}.hs-chart .hit i{background:#34d39966}.hs-chart .now i{background:#34d399}
+.hs-chart u{position:absolute;left:0;right:0;border-top:1px dashed var(--muted);opacity:.5;pointer-events:none}
+.hs-sleep{height:110px;gap:8px}.hs-sleep i{background:#818cf8}.hs-sleep small{font-size:10px;color:var(--muted);margin-top:3px}
+.hs-list{list-style:none;margin:0;padding:0}.hs-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft)}.hs-list li:last-child{border:0}
+.hs-list small{display:block;color:var(--muted);font-size:12px}.hs-list span{font-weight:650;white-space:nowrap}
+.hs-spark{width:100%;height:40px;margin:6px 0}
