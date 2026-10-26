@@ -9,7 +9,18 @@ const LMA_DEFAULTS={
 const LMA_IN='width:auto;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit';
 let lmaPrefs=null,lmaPlugins={},lmaSyncTimer=0,lmaLastSig='',lmaSyncBusy=false;
 function lmaNative(){try{return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch(e){return false}}
-function lmaPlugin(name){if(!lmaNative())return null;try{return lmaPlugins[name]||(lmaPlugins[name]=Capacitor.registerPlugin(name))}catch(e){return null}}
+let lmaLastErr='';
+/* Capacitor registers every native plugin itself, so use that proxy; registering again throws. */
+function lmaPlugin(name){
+ if(!lmaNative())return null;
+ if(lmaPlugins[name])return lmaPlugins[name];
+ try{
+  const have=window.Capacitor.Plugins&&window.Capacitor.Plugins[name];
+  const p=have||Capacitor.registerPlugin(name);
+  if(p)lmaPlugins[name]=p;
+  return p||null;
+ }catch(e){lmaLastErr=String(e&&e.message||e);return null}
+}
 function lmaLoad(){
  if(lmaPrefs)return lmaPrefs;
  let raw=null;try{raw=JSON.parse(localStorage.getItem(LMA_PREF_KEY)||'null')}catch(e){}

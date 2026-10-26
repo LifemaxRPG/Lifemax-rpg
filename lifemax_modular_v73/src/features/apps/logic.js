@@ -24,6 +24,7 @@ const AppsFeature=(function(){
  const errText=e=>String((e&&(e.message||e.errorMessage))||e||'unknown error').slice(0,200);
  async function fetchIcons(pkgs){
   const L=lmaPlugin('AppLauncher'),out={};
+  if(!L)return out;
   for(let i=0;i<pkgs.length;i+=20){
    try{Object.assign(out,(await L.getIcons({pkgs:pkgs.slice(i,i+20)})).icons||{})}catch(e){}
    if(sheet)paintIcons(out);
@@ -36,6 +37,7 @@ const AppsFeature=(function(){
  }
  async function loadAll(){
   const L=lmaPlugin('AppLauncher');
+  if(!L)throw new Error('The native launcher is not available'+(lmaLastErr?': '+lmaLastErr:''));
   all=(await L.getApps()).apps||[];
   /* refresh names and icons of saved shortcuts */
   const by=new Map(all.map(a=>[a.pkg,a]));let ch=false;
