@@ -2,7 +2,7 @@
 
 1. Push to GitHub. The **Build Android APK** workflow runs automatically (or run it by hand from the repo's *Actions* tab → *Build Android APK* → *Run workflow*).
 2. When it finishes (~2 min), open the repo's **Releases** page on your phone, download `LifeMax-RPG.apk` from the *latest* release and tap it to install (allow "install unknown apps" for your browser when asked).
-3. To use it as your home screen: Settings → Apps → Default apps → **Home app** → LifeMax RPG.
+3. To use it as your home screen: Settings → Apps → Default apps → **Home app** → LifeMax.
 
 ## The permanent signing key (one-time setup)
 

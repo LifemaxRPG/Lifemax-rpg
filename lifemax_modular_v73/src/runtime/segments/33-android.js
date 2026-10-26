@@ -127,7 +127,7 @@ async function lmaTestNotification(){
  const LN=lmaPlugin('LocalNotifications');if(!LN){toast('Notifications work in the Android app');return}
  if(await lmaPermission(true)!=='granted'){toast('Allow notifications first');lmaRenderSettings();return}
  try{await LN.createChannel({id:LMA_CHANNEL,name:'Reminders',description:'Workouts, planned sessions and check-ins',importance:4,visibility:1})}catch(e){}
- await LN.schedule({notifications:[{id:1,title:'LifeMax RPG',body:'Reminders are working.',channelId:LMA_CHANNEL,schedule:{at:new Date(Date.now()+5000),allowWhileIdle:true}}]});
+ await LN.schedule({notifications:[{id:1,title:'LifeMax',body:'Reminders are working.',channelId:LMA_CHANNEL,schedule:{at:new Date(Date.now()+5000),allowWhileIdle:true}}]});
  toast('Test reminder in 5 seconds');
 }
 async function lmaExactTiming(){
@@ -146,7 +146,7 @@ async function lmaRenderSettings(){
  const time=(k)=>'<input type="time" value="'+n[k]+'" onchange="lmaSet(\''+k+'\',this.value)" style="'+LMA_IN+'">';
  const off=!n.on;
  let h='';
- if(perm==='denied')h+='<div class="note" style="margin-bottom:10px">Notifications are blocked for this app. Turn them on in Android Settings → Apps → LifeMax RPG → Notifications.</div>';
+ if(perm==='denied')h+='<div class="note" style="margin-bottom:10px">Notifications are blocked for this app. Turn them on in Android Settings → Apps → LifeMax → Notifications.</div>';
  else if(n.on&&perm!=='granted')h+='<div class="note" style="margin-bottom:10px">Android needs your permission first. <button class="btn small" onclick="lmaPermission(true).then(()=>{lmaRenderSettings();lmaSync(true)})">Allow notifications</button></div>';
  if(n.on&&perm==='granted'&&exact==='denied')h+='<div class="note" style="margin-bottom:10px">Without “Alarms &amp; reminders” access Android may delay reminders by several minutes. <button class="btn small secondary" onclick="lmaExactTiming()">Allow exact timing</button></div>';
  h+=row('Reminders','Master switch. Off cancels everything scheduled.',tog('on'));

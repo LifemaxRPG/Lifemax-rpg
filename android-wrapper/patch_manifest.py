@@ -1,4 +1,4 @@
-"""Make LifeMax RPG selectable as the Android home screen (launcher).
+"""Make LifeMax selectable as the Android home screen (launcher).
 
 Adds the HOME + DEFAULT categories to the main activity's launcher intent
 filter and sets launchMode=singleTask so pressing Home returns to the app.

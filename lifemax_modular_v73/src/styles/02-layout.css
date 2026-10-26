@@ -584,7 +584,7 @@ html.light-theme .onb-carousel-detail p{color:var(--text-dim)}
 }
 body.noscroll{overflow:hidden}
 
-/* ===== LIFE MAX RPG / premium calendar art direction ===== */
+/* ===== LIFEMAX / premium calendar art direction ===== */
 .plan-calendar-card{border-radius:25px!important;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line))!important;background:var(--panel)!important;box-shadow:0 24px 65px #00000030,inset 0 1px 0 #ffffff0a!important}
 .plan-calendar{isolation:isolate}
 .plan-calendar:before{width:340px;height:340px;right:-150px;top:-170px;opacity:.8;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 22%,transparent) 0%,transparent 68%);filter:blur(10px)}

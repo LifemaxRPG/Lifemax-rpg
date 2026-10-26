@@ -276,7 +276,7 @@ document.addEventListener('input',function(e){var t=e.target;
 })();
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   LIFE MAX RPG / GUIDED WORKOUT ENGINE
+   LIFEMAX / GUIDED WORKOUT ENGINE
    Coordinates with the existing planToggle() and plan XP system.
    Each logged set goes into plan.checks[date].setDetails and the
    SAME checklist that the Plan tab already reads. No duplicate XP.

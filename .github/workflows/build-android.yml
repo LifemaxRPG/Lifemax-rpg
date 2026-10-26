@@ -88,5 +88,5 @@ jobs:
           sed -i 's/^ *//' version.json
           gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
           gh release create latest LifeMax-RPG.apk version.json --repo "$GITHUB_REPOSITORY" \
-            --title "LifeMax RPG (latest build)" \
+            --title "LifeMax (latest build)" \
             --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"

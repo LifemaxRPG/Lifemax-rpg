@@ -46,7 +46,7 @@ function lmaUpdPopRender(){
  else if(u.state==='opened'){body='Android’s installer is open. Tap Update there to finish.';btns='<button class="btn" data-up="close">OK</button>'}
  else if(u.state==='permission'){body='Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.';btns='<button class="btn" data-up="go">Update</button><button class="btn secondary" data-up="later">Later</button>'}
  else if(u.state==='error'){body='Could not update: '+esc(u.err);btns='<button class="btn" data-up="go">Try again</button><button class="btn secondary" data-up="later">Later</button>'}
- else{body='A newer build of LifeMax RPG (build '+esc(i.latest)+') is ready. You have build '+esc(i.current)+'. Your data stays as it is.';btns='<button class="btn" data-up="go">Update now</button><button class="btn secondary" data-up="later">Later</button>'}
+ else{body='A newer build of LifeMax (build '+esc(i.latest)+') is ready. You have build '+esc(i.current)+'. Your data stays as it is.';btns='<button class="btn" data-up="go">Update now</button><button class="btn secondary" data-up="later">Later</button>'}
  o.innerHTML='<div class="updpop-card"><h3>Update available</h3><p>'+body+'</p><div class="updpop-btns">'+btns+'</div></div>';
 }
 function lmaRenderUpdates(){

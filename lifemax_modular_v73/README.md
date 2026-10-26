@@ -351,3 +351,6 @@ Media library and Journal now sit under one **Library** tab (a Media | Journal s
 
 ## v115 — Food tab; Character and Cat reached from the Overview
 Meals and Recipes share one **Food** tab (Meals | Recipes switch, remembered). The **Character** and **Cat** tabs are off the bar: the Overview's level-and-name tile now shows your profile picture (or initial) and opens the Character page when tapped, and the Cat tile opens the Cat page. The bar highlights Overview while you are on those pages. The bar is down to 8 tabs: Overview, Log activity, Quests, Workout plan, Library, Food, Money, Life Director.
+
+## v116 — renamed to LifeMax, new icon
+The app is now just **LifeMax**: launcher label (`capacitor.config.json` appName), page title, header, notifications, update pop-up, widget and release names. The package id (`com.lifemax.rpg`) and the backup file identifier are unchanged so updates and backups keep working. New launcher icon (pixel-art landscape with the LM monogram): adaptive foreground keeps the monogram inside the launcher's safe zone with a blurred extension of the artwork around it; legacy square and round icons and the splash use the artwork directly.

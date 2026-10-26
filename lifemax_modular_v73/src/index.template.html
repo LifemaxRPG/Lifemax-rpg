@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Life Max RPG</title>
+<title>LifeMax</title>
 <style>@@INCLUDE:src/styles/00-00-foundation.css@@@@INCLUDE:src/styles/01-base.css@@@@INCLUDE:src/styles/02-layout.css@@@@INCLUDE:src/styles/03-features.css@@@@INCLUDE:src/styles/04-nutrition.css@@@@INCLUDE:src/styles/05-training.css@@@@INCLUDE:src/styles/06-quests.css@@@@INCLUDE:src/styles/07-finishing.css@@</style>
 </head>
 <body>
 <div id="onboarding" aria-modal="true" role="dialog" aria-labelledby="onbTitle">
   <div class="onb-orb one"></div><div class="onb-orb two"></div>
   <div class="onb-shell">
-    <div class="onb-brand"><div class="onb-mark">✦</div><span>LIFE MAX RPG</span></div>
+    <div class="onb-brand"><div class="onb-mark">✦</div><span>LIFEMAX</span></div>
     <div class="onb-progress" id="onbProgress" aria-label="Setup progress"><span class="active"></span><span></span><span></span><span></span><span></span><span></span></div>
     <div class="onb-kicker" id="onbKicker">A new chapter begins</div>
     <div class="onb-stepstage" id="onbStepStage">
@@ -36,7 +36,7 @@
 </div>
 <div class="app">
   <header class="topbar">
-    <div class="brand" onclick="navigate('character')" style="cursor:pointer" title="Open character sheet"><div class="logo" id="brandLogo"></div><div><h1 id="brandName">Life Max RPG</h1><p>Build the character. Build the life.</p></div></div>
+    <div class="brand" onclick="navigate('character')" style="cursor:pointer" title="Open character sheet"><div class="logo" id="brandLogo"></div><div><h1 id="brandName">LifeMax</h1><p>Build the character. Build the life.</p></div></div>
     <div class="top-actions"><span class="pill">PROTOTYPE · v0.3</span><button class="btn" onclick="navigate('log')">＋ Log activity</button><button class="btn secondary topgear" onclick="navigate('settings')" aria-label="Settings" title="Settings"><i data-px="gear" data-s="18"></i></button></div>
   </header>
   <div class="layout">
@@ -112,7 +112,7 @@
       <summary><span class="fuel-guide-art" aria-hidden="true"><svg class="fuel-guide-svg" viewBox="0 0 20 20" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path fill="#3a2f3d" d="M3 1h13v1h-13zM2 2h1v1h-1zM16 2h1v1h-1zM2 3h1v1h-1zM17 3h1v1h-1zM2 4h1v1h-1zM17 4h1v1h-1zM2 5h1v1h-1zM17 5h1v1h-1zM2 6h1v1h-1zM17 6h1v1h-1zM2 7h1v1h-1zM17 7h1v1h-1zM2 8h1v1h-1zM17 8h1v1h-1zM2 9h1v1h-1zM17 9h1v1h-1zM2 10h1v1h-1zM17 10h1v1h-1zM2 11h1v1h-1zM17 11h1v1h-1zM2 12h1v1h-1zM17 12h1v1h-1zM2 13h1v1h-1zM17 13h1v1h-1zM2 14h1v1h-1zM17 14h1v1h-1zM2 15h1v1h-1zM17 15h1v1h-1zM2 16h1v1h-1zM17 16h1v1h-1zM2 17h1v1h-1zM16 17h1v1h-1zM3 18h9v1h-9zM14 18h2v1h-2zM12 19h1v1h-1zM14 19h1v1h-1z"/><path fill="#2f55a8" d="M3 2h2v1h-2zM3 3h2v1h-2zM3 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM3 7h2v1h-2zM3 8h2v1h-2zM3 9h2v1h-2zM3 10h2v1h-2zM3 11h2v1h-2zM3 12h2v1h-2zM3 13h2v1h-2zM3 14h2v1h-2zM3 15h2v1h-2zM3 16h2v1h-2zM3 17h2v1h-2z"/><path fill="#3f6fd6" d="M5 2h11v1h-11zM5 3h10v1h-10zM5 4h10v1h-10zM5 5h2v1h-2zM14 5h1v1h-1zM5 6h10v1h-10zM5 7h10v1h-10zM5 8h5v1h-5zM11 8h4v1h-4zM5 9h3v1h-3zM13 9h2v1h-2zM5 10h3v1h-3zM13 10h2v1h-2zM5 11h2v1h-2zM14 11h1v1h-1zM5 12h3v1h-3zM13 12h2v1h-2zM5 13h3v1h-3zM13 13h2v1h-2zM5 14h5v1h-5zM11 14h4v1h-4zM5 15h10v1h-10zM5 16h7v1h-7zM14 16h1v1h-1zM5 17h7v1h-7zM14 17h2v1h-2z"/><path fill="#f4ecd6" d="M15 3h2v1h-2zM15 4h1v1h-1zM15 5h1v1h-1zM15 6h1v1h-1zM15 7h1v1h-1zM15 8h1v1h-1zM15 9h1v1h-1zM15 10h1v1h-1zM15 11h1v1h-1zM15 12h1v1h-1zM15 13h1v1h-1zM15 14h1v1h-1zM15 15h1v1h-1zM15 16h2v1h-2z"/><path fill="#d9cfb4" d="M16 4h1v1h-1zM16 5h1v1h-1zM16 6h1v1h-1zM16 7h1v1h-1zM16 8h1v1h-1zM16 9h1v1h-1zM16 10h1v1h-1zM16 11h1v1h-1zM16 12h1v1h-1zM16 13h1v1h-1zM16 14h1v1h-1zM16 15h1v1h-1z"/><path fill="#9fb8f2" d="M7 5h7v1h-7z"/><path fill="#e9f6ee" d="M10 8h1v1h-1zM8 9h2v1h-2zM8 10h2v1h-2zM12 10h1v1h-1zM7 11h3v1h-3zM12 11h2v1h-2zM8 12h2v1h-2zM11 12h2v1h-2zM8 13h2v1h-2zM11 13h2v1h-2z"/><path fill="#46c06a" d="M10 9h3v1h-3zM11 10h1v1h-1zM11 11h1v1h-1z"/><path fill="#2f9d52" d="M10 10h1v1h-1zM10 11h1v1h-1zM10 12h1v1h-1zM10 13h1v1h-1zM10 14h1v1h-1z"/><path fill="#e2564f" d="M12 16h2v1h-2zM12 17h2v1h-2zM12 18h2v1h-2zM13 19h1v1h-1z"/></svg></span><span><b>YOUR CLASS NUTRITION GUIDE</b><small>Weekly menu, performance targets, and substitutions.</small></span><i>＋</i></summary>
       <div id="dietPlanWrap"></div>
     </details>
-    <div class="fuel-signoff"><span>THE BEST BUILD IS THE ONE YOU KEEP SHOWING UP FOR.</span><span>LIFE MAX RPG / FUEL SYSTEM</span></div>
+    <div class="fuel-signoff"><span>THE BEST BUILD IS THE ONE YOU KEEP SHOWING UP FOR.</span><span>LIFEMAX / FUEL SYSTEM</span></div>
   </div>
 </section>
       @@INCLUDE:src/views/money.html@@
@@ -120,7 +120,7 @@
       @@INCLUDE:src/views/settings.html@@
     </main>
   </div>
-  <div class="footer">LIFE MAX RPG · PROTOTYPE · Train it or lose it. Your build, your rules.</div>
+  <div class="footer">LIFEMAX · PROTOTYPE · Train it or lose it. Your build, your rules.</div>
 </div>
 
 <input type="file" id="audioFileInput" class="audio-hidden-input" accept="audio/*,.m4b,.m4a,.mp3,.aac,.ogg,.wav,audio/mp4,audio/x-m4a,audio/mpeg" />

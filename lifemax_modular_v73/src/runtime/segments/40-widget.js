@@ -14,8 +14,8 @@ async function lmaWidgetPush(manual){
 async function lmaWidgetPin(){
  const W=lmaPlugin('WidgetBridge');if(!W)return;
  await lmaWidgetPush(true);
- try{const r=await W.pin();if(!r||!r.requested)toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax RPG.')}
- catch(e){toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax RPG.')}
+ try{const r=await W.pin();if(!r||!r.requested)toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax.')}
+ catch(e){toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax.')}
 }
 async function lmaWidgetRender(){
  const el=document.getElementById('lmaWidgetBody');if(!el)return;

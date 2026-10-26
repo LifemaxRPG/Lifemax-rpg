@@ -1,5 +1,5 @@
-/* Life Director 1.4.0 — Forge feature for LifeMax RPG. Engine + store + host adapter unchanged from 1.3; interface rebuilt around the chrono dial. */
-/*! Life Director Engine v1.0.0 — LifeMax RPG
+/* Life Director 1.4.0 — Forge feature for LifeMax. Engine + store + host adapter unchanged from 1.3; interface rebuilt around the chrono dial. */
+/*! Life Director Engine v1.0.0 — LifeMax
  *  Offline-first, deterministic, constraint-guided scheduler.
  *  Pure module: no DOM, no storage, no clock reads, no randomness in planning paths.
  *  Implements Gemini's Life Director spec with the corrections listed in IMPLEMENTATION_NOTES.md. */

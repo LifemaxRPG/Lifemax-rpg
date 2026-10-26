@@ -85,10 +85,10 @@ function buildReport(){const lv=characterLevel();
    ['Savings transactions',['Date','Type','Amount','Note'],M().tx.slice().reverse().map(t=>[day(t.date),t.type==='deposit'?'Deposit':'Withdrawal',(t.type==='deposit'?'+':'-')+fmt(t.amount),t.note||''])],
    ['Activity history',['Date','Activity','Minutes','XP','Attribute','Notes'],state.activities.slice().sort((x,y)=>new Date(y.date)-new Date(x.date)).map(a=>[when(a.date),a.name,a.duration||0,'+'+a.xp,(ATTRS.find(x=>x.id===a.primary)||{}).short||'',a.notes||''])]
   ]}}
-function reportText(){const r=buildReport();let t=`LIFE MAX RPG - CHARACTER REPORT\n${r.name}${r.build?' ('+r.build+')':''}\nGenerated ${r.date}\n\nSUMMARY\n`+r.summary.map(x=>`  ${x[0]}: ${x[1]}`).join('\n')+'\n';
+function reportText(){const r=buildReport();let t=`LIFEMAX - CHARACTER REPORT\n${r.name}${r.build?' ('+r.build+')':''}\nGenerated ${r.date}\n\nSUMMARY\n`+r.summary.map(x=>`  ${x[0]}: ${x[1]}`).join('\n')+'\n';
  r.sections.forEach(([title,head,rows])=>{t+=`\n${title.toUpperCase()}\n`;t+=rows.length?rows.map(x=>'  '+x.filter((v,i)=>v!==''||i<3).join('  |  ')).join('\n')+'\n':'  (none yet)\n'});return t}
 function reportDoc(){const r=buildReport();const tbl=(h,rows)=>rows.length?`<table><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr>${rows.map(x=>`<tr>${x.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table>`:'<p><i>None yet.</i></p>';
- return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Life Max RPG Report</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#222}h1{font-size:22pt;color:#2b3a67;margin-bottom:0}h2{font-size:14pt;color:#2b3a67;border-bottom:1px solid #bbb;padding-bottom:3px;margin-top:22px}table{border-collapse:collapse;width:100%}th{background:#2b3a67;color:#fff;text-align:left;padding:5px 8px;font-size:10pt}td{border-bottom:1px solid #ddd;padding:5px 8px;font-size:10pt}p.sub{color:#666;margin-top:2px}
+ return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>LifeMax Report</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#222}h1{font-size:22pt;color:#2b3a67;margin-bottom:0}h2{font-size:14pt;color:#2b3a67;border-bottom:1px solid #bbb;padding-bottom:3px;margin-top:22px}table{border-collapse:collapse;width:100%}th{background:#2b3a67;color:#fff;text-align:left;padding:5px 8px;font-size:10pt}td{border-bottom:1px solid #ddd;padding:5px 8px;font-size:10pt}p.sub{color:#666;margin-top:2px}
 /* Premium tactile calendar v2 — immersive training-cycle surface */
 .plan-calendar-card{padding:0!important;overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line))!important;background:linear-gradient(155deg,color-mix(in srgb,var(--panel) 94%,var(--accent) 6%),var(--panel))!important;box-shadow:0 18px 50px #00000022, inset 0 1px 0 #ffffff0a!important}
 .plan-calendar{padding:0;overflow:hidden;position:relative}
@@ -155,7 +155,7 @@ function reportDoc(){const r=buildReport();const tbl=(h,rows)=>rows.length?`<tab
 }
 @media(prefers-reduced-motion:reduce){.plan-week,.plan-day-tile,.plan-cycle-line span{transition:none}}
 
-</style></head><body><h1>${esc(r.name)}</h1><p class="sub">${esc(r.build)} &middot; Life Max RPG report &middot; ${esc(r.date)}</p><h2>Summary</h2>${tbl(['Stat','Value'],r.summary)}${r.sections.map(x=>`<h2>${x[0]}</h2>${tbl(x[1],x[2])}`).join('')}</body></html>`}
+</style></head><body><h1>${esc(r.name)}</h1><p class="sub">${esc(r.build)} &middot; LifeMax report &middot; ${esc(r.date)}</p><h2>Summary</h2>${tbl(['Stat','Value'],r.summary)}${r.sections.map(x=>`<h2>${x[0]}</h2>${tbl(x[1],x[2])}`).join('')}</body></html>`}
 function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufeff'+reportText();lmaDownload(content,'life-max-report-'+getToday()+(doc?'.doc':'.txt'),doc?'application/msword':'text/plain',doc?'Word report':'Text report')}
 function M(){if(!state.money)state.money={account:'',start:0,goal:0,tx:[]};return state.money}
 function fmt(n){return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n)}
