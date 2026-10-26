@@ -69,3 +69,26 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .ova-app img,.ova-add i{width:48px;height:48px;border-radius:12px;object-fit:cover}
 .ova-add i{display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);font-style:normal;font-size:24px;color:var(--muted)}
 .ova-app span{font-size:11px;line-height:1.15;max-width:62px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* v104 · Scrub bar (phones): a floating glass capsule; slide a thumb along it to glide through the tabs */
+.navtrack{display:contents}.navpill,.navbubble{display:none}
+@media(max-width:860px){
+  :root{--nav-h:84px}
+  .sidebar{left:10px;right:10px;bottom:calc(8px + var(--safe-b));height:64px;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:26px;
+    background:rgba(18,21,28,.74);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 10px 34px #0008,inset 0 1px 0 #ffffff12;touch-action:none;display:block}
+  .sidebar::before,.sidebar::after{content:"";position:absolute;top:0;bottom:0;width:30px;z-index:2;pointer-events:none}
+  .sidebar::before{left:0;background:linear-gradient(90deg,rgba(18,21,28,.95),transparent)}
+  .sidebar::after{right:0;background:linear-gradient(270deg,rgba(18,21,28,.95),transparent)}
+  .navtrack{display:flex;position:relative;height:100%;width:max-content;will-change:transform;align-items:stretch}
+  .navpill{display:block;position:absolute;left:0;top:7px;bottom:7px;width:58px;border-radius:20px;background:var(--accent-dim);box-shadow:inset 0 0 0 1px #ffffff10,0 0 18px -4px var(--accent);will-change:transform}
+  .sidebar .navbtn{position:relative;z-index:1;flex:0 0 66px;width:66px;min-width:0;max-width:none;height:100%;padding:8px 0 6px;margin:0;border-radius:0;background:none!important;justify-content:center;gap:4px;color:var(--muted);font-size:9.5px;font-weight:550;transition:color .2s}
+  .sidebar .navbtn .ico{animation:none!important;will-change:transform}
+  .sidebar .navbtn:active{transform:none}
+  .sidebar .navbtn.scrub-near,.sidebar .navbtn.active{color:var(--accent-strong)}
+  .navbubble{display:block;position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) - 4px);z-index:31;padding:7px 16px;border-radius:99px;background:rgba(28,32,42,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--text);font-size:14px;font-weight:650;box-shadow:0 6px 24px #0007,inset 0 0 0 1px #ffffff14;opacity:0;transform:translate(-50%,10px) scale(.92);transition:opacity .16s,transform .22s var(--ease-out);pointer-events:none;white-space:nowrap}
+  .navbubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
+  .view.vslide-r{animation:vSlideR .28s var(--ease-out)}.view.vslide-l{animation:vSlideL .28s var(--ease-out)}
+}
+@keyframes vSlideR{from{opacity:.0;transform:translate3d(34px,0,0)}to{opacity:1;transform:none}}
+@keyframes vSlideL{from{opacity:.0;transform:translate3d(-34px,0,0)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.view.vslide-r,.view.vslide-l{animation:none!important}}

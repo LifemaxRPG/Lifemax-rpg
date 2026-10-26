@@ -324,3 +324,6 @@ New Overview tile "App shortcuts": a scrolling row of your Apps-tab shortcuts us
 
 ## v103 — launch update check retries
 If the check at launch fails (e.g. no network yet) it retries after 15 s, 45 s and 2 min, and Settings → App updates shows the error instead of staying silent.
+
+## v104 — Scrub bar navigation (phones)
+The bottom bar is now a floating glass capsule. Slide a thumb along it and the tabs glide past (a full-width swipe covers all 14): the strip centres on your finger's position, a pill follows, icons swell like a dock, a bubble names the tab, light haptic ticks mark each tab, and the page switches live with a short slide in from the side it lies on. Release snaps to the nearest tab with a little momentum. Tapping still works; Back returns to where the scrub started. `src/runtime/segments/42-scrubnav.js`.

@@ -52,7 +52,7 @@ function lmaTabList(){return [...document.querySelectorAll('.navbtn[data-view]')
 /* true when a touch starting here should never turn into a tab swipe */
 function lmaSwipeBlocked(t){
  if(!t||!t.closest)return true;
- if(t.closest('#view-life-director,#view-pet canvas,[data-noswipe]'))return true; /* Life Director has its own swipes; the cat room is touch-played */
+ if(t.closest('#view-life-director,#view-pet canvas,[data-noswipe],.sidebar'))return true; /* Life Director has its own swipes; the cat room is touch-played */
  for(let e=t;e&&e!==document.documentElement;e=e.parentElement){
   if(/^(INPUT|TEXTAREA|SELECT|CANVAS|VIDEO|AUDIO)$/.test(e.tagName)||e.isContentEditable)return true;
   const ox=getComputedStyle(e).overflowX;

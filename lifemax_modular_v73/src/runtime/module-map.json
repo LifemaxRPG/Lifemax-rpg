@@ -1851,6 +1851,28 @@
     "ovAppsFetching",
     "ovAppsRender"
    ]
+  },
+  {
+   "file": "src/runtime/segments/42-scrubnav.js",
+   "bytes": 6368,
+   "statement_count": 12,
+   "tags": [
+    "navigation",
+    "android"
+   ],
+   "symbols": [
+    "LMA_SCRUB",
+    "lmaScrub",
+    "lmaScrubOn",
+    "lmaScrubItems",
+    "lmaScrubIndex",
+    "lmaScrubRender",
+    "lmaScrubTick",
+    "lmaScrubGo",
+    "lmaScrubBubble",
+    "lmaScrubCommit",
+    "lmaScrubInit"
+   ]
   }
  ]
 }
