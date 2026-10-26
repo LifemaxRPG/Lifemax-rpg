@@ -27,3 +27,11 @@ function ovAppsRender(){
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovAppsRender()}catch(e){console.warn('[apps row]',e)}return r};
  setTimeout(function(){try{ovAppsRender()}catch(e){}},1500);
 })();
+
+/* the level and name tile opens the Character page, which no longer has its own tab */
+(function ovHeroOpen(){
+ document.addEventListener('click',e=>{
+  const h=e.target.closest&&e.target.closest('#ovHero');if(!h||e.target.closest('button,a,input'))return;
+  navigate('character');
+ });
+})();

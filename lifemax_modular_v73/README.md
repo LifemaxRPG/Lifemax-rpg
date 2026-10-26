@@ -348,3 +348,6 @@ The scrub veil shows the blurred screenshot of each tab with a thin white outlin
 
 ## v114 — fewer tabs
 Media library and Journal now sit under one **Library** tab (a Media | Journal switch at the top of each page; the tab remembers which one you were on). The **Apps** tab is gone from the bar (the Overview app row stays, and its "Edit" link opens the shortcut editor, `nav: false` in the feature file). **Settings** moved to a gear button in the top bar. The bar now has 11 tabs: Overview, Character, Cat, Log activity, Quests, Workout plan, Library, Meals, Recipes, Money, Life Director.
+
+## v115 — Food tab; Character and Cat reached from the Overview
+Meals and Recipes share one **Food** tab (Meals | Recipes switch, remembered). The **Character** and **Cat** tabs are off the bar: the Overview's level-and-name tile now shows your profile picture (or initial) and opens the Character page when tapped, and the Cat tile opens the Cat page. The bar highlights Overview while you are on those pages. The bar is down to 8 tabs: Overview, Log activity, Quests, Workout plan, Library, Food, Money, Life Director.

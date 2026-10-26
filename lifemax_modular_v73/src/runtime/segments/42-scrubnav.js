@@ -87,6 +87,7 @@ const LMA_TAB_ICONS={
  history:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>',
  settings:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.500"/><path d="M12 2v2.500M12 19.500V22M2 12h2.500M19.500 12H22M4.900 4.900l1.800 1.800M17.300 17.300l1.800 1.800M4.900 19.100l1.800-1.800M17.300 6.700l1.800-1.800"/>',
  apps:'<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M10.500 18.500h3"/>',
+ food:'<path d="M3.500 11h17a8.500 8.500 0 0 1-17 0z"/><path d="M8 4.500c0 2 2 2 2 4M13 3.500c0 2 2 2 2 5"/>',
  library:'<path d="M12 6C10 4.500 7 4 4 4v14c3 0 6 .5 8 2 2-1.500 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/>',
  'life-director':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.500"/><path d="M12 12V7.500M12 12l3.500 2"/><path d="M12 3v1.500M21 12h-1.500M12 21v-1.500M3 12h1.500"/>'
 };
@@ -192,7 +193,11 @@ function lmaScrubInit(){
  navigate=function(v){
   const r=_nav.apply(this,arguments);
   try{
-   if(v==='media'||v==='history'){state.libPane=v;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view==='library'))}
+   const g=lmaTabKey(v);
+   if(g==='library')state.libPane=v;if(g==='food')state.foodPane=v;
+   /* grouped pages, and the pages reached from the Overview (Character, Cat), light up their tab on the bar */
+   const lit=g!==v?g:(v==='character'||v==='pet')?'dashboard':null;
+   if(lit)document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===lit));
    document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
    lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));
   }catch(e){}

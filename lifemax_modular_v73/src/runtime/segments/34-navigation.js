@@ -4,8 +4,9 @@ const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
 let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
 /* Media and Journal live together under the Library tab */
-const lmaTabKey=v=>v==='media'||v==='history'?'library':v;
-const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v;
+const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
+const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
+const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
 function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.

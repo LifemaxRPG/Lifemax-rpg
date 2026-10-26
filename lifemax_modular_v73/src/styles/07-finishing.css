@@ -120,3 +120,10 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 .libseg button.on{background:var(--accent-dim);color:var(--accent-strong)}
 .topgear{padding:9px 11px;display:inline-flex;align-items:center;justify-content:center}
 .top-actions{display:flex;gap:8px;align-items:center}
+
+/* v115 · Food tab, Overview hero opens Character */
+.foodseg{padding:0 4px}
+.ov-hero{cursor:pointer}
+.ov-ava{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:var(--panel3) center/cover no-repeat;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--text);box-shadow:0 0 0 2px var(--accent-dim);margin-right:2px}
+.ov-lvrow{display:flex;align-items:center;gap:10px}
+.ov-go{margin-left:auto;font-size:26px;line-height:1;color:var(--muted)}

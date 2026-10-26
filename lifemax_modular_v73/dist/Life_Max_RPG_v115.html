@@ -3501,6 +3501,13 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 .libseg button.on{background:var(--accent-dim);color:var(--accent-strong)}
 .topgear{padding:9px 11px;display:inline-flex;align-items:center;justify-content:center}
 .top-actions{display:flex;gap:8px;align-items:center}
+
+/* v115 · Food tab, Overview hero opens Character */
+.foodseg{padding:0 4px}
+.ov-hero{cursor:pointer}
+.ov-ava{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:var(--panel3) center/cover no-repeat;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--text);box-shadow:0 0 0 2px var(--accent-dim);margin-right:2px}
+.ov-lvrow{display:flex;align-items:center;gap:10px}
+.ov-go{margin-left:auto;font-size:26px;line-height:1;color:var(--muted)}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
@@ -4200,14 +4207,11 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
   <div class="layout">
     <aside class="sidebar">
       <button class="navbtn active" data-view="dashboard" onclick="navigate('dashboard')"><span class="ico"><i data-px="grid" data-s="18"></i></span>Overview</button>
-      <button class="navbtn" data-view="character" onclick="navigate('character')"><span class="ico"><i data-px="person" data-s="18"></i></span>Character</button>
-      <button class="navbtn" data-view="pet" onclick="navigate('pet')"><span class="ico"><i data-px="paw" data-s="18"></i></span>Cat</button>
       <button class="navbtn" data-view="log" onclick="navigate('log')"><span class="ico"><i data-px="plus" data-s="18"></i></span>Log activity</button>
       <button class="navbtn" data-view="quests" onclick="navigate('quests')"><span class="ico"><i data-px="flag" data-s="18"></i></span>Quests</button>
       <button class="navbtn" data-view="plan" onclick="navigate('plan')"><span class="ico"><i data-px="list" data-s="18"></i></span>Workout plan</button>
       <button class="navbtn" data-view="library" onclick="lmaNavTo('library')"><span class="ico"><i data-px="book" data-s="18"></i></span>Library</button>
-      <button class="navbtn" data-view="meals" onclick="navigate('meals')"><span class="ico"><i data-px="heart" data-s="18"></i></span>Meals</button>
-      <button class="navbtn" data-view="recipes" onclick="navigate('recipes')"><span class="ico"><i data-px="book-open" data-s="18"></i></span>Recipes</button>
+      <button class="navbtn" data-view="food" onclick="lmaNavTo('food')"><span class="ico"><i data-px="heart" data-s="18"></i></span>Food</button>
       <button class="navbtn" data-view="money" onclick="navigate('money')"><span class="ico"><i data-px="coin" data-s="18"></i></span>Money</button>
       <button class="navbtn" data-view="life-director" onclick="navigate('life-director')"><span class="ico">✦</span>Life Director</button>
 <div class="sidebar-note"><strong>YOUR REAL-LIFE SAVE FILE</strong>Train an attribute or watch it fade. Rest is a choice — unused stats still decay.</div>
@@ -4441,11 +4445,13 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         </div>
       </section>
       <section id="view-recipes" class="view">
-        <div class="pagehead"><div><div class="eyebrow">FUEL YOUR BUILD</div><h2>Recipes</h2><p>Recipes from the Fit to Win Athlete Cookbook. Nutrition values are shown as printed in the cookbook; recipe variations may change them. Class-plan recipes are marked (est.) and use estimated nutrition.</p></div><button class="btn" onclick="navigate('meals')">＋ Log a meal</button></div>
+        <div class="libseg" role="tablist"><button type="button" data-lib="meals" onclick="lmaNavTo('meals')">Meals</button><button type="button" data-lib="recipes" onclick="lmaNavTo('recipes')">Recipes</button></div>
+  <div class="pagehead"><div><div class="eyebrow">FUEL YOUR BUILD</div><h2>Recipes</h2><p>Recipes from the Fit to Win Athlete Cookbook. Nutrition values are shown as printed in the cookbook; recipe variations may change them. Class-plan recipes are marked (est.) and use estimated nutrition.</p></div><button class="btn" onclick="navigate('meals')">＋ Log a meal</button></div>
         <div class="card" style="margin-bottom:14px"><div class="field"><label for="recipeSearch">Find a recipe</label><input id="recipeSearch" type="search" placeholder="Search recipes or ingredients…" oninput="renderRecipes()"></div><div class="formgrid" style="margin-top:10px"><div class="field"><label for="recipeCategory">Category</label><select id="recipeCategory" onchange="renderRecipes()"><option value="all">All recipes</option><option>Breakfast</option><option>Pre-workout</option><option>Post-workout</option><option>Lunch & dinner</option></select></div></div></div>
         <div id="recipesList" class="grid two-col"></div>
       </section>
       <section id="view-meals" class="view fuel-view">
+  <div class="foodseg"><div class="libseg" role="tablist"><button type="button" data-lib="meals" onclick="lmaNavTo('meals')">Meals</button><button type="button" data-lib="recipes" onclick="lmaNavTo('recipes')">Recipes</button></div></div>
   <div class="fuel-world">
     <header class="fuel-topline">
       <span class="fuel-topline-label"><span class="fuel-online-dot" aria-hidden="true"></span> LIFE MAX / NUTRITION SYSTEM</span>
@@ -8444,7 +8450,7 @@ function ovHeroHtml(){
   let dots='';for(let i=6;i>=0;i--)dots+='<i class="'+(m[ovKey(i)]?'on':'')+(i===0?' now':'')+'"></i>';
   return '<div class="ov-hero-main"><div class="ov-ring"><svg viewBox="0 0 148 148" aria-hidden="true"><circle class="ov-ring-track" cx="74" cy="74" r="'+R+'"/><g transform="rotate(-90 74 74)"><g class="ov-segs">'+arcs+'</g></g></svg>'
    +'<div class="ov-ring-c"><div><small>TODAY</small><b id="ovToday" data-v="'+today+'" class="'+(over?'over':'')+'">'+today+'</b><span>of '+pace+' XP'+(over?' · +'+over+'%':'')+'</span></div></div></div>'
-   +'<div class="ov-meta"><div class="ov-lvrow"><span class="ov-lvbadge">'+lv.level+'</span><div style="min-width:0;flex:1"><div class="ov-title">'+title.toUpperCase()+(cls?'<br><span>'+cls.name.toUpperCase()+'</span>':'')+'</div></div></div><div class="ov-xpt"><span>'+lv.into.toLocaleString()+' / '+lv.needed.toLocaleString()+' XP</span><span>LV '+(lv.level+1)+' →</span></div>'
+   +'<div class="ov-meta"><div class="ov-lvrow"><span class="ov-ava"'+(state.avatar?' style="background-image:url(&quot;'+state.avatar+'&quot;)"':'')+'>'+(state.avatar?'':esc(((state.name||'?').trim()[0]||'?').toUpperCase()))+'</span><span class="ov-lvbadge">'+lv.level+'</span><div style="min-width:0;flex:1"><div class="ov-title">'+title.toUpperCase()+(cls?'<br><span>'+cls.name.toUpperCase()+'</span>':'')+'</div></div><span class="ov-go" aria-hidden="true">›</span></div><div class="ov-xpt"><span>'+lv.into.toLocaleString()+' / '+lv.needed.toLocaleString()+' XP</span><span>LV '+(lv.level+1)+' →</span></div>'
    +'<div class="xpbar ov-xpbar"><div class="xpfill" data-w="'+lv.pct.toFixed(1)+'%" style="width:'+lv.pct.toFixed(1)+'%"></div></div>'
    +'<div class="ov-streak"><span class="ov-flame">'+px('flame',16)+'</span><b>'+streak()+'</b><span>day streak</span><span class="ov-dots">'+dots+'</span></div></div></div>'
    +'<div class="ov-hero-foot"><div><small>THIS WEEK</small><b>+'+wk.toLocaleString()+' XP</b>'+(delta===null?'':'<em class="'+(delta>=0?'up':'dn')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'%</em>')+'</div><div><small>TOTAL XP</small><b>'+totalXP().toLocaleString()+'</b></div><div><small>ACHIEVEMENTS</small><b>'+Object.keys(state.badges||{}).length+' / '+BADGES.length+'</b></div></div>';
@@ -13504,8 +13510,9 @@ const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
 let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
 /* Media and Journal live together under the Library tab */
-const lmaTabKey=v=>v==='media'||v==='history'?'library':v;
-const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v;
+const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
+const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
+const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
 function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
@@ -14582,6 +14589,14 @@ function ovAppsRender(){
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovAppsRender()}catch(e){console.warn('[apps row]',e)}return r};
  setTimeout(function(){try{ovAppsRender()}catch(e){}},1500);
 })();
+
+/* the level and name tile opens the Character page, which no longer has its own tab */
+(function ovHeroOpen(){
+ document.addEventListener('click',e=>{
+  const h=e.target.closest&&e.target.closest('#ovHero');if(!h||e.target.closest('button,a,input'))return;
+  navigate('character');
+ });
+})();
 /* ---------- v106 · Bottom bar: looks as it always did; slide a thumb along it to run through the tabs ----------
    The finger picks a tab (a full-width swipe covers them all). The bar just shows that tab as the active one and
    scrolls only when it has to keep it in view. The page follows as soon as the finger slows (and when it lifts),
@@ -14671,6 +14686,7 @@ const LMA_TAB_ICONS={
  history:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>',
  settings:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.500"/><path d="M12 2v2.500M12 19.500V22M2 12h2.500M19.500 12H22M4.900 4.900l1.800 1.800M17.300 17.300l1.800 1.800M4.900 19.100l1.800-1.800M17.300 6.700l1.800-1.800"/>',
  apps:'<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M10.500 18.500h3"/>',
+ food:'<path d="M3.500 11h17a8.500 8.500 0 0 1-17 0z"/><path d="M8 4.500c0 2 2 2 2 4M13 3.500c0 2 2 2 2 5"/>',
  library:'<path d="M12 6C10 4.500 7 4 4 4v14c3 0 6 .5 8 2 2-1.500 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/>',
  'life-director':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.500"/><path d="M12 12V7.500M12 12l3.500 2"/><path d="M12 3v1.500M21 12h-1.500M12 21v-1.500M3 12h1.500"/>'
 };
@@ -14776,7 +14792,11 @@ function lmaScrubInit(){
  navigate=function(v){
   const r=_nav.apply(this,arguments);
   try{
-   if(v==='media'||v==='history'){state.libPane=v;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view==='library'))}
+   const g=lmaTabKey(v);
+   if(g==='library')state.libPane=v;if(g==='food')state.foodPane=v;
+   /* grouped pages, and the pages reached from the Overview (Character, Cat), light up their tab on the bar */
+   const lit=g!==v?g:(v==='character'||v==='pet')?'dashboard':null;
+   if(lit)document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===lit));
    document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
    lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));
   }catch(e){}
