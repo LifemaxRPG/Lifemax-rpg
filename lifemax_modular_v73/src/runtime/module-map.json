@@ -1693,6 +1693,34 @@
     "lmaSetHtml",
     "lmaUpd"
    ]
+  },
+  {
+   "file": "src/runtime/segments/36-money-pay.js",
+   "bytes": 10599,
+   "statement_count": 17,
+   "tags": [
+    "money",
+    "paychecks"
+   ],
+   "symbols": [
+    "PAY_FREQ",
+    "payCfg",
+    "payClear",
+    "payClearNow",
+    "payDayStr",
+    "payDays",
+    "payISO",
+    "payJob",
+    "payNextDate",
+    "payR2",
+    "payRemovePending",
+    "payRender",
+    "payRules",
+    "payScan",
+    "paySet",
+    "payTick",
+    "payTime"
+   ]
   }
  ]
 }

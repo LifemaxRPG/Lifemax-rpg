@@ -4609,14 +4609,47 @@ const LifeDirectorApp = (function () {
     }
     tick(); render();
   }
-  return { mount, glance, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, FEATURE_ID };
+  /* Read-only helpers for LifeMax's Money tab: recurring WORK rules, and the work shifts that ENDED in (fromEpoch, toEpoch].
+     One-off commitments of kind WORK count too; shifts mostly covered by a one-off blackout (called off, sick) do not. */
+  function workRules() {
+    if (!ST) boot();
+    return (ST.availability.rules || []).filter(r => r.kind === 'WORK').map(r => ({ id: r.id, title: r.title || 'Work', days: (r.days || []).slice(), startMin: r.startMin, durationMin: r.durationMin }));
+  }
+  function shifts(fromEpoch, toEpoch) {
+    if (!ST) boot();
+    const U = LifeDirectorEngine.util, z = tz(), out = [];
+    const p0 = U.localParts(fromEpoch, z), p1 = U.localParts(toEpoch, z);
+    let ymd = U.ymdAdd({ y: p0.y, mo: p0.mo, d: p0.d }, -1);
+    const lastKey = U.ymdKey(U.ymdAdd({ y: p1.y, mo: p1.mo, d: p1.d }, 0));
+    for (let guard = 0; guard < 400 && U.ymdKey(ymd) <= lastKey; guard++, ymd = U.ymdAdd(ymd, 1)) {
+      for (const r of ST.availability.rules || []) {
+        if (r.kind !== 'WORK' || !ruleOn(r, ymd)) continue;
+        const s = U.zonedToEpoch(ymd.y, ymd.mo, ymd.d, r.startMin, z), e = U.zonedToEpoch(ymd.y, ymd.mo, ymd.d, r.startMin + r.durationMin, z);
+        if (e <= fromEpoch || e > toEpoch) continue;
+        out.push({ key: r.id + '|' + U.ymdKey(ymd), ruleId: r.id, title: r.title || 'Work', startEpoch: s, endEpoch: e, durationMin: r.durationMin });
+      }
+    }
+    for (const c of ST.fixedCommitments || []) {
+      const k = c.kind || (c.commitmentType === 'CLASS' ? 'CLASS' : c.commitmentType === 'EMERGENCY' ? 'EMERGENCY' : 'WORK');
+      if (k !== 'WORK' || !c.startEpoch || !c.endEpoch || c.endEpoch <= fromEpoch || c.endEpoch > toEpoch) continue;
+      out.push({ key: 'one|' + String(c.id || c.commitmentId || c.startEpoch), ruleId: null, title: c.title || 'Extra shift', startEpoch: c.startEpoch, endEpoch: c.endEpoch, durationMin: Math.round((c.endEpoch - c.startEpoch) / 60) });
+    }
+    const off = (ST.availability.blackouts || []).filter(b => b && b.startEpoch && b.endEpoch);
+    return out.filter(s => {
+      const dur = s.endEpoch - s.startEpoch;
+      const hit = off.reduce((a, b) => a + Math.max(0, Math.min(b.endEpoch, s.endEpoch) - Math.max(b.startEpoch, s.startEpoch)), 0);
+      return hit < dur * 0.5;
+    }).sort((a, b) => a.endEpoch - b.endEpoch);
+  }
+  return { mount, glance, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */
 window.LifeDirector = Object.freeze({
   version: LifeDirectorEngine.ENGINE_VERSION, engine: LifeDirectorEngine,
   getSchedule: () => LifeDirectorApp.getSchedule(), regenerate: r => LifeDirectorApp.regenerate(r),
-  glance: (el, opts) => LifeDirectorApp.glance(el, opts)
+  glance: (el, opts) => LifeDirectorApp.glance(el, opts),
+  workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b)
 });
 /* the Overview was drawn before this feature loaded: put today's dial on it now */
 try { const g = document.getElementById('ovPlan'); if (g) LifeDirectorApp.glance(g); } catch (e) { /* the Overview will try again on its next draw */ }
