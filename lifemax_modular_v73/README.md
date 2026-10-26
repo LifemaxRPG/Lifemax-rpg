@@ -339,3 +339,6 @@ While the finger is moving fast the page no longer switches at all (the bar glid
 
 ## v110 — scrub veil
 While you scrub the bottom bar, the page you were on is blurred and dimmed behind a large icon and the name of the tab you are over (a veil: one extra layer, no page work). The real page is switched in when the finger rests (130 ms) or lifts, and the veil fades out once it has painted. The bar always shows the tab you are on as the active one.
+
+## v111 — whole-bar scrub
+Edge to edge on the bottom bar covers every tab from any starting point: where your thumb lands is the tab you are on, the left edge is the first tab, the right edge the last, and the distance on each side is spread evenly between.

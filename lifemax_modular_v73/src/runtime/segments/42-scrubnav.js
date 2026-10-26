@@ -63,7 +63,8 @@ function lmaScrubInit(){
   if(!lmaScrubOn()||e.touches.length!==1)return;
   const t=e.touches[0];lmaScrubItems();
   const st=Math.max(0,lmaScrubIndex(lmaView()));
-  S.drag={x0:t.clientX,y0:t.clientY,start:st,moved:false,from:lmaView(),W:Math.max(200,sb.clientWidth)};
+  const r=sb.getBoundingClientRect();
+  S.drag={x0:t.clientX,y0:t.clientY,start:st,moved:false,from:lmaView(),W:Math.max(200,r.width),L:r.left};
   S.sel=st;
  },{passive:true});
  sb.addEventListener('touchmove',e=>{
@@ -76,7 +77,11 @@ function lmaScrubInit(){
   }
   e.preventDefault();
   const nowT=performance.now();if(d.lt){const dt=Math.max(1,nowT-d.lt);d.speed=(d.speed||0)*.5+Math.abs(t.clientX-d.lx)/dt*.5}d.lt=nowT;d.lx=t.clientX;
-  const per=d.W*LMA_SCRUB.gain/Math.max(1,n-1),i=Math.round(Math.min(n-1,Math.max(0,d.start-dx/per)));
+  /* the whole bar is the whole scrub: your starting point is the tab you are on, the left edge is the first tab and the
+     right edge the last, with the stretch in between spread evenly on each side */
+  const W=d.W,x=Math.min(W,Math.max(0,t.clientX-d.L)),x0=Math.min(W-40,Math.max(40,d.x0-d.L));
+  const f=x<=x0?d.start*(x/x0):d.start+(n-1-d.start)*((x-x0)/(W-x0));
+  const i=Math.round(Math.min(n-1,Math.max(0,f)));
   if(i!==S.sel){
    lmaScrubMark(i);lmaBuzz('tick');lmaVeilSet(i);lmaVeil(true);
    clearTimeout(S.timer);S.timer=setTimeout(go,settleFor(i));
