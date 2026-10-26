@@ -8,19 +8,19 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 57,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
     "flagged": [
      {
       "frame": 0,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 2,
@@ -29,38 +29,38 @@
      },
      {
       "frame": 3,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 13,
       "profile": "tail long"
      },
      {
       "frame": 6,
-      "score": 8,
-      "profile": "ears short"
+      "score": 15,
+      "profile": "tail long"
      },
      {
       "frame": 7,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 8,
-     "tail long": 10,
-     "tail short": 1,
+     "tail long": 15,
+     "tail short": 4,
      "whiskers": 2
     },
-    "bestFrame": 5
+    "bestFrame": 6
    },
    "walk": {
     "legs": true,
@@ -69,48 +69,48 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 30,
-    "worst": 12,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 12,
+      "score": 12.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 11,
+      "score": 13,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 5,
       "score": 10.5,
       "profile": "tail short"
      },
      {
+      "frame": 5,
+      "score": 13.5,
+      "profile": "tail short"
+     },
+     {
       "frame": 6,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 12,
-     "tail short": 10.5,
+     "tail long": 13,
+     "tail short": 13.5,
      "legs long": 0,
      "legs short": 2.5,
      "body long": 0,
      "body short": 1.5,
      "whiskers": 1
     },
-    "bestFrame": 0
+    "bestFrame": 5
    },
    "run": {
     "legs": false,
@@ -119,26 +119,31 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 59,
-    "worst": 25,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 28,
     "flagged": [
      {
       "frame": 0,
-      "score": 25,
+      "score": 28,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 9,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 4.5,
-     "tail short": 25,
+     "tail long": 7.5,
+     "tail short": 28,
      "body long": 0,
      "body short": 1,
      "whiskers": 1
@@ -148,42 +153,40 @@
    "sleep": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 42,
-    "worst": 191.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
     "flagged": [
      {
       "frame": 0,
-      "score": 191.5,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      },
      {
       "frame": 1,
-      "score": 187,
-      "profile": "tail long"
+      "score": 14,
+      "profile": "ears short"
      },
      {
       "frame": 2,
-      "score": 186,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 185.5,
-      "profile": "tail long"
+      "score": 14,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 15,
-     "tail long": 191.5,
-     "tail short": 31.5,
-     "body long": 2,
-     "body short": 7.5,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -195,37 +198,37 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 64,
-    "worst": 14.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 20,
     "flagged": [
      {
       "frame": 0,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 8.5,
-     "tail long": 0,
-     "tail short": 14.5,
-     "body long": 4,
+     "tail long": 5.5,
+     "tail short": 20,
+     "body long": 0,
      "body short": 8,
      "whiskers": 1
     },
@@ -238,18 +241,23 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 54,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11,
     "flagged": [
      {
       "frame": 0,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
       "profile": "tail long"
      },
      {
@@ -258,19 +266,34 @@
       "profile": "ears short"
      },
      {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "tail long"
+     },
+     {
       "frame": 5,
       "score": 8,
       "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 10.5,
-     "tail short": 0.5,
+     "tail long": 11,
+     "tail short": 1.5,
      "whiskers": 2
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "eat": {
     "legs": true,
@@ -279,33 +302,33 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 29,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 11,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 11,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 3,
-     "tail short": 11,
+     "tail long": 6,
+     "tail short": 12.5,
      "legs long": 0,
      "legs short": 0,
      "body long": 0,
      "body short": 0,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "play": {
     "legs": false,
@@ -363,13 +386,13 @@
     "frames": 7,
     "earsFound": 7,
     "tailFrames": 7,
-    "identityBad": 7,
-    "idMax": 42,
-    "worst": 15.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 16.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 12.5,
+      "score": 16.5,
       "profile": "tail short"
      },
      {
@@ -391,16 +414,21 @@
       "frame": 5,
       "score": 14.5,
       "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 9,
+      "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 15.5,
-     "tail long": 12,
-     "tail short": 12.5,
+     "tail long": 12.5,
+     "tail short": 16.5,
      "whiskers": 2
     },
-    "bestFrame": 5
+    "bestFrame": 1
    },
    "lookup": {
     "legs": false,
@@ -409,13 +437,13 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 57,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13,
     "flagged": [
      {
       "frame": 0,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
@@ -425,20 +453,20 @@
      },
      {
       "frame": 2,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 13,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 10,
-     "tail short": 1,
+     "tail long": 13,
+     "tail short": 4,
      "whiskers": 0
     },
     "bestFrame": 3
@@ -450,46 +478,46 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 43,
-    "worst": 8,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 8,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 8,
-     "tail long": 7,
-     "tail short": 0,
+     "tail long": 10.5,
+     "tail short": 3,
      "whiskers": 2
     },
     "bestFrame": 0
@@ -501,10 +529,15 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 46,
-    "worst": 9,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10.5,
     "flagged": [
+     {
+      "frame": 0,
+      "score": 10.5,
+      "profile": "tail long"
+     },
      {
       "frame": 1,
       "score": 8,
@@ -512,7 +545,7 @@
      },
      {
       "frame": 2,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
@@ -524,11 +557,11 @@
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 9,
-     "tail short": 1,
+     "tail long": 10.5,
+     "tail short": 4,
      "whiskers": 1
     },
-    "bestFrame": 2
+    "bestFrame": 0
    },
    "rub": {
     "legs": true,
@@ -537,8 +570,8 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 21,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -555,15 +588,15 @@
     "prof": {
      "ears long": 1.5,
      "ears short": 8,
-     "tail long": 4,
-     "tail short": 0.5,
+     "tail long": 5.5,
+     "tail short": 2,
      "legs long": 0,
      "legs short": 2,
      "body long": 0,
      "body short": 0,
      "whiskers": 1
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "knead": {
     "legs": false,
@@ -572,33 +605,38 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 64,
-    "worst": 15.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 20,
     "flagged": [
      {
       "frame": 0,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 15.5,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 14.5,
+      "score": 20,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 8.5,
-     "tail long": 3,
-     "tail short": 15.5,
+     "tail long": 7.5,
+     "tail short": 20,
      "body long": 10,
-     "body short": 15.5,
+     "body short": 15,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -610,36 +648,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 46,
-    "worst": 9,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 9,
+      "score": 10.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 8,
-     "tail long": 9,
-     "tail short": 0,
+     "tail long": 10.5,
+     "tail short": 1,
      "whiskers": 2
     },
     "bestFrame": 0
@@ -651,15 +689,15 @@
     "frames": 2,
     "earsFound": 2,
     "tailFrames": 2,
-    "identityBad": 2,
-    "idMax": 34,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 1.5,
-     "tail short": 1,
+     "tail long": 4,
+     "tail short": 3.5,
      "legs long": 0,
      "legs short": 3,
      "body long": 0,
@@ -675,18 +713,24 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 71,
-    "worst": 6.5,
-    "flagged": [],
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 9,
+      "profile": "tail long"
+     }
+    ],
     "prof": {
      "ears long": 1,
      "ears short": 6.5,
-     "tail long": 4.5,
-     "tail short": 0.5,
+     "tail long": 9,
+     "tail short": 5,
      "whiskers": 2
     },
-    "bestFrame": 5
+    "bestFrame": 2
    },
    "walk_w": {
     "legs": true,
@@ -695,8 +739,8 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 35,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -743,15 +787,15 @@
     "prof": {
      "ears long": 0,
      "ears short": 8,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 3.5,
+     "tail short": 3,
      "legs long": 0,
      "legs short": 2.5,
      "body long": 0,
      "body short": 1.5,
      "whiskers": 1
     },
-    "bestFrame": 3
+    "bestFrame": 0
    },
    "loaf_w": {
     "legs": false,
@@ -760,37 +804,37 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 54,
-    "worst": 14.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17,
     "flagged": [
      {
       "frame": 0,
-      "score": 14.5,
+      "score": 17,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 14.5,
+      "score": 17,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 14.5,
+      "score": 17,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 14.5,
+      "score": 17,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 6.5,
-     "tail long": 0.5,
-     "tail short": 14.5,
-     "body long": 4,
+     "tail long": 3,
+     "tail short": 17,
+     "body long": 0,
      "body short": 8,
      "whiskers": 1
     },
@@ -799,45 +843,28 @@
    "sleep_w": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 49,
-    "worst": 186.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
     "flagged": [
      {
-      "frame": 0,
-      "score": 186.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 183,
-      "profile": "tail long"
-     },
-     {
       "frame": 2,
-      "score": 182.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 181,
-      "profile": "tail long"
+      "score": 14,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 2.5,
      "ears short": 14,
-     "tail long": 186.5,
-     "tail short": 10,
      "body long": 4,
-     "body short": 8.5,
+     "body short": 0,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "crouch": {
     "legs": false,
@@ -846,8 +873,8 @@
     "frames": 3,
     "earsFound": 3,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 33,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 10,
     "flagged": [
      {
@@ -869,8 +896,8 @@
     "prof": {
      "ears long": 1.5,
      "ears short": 10,
-     "tail long": 4.5,
-     "tail short": 1.5,
+     "tail long": 7.5,
+     "tail short": 2,
      "body long": 0,
      "body short": 1,
      "whiskers": 2
@@ -880,62 +907,135 @@
    "scratch": {
     "legs": false,
     "body": false,
-    "tail": false,
+    "tail": true,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 0,
+    "tailFrames": 8,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 17,
+    "worst": 10.5,
     "flagged": [
      {
+      "frame": 0,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
       "frame": 7,
-      "score": 17,
-      "profile": "ears short"
+      "score": 10.5,
+      "profile": "tail long"
      }
     ],
     "prof": {
-     "ears long": 3.5,
-     "ears short": 17,
-     "whiskers": 0
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 10.5,
+     "tail short": 1,
+     "whiskers": 2
     },
-    "bestFrame": 7
+    "bestFrame": 0
    },
    "scratch_in": {
     "legs": false,
     "body": false,
-    "tail": false,
+    "tail": true,
     "frames": 3,
     "earsFound": 3,
-    "tailFrames": 0,
+    "tailFrames": 3,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 7,
-    "flagged": [],
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail long"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 7,
-     "whiskers": 0
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 10.5,
+     "tail short": 1,
+     "whiskers": 3
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "scratch_out": {
     "legs": false,
     "body": false,
-    "tail": false,
+    "tail": true,
     "frames": 3,
     "earsFound": 3,
-    "tailFrames": 0,
+    "tailFrames": 3,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 7,
-    "flagged": [],
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail long"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 7,
-     "whiskers": 0
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 10.5,
+     "tail short": 1,
+     "whiskers": 3
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "roll": {
     "legs": false,
@@ -1129,63 +1229,20 @@
    "idle_sit": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 43,
-    "worst": 137.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 1,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 2,
-      "score": 137.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 4,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 5,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 6,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 7,
-      "score": 10,
-      "profile": "tail short"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
     "prof": {
      "ears long": 3,
      "ears short": 7.5,
-     "tail long": 137.5,
-     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "walk": {
     "legs": false,
@@ -1241,39 +1298,39 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 29,
-    "worst": 28.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 29,
     "flagged": [
      {
       "frame": 0,
-      "score": 27.5,
+      "score": 29,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 28.5,
+      "score": 29,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 28.5,
+      "score": 29,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 28.5,
+      "score": 29,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 3,
-     "ears short": 15.5,
-     "tail long": 28.5,
-     "tail short": 4.5,
+     "ears short": 14,
+     "tail long": 29,
+     "tail short": 5,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "loaf": {
     "legs": false,
@@ -1282,35 +1339,35 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 7,
-    "worst": 54,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 55,
     "flagged": [
      {
       "frame": 0,
-      "score": 54,
+      "score": 55,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 51,
+      "score": 51.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 51,
+      "score": 51.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 51,
+      "score": 51.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 54,
+     "tail long": 55,
      "tail short": 10,
      "whiskers": 0
     },
@@ -1319,43 +1376,23 @@
    "groom": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 46,
-    "worst": 133.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 9.5,
     "flagged": [
      {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 2,
-      "score": 129,
-      "profile": "tail long"
-     },
-     {
       "frame": 3,
-      "score": 133.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 4,
-      "score": 129,
-      "profile": "tail long"
+      "score": 9.5,
+      "profile": "ears short"
      },
      {
       "frame": 5,
-      "score": 133.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 6,
-      "score": 129,
-      "profile": "tail long"
+      "score": 9.5,
+      "profile": "ears short"
      },
      {
       "frame": 7,
@@ -1366,8 +1403,6 @@
     "prof": {
      "ears long": 2,
      "ears short": 9.5,
-     "tail long": 133.5,
-     "tail short": 10,
      "whiskers": 0
     },
     "bestFrame": 3
@@ -1399,24 +1434,24 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 47,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 13,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 7,
-     "tail long": 4.5,
-     "tail short": 10,
+     "tail long": 6.5,
+     "tail short": 13,
      "whiskers": 0
     },
-    "bestFrame": 3
+    "bestFrame": 0
    },
    "stretch": {
     "legs": false,
@@ -1459,36 +1494,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 44,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 14,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 0.5,
-     "tail short": 10,
+     "tail long": 4.5,
+     "tail short": 14,
      "whiskers": 0
     },
     "bestFrame": 3
@@ -1496,50 +1531,17 @@
    "slowblink": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 6,
     "earsFound": 6,
-    "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 42,
-    "worst": 136,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 4,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 5,
-      "score": 136,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 136,
-     "tail short": 14,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -1547,43 +1549,31 @@
    "purr": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 42,
-    "worst": 137,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
       "frame": 0,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 137,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 2,
-      "score": 136,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 137,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8,
-     "tail long": 137,
-     "tail short": 14,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "rub": {
     "legs": false,
@@ -1612,35 +1602,35 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 14,
-    "worst": 54,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 55,
     "flagged": [
      {
       "frame": 0,
-      "score": 54,
+      "score": 55,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 51,
+      "score": 51.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 51,
+      "score": 51.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 52.5,
+      "score": 53.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 54,
+     "tail long": 55,
      "tail short": 10,
      "whiskers": 0
     },
@@ -1649,43 +1639,26 @@
    "meow": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 43,
-    "worst": 137,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 1,
-      "score": 137,
-      "profile": "tail long"
-     },
-     {
       "frame": 2,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 3,
-      "score": 137,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 8,
-     "tail long": 137,
-     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 2
    },
    "leap": {
     "legs": false,
@@ -1710,63 +1683,41 @@
    "idle_sit_w": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 46,
-    "worst": 138.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 9,
     "flagged": [
      {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
       "frame": 1,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 2,
-      "score": 138.5,
-      "profile": "tail long"
+      "score": 9,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 4,
-      "score": 10,
-      "profile": "tail short"
+      "score": 9,
+      "profile": "ears short"
      },
      {
       "frame": 5,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 6,
-      "score": 10,
-      "profile": "tail short"
+      "score": 9,
+      "profile": "ears short"
      },
      {
       "frame": 7,
-      "score": 10,
-      "profile": "tail short"
+      "score": 9,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 9,
-     "tail long": 138.5,
-     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "walk_w": {
     "legs": false,
@@ -1795,36 +1746,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 30,
-    "worst": 58.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 60.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 58.5,
+      "score": 60.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 58.5,
+      "score": 60.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 58.5,
+      "score": 60.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 58.5,
-     "tail short": 10,
+     "tail long": 60.5,
+     "tail short": 11,
      "body long": 0,
      "body short": 0,
      "whiskers": 0
@@ -1838,39 +1789,39 @@
     "frames": 4,
     "earsFound": 0,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 47,
-    "worst": 14.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 20.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 14.5,
+      "score": 20,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 14.5,
+      "score": 20.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 14.5,
+      "score": 20.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 14.5,
+      "score": 20.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
-     "ears short": 4,
-     "tail long": 14.5,
-     "tail short": 10.5,
+     "ears short": 3.5,
+     "tail long": 20.5,
+     "tail short": 16.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "crouch": {
     "legs": false,
@@ -1967,26 +1918,41 @@
     "frames": 8,
     "earsFound": 0,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 44,
-    "worst": 29,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 35.5,
     "flagged": [
      {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
       "frame": 3,
-      "score": 29,
+      "score": 35.5,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 11,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 9,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 0,
-     "tail long": 19,
-     "tail short": 29,
+     "tail long": 26.5,
+     "tail short": 35.5,
      "whiskers": 0
     },
     "bestFrame": 3
@@ -1998,51 +1964,51 @@
     "frames": 6,
     "earsFound": 0,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 49,
-    "worst": 16,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 16,
+      "score": 17,
       "profile": "body long"
      },
      {
       "frame": 2,
-      "score": 16,
+      "score": 17,
       "profile": "body long"
      },
      {
       "frame": 3,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 14,
+      "score": 15.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 14,
+      "score": 15.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 3.5,
-     "tail long": 16,
-     "tail short": 12,
-     "body long": 16,
-     "body short": 0.5,
+     "tail long": 17.5,
+     "tail short": 13.5,
+     "body long": 17,
+     "body short": 0,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "bat": {
     "legs": false,
@@ -2069,46 +2035,46 @@
     "frames": 6,
     "earsFound": 0,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 48,
-    "worst": 16,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 16,
+      "score": 17.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 3.5,
-     "tail long": 16,
-     "tail short": 3,
+     "tail long": 17.5,
+     "tail short": 4.5,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -2122,59 +2088,59 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 55,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 5.5,
-     "tail long": 2,
-     "tail short": 10,
+     "tail long": 4.5,
+     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "walk": {
     "legs": false,
@@ -2219,40 +2185,33 @@
    "sleep": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 33,
-    "worst": 89.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
       "frame": 0,
-      "score": 89.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 1,
-      "score": 88.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 88.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 89.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 0,
-     "ears short": 9,
-     "tail long": 89.5,
-     "tail short": 1,
+     "ears short": 8,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -2264,92 +2223,70 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 28,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 5.5,
-     "tail long": 2.5,
-     "tail short": 10,
+     "tail long": 5,
+     "tail short": 12.5,
      "body long": 0,
      "body short": 2,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 0
    },
    "groom": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 53,
-    "worst": 174,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
     "flagged": [
      {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 2,
-      "score": 174,
-      "profile": "tail long"
-     },
-     {
       "frame": 3,
-      "score": 174,
-      "profile": "tail long"
-     },
-     {
-      "frame": 4,
-      "score": 174,
-      "profile": "tail long"
+      "score": 8.5,
+      "profile": "ears short"
      },
      {
       "frame": 5,
-      "score": 174,
-      "profile": "tail long"
-     },
-     {
-      "frame": 6,
-      "score": 174,
-      "profile": "tail long"
+      "score": 8.5,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 8.5,
-     "tail long": 174,
-     "tail short": 10,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 3
    },
    "eat": {
     "legs": false,
@@ -2395,19 +2332,14 @@
    "play": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 6,
     "earsFound": 6,
-    "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 58,
-    "worst": 202,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
-     {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
      {
       "frame": 2,
       "score": 8,
@@ -2415,28 +2347,16 @@
      },
      {
       "frame": 3,
-      "score": 202,
-      "profile": "tail long"
-     },
-     {
-      "frame": 4,
-      "score": 161,
-      "profile": "tail long"
-     },
-     {
-      "frame": 5,
-      "score": 49.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 8,
-     "tail long": 202,
-     "tail short": 10,
      "whiskers": 0
     },
-    "bestFrame": 3
+    "bestFrame": 2
    },
    "stretch": {
     "legs": false,
@@ -2481,39 +2401,39 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 55,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 4.5,
-     "tail long": 1,
-     "tail short": 10,
+     "tail long": 3.5,
+     "tail short": 12.5,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 3
    },
    "slowblink": {
     "legs": false,
@@ -2522,46 +2442,46 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 53,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 1.5,
-     "tail short": 10,
+     "tail long": 4,
+     "tail short": 12,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -2569,43 +2489,31 @@
    "purr": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 53,
-    "worst": 204,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 1,
-      "score": 204,
-      "profile": "tail long"
+      "score": 8.5,
+      "profile": "ears short"
      },
      {
       "frame": 2,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 3,
-      "score": 10,
-      "profile": "tail short"
+      "score": 8.5,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 204,
-     "tail short": 11,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "rub": {
     "legs": false,
@@ -2640,36 +2548,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 35,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 5.5,
-     "tail long": 2.5,
-     "tail short": 10,
+     "tail long": 5,
+     "tail short": 12.5,
      "body long": 0,
      "body short": 2,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "meow": {
     "legs": false,
@@ -2678,36 +2586,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 52,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 9.5,
-     "tail long": 0.5,
-     "tail short": 10,
+     "tail long": 3,
+     "tail short": 11.5,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -2739,59 +2647,59 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 57,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 7.5,
-     "tail long": 2,
-     "tail short": 10,
+     "tail long": 4.5,
+     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "walk_w": {
     "legs": false,
@@ -2820,82 +2728,59 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 28,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 7.5,
-     "tail long": 2.5,
-     "tail short": 10,
+     "tail long": 5,
+     "tail short": 12.5,
      "body long": 0,
      "body short": 2,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 0
    },
    "sleep_w": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 0,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 67,
-    "worst": 18,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 18,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 9.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 9.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 9.5,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 3.5,
+    "flagged": [],
     "prof": {
      "ears long": 0,
      "ears short": 3.5,
-     "tail long": 18,
-     "tail short": 1,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "crouch": {
     "legs": false,
@@ -3014,47 +2899,47 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 26,
-    "worst": 17,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 19,
     "flagged": [
      {
       "frame": 0,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 11,
+      "score": 13.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 11,
+      "score": 13.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 17,
+      "score": 18,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 17,
+      "score": 18,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8,
-     "tail long": 17,
-     "tail short": 1.5,
-     "body long": 5.5,
+     "tail long": 19,
+     "tail short": 3,
+     "body long": 15,
      "body short": 0,
      "whiskers": 0
     },
@@ -3067,8 +2952,8 @@
     "frames": 8,
     "earsFound": 0,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 81,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 12,
     "flagged": [
      {
@@ -3077,19 +2962,29 @@
       "profile": "ears short"
      },
      {
-      "frame": 7,
+      "frame": 2,
       "score": 10,
-      "profile": "ears short"
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10.5,
+      "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 12,
-     "tail long": 5,
-     "tail short": 7.5,
+     "tail long": 7.5,
+     "tail short": 10.5,
      "whiskers": 0
     },
-    "bestFrame": 3
+    "bestFrame": 0
    },
    "swat": {
     "legs": false,
@@ -3098,46 +2993,46 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 26,
-    "worst": 17,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 19,
     "flagged": [
      {
       "frame": 0,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 17,
+      "score": 19,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 17,
-     "tail short": 0.5,
+     "tail long": 19,
+     "tail short": 3,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -3151,59 +3046,59 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 57,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 13.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 11,
+      "score": 14,
       "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 11,
+      "score": 14,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7,
-     "tail long": 1,
-     "tail short": 11,
+     "tail long": 5,
+     "tail short": 14,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 5
    },
    "walk": {
     "legs": false,
@@ -3300,42 +3195,40 @@
    "sleep": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 31,
-    "worst": 106,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
     "flagged": [
      {
       "frame": 0,
-      "score": 106,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      },
      {
       "frame": 1,
-      "score": 102.5,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      },
      {
       "frame": 2,
-      "score": 102.5,
-      "profile": "tail long"
+      "score": 14,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 102.5,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 0,
-     "ears short": 16.5,
-     "tail long": 106,
-     "tail short": 1.5,
-     "body long": 19,
-     "body short": 4.5,
+     "ears short": 15,
+     "body long": 7,
+     "body short": 0,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -3347,36 +3240,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 39,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 0,
-     "tail short": 10,
+     "tail long": 2.5,
+     "tail short": 12,
      "body long": 2,
      "body short": 3,
      "whiskers": 0
@@ -3386,50 +3279,33 @@
    "groom": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 56,
-    "worst": 228.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
       "frame": 2,
-      "score": 228.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 224,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 4,
-      "score": 228.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 5,
-      "score": 224,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 6,
-      "score": 228.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 228.5,
-     "tail short": 10,
      "whiskers": 0
     },
     "bestFrame": 2
@@ -3461,24 +3337,24 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 60,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7,
-     "tail long": 3,
-     "tail short": 10,
+     "tail long": 7,
+     "tail short": 12,
      "whiskers": 0
     },
-    "bestFrame": 5
+    "bestFrame": 0
    },
    "stretch": {
     "legs": false,
@@ -3531,39 +3407,39 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 57,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 13.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 11,
+      "score": 14,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 1,
-     "tail short": 11,
+     "tail long": 5,
+     "tail short": 14,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 3
    },
    "slowblink": {
     "legs": false,
@@ -3572,46 +3448,46 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 54,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 7.5,
-     "tail long": 0.5,
-     "tail short": 10,
+     "tail long": 3.5,
+     "tail short": 12,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -3623,36 +3499,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 57,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 13.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 7.5,
-     "tail long": 1,
-     "tail short": 10,
+     "tail long": 4,
+     "tail short": 13.5,
      "whiskers": 0
     },
     "bestFrame": 1
@@ -3690,23 +3566,23 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 39,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
@@ -3718,13 +3594,13 @@
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 0.5,
-     "tail short": 10.5,
-     "body long": 2,
+     "tail long": 5,
+     "tail short": 12.5,
+     "body long": 12,
      "body short": 3,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "meow": {
     "legs": false,
@@ -3733,36 +3609,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 51,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 1,
-     "tail short": 10,
+     "tail long": 4.5,
+     "tail short": 12,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -3800,59 +3676,59 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 63,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 16,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 14.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 11,
+      "score": 16,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 13.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 11,
+      "score": 16,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10,
+      "score": 14.5,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 10,
+      "score": 14.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 1,
-     "tail short": 11,
+     "tail long": 6.5,
+     "tail short": 16,
      "whiskers": 0
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "walk_w": {
     "legs": false,
@@ -3922,36 +3798,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 0,
-     "tail short": 10,
+     "tail long": 3,
+     "tail short": 12.5,
      "body long": 2,
      "body short": 2,
      "whiskers": 0
@@ -3961,43 +3837,20 @@
    "sleep_w": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 37,
-    "worst": 116.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 116,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 116.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 116.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 116.5,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 7,
-     "tail long": 116.5,
-     "tail short": 0,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "crouch": {
     "legs": false,
@@ -4006,15 +3859,15 @@
     "frames": 3,
     "earsFound": 0,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 31,
-    "worst": 4,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 4.5,
     "flagged": [],
     "prof": {
      "ears long": 0,
      "ears short": 4,
-     "tail long": 1.5,
-     "tail short": 1,
+     "tail long": 4.5,
+     "tail short": 4,
      "body long": 0,
      "body short": 1,
      "whiskers": 0
@@ -4114,46 +3967,46 @@
     "frames": 6,
     "earsFound": 4,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 55,
-    "worst": 58,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 63,
     "flagged": [
      {
       "frame": 0,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 58,
+      "score": 63,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 58,
+      "score": 63,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 58,
-     "tail short": 5.5,
+     "tail long": 63,
+     "tail short": 10.5,
      "whiskers": 0
     },
     "bestFrame": 1
@@ -4165,13 +4018,13 @@
     "frames": 8,
     "earsFound": 1,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 81,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 20.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 11.5,
+      "score": 17.5,
       "profile": "tail short"
      },
      {
@@ -4181,22 +4034,22 @@
      },
      {
       "frame": 2,
-      "score": 11,
+      "score": 17.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 11,
+      "score": 17.5,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 10.5,
-      "profile": "ears short"
+      "score": 17.5,
+      "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10.5,
+      "score": 17,
       "profile": "tail short"
      },
      {
@@ -4206,15 +4059,15 @@
      },
      {
       "frame": 7,
-      "score": 11,
+      "score": 17,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 20.5,
-     "tail long": 7,
-     "tail short": 11.5,
+     "tail long": 14,
+     "tail short": 17.5,
      "whiskers": 0
     },
     "bestFrame": 1
@@ -4226,46 +4079,46 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 30,
-    "worst": 21.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 22,
     "flagged": [
      {
       "frame": 0,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 21.5,
+      "score": 22,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 21.5,
-     "tail short": 0.5,
+     "tail long": 22,
+     "tail short": 1,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -4279,9 +4132,9 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 44,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
@@ -4295,7 +4148,7 @@
      },
      {
       "frame": 2,
-      "score": 10.5,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
@@ -4327,11 +4180,11 @@
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 3.5,
-     "tail short": 10.5,
+     "tail long": 5.5,
+     "tail short": 12.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "walk": {
     "legs": false,
@@ -4380,42 +4233,19 @@
    "sleep": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 36,
-    "worst": 128.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 126,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 128.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 128.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 126,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
     "prof": {
      "ears long": 0.5,
-     "ears short": 7.5,
-     "tail long": 128.5,
-     "tail short": 2.5,
-     "body long": 13.5,
-     "body short": 2.5,
+     "ears short": 7,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 0
     },
     "bestFrame": 1
@@ -4427,36 +4257,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 0.5,
-     "tail short": 10,
+     "tail long": 2.5,
+     "tail short": 11.5,
      "body long": 4,
      "body short": 8,
      "whiskers": 0
@@ -4466,23 +4296,18 @@
    "groom": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 46,
-    "worst": 85,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
     "flagged": [
      {
       "frame": 0,
       "score": 8.5,
       "profile": "ears short"
-     },
-     {
-      "frame": 1,
-      "score": 85,
-      "profile": "tail long"
      },
      {
       "frame": 7,
@@ -4493,11 +4318,9 @@
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 85,
-     "tail short": 6,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "eat": {
     "legs": false,
@@ -4522,13 +4345,13 @@
    "play": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 6,
     "earsFound": 6,
-    "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 46,
-    "worst": 88,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
     "flagged": [
      {
       "frame": 0,
@@ -4537,8 +4360,8 @@
      },
      {
       "frame": 1,
-      "score": 88,
-      "profile": "tail long"
+      "score": 8.5,
+      "profile": "ears short"
      },
      {
       "frame": 2,
@@ -4552,8 +4375,8 @@
      },
      {
       "frame": 4,
-      "score": 82.5,
-      "profile": "tail long"
+      "score": 8.5,
+      "profile": "ears short"
      },
      {
       "frame": 5,
@@ -4564,11 +4387,9 @@
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 88,
-     "tail short": 4.5,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "stretch": {
     "legs": false,
@@ -4606,24 +4427,24 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 44,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6,
-     "tail long": 3.5,
-     "tail short": 10.5,
+     "tail long": 5.5,
+     "tail short": 12.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "slowblink": {
     "legs": false,
@@ -4632,8 +4453,8 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 44,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -4670,8 +4491,8 @@
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 3.5,
-     "tail short": 5,
+     "tail long": 5.5,
+     "tail short": 7,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -4683,9 +4504,9 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 44,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 0,
@@ -4694,7 +4515,7 @@
      },
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
@@ -4704,18 +4525,18 @@
      },
      {
       "frame": 3,
-      "score": 10.5,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 3.5,
-     "tail short": 10.5,
+     "tail long": 5.5,
+     "tail short": 12.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "rub": {
     "legs": false,
@@ -4755,13 +4576,13 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 13,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
@@ -4771,7 +4592,7 @@
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
@@ -4783,13 +4604,13 @@
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 2,
-     "tail short": 10,
+     "tail long": 4,
+     "tail short": 11.5,
      "body long": 13,
      "body short": 8,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "meow": {
     "legs": false,
@@ -4798,8 +4619,8 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 44,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8.5,
     "flagged": [
      {
@@ -4811,8 +4632,8 @@
     "prof": {
      "ears long": 2,
      "ears short": 8.5,
-     "tail long": 3.5,
-     "tail short": 4.5,
+     "tail long": 5.5,
+     "tail short": 6.5,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -4850,24 +4671,54 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 53,
-    "worst": 11.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
     "flagged": [
      {
+      "frame": 0,
+      "score": 8,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "tail short"
+     },
+     {
       "frame": 2,
-      "score": 11.5,
+      "score": 14,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 9,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 9,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 8,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 6.5,
-     "tail long": 2.5,
-     "tail short": 11.5,
+     "tail long": 5,
+     "tail short": 14,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "walk_w": {
     "legs": false,
@@ -4896,36 +4747,36 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 6.5,
-     "tail long": 0.5,
-     "tail short": 10,
+     "tail long": 2.5,
+     "tail short": 11.5,
      "body long": 4,
      "body short": 8,
      "whiskers": 0
@@ -4935,45 +4786,22 @@
    "sleep_w": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 127.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 125,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 127.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 127.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 125,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
     "prof": {
      "ears long": 0.5,
-     "ears short": 8,
-     "tail long": 127.5,
-     "tail short": 2.5,
-     "body long": 13.5,
-     "body short": 2.5,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 2
    },
    "crouch": {
     "legs": false,
@@ -4982,15 +4810,15 @@
     "frames": 3,
     "earsFound": 0,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 28,
-    "worst": 2,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 4,
     "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 2,
-     "tail long": 1.5,
-     "tail short": 1,
+     "tail long": 4,
+     "tail short": 3.5,
      "whiskers": 0
     },
     "bestFrame": 0
@@ -5114,47 +4942,47 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 39,
-    "worst": 36.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 45.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 15,
+      "score": 17,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 15,
+      "score": 17,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 36,
+      "score": 41.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 36,
+      "score": 41.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 36.5,
-     "tail short": 10,
-     "body long": 8,
+     "tail long": 45.5,
+     "tail short": 11.5,
+     "body long": 17,
      "body short": 0.5,
      "whiskers": 0
     },
@@ -5167,44 +4995,59 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 97,
-    "worst": 16.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 23.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 16.5,
+      "score": 23.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 14.5,
+      "score": 23,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 8,
-      "profile": "ears short"
+      "score": 16.5,
+      "profile": "tail long"
      },
      {
-      "frame": 6,
+      "frame": 3,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
       "score": 14.5,
       "profile": "tail long"
      },
      {
+      "frame": 5,
+      "score": 15,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 23,
+      "profile": "tail long"
+     },
+     {
       "frame": 7,
-      "score": 14,
+      "score": 23,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 8.5,
-     "tail long": 16.5,
-     "tail short": 0,
+     "tail long": 23.5,
+     "tail short": 7,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "swat": {
     "legs": false,
@@ -5213,47 +5056,47 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 39,
-    "worst": 36.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 45.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 36.5,
+      "score": 45.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 3,
      "ears short": 6.5,
-     "tail long": 36.5,
-     "tail short": 10,
-     "body long": 6,
+     "tail long": 45.5,
+     "tail short": 11.5,
+     "body long": 17,
      "body short": 0,
      "whiskers": 0
     },
@@ -5268,8 +5111,8 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 46,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8.5,
     "flagged": [
      {
@@ -5316,8 +5159,8 @@
     "prof": {
      "ears long": 0.5,
      "ears short": 8.5,
-     "tail long": 2.5,
-     "tail short": 4,
+     "tail long": 8,
+     "tail short": 7,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -5329,31 +5172,36 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 52,
-    "worst": 9,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 9,
+      "score": 12.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 9,
+      "score": 12.5,
       "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 2.5,
      "ears short": 6,
-     "tail long": 9,
-     "tail short": 5,
+     "tail long": 12.5,
+     "tail short": 8.5,
      "body long": 0,
      "body short": 1,
      "whiskers": 2
     },
-    "bestFrame": 5
+    "bestFrame": 1
    },
    "run": {
     "legs": false,
@@ -5362,74 +5210,56 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 57,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 4.5,
-     "tail short": 10,
+     "tail long": 10,
+     "tail short": 11.5,
      "body long": 0,
      "body short": 1.5,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "sleep": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 34,
-    "worst": 135.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 135.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 134,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 132.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 135.5,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
     "prof": {
      "ears long": 1.5,
-     "ears short": 8,
-     "tail long": 135.5,
-     "tail short": 11,
-     "body long": 3.5,
-     "body short": 8.5,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "loaf": {
     "legs": false,
@@ -5438,38 +5268,38 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 59,
-    "worst": 26.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 30,
     "flagged": [
      {
       "frame": 0,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 8,
-     "tail long": 5.5,
-     "tail short": 26.5,
-     "body long": 2,
-     "body short": 6,
+     "tail long": 9,
+     "tail short": 30,
+     "body long": 3,
+     "body short": 7,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -5477,13 +5307,13 @@
    "groom": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 8,
     "earsFound": 8,
-    "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 47,
-    "worst": 95,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
     "flagged": [
      {
       "frame": 0,
@@ -5492,8 +5322,8 @@
      },
      {
       "frame": 1,
-      "score": 95,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 7,
@@ -5504,11 +5334,9 @@
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 95,
-     "tail short": 4,
      "whiskers": 2
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "eat": {
     "legs": false,
@@ -5517,13 +5345,13 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 57,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
     "flagged": [
      {
       "frame": 2,
-      "score": 11,
+      "score": 12.5,
       "profile": "tail short"
      },
      {
@@ -5533,20 +5361,20 @@
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 2.5,
-     "tail short": 11,
+     "tail long": 3.5,
+     "tail short": 12.5,
      "body long": 0,
      "body short": 0.5,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "play": {
     "legs": false,
@@ -5555,9 +5383,9 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 48,
-    "worst": 10.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13,
     "flagged": [
      {
       "frame": 0,
@@ -5566,7 +5394,7 @@
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 13,
       "profile": "tail short"
      },
      {
@@ -5581,23 +5409,23 @@
      },
      {
       "frame": 4,
-      "score": 10.5,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 12.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 8.5,
-     "tail long": 2.5,
-     "tail short": 10.5,
+     "tail long": 7.5,
+     "tail short": 13,
      "whiskers": 1
     },
-    "bestFrame": 2
+    "bestFrame": 1
    },
    "stretch": {
     "legs": false,
@@ -5647,18 +5475,24 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 46,
-    "worst": 7.5,
-    "flagged": [],
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "tail short"
+     }
+    ],
     "prof": {
      "ears long": 2,
      "ears short": 7.5,
-     "tail long": 2.5,
-     "tail short": 4,
+     "tail long": 7.5,
+     "tail short": 8.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 3
    },
    "slowblink": {
     "legs": false,
@@ -5667,8 +5501,8 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 45,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -5705,8 +5539,8 @@
     "prof": {
      "ears long": 0,
      "ears short": 8,
-     "tail long": 1,
-     "tail short": 4,
+     "tail long": 6,
+     "tail short": 6.5,
      "whiskers": 0.5
     },
     "bestFrame": 0
@@ -5718,8 +5552,8 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 45,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 9,
     "flagged": [
      {
@@ -5746,11 +5580,11 @@
     "prof": {
      "ears long": 1.5,
      "ears short": 9,
-     "tail long": 1,
-     "tail short": 4,
+     "tail long": 6,
+     "tail short": 6.5,
      "whiskers": 0.5
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "rub": {
     "legs": true,
@@ -5759,22 +5593,22 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 21,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 2,
      "ears short": 7.5,
-     "tail long": 0,
-     "tail short": 5,
+     "tail long": 1,
+     "tail short": 7,
      "legs long": 0,
      "legs short": 1,
      "body long": 0,
      "body short": 0.5,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "knead": {
     "legs": false,
@@ -5783,41 +5617,41 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 66,
-    "worst": 28.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 30,
     "flagged": [
      {
       "frame": 0,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 28.5,
+      "score": 29.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 26.5,
+      "score": 30,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 20.5,
+      "score": 22,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 8,
-     "tail long": 13,
-     "tail short": 28.5,
+     "tail long": 14.5,
+     "tail short": 30,
      "body long": 13,
      "body short": 10,
      "whiskers": 1
     },
-    "bestFrame": 3
+    "bestFrame": 0
    },
    "meow": {
     "legs": false,
@@ -5826,8 +5660,8 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 46,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8.5,
     "flagged": [
      {
@@ -5839,8 +5673,8 @@
     "prof": {
      "ears long": 2,
      "ears short": 8.5,
-     "tail long": 2.5,
-     "tail short": 4,
+     "tail long": 7.5,
+     "tail short": 7,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -5852,26 +5686,26 @@
     "frames": 2,
     "earsFound": 2,
     "tailFrames": 2,
-    "identityBad": 2,
-    "idMax": 47,
-    "worst": 11.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 1,
-      "score": 11.5,
+      "score": 12,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 7,
-     "tail long": 11.5,
-     "tail short": 10,
+     "tail long": 12,
+     "tail short": 10.5,
      "body long": 0,
      "body short": 1,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "idle_sit_w": {
     "legs": false,
@@ -5880,18 +5714,29 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 55,
-    "worst": 7,
-    "flagged": [],
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "tail long"
+     }
+    ],
     "prof": {
      "ears long": 0.5,
      "ears short": 7,
-     "tail long": 2.5,
-     "tail short": 4,
+     "tail long": 8,
+     "tail short": 7,
      "whiskers": 1
     },
-    "bestFrame": 2
+    "bestFrame": 4
    },
    "walk_w": {
     "legs": false,
@@ -5900,8 +5745,8 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 65,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -5948,8 +5793,8 @@
     "prof": {
      "ears long": 0,
      "ears short": 8,
-     "tail long": 2,
-     "tail short": 0,
+     "tail long": 8,
+     "tail short": 2.5,
      "body long": 0,
      "body short": 1,
      "whiskers": 1
@@ -5963,38 +5808,38 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 43,
-    "worst": 20,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 24.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 20,
+      "score": 24.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 20,
+      "score": 24.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 20,
+      "score": 24.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 20,
+      "score": 24.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 7,
-     "tail long": 0.5,
-     "tail short": 20,
-     "body long": 2,
-     "body short": 6,
+     "tail long": 4.5,
+     "tail short": 24.5,
+     "body long": 3,
+     "body short": 7,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -6002,45 +5847,38 @@
    "sleep_w": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 41,
-    "worst": 128.5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
       "frame": 0,
-      "score": 127.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 1,
-      "score": 128.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 2,
-      "score": 128.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 127.5,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 1.5,
-     "ears short": 8.5,
-     "tail long": 128.5,
-     "tail short": 0.5,
-     "body long": 3.5,
-     "body short": 8.5,
+     "ears short": 8,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "crouch": {
     "legs": false,
@@ -6049,13 +5887,13 @@
     "frames": 3,
     "earsFound": 3,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 47,
-    "worst": 11.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 11.5,
+      "score": 14.5,
       "profile": "tail short"
      },
      {
@@ -6072,13 +5910,13 @@
     "prof": {
      "ears long": 2.5,
      "ears short": 9.5,
-     "tail long": 5,
-     "tail short": 11.5,
+     "tail long": 7.5,
+     "tail short": 14.5,
      "body long": 0,
      "body short": 1,
      "whiskers": 1
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "scratch": {
     "legs": false,
@@ -6184,8 +6022,8 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 32,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 15.5,
     "flagged": [
      {
@@ -6212,13 +6050,13 @@
     "prof": {
      "ears long": 1,
      "ears short": 15.5,
-     "tail long": 4,
-     "tail short": 1,
-     "body long": 0.5,
+     "tail long": 7,
+     "tail short": 4.5,
+     "body long": 0,
      "body short": 0.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "bat": {
     "legs": false,
@@ -6261,8 +6099,8 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 32,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -6289,9 +6127,9 @@
     "prof": {
      "ears long": 1,
      "ears short": 8,
-     "tail long": 4.5,
-     "tail short": 1,
-     "body long": 0.5,
+     "tail long": 7,
+     "tail short": 4.5,
+     "body long": 0,
      "body short": 0.5,
      "whiskers": 0
     },
@@ -6306,18 +6144,18 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 44,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 1,
-     "tail short": 0,
+     "tail long": 5.5,
+     "tail short": 3.5,
      "whiskers": 2
     },
-    "bestFrame": 6
+    "bestFrame": 0
    },
    "walk": {
     "legs": false,
@@ -6326,31 +6164,31 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 59,
-    "worst": 17,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 21,
     "flagged": [
      {
       "frame": 1,
-      "score": 17,
+      "score": 21,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 11.5,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 11.5,
+      "score": 13,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 2,
      "ears short": 7.5,
-     "tail long": 5,
-     "tail short": 17,
+     "tail long": 9.5,
+     "tail short": 21,
      "body long": 0,
      "body short": 1.5,
      "whiskers": 1
@@ -6364,8 +6202,8 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 60,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 11.5,
     "flagged": [
      {
@@ -6375,60 +6213,53 @@
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 9.5,
+     "tail long": 10,
      "tail short": 11.5,
      "body long": 0,
      "body short": 0.5,
      "whiskers": 1
     },
-    "bestFrame": 0
+    "bestFrame": 3
    },
    "sleep": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 45,
-    "worst": 177,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
     "flagged": [
      {
-      "frame": 0,
-      "score": 170.5,
-      "profile": "tail long"
-     },
-     {
       "frame": 1,
-      "score": 177,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      },
      {
       "frame": 2,
-      "score": 177,
-      "profile": "tail long"
+      "score": 14.5,
+      "profile": "ears short"
      },
      {
       "frame": 3,
-      "score": 168.5,
-      "profile": "tail long"
+      "score": 15,
+      "profile": "ears short"
      }
     ],
     "prof": {
-     "ears long": 1,
-     "ears short": 14,
-     "tail long": 177,
-     "tail short": 20.5,
-     "body long": 5,
-     "body short": 8.5,
+     "ears long": 1.5,
+     "ears short": 15,
+     "body long": 3,
+     "body short": 0,
      "whiskers": 0
     },
     "bestFrame": 1
@@ -6440,37 +6271,37 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 5.5,
-     "tail long": 2,
-     "tail short": 10,
-     "body long": 4,
+     "tail long": 3,
+     "tail short": 10.5,
+     "body long": 0,
      "body short": 8,
      "whiskers": 2
     },
@@ -6483,8 +6314,8 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 43,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8,
     "flagged": [
      {
@@ -6506,11 +6337,11 @@
     "prof": {
      "ears long": 1.5,
      "ears short": 8,
-     "tail long": 2,
-     "tail short": 1,
+     "tail long": 7.5,
+     "tail short": 4.5,
      "whiskers": 2
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "eat": {
     "legs": false,
@@ -6519,41 +6350,41 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 49,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 18.5,
     "flagged": [
      {
       "frame": 1,
-      "score": 11,
+      "score": 11.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 10.5,
+      "score": 12,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 11,
+      "score": 18.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 10,
+      "score": 10.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 11,
-     "tail short": 10.5,
+     "tail long": 18.5,
+     "tail short": 12,
      "body long": 0,
      "body short": 0,
      "whiskers": 1
     },
-    "bestFrame": 3
+    "bestFrame": 4
    },
    "play": {
     "legs": false,
@@ -6562,18 +6393,18 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 45,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 2.5,
-     "tail short": 0,
+     "tail long": 7.5,
+     "tail short": 3.5,
      "whiskers": 2
     },
-    "bestFrame": 4
+    "bestFrame": 0
    },
    "stretch": {
     "legs": false,
@@ -6582,10 +6413,15 @@
     "frames": 7,
     "earsFound": 7,
     "tailFrames": 7,
-    "identityBad": 7,
-    "idMax": 91,
-    "worst": 16,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17.5,
     "flagged": [
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "tail long"
+     },
      {
       "frame": 2,
       "score": 14.5,
@@ -6593,8 +6429,8 @@
      },
      {
       "frame": 3,
-      "score": 15,
-      "profile": "ears short"
+      "score": 17.5,
+      "profile": "tail short"
      },
      {
       "frame": 4,
@@ -6608,18 +6444,18 @@
      },
      {
       "frame": 6,
-      "score": 13.5,
+      "score": 15.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 16,
-     "tail long": 13.5,
-     "tail short": 12,
+     "tail long": 15.5,
+     "tail short": 17.5,
      "whiskers": 2
     },
-    "bestFrame": 2
+    "bestFrame": 3
    },
    "lookup": {
     "legs": false,
@@ -6628,15 +6464,15 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 43,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 5,
+     "tail short": 3.5,
      "whiskers": 0.5
     },
     "bestFrame": 0
@@ -6648,15 +6484,15 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 43,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 0.5,
      "ears short": 7.5,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 5,
+     "tail short": 3.5,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -6668,15 +6504,15 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 43,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 5,
+     "tail short": 3.5,
      "whiskers": 1
     },
     "bestFrame": 0
@@ -6688,8 +6524,8 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 37,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 8.5,
     "flagged": [
      {
@@ -6711,58 +6547,35 @@
     "prof": {
      "ears long": 1,
      "ears short": 8.5,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 1.5,
+     "tail short": 1,
      "legs long": 0,
      "legs short": 2,
      "body long": 0,
      "body short": 0,
      "whiskers": 1
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "knead": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 40,
-    "worst": 140.5,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 1,
-      "score": 13.5,
-      "profile": "body short"
-     },
-     {
-      "frame": 2,
-      "score": 10,
-      "profile": "tail short"
-     },
-     {
-      "frame": 3,
-      "score": 140.5,
-      "profile": "tail long"
-     }
-    ],
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 5.5,
+    "flagged": [],
     "prof": {
      "ears long": 1.5,
      "ears short": 5.5,
-     "tail long": 140.5,
-     "tail short": 10,
-     "body long": 20.5,
-     "body short": 19.5,
+     "body long": 0,
+     "body short": 0,
      "whiskers": 2
     },
-    "bestFrame": 3
+    "bestFrame": 0
    },
    "meow": {
     "legs": false,
@@ -6771,15 +6584,15 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 43,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1.5,
      "ears short": 7.5,
-     "tail long": 0.5,
-     "tail short": 0,
+     "tail long": 5,
+     "tail short": 3.5,
      "whiskers": 2
     },
     "bestFrame": 0
@@ -6791,15 +6604,15 @@
     "frames": 2,
     "earsFound": 2,
     "tailFrames": 2,
-    "identityBad": 2,
-    "idMax": 35,
-    "worst": 7,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
     "flagged": [],
     "prof": {
      "ears long": 1.5,
      "ears short": 7,
-     "tail long": 3,
-     "tail short": 1.5,
+     "tail long": 7.5,
+     "tail short": 6,
      "body long": 0,
      "body short": 0.5,
      "whiskers": 2
@@ -6813,18 +6626,18 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 53,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 6.5,
     "flagged": [],
     "prof": {
      "ears long": 1,
      "ears short": 6.5,
-     "tail long": 1,
-     "tail short": 0,
+     "tail long": 5.5,
+     "tail short": 3.5,
      "whiskers": 2
     },
-    "bestFrame": 6
+    "bestFrame": 0
    },
    "walk_w": {
     "legs": true,
@@ -6833,56 +6646,56 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 46,
-    "worst": 12,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13,
     "flagged": [
      {
       "frame": 0,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 4,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      },
      {
       "frame": 7,
-      "score": 12,
+      "score": 13,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 7,
-     "tail long": 3,
-     "tail short": 12,
+     "tail long": 4,
+     "tail short": 13,
      "legs long": 0,
      "legs short": 1.5,
      "body long": 0,
@@ -6898,37 +6711,37 @@
     "frames": 4,
     "earsFound": 4,
     "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 42,
-    "worst": 10,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      },
      {
       "frame": 3,
-      "score": 10,
+      "score": 11.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 8.5,
-     "tail long": 1,
-     "tail short": 10,
-     "body long": 4,
+     "tail long": 3.5,
+     "tail short": 11.5,
+     "body long": 0,
      "body short": 8,
      "whiskers": 2
     },
@@ -6937,45 +6750,28 @@
    "sleep_w": {
     "legs": false,
     "body": true,
-    "tail": true,
+    "tail": false,
     "frames": 4,
     "earsFound": 4,
-    "tailFrames": 4,
-    "identityBad": 4,
-    "idMax": 49,
-    "worst": 160,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
     "flagged": [
      {
-      "frame": 0,
-      "score": 160,
-      "profile": "tail long"
-     },
-     {
-      "frame": 1,
-      "score": 156,
-      "profile": "tail long"
-     },
-     {
       "frame": 2,
-      "score": 155.5,
-      "profile": "tail long"
-     },
-     {
-      "frame": 3,
-      "score": 157,
-      "profile": "tail long"
+      "score": 8,
+      "profile": "ears short"
      }
     ],
     "prof": {
      "ears long": 0.5,
      "ears short": 8,
-     "tail long": 160,
-     "tail short": 0,
-     "body long": 15,
-     "body short": 10,
+     "body long": 1,
+     "body short": 1.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 2
    },
    "crouch": {
     "legs": false,
@@ -6984,13 +6780,13 @@
     "frames": 3,
     "earsFound": 3,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 51,
-    "worst": 11,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12,
     "flagged": [
      {
       "frame": 0,
-      "score": 11,
+      "score": 12,
       "profile": "tail short"
      },
      {
@@ -7007,13 +6803,13 @@
     "prof": {
      "ears long": 2.5,
      "ears short": 9.5,
-     "tail long": 3.5,
-     "tail short": 11,
+     "tail long": 6.5,
+     "tail short": 12,
      "body long": 0,
      "body short": 1.5,
      "whiskers": 1
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "scratch": {
     "legs": false,
@@ -7040,34 +6836,34 @@
     "frames": 3,
     "earsFound": 3,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 109,
-    "worst": 23,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 39,
     "flagged": [
      {
       "frame": 0,
-      "score": 23,
+      "score": 39,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 29,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 10.5,
+      "score": 14.5,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 10.5,
-     "tail short": 23,
+     "tail long": 29,
+     "tail short": 39,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 0
    },
    "scratch_out": {
     "legs": false,
@@ -7076,34 +6872,34 @@
     "frames": 3,
     "earsFound": 3,
     "tailFrames": 3,
-    "identityBad": 3,
-    "idMax": 109,
-    "worst": 23,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 39,
     "flagged": [
      {
       "frame": 0,
-      "score": 10.5,
+      "score": 14.5,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 10.5,
+      "score": 29,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 23,
+      "score": 39,
       "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 0,
      "ears short": 6.5,
-     "tail long": 10.5,
-     "tail short": 23,
+     "tail long": 29,
+     "tail short": 39,
      "whiskers": 0
     },
-    "bestFrame": 1
+    "bestFrame": 2
    },
    "roll": {
     "legs": false,
@@ -7148,41 +6944,51 @@
     "frames": 6,
     "earsFound": 4,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 42,
-    "worst": 18.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 19.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 17,
+      "score": 18,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 17,
+      "score": 18,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "tail short"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 14.5,
-     "tail long": 18.5,
-     "tail short": 6.5,
-     "body long": 0.5,
-     "body short": 1.5,
+     "tail long": 19.5,
+     "tail short": 8.5,
+     "body long": 0,
+     "body short": 0.5,
      "whiskers": 0
     },
-    "bestFrame": 4
+    "bestFrame": 0
    },
    "bat": {
     "legs": false,
@@ -7191,23 +6997,23 @@
     "frames": 8,
     "earsFound": 8,
     "tailFrames": 8,
-    "identityBad": 8,
-    "idMax": 89,
+    "identityBad": 0,
+    "idMax": 0,
     "worst": 20.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 14.5,
+      "score": 19,
       "profile": "tail short"
      },
      {
       "frame": 1,
-      "score": 15,
-      "profile": "ears short"
+      "score": 19,
+      "profile": "tail short"
      },
      {
       "frame": 2,
-      "score": 14.5,
+      "score": 19,
       "profile": "tail short"
      },
      {
@@ -7217,18 +7023,18 @@
      },
      {
       "frame": 4,
-      "score": 15,
+      "score": 20,
       "profile": "tail short"
      },
      {
       "frame": 5,
-      "score": 15.5,
-      "profile": "ears short"
+      "score": 19,
+      "profile": "tail short"
      },
      {
       "frame": 6,
-      "score": 14.5,
-      "profile": "ears short"
+      "score": 19,
+      "profile": "tail short"
      },
      {
       "frame": 7,
@@ -7239,11 +7045,11 @@
     "prof": {
      "ears long": 6,
      "ears short": 20.5,
-     "tail long": 8.5,
-     "tail short": 15,
+     "tail long": 13.5,
+     "tail short": 20,
      "whiskers": 0
     },
-    "bestFrame": 4
+    "bestFrame": 3
    },
    "swat": {
     "legs": false,
@@ -7252,47 +7058,47 @@
     "frames": 6,
     "earsFound": 6,
     "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 31,
-    "worst": 18.5,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 19.5,
     "flagged": [
      {
       "frame": 0,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 1,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 2,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 3,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 4,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      },
      {
       "frame": 5,
-      "score": 18.5,
+      "score": 19.5,
       "profile": "tail long"
      }
     ],
     "prof": {
      "ears long": 1,
      "ears short": 7.5,
-     "tail long": 18.5,
-     "tail short": 5.5,
-     "body long": 0.5,
+     "tail long": 19.5,
+     "tail short": 6.5,
+     "body long": 0,
      "body short": 0.5,
      "whiskers": 0
     },
@@ -7354,18 +7160,29 @@
     "body": false,
     "tail": false,
     "frames": 6,
-    "earsFound": 0,
+    "earsFound": 4,
     "tailFrames": 0,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 0,
-    "flagged": [],
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 0,
+     "ears long": 1,
+     "ears short": 8.5,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "sniff": {
     "legs": false,
@@ -7460,18 +7277,29 @@
     "body": false,
     "tail": false,
     "frames": 6,
-    "earsFound": 0,
+    "earsFound": 6,
     "tailFrames": 0,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 0,
-    "flagged": [],
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 4,
+      "score": 9,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 9,
+      "profile": "ears short"
+     }
+    ],
     "prof": {
      "ears long": 0,
-     "ears short": 0,
+     "ears short": 9,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 4
    },
    "sniff": {
     "legs": false,
@@ -7534,29 +7362,18 @@
     "body": false,
     "tail": false,
     "frames": 6,
-    "earsFound": 0,
+    "earsFound": 6,
     "tailFrames": 0,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 21,
-    "flagged": [
-     {
-      "frame": 0,
-      "score": 21,
-      "profile": "ears short"
-     },
-     {
-      "frame": 3,
-      "score": 21,
-      "profile": "ears short"
-     }
-    ],
+    "worst": 7,
+    "flagged": [],
     "prof": {
-     "ears long": 0,
-     "ears short": 21,
+     "ears long": 0.5,
+     "ears short": 7,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 4
    },
    "sniff": {
     "legs": false,
@@ -7619,18 +7436,29 @@
     "body": false,
     "tail": false,
     "frames": 6,
-    "earsFound": 0,
+    "earsFound": 6,
     "tailFrames": 0,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 0,
-    "flagged": [],
+    "worst": 13,
+    "flagged": [
+     {
+      "frame": 4,
+      "score": 13,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 13,
+      "profile": "ears short"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 0,
+     "ears long": 1,
+     "ears short": 13,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 4
    },
    "sniff": {
     "legs": false,
@@ -7693,18 +7521,18 @@
     "body": false,
     "tail": false,
     "frames": 6,
-    "earsFound": 0,
+    "earsFound": 4,
     "tailFrames": 0,
     "identityBad": 0,
     "idMax": 0,
-    "worst": 0,
+    "worst": 6,
     "flagged": [],
     "prof": {
-     "ears long": 0,
-     "ears short": 0,
+     "ears long": 0.5,
+     "ears short": 6,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 1
    },
    "sniff": {
     "legs": false,
@@ -7765,22 +7593,41 @@
    "walk_back": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 6,
-    "earsFound": 0,
-    "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 27,
-    "worst": 3.5,
-    "flagged": [],
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 21,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 19,
+      "profile": "ears long"
+     },
+     {
+      "frame": 2,
+      "score": 21,
+      "profile": "ears long"
+     },
+     {
+      "frame": 4,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 13.5,
+      "profile": "ears short"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 0,
-     "tail long": 3.5,
-     "tail short": 2,
+     "ears long": 21,
+     "ears short": 13.5,
      "whiskers": 0
     },
-    "bestFrame": 4
+    "bestFrame": 2
    },
    "sniff": {
     "legs": false,
@@ -7841,22 +7688,31 @@
    "walk_back": {
     "legs": false,
     "body": false,
-    "tail": true,
+    "tail": false,
     "frames": 6,
-    "earsFound": 0,
-    "tailFrames": 6,
-    "identityBad": 6,
-    "idMax": 31,
-    "worst": 4,
-    "flagged": [],
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "ears short"
+     }
+    ],
     "prof": {
-     "ears long": 0,
-     "ears short": 0,
-     "tail long": 4,
-     "tail short": 3.5,
+     "ears long": 1,
+     "ears short": 10,
      "whiskers": 0
     },
-    "bestFrame": 0
+    "bestFrame": 4
    },
    "sniff": {
     "legs": false,

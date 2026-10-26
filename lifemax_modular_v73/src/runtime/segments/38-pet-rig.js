@@ -77,6 +77,8 @@ function petRigCompose(src,fr,m,pose,W,H){
   /* tail first, so the body and ears sit over it */
   if(fr.tail){const T=fr.tail,sl=petRigQ(m.tl),th=pose&&pose.tail?pose.tail*Math.PI/180:0,a0=T.a[0],ca=Math.cos(th),sa=Math.sin(th);
     const sx=X(a0[0])-a0[0],sy=Y(a0[1])-a0[1];
+    if(sl===1&&!th){T.px.forEach(function(p){put(Math.round(p%W+sx)+MX,Math.round(Math.floor(p/W)+sy)+MT,src[p])})}   /* untouched tail: the original pixels, no resampling */
+    else{
     const A=T.a.map(function(p){const dx=(p[0]-a0[0])*sl,dy=(p[1]-a0[1])*sl;return [a0[0]+dx*ca-dy*sa,a0[1]+dx*sa+dy*ca]});
     const n=A.length,len=[],tot=T.cum[n-1]*sl,dir=[];
     for(let i=0;i<n-1;i++){const dx=A[i+1][0]-A[i][0],dy=A[i+1][1]-A[i][1],l=Math.hypot(dx,dy)||1;len.push(l);dir.push([dx/l,dy/l])}
@@ -95,7 +97,7 @@ function petRigCompose(src,fr,m,pose,W,H){
       const u=(ts-T.cum[j])/(sl2[j]||1),px=T.a[j][0]+sd[j][0]*u*sl2[j]+(-sd[j][1])*w,py=T.a[j][1]+sd[j][1]*u*sl2[j]+sd[j][0]*w;
       const ix=Math.floor(px),iy=Math.floor(py);if(ix<0||ix>=W||iy<0||iy>=H)continue;const si=iy*W+ix;
       if(part[si]===3&&src[si]>>>24)put(Math.round(x+sx)+MX,Math.round(y+sy)+MT,src[si]);
-    }}
+    }}}
   /* ears */
   tgt=top;
   fr.ears.forEach(function(e,k){
@@ -103,6 +105,7 @@ function petRigCompose(src,fr,m,pose,W,H){
     const th=(pose&&(k===0?pose.ear0:pose.ear1)||0)*Math.PI/180,ca=Math.cos(th),sa=Math.sin(th);
     const u2=[u[0]*ca-u[1]*sa,u[0]*sa+u[1]*ca],n2=[-u2[1],u2[0]],sl=earS[1]*(pose&&pose.flat?0.85:1),sw=earS[0];
     const sx=X(b[0])-b[0],sy=Y(b[1])-b[1];
+    if(sl===1&&sw===1&&!th){e.px.forEach(function(p){put(Math.round(p%W+sx)+MX,Math.round(Math.floor(p/W)+sy)+MT,src[p])});return}   /* untouched ear: original pixels */
     let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
     e.px.forEach(function(p){const x=p%W+0.5,y=Math.floor(p/W)+0.5,t=(x-b[0])*u[0]+(y-b[1])*u[1],w=(x-b[0])*nrm[0]+(y-b[1])*nrm[1],
       fx=b[0]+t*sl*u2[0]+w*sw*n2[0],fy=b[1]+t*sl*u2[1]+w*sw*n2[1];x0=Math.min(x0,fx);x1=Math.max(x1,fx);y0=Math.min(y0,fy);y1=Math.max(y1,fy)});

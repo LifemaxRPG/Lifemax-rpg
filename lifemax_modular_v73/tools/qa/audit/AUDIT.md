@@ -1,4 +1,6 @@
-# Cat rig audit (v119)
+# Cat rig audit (v119, repairs in v124)
+
+**Status after v124:** findings 1 and 2 are fixed. Curled-tail rows keep their original tail art (no tail stretch), and ears/tail drawn at normal size are now copied pixel-for-pixel, so every row matches the original at 1.0x (`idBad 0` in `summary.txt`). `walk_back` and the scratch family were redrawn (v123). Findings 3 and 4 are stress-test heuristics at extreme sizes and were not changed. The findings below describe the v119 audit.
 
 Method: `node tools/rig_audit.js <built html>` runs the real runtime compositor over all 224 animation rows (adult, six kitten stages, back/front views and their kitten stages), every frame, at 1.0x and at stress values (ears 2.2x and 0.45x, tail 2x and 0.5x, legs 1.5x and 0.7x, body 1.5x and 0.7x, whiskers 1.8x). It counts new stray pieces, new holes and exposed fill, and how many pixels differ from the original art at 1.0x. These are heuristics for picking what a person should look at, not a verdict.
 
