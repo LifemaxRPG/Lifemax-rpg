@@ -29,8 +29,9 @@ import java.util.List;
 /** Lets the web app list and launch other apps, and colour the system bars. */
 @CapacitorPlugin(name = "AppLauncher")
 public class AppLauncherPlugin extends Plugin {
-    private static final int ICON_PX = 96;
+    private static final int ICON_PX = 84;
 
+    /** Fast: names and package ids only. Icons come separately (getIcons) so this stays small. */
     @PluginMethod
     public void getApps(final PluginCall call) {
         new Thread(() -> {
@@ -42,25 +43,50 @@ public class AppLauncherPlugin extends Plugin {
                 final String self = getContext().getPackageName();
                 List<JSObject> rows = new ArrayList<>();
                 for (ResolveInfo ri : found) {
-                    String pkg = ri.activityInfo.packageName;
-                    if (pkg.equals(self)) continue;
-                    JSObject o = new JSObject();
-                    o.put("pkg", pkg);
-                    o.put("label", String.valueOf(ri.loadLabel(pm)));
-                    o.put("icon", encode(ri.loadIcon(pm)));
-                    rows.add(o);
+                    try {
+                        String pkg = ri.activityInfo.packageName;
+                        if (pkg.equals(self)) continue;
+                        CharSequence lbl = ri.loadLabel(pm);
+                        JSObject o = new JSObject();
+                        o.put("pkg", pkg);
+                        o.put("label", lbl == null ? pkg : lbl.toString());
+                        rows.add(o);
+                    } catch (Throwable ignored) { /* skip one bad entry */ }
                 }
-                Collections.sort(rows, (a, b) -> {
-                    String x = a.getString("label"), y = b.getString("label");
-                    return String.CASE_INSENSITIVE_ORDER.compare(x == null ? "" : x, y == null ? "" : y);
-                });
+                Collections.sort(rows, (x, y) ->
+                        String.CASE_INSENSITIVE_ORDER.compare(x.optString("label", ""), y.optString("label", "")));
                 JSArray arr = new JSArray();
                 for (JSObject o : rows) arr.put(o);
                 JSObject ret = new JSObject();
                 ret.put("apps", arr);
                 call.resolve(ret);
-            } catch (Exception e) {
-                call.reject("Could not list apps: " + e.getMessage());
+            } catch (Throwable e) {
+                call.reject("getApps failed: " + e);
+            }
+        }).start();
+    }
+
+    /** pkgs: array of package ids. Returns { icons: { pkg: "data:image/png;base64,..." } }. */
+    @PluginMethod
+    public void getIcons(final PluginCall call) {
+        final JSArray pkgs = call.getArray("pkgs");
+        if (pkgs == null) { call.reject("pkgs required"); return; }
+        new Thread(() -> {
+            try {
+                PackageManager pm = getContext().getPackageManager();
+                JSObject icons = new JSObject();
+                for (int i = 0; i < pkgs.length(); i++) {
+                    String pkg = pkgs.optString(i, null);
+                    if (pkg == null) continue;
+                    try {
+                        icons.put(pkg, encode(pm.getApplicationIcon(pkg)));
+                    } catch (Throwable ignored) { /* no icon for this one */ }
+                }
+                JSObject ret = new JSObject();
+                ret.put("icons", icons);
+                call.resolve(ret);
+            } catch (Throwable e) {
+                call.reject("getIcons failed: " + e);
             }
         }).start();
     }
