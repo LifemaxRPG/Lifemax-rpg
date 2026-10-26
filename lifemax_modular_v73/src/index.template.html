@@ -37,7 +37,7 @@
 <div class="app">
   <header class="topbar">
     <div class="brand" onclick="navigate('character')" style="cursor:pointer" title="Open character sheet"><div class="logo" id="brandLogo"></div><div><h1 id="brandName">Life Max RPG</h1><p>Build the character. Build the life.</p></div></div>
-    <div class="top-actions"><span class="pill">PROTOTYPE · v0.3</span><button class="btn" onclick="navigate('log')">＋ Log activity</button></div>
+    <div class="top-actions"><span class="pill">PROTOTYPE · v0.3</span><button class="btn" onclick="navigate('log')">＋ Log activity</button><button class="btn secondary topgear" onclick="navigate('settings')" aria-label="Settings" title="Settings"><i data-px="gear" data-s="18"></i></button></div>
   </header>
   <div class="layout">
     <aside class="sidebar">
@@ -47,12 +47,10 @@
       <button class="navbtn" data-view="log" onclick="navigate('log')"><span class="ico"><i data-px="plus" data-s="18"></i></span>Log activity</button>
       <button class="navbtn" data-view="quests" onclick="navigate('quests')"><span class="ico"><i data-px="flag" data-s="18"></i></span>Quests</button>
       <button class="navbtn" data-view="plan" onclick="navigate('plan')"><span class="ico"><i data-px="list" data-s="18"></i></span>Workout plan</button>
-      <button class="navbtn" data-view="media" onclick="navigate('media')"><span class="ico"><i data-px="book" data-s="18"></i></span>Media library</button>
+      <button class="navbtn" data-view="library" onclick="lmaNavTo('library')"><span class="ico"><i data-px="book" data-s="18"></i></span>Library</button>
       <button class="navbtn" data-view="meals" onclick="navigate('meals')"><span class="ico"><i data-px="heart" data-s="18"></i></span>Meals</button>
       <button class="navbtn" data-view="recipes" onclick="navigate('recipes')"><span class="ico"><i data-px="book-open" data-s="18"></i></span>Recipes</button>
       <button class="navbtn" data-view="money" onclick="navigate('money')"><span class="ico"><i data-px="coin" data-s="18"></i></span>Money</button>
-      <button class="navbtn" data-view="history" onclick="navigate('history')"><span class="ico"><i data-px="clock" data-s="18"></i></span>Journal</button>
-      <button class="navbtn" data-view="settings" onclick="navigate('settings')"><span class="ico"><i data-px="gear" data-s="18"></i></span>Settings</button>
       <div class="sidebar-note"><strong>YOUR REAL-LIFE SAVE FILE</strong>Train an attribute or watch it fade. Rest is a choice — unused stats still decay.</div>
     </aside>
     <main class="content">

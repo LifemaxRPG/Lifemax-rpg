@@ -3,12 +3,16 @@
 const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
 let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
-function lmaTabIndex(v){return lmaTabList().findIndex(b=>b.dataset.view===v)}
+/* Media and Journal live together under the Library tab */
+const lmaTabKey=v=>v==='media'||v==='history'?'library':v;
+const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v;
+function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
    opts.skip: do not record it in Back history. opts.fast: no animation (used while scrubbing). */
 let lmaVTcur=null;
 function lmaNavTo(v,opts){
+ v=lmaResolve(v);
  const el=document.getElementById('view-'+v);if(!el)return false;
  const from=lmaView(),root=document.documentElement;
  const run=()=>{
@@ -22,7 +26,7 @@ function lmaNavTo(v,opts){
  const a=lmaTabIndex(from),b=lmaTabIndex(v);
  root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
  try{
-  const t=document.startViewTransition(run);lmaVTcur=t;
+  const t=document.startViewTransition(run);lmaVTcur=t;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
   const done=()=>{if(lmaVTcur===t){lmaVTcur=null;delete root.dataset.vt}};
   t.finished.then(done,done);
  }catch(e){delete root.dataset.vt;run()}
@@ -109,7 +113,7 @@ document.addEventListener('touchend',e=>{
  const t=e.changedTouches[0],dx=t.clientX-s.x,dy=t.clientY-s.y,dt=Date.now()-s.t;
  if(dt>LMA_SWIPE.maxMs||Math.abs(dx)<Math.max(LMA_SWIPE.minPx,window.innerWidth*LMA_SWIPE.minFrac)||Math.abs(dx)<Math.abs(dy)*LMA_SWIPE.ratio)return;
  if(lmaTopOverlay())return;
- const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaView()),next=cur+(dx<0?1:-1);
+ const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+(dx<0?1:-1);
  if(cur<0||next<0||next>=tabs.length)return;
  tabs[next].click();
  lmaSwipeHint(tabs[next],dx<0?-1:1);

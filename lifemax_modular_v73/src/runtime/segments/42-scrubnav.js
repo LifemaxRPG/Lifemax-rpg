@@ -37,7 +37,7 @@ function lmaThumbSchedule(v){
  clearTimeout(lmaThumbTimer);
  lmaThumbTimer=setTimeout(async()=>{
   const S=lmaScrub;
-  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaView()!==v)return;
+  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}
@@ -87,6 +87,7 @@ const LMA_TAB_ICONS={
  history:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>',
  settings:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.500"/><path d="M12 2v2.500M12 19.500V22M2 12h2.500M19.500 12H22M4.900 4.900l1.800 1.800M17.300 17.300l1.800 1.800M4.900 19.100l1.800-1.800M17.300 6.700l1.800-1.800"/>',
  apps:'<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M10.500 18.500h3"/>',
+ library:'<path d="M12 6C10 4.500 7 4 4 4v14c3 0 6 .5 8 2 2-1.500 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/>',
  'life-director':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.500"/><path d="M12 12V7.500M12 12l3.500 2"/><path d="M12 3v1.500M21 12h-1.500M12 21v-1.500M3 12h1.500"/>'
 };
 function lmaTabIcon(v){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(LMA_TAB_ICONS[v]||'<circle cx="12" cy="12" r="8"/>').replace(/<(\w+)/g,'<$1 vector-effect="non-scaling-stroke"')+'</svg>'}
@@ -105,7 +106,7 @@ function lmaVeilSet(i){
  S.veil.querySelector('.sv-name').textContent=b.textContent.trim();
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
-function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
+function lmaScrubIndex(v){v=lmaTabKey(v);return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
 /* nudge the strip just enough that tab i is fully visible */
 function lmaScrubReveal(i){
  const S=lmaScrub,b=S.items[i];if(!b)return;
@@ -127,7 +128,7 @@ function lmaScrubInit(){
  /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
     and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
  const go=()=>{
-  const b=S.items[S.sel];if(!b)return;const v=b.dataset.view;if(v===lmaView())return;
+  const b=S.items[S.sel];if(!b)return;const v=b.dataset.view;if(v===lmaTabKey(lmaView()))return;
   if(S.drag&&S.drag.speed>LMA_SCRUB.fast){clearTimeout(S.timer);S.timer=setTimeout(go,60);return}   /* still moving quickly: keep gliding, switch when it eases */
   requestAnimationFrame(()=>setTimeout(()=>{
    if(!S.drag||S.items[S.sel]!==b)return;
@@ -170,7 +171,7 @@ function lmaScrubInit(){
   if(!d.moved)return;
   S.block=Date.now();lmaBuzz('end');
   const b=S.items[S.sel];if(!b)return;
-  if(b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true,fast:true});
+  if(b.dataset.view!==lmaTabKey(lmaView()))lmaNavTo(b.dataset.view,{skip:true,fast:true});
   requestAnimationFrame(()=>requestAnimationFrame(()=>lmaVeil(false)));
   if(b.dataset.view!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
  };
@@ -188,10 +189,18 @@ function lmaScrubInit(){
 }
 (function lmaScrubBoot(){
  const _nav=navigate;
- navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v);lmaThumbSchedule(lmaView())}catch(e){}return r};
+ navigate=function(v){
+  const r=_nav.apply(this,arguments);
+  try{
+   if(v==='media'||v==='history'){state.libPane=v;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view==='library'))}
+   document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
+   lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));
+  }catch(e){}
+  return r;
+ };
  const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
- setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaView());lmaThumbRender()}catch(e){}},1200);
+ setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaTabKey(lmaView()));lmaThumbRender()}catch(e){}},1200);
  setTimeout(()=>{try{if(lmaNative()&&!lmaScrub.drag)lmaThumbWarm(false)}catch(e){}},9000);
  const _nav2=navigate;navigate=function(v){const r=_nav2.apply(this,arguments);if(v==='settings')try{lmaThumbRender()}catch(e){}return r};
 })();

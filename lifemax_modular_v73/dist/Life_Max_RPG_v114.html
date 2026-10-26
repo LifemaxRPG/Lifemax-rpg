@@ -3494,9 +3494,16 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
   html.light-theme .sv-mid{color:#fff}
   .thumbwarm{display:block;position:fixed;left:0;right:0;top:0;height:3px;z-index:6000;background:#ffffff1a}.thumbwarm i{display:block;height:100%;width:0;background:var(--accent-strong);transition:width .3s}
 }
+
+/* v114 · Library tab (Media + Journal) and the top settings button */
+.libseg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);margin-bottom:14px}
+.libseg button{background:none;border:0;color:var(--muted);font:inherit;font-size:13.5px;font-weight:600;padding:7px 18px;border-radius:9px;cursor:pointer;transition:background .2s,color .2s}
+.libseg button.on{background:var(--accent-dim);color:var(--accent-strong)}
+.topgear{padding:9px 11px;display:inline-flex;align-items:center;justify-content:center}
+.top-actions{display:flex;gap:8px;align-items:center}
 </style>
 <style id="lifemax-feature-styles">
-/* Feature apps v1.2.0 */
+/* Feature apps v1.3.0 */
 .apps-root{padding-bottom:24px}
 .apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:14px 8px;margin-top:6px}
 .apps-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;background:none;border:0;color:var(--text);font:inherit;cursor:pointer;border-radius:14px;-webkit-tap-highlight-color:transparent}
@@ -4188,7 +4195,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 <div class="app">
   <header class="topbar">
     <div class="brand" onclick="navigate('character')" style="cursor:pointer" title="Open character sheet"><div class="logo" id="brandLogo"></div><div><h1 id="brandName">Life Max RPG</h1><p>Build the character. Build the life.</p></div></div>
-    <div class="top-actions"><span class="pill">PROTOTYPE · v0.3</span><button class="btn" onclick="navigate('log')">＋ Log activity</button></div>
+    <div class="top-actions"><span class="pill">PROTOTYPE · v0.3</span><button class="btn" onclick="navigate('log')">＋ Log activity</button><button class="btn secondary topgear" onclick="navigate('settings')" aria-label="Settings" title="Settings"><i data-px="gear" data-s="18"></i></button></div>
   </header>
   <div class="layout">
     <aside class="sidebar">
@@ -4198,13 +4205,10 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
       <button class="navbtn" data-view="log" onclick="navigate('log')"><span class="ico"><i data-px="plus" data-s="18"></i></span>Log activity</button>
       <button class="navbtn" data-view="quests" onclick="navigate('quests')"><span class="ico"><i data-px="flag" data-s="18"></i></span>Quests</button>
       <button class="navbtn" data-view="plan" onclick="navigate('plan')"><span class="ico"><i data-px="list" data-s="18"></i></span>Workout plan</button>
-      <button class="navbtn" data-view="media" onclick="navigate('media')"><span class="ico"><i data-px="book" data-s="18"></i></span>Media library</button>
+      <button class="navbtn" data-view="library" onclick="lmaNavTo('library')"><span class="ico"><i data-px="book" data-s="18"></i></span>Library</button>
       <button class="navbtn" data-view="meals" onclick="navigate('meals')"><span class="ico"><i data-px="heart" data-s="18"></i></span>Meals</button>
       <button class="navbtn" data-view="recipes" onclick="navigate('recipes')"><span class="ico"><i data-px="book-open" data-s="18"></i></span>Recipes</button>
       <button class="navbtn" data-view="money" onclick="navigate('money')"><span class="ico"><i data-px="coin" data-s="18"></i></span>Money</button>
-      <button class="navbtn" data-view="history" onclick="navigate('history')"><span class="ico"><i data-px="clock" data-s="18"></i></span>Journal</button>
-      <button class="navbtn" data-view="settings" onclick="navigate('settings')"><span class="ico"><i data-px="gear" data-s="18"></i></span>Settings</button>
-      <button class="navbtn" data-view="apps" onclick="navigate('apps')"><span class="ico">▦</span>Apps</button>
       <button class="navbtn" data-view="life-director" onclick="navigate('life-director')"><span class="ico">✦</span>Life Director</button>
 <div class="sidebar-note"><strong>YOUR REAL-LIFE SAVE FILE</strong>Train an attribute or watch it fade. Rest is a choice — unused stats still decay.</div>
     </aside>
@@ -4401,6 +4405,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div id="planBody"></div>
       </section>
       <section id="view-media" class="view">
+        <div class="libseg" role="tablist"><button type="button" data-lib="media" onclick="lmaNavTo('media')">Media</button><button type="button" data-lib="history" onclick="lmaNavTo('history')">Journal</button></div>
         <div class="pagehead">
           <div><div class="eyebrow">YOUR PERSONAL LIBRARY</div><h2>Media library</h2><p>Reading list, courses, and audiobooks. Attach .m4b/.m4a files to play in-app — stored on this device.</p></div>
           <button class="btn" onclick="showMediaForm()">＋ Add media</button>
@@ -4557,6 +4562,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="card" style="margin-top:14px"><h3>Transactions</h3><div id="txList"></div></div>
       </section>
       <section id="view-history" class="view">
+        <div class="libseg" role="tablist"><button type="button" data-lib="media" onclick="lmaNavTo('media')">Media</button><button type="button" data-lib="history" onclick="lmaNavTo('history')">Journal</button></div>
         <div class="pagehead"><div><div class="eyebrow">YOUR JOURNEY SO FAR</div><h2>Journal</h2><p>Everything you logged, compiled by day. Add a reflection if you want.</p></div><button class="btn secondary" onclick="exportData()">Export backup</button></div>
         <div class="journal-layout">
           <div class="card journal-days" id="journalDays"></div>
@@ -13497,12 +13503,16 @@ async function lmaDownload(text,filename,mime,label){
 const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
 let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
-function lmaTabIndex(v){return lmaTabList().findIndex(b=>b.dataset.view===v)}
+/* Media and Journal live together under the Library tab */
+const lmaTabKey=v=>v==='media'||v==='history'?'library':v;
+const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v;
+function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
    opts.skip: do not record it in Back history. opts.fast: no animation (used while scrubbing). */
 let lmaVTcur=null;
 function lmaNavTo(v,opts){
+ v=lmaResolve(v);
  const el=document.getElementById('view-'+v);if(!el)return false;
  const from=lmaView(),root=document.documentElement;
  const run=()=>{
@@ -13516,7 +13526,7 @@ function lmaNavTo(v,opts){
  const a=lmaTabIndex(from),b=lmaTabIndex(v);
  root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
  try{
-  const t=document.startViewTransition(run);lmaVTcur=t;
+  const t=document.startViewTransition(run);lmaVTcur=t;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
   const done=()=>{if(lmaVTcur===t){lmaVTcur=null;delete root.dataset.vt}};
   t.finished.then(done,done);
  }catch(e){delete root.dataset.vt;run()}
@@ -13603,7 +13613,7 @@ document.addEventListener('touchend',e=>{
  const t=e.changedTouches[0],dx=t.clientX-s.x,dy=t.clientY-s.y,dt=Date.now()-s.t;
  if(dt>LMA_SWIPE.maxMs||Math.abs(dx)<Math.max(LMA_SWIPE.minPx,window.innerWidth*LMA_SWIPE.minFrac)||Math.abs(dx)<Math.abs(dy)*LMA_SWIPE.ratio)return;
  if(lmaTopOverlay())return;
- const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaView()),next=cur+(dx<0?1:-1);
+ const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+(dx<0?1:-1);
  if(cur<0||next<0||next>=tabs.length)return;
  tabs[next].click();
  lmaSwipeHint(tabs[next],dx<0?-1:1);
@@ -14611,7 +14621,7 @@ function lmaThumbSchedule(v){
  clearTimeout(lmaThumbTimer);
  lmaThumbTimer=setTimeout(async()=>{
   const S=lmaScrub;
-  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaView()!==v)return;
+  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}
@@ -14661,6 +14671,7 @@ const LMA_TAB_ICONS={
  history:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>',
  settings:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.500"/><path d="M12 2v2.500M12 19.500V22M2 12h2.500M19.500 12H22M4.900 4.900l1.800 1.800M17.300 17.300l1.800 1.800M4.900 19.100l1.800-1.800M17.300 6.700l1.800-1.800"/>',
  apps:'<rect x="7" y="2.500" width="10" height="19" rx="2.500"/><path d="M10.500 18.500h3"/>',
+ library:'<path d="M12 6C10 4.500 7 4 4 4v14c3 0 6 .5 8 2 2-1.500 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/>',
  'life-director':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.500"/><path d="M12 12V7.500M12 12l3.500 2"/><path d="M12 3v1.500M21 12h-1.500M12 21v-1.500M3 12h1.500"/>'
 };
 function lmaTabIcon(v){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(LMA_TAB_ICONS[v]||'<circle cx="12" cy="12" r="8"/>').replace(/<(\w+)/g,'<$1 vector-effect="non-scaling-stroke"')+'</svg>'}
@@ -14679,7 +14690,7 @@ function lmaVeilSet(i){
  S.veil.querySelector('.sv-name').textContent=b.textContent.trim();
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
-function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
+function lmaScrubIndex(v){v=lmaTabKey(v);return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
 /* nudge the strip just enough that tab i is fully visible */
 function lmaScrubReveal(i){
  const S=lmaScrub,b=S.items[i];if(!b)return;
@@ -14701,7 +14712,7 @@ function lmaScrubInit(){
  /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
     and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
  const go=()=>{
-  const b=S.items[S.sel];if(!b)return;const v=b.dataset.view;if(v===lmaView())return;
+  const b=S.items[S.sel];if(!b)return;const v=b.dataset.view;if(v===lmaTabKey(lmaView()))return;
   if(S.drag&&S.drag.speed>LMA_SCRUB.fast){clearTimeout(S.timer);S.timer=setTimeout(go,60);return}   /* still moving quickly: keep gliding, switch when it eases */
   requestAnimationFrame(()=>setTimeout(()=>{
    if(!S.drag||S.items[S.sel]!==b)return;
@@ -14744,7 +14755,7 @@ function lmaScrubInit(){
   if(!d.moved)return;
   S.block=Date.now();lmaBuzz('end');
   const b=S.items[S.sel];if(!b)return;
-  if(b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true,fast:true});
+  if(b.dataset.view!==lmaTabKey(lmaView()))lmaNavTo(b.dataset.view,{skip:true,fast:true});
   requestAnimationFrame(()=>requestAnimationFrame(()=>lmaVeil(false)));
   if(b.dataset.view!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
  };
@@ -14762,10 +14773,18 @@ function lmaScrubInit(){
 }
 (function lmaScrubBoot(){
  const _nav=navigate;
- navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v);lmaThumbSchedule(lmaView())}catch(e){}return r};
+ navigate=function(v){
+  const r=_nav.apply(this,arguments);
+  try{
+   if(v==='media'||v==='history'){state.libPane=v;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view==='library'))}
+   document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
+   lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));
+  }catch(e){}
+  return r;
+ };
  const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
- setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaView());lmaThumbRender()}catch(e){}},1200);
+ setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaTabKey(lmaView()));lmaThumbRender()}catch(e){}},1200);
  setTimeout(()=>{try{if(lmaNative()&&!lmaScrub.drag)lmaThumbWarm(false)}catch(e){}},9000);
  const _nav2=navigate;navigate=function(v){const r=_nav2.apply(this,arguments);if(v==='settings')try{lmaThumbRender()}catch(e){}return r};
 })();

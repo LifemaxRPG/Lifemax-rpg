@@ -345,3 +345,6 @@ Edge to edge on the bottom bar covers every tab from any starting point: where y
 
 ## v113 — real screenshots on the veil, outline icons
 The scrub veil shows the blurred screenshot of each tab with a thin white outline icon and the tab's name (14 hand-drawn SVG icons in `LMA_TAB_ICONS`). Screenshots: `PageThumbPlugin` tries PixelCopy, then a software draw, and reports any error in full. A one-time pass 9 s after launch visits every tab without a picture and snapshots it (a thin progress line at the top; touching the screen stops it); Settings -> Tab previews shows how many tabs are captured, the last error, and "Capture all".
+
+## v114 — fewer tabs
+Media library and Journal now sit under one **Library** tab (a Media | Journal switch at the top of each page; the tab remembers which one you were on). The **Apps** tab is gone from the bar (the Overview app row stays, and its "Edit" link opens the shortcut editor, `nav: false` in the feature file). **Settings** moved to a gear button in the top bar. The bar now has 11 tabs: Overview, Character, Cat, Log activity, Quests, Workout plan, Library, Meals, Recipes, Money, Life Director.
