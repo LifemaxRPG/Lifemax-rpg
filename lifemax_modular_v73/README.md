@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v123 — cat: new rear-view walk and a new wall scratch
+
+- `walk_back` (all coats, every age): real head with ears (built from the front-view head with the face painted out), and a curved, swaying tail beside the body instead of a stripe down the back. `tools/redo_back.py`.
+- Scratch family (`scratch`, `scratch_in`, `scratch_out`, adult, all coats): the cat sits and reaches up the wall, raking each paw down in turn, claws out. Claw marks now land where the paws do. `tools/redo_scratch.py`.
+- Rig data regenerated (`tools/rig_build.py`).
+
+## v122 — (rolled into v123)
+
 ## v121 — mic button in the top bar
 
 The floating microphone button is gone. The mic now sits in the top bar next to Settings and looks like it; it pulses while listening.

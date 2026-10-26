@@ -158,8 +158,8 @@ function petUpdate(rt,dt){
       const meta=rt.A.anims.scratch,T=c.t*meta.fps/meta.n,kR=Math.floor(T-0.15),kL=Math.floor(T-0.65);
       if(s.kR==null){s.kR=kR;s.kL=kL}
       const dyF=Math.round(c.y-meta.bottom+1);
-      if(kR!==s.kR){s.kR=kR;petAddMark(rt,c.x+8.0+Math.random()*3-1.5,dyF+4+Math.random()*3-1.5)}
-      if(kL!==s.kL){s.kL=kL;petAddMark(rt,c.x-8.0+Math.random()*3-1.5,dyF+4+Math.random()*3-1.5)}
+      if(kR!==s.kR){s.kR=kR;petAddMark(rt,c.x+24.5+Math.random()*2-1,dyF+22+Math.random()*4-2)}
+      if(kL!==s.kL){s.kL=kL;petAddMark(rt,c.x+22.5+Math.random()*2-1,dyF+24+Math.random()*4-2)}
     }
     if(s.a==='kick'&&rt.ball.on){const b=rt.ball;b.x=c.x+c.dir*18.2*petSx(petData())+Math.sin(c.t*24)*0.8;b.vx=0;b.h=Math.max(0,Math.sin(c.t*12*Math.PI/3))*1.6;b.flip=c.dir<0}
     if(s.swat||s.pat||s.hug)petPlayTick(rt,s,dt);
