@@ -40,7 +40,11 @@ xml = xml.replace(
     '        </activity-alias>\n'
     '        <activity-alias android:name="ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".MainActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">\n'
     '            <intent-filter>\n                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />\n                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />\n            </intent-filter>\n'
-    '        </activity-alias>\n    </application>',
+    '        </activity-alias>\n'
+    '        <receiver android:name=".LifeDialWidget" android:exported="false">\n'
+    '            <intent-filter>\n                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />\n            </intent-filter>\n'
+    '            <meta-data android:name="android.appwidget.provider" android:resource="@xml/lifemax_dial_widget_info" />\n'
+    '        </receiver>\n    </application>',
     1,
 )
 assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml, "manifest patch failed"

@@ -2,6 +2,7 @@ package com.lifemax.rpg;
 
 import android.graphics.Color;
 import android.os.Build;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
@@ -16,6 +17,16 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    static final String EXTRA_OPEN = "lma_open";
+    /** Set by the home-screen widget; the web app reads and clears it. */
+    static volatile String launchTarget = null;
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent != null && intent.getStringExtra(EXTRA_OPEN) != null) launchTarget = intent.getStringExtra(EXTRA_OPEN);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(AppLauncherPlugin.class);
@@ -23,7 +34,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(UpdaterPlugin.class);
         registerPlugin(BackupFolderPlugin.class);
         registerPlugin(HealthSyncPlugin.class);
+        registerPlugin(WidgetBridgePlugin.class);
         super.onCreate(savedInstanceState);
+        if (getIntent() != null && getIntent().getStringExtra(EXTRA_OPEN) != null) launchTarget = getIntent().getStringExtra(EXTRA_OPEN);
 
         // Draw edge to edge, then keep the page clear of the status bar, camera cut-out,
         // gesture bar and keyboard by padding the content area by the system insets.

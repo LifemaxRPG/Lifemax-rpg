@@ -3451,7 +3451,7 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .apps-artgrid button.on{border-color:var(--gold,#e0b341);background:var(--panel2)}
 .apps-artgrid img{width:56px;height:56px}
 
-/* Feature life-director v1.7.1 */
+/* Feature life-director v1.8.0 */
 /* ==========================================================================
    LIFE DIRECTOR · CHRONO  (visual system v6, Life Director 1.4)
    One instrument: a 24-hour dial. Outer ring = time you already gave away
@@ -4509,6 +4509,11 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
           <h3>App updates</h3>
           <p class="muted" style="font-size:12px;margin-top:-5px">New builds come from this app’s GitHub releases. Android asks you to confirm each install.</p>
           <div id="lmaUpdBody"></div>
+        </div>
+        <div class="card" style="margin-bottom:14px" id="lmaWidgetCard">
+          <h3>Home-screen widget</h3>
+          <p class="muted" style="font-size:12px;margin-top:-5px">Your Life Director dial on the home screen: today’s plan, a moving hand for now, and what is on or next.</p>
+          <div id="lmaWidgetBody"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaHealthCard">
           <h3>Health sync</h3>
@@ -14227,6 +14232,47 @@ function ovHealthRender(){
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovHealthRender()}catch(e){console.warn('[health tile]',e)}return r};
  setTimeout(function(){try{ovHealthRender()}catch(e){}},1500);
 })();
+/* ---------- Home-screen widget: the Life Director dial (Android app only) ---------- */
+let lmaWidgetBusy=false,lmaWidgetAt=0,lmaWidgetMsg='';
+async function lmaWidgetPush(manual){
+ const W=lmaNative()&&lmaPlugin('WidgetBridge');
+ if(!W||lmaWidgetBusy||!window.LifeDirector||!LifeDirector.widgetSnapshot)return;
+ lmaWidgetBusy=true;
+ try{
+  const snap=await LifeDirector.widgetSnapshot(720);
+  if(!snap){lmaWidgetMsg='Set up Life Director first, then the widget can show your day.';return}
+  await W.update(snap);lmaWidgetAt=Date.now();lmaWidgetMsg='';
+ }catch(e){lmaWidgetMsg=String((e&&e.message)||e).slice(0,160);if(manual)toast('Widget: '+lmaWidgetMsg)}
+ finally{lmaWidgetBusy=false;lmaWidgetRender()}
+}
+async function lmaWidgetPin(){
+ const W=lmaPlugin('WidgetBridge');if(!W)return;
+ await lmaWidgetPush(true);
+ try{const r=await W.pin();if(!r||!r.requested)toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax RPG.')}
+ catch(e){toast('Touch and hold an empty spot on your home screen, choose Widgets, then LifeMax RPG.')}
+}
+async function lmaWidgetRender(){
+ const el=document.getElementById('lmaWidgetBody');if(!el)return;
+ if(!lmaNative()){el.innerHTML='<div class="note">The home-screen widget is part of the Android app.</div>';return}
+ let n=0,pin=false;
+ try{const r=await lmaPlugin('WidgetBridge').status();n=r.count||0;pin=!!r.canPin}catch(e){}
+ el.innerHTML=(lmaWidgetMsg?'<div class="note" style="margin-bottom:10px">'+esc(lmaWidgetMsg)+'</div>':'')+
+  '<div class="settingsline"><div style="flex:1"><strong>'+(n?n+' on your home screen':'Not on your home screen yet')+'</strong><div class="muted" style="font-size:12px">'+(lmaWidgetAt?'Picture updated '+esc(lmaAgo(lmaWidgetAt)):'The picture updates whenever you leave the app.')+'</div></div>'+
+  '<button class="btn small" onclick="lmaWidgetPin()">'+(pin?'Add widget':'How to add')+'</button></div>'+
+  '<div class="settingsline"><div style="flex:1"><strong>Refresh the picture</strong><div class="muted" style="font-size:12px">Use after you change your plan. The hand moves on its own.</div></div><button class="btn small" '+(lmaWidgetBusy?'disabled ':'')+'onclick="lmaWidgetPush(true)">'+(lmaWidgetBusy?'Drawing…':'Refresh')+'</button></div>';
+}
+async function lmaWidgetLaunch(){
+ try{const r=await lmaPlugin('WidgetBridge').consumeLaunch();if(r&&r.open==='life-director')navigate('life-director')}catch(e){}
+}
+(function lmaWidgetBoot(){
+ const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings')lmaWidgetRender();return r};
+ document.addEventListener('visibilitychange',function(){
+  if(!lmaNative())return;
+  if(document.visibilityState==='hidden')lmaWidgetPush(false);else lmaWidgetLaunch();
+ });
+ setInterval(function(){if(lmaNative()&&document.visibilityState==='visible'&&Date.now()-lmaWidgetAt>10*60e3)lmaWidgetPush(false)},5*60e3);
+ setTimeout(function(){if(lmaNative()){lmaWidgetLaunch();lmaWidgetPush(false)}lmaWidgetRender()},9000);
+})();
 </script>
 <script>window.LifeMaxFeatures=(()=>{const features=new Map();return Object.freeze({register(x){if(!x||typeof x.id!=='string'||features.has(x.id)||typeof x.mount!=='function')throw Error('Invalid feature registration');features.set(x.id,x)},open(id){const x=features.get(id);if(x)x.mount(document.getElementById('view-'+id))},list(){return [...features.keys()]}})})();document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b&&b.dataset.view&&document.getElementById('view-'+b.dataset.view)?.classList.contains('lmf-feature'))queueMicrotask(()=>LifeMaxFeatures.open(b.dataset.view))});</script>
 <script>
@@ -17580,7 +17626,7 @@ const LifeDirectorApp = (function () {
     const svg = String(icon(tagIcon(b.inst.tag), s) || '');
     return svg.indexOf('<svg') === 0 ? svg.replace('<svg class="px"', '<svg class="px ld-sico" x="' + (x - s / 2).toFixed(1) + '" y="' + (y - s / 2).toFixed(1) + '"') : '';
   }
-  function dialHtml(day, blocks, isToday, now) {
+  function dialHtml(day, blocks, isToday, now, plain) {
     const d0 = day.startEpoch, d1 = day.endEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     let outer = '', words = '', inner = '', i = 0;
@@ -17614,7 +17660,7 @@ const LifeDirectorApp = (function () {
       }
     }
     let handles = '';
-    for (const ri of ruleInstances(day)) {
+    for (const ri of plain ? [] : ruleInstances(day)) {
       for (const end of ['start', 'end']) {
         const ep = end === 'start' ? ri.startEpoch : ri.endEpoch;
         if (ep < d0 || ep >= d1 || (end === 'end' && ep === d0)) continue;
@@ -17623,7 +17669,7 @@ const LifeDirectorApp = (function () {
           '<circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10.5"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5"/></g>';
       }
     }
-    const live = isToday && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
+    const live = isToday && !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
     /* the part of today that has already gone, greyed out */
     let past = '';
     if (live && an > 1) {
@@ -19125,7 +19171,43 @@ const LifeDirectorApp = (function () {
       return hit < dur * 0.5;
     }).sort((a, b) => a.endEpoch - b.endEpoch);
   }
-  return { mount, glance, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  /* ── the home-screen widget ─────────────────────────────────────────────
+     The Android widget shows this same dial as a picture. The plain dial (no hand, no drag
+     handles, no shaded past, no centre) is drawn off screen, its computed styles are copied
+     into the SVG so it stands alone, and it is rasterised to a PNG. The widget adds the live
+     hand, the shaded past and the centre text itself, so it stays right between app opens. */
+  const SNAP_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'display', 'visibility', 'font-family', 'font-size', 'font-weight', 'letter-spacing', 'text-anchor', 'dominant-baseline', 'paint-order'];
+  async function widgetSnapshot(size) {
+    if (!ST || !ST.setupComplete || !ST.schedule) return null;
+    const s = ST.schedule, day = horizonDays(s, tz())[0];
+    if (!day) return null;
+    const now = nowEpoch(), blocks = dayBlocks(s, day, tz());
+    if (!document.getElementById('ldSnapCss')) { const st = document.createElement('style'); st.id = 'ldSnapCss'; st.textContent = '.ld-snap *{animation:none!important;transition:none!important}.ld-snap .ld-dial{width:360px;margin:0}'; document.head.appendChild(st); }
+    const host = document.createElement('div');
+    host.className = 'ld-root ld-snap';
+    host.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;height:360px;pointer-events:none;background:none';
+    host.innerHTML = dialHtml(day, blocks, true, now, true);
+    document.body.appendChild(host);
+    try {
+      const svg = host.querySelector('svg');
+      svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.setAttribute('width', '380'); svg.setAttribute('height', '380'); svg.setAttribute('viewBox', '-10 -10 380 380');
+      svg.querySelectorAll('title,.ld-hit').forEach(n => n.remove());
+      for (const el of [svg, ...svg.querySelectorAll('*')]) {
+        const cs = getComputedStyle(el);
+        for (const p of SNAP_PROPS) { let v = cs.getPropertyValue(p); if (v) { v = v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g, 'url($1)'); el.style.setProperty(p, v); } }
+      }
+      const xml = new XMLSerializer().serializeToString(svg);
+      const img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error('The dial image could not be drawn')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); });
+      const px = size || 720, cv = document.createElement('canvas');
+      cv.width = cv.height = px;
+      cv.getContext('2d').drawImage(img, 0, 0, px, px);
+      const sessions = (s.scheduledInstances || []).filter(i => i.lifecycleState === 'PLANNED' && i.endEpoch > now - 3600 && i.startEpoch < now + 36 * 3600)
+        .sort((a, b) => a.startEpoch - b.startEpoch).slice(0, 8).map(i => ({ s: i.startEpoch, e: i.endEpoch, t: i.title }));
+      return { png: cv.toDataURL('image/png').split(',')[1], json: JSON.stringify({ d0: day.startEpoch, d1: day.endEpoch, at: now, sessions }) };
+    } finally { host.remove(); }
+  }
+  return { mount, glance, widgetSnapshot, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */
@@ -19133,6 +19215,7 @@ window.LifeDirector = Object.freeze({
   version: LifeDirectorEngine.ENGINE_VERSION, engine: LifeDirectorEngine,
   getSchedule: () => LifeDirectorApp.getSchedule(), regenerate: r => LifeDirectorApp.regenerate(r),
   glance: (el, opts) => LifeDirectorApp.glance(el, opts),
+  widgetSnapshot: size => LifeDirectorApp.widgetSnapshot(size),
   workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b)
 });
 /* the Overview was drawn before this feature loaded: put today's dial on it now */

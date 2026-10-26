@@ -1820,6 +1820,24 @@
     "lmaHealthSet",
     "lmaHealthSync"
    ]
+  },
+  {
+   "file": "src/runtime/segments/40-widget.js",
+   "bytes": 2995,
+   "statement_count": 9,
+   "tags": [
+    "android",
+    "widget"
+   ],
+   "symbols": [
+    "lmaWidgetAt",
+    "lmaWidgetBusy",
+    "lmaWidgetLaunch",
+    "lmaWidgetMsg",
+    "lmaWidgetPin",
+    "lmaWidgetPush",
+    "lmaWidgetRender"
+   ]
   }
  ]
 }
