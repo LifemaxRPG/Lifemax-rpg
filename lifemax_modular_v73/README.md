@@ -357,3 +357,6 @@ The app is now just **LifeMax**: launcher label (`capacitor.config.json` appName
 
 ## v117 — LifeMax Voice, phase 1
 See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life Director (create_activity, query_schedule), clarification questions instead of guesses, three-tier idempotency (delivery guard, persistent operation journal with crash reconciliation, repeat-detector), preview before saving, Undo through a verified delete, diagnostics and a text simulator. Native `VoiceEnginePlugin` uses only the on-device recognizer (Android 12+).
+
+## v118 — Character tab restored
+The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
