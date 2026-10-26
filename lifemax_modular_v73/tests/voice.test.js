@@ -26,6 +26,11 @@ const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 202
   const ids = await p.evaluate(() => (LifeDirectorApp._debug().ST.fixedCommitments || []).filter(c => c.voice).length);
   ok('canonical: exactly one commitment', ids === 1, ids);
 
+  // a voice meeting belongs on the inner ring with the other plan items
+  await p.evaluate(() => { LifeMaxFeatures.open('life-director'); const b = document.querySelector('.ld-chipday[data-act="day"][data-i="1"]'); if (b) b.click() }); await p.waitForTimeout(600);
+  const ring = await p.evaluate(() => { const t = LifeDirectorApp._debug().ST.fixedCommitments.find(c => c.voice); const e = String(t.startEpoch); return { appt: [...document.querySelectorAll('.ld-appt')].some(n => n.dataset.s === e), outer: [...document.querySelectorAll('.ld-o')].some(n => n.dataset.s === e) } });
+  ok('voice appointment draws on the inner ring, not the outer', ring.appt && !ring.outer, ring);
+
   // idempotency
   const before = ids;
   await say('Hey, can you put an hour-long workout on my Life Director tomorrow morning at nine?', { utteranceId: 'u1' });

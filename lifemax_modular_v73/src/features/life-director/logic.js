@@ -1475,7 +1475,7 @@ function segments(S) {
     while (j < g.n && g.type[j] === code && g.tag[j] === g.tag[i] && (!owner || epochOf(g, j) < owner.endEpoch)) j++;
     const blk = g.tag[i] >= 0 ? g.blocks[g.tag[i]] : null;
     out.push({ startEpoch: epochOf(g, i), endEpoch: epochOf(g, j), code: SLOT_NAMES[code], title: owner ? owner.title : code === SLOT.FREE ? 'Free time' : code === SLOT.RECOVERY ? 'Protected downtime' : (blk ? blk.title : SLOT_NAMES[code]),
-      kind: owner ? 'TASK' : (blk ? blk.kind : code === SLOT.RECOVERY ? 'RECOVERY' : 'FREE'), instanceId: owner ? owner.instanceId : null });
+      kind: owner ? 'TASK' : (blk ? blk.kind : code === SLOT.RECOVERY ? 'RECOVERY' : 'FREE'), instanceId: owner ? owner.instanceId : null, refId: blk && blk.refId != null ? blk.refId : null });
     i = j;
   }
   return out;
@@ -2889,7 +2889,7 @@ const LifeDirectorApp = (function () {
     for (const g of sched.segments || []) {
       if (g.endEpoch <= s || g.startEpoch >= e) continue;
       if (['FREE', 'SCHEDULED_TASK', 'USER_LOCKED_ACTIVITY'].includes(g.code)) continue;
-      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, clipped: g.startEpoch < s || g.endEpoch > e });
+      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, clipped: g.startEpoch < s || g.endEpoch > e });
     }
     const insts = (sched.scheduledInstances || []).concat(sched.historyInstances || []).filter(i => i.endEpoch > s && i.startEpoch < e && !['EXCUSED_DISPLACED', 'CANCELLED_BY_QUEST'].includes(i.lifecycleState));
     for (const i of insts) out.push({ startEpoch: i.startEpoch, endEpoch: i.endEpoch, code: 'TASK', kind: 'TASK', title: i.title, inst: i });
@@ -3108,11 +3108,18 @@ const LifeDirectorApp = (function () {
     const d0 = day.startEpoch, d1 = day.endEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     let outer = '', words = '', inner = '', i = 0;
+    const voiceIds = new Set(((ST && ST.fixedCommitments) || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
     for (const b of blocks) {
       const k = blockClass(b);
       let [a0, a1] = [angOf(b.startEpoch, d0, d1), angOf(b.endEpoch, d0, d1)];
       if (a1 - a0 < 0.3) continue;
-      if (OUTER[k]) {
+      if (!b.inst && b.refId && voiceIds.has(String(b.refId)) && b.kind === 'APPOINTMENT') {
+        /* a one-off you set by voice is a plan item: inner ring, with your other activities */
+        [a0, a1] = gap(a0, a1, 1.4);
+        const d = arcD(DIAL.RI, a0, a1);
+        inner += '<g class="ld-meal ld-appt" data-act="anchor" data-k="work" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" role="button" tabindex="0" aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '"><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title>' +
+          '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ap" d="' + d + '" stroke-width="' + DIAL.WI + '"/></g>';
+      } else if (OUTER[k]) {
         [a0, a1] = gap(a0, a1, 0.9);
         const w = arcText(DIAL.RO, a0, a1, blockWords(b, d0, d1), 'ld-c-' + k);
         outer += '<path class="ld-o ld-c-' + k + '" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '" data-act="anchor" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-k="' + k + '"' + (w ? ' data-lbl="1"' : '') + '><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title></path>';

@@ -585,6 +585,8 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 .ld-root{--meal:#fdba74}
 .ld-c-meal{--c:var(--meal)}
 .ld-meal{cursor:pointer;outline:none}
+.ld-ap{fill:none;stroke:#60a5fa;filter:drop-shadow(0 0 5px rgba(96,165,250,.45));transition:stroke-width .15s}
+.ld-appt:active .ld-ap{stroke-width:25}
 .ld-ma{fill:none;stroke:var(--meal);filter:drop-shadow(0 0 5px rgba(253,186,116,.45));transition:stroke-width .15s}
 .ld-meal:active .ld-ma,.ld-meal:focus-visible .ld-ma{stroke-width:25}
 .ld-meal .ld-sico{color:#3b1d06}
