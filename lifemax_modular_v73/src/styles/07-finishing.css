@@ -92,3 +92,18 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 /* v109 · Rewards */
 .rs-bal{font-weight:700;color:var(--gold,#fbbf24);white-space:nowrap}.rs-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
 .hsheet .hs-list li small{max-width:230px}
+
+/* v110 · scrub veil: a blurred stand-in for the page while the bottom bar is being scrubbed */
+.scrubveil{display:none}
+@media(max-width:860px){
+  .scrubveil{display:flex;position:fixed;left:0;right:0;top:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:29;align-items:center;justify-content:center;pointer-events:none;
+    background:rgba(8,10,16,.34);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);opacity:0;transition:opacity .14s ease-out}
+  .scrubveil.on{opacity:1}
+  html.light-theme .scrubveil{background:rgba(255,255,255,.4)}
+  .sv-card{display:flex;flex-direction:column;align-items:center;gap:14px;transform:scale(.96);transition:transform .16s cubic-bezier(.2,.8,.2,1)}
+  .scrubveil.on .sv-card{transform:none}
+  .sv-ico{width:84px;height:84px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:var(--accent-dim);box-shadow:inset 0 0 0 1px #ffffff1a,0 14px 40px -12px var(--accent);color:var(--accent-strong);font-size:38px}
+  .sv-ico .px,.sv-ico svg,.sv-ico i{transform:scale(1.9);transform-origin:center}
+  .sv-name{font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);text-shadow:0 2px 14px #0008}
+}
+@media(prefers-reduced-motion:reduce){.scrubveil,.sv-card{transition:none}}

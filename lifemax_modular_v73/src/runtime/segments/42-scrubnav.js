@@ -3,8 +3,8 @@
    scrolls only when it has to keep it in view. The page follows as soon as the finger slows (and when it lifts),
    so fast swipes stay light; nothing is animated while scrubbing. Taps work as before, with a short slide.
    Phones only (<= 860px wide). The page animation is lmaNavTo in 34-navigation.js. */
-const LMA_SCRUB={slop:7,settle:70,gain:.92,fast:.16};
-const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0,cost:{}};
+const LMA_SCRUB={slop:7,settle:130,gain:.92,fast:.16};
+const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0,cost:{},veil:null,veilOn:false};
 const lmaScrubOn=()=>!!(window.matchMedia&&matchMedia('(max-width:860px)').matches);
 /* a tick for each tab passed, firmer pulses at the start and end of a scrub (system haptics through the Android app) */
 function lmaBuzz(kind){
@@ -14,6 +14,18 @@ function lmaBuzz(kind){
   if(N&&N[kind]){N[kind]().catch(()=>{});return}
   haptic(kind==='tick'?6:kind==='start'?10:14);
  }catch(e){}
+}
+/* while scrubbing, a blurred veil over the page you were on names the tab; the real page replaces it when you rest or let go */
+function lmaVeil(show){
+ const S=lmaScrub;if(!S.veil)return;
+ if(show===S.veilOn)return;S.veilOn=show;
+ S.veil.classList.toggle('on',show);
+}
+function lmaVeilSet(i){
+ const S=lmaScrub,b=S.items[i];if(!b||!S.veil)return;
+ const ico=b.querySelector('.ico'),txt=b.textContent.trim();
+ S.veil.querySelector('.sv-ico').innerHTML=ico?ico.innerHTML:'';
+ S.veil.querySelector('.sv-name').textContent=txt;
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
 function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
@@ -34,6 +46,7 @@ function lmaScrubInit(){
  const S=lmaScrub,sb=document.querySelector('.sidebar');
  if(!sb||S.sb)return;
  S.sb=sb;lmaScrubItems();
+ S.veil=document.createElement('div');S.veil.className='scrubveil';S.veil.setAttribute('aria-hidden','true');S.veil.innerHTML='<div class="sv-card"><div class="sv-ico"></div><div class="sv-name"></div></div>';document.body.appendChild(S.veil);
  /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
     and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
  const go=()=>{
@@ -41,8 +54,8 @@ function lmaScrubInit(){
   if(S.drag&&S.drag.speed>LMA_SCRUB.fast){clearTimeout(S.timer);S.timer=setTimeout(go,60);return}   /* still moving quickly: keep gliding, switch when it eases */
   requestAnimationFrame(()=>setTimeout(()=>{
    if(!S.drag||S.items[S.sel]!==b)return;
-   const t0=performance.now();lmaNavTo(v,{skip:true,fast:true});
-   requestAnimationFrame(()=>requestAnimationFrame(()=>{const c=performance.now()-t0;S.cost[v]=S.cost[v]?S.cost[v]*.4+c*.6:c}));
+   const t0=performance.now();lmaNavTo(v,{skip:true,fast:true});lmaScrubMark(S.sel);
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{const c=performance.now()-t0;S.cost[v]=S.cost[v]?S.cost[v]*.4+c*.6:c;if(S.drag&&S.items[S.sel]===b)lmaVeil(false)}));
   },0));
  };
  const settleFor=i=>{const b=S.items[i],c=b&&S.cost[b.dataset.view];return c?Math.max(LMA_SCRUB.settle,Math.min(360,Math.round(c*1.4))):LMA_SCRUB.settle};
@@ -59,13 +72,13 @@ function lmaScrubInit(){
   if(!d.moved){
    if(Math.abs(dx)<LMA_SCRUB.slop)return;
    if(Math.abs(t.clientY-d.y0)>Math.abs(dx)*1.5){S.drag=null;return}
-   d.moved=true;lmaBuzz('start');
+   d.moved=true;lmaBuzz('start');lmaVeilSet(S.sel>=0?S.sel:d.start);
   }
   e.preventDefault();
   const nowT=performance.now();if(d.lt){const dt=Math.max(1,nowT-d.lt);d.speed=(d.speed||0)*.5+Math.abs(t.clientX-d.lx)/dt*.5}d.lt=nowT;d.lx=t.clientX;
   const per=d.W*LMA_SCRUB.gain/Math.max(1,n-1),i=Math.round(Math.min(n-1,Math.max(0,d.start-dx/per)));
   if(i!==S.sel){
-   lmaScrubMark(i);lmaBuzz('tick');
+   lmaScrubMark(i);lmaBuzz('tick');lmaVeilSet(i);lmaVeil(true);
    clearTimeout(S.timer);S.timer=setTimeout(go,settleFor(i));
   }
  },{passive:false});
@@ -75,7 +88,8 @@ function lmaScrubInit(){
   if(!d.moved)return;
   S.block=Date.now();lmaBuzz('end');
   const b=S.items[S.sel];if(!b)return;
-  if(b.dataset.view!==lmaView()){const c=S.cost[b.dataset.view];lmaNavTo(b.dataset.view,{skip:true,fast:c>140})}
+  if(b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true,fast:true});
+  requestAnimationFrame(()=>requestAnimationFrame(()=>lmaVeil(false)));
   if(b.dataset.view!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
  };
  sb.addEventListener('touchend',end,{passive:true});
