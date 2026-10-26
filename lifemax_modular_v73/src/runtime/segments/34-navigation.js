@@ -5,19 +5,27 @@ let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
 function lmaTabIndex(v){return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
-/* go to a tab, with the page area sliding across when the browser can do it. opts.skip: do not record it in Back history */
+/* go to a tab, with the page area sliding across when the browser can do it.
+   opts.skip: do not record it in Back history. opts.fast: no animation (used while scrubbing). */
+let lmaVTcur=null;
 function lmaNavTo(v,opts){
  const el=document.getElementById('view-'+v);if(!el)return false;
- const from=lmaView();
+ const from=lmaView(),root=document.documentElement;
  const run=()=>{
   const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
   try{navigate(v);if(el.classList.contains('lmf-feature')&&window.LifeMaxFeatures)LifeMaxFeatures.open(v)}finally{lmaNavSkip=sk}
   window.scrollTo(0,0);
  };
- if(!from||from===v||!lmaVTok()){run();return true}
- const a=lmaTabIndex(from),b=lmaTabIndex(v),root=document.documentElement;
+ /* a newer request wins: let an unfinished slide jump to its end first */
+ if(lmaVTcur){try{lmaVTcur.skipTransition()}catch(e){}lmaVTcur=null}
+ if(!from||from===v||(opts&&opts.fast)||!lmaVTok()){run();return true}
+ const a=lmaTabIndex(from),b=lmaTabIndex(v);
  root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
- try{const t=document.startViewTransition(run),done=()=>{delete root.dataset.vt};t.finished.then(done,done)}catch(e){delete root.dataset.vt;run()}
+ try{
+  const t=document.startViewTransition(run);lmaVTcur=t;
+  const done=()=>{if(lmaVTcur===t){lmaVTcur=null;delete root.dataset.vt}};
+  t.finished.then(done,done);
+ }catch(e){delete root.dataset.vt;run()}
  return true;
 }
 function lmaGoView(v){return lmaNavTo(v,{skip:true})}

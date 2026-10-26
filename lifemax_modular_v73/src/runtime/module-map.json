@@ -1854,7 +1854,7 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 4607,
+   "bytes": 4103,
    "statement_count": 12,
    "tags": [
     "navigation",
@@ -1866,8 +1866,8 @@
     "lmaScrubOn",
     "lmaScrubItems",
     "lmaScrubIndex",
-    "lmaScrubShow",
-    "lmaScrubFollow",
+    "lmaScrubReveal",
+    "lmaScrubMark",
     "lmaScrubSync",
     "lmaScrubInit"
    ]
