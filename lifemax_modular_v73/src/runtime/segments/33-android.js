@@ -4,7 +4,8 @@ const LMA_PREF_KEY='lifemax_android_prefs_v1';
 const LMA_CHANNEL='lifemax_reminders';
 const LMA_DEFAULTS={
  notif:{on:true,sessions:true,lead:15,workout:true,workoutTime:'17:00',nudge:true,checkin:false,checkinTime:'20:30',quiet:true,quietFrom:'22:00',quietTo:'07:00'},
- apps:[]
+ apps:[],
+ backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,status:'',err:'',lastName:''}
 };
 const LMA_IN='width:auto;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit';
 let lmaPrefs=null,lmaPlugins={},lmaSyncTimer=0,lmaLastSig='',lmaSyncBusy=false;
@@ -25,7 +26,7 @@ function lmaLoad(){
  if(lmaPrefs)return lmaPrefs;
  let raw=null;try{raw=JSON.parse(localStorage.getItem(LMA_PREF_KEY)||'null')}catch(e){}
  raw=raw&&typeof raw==='object'?raw:{};
- lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],pixel:raw.pixel!==false,swipe:raw.swipe!==false};
+ lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],pixel:raw.pixel!==false,swipe:raw.swipe!==false,updChecked:+raw.updChecked||0,backup:Object.assign({},LMA_DEFAULTS.backup,raw.backup||{})};
  return lmaPrefs;
 }
 function lmaSave(){try{localStorage.setItem(LMA_PREF_KEY,JSON.stringify(lmaLoad()))}catch(e){console.warn('LMA prefs not saved',e)}}
@@ -164,7 +165,7 @@ async function lmaRenderSettings(){
 }
 /* ---------- saving files and backups ---------- */
 const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
-function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{const v=localStorage.getItem(k);if(typeof v==='string')o[k]=v}catch(e){}}return o}
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k==='lifemax_android_prefs_v1'){try{const j=JSON.parse(v);if(j&&j.backup){j.backup={...j.backup,uri:'',folder:'',on:false,last:0,status:''}}v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
 function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
 /* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
 async function lmaDownload(text,filename,mime,label){

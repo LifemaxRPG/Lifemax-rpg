@@ -23,9 +23,10 @@ xml = re.sub(r'android:launchMode="[^"]*"', 'android:launchMode="singleTask"', x
 xml = xml.replace(
     "<application",
     '<queries>\n        <intent>\n            <action android:name="android.intent.action.MAIN" />\n'
-    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n    </queries>\n\n    <application',
+    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n    </queries>\n\n'
+    '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n\n    <application',
     1,
 )
 
-assert "category.HOME" in xml and "<queries>" in xml, "manifest patch failed"
+assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

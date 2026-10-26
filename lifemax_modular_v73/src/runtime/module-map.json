@@ -1670,6 +1670,29 @@
     "lmaTopOverlay",
     "lmaView"
    ]
+  },
+  {
+   "file": "src/runtime/segments/35-android-upkeep.js",
+   "bytes": 7300,
+   "statement_count": 11,
+   "tags": [
+    "android",
+    "updates",
+    "backup"
+   ],
+   "symbols": [
+    "lmaAgo",
+    "lmaBackupDue",
+    "lmaCheckUpdate",
+    "lmaInstallUpdate",
+    "lmaPickBackupFolder",
+    "lmaRenderBackup",
+    "lmaRenderUpdates",
+    "lmaRunBackup",
+    "lmaSetBackup",
+    "lmaSetHtml",
+    "lmaUpd"
+   ]
   }
  ]
 }
