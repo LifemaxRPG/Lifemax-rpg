@@ -1,0 +1,7899 @@
+{
+ "sheets": {
+  "adult": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 57,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 9,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 10,
+     "tail short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 5
+   },
+   "walk": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 30,
+    "worst": 12,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 12,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 12,
+     "tail short": 10.5,
+     "legs long": 0,
+     "legs short": 2.5,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "run": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 59,
+    "worst": 25,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 25,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 4.5,
+     "tail short": 25,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "sleep": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 42,
+    "worst": 191.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 191.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 187,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 186,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 185.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 15,
+     "tail long": 191.5,
+     "tail short": 31.5,
+     "body long": 2,
+     "body short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 64,
+    "worst": 14.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 14.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 8.5,
+     "tail long": 0,
+     "tail short": 14.5,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 54,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 10.5,
+     "tail short": 0.5,
+     "whiskers": 2
+    },
+    "bestFrame": 2
+   },
+   "eat": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 29,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 3,
+     "tail short": 11,
+     "legs long": 0,
+     "legs short": 0,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "stretch": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 7,
+    "earsFound": 7,
+    "tailFrames": 7,
+    "identityBad": 7,
+    "idMax": 42,
+    "worst": 15.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 12.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 14.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 15.5,
+     "tail long": 12,
+     "tail short": 12.5,
+     "whiskers": 2
+    },
+    "bestFrame": 5
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 57,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 10,
+     "tail short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 43,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "tail long": 7,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 46,
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 9,
+     "tail short": 1,
+     "whiskers": 1
+    },
+    "bestFrame": 2
+   },
+   "rub": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 21,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8,
+     "tail long": 4,
+     "tail short": 0.5,
+     "legs long": 0,
+     "legs short": 2,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 64,
+    "worst": 15.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 15.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 8.5,
+     "tail long": 3,
+     "tail short": 15.5,
+     "body long": 10,
+     "body short": 15.5,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 46,
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 8,
+     "tail long": 9,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 2,
+    "identityBad": 2,
+    "idMax": 34,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 1.5,
+     "tail short": 1,
+     "legs long": 0,
+     "legs short": 3,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 71,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 6.5,
+     "tail long": 4.5,
+     "tail short": 0.5,
+     "whiskers": 2
+    },
+    "bestFrame": 5
+   },
+   "walk_w": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 35,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "tail long": 0.5,
+     "tail short": 0,
+     "legs long": 0,
+     "legs short": 2.5,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 1
+    },
+    "bestFrame": 3
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 54,
+    "worst": 14.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 14.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 6.5,
+     "tail long": 0.5,
+     "tail short": 14.5,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 49,
+    "worst": 186.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 186.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 183,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 182.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 181,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 14,
+     "tail long": 186.5,
+     "tail short": 10,
+     "body long": 4,
+     "body short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "crouch": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 33,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 10,
+     "tail long": 4.5,
+     "tail short": 1.5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17,
+    "flagged": [
+     {
+      "frame": 7,
+      "score": 17,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 3.5,
+     "ears short": 17,
+     "whiskers": 0
+    },
+    "bestFrame": 7
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 20,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 9,
+      "profile": "ears long"
+     },
+     {
+      "frame": 3,
+      "score": 20,
+      "profile": "body short"
+     },
+     {
+      "frame": 4,
+      "score": 11,
+      "profile": "body long"
+     },
+     {
+      "frame": 5,
+      "score": 12,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 16,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 9,
+     "ears short": 16,
+     "body long": 11,
+     "body short": 20,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 10,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 14,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 11,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 14,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 15,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 15,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "swat": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 8,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st0": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 43,
+    "worst": 137.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 137.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 7.5,
+     "tail long": 137.5,
+     "tail short": 12,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "run": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 8,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "sleep": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 29,
+    "worst": 28.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 27.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 28.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 28.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 28.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 15.5,
+     "tail long": 28.5,
+     "tail short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "loaf": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 7,
+    "worst": 54,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 54,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 51,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 51,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 51,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 54,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 46,
+    "worst": 133.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 129,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 133.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 129,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 133.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 129,
+      "profile": "tail long"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 9.5,
+     "tail long": 133.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 47,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7,
+     "tail long": 4.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "stretch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 7,
+    "earsFound": 7,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 13,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 13,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 44,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 0.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 42,
+    "worst": 136,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 136,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 136,
+     "tail short": 14,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 42,
+    "worst": 137,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 137,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 136,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 137,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "tail long": 137,
+     "tail short": 14,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "rub": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "knead": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 14,
+    "worst": 54,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 54,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 51,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 51,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 52.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 54,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 43,
+    "worst": 137,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 137,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 137,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "tail long": 137,
+     "tail short": 12,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 46,
+    "worst": 138.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 138.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 9,
+     "tail long": 138.5,
+     "tail short": 12,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk_w": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 30,
+    "worst": 58.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 58.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 58.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 58.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 58.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 0,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 47,
+    "worst": 14.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 14.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 14.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 14.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 4,
+     "tail long": 14.5,
+     "tail short": 10.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "crouch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 12.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 12.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 12.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 12.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "roll": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 44,
+    "worst": 29,
+    "flagged": [
+     {
+      "frame": 3,
+      "score": 29,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 11,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "tail long": 19,
+     "tail short": 29,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 49,
+    "worst": 16,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 16,
+      "profile": "body long"
+     },
+     {
+      "frame": 2,
+      "score": 16,
+      "profile": "body long"
+     },
+     {
+      "frame": 3,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 14,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 14,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 3.5,
+     "tail long": 16,
+     "tail short": 12,
+     "body long": 16,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 1.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 1.5,
+     "whiskers": 0
+    },
+    "bestFrame": 4
+   },
+   "swat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 48,
+    "worst": 16,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 16,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 16,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 3.5,
+     "tail long": 16,
+     "tail short": 3,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st1": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 55,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 5.5,
+     "tail long": 2,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "run": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "sleep": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 33,
+    "worst": 89.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 89.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 88.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 88.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 89.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 9,
+     "tail long": 89.5,
+     "tail short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 28,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 5.5,
+     "tail long": 2.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 2,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 53,
+    "worst": 174,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 174,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 174,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 174,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 174,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 174,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8.5,
+     "tail long": 174,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 9,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 15.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 58,
+    "worst": 202,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 202,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 161,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 49.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8,
+     "tail long": 202,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "stretch": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 7,
+    "earsFound": 5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 14.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 14.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 5
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 55,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 4.5,
+     "tail long": 1,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 53,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 1.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 53,
+    "worst": 204,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 204,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 204,
+     "tail short": 11,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "rub": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 35,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 5.5,
+     "tail long": 2.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 2,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 52,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 9.5,
+     "tail long": 0.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 57,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "tail long": 2,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk_w": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 28,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "tail long": 2.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 2,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 0,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 67,
+    "worst": 18,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 18,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 9.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 9.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 9.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 3.5,
+     "tail long": 18,
+     "tail short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "crouch": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 13.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 13.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 0.5,
+     "body long": 5,
+     "body short": 7,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 26,
+    "worst": 17,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 17,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "tail long": 17,
+     "tail short": 1.5,
+     "body long": 5.5,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 81,
+    "worst": 12,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 12,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 12,
+     "tail long": 5,
+     "tail short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "swat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 26,
+    "worst": 17,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 17,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 17,
+     "tail short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st2": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 57,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7,
+     "tail long": 1,
+     "tail short": 11,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "run": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "sleep": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 31,
+    "worst": 106,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 106,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 102.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 102.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 102.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 16.5,
+     "tail long": 106,
+     "tail short": 1.5,
+     "body long": 19,
+     "body short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 39,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 0,
+     "tail short": 10,
+     "body long": 2,
+     "body short": 3,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 56,
+    "worst": 228.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 228.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 224,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 228.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 224,
+      "profile": "tail long"
+     },
+     {
+      "frame": 6,
+      "score": 228.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 228.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 60,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7,
+     "tail long": 3,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 5
+   },
+   "stretch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 7,
+    "earsFound": 7,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 14,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 14,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 15,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 57,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 11,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 1,
+     "tail short": 11,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 54,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "tail long": 0.5,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 57,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "tail long": 1,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "rub": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 39,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 0.5,
+     "tail short": 10.5,
+     "body long": 2,
+     "body short": 3,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 51,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 1,
+     "tail short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 63,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 1,
+     "tail short": 11,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "walk_w": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 0,
+     "tail short": 10,
+     "body long": 2,
+     "body short": 2,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 37,
+    "worst": 116.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 116,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 116.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 116.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 116.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7,
+     "tail long": 116.5,
+     "tail short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "crouch": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 31,
+    "worst": 4,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 4,
+     "tail long": 1.5,
+     "tail short": 1,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 1,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 21.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 21.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 21.5,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 1,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 21.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 21.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 21.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 2,
+     "body long": 6,
+     "body short": 3,
+     "whiskers": 0
+    },
+    "bestFrame": 4
+   },
+   "kick": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 4,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 55,
+    "worst": 58,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 58,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 58,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 21.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 58,
+     "tail short": 5.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 1,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 81,
+    "worst": 20.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 11.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 20.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 10.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 20,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 11,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 20.5,
+     "tail long": 7,
+     "tail short": 11.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "swat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 30,
+    "worst": 21.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 21.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 21.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 21.5,
+     "tail short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st3": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 44,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 3.5,
+     "tail short": 10.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 5,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "run": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 3.5,
+     "ears short": 8,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sleep": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 36,
+    "worst": 128.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 126,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 128.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 128.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 126,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7.5,
+     "tail long": 128.5,
+     "tail short": 2.5,
+     "body long": 13.5,
+     "body short": 2.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 0.5,
+     "tail short": 10,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 46,
+    "worst": 85,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 85,
+      "profile": "tail long"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 85,
+     "tail short": 6,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 3,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 46,
+    "worst": 88,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 88,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 82.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 88,
+     "tail short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "stretch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 7,
+    "earsFound": 5,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 13.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 13.5,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 44,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6,
+     "tail long": 3.5,
+     "tail short": 10.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 44,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 3.5,
+     "tail short": 5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 44,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 10.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 3.5,
+     "tail short": 10.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "rub": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 8.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 13,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 13,
+      "profile": "body long"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 2,
+     "tail short": 10,
+     "body long": 13,
+     "body short": 8,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 44,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8.5,
+     "tail long": 3.5,
+     "tail short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 53,
+    "worst": 11.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 11.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 6.5,
+     "tail long": 2.5,
+     "tail short": 11.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_w": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7.5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 6.5,
+     "tail long": 0.5,
+     "tail short": 10,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 127.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 125,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 127.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 127.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 125,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 127.5,
+     "tail short": 2.5,
+     "body long": 13.5,
+     "body short": 2.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "crouch": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 0,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 28,
+    "worst": 2,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 2,
+     "tail long": 1.5,
+     "tail short": 1,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 23.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 22.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 23.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 23.5,
+     "whiskers": 0
+    },
+    "bestFrame": 2
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 23.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 23.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 22.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 23.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 11.5,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "body short"
+     },
+     {
+      "frame": 4,
+      "score": 9.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 11.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 11.5,
+     "body long": 9,
+     "body short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 5
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 39,
+    "worst": 36.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 15,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 15,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 36,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 36,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 36.5,
+     "tail short": 10,
+     "body long": 8,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 97,
+    "worst": 16.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 16.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 14.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 14.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 7,
+      "score": 14,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8.5,
+     "tail long": 16.5,
+     "tail short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "swat": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 39,
+    "worst": 36.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 36.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 36.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 3,
+     "ears short": 6.5,
+     "tail long": 36.5,
+     "tail short": 10,
+     "body long": 6,
+     "body short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st4": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 46,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8.5,
+     "tail long": 2.5,
+     "tail short": 4,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "walk": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 52,
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 9,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 6,
+     "tail long": 9,
+     "tail short": 5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 5
+   },
+   "run": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 57,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 4.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "sleep": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 34,
+    "worst": 135.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 135.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 134,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 132.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 135.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8,
+     "tail long": 135.5,
+     "tail short": 11,
+     "body long": 3.5,
+     "body short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 59,
+    "worst": 26.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 26.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 26.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 26.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 26.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "tail long": 5.5,
+     "tail short": 26.5,
+     "body long": 2,
+     "body short": 6,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 47,
+    "worst": 95,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 95,
+      "profile": "tail long"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 95,
+     "tail short": 4,
+     "whiskers": 2
+    },
+    "bestFrame": 1
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 57,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 2.5,
+     "tail short": 11,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 48,
+    "worst": 10.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8.5,
+     "tail long": 2.5,
+     "tail short": 10.5,
+     "whiskers": 1
+    },
+    "bestFrame": 2
+   },
+   "stretch": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 7,
+    "earsFound": 7,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 15,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 13.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 15,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 15,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 5
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 46,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "tail long": 2.5,
+     "tail short": 4,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 45,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "tail long": 1,
+     "tail short": 4,
+     "whiskers": 0.5
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 45,
+    "worst": 9,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 9,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 9,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 9,
+     "tail long": 1,
+     "tail short": 4,
+     "whiskers": 0.5
+    },
+    "bestFrame": 0
+   },
+   "rub": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 21,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "tail long": 0,
+     "tail short": 5,
+     "legs long": 0,
+     "legs short": 1,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 66,
+    "worst": 28.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 26.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 28.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 26.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 20.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8,
+     "tail long": 13,
+     "tail short": 28.5,
+     "body long": 13,
+     "body short": 10,
+     "whiskers": 1
+    },
+    "bestFrame": 3
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 46,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 8.5,
+     "tail long": 2.5,
+     "tail short": 4,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 2,
+    "identityBad": 2,
+    "idMax": 47,
+    "worst": 11.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 11.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7,
+     "tail long": 11.5,
+     "tail short": 10,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 55,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7,
+     "tail long": 2.5,
+     "tail short": 4,
+     "whiskers": 1
+    },
+    "bestFrame": 2
+   },
+   "walk_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 65,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8,
+     "tail long": 2,
+     "tail short": 0,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 43,
+    "worst": 20,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 20,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 20,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 20,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 20,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7,
+     "tail long": 0.5,
+     "tail short": 20,
+     "body long": 2,
+     "body short": 6,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 41,
+    "worst": 128.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 127.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 128.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 128.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 127.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8.5,
+     "tail long": 128.5,
+     "tail short": 0.5,
+     "body long": 3.5,
+     "body short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "crouch": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 47,
+    "worst": 11.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 11.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 9.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 9.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 9.5,
+     "tail long": 5,
+     "tail short": 11.5,
+     "body long": 0,
+     "body short": 1,
+     "whiskers": 1
+    },
+    "bestFrame": 1
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 14,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 14,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 3,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 14,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 14,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 14,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 16,
+    "flagged": [
+     {
+      "frame": 5,
+      "score": 11.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 16,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 16,
+     "body long": 6,
+     "body short": 3.5,
+     "whiskers": 0
+    },
+    "bestFrame": 6
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 32,
+    "worst": 15.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 15.5,
+     "tail long": 4,
+     "tail short": 1,
+     "body long": 0.5,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 12.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 12.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 12.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "swat": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 32,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8,
+     "tail long": 4.5,
+     "tail short": 1,
+     "body long": 0.5,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "st5": {
+   "idle_sit": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 44,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 1,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 6
+   },
+   "walk": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 59,
+    "worst": 17,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 17,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 11.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 11.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "tail long": 5,
+     "tail short": 17,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 1
+    },
+    "bestFrame": 1
+   },
+   "run": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 60,
+    "worst": 11.5,
+    "flagged": [
+     {
+      "frame": 3,
+      "score": 11.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 9.5,
+     "tail short": 11.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "sleep": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 45,
+    "worst": 177,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 170.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 177,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 177,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 168.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 14,
+     "tail long": 177,
+     "tail short": 20.5,
+     "body long": 5,
+     "body short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "loaf": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 5.5,
+     "tail long": 2,
+     "tail short": 10,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "groom": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 43,
+    "worst": 8,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 8,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 8,
+     "tail long": 2,
+     "tail short": 1,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "eat": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 49,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 11,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 11,
+     "tail short": 10.5,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 1
+    },
+    "bestFrame": 3
+   },
+   "play": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 45,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 2.5,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 4
+   },
+   "stretch": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 7,
+    "earsFound": 7,
+    "tailFrames": 7,
+    "identityBad": 7,
+    "idMax": 91,
+    "worst": 16,
+    "flagged": [
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 16,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 13.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 16,
+     "tail long": 13.5,
+     "tail short": 12,
+     "whiskers": 2
+    },
+    "bestFrame": 2
+   },
+   "lookup": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 43,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 0.5,
+     "tail short": 0,
+     "whiskers": 0.5
+    },
+    "bestFrame": 0
+   },
+   "slowblink": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 43,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 7.5,
+     "tail long": 0.5,
+     "tail short": 0,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "purr": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 43,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 0.5,
+     "tail short": 0,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "rub": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 37,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "tail long": 0.5,
+     "tail short": 0,
+     "legs long": 0,
+     "legs short": 2,
+     "body long": 0,
+     "body short": 0,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "knead": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 40,
+    "worst": 140.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 13.5,
+      "profile": "body short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 140.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 5.5,
+     "tail long": 140.5,
+     "tail short": 10,
+     "body long": 20.5,
+     "body short": 19.5,
+     "whiskers": 2
+    },
+    "bestFrame": 3
+   },
+   "meow": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 43,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7.5,
+     "tail long": 0.5,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "leap": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 2,
+    "identityBad": 2,
+    "idMax": 35,
+    "worst": 7,
+    "flagged": [],
+    "prof": {
+     "ears long": 1.5,
+     "ears short": 7,
+     "tail long": 3,
+     "tail short": 1.5,
+     "body long": 0,
+     "body short": 0.5,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "idle_sit_w": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 53,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 6.5,
+     "tail long": 1,
+     "tail short": 0,
+     "whiskers": 2
+    },
+    "bestFrame": 6
+   },
+   "walk_w": {
+    "legs": true,
+    "body": true,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 46,
+    "worst": 12,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 4,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 6,
+      "score": 12,
+      "profile": "tail short"
+     },
+     {
+      "frame": 7,
+      "score": 12,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 7,
+     "tail long": 3,
+     "tail short": 12,
+     "legs long": 0,
+     "legs short": 1.5,
+     "body long": 0,
+     "body short": 2,
+     "whiskers": 1
+    },
+    "bestFrame": 0
+   },
+   "loaf_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 42,
+    "worst": 10,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 2,
+      "score": 10,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 10,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 8.5,
+     "tail long": 1,
+     "tail short": 10,
+     "body long": 4,
+     "body short": 8,
+     "whiskers": 2
+    },
+    "bestFrame": 0
+   },
+   "sleep_w": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 4,
+    "identityBad": 4,
+    "idMax": 49,
+    "worst": 160,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 160,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 156,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 155.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 157,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 8,
+     "tail long": 160,
+     "tail short": 0,
+     "body long": 15,
+     "body short": 10,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "crouch": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 51,
+    "worst": 11,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 11,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 9.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 9.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 2.5,
+     "ears short": 9.5,
+     "tail long": 3.5,
+     "tail short": 11,
+     "body long": 0,
+     "body short": 1.5,
+     "whiskers": 1
+    },
+    "bestFrame": 1
+   },
+   "scratch": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "scratch_in": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 109,
+    "worst": 23,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 23,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 10.5,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 10.5,
+     "tail short": 23,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "scratch_out": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 3,
+    "earsFound": 3,
+    "tailFrames": 3,
+    "identityBad": 3,
+    "idMax": 109,
+    "worst": 23,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 10.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 10.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 23,
+      "profile": "tail short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "tail long": 10.5,
+     "tail short": 23,
+     "whiskers": 0
+    },
+    "bestFrame": 1
+   },
+   "roll": {
+    "legs": false,
+    "body": true,
+    "tail": false,
+    "frames": 8,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 17,
+    "flagged": [
+     {
+      "frame": 3,
+      "score": 17,
+      "profile": "body short"
+     },
+     {
+      "frame": 4,
+      "score": 8,
+      "profile": "body long"
+     },
+     {
+      "frame": 5,
+      "score": 11.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 6,
+     "ears short": 11.5,
+     "body long": 8,
+     "body short": 17,
+     "whiskers": 0
+    },
+    "bestFrame": 3
+   },
+   "kick": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 4,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 42,
+    "worst": 18.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 17,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 18.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 14.5,
+     "tail long": 18.5,
+     "tail short": 6.5,
+     "body long": 0.5,
+     "body short": 1.5,
+     "whiskers": 0
+    },
+    "bestFrame": 4
+   },
+   "bat": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 8,
+    "earsFound": 8,
+    "tailFrames": 8,
+    "identityBad": 8,
+    "idMax": 89,
+    "worst": 20.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 1,
+      "score": 15,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 14.5,
+      "profile": "tail short"
+     },
+     {
+      "frame": 3,
+      "score": 20.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 15,
+      "profile": "tail short"
+     },
+     {
+      "frame": 5,
+      "score": 15.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 6,
+      "score": 14.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 7,
+      "score": 20.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 6,
+     "ears short": 20.5,
+     "tail long": 8.5,
+     "tail short": 15,
+     "whiskers": 0
+    },
+    "bestFrame": 4
+   },
+   "swat": {
+    "legs": false,
+    "body": true,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 31,
+    "worst": 18.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 1,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 2,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 3,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 4,
+      "score": 18.5,
+      "profile": "tail long"
+     },
+     {
+      "frame": 5,
+      "score": 18.5,
+      "profile": "tail long"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "tail long": 18.5,
+     "tail short": 5.5,
+     "body long": 0.5,
+     "body short": 0.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "depth": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 4,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 5,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 2,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 8.5,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 8.5,
+      "profile": "ears short"
+     },
+     {
+      "frame": 1,
+      "score": 8.5,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 1,
+     "ears short": 8.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst0": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 6.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst1": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 4.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 21,
+    "flagged": [
+     {
+      "frame": 0,
+      "score": 21,
+      "profile": "ears short"
+     },
+     {
+      "frame": 3,
+      "score": 21,
+      "profile": "ears short"
+     }
+    ],
+    "prof": {
+     "ears long": 0,
+     "ears short": 21,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 4.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 4.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 4.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst2": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst3": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 6,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 0,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 6,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 6,
+    "flagged": [],
+    "prof": {
+     "ears long": 0.5,
+     "ears short": 6,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst4": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 27,
+    "worst": 3.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "tail long": 3.5,
+     "tail short": 2,
+     "whiskers": 0
+    },
+    "bestFrame": 4
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 2,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  },
+  "dst5": {
+   "walk_front": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 6,
+    "earsFound": 6,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0.5
+    },
+    "bestFrame": 0
+   },
+   "walk_back": {
+    "legs": false,
+    "body": false,
+    "tail": true,
+    "frames": 6,
+    "earsFound": 0,
+    "tailFrames": 6,
+    "identityBad": 6,
+    "idMax": 31,
+    "worst": 4,
+    "flagged": [],
+    "prof": {
+     "ears long": 0,
+     "ears short": 0,
+     "tail long": 4,
+     "tail short": 3.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   },
+   "sniff": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 4,
+    "earsFound": 4,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0.5
+    },
+    "bestFrame": 0
+   },
+   "bonk": {
+    "legs": false,
+    "body": false,
+    "tail": false,
+    "frames": 2,
+    "earsFound": 2,
+    "tailFrames": 0,
+    "identityBad": 0,
+    "idMax": 0,
+    "worst": 7.5,
+    "flagged": [],
+    "prof": {
+     "ears long": 1,
+     "ears short": 7.5,
+     "whiskers": 0
+    },
+    "bestFrame": 0
+   }
+  }
+ }
+}

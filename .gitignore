@@ -7,3 +7,6 @@ android-wrapper/www/
 *.p12
 keystore_base64.txt
 lifemax_modular_v73/gemini/LifeMax_RPG_v*_lean.html
+
+# rig audit per-row images
+lifemax_modular_v73/tools/qa/audit/*__*.png
