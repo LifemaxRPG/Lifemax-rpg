@@ -361,6 +361,17 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v127 — Journal coach
+
+The Journal (Library tab) now reads your own data and talks back. Designed by Gemini, adapted to what the app really has; all offline and rule-based (`src/runtime/segments/47-journal-coach.js`, tests in `tests/coach.test.js`).
+- **Day insight:** each day with data gets a badge (High Output, Dial Master, Off-Script Win, Quest Clear, Steady Stride, Rest Day, Quiet Anchor, Low Power, Chapter Resumed) and 1 to 2 kind lines, chosen by rules from that day's XP against your own 14-day average, how much of your Life Director dial you did, quests and cat care. The wording is picked by the date, so it never changes on reload.
+- **Reflection prompt:** a question that fits the day, with a swap button. Writing 40+ characters about today or yesterday pays 15 XP and +2 bond, once a day (no back-farming old days).
+- **Patterns:** at most one a day, from nine rules over the last 21 days (best time of day, dial too full, boom and bust, a keystone habit, a weak weekday, one stat only, small days that kept you going, journal lift, feeding the cat early). A pattern then rests for 7 days. Needs 7 active days.
+- **Welcome back:** after 3+ quiet days a calm card instead of a broken streak, with a small one-time reward (10 / 20 / 25 XP by length of absence); after 14+ days your rolling average resets for a week. Quiet stretches collapse into one line in the day list.
+- **Weekly and monthly reviews** appear inline in the day list (gold border), with a short coach summary and a closing question (+30 / +50 XP once).
+- **Safe by design:** never reads weight or food data; a reflection with words of self-harm gets a gentle note and a crisis line (988 in the US) and the coach stays quiet that day. Coach XP is type `coach`: it pays Sparks but never counts as a training day or streak day, and is left out of the numbers the coach judges you by.
+- Life Director 1.9.3 adds a read-only `LifeDirector.coach.dayStats(date)`.
+
 ## v126 — voice: understands questions, escapes and more
 
 A question like "what are my quests today" is no longer mistaken for a new activity. The voice engine now works out what a sentence is for before scheduling: quests, XP and level, schedule and free time, your cat (status, feed, pet), steps, calories and macros, opening any screen, and completing, moving or cancelling an activity (move and cancel ask to confirm first). While it is waiting for an answer, "any time", "whenever", "now", "in 30 minutes", "morning" and so on pick a real free slot or time, "never mind" cancels, and a new question replaces the half-finished one. Life Director 1.9.2. See `VOICE.md`.

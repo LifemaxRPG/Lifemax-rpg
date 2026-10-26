@@ -9,7 +9,7 @@ const ECO_OLD_RULES={reading:[20,'discipline'],business:[25,'discipline'],streng
 const charXpForLevel=L=>ECO.charBase+ECO.charSlope*(L-1);
 const charCumXP=L=>37.5*L*L+87.5*L-125;           /* XP needed to reach character level L */
 /* steps and sleep from Health Connect (older records were stored as 'custom' / 'recovery' with these skills) */
-const ecoPassive=a=>a&&(a.type==='steps'||a.type==='sleep'||(a.src==='health'&&(a.skill==='Walking'||a.skill==='Sleep')));
+const ecoPassive=a=>a&&(a.type==='steps'||a.type==='coach'||a.type==='sleep'||(a.src==='health'&&(a.skill==='Walking'||a.skill==='Sleep')));
 const ecoDayKey=n=>new Date(n*864e5).toISOString().slice(0,10);
 function ecoActsOn(day){return state.activities.filter(a=>activityDate(a)===day)}
 /* the duration curve: 30 min = 1x, 60 min = 2x, 120 min+ = 3x; under 5 minutes earns nothing */

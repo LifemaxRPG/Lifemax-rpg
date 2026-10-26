@@ -4818,7 +4818,26 @@ const LifeDirectorApp = (function () {
       return items.sort((a, b) => a.startEpoch - b.startEpoch);
     }
   };
-  return { mount, glance, widgetSnapshot, voice: voiceApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  /* read-only numbers for the Journal coach: minutes of sessions scheduled on a local date and how many were done */
+  const coachApi = {
+    dayStats(dateKey) {
+      if (!voiceApi.ready()) return null;
+      const [y, mo, d] = String(dateKey).split('-').map(Number), z = tz();
+      const s0 = U.zonedToEpoch(y, mo, d, 0, z), s1 = U.zonedToEpoch(y, mo, d, 1440, z);
+      let sched = 0, done = 0, n = 0, doneN = 0;
+      const seen = new Set();
+      for (const i of (ST.schedule.scheduledInstances || []).concat(ST.schedule.historyInstances || [])) {
+        if (!i || seen.has(i.instanceId) || !(i.startEpoch >= s0 && i.startEpoch < s1)) continue;
+        if (/EXCUSED|CANCELLED/.test(String(i.lifecycleState))) continue;
+        seen.add(i.instanceId);
+        const m = (i.durationSlots || 0) * 15, st = String(i.lifecycleState);
+        sched += m; n++;
+        if (/COMPLETED/.test(st) && !/PARTIAL/.test(st)) { done += m; doneN++; } else if (/PARTIAL/.test(st)) done += Math.round(m / 2);
+      }
+      return { schedMin: sched, doneMin: done, sessions: n, doneSessions: doneN };
+    }
+  };
+  return { mount, glance, widgetSnapshot, voice: voiceApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */
@@ -4828,7 +4847,8 @@ window.LifeDirector = Object.freeze({
   glance: (el, opts) => LifeDirectorApp.glance(el, opts),
   widgetSnapshot: size => LifeDirectorApp.widgetSnapshot(size),
   workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b),
-  voice: LifeDirectorApp.voice
+  voice: LifeDirectorApp.voice,
+  coach: LifeDirectorApp.coach
 });
 /* the Overview was drawn before this feature loaded: put today's dial on it now */
 try { const g = document.getElementById('ovPlan'); if (g) LifeDirectorApp.glance(g); } catch (e) { /* the Overview will try again on its next draw */ }

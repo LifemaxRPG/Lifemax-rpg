@@ -149,3 +149,23 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 .lmv-simrow{display:flex;gap:8px;margin:8px 0}.lmv-sim{flex:1;min-width:0;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}
 .lmv-kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:13px}.lmv-kv span{color:var(--muted)}.lmv-kv b{font-weight:600;text-align:right;word-break:break-word}
 .lmv-tog{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px}.lmv-log{white-space:pre-wrap;font-size:11px;color:var(--muted);margin:0}
+
+/* v127 · Journal coach */
+.jc-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.jc-quiet{margin:6px 4px;padding:6px 10px;border-radius:10px;background:var(--panel2,#ffffff0a);color:var(--muted);font-size:12px;text-align:center}
+.journal-day-btn.jc-rev{border:1px solid #F59E0B66;background:linear-gradient(#F59E0B14,#F59E0B08)}
+.jc-card{margin:12px 0;padding:12px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--jc,#14B8A6) 40%,transparent);background:color-mix(in srgb,var(--jc,#14B8A6) 10%,transparent)}
+.jc-card p{margin:6px 0 0;font-size:14px;line-height:1.5}
+.jc-badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--jc,#14B8A6);color:#06121a}
+.jc-pat{margin-top:10px;padding-top:8px;border-top:1px dashed #ffffff22;font-size:13px;color:var(--muted)}
+.jc-welcome{margin:12px 0;padding:14px;border-radius:16px;border:1px solid #F59E0B66;background:linear-gradient(#F59E0B1c,#F59E0B08)}
+.jc-wh{font-weight:800;font-size:16px}.jc-welcome p{margin:6px 0 10px;font-size:14px;line-height:1.5;color:var(--muted)}
+.jc-chips{display:flex;gap:8px;flex-wrap:wrap}
+.jc-chip{border:1px solid #ffffff2a;background:#ffffff10;color:inherit;border-radius:99px;padding:8px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.jc-chip.done{opacity:.5}
+.jc-q{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;margin-bottom:8px;font-weight:700;color:#E2E8F0;line-height:1.4}
+.jc-swap{border:1px solid #ffffff2a;background:#ffffff10;color:inherit;border-radius:10px;padding:4px 10px;font-size:15px;cursor:pointer;flex:none}
+.jc-count{margin-top:6px;font-size:12px;color:var(--muted)}.jc-count.on{color:#34d399}
+.jc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.jc-grid>div{padding:10px 12px;border-radius:12px;background:#ffffff0c}.jc-grid small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}.jc-grid b{font-size:14px}
+.jc-care{margin:12px 0;padding:14px;border-radius:14px;border:1px solid #38BDF866;background:#38BDF812;font-size:14px;line-height:1.5}

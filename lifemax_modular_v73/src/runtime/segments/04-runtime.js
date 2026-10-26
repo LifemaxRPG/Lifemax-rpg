@@ -54,7 +54,8 @@ function renderBenchmarks(){document.getElementById('benchmarks').innerHTML=stat
 function renderHistory(){
   if(!state.dayReflections)state.dayReflections={};
   const days=journalDays();
-  if(!histSel||!days.includes(histSel))histSel=days[0]||getToday();
+  if(typeof LifeMaxCoach!=='undefined')LifeMaxCoach.reset();
+  if(!histSel||(!days.includes(histSel)&&!/^[WM]:/.test(histSel)))histSel=days[0]||getToday();
   const daysEl=document.getElementById('journalDays');
   const entryEl=document.getElementById('journalEntry');
   if(!daysEl||!entryEl)return;
@@ -63,13 +64,13 @@ function renderHistory(){
     entryEl.innerHTML=`<div class="empty"><div>◷</div><strong>No journal entries yet</strong><br>Log an activity, complete a quest, or finish a plan session. Everything you enter will show up here by day.</div>`;
     return;
   }
-  daysEl.innerHTML=days.map(d=>{
+  daysEl.innerHTML=typeof jcListHtml==='function'?jcListHtml(days,histSel):days.map(d=>{
     const acts=actsForDay(d);
     const hasRef=!!(state.dayReflections[d]||'').trim();
     const label=journalDayLabel(d);
     return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(label)}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
-  entryEl.innerHTML=renderJournalDay(histSel);
+  entryEl.innerHTML=/^[WM]:/.test(histSel)&&typeof jcReviewHtml==='function'?jcReviewHtml(histSel):renderJournalDay(histSel);
 }
 let histSel=null;
 function journalDays(){
@@ -110,16 +111,19 @@ function saveDayReflection(d,val){
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
   state.customRules=rules;
   try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  try{if(typeof jcOnReflect==='function')jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
   if(daysEl){
+    if(typeof LifeMaxCoach!=='undefined')LifeMaxCoach.reset();
     const days=journalDays();
-    daysEl.innerHTML=days.map(day=>{
+    daysEl.innerHTML=typeof jcListHtml==='function'?jcListHtml(days,histSel):days.map(day=>{
       const acts=actsForDay(day);
       const hasRef=!!(state.dayReflections[day]||'').trim();
       return `<button type="button" class="journal-day-btn ${day===histSel?'on':''}" onclick="selectJournalDay('${day}')">${esc(journalDayLabel(day))}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
     }).join('');
   }
+  const cnt=document.getElementById('jcCount');if(cnt&&typeof jcCounter==='function'){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
 }
 function planLogsForDay(d){
   if(!state.plan||!state.plan.checks||!state.plan.checks[d])return [];
@@ -167,9 +171,10 @@ function renderJournalDay(d){
   }
   return `<div class="journal-date">${esc(journalDayTitle(d))}</div>
     <div class="journal-meta">${acts.length} entr${acts.length===1?'y':'ies'} · ${totalXP} XP${logs.length?` · ${logs.length} exercise note${logs.length===1?'':'s'}`:''}</div>
+    ${typeof jcTop==='function'?jcTop(d):''}
     ${body}
-    <div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
-    <textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" onchange="saveDayReflection('${d}',this.value)">${esc(ref)}</textarea></div>`;
+    ${typeof jcTop==='function'?'':`<div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
+    <textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" onchange="saveDayReflection('${d}',this.value)">${esc(ref)}</textarea></div>`}`;
 }
 function renderStats(){const lvl=characterLevel();document.getElementById('heroName').textContent=state.name||'The Life Architect';document.getElementById('heroLevel').textContent=lvl.level;document.getElementById('heroXP').textContent=totalXP().toLocaleString()+' XP';document.getElementById('heroBar').style.width=lvl.pct+'%';document.getElementById('heroProgress').textContent=`${lvl.into} / ${lvl.needed} XP to next level`;document.getElementById('heroPercent').textContent=Math.round(lvl.pct)+'%';document.getElementById('achievementCount').textContent=Object.keys(state.questDone).length;document.getElementById('totalActivities').textContent=state.activities.length;document.getElementById('todayXP').textContent=todayActivities().reduce((s,a)=>s+a.xp,0)+' XP earned';document.getElementById('totalXPStat').textContent=totalXP().toLocaleString();let strongest=ATTRS.slice().sort((a,b)=>attrXP(b.id)-attrXP(a.id))[0];document.getElementById('strongestStat').textContent=attrXP(strongest.id)>0?strongest.short:'—';document.getElementById('skillsStat').textContent=Object.values(state.skillXP).filter(v=>v>0).length;document.getElementById('questsStat').textContent=Object.keys(state.questDone).length;let tq=todayActivities().length;let qd=state.quests.filter(q=>q.cadence==='daily'&&isQuestDone(q)).length;document.getElementById('dailyMini').innerHTML=`<div class="minirow"><span>Activities logged</span><strong>${tq}</strong></div><div class="minirow"><span>Quests completed</span><strong>${qd}</strong></div><div class="minirow"><span>Active skills</span><strong>${Object.values(state.skillXP).filter(v=>v>0).length}</strong></div>`;document.getElementById('todayLabel').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}
 function renderRules(){document.getElementById('xpRules').innerHTML=Object.entries(rules).map(([id,r])=>`<div class="settingsline"><div style="flex:1"><strong>${iconHtml(r.icon)} ${esc(r.name)}</strong><div class="muted" style="font-size:11px">${esc(r.skill)} · base XP</div></div><input aria-label="${esc(r.name)} base XP" id="rule-${id}" type="number" min="1" max="200" value="${r.base}" style="width:78px;background:#0b1223;color:var(--text);border:1px solid var(--line);padding:8px;border-radius:9px"></div>`).join('')}

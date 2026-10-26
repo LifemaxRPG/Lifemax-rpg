@@ -3,7 +3,7 @@
  "segments": [
   {
    "file": "src/runtime/segments/00-runtime.js",
-   "bytes": 46680,
+   "bytes": 46685,
    "statement_count": 4,
    "tags": [
     "quests"
@@ -17,7 +17,7 @@
   },
   {
    "file": "src/runtime/segments/01-runtime.js",
-   "bytes": 84223,
+   "bytes": 84379,
    "statement_count": 7,
    "tags": [
     "nutrition"
@@ -66,7 +66,7 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 27242,
+   "bytes": 28526,
    "statement_count": 64,
    "tags": [
     "training",
@@ -144,7 +144,7 @@
   },
   {
    "file": "src/runtime/segments/05-runtime.js",
-   "bytes": 27967,
+   "bytes": 29537,
    "statement_count": 35,
    "tags": [
     "training",
@@ -242,7 +242,7 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 27083,
+   "bytes": 27078,
    "statement_count": 65,
    "tags": [
     "training",
@@ -528,7 +528,7 @@
   },
   {
    "file": "src/runtime/segments/13-runtime.js",
-   "bytes": 27233,
+   "bytes": 27228,
    "statement_count": 77,
    "tags": [
     "training",
@@ -734,7 +734,7 @@
   },
   {
    "file": "src/runtime/segments/16-runtime.js",
-   "bytes": 31138,
+   "bytes": 31134,
    "statement_count": 47,
    "tags": [
     "training",
@@ -794,7 +794,7 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 34234,
+   "bytes": 34914,
    "statement_count": 59,
    "tags": [
     "pet",
@@ -859,7 +859,7 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 27446,
+   "bytes": 27999,
    "statement_count": 52,
    "tags": [
     "interface"
@@ -921,7 +921,7 @@
   },
   {
    "file": "src/runtime/segments/19-runtime.js",
-   "bytes": 27867,
+   "bytes": 27893,
    "statement_count": 46,
    "tags": [],
    "symbols": [
@@ -962,7 +962,7 @@
   },
   {
    "file": "src/runtime/segments/20-runtime.js",
-   "bytes": 30686,
+   "bytes": 30681,
    "statement_count": 19,
    "tags": [],
    "symbols": [
@@ -1382,7 +1382,7 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 42994,
+   "bytes": 45229,
    "statement_count": 91,
    "tags": [
     "pet",
@@ -1464,7 +1464,7 @@
   },
   {
    "file": "src/runtime/segments/30-pet-sleep.js",
-   "bytes": 10512,
+   "bytes": 10743,
    "statement_count": 14,
    "tags": [
     "pet"
@@ -1617,7 +1617,7 @@
   },
   {
    "file": "src/runtime/segments/33-android.js",
-   "bytes": 11542,
+   "bytes": 13514,
    "statement_count": 23,
    "tags": [
     "android",
@@ -1651,7 +1651,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 5450,
+   "bytes": 7226,
    "statement_count": 11,
    "tags": [
     "navigation",
@@ -1673,7 +1673,7 @@
   },
   {
    "file": "src/runtime/segments/35-android-upkeep.js",
-   "bytes": 7300,
+   "bytes": 9729,
    "statement_count": 11,
    "tags": [
     "android",
@@ -1696,7 +1696,7 @@
   },
   {
    "file": "src/runtime/segments/36-money-pay.js",
-   "bytes": 10599,
+   "bytes": 10677,
    "statement_count": 17,
    "tags": [
     "money",
@@ -1724,7 +1724,7 @@
   },
   {
    "file": "src/runtime/segments/37-pet-morph.js",
-   "bytes": 20929,
+   "bytes": 22723,
    "statement_count": 40,
    "tags": [
     "pet",
@@ -1776,7 +1776,7 @@
   },
   {
    "file": "src/runtime/segments/38-pet-rig.js",
-   "bytes": 11614,
+   "bytes": 12590,
    "statement_count": 13,
    "tags": [
     "pet",
@@ -1800,7 +1800,7 @@
   },
   {
    "file": "src/runtime/segments/39-health.js",
-   "bytes": 9819,
+   "bytes": 21476,
    "statement_count": 12,
    "tags": [
     "android",
@@ -1823,7 +1823,7 @@
   },
   {
    "file": "src/runtime/segments/40-widget.js",
-   "bytes": 2995,
+   "bytes": 3027,
    "statement_count": 9,
    "tags": [
     "android",
@@ -1841,7 +1841,7 @@
   },
   {
    "file": "src/runtime/segments/41-ov-apps.js",
-   "bytes": 2348,
+   "bytes": 2674,
    "statement_count": 3,
    "tags": [
     "android",
@@ -1854,7 +1854,7 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 4103,
+   "bytes": 13737,
    "statement_count": 12,
    "tags": [
     "navigation",
@@ -1874,7 +1874,7 @@
   },
   {
    "file": "src/runtime/segments/43-economy.js",
-   "bytes": 5577,
+   "bytes": 6151,
    "statement_count": 20,
    "tags": [
     "economy",
@@ -1902,7 +1902,7 @@
   },
   {
    "file": "src/runtime/segments/44-rewards.js",
-   "bytes": 12834,
+   "bytes": 12796,
    "statement_count": 26,
    "tags": [
     "economy",
@@ -1934,7 +1934,7 @@
   },
   {
    "file": "src/runtime/segments/45-voice.js",
-   "bytes": 50124,
+   "bytes": 50219,
    "statement_count": 120,
    "tags": [
     "voice"
@@ -1954,7 +1954,7 @@
   },
   {
    "file": "src/runtime/segments/46-voice-nlu.js",
-   "bytes": 30030,
+   "bytes": 30481,
    "statement_count": 39,
    "tags": [
     "voice"
@@ -1999,6 +1999,62 @@
     "lmvActFrame",
     "lmvHCancel",
     "lmvHMove"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/47-journal-coach.js",
+   "bytes": 34535,
+   "statement_count": 45,
+   "tags": [
+    "journal",
+    "coach"
+   ],
+   "symbols": [
+    "JC",
+    "jcCache",
+    "jcStore",
+    "jcAdd",
+    "jcDow",
+    "jcHash",
+    "jcFill",
+    "jcEsc",
+    "jcMean",
+    "jcCat",
+    "jcIndex",
+    "jcCoachAct",
+    "jcPassive",
+    "jcBaseOn",
+    "jcDay",
+    "jcGap",
+    "JC_ARCH",
+    "jcArch",
+    "JC_TXT",
+    "jcInsight",
+    "JC_POOLS",
+    "JC_POOL_OF",
+    "jcPrompt",
+    "jcSwap",
+    "jcAward",
+    "jcCare",
+    "jcOnReflect",
+    "jcCounter",
+    "jcPatterns",
+    "jcChip",
+    "JC_DISTRESS",
+    "jcCareNote",
+    "jcWelcome",
+    "jcClaim",
+    "jcCatchUp",
+    "jcTop",
+    "jcReflectBox",
+    "jcWeekId",
+    "jcWeekStart",
+    "jcReviewList",
+    "jcListHtml",
+    "jcShort",
+    "jcRange",
+    "jcReviewHtml",
+    "jcSaveReview"
    ]
   }
  ]
