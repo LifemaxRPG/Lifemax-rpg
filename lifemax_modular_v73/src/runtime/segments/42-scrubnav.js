@@ -3,9 +3,18 @@
    scrolls only when it has to keep it in view. The page follows as soon as the finger slows (and when it lifts),
    so fast swipes stay light; nothing is animated while scrubbing. Taps work as before, with a short slide.
    Phones only (<= 860px wide). The page animation is lmaNavTo in 34-navigation.js. */
-const LMA_SCRUB={slop:7,settle:70,gain:.92};
-const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0};
+const LMA_SCRUB={slop:7,settle:70,gain:.92,fast:.16};
+const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0,cost:{}};
 const lmaScrubOn=()=>!!(window.matchMedia&&matchMedia('(max-width:860px)').matches);
+/* a tick for each tab passed, firmer pulses at the start and end of a scrub (system haptics through the Android app) */
+function lmaBuzz(kind){
+ try{
+  if(!fxOpt().haptics)return;
+  const N=lmaNative()&&lmaPlugin('NavHaptics');
+  if(N&&N[kind]){N[kind]().catch(()=>{});return}
+  haptic(kind==='tick'?6:kind==='start'?10:14);
+ }catch(e){}
+}
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
 function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
 /* nudge the strip just enough that tab i is fully visible */
@@ -25,7 +34,18 @@ function lmaScrubInit(){
  const S=lmaScrub,sb=document.querySelector('.sidebar');
  if(!sb||S.sb)return;
  S.sb=sb;lmaScrubItems();
- const go=()=>{const b=S.items[S.sel];if(b&&b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true,fast:true})};
+ /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
+    and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
+ const go=()=>{
+  const b=S.items[S.sel];if(!b)return;const v=b.dataset.view;if(v===lmaView())return;
+  if(S.drag&&S.drag.speed>LMA_SCRUB.fast){clearTimeout(S.timer);S.timer=setTimeout(go,60);return}   /* still moving quickly: keep gliding, switch when it eases */
+  requestAnimationFrame(()=>setTimeout(()=>{
+   if(!S.drag||S.items[S.sel]!==b)return;
+   const t0=performance.now();lmaNavTo(v,{skip:true,fast:true});
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{const c=performance.now()-t0;S.cost[v]=S.cost[v]?S.cost[v]*.4+c*.6:c}));
+  },0));
+ };
+ const settleFor=i=>{const b=S.items[i],c=b&&S.cost[b.dataset.view];return c?Math.max(LMA_SCRUB.settle,Math.min(360,Math.round(c*1.4))):LMA_SCRUB.settle};
  sb.addEventListener('touchstart',e=>{
   if(!lmaScrubOn()||e.touches.length!==1)return;
   const t=e.touches[0];lmaScrubItems();
@@ -39,22 +59,23 @@ function lmaScrubInit(){
   if(!d.moved){
    if(Math.abs(dx)<LMA_SCRUB.slop)return;
    if(Math.abs(t.clientY-d.y0)>Math.abs(dx)*1.5){S.drag=null;return}
-   d.moved=true;
+   d.moved=true;lmaBuzz('start');
   }
   e.preventDefault();
+  const nowT=performance.now();if(d.lt){const dt=Math.max(1,nowT-d.lt);d.speed=(d.speed||0)*.5+Math.abs(t.clientX-d.lx)/dt*.5}d.lt=nowT;d.lx=t.clientX;
   const per=d.W*LMA_SCRUB.gain/Math.max(1,n-1),i=Math.round(Math.min(n-1,Math.max(0,d.start-dx/per)));
   if(i!==S.sel){
-   lmaScrubMark(i);haptic(5);
-   clearTimeout(S.timer);S.timer=setTimeout(go,LMA_SCRUB.settle);
+   lmaScrubMark(i);lmaBuzz('tick');
+   clearTimeout(S.timer);S.timer=setTimeout(go,settleFor(i));
   }
  },{passive:false});
  const end=()=>{
   const d=S.drag;if(!d)return;S.drag=null;
   clearTimeout(S.timer);
   if(!d.moved)return;
-  S.block=Date.now();
+  S.block=Date.now();lmaBuzz('end');
   const b=S.items[S.sel];if(!b)return;
-  if(b.dataset.view!==lmaView())lmaNavTo(b.dataset.view,{skip:true});
+  if(b.dataset.view!==lmaView()){const c=S.cost[b.dataset.view];lmaNavTo(b.dataset.view,{skip:true,fast:c>140})}
   if(b.dataset.view!==d.from&&lmaNavStack[lmaNavStack.length-1]!==d.from)lmaNavStack.push(d.from);
  };
  sb.addEventListener('touchend',end,{passive:true});

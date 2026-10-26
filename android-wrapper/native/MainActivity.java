@@ -35,6 +35,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(BackupFolderPlugin.class);
         registerPlugin(HealthSyncPlugin.class);
         registerPlugin(WidgetBridgePlugin.class);
+        registerPlugin(NavHapticsPlugin.class);
         super.onCreate(savedInstanceState);
         if (getIntent() != null && getIntent().getStringExtra(EXTRA_OPEN) != null) launchTarget = getIntent().getStringExtra(EXTRA_OPEN);
 
