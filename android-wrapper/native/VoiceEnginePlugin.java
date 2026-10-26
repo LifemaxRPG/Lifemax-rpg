@@ -48,6 +48,7 @@ public class VoiceEnginePlugin extends Plugin {
     private long lastRms = 0;
     private boolean modelMissing = false;
     private boolean listening = false;
+    private int gen = 0;     // bumped whenever a recognizer is replaced; callbacks from an older one are ignored
 
     private boolean hasMic() {
         return ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
@@ -136,14 +137,15 @@ public class VoiceEnginePlugin extends Plugin {
     @RequiresApi(31)
     private void begin(String sid, String loc) {
         destroy();
+        final int myGen = ++gen;
         session = sid;
         seq = 0;
         lastRms = 0;
         recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(getContext());
         recognizer.setRecognitionListener(new RecognitionListener() {
-            @Override public void onReadyForSpeech(Bundle params) { listening = true; emit("VOICE_READY", null); }
-            @Override public void onBeginningOfSpeech() { emit("VOICE_BEGIN", null); }
-            @Override public void onRmsChanged(float rmsdB) {
+            @Override public void onReadyForSpeech(Bundle params) { if (myGen != gen) return; listening = true; emit("VOICE_READY", null); }
+            @Override public void onBeginningOfSpeech() { if (myGen != gen) return; emit("VOICE_BEGIN", null); }
+            @Override public void onRmsChanged(float rmsdB) { if (myGen != gen) return;
                 long now = SystemClock.elapsedRealtime();
                 if (now - lastRms < 100) return;            // at most 10 per second
                 lastRms = now;
@@ -152,11 +154,12 @@ public class VoiceEnginePlugin extends Plugin {
                 emit("VOICE_RMS", p);
             }
             @Override public void onBufferReceived(byte[] buffer) { }
-            @Override public void onEndOfSpeech() { listening = false; emit("VOICE_EOS", null); }
-            @Override public void onError(int error) {
+            @Override public void onEndOfSpeech() { if (myGen != gen) return; listening = false; emit("VOICE_EOS", null); }
+            @Override public void onError(int error) { if (myGen != gen) return;
                 listening = false;
                 JSObject p = new JSObject();
                 String code;
+                if (error == 11 || error == 5) return;      // SERVER_DISCONNECTED / CLIENT: the recognizer was replaced or cancelled by us, not a real failure
                 if (error == 12 || error == 13) { modelMissing = true; code = "OFFLINE_MODEL_MISSING"; }    // LANGUAGE_NOT_SUPPORTED / LANGUAGE_UNAVAILABLE
                 else if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) code = "NO_SPEECH";
                 else if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) code = "PERMISSION_MISSING";
@@ -165,7 +168,7 @@ public class VoiceEnginePlugin extends Plugin {
                 p.put("detail", error);
                 emit("VOICE_ERROR", p);
             }
-            @Override public void onResults(Bundle results) {
+            @Override public void onResults(Bundle results) { if (myGen != gen) return;
                 listening = false;
                 ArrayList<String> t = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 float[] c = results.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);
@@ -182,7 +185,7 @@ public class VoiceEnginePlugin extends Plugin {
                 p.put("utteranceId", "utt_" + session + "_" + seq);
                 emit("VOICE_FINAL_TRANSCRIPT", p);
             }
-            @Override public void onPartialResults(Bundle partial) {
+            @Override public void onPartialResults(Bundle partial) { if (myGen != gen) return;
                 ArrayList<String> t = partial.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (t == null || t.isEmpty()) return;
                 String text = t.get(0);
@@ -198,10 +201,15 @@ public class VoiceEnginePlugin extends Plugin {
         i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, loc.replace('_', '-'));
         i.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        // be patient with natural pauses so a half-finished request is not cut off
+        i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2200L);
+        i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1800L);
+        i.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1500L);
         recognizer.startListening(i);
     }
 
     private void destroy() {
+        gen++;
         if (recognizer != null) {
             try { recognizer.cancel(); } catch (Throwable ignored) { }
             try { recognizer.destroy(); } catch (Throwable ignored) { }

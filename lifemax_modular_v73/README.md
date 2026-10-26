@@ -360,3 +360,9 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
+
+## v119 — voice: fewer questions, no stray error
+- Speech error 11 ("recognition service disconnected") came from replacing the recognizer while an older one was still winding down; callbacks from an older recognizer are now ignored (generation counter), and error 11/5 raised by our own cancel are never shown.
+- The recognizer waits longer through pauses (2.2 s of silence ends a request) so a half-finished sentence is not cut off; after a question the mic reopens by itself so you can answer "p.m." without tapping.
+- No length given = a standard 30 minutes (shown as "standard" in the preview), no question.
+- Plausible times by kind of activity (`LMV_KINDS` in `45-voice.js`): a meeting at 3 is 3 PM, the bar at 7 is 7 PM, wake up at 6 is 6 AM, lunch at 12 is noon; ambiguous ones (gym at 6) still ask. An explicit unusual time ("meeting at 3 am") is kept but flagged. Assumptions are shown in the preview.

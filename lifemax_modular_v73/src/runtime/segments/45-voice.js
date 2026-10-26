@@ -125,7 +125,7 @@ function lmvFinalize(f,ctx){
  }
  if(f.hour==null)return lmvAsk('time','What time?',[]);
  /* meridiem: only when it was said or clearly implied */
- let h=f.hour,mi=f.minute||0;
+ let h=f.hour,mi=f.minute||0,mer=null;const assume=[];
  if(f.mer==='24'){}
  else if(f.mer==='am'||f.mer==='pm'){h=lmvTo24(h,f.mer)}
  else if(h>=13||h===0){}
@@ -135,6 +135,7 @@ function lmvFinalize(f,ctx){
   if(f.daypart==='night'&&f.hour===12)h=0;
  }
  else if(h===12){}
+ else if(lmvGuess(f.title,h)){mer=lmvGuess(f.title,h);h=lmvTo24(h,mer);assume.push('MERIDIEM_INFERRED')}
  else{const w=LMV_WORDS[h%12]||String(h);return lmvAsk('meridiem',w.charAt(0).toUpperCase()+w.slice(1)+' in the morning or evening?',[{label:'Morning',patch:{mer:'am'}},{label:'Evening',patch:{mer:'pm'}}],'MERIDIEM_UNSPECIFIED')}
  if(h===24){h=0}
  /* an explicit end time gives the duration */
@@ -143,7 +144,8 @@ function lmvFinalize(f,ctx){
   if(f.endMer==='am'||f.endMer==='pm'){dur=((lmvTo24(f.endHour,f.endMer)*60+em)-startMin+1440)%1440||null}
   else{const c=[f.endHour%12,f.endHour%12+12].map(function(x){return x*60+em-startMin}).filter(function(x){return x>0}).sort(function(a,b){return a-b});dur=c.length?c[0]:null}
  }
- if(dur==null||dur<=0)return lmvAsk('duration','How long should it be?',lmvDurChips());
+ let durDefault=false;
+ if(dur==null||dur<=0){dur=LMV_DEFAULT_MIN;durDefault=true}      /* nobody said how long: a standard half hour, shown in the preview */
  if(dur>16*60)return lmvAsk('duration','That is more than 16 hours. How long should it be?',lmvDurChips());
  /* wall clock -> epoch, checking daylight saving */
  const a=f.date.split('-').map(Number),r=lmvLocalToEpoch(a[0],a[1],a[2],h,mi,ctx.tz);
@@ -166,8 +168,37 @@ function lmvFinalize(f,ctx){
   const tm=lmvAddDays(today,1);
   return lmvAsk('past',lmvNiceTime(lmvPad(h)+':'+lmvPad(mi))+' has already passed today. Schedule it for tomorrow at '+lmvNiceTime(lmvPad(h)+':'+lmvPad(mi))+' instead?',[{label:'Tomorrow',patch:{date:tm}},{label:'Pick another time',patch:{hour:null,mer:null,daypart:null,endHour:null}}],'PAST_TIME_ON_TODAY');
  }
- return {status:'READY',slot:{localDate:f.date,localStartTime:lmvPad(h)+':'+lmvPad(mi),localEndTime:lmvPad(ep.h)+':'+lmvPad(ep.mi),durationMinutes:dur,ianaTimeZone:ctx.tz,startEpochMs:start,endEpochMs:end,ambiguities:ambig},title:f.title};
+ const odd=lmvOdd(f.title,h);
+ if(odd)assume.push('UNUSUAL_TIME');
+ return {status:'READY',oddText:odd,slot:{assumptions:assume,durationDefaulted:durDefault,localDate:f.date,localStartTime:lmvPad(h)+':'+lmvPad(mi),localEndTime:lmvPad(ep.h)+':'+lmvPad(ep.mi),durationMinutes:dur,ianaTimeZone:ctx.tz,startEpochMs:start,endEpochMs:end,ambiguities:ambig},title:f.title};
 }
+/* what a title usually means for the time of day: used to avoid asking "morning or evening?" when only one makes sense.
+   win = the hours (24 h clock) such an activity normally falls in; infer(h) = which half of the clock an unmarked hour 1-11 means. */
+const LMV_KINDS=[
+ {re:/\b(wake|wake up|alarm|get up|sunrise)\b/,name:'waking up',win:[4,10],infer:function(h){return h>=4&&h<=10?'am':null}},
+ {re:/\b(breakfast)\b/,name:'breakfast',win:[5,11],infer:function(h){return h>=5&&h<=11?'am':null}},
+ {re:/\b(brunch)\b/,name:'brunch',win:[9,14],infer:function(h){return h>=9&&h<=11?'am':h<=2?'pm':null}},
+ {re:/\b(lunch)\b/,name:'lunch',win:[10,15],infer:function(h){return h>=10&&h<=11?'am':h<=3?'pm':null}},
+ {re:/\b(dinner|supper)\b/,name:'dinner',win:[16,22],infer:function(h){return h>=4&&h<=10?'pm':null}},
+ {re:/\b(bar|pub|drinks?|happy hour|club|clubbing|party|date|date night|movies?|cinema|concert|show|karaoke|bowling|game night)\b/,name:'going out',win:[11,26],infer:function(h){return h<=11?'pm':null}},
+ {re:/\b(nap)\b/,name:'a nap',win:[12,17],infer:function(h){return h<=4?'pm':null}},
+ {re:/\b(bed|bedtime|go to sleep|sleep)\b/,name:'bedtime',win:[20,26],infer:function(h){return h>=8&&h<=11?'pm':null}},
+ {re:/\b(meeting|meet|call|interview|appointment|dentist|doctor|consult(ation)?|conference|class|lecture|exam|presentation|standup|sync|review|office|work|shift|checkup)\b/,name:'that',win:[7,20],infer:function(h){return h>=8&&h<=11?'am':h<=6?'pm':null}},
+ {re:/\b(workout|gym|run|jog|walk|yoga|lift|lifting|swim|hike|cardio|exercise|training|stretch)\b/,name:'exercise',win:[4,23],infer:function(h){return h<=3?'pm':null}}
+];
+function lmvKind(title){const t=String(title||'').toLowerCase();for(let i=0;i<LMV_KINDS.length;i++)if(LMV_KINDS[i].re.test(t))return LMV_KINDS[i];return null}
+function lmvGuess(title,h){
+ if(h<1||h>11)return null;
+ const k=lmvKind(title);
+ if(k)return k.infer(h);
+ return h<=5?'pm':null;                    /* nothing is scheduled for 1 to 5 in the morning unless it says so */
+}
+function lmvOdd(title,h24){
+ const k=lmvKind(title);if(!k)return null;
+ const h=h24<k.win[0]?h24+24:h24;
+ return h<k.win[0]||h>=k.win[1]?String(title)+' at '+lmvNiceTime(lmvPad(h24%24)+':00').replace(':00','')+' is an unusual time.':null;
+}
+const LMV_DEFAULT_MIN=30;
 function lmvTo24(h,mer){if(mer==='am')return h===12?0:h;return h===12?12:h+12}
 function lmvDurChips(){return [{label:'30 min',patch:{dur:30}},{label:'45 min',patch:{dur:45}},{label:'1 hour',patch:{dur:60}},{label:'90 min',patch:{dur:90}}]}
 /* ===== capability registry ===== */
@@ -222,6 +253,9 @@ function lmvAdvance(f,ctx){
  if(res.status==='NEED'){f.state='AWAITING_CLARIFICATION';f.question={kind:res.kind,text:res.question,chips:res.chips,flag:res.flag};f.slot=null;f.notices=[];return f}
  f.question=null;f.title=res.title;f.slot=res.slot;f.state='VALIDATED';
  const notices=[];
+ if(res.slot.assumptions.indexOf('MERIDIEM_INFERRED')>=0)notices.push({kind:'info',text:'Assumed '+lmvNiceTime(res.slot.localStartTime).slice(-2)+' because of the kind of activity. Say or tap Cancel if that is wrong.'});
+ if(res.slot.durationDefaulted)notices.push({kind:'info',text:'No length given, so I used a standard '+LMV_DEFAULT_MIN+' minutes.'});
+ if(res.oddText)notices.push({kind:'duplicate',text:res.oddText});
  f.conflicts=lmvLD.conflicts(res.slot);
  if(f.conflicts.length)notices.push({kind:'conflict',text:'Overlaps '+f.conflicts.map(function(c){return c.title}).join(', ')+'.'});
  /* tier 3: a new request that looks just like one that was just saved */
@@ -364,7 +398,7 @@ function lmvOnNative(ev){
  else if(ev.event==='VOICE_PARTIAL'){lmvPartial=String(p.text||'').slice(0,300);lmvRender()}
  else if(ev.event==='VOICE_FINAL_TRANSCRIPT'){lmvListening=false;lmvPartial='';lmvHandle(String(p.text||''),{utteranceId:ev.utteranceId||p.utteranceId,confidence:typeof p.confidence==='number'?p.confidence:1});
   /* hands-free: after a question, listen for the answer */
-  if(lmvFrame&&lmvFrame.state==='AWAITING_CLARIFICATION')setTimeout(lmvListen,350)}
+  if(lmvFrame&&lmvFrame.state==='AWAITING_CLARIFICATION')setTimeout(lmvListen,250)}
  else if(ev.event==='VOICE_ERROR'){
   lmvListening=false;lmvPartial='';
   const code=String(p.code||'ENGINE_ERROR');
@@ -445,7 +479,7 @@ function lmvCard(f){
  const s=f.slot,c=lmvEl('div','lmv-card');
  c.appendChild(lmvEl('div','lmv-ct',f.title));
  c.appendChild(lmvEl('div','lmv-cl',lmvNiceDate(s.localDate)));
- c.appendChild(lmvEl('div','lmv-cl',lmvNiceTime(s.localStartTime)+' – '+lmvNiceTime(s.localEndTime)+'  ·  '+lmvDurText(s.durationMinutes)));
+ c.appendChild(lmvEl('div','lmv-cl',lmvNiceTime(s.localStartTime)+' – '+lmvNiceTime(s.localEndTime)+'  ·  '+lmvDurText(s.durationMinutes)+(s.durationDefaulted?' (standard)':'')));
  return c;
 }
 /* diagnostics + text simulator */

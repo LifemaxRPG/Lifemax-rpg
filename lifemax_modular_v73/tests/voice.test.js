@@ -99,6 +99,32 @@ const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 202
   ok('markup in a transcript stays inert', pw.pwned === undefined && pw.scripts === 0, pw);
   await reset();
 
+  // 7b defaults and plausibility
+  r = await say('Hey, can you set me a meeting tomorrow at 3?');
+  ok('meeting at 3 with no AM/PM is 3 PM without asking', r.state === 'PREVIEWED' && r.slot.localStartTime === '15:00' && r.slot.assumptions.includes('MERIDIEM_INFERRED'), r.slot);
+  ok('no length given: standard 30 minutes, no question', r.slot.durationMinutes === 30 && r.slot.durationDefaulted === true && r.slot.localEndTime === '15:30', r.slot);
+  await reset();
+  r = await say('Schedule going to the bar tomorrow at 7');
+  ok('the bar at 7 is 7 PM', r.state === 'PREVIEWED' && r.slot.localStartTime === '19:00', r.slot || r.question);
+  await reset();
+  r = await say('Wake up tomorrow at 6');
+  ok('wake up at 6 is 6 AM', r.state === 'PREVIEWED' && r.slot.localStartTime === '06:00', r.slot || r.question);
+  await reset();
+  r = await say('Schedule lunch tomorrow at 12');
+  ok('lunch at 12 is noon', r.state === 'PREVIEWED' && r.slot.localStartTime === '12:00', r.slot || r.question);
+  await reset();
+  r = await say('Gym tomorrow at 6');
+  ok('gym at 6 still asks (could be either)', r.question && r.question.flag === 'MERIDIEM_UNSPECIFIED', r.question);
+  r = await say('p.m.');
+  ok('answering just "p.m." finishes it', r.state === 'PREVIEWED' && r.slot.localStartTime === '18:00', r.slot || r.question);
+  await reset();
+  r = await say('Meeting tomorrow at 3 am');
+  ok('an explicit unusual time is kept but flagged', r.state === 'PREVIEWED' && r.slot.localStartTime === '03:00' && r.notices.some(n => /unusual/.test(n.text)), r.notices);
+  await reset();
+  r = await say('Schedule dentist tomorrow at 7');
+  ok('7 for an appointment still asks', r.question && r.question.kind === 'meridiem', r.question || r.slot);
+  await reset();
+
   // 8 registry + policy
   const reg = await p.evaluate(() => LifeMaxVoice.registry());
   ok('registry: create_activity executable, future domains planned', reg.find(c => c.intentId === 'life_director.create_activity').status === 'EXECUTABLE' && reg.filter(c => /\.\*$/.test(c.intentId)).every(c => c.status === 'PLANNED_NOT_IMPLEMENTED'), reg);
