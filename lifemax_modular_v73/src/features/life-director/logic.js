@@ -4760,6 +4760,54 @@ const LifeDirectorApp = (function () {
       }
       return best;
     },
+    /* planned sessions on a local date, with the ids the actions below take */
+    sessions(dateKey) {
+      if (!voiceApi.ready()) return [];
+      const [y, mo, d] = String(dateKey).split('-').map(Number), z = tz();
+      const s0 = U.zonedToEpoch(y, mo, d, 0, z), s1 = U.zonedToEpoch(y, mo, d, 1440, z);
+      return (ST.schedule.scheduledInstances || []).filter(i => i.lifecycleState === 'PLANNED' && i.startEpoch < s1 && i.endEpoch > s0)
+        .map(i => ({ id: i.instanceId, title: i.title, startEpoch: i.startEpoch, endEpoch: i.endEpoch, kind: 'SESSION' })).sort((a, b) => a.startEpoch - b.startEpoch);
+    },
+    commitments(dateKey) {
+      if (!voiceApi.ready()) return [];
+      const [y, mo, d] = String(dateKey).split('-').map(Number), z = tz();
+      const s0 = U.zonedToEpoch(y, mo, d, 0, z), s1 = U.zonedToEpoch(y, mo, d, 1440, z);
+      return (ST.fixedCommitments || []).filter(c => c.startEpoch && c.endEpoch && c.startEpoch < s1 && c.endEpoch > s0)
+        .map(c => ({ id: String(c.id), title: c.title || 'Commitment', startEpoch: c.startEpoch, endEpoch: c.endEpoch, kind: 'COMMITMENT', voice: !!c.voice })).sort((a, b) => a.startEpoch - b.startEpoch);
+    },
+    now() { return nowEpoch(); },
+    /* the same completion Life Director's own button uses, so XP, quests and streak hooks all fire */
+    completeSession(id) {
+      if (!voiceApi.ready()) return { ok: false, reason: 'NOT_SET_UP' };
+      const i = findInst(id); if (!i) return { ok: false, reason: 'NOT_FOUND' };
+      if (!doable(i, nowEpoch())) return { ok: false, reason: 'NOT_STARTED' };
+      const r = finishInstance(i, i.durationSlots * 15);
+      try { render(); } catch (e) { /* ignore */ }
+      return { ok: !!r, reason: r ? null : 'REJECTED' };
+    },
+    skipSession(id) {
+      if (!voiceApi.ready()) return { ok: false, reason: 'NOT_SET_UP' };
+      const i = findInst(id); if (!i) return { ok: false, reason: 'NOT_FOUND' };
+      const c = E.applyMissConsequence(ST.ledger, i, ST.prefs, nowEpoch(), 'SKIP'); ST.ledger = c.ledger;
+      const r = reschedule({ type: 'SKIPPED', instanceId: id }); persist();
+      try { render(); if (glanceEl) glance(glanceEl); } catch (e) { /* ignore */ }
+      return { ok: true, replanned: !!r };
+    },
+    moveSession(id, newStartEpoch) {
+      if (!voiceApi.ready()) return { ok: false, reason: 'NOT_SET_UP' };
+      const r = reschedule({ type: 'MOVE', instanceId: id, newStartEpoch: +newStartEpoch });
+      if (!r) return { ok: false, reason: 'PLAN_REJECTED' };
+      persist(); try { render(); if (glanceEl) glance(glanceEl); } catch (e) { /* ignore */ }
+      return { ok: true };
+    },
+    moveCommitment(id, startEpoch, endEpoch) {
+      if (!voiceApi.ready()) return { ok: false, reason: 'NOT_SET_UP' };
+      const c = (ST.fixedCommitments || []).find(x => String(x.id) === String(id)); if (!c) return { ok: false, reason: 'NOT_FOUND' };
+      c.startEpoch = +startEpoch; c.endEpoch = +endEpoch;
+      regenerate('voice move', true);
+      try { render(); if (glanceEl) glance(glanceEl); } catch (e) { /* ignore */ }
+      return { ok: true };
+    },
     /* read-only: what is planned on a local date (fixed items and planned sessions), for life_director.query_schedule */
     dayItems(dateKey) {
       if (!voiceApi.ready()) return null;

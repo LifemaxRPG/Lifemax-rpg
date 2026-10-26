@@ -1934,7 +1934,7 @@
   },
   {
    "file": "src/runtime/segments/45-voice.js",
-   "bytes": 43350,
+   "bytes": 50124,
    "statement_count": 120,
    "tags": [
     "voice"
@@ -1950,6 +1950,55 @@
     "lmvUndo",
     "lmvListen",
     "LifeMaxVoice"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/46-voice-nlu.js",
+   "bytes": 30030,
+   "statement_count": 39,
+   "tags": [
+    "voice"
+   ],
+   "symbols": [
+    "LMV_B",
+    "LMV_SECTIONS",
+    "LMV_STOP",
+    "lmvLow",
+    "lmvLead",
+    "lmvClassify",
+    "lmvToday",
+    "lmvClock",
+    "lmvLines",
+    "lmvGo",
+    "lmvOpenChip",
+    "lmvDaypartWin",
+    "lmvDaypartDefault",
+    "lmvBusy",
+    "lmvFindSlot",
+    "lmvNowMin",
+    "lmvMeta",
+    "lmvTokens",
+    "lmvCandidates",
+    "lmvLastRef",
+    "lmvResolve",
+    "lmvTimeAfter",
+    "lmvDatesFor",
+    "lmvDomain",
+    "lmvHQuests",
+    "lmvHStats",
+    "lmvHSchedule",
+    "lmvHFree",
+    "lmvPets",
+    "lmvHPetStatus",
+    "lmvPetDo",
+    "lmvHPetAct",
+    "lmvHSteps",
+    "lmvHFood",
+    "lmvPick",
+    "lmvHComplete",
+    "lmvActFrame",
+    "lmvHCancel",
+    "lmvHMove"
    ]
   }
  ]

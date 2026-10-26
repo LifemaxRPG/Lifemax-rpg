@@ -1,5 +1,14 @@
 # LifeMax Voice, phase 1: engineering report
 
+## Conversational NLU and more domains (v126)
+`46-voice-nlu.js` runs before any scheduling. `lmvClassify` decides what a sentence is FOR from word buckets (question markers, quest / stat / schedule / cat / steps / food nouns, create / move / cancel / complete verbs), so "what are my quests today" is a quest read and never a scheduling question that asks "What time?". An explicit scheduling verb ("put", "add", "book", "remind me", "block out", "set me") always wins, even with a trailing question mark.
+- **Open-question replies** ("any time", "whenever (I'm free)", "you pick", "doesn't matter", "now", "right now", "in 30 minutes", "in an hour", bare "morning / afternoon / evening / tonight", "noon", "midnight") resolve to a real free slot (searching 9:00 to 21:00, or from the next quarter hour today) or the stated time, and go to the preview with a note saying what was picked. If nothing is open, it says so and asks for a time.
+- **Escape:** "cancel", "never mind", "forget it", "stop", "nothing", "abort", "scratch that" end the pending request at any point.
+- **Barge-in:** a complete command or question for another domain while a question is open drops the half-built activity and runs the new command.
+- **Handlers (all read from the app's own stores):** quests (`rpg.view_quests`), XP / level / streak (`rpg.query_stats`), schedule and free time (`life_director.query_schedule`, `find_free_time`), cats (`virtual_pets.check_status`, feed / pet / play), steps and today's activity (`health_fitness.query_steps`), calories and macros (`nutrition.check_totals`; water is not tracked and says so), and opening any screen (`navigation_system.open_section`). Results show in the HUD with an Open button.
+- **Activity actions:** complete a session through Life Director's own completion (XP and quest hooks fire; only once it has started); move (shift or absolute time) and cancel always show a before / after preview and wait for confirmation. They work on planned sessions and on commitments, including ones made by voice.
+- Not done: logging food, water or workouts by voice; waking a specific one of several cats by name beyond the first two.
+
 ## Repository audit (what was actually found)
 - **Android shell:** Capacitor 7 app generated in CI (`android-wrapper/`, package `com.lifemax.rpg`, minSdk 26). One `MainActivity` (BridgeActivity); the page is the single-file web build loaded by Capacitor (origin `https://localhost`). Native code reaches JS only through Capacitor plugins registered in `MainActivity` (`AppLauncher`, `FileSaver`, `Updater`, `BackupFolder`, `HealthSync`, `WidgetBridge`, `NavHaptics`, `PageThumb`, and now `VoiceEngine`). There are no `@JavascriptInterface` methods and no `file://` loading, so the spec's origin-token fallback is not needed.
 - **Web layer:** plain JavaScript segments (`lifemax_modular_v73/src/runtime/segments/*.js`) concatenated into one script; no bundler or TypeScript. Voice lives in `45-voice.js`.
@@ -16,7 +25,7 @@
 **Web (ships with the web build):** `src/runtime/segments/45-voice.js` (new), `src/features/life-director/logic.js` (voice seam, 1.9.0), `src/views/settings.html` (Voice card), `src/styles/07-finishing.css`, `src/index.template.html`, `src/runtime/module-map.json`, `tests/voice.test.js` (new).
 
 ## Verification matrix
-| Verified automatically (`node tests/voice.test.js`, 28 checks) | Needs a real phone |
+| Verified automatically (`node tests/voice.test.js`, 117 checks) | Needs a real phone |
 |---|---|
 | canonical utterance, slot values, save into Life Director, Undo | live microphone capture |
 | multi-turn "gym time" -> "around six" -> "evening, for an hour", same operationId | Android 12+ on-device language pack present and working |

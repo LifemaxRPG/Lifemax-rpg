@@ -205,11 +205,17 @@ function lmvDurChips(){return [{label:'30 min',patch:{dur:30}},{label:'45 min',p
 const LMV_CAPS=[
  {intentId:'life_director.create_activity',domain:'life_director',title:'Schedule an activity',exampleUtterance:'Put a one hour workout on my Life Director tomorrow morning at nine',evaluateStatus:function(){return lmvCapStatus(true)}},
  {intentId:'life_director.query_schedule',domain:'life_director',title:'What is on my schedule',exampleUtterance:'What is on my schedule tomorrow',evaluateStatus:function(){return lmvCapStatus(true)}},
- {intentId:'rpg.*',domain:'rpg',title:'Character and XP',exampleUtterance:'',evaluateStatus:function(){return 'PLANNED_NOT_IMPLEMENTED'}},
- {intentId:'health_fitness.*',domain:'health_fitness',title:'Health and workouts',exampleUtterance:'',evaluateStatus:function(){return 'PLANNED_NOT_IMPLEMENTED'}},
- {intentId:'nutrition.*',domain:'nutrition',title:'Meals',exampleUtterance:'',evaluateStatus:function(){return 'PLANNED_NOT_IMPLEMENTED'}},
- {intentId:'virtual_pets.*',domain:'virtual_pets',title:'Cat',exampleUtterance:'',evaluateStatus:function(){return 'PLANNED_NOT_IMPLEMENTED'}},
- {intentId:'navigation_system.*',domain:'navigation_system',title:'Navigation and apps',exampleUtterance:'',evaluateStatus:function(){return 'PLANNED_NOT_IMPLEMENTED'}}
+ {intentId:'life_director.find_free_time',domain:'life_director',title:'When am I free',exampleUtterance:'When am I free today',evaluateStatus:function(){return lmvCapStatus(true)}},
+ {intentId:'life_director.complete_activity',domain:'life_director',title:'Mark an activity done',exampleUtterance:'I just finished my workout',evaluateStatus:function(){return lmvCapStatus(true)}},
+ {intentId:'life_director.move_activity',domain:'life_director',title:'Move an activity',exampleUtterance:'Push my workout back 30 minutes',evaluateStatus:function(){return lmvCapStatus(true)}},
+ {intentId:'life_director.cancel_activity',domain:'life_director',title:'Cancel an activity',exampleUtterance:'Cancel my workout today',evaluateStatus:function(){return lmvCapStatus(true)}},
+ {intentId:'rpg.view_quests',domain:'rpg',title:'Quests',exampleUtterance:'What are my quests today',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'rpg.query_stats',domain:'rpg',title:'Character, XP and level',exampleUtterance:'What level am I',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'health_fitness.query_steps',domain:'health_fitness',title:'Steps and activity',exampleUtterance:'How many steps do I have today',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'nutrition.check_totals',domain:'nutrition',title:'Calories and macros',exampleUtterance:'How many calories have I had today',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'virtual_pets.check_status',domain:'virtual_pets',title:'How is my cat',exampleUtterance:'How is my cat doing',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'virtual_pets.perform_action',domain:'virtual_pets',title:'Feed or pet my cat',exampleUtterance:'Feed my cat',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'navigation_system.open_section',domain:'navigation_system',title:'Open a screen',exampleUtterance:'Take me to my quests',evaluateStatus:function(){return 'EXECUTABLE'}}
 ];
 function lmvCapStatus(){
  try{if(!(window.LifeDirector&&LifeDirector.voice))return 'UNSUPPORTED_ON_DEVICE';if(!LifeDirector.voice.ready())return 'CONFIGURATION_REQUIRED'}catch(e){return 'UNSUPPORTED_ON_DEVICE'}
@@ -245,7 +251,7 @@ function lmvMerge(frame,patch){
  Object.keys(patch).forEach(function(k){if(k==='intent'||patch[k]===undefined)return;frame.raw[k]=patch[k]});
 }
 function lmvLogLine(s){lmvLog.push(new Date().toLocaleTimeString()+'  '+s);if(lmvLog.length>60)lmvLog.shift()}
-function lmvSnapshot(){const f=lmvFrame;return f?{operationId:f.operationId,state:f.state,question:f.question,slot:f.slot,title:f.title,notices:f.notices.slice(),conflicts:f.conflicts.slice(),dup:f.dup,entityId:f.entityId,undo:f.undo,error:f.error,raw:f.raw}:{state:'IDLE'}}
+function lmvSnapshot(){const f=lmvFrame;return f?{operationId:f.operationId,intentId:f.intentId,head:f.head||null,actions:(f.actions||[]).map(function(a){return a.label}),state:f.state,question:f.question,slot:f.slot,title:f.title,notices:f.notices.slice(),conflicts:f.conflicts.slice(),dup:f.dup,entityId:f.entityId,undo:f.undo,error:f.error,raw:f.raw}:{state:'IDLE'}}
 /* advance a frame as far as it can go without the user */
 function lmvAdvance(f,ctx){
  const res=lmvFinalize(f.raw,ctx);
@@ -292,7 +298,7 @@ function lmvExecute(f){
   else{const r=lmvLD.create(op,f.title,f.slot);if(!r||!r.ok){j.status='FAILED';lmvJPut(j);f.state='FAILED';f.error=r&&r.reason==='NOT_SET_UP'?'Life Director is not set up yet. Open it and plan your days first.':'Life Director could not fit that in. Nothing was saved.';return f}id=String(r.id)}
   lmvMark('t6_saved');
   j.status='COMMITTED';j.createdEntityId=id;lmvJPut(j);
-  f.state='COMMITTED';f.entityId=id;
+  f.state='COMMITTED';f.entityId=id;lmvLastRef={id:id,title:f.title};
   lmvAfterPaint(function(){lmvMark('t7_ui_done');lmvTelemetryDone()});
   f.state='CONFIRMED';f.undo=lmvLD.canUndo();
  }catch(e){const j2=lmvJGet(op);if(j2){j2.status='FAILED';lmvJPut(j2)}f.state='FAILED';f.error=String((e&&e.message)||e).slice(0,140)}
@@ -306,6 +312,8 @@ function lmvUndo(){
  lmvRender();return ok;
 }
 /* the one entry point for anything the user says or types */
+function lmvEnd(f,msg){f.state='CANCELLED';f.question=null;f.act=null;f.notices=[{kind:'info',text:msg||'Okay, cancelled.'}]}
+function lmvRunAct(f){const a=f.act;f.act=null;if(a&&a.run)a.run()}
 function lmvHandle(text,meta){
  meta=meta||{};
  if(!lmvEnabled())return lmvSnapshot();
@@ -317,16 +325,34 @@ function lmvHandle(text,meta){
  const active=f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED');
  /* yes / no while a preview is showing */
  if(active&&f.state==='PREVIEWED'){
-  if(/^(yes|yeah|yep|confirm|confirmed|save|save it|do it|sure|go ahead|correct|that's right|thats right|create another|create duplicate)$/.test(n)){if(f.dup)f.dupOk=true;lmvAuthorize(f);lmvRender();return lmvSnapshot()}
-  if(/^(no|nope|cancel|never mind|nevermind|stop|forget it)$/.test(n)){f.state='CANCELLED';lmvRender();return lmvSnapshot()}
+  if(/^(yes|yeah|yep|confirm|confirmed|save|save it|do it|sure|go ahead|correct|that's right|thats right|create another|create duplicate|remove it|move it|confirm remove)$/.test(n)){if(f.act){lmvRunAct(f)}else{if(f.dup)f.dupOk=true;lmvAuthorize(f)}lmvRender();return lmvSnapshot()}
+  if(/^(no|nope)$/.test(n)){lmvEnd(f,'Okay, cancelled.');lmvRender();return lmvSnapshot()}
  }
- if(/^(cancel|never mind|nevermind|forget it|stop)$/.test(n)){if(f&&active){f.state='CANCELLED';lmvRender()}return lmvSnapshot()}
+ /* universal escape: works at any point, leaves nothing half-built */
+ if(LMV_B.abort.test(n)){if(f&&active)lmvEnd(f,'Okay, cancelled.');lmvRender();return lmvSnapshot()}
+ /* a reply to an open question: "any time", "now", "in 30 minutes", "morning" ... */
+ if(active&&f.state==='AWAITING_CLARIFICATION'){
+  const mr=lmvMeta(f,n,ctx);
+  if(mr){
+   if(mr.fail){f.question.text=mr.fail;lmvRender();return lmvSnapshot()}
+   const pt=Object.assign({},mr.patch);if(mr.date)pt.date=mr.date;
+   f.autoNote=mr.note||null;lmvMerge(f,pt);lmvAdvance(f,ctx);
+   if(f.autoNote&&f.state==='PREVIEWED')f.notices.unshift({kind:'info',text:f.autoNote});
+   lmvRender();return lmvSnapshot();
+  }
+ }
+ /* what is this sentence FOR? A question or another domain never becomes a new activity. */
+ const cls=lmvClassify(clean);
+ if(cls.id!=='life_director.create_activity'&&cls.conf>=.78){
+  if(active)f.state='CANCELLED';          /* barge-in: a new complete command replaces the half-finished one */
+  f=lmvFrame=lmvNewFrame();f.confidence=meta.confidence==null?1:meta.confidence;
+  const r=lmvDomain(cls,clean,f,ctx);lmvRender();return r||lmvSnapshot();
+ }
  const fresh=!active;
  if(fresh){f=lmvFrame=lmvNewFrame();f.raw=null}
  f.transcript=clean;f.confidence=meta.confidence==null?1:meta.confidence;
  const expect=f.question?f.question.kind:null;
  const raw=lmvExtract(clean,ctx,expect);
- if(fresh&&raw.intent==='query'){return lmvQuery(f,raw,ctx)}
  /* an answer to a pending question may carry only a time of day or a meridiem word */
  if(!fresh&&expect==='meridiem'){const w=' '+n+' ';if(/\b(am|morning)\b/.test(w))raw.mer=raw.mer||'am';else if(/\b(pm|evening|afternoon|night|tonight)\b/.test(w))raw.mer=raw.mer||'pm'}
  if(!fresh&&expect==='title'&&!raw.title){raw.title=n?n.charAt(0).toUpperCase()+n.slice(1):null}
@@ -348,8 +374,8 @@ function lmvAnswer(patch){
  lmvMerge(f,patch);
  lmvAdvance(f,lmvCtx());lmvRender();return lmvSnapshot();
 }
-function lmvConfirm(){const f=lmvFrame;if(!f||f.state!=='PREVIEWED')return lmvSnapshot();if(f.dup)f.dupOk=true;lmvAuthorize(f);lmvRender();return lmvSnapshot()}
-function lmvCancel(){const f=lmvFrame;if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))f.state='CANCELLED';lmvRender();return lmvSnapshot()}
+function lmvConfirm(){const f=lmvFrame;if(!f||f.state!=='PREVIEWED')return lmvSnapshot();if(f.act){lmvRunAct(f);lmvRender();return lmvSnapshot()}if(f.dup)f.dupOk=true;lmvAuthorize(f);lmvRender();return lmvSnapshot()}
+function lmvCancel(){const f=lmvFrame;if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))lmvEnd(f,'Okay, cancelled.');lmvRender();return lmvSnapshot()}
 function lmvReset(){lmvFrame=null;lmvDelivered=new Set();lmvExec={};lmvRender()}
 /* read-only query */
 function lmvQuery(f,raw,ctx){
@@ -442,7 +468,7 @@ function lmvRender(){
  if(!lmvUI.open&&(lmvListening||lmvFrame))lmvHudOpen(true);
  hud.textContent='';
  const f=lmvFrame,head=lmvEl('div','lmv-head');
- const st=lmvListening?'Listening…':f&&f.state==='AWAITING_CLARIFICATION'?'One more thing':f&&f.state==='PREVIEWED'?'Check and save':f&&f.state==='CONFIRMED'?(f.query?'Your schedule':'Saved'):f&&f.state==='FAILED'?'Could not save':'Voice';
+ const st=lmvListening?'Listening…':f&&f.state==='AWAITING_CLARIFICATION'?'One more thing':f&&f.state==='PREVIEWED'?(f.act?(f.head||'Confirm'):'Check and save'):f&&f.state==='CONFIRMED'?(f.query?(f.head||'Your schedule'):'Saved'):f&&f.state==='FAILED'?'Could not save':'Voice';
  head.appendChild(lmvEl('b','',st));
  const kb=lmvEl('button','lmv-ic','⌨');kb.type='button';kb.setAttribute('aria-label','Type a command');kb.addEventListener('click',function(){lmvDiagOpen()});head.appendChild(kb);
  const x=lmvEl('button','lmv-ic','✕');x.type='button';x.setAttribute('aria-label','Close');x.addEventListener('click',function(){lmvStopListening();if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))f.state='CANCELLED';lmvHudOpen(false)});head.appendChild(x);
@@ -457,7 +483,13 @@ function lmvRender(){
   const cx=lmvEl('button','lmv-chip lmv-ghost','Cancel');cx.type='button';cx.addEventListener('click',lmvCancel);row.appendChild(cx);
   hud.appendChild(row);
  }
- if(f&&f.state==='PREVIEWED'&&f.slot){hud.appendChild(lmvCard(f));
+ if(f&&f.state==='PREVIEWED'&&f.act){
+  hud.appendChild(lmvEl('p','lmv-q',f.title));f.act.lines.forEach(function(t){hud.appendChild(lmvEl('p','lmv-note lmv-info',t))});
+  const row=lmvEl('div','lmv-chips');
+  const ok=lmvEl('button','lmv-chip lmv-go',f.act.label||'Confirm');ok.type='button';ok.addEventListener('click',lmvConfirm);
+  const cx=lmvEl('button','lmv-chip lmv-ghost','Cancel');cx.type='button';cx.addEventListener('click',lmvCancel);row.appendChild(ok);row.appendChild(cx);hud.appendChild(row);
+ }
+ if(f&&f.state==='PREVIEWED'&&f.slot&&!f.act){hud.appendChild(lmvCard(f));
   f.notices.forEach(function(n){hud.appendChild(lmvEl('p','lmv-note lmv-'+n.kind,n.text))});
   const row=lmvEl('div','lmv-chips');
   const ok=lmvEl('button','lmv-chip lmv-go',f.dup?'Create another':'Save activity');ok.type='button';ok.addEventListener('click',lmvConfirm);
@@ -468,12 +500,13 @@ function lmvRender(){
   if(f.query)hud.appendChild(lmvEl('p','lmv-q',f.title));
   f.notices.forEach(function(n){hud.appendChild(lmvEl('p','lmv-note lmv-info',n.text))});
   const row=lmvEl('div','lmv-chips');
+  (f.actions||[]).forEach(function(a){const b=lmvEl('button','lmv-chip',a.label);b.type='button';b.addEventListener('click',function(){a.run();lmvRender()});row.appendChild(b)});
   if(f.undo){const u=lmvEl('button','lmv-chip',"Undo");u.type='button';u.addEventListener('click',lmvUndo);row.appendChild(u)}
   const d=lmvEl('button','lmv-chip lmv-ghost','Done');d.type='button';d.addEventListener('click',function(){lmvFrame=null;lmvHudOpen(false)});row.appendChild(d);hud.appendChild(row);
  }
  if(f&&f.state==='FAILED'){hud.appendChild(lmvEl('p','lmv-note lmv-conflict',f.error||'Something went wrong.'));const row=lmvEl('div','lmv-chips');const r=lmvEl('button','lmv-chip lmv-go','Try again');r.type='button';r.addEventListener('click',function(){f.state='PREVIEWED';lmvAuthorize(f);lmvRender()});const d=lmvEl('button','lmv-chip lmv-ghost','Close');d.type='button';d.addEventListener('click',function(){lmvFrame=null;lmvHudOpen(false)});row.appendChild(r);row.appendChild(d);hud.appendChild(row)}
  if(f&&f.state==='CANCELLED'&&!lmvListening){hud.appendChild(lmvEl('p','lmv-q',f.notices&&f.notices[0]?f.notices[0].text:'Cancelled.'))}
- if(!f&&!lmvListening&&!lmvVoiceMsg)hud.appendChild(lmvEl('p','lmv-q','Tap the mic and say what to schedule.'));
+ if(!f&&!lmvListening&&!lmvVoiceMsg)hud.appendChild(lmvEl('p','lmv-q','Tap the mic. Schedule something, or ask about your schedule, quests, XP, cat, steps or food.'));
 }
 function lmvCard(f){
  const s=f.slot,c=lmvEl('div','lmv-card');

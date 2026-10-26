@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v126 — voice: understands questions, escapes and more
+
+A question like "what are my quests today" is no longer mistaken for a new activity. The voice engine now works out what a sentence is for before scheduling: quests, XP and level, schedule and free time, your cat (status, feed, pet), steps, calories and macros, opening any screen, and completing, moving or cancelling an activity (move and cancel ask to confirm first). While it is waiting for an answer, "any time", "whenever", "now", "in 30 minutes", "morning" and so on pick a real free slot or time, "never mind" cancels, and a new question replaces the half-finished one. Life Director 1.9.2. See `VOICE.md`.
+
 ## v125 — cat: tail only stretches where it is free
 
 The tail-length gene only re-draws the tail on walk, run, stretch, leap, rub and eat. In every sitting, lying, grooming and kneading pose the tail lies curled on the floor, and stretching it made a spike poking out the wrong side; those poses now keep their original tail art. `FREE_TAIL` in `tools/rig_build.py`.

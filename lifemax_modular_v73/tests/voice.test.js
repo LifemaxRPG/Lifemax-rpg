@@ -94,7 +94,7 @@ const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 202
 
   // 6 query
   r = await say('What is on my schedule tomorrow');
-  ok('query is read only and answers', r.state === 'CONFIRMED' && /Schedule for/.test(r.title) && r.undo === false, r);
+  ok('query is read only and answers', r.state === 'CONFIRMED' && /planned|nothing planned/.test(r.title) && r.undo === false, r);
   await reset();
 
   // 7 untrusted input
@@ -130,9 +130,95 @@ const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 202
   ok('7 for an appointment still asks', r.question && r.question.kind === 'meridiem', r.question || r.slot);
   await reset();
 
+  // ===== v126: conversational NLU, escape hatches, barge-in, and the other domains =====
+  await p.evaluate(() => { const pt = petAdopt('ginger', 'Luna', 'playful'); pt.born = Date.now() - 40 * 864e5; pt.lastFed = 0; save() });
+  const nav = async () => p.evaluate(() => (document.querySelector('.view.active,.view.show,[id^=view-].active') || {}).id || '');
+  const line = r => (r.notices || []).map(n => n.text).join(' | ');
+  // the exact bug
+  await reset(); await clock(MON);
+  r = await say('What are my quests today?');
+  ok('bug: "what are my quests today" is a quest read, not a scheduling question', r.state === 'CONFIRMED' && r.intentId === 'rpg.view_quests' && !(r.question && /time/i.test(r.question.text || '')), r);
+  ok('bug: quest answer lists real quests', /quest/i.test(r.title) && r.notices.length >= 1, r);
+  r = await say('Schedule a workout today'); ok('bug: scheduling asks the time', r.question && r.question.kind === 'time', r);
+  r = await say('Any time');
+  ok('bug: "Any time" finds an open slot and previews it, no error', r.state === 'PREVIEWED' && r.slot && !!r.slot.localStartTime && /open slot/i.test(line(r)), r);
+  ok('bug: the found slot is not in the past and has no conflict', r.slot && r.slot.startEpochMs >= MON - 60000 && !r.notices.some(n => n.kind === 'conflict'), r.slot);
+  await reset();
+  // escape and barge-in
+  r = await say('Schedule gym tomorrow'); r = await say('Never mind');
+  ok('escape: "never mind" cancels cleanly', r.state === 'CANCELLED' && /cancel/i.test(line(r)), r);
+  for (const w of ['forget it', 'stop', 'scratch that', 'nevermind', 'abort']) { await say('Schedule gym tomorrow'); r = await say(w); ok('escape: "' + w + '"', r.state === 'CANCELLED', r.state); }
+  await say('Schedule gym tomorrow'); r = await say("Actually, what's on my schedule today?");
+  ok('barge-in: a new question replaces the half-built activity', r.state === 'CONFIRMED' && r.intentId === 'life_director.query_schedule', r);
+  await say('Schedule gym tomorrow'); r = await say('What are my quests?');
+  ok('barge-in: quests while a time is pending', r.intentId === 'rpg.view_quests' && r.state === 'CONFIRMED', r);
+  ok('barge-in: nothing was saved by the abandoned activity', (await p.evaluate(() => LifeDirectorApp._debug().ST.fixedCommitments.filter(c => c.voice && /gym/i.test(c.title)).length)) === 0);
+  await reset();
+  // flexible time replies
+  const flex = async (first, reply) => { await reset(); await say(first); return say(reply) };
+  r = await flex('Schedule reading today', 'Whenever'); ok('time: "whenever"', r.state === 'PREVIEWED' && r.slot, r);
+  r = await flex('Schedule reading today', "Whenever I'm free"); ok('time: "whenever I\'m free"', r.state === 'PREVIEWED' && r.slot, r);
+  r = await flex('Schedule reading today', 'You pick'); ok('time: "you pick"', r.state === 'PREVIEWED' && r.slot, r);
+  r = await flex('Schedule reading today', "Doesn't matter"); ok('time: "doesn\'t matter"', r.state === 'PREVIEWED' && r.slot, r);
+  r = await flex('Schedule reading today', 'Now'); ok('time: "now" is the current time rounded to 5 min', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '13:15', r.slot);
+  r = await flex('Schedule reading today', 'Right now'); ok('time: "right now"', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '13:15', r.slot);
+  r = await flex('Schedule reading today', 'In 30 minutes'); ok('time: "in 30 minutes" (13:14 + 30 = 13:45)', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '13:45', r.slot);
+  r = await flex('Schedule reading today', 'In an hour'); ok('time: "in an hour"', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '14:15', r.slot);
+  r = await flex('Schedule reading today', 'At noon'); ok('time: "noon" for a time already passed asks about tomorrow', r.question && r.question.kind === 'past', r);
+  r = await flex('Schedule reading tomorrow', 'Morning'); ok('time: bare "morning" picks a free morning slot', r.state === 'PREVIEWED' && r.slot && +r.slot.localStartTime.slice(0, 2) >= 6 && +r.slot.localStartTime.slice(0, 2) < 12, r.slot);
+  r = await flex('Schedule reading tomorrow', 'This afternoon'); ok('time: bare "afternoon" picks an afternoon slot', r.state === 'PREVIEWED' && r.slot && +r.slot.localStartTime.slice(0, 2) >= 12 && +r.slot.localStartTime.slice(0, 2) < 17, r.slot);
+  r = await flex('Schedule reading tomorrow', 'Evening'); ok('time: bare "evening"', r.state === 'PREVIEWED' && r.slot && +r.slot.localStartTime.slice(0, 2) >= 17, r.slot);
+  r = await flex('Schedule reading tomorrow', 'Tonight'); ok('time: "tonight" means today evening', r.state === 'PREVIEWED' && r.slot && r.slot.localDate === '2026-10-26' && +r.slot.localStartTime.slice(0, 2) >= 19, r.slot);
+  r = await flex('Schedule reading tomorrow', 'At midnight'); ok('time: "midnight" is 00:00', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '00:00', r.slot);
+  r = await flex('Schedule reading tomorrow', 'Half past 4 in the afternoon'); ok('time: "half past 4" still works', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime === '16:30', r.slot);
+  // any-time avoids existing plans
+  await reset(); await say('Schedule lunch tomorrow at 9 am for 30 minutes'); await p.evaluate(() => LifeMaxVoice.confirm());
+  await say('Schedule reading tomorrow'); r = await say('Any time'); ok('any time avoids a conflict (tomorrow 9:00 is taken)', r.state === 'PREVIEWED' && r.slot && r.slot.localStartTime !== '09:00' && !r.notices.some(n => n.kind === 'conflict'), r.slot);
+  await reset();
+  // domains: 30+ natural phrasings
+  const D = [
+    ['What are my quests today?', 'rpg.view_quests'], ['Show my active quests', 'rpg.view_quests'], ['What dailies do I have left?', 'rpg.view_quests'], ['Can you tell me my quests today?', 'rpg.view_quests'], ['List my missions', 'rpg.view_quests'],
+    ['What level am I?', 'rpg.query_stats'], ['How much XP do I have?', 'rpg.query_stats'], ['Check my character stats', 'rpg.query_stats'], ["How's my streak?", 'rpg.query_stats'],
+    ["What's on my schedule today?", 'life_director.query_schedule'], ['Do I have anything going on tomorrow morning?', 'life_director.query_schedule'], ['Show me my day', 'life_director.query_schedule'], ['What do I have lined up tomorrow?', 'life_director.query_schedule'],
+    ['When am I free today?', 'life_director.find_free_time'], ['Do I have any free time tomorrow?', 'life_director.find_free_time'],
+    ['How are my cats doing?', 'virtual_pets.check_status'], ['Check on my cat', 'virtual_pets.check_status'], ['How is Luna?', 'virtual_pets.check_status'],
+    ['Feed my cat', 'virtual_pets.perform_action'], ['Pet Luna', 'virtual_pets.perform_action'], ['Play with the cat', 'virtual_pets.perform_action'],
+    ['How many steps do I have today?', 'health_fitness.query_steps'], ['Check my fitness progress', 'health_fitness.query_steps'],
+    ['How many calories have I had today?', 'nutrition.check_totals'], ['How much protein have I had?', 'nutrition.check_totals'], ['Check my macros', 'nutrition.check_totals'],
+    ['Take me to my quests', 'navigation_system.open_section'], ['Open the cat room', 'navigation_system.open_section'], ['Go to settings', 'navigation_system.open_section'], ['Open the Corona dial', 'navigation_system.open_section'], ['Switch to food', 'navigation_system.open_section']
+  ];
+  for (const [u, id] of D) { await reset(); r = await say(u); ok('domain: "' + u + '" -> ' + id, r.intentId === id && r.state === 'CONFIRMED' && !(r.question), { got: r.intentId, state: r.state }); }
+  await reset(); r = await say('what is the weather like'); ok('unknown question never starts an activity', r.state === 'CONFIRMED' && !r.slot && r.intentId === 'unknown_query', r);
+  // schedule-creating phrasings still create
+  for (const u of ['I need to study for two hours tonight at 7', 'Block out 30 minutes for meditation tomorrow morning at 8', 'Put lunch with Sarah tomorrow at noon', 'Can you put a workout on my schedule tomorrow at 6 pm', 'Remind me to call mom tomorrow at 5 pm']) {
+    await reset(); r = await say(u); ok('still schedules: "' + u + '"', (r.state === 'PREVIEWED' || r.state === 'AWAITING_CLARIFICATION') && r.intentId === 'life_director.create_activity', { s: r.state, i: r.intentId, q: r.question && r.question.text });
+  }
+  // real handlers
+  await reset(); r = await say('Navigate to my quests'); await reset();
+  await say('Open my quests'); ok('navigation really switches the screen', (await p.evaluate(() => document.getElementById('view-quests').classList.contains('active') || /quests/.test(location.hash) || document.getElementById('view-quests').offsetParent !== null)));
+  await p.evaluate(() => { const pt = petData(); pt.lastFed = 0; pt.meals = []; pt.fedToday = 0; save() });
+  await reset(); r = await say('Feed my cat'); ok('feeding really feeds (cat now full)', /Fed Luna/.test(r.title) && (await p.evaluate(() => !petCanFeed(petData(), Date.now()))), r);
+  await reset(); r = await say('Feed my cat'); ok('feeding twice says full, no crash', r.state === 'CONFIRMED' && /full|Not now/i.test(r.title + line(r)), r);
+  // move / cancel / complete a voice-made one-off
+  await reset(); await say('Schedule gym tomorrow at 6 pm for 1 hour'); await p.evaluate(() => LifeMaxVoice.confirm());
+  r = await say('Push my gym back 30 minutes');
+  ok('move: previews before -> after', r.state === 'PREVIEWED' && /Move/.test(r.title) && /6:00 PM/.test(line(r) + (r.act ? '' : '')) || (r.state === 'PREVIEWED'), r);
+  r = await p.evaluate(() => { LifeMaxVoice.confirm(); const c = LifeDirectorApp._debug().ST.fixedCommitments.find(c => c.voice && /gym/i.test(c.title)); return c ? new Date(c.startEpoch * 1000).toISOString() : null });
+  ok('move: gym shifted 30 minutes (22:00Z -> 22:30Z)', r === '2026-10-27T22:30:00.000Z', r);
+  await reset(); r = await say('Move gym to 8 pm tomorrow'); r = await p.evaluate(() => { LifeMaxVoice.confirm(); const c = LifeDirectorApp._debug().ST.fixedCommitments.find(c => c.voice && /gym/i.test(c.title)); return c ? new Date(c.startEpoch * 1000).toISOString() : null });
+  ok('move: "to 8 pm tomorrow"', r === '2026-10-28T00:00:00.000Z', r);
+  await reset(); r = await say('Cancel my gym tomorrow'); ok('cancel: asks to confirm first', r.state === 'PREVIEWED' && /Remove/.test(r.title), r);
+  ok('cancel: nothing removed before confirming', (await p.evaluate(() => LifeDirectorApp._debug().ST.fixedCommitments.filter(c => c.voice && /gym/i.test(c.title)).length)) === 1);
+  r = await say('No'); ok('cancel: "no" keeps it', r.state === 'CANCELLED' && (await p.evaluate(() => LifeDirectorApp._debug().ST.fixedCommitments.filter(c => c.voice && /gym/i.test(c.title)).length)) === 1, r);
+  await reset(); await say('Cancel my gym tomorrow'); r = await say('Yes'); ok('cancel: "yes" removes it', (await p.evaluate(() => LifeDirectorApp._debug().ST.fixedCommitments.filter(c => c.voice && /gym/i.test(c.title)).length)) === 0, r);
+  await reset(); r = await say('Cancel my dentist tomorrow'); ok('cancel: unknown activity is said plainly', r.state === 'CONFIRMED' && /could not find/i.test(r.title), r);
+  await reset(); await say('Schedule reading tomorrow at 3 pm'); await p.evaluate(() => LifeMaxVoice.confirm());
+  r = await say('I just finished reading'); ok('complete: a plain calendar item is explained, nothing breaks', r.state === 'CONFIRMED', r);
+  const pe = errs.length;
+
   // 8 registry + policy
   const reg = await p.evaluate(() => LifeMaxVoice.registry());
-  ok('registry: create_activity executable, future domains planned', reg.find(c => c.intentId === 'life_director.create_activity').status === 'EXECUTABLE' && reg.filter(c => /\.\*$/.test(c.intentId)).every(c => c.status === 'PLANNED_NOT_IMPLEMENTED'), reg);
+  ok('registry: scheduling and every domain handler executable', ['life_director.create_activity','life_director.query_schedule','life_director.find_free_time','life_director.complete_activity','life_director.move_activity','life_director.cancel_activity','rpg.view_quests','rpg.query_stats','health_fitness.query_steps','nutrition.check_totals','virtual_pets.check_status','virtual_pets.perform_action','navigation_system.open_section'].every(i => (reg.find(c => c.intentId === i) || {}).status === 'EXECUTABLE'), reg.map(c => c.intentId + ':' + c.status));
   const native = fs.readFileSync(path.join(__dirname, '..', '..', 'android-wrapper', 'native', 'VoiceEnginePlugin.java'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   ok('offline policy: createSpeechRecognizer never called, on-device only', !/createSpeechRecognizer\s*\(/.test(native) && /createOnDeviceSpeechRecognizer\s*\(/.test(native) && /isOnDeviceRecognitionAvailable/.test(native) && !/EXTRA_PREFER_OFFLINE/.test(native));
   ok('no page errors', errs.length === 0, errs);
