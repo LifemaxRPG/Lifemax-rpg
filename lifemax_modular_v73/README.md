@@ -279,3 +279,20 @@ Whenever Life Director builds or repairs your plan, the Today dial shows it happ
 - **Saved:** `state.pet.dna`, `state.pet.sex` (and the same on `state.pet2`), about 0.8 KB per cat.
 - **Test buttons** (developer mode): DNA: random genome, calico ♀, Siamese point, longhair classic tabby, undo, 2,000-kitten check (sex ratio, tortie only in females, ginger mostly male), draw 12 random cats.
 - **Known limits:** body size changes weight and voice, not the drawn size; tortoiseshell patches are built from the stripe layer, so they are somewhat banded; in a tortie point the red patches fade into the points; Manx, folds, polydactyly and odd eyes are not modelled; the pair interactions do not use dominance/friendliness yet. The startup error "Cannot access 'OV_DEFAULT' before initialization" predates v87 (present in v86).
+
+## v93: body shape genes and the breeding lab
+
+`37-pet-morph.js`. Six more quantitative traits on top of the v87 genome (`PET_MORPH`): ear length, ear width, tail length, leg length, body length, whisker length. Each is 2–5 modelled + / − loci (`Em1…`, `Ew1…`, `Tl1…`, `Lg1…`, `Bl1…`, `Wk1…`), heritability 0.7–0.8, so selecting the longest-eared cats of each litter makes longer ears in a few generations (tested: ears 0.8× → 2.5× in five generations). A recessive major gene `Tb` makes a bobtail. `petDnaPheno(d).morph` holds the multipliers (1 = the art as drawn), `mz` the −1..1 scores, `mc` the allele counts.
+
+- **Existing cats keep their body.** A genome flagged `legacy` (everything created before v87) gets balanced alleles and no noise, so every proportion is exactly 1 and the rig is skipped. Their kittens vary.
+- **Genetics panel** gains a *Body shape* section.
+- **Breeding lab** (Cat → Care and settings): a cattery (`state.cattery`, up to 16 cats kept as genomes), a mother and a father from your roster, a Monte-Carlo forecast for the goal trait, a litter of 2–6 you can keep or release, a goal (longest/shortest of any trait) with the best cat so far, *Another stray* for fresh genes, and *Bring home* when the second cat slot is free.
+- **Test buttons** (developer mode): fill the cattery, ten generations of selection, and one-tap extreme shapes (long ears, tiny ears, long tail, bobtail, leggy and long, short and cobby, everything extreme, back to random).
+
+## v94: the rig
+
+`tools/rig_build.py` (offline, needs numpy and Pillow) cuts each adult frame into parts along the art's own outlines and writes `src/data/petRig.html`: ears, the tail chain with its centre line, whiskers, and the bands where legs and torso can be stretched. Rows it cannot map reliably (scratch, scratch in/out, bat, kick, swat, roll's tail, play's tail) keep their original art for the parts it cannot find. `--qa` writes contact sheets to `tools/qa/`.
+
+`38-pet-rig.js` re-assembles a frame with the parts transformed (`petRigFrame`): ears scale along and across their axis, the tail bends along its own centre line (longer without getting thicker), whiskers lengthen, a row band stretches the legs, a column band stretches the torso, and the outline is repaired where a part was cut. Results are cached per sheet, row, frame and proportions. The hook is in `petDrawCat` (17): adult cats only for now; kittens, the front/back views and any cat whose proportions are all about 1 draw the plain sheet.
+
+Known limits: kittens and the front/back-view frames do not use the rig yet; scratch, bat, kick, swat keep their tails; wide ears (> 1.4×) look rough because pixels are re-spaced unevenly.

@@ -887,3 +887,19 @@ html.reduce-motion .ov-edit-in,html.reduce-motion .ov-edit-in .ov-er{animation:n
 .pet-dna-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:6px}
 .pet-dna-gal figure{margin:0;text-align:center;font-size:11px}
 .pet-dna-gal canvas{width:100%;image-rendering:pixelated;background:linear-gradient(#8fb8b0,#c6ddd0);border-radius:8px}
+
+/* v93 · breeding lab */
+.pet-breed-d{border:1px solid var(--line-soft);border-radius:14px;padding:10px 12px;background:var(--panel2)}
+.pet-breed-d>summary{cursor:pointer;font-weight:650;font-size:14px}
+.pet-breed-b{margin-top:10px}
+.pet-pairing{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.pet-bl{display:grid;gap:10px;margin:8px 0}
+.pet-bc{display:grid;grid-template-columns:144px 1fr;grid-template-areas:"c i" "c a";gap:4px 12px;padding:10px;border-radius:12px;background:var(--panel);border:1px solid var(--line-soft);align-items:start}
+.pet-bcv{grid-area:c;width:144px;height:128px;border-radius:10px;background:linear-gradient(#2a2538,#1c1a28);image-rendering:pixelated}
+.pet-bci{grid-area:i;min-width:0}.pet-bci b{display:block;font-size:14px}.pet-bci b a{text-decoration:underline dotted;cursor:pointer}
+.pet-bci small{display:block;color:var(--muted);font-size:11.5px;margin:2px 0 6px}
+.pet-bact{grid-area:a;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pet-chips{display:flex;flex-wrap:wrap;gap:4px}
+.pet-chip{font-size:10.5px;padding:2px 7px;border-radius:99px;background:var(--panel3);color:var(--text-dim);white-space:nowrap}
+.pet-chip.goal{background:var(--gold,#e0b341);color:#1b1608;font-weight:650}
+@media (max-width:420px){.pet-bc{grid-template-columns:110px 1fr}.pet-bcv{width:110px;height:98px}}

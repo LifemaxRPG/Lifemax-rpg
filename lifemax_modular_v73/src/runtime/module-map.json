@@ -1721,6 +1721,82 @@
     "payTick",
     "payTime"
    ]
+  },
+  {
+   "file": "src/runtime/segments/37-pet-morph.js",
+   "bytes": 20929,
+   "statement_count": 40,
+   "tags": [
+    "pet",
+    "dna",
+    "breeding"
+   ],
+   "symbols": [
+    "PET_BREED",
+    "PET_CATTERY_MAX",
+    "PET_MORPH",
+    "PET_MORPH_KEYS",
+    "petBreedAdd",
+    "petBreedCard",
+    "petBreedChips",
+    "petBreedDraw",
+    "petBreedDrop",
+    "petBreedDropAll",
+    "petBreedFind",
+    "petBreedForecast",
+    "petBreedGo",
+    "petBreedGoal",
+    "petBreedGoalSelect",
+    "petBreedGoalVal",
+    "petBreedHome",
+    "petBreedHtml",
+    "petBreedKeep",
+    "petBreedKeepAll",
+    "petBreedName",
+    "petBreedPick",
+    "petBreedPreviews",
+    "petBreedRefresh",
+    "petBreedRelease",
+    "petBreedRename",
+    "petBreedRender",
+    "petBreedRoster",
+    "petBreedSetGoal",
+    "petBreedStray",
+    "petCattery",
+    "petDevBreedEvolve",
+    "petDevBreedFill",
+    "petMorphAttach",
+    "petMorphFill",
+    "petMorphIds",
+    "petMorphPanelHtml",
+    "petMorphScore",
+    "petMorphVal",
+    "petMorphWord"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/38-pet-rig.js",
+   "bytes": 11614,
+   "statement_count": 13,
+   "tags": [
+    "pet",
+    "rig"
+   ],
+   "symbols": [
+    "PET_RIG",
+    "PET_RIG_MX",
+    "PET_RIG_OUTLINE",
+    "petRigCompose",
+    "petRigFrame",
+    "petRigFrameData",
+    "petRigIdx",
+    "petRigJson",
+    "petRigNeutral",
+    "petRigPick",
+    "petRigPoseKey",
+    "petRigQ",
+    "petRigSrcPixels"
+   ]
   }
  ]
 }

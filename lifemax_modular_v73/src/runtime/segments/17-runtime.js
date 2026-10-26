@@ -35,7 +35,9 @@ function petDrawCat(rt,o){
   else f=Math.floor(c.t*meta.fps*(c.fpsMul||1))%meta.n;
   if(PET_BLINK[c.anim]&&c.lock==null)f=petBlinkFrame(rt,c.anim,meta);   /* v78.1: eyes open, with a blink every few seconds instead of every loop */
   if(c.lock!=null)f=Math.min(meta.n-1,c.lock);                    /* v78: a held pose (doze, belly-up, a freeze) */
-  const bv=petBrainVariant(rt,sh,meta.row,W,H,c.anim,p.coat),sy=bv?0:meta.row*H;if(bv)sh=bv;   /* v78: ears, tail tip, pupils */
+  const bv=petBrainVariant(rt,sh,meta.row,W,H,c.anim,p.coat),sy=bv?0:meta.row*H;
+  const RG=typeof petRigPick==='function'?petRigPick(rt,p,sh,meta,c,f,bv,gi,!!(dA&&rt.dsheets&&rt.dsheets[p.coat])):null;   /* v94: the rig re-assembles the frame from its parts */
+  if(bv)sh=bv;   /* v78: ears, tail tip, pupils */
   const bottom=meta.bottom||44;
   /* ground shadow: stays on the ground under a jump and shrinks with height */
   const s=c.step,hopping=s&&s.k==='hop'&&s.g0!=null;let gy=c.y,elev=0;
@@ -46,10 +48,10 @@ function petDrawCat(rt,o){
   else{const q=function(v){return Math.round(v*PET_OS)/PET_OS},dx=c.x+(c.wx||0),wide=(/sleep|loaf|knead/.test(c.anim)?22:/walk_front|walk_back|sniff|bonk/.test(c.anim)?11:15)*sc*shk,hh=Math.max(1,2*shk);
     o.fillStyle='rgba(30,16,40,'+(0.28*Math.min(1,shk/kz+0.2)).toFixed(3)+')';o.fillRect(q(dx-wide),q(gy-hh/2),q(wide*2),q(hh));o.fillRect(q(dx-wide+3*shk),q(gy+hh/2),q(wide*2-6*shk),q(Math.max(1,shk)))}
   if(k===1){const dy=Math.round(c.y-bottom+1),dx=Math.round(c.x)+(c.wx||0);
-    o.save();o.translate(dx,0);if(c.dir<0)o.scale(-1,1);o.drawImage(sh,f*W,sy,W,H,-36,dy,W,H);o.restore();return}
+    o.save();o.translate(dx,0);if(c.dir<0)o.scale(-1,1);if(RG)o.drawImage(RG.cv,0,0,RG.cv.width,RG.cv.height,-36-RG.ox,dy-RG.oy,RG.cv.width,RG.cv.height);else o.drawImage(sh,f*W,sy,W,H,-36,dy,W,H);o.restore();return}
   /* scaled: anchored at the feet, snapped to the 3x grid so pixels stay crisp */
   const X=Math.round((c.x+(c.wx||0))*PET_OS)/PET_OS,Y=Math.round(c.y*PET_OS)/PET_OS;
-  o.save();o.translate(X,Y);o.scale(c.dir<0?-k:k,k);o.drawImage(sh,f*W,sy,W,H,-36,-(bottom-1),W,H);o.restore();
+  o.save();o.translate(X,Y);o.scale(c.dir<0?-k:k,k);if(RG)o.drawImage(RG.cv,0,0,RG.cv.width,RG.cv.height,-36-RG.ox,-(bottom-1)-RG.oy,RG.cv.width,RG.cv.height);else o.drawImage(sh,f*W,sy,W,H,-36,-(bottom-1),W,H);o.restore();
 }
 /* ===== Pet screen: adoption, room, status, memorial, Overview card ===== */
 var PET_LOOP={raf:0,last:0};
