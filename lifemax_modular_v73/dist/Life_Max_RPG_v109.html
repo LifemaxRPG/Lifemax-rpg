@@ -3469,6 +3469,10 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 @keyframes vtOutR{to{opacity:0;transform:translate3d(7%,0,0)}}
 @keyframes vtInR{from{opacity:0;transform:translate3d(9%,0,0)}to{opacity:1;transform:none}}
 @keyframes vtInL{from{opacity:0;transform:translate3d(-9%,0,0)}to{opacity:1;transform:none}}
+
+/* v109 · Rewards */
+.rs-bal{font-weight:700;color:var(--gold,#fbbf24);white-space:nowrap}.rs-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.hsheet .hs-list li small{max-width:230px}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.2.0 */
@@ -4207,6 +4211,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="ov-tile" data-tile="plan"><div class="ov-plan" id="ovPlan" hidden></div></div>
         <div class="ov-tile" data-tile="next"><div class="card ov-card" id="ovNext"></div></div>
         <div class="ov-tile" data-tile="hero"><div class="card ov-hero" id="ovHero"></div></div>
+        <div class="ov-tile" data-tile="rewards"><div class="card ov-card" id="ovRewards"></div></div>
         <div class="ov-tile" data-tile="apps"><div class="card ov-card" id="ovApps"></div></div>
         <div class="ov-tile" data-tile="health"><div class="card ov-card ov-health" id="ovHealth"></div></div>
         <div class="ov-tile" data-tile="attrs"><div class="card ov-card" id="ovAttrs"></div></div>
@@ -4594,6 +4599,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
           </div>
           <div style="margin-top:12px"><button class="btn" onclick="saveCharacter()">Save character</button></div>
         </div>
+        <div class="card" style="margin-bottom:14px"><h3>Rewards</h3><p class="muted" style="font-size:12px;margin-top:-5px">Sparks, perks, accent colours, cat toys, streak shields and attribute ascension.</p><button class="btn secondary" onclick="ecoShopOpen()">Open rewards</button></div>
         <div class="card" style="margin-bottom:14px"><h3>Decay system</h3><p class="muted" style="font-size:12px;margin-top:-5px">After the grace period with no training, the attribute loses XP daily. Skill XP does not decay. Turn this off only if you want a softer game.</p><div class="settingsline"><div style="flex:1"><strong>Enable decay</strong></div><input id="decayOn" type="checkbox" class="check"></div><div class="formgrid" style="margin-top:12px"><div class="field"><label>Grace period (days, 1–14)</label><input id="decayGrace" type="number" min="1" max="14"></div><div class="field"><label>Daily loss (% of attribute XP, 1–10)</label><input id="decayRate" type="number" min="1" max="10"></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveDecay()">Save decay settings</button><button class="btn secondary" onclick="resetTips()">Show tips again</button></div></div>
                 <div class="card" style="margin-bottom:14px" id="devModeCard">
           <h3>Developer mode</h3>
@@ -4758,6 +4764,7 @@ function ecoActsOn(day){return state.activities.filter(a=>activityDate(a)===day)
 function ecoDur(dur){dur=Number(dur)||0;return dur<ECO.minMin?0:dur<=60?dur/30:Math.min(3,2+(dur-60)/60)}
 /* a day's XP counted toward the cap (epic quests are exempt) */
 function ecoDayXP(day){return ecoActsOn(day).reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
+function ecoRestedPeek(x){const pool=Number(state.restedXP)||0;return pool>0&&x>0?x+Math.min(pool,Math.round(x*ECO.restedBonus)):x}
 function ecoRestedTake(x){
  const pool=Number(state.restedXP)||0;if(pool<=0||x<=0)return x;
  const b=Math.min(pool,Math.round(x*ECO.restedBonus));state.restedXP=pool-b;return x+b;
@@ -4779,14 +4786,16 @@ function ecoAward(type,total,dur,o){
  if(!factor)return {xp:0,msg:'Daily XP limit reached for this activity type'};
  if(o.manual){const mins=ecoActsOn(day).filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
  let x=Math.max(1,Math.round(total*factor));
- x=ecoRestedTake(x);x=ecoCap(x,day);
+ if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar'))x=Math.round(x*1.1);
+ x=o.peek?ecoRestedPeek(x):ecoRestedTake(x);x=ecoCap(x,day);
  return x>0?{xp:x,msg:''}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
 function ecoQuestXP(q){
- const base=Math.max(0,Number(q.xp)||0),cad=q.cadence,day=getToday();
+ let base=Math.max(0,Number(q.xp)||0);const cad=q.cadence,day=getToday();
  const qs=state.activities.filter(a=>a.type==='quest');
  if(cad==='epic'){return qs.filter(a=>a.epic&&activityDate(a)===day).length>=ECO.epicPerDay?0:ecoRestedTake(base)}
+ if(cad==='daily'&&ecoPerk('compound'))base=Math.round(base*1.15);
  const lim=cad==='weekly'?ECO.weeklyQuests:ECO.dailyQuests;
  const since=cad==='weekly'?(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toLocaleDateString('en-CA')})():day;
  const n=qs.filter(a=>a.cad===cad&&activityDate(a)>=since).length;
@@ -4796,13 +4805,14 @@ function ecoQuestXP(q){
 /* rest days: planned rest costs nothing (no decay, streak safe) */
 function ecoRestDay(key){
  if((state.restDays||{})[key])return true;
+ try{const pd=planDay(key);if(pd&&pd.kind==='rest')return true}catch(e){}
  return ecoActsOn(key).some(a=>a.type==='recovery'&&!ecoPassive(a)&&(Number(a.duration)||0)>=20);
 }
 function ecoRestUsed(){const since=new Date();since.setDate(since.getDate()-6);const s=since.toLocaleDateString('en-CA');return Object.keys(state.restDays||{}).filter(k=>k>=s).length}
 function ecoTakeRest(){
  const d=getToday();state.restDays=state.restDays||{};
  if(state.restDays[d]){toast('Today is already a rest day');return}
- if(ecoRestUsed()>=ECO.restPerWeek){toast('Two rest days per week are used');return}
+ if(ecoRestUsed()>=ECO.restPerWeek){if((state.restTokens||0)>0){state.restTokens--;toast('Rest token used')}else{toast('Two rest days per week are used');return}}
  state.restDays[d]=true;save();toast('Rest day taken. No decay today.');renderDecay();
 }
 /* one-time move to the v2 economy; character level and every attribute level stay exactly where they are */
@@ -4818,6 +4828,7 @@ function ecoMigrate(){
   if(r&&nw[id]&&Number(r.base)===o[0]&&(r.secondary||'')===o[1]){r.base=nw[id].base;r.primary=nw[id].primary;r.secondary=nw[id].secondary}});
  state.customRules=rules;
  try{M().peakBalance=moneyBalance()}catch(e){}
+ state.sparks=Math.round(raw*.5);state.activities.forEach(a=>{a.sp=1});
  state.xpSchemaV2=true;
 }
 CLASS_CONTENT.athlete.diet={id:'athlete_performance_nutrition_v1',phil:'Nutrition is training fuel and recovery architecture. Consistent protein distribution supports muscle protein synthesis, complex carbohydrates maintain glycogen storage for training output, and quality hydration prevents performance drops.',targets:{protein_g_per_kg:[1.6,2.2],carb_pct:[45,60],fat_pct:[20,30],fiber_g:[30,45],water_l:[3,4.5]},pattern:[
@@ -4918,11 +4929,11 @@ function freshState(){return {name:'The Life Architect',build:'The Life Architec
 function setLightMode(enabled){document.documentElement.classList.toggle('light-theme',!!enabled);try{localStorage.setItem('lifeMaxTheme',enabled?'light':'dark')}catch(e){}const toggle=document.getElementById('lightModeToggle');if(toggle)toggle.checked=!!enabled;toast(enabled?'Light mode enabled':'Dark mode enabled')}
 function initTheme(){let theme='dark';try{theme=localStorage.getItem('lifeMaxTheme')||'dark'}catch(e){}document.documentElement.classList.toggle('light-theme',theme==='light');const toggle=document.getElementById('lightModeToggle');if(toggle)toggle.checked=theme==='light'}
 function load(){try{const raw=localStorage.getItem(STORE);if(raw){state={...freshState(),...JSON.parse(raw)};state.attrXP={...freshState().attrXP,...(state.attrXP||{})};if(Array.isArray(state.activities)&&state.activities.length){try{rebuildAttrXP();rebuildSkillXP()}catch(e){}}rules={...structuredClone(DEFAULT_RULES),...(state.customRules||{})};try{ecoMigrate()}catch(e){console.warn('[economy migration]',e)}seedReadingList();applyClassContent();localStorage.setItem(STORE,JSON.stringify(state));return}}catch(e){}state=freshState();rules=structuredClone(DEFAULT_RULES);seedReadingList();try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
-function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();checkLevelUps();try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){console.warn("Save failed",e);toast("Could not save to this browser (storage full?)")}renderAll()}
+function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();checkLevelUps();try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){console.warn("Save failed",e);toast("Could not save to this browser (storage full?)")}renderAll()}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
-function characterLevel(){return levelData(totalXP()+(state.legacyCharXPBonus||0),charXpForLevel)}
+function characterLevel(){return levelData(totalXP()+(state.legacyCharXPBonus||0)+Object.values(state.ascended||{}).reduce((a,b)=>a+b,0),charXpForLevel)}
 function attrXP(id){return Number(state.attrXP[id]||0)}
 function rebuildAttrXP(){
   const next=Object.fromEntries(ATTRS.map(a=>[a.id,0]));
@@ -4935,7 +4946,7 @@ function rebuildAttrXP(){
     });
   });
   const decay=state.decayTotal||{};
-  ATTRS.forEach(a=>{next[a.id]=Math.max(0,(next[a.id]||0)-Math.max(0,Number(decay[a.id])||0))});
+  const asc=state.ascended||{};ATTRS.forEach(a=>{next[a.id]=Math.max(0,(next[a.id]||0)-Math.max(0,Number(decay[a.id])||0)-Math.max(0,Number(asc[a.id])||0))});
   state.attrXP=next;
 }
 function rebuildSkillXP(){
@@ -5086,7 +5097,7 @@ function populateAttrSelects(){const p=document.getElementById('primaryAttr'),s=
 function activityPresetChanged(){const id=document.getElementById('activityType').value,r=rules[id]||rules.custom;document.getElementById('customNameWrap').style.display=id==='custom'?'block':'none';document.getElementById('skillName').value=r.skill;document.getElementById('primaryAttr').value=r.primary;document.getElementById('secondaryAttr').value=r.secondary||'';updatePreview()}
 function calcPreview(){const id=document.getElementById('activityType').value,r=rules[id]||rules.custom;const dur=Math.max(0,Number(document.getElementById('duration').value)||0);const quality=Number(document.getElementById('quality').value)||1;/* 30 min = 1× base; scales linearly to 3× at 90+ min; short sessions floor at 0.4× */const durFactor=ecoDur(dur);const q=dur<20?Math.min(1,quality):quality;let base=r.base*durFactor;let total=Math.max(0,Math.round(base*q));return {total,primary:document.getElementById('primaryAttr').value||r.primary,secondary:document.getElementById('secondaryAttr').value,skill:(document.getElementById('skillName').value||r.skill).trim()||r.skill,durFactor}}
 function updatePreview(){const x=calcPreview();document.getElementById('previewXP').textContent=x.total;document.getElementById('previewBar').style.width=Math.min(100,x.total/120*100)+'%';const p=ATTRS.find(a=>a.id===x.primary);const s=ATTRS.find(a=>a.id===x.secondary);let chunks=[];if(x.secondary&&x.secondary!==x.primary){const pXP=Math.round(x.total*.7),sXP=x.total-pXP;chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Primary'} <strong>+${pXP}</strong></span>`,`<span class="preview-chip">${s?px(s.icon):''} ${s?.short||'Secondary'} <strong>+${sXP}</strong></span>`)}else chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Attribute'} <strong>+${x.total}</strong></span>`);if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
-function submitActivity(e){e.preventDefault();const id=document.getElementById('activityType').value,r=rules[id]||rules.custom,x=calcPreview();if(!x.total){toast('Log at least 5 minutes to earn XP');return}const ec=ecoAward(id,x.total,Number(document.getElementById('duration').value)||0,{manual:true});if(ec.xp<=0){toast(ec.msg);return}const xp=ec.xp;const p=x.primary,s=x.secondary;let pXP=xp, sXP=0;if(s&&s!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}const name=id==='custom'?(document.getElementById('customName').value.trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),type:id,name,icon:r.icon,duration:Number(document.getElementById('duration').value)||0,quality:Number(document.getElementById('quality').value),skill:x.skill,primary:p,secondary:s,xp,date:new Date().toISOString(),notes:document.getElementById('activityNotes').value.trim(),xpSplit:[{attr:p,xp:pXP},...(s&&s!==p?[{attr:s,xp:sXP}]:[])]};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;save();document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(`Activity saved · +${xp} XP`);navigate('dashboard')}
+function submitActivity(e){e.preventDefault();const id=document.getElementById('activityType').value,r=rules[id]||rules.custom,x=calcPreview();if(!x.total){toast('Log at least 5 minutes to earn XP');return}const ec=ecoAward(id,x.total,Number(document.getElementById('duration').value)||0,{manual:true});if(ec.xp<=0){toast(ec.msg);return}const xp=ec.xp;const p=x.primary,s=x.secondary;let pXP=xp, sXP=0;if(s&&s!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(s&&s!==p)sXP=ecoStarXP(s,sXP);const xpTot=pXP+sXP;const name=id==='custom'?(document.getElementById('customName').value.trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),type:id,name,icon:r.icon,duration:Number(document.getElementById('duration').value)||0,quality:Number(document.getElementById('quality').value),skill:x.skill,primary:p,secondary:s,xp:xpTot,date:new Date().toISOString(),notes:document.getElementById('activityNotes').value.trim(),xpSplit:[{attr:p,xp:pXP},...(s&&s!==p?[{attr:s,xp:sXP}]:[])]};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;save();document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(`Activity saved · +${xp} XP`);navigate('dashboard')}
 function toggleQuest(id,checked){const q=state.quests.find(q=>q.id===id);if(!q)return;const A=q.attribute||'discipline';if(checked&&questLocked(q)){toast('Locked until you reach level '+stageLvl(q.stage));renderQuests();return}const key=questKey(q);if(checked&&!state.questDone[key]){const qid='quest_'+Date.now();state.questDone[key]=qid;const xp=ecoQuestXP(q);if(!xp&&(Number(q.xp)||0)>0)toast(q.cadence==='epic'?'One epic quest reward per day':'Quest XP limit reached for '+(q.cadence==='weekly'?'this week':'today'));const noteEl=document.getElementById('qnote-'+id);const qnote=(noteEl&&noteEl.value.trim())||'';state.attrXP[A]=(state.attrXP[A]||0)+xp;state.skillXP['Quest Completion']=(state.skillXP['Quest Completion']||0)+xp;state.activities.push({id:qid,cad:q.cadence,epic:q.cadence==='epic',skill:'Quest Completion',type:'quest',name:'Quest: '+q.name,icon:'flag',duration:0,xp,primary:A,date:new Date().toISOString(),notes:qnote||'Quest completed',xpSplit:[{attr:A,xp}]});if(xp>0)toast(`Quest complete · +${xp} XP`)}else if(!checked&&state.questDone[key]){const aid=state.questDone[key],xp=Math.max(0,Number(q.xp)||0);delete state.questDone[key];state.attrXP[A]=Math.max(0,(state.attrXP[A]||0)-xp);state.skillXP['Quest Completion']=Math.max(0,(state.skillXP['Quest Completion']||0)-xp);state.activities=state.activities.filter(a=>a.id!==aid);toast('Quest undone · XP removed')}save()}
 function showCustomQuest(){document.getElementById('customQuestCard').style.display='block';document.getElementById('newQuestName').focus()}
 function hideCustomQuest(){document.getElementById('customQuestCard').style.display='none'}
@@ -5170,7 +5181,7 @@ function checkLevelUps(){const cur=snapshot(),p=prevSnap;prevSnap=cur;if(!p||!p.
  const delta=gains.reduce((n,g)=>n+g.xp,0);if(delta>1500)return;
  if(delta>0)celebrateXP(delta,gains);
  if(cur.c>p.c||ups.length)setTimeout(()=>showLevelUp({charLevel:cur.c>p.c?cur.c:null,from:p.c,attrs:ups}),delta>0?950:0)}
-function streak(){const set=new Set(state.activities.filter(a=>!ecoPassive(a)).map(activityDate));Object.keys(state.restDays||{}).forEach(k=>set.add(k));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
+function streak(){const set=new Set(state.activities.filter(a=>!ecoPassive(a)).map(activityDate));Object.keys(state.restDays||{}).forEach(k=>set.add(k));Object.keys(state.shieldDays||{}).forEach(k=>set.add(k));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
 const BADGES=[
 {id:'first',icon:'bolt',name:'First Step',desc:'Log your first activity',t:()=>state.activities.length>=1},
 {id:'ten',icon:'star',name:'Getting Going',desc:'Log 10 activities',t:()=>state.activities.length>=10},
@@ -5203,8 +5214,8 @@ function renderExtras(){renderFxSettings();document.documentElement.classList.to
 function getDecay(){return {on:true,grace:4,rate:3,...(state.decay||{})}}
 function dayNum(k){const p=k.split('-').map(Number);return Math.round(Date.UTC(p[0],p[1]-1,p[2])/864e5)}
 function lastTrained(id){let best=null;state.activities.forEach(a=>{if(ecoPassive(a))return;if(a.primary===id||a.secondary===id){const k=activityDate(a);if(!best||k>best)best=k}});return best}
-function applyDecay(){const d=getDecay();if(!d.on)return false;state.decayApplied=state.decayApplied||{};state.decayLog=state.decayLog||[];const today=dayNum(getToday());let changed=false;
- ATTRS.forEach(a=>{const lt=lastTrained(a.id);if(!lt)return;const from=Math.max(dayNum(lt)+d.grace+1,(state.decayApplied[a.id]||0)+1);let lost=0;
+function applyDecay(){try{ecoShieldTick()}catch(e){console.warn('[shields]',e)}const d=getDecay();if(!d.on)return false;state.decayApplied=state.decayApplied||{};state.decayLog=state.decayLog||[];const today=dayNum(getToday());let changed=false;
+ ATTRS.forEach(a=>{const lt=lastTrained(a.id);if(!lt)return;const from=Math.max(dayNum(lt)+d.grace+((a.id==='physique'||a.id==='endurance')&&ecoPerk('iron')?2:0)+1,(state.decayApplied[a.id]||0)+1);let lost=0;
   for(let n=from;n<=today;n++){if(ecoRestDay(ecoDayKey(n)))continue;const xp=attrXP(a.id);if(xp<=0)break;const lv=levelData(xp);if(lv.into<=0)break;const l=Math.min(lv.into,Math.max(1,Math.min(15,Math.round(xpForLevel(lv.level)*d.rate/100))));state.attrXP[a.id]=xp-l;lost+=l}
   if(lost>0&&today-dayNum(lt)>=7)state.restedXP=Math.min(ECO.restedCap,(Number(state.restedXP)||0)+Math.round(lost*ECO.restedRate));
   if(today>=from)state.decayApplied[a.id]=today;
@@ -14287,8 +14298,8 @@ function lmaHealthAward(o){
  if(ec.xp<=0)return 0;
  const xp=ec.xp;
  const p=o.primary||r.primary,sec=o.secondary===undefined?r.secondary:o.secondary;
- let pXP=xp,sXP=0;if(sec&&sec!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}
- const act={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type:o.type,name:o.name,icon:r.icon,duration:o.duration||0,quality:1,skill:o.skill||r.skill,primary:p,secondary:sec,xp:xp,
+ let pXP=xp,sXP=0;if(sec&&sec!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(sec&&sec!==p)sXP=ecoStarXP(sec,sXP);const xpT=pXP+sXP;
+ const act={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type:o.type,name:o.name,icon:r.icon,duration:o.duration||0,quality:1,skill:o.skill||r.skill,primary:p,secondary:sec,xp:xpT,
   date:new Date(o.at).toISOString(),notes:o.note||'',xpSplit:[{attr:p,xp:pXP}].concat(sec&&sec!==p?[{attr:sec,xp:sXP}]:[]),src:'health',hc:o.hc};
  state.activities.push(act);act.xpSplit.forEach(function(z){state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp});
  state.skillXP[act.skill]=(state.skillXP[act.skill]||0)+xp;return xp;
@@ -14633,6 +14644,156 @@ function lmaScrubInit(){
  const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
  setTimeout(()=>{try{lmaScrubSync()}catch(e){}},1200);
+})();
+/* ---------- v109 · Economy v2, second half: Sparks and the shop, perks, ascension, streak shields, rest tokens,
+   nutrition and cat-care bonuses. XP earns Sparks one for one (decay never takes them back); Sparks buy cosmetics,
+   toys, utilities and one equipped perk. ---------- */
+const ECO_THEMES={emerald:['Emerald Surge','#34d399'],gold:['Solar Gold','#fbbf24'],violet:['Cyber Violet','#a78bfa'],crimson:['Crimson Iron','#f87171'],mono:['Mono Ink','#d4d4d8']};
+const ECO_PERKS={scholar:['Scholar’s Flow','+10% XP on reading and language sessions of 45 min or more'],iron:['Iron Grace','+2 days of grace before Physique and Endurance start to decay'],exec:['Executive Edge','Life Director’s execution bonus rises from +10% to +20%'],compound:['Compound Habit','+15% XP on every daily quest']};
+const ECO_TOY_PRICE={ball_b:150,yarn:150,feather:200,spring:300,wand:450};
+const ECO_PRICE={theme:300,perk:600,rest:250,shield:250};
+function ecoPerk(id){return !!state&&state.perk===id&&(state.perksOwned||[]).indexOf(id)>=0}
+function ecoStars(a){return (state.attrStars||{})[a]||0}
+function ecoStarXP(a,xp){return Math.round(xp*(1+.05*ecoStars(a)))}
+function ecoSparks(){return Math.max(0,Math.round(Number(state.sparks)||0))}
+/* every XP earned grants the same in Sparks; called from save() so every source is covered */
+function ecoSparksSync(){
+ let add=0;state.activities.forEach(a=>{if(!a.sp){a.sp=1;add+=Math.max(0,Number(a.xp)||0)}});
+ if(add)state.sparks=(Number(state.sparks)||0)+add;
+}
+/* ---- ascension: at attribute level 20 an attribute can be banked for a star (+5% XP on that attribute) ---- */
+function ecoAscend(id){
+ const a=ATTRS.find(x=>x.id===id);if(!a)return;
+ if(attrLevel(id).level<20){toast('Reach level 20 in '+a.short+' first');return}
+ if(ecoStars(id)>=3){toast(a.short+' already has three stars');return}
+ if(!confirm('Ascend '+a.name+'? Its level restarts at 1 (all '+attrXP(id).toLocaleString()+' XP stays banked in your character level) and it earns +5% XP for good.'))return;
+ const c=attrXP(id);state.ascended=state.ascended||{};state.attrStars=state.attrStars||{};
+ state.ascended[id]=(state.ascended[id]||0)+c;state.attrStars[id]=ecoStars(id)+1;
+ save();toast(a.short+' ascended · '+'★'.repeat(ecoStars(id)));ecoShopRender();
+}
+/* ---- streak shields ---- */
+function ecoActive(key){return ecoActsOn(key).some(a=>!ecoPassive(a))}
+function ecoShieldTick(){
+ const today=dayNum(getToday());
+ if(state.shieldTick==null){state.shieldTick=today-1;return}
+ state.shieldDays=state.shieldDays||{};
+ let miss=state.shieldMiss||0,sh=state.streakShields||0;
+ for(let n=state.shieldTick+1;n<=today-1;n++){
+  const k=ecoDayKey(n),present=ecoActive(k)||ecoRestDay(k)||state.shieldDays[k];
+  if(present){miss=0;continue}
+  miss++;
+  if(miss>=2&&sh>0&&state.activities.some(a=>!ecoPassive(a)&&dayNum(activityDate(a))>=n-30)){state.shieldDays[k]=true;sh--;miss=1;toast('A streak shield covered a missed day')}
+ }
+ state.shieldTick=today-1;state.shieldMiss=miss;
+ const s=streak(),m=Math.floor(s/7);
+ if(m>(state.shieldMilestone||0)){sh=Math.min(2,sh+(m-(state.shieldMilestone||0)));toast('Streak shield earned')}
+ state.shieldMilestone=Math.min(m,Math.floor(s/7));
+ state.streakShields=sh;
+}
+/* ---- nutrition: a day's calories within 15% of your goal ---- */
+function ecoNutritionCheck(){
+ if(!state||typeof dayFoodLog!=='function')return;
+ const goal=Math.max(0,Number(state.mealsMeta&&state.mealsMeta.calGoal)||0);if(!goal)return;
+ const day=getToday();state.nutriDone=state.nutriDone||{};if(state.nutriDone[day])return;
+ const kcal=dayFoodLog(day).reduce((a,e)=>a+(Number(e.kcal)||0),0);
+ if(kcal<goal*.85||kcal>goal*1.15)return;
+ state.nutriDone[day]=1;
+ const xp=ecoCap(ecoRestedTake(8),day);if(xp<=0)return;
+ const p=Math.round(xp*.7),s=xp-p;
+ state.activities.push({id:'nut_'+Date.now(),type:'nutrition',name:'Nutrition goal hit',icon:'heart',duration:0,skill:'Nutrition',primary:'wellbeing',secondary:'physique',xp,date:new Date().toISOString(),notes:kcal+' kcal against a goal of '+goal,xpSplit:[{attr:'wellbeing',xp:p},{attr:'physique',xp:s}]});
+ save();toast('Nutrition goal hit · +'+xp+' XP');
+}
+/* ---- cat care: fed, played with and petted on the same day ---- */
+function ecoCare(kind){
+ const day=getToday();let c=state.careDay;if(!c||c.day!==day)c=state.careDay={day};
+ c[kind]=1;if(!(c.feed&&c.play&&c.pet)||c.paid)return;c.paid=1;
+ const xp=ecoCap(ecoRestedTake(10),day);if(xp<=0)return;
+ state.activities.push({id:'care_'+Date.now(),type:'catcare',name:'Cat care: fed, played, petted',icon:'paw',duration:0,skill:'Cat Care',primary:'wellbeing',secondary:'social',xp,date:new Date().toISOString(),notes:'',xpSplit:[{attr:'wellbeing',xp:Math.round(xp*.7)},{attr:'social',xp:xp-Math.round(xp*.7)}]});
+ save();toast('Cat care complete · +'+xp+' XP');
+}
+/* ---- the shop ---- */
+function ecoApplyTheme(){
+ let st=document.getElementById('ecoThemeCss');
+ const t=ECO_THEMES[state&&state.theme];
+ if(!t){if(st)st.remove();return}
+ if(!st){st=document.createElement('style');st.id='ecoThemeCss';document.head.appendChild(st)}
+ const c=t[1];
+ st.textContent=':root:root,html.light-theme:root{--accent:'+c+';--accent-dim:color-mix(in srgb,'+c+' 18%,transparent);--accent-strong:color-mix(in srgb,'+c+' 78%,white)}';
+}
+function ecoSpend(n){if(ecoSparks()<n){toast('Not enough Sparks');return false}state.sparks=(Number(state.sparks)||0)-n;return true}
+function ecoBuy(kind,id){
+ state.perksOwned=state.perksOwned||[];state.themesOwned=state.themesOwned||[];state.toysBought=state.toysBought||{};
+ if(kind==='theme'){
+  if(state.themesOwned.indexOf(id)<0){if(!ecoSpend(ECO_PRICE.theme))return;state.themesOwned.push(id)}
+  state.theme=state.theme===id?null:id;ecoApplyTheme();
+ }else if(kind==='perk'){
+  if(state.perksOwned.indexOf(id)<0){if(!ecoSpend(ECO_PRICE.perk))return;state.perksOwned.push(id)}
+  state.perk=state.perk===id?null:id;
+ }else if(kind==='toy'){
+  if(state.toysBought[id])return;if(!ecoSpend(ECO_TOY_PRICE[id]))return;state.toysBought[id]=1;toast('Toy unlocked for your cat');
+ }else if(kind==='rest'){
+  const wk=Date.now()-7*864e5;if((state.restBoughtAt||0)>wk){toast('One rest token a week');return}
+  if(!ecoSpend(ECO_PRICE.rest))return;state.restTokens=(state.restTokens||0)+1;state.restBoughtAt=Date.now();
+ }else if(kind==='shield'){
+  const mo=Date.now()-30*864e5;if((state.shieldBoughtAt||0)>mo){toast('One shield refill a month');return}
+  if((state.streakShields||0)>=2){toast('Shields are already full');return}
+  if(!ecoSpend(ECO_PRICE.shield))return;state.streakShields=2;state.shieldBoughtAt=Date.now();
+ }
+ save();ecoShopRender();try{ovRewardsRender()}catch(e){}
+}
+function ecoShopOpen(){
+ if(document.querySelector('.rsheet'))return;
+ const o=document.createElement('div');o.className='hsheet rsheet';o.setAttribute('role','dialog');o.setAttribute('aria-label','Rewards');
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-rs]');if(!b)return;const k=b.dataset.rs;
+  if(k==='close')o.remove();else if(k==='buy')ecoBuy(b.dataset.kind,b.dataset.id);else if(k==='ascend')ecoAscend(b.dataset.id)});
+ document.body.appendChild(o);ecoShopRender();
+}
+function ecoShopRender(){
+ const o=document.querySelector('.rsheet');if(!o)return;
+ const sp=ecoSparks(),own=a=>(a||[]).length;
+ const btn=(kind,id,label,cls)=>'<button class="btn small '+(cls||'')+'" data-rs="buy" data-kind="'+kind+'" data-id="'+id+'">'+label+'</button>';
+ let h='<header><button class="btn small secondary" data-rs="close">‹ Back</button><h2>Rewards</h2><span class="rs-bal">✦ '+sp.toLocaleString()+'</span></header><div class="hs-body">';
+ h+='<div class="card"><p class="muted" style="margin:0 0 4px;font-size:13px">Every XP you earn also earns a Spark. Decay never takes Sparks back, and spending them never lowers your level.</p></div>';
+ /* status */
+ const sh=state.streakShields||0,tk=state.restTokens||0;
+ h+='<div class="card"><h3>Streak and rest</h3><div class="ovh-chips"><div class="ovh-chip"><span>Streak</span><b>'+streak()+' days</b></div><div class="ovh-chip"><span>Shields</span><b>'+'🛡'.repeat(sh)+(sh?'':'none')+'</b></div><div class="ovh-chip"><span>Rest tokens</span><b>'+tk+'</b></div></div><p class="muted" style="font-size:12px;margin:8px 0 0">A shield is earned at every 7-day streak (up to 2) and covers a missed day. Two rest days a week are free; tokens cover extra ones.</p>'+
+  '<ul class="hs-list"><li><div><b>Rest day token</b><small>One a week</small></div>'+btn('rest','x','✦ '+ECO_PRICE.rest)+'</li><li><div><b>Streak shield refill</b><small>Refills to 2, once a month</small></div>'+btn('shield','x','✦ '+ECO_PRICE.shield)+'</li></ul></div>';
+ /* perks */
+ h+='<div class="card"><h3>Perks <small class="muted">equip one</small></h3><ul class="hs-list">'+Object.keys(ECO_PERKS).map(id=>{const ow=(state.perksOwned||[]).indexOf(id)>=0,on=state.perk===id;
+  return '<li><div><b>'+ECO_PERKS[id][0]+(on?' · equipped':'')+'</b><small>'+ECO_PERKS[id][1]+'</small></div>'+btn('perk',id,on?'Unequip':ow?'Equip':'✦ '+ECO_PRICE.perk,on?'secondary':'')+'</li>'}).join('')+'</ul></div>';
+ /* themes */
+ h+='<div class="card"><h3>Accent colours</h3><ul class="hs-list">'+Object.keys(ECO_THEMES).map(id=>{const ow=(state.themesOwned||[]).indexOf(id)>=0,on=state.theme===id;
+  return '<li><div><b><i class="rs-dot" style="background:'+ECO_THEMES[id][1]+'"></i>'+ECO_THEMES[id][0]+(on?' · on':'')+'</b></div>'+btn('theme',id,on?'Turn off':ow?'Use':'✦ '+ECO_PRICE.theme,on?'secondary':'')+'</li>'}).join('')+'</ul></div>';
+ /* toys */
+ const toys=Object.keys(ECO_TOY_PRICE).filter(id=>typeof PET_TOYS!=='undefined'&&PET_TOYS[id]);
+ h+='<div class="card"><h3>Cat toys <small class="muted">unlock early</small></h3><ul class="hs-list">'+toys.map(id=>{const bought=!!(state.toysBought||{})[id];
+  return '<li><div><b>'+PET_TOYS[id].name+'</b><small>'+(bought?'Unlocked':'Opens on its own later, or now')+'</small></div>'+(bought?'<span class="muted">✓</span>':btn('toy',id,'✦ '+ECO_TOY_PRICE[id]))+'</li>'}).join('')+'</ul></div>';
+ /* ascension */
+ h+='<div class="card"><h3>Ascension</h3><p class="muted" style="font-size:12.5px;margin:0 0 6px">At attribute level 20 you can bank it for a star: the bar restarts at level 1, the XP still counts toward your character level, and that attribute earns +5% XP for good (three stars at most).</p><ul class="hs-list">'+
+  ATTRS.map(a=>{const lv=attrLevel(a.id).level,st=ecoStars(a.id);
+   return '<li><div><b>'+a.short+' <span style="color:var(--gold)">'+'★'.repeat(st)+'</span></b><small>Level '+lv+(lv>=20&&st<3?' · ready':'')+'</small></div>'+(st>=3?'<span class="muted">max</span>':lv>=20?'<button class="btn small" data-rs="ascend" data-id="'+a.id+'">Ascend</button>':'<span class="muted">'+(20-lv)+' to go</span>')+'</li>'}).join('')+'</ul></div>';
+ h+='</div>';
+ const top=(o.querySelector('.hs-body')||{}).scrollTop||0;o.innerHTML=h;const nb=o.querySelector('.hs-body');if(nb)nb.scrollTop=top;
+}
+/* ---- Overview tile ---- */
+function ovRewardsRender(){
+ const el=document.getElementById('ovRewards');if(!el)return;
+ const sh=state.streakShields||0;
+ el.innerHTML='<div class="ov-h"><h3>Rewards</h3><button type="button" class="ov-link" onclick="ecoShopOpen()">Shop ›</button></div><div class="ovh-chips"><div class="ovh-chip"><span>Sparks</span><b>✦ '+ecoSparks().toLocaleString()+'</b></div><div class="ovh-chip"><span>Streak</span><b>'+streak()+'d'+(sh?' · '+'🛡'.repeat(sh):'')+'</b></div>'+(state.restedXP>0?'<div class="ovh-chip"><span>Rested</span><b>+50% · '+Math.round(state.restedXP)+'</b></div>':'')+'</div>';
+ el.onclick=e=>{if(!e.target.closest('button'))ecoShopOpen()};el.style.cursor='pointer';
+}
+(function ecoRewardsBoot(){
+ const i=OV_TILES.findIndex(t=>t.id==='hero')+1;
+ OV_TILES.splice(i,0,{id:'rewards',name:'Rewards',sub:'Sparks, shields and the shop',icon:'star',col:'#fbbf24'});
+ OV_DEFAULT.splice(i,0,'rewards');
+ const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovRewardsRender()}catch(e){console.warn('[rewards tile]',e)}return r};
+ /* cat care, nutrition, toys */
+ const pf=petFeed;petFeed=function(){const r=pf.apply(this,arguments);try{if(r&&r.ok)ecoCare('feed')}catch(e){}return r};
+ const pp=petPlayDone;petPlayDone=function(){const r=pp.apply(this,arguments);try{if(r&&r.ok)ecoCare('play')}catch(e){}return r};
+ const pt=petPetDone;petPetDone=function(){const r=pt.apply(this,arguments);try{if(r&&r.ok)ecoCare('pet')}catch(e){}return r};
+ const am=addMealEntry;addMealEntry=function(){const r=am.apply(this,arguments);try{setTimeout(ecoNutritionCheck,50)}catch(e){}return r};
+ const tu=petToyUnlocked;petToyUnlocked=function(p,id){return !!(state.toysBought&&state.toysBought[id])||tu(p,id)};
+ setTimeout(()=>{try{ecoApplyTheme();ovRewardsRender()}catch(e){}},800);
 })();
 </script>
 <script>window.LifeMaxFeatures=(()=>{const features=new Map();return Object.freeze({register(x){if(!x||typeof x.id!=='string'||features.has(x.id)||typeof x.mount!=='function')throw Error('Invalid feature registration');features.set(x.id,x)},open(id){const x=features.get(id);if(x)x.mount(document.getElementById('view-'+id))},list(){return [...features.keys()]}})})();document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b&&b.dataset.view&&document.getElementById('view-'+b.dataset.view)?.classList.contains('lmf-feature'))queueMicrotask(()=>LifeMaxFeatures.open(b.dataset.view))});</script>
@@ -17228,17 +17389,18 @@ const LifeMaxHost = (function () {
   /* LifeMax's own XP formula from submitActivity()/calcPreview(), reproduced exactly:
      duration factor 0.4×…3× (30 min = 1×), quality, diminishing returns after 3 and 5 same-type logs per day,
      70/30 primary/secondary split. If LifeMax changes this formula, update ONLY this function. */
-  H.xpFor = function (type, minutes, quality, dateKey) {
+  H.xpFor = function (type, minutes, quality, dateKey, commit) {
     const R = rules[type] || rules.custom;
     const dur = Math.max(0, Number(minutes) || 0);
-    const durFactor = dur <= 0 ? 0 : Math.min(3, Math.max(0.4, dur / 30));
-    const total = Math.max(0, Math.round(R.base * durFactor * (quality || 1)));
+    const q = dur < 20 ? Math.min(1, quality || 1) : (quality || 1);
+    const total = Math.max(0, Math.round(R.base * ecoDur(dur) * q));
     const day = dateKey || new Date().toLocaleDateString('en-CA');
-    const todayCount = state.activities.filter(a => a.type === type && new Date(a.date).toLocaleDateString('en-CA') === day).length;
-    const factor = todayCount >= 5 ? 0.25 : todayCount >= 3 ? 0.5 : 1;
-    const xp = Math.max(1, Math.round(total * factor));
+    const ec = total > 0 ? ecoAward(type, total, dur, { day: day, peek: !commit }) : { xp: 0 };
+    let xp = ec.xp;
     const p = R.primary, s = R.secondary;
     let pXP = xp, sXP = 0; if (s && s !== p) { pXP = Math.round(xp * 0.7); sXP = xp - pXP; }
+    pXP = ecoStarXP(p, pXP); if (s && s !== p) sXP = ecoStarXP(s, sXP);
+    xp = pXP + sXP;
     return { xp, rule: R, split: [{ attr: p, xp: pXP }].concat(s && s !== p ? [{ attr: s, xp: sXP }] : []) };
   };
   /* Stream 1 (spec §5.3): exactly one LifeMax activity per CompletionEvent. */
@@ -17248,10 +17410,17 @@ const LifeMaxHost = (function () {
     if (existing) return { awarded: false, reason: 'ALREADY_IN_LIFEMAX', activityId: existing.id, xp: existing.xp };
     const type = H.typeForTag(event.activityTypeTag);
     const when = new Date(event.actualStartEpoch * 1000);
-    const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'));
+    const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'), true);
     const act = { id: 'ld_' + event.eventId, ldEventId: event.eventId, type, name: info && info.title || event.title, icon: x.rule.icon, duration: event.actualDurationMinutes, quality: 1,
       skill: x.rule.skill, primary: x.rule.primary, secondary: x.rule.secondary || '', xp: x.xp, date: when.toISOString(),
       notes: 'Logged from Life Director' + (event.lifecycleState === 'PARTIALLY_COMPLETED' ? ' (partial)' : ''), xpSplit: x.split };
+    /* execution bonus: +10% (+20% with Executive Edge) of the session's XP to Discipline, 2 to 5 XP, up to 15 a day */
+    if (x.xp > 0) {
+      const dayKey = when.toLocaleDateString('en-CA');
+      const used = state.activities.filter(a => a.ldBonus && new Date(a.date).toLocaleDateString('en-CA') === dayKey).reduce((n, a) => n + a.ldBonus, 0);
+      const b = Math.min(Math.max(0, 15 - used), Math.max(2, Math.min(5, Math.round(x.xp * (ecoPerk('exec') ? 0.2 : 0.1)))));
+      if (b > 0) { act.xp += b; act.ldBonus = b; act.xpSplit = act.xpSplit.concat([{ attr: 'discipline', xp: b }]); }
+    }
     state.activities.push(act);
     try { save(); } catch (e) { state.activities = state.activities.filter(a => a !== act); return { awarded: false, reason: 'HOST_SAVE_FAILED', error: String(e) }; }
     return { awarded: true, activityId: act.id, xp: x.xp };

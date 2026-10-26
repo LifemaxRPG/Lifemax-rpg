@@ -2477,17 +2477,18 @@ const LifeMaxHost = (function () {
   /* LifeMax's own XP formula from submitActivity()/calcPreview(), reproduced exactly:
      duration factor 0.4×…3× (30 min = 1×), quality, diminishing returns after 3 and 5 same-type logs per day,
      70/30 primary/secondary split. If LifeMax changes this formula, update ONLY this function. */
-  H.xpFor = function (type, minutes, quality, dateKey) {
+  H.xpFor = function (type, minutes, quality, dateKey, commit) {
     const R = rules[type] || rules.custom;
     const dur = Math.max(0, Number(minutes) || 0);
-    const durFactor = dur <= 0 ? 0 : Math.min(3, Math.max(0.4, dur / 30));
-    const total = Math.max(0, Math.round(R.base * durFactor * (quality || 1)));
+    const q = dur < 20 ? Math.min(1, quality || 1) : (quality || 1);
+    const total = Math.max(0, Math.round(R.base * ecoDur(dur) * q));
     const day = dateKey || new Date().toLocaleDateString('en-CA');
-    const todayCount = state.activities.filter(a => a.type === type && new Date(a.date).toLocaleDateString('en-CA') === day).length;
-    const factor = todayCount >= 5 ? 0.25 : todayCount >= 3 ? 0.5 : 1;
-    const xp = Math.max(1, Math.round(total * factor));
+    const ec = total > 0 ? ecoAward(type, total, dur, { day: day, peek: !commit }) : { xp: 0 };
+    let xp = ec.xp;
     const p = R.primary, s = R.secondary;
     let pXP = xp, sXP = 0; if (s && s !== p) { pXP = Math.round(xp * 0.7); sXP = xp - pXP; }
+    pXP = ecoStarXP(p, pXP); if (s && s !== p) sXP = ecoStarXP(s, sXP);
+    xp = pXP + sXP;
     return { xp, rule: R, split: [{ attr: p, xp: pXP }].concat(s && s !== p ? [{ attr: s, xp: sXP }] : []) };
   };
   /* Stream 1 (spec §5.3): exactly one LifeMax activity per CompletionEvent. */
@@ -2497,10 +2498,17 @@ const LifeMaxHost = (function () {
     if (existing) return { awarded: false, reason: 'ALREADY_IN_LIFEMAX', activityId: existing.id, xp: existing.xp };
     const type = H.typeForTag(event.activityTypeTag);
     const when = new Date(event.actualStartEpoch * 1000);
-    const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'));
+    const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'), true);
     const act = { id: 'ld_' + event.eventId, ldEventId: event.eventId, type, name: info && info.title || event.title, icon: x.rule.icon, duration: event.actualDurationMinutes, quality: 1,
       skill: x.rule.skill, primary: x.rule.primary, secondary: x.rule.secondary || '', xp: x.xp, date: when.toISOString(),
       notes: 'Logged from Life Director' + (event.lifecycleState === 'PARTIALLY_COMPLETED' ? ' (partial)' : ''), xpSplit: x.split };
+    /* execution bonus: +10% (+20% with Executive Edge) of the session's XP to Discipline, 2 to 5 XP, up to 15 a day */
+    if (x.xp > 0) {
+      const dayKey = when.toLocaleDateString('en-CA');
+      const used = state.activities.filter(a => a.ldBonus && new Date(a.date).toLocaleDateString('en-CA') === dayKey).reduce((n, a) => n + a.ldBonus, 0);
+      const b = Math.min(Math.max(0, 15 - used), Math.max(2, Math.min(5, Math.round(x.xp * (ecoPerk('exec') ? 0.2 : 0.1)))));
+      if (b > 0) { act.xp += b; act.ldBonus = b; act.xpSplit = act.xpSplit.concat([{ attr: 'discipline', xp: b }]); }
+    }
     state.activities.push(act);
     try { save(); } catch (e) { state.activities = state.activities.filter(a => a !== act); return { awarded: false, reason: 'HOST_SAVE_FAILED', error: String(e) }; }
     return { awarded: true, activityId: act.id, xp: x.xp };

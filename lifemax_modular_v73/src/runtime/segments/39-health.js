@@ -21,8 +21,8 @@ function lmaHealthAward(o){
  if(ec.xp<=0)return 0;
  const xp=ec.xp;
  const p=o.primary||r.primary,sec=o.secondary===undefined?r.secondary:o.secondary;
- let pXP=xp,sXP=0;if(sec&&sec!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}
- const act={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type:o.type,name:o.name,icon:r.icon,duration:o.duration||0,quality:1,skill:o.skill||r.skill,primary:p,secondary:sec,xp:xp,
+ let pXP=xp,sXP=0;if(sec&&sec!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(sec&&sec!==p)sXP=ecoStarXP(sec,sXP);const xpT=pXP+sXP;
+ const act={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type:o.type,name:o.name,icon:r.icon,duration:o.duration||0,quality:1,skill:o.skill||r.skill,primary:p,secondary:sec,xp:xpT,
   date:new Date(o.at).toISOString(),notes:o.note||'',xpSplit:[{attr:p,xp:pXP}].concat(sec&&sec!==p?[{attr:sec,xp:sXP}]:[]),src:'health',hc:o.hc};
  state.activities.push(act);act.xpSplit.forEach(function(z){state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp});
  state.skillXP[act.skill]=(state.skillXP[act.skill]||0)+xp;return xp;

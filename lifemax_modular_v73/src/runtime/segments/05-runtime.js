@@ -10,7 +10,7 @@ function checkLevelUps(){const cur=snapshot(),p=prevSnap;prevSnap=cur;if(!p||!p.
  const delta=gains.reduce((n,g)=>n+g.xp,0);if(delta>1500)return;
  if(delta>0)celebrateXP(delta,gains);
  if(cur.c>p.c||ups.length)setTimeout(()=>showLevelUp({charLevel:cur.c>p.c?cur.c:null,from:p.c,attrs:ups}),delta>0?950:0)}
-function streak(){const set=new Set(state.activities.filter(a=>!ecoPassive(a)).map(activityDate));Object.keys(state.restDays||{}).forEach(k=>set.add(k));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
+function streak(){const set=new Set(state.activities.filter(a=>!ecoPassive(a)).map(activityDate));Object.keys(state.restDays||{}).forEach(k=>set.add(k));Object.keys(state.shieldDays||{}).forEach(k=>set.add(k));const d=new Date();let n=0,miss=0;for(let i=0;i<400;i++){if(set.has(d.toLocaleDateString('en-CA'))){n++;miss=0}else if(++miss>=2)break;d.setDate(d.getDate()-1)}return n}
 const BADGES=[
 {id:'first',icon:'bolt',name:'First Step',desc:'Log your first activity',t:()=>state.activities.length>=1},
 {id:'ten',icon:'star',name:'Getting Going',desc:'Log 10 activities',t:()=>state.activities.length>=10},
@@ -43,8 +43,8 @@ function renderExtras(){renderFxSettings();document.documentElement.classList.to
 function getDecay(){return {on:true,grace:4,rate:3,...(state.decay||{})}}
 function dayNum(k){const p=k.split('-').map(Number);return Math.round(Date.UTC(p[0],p[1]-1,p[2])/864e5)}
 function lastTrained(id){let best=null;state.activities.forEach(a=>{if(ecoPassive(a))return;if(a.primary===id||a.secondary===id){const k=activityDate(a);if(!best||k>best)best=k}});return best}
-function applyDecay(){const d=getDecay();if(!d.on)return false;state.decayApplied=state.decayApplied||{};state.decayLog=state.decayLog||[];const today=dayNum(getToday());let changed=false;
- ATTRS.forEach(a=>{const lt=lastTrained(a.id);if(!lt)return;const from=Math.max(dayNum(lt)+d.grace+1,(state.decayApplied[a.id]||0)+1);let lost=0;
+function applyDecay(){try{ecoShieldTick()}catch(e){console.warn('[shields]',e)}const d=getDecay();if(!d.on)return false;state.decayApplied=state.decayApplied||{};state.decayLog=state.decayLog||[];const today=dayNum(getToday());let changed=false;
+ ATTRS.forEach(a=>{const lt=lastTrained(a.id);if(!lt)return;const from=Math.max(dayNum(lt)+d.grace+((a.id==='physique'||a.id==='endurance')&&ecoPerk('iron')?2:0)+1,(state.decayApplied[a.id]||0)+1);let lost=0;
   for(let n=from;n<=today;n++){if(ecoRestDay(ecoDayKey(n)))continue;const xp=attrXP(a.id);if(xp<=0)break;const lv=levelData(xp);if(lv.into<=0)break;const l=Math.min(lv.into,Math.max(1,Math.min(15,Math.round(xpForLevel(lv.level)*d.rate/100))));state.attrXP[a.id]=xp-l;lost+=l}
   if(lost>0&&today-dayNum(lt)>=7)state.restedXP=Math.min(ECO.restedCap,(Number(state.restedXP)||0)+Math.round(lost*ECO.restedRate));
   if(today>=from)state.decayApplied[a.id]=today;

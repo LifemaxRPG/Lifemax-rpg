@@ -1899,6 +1899,38 @@
     "ecoTakeRest",
     "ecoMigrate"
    ]
+  },
+  {
+   "file": "src/runtime/segments/44-rewards.js",
+   "bytes": 12834,
+   "statement_count": 26,
+   "tags": [
+    "economy",
+    "rewards"
+   ],
+   "symbols": [
+    "ECO_THEMES",
+    "ECO_PERKS",
+    "ECO_TOY_PRICE",
+    "ECO_PRICE",
+    "ecoPerk",
+    "ecoStars",
+    "ecoStarXP",
+    "ecoSparks",
+    "ecoSparksSync",
+    "ecoAscendCost",
+    "ecoAscend",
+    "ecoActive",
+    "ecoShieldTick",
+    "ecoNutritionCheck",
+    "ecoCare",
+    "ecoApplyTheme",
+    "ecoSpend",
+    "ecoBuy",
+    "ecoShopOpen",
+    "ecoShopRender",
+    "ovRewardsRender"
+   ]
   }
  ]
 }

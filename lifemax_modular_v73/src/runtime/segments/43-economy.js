@@ -16,6 +16,7 @@ function ecoActsOn(day){return state.activities.filter(a=>activityDate(a)===day)
 function ecoDur(dur){dur=Number(dur)||0;return dur<ECO.minMin?0:dur<=60?dur/30:Math.min(3,2+(dur-60)/60)}
 /* a day's XP counted toward the cap (epic quests are exempt) */
 function ecoDayXP(day){return ecoActsOn(day).reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
+function ecoRestedPeek(x){const pool=Number(state.restedXP)||0;return pool>0&&x>0?x+Math.min(pool,Math.round(x*ECO.restedBonus)):x}
 function ecoRestedTake(x){
  const pool=Number(state.restedXP)||0;if(pool<=0||x<=0)return x;
  const b=Math.min(pool,Math.round(x*ECO.restedBonus));state.restedXP=pool-b;return x+b;
@@ -37,14 +38,16 @@ function ecoAward(type,total,dur,o){
  if(!factor)return {xp:0,msg:'Daily XP limit reached for this activity type'};
  if(o.manual){const mins=ecoActsOn(day).filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
  let x=Math.max(1,Math.round(total*factor));
- x=ecoRestedTake(x);x=ecoCap(x,day);
+ if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar'))x=Math.round(x*1.1);
+ x=o.peek?ecoRestedPeek(x):ecoRestedTake(x);x=ecoCap(x,day);
  return x>0?{xp:x,msg:''}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
 function ecoQuestXP(q){
- const base=Math.max(0,Number(q.xp)||0),cad=q.cadence,day=getToday();
+ let base=Math.max(0,Number(q.xp)||0);const cad=q.cadence,day=getToday();
  const qs=state.activities.filter(a=>a.type==='quest');
  if(cad==='epic'){return qs.filter(a=>a.epic&&activityDate(a)===day).length>=ECO.epicPerDay?0:ecoRestedTake(base)}
+ if(cad==='daily'&&ecoPerk('compound'))base=Math.round(base*1.15);
  const lim=cad==='weekly'?ECO.weeklyQuests:ECO.dailyQuests;
  const since=cad==='weekly'?(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toLocaleDateString('en-CA')})():day;
  const n=qs.filter(a=>a.cad===cad&&activityDate(a)>=since).length;
@@ -54,13 +57,14 @@ function ecoQuestXP(q){
 /* rest days: planned rest costs nothing (no decay, streak safe) */
 function ecoRestDay(key){
  if((state.restDays||{})[key])return true;
+ try{const pd=planDay(key);if(pd&&pd.kind==='rest')return true}catch(e){}
  return ecoActsOn(key).some(a=>a.type==='recovery'&&!ecoPassive(a)&&(Number(a.duration)||0)>=20);
 }
 function ecoRestUsed(){const since=new Date();since.setDate(since.getDate()-6);const s=since.toLocaleDateString('en-CA');return Object.keys(state.restDays||{}).filter(k=>k>=s).length}
 function ecoTakeRest(){
  const d=getToday();state.restDays=state.restDays||{};
  if(state.restDays[d]){toast('Today is already a rest day');return}
- if(ecoRestUsed()>=ECO.restPerWeek){toast('Two rest days per week are used');return}
+ if(ecoRestUsed()>=ECO.restPerWeek){if((state.restTokens||0)>0){state.restTokens--;toast('Rest token used')}else{toast('Two rest days per week are used');return}}
  state.restDays[d]=true;save();toast('Rest day taken. No decay today.');renderDecay();
 }
 /* one-time move to the v2 economy; character level and every attribute level stay exactly where they are */
@@ -76,5 +80,6 @@ function ecoMigrate(){
   if(r&&nw[id]&&Number(r.base)===o[0]&&(r.secondary||'')===o[1]){r.base=nw[id].base;r.primary=nw[id].primary;r.secondary=nw[id].secondary}});
  state.customRules=rules;
  try{M().peakBalance=moneyBalance()}catch(e){}
+ state.sparks=Math.round(raw*.5);state.activities.forEach(a=>{a.sp=1});
  state.xpSchemaV2=true;
 }

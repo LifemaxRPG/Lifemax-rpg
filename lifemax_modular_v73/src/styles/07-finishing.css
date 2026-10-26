@@ -88,3 +88,7 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 @keyframes vtOutR{to{opacity:0;transform:translate3d(7%,0,0)}}
 @keyframes vtInR{from{opacity:0;transform:translate3d(9%,0,0)}to{opacity:1;transform:none}}
 @keyframes vtInL{from{opacity:0;transform:translate3d(-9%,0,0)}to{opacity:1;transform:none}}
+
+/* v109 · Rewards */
+.rs-bal{font-weight:700;color:var(--gold,#fbbf24);white-space:nowrap}.rs-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.hsheet .hs-list li small{max-width:230px}

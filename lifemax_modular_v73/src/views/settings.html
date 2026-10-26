@@ -55,6 +55,7 @@
           </div>
           <div style="margin-top:12px"><button class="btn" onclick="saveCharacter()">Save character</button></div>
         </div>
+        <div class="card" style="margin-bottom:14px"><h3>Rewards</h3><p class="muted" style="font-size:12px;margin-top:-5px">Sparks, perks, accent colours, cat toys, streak shields and attribute ascension.</p><button class="btn secondary" onclick="ecoShopOpen()">Open rewards</button></div>
         <div class="card" style="margin-bottom:14px"><h3>Decay system</h3><p class="muted" style="font-size:12px;margin-top:-5px">After the grace period with no training, the attribute loses XP daily. Skill XP does not decay. Turn this off only if you want a softer game.</p><div class="settingsline"><div style="flex:1"><strong>Enable decay</strong></div><input id="decayOn" type="checkbox" class="check"></div><div class="formgrid" style="margin-top:12px"><div class="field"><label>Grace period (days, 1–14)</label><input id="decayGrace" type="number" min="1" max="14"></div><div class="field"><label>Daily loss (% of attribute XP, 1–10)</label><input id="decayRate" type="number" min="1" max="10"></div></div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveDecay()">Save decay settings</button><button class="btn secondary" onclick="resetTips()">Show tips again</button></div></div>
                 <div class="card" style="margin-bottom:14px" id="devModeCard">
           <h3>Developer mode</h3>
