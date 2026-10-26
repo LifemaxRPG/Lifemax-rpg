@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v125 — cat: tail only stretches where it is free
+
+The tail-length gene only re-draws the tail on walk, run, stretch, leap, rub and eat. In every sitting, lying, grooming and kneading pose the tail lies curled on the floor, and stretching it made a spike poking out the wrong side; those poses now keep their original tail art. `FREE_TAIL` in `tools/rig_build.py`.
+
 ## v123 — cat: new rear-view walk and a new wall scratch
 
 - `walk_back` (all coats, every age): real head with ears (built from the front-view head with the face painted out), and a curved, swaying tail beside the body instead of a stripe down the back. `tools/redo_back.py`.

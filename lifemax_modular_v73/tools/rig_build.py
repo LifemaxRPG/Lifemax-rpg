@@ -20,10 +20,9 @@ W, H = 72, 48
 OUTLINE, WHISKER = 10, 190
 BIG = 70          # cells with at least this many pixels belong to the torso group
 RING_MAX = 45     # tail ring cells are small
-# rows where the tail wraps around or under the body: stretching it makes a spike or a line, so the tail keeps its original art
-CURLED = {('adult', 'sleep'), ('adult', 'sleep_w')} | {(k, a) for k in ('st1', 'st2', 'st3', 'st4', 'st5') for a in ('sleep', 'sleep_w')} \
-    | {('st%d' % i, 'groom') for i in range(5)} | {('st0', 'purr'), ('st1', 'purr'), ('st1', 'play'), ('st3', 'play'), ('st0', 'slowblink'),
-      ('st0', 'meow'), ('st0', 'idle_sit'), ('st0', 'idle_sit_w'), ('st5', 'knead')}
+# The tail may only be re-drawn at another length where it sticks out free of the body. In every sitting, lying,
+# grooming or kneading pose it lies curled along the floor, and stretching that makes a spike, so those rows keep the original art.
+FREE_TAIL = {'walk', 'walk_w', 'run', 'stretch', 'leap', 'rub', 'eat'}
 
 def load_json(name, tag):
     s = (DATA / name).read_text(encoding='utf-8')
@@ -298,7 +297,7 @@ def main():
         g = sheet(coats['ginger']); b = sheet(coats['black'])
         qa = [] if kind in qa_kinds else None
         rig = build_sheet(g, b, anims, qa)
-        out[kind] = {n: dict(lg=int(r['legs']), bd=int(r['body']), tl=int(r['tail'] and (kind, n) not in CURLED), f=[enc_frame(fr, r['legs'], r['body'], r['tail'] and (kind, n) not in CURLED) for fr in r['frames']]) for n, r in rig.items()}
+        out[kind] = {n: dict(lg=int(r['legs']), bd=int(r['body']), tl=int(r['tail'] and n in FREE_TAIL), f=[enc_frame(fr, r['legs'], r['body'], r['tail'] and n in FREE_TAIL) for fr in r['frames']]) for n, r in rig.items()}
         ok = lambda k: sum(1 for r in rig.values() if r[k])
         print('%-6s rows %2d  tail ok %2d  legs ok %2d  body ok %2d  ears-per-frame %s' % (kind, len(rig), ok('tail'), ok('legs'), ok('body'),
               sorted({len(fr['ears']) for r in rig.values() for fr in r['frames']})))
