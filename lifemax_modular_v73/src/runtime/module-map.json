@@ -1614,6 +1614,40 @@
     "petPron",
     "petSexOf"
    ]
+  },
+  {
+   "file": "src/runtime/segments/33-android.js",
+   "bytes": 11542,
+   "statement_count": 23,
+   "tags": [
+    "android",
+    "notifications"
+   ],
+   "symbols": [
+    "LMA_CHANNEL",
+    "LMA_DEFAULTS",
+    "LMA_PREF_KEY",
+    "lmaApplyBars",
+    "lmaAt",
+    "lmaDirectorSessions",
+    "lmaExactTiming",
+    "lmaFmtTime",
+    "lmaHM",
+    "lmaId",
+    "lmaLoad",
+    "lmaNative",
+    "lmaPermission",
+    "lmaPlugin",
+    "lmaPrefs",
+    "lmaQuiet",
+    "lmaRenderSettings",
+    "lmaSave",
+    "lmaSet",
+    "lmaSoon",
+    "lmaSync",
+    "lmaTestNotification",
+    "lmaWantedReminders"
+   ]
   }
  ]
 }

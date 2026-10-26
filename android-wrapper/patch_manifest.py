@@ -19,5 +19,13 @@ xml = re.sub(
     count=1,
 )
 xml = re.sub(r'android:launchMode="[^"]*"', 'android:launchMode="singleTask"', xml)
-assert "category.HOME" in xml, "manifest patch failed"
+# Android 11+ hides other apps unless we ask to see launchable ones (Apps tab).
+xml = xml.replace(
+    "<application",
+    '<queries>\n        <intent>\n            <action android:name="android.intent.action.MAIN" />\n'
+    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n    </queries>\n\n    <application',
+    1,
+)
+
+assert "category.HOME" in xml and "<queries>" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

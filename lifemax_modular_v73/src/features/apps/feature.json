@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "id": "apps",
+  "name": "Apps",
+  "version": "1.0.0",
+  "type": "tab",
+  "icon": "▦",
+  "dependencies": [],
+  "files": [
+    "view.html",
+    "style.css",
+    "logic.js"
+  ]
+}

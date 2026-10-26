@@ -33,6 +33,7 @@ jobs:
           npm install
           npx cap add android
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
+          cp native/*.java android/app/src/main/java/com/lifemax/rpg/
           npx cap sync android
 
       - name: Build debug APK
