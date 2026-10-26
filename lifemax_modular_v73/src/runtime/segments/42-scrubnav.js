@@ -15,7 +15,23 @@ function lmaBuzz(kind){
   haptic(kind==='tick'?6:kind==='start'?10:14);
  }catch(e){}
 }
-/* while scrubbing, a blurred veil over the page you were on names the tab; the real page replaces it when you rest or let go */
+/* while scrubbing, a blurred picture of the tab you are over fills the page area; the real page replaces it when you rest or let go.
+   The pictures are small snapshots the Android app takes of each tab a moment after you visit it (kept between launches). A tab
+   you have never opened yet shows a soft tinted blur until the first visit. */
+const LMA_THUMB_KEY='lifemax_thumbs_v1';
+let lmaThumbs={},lmaThumbTimer=0,lmaThumbBusy=false;
+try{lmaThumbs=JSON.parse(localStorage.getItem(LMA_THUMB_KEY)||'{}')||{}}catch(e){lmaThumbs={}}
+function lmaThumbSave(){try{localStorage.setItem(LMA_THUMB_KEY,JSON.stringify(lmaThumbs))}catch(e){}}
+function lmaThumbSchedule(v){
+ clearTimeout(lmaThumbTimer);
+ lmaThumbTimer=setTimeout(async()=>{
+  const S=lmaScrub,P=lmaNative()&&lmaPlugin('PageThumb');
+  if(!P||lmaThumbBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaView()!==v)return;
+  lmaThumbBusy=true;
+  try{const r=await P.snap({div:4});if(r&&r.img&&lmaView()===v&&!S.veilOn){lmaThumbs[v]=r.img;lmaThumbSave()}}catch(e){}
+  lmaThumbBusy=false;
+ },1100);
+}
 function lmaVeil(show){
  const S=lmaScrub;if(!S.veil)return;
  if(show===S.veilOn)return;S.veilOn=show;
@@ -23,9 +39,10 @@ function lmaVeil(show){
 }
 function lmaVeilSet(i){
  const S=lmaScrub,b=S.items[i];if(!b||!S.veil)return;
- const ico=b.querySelector('.ico'),txt=b.textContent.trim();
- S.veil.querySelector('.sv-ico').innerHTML=ico?ico.innerHTML:'';
- S.veil.querySelector('.sv-name').textContent=txt;
+ const v=b.dataset.view,img=S.veil.querySelector('.sv-img'),t=lmaThumbs[v];
+ if(t){if(img.getAttribute('src')!==t)img.src=t;img.style.display=''}else{img.style.display='none';img.removeAttribute('src')}
+ let h=0;for(let k=0;k<v.length;k++)h=(h*31+v.charCodeAt(k))%360;
+ S.veil.style.setProperty('--sv-hue',h);
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
 function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
@@ -46,7 +63,7 @@ function lmaScrubInit(){
  const S=lmaScrub,sb=document.querySelector('.sidebar');
  if(!sb||S.sb)return;
  S.sb=sb;lmaScrubItems();
- S.veil=document.createElement('div');S.veil.className='scrubveil';S.veil.setAttribute('aria-hidden','true');S.veil.innerHTML='<div class="sv-card"><div class="sv-ico"></div><div class="sv-name"></div></div>';document.body.appendChild(S.veil);
+ S.veil=document.createElement('div');S.veil.className='scrubveil';S.veil.setAttribute('aria-hidden','true');S.veil.innerHTML='<img class="sv-img" alt="" decoding="sync">';document.body.appendChild(S.veil);
  /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
     and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
  const go=()=>{
@@ -111,8 +128,8 @@ function lmaScrubInit(){
 }
 (function lmaScrubBoot(){
  const _nav=navigate;
- navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v)}catch(e){}return r};
+ navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v);lmaThumbSchedule(lmaView())}catch(e){}return r};
  const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
- setTimeout(()=>{try{lmaScrubSync()}catch(e){}},1200);
+ setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaView())}catch(e){}},1200);
 })();

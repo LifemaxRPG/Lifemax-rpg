@@ -3474,20 +3474,17 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 .rs-bal{font-weight:700;color:var(--gold,#fbbf24);white-space:nowrap}.rs-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
 .hsheet .hs-list li small{max-width:230px}
 
-/* v110 · scrub veil: a blurred stand-in for the page while the bottom bar is being scrubbed */
+/* v112 · scrub veil: a blurred picture of the tab you are over, shown while the bottom bar is being scrubbed */
 .scrubveil{display:none}
 @media(max-width:860px){
-  .scrubveil{display:flex;position:fixed;left:0;right:0;top:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:29;align-items:center;justify-content:center;pointer-events:none;
-    background:rgba(8,10,16,.34);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);opacity:0;transition:opacity .14s ease-out}
+  .scrubveil{display:block;position:fixed;inset:0;z-index:29;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .12s ease-out;
+    background:radial-gradient(120% 80% at 50% 25%,hsl(var(--sv-hue,220) 40% 24%),#0a0c12 70%)}
   .scrubveil.on{opacity:1}
-  html.light-theme .scrubveil{background:rgba(255,255,255,.4)}
-  .sv-card{display:flex;flex-direction:column;align-items:center;gap:14px;transform:scale(.96);transition:transform .16s cubic-bezier(.2,.8,.2,1)}
-  .scrubveil.on .sv-card{transform:none}
-  .sv-ico{width:84px;height:84px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:var(--accent-dim);box-shadow:inset 0 0 0 1px #ffffff1a,0 14px 40px -12px var(--accent);color:var(--accent-strong);font-size:38px}
-  .sv-ico .px,.sv-ico svg,.sv-ico i{transform:scale(1.9);transform-origin:center}
-  .sv-name{font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);text-shadow:0 2px 14px #0008}
+  .sv-img{position:absolute;inset:-6%;width:112%;height:112%;object-fit:cover;object-position:top;filter:blur(9px) brightness(.8) saturate(1.1)}
+  html.light-theme .scrubveil{background:radial-gradient(120% 80% at 50% 25%,hsl(var(--sv-hue,220) 55% 86%),#eef0f6 70%)}
+  html.light-theme .sv-img{filter:blur(9px) brightness(.97)}
 }
-@media(prefers-reduced-motion:reduce){.scrubveil,.sv-card{transition:none}}
+@media(prefers-reduced-motion:reduce){.scrubveil{transition:none}}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.2.0 */
@@ -14578,7 +14575,23 @@ function lmaBuzz(kind){
   haptic(kind==='tick'?6:kind==='start'?10:14);
  }catch(e){}
 }
-/* while scrubbing, a blurred veil over the page you were on names the tab; the real page replaces it when you rest or let go */
+/* while scrubbing, a blurred picture of the tab you are over fills the page area; the real page replaces it when you rest or let go.
+   The pictures are small snapshots the Android app takes of each tab a moment after you visit it (kept between launches). A tab
+   you have never opened yet shows a soft tinted blur until the first visit. */
+const LMA_THUMB_KEY='lifemax_thumbs_v1';
+let lmaThumbs={},lmaThumbTimer=0,lmaThumbBusy=false;
+try{lmaThumbs=JSON.parse(localStorage.getItem(LMA_THUMB_KEY)||'{}')||{}}catch(e){lmaThumbs={}}
+function lmaThumbSave(){try{localStorage.setItem(LMA_THUMB_KEY,JSON.stringify(lmaThumbs))}catch(e){}}
+function lmaThumbSchedule(v){
+ clearTimeout(lmaThumbTimer);
+ lmaThumbTimer=setTimeout(async()=>{
+  const S=lmaScrub,P=lmaNative()&&lmaPlugin('PageThumb');
+  if(!P||lmaThumbBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaView()!==v)return;
+  lmaThumbBusy=true;
+  try{const r=await P.snap({div:4});if(r&&r.img&&lmaView()===v&&!S.veilOn){lmaThumbs[v]=r.img;lmaThumbSave()}}catch(e){}
+  lmaThumbBusy=false;
+ },1100);
+}
 function lmaVeil(show){
  const S=lmaScrub;if(!S.veil)return;
  if(show===S.veilOn)return;S.veilOn=show;
@@ -14586,9 +14599,10 @@ function lmaVeil(show){
 }
 function lmaVeilSet(i){
  const S=lmaScrub,b=S.items[i];if(!b||!S.veil)return;
- const ico=b.querySelector('.ico'),txt=b.textContent.trim();
- S.veil.querySelector('.sv-ico').innerHTML=ico?ico.innerHTML:'';
- S.veil.querySelector('.sv-name').textContent=txt;
+ const v=b.dataset.view,img=S.veil.querySelector('.sv-img'),t=lmaThumbs[v];
+ if(t){if(img.getAttribute('src')!==t)img.src=t;img.style.display=''}else{img.style.display='none';img.removeAttribute('src')}
+ let h=0;for(let k=0;k<v.length;k++)h=(h*31+v.charCodeAt(k))%360;
+ S.veil.style.setProperty('--sv-hue',h);
 }
 function lmaScrubItems(){const S=lmaScrub;S.items=S.sb?[...S.sb.querySelectorAll('.navbtn[data-view]')].filter(b=>b.offsetWidth>0):[];return S.items}
 function lmaScrubIndex(v){return lmaScrub.items.findIndex(b=>b.dataset.view===v)}
@@ -14609,7 +14623,7 @@ function lmaScrubInit(){
  const S=lmaScrub,sb=document.querySelector('.sidebar');
  if(!sb||S.sb)return;
  S.sb=sb;lmaScrubItems();
- S.veil=document.createElement('div');S.veil.className='scrubveil';S.veil.setAttribute('aria-hidden','true');S.veil.innerHTML='<div class="sv-card"><div class="sv-ico"></div><div class="sv-name"></div></div>';document.body.appendChild(S.veil);
+ S.veil=document.createElement('div');S.veil.className='scrubveil';S.veil.setAttribute('aria-hidden','true');S.veil.innerHTML='<img class="sv-img" alt="" decoding="sync">';document.body.appendChild(S.veil);
  /* switch the page to the tab the bar shows. The bar has already painted; the page work runs right after a frame,
     and how long each page takes is remembered, so heavy pages wait for the finger to rest longer */
  const go=()=>{
@@ -14674,10 +14688,10 @@ function lmaScrubInit(){
 }
 (function lmaScrubBoot(){
  const _nav=navigate;
- navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v)}catch(e){}return r};
+ navigate=function(v){const r=_nav.apply(this,arguments);try{lmaScrubSync(v);lmaThumbSchedule(lmaView())}catch(e){}return r};
  const go=()=>{try{lmaScrubInit()}catch(e){console.warn('[bottom bar]',e)}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();
- setTimeout(()=>{try{lmaScrubSync()}catch(e){}},1200);
+ setTimeout(()=>{try{lmaScrubSync();lmaThumbSchedule(lmaView())}catch(e){}},1200);
 })();
 /* ---------- v109 · Economy v2, second half: Sparks and the shop, perks, ascension, streak shields, rest tokens,
    nutrition and cat-care bonuses. XP earns Sparks one for one (decay never takes them back); Sparks buy cosmetics,
