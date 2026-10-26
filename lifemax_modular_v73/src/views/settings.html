@@ -4,6 +4,11 @@
           <h3>Appearance</h3>
           <div class="settingsline"><div style="flex:1"><strong>Light mode</strong><div class="muted" style="font-size:12px">Switch between the dark and light appearance. This only changes how the app looks.</div></div><input id="lightModeToggle" type="checkbox" class="check" onchange="setLightMode(this.checked)" aria-label="Enable light mode"></div>
         </div>
+        <div class="card" style="margin-bottom:14px" id="lmaNavCard">
+          <h3>Navigation</h3>
+          <div class="settingsline"><div style="flex:1"><strong>Swipe to switch tabs</strong><div class="muted" style="font-size:12px">Swipe left or right with one finger to move between tabs. Ignored near the screen edges, on scrolling strips, sliders, the cat room and the Life Director.</div></div><input id="lmaSwipeToggle" type="checkbox" class="check" onchange="lmaSetSwipe(this.checked)" aria-label="Swipe to switch tabs"></div>
+          <div class="muted" style="font-size:12px;margin-top:8px">The Android Back button or gesture closes a popup, then returns to the previous tab. It never closes the app.</div>
+        </div>
         <div class="card" style="margin-bottom:14px" id="lmaNotifCard">
           <h3>Notifications</h3>
           <p class="muted" style="font-size:12px;margin-top:-5px">Smart reminders for workouts and planned sessions. Everything is scheduled on this phone.</p>

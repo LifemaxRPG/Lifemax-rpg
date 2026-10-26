@@ -47,12 +47,16 @@ public class MainActivity extends BridgeActivity {
         });
         ViewCompat.requestApplyInsets(content);
 
-        // As a home screen, Back must never close the app.
+        // Back (button or gesture) is handled by the web app: it closes a popup or returns to the
+        // previous tab. As a home screen it must never close the app, so nothing else happens.
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 WebView w = getBridge() == null ? null : getBridge().getWebView();
-                if (w != null && w.canGoBack()) w.goBack();
+                if (w == null) return;
+                w.evaluateJavascript(
+                        "(function(){try{return window.lmaBack?window.lmaBack():false}catch(e){return false}})()",
+                        null);
             }
         });
     }

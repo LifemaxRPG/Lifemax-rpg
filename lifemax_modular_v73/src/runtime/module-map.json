@@ -1648,6 +1648,28 @@
     "lmaTestNotification",
     "lmaWantedReminders"
    ]
+  },
+  {
+   "file": "src/runtime/segments/34-navigation.js",
+   "bytes": 5450,
+   "statement_count": 11,
+   "tags": [
+    "navigation",
+    "android"
+   ],
+   "symbols": [
+    "LMA_SWIPE",
+    "lmaBack",
+    "lmaGoView",
+    "lmaNavStack",
+    "lmaSetSwipe",
+    "lmaSwipeBlocked",
+    "lmaSwipeEnabled",
+    "lmaSwipeHint",
+    "lmaTabList",
+    "lmaTopOverlay",
+    "lmaView"
+   ]
   }
  ]
 }
