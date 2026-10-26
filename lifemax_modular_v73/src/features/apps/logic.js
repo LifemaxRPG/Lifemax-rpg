@@ -1,11 +1,22 @@
-/* Apps 1.0.0 — a launcher shelf for the other apps on the phone (Android app only). */
+/* Apps 1.1.0 — a launcher shelf for the other apps on the phone (Android app only). Pixel-art icons come from art.js. */
 const AppsFeature=(function(){
  let root=null,editing=false,sheet=null,all=null;
+ const iconCache={};
  const P=()=>lmaLoad();
+ const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+ /* what to show for an app: a pixel-art tile (logo or letter), or its real Android icon */
+ function iconHtml(a,cls){
+  const mode=a.art||'auto';
+  if(P().pixel!==false&&mode!=='orig'){
+   const key=mode!=='auto'?mode:AppsPixelArt.autoKey(a.pkg,a.label);
+   return '<img class="apps-px" alt="" src="'+AppsPixelArt.url(key,a.label,a.pkg)+'">';
+  }
+  const real=a.icon||iconCache[a.pkg];
+  return real?'<img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(real)+'">':'<div class="apps-fallback">'+esc((a.label||'?').charAt(0))+'</div>';
+ }
  const tileHtml=(a,i)=>{
-  const icon=a.icon?'<img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(iconOf(a.pkg))+'">':'<div class="apps-fallback">'+esc((a.label||'?').charAt(0))+'</div>';
-  return '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile" data-act="launch" data-i="'+i+'" aria-label="Open '+esc(a.label)+'">'+icon+'<span class="apps-name">'+esc(a.label)+'</span></button>'+
-   (editing?'<div class="apps-edit"><button data-act="left" data-i="'+i+'" aria-label="Move left">◀</button><button class="apps-x" data-act="remove" data-i="'+i+'" aria-label="Remove">✕</button><button data-act="right" data-i="'+i+'" aria-label="Move right">▶</button></div>':'')+'</div>';
+  return '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile" data-act="launch" data-i="'+i+'" aria-label="Open '+esc(a.label)+'">'+iconHtml(a)+'<span class="apps-name">'+esc(a.label)+'</span></button>'+
+   (editing?'<div class="apps-edit"><button data-act="left" data-i="'+i+'" aria-label="Move left">◀</button><button data-act="right" data-i="'+i+'" aria-label="Move right">▶</button><button data-act="art" data-i="'+i+'" aria-label="Change icon">✎</button><button class="apps-x" data-act="remove" data-i="'+i+'" aria-label="Remove">✕</button></div>':'')+'</div>';
  };
  function render(){
   if(!root)return;
@@ -17,7 +28,7 @@ const AppsFeature=(function(){
   const apps=P().apps;
   h+='<div class="card"><div class="apps-grid">'+apps.map(tileHtml).join('')+
    '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile apps-add" data-act="add" aria-label="Add app"><div class="apps-fallback">＋</div><span class="apps-name">Add app</span></button></div></div>'+
-   (apps.length?'<div class="apps-bar"><button class="btn small secondary" data-act="edit">'+(editing?'Done':'Edit shortcuts')+'</button></div>':'<p class="muted" style="font-size:12px;margin:10px 0 0">Tap “Add app” to pick the apps you want here.</p>')+'</div>';
+   (apps.length?'<div class="apps-bar"><button class="btn small secondary" data-act="edit">'+(editing?'Done':'Edit shortcuts')+'</button><label class="apps-opt"><input type="checkbox" class="check" data-act="pixel" '+(P().pixel!==false?'checked':'')+'> Pixel-art icons</label></div>':'<p class="muted" style="font-size:12px;margin:10px 0 0">Tap “Add app” to pick the apps you want here.</p>')+'</div>';
   h+='<div class="card" style="margin-top:14px"><h3>Use LifeMax as your home screen</h3><p class="muted" style="font-size:12px;margin-top:-5px">Choose LifeMax RPG as the default Home app. Pressing Home then brings you here, and you can switch back any time in the same place.</p><button class="btn secondary" data-act="home">Open home app settings</button></div>';
   root.innerHTML=h;
  }
@@ -47,11 +58,9 @@ const AppsFeature=(function(){
   if(ch){lmaSave();if(!sheet)render()}
   return all;
  }
- const iconCache={};
- function iconOf(pkg){return iconCache[pkg]||'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='}
- function sheetHtml(q){
+  function sheetHtml(q){
   const have=new Set(P().apps.map(a=>a.pkg)),ql=(q||'').toLowerCase();
-  const rows=(all||[]).filter(a=>!ql||a.label.toLowerCase().indexOf(ql)>=0).map(a=>'<button class="apps-row" data-act="pick" data-pkg="'+esc(a.pkg)+'"><img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(iconOf(a.pkg))+'"><span class="apps-lbl">'+esc(a.label)+'</span>'+(have.has(a.pkg)?'<span class="apps-chk">✓</span>':'')+'</button>').join('');
+  const rows=(all||[]).filter(a=>!ql||a.label.toLowerCase().indexOf(ql)>=0).map(a=>'<button class="apps-row" data-act="pick" data-pkg="'+esc(a.pkg)+'">'+iconHtml(a)+'<span class="apps-lbl">'+esc(a.label)+'</span>'+(have.has(a.pkg)?'<span class="apps-chk">✓</span>':'')+'</button>').join('');
   return rows||'<p class="muted" style="padding:16px 4px">'+(all?'No apps match.':'Loading apps…')+'</p>';
  }
  function openSheet(){
@@ -74,10 +83,25 @@ const AppsFeature=(function(){
   loadAll().then(()=>{
    if(!sheet)return;
    list.innerHTML=sheetHtml(sheet.querySelector('input').value);
-   return fetchIcons(all.map(a=>a.pkg)).then(m=>Object.assign(iconCache,m));
+   return fetchIcons(all.map(a=>a.pkg)).then(m=>{Object.assign(iconCache,m);if(sheet&&P().pixel===false)list.innerHTML=sheetHtml(sheet.querySelector('input').value)});
   }).catch(err=>{if(list)list.innerHTML='<p class="muted" style="padding:16px 4px">Could not read the app list.<br><small>'+esc(errText(err))+'</small></p>'});
  }
  function closeSheet(){if(sheet){sheet.remove();sheet=null}let ch=false;for(const a of P().apps)if(!a.icon&&iconCache[a.pkg]){a.icon=iconCache[a.pkg];ch=true}if(ch)lmaSave();render()}
+ function openArt(i){
+  const a=P().apps[i];if(!a)return;
+  const cur=a.art||'auto',opt=(k,label,src)=>'<button data-k="'+k+'" class="'+(cur===k?'on':'')+'"><img class="apps-px" alt="" src="'+src+'"><span>'+esc(label)+'</span></button>';
+  const ov=document.createElement('div');ov.className='apps-sheet';
+  const autoKey=AppsPixelArt.autoKey(a.pkg,a.label);
+  ov.innerHTML='<header><strong style="flex:1">Icon for '+esc(a.label)+'</strong><button class="btn small" data-k="__close">Done</button></header><div class="apps-list"><div class="apps-artgrid">'+
+   opt('auto','Automatic',AppsPixelArt.url(autoKey,a.label,a.pkg))+AppsPixelArt.keys().map(k=>opt(k,AppsPixelArt.name(k),AppsPixelArt.url(k))).join('')+
+   (a.icon||iconCache[a.pkg]?'<button data-k="orig" class="'+(cur==='orig'?'on':'')+'"><img alt="" src="'+esc(a.icon||iconCache[a.pkg])+'"><span>Original</span></button>':'')+'</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{
+   const b=e.target.closest('[data-k]');if(!b)return;
+   if(b.dataset.k!=='__close'){if(b.dataset.k==='auto')delete a.art;else a.art=b.dataset.k;lmaSave()}
+   ov.remove();render();
+  });
+ }
  async function onClick(e){
   const b=e.target.closest('[data-act]');if(!b)return;
   const act=b.dataset.act,apps=P().apps,i=+b.dataset.i;
@@ -85,6 +109,8 @@ const AppsFeature=(function(){
    try{await lmaPlugin('AppLauncher').launch({pkg:apps[i].pkg})}catch(err){toast('Could not open it: '+errText(err))}
   }else if(act==='add'){openSheet()}
   else if(act==='edit'){editing=!editing;render()}
+  else if(act==='art'){openArt(i)}
+  else if(act==='pixel'){P().pixel=b.checked;lmaSave();render()}
   else if(act==='remove'){apps.splice(i,1);lmaSave();render()}
   else if(act==='left'&&i>0){[apps[i-1],apps[i]]=[apps[i],apps[i-1]];lmaSave();render()}
   else if(act==='right'&&i<apps.length-1){[apps[i+1],apps[i]]=[apps[i],apps[i+1]];lmaSave();render()}

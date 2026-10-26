@@ -3391,7 +3391,7 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .pet-grow small{display:block;font-size:11.5px;line-height:1.45;color:var(--text-dim)}
 </style>
 <style id="lifemax-feature-styles">
-/* Feature apps v1.0.0 */
+/* Feature apps v1.1.0 */
 .apps-root{padding-bottom:24px}
 .apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:14px 8px;margin-top:6px}
 .apps-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;background:none;border:0;color:var(--text);font:inherit;cursor:pointer;border-radius:14px;-webkit-tap-highlight-color:transparent}
@@ -3400,8 +3400,8 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .apps-fallback{display:flex;align-items:center;justify-content:center;background:var(--panel3);font-weight:700;font-size:22px}
 .apps-tile span.apps-name{font-size:12px;line-height:1.15;max-width:76px;text-align:center;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .apps-add img,.apps-add .apps-fallback{border:2px dashed var(--line);background:transparent;color:var(--text-dim)}
-.apps-edit{display:flex;gap:4px;margin-top:2px}
-.apps-edit button{background:var(--panel3);color:var(--text);border:1px solid var(--line);border-radius:8px;width:26px;height:26px;font-size:12px;line-height:1;cursor:pointer}
+.apps-edit{display:grid;grid-template-columns:repeat(2,30px);gap:4px;margin-top:2px}
+.apps-edit button{background:var(--panel3);color:var(--text);border:1px solid var(--line);border-radius:8px;width:30px;height:28px;font-size:12px;line-height:1;cursor:pointer}
 .apps-edit button.apps-x{color:#ff7b7b}
 .apps-bar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
 .apps-sheet{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;padding:max(12px,env(safe-area-inset-top)) 14px 0}
@@ -3412,6 +3412,12 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .apps-row img{width:40px;height:40px;border-radius:10px}
 .apps-row .apps-lbl{flex:1}
 .apps-row .apps-chk{color:var(--good,#5fd38d);font-weight:700}
+.apps-px{image-rendering:pixelated;image-rendering:crisp-edges}
+.apps-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim)}
+.apps-artgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px 6px;padding:8px 0 24px}
+.apps-artgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:1px solid transparent;border-radius:12px;padding:8px 2px;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.apps-artgrid button.on{border-color:var(--gold,#e0b341);background:var(--panel2)}
+.apps-artgrid img{width:56px;height:56px}
 
 /* Feature life-director v1.7.0 */
 /* ==========================================================================
@@ -13099,7 +13105,7 @@ function lmaLoad(){
  if(lmaPrefs)return lmaPrefs;
  let raw=null;try{raw=JSON.parse(localStorage.getItem(LMA_PREF_KEY)||'null')}catch(e){}
  raw=raw&&typeof raw==='object'?raw:{};
- lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[]};
+ lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],pixel:raw.pixel!==false};
  return lmaPrefs;
 }
 function lmaSave(){try{localStorage.setItem(LMA_PREF_KEY,JSON.stringify(lmaLoad()))}catch(e){console.warn('LMA prefs not saved',e)}}
@@ -13248,14 +13254,147 @@ async function lmaRenderSettings(){
 </script>
 <script>window.LifeMaxFeatures=(()=>{const features=new Map();return Object.freeze({register(x){if(!x||typeof x.id!=='string'||features.has(x.id)||typeof x.mount!=='function')throw Error('Invalid feature registration');features.set(x.id,x)},open(id){const x=features.get(id);if(x)x.mount(document.getElementById('view-'+id))},list(){return [...features.keys()]}})})();document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b&&b.dataset.view&&document.getElementById('view-'+b.dataset.view)?.classList.contains('lmf-feature'))queueMicrotask(()=>LifeMaxFeatures.open(b.dataset.view))});</script>
 <script>
-/* Apps 1.0.0 — a launcher shelf for the other apps on the phone (Android app only). */
+/* Pixel-art icons for the Apps tab: 16x16 sprites drawn in code, shown scaled up with hard edges. */
+const AppsPixelArt=(function(){
+ const N=16,cache={};
+ const grid=()=>Array.from({length:N},()=>Array(N).fill(null));
+ const put=(g,x,y,c)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<N&&y<N)g[y][x]=c};
+ const shade=(hex,k)=>{const n=parseInt(hex.slice(1),16),f=v=>Math.max(0,Math.min(255,Math.round(v*k)));return '#'+[(n>>16)&255,(n>>8)&255,n&255].map(f).map(v=>v.toString(16).padStart(2,'0')).join('')};
+ const each=f=>{for(let y=0;y<N;y++)for(let x=0;x<N;x++)f(x,y)};
+ const dist=(x,y,cx,cy)=>Math.hypot(x-cx,y-cy);
+ /* rounded tile with a lit top edge and shaded bottom edge */
+ function tile(g,c){
+  each((x,y)=>{
+   const cx=Math.min(x,N-1-x),cy=Math.min(y,N-1-y);
+   if(cx+cy<2)return;
+   g[y][x]=y===0?shade(c,1.25):y===N-1?shade(c,.6):y>=N-3?shade(c,.82):c;
+  });
+ }
+ function rows(g,pal,lines,ox,oy){lines.forEach((ln,y)=>{for(let x=0;x<ln.length;x++){const c=pal[ln[x]];if(c)put(g,x+(ox||0),y+(oy||0),c)}})}
+ function disc(g,cx,cy,r,c){each((x,y)=>{if(dist(x,y,cx,cy)<=r)g[y][x]=c})}
+ function ray(g,cx,cy,deg,r0,r1,w,c){
+  const a=deg*Math.PI/180,dx=Math.cos(a),dy=Math.sin(a);
+  each((x,y)=>{const px=x-cx,py=y-cy,t=px*dx+py*dy;if(t<r0||t>r1)return;if(Math.abs(-px*dy+py*dx)<=w)g[y][x]=c});
+ }
+ const ART={
+  spotify:{label:'Spotify',draw(g){
+   const G='#1ed760',K='#0b1d12';
+   each((x,y)=>{if(dist(x,y,7.5,7.5)<=7.7)g[y][x]=y>=13?shade(G,.82):G});
+   [[4,3,12],[7,4,11],[10,5,10]].forEach(([top,x0,x1])=>each((x,y)=>{
+    if(x<x0||x>x1||y<top||y>top+2)return;
+    if(Math.abs(dist(x,y,7.75,top+9.5)-9.5)<=0.8)put(g,x,y,K);
+   }));
+  }},
+  firefox:{label:'Firefox',draw(g){
+   const R=7.7;
+   each((x,y)=>{
+    const d=dist(x,y,7.5,7.5);if(d>R)return;
+    const th=Math.atan2(y-7.5,x-7.5)*180/Math.PI;
+    g[y][x]=d<4?'#8a5cff':d<6?'#6a3fd6':'#4a22a8';
+    const sweep=(th>-35&&th<205)||(th>-120&&th<-60&&d>5);
+    if(sweep&&d>3.2){g[y][x]=d>6.1?'#ff6a1a':d>4.6?'#ff9a1f':'#ffc83a'}
+    if(th>200&&th<250&&d>6.2)g[y][x]='#ff6a1a';
+   });
+   put(g,12,2,'#ff6a1a');put(g,13,3,'#ff6a1a');put(g,13,2,'#ff9a1f');
+  }},
+  claude:{label:'Claude',draw(g){
+   const C='#d97757',L='#fbf1e6';
+   tile(g,C);
+   for(let k=0;k<12;k++)ray(g,7.5,7.5,k*30+15,0,6.6,0.55,L);
+   disc(g,7.5,7.5,1.3,L);
+  }},
+  settings:{label:'Settings',draw(g){
+   tile(g,'#3a4558');
+   const c='#cfd8e6';
+   each((x,y)=>{
+    const d=dist(x,y,7.5,7.5),th=Math.atan2(y-7.5,x-7.5)*180/Math.PI;
+    const tooth=(((th%45)+45)%45<18);
+    if(d<=4.9||(d<=6.4&&tooth))g[y][x]=d<=4.9&&d>=3.9?'#aab6c8':c;
+    if(d<2.4)g[y][x]=null;
+   });
+   each((x,y)=>{if(g[y][x]===null&&dist(x,y,7.5,7.5)<2.4)g[y][x]='#3a4558'});
+  }},
+  chrome:{label:'Chrome',draw(g){
+   each((x,y)=>{
+    const d=dist(x,y,7.5,7.5);if(d>7.7)return;
+    const th=(Math.atan2(y-7.5,x-7.5)*180/Math.PI+360+90)%360;
+    g[y][x]=th<120?'#e8453c':th<240?'#fbbc04':'#34a853';
+    if(d<=3.9)g[y][x]=d<=3?'#4285f4':'#ffffff';
+   });
+  }},
+  youtube:{label:'YouTube',draw(g){
+   const R='#ff1f1f';
+   each((x,y)=>{if(y>=3&&y<=12&&x>=0&&x<=15&&!((x<1||x>14)&&(y<4||y>11)))g[y][x]=y>=11?shade(R,.8):R});
+   rows(g,{w:'#ffffff'},['w','ww','www','wwww','www','ww','w'],6,4);
+  }},
+  snapchat:{label:'Snapchat',draw(g){
+   tile(g,'#fffc00');
+   rows(g,{o:'#2b2b2b',w:'#ffffff'},[
+    '................','................','......oooo......','.....owwwwo.....','....owwwwwwo....','....owwwwwwo....','....owwwwwwo....',
+    '...owwwwwwwwo...','..owwwwwwwwwwo..','...owwwwwwwwo...','...owwwwwwwwo...','...owwwwwwwwo...','..owwowwowwowo..','...oo.oo.oo.oo..'
+   ]);
+  }}
+ };
+ /* tiny 3x5 pixel font for letters on icons we have no logo for */
+ const F={A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',E:'111100110100111',F:'111100110100100',G:'011100101101011',H:'101101111101101',I:'111010010010111',J:'001001001101010',K:'101101110101101',L:'100100100100111',M:'101111111101101',N:'110101101101101',O:'010101101101010',P:'110101110100100',Q:'010101101111011',R:'110101110101101',S:'011100010001110',T:'111010010010010',U:'101101101101111',V:'101101101101010',W:'101101111111101',X:'101101010101101',Y:'101101010010010',Z:'111001010100111',0:'111101101101111',1:'010110010010111',2:'110001010100111',3:'110001010001110',4:'101101111001001',5:'111100110001110',6:'011100111101111',7:'111001010010010',8:'111101111101111',9:'111101111001110'};
+ function hue(str){let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;return h%360}
+ function hsl(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return '#'+[f(0),f(8),f(4)].map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('')}
+ function letterTile(g,label,seed){
+  tile(g,hsl(hue(seed||label),48,40));
+  const ch=((label||'?').trim().charAt(0)||'?').toUpperCase(),bits=F[ch]||F.X;
+  for(let i=0;i<15;i++)if(bits[i]==='1'){
+   const gx=5+(i%3)*2,gy=3+Math.floor(i/3)*2;
+   for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){put(g,gx+dx+1,gy+dy+1,'rgba(0,0,0,.35)');}
+  }
+  for(let i=0;i<15;i++)if(bits[i]==='1'){
+   const gx=5+(i%3)*2,gy=3+Math.floor(i/3)*2;
+   for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++)put(g,gx+dx,gy+dy,'#ffffff');
+  }
+ }
+ function toUrl(g){
+  const c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');
+  each((px,py)=>{const v=g[py][px];if(v){x.fillStyle=v;x.fillRect(px,py,1,1)}});
+  return c.toDataURL('image/png');
+ }
+ const MATCH=[
+  ['spotify',/(^|\.)spotify|spoti/i],['firefox',/firefox|fenix/i],['claude',/anthropic\.claude|^claude/i],
+  ['settings',/^com\.(android|samsung\.android)\.settings$|^settings$/i],['chrome',/^com\.android\.chrome$|^chrome$/i],
+  ['youtube',/google\.android\.youtube$|^youtube$/i],['snapchat',/snapchat/i]
+ ];
+ function autoKey(pkg,label){for(const [k,re] of MATCH)if(re.test(pkg||'')||re.test(label||''))return k;return null}
+ return {
+  keys:()=>Object.keys(ART),
+  name:k=>ART[k]&&ART[k].label,
+  autoKey,
+  /* key: a logo key, or null for the generic letter tile */
+  url(key,label,seed){
+   const ck=key?key:'L:'+((label||'?').trim().charAt(0).toUpperCase())+':'+hue(seed||label||'');
+   if(cache[ck])return cache[ck];
+   const g=grid();
+   if(key&&ART[key])ART[key].draw(g);else letterTile(g,label,seed);
+   return cache[ck]=toUrl(g);
+  }
+ };
+})();
+/* Apps 1.1.0 — a launcher shelf for the other apps on the phone (Android app only). Pixel-art icons come from art.js. */
 const AppsFeature=(function(){
  let root=null,editing=false,sheet=null,all=null;
+ const iconCache={};
  const P=()=>lmaLoad();
+ const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+ /* what to show for an app: a pixel-art tile (logo or letter), or its real Android icon */
+ function iconHtml(a,cls){
+  const mode=a.art||'auto';
+  if(P().pixel!==false&&mode!=='orig'){
+   const key=mode!=='auto'?mode:AppsPixelArt.autoKey(a.pkg,a.label);
+   return '<img class="apps-px" alt="" src="'+AppsPixelArt.url(key,a.label,a.pkg)+'">';
+  }
+  const real=a.icon||iconCache[a.pkg];
+  return real?'<img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(real)+'">':'<div class="apps-fallback">'+esc((a.label||'?').charAt(0))+'</div>';
+ }
  const tileHtml=(a,i)=>{
-  const icon=a.icon?'<img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(iconOf(a.pkg))+'">':'<div class="apps-fallback">'+esc((a.label||'?').charAt(0))+'</div>';
-  return '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile" data-act="launch" data-i="'+i+'" aria-label="Open '+esc(a.label)+'">'+icon+'<span class="apps-name">'+esc(a.label)+'</span></button>'+
-   (editing?'<div class="apps-edit"><button data-act="left" data-i="'+i+'" aria-label="Move left">◀</button><button class="apps-x" data-act="remove" data-i="'+i+'" aria-label="Remove">✕</button><button data-act="right" data-i="'+i+'" aria-label="Move right">▶</button></div>':'')+'</div>';
+  return '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile" data-act="launch" data-i="'+i+'" aria-label="Open '+esc(a.label)+'">'+iconHtml(a)+'<span class="apps-name">'+esc(a.label)+'</span></button>'+
+   (editing?'<div class="apps-edit"><button data-act="left" data-i="'+i+'" aria-label="Move left">◀</button><button data-act="right" data-i="'+i+'" aria-label="Move right">▶</button><button data-act="art" data-i="'+i+'" aria-label="Change icon">✎</button><button class="apps-x" data-act="remove" data-i="'+i+'" aria-label="Remove">✕</button></div>':'')+'</div>';
  };
  function render(){
   if(!root)return;
@@ -13267,7 +13406,7 @@ const AppsFeature=(function(){
   const apps=P().apps;
   h+='<div class="card"><div class="apps-grid">'+apps.map(tileHtml).join('')+
    '<div style="display:flex;flex-direction:column;align-items:center"><button class="apps-tile apps-add" data-act="add" aria-label="Add app"><div class="apps-fallback">＋</div><span class="apps-name">Add app</span></button></div></div>'+
-   (apps.length?'<div class="apps-bar"><button class="btn small secondary" data-act="edit">'+(editing?'Done':'Edit shortcuts')+'</button></div>':'<p class="muted" style="font-size:12px;margin:10px 0 0">Tap “Add app” to pick the apps you want here.</p>')+'</div>';
+   (apps.length?'<div class="apps-bar"><button class="btn small secondary" data-act="edit">'+(editing?'Done':'Edit shortcuts')+'</button><label class="apps-opt"><input type="checkbox" class="check" data-act="pixel" '+(P().pixel!==false?'checked':'')+'> Pixel-art icons</label></div>':'<p class="muted" style="font-size:12px;margin:10px 0 0">Tap “Add app” to pick the apps you want here.</p>')+'</div>';
   h+='<div class="card" style="margin-top:14px"><h3>Use LifeMax as your home screen</h3><p class="muted" style="font-size:12px;margin-top:-5px">Choose LifeMax RPG as the default Home app. Pressing Home then brings you here, and you can switch back any time in the same place.</p><button class="btn secondary" data-act="home">Open home app settings</button></div>';
   root.innerHTML=h;
  }
@@ -13297,11 +13436,9 @@ const AppsFeature=(function(){
   if(ch){lmaSave();if(!sheet)render()}
   return all;
  }
- const iconCache={};
- function iconOf(pkg){return iconCache[pkg]||'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='}
- function sheetHtml(q){
+  function sheetHtml(q){
   const have=new Set(P().apps.map(a=>a.pkg)),ql=(q||'').toLowerCase();
-  const rows=(all||[]).filter(a=>!ql||a.label.toLowerCase().indexOf(ql)>=0).map(a=>'<button class="apps-row" data-act="pick" data-pkg="'+esc(a.pkg)+'"><img alt="" data-pkg="'+esc(a.pkg)+'" src="'+esc(iconOf(a.pkg))+'"><span class="apps-lbl">'+esc(a.label)+'</span>'+(have.has(a.pkg)?'<span class="apps-chk">✓</span>':'')+'</button>').join('');
+  const rows=(all||[]).filter(a=>!ql||a.label.toLowerCase().indexOf(ql)>=0).map(a=>'<button class="apps-row" data-act="pick" data-pkg="'+esc(a.pkg)+'">'+iconHtml(a)+'<span class="apps-lbl">'+esc(a.label)+'</span>'+(have.has(a.pkg)?'<span class="apps-chk">✓</span>':'')+'</button>').join('');
   return rows||'<p class="muted" style="padding:16px 4px">'+(all?'No apps match.':'Loading apps…')+'</p>';
  }
  function openSheet(){
@@ -13324,10 +13461,25 @@ const AppsFeature=(function(){
   loadAll().then(()=>{
    if(!sheet)return;
    list.innerHTML=sheetHtml(sheet.querySelector('input').value);
-   return fetchIcons(all.map(a=>a.pkg)).then(m=>Object.assign(iconCache,m));
+   return fetchIcons(all.map(a=>a.pkg)).then(m=>{Object.assign(iconCache,m);if(sheet&&P().pixel===false)list.innerHTML=sheetHtml(sheet.querySelector('input').value)});
   }).catch(err=>{if(list)list.innerHTML='<p class="muted" style="padding:16px 4px">Could not read the app list.<br><small>'+esc(errText(err))+'</small></p>'});
  }
  function closeSheet(){if(sheet){sheet.remove();sheet=null}let ch=false;for(const a of P().apps)if(!a.icon&&iconCache[a.pkg]){a.icon=iconCache[a.pkg];ch=true}if(ch)lmaSave();render()}
+ function openArt(i){
+  const a=P().apps[i];if(!a)return;
+  const cur=a.art||'auto',opt=(k,label,src)=>'<button data-k="'+k+'" class="'+(cur===k?'on':'')+'"><img class="apps-px" alt="" src="'+src+'"><span>'+esc(label)+'</span></button>';
+  const ov=document.createElement('div');ov.className='apps-sheet';
+  const autoKey=AppsPixelArt.autoKey(a.pkg,a.label);
+  ov.innerHTML='<header><strong style="flex:1">Icon for '+esc(a.label)+'</strong><button class="btn small" data-k="__close">Done</button></header><div class="apps-list"><div class="apps-artgrid">'+
+   opt('auto','Automatic',AppsPixelArt.url(autoKey,a.label,a.pkg))+AppsPixelArt.keys().map(k=>opt(k,AppsPixelArt.name(k),AppsPixelArt.url(k))).join('')+
+   (a.icon||iconCache[a.pkg]?'<button data-k="orig" class="'+(cur==='orig'?'on':'')+'"><img alt="" src="'+esc(a.icon||iconCache[a.pkg])+'"><span>Original</span></button>':'')+'</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{
+   const b=e.target.closest('[data-k]');if(!b)return;
+   if(b.dataset.k!=='__close'){if(b.dataset.k==='auto')delete a.art;else a.art=b.dataset.k;lmaSave()}
+   ov.remove();render();
+  });
+ }
  async function onClick(e){
   const b=e.target.closest('[data-act]');if(!b)return;
   const act=b.dataset.act,apps=P().apps,i=+b.dataset.i;
@@ -13335,6 +13487,8 @@ const AppsFeature=(function(){
    try{await lmaPlugin('AppLauncher').launch({pkg:apps[i].pkg})}catch(err){toast('Could not open it: '+errText(err))}
   }else if(act==='add'){openSheet()}
   else if(act==='edit'){editing=!editing;render()}
+  else if(act==='art'){openArt(i)}
+  else if(act==='pixel'){P().pixel=b.checked;lmaSave();render()}
   else if(act==='remove'){apps.splice(i,1);lmaSave();render()}
   else if(act==='left'&&i>0){[apps[i-1],apps[i]]=[apps[i],apps[i-1]];lmaSave();render()}
   else if(act==='right'&&i<apps.length-1){[apps[i+1],apps[i]]=[apps[i],apps[i+1]];lmaSave();render()}

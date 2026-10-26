@@ -29,9 +29,10 @@ def inject(html):
     for fj in sorted((ROOT / "src/features").glob("*/feature.json")):
         meta = json.loads(fj.read_text(encoding="utf-8"))
         d = fj.parent
+        scripts = meta.get("scripts") or ["logic.js"]
         feats.append((meta, (d / "view.html").read_text(encoding="utf-8"),
                       (d / "style.css").read_text(encoding="utf-8"),
-                      (d / "logic.js").read_text(encoding="utf-8")))
+                      "".join((d / n).read_text(encoding="utf-8") for n in scripts)))
     if not feats:
         return html
     css = '<style id="lifemax-feature-styles">\n' + "".join(
