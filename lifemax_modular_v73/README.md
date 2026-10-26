@@ -321,3 +321,6 @@ The app checks for a newer build a few seconds after every launch (and when you 
 
 ## v102 — Overview app row; pixel-art app icons removed
 New Overview tile "App shortcuts": a scrolling row of your Apps-tab shortcuts using each app's own Android icon, with a + button that opens the app picker. The pixel-art icon set (art.js), the "Pixel-art icons" toggle and the per-app icon picker are gone from the Apps tab. Also fixed: the widget's tap-to-open now loads the Life Director tab properly.
+
+## v103 — launch update check retries
+If the check at launch fails (e.g. no network yet) it retries after 15 s, 45 s and 2 min, and Settings → App updates shows the error instead of staying silent.

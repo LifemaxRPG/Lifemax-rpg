@@ -13453,7 +13453,7 @@ document.addEventListener('touchcancel',()=>{lmaSw=null},{passive:true});
 setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled()},500);
 /* v91 · Android upkeep: in-app updates and automatic backups to a folder you choose.
    Everything here needs the Android shell; in a browser the Settings cards just say so. */
-let lmaUpd={state:'idle',info:null,pct:0,err:''},lmaBakBusy=false,lmaUpdBound=false;
+let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakBusy=false,lmaUpdBound=false;
 const lmaSetHtml=(id,h)=>{const el=document.getElementById(id);if(el)el.innerHTML=h};
 const lmaAgo=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 /* ---------- updates ---------- */
@@ -13464,9 +13464,9 @@ async function lmaCheckUpdate(silent){
  try{
   const r=await U.check();lmaUpd.info=r;
   lmaUpd.state=r.latest>r.current&&r.apk?'available':'latest';
-  lmaLoad().updChecked=Date.now();lmaSave();
+  lmaLoad().updChecked=Date.now();lmaSave();lmaUpd.autoErr='';lmaUpdTries=0;
   if(silent&&lmaUpd.state==='available')lmaUpdPopOpen();
- }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent)lmaUpd.state='idle'}
+ }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent){lmaUpd.state='idle';lmaUpd.autoErr=lmaUpd.err;if(lmaUpdTries<3)setTimeout(()=>lmaCheckUpdate(true),[15000,45000,120000][lmaUpdTries++])}}
  lmaRenderUpdates();
 }
 async function lmaInstallUpdate(){
@@ -13508,7 +13508,7 @@ function lmaRenderUpdates(){
  if(!lmaNative()){lmaSetHtml('lmaUpdBody','<div class="note">Updates are managed inside the Android app.</div>');return}
  const u=lmaUpd,i=u.info,cur=i?i.current:'';
  let h='<div class="settingsline"><div style="flex:1"><strong>'+(i?'Installed build '+cur:'Installed build')+'</strong><div class="muted" style="font-size:12px">';
- h+=u.state==='checking'?'Checking…':u.state==='latest'?'You have the newest build.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.';
+ h+=u.state==='checking'?'Checking…':u.state==='latest'?'You have the newest build.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
  h+='</div></div>';
  if(u.state==='available'||u.state==='permission')h+='<button class="btn" onclick="lmaInstallUpdate()">Update</button>';
  else if(u.state!=='checking'&&u.state!=='downloading')h+='<button class="btn secondary" onclick="lmaCheckUpdate(false)">Check now</button>';
