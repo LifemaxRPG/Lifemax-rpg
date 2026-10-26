@@ -82,6 +82,8 @@ def angle(u, v):
 
 def segment_frame(fg, fb):
     S = (fg > 0) | (fb > 0)
+    if not S.any():     # an empty cell (some kitten rows are blank)
+        return {'H': None, 'ears': [], 'tail': None, 'whisk': [], 'bottom': 0}, S, np.zeros((H, W), np.int16), S.copy()
     wall = (fg == OUTLINE)
     lab, comps = components4(S & ~wall)
     n = len(comps)
@@ -128,6 +130,11 @@ def segment_frame(fg, fb):
         bot = max(y for y in range(H) if S[y].any())
         if sum(1 for i in tail if st[i]['cy'] >= bot - 9) >= 0.7 * len(tail):
             while len(tail) > 4 and st[tail[-1]]['cy'] < bot - 9: tail = tail[:-1]
+    if tail:
+        # a vertical chain that reaches the floor is a leg, not a tail (kittens have no rings on their tails)
+        bot = max(y for y in range(H) if S[y].any())
+        ys = [p[0] for i in tail for p in st[i]['pts']]; xs = [p[1] for i in tail for p in st[i]['pts']]
+        if max(ys) >= bot - 2 and (max(ys) - min(ys)) >= 1.2 * (max(xs) - min(xs) + 1): tail = []
     tails = set(tail)
     ears = []
     if big:
@@ -208,6 +215,7 @@ def segment_frame(fg, fb):
     return out, S, P, body
 
 def stretch_regions(body, S, head):
+    if not body.any(): return None, None
     """rows [ya,yb) of the legs that can be stretched, columns [xa,xb) of the torso"""
     ys = [y for y in range(H) if body[y].any()]
     if not ys: return None, None
@@ -265,24 +273,38 @@ def enc_frame(fr, legs_ok, body_ok, tail_ok):
     r['y'] = fr['bottom']
     return r
 
+def sheet_sets(A, G):
+    """name -> (ginger sheet, black sheet, anims, W, H)"""
+    sets = {'adult': (A['coats'], A['anims'])}
+    for i, st in enumerate(G['stages']): sets['st%d' % i] = (st['coats'], A['anims'])
+    d = A['depth']
+    sets['depth'] = (d['coats'], d['anims'])
+    for i, st in enumerate(d['stages']): sets['dst%d' % i] = (st['coats'], d['anims'])
+    return sets
+
 def main():
-    qa_on = '--qa' in sys.argv
-    A = load_json('petAssets.html', 'petAssets')
-    g = sheet(A['coats']['ginger']); b = sheet(A['coats']['black'])
-    qa = [] if qa_on else None
-    adult = build_sheet(g, b, A['anims'], qa)
-    out = {'v': 1, 'W': W, 'H': H, 'adult': {n: dict(lg=int(r['legs']), bd=int(r['body']), tl=int(r['tail']), f=[enc_frame(fr, r['legs'], r['body'], r['tail']) for fr in r['frames']]) for n, r in adult.items()}}
+    qa_kinds = [a.split('=')[1].split(',') for a in sys.argv if a.startswith('--qa=')]
+    qa_kinds = qa_kinds[0] if qa_kinds else (['adult'] if '--qa' in sys.argv else [])
+    only = [a.split('=')[1].split(',') for a in sys.argv if a.startswith('--only=')]
+    A = load_json('petAssets.html', 'petAssets'); G = load_json('petGrowth.html', 'petGrowth')
+    sets = sheet_sets(A, G)
+    out = {'v': 2, 'W': W, 'H': H}
+    for kind, (coats, anims) in sets.items():
+        if only and kind not in only[0]: continue
+        g = sheet(coats['ginger']); b = sheet(coats['black'])
+        qa = [] if kind in qa_kinds else None
+        rig = build_sheet(g, b, anims, qa)
+        out[kind] = {n: dict(lg=int(r['legs']), bd=int(r['body']), tl=int(r['tail']), f=[enc_frame(fr, r['legs'], r['body'], r['tail']) for fr in r['frames']]) for n, r in rig.items()}
+        ok = lambda k: sum(1 for r in rig.values() if r[k])
+        print('%-6s rows %2d  tail ok %2d  legs ok %2d  body ok %2d  ears-per-frame %s' % (kind, len(rig), ok('tail'), ok('legs'), ok('body'),
+              sorted({len(fr['ears']) for r in rig.values() for fr in r['frames']})))
+        if qa is not None:
+            qa_dir = ROOT / 'tools/qa'; qa_dir.mkdir(exist_ok=True); qa_images(qa, qa_dir, kind)
     txt = '<script type="application/json" id="petRig">' + json.dumps(out, separators=(',', ':')) + '</script>'
     (DATA / 'petRig.html').write_text(txt, encoding='utf-8')
     print('petRig.html', len(txt), 'bytes')
-    for n, r in adult.items():
-        tails = sum(1 for fr in r['frames'] if fr['tail']); ears = [len(fr['ears']) for fr in r['frames']]
-        print('%-12s frames %d  tail %d/%d ok=%s  ears %s  legs %s  body %s' % (n, len(r['frames']), tails, len(r['frames']), r['tail'], ''.join(map(str, ears)), r['legs'], r['body']))
-    if qa_on:
-        qa_dir = ROOT / 'tools/qa'; qa_dir.mkdir(exist_ok=True)
-        qa_images(qa, qa_dir)
 
-def qa_images(qa, outdir):
+def qa_images(qa, outdir, kind='adult'):
     scale = 3
     for i in range(0, len(qa), 7):
         chunk = qa[i:i+7]; cols = 4
@@ -311,7 +333,7 @@ def qa_images(qa, outdir):
                         for xx in fr['bod']:
                             if fg[y, xx] > 0: px[xx, y] = (255, 160, 60)
                 im.paste(tile.resize((W*scale, H*scale), Image.NEAREST), (k*W*scale, r*H*scale))
-        im.save(outdir / ('adult_%d.png' % (i//7)))
+        im.save(outdir / ('%s_%d.png' % (kind, i//7)))
 
 if __name__ == '__main__':
     main()

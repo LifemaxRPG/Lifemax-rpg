@@ -132,10 +132,11 @@ function petRigCompose(src,fr,m,pose,W,H){
     if(x===0||y===0||x===CW-1||y===CH-1||!(res[i-1]>>>24)||!(res[i+1]>>>24)||!(res[i-CW]>>>24)||!(res[i+CW]>>>24))res[i]=PET_RIG_OUTLINE}
   return {px:res,CW:CW,CH:CH};
 }
-function petRigFrame(rt,sh,kind,anim,f,morph,pose){
+function petRigFrame(rt,sh,kind,anim,f,morph,pose,meta){
   try{
     if(!sh||!morph||(petRigNeutral(morph)&&!pose))return null;
-    const A=rt.A,a=A.anims[anim];if(!a)return null;const W=A.W,H=A.H;
+    const A=rt.A,dep=kind==='depth'||kind.charAt(0)==='d',a=meta||(dep?A.depth&&A.depth.anims[anim]:A.anims[anim]);if(!a)return null;
+    const W=dep?A.depth.W:A.W,H=dep?A.depth.H:A.H;
     const fr=petRigFrameData(kind,anim,f%a.n);if(!fr)return null;
     const m={em:morph.em,ew:morph.ew,tl:morph.bob?Math.min(morph.tl,0.3):morph.tl,lg:morph.lg,bl:morph.bl,wk:morph.wk};
     const key=[anim,f%a.n,petRigQ(m.em),petRigQ(m.ew),petRigQ(m.tl),petRigQ(m.lg),petRigQ(m.bl),petRigQ(m.wk),petRigPoseKey(pose)].join('|');
@@ -148,9 +149,16 @@ function petRigFrame(rt,sh,kind,anim,f,morph,pose){
     if(C.size>600)C.delete(C.keys().next().value);C.set(key,hit);return hit;
   }catch(e){console.warn('[pet rig]',e);return null}
 }
-/* the draw hook used by petDrawCat (17): adult cats only; kittens, the front/back views and any row the rig cannot map keep their art */
-function petRigPick(rt,p,sh,meta,c,f,bv,gi,depthRow){
-  if(gi>=0||bv||depthRow)return null;
+/* a kitten shows its proportions in step with how grown it is: day 0 has none of them, day 30 all */
+function petRigGrown(m,g){
+  if(g>=1)return m;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};
+  ['em','ew','tl','lg','bl','wk'].forEach(function(k){o[k]=one(m[k])});if(m.bob)o.tl=m.tl;return o;
+}
+/* the draw hook used by petDrawCat (17): kind says which sheet is being drawn: adult, st0-st5 (kitten stages), depth or dst0-dst5 (front/back views) */
+function petRigPick(rt,p,sh,meta,c,f,bv,kind){
+  if(bv||!kind)return null;
   const ph=petPheno(p);if(!ph||!ph.morph)return null;
-  return petRigFrame(rt,sh,'adult',rt.A.anims[c.anim]?c.anim:'idle_sit',f,ph.morph,null);
+  const dep=kind.charAt(0)==='d',tab=dep?rt.A.depth.anims:rt.A.anims,anim=tab[c.anim]?c.anim:(dep?'walk_front':'idle_sit');
+  const g=kind==='adult'||kind==='depth'?1:petGrowth(p);
+  return petRigFrame(rt,sh,kind,anim,f,petRigGrown(ph.morph,g),null,tab[anim]);
 }

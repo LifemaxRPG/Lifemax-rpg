@@ -295,4 +295,8 @@ Whenever Life Director builds or repairs your plan, the Today dial shows it happ
 
 `38-pet-rig.js` re-assembles a frame with the parts transformed (`petRigFrame`): ears scale along and across their axis, the tail bends along its own centre line (longer without getting thicker), whiskers lengthen, a row band stretches the legs, a column band stretches the torso, and the outline is repaired where a part was cut. Results are cached per sheet, row, frame and proportions. The hook is in `petDrawCat` (17): adult cats only for now; kittens, the front/back views and any cat whose proportions are all about 1 draw the plain sheet.
 
-Known limits: kittens and the front/back-view frames do not use the rig yet; scratch, bat, kick, swat keep their tails; wide ears (> 1.4×) look rough because pixels are re-spaced unevenly.
+Known limits: scratch, bat, kick, swat keep their tails; wide ears (> 1.4×) look rough because pixels are re-spaced unevenly.
+
+## v95: kittens and the front/back views
+
+`tools/rig_build.py` now covers every sheet: `adult`, the six kitten stages `st0`–`st5`, the front/back-view sheet `depth` and its kitten stages `dst0`–`dst5` (one JSON block, about 520 KB). `petDrawCat` (17) passes the sheet kind to `petRigPick`, which scales a kitten's proportions by how grown it is (`petRigGrown`: day 0 none, day 30 all, so there is no pop when it grows up). Ears work in every view; tails work in the rows where the builder found a real chain; legs and torso stretch only in the rows flagged for it (walk, eat, rub, leap, walk_w, and the lying rows for the torso). A vertical chain that touches the floor is a leg, not a tail (kittens' tails have no rings), so those rows keep their plain tail. The back view (`walk_back`) and the scratch/bat rows are left alone until they are redrawn to fit the rig.

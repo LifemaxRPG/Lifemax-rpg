@@ -23,10 +23,10 @@ function petDrawMarks(rt,o){
 function petDrawCat(rt,o){
   const p=petData(),c=rt.c,A=rt.A,gi=petGrowIdx(p);let meta=A.anims[c.anim]||A.anims.idle_sit,sh=rt.sheets[p.coat],sc=1,W=A.W,H=A.H;
   const kz=petK(c);let k=kz;
-  const dA=A.depth&&A.depth.anims[c.anim];
-  if(dA&&rt.dsheets&&rt.dsheets[p.coat]){meta=dA;sh=rt.dsheets[p.coat];W=A.depth.W;H=A.depth.H;
-    if(gi>=0){sc=petSx(p);const ks=petDepthStageSheet(rt,p,gi);if(ks)sh=ks;else k=kz*sc}}   /* kittens have their own frames (big head); the adult ones shrunk until those load */
-  else if(gi>=0){const g=petStageSheet(rt,p,gi);if(g){g.coat=p.coat;if(g.bottom[c.anim]==null&&g.bottom.idle_sit!=null){meta=A.anims.idle_sit}sh=g.cv;sc=g.sc;meta=Object.assign({},meta,{bottom:g.bottom[c.anim]!=null?g.bottom[c.anim]:g.bottom.idle_sit})}}
+  const dA=A.depth&&A.depth.anims[c.anim];let rigKind=gi<0?'adult':null;
+  if(dA&&rt.dsheets&&rt.dsheets[p.coat]){meta=dA;sh=rt.dsheets[p.coat];W=A.depth.W;H=A.depth.H;rigKind='depth';
+    if(gi>=0){sc=petSx(p);const ks=petDepthStageSheet(rt,p,gi);if(ks){sh=ks;rigKind='dst'+gi}else k=kz*sc}}   /* kittens have their own frames (big head); the adult ones shrunk until those load */
+  else if(gi>=0){const g=petStageSheet(rt,p,gi);if(g){g.coat=p.coat;if(g.bottom[c.anim]==null&&g.bottom.idle_sit!=null){meta=A.anims.idle_sit}sh=g.cv;sc=g.sc;rigKind='st'+gi;meta=Object.assign({},meta,{bottom:g.bottom[c.anim]!=null?g.bottom[c.anim]:g.bottom.idle_sit})}}
   if(!sh||!meta)return;
   let f;if(c.anim==='leap'){const s=c.step;const u=s&&s.k==='hop'?Math.min(1,s.t/s.T):1;f=u<0.4?0:1}
   else if(c.anim==='swat'){const s0=c.step;f=Math.floor((s0&&s0.t||0)*meta.fps)%meta.n}
@@ -36,7 +36,7 @@ function petDrawCat(rt,o){
   if(PET_BLINK[c.anim]&&c.lock==null)f=petBlinkFrame(rt,c.anim,meta);   /* v78.1: eyes open, with a blink every few seconds instead of every loop */
   if(c.lock!=null)f=Math.min(meta.n-1,c.lock);                    /* v78: a held pose (doze, belly-up, a freeze) */
   const bv=petBrainVariant(rt,sh,meta.row,W,H,c.anim,p.coat),sy=bv?0:meta.row*H;
-  const RG=typeof petRigPick==='function'?petRigPick(rt,p,sh,meta,c,f,bv,gi,!!(dA&&rt.dsheets&&rt.dsheets[p.coat])):null;   /* v94: the rig re-assembles the frame from its parts */
+  const RG=typeof petRigPick==='function'?petRigPick(rt,p,sh,meta,c,f,bv,rigKind):null;   /* v94: the rig re-assembles the frame from its parts */
   if(bv)sh=bv;   /* v78: ears, tail tip, pupils */
   const bottom=meta.bottom||44;
   /* ground shadow: stays on the ground under a jump and shrinks with height */
