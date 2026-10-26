@@ -2,18 +2,16 @@
   "protocol": 1,
   "id": "apps",
   "name": "Apps",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "tab",
   "icon": "\u25a6",
   "dependencies": [],
   "files": [
     "view.html",
     "style.css",
-    "art.js",
     "logic.js"
   ],
   "scripts": [
-    "art.js",
     "logic.js"
   ]
 }

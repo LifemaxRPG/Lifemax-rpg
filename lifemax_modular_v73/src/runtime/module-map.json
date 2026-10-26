@@ -1838,6 +1838,19 @@
     "lmaWidgetPush",
     "lmaWidgetRender"
    ]
+  },
+  {
+   "file": "src/runtime/segments/41-ov-apps.js",
+   "bytes": 2348,
+   "statement_count": 3,
+   "tags": [
+    "android",
+    "overview"
+   ],
+   "symbols": [
+    "ovAppsFetching",
+    "ovAppsRender"
+   ]
   }
  ]
 }

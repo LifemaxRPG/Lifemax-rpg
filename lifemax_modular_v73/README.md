@@ -318,3 +318,6 @@ Tapping the Overview "Activity today" tile opens a full Health page and starts a
 
 ## v101 — Update pop-up at launch
 The app checks for a newer build a few seconds after every launch (and when you return after 30+ minutes) and shows an "Update available" pop-up with Update now / Later. Later hides it until the next launch. Back closes it.
+
+## v102 — Overview app row; pixel-art app icons removed
+New Overview tile "App shortcuts": a scrolling row of your Apps-tab shortcuts using each app's own Android icon, with a + button that opens the app picker. The pixel-art icon set (art.js), the "Pixel-art icons" toggle and the per-app icon picker are gone from the Apps tab. Also fixed: the widget's tap-to-open now loads the Life Director tab properly.

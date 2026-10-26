@@ -18,9 +18,3 @@
 .apps-row img{width:40px;height:40px;border-radius:10px}
 .apps-row .apps-lbl{flex:1}
 .apps-row .apps-chk{color:var(--good,#5fd38d);font-weight:700}
-.apps-px{image-rendering:pixelated;image-rendering:crisp-edges}
-.apps-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim)}
-.apps-artgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px 6px;padding:8px 0 24px}
-.apps-artgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:1px solid transparent;border-radius:12px;padding:8px 2px;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
-.apps-artgrid button.on{border-color:var(--gold,#e0b341);background:var(--panel2)}
-.apps-artgrid img{width:56px;height:56px}

@@ -61,3 +61,11 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .updpop-card h3{margin:0 0 8px}.updpop-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.45}
 .updpop-btns{display:flex;gap:10px;justify-content:flex-end}
 .updpop-bar{height:8px;border-radius:99px;background:var(--line-soft);overflow:hidden;flex:1}.updpop-bar i{display:block;height:100%;background:#34d399;transition:width .3s}
+
+/* v102 · Overview: app shortcut row */
+.ova-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}.ova-row::-webkit-scrollbar{display:none}
+.ova-app{flex:0 0 auto;width:64px;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;padding:6px 2px;border-radius:14px;color:var(--text);font:inherit;cursor:pointer}
+.ova-app:active{background:var(--panel2)}
+.ova-app img,.ova-add i{width:48px;height:48px;border-radius:12px;object-fit:cover}
+.ova-add i{display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);font-style:normal;font-size:24px;color:var(--muted)}
+.ova-app span{font-size:11px;line-height:1.15;max-width:62px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

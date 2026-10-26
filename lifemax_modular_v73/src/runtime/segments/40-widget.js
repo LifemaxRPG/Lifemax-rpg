@@ -28,7 +28,7 @@ async function lmaWidgetRender(){
   '<div class="settingsline"><div style="flex:1"><strong>Refresh the picture</strong><div class="muted" style="font-size:12px">Use after you change your plan. The hand moves on its own.</div></div><button class="btn small" '+(lmaWidgetBusy?'disabled ':'')+'onclick="lmaWidgetPush(true)">'+(lmaWidgetBusy?'Drawing…':'Refresh')+'</button></div>';
 }
 async function lmaWidgetLaunch(){
- try{const r=await lmaPlugin('WidgetBridge').consumeLaunch();if(r&&r.open==='life-director')navigate('life-director')}catch(e){}
+ try{const r=await lmaPlugin('WidgetBridge').consumeLaunch();if(r&&r.open==='life-director'){navigate('life-director');LifeMaxFeatures.open('life-director')}}catch(e){}
 }
 (function lmaWidgetBoot(){
  const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings')lmaWidgetRender();return r};
