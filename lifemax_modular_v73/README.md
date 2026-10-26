@@ -354,3 +354,6 @@ Meals and Recipes share one **Food** tab (Meals | Recipes switch, remembered). T
 
 ## v116 — renamed to LifeMax, new icon
 The app is now just **LifeMax**: launcher label (`capacitor.config.json` appName), page title, header, notifications, update pop-up, widget and release names. The package id (`com.lifemax.rpg`) and the backup file identifier are unchanged so updates and backups keep working. New launcher icon (pixel-art landscape with the LM monogram): adaptive foreground keeps the monogram inside the launcher's safe zone with a blurred extension of the artwork around it; legacy square and round icons and the splash use the artwork directly.
+
+## v117 — LifeMax Voice, phase 1
+See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life Director (create_activity, query_schedule), clarification questions instead of guesses, three-tier idempotency (delivery guard, persistent operation journal with crash reconciliation, repeat-detector), preview before saving, Undo through a verified delete, diagnostics and a text simulator. Native `VoiceEnginePlugin` uses only the on-device recognizer (Android 12+).

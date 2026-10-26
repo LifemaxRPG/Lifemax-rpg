@@ -23,12 +23,13 @@ xml = re.sub(r'android:launchMode="[^"]*"', 'android:launchMode="singleTask"', x
 xml = xml.replace(
     "<application",
     '<queries>\n        <intent>\n            <action android:name="android.intent.action.MAIN" />\n'
-    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n        <package android:name="com.google.android.apps.healthdata" />\n    </queries>\n\n'
+    '            <category android:name="android.intent.category.LAUNCHER" />\n        </intent>\n        <intent>\n            <action android:name="android.speech.RecognitionService" />\n        </intent>\n        <package android:name="com.google.android.apps.healthdata" />\n    </queries>\n\n'
     '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n'
     '    <uses-permission android:name="android.permission.health.READ_EXERCISE" />\n'
     '    <uses-permission android:name="android.permission.health.READ_STEPS" />\n'
     '    <uses-permission android:name="android.permission.health.READ_SLEEP" />\n'
-    '    <uses-permission android:name="android.permission.health.READ_WEIGHT" />\n\n    <application',
+    '    <uses-permission android:name="android.permission.health.READ_WEIGHT" />\n'
+    '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n\n    <application',
     1,
 )
 
@@ -47,5 +48,5 @@ xml = xml.replace(
     '        </receiver>\n    </application>',
     1,
 )
-assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml, "manifest patch failed"
+assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "RecognitionService" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

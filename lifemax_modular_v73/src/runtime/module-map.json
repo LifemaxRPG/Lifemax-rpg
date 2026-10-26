@@ -1931,6 +1931,26 @@
     "ecoShopRender",
     "ovRewardsRender"
    ]
+  },
+  {
+   "file": "src/runtime/segments/45-voice.js",
+   "bytes": 43350,
+   "statement_count": 120,
+   "tags": [
+    "voice"
+   ],
+   "symbols": [
+    "LMV",
+    "lmvHandle",
+    "lmvFinalize",
+    "lmvExtract",
+    "lmvNormalize",
+    "lmvLocalToEpoch",
+    "lmvExecute",
+    "lmvUndo",
+    "lmvListen",
+    "LifeMaxVoice"
+   ]
   }
  ]
 }

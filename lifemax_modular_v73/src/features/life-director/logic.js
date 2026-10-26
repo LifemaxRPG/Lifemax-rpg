@@ -4685,7 +4685,85 @@ const LifeDirectorApp = (function () {
       return { png: cv.toDataURL('image/png').split(',')[1], json: JSON.stringify({ d0: day.startEpoch, d1: day.endEpoch, at: now, sessions }) };
     } finally { host.remove(); }
   }
-  return { mount, glance, widgetSnapshot, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
+     Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own
+     NEW_COMMITMENT repair (so the rest of the day is re-planned around it), find it again by id, remove it by id
+     (the verified inverse used for Undo), and read what is already in the way. It never touches XP or quests. */
+  const voiceApi = {
+    ready() { if (!ST) boot(); return !!(ST && ST.setupComplete && ST.schedule); },
+    timezone() { if (!ST) boot(); return tz(); },
+    find(id) { if (!ST) boot(); return (ST.fixedCommitments || []).find(c => String(c.id) === String(id)) || null; },
+    findMatch(title, startEpoch, endEpoch) {
+      if (!ST) boot();
+      const t = String(title || '').trim().toLowerCase();
+      return (ST.fixedCommitments || []).find(c => c.voice && String(c.title || '').trim().toLowerCase() === t && c.startEpoch === startEpoch && c.endEpoch === endEpoch) || null;
+    },
+    add(c) {
+      if (!voiceApi.ready()) return { ok: false, reason: 'NOT_SET_UP' };
+      if (voiceApi.find(c.id)) return { ok: true, id: c.id, existing: true };
+      const r = reschedule({ type: 'NEW_COMMITMENT', commitment: { id: c.id, title: c.title, startEpoch: c.startEpoch, endEpoch: c.endEpoch, commuteMin: 0, kind: 'APPOINTMENT', voice: true } });
+      if (!r) return { ok: false, reason: 'PLAN_REJECTED' };
+      persist(); try { if (root) render(); if (glanceEl) glance(glanceEl); } catch (e) { /* the page redraws on its next tick */ }
+      return { ok: true, id: c.id };
+    },
+    remove(id) {
+      if (!ST) boot();
+      const n = (ST.fixedCommitments || []).length;
+      ST.fixedCommitments = (ST.fixedCommitments || []).filter(c => String(c.id) !== String(id));
+      if (ST.fixedCommitments.length === n) return false;
+      regenerate('voice undo', true);
+      try { if (root) render(); if (glanceEl) glance(glanceEl); } catch (e) { /* ignore */ }
+      return true;
+    },
+    /* fixed things already occupying [startEpoch, endEpoch) in seconds: sleep, work, classes, regular and one-off commitments, blackouts */
+    overlaps(startEpoch, endEpoch) {
+      if (!ST) boot();
+      const z = tz(), out = [], p0 = U.localParts(startEpoch, z);
+      const days = [-1, 0, 1].map(k => U.ymdAdd({ y: p0.y, mo: p0.mo, d: p0.d }, k));
+      const hit = (s, e) => s < endEpoch && e > startEpoch;
+      for (const r of ST.availability.rules || []) {
+        if (!DRAG_KINDS[r.kind]) continue;
+        for (const ymd of days) {
+          if (!ruleOn(r, ymd)) continue;
+          const s = U.zonedToEpoch(ymd.y, ymd.mo, ymd.d, r.startMin, z), e = U.zonedToEpoch(ymd.y, ymd.mo, ymd.d, r.startMin + r.durationMin, z);
+          if (hit(s, e)) out.push({ title: r.kind === 'SLEEP' ? 'Sleep' : (r.title || KIND_LABEL[r.kind] || r.kind), kind: r.kind, startEpoch: s, endEpoch: e });
+        }
+      }
+      for (const c of ST.fixedCommitments || []) if (c.startEpoch && c.endEpoch && hit(c.startEpoch, c.endEpoch)) out.push({ title: c.title || 'Commitment', kind: c.kind || 'COMMITMENT', startEpoch: c.startEpoch, endEpoch: c.endEpoch });
+      for (const b of ST.availability.blackouts || []) if (b && b.startEpoch && b.endEpoch && hit(b.startEpoch, b.endEpoch)) out.push({ title: b.reason || b.title || 'Unavailable', kind: 'BLACKOUT', startEpoch: b.startEpoch, endEpoch: b.endEpoch });
+      return out.sort((a, b) => a.startEpoch - b.startEpoch);
+    },
+    /* the work hours Life Director knows for a local date ("YYYY-MM-DD"), or null: never guessed */
+    workOn(dateKey) {
+      if (!ST) boot();
+      const [y, mo, d] = String(dateKey).split('-').map(Number), z = tz(), ymd = { y, mo, d };
+      let best = null;
+      for (const r of ST.availability.rules || []) {
+        if (r.kind !== 'WORK' || !ruleOn(r, ymd)) continue;
+        const w = { title: r.title || 'Work', startMin: r.startMin, endMin: r.startMin + r.durationMin };
+        if (!best || w.endMin > best.endMin) best = w;
+      }
+      for (const c of ST.fixedCommitments || []) {
+        if ((c.kind || 'WORK') !== 'WORK' || !c.startEpoch) continue;
+        const p = U.localParts(c.startEpoch, z);
+        if (p.y === y && p.mo === mo && p.d === d) {
+          const w = { title: c.title || 'Work', startMin: p.h * 60 + p.mi, endMin: p.h * 60 + p.mi + Math.round((c.endEpoch - c.startEpoch) / 60) };
+          if (!best || w.endMin > best.endMin) best = w;
+        }
+      }
+      return best;
+    },
+    /* read-only: what is planned on a local date (fixed items and planned sessions), for life_director.query_schedule */
+    dayItems(dateKey) {
+      if (!voiceApi.ready()) return null;
+      const [y, mo, d] = String(dateKey).split('-').map(Number), z = tz();
+      const s0 = U.zonedToEpoch(y, mo, d, 0, z), s1 = U.zonedToEpoch(y, mo, d, 1440, z);
+      const items = voiceApi.overlaps(s0, s1).filter(x => x.kind !== 'SLEEP');
+      for (const i of ST.schedule.scheduledInstances || []) if (i.lifecycleState === 'PLANNED' && i.startEpoch < s1 && i.endEpoch > s0) items.push({ title: i.title, kind: 'SESSION', startEpoch: i.startEpoch, endEpoch: i.endEpoch });
+      return items.sort((a, b) => a.startEpoch - b.startEpoch);
+    }
+  };
+  return { mount, glance, widgetSnapshot, voice: voiceApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */
@@ -4694,7 +4772,8 @@ window.LifeDirector = Object.freeze({
   getSchedule: () => LifeDirectorApp.getSchedule(), regenerate: r => LifeDirectorApp.regenerate(r),
   glance: (el, opts) => LifeDirectorApp.glance(el, opts),
   widgetSnapshot: size => LifeDirectorApp.widgetSnapshot(size),
-  workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b)
+  workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b),
+  voice: LifeDirectorApp.voice
 });
 /* the Overview was drawn before this feature loaded: put today's dial on it now */
 try { const g = document.getElementById('ovPlan'); if (g) LifeDirectorApp.glance(g); } catch (e) { /* the Overview will try again on its next draw */ }
