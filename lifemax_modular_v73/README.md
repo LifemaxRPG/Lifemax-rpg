@@ -342,3 +342,6 @@ While you scrub the bottom bar, a blurred picture of the tab you are over fills 
 
 ## v111 — whole-bar scrub
 Edge to edge on the bottom bar covers every tab from any starting point: where your thumb lands is the tab you are on, the left edge is the first tab, the right edge the last, and the distance on each side is spread evenly between.
+
+## v113 — real screenshots on the veil, outline icons
+The scrub veil shows the blurred screenshot of each tab with a thin white outline icon and the tab's name (14 hand-drawn SVG icons in `LMA_TAB_ICONS`). Screenshots: `PageThumbPlugin` tries PixelCopy, then a software draw, and reports any error in full. A one-time pass 9 s after launch visits every tab without a picture and snapshots it (a thin progress line at the top; touching the screen stops it); Settings -> Tab previews shows how many tabs are captured, the last error, and "Capture all".

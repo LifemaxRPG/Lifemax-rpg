@@ -36,6 +36,19 @@ public class PageThumbPlugin extends Plugin {
         }
     }
 
+    /** Software fallback: draw the WebView into a small canvas. */
+    private void drawFallback(PluginCall call, WebView v, int div, int w, int h, String why) {
+        try {
+            Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(b);
+            c.scale(1f / div, 1f / div);
+            v.draw(c);
+            done(call, b);
+        } catch (Throwable t) {
+            call.reject("snapshot failed (" + why + "; draw: " + t + ")");
+        }
+    }
+
     @PluginMethod
     public void snap(final PluginCall call) {
         final int div = Math.max(2, call.getInt("div", 4));
@@ -45,23 +58,25 @@ public class PageThumbPlugin extends Plugin {
                 final WebView v = getBridge().getWebView();
                 final int w = v.getWidth() / div, h = v.getHeight() / div;
                 if (w < 8 || h < 8) { call.reject("no size"); return; }
-                final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
                 if (Build.VERSION.SDK_INT >= 26) {
+                    final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
                     int[] loc = new int[2];
                     v.getLocationInWindow(loc);
                     Rect src = new Rect(loc[0], loc[1], loc[0] + v.getWidth(), loc[1] + v.getHeight());
-                    PixelCopy.request(getActivity().getWindow(), src, b, result -> {
-                        if (result == PixelCopy.SUCCESS) done(call, b);
-                        else { b.recycle(); call.reject("copy failed " + result); }
-                    }, new Handler(Looper.getMainLooper()));
+                    try {
+                        PixelCopy.request(getActivity().getWindow(), src, b, result -> {
+                            if (result == PixelCopy.SUCCESS) done(call, b);
+                            else { b.recycle(); drawFallback(call, v, div, w, h, "pixelcopy " + result); }
+                        }, new Handler(Looper.getMainLooper()));
+                    } catch (Throwable t) {
+                        b.recycle();
+                        drawFallback(call, v, div, w, h, "pixelcopy " + t);
+                    }
                 } else {
-                    Canvas c = new Canvas(b);
-                    c.scale(1f / div, 1f / div);
-                    v.draw(c);
-                    done(call, b);
+                    drawFallback(call, v, div, w, h, "old android");
                 }
             } catch (Throwable t) {
-                call.reject(String.valueOf(t.getMessage()));
+                call.reject(String.valueOf(t));
             }
         });
     }
