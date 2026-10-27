@@ -213,12 +213,15 @@ function petPairMaybeStart(){
   const e=(petPairEnergy(0)+petPairEnergy(1))/2,kit=Math.max(petPairKit(0),petPairKit(1)),play=(state.pet.trait==='playful'||state.pet2.trait==='playful')?1.5:1;
   const O=[],add=function(k,w){if(w>0)O.push([k,w])};
   add('greet',(now-(d.lastGreet||0))/60000>C.GREET_GAP_MIN?1.3:0.2);
+  try{add('standoff',petRankWeight())}catch(e){}
   if(d.rel>=C.CHASE_REL||kit>0.3)add('chase',(rest[0]||rest[1]?0.3:1)*(0.6+Math.max(0,e))*(1+1.4*kit)*play);
   if(d.rel>=C.GROOM_REL)add('groom',(rest[0]||rest[1]?1.6:0.7)*(1.2-0.6*Math.max(0,e)));
   let tot=0;O.forEach(function(o){tot+=o[1]});let x=Math.random()*tot,pick=O[0];for(const o of O){if((x-=o[1])<=0){pick=o;break}}
   let a=Math.random()<0.5?0:1;
   if(pick[0]==='chase')a=petPairKit(1)>petPairKit(0)+0.2?1:petPairKit(0)>petPairKit(1)+0.2?0:a;    /* the younger one starts it */
   if(pick[0]==='groom')a=petPairKit(0)<petPairKit(1)-0.2?0:petPairKit(1)<petPairKit(0)-0.2?1:a;   /* the older one grooms */
+  if((pick[0]==='chase'||pick[0]==='groom')&&Math.abs(petPairKit(0)-petPairKit(1))<=0.2)try{a=petRankBias(pick[0],a)}catch(e){}   /* no age gap: rank decides */
+  if(pick[0]==='standoff')try{a=petRankChallenger()}catch(e){}
   petPairStart(pick[0],a);
 }
 function petPairStart(kind,a,opt){
@@ -429,12 +432,13 @@ function petPairSwitchHtml(){
 }
 function petPairCardHtml(){
   const d=petPairData();if(!d)return '';const L=petPairLevel(d.rel),a=state.pet.name,b=state.pet2.name,n=d.n,now=Date.now();
-  const bits=[];if(n.greet)bits.push(n.greet+' nose touch'+(n.greet>1?'es':''));if(n.hiss)bits.push(n.hiss+' hiss'+(n.hiss>1?'es':''));if(n.chase)bits.push(n.chase+' chase'+(n.chase>1?'s':''));if(n.groom)bits.push(n.groom+' grooming'+(n.groom>1?'s':''));if(n.nap)bits.push(n.nap+' nap'+(n.nap>1?'s':'')+' together');
+  const bits=[];if(n.greet)bits.push(n.greet+' nose touch'+(n.greet>1?'es':''));if(n.hiss)bits.push(n.hiss+' hiss'+(n.hiss>1?'es':''));if(n.chase)bits.push(n.chase+' chase'+(n.chase>1?'s':''));if(n.groom)bits.push(n.groom+' grooming'+(n.groom>1?'s':''));if(n.nap)bits.push(n.nap+' nap'+(n.nap>1?'s':'')+' together');if(n.standoff)bits.push(n.standoff+' standoff'+(n.standoff>1?'s':''));
   let h='<div class="pet-pair-head"><div><div class="eyebrow">TOGETHER</div><h3>'+esc(a)+' &amp; '+esc(b)+'</h3></div><span class="pet-pair-lvl">'+L[1]+'</span></div>'
    +'<div class="pet-bondbar pet-pair-bar"><i style="width:'+Math.round(d.rel*100)+'%"></i></div>'
    +'<p class="pet-pair-text">'+(d.met?L[2]:esc(b)+' is new here. They have not properly met yet.')+'</p>';
   if(d.away&&now-d.away.at<15*60000)h+='<p class="pet-away"><b>While you were away</b>'+esc(d.away.t)+'</p>';
   if(bits.length)h+='<p class="muted pet-pair-counts">'+bits.join(' · ')+'</p>';
+  try{h+=petRankHtml()}catch(e){}
   if(d.last)h+='<p class="muted pet-pair-counts">Last: '+esc(d.last.t)+', '+petAgo(now-d.last.at)+'.</p>';
   return h;
 }

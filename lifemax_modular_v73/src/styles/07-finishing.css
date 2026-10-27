@@ -319,3 +319,5 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 .tabrow-ico{display:inline-flex;width:24px;justify-content:center;color:var(--muted,#9aa6ba)}
 .tabrow .tb{min-width:40px;min-height:40px;border-radius:10px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:inherit;font-size:12px}
 .tabrow .tb:disabled{opacity:.3}
+.pet-rank .pet-thread{display:grid;grid-template-columns:72px 1fr 72px;align-items:center;gap:10px;margin:4px 0}
+.pet-rank .pet-thread small{text-align:right}
