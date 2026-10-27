@@ -226,3 +226,53 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 
 .fd-foil{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;opacity:.42;border-radius:18px}
 .fd-t2 .fd-foil{opacity:.26}
+
+/* ===== Fate Deck: spooky fantasy tarot faces ===== */
+.dh-card{aspect-ratio:3/5;flex-basis:78%;max-width:310px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.qpxt{display:flex;flex-direction:column;align-items:center;gap:calc(var(--ql,18px)*.22);image-rendering:pixelated}
+.qpx{display:block}
+.fd-front{padding:12px 13px 12px;gap:0;background:radial-gradient(120% 70% at 50% 0%,rgba(var(--acr),.16),transparent 60%),linear-gradient(180deg,#14101f,#0a0812 70%);border:2px solid rgba(var(--acr),.75);box-shadow:inset 0 0 0 3px #0a0812,inset 0 0 0 4px rgba(var(--acr),.45),inset 0 0 40px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.5);color:#efe6d2}
+.fd-t3 .fd-front{box-shadow:inset 0 0 0 3px #0a0812,inset 0 0 0 4px rgba(255,205,100,.7),inset 0 0 40px rgba(0,0,0,.6),0 0 28px rgba(255,190,80,.28)}
+.fd-t2 .fd-front{box-shadow:inset 0 0 0 3px #0a0812,inset 0 0 0 4px rgba(var(--acr),.6),inset 0 0 40px rgba(0,0,0,.6),0 0 18px rgba(var(--acr),.2)}
+.qcor{position:absolute;color:rgba(var(--acr),.9);width:14px;height:12px;pointer-events:none;z-index:2}
+.qcor.tl{left:6px;top:6px}.qcor.tr{right:6px;top:6px;transform:scaleX(-1)}.qcor.bl{left:6px;bottom:6px;transform:scaleY(-1)}.qcor.br{right:6px;bottom:6px;transform:scale(-1,-1)}
+.dh-top{display:flex;align-items:center;justify-content:space-between;padding:2px 12px 7px;color:rgba(var(--acr),1)}
+.fd-num{display:block;color:var(--ac)}.dh-slot{color:#8f86ad}
+.qart{position:relative;height:36%;min-height:120px;border-radius:70px 70px 6px 6px;overflow:hidden;border:2px solid rgba(var(--acr),.7);box-shadow:0 0 0 2px #0a0812,0 0 14px rgba(var(--acr),.35);background:radial-gradient(90% 80% at 50% 62%,rgba(var(--acr),.38),rgba(var(--acr),.08) 55%,#07050f 100%)}
+.qscene{position:absolute;inset:0;width:100%;height:100%}
+.qscene g{transform-box:view-box}
+.qglow{position:absolute;left:50%;top:52%;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;background:radial-gradient(circle,rgba(var(--acr),.55),transparent 68%);animation:qPulse 3.2s ease-in-out infinite}
+.qicon{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);color:#fff;filter:drop-shadow(0 0 6px var(--ac)) drop-shadow(0 0 14px var(--ac))}
+.fd-t3 .qicon{color:#ffe9b0}
+.qcandle{position:absolute;bottom:14px;line-height:0}.qcandle.l{left:12px}.qcandle.r{right:12px}
+.qfl rect:nth-child(-n+4){transform-origin:50% 100%;animation:qFlick .55s steps(2,end) infinite}
+.qcandle.r .qfl rect:nth-child(-n+4){animation-delay:-.27s}
+.qbat{animation:qBat 5s ease-in-out infinite}.qbat.b2{animation-duration:7s;animation-delay:-2s}
+.qarc{display:flex;flex-direction:column;align-items:center;gap:4px;margin:9px 0 6px;color:var(--ac)}
+.qtier{color:#8f86ad;display:block}
+.dh-name{margin:2px 0 5px;font-weight:400;color:#f4ecd8;text-shadow:2px 2px 0 rgba(var(--acr),.35);display:flex;justify-content:center}
+.dh-desc{display:block;text-align:center;color:#a79fc2;font:italic 12px/1.35 Georgia,'Times New Roman',serif;margin:0 4px 6px}
+.dh-meta{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding:6px 4px 4px;border-top:1px solid rgba(var(--acr),.3);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8f86ad}
+.dh-xp{color:#ffd35c;display:block}
+.qpips{display:flex;gap:4px}.qpips i{width:8px;height:8px;transform:rotate(45deg);background:rgba(255,255,255,.14)}.qpips i.on{background:#ffd35c;box-shadow:0 0 6px rgba(255,211,92,.7)}
+.dh-attr{flex:1;text-align:center}
+.dh-actions{min-height:46px}
+.dh-state{color:#8f86ad;font:italic 11px Georgia,serif}
+.dh-claim{background:rgba(var(--acr),.14);color:#f4ecd8}
+.fd-prog{stroke:var(--ac)}
+.dh-card.is-done .fd-front{filter:saturate(.55) brightness(.85);border-color:rgba(123,224,160,.6)}
+.qstamp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-14deg);color:#7be0a0;border:3px solid #7be0a0;padding:5px 8px;background:rgba(10,8,18,.82);z-index:3;box-shadow:0 0 14px rgba(123,224,160,.35)}
+.dh-card.is-done .fd-medal::after{content:none}
+/* card back */
+.fd-back{background:radial-gradient(circle at 50% 42%,#2b2052,#0c0818 72%);border:2px solid rgba(190,160,255,.6);box-shadow:inset 0 0 0 3px #0c0818,inset 0 0 0 4px rgba(190,160,255,.4),0 6px 18px rgba(0,0,0,.5)}
+.qback{position:absolute;inset:0;display:grid;place-items:center;color:#cdb8ff}
+.qback .qcor{color:rgba(190,160,255,.9)}
+.qback-num{position:absolute;top:22px;left:0;right:0;display:grid;place-items:center;opacity:.9}
+.qback-eye{display:block;filter:drop-shadow(0 0 10px #8a5cff);animation:qPulse 3.6s ease-in-out infinite}
+.qback-tag{position:absolute;bottom:22px;left:0;right:0;display:grid;place-items:center;opacity:.65}
+.fd-sback{background:radial-gradient(circle at 50% 42%,#2b2052,#0c0818 72%);border:2px solid rgba(190,160,255,.6)}
+@keyframes qPulse{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes qFlick{0%{transform:scaleY(1)}50%{transform:scaleY(.8) translateY(1px)}}
+@keyframes qBat{0%,100%{translate:0 0}50%{translate:-8px 5px}}
+@media (prefers-reduced-motion:reduce){.qglow,.qback-eye,.qbat,.qfl rect{animation:none}}

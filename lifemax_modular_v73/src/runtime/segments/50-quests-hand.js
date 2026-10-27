@@ -175,19 +175,23 @@ function dhRingSvg(tier){
 }
 function dhCardHtml(q){
  const done=isQuestDone(q),up=dhIsUp(q),auto=!/^(self|none)/.test(q.verify||'self'),A=ATTRS.find(function(a){return a.id===q.attribute})||ATTRS[0];
- const cost=dhRerollCost(),tier=q.tier||1;
+ const arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,cost=dhRerollCost(),tier=q.tier||1;
  const foot=done?'<span class="dh-state">Fulfilled</span>':auto?'<span class="dh-state dh-auto">Fulfils itself when you log it</span>':
   '<button class="dh-claim" type="button" aria-label="Hold to claim '+esc(q.name)+'" onpointerdown="dhHoldStart(\''+q.id+'\',this)" onpointerup="dhHoldEnd()" onpointerleave="dhHoldEnd()" onpointercancel="dhHoldEnd()" oncontextmenu="return false" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();qosToggle(\''+q.id+'\',true)}"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="fd-track" cx="22" cy="22" r="19"/><circle class="fd-prog" cx="22" cy="22" r="19"/></svg><span class="dh-claim-t">Hold</span></button>';
  const rr=done?'':'<button class="dh-reroll" type="button" onclick="dhReroll('+q.slot+')" aria-label="Redraw '+esc(q.name)+'">Redraw · '+(cost?cost+' Sparks':'free')+'</button>';
- return '<div class="dh-card fd-t'+tier+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+'">'
+ let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
+ return '<div class="dh-card fd-t'+tier+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
   +'<div class="fd-inner">'
-  +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}"><div class="fd-backart"><span>'+DH_NUMERALS[q.slot]+'</span><i></i><small>Tap to turn over</small></div></div>'
-  +'<div class="fd-face fd-front"><div class="dh-top"><span class="fd-num">'+DH_NUMERALS[q.slot]+'</span><span class="dh-slot">'+DH_SLOT_NAMES[q.slot]+'</span></div>'
-  +'<div class="fd-medal">'+dhRingSvg(tier)+'<span class="fd-icon">'+px(A.icon,40)+'</span></div>'
-  +'<strong class="dh-name">'+esc(q.name)+'</strong><small class="dh-desc">'+esc(q.desc||'')+'</small>'
-  +'<div class="dh-meta"><span>'+esc(A.short)+'</span><span class="dh-xp">+'+Math.max(0,Number(q.xp)||0)+' XP</span></div>'
-  +'<div class="dh-actions">'+foot+rr+'</div></div>'
-  +'</div></div>';
+  +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}">'+qcardBack(q.slot)+'</div>'
+  +'<div class="fd-face fd-front">'+qcardCorners()
+  +'<div class="dh-top"><span class="fd-num">'+qpxText(DH_NUMERALS[q.slot],{s:2,w:60})+'</span><span class="dh-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:150,lines:1})+'</span></div>'
+  +qcardArt(q)
+  +'<div class="qarc">'+qpxText(arc.name,{s:2,w:230,lines:1})+'<span class="qtier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span></div>'
+  +'<h4 class="dh-name">'+qpxText(q.name,{s:2,w:228,lines:3})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc">'+esc(q.desc||'')+'</small>'
+  +'<div class="dh-meta"><span class="qpips" title="Difficulty">'+pips+'</span><span class="dh-attr">'+esc(A.short)+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></div>'
+  +'<div class="dh-actions">'+foot+rr+'</div>'
+  +(done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')
+  +'</div></div></div>';
 }
 var dhDealing=false,dhPrevDone=null;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}

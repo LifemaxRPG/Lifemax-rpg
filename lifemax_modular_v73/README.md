@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v158 — spooky fantasy tarot card faces
+- New card faces (`50-quests-cards.js`): a pixel font (5x7, drawn from a glyph table, no font file), pixel sprites (skull, bats, eye, crescent moon, candles, thorns) and a seeded night scene in an arched window. Each attribute is a named arcana with its own colour (Colossus, Wanderer, Oracle, Merchant, Bard, Monk, Fool, Hermit). Rarity: Minor (1 star), Rare (2, adds bats and an eye), Major (3, adds a skull and gold frame).
+- Quest names, numerals and XP are pixel text (real text stays in aria-labels); descriptions stay in a readable serif italic. Card backs show a glowing eye. Fulfilled cards get a pixel stamp.
+
 ## v157 — Fate Deck effects (WebGL2)
 - `50-quests-fx.js` adds a small GPU engine: particles whose motion is computed in the vertex shader from their age (one buffer write per particle at birth, nothing per frame), used for riffle sparks, deal trails, a burst when a card is turned over (bigger for 3-star) and a fountain plus ring when a quest is fulfilled, by hold or automatically.
 - Holographic foil on 2- and 3-star cards: one shared fragment shader (iridescence, diagonal sheen, sparkle, edge glow) is drawn per card at about 30 fps and copied onto the card. Cards also lean toward your finger, or with the phone's tilt.

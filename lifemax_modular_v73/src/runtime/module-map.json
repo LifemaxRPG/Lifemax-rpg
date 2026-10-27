@@ -2174,6 +2174,15 @@
    ],
    "symbols": []
   },  {
+   "file": "src/runtime/segments/50-quests-cards.js",
+   "bytes": 8000,
+   "statement_count": 0,
+   "tags": [
+    "quests"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/50-quests-hand.js",
    "bytes": 13962,
    "statement_count": 0,
