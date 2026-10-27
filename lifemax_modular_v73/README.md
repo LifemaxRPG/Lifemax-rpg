@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v132 — bolder cat faces
+
+Eyes are now pointed almonds (the outer corner lifts a little) with a two-pixel dark rim, a green iris that shades darker at the top, a thin vertical slit pupil and a highlight; surprised eyes are rounder, sleepy and angry ones are clipped by the lid. The nose is a chunky pink triangle with a dark edge, the mouth and the line down to it are two pixels thick, and happy and blink are thick curves. (`petHdEye` and `petHdFace` in `50-pet-hd.js`.)
+
 ## v131 — HD cat: walking at twice the detail
 
 The cat's walking animations (side view, front and back views, every growth stage, every coat including the genetic ones) are redrawn at 2x pixel density with the strong outlines kept. Built by `tools/hires.py` and `tools/hires_build.py` into `src/data/petHd.html`: the old art smoothed to 2x, with the face removed. The face is drawn live by `src/runtime/segments/50-pet-hd.js`: bigger eyes with a rim, iris, pupil and highlight, a nose, a mouth and whiskers that follow the cat's whisker gene, and seven expressions (neutral, happy, sleepy, surprised, angry, sad, blink). The cat blinks every few seconds, looks sleepy late at night, and sad when it has gone a long time without food. The ear, tail, leg and body genes still shape the cat: the existing rig data is scaled up and each part also takes the outline pixels touching it so nothing is left behind. The genetic-coat compositor (`32-pet-dna.js`) runs on the 2x sheets with all distances doubled. The room is now drawn at 4x (`PET_OS`) so a 2x pixel is exactly two screen pixels. Settings > Cat graphics turns HD walking off. Everything else (sleeping, playing, scratching and so on) still uses the original art until it is redrawn, row by row. Tests: `tests/pethd.test.js`.
