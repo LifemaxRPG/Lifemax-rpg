@@ -4,7 +4,7 @@ const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', 
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x ? '  ' + JSON.stringify(x) : '')) } };
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const mk = async (mode) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[cine|\[deal|\[hand/.test(m.text())) p.errs.push(m.text()) }); await p.addInitScript((mode ? "localStorage.setItem('lma_qdeal','" + mode + "');" : '') + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') }); return p };
+  const mk = async (mode) => { mode = mode || 'cine'; const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[cine|\[deal|\[hand/.test(m.text())) p.errs.push(m.text()) }); await p.addInitScript((mode ? "localStorage.setItem('lma_qdeal','" + mode + "');" : '') + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') }); return p };
   let p = await mk();
   await p.waitForSelector('#fateScene', { timeout: 5000 });
   ok('the reading starts by itself on the first visit of the day', true);
@@ -44,7 +44,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   // other modes
   const o = await mk('off'); await o.waitForTimeout(1200);
   ok('Instant mode shows no scene and leaves cards face-down', await o.evaluate(() => !document.getElementById('fateScene') && state.dailyDraw.dealt && ![...document.querySelectorAll('#dailyHand .dh-card')].some(c => c.classList.contains('is-up'))));
-  const qk = await mk('quick'); await qk.waitForTimeout(1000);
+  const qk = await mk('quick'); await qk.waitForTimeout(1800);
   ok('Quick mode uses the small shuffle stage, not the film', await qk.evaluate(() => !document.getElementById('fateScene') && !!document.getElementById('dailyStage')));
   ok('the Settings choice exists', await qk.evaluate(() => { setPickCat('look'); return !!document.getElementById('qdealSel') && document.getElementById('qdealSel').value === 'quick' }));
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);

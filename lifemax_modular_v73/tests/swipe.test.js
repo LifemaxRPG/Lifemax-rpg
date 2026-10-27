@@ -6,6 +6,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
+  await p.addInitScript("localStorage.setItem('lma_qdeal','off')");
   await p.goto('file://' + file); await p.waitForTimeout(900);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } navigate('dashboard'); window.scrollTo(0, 0) });
   await p.waitForTimeout(600);

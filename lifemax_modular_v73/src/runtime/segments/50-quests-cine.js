@@ -13,8 +13,8 @@ var CINE_FOG_F='#version 300 es\nprecision mediump float;uniform float uT,uDim,u
  'vec3 fogc=mix(vec3(.07,.05,.17),vec3(.04,.14,.18),uv.y)*fog;\n'+
  'vec3 col=vec3(.012,.008,.03)+fogc*(.22+lit*1.3)+vec3(1.,.6,.3)*lit*.3+vec3(.7,.78,1.)*uFlash*(.35+.4*fog);col*=mix(.45,1.,vig);\n'+
  'float a=uDim*.97;o=vec4(col*a,a);}';
-function dhDealMode(){try{return localStorage.getItem('lma_qdeal')||'cine'}catch(e){return 'cine'}}
-function dhSetDealMode(v){try{localStorage.setItem('lma_qdeal',v)}catch(e){}toast(v==='cine'?'Card deal: cinematic':v==='quick'?'Card deal: quick':'Card deal: instant')}
+function dhDealMode(){try{return localStorage.getItem('lma_qdeal')||'table'}catch(e){return 'table'}}
+function dhSetDealMode(v){try{localStorage.setItem('lma_qdeal',v)}catch(e){}toast(v==='table'?'Card deal: 3D table':v==='cine'?'Card deal: classic cinematic':v==='quick'?'Card deal: quick':'Card deal: instant')}
 function cineBg(canvas,S){
  try{
   const g=canvas.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false});if(!g)return null;

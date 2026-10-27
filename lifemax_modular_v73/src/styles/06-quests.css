@@ -344,3 +344,5 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 .fs-hint i{position:absolute;left:0;top:50%;width:34px;height:34px;margin-top:-17px;border-radius:50%;background:rgba(255,235,190,.85);box-shadow:0 0 18px rgba(255,214,140,.9);animation:fsSwipe 1.5s ease-in-out infinite}
 @keyframes fsSwipe{0%{transform:translateX(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(86px);opacity:0}}
 .cine-back{pointer-events:none}
+#fateScene.fs-3d{background:#05030a}
+#fateScene .fs-gl{position:absolute;inset:0;width:100%;height:100%;touch-action:none}

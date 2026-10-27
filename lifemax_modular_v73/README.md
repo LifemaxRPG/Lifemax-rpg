@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v163 — the 3D table
+- The reading is now a real 3D scene by default (`50-quests-table.js`): the wooden table model you supplied (OBJ, normal map and a packed AO/roughness map, shrunk from about 10 MB to about 240 KB), two candles that are the only light (flickering, falling off with distance), fog, soft card shadows, and the cards as 3D objects drawn from the painted art plus the quest text. The deck drops onto the wood, is riffled, three cards are laid down, then each is lifted to the camera and turned by hand in real 3D, then laid face-up on the table.
+- Settings → Quest effects → Card deal: 3D table (default), Classic cinematic (the flat version, also the automatic fallback if WebGL2 is missing), Quick, Instant.
+- The reading starts only if you stay on the Quest Board for about a second, so swiping or scrubbing past it no longer triggers it.
+- Re-generate the table assets with `python3 tools/make_table_art.py` (sources in `art/table/src`). Tests: `tests/table3d.test.js`.
+
 ## v162 — turn the card by hand; the Monk is painted
 - The Monk painting (Discipline) is in, so all eight attributes now have painted cards.
 - In The Reading you now turn each card yourself: it is lifted to the middle, then dragged with a finger it rotates in 3D (up to a full turn; vertical drag tilts it) with a moving sheen and shadow, carries on with a flick and springs to the nearest face. Releasing on the front reveals it (flash, burst, name); releasing on the back springs it back. A pulsing finger hint appears after a few idle seconds. Skip still reveals everything at once.

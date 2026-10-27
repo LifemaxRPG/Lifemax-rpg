@@ -200,13 +200,21 @@ function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
  const cards=dhCards().sort(function(a,b){return a.slot-b.slot}),keep=el.scrollLeft;
  const sig=cards.map(function(q){return q.id+(isQuestDone(q)?'1':'0')+(dhIsUp(q)?'u':'d')}).join('|')+'|'+dhRerollCost()+'|'+(d&&d.dealt?1:0);
- if(sig===dhSig&&el.firstChild){if(d&&!d.dealt&&cards.length&&dhViewOn()&&!el.classList.contains('fd-pre')){el.classList.add('fd-pre');setTimeout(dhMaybeDeal,60)}return}
+ if(sig===dhSig&&el.firstChild){dhSchedDeal(el,d,cards);return}
  dhSig=sig;
  const prevDone=dhPrevDone||{};dhPrevDone={};
  el.innerHTML=cards.map(dhCardHtml).join('');el.scrollLeft=keep;
  cards.forEach(function(q){const dn=isQuestDone(q);dhPrevDone[q.id]=dn;if(dn&&prevDone[q.id]===false&&dhViewOn()){const c=el.querySelector('.dh-card[data-slot="'+q.slot+'"]');if(c){try{QFX.claim(c.getBoundingClientRect());if(window.LifeMaxHaptics)LifeMaxHaptics.play('success')}catch(e){}}}});
  try{QFX.foilKick()}catch(e){}
- if(d&&!d.dealt&&cards.length&&dhViewOn()){el.classList.add('fd-pre');setTimeout(dhMaybeDeal,60)}
+ dhSchedDeal(el,d,cards);
+}
+/* the reading starts only if you stay on the Quest Board a moment, so swiping or scrubbing past it does not trigger it */
+var dhDealTimer=0;
+function dhSchedDeal(el,d,cards){
+ if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing)return;
+ el.classList.add('fd-pre');
+ if(dhDealTimer)return;
+ dhDealTimer=setTimeout(function(){dhDealTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal();else if(!dhDealing){const h=document.getElementById('dailyHand');if(h)h.classList.remove('fd-pre')}},900);
 }
 /* ---- shuffle and lay-out: a riffle in a small stage, then each real card flies from the deck to its place (FLIP) ---- */
 function dhStage(){
@@ -226,7 +234,8 @@ async function dhMaybeDeal(replay){
   if(replay===true){cards.forEach(function(c){c.classList.remove('is-up')});d.up=[false,false,false]}
   el.classList.add('fd-pre');el.scrollLeft=0;
   const mode=typeof dhDealMode==='function'?dhDealMode():'quick';
-  if(mode==='cine'&&typeof dhCinematic==='function'){await dhCinematic(el,cards,d,replay===true);return}
+  if(mode==='table'&&typeof dhTable3D==='function'){const ok=await dhTable3D(el,cards,d,replay===true);if(ok!==false)return}
+  if((mode==='cine'||mode==='table')&&typeof dhCinematic==='function'){await dhCinematic(el,cards,d,replay===true);return}
   if(mode==='off')return;
   const st=dhStage();st.hidden=false;st.innerHTML='';
   const N=10,backs=[];

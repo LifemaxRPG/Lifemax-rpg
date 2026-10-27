@@ -54,10 +54,10 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('progress summary counts hand cards', await ev(() => { renderQuests(); return /\/ \d+/.test(document.getElementById('qosDailyProgress').textContent) && !/\/ 0$/.test(document.getElementById('qosDailyProgress').textContent) }));
   // shuffle and deal
   await ev(() => { state.dailyDraw.dealt = false; state.dailyDraw.up = [false, false, false]; renderQuests() });
-  await p.waitForTimeout(300);
+  await p.waitForTimeout(1400);
   ok('cards stay hidden while the deck shuffles', await ev(() => document.getElementById('dailyHand').classList.contains('fd-pre') && !document.getElementById('dailyStage').hidden));
   ok('the shuffle stage shows a stack of card backs', await ev(() => document.querySelectorAll('#dailyStage .fd-sback').length >= 8));
-  await p.waitForTimeout(5200);
+  await p.waitForTimeout(4600);
   ok('after the deal the stage is gone and the three cards are visible', await ev(() => document.getElementById('dailyStage').hidden && !document.getElementById('dailyHand').classList.contains('fd-pre') && state.dailyDraw.dealt && [...document.querySelectorAll('#dailyHand .dh-card')].every(c => getComputedStyle(c).opacity === '1')));
   ok('dealt cards start face-down and turn over on tap', await ev(() => { const c = document.querySelector('#dailyHand .dh-card:not(.is-done)'); const was = c.classList.contains('is-up'); dhReveal(+c.dataset.slot); return !was && c.classList.contains('is-up') && state.dailyDraw.up[+c.dataset.slot] }));
   ok('a second render does not replay the deal', await ev(() => { renderQuests(); return !document.getElementById('dailyHand').classList.contains('fd-pre') }));
