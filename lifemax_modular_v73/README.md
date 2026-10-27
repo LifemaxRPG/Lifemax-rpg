@@ -668,3 +668,6 @@ A meeting or appointment set by voice now draws on the dial's inner ring with yo
 - The recognizer waits longer through pauses (2.2 s of silence ends a request) so a half-finished sentence is not cut off; after a question the mic reopens by itself so you can answer "p.m." without tapping.
 - No length given = a standard 30 minutes (shown as "standard" in the preview), no question.
 - Plausible times by kind of activity (`LMV_KINDS` in `45-voice.js`): a meeting at 3 is 3 PM, the bar at 7 is 7 PM, wake up at 6 is 6 AM, lunch at 12 is noon; ambiguous ones (gym at 6) still ask. An explicit unusual time ("meeting at 3 am") is kept but flagged. Assumptions are shown in the preview.
+
+## v176 — trainer is skinned on the CPU
+The trainer pack was invisible on a real phone GPU (integer vertex attributes plus a 54-matrix uniform array). The character is now skinned on the CPU each frame and drawn with a plain shader. If the pack ever fails to draw (GL error, textures not decoding), the built-in trainer is shown instead of nothing. The gym no longer syncs before its stations are built. The pack file format is unchanged, so the pack already on the phone still works.
