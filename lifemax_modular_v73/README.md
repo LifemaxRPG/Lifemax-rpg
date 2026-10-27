@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v152 — faster scrubbing along the bottom bar
+
+Sliding a finger along the bottom bar now moves through the tabs about 1.8 times as fast by default (a 100 px slide that used to cross two tabs now crosses three or four). The start threshold is 5 px instead of 7, and the wait before the page behind it switches is shorter (100 ms instead of 130, still longer for pages that are slow to draw). Settings > Navigation > **Bar scrubbing speed**: Normal (the old pace), Fast (the new default) or Faster (2.6 times: the last tab is reached before your finger gets to the edge). `tests/scrub.test.js` (10 checks). Web-only.
+
 ## v151 — a new swipe animation that never moves the page
 
 Moving the whole page was what made the bottom bar blink on your phone (with the animation off it was fine), and two layer fixes did not cure it. So the page container is no longer touched at all while you swipe.

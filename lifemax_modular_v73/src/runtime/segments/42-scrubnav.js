@@ -3,7 +3,11 @@
    scrolls only when it has to keep it in view. The page follows as soon as the finger slows (and when it lifts),
    so fast swipes stay light; nothing is animated while scrubbing. Taps work as before, with a short slide.
    Phones only (<= 860px wide). The page animation is lmaNavTo in 34-navigation.js. */
-const LMA_SCRUB={slop:7,settle:130,gain:.92,fast:.16};
+const LMA_SCRUB={slop:5,settle:100,gain:.92,fast:.16};
+/* how far a finger has to travel along the bar: 1 is the old pace (the bar's full width reaches the end tab), higher means the same movement gets you through more tabs */
+const LMA_SCRUB_GAINS={normal:1,fast:1.8,faster:2.6};
+function lmaScrubGain(){const k=lmaLoad().scrubSpeed;return LMA_SCRUB_GAINS[k]||LMA_SCRUB_GAINS.fast}
+function lmaSetScrubSpeed(k){lmaLoad().scrubSpeed=LMA_SCRUB_GAINS[k]?k:'fast';lmaSave();toast('Bar scrubbing: '+lmaLoad().scrubSpeed)}
 const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0,cost:{},veil:null,veilOn:false};
 const lmaScrubOn=()=>!!(window.matchMedia&&matchMedia('(max-width:860px)').matches);
 /* a tick for each tab passed, firmer pulses at the start and end of a scrub (system haptics through the Android app) */
@@ -160,7 +164,7 @@ function lmaScrubInit(){
   const nowT=performance.now();if(d.lt){const dt=Math.max(1,nowT-d.lt);d.speed=(d.speed||0)*.5+Math.abs(t.clientX-d.lx)/dt*.5}d.lt=nowT;d.lx=t.clientX;
   /* the whole bar is the whole scrub: your starting point is the tab you are on, the left edge is the first tab and the
      right edge the last, with the stretch in between spread evenly on each side */
-  const W=d.W,x=Math.min(W,Math.max(0,t.clientX-d.L)),x0=Math.min(W-40,Math.max(40,d.x0-d.L));
+  const W=d.W,x0=Math.min(W-40,Math.max(40,d.x0-d.L)),x=Math.min(W,Math.max(0,x0+(t.clientX-d.L-x0)*lmaScrubGain()));
   const f=x<=x0?d.start*(x/x0):d.start+(n-1-d.start)*((x-x0)/(W-x0));
   const i=Math.round(Math.min(n-1,Math.max(0,f)));
   if(i!==S.sel){

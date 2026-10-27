@@ -180,4 +180,4 @@ function lmaSwipeEnd(e){
 }
 document.addEventListener('touchend',lmaSwipeEnd,{passive:true});
 document.addEventListener('touchcancel',()=>{lmaSw=null;lmaIndHide()},{passive:true});
-setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false},500);
+setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false;const g=document.getElementById('lmaScrubSpeed');if(g)g.value=LMA_SCRUB_GAINS[lmaLoad().scrubSpeed]?lmaLoad().scrubSpeed:'fast'},500);
