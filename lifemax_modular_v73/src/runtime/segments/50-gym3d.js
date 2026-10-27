@@ -28,15 +28,21 @@ function g3MSeg(a,b,rx,rz){var d=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],ref=Math.abs(d[
  m[0]=x[0]*rx;m[1]=x[1]*rx;m[2]=x[2]*rx;m[4]=d[0];m[5]=d[1];m[6]=d[2];m[8]=z[0]*(rz||rx);m[9]=z[1]*(rz||rx);m[10]=z[2]*(rz||rx);m[12]=a[0];m[13]=a[1];m[14]=a[2];return m}
 function g3MSph(c,rx,ry,rz){var m=t3m();m[0]=rx;m[5]=ry||rx;m[10]=rz||rx;m[12]=c[0];m[13]=c[1];m[14]=c[2];return m}
 /* ---- the trainer: a planar rig. Angles are absolute segment directions in degrees: 0 up, 90 forward (+x), 180 down ---- */
-var G3_L={torso:.52,thigh:.44,shin:.44,ua:.3,fa:.27};
+var G3_L={torso:.528,thigh:.448,shin:.443,ua:.316,fa:.218};
 function g3Dir(a){var r=a*Math.PI/180;return [Math.sin(r),Math.cos(r)]}
 function g3Lerp(A,B,u){var o={};for(var k in A){var a=A[k],b=B[k];o[k]=(a&&typeof a==='object'&&!Array.isArray(a))?g3Lerp(a,b,u):(typeof a==='number'?a+(b-a)*u:a)}return o}
+/* two-bone inverse kinematics in the side plane: angles (from up, + forward) for a limb reaching t from o; side +1 puts the joint on the counter-clockwise side of the line (the knee forward when standing) */
+function g3Ik2(o,t,l1,l2,s){
+ var dx=t[0]-o[0],dy=t[1]-o[1],d=Math.hypot(dx,dy),mx=l1+l2-1e-3,mn=Math.abs(l1-l2)+1e-3;if(d>mx)d=mx;if(d<mn)d=mn;
+ var be=Math.atan2(dx,dy),al=Math.acos(Math.max(-1,Math.min(1,(l1*l1+d*d-l2*l2)/(2*l1*d)))),a1=be-s*al,kx=o[0]+l1*Math.sin(a1),ky=o[1]+l1*Math.cos(a1);
+ return [a1*57.29578,Math.atan2(t[0]-kx,t[1]-ky)*57.29578];
+}
 function g3FK(P){
  var d=g3Dir,add=function(p,v,l){return [p[0]+v[0]*l,p[1]+v[1]*l]},hip,T=P.torso;
  if(P.anchor==='ankle'){var t=d(P.legs.th),s=d(P.legs.sh);hip=[P.pos[0]-t[0]*G3_L.thigh-s[0]*G3_L.shin,P.pos[1]-t[1]*G3_L.thigh-s[1]*G3_L.shin]}else hip=P.pos.slice();
  var tv=d(T),sh=add(hip,tv,G3_L.torso),head=add(sh,tv,.2);
- var leg=function(l){var knee=add(hip,d(l.th),G3_L.thigh),ank=add(knee,d(l.sh),G3_L.shin);return {knee:knee,ank:ank}};
- var arm=function(a){var el=add(sh,d(a.ua),G3_L.ua),wr=add(el,d(a.fa),G3_L.fa);return {el:el,wr:wr}};
+ var leg=function(l){if(l.ik){var a=g3Ik2(hip,l.ik,G3_L.thigh,G3_L.shin,l.ik[2]);l.th=a[0];l.sh=a[1]}var knee=add(hip,d(l.th),G3_L.thigh),ank=add(knee,d(l.sh),G3_L.shin);return {knee:knee,ank:ank}};
+ var arm=function(a){if(a.ik){var q=g3Ik2(sh,a.ik,G3_L.ua,G3_L.fa,a.ik[2]);a.ua=q[0];a.fa=q[1]}var el=add(sh,d(a.ua),G3_L.ua),wr=add(el,d(a.fa),G3_L.fa);return {el:el,wr:wr}};
  return {hip:hip,sh:sh,head:head,legN:leg(P.legs),legF:leg(P.legsF||P.legs),armN:arm(P.arms),armF:arm(P.armsF||P.arms)};
 }
 /* movement archetypes: A and B are the two ends of one rep. anchor: where the body is pinned (hip on a seat, ankle on the floor). */
@@ -67,7 +73,7 @@ function g3Archetype(label){
  return 'mobility';
 }
 G3_MOVES.open={seat:'open',A:G3_MOVES.hinge.A,B:G3_MOVES.hinge.B,tempo:4};G3_MOVES.bench={seat:'bench',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};
-G3_MOVES.pullup={seat:'bar',A:G3_MOVES.pulldown.A,B:G3_MOVES.pulldown.B,tempo:4};G3_MOVES.bike={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};G3_MOVES.ellip={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};
+G3_MOVES.step={seat:'step',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};G3_MOVES.wallf={seat:'wallf',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};G3_MOVES.wallb={seat:'wallb',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};G3_MOVES.prone={seat:'prone',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};G3_MOVES.pullup={seat:'bar',A:G3_MOVES.pulldown.A,B:G3_MOVES.pulldown.B,tempo:4};G3_MOVES.bike={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};G3_MOVES.ellip={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};
 /* ---- designed exercise movements: G3_X (50-gym3d-moves.js) holds key poses and a cycle for each exercise ---- */
 function g3MoveFor(label,desc){
  var ids=G3_COVER[label],t=String(label||'').toLowerCase(),id,use=function(k){var m=G3_X[k];m.id=k;return m};
@@ -77,6 +83,7 @@ function g3MoveFor(label,desc){
  return ids&&ids.length?use(ids[0]):null;
 }
 function g3MoveSeq(m){
+ if(m.K){m.total=m.T;return m.K}
  if(m.seq)return m.seq;var s=[],t=0,cur='A';
  m.c.split(',').forEach(function(tok){var h=tok.charAt(0)==='-',d=parseFloat(tok.slice(1)),to=h?cur:tok.charAt(0);s.push({f:cur,to:to,t0:t,t1:t+d});t+=d;cur=to});
  m.total=t;m.seq=s;return s;
@@ -86,7 +93,27 @@ function g3Ang(a,b,u){
  if(Math.abs(d)>179.9){var up=Math.abs(((a+90-90+540)%360)-180),dn=Math.abs(((a-90-90+540)%360)-180);d=up<=dn?180:-180}
  return a+d*u;
 }
+/* movements authored with tools/make_moves.py: dense keys of hip, torso, neck, spine curl, effort and four limbs, read with a periodic cubic Hermite curve.
+   A limb is [th,sh,0,0] (absolute angles) or [x,y,side,foot or hand angle] (reach a target); -999 means the foot or hand just follows the limb. */
+function g3Hk(m,t){
+ var K=m.K,n=K.length,T=m.T,wt=function(j){return K[((j%n)+n)%n][0]+Math.floor(j/n)*T},i;
+ if(t>=K[n-1][0])i=n-1;else{var lo=0,hi=n-1;while(hi-lo>1){var mid=(lo+hi)>>1;if(K[mid][0]<=t)lo=mid;else hi=mid}i=lo}
+ var ta=wt(i),tb=wt(i+1),h=tb-ta,u=(t-ta)/h,u2=u*u,u3=u2*u,h00=2*u3-3*u2+1,h10=u3-2*u2+u,h01=-2*u3+3*u2,h11=u3-u2,
+  A=K[i],B=K[(i+1)%n],Z=K[((i-1)%n+n)%n],C=K[(i+2)%n],tz=wt(i-1),tc=wt(i+2),r=new Array(A.length);
+ for(var c=1;c<A.length;c++){var ma=(B[c]-Z[c])/(tb-tz),mb=(C[c]-A[c])/(tc-ta);r[c]=h00*A[c]+h10*h*ma+h01*B[c]+h11*h*mb}
+ return r;
+}
+function g3MoveEval2(m,t){
+ var T=m.T,rep=Math.floor(t/T),v=g3Hk(m,t-rep*T),sw=m.alt&&rep%2,lt=m.lt||'ffff',o=[7,11,15,19];
+ if(sw){var w=v.slice();for(var q=0;q<4;q++){v[7+q]=w[11+q];v[11+q]=w[7+q];v[15+q]=w[19+q];v[19+q]=w[15+q]}v[23]=w[25];v[24]=w[26];v[25]=w[23];v[26]=w[24]}
+ var limb=function(k,leg){var b=o[k],a=v[b],c=v[b+1],s=v[b+2],d=v[b+3];
+  if(lt.charAt(k)==='i'){var x={ik:[a,c,s>=0?1:-1]};if(d>-900){if(leg)x.ft=d;else x.hd=d}return x}
+  return {th:a,sh:c,ua:a,fa:c}};
+ var L1=limb(0,1),L2=limb(1,1),A1=limb(2,0),A2=limb(3,0);A1.lu=v[23];A1.lf=v[24];A2.lu=v[25];A2.lf=v[26];
+ return {P:{anchor:'hip',pos:[v[1],v[2]],torso:v[3],neck:v[4],curl:v[5],legs:L1,legsF:L2,arms:A1,armsF:A2},u:v[6],rep:rep};
+}
 function g3MoveEval(m,t){
+ if(m.K)return g3MoveEval2(m,t);
  var s=g3MoveSeq(m),T=m.total,rep=Math.floor(t/T),tt=t-rep*T,seg=s[s.length-1],i;
  for(i=0;i<s.length;i++)if(tt<s[i].t1){seg=s[i];break}
  var u=seg.t1>seg.t0?Math.min(1,Math.max(0,(tt-seg.t0)/(seg.t1-seg.t0))):0;if(m.m!=='l')u=u*u*(3-2*u);
@@ -133,6 +160,15 @@ function g3StationParts(arch,mv,acc,lift,fk,selIdx){
   P.push({m:'box',M:g3MBoxZ(hp[0]+dd[0]*.28-nn[0]*.08,hp[1]+dd[1]*.28-nn[1]*.08,0,.82,.1,.34,Math.atan2(dd[1],dd[0])),c:pad});
   B(hp[0]-.05,hp[1]-.09,0,.42,.08,.34,pad);B(hp[0]+.1,(hp[1]-.12)/2,.13,.06,hp[1]-.12,.06,G3_C.frame);B(hp[0]+.1,(hp[1]-.12)/2,-.13,.06,hp[1]-.12,.06,G3_C.frame);B(hp[0]-.45,.2,0,.06,.4,.4,G3_C.frame);
   [fk.armN.wr,fk.armF.wr].forEach(function(w,i){var z=i?-.14:.14;C([w[0],w[1],z-.07],[w[0],w[1],z+.07],.025,G3_C.steel);B(w[0],w[1],z-.1,.09,.09,.06,G3_C.rubber);B(w[0],w[1],z+.1,.09,.09,.06,G3_C.rubber)})
+ }else if(mv.seat==='step'){
+  B(.34,.2,0,.56,.4,.5,G3_C.bench,null);B(.34,.405,0,.58,.02,.52,[.22,.23,.28])
+ }else if(mv.seat==='wallf'){
+  B(.72,1.4,0,.08,2.8,2.6,[.14,.15,.19],null);B(.68,.04,0,.02,.06,2.6,[.3,.31,.36])
+ }else if(mv.seat==='wallb'){
+  B(-.3,1.4,0,.08,2.8,2.6,[.14,.15,.19],null);B(-.26,.04,0,.02,.06,2.6,[.3,.31,.36])
+ }else if(mv.seat==='prone'){
+  var hp=fk.hip,ak=fk.legN.ank;B(hp[0]+.05,hp[1]-.11,0,1.45,.1,.36,pad);B(hp[0]+.6,(hp[1]-.16)/2,.14,.06,hp[1]-.16,.06,G3_C.frame);B(hp[0]+.6,(hp[1]-.16)/2,-.14,.06,hp[1]-.16,.06,G3_C.frame);B(hp[0]-.5,(hp[1]-.16)/2,.14,.06,hp[1]-.16,.06,G3_C.frame);B(hp[0]-.5,(hp[1]-.16)/2,-.14,.06,hp[1]-.16,.06,G3_C.frame);
+  C([ak[0]-.05,ak[1]-.01,-.2],[ak[0]-.05,ak[1]-.01,.2],.05,pad);C([hp[0]-.9,hp[1]-.05,0],[ak[0]-.05,ak[1]-.01,0],.03,G3_C.frame);B(hp[0]-1.25,.6,0,.1,1.2,.5,G3_C.frame)
  }else if(mv.seat==='bar'){
   var wb=fk.armN.wr,kn=fk.legN.knee;B(wb[0]+.02,wb[1],0,.06,.06,.9,G3_C.steel);B(wb[0]+.02,1.05,.42,.07,2.1,.07,G3_C.frame);B(wb[0]+.02,1.05,-.42,.07,2.1,.07,G3_C.frame);
   B(kn[0],kn[1]-.1,0,.3,.06,.34,pad);B(kn[0],(kn[1]-.1)/2,0,.06,kn[1]-.1,.06,G3_C.frame);B(-.5,.04,0,1.4,.08,.7,G3_C.frame)
@@ -220,23 +256,32 @@ async function g3TrainerInit(gl){
 }
 /* poses the skeleton from the planar rig (angles in degrees) */
 function g3TrainerPose(T,P,anchorPoint){
- var I=T.idx,b=T.b,n=b.length,Q=new Array(n),pp=new Array(n),id=[0,0,0,1],rv=function(a,c){return t3sub(b[I[c]],b[I[a]])};
- var QT=g3Arc(rv('spine_1','spine_4'),g3Dp(P.torso)),QN=g3Arc(rv('neck','head'),g3Dp(P.neck!=null?P.neck:P.torso*.4)),QH=t3slerp(id,QT,.45);
- var side={r:{s:1,leg:P.legs,arm:P.arms},l:{s:-1,leg:P.legsF||P.legs,arm:P.armsF||P.arms}};
+ var I=T.idx,b=T.b,n=b.length,Q=new Array(n),pp=new Array(n),id=[0,0,0,1],rv=function(a,c){return t3sub(b[I[c]],b[I[a]])},len=function(a,c){return Math.hypot.apply(null,rv(a,c))};
+ var vert=rv('spine_1','spine_4'),cu=P.curl||0,dv=[-1,-.4,.4,1],QT=g3Arc(vert,g3Dp(P.torso)),QN=g3Arc(rv('neck','head'),g3Dp(P.neck!=null?P.neck:P.torso*.4));
  for(var j=0;j<n;j++)Q[j]=id;
- Q[I.hip]=QH;['spine_1','spine_2','spine_3','spine_4','clavicle_l','clavicle_r'].forEach(function(k){Q[I[k]]=QT});Q[I.neck]=QN;Q[I.head]=QN;
- ['l','r'].forEach(function(x){var S=side[x],q1=g3Arc(rv('leg_'+x+'1','leg_'+x+'2'),g3Dp(S.leg.th)),q2=g3Arc(rv('leg_'+x+'2','ankle_'+x),g3Dp(S.leg.sh)),q3=g3Arc(rv('ankle_'+x,'toe_'+x),g3Dp(S.leg.sh-90+10)),
-  a1=g3Arc(rv('arm_'+x+'1','arm_'+x+'2'),g3Dlat(S.arm.ua,S.s,12)),a2=g3Arc(rv('arm_'+x+'2','wrist_'+x),g3Dlat(S.arm.fa,S.s,6));
-  Q[I['leg_'+x+'1']]=q1;Q[I['leg_'+x+'2']]=q2;Q[I['ankle_'+x]]=q3;Q[I['toe_'+x]]=q3;Q[I['arm_'+x+'1']]=a1;Q[I['arm_'+x+'2']]=a2;
-  Object.keys(I).forEach(function(k){if(k.indexOf('wrist_'+x)===0||new RegExp('(finger|thumb)_'+x+'\\d').test(k))Q[I[k]]=a2})});
- var H=[0,0,0];
- var fk=function(H){pp[I.center]=H.slice();var seen={};(function go(j){if(seen[j])return;seen[j]=1;for(var c=0;c<n;c++)if(T.par[c]===j){var off=t3sub(b[c],b[j]),q=Q[j];if(j===I.hip||j===I.center&&c===I.hip)q=id;var r=g3Qv(q,off);pp[c]=[pp[j][0]+r[0],pp[j][1]+r[1],pp[j][2]+r[2]];go(c)}})(I.center)};
- fk(H);
- if(anchorPoint.mode==='ankle'){var a=pp[I.ankle_r];H=[anchorPoint.x-a[0],anchorPoint.y-a[1],0];fk(H)}else{H=[anchorPoint.x,anchorPoint.y+.16,0];fk(H)}
+ /* the pelvis turns with the torso, so the hip joint and the shoulders sit where the planar rig says; spine curl bends the spine bones against each other */
+ Q[I.hip]=QT;var top=QT;['spine_1','spine_2','spine_3','spine_4'].forEach(function(k,i){var q=cu?g3Arc(vert,g3Dp(P.torso-cu*22*dv[i])):QT;Q[I[k]]=q;top=q});
+ Q[I.clavicle_l]=top;Q[I.clavicle_r]=top;Q[I.neck]=QN;Q[I.head]=QN;
+ var fk=function(H){pp[I.center]=H.slice();var seen={};(function go(j){if(seen[j])return;seen[j]=1;for(var c=0;c<n;c++)if(T.par[c]===j){var off=t3sub(b[c],b[j]),r=g3Qv(Q[j],off);pp[c]=[pp[j][0]+r[0],pp[j][1]+r[1],pp[j][2]+r[2]];go(c)}})(I.center)};
+ var side={r:{s:1,leg:P.legs,arm:P.arms},l:{s:-1,leg:P.legsF||P.legs,arm:P.armsF||P.arms}};
+ /* limbs: forward kinematics from absolute angles, or inverse kinematics to a target (planted foot, gripped handle) from the real joint positions */
+ var limbs=function(C,roots){
+  ['l','r'].forEach(function(x){var S=side[x],L=S.leg,A=S.arm,th=L.th,sh=L.sh,ua=A.ua,fa=A.fa;
+   if(L.ik&&roots){var q=g3Ik2(roots['leg_'+x+'1'],L.ik,len('leg_'+x+'1','leg_'+x+'2'),len('leg_'+x+'2','ankle_'+x),L.ik[2]);th=q[0];sh=q[1]}
+   if(A.ik&&roots){var q2=g3Ik2(roots['arm_'+x+'1'],A.ik,len('arm_'+x+'1','arm_'+x+'2'),len('arm_'+x+'2','wrist_'+x),A.ik[2]);ua=q2[0];fa=q2[1]}
+   var q1=g3Arc(rv('leg_'+x+'1','leg_'+x+'2'),g3Dp(th)),q2b=g3Arc(rv('leg_'+x+'2','ankle_'+x),g3Dp(sh)),q3=g3Arc(rv('ankle_'+x,'toe_'+x),g3Dp(L.ft!=null?L.ft:sh-90+10)),
+    a1=g3Arc(rv('arm_'+x+'1','arm_'+x+'2'),g3Dlat(ua,S.s,A.lu!=null?A.lu:12)),a2=g3Arc(rv('arm_'+x+'2','wrist_'+x),g3Dlat(fa,S.s,A.lf!=null?A.lf:6)),qh=a2;
+   if(A.hd!=null){var cur=g3Qv(a2,rv('wrist_'+x,'m_finger_'+x+'1'));qh=t3qmul(g3Arc(cur,g3Dlat(A.hd,S.s,A.lf!=null?A.lf:6)),a2)}
+   Q[I['leg_'+x+'1']]=q1;Q[I['leg_'+x+'2']]=q2b;Q[I['ankle_'+x]]=q3;Q[I['toe_'+x]]=q3;Q[I['arm_'+x+'1']]=a1;Q[I['arm_'+x+'2']]=a2;
+   Object.keys(I).forEach(function(k){if(k.indexOf('wrist_'+x)===0)Q[I[k]]=a2;else if(new RegExp('(finger|thumb)_'+x+'\\d').test(k))Q[I[k]]=qh})});
+ };
+ var C;
+ if(anchorPoint.mode==='ankle'){limbs([0,0,0],null);fk([0,0,0]);var a=pp[I.ankle_r];C=[anchorPoint.x-a[0],anchorPoint.y-a[1],0];fk(C)}
+ else{fk([0,0,0]);var r0=pp[I.leg_r1];C=[anchorPoint.x-r0[0],anchorPoint.y-r0[1],0];
+  var roots={};['leg_l1','leg_r1','arm_l1','arm_r1'].forEach(function(k){var p=pp[I[k]];roots[k]=[p[0]+C[0],p[1]+C[1]]});limbs(C,roots);fk(C)}
  for(var j=0;j<n;j++){var q=Q[j],r=g3Qv(q,b[j]),M=t3qmat(q,[pp[j][0]-r[0],pp[j][1]-r[1],pp[j][2]-r[2]]);T.mats.set(M,j*16)}
  return T.mats;
 }
-/* blends each vertex by its joint matrices (column-major) and uploads the posed copy */
 function g3Skin(P,m,gl){
  var n=P.n,R=P.rest,O=P.out,J=P.J,W=P.W;
  for(var i=0;i<n;i++){
@@ -329,6 +374,8 @@ function g3Loop(){
 }
 function g3Frame(S){
  var now=performance.now(),g=gwrCurrent();if(!g)return;
+ /* if the workout moved on without the gym hearing about it (a missed redraw), catch up so the trainer never stays frozen on an old step */
+ if(S.ready&&(S.phaseKey||'').indexOf(g.phase+':')!==0)g3Sync();
  var moving=!!S.walk||g.phase==='active'||g.phase==='timing'||S.sheetAnim;
  if(document.hidden||(!moving&&now-S.lastDraw<60))return;S.lastDraw=now;S.frames=(S.frames||0)+1;if(now-(S.fpsT||0)>1000){S.fps=Math.round((S.frames-(S.fpsF||0))*1000/(now-(S.fpsT||now)));S.fpsT=now;S.fpsF=S.frames}
  var t=(now-S.t0)/1000,gl=S.gl,U=S.U;

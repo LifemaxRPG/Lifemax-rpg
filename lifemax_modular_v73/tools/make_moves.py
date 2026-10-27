@@ -77,12 +77,26 @@ DESC = [['elliptical', 'elliptical'], ['jog', 'treadmill_jog'], ['incline walk|r
 ALT = {'bird_dog', 'dead_bug'}
 bad = [i for i in M if i not in D] + [i for i in D if i not in M]
 assert not bad, bad
+import sys; sys.path.insert(0, 'tools')
+import moves_v2, anim_lib
 INDEX = json.load(open(H + 'moves-index.json'))
 out = {}
 for i, (eq, mode, cyc, kw) in M.items():
     anc, P = D[i]
     out[i] = {'a': eq, 'm': mode, 'n': 'h' if anc == 'hip' else 'a', 'c': cyc, 'k': kw, 'P': {k: [round(x, 3) for x in v] for k, v in P.items()}}
     if i in ALT: out[i]['alt'] = 1
+for i, r in moves_v2.REG.items():
+    body = anim_lib.sample(r['fn'], r['T'], r['N'])
+    worst = 0
+    for q in range(r['N'] * 3):          # every reach target must be within the rig's reach, or a limb would stretch
+        pq = r['fn'](q / (r['N'] * 3)); pts = anim_lib.world_pts(pq)
+        for l, kk in (('ln', 'ankN'), ('lf', 'ankF'), ('an', 'wrN'), ('af', 'wrF')):
+            sp = pq[l]
+            if sp[0] == 'i': worst = max(worst, ((sp[1] - pts[kk][0]) ** 2 + (sp[2] - pts[kk][1]) ** 2) ** .5)
+    assert worst < r.get('tol', .03), (i, 'a reach target is out of reach by', round(worst, 3))
+    old = out.get(i, {})
+    out[i] = {'a': r['eq'], 'm': r['mode'], 'k': old.get('k', i.replace('_', ' ')), **body}
+    if r['alt']: out[i]['alt'] = 1
 js = '/* ===== Exercise movement data for the 3D gym, built by tools/make_moves.py. Do not edit by hand. ===== */\nvar G3_X=' + json.dumps(out, separators=(',', ':')) + ';\nvar G3_COVER=' + json.dumps(INDEX, separators=(',', ':')) + ';\nvar G3_DESC=' + json.dumps(DESC, separators=(',', ':')) + ';\n'
 open('src/runtime/segments/50-gym3d-moves.js', 'w').write(js)
 print('wrote', len(out), 'moves,', len(INDEX), 'plan names,', len(js) // 1024, 'KB')
