@@ -283,3 +283,12 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
  .jx-tile{width:auto}.jx-rev,.jx-quiet{grid-column:1/-1}
 }
 .jx-hc{font-style:normal}.jx-reflect .jc-q>span:first-child:not(.jx-qmark){flex:1 1 0}
+
+/* v129 · Journal lock */
+#view-history{position:relative}
+#view-history.jlocked>*:not(#jlOverlay):not(.libseg){visibility:hidden}
+.jl-overlay{position:absolute;left:0;right:0;top:58px;bottom:0;z-index:5;display:flex;align-items:flex-start;justify-content:center;padding:34px 18px 0;min-height:60vh}
+.jl-card{width:100%;max-width:340px;text-align:center;padding:28px 22px 24px;border-radius:26px;border:1px solid var(--line);background:radial-gradient(120% 130% at 50% 0%,#7c9cff26,transparent 60%),linear-gradient(180deg,var(--panel),var(--bg-elev));box-shadow:var(--shadow)}
+.jl-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;color:var(--accent-strong);background:var(--accent-dim);box-shadow:0 10px 30px -10px var(--accent)}
+.jl-card h3{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.03em}.jl-card p{margin:0 0 18px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.jl-err{min-height:18px;margin-top:10px;font-size:12.5px;color:var(--bad)}

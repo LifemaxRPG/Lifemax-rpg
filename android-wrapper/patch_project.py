@@ -30,6 +30,14 @@ if "kotlin-android" not in s:
     assert n == 1, 'could not find the android block'
     p.write_text(s, encoding='utf-8')
 
+# 2b. the Journal lock uses the AndroidX biometric prompt
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'androidx.biometric' not in s:
+    s, n = re.subn(r"(dependencies\s*\{)", r"\1\n    implementation 'androidx.biometric:biometric:1.1.0'", s, count=1)
+    assert n == 1, 'could not find the dependencies block for biometric'
+    p.write_text(s, encoding='utf-8')
+
 # 3. variables.gradle: minSdk
 p = root / 'variables.gradle'
 s = p.read_text(encoding='utf-8')

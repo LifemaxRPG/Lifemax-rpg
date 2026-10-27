@@ -3664,6 +3664,15 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
  .jx-tile{width:auto}.jx-rev,.jx-quiet{grid-column:1/-1}
 }
 .jx-hc{font-style:normal}.jx-reflect .jc-q>span:first-child:not(.jx-qmark){flex:1 1 0}
+
+/* v129 · Journal lock */
+#view-history{position:relative}
+#view-history.jlocked>*:not(#jlOverlay):not(.libseg){visibility:hidden}
+.jl-overlay{position:absolute;left:0;right:0;top:58px;bottom:0;z-index:5;display:flex;align-items:flex-start;justify-content:center;padding:34px 18px 0;min-height:60vh}
+.jl-card{width:100%;max-width:340px;text-align:center;padding:28px 22px 24px;border-radius:26px;border:1px solid var(--line);background:radial-gradient(120% 130% at 50% 0%,#7c9cff26,transparent 60%),linear-gradient(180deg,var(--panel),var(--bg-elev));box-shadow:var(--shadow)}
+.jl-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;color:var(--accent-strong);background:var(--accent-dim);box-shadow:0 10px 30px -10px var(--accent)}
+.jl-card h3{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.03em}.jl-card p{margin:0 0 18px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.jl-err{min-height:18px;margin-top:10px;font-size:12.5px;color:var(--bad)}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
@@ -4753,6 +4762,10 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="card" style="margin-bottom:14px" id="lmvCard">
           <h3>Voice (beta)</h3>
           <div id="lmvSettingsBody"></div>
+        </div>
+        <div class="card" style="margin-bottom:14px" id="jlCard">
+          <h3>Journal privacy</h3>
+          <div id="jlSettingsBody"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaThumbCard">
           <h3>Tab previews</h3>
@@ -14795,6 +14808,7 @@ try{lmaThumbs=JSON.parse(localStorage.getItem(LMA_THUMB_KEY)||'{}')||{}}catch(e)
 function lmaThumbSave(){try{localStorage.setItem(LMA_THUMB_KEY,JSON.stringify(lmaThumbs))}catch(e){}}
 let lmaThumbErr='',lmaThumbWarmBusy=false;
 async function lmaThumbSnapNow(v){
+ if(window.LifeMaxJournalLock&&LifeMaxJournalLock.on()&&lmaView()==='history')return false;     /* never keep a picture of a locked Journal */
  const P=lmaNative()&&lmaPlugin('PageThumb');
  if(!P){lmaThumbErr='The snapshot helper is not in this build';return false}
  try{
@@ -16443,6 +16457,88 @@ function jcSaveReview(key,val){
 window.LifeMaxCoach=Object.freeze({day:jcDay,arch:jcArch,insight:jcInsight,prompt:jcPrompt,patterns:jcPatterns,gap:jcGap,reviewList:jcReviewList,reviewHtml:jcReviewHtml,reflect:jcOnReflect,store:jcStore,hash:jcHash,reset:function(){jcCache={sig:'',idx:null,day:{}}}});
 /* the Journal was first drawn during start-up, before this module existed: draw it again now */
 try{if(document.getElementById('journalDays')&&typeof renderHistory==='function')renderHistory()}catch(e){console.warn('[coach]',e)}
+/* ---------- Optional Journal lock. Turn it on in Settings; opening the Journal then asks for your fingerprint or screen lock.
+   Android does the checking (nothing is stored here but the on/off choice). It locks again when you leave the app, or
+   a minute after you leave the Journal. While the Journal is open the screen is hidden from the app switcher and
+   screenshots, and tab previews never capture it. ---------- */
+const JL={graceMs:60000};
+let jlUnlocked=false,jlLeftAt=0,jlPrompting=false,jlPrevView='';
+function jlOn(){return !!(typeof state!=='undefined'&&state.journalLock&&state.journalLock.on)}
+function jlPlugin(){try{return typeof lmaNative==='function'&&lmaNative()?lmaPlugin('BiometricLock'):null}catch(e){return null}}
+async function jlStatus(){const p=jlPlugin();if(!p)return {available:false,kind:'web'};try{return await p.status()}catch(e){return {available:false,kind:'unavailable'}}}
+async function jlAuth(subtitle){const p=jlPlugin();if(!p)return {ok:false,error:'web'};try{return await p.authenticate({title:'Unlock your Journal',subtitle:subtitle||'Your reflections stay private.'})}catch(e){return {ok:false,error:String(e&&e.message||e)}}}
+function jlSecure(on){const p=jlPlugin();if(p)try{p.secure({on:!!on})}catch(e){}}
+function jlViewIsJournal(){try{return lmaView()==='history'}catch(e){return false}}
+function jlSection(){return document.getElementById('view-history')}
+function jlOverlay(){
+ const s=jlSection();if(!s)return null;
+ let o=document.getElementById('jlOverlay');
+ if(!o){
+  o=document.createElement('div');o.id='jlOverlay';o.className='jl-overlay';
+  o.innerHTML='<div class="jl-card"><div class="jl-ico"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg></div><h3>Journal locked</h3><p>Your reflections are private. Unlock with your fingerprint or screen lock.</p><button type="button" class="btn" id="jlUnlockBtn">Unlock</button><div class="jl-err" id="jlErr"></div></div>';
+  s.appendChild(o);
+  o.querySelector('#jlUnlockBtn').addEventListener('click',function(){jlPrompt()});
+ }
+ return o;
+}
+/* show or hide the cover to match the lock state */
+function jlApply(){
+ const s=jlSection();if(!s)return;
+ const locked=jlOn()&&!jlUnlocked;
+ s.classList.toggle('jlocked',locked);
+ if(jlOn())jlOverlay();
+ const o=document.getElementById('jlOverlay');if(o)o.style.display=locked?'':'none';
+ jlSecure(jlOn()&&jlViewIsJournal());
+}
+async function jlPrompt(){
+ if(jlPrompting||!jlOn()||jlUnlocked)return;
+ jlPrompting=true;const err=document.getElementById('jlErr');if(err)err.textContent='';
+ const r=await jlAuth();jlPrompting=false;
+ if(r&&r.ok){jlUnlocked=true;jlApply();try{renderHistory()}catch(e){}return true}
+ const e2=document.getElementById('jlErr');if(e2)e2.textContent=r&&r.cancelled?'':'Could not unlock. Try again.';
+ return false;
+}
+function jlRelock(){jlUnlocked=false;jlApply()}
+function jlOnNavigate(v,prev){
+ if(v==='history'){
+  if(jlOn()){if(jlUnlocked&&Date.now()-jlLeftAt>JL.graceMs)jlUnlocked=false;jlApply();if(!jlUnlocked)jlPrompt()}
+  else jlApply();
+ }else{
+  if(prev==='history'){jlLeftAt=Date.now()}
+  jlSecure(false);
+  const s=jlSection();if(s&&!jlOn())s.classList.remove('jlocked');
+ }
+}
+/* Settings card */
+function jlSettingsRender(){
+ const el=document.getElementById('jlSettingsBody');if(!el)return;
+ const native=typeof lmaNative==='function'&&lmaNative();
+ el.innerHTML='<div class="settingsline"><div style="flex:1"><strong>Lock the Journal</strong><div class="muted" style="font-size:12.5px">'+(native?'Ask for your fingerprint or screen lock to open the Journal. It also hides the Journal from the app switcher and screenshots while it is open.':'Available in the Android app.')+'</div></div><input type="checkbox" class="check" id="jlToggle"'+(jlOn()?' checked':'')+(native?'':' disabled')+'></div><div class="muted" id="jlMsg" style="font-size:12.5px;margin-top:6px"></div>';
+ const t=document.getElementById('jlToggle');if(!t)return;
+ t.addEventListener('change',async function(){
+  const msg=document.getElementById('jlMsg'),want=t.checked;msg.textContent='';
+  if(want){
+   const st=await jlStatus();
+   if(!st.available){t.checked=false;msg.textContent=st.kind==='none_enrolled'?'Set up a fingerprint or screen lock in Android settings first, then try again.':'This phone cannot do a secure unlock right now.';return}
+   const r=await jlAuth('Confirm it is you to turn the lock on.');
+   if(!(r&&r.ok)){t.checked=false;return}
+   state.journalLock={on:true};jlUnlocked=true;
+   try{delete lmaThumbs.history;delete lmaThumbs.library;lmaThumbSave()}catch(e){}
+   try{save()}catch(e){}msg.textContent='The Journal is locked.';
+  }else{
+   const r=await jlAuth('Confirm it is you to turn the lock off.');
+   if(!(r&&r.ok)){t.checked=true;return}
+   state.journalLock={on:false};try{save()}catch(e){}msg.textContent='The lock is off.';
+  }
+  jlApply();
+ });
+}
+window.LifeMaxJournalLock=Object.freeze({on:jlOn,apply:jlApply,relock:jlRelock,prompt:jlPrompt,unlocked:function(){return jlUnlocked},render:jlSettingsRender,status:jlStatus});
+(function jlBoot(){
+ const nav=navigate;navigate=function(v){const prev=jlPrevView||(function(){try{return lmaView()}catch(e){return ''}})();const r=nav.apply(this,arguments);jlPrevView=v;try{jlOnNavigate(v,prev)}catch(e){console.warn('[lock]',e)}if(v==='settings')try{jlSettingsRender()}catch(e){}return r};
+ document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible'&&jlOn()){jlUnlocked=false;jlApply()}});
+ setTimeout(function(){try{jlApply();jlSettingsRender();if(jlOn()&&jlViewIsJournal())jlPrompt()}catch(e){console.warn('[lock]',e)}},1800);
+})();
 </script>
 <script>window.LifeMaxFeatures=(()=>{const features=new Map();return Object.freeze({register(x){if(!x||typeof x.id!=='string'||features.has(x.id)||typeof x.mount!=='function')throw Error('Invalid feature registration');features.set(x.id,x)},open(id){const x=features.get(id);if(x)x.mount(document.getElementById('view-'+id))},list(){return [...features.keys()]}})})();document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b&&b.dataset.view&&document.getElementById('view-'+b.dataset.view)?.classList.contains('lmf-feature'))queueMicrotask(()=>LifeMaxFeatures.open(b.dataset.view))});</script>
 <script>

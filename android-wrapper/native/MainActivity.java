@@ -38,6 +38,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NavHapticsPlugin.class);
         registerPlugin(PageThumbPlugin.class);
         registerPlugin(VoiceEnginePlugin.class);
+        registerPlugin(BiometricLockPlugin.class);
         super.onCreate(savedInstanceState);
         if (getIntent() != null && getIntent().getStringExtra(EXTRA_OPEN) != null) launchTarget = getIntent().getStringExtra(EXTRA_OPEN);
 

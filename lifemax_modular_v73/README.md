@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v129 — optional Journal lock
+
+Settings > Journal privacy > **Lock the Journal**. When on, opening the Journal asks for your fingerprint or face, or your screen lock (PIN, pattern, password) if there is none. Android does the checking (`BiometricLockPlugin.java`, AndroidX biometric); the app stores only the on/off choice. You confirm it is you to turn it on or off. It locks again when you leave the app, or a minute after you leave the Journal (quick back-and-forth does not nag). While the Journal is open the screen is hidden from the app switcher and screenshots, and tab previews never capture it. The Media | Journal switch stays usable on the lock screen. Works in the Android app only; `tests/lock.test.js` (mocked Android prompt). Needs the new build (native plugin and a Gradle dependency).
+
 ## v128 — Journal redesign
 
 The whole Journal got a premium pass. A "Your chronicle" hero shows day streak, days this month, XP this week and reflections, with a 4-week rhythm strip (one glowing cell per day, coloured by the day's badge, brighter for bigger days). The day list is now calendar tiles (weekday, date, an XP bar in the day's colour, a pen mark when you wrote a reflection) with gold review tiles and dashed quiet-stretch markers. A day opens with a big date numeral and a glowing XP counter, then the coach card and a notebook-style reflection page (lined paper, a progress meter to the 40-character reward), then the activity log as a timeline with colour-coded nodes, attribute pills and XP. Weekly reviews show a bar chart of the week; monthly reviews show a calendar heatmap. Entries fade in with a short stagger (off with reduced motion); works in the light theme.

@@ -1854,7 +1854,7 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 13737,
+   "bytes": 13880,
    "statement_count": 12,
    "tags": [
     "navigation",
@@ -2055,6 +2055,32 @@
     "jcRange",
     "jcReviewHtml",
     "jcSaveReview"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/48-journal-lock.js",
+   "bytes": 5843,
+   "statement_count": 15,
+   "tags": [
+    "journal",
+    "lock"
+   ],
+   "symbols": [
+    "JL",
+    "jlUnlocked",
+    "jlOn",
+    "jlPlugin",
+    "jlStatus",
+    "jlAuth",
+    "jlSecure",
+    "jlViewIsJournal",
+    "jlSection",
+    "jlOverlay",
+    "jlApply",
+    "jlPrompt",
+    "jlRelock",
+    "jlOnNavigate",
+    "jlSettingsRender"
    ]
   }
  ]

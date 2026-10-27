@@ -24,6 +24,7 @@ try{lmaThumbs=JSON.parse(localStorage.getItem(LMA_THUMB_KEY)||'{}')||{}}catch(e)
 function lmaThumbSave(){try{localStorage.setItem(LMA_THUMB_KEY,JSON.stringify(lmaThumbs))}catch(e){}}
 let lmaThumbErr='',lmaThumbWarmBusy=false;
 async function lmaThumbSnapNow(v){
+ if(window.LifeMaxJournalLock&&LifeMaxJournalLock.on()&&lmaView()==='history')return false;     /* never keep a picture of a locked Journal */
  const P=lmaNative()&&lmaPlugin('PageThumb');
  if(!P){lmaThumbErr='The snapshot helper is not in this build';return false}
  try{
