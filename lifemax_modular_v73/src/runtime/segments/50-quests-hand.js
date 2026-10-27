@@ -219,7 +219,7 @@ function dhRenderHand(){
 /* the reading starts only if you stay on the Quest Board a moment, so swiping or scrubbing past it does not trigger it */
 var dhDealTimer=0;
 function dhSchedDeal(el,d,cards){
- if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing)return;
+ if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing||dhGating)return;
  el.classList.add('fd-pre');
  if(dhDealTimer)return;
  dhDealTimer=setTimeout(function(){dhDealTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal();else if(!dhDealing){const h=document.getElementById('dailyHand');if(h)h.classList.remove('fd-pre')}},900);
@@ -237,6 +237,13 @@ async function dhMaybeDeal(replay){
  if(!el||!d||dhDealing||(d.dealt&&replay!==true)||!dhViewOn())return;
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
  if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+ const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
+ if(replay!==true&&(gmode==='table'||gmode==='cine')&&typeof dhGate==='function'){
+  if(dhGating)return;dhGating=true;el.classList.add('fd-pre');let gr='go';
+  try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
+  if(gr==='leave'){el.classList.remove('fd-pre');return}
+  if(gr==='skip'){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+ }
  dhDealing=true;
  try{
   if(replay===true){cards.forEach(function(c){c.classList.remove('is-up')});d.up=[false,false,false]}

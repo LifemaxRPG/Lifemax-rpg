@@ -2232,7 +2232,16 @@
     "quests"
    ],
    "symbols": []
+  },  {
+   "file": "src/runtime/segments/50-quests-gate.js",
+   "bytes": 1,
+   "statement_count": 0,
+   "tags": [
+    "quests"
+   ],
+   "symbols": []
   },
+
 
 
   {

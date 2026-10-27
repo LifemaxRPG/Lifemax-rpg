@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v167 — the threshold splash
+- The first visit to the Quest Board each day (after you linger about a second) now opens on a dark void: a watching pixel eye, two flickering candles with rising embers, "YOUR CARDS ARE WAITING" and a "GET YOUR QUESTS" button. Pressing it ignites the button, opens the eye and fades into the 3D reading. "Not now" skips the reading and leaves the cards face-down; leaving the page removes it until next visit. It stops above the bottom bar so you can always leave.
+- It appears for the 3D table and classic cinematic deal modes only (not Quick or Instant), and "Shuffle again" goes straight to the reading.
+
 ## v166 — table fixes
 - The deck now sits at the back of the table and the three cards are laid in front of it, so they no longer land on top of it; the leftover deck is pushed to the side.
 - 3D cards have rounded corners (the art's black corner pixels are cut away in the shader).

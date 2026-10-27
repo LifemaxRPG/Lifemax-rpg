@@ -363,3 +363,24 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 /* only the face that is turned toward you takes touches (backface-hidden faces can still win the hit test) */
 .dh-card:not(.is-up) .fd-front,.dh-card.is-up.is-turned .fd-front{pointer-events:none}
 .dh-card.is-up:not(.is-turned) .fd-back{pointer-events:none}
+
+/* ===== The threshold splash ===== */
+#dhGate{position:fixed;z-index:57;background:radial-gradient(90% 60% at 50% 38%,#12091f 0%,#05030a 62%,#000 100%);overflow:hidden;opacity:0;display:grid;place-items:center;color:#e9cf9c;touch-action:pan-y}
+#dhGate .gate-glow{position:absolute;left:50%;top:34%;width:340px;height:340px;margin:-170px 0 0 -170px;border-radius:50%;background:radial-gradient(circle,rgba(138,92,255,.28),transparent 66%);animation:qPulse 4.2s ease-in-out infinite;pointer-events:none}
+#dhGate .gate-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 24px;max-width:380px;text-align:center}
+#dhGate .gate-eye{display:block;line-height:0;filter:drop-shadow(0 0 16px #8a5cff) drop-shadow(0 0 4px #cdb8ff);animation:gateEye 5s ease-in-out infinite;transform-origin:center}
+#dhGate .gate-eye.open{animation:none;transform:scale(1.35);filter:drop-shadow(0 0 30px #ffd35c) drop-shadow(0 0 8px #fff);transition:transform .5s ease-out,filter .5s}
+#dhGate .gate-eyebrow{color:#8f86ad}
+#dhGate .gate-title{margin:2px 0 0;font-weight:400;color:#f6ecd0;filter:drop-shadow(0 0 14px rgba(138,92,255,.55))}
+#dhGate .gate-sub{margin:0;color:#a79fc2;font:italic 14px/1.45 Georgia,'Times New Roman',serif}
+#dhGate .gate-btn{position:relative;margin-top:10px;min-width:260px;min-height:62px;padding:0 22px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:14px;border:2px solid rgba(255,214,140,.75);background:linear-gradient(180deg,#2a1850,#150b2c);color:#f6e3b0;cursor:pointer;box-shadow:0 0 22px rgba(138,92,255,.45),inset 0 0 18px rgba(255,214,140,.14);animation:gateBtn 2.6s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+#dhGate .gate-btn:active{transform:scale(.97)}
+#dhGate .gate-btn.lit{animation:none;background:linear-gradient(180deg,#ffd98a,#d38a28);color:#2b1608;box-shadow:0 0 60px 14px rgba(255,200,100,.85);transition:all .35s}
+#dhGate .gate-flame{width:10px;height:22px;border-radius:50% 50% 40% 40%;background:linear-gradient(180deg,#fff2c4,#ff8a2a 70%,transparent);filter:blur(.4px);animation:qFlick .5s steps(2,end) infinite;transform-origin:50% 100%}
+#dhGate .gate-flame.r{animation-delay:-.25s}
+#dhGate .gate-skip{margin-top:6px;min-height:44px;padding:0 16px;border:0;background:transparent;color:#7d7499;cursor:pointer}
+#dhGate .gate-candle{position:absolute;bottom:5%;line-height:0;filter:drop-shadow(0 0 18px rgba(255,150,60,.7))}
+#dhGate .gate-candle.l{left:7%}#dhGate .gate-candle.r{right:7%}
+@keyframes gateEye{0%,100%{transform:scale(1);opacity:.85}48%{transform:scale(1.06);opacity:1}52%{transform:scaleY(.12);opacity:1}56%{transform:scale(1.06)}}
+@keyframes gateBtn{0%,100%{box-shadow:0 0 18px rgba(138,92,255,.4),inset 0 0 14px rgba(255,214,140,.1)}50%{box-shadow:0 0 34px rgba(138,92,255,.75),inset 0 0 22px rgba(255,214,140,.22)}}
+@media (prefers-reduced-motion:reduce){#dhGate .gate-eye,#dhGate .gate-btn,#dhGate .gate-glow,#dhGate .gate-flame{animation:none}}
