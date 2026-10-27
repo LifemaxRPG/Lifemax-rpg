@@ -111,25 +111,31 @@ function lmaSwipeHint(btn,dir){
  h.textContent=dir<0?'›  '+name:name+'  ‹';h.className='show '+(dir<0?'to-next':'to-prev');
  clearTimeout(lmaHintTimer);lmaHintTimer=setTimeout(()=>{h.className=''},700);
 }
-/* Swiping between tabs, version 3. The page itself is never moved while you swipe (sliding the whole page made the bottom bar blink out
-   on some phones). Instead a small tag at the edge shows where you are heading and fills as you pull; let go and the new page appears
-   at once with its cards sliding in from the side you swiped toward: the same kind of card animation the app has always used. */
+/* Swiping between tabs, version 4: the cards follow your finger, then the new page's cards slide in.
+   What moves is each card on the page (one CSS variable on the page, read by every card), never the page container as a whole:
+   moving the whole container made the fixed bottom bar blink out on some phones, while moving cards is what the app's own page-change
+   animation has always done. */
 const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)||lmaLoad().swipeAnim===false;
 function lmaSetSwipeAnim(on){lmaLoad().swipeAnim=!!on;lmaSave();toast(on?'Swipe animation: on':'Swipe animation: off. Swipes switch tabs instantly.')}
-let lmaIndRaf=0,lmaIndState=null,lmaDragDx=0;
-function lmaInd(){let e=document.getElementById('lmaSwipeInd');if(!e){e=document.createElement('div');e.id='lmaSwipeInd';e.setAttribute('aria-hidden','true');document.body.appendChild(e)}return e}
-function lmaIndPaint(){
- lmaIndRaf=0;const s=lmaIndState,e=lmaInd();
- if(!s){e.className='';e.style.opacity='';e.style.transform='';return}
- const p=Math.min(1,Math.abs(lmaDragDx)/(window.innerWidth*.22)),sg=s.dir>0?1:-1;
- if(e.dataset.name!==s.name||e.dataset.dir!==String(s.dir)){e.dataset.name=s.name;e.dataset.dir=String(s.dir);e.textContent=s.dir>0?s.name+'  ›':'‹  '+s.name}
- e.className='show '+(s.dir>0?'to-next':'to-prev')+(p>=1?' ready':'');
- e.style.opacity=String(.3+.7*p);e.style.transform='translateY(-50%) translateX('+(sg*(1-p)*28)+'px) scale('+(.92+.08*p)+')';
+let lmaPgDx=0,lmaPgRaf=0,lmaPgTw=0,lmaPgView=null;
+function lmaPgApply(){lmaPgRaf=0;const v=lmaPgView;if(v)v.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px')}
+function lmaPgSet(dx){lmaPgDx=dx;if(!lmaPgRaf)lmaPgRaf=requestAnimationFrame(lmaPgApply)}
+function lmaPgStart(){lmaPgView=document.querySelector('.view.active');lmaPgDx=0;document.documentElement.classList.add('lma-drag');if(lmaPgView)lmaPgView.style.setProperty('--swx','0px')}
+function lmaPgEnd(){
+ cancelAnimationFrame(lmaPgRaf);lmaPgRaf=0;cancelAnimationFrame(lmaPgTw);lmaPgTw=0;
+ if(lmaPgView)lmaPgView.style.removeProperty('--swx');lmaPgView=null;lmaPgDx=0;document.documentElement.classList.remove('lma-drag');
 }
-function lmaIndSet(st,dx){lmaIndState=st;lmaDragDx=dx;if(!lmaIndRaf)lmaIndRaf=requestAnimationFrame(lmaIndPaint)}
-function lmaIndHide(){lmaIndState=null;lmaDragDx=0;if(lmaIndRaf){cancelAnimationFrame(lmaIndRaf);lmaIndRaf=0}const e=document.getElementById('lmaSwipeInd');if(e){e.className='';e.style.opacity='';e.style.transform='';delete e.dataset.name}}
+/* glide the cards from where they are to a place, then call done */
+function lmaPgTween(to,ms,easing,done){
+ cancelAnimationFrame(lmaPgRaf);lmaPgRaf=0;cancelAnimationFrame(lmaPgTw);
+ const from=lmaPgDx,t0=performance.now();
+ const step=t=>{const k=Math.min(1,(t-t0)/ms),e=easing(k);lmaPgDx=from+(to-from)*e;if(lmaPgView)lmaPgView.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px');if(k<1)lmaPgTw=requestAnimationFrame(step);else{lmaPgTw=0;done&&done()}};
+ lmaPgTw=requestAnimationFrame(step);
+}
+const lmaEaseOut=k=>1-Math.pow(1-k,3),lmaEaseIn=k=>k*k;
 document.addEventListener('touchstart',e=>{
- lmaSw=null;lmaIndHide();
+ lmaSw=null;
+ if(lmaPgView)lmaPgEnd();                                   /* a new touch while the last one is still settling: put everything where it belongs */
  if(!lmaSwipeEnabled()||e.touches.length!==1||lmaTopOverlay()||document.body.classList.contains('noscroll'))return;
  if(window.visualViewport&&window.visualViewport.scale>1.02)return;
  const t=e.touches[0],w=window.innerWidth;
@@ -140,7 +146,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 document.addEventListener('touchmove',e=>{
  if(!lmaSw)return;
- if(e.touches.length!==1){lmaSw=null;lmaIndHide();return}
+ if(e.touches.length!==1){const was=lmaSw.drag;lmaSw=null;if(was)lmaPgTween(0,140,lmaEaseOut,lmaPgEnd);return}
  const t=e.touches[0],dx=t.clientX-lmaSw.x,dy=t.clientY-lmaSw.y;
  if(!lmaSw.drag&&Math.abs(dy)>LMA_SWIPE.slop&&Math.abs(dy)*LMA_SWIPE.ratio>Math.abs(dx))lmaSw.dead=true; /* it is a scroll, not a swipe */
  if(lmaSw.dead)return;
@@ -149,12 +155,12 @@ document.addEventListener('touchmove',e=>{
   if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.4&&!lmaMotionOff()){
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView()));
    if(cur<0)return;
-   lmaSw.drag=true;lmaSw.cur=cur;lmaSw.tabs=tabs;
+   lmaSw.drag=true;lmaSw.cur=cur;lmaSw.n=tabs.length;lmaPgStart();
   }else return;
  }
- const dir=dx<0?1:-1,nx=lmaSw.cur+dir;
- if(nx<0||nx>=lmaSw.tabs.length)lmaIndSet(null,dx);                       /* nowhere further to go: no tag */
- else lmaIndSet({dir:dir,name:(lmaSw.tabs[nx].textContent||'').trim()},dx);
+ /* the cards follow the finger; where there is no further tab they stretch a little and no more */
+ const dir=dx<0?1:-1,nx=lmaSw.cur+dir,edge=nx<0||nx>=lmaSw.n;
+ lmaPgSet(edge?dx*.25:dx);
 },{passive:true});
 /* go to a tab because of a swipe: its cards slide in from the side you swiped toward */
 function lmaSwipeGo(v,dir){
@@ -163,21 +169,29 @@ function lmaSwipeGo(v,dir){
  lmaSyncActive();
 }
 function lmaSwipeEnd(e){
- const s=lmaSw;lmaSw=null;lmaIndHide();
+ const s=lmaSw;lmaSw=null;
  if(!s||s.dead)return;
- const t=e.changedTouches&&e.changedTouches[0];if(!t)return;
+ const t=e.changedTouches&&e.changedTouches[0];if(!t){if(s.drag)lmaPgTween(0,140,lmaEaseOut,lmaPgEnd);return}
  const dx=t.clientX-s.x,dy=t.clientY-s.y,dt=Date.now()-s.t,w=window.innerWidth,dir=dx<0?1:-1;
  /* speed over the last moments of the swipe (px per ms) */
  let v=0;const p=s.pts;if(p.length>1){const a=p[0],b=p[p.length-1];if(b[0]>a[0])v=(b[1]-a[1])/(b[0]-a[0])}
  const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+dir;
- if(cur<0||next<0||next>=tabs.length||lmaTopOverlay())return;
  let go=false;
- if(s.drag)go=Math.abs(dx)>=Math.abs(dy)*1.2&&(Math.abs(dx)>=w*.22||(Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx)));
- else go=dt<=LMA_SWIPE.maxMs&&Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio;   /* a quick swipe that never became a drag (animation off) */
- if(!go)return;
- lmaSwipeGo(tabs[next].dataset.view,dir);
- lmaSwipeHint(tabs[next],dir>0?-1:1);
+ if(cur>=0&&next>=0&&next<tabs.length&&!lmaTopOverlay()){
+  if(s.drag)go=Math.abs(dx)>=Math.abs(dy)*1.2&&(Math.abs(dx)>=w*.22||(Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx)));
+  else go=dt<=LMA_SWIPE.maxMs&&Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio;   /* a quick swipe that never became a drag (animation off) */
+ }
+ if(!s.drag){if(go){lmaSwipeGo(tabs[next].dataset.view,dir);lmaSwipeHint(tabs[next],dir>0?-1:1)}return}
+ if(!go){lmaPgTween(0,170,lmaEaseOut,lmaPgEnd);return}                      /* not far enough: the cards settle back */
+ /* far enough: the cards carry on off the screen (faster if you flicked), then the next page takes over */
+ const off=(dir>0?-1:1)*w,ms=Math.max(70,Math.min(150,Math.abs(off-lmaPgDx)/Math.max(.9,Math.abs(v)*1.3)));
+ const target=tabs[next];
+ lmaPgTween(off,ms,lmaEaseIn,()=>{
+  lmaPgEnd();
+  lmaSwipeGo(target.dataset.view,dir);
+  lmaSwipeHint(target,dir>0?-1:1);
+ });
 }
 document.addEventListener('touchend',lmaSwipeEnd,{passive:true});
-document.addEventListener('touchcancel',()=>{lmaSw=null;lmaIndHide()},{passive:true});
+document.addEventListener('touchcancel',()=>{const was=lmaSw&&lmaSw.drag;lmaSw=null;if(was)lmaPgTween(0,140,lmaEaseOut,lmaPgEnd)},{passive:true});
 setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false;const g=document.getElementById('lmaScrubSpeed');if(g)g.value=LMA_SCRUB_GAINS[lmaLoad().scrubSpeed]?lmaLoad().scrubSpeed:'fast'},500);

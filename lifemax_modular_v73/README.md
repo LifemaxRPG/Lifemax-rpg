@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v153 — the swipe follows your finger again, without moving the page container
+
+v151's edge tag worked but was not the fluid swipe. Now the page follows the finger as it used to, done differently so the bottom bar is left alone:
+- **While your finger is down:** every card on the page moves with it (one CSS variable is set on the page once per frame and each card reads it). Where there is no further tab the cards stretch a little and no more. The page container itself is never moved, faded or promoted; the tests check that on every frame.
+- **Let go far enough** (a fifth of the screen, or a quick flick) and the cards carry on off the screen (70 to 150 ms, quicker if you flicked), then the next page takes over and its cards slide in from the side you swiped toward (0.26 s). **Not far enough:** they settle back (170 ms).
+- Removed: the edge tag. The Settings switch **Swipe animation** is still there if it ever misbehaves (off: instant switches, no movement).
+- If the bar blinks again with this, the cause is any movement of page content on your phone, and the next step is to look at how the bar is drawn rather than at the animation. `tests/swipe.test.js` is 32 checks. Web-only.
+
 ## v152 — faster scrubbing along the bottom bar
 
 Sliding a finger along the bottom bar now moves through the tabs about 1.8 times as fast by default (a 100 px slide that used to cross two tabs now crosses three or four). The start threshold is 5 px instead of 7, and the wait before the page behind it switches is shorter (100 ms instead of 130, still longer for pages that are slow to draw). Settings > Navigation > **Bar scrubbing speed**: Normal (the old pace), Fast (the new default) or Faster (2.6 times: the last tab is reached before your finger gets to the edge). `tests/scrub.test.js` (10 checks). Web-only.

@@ -841,9 +841,11 @@ html.reduce-motion .sheet{opacity:0}html.reduce-motion .sheet-ov.show .sheet{opa
 html.reduce-motion #devChat,html.reduce-motion #devChat.open{transform:none}
 html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.reduce-motion .navbtn.active .ico,html.reduce-motion #pacOverlay{animation:none!important}
 
-/* after a swipe the new page's cards slide in from the side you swiped toward (same kind of animation as the normal card fade-in) */
-@keyframes viewSlideNext{from{opacity:0;transform:translate3d(22px,0,0)}to{opacity:1;transform:none}}
-@keyframes viewSlidePrev{from{opacity:0;transform:translate3d(-22px,0,0)}to{opacity:1;transform:none}}
-html[data-swipe-dir="next"] .view.active>*{animation:viewSlideNext .24s var(--ease-out) backwards}
-html[data-swipe-dir="prev"] .view.active>*{animation:viewSlidePrev .24s var(--ease-out) backwards}
+/* swiping between tabs: while a finger is down every card on the page follows it (the variable is set once on the page), and after a swipe the new
+   page's cards slide in from the side you swiped toward. The page container itself is never moved. */
+html.lma-drag .view.active>*{transform:translate3d(var(--swx,0px),0,0);will-change:transform}
+@keyframes viewSlideNext{from{opacity:0;transform:translate3d(30vw,0,0)}to{opacity:1;transform:none}}
+@keyframes viewSlidePrev{from{opacity:0;transform:translate3d(-30vw,0,0)}to{opacity:1;transform:none}}
+html[data-swipe-dir="next"] .view.active>*{animation:viewSlideNext .26s var(--ease-out) backwards}
+html[data-swipe-dir="prev"] .view.active>*{animation:viewSlidePrev .26s var(--ease-out) backwards}
 html.reduce-motion .view.active>*{animation:none!important}
