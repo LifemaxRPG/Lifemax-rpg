@@ -361,6 +361,21 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v139 — Voice generation 5: a day that goes off-script
+
+New segment `50-voice-gen5.js` (wraps the voice segments; web only) and `tests/voice5.test.js` (102 checks). Voice tests overall: 222 + 90 + 102.
+- **Negation:** "don't cancel my workout", "do not schedule that", "please don't delete anything", "I don't want you to remove it" do nothing and cancel a card that is showing ("Understood, I won't do that"). "Don't forget to schedule X" still schedules it; "never mind" still cancels.
+- **Places to avoid:** "schedule a 1 hour workout tomorrow, but not in the morning", "reading anytime tomorrow after 11 AM", "not before 4 PM", "find free time today except between 12 and 2 PM". The time is found for you and the card says why.
+- **A day gone wrong:** "push everything back 30 minutes" / "I'm running 20 minutes late" / "shift my afternoon forward 15 minutes" (everything from now on, or that part of the day; one Before → After card; applied together or not at all), "swap my workout and deep work today" (start times swap, each keeps its length), "clear my afternoon" / "cancel everything after 6 PM today" (a removal card naming each item). For these bulk moves "back", "later" and "forward" all mean later; "earlier", "ahead" and "sooner" mean earlier.
+- **Only if there is room:** "if I have an hour free this afternoon, schedule guitar practice" books it, or says what the longest gap is and offers that; "squeeze in a 20 minute meditation before dinner" ends it right where dinner starts (6 PM if there is no dinner block).
+- **"The second one" and "here":** after a list (quests, schedule, plan), "complete the first one", "check off the last one", "tell me more about number two"; on the Quests or Workout plan screen the list is the screen's. "What do I have left here?" / "summarize this screen" answers for whichever tab is open. "Mark the first exercise in my workout plan as done" ticks its sets.
+- **Detailed logging:** "log bench press 3 sets of 10 at 185 pounds", "I did 50 pushups", "log a 5K run in 25 minutes", "I biked 10 miles", "walked 2 miles this morning". Saved on the activity as `detail` (sets, reps, weight, volume, distance, pace). With no time, the length is estimated and says so.
+- **Water, meals, goals:** water by glass (250 ml), bottle (500 ml), large bottle or liter (1000 ml), oz or ml, kept in a new `waterLog` (default goal 2 L; "set my water goal to 3 liters"). Whole meals in one sentence ("for breakfast I had 3 eggs, two slices of toast and a protein shake"), matched to the food database or to a short built-in list of common foods, which is labelled "(estimate)"; anything it cannot match is listed and left out. "How many calories can I still eat today", "how much protein do I have left" (a protein goal is new: "set my protein goal to 150 grams").
+- **Cats:** every cat's name is picked up from your save at the moment you speak: "what is Mochi's personality", "which cat is hungry", "how is Mochi doing". There are no treats or litter box in LifeMax, so those two say so instead of pretending.
+- **Shortcuts:** "when I say 'beast mode', log a 60 minute workout and open my workout plan" (up to five steps); built in: "start my day", "end of day review", "wrap up my day", "wind down for bed".
+- **Spoken Undo:** "undo", "undo that", "take that back", "revert last command" reverse the latest change even after the card is gone: a scheduled activity (its journal entry becomes UNDONE), a move or shift or swap, a removal or clear, a logged activity, food, water, a quest, plan sets, a goal. Marking a session done or skipping one cannot be reversed, and Undo says so. The stack keeps the last 25 and survives a restart.
+- Browser-tested only.
+
 ## v138 — Voice generation 4: how people really talk
 
 New segment `50-voice-gen4.js` (wraps the earlier voice segments; web only, no native change) and `tests/voice4.test.js` (90 checks).

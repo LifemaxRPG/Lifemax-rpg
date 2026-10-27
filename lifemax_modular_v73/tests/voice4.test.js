@@ -9,7 +9,7 @@ const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
   await p.goto('file://' + file); await p.waitForTimeout(800);
-  await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } localStorage.removeItem('lifemax_voice_op_journal_v1'); localStorage.removeItem('lifemax_voice_timer_v1'); localStorage.removeItem('lifemax_voice_alias_v1') });
+  await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } localStorage.removeItem('lifemax_voice_op_journal_v1'); localStorage.removeItem('lifemax_voice_timer_v1'); localStorage.removeItem('lifemax_voice_alias_v1'); localStorage.removeItem('lifemax_voice_macros_v1'); localStorage.removeItem('lifemax_voice_undo_v1') });
   await p.evaluate(() => { const { ST } = LifeDirectorApp._debug(); ST.availability.timezone = 'America/New_York'; ST.availability.rules.push({ id: 'sl', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4, 5, 6], startMin: 23 * 60, durationMin: 480, commuteMin: 0 }); ST.setupComplete = true; LifeDirector.regenerate('test') });
   await p.evaluate(() => LifeMaxVoice._t.buildUI());
   const say = (t, o) => p.evaluate(([t, o]) => LifeMaxVoice.simulateUtterance(t, o), [t, o || {}]);
@@ -50,7 +50,7 @@ const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
   ok('split: never inside "between 2 and 4 PM"', await sp('Schedule lunch between 2 and 4 PM') === null);
   ok('split: never inside "an hour and a half"', await sp('Schedule a study block tomorrow at 4 PM for an hour and a half') === null);
   const s1 = await sp('Complete my workout and check my quests'); ok('split: two clear requests', s1 && /^Complete my workout/.test(s1.a) && /^check my quests/i.test(s1.b), s1);
-  await reset(); const byVoice = () => p.evaluate(() => state.activities.filter(a => a.notes === 'Logged by voice').length); const nBefore = await byVoice();
+  await reset(); const byVoice = () => p.evaluate(() => state.activities.filter(a => /^Logged by voice/.test(a.notes)).length); const nBefore = await byVoice();
   r = await say('Log a 30 minute walk and check my XP');
   ok('compound: the first request waits for a yes', r.state === 'PREVIEWED' && r.act && /30 min/.test(text(r)), r);
   r = await confirm();
@@ -170,10 +170,10 @@ const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
 
   // ===== 10. routines and shortcuts you teach it =====
   await reset(); r = await say('Start my morning routine'); ok('routine: morning brief with the quests', r.intentId === 'assistant.routine' && /Good morning/.test(r.title) && /XP today/.test(text(r)), text(r));
-  await reset(); r = await say('When I say gym time, do log a 45 minute workout'); ok('shortcut: taught', r.intentId === 'assistant.teach_alias' && (await p.evaluate(() => LifeMaxVoiceG4.aliases()))['gym time'] === 'log a 45 minute workout', r.title);
+  await reset(); r = await say('When I say gym time, do log a 45 minute workout'); ok('shortcut: taught', r.intentId === 'voice.create_macro' && (await p.evaluate(() => LifeMaxVoiceG5.macros()))['gym time'].cmds[0] === 'log a 45 minute workout', r.title);
   await reset(); r = await say('Gym time'); ok('shortcut: the phrase runs the command', r.act && /45 min/.test(text(r)) && /Workout|Strength/i.test(text(r)), text(r));
   await reset(); r = await say('What shortcuts do I have?'); ok('shortcut: listed', /gym time/.test(text(r)), text(r));
-  await reset(); r = await say('Forget gym time'); ok('shortcut: forgotten', !(await p.evaluate(() => LifeMaxVoiceG4.aliases()))['gym time']);
+  await reset(); r = await say('Forget gym time'); ok('shortcut: forgotten', !(await p.evaluate(() => LifeMaxVoiceG5.macros()))['gym time']);
 
   // ===== 11. the registry and a clean console =====
   const reg = await p.evaluate(() => LifeMaxVoice.registry().map(c => c.intentId));

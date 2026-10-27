@@ -204,6 +204,8 @@ function lmvResolve(textAfterVerb,ctx,dates){
   return {x:x,score:hit/toks.length};
  }).filter(function(r){return r.score>=.5}).sort(function(a,b){return b.score-a.score||a.x.startEpoch-b.x.startEpoch});
  if(!scored.length)return {none:true,toks:toks};
+ const qn=toks.join(' '),exact=scored.filter(function(r){return lmvTokens(r.x.title).join(' ')===qn});
+ if(exact.length>=1&&(exact.length===1||exact.every(function(r){return r.x.title===exact[0].x.title})))return {item:exact[0].x};
  if(scored.length>1&&scored[0].score===scored[1].score&&scored[0].x.title!==scored[1].x.title)return {many:scored.slice(0,3).map(function(r){return r.x})};
  return {item:scored[0].x};
 }

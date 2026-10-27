@@ -163,7 +163,7 @@ function g4Chain(clean,ctx,meta){
   if(!r||!r.item)return null;
   const it=r.item,a=lmvParts(it.startEpoch*1000,ctx.tz),b=lmvParts(it.endEpoch*1000,ctx.tz);ref={title:it.title,date:lmvYmd(a),start:lmvPad(a.h)+':'+lmvPad(a.mi),end:lmvPad(b.h)+':'+lmvPad(b.mi)};
  }
- const ex=lmvExtract(left.replace(/\b(?:the |a |an )?(?:last|previous) (?:one|activity|block)\b/,' '),ctx,null);
+ const ex=lmvExtract(left.replace(/\b(?:the |a |an )?(?:last|previous) (?:one|activity|block)\b/,' ').replace(/\b(?:squeeze|fit|slot|throw|tuck)(?: me| it)? in\b/g,' ').replace(/\b(?:squeeze|fit)\b/g,' '),ctx,null);
  let dur=ex.dur;const dflt=dur==null;if(dflt)dur=dir==='before'?30:null;
  const f=lmvFrame=lmvNewFrame();f.transcript=clean;f.confidence=meta&&meta.confidence!=null?meta.confidence:1;
  let hh,mm;
@@ -542,7 +542,7 @@ lmvHandle=function(text,meta){
   /* "right after that" */
   if(!active||(f&&f.state==='PREVIEWED')){const r=g4Chain(clean,ctx,meta);if(r)return r}
   /* two things at once */
-  if(!active){
+  if(!active&&!/^\s*(?:hey |ok |okay )?(?:when|if|whenever) i say\b/i.test(clean)){
    const sp=g4Split(clean);
    if(sp){g4Reset();g4On=true;g4Queue=[sp.b];g4More=!!sp.more;g4Orig(sp.a,meta);g4Frame=lmvFrame;g4Pump();lmvRender();return lmvSnapshot()}
   }

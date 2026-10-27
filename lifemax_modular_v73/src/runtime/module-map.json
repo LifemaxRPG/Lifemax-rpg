@@ -2148,6 +2148,15 @@
    "symbols": []
   },
   {
+   "file": "src/runtime/segments/50-voice-gen5.js",
+   "bytes": 75737,
+   "statement_count": 0,
+   "tags": [
+    "voice"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/51-boot-ok.js",
    "bytes": 523,
    "statement_count": 2,
