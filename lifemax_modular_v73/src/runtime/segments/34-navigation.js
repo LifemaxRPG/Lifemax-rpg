@@ -7,6 +7,18 @@ function lmaView(){const v=document.querySelector('.view.active');return v?v.id.
 const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
 const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
 const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
+/* slide the bottom bar so the tab you are on is in the middle. One mover only: the browser's own smooth scrollIntoView used to fight the
+   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. */
+let lmaBarRaf=0;
+function lmaBarTo(btn){
+ const sb=document.querySelector('.sidebar');if(!sb||!btn||sb.scrollWidth<=sb.clientWidth+2)return;
+ const to=Math.max(0,Math.min(sb.scrollWidth-sb.clientWidth,btn.offsetLeft-(sb.clientWidth-btn.offsetWidth)/2)),from=sb.scrollLeft;
+ cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0;
+ if(Math.abs(to-from)<2){return}
+ if(typeof lmaMotionOff==='function'&&lmaMotionOff()){sb.scrollLeft=to;return}
+ const t0=performance.now(),D=170,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
+ lmaBarRaf=requestAnimationFrame(step);
+}
 /* exactly one bottom-bar tab is lit: the one for the page you are on */
 function lmaSyncActive(){
  try{const k=lmaTabKey(lmaView()),bs=[...document.querySelectorAll('.navbtn[data-view]')];if(bs.some(b=>b.dataset.view===k))bs.forEach(b=>b.classList.toggle('active',b.dataset.view===k))}catch(e){}
@@ -73,7 +85,7 @@ window.lmaBack=lmaBack;
    if(lmaNavStack[lmaNavStack.length-1]!==prev)lmaNavStack.push(prev);
    if(lmaNavStack.length>30)lmaNavStack.shift();
   }
-  try{const b=document.querySelector('.navbtn[data-view="'+now+'"]');if(b&&b.scrollIntoView)b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}catch(e){}
+  try{const b=document.querySelector('.navbtn[data-view="'+now+'"]')||document.querySelector('.navbtn.active');lmaBarTo(b)}catch(e){}
   return r;
  };
 })();
@@ -101,10 +113,11 @@ function lmaSwipeHint(btn,dir){
 }
 /* The page follows your finger while you swipe, and on release it either finishes the slide or springs back.
    (It used to wait until you let go, then start a screenshot-style transition, which felt like it lagged behind.) */
-const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)||lmaLoad().swipeAnim===false;
+function lmaSetSwipeAnim(on){lmaLoad().swipeAnim=!!on;lmaSave();toast(on?'Page slides with your finger: on':'Page slides with your finger: off. Swipes switch tabs instantly.')}
 function lmaContent(){return document.querySelector('main.content')}
 let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
-function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;const w=window.innerWidth,k=Math.min(1,Math.abs(lmaDragDx)/w);c.style.transform='translate3d('+lmaDragDx+'px,0,0)';c.style.opacity=String(1-k*.35)}
+function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;c.style.transform='translate3d('+lmaDragDx+'px,0,0)'}
 function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
 function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity=''}}
 function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
@@ -113,7 +126,7 @@ function lmaSlide(from,to,fromOp,toOp,ms,easing){
  const c=lmaContent();return new Promise(res=>{
   if(!c||!c.animate){res();return}
   lmaStopAnim();
-  const an=c.animate([{transform:'translate3d('+from+'px,0,0)',opacity:fromOp},{transform:'translate3d('+to+'px,0,0)',opacity:toOp}],{duration:ms,easing:easing||'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+  const an=c.animate([{transform:'translate3d('+from+'px,0,0)'},{transform:'translate3d('+to+'px,0,0)'}],{duration:ms,easing:easing||'cubic-bezier(.2,.8,.2,1)',fill:'both'});
   lmaAnim=an;const fin=()=>{res()};an.onfinish=fin;an.oncancel=fin;
  });
 }
@@ -184,4 +197,4 @@ function lmaSwipeEnd(e){
 }
 document.addEventListener('touchend',lmaSwipeEnd,{passive:true});
 document.addEventListener('touchcancel',()=>{const s=lmaSw;lmaSw=null;if(s&&s.drag){lmaSlide(lmaDragDx,0,1,1,140).then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0})}},{passive:true});
-setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled()},500);
+setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false},500);

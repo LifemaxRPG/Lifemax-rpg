@@ -7,6 +7,7 @@
         <div class="card" style="margin-bottom:14px" id="lmaNavCard">
           <h3>Navigation</h3>
           <div class="settingsline"><div style="flex:1"><strong>Swipe to switch tabs</strong><div class="muted" style="font-size:12px">Swipe left or right with one finger to move between tabs. Ignored near the screen edges, on scrolling strips, sliders, the cat room and the Life Director.</div></div><input id="lmaSwipeToggle" type="checkbox" class="check" onchange="lmaSetSwipe(this.checked)" aria-label="Swipe to switch tabs"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Page slides with your finger</strong><div class="muted" style="font-size:12px">The page follows your finger as you swipe and slides into place. Turn this off if swiping ever looks jumpy: the tabs then switch instantly.</div></div><input id="lmaSwipeAnimToggle" type="checkbox" class="check" checked onchange="lmaSetSwipeAnim(this.checked)" aria-label="Page slides with your finger"></div>
           <div class="muted" style="font-size:12px;margin-top:8px">The Android Back button or gesture closes a popup, then returns to the previous tab. It never closes the app.</div>
         </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">

@@ -361,6 +361,15 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v149 — the bottom bar while swiping, take two
+
+Reports: the bar still disappeared and jumped as you swipe through tabs. I could not make that happen in my browser test, so these are the real fault I could find plus three ways of making the rest less likely:
+- **Two things were scrolling the bar at once.** On every tab change the bar was told to scroll smoothly to centre the tab (the browser's own `scrollIntoView`), and a moment later a second piece of code set its scroll position directly. With a swipe through several tabs they fight, and the tabs jump about or the lit tab slips out of view. There is now one mover (a 170 ms glide, cancelled by any new one), and the other piece stands aside while it glides. The test swipes through eight tabs on a narrow screen and checks the bar never scrolls back on itself and the lit tab is always on screen.
+- **Lighter page animation:** the page now only slides (no fade). A fade makes the phone draw the whole tall page into an extra buffer every frame, which is the heaviest part and could starve the bar.
+- **The tab preview snapshot** (a picture the app takes of the page a moment after you stop) now waits 2.6 s after a swipe instead of 1.1 s, so it cannot land in the middle of a series of swipes.
+- **A switch in Settings > Navigation: "Page slides with your finger".** Turn it off and swipes switch the tab instantly with no movement, which also tells us whether the slide animation is the cause. Also removed the extra layer I put on the bar in v148.
+- `tests/swipe.test.js` is 28 checks. Web-only.
+
 ## v148 — the bottom bar no longer blinks during a swipe
 
 The bar was a frosted-glass strip (80% opaque, blurring the page behind it). While the page slides and fades under it, the phone has to redo that blur every frame, and on some phones that makes the bar drop out for a moment. On phones the bar is now solid (dark `#12151c`, white in the light theme), with no blur, on its own layer. Side effect, in a good way: the page used to faintly show through the bar (a dark card edge could look like a highlighted tab); that is gone too. I could not make the blink happen in my browser test (it is a phone graphics issue), so the test checks the bar is in place and visible on every frame of a swipe and that it no longer blurs. Please tell me if it still blinks. `tests/swipe.test.js` is 23 checks. Web-only.

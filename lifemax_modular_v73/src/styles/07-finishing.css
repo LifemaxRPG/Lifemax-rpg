@@ -302,6 +302,6 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 /* the bottom bar is solid enough not to need to blur what is behind it. Blurring the page behind a fixed bar while the page slides and fades under it
    made the bar flicker out for a moment on some phones; a nearly solid bar on its own layer cannot. */
 @media(max-width:860px){
-  .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none;transform:translate3d(0,0,0)}
+  .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none}
   html.light-theme .sidebar{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
 }

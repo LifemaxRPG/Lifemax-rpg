@@ -42,7 +42,7 @@ function lmaThumbSchedule(v){
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}
- },1100);
+ },lmaSwipeNav?2600:1100);
 }
 /* one pass through every tab so each has a real screenshot (runs once after install, or from Settings); touching the screen stops it */
 async function lmaThumbWarm(force){
@@ -112,6 +112,7 @@ function lmaScrubIndex(v){v=lmaTabKey(v);return lmaScrub.items.findIndex(b=>b.da
 /* nudge the strip just enough that tab i is fully visible */
 function lmaScrubReveal(i){
  const S=lmaScrub,b=S.items[i];if(!b)return;
+ if(S.drag){cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0}else if(lmaBarRaf)return;     /* the bar is already gliding to the tab */
  const l=b.offsetLeft,r=l+b.offsetWidth,sl=S.sb.scrollLeft,w=S.sb.clientWidth;
  if(l-10<sl)S.sb.scrollLeft=Math.max(0,l-10);else if(r+10>sl+w)S.sb.scrollLeft=r+10-w;
 }

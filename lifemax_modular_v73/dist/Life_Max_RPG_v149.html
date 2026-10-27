@@ -3686,7 +3686,7 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 /* the bottom bar is solid enough not to need to blur what is behind it. Blurring the page behind a fixed bar while the page slides and fades under it
    made the bar flicker out for a moment on some phones; a nearly solid bar on its own layer cannot. */
 @media(max-width:860px){
-  .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none;transform:translate3d(0,0,0)}
+  .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none}
   html.light-theme .sidebar{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
 }
 </style>
@@ -4769,6 +4769,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="card" style="margin-bottom:14px" id="lmaNavCard">
           <h3>Navigation</h3>
           <div class="settingsline"><div style="flex:1"><strong>Swipe to switch tabs</strong><div class="muted" style="font-size:12px">Swipe left or right with one finger to move between tabs. Ignored near the screen edges, on scrolling strips, sliders, the cat room and the Life Director.</div></div><input id="lmaSwipeToggle" type="checkbox" class="check" onchange="lmaSetSwipe(this.checked)" aria-label="Swipe to switch tabs"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Page slides with your finger</strong><div class="muted" style="font-size:12px">The page follows your finger as you swipe and slides into place. Turn this off if swiping ever looks jumpy: the tabs then switch instantly.</div></div><input id="lmaSwipeAnimToggle" type="checkbox" class="check" checked onchange="lmaSetSwipeAnim(this.checked)" aria-label="Page slides with your finger"></div>
           <div class="muted" style="font-size:12px;margin-top:8px">The Android Back button or gesture closes a popup, then returns to the previous tab. It never closes the app.</div>
         </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">
@@ -13734,6 +13735,18 @@ function lmaView(){const v=document.querySelector('.view.active');return v?v.id.
 const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
 const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
 const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
+/* slide the bottom bar so the tab you are on is in the middle. One mover only: the browser's own smooth scrollIntoView used to fight the
+   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. */
+let lmaBarRaf=0;
+function lmaBarTo(btn){
+ const sb=document.querySelector('.sidebar');if(!sb||!btn||sb.scrollWidth<=sb.clientWidth+2)return;
+ const to=Math.max(0,Math.min(sb.scrollWidth-sb.clientWidth,btn.offsetLeft-(sb.clientWidth-btn.offsetWidth)/2)),from=sb.scrollLeft;
+ cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0;
+ if(Math.abs(to-from)<2){return}
+ if(typeof lmaMotionOff==='function'&&lmaMotionOff()){sb.scrollLeft=to;return}
+ const t0=performance.now(),D=170,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
+ lmaBarRaf=requestAnimationFrame(step);
+}
 /* exactly one bottom-bar tab is lit: the one for the page you are on */
 function lmaSyncActive(){
  try{const k=lmaTabKey(lmaView()),bs=[...document.querySelectorAll('.navbtn[data-view]')];if(bs.some(b=>b.dataset.view===k))bs.forEach(b=>b.classList.toggle('active',b.dataset.view===k))}catch(e){}
@@ -13800,7 +13813,7 @@ window.lmaBack=lmaBack;
    if(lmaNavStack[lmaNavStack.length-1]!==prev)lmaNavStack.push(prev);
    if(lmaNavStack.length>30)lmaNavStack.shift();
   }
-  try{const b=document.querySelector('.navbtn[data-view="'+now+'"]');if(b&&b.scrollIntoView)b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}catch(e){}
+  try{const b=document.querySelector('.navbtn[data-view="'+now+'"]')||document.querySelector('.navbtn.active');lmaBarTo(b)}catch(e){}
   return r;
  };
 })();
@@ -13828,10 +13841,11 @@ function lmaSwipeHint(btn,dir){
 }
 /* The page follows your finger while you swipe, and on release it either finishes the slide or springs back.
    (It used to wait until you let go, then start a screenshot-style transition, which felt like it lagged behind.) */
-const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)||lmaLoad().swipeAnim===false;
+function lmaSetSwipeAnim(on){lmaLoad().swipeAnim=!!on;lmaSave();toast(on?'Page slides with your finger: on':'Page slides with your finger: off. Swipes switch tabs instantly.')}
 function lmaContent(){return document.querySelector('main.content')}
 let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
-function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;const w=window.innerWidth,k=Math.min(1,Math.abs(lmaDragDx)/w);c.style.transform='translate3d('+lmaDragDx+'px,0,0)';c.style.opacity=String(1-k*.35)}
+function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;c.style.transform='translate3d('+lmaDragDx+'px,0,0)'}
 function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
 function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity=''}}
 function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
@@ -13840,7 +13854,7 @@ function lmaSlide(from,to,fromOp,toOp,ms,easing){
  const c=lmaContent();return new Promise(res=>{
   if(!c||!c.animate){res();return}
   lmaStopAnim();
-  const an=c.animate([{transform:'translate3d('+from+'px,0,0)',opacity:fromOp},{transform:'translate3d('+to+'px,0,0)',opacity:toOp}],{duration:ms,easing:easing||'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+  const an=c.animate([{transform:'translate3d('+from+'px,0,0)'},{transform:'translate3d('+to+'px,0,0)'}],{duration:ms,easing:easing||'cubic-bezier(.2,.8,.2,1)',fill:'both'});
   lmaAnim=an;const fin=()=>{res()};an.onfinish=fin;an.oncancel=fin;
  });
 }
@@ -13911,7 +13925,7 @@ function lmaSwipeEnd(e){
 }
 document.addEventListener('touchend',lmaSwipeEnd,{passive:true});
 document.addEventListener('touchcancel',()=>{const s=lmaSw;lmaSw=null;if(s&&s.drag){lmaSlide(lmaDragDx,0,1,1,140).then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0})}},{passive:true});
-setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled()},500);
+setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false},500);
 /* v91 · Android upkeep: in-app updates and automatic backups to a folder you choose.
    Everything here needs the Android shell; in a browser the Settings cards just say so. */
 let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakBusy=false,lmaUpdBound=false;
@@ -14970,7 +14984,7 @@ function lmaThumbSchedule(v){
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}
- },1100);
+ },lmaSwipeNav?2600:1100);
 }
 /* one pass through every tab so each has a real screenshot (runs once after install, or from Settings); touching the screen stops it */
 async function lmaThumbWarm(force){
@@ -15040,6 +15054,7 @@ function lmaScrubIndex(v){v=lmaTabKey(v);return lmaScrub.items.findIndex(b=>b.da
 /* nudge the strip just enough that tab i is fully visible */
 function lmaScrubReveal(i){
  const S=lmaScrub,b=S.items[i];if(!b)return;
+ if(S.drag){cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0}else if(lmaBarRaf)return;     /* the bar is already gliding to the tab */
  const l=b.offsetLeft,r=l+b.offsetWidth,sl=S.sb.scrollLeft,w=S.sb.clientWidth;
  if(l-10<sl)S.sb.scrollLeft=Math.max(0,l-10);else if(r+10>sl+w)S.sb.scrollLeft=r+10-w;
 }
