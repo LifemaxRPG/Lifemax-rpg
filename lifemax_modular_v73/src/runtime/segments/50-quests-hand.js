@@ -194,11 +194,14 @@ function dhCardHtml(q){
   +'</div>')+'</div></div>'
   +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
-var dhDealing=false,dhPrevDone=null;
+var dhDealing=false,dhPrevDone=null,dhSig='';
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
  const cards=dhCards().sort(function(a,b){return a.slot-b.slot}),keep=el.scrollLeft;
+ const sig=cards.map(function(q){return q.id+(isQuestDone(q)?'1':'0')+(dhIsUp(q)?'u':'d')}).join('|')+'|'+dhRerollCost()+'|'+(d&&d.dealt?1:0);
+ if(sig===dhSig&&el.firstChild){if(d&&!d.dealt&&cards.length&&dhViewOn()&&!el.classList.contains('fd-pre')){el.classList.add('fd-pre');setTimeout(dhMaybeDeal,60)}return}
+ dhSig=sig;
  const prevDone=dhPrevDone||{};dhPrevDone={};
  el.innerHTML=cards.map(dhCardHtml).join('');el.scrollLeft=keep;
  cards.forEach(function(q){const dn=isQuestDone(q);dhPrevDone[q.id]=dn;if(dn&&prevDone[q.id]===false&&dhViewOn()){const c=el.querySelector('.dh-card[data-slot="'+q.slot+'"]');if(c){try{QFX.claim(c.getBoundingClientRect());if(window.LifeMaxHaptics)LifeMaxHaptics.play('success')}catch(e){}}}});
@@ -222,6 +225,9 @@ async function dhMaybeDeal(replay){
  try{
   if(replay===true){cards.forEach(function(c){c.classList.remove('is-up')});d.up=[false,false,false]}
   el.classList.add('fd-pre');el.scrollLeft=0;
+  const mode=typeof dhDealMode==='function'?dhDealMode():'quick';
+  if(mode==='cine'&&typeof dhCinematic==='function'){await dhCinematic(el,cards,d,replay===true);return}
+  if(mode==='off')return;
   const st=dhStage();st.hidden=false;st.innerHTML='';
   const N=10,backs=[];
   for(let i=0;i<N;i++){const b=document.createElement('div');b.className='fd-sback';if(typeof qartUrl==='function'&&qartUrl('back'))b.style.backgroundImage='url('+qartUrl('back')+')';b.style.zIndex=i;b.style.transform='translate('+(i*0.6)+'px,'+(-i*0.8)+'px)';st.appendChild(b);backs.push(b)}
@@ -252,7 +258,7 @@ async function dhMaybeDeal(replay){
 }
 function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}
 var _dhNav=navigate;
-navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests')setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
+navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests'&&state.dailyDraw&&!state.dailyDraw.dealt)setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
 window.LifeMaxDailyHand={deal:dhMaybeDeal,replay:dhReplayDeal,reveal:dhReveal,library:QUEST_LIBRARY,ensure:dhEnsure,reroll:dhReroll,cards:dhCards,verify:dhAutoVerify,verifyMet:dhVerifyMet,draw:dhDraw,weakest:dhWeakestAttr,cost:dhRerollCost};
 /* boot already rendered the board before this segment existed; deal and draw once now */
 try{dhEnsure();renderQuests()}catch(e){console.warn("[daily hand boot]",e)}

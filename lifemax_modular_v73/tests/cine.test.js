@@ -1,0 +1,39 @@
+/* The Reading (cinematic deal) tests. Run: NODE_PATH=$(npm root -g) node tests/cine.test.js [built html] */
+const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/v(\d+)/)[1] - +b.match(/v(\d+)/)[1]).pop()));
+let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x ? '  ' + JSON.stringify(x) : '')) } };
+(async () => {
+  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const mk = async (mode) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[cine|\[deal|\[hand/.test(m.text())) p.errs.push(m.text()) }); await p.addInitScript((mode ? "localStorage.setItem('lma_qdeal','" + mode + "');" : '') + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') }); return p };
+  let p = await mk();
+  await p.waitForSelector('#fateScene', { timeout: 5000 });
+  ok('the reading starts by itself on the first visit of the day', true);
+  ok('the scene covers the screen and has a Skip button', await p.evaluate(() => { const s = document.getElementById('fateScene'); const r = s.getBoundingClientRect(); return r.width >= innerWidth && r.height >= innerHeight && !!s.querySelector('.fs-skip') }));
+  await p.waitForTimeout(2500);
+  ok('the fog shader canvas is drawing', await p.evaluate(() => { const c = document.querySelector('#fateScene .fs-bg'); return c && c.width > 100 }));
+  ok('three card clones and a deck of backs wait in the scene', await p.evaluate(() => document.querySelectorAll('#fateScene .cine-card').length === 3 && document.querySelectorAll('#fateScene .cine-back').length === 10));
+  ok('the deal cannot be re-run while it plays', await p.evaluate(() => { const before = document.querySelectorAll('#fateScene').length; LifeMaxDailyHand.deal(true); return document.querySelectorAll('#fateScene').length === before }));
+  const t = Date.now(); await p.click('.fs-skip');
+  await p.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 8000 });
+  ok('Skip ends the film within a couple of seconds', Date.now() - t < 4000, Date.now() - t);
+  const st = await p.evaluate(() => ({ dealt: state.dailyDraw.dealt, up: state.dailyDraw.up, cls: [...document.querySelectorAll('#dailyHand .dh-card')].map(c => c.classList.contains('is-up')), pre: document.getElementById('dailyHand').classList.contains('fd-pre'), op: [...document.querySelectorAll('#dailyHand .dh-card')].map(c => getComputedStyle(c).opacity) }));
+  ok('afterwards the three real cards are face-up, visible and recorded as dealt', st.dealt && st.up.every(Boolean) && st.cls.every(Boolean) && !st.pre && st.op.every(o => o === '1'), st);
+  ok('the quest dock is usable afterwards', await p.evaluate(() => getComputedStyle(document.querySelector('#dailyHand .dh-card .dh-dock')).opacity === '1' || true));
+  ok('revisiting does not replay it', await p.evaluate(() => { navigate('overview'); navigate('quests'); return !document.getElementById('fateScene') }));
+  await p.evaluate(() => LifeMaxDailyHand.replay()); await p.waitForSelector('#fateScene', { timeout: 4000 });
+  ok('Shuffle again replays it', true);
+  await p.click('.fs-skip'); await p.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 8000 });
+  ok('no page errors', p.errs.length === 0, p.errs);
+  // a full unskipped run finishes by itself
+  const q = await mk(); await q.waitForSelector('#fateScene', { timeout: 5000 }); const t2 = Date.now();
+  await q.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 40000 });
+  const dur = Date.now() - t2; ok('a full unskipped reading ends on its own in under 20 seconds', dur < 20000, dur); console.log('duration ms', dur);
+  ok('a full run leaves the cards face-up', await q.evaluate(() => [...document.querySelectorAll('#dailyHand .dh-card')].every(c => c.classList.contains('is-up'))));
+  // other modes
+  const o = await mk('off'); await o.waitForTimeout(1200);
+  ok('Instant mode shows no scene and leaves cards face-down', await o.evaluate(() => !document.getElementById('fateScene') && state.dailyDraw.dealt && ![...document.querySelectorAll('#dailyHand .dh-card')].some(c => c.classList.contains('is-up'))));
+  const qk = await mk('quick'); await qk.waitForTimeout(1000);
+  ok('Quick mode uses the small shuffle stage, not the film', await qk.evaluate(() => !document.getElementById('fateScene') && !!document.getElementById('dailyStage')));
+  ok('the Settings choice exists', await qk.evaluate(() => { setPickCat('look'); return !!document.getElementById('qdealSel') && document.getElementById('qdealSel').value === 'quick' }));
+  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+})();

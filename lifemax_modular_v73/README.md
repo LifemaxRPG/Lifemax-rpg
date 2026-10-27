@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v161 — The Reading (cinematic deal)
+- The first visit to the Quest Board each day plays a short film (`50-quests-cine.js`): the screen falls into a candlelit, foggy room (one fullscreen fog shader with two flickering candle lights), the deck drops out of the dark with a thud and dust, riffle-shuffles, three cards are slammed down on the table, then each card in turn is lifted to the middle, turned over with a flash and named in pixel text (Major Arcana get a bigger flash and a stronger buzz). The cards then glide into the carousel, already face-up.
+- Skip is always in the corner. Settings → Look & feel → Quest effects → Card deal chooses Cinematic (default, roughly 14 seconds), Quick (the earlier short shuffle) or Instant. "Shuffle again" replays it. Reduced motion skips it.
+- The hand is no longer rebuilt on every save, only when a card, its state or the reroll cost changes.
+- Tests: `tests/cine.test.js` (16 checks).
+
 ## v160 — floating cards
 - The strip under each painted card is gone. The cards float on their own; the Hold seal, slot, XP and Redraw sit in a separate dark pill beneath, which appears once the card is turned over.
 

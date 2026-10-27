@@ -14,6 +14,7 @@
         <div class="card" style="margin-bottom:14px" id="qfxCard">
           <h3>Quest effects</h3>
           <div class="settingsline"><div style="flex:1"><strong>Card effects</strong><div class="muted" style="font-size:12px">GPU sparkles, holographic foil and tilt on the quest cards. Turn off for plain cards if your phone gets warm or you want to save battery.</div></div><input id="qfxToggle" type="checkbox" class="check" checked onchange="qfxSet(this.checked)" aria-label="Card effects"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Card deal</strong><div class="muted" style="font-size:12px">The first time you open the Quest Board each day. Cinematic is a candlelit reading with fog, a shuffle and a slow reveal (about 12 seconds, skippable). Quick is a short shuffle. Instant just shows the cards.</div></div><select id="qdealSel" onchange="dhSetDealMode(this.value)" aria-label="Card deal"><option value="cine">Cinematic</option><option value="quick">Quick</option><option value="off">Instant</option></select></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">
           <h3>Haptics</h3>

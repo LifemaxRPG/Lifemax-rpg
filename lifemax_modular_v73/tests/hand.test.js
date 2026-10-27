@@ -5,7 +5,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
-  await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',quests:[{id:'q1',name:'Old',cadence:'daily',xp:15,kind:'learning'},{id:'mine',name:'My own thing',cadence:'daily',xp:10},{id:'e1',name:'Epic',cadence:'epic',xp:75}]}));");
+  await p.addInitScript("localStorage.setItem('lma_qdeal','quick');localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',quests:[{id:'q1',name:'Old',cadence:'daily',xp:15,kind:'learning'},{id:'mine',name:'My own thing',cadence:'daily',xp:10},{id:'e1',name:'Epic',cadence:'epic',xp:75}]}));");
   await p.goto('file://' + file); await p.waitForTimeout(700);
   const ev = (f, a) => p.evaluate(f, a);
   ok('library has 50+ templates across all 8 attributes', await ev(() => LifeMaxDailyHand.library.length >= 50 && new Set(LifeMaxDailyHand.library.map(t => t.attr)).size === 8));
