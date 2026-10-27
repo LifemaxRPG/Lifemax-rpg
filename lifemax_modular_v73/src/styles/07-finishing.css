@@ -305,3 +305,9 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
   .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none}
   html.light-theme .sidebar{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
 }
+/* settings categories */
+.set-cats{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.set-cats::-webkit-scrollbar{display:none}
+.set-cats button{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:var(--muted,#9aa6ba);font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
+.set-cats button.on{background:var(--accent,#6aa6ff);color:#0b1220;border-color:transparent}
+#view-settings .set-hide{display:none!important}

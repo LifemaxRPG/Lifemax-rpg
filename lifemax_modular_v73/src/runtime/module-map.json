@@ -2181,7 +2181,16 @@
     "quests"
    ],
    "symbols": []
+  },  {
+   "file": "src/runtime/segments/50-settings-tabs.js",
+   "bytes": 2600,
+   "statement_count": 0,
+   "tags": [
+    "settings"
+   ],
+   "symbols": []
   },
+
 
   {
    "file": "src/runtime/segments/51-boot-ok.js",

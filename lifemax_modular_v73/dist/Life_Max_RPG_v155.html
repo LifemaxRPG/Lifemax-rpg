@@ -3719,6 +3719,12 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
   .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none}
   html.light-theme .sidebar{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
 }
+/* settings categories */
+.set-cats{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.set-cats::-webkit-scrollbar{display:none}
+.set-cats button{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:var(--muted,#9aa6ba);font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
+.set-cats button.on{background:var(--accent,#6aa6ff);color:#0b1220;border-color:transparent}
+#view-settings .set-hide{display:none!important}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
@@ -18888,6 +18894,39 @@ function dhRenderHand(){
 window.LifeMaxDailyHand={library:QUEST_LIBRARY,ensure:dhEnsure,reroll:dhReroll,cards:dhCards,verify:dhAutoVerify,verifyMet:dhVerifyMet,draw:dhDraw,weakest:dhWeakestAttr,cost:dhRerollCost};
 /* boot already rendered the board before this segment existed; deal and draw once now */
 try{dhEnsure();renderQuests()}catch(e){console.warn("[daily hand boot]",e)}
+/* ===== Settings categories: one group of cards at a time instead of one long list ===== */
+var SET_CATS=[
+ {id:'look',name:'Look & feel',cards:['Appearance','Navigation','Tab previews','Cat graphics','Haptics']},
+ {id:'voice',name:'Voice & journal',cards:['Voice (beta)','Journal privacy']},
+ {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Automatic backup','Notifications']},
+ {id:'game',name:'Character & game',cards:['Character profile','Rewards','Decay system','XP rules']},
+ {id:'data',name:'Data & advanced',cards:['Data management','Developer mode']}
+];
+var setCat=(function(){try{return localStorage.getItem('lma_set_cat')}catch(e){return null}})()||'look';
+function setCatOf(card){const h=card.querySelector(':scope>h3');if(!h)return null;const t=h.textContent.trim();const c=SET_CATS.find(function(x){return x.cards.indexOf(t)>=0});return c?c.id:null}
+function setApplyCats(){
+ const v=document.getElementById('view-settings');if(!v)return;
+ let bar=document.getElementById('setCatBar');
+ if(!bar){
+  bar=document.createElement('div');bar.id='setCatBar';bar.className='set-cats';bar.setAttribute('role','tablist');
+  bar.innerHTML=SET_CATS.map(function(c){return '<button type="button" role="tab" data-cat="'+c.id+'" onclick="setPickCat(\''+c.id+'\')">'+c.name+'</button>'}).join('');
+  const head=v.querySelector('.pagehead');head?head.after(bar):v.prepend(bar);
+ }
+ v.querySelectorAll('.card').forEach(function(card){
+  if(card.closest('.card')!==card)return;
+  const c=setCatOf(card);if(c)card.dataset.setcat=c;
+  card.classList.toggle('set-hide',!!c&&c!==setCat);
+ });
+ v.querySelectorAll('.grid.two-col').forEach(function(g){g.classList.toggle('set-hide',!g.querySelector('.card:not(.set-hide)'))});
+ bar.querySelectorAll('button').forEach(function(b){const on=b.dataset.cat===setCat;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+}
+function setPickCat(id){setCat=id;try{localStorage.setItem('lma_set_cat',id)}catch(e){}setApplyCats();const bar=document.getElementById('setCatBar');if(bar)bar.scrollIntoView({block:'nearest'})}
+(function(){
+ const v=document.getElementById('view-settings');if(!v)return;
+ let busy=false;
+ new MutationObserver(function(){if(busy)return;busy=true;try{setApplyCats()}finally{setTimeout(function(){busy=false},0)}}).observe(v,{childList:true,subtree:true});
+ setApplyCats();
+})();
 /* Last segment: reaching this line means every segment before it ran. A web build that was downloaded over the air counts
    as on trial until it reports here; if it never does (a broken build), Android drops it and goes back to the bundled one.
    Keep this the final segment: add new ones before it. */

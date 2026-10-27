@@ -361,6 +361,9 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v155 — Settings in categories
+- A pill row under the Settings title switches between Look & feel, Voice & journal, Phone & sync, Character & game, and Data & advanced. Only that group's cards show; the last choice is remembered. Cards are grouped by their heading in `50-settings-tabs.js`, so new cards need adding to a group there (unlisted cards stay visible everywhere).
+
 ## v154 — the Daily Hand (quests, phase 1 and 2)
 - Each day the Quest Board deals three cards: Maintenance (your weakest attribute over the last 7 days), Class (an attribute your class cares about) and Wildcard. The draw is seeded by the date, your Luck score and the reroll count, so it is stable all day. Luck nudges the odds toward harder cards; a rest day never deals a hard (3-star) card.
 - 54 templates in `QUEST_LIBRARY` (`50-quests-hand.js`) across all eight attributes. Cards that match something you log (a strength/cardio/reading/business/language/recovery activity of enough minutes, water goal, feeding/petting/playing the cat, today's workout plan) complete themselves. The rest use a hold-to-claim button (about a second; Enter/Space also works).
