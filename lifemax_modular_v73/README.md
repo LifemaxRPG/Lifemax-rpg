@@ -361,6 +361,13 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v173 — the 3D gym (first version of the new guided workout)
+- `50-gym3d.js` puts a 3D gym scene over the existing guided-workout logic (21/22-runtime stay the source of truth; sets are still saved by `gwrLogSet`). Opening a guided workout shows today's plan on a board ("step onto the floor"); then the camera walks to each machine in turn, with chevrons on the floor pointing the way, and ends on a wide shot with a summary board.
+- Each exercise is mapped (by name) to a movement: leg press, chest press, shoulder press, pulldown, row, leg extension, leg curl, squat, hinge, calf raise, plank, dead bug, treadmill walk, mobility. A low-poly trainer (planar forward-kinematics rig, limbs keep fixed lengths) repeats the rep at a fixed 4 s pace while the set is active, the machine's weight stack rising with him, and a big rep counter follows him. SET DONE opens a log sheet (weight steps of 2.5/5 with a "last time" reminder, reps, effort 6 to 10), then the gym interval clock (red digits, beeps at 3-2-1) counts the rest, with +/-15 s and Skip.
+- Menu: itinerary, undo, skip, swap machine, end session, switch to classic. Pause closes the scene and resume reopens it. Settings → Look & feel → Guided workout switches between 3D gym and the classic screen; reduced motion or no WebGL2 uses classic.
+- Draws at full rate only while the trainer moves or the camera walks (about 16 fps otherwise). Not done yet: real exercise animations and form (placeholder poses), pocket/voice mode, records wall, gym skins, a nicer trainer model, per-machine models, set-by-set weight memory per machine beyond last session.
+- Tests: `tests/gym3d.test.js`.
+
 ## v172 — sound for the quest table and the Luck dice
 - Recorded effects (Kenney Casino Audio, CC0, licence kept in `art/sfx/KENNEY_LICENSE.txt`, plus your notification bell) are packed by `python3 tools/make_sfx.py` into `50-sfx-data.js` (about 0.55 MB, mono Vorbis) and played by `QSFX` in `50-sfx.js` through one shared AudioContext. They honour the main Sound switch and have their own volume (Settings → Look & feel → Quest effects: Off / Low / Medium / High).
 - Quest table: the bell rings when you press Get your quests and when you press Shuffle / Shuffle again; card-pack and slide sounds for the deck drop, the riffle, each card laid (with a thud), pushing the spare deck aside, lifting and putting back a card, turning a card face-up, and coins when a quest is fulfilled. The flat page's card turns and claims use them too.

@@ -24,6 +24,10 @@
           <div class="settingsline"><div style="flex:1"><strong>Card deal</strong><div class="muted" style="font-size:12px">The first time you open the Quest Board each day. 3D table lays the cards on a candlelit wooden table in real 3D (skippable). Classic cinematic is the flat version of the same reading. Quick is a short shuffle. Instant just shows the cards.</div></div><select id="qdealSel" onchange="dhSetDealMode(this.value)" aria-label="Card deal"><option value="table">3D table</option><option value="cine">Classic cinematic</option><option value="quick">Quick</option><option value="off">Instant</option></select></div>
           <div class="settingsline"><div style="flex:1"><strong>Card art</strong><div class="muted" style="font-size:12px">Which painted deck your quest cards use. Automatic picks the seasonal deck when one is in season. Cards a deck has no art for use the Classic art.</div></div><select id="qpackSel" onchange="qartSetPack(this.value)" aria-label="Card art"></select></div>
         </div>
+        <div class="card" style="margin-bottom:14px" id="gwrCard">
+          <h3>Guided workout</h3>
+          <div class="settingsline"><div style="flex:1"><strong>Workout screen</strong><div class="muted" style="font-size:12px">3D gym walks you from machine to machine with a trainer showing the pace of each rep. Classic is the plain screen. Reduced motion always uses classic.</div></div><select id="gwr3dSel" onchange="g3SetPref(this.value==='on')" aria-label="Workout screen"><option value="on">3D gym</option><option value="off">Classic</option></select></div>
+        </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">
           <h3>Haptics</h3>
           <div id="hapBody"></div>
