@@ -38,13 +38,25 @@ public class UpdaterPlugin extends Plugin {
         }
     }
 
+    /* Follows redirects by hand so each hop is a fresh, plain request: GitHub sends release downloads to a signed storage address that rejects extra headers (it answers "bad request"). */
     private HttpURLConnection open(String url) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-        c.setConnectTimeout(15000);
-        c.setReadTimeout(30000);
-        c.setInstanceFollowRedirects(true);
-        c.setRequestProperty("Cache-Control", "no-cache");
-        return c;
+        for (int hop = 0; hop < 6; hop++) {
+            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(15000);
+            c.setReadTimeout(30000);
+            c.setInstanceFollowRedirects(false);
+            c.setRequestProperty("User-Agent", "LifeMax-Updater");
+            int code = c.getResponseCode();
+            if (code >= 300 && code < 400) {
+                String loc = c.getHeaderField("Location");
+                c.disconnect();
+                if (loc == null || loc.isEmpty()) throw new Exception("redirect without a address");
+                url = new URL(new URL(url), loc).toString();
+                continue;
+            }
+            return c;
+        }
+        throw new Exception("too many redirects");
     }
 
     @PluginMethod
