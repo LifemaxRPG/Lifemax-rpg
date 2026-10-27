@@ -20437,6 +20437,7 @@ function t3cardMesh(W,H,T,R,seg){
 async function dhTable3D(el,cards,d,replay,gated,restOnly){
  var BX=dhGateBox(),vw=innerWidth-BX.left-BX.right,vh=innerHeight-BX.top-BX.bottom,sh;
  try{sh=await t3load()}catch(e){console.warn('[table load]',e);return false}
+ if(!dhViewOn())return 'leave';      /* the tab was left while the scene was loading (a scrub passing through Quests): never open it */
  var sc=document.createElement('div');sc.id='fateScene';sc.className='fs-3d';sc.setAttribute('data-noswipe','1');sc.style.cssText='left:'+BX.left+'px;top:'+BX.top+'px;right:'+BX.right+'px;bottom:'+BX.bottom+'px';
  var gateHtml=gated?'<div class="fs-gate"><div class="gate3-top"><div class="gate3-eyebrow">'+qpxText('A NEW DAY. A NEW DRAW.',{s:1,w:300,lines:1})+'</div><h2 class="gate3-title">'+qpxText('YOUR CARDS ARE WAITING',{s:3,w:Math.min(330,vw-40),lines:3})+'<span class="sr">Your cards are waiting</span></h2><div class="gate3-rule"><i></i></div><p class="gate3-sub">Three quests, drawn from the dark.</p></div><div class="gate3-bot"><button class="gate3-btn" type="button" aria-label="Get your quests"><span class="g3c tl"></span><span class="g3c tr"></span><span class="g3c bl"></span><span class="g3c br"></span><span class="gate3-btn-t">'+qpxText('GET YOUR QUESTS',{s:2,w:240,lines:1})+'</span></button><button class="gate3-skip" type="button">'+qpxText('NOT NOW',{s:1,w:80,lines:1})+'</button></div></div>':'';
  sc.innerHTML='<canvas class="fs-gl"></canvas>'+gateHtml+'<div class="fs-title"></div><div class="fs-cap"></div><button class="fs-skip" type="button" aria-label="Skip the reading"'+(gated?' style="display:none"':'')+'>'+qpxText('SKIP',{s:2,w:60,lines:1})+'</button>';
@@ -20552,7 +20553,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   if(gated){gateP=new Promise(function(res){var done=false,end=function(v){if(done)return;done=true;clearInterval(gateEmbers);clearInterval(gateWatch);res(v)};sc.querySelector('.gate3-btn').addEventListener('click',function(){end('go')});sc.querySelector('.gate3-skip').addEventListener('click',function(){end('skip')});gateWatch=setInterval(function(){if(!dhViewOn())end('leave')},250)})}
   loop();
   /* leaving the Quests tab in the middle of the reading (the tab bar, a swipe, the scrubber) ends it: the scene goes, the day is not used up */
-  var leftEarly=false,leaveWatch=restOnly?0:setInterval(function(){if(!alive){clearInterval(leaveWatch);return}if(!dhViewOn()){leftEarly=true;clearInterval(leaveWatch);skip()}},200);
+  var leftEarly=false,leaveWatch=setInterval(function(){if(!alive){clearInterval(leaveWatch);return}if(!dhViewOn()){leftEarly=true;clearInterval(leaveWatch);skip()}},200);
   await anim(700,function(t){sc.style.opacity=t},eO);
   var teardown=function(){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove()};
   if(restOnly){

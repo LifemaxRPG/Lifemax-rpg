@@ -98,5 +98,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const bad2 = await fl.evaluate(() => window.__vis.filter(s => s.startsWith('visible|true|false')).length); ok('nor when you come back to the resting table', bad2 === 0, bad2);
   await fl.evaluate(() => { window.__vis.length = 0 }); await fl.click('.rest-btn[data-a=again]'); await fl.waitForSelector('#fateScene.fs-3d:not(.rest)', { timeout: 8000 });
   const bad3 = await fl.evaluate(() => window.__vis.filter(s => s.startsWith('visible|true|false')).length); ok('nor during Reshuffle', bad3 === 0, bad3);
+  // ---- leaving while the resting table is still swooping in (a scrub passing through Quests) must not leave the scene up
+  await fl.evaluate(() => navigate('character')); await fl.waitForTimeout(3000);
+  await fl.evaluate(() => navigate('quests')); await fl.waitForTimeout(300); await fl.evaluate(() => navigate('meals')); await fl.waitForTimeout(900);
+  ok('leaving the Quests tab during the table swoop removes the scene', await fl.evaluate(() => !document.getElementById('fateScene')));
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

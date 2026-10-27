@@ -689,3 +689,6 @@ The plain round eyes (neutral and surprised) are now big, soft almonds (a little
 
 ## v184 — the quest reading no longer follows you to other tabs
 Leaving the Quests tab in the middle of the 3D reading (tab bar, swipe, scrubber) now ends it: the scene is removed within a fifth of a second and the day is not used up, so the reading plays again when you return. While you scrub the tab bar, the blurred picture of the tab you are over also covers the 3D quest table (it used to sit above the blur), and a reading that would start while you are still scrubbing waits until you let go.
+
+## v185 — the quest table no longer lingers when you scrub past Quests
+The resting 3D table had no leave check during its first ~2.5 seconds (the camera swoop), and could even open after you had already left the tab. If the scrubber passed through Quests on its way to another tab, the table stayed on screen over that tab. It now never opens when the tab is gone, and the leave check runs from the first frame.
