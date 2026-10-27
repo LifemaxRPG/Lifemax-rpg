@@ -37,7 +37,7 @@ public class LiveWebPlugin extends Plugin {
     public void fetch(final PluginCall call) {
         final String url = call.getString("url", "");
         final String sha = String.valueOf(call.getString("sha256", "")).toLowerCase();
-        final long build = call.getLong("build", 0L);
+        final long build = call.getData().optLong("build", 0L);   /* getLong() answers 0 for a small whole number, which made every web update "bad request" */
         if (!url.startsWith("https://") || sha.length() != 64 || build <= 0) { call.reject("bad request"); return; }
         final SharedPreferences p = LiveWeb.prefs(getContext());
         if (build <= p.getLong("bad", 0)) { call.reject("that build was rejected earlier"); return; }
