@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LifeMax</title>
-<style>@@INCLUDE:src/styles/00-00-foundation.css@@@@INCLUDE:src/styles/01-base.css@@@@INCLUDE:src/styles/02-layout.css@@@@INCLUDE:src/styles/03-features.css@@@@INCLUDE:src/styles/04-nutrition.css@@@@INCLUDE:src/styles/05-training.css@@@@INCLUDE:src/styles/06-quests.css@@@@INCLUDE:src/styles/07-finishing.css@@</style>
+<style>@@INCLUDE:src/styles/00-00-foundation.css@@@@INCLUDE:src/styles/01-base.css@@@@INCLUDE:src/styles/02-layout.css@@@@INCLUDE:src/styles/03-features.css@@@@INCLUDE:src/styles/04-nutrition.css@@@@INCLUDE:src/styles/05-training.css@@@@INCLUDE:src/styles/06-quests.css@@@@INCLUDE:src/styles/07-finishing.css@@@@INCLUDE:src/styles/08-food.css@@</style>
 </head>
 <body>
 <div id="onboarding" aria-modal="true" role="dialog" aria-labelledby="onbTitle">
@@ -63,60 +63,6 @@
       @@INCLUDE:src/views/media.html@@
       @@INCLUDE:src/views/recipes.html@@
       @@INCLUDE:src/views/meals.html@@
-
-    <div class="fuel-section-label"><span><i>02</i> YOUR RHYTHM</span><span>7-DAY HISTORY</span></div>
-    <section class="fuel-rhythm" aria-label="Calories logged over the last seven days">
-      <div class="fuel-rhythm-head"><div><span class="fuel-eyebrow">YOUR WEEK AT A GLANCE</span><h3>Consistency, visualized.</h3></div><div class="fuel-rhythm-legend"><i></i> CALORIES LOGGED</div></div>
-      <div id="fuelWeekChart" class="fuel-week-chart" aria-label="Seven day calorie chart"></div>
-      <div class="fuel-week-foot"><span id="fuelWeekTotal">Seven-day total — kcal</span><span>Tap a day to inspect</span></div>
-    </section>
-
-    <div class="fuel-section-label"><span><i>03</i> THE DAILY ROUTE</span><span>YOUR FOUR MEAL WINDOWS</span></div>
-    <section class="fuel-stations-shell">
-      <div class="fuel-stations-intro"><div><span class="fuel-eyebrow">EAT IN CHAPTERS</span><h3>Four moments. One day.</h3></div><button class="fuel-plain-link" type="button" onclick="fuelOpenLab()">OPEN FOOD STUDIO <span aria-hidden="true">↗</span></button></div>
-      <div class="fuel-meal-rail" aria-hidden="true"></div>
-      <div id="fuelStations" class="fuel-stations" aria-label="Tap a meal station to log food"></div>
-    </section>
-
-    <section class="fuel-action-ribbon" aria-label="Quick actions">
-      <div><div class="fuel-eyebrow">READY WHEN YOU ARE</div><h3>What are we having?</h3><p>Add food in seconds. Your daily view changes as you log.</p></div>
-      <button class="fuel-primary-cta" type="button" onclick="fuelOpenLab()"><span class="fuel-cta-glyph" aria-hidden="true">＋</span> OPEN FOOD STUDIO <span aria-hidden="true">↗</span></button>
-    </section>
-
-    <details id="fuelLab" class="fuel-lab">
-      <summary><span><i class="fuel-lab-ico" aria-hidden="true">＋</i><span><b>FOOD STUDIO</b><small>Search, weigh, save, repeat.</small></span></span><span class="fuel-lab-toggle">OPEN / CLOSE <i aria-hidden="true">⌄</i></span></summary>
-      <div class="fuel-lab-body">
-        <div class="fuel-lab-head"><span class="fuel-eyebrow">NUTRITION INPUT / 01</span><h3>Every ingredient counts.</h3><p>Pick any food, enter the amount, and choose where it belongs in your day.</p></div>
-        <div class="meals-composer-grid">
-          <div class="field full"><label for="mealSearch">FIND A FOOD</label><input id="mealSearch" type="search" placeholder="Search chicken, rice, bananas..." oninput="mealSearch()" autocomplete="off">
-          <div class="meals-search-help"><button class="btn small secondary" type="button" onclick="document.getElementById('usdaImportFile').click()">IMPORT USDA BRANDED FOODS</button><input id="usdaImportFile" type="file" accept=".gz,application/gzip" style="display:none" onchange="importUsdaFoods(event)"><span id="usdaImportStatus" class="muted" style="font-size:12px">Optional food database · stays on this device</span></div></div>
-          <div class="field"><label for="mealSlot">MEAL WINDOW</label><select id="mealSlot"><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="snacks">Snacks</option></select></div>
-          <div class="field"><label for="mealGrams">AMOUNT / G</label><input id="mealGrams" type="number" min="1" step="1" value="100" inputmode="numeric"></div>
-        </div>
-        <div id="mealPortionRow" class="field full meals-portions" style="display:none"><label for="mealPortion">SERVING SIZE</label><select id="mealPortion" onchange="mealPortionPicked()"></select></div>
-        <div id="mealSearchResults" class="meal-results"></div>
-        <div class="meals-actions-row"><button class="btn" type="button" id="mealAddBtn" onclick="addMealEntry()" disabled>LOG THIS FOOD →</button><button class="btn secondary" type="button" onclick="showCustomFood()">CREATE A CUSTOM FOOD</button></div>
-        <div id="customFoodCard" class="meals-custom-wrap">
-          <div class="meals-panel-head"><div><div class="fuel-eyebrow">CUSTOM ENTRY</div><h3>Build a food.</h3><p>Specify the nutrition per 100 g and reuse the item whenever you need it.</p></div></div>
-          <div class="meals-custom-grid"><div class="field full"><label>NAME</label><input id="cfName" maxlength="80" placeholder="e.g. Homemade protein shake"></div><div class="field"><label>KCAL</label><input id="cfKcal" type="number" min="0" step="1" value="0"></div><div class="field"><label>PROTEIN / G</label><input id="cfP" type="number" min="0" step="0.1" value="0"></div><div class="field"><label>CARBS / G</label><input id="cfC" type="number" min="0" step="0.1" value="0"></div><div class="field"><label>FAT / G</label><input id="cfF" type="number" min="0" step="0.1" value="0"></div></div>
-          <div class="meals-actions-row"><button class="btn" type="button" onclick="saveCustomFood()">SAVE CUSTOM FOOD</button><button class="btn secondary" type="button" onclick="hideCustomFood()">CANCEL</button></div>
-        </div>
-      </div>
-    </details>
-
-    <div class="fuel-section-label"><span><i>04</i> FOOD JOURNAL</span><span>EVERY ENTRY, IN CONTEXT</span></div>
-    <section class="fuel-journal">
-      <div class="fuel-journal-header"><div><span class="fuel-eyebrow">YOUR FOOD RECORD</span><h3>What you've eaten.</h3><p>Everything logged for the selected day, grouped by meal.</p></div><button type="button" onclick="fuelOpenLab()" class="fuel-plain-link">ADD AN ENTRY ↗</button></div>
-      <div id="mealsLog" class="fuel-log"></div>
-    </section>
-
-    <details class="fuel-guide" id="fuelGuide">
-      <summary><span class="fuel-guide-art" aria-hidden="true"><svg class="fuel-guide-svg" viewBox="0 0 20 20" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path fill="#3a2f3d" d="M3 1h13v1h-13zM2 2h1v1h-1zM16 2h1v1h-1zM2 3h1v1h-1zM17 3h1v1h-1zM2 4h1v1h-1zM17 4h1v1h-1zM2 5h1v1h-1zM17 5h1v1h-1zM2 6h1v1h-1zM17 6h1v1h-1zM2 7h1v1h-1zM17 7h1v1h-1zM2 8h1v1h-1zM17 8h1v1h-1zM2 9h1v1h-1zM17 9h1v1h-1zM2 10h1v1h-1zM17 10h1v1h-1zM2 11h1v1h-1zM17 11h1v1h-1zM2 12h1v1h-1zM17 12h1v1h-1zM2 13h1v1h-1zM17 13h1v1h-1zM2 14h1v1h-1zM17 14h1v1h-1zM2 15h1v1h-1zM17 15h1v1h-1zM2 16h1v1h-1zM17 16h1v1h-1zM2 17h1v1h-1zM16 17h1v1h-1zM3 18h9v1h-9zM14 18h2v1h-2zM12 19h1v1h-1zM14 19h1v1h-1z"/><path fill="#2f55a8" d="M3 2h2v1h-2zM3 3h2v1h-2zM3 4h2v1h-2zM3 5h2v1h-2zM3 6h2v1h-2zM3 7h2v1h-2zM3 8h2v1h-2zM3 9h2v1h-2zM3 10h2v1h-2zM3 11h2v1h-2zM3 12h2v1h-2zM3 13h2v1h-2zM3 14h2v1h-2zM3 15h2v1h-2zM3 16h2v1h-2zM3 17h2v1h-2z"/><path fill="#3f6fd6" d="M5 2h11v1h-11zM5 3h10v1h-10zM5 4h10v1h-10zM5 5h2v1h-2zM14 5h1v1h-1zM5 6h10v1h-10zM5 7h10v1h-10zM5 8h5v1h-5zM11 8h4v1h-4zM5 9h3v1h-3zM13 9h2v1h-2zM5 10h3v1h-3zM13 10h2v1h-2zM5 11h2v1h-2zM14 11h1v1h-1zM5 12h3v1h-3zM13 12h2v1h-2zM5 13h3v1h-3zM13 13h2v1h-2zM5 14h5v1h-5zM11 14h4v1h-4zM5 15h10v1h-10zM5 16h7v1h-7zM14 16h1v1h-1zM5 17h7v1h-7zM14 17h2v1h-2z"/><path fill="#f4ecd6" d="M15 3h2v1h-2zM15 4h1v1h-1zM15 5h1v1h-1zM15 6h1v1h-1zM15 7h1v1h-1zM15 8h1v1h-1zM15 9h1v1h-1zM15 10h1v1h-1zM15 11h1v1h-1zM15 12h1v1h-1zM15 13h1v1h-1zM15 14h1v1h-1zM15 15h1v1h-1zM15 16h2v1h-2z"/><path fill="#d9cfb4" d="M16 4h1v1h-1zM16 5h1v1h-1zM16 6h1v1h-1zM16 7h1v1h-1zM16 8h1v1h-1zM16 9h1v1h-1zM16 10h1v1h-1zM16 11h1v1h-1zM16 12h1v1h-1zM16 13h1v1h-1zM16 14h1v1h-1zM16 15h1v1h-1z"/><path fill="#9fb8f2" d="M7 5h7v1h-7z"/><path fill="#e9f6ee" d="M10 8h1v1h-1zM8 9h2v1h-2zM8 10h2v1h-2zM12 10h1v1h-1zM7 11h3v1h-3zM12 11h2v1h-2zM8 12h2v1h-2zM11 12h2v1h-2zM8 13h2v1h-2zM11 13h2v1h-2z"/><path fill="#46c06a" d="M10 9h3v1h-3zM11 10h1v1h-1zM11 11h1v1h-1z"/><path fill="#2f9d52" d="M10 10h1v1h-1zM10 11h1v1h-1zM10 12h1v1h-1zM10 13h1v1h-1zM10 14h1v1h-1z"/><path fill="#e2564f" d="M12 16h2v1h-2zM12 17h2v1h-2zM12 18h2v1h-2zM13 19h1v1h-1z"/></svg></span><span><b>YOUR CLASS NUTRITION GUIDE</b><small>Weekly menu, performance targets, and substitutions.</small></span><i>＋</i></summary>
-      <div id="dietPlanWrap"></div>
-    </details>
-    <div class="fuel-signoff"><span>THE BEST BUILD IS THE ONE YOU KEEP SHOWING UP FOR.</span><span>LIFEMAX / FUEL SYSTEM</span></div>
-  </div>
-</section>
       @@INCLUDE:src/views/money.html@@
       @@INCLUDE:src/views/history.html@@
       @@INCLUDE:src/views/settings.html@@
@@ -160,29 +106,6 @@
   <audio id="audioEl" preload="metadata"></audio>
 </div>
 
-<div id="mealSheet" class="sheet-ov" onclick="if(event.target===this)closeMealSheet()">
-  <div class="sheet" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
-    <div class="sh-head">
-      <div class="sh-top">
-        <h3 style="margin:0;font-size:18px" id="mealSheetTitle">Add food</h3>
-        <button type="button" class="sh-x" onclick="closeMealSheet()" aria-label="Close">✕</button>
-      </div>
-      <p class="muted" style="font-size:12.5px;margin:8px 0 0">Recent foods and USDA search for this meal.</p>
-    </div>
-    <div style="padding:12px 18px;border-bottom:1px solid var(--line-soft);display:grid;gap:10px">
-      <div class="field" style="margin:0"><label for="msSearch">Search</label><input id="msSearch" type="search" placeholder="chicken, rice, banana…" oninput="mealSheetSearch()" autocomplete="off"></div>
-      <div class="formgrid" style="grid-template-columns:1fr 1fr">
-        <div class="field"><label for="msGrams">Grams</label><input id="msGrams" type="number" min="1" step="1" value="100"></div>
-        <div class="field" id="msPortionField" style="display:none"><label for="msPortion">Portion</label><select id="msPortion" onchange="msPortionPicked()"></select></div>
-      </div>
-    </div>
-    <div class="sh-list" id="mealSheetList"></div>
-    <div style="padding:12px 18px;border-top:1px solid var(--line-soft);display:flex;gap:8px;flex-wrap:wrap">
-      <button type="button" class="btn" id="msAddBtn" onclick="mealSheetAdd()" disabled style="flex:1">Add to meal</button>
-      <button type="button" class="btn secondary" onclick="showCustomFood();closeMealSheet()">Custom food</button>
-    </div>
-  </div>
-</div>
 <div id="attrSheet" class="sheet-ov" onclick="if(event.target===this)closeAttr()"><div class="sheet" id="sheetPanel" role="dialog" aria-modal="true"></div></div>
 
 <div id="tutorial" aria-modal="true" role="dialog" aria-labelledby="tutTitle" aria-hidden="true">
@@ -205,6 +128,6 @@
 @@INCLUDE:src/data/petAssets.html@@
 @@INCLUDE:src/data/petRig.html@@
 @@INCLUDE:src/data/petHd.html@@
-<script>@@INCLUDE:src/runtime/segments/00-runtime.js@@@@INCLUDE:src/runtime/segments/43-economy.js@@@@INCLUDE:src/runtime/segments/01-runtime.js@@@@INCLUDE:src/runtime/segments/02-runtime.js@@@@INCLUDE:src/runtime/segments/03-runtime.js@@@@INCLUDE:src/runtime/segments/04-runtime.js@@@@INCLUDE:src/runtime/segments/05-runtime.js@@@@INCLUDE:src/runtime/segments/06-runtime.js@@@@INCLUDE:src/runtime/segments/07-runtime.js@@@@INCLUDE:src/runtime/segments/08-runtime.js@@@@INCLUDE:src/runtime/segments/09-runtime.js@@@@INCLUDE:src/runtime/segments/10-runtime.js@@@@INCLUDE:src/runtime/segments/11-runtime.js@@@@INCLUDE:src/runtime/segments/12-runtime.js@@@@INCLUDE:src/runtime/segments/13-runtime.js@@@@INCLUDE:src/runtime/segments/14-runtime.js@@@@INCLUDE:src/runtime/segments/15-runtime.js@@@@INCLUDE:src/runtime/segments/16-runtime.js@@@@INCLUDE:src/runtime/segments/17-runtime.js@@@@INCLUDE:src/runtime/segments/18-runtime.js@@@@INCLUDE:src/runtime/segments/19-runtime.js@@@@INCLUDE:src/runtime/segments/20-runtime.js@@@@INCLUDE:src/runtime/segments/21-runtime.js@@@@INCLUDE:src/runtime/segments/22-runtime.js@@@@INCLUDE:src/runtime/segments/23-runtime.js@@@@INCLUDE:src/runtime/segments/24-pet-depth.js@@@@INCLUDE:src/runtime/segments/25-pet-likes.js@@@@INCLUDE:src/runtime/segments/26-pet-brain.js@@@@INCLUDE:src/runtime/segments/27-pet-play.js@@@@INCLUDE:src/runtime/segments/28-pet-box.js@@@@INCLUDE:src/runtime/segments/29-pet-pair.js@@@@INCLUDE:src/runtime/segments/30-pet-sleep.js@@@@INCLUDE:src/runtime/segments/31-overview-edit.js@@@@INCLUDE:src/runtime/segments/32-pet-dna.js@@@@INCLUDE:src/runtime/segments/33-android.js@@@@INCLUDE:src/runtime/segments/34-navigation.js@@@@INCLUDE:src/runtime/segments/35-android-upkeep.js@@@@INCLUDE:src/runtime/segments/36-money-pay.js@@@@INCLUDE:src/runtime/segments/37-pet-morph.js@@@@INCLUDE:src/runtime/segments/38-pet-rig.js@@@@INCLUDE:src/runtime/segments/39-health.js@@@@INCLUDE:src/runtime/segments/40-widget.js@@@@INCLUDE:src/runtime/segments/41-ov-apps.js@@@@INCLUDE:src/runtime/segments/42-scrubnav.js@@@@INCLUDE:src/runtime/segments/44-rewards.js@@@@INCLUDE:src/runtime/segments/45-voice.js@@@@INCLUDE:src/runtime/segments/46-voice-nlu.js@@@@INCLUDE:src/runtime/segments/47-journal-coach.js@@@@INCLUDE:src/runtime/segments/48-journal-lock.js@@@@INCLUDE:src/runtime/segments/49-voice-time.js@@@@INCLUDE:src/runtime/segments/50-pet-hd.js@@@@INCLUDE:src/runtime/segments/50-voice-gen4.js@@@@INCLUDE:src/runtime/segments/50-voice-gen5.js@@@@INCLUDE:src/runtime/segments/50-voice-fallback.js@@@@INCLUDE:src/runtime/segments/50-haptics.js@@@@INCLUDE:src/runtime/segments/50-quests-art.js@@@@INCLUDE:src/runtime/segments/50-quests-cards.js@@@@INCLUDE:src/runtime/segments/50-quests-hand.js@@@@INCLUDE:src/runtime/segments/50-sfx-data.js@@@@INCLUDE:src/runtime/segments/50-sfx.js@@@@INCLUDE:src/runtime/segments/50-quests-fx.js@@@@INCLUDE:src/runtime/segments/50-gym3d-moves.js@@@@INCLUDE:src/runtime/segments/50-gym3d.js@@@@INCLUDE:src/runtime/segments/50-quests-cine.js@@@@INCLUDE:src/runtime/segments/50-quests-table-data.js@@@@INCLUDE:src/runtime/segments/50-quests-table.js@@@@INCLUDE:src/runtime/segments/50-quests-gate.js@@@@INCLUDE:src/runtime/segments/50-settings-tabs.js@@@@INCLUDE:src/runtime/segments/50-tabs-edit.js@@@@INCLUDE:src/runtime/segments/51-boot-ok.js@@</script>
+<script>@@INCLUDE:src/runtime/segments/00-runtime.js@@@@INCLUDE:src/runtime/segments/43-economy.js@@@@INCLUDE:src/runtime/segments/01-runtime.js@@@@INCLUDE:src/runtime/segments/02-runtime.js@@@@INCLUDE:src/runtime/segments/03-runtime.js@@@@INCLUDE:src/runtime/segments/04-runtime.js@@@@INCLUDE:src/runtime/segments/05-runtime.js@@@@INCLUDE:src/runtime/segments/06-runtime.js@@@@INCLUDE:src/runtime/segments/07-runtime.js@@@@INCLUDE:src/runtime/segments/08-runtime.js@@@@INCLUDE:src/runtime/segments/09-runtime.js@@@@INCLUDE:src/runtime/segments/10-runtime.js@@@@INCLUDE:src/runtime/segments/11-runtime.js@@@@INCLUDE:src/runtime/segments/12-runtime.js@@@@INCLUDE:src/runtime/segments/13-runtime.js@@@@INCLUDE:src/runtime/segments/14-runtime.js@@@@INCLUDE:src/runtime/segments/15-runtime.js@@@@INCLUDE:src/runtime/segments/16-runtime.js@@@@INCLUDE:src/runtime/segments/17-runtime.js@@@@INCLUDE:src/runtime/segments/18-runtime.js@@@@INCLUDE:src/runtime/segments/19-runtime.js@@@@INCLUDE:src/runtime/segments/20-runtime.js@@@@INCLUDE:src/runtime/segments/21-runtime.js@@@@INCLUDE:src/runtime/segments/22-runtime.js@@@@INCLUDE:src/runtime/segments/23-runtime.js@@@@INCLUDE:src/runtime/segments/24-pet-depth.js@@@@INCLUDE:src/runtime/segments/25-pet-likes.js@@@@INCLUDE:src/runtime/segments/26-pet-brain.js@@@@INCLUDE:src/runtime/segments/27-pet-play.js@@@@INCLUDE:src/runtime/segments/28-pet-box.js@@@@INCLUDE:src/runtime/segments/29-pet-pair.js@@@@INCLUDE:src/runtime/segments/30-pet-sleep.js@@@@INCLUDE:src/runtime/segments/31-overview-edit.js@@@@INCLUDE:src/runtime/segments/32-pet-dna.js@@@@INCLUDE:src/runtime/segments/33-android.js@@@@INCLUDE:src/runtime/segments/34-navigation.js@@@@INCLUDE:src/runtime/segments/35-android-upkeep.js@@@@INCLUDE:src/runtime/segments/36-money-pay.js@@@@INCLUDE:src/runtime/segments/37-pet-morph.js@@@@INCLUDE:src/runtime/segments/38-pet-rig.js@@@@INCLUDE:src/runtime/segments/39-health.js@@@@INCLUDE:src/runtime/segments/40-widget.js@@@@INCLUDE:src/runtime/segments/41-ov-apps.js@@@@INCLUDE:src/runtime/segments/42-scrubnav.js@@@@INCLUDE:src/runtime/segments/44-rewards.js@@@@INCLUDE:src/runtime/segments/45-voice.js@@@@INCLUDE:src/runtime/segments/46-voice-nlu.js@@@@INCLUDE:src/runtime/segments/47-journal-coach.js@@@@INCLUDE:src/runtime/segments/48-journal-lock.js@@@@INCLUDE:src/runtime/segments/49-voice-time.js@@@@INCLUDE:src/runtime/segments/50-pet-hd.js@@@@INCLUDE:src/runtime/segments/50-voice-gen4.js@@@@INCLUDE:src/runtime/segments/50-voice-gen5.js@@@@INCLUDE:src/runtime/segments/50-voice-fallback.js@@@@INCLUDE:src/runtime/segments/50-haptics.js@@@@INCLUDE:src/runtime/segments/50-quests-art.js@@@@INCLUDE:src/runtime/segments/50-quests-cards.js@@@@INCLUDE:src/runtime/segments/50-quests-hand.js@@@@INCLUDE:src/runtime/segments/50-sfx-data.js@@@@INCLUDE:src/runtime/segments/50-sfx.js@@@@INCLUDE:src/runtime/segments/50-quests-fx.js@@@@INCLUDE:src/runtime/segments/50-gym3d-moves.js@@@@INCLUDE:src/runtime/segments/50-gym3d.js@@@@INCLUDE:src/runtime/segments/50-quests-cine.js@@@@INCLUDE:src/runtime/segments/50-quests-table-data.js@@@@INCLUDE:src/runtime/segments/50-quests-table.js@@@@INCLUDE:src/runtime/segments/50-quests-gate.js@@@@INCLUDE:src/runtime/segments/50-settings-tabs.js@@@@INCLUDE:src/runtime/segments/50-tabs-edit.js@@@@INCLUDE:src/runtime/segments/50-food.js@@@@INCLUDE:src/runtime/segments/51-boot-ok.js@@</script>
 </body>
 </html>

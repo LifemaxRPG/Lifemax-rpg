@@ -55,7 +55,7 @@ const FEATURE_TIPS={
   meals:{
     icon:'♡',
     title:'Food log',
-    body:'Search USDA foods or add custom items. Macros update the ring and daily totals. Optional calorie goal lives at the top of this page.'
+    body:'Tap the search bar to add food, or tap the middle of the rings to set your daily targets. Protein, carbs and fat fill their rings as you log.'
   },
   media:{
     icon:'▤',

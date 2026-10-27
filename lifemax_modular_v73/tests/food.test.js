@@ -1,0 +1,40 @@
+/* Food tab v2: rings, add-food sheet, portion/edit/create/goal flows.
+   Run: NODE_PATH=$(npm root -g) node tests/food.test.js [built html] */
+const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/v(\d+)/)[1] - +b.match(/v(\d+)/)[1]).pop()));
+let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
+(async () => {
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 880 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
+  await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
+  await p.goto('file://' + file); await p.waitForTimeout(900);
+  await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('meals') }); await p.waitForTimeout(400);
+  ok('the new Food tab renders the dial, week strip and four meals', await p.evaluate(() => !!document.querySelector('.fv2-svg') && document.querySelectorAll('.fv2-d').length === 7 && document.querySelectorAll('.fv2-meal').length === 4));
+  ok('empty rings draw no stray dots', await p.evaluate(() => [...document.querySelectorAll('.fv2-arc')].every(a => getComputedStyle(a).opacity === '0')));
+  await p.click('.fv2-mid'); await p.waitForTimeout(400); await p.click('[data-s2=preset][data-p=hi]'); await p.click('[data-s2=goalsave]'); await p.waitForTimeout(500);
+  ok('targets save calories, protein, carbs, fat and water', await p.evaluate(() => { const m = state.mealsMeta; return m.calGoal === 2000 && m.protGoal > 0 && m.carbGoal > 0 && m.fatGoal > 0 && m.waterGoalMl === 2000 }));
+  await p.click('#fv2Dock'); await p.waitForTimeout(400); await p.fill('#fv2Q', 'banana'); await p.waitForTimeout(400); await p.click('.fv2-r .q'); await p.waitForTimeout(500);
+  ok('the + on a search row logs one default serving', await p.evaluate(() => dayFoodLog(getToday()).length === 1));
+  await p.click('.fv2-meal .add[data-s=dinner]'); await p.waitForTimeout(400); await p.fill('#fv2Q', 'salmon'); await p.waitForTimeout(400); await p.click('.fv2-r .m'); await p.waitForTimeout(300);
+  const g0 = await p.evaluate(() => sh0 = fv2S().sh.grams); await p.click('[data-s2=mult][data-x="2"]');
+  ok('the 2x chip doubles the portion', await p.evaluate(g => fv2S().sh.grams >= g * 1.9, g0));
+  await p.click('[data-s2=fav]'); await p.click('[data-s2=log]'); await p.waitForTimeout(500);
+  ok('the portion screen logs into the chosen meal', await p.evaluate(() => dayFoodLog(getToday()).some(e => e.slot === 'dinner')));
+  ok('starring a food keeps it in Favorites', await p.evaluate(() => state.mealsMeta.favs.length === 1));
+  await p.click('.fv2-e'); await p.waitForTimeout(300); await p.click('[data-s2=step][data-d="1"]'); await p.click('[data-s2=save]'); await p.waitForTimeout(400);
+  ok('editing an entry changes its grams and calories', await p.evaluate(() => { const e = dayFoodLog(getToday())[0]; return e && e.grams > 0 && e.kcal > 0 }));
+  await p.click('#fv2Dock'); await p.waitForTimeout(300); await p.click('[data-s2=create]'); await p.waitForTimeout(300);
+  await p.fill('#fv2CN', 'Protein shake'); await p.fill('#fv2CS', '300'); await p.fill('#fv2CK', '160'); await p.fill('#fv2CP', '30'); await p.click('[data-s2=createsave]'); await p.waitForTimeout(300);
+  ok('a created food is stored per 100 g from its label serving', await p.evaluate(() => { const f = state.customFoods[0]; return f && Math.abs(f.kcal - 53.33) < .1 && f.port[0].g === 300 }));
+  await p.click('[data-s2=log]'); await p.waitForTimeout(500);
+  ok('and logs the full label calories for its serving', await p.evaluate(() => dayFoodLog(getToday()).some(e => e.name === 'Protein shake' && e.kcal === 160)));
+  await p.click('[data-a=water][data-ml="500"]'); await p.waitForTimeout(200);
+  ok('water adds to the water log', await p.evaluate(() => (state.waterLog || []).length === 1));
+  await p.click('#fv2Dock'); await p.waitForTimeout(300); await p.click('[data-s2=quick]'); await p.waitForTimeout(200); await p.fill('#fv2QK', '450'); await p.click('[data-s2=quicksave]'); await p.waitForTimeout(400);
+  ok('quick calories logs a plain kcal entry', await p.evaluate(() => dayFoodLog(getToday()).some(e => e.kcal === 450)));
+  await p.evaluate(() => { const e = state.foodLog.find(x => x.name === 'Quick calories'); e.date = fv2DayShift(getToday(), -1); e.slot = 'snacks'; save(); renderMeals() });
+  await p.click('[data-a=step][data-n="-1"]'); await p.waitForTimeout(300); await p.click('[data-a=step][data-n="1"]'); await p.waitForTimeout(300);
+  await p.click('[data-a=copy]'); await p.waitForTimeout(200);
+  ok('Copy yesterday brings a meal forward', await p.evaluate(() => dayFoodLog(getToday()).filter(e => e.kcal === 450).length >= 1));
+  ok('no script errors', errs.length === 0, errs);
+  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+})();
