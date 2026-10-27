@@ -74,7 +74,7 @@ jobs:
             PREV_API=$(python3 -c "import json;print(json.load(open('prev.json')).get('nativeApi',0))")
             NOW_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
             if [ -n "$PREV_SHA" ] && git cat-file -e "$PREV_SHA^{commit}" 2>/dev/null; then
-              CHANGED=$(git diff --name-only "$PREV_SHA" HEAD -- android-wrapper/native android-wrapper/patch_manifest.py android-wrapper/patch_gradle.py android-wrapper/patch_project.py android-wrapper/patch_styles.py | grep -v 'NativeApi.java' || true)
+              CHANGED=$(git diff --name-only "$PREV_SHA" HEAD -- android-wrapper/native android-wrapper/res android-wrapper/patch_manifest.py android-wrapper/patch_gradle.py android-wrapper/patch_project.py android-wrapper/patch_styles.py | grep -v 'NativeApi.java' || true)
               echo "previous build $PREV_SHA had nativeApi $PREV_API; now $NOW_API"
               if [ -n "$CHANGED" ] && [ "$NOW_API" -le "$PREV_API" ]; then
                 echo "::error::The Android side changed but NativeApi.VALUE was not raised (still $NOW_API). Raise it in android-wrapper/native/NativeApi.java so phones are offered the new APK. Changed: $CHANGED"
