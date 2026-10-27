@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v166 — table fixes
+- The deck now sits at the back of the table and the three cards are laid in front of it, so they no longer land on top of it; the leftover deck is pushed to the side.
+- 3D cards have rounded corners (the art's black corner pixels are cut away in the shader).
+
 ## v165 — edit the bottom bar
 - Settings → Look & feel → Bottom bar: reorder the tabs with the arrows, switch tabs on or off (at least two stay), add Settings to the bar, or reset. The change applies to the real buttons, so swiping between tabs and scrubbing along the bar follow the new order and skip hidden tabs. Hidden pages stay reachable from links inside the app.
 - Fix: some settings (swipe animation, scrub speed) were dropped when the app restarted, because the prefs loader only kept the keys it knew. It now keeps everything it finds.

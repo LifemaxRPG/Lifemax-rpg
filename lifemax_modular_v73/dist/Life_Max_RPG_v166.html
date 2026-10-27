@@ -19603,7 +19603,7 @@ var T3_CVS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=1)in v
  'void main(){vec4 w=uM*vec4(aP,1.);vP=w.xyz;vN=mat3(uM)*aN;vUV=aUV;vF=aF;gl_Position=uVP*w;}';
 var T3_CFS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2 vUV;in float vF;out vec4 o;uniform sampler2D uFront,uBack;uniform vec3 uEye,uL1,uL2;uniform float uI1,uI2,uAmb,uSheen,uFogK,uFade;\n'+
  'vec3 lt(vec3 P,vec3 N,vec3 lp,float I){vec3 d=lp-P;float r2=dot(d,d);float att=I/(1.+r2*.0075);return vec3(1.,.7,.42)*max(dot(N,normalize(d)),0.)*att;}\n'+
- 'void main(){vec3 N=normalize(vN);vec3 V=normalize(uEye-vP);vec3 alb=pow((vF<.5?texture(uFront,vUV):texture(uBack,vUV)).rgb,vec3(2.2));\n'+
+ 'void main(){vec2 rp=(vUV-.5)*vec2(1.,1.7506);vec2 hf=vec2(.5,.5*1.7506);float rr=.05;if(length(max(abs(rp)-hf+rr,0.))-rr>0.)discard;vec3 N=normalize(vN);vec3 V=normalize(uEye-vP);vec3 alb=pow((vF<.5?texture(uFront,vUV):texture(uBack,vUV)).rgb,vec3(2.2));\n'+
  'vec3 c=alb*(vec3(.12,.13,.2)*uAmb+lt(vP,N,uL1,uI1)+lt(vP,N,uL2,uI2));\n'+
  'vec3 Lh=normalize(vec3(-.4,.7,.6));vec3 R=reflect(-Lh,N);c+=vec3(1.,.93,.78)*uSheen*pow(max(dot(R,V),0.),26.)*.3;\n'+
  'float dist=length(uEye-vP);c=mix(c,vec3(0.),(1.-exp(-dist*uFogK))*.8);c=c/(c+vec3(.9));c=pow(c,vec3(1./2.2));o=vec4(c,1.)*uFade;}';
@@ -19755,7 +19755,7 @@ async function dhTable3D(el,cards,d,replay){
  var skip=function(){if(skipped)return;skipped=true;tw.forEach(function(a){a.ms=0});waits.forEach(function(w){clearTimeout(w[0]);w[1]()});if(awaitFlip)awaitFlip.finish()};
  sc.querySelector('.fs-skip').addEventListener('click',skip);
  /* the table pose of each dealt card and deck */
- var LD=CH/(.74*2*Math.tan(FOV/2)),DECK=[22,0,12],slots=[[-12,0,6],[0,0,6],[12,0,6]];
+ var LD=CH/(.74*2*Math.tan(FOV/2)),DECK=[0,0,-17],SIDE=[28,0,-12],slots=[[-12.4,0,14],[0,0,14],[12.4,0,14]];
  /* turning a lifted card with a finger: it rotates about whatever axis your drag implies (arcball style), so a corner-to-corner
     drag flips it diagonally. On release it settles upright onto whichever face is turned toward you. */
  var qrot=function(q,v){var u=[q[0],q[1],q[2]],w=q[3],c1=t3cross(u,v),c2=t3cross(u,c1);return [v[0]+2*(w*c1[0]+c2[0]),v[1]+2*(w*c1[1]+c2[1]),v[2]+2*(w*c1[2]+c2[2])]};
@@ -19790,7 +19790,7 @@ async function dhTable3D(el,cards,d,replay){
    drops.push(wait(i*60).then(function(){if(skipped){c.p=to;c.q=q1;c.sh=.7;return}return anim(520,function(t){c.p=lerp3(from,to,t);c.q=t3slerp(q0,q1,t);c.sh=Math.min(.8,t*1.2)},eBounce)}))})(i)}
   await Promise.all(drops);if(!skipped)thud([DECK[0],TY,DECK[2]],22,2);
   /* it begins to move: the deck slides to the middle of the table */
-  var mid=[0,TY,-3];
+  var mid=[DECK[0],TY,DECK[2]];
   await Promise.all(C.map(function(c,i){return move(c,[mid[0],TY+i*.16,mid[2]],faceDown(rnd(-3,3)),600)}));
   await type('THE DECK IS SHUFFLED',120);
   for(var r=0;r<2&&!skipped;r++){
@@ -19805,7 +19805,7 @@ async function dhTable3D(el,cards,d,replay){
    var mv1=move(c,to,faceDown(yaw),640,{arc:9,ease:eO});await wait(500);if(skipped)break;thud([to[0],TY,to[2]],14,1.4);S_flash(.18);await mv1;await wait(100);
   }
   /* the rest of the deck is pushed aside */
-  if(!skipped)await Promise.all(C.filter(function(c){return dealt.indexOf(c)<0}).map(function(c,i){return move(c,[DECK[0]+1.4,TY+i*.16,DECK[2]],faceDown(rnd(-4,4)),450)}));
+  if(!skipped)await Promise.all(C.filter(function(c){return dealt.indexOf(c)<0}).map(function(c,i){return move(c,[SIDE[0],TY+i*.16,SIDE[2]],faceDown(rnd(-4,4)),520,{arc:3})}));
   /* the reading */
   var arcOf=function(q){return QPX_ARC[q.attribute]||QPX_ARC.discipline};
   if(!skipped){await type('YOUR CARDS AWAIT',150);gutter=.2;await wait(330);gutter=1;ST.flash=.5}
