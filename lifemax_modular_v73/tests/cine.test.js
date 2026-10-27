@@ -24,10 +24,22 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('Shuffle again replays it', true);
   await p.click('.fs-skip'); await p.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 8000 });
   ok('no page errors', p.errs.length === 0, p.errs);
-  // a full unskipped run finishes by itself
+  // a full run, turning each card by hand
   const q = await mk(); await q.waitForSelector('#fateScene', { timeout: 5000 }); const t2 = Date.now();
-  await q.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 40000 });
-  const dur = Date.now() - t2; ok('a full unskipped reading ends on its own in under 20 seconds', dur < 20000, dur); console.log('duration ms', dur);
+  const drag = async (dx, steps) => { await q.mouse.move(206, 430); await q.mouse.down(); for (let i = 1; i <= steps; i++) { await q.mouse.move(206 + dx * i / steps, 430, { steps: 1 }); await q.waitForTimeout(16) } await q.mouse.up() };
+  let turned = 0, nudged = false, stayedBack = false, midAngle = null;
+  while (await q.evaluate(() => !!document.getElementById('fateScene'))) {
+    if (await q.evaluate(() => document.getElementById('fateScene').dataset.await === 'flip')) {
+      if (!nudged) { nudged = true; await drag(26, 5); await q.waitForTimeout(900); stayedBack = await q.evaluate(() => document.getElementById('fateScene').dataset.await === 'flip' && !document.querySelector('#fateScene .cine-card .dh-card.is-up')); 
+        await q.mouse.move(206, 430); await q.mouse.down(); for (let i = 1; i <= 6; i++) { await q.mouse.move(206 + 40 * i, 430); await q.waitForTimeout(16) } midAngle = await q.evaluate(() => [...document.querySelectorAll('#fateScene .cine-card .fd-inner')].map(e => e.style.transform).find(t => /rotateY/.test(t))); await q.mouse.up(); await q.waitForTimeout(900) }
+      else { await drag(230, 8); await q.waitForTimeout(900) }
+      turned++;
+    }
+    await q.waitForTimeout(150); if (Date.now() - t2 > 60000) break;
+  }
+  const dur = Date.now() - t2; ok('a small nudge does not turn the card over', stayedBack);
+  ok('while dragging the card rotates in 3D with the finger', /rotateY\(/.test(midAngle || '') && /rotateX\(/.test(midAngle || ''), midAngle);
+  ok('a full run, turning each card by hand, ends by itself', dur < 60000, dur); console.log('duration ms', dur);
   ok('a full run leaves the cards face-up', await q.evaluate(() => [...document.querySelectorAll('#dailyHand .dh-card')].every(c => c.classList.contains('is-up'))));
   // other modes
   const o = await mk('off'); await o.waitForTimeout(1200);

@@ -57,10 +57,37 @@ async function dhCinematic(el,cards,d,replay){
  const deckBackUrl=typeof qartUrl==='function'&&qartUrl('back');
  const clones=cards.map(function(c,i){
   const w=document.createElement('div');w.className='cine-card';w.style.cssText='width:'+cw+'px;height:'+ch+'px;margin:'+(-ch/2)+'px 0 0 '+(-cw/2)+'px;opacity:0';
-  const n=c.cloneNode(true);n.classList.remove('is-up');n.style.cssText='';const dk=n.querySelector('.dh-dock');if(dk)dk.remove();w.appendChild(n);stage.appendChild(w);place(w,0,0,sm,0);return {w:w,n:n,c:c};
+  const n=c.cloneNode(true);n.classList.remove('is-up');n.style.cssText='';const dk=n.querySelector('.dh-dock');if(dk)dk.remove();const fb=n.querySelector('.fd-back');if(fb){fb.removeAttribute('onclick');fb.removeAttribute('onkeydown');fb.removeAttribute('tabindex')}w.appendChild(n);stage.appendChild(w);place(w,0,0,sm,0);return {w:w,n:n,c:c};
  });
  const backs=[];
  for(let i=0;i<10;i++){const b=document.createElement('div');b.className='cine-back';b.style.cssText='width:'+cw+'px;height:'+ch+'px;margin:'+(-ch/2)+'px 0 0 '+(-cw/2)+'px;opacity:0'+(deckBackUrl?';background-image:url('+deckBackUrl+')':'');b.style.zIndex=i+1;stage.appendChild(b);place(b,0,0,sm,0);backs.push(b)}
+
+ /* turn the card with your finger: it rotates in 3D under the drag, carries on with a flick, and settles front or back */
+ const flipByHand=function(k){return new Promise(function(res){
+  const fi=k.n.querySelector('.fd-inner'),w=k.w;let a=180,rx=0,drag=false,sx=0,sy=0,a0=180,samples=[],seen=false,settling=0,done=false;
+  const gl=document.createElement('span');gl.className='cine-gloss';k.n.querySelector('.fd-front').appendChild(gl);
+  const hint=document.createElement('span');hint.className='fs-hint';hint.innerHTML='<i></i>';w.appendChild(hint);
+  let idle=setTimeout(function(){hint.classList.add('on')},2600);
+  const apply=function(){fi.style.transform='rotateX('+rx.toFixed(1)+'deg) rotateY('+a.toFixed(1)+'deg)';const c=Math.cos(a*Math.PI/180);gl.style.opacity=Math.abs(Math.sin(a*Math.PI/180))*.0+(.55*Math.abs(c)).toFixed(2);gl.style.backgroundPosition=(50-Math.sin(a*Math.PI/180)*90).toFixed(0)+'% 0';w.style.filter='drop-shadow('+(Math.sin(a*Math.PI/180)*14).toFixed(0)+'px 18px 22px rgba(0,0,0,.7))'};
+  fi.style.transition='none';apply();
+  const finish=function(){if(done)return;done=true;clearTimeout(idle);cancelAnimationFrame(settling);w.removeEventListener('pointerdown',down);w.removeEventListener('pointermove',move);w.removeEventListener('pointerup',up);w.removeEventListener('pointercancel',up);
+   k.n.classList.add('is-up');fi.style.transform='';void fi.offsetWidth;fi.style.transition='';gl.remove();hint.remove();w.style.filter='';res()};
+  const front=function(){return Math.cos(a*Math.PI/180)>0};
+  const down=function(e){if(done||settling)return;drag=true;sx=e.clientX;sy=e.clientY;a0=a;samples=[[performance.now(),a]];hint.classList.remove('on');clearTimeout(idle);try{w.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()};
+  const move=function(e){if(!drag)return;a=a0+(e.clientX-sx)*.85;rx=Math.max(-24,Math.min(24,(e.clientY-sy)*-.12));apply();
+   const now=performance.now();samples.push([now,a]);while(samples.length>2&&now-samples[0][0]>90)samples.shift();
+   if(front()&&!seen){seen=true;S.flash=Math.max(S.flash,.22);hap('tap')}};
+  const up=function(){if(!drag)return;drag=false;
+   const n=samples.length,v=n>1?(samples[n-1][1]-samples[0][1])/Math.max(16,samples[n-1][0]-samples[0][0])*1000:0;/* deg per second */
+   const boost=Math.max(-45,Math.min(45,v*.04)),target=Math.round((a+boost)/180)*180,from=a,from_rx=rx,t0=performance.now(),dur=520;
+   const step=function(){const t=Math.min(1,(performance.now()-t0)/dur),c1=1.4,c3=c1+1,e=1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);
+    a=from+(target-from)*e;rx=from_rx*(1-t);apply();
+    if(t<1){settling=requestAnimationFrame(step)}else{settling=0;a=target;rx=0;apply();
+     if(Math.round(target/180)%2===0){finish()}else{seen=false;idle=setTimeout(function(){hint.classList.add('on')},2200)}}};
+   settling=requestAnimationFrame(step)};
+  w.addEventListener('pointerdown',down);w.addEventListener('pointermove',move);w.addEventListener('pointerup',up);w.addEventListener('pointercancel',up);
+  waits.push([0,finish]);/* Skip resolves it */
+ })};
  try{
   await A(sc,[{opacity:0},{opacity:1}],{duration:700,fill:'forwards'});
   const dimT=performance.now();const dimLoop=function(){S.dim=Math.min(1,(performance.now()-dimT)/900);if(S.dim<1&&alive)requestAnimationFrame(dimLoop)};dimLoop();
@@ -91,20 +118,22 @@ async function dhCinematic(el,cards,d,replay){
   const arcOf=function(q){return QPX_ARC[q.attribute]||QPX_ARC.discipline};
   if(!skipped){
    backs.forEach(function(b){b.style.opacity='0'});
-   await type('TURN THEM OVER',150);
+   await type('YOUR CARDS AWAIT',150);
    const gut=A(sc,[{filter:'brightness(1)'},{filter:'brightness(.55)'},{filter:'brightness(1)'}],{duration:520});S.flare=.15;await wait(330);S.flare=1;S.flash=.5;await gut;
   }
   for(let i=0;i<3&&!skipped;i++){
    const k=clones[i],x=(i-1)*gap,r=(i-1)*4,q=dhCards().find(function(z){return z.slot===i})||{tier:1,attribute:'discipline'},tier=q.tier||1,arc=arcOf(q);
+   clones.forEach(function(o,j){o.w.style.zIndex=j===i?20:1;o.w.style.pointerEvents=j===i?'auto':'none'});
    clones.forEach(function(o,j){if(j!==i)A(o.w,[{opacity:1},{opacity:.28}],{duration:350,fill:'forwards'})});
    await A(k.w,[{transform:tf(x,cy-vh/2,s0,r)},{transform:tf(0,cy-vh/2-10,s1,0)}],{duration:500,easing:'cubic-bezier(.3,.8,.25,1)',fill:'forwards'});
    if(skipped)break;
-   await wait(100);
-   k.n.classList.add('is-up');S.flash=tier>=3?1:tier===2?.7:.45;hap(tier>=3?'big':'double');
+   cap.innerHTML=qpxText('TURN THE CARD',{s:2,w:vw-40,lines:1});sc.dataset.await='flip';
+   await flipByHand(k);sc.dataset.await='';cap.innerHTML='';if(skipped)break;
+   S.flash=tier>=3?1:tier===2?.7:.45;hap(tier>=3?'big':'double');
    try{const rc=k.w.getBoundingClientRect();QFX.burst(rc,tier)}catch(e){}
-   title.innerHTML='<span style="color:'+arc.ac+'">'+qpxText(arc.name,{s:3,w:vw-20,lines:1})+'</span><span class="fs-tier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span>';
+   title.innerHTML='<span style="color:#f6ecd0;filter:drop-shadow(0 0 10px '+arc.ac+') drop-shadow(0 0 3px '+arc.ac+')">'+qpxText(arc.name,{s:3,w:vw-20,lines:1})+'</span><span class="fs-tier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span>';
    A(title,[{opacity:0,transform:'translateY(10px) scale(.9)'},{opacity:1,transform:'none'}],{duration:420,fill:'forwards'});
-   await wait(tier>=3?1250:850);if(skipped)break;
+   await wait(tier>=3?1250:800);if(skipped)break;
    A(title,[{opacity:1},{opacity:0}],{duration:300,fill:'forwards'});
    clones.forEach(function(o,j){if(j!==i)A(o.w,[{opacity:.28},{opacity:1}],{duration:350,fill:'forwards'})});
    await A(k.w,[{transform:tf(0,cy-vh/2-10,s1,0)},{transform:tf(x,cy-vh/2,s0,r)}],{duration:420,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
@@ -113,7 +142,7 @@ async function dhCinematic(el,cards,d,replay){
  /* hand-off: all three face-up cards glide to the carousel while the room fades */
  skipped=true;anims.forEach(function(a){try{a.finish()}catch(e){}});
  d.up=[true,true,true];
- clones.forEach(function(k){k.n.classList.add('is-up');k.w.style.opacity='1'});
+ clones.forEach(function(k){const fi=k.n.querySelector('.fd-inner');if(fi){fi.style.transform='';fi.style.transition=''}k.n.classList.add('is-up');k.w.style.opacity='1';k.w.style.filter=''});
  cap.innerHTML='';title.innerHTML='';
  el.classList.remove('fd-pre');cards.forEach(function(c){c.classList.add('is-up');c.style.opacity='0'});
  const outs=clones.map(function(k,i){

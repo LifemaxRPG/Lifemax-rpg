@@ -361,6 +361,11 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v162 — turn the card by hand; the Monk is painted
+- The Monk painting (Discipline) is in, so all eight attributes now have painted cards.
+- In The Reading you now turn each card yourself: it is lifted to the middle, then dragged with a finger it rotates in 3D (up to a full turn; vertical drag tilts it) with a moving sheen and shadow, carries on with a flick and springs to the nearest face. Releasing on the front reveals it (flash, burst, name); releasing on the back springs it back. A pulsing finger hint appears after a few idle seconds. Skip still reveals everything at once.
+- Fixes: hidden deck backs no longer catch touches, the lifted card is always the top layer, the title text is readable.
+
 ## v161 — The Reading (cinematic deal)
 - The first visit to the Quest Board each day plays a short film (`50-quests-cine.js`): the screen falls into a candlelit, foggy room (one fullscreen fog shader with two flickering candle lights), the deck drops out of the dark with a thud and dust, riffle-shuffles, three cards are slammed down on the table, then each card in turn is lifted to the middle, turned over with a flash and named in pixel text (Major Arcana get a bigger flash and a stronger buzz). The cards then glide into the carousel, already face-up.
 - Skip is always in the corner. Settings → Look & feel → Quest effects → Card deal chooses Cinematic (default, roughly 14 seconds), Quick (the earlier short shuffle) or Instant. "Shuffle again" replays it. Reduced motion skips it.
