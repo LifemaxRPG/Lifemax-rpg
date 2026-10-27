@@ -453,3 +453,5 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 .nq-card input,.nq-card select{min-height:46px;border-radius:8px;border:1px solid rgba(190,160,255,.4);background:rgba(0,0,0,.4);color:#f4ecd8;padding:0 12px;font:16px Georgia,serif;width:100%;box-sizing:border-box}
 .nq-row{display:flex;gap:10px}
 .nq-row .rest-btn{max-width:none}
+/* while the 3D table is opening, the flat Quest Board never shows */
+html.q3d #view-quests{visibility:hidden}

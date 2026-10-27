@@ -381,7 +381,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   api._stop=function(){clearInterval(tick);clearInterval(leave);clearInterval(embers);if(spinStop)spinStop()};
  });
  if(window.dhRest&&window.dhRest._stop)window.dhRest._stop();window.dhRest=null;
- await new Promise(function(r){var t1=performance.now(),f=function(){var t=Math.min(1,(performance.now()-t1)/450);sc.style.opacity=1-t;if(t<1)requestAnimationFrame(f);else r()};f()});
+ await new Promise(function(r){var t1=performance.now(),dur=outcome==='replay'?1:450,f=function(){var t=Math.min(1,(performance.now()-t1)/dur);sc.style.opacity=1-t;if(t<1)requestAnimationFrame(f);else r()};f()});
  alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove();
  try{QFX.foilKick()}catch(e){}
  return outcome==='replay'?'replay':true;

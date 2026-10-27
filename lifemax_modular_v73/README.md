@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v171 — no flat-page flash; Halloween deck complete
+- While the 3D table is opening (first visit, coming back, Reshuffle) the flat Quest Board page is hidden from the first frame (`html.q3d`), so it no longer flashes. The scene opens sooner, and Reshuffle swaps scenes without a fade.
+- Halloween deck now has all eight cards: Endurance is the backpack and compass at the signpost, Adventure is the Fool's staircase with the jester emblem.
+
 ## v170 — the Quest Board is the table
 - With the 3D table deal mode (the default) the old Quest Board page is never shown. The whole Quests tab is the scene, above the bottom bar: first visit of the day is the gate and the reading; afterwards (and on every later visit) it is the resting table: the three cards face-up on the wood, candles, the void, and a progress line (pips plus "X / 3 FULFILLED" and the weekly count).
 - Tap a card to lift it to you (controls pill: Hold to claim or "fulfils itself", XP, Redraw, put back). It turns freely on any axis. Claiming or redrawing re-paints the card in 3D (a FULFILLED stamp, a spin and a burst).

@@ -80,5 +80,15 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await qk.click('#dailyHand .dh-card[data-slot="0"] .dh-corner.tl'); await qk.waitForTimeout(900);
   ok('tapping a card corner turns it over to its back (old page)', await qk.evaluate(() => document.querySelector('#dailyHand .dh-card[data-slot="0"]').classList.contains('is-turned')));
   ok('Settings lists the 3D table choice', await qk.evaluate(() => { setPickCat('look'); const o = [...document.querySelectorAll('#qdealSel option')].map(x => x.value); return o.includes('table') && o.includes('cine') && o.includes('quick') && o.includes('off') }));
+  // the flat page never flashes
+  const fl = await mk(null, null, () => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); window.__vis = []; const v = document.getElementById('view-quests'); const sample = () => window.__vis.push(getComputedStyle(v).visibility + '|' + v.classList.contains('active') + '|' + !!document.getElementById('fateScene')); const t = setInterval(sample, 16); window.__stop = () => clearInterval(t); navigate('quests') });
+  await fl.waitForSelector('#fateScene.fs-3d .gate3-btn', { timeout: 8000 }); await fl.waitForTimeout(500);
+  const bad1 = await fl.evaluate(() => { window.__stop(); return window.__vis.filter(s => s.startsWith('visible|true|false')).length });
+  ok('the flat page is never visible while the table opens (first visit)', bad1 === 0, bad1);
+  await fl.click('.gate3-skip'); await sceneGone(fl, 5000); await fl.evaluate(() => { window.__vis = []; const v = document.getElementById('view-quests'); window.__t2 = setInterval(() => window.__vis.push(getComputedStyle(v).visibility + '|' + v.classList.contains('active') + '|' + !!document.getElementById('fateScene')), 16); navigate('dashboard'); navigate('quests') });
+  await fl.waitForSelector('#fateScene.rest', { timeout: 12000 }); await fl.waitForTimeout(2200);
+  const bad2 = await fl.evaluate(() => window.__vis.filter(s => s.startsWith('visible|true|false')).length); ok('nor when you come back to the resting table', bad2 === 0, bad2);
+  await fl.evaluate(() => { window.__vis.length = 0 }); await fl.click('.rest-btn[data-a=again]'); await fl.waitForSelector('#fateScene.fs-3d:not(.rest)', { timeout: 8000 });
+  const bad3 = await fl.evaluate(() => window.__vis.filter(s => s.startsWith('visible|true|false')).length); ok('nor during Reshuffle', bad3 === 0, bad3);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

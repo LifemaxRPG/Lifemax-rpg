@@ -219,11 +219,11 @@ function dhRenderHand(){
 /* the reading starts only if you stay on the Quest Board a moment, so swiping or scrubbing past it does not trigger it */
 var dhDealTimer=0;
 function dhSchedDeal(el,d,cards){
- if(d&&d.dealt&&cards.length&&dhViewOn()&&!dhDealing&&typeof dhDealMode==='function'&&dhDealMode()==='table'&&!dhRestTimer){dhRestTimer=setTimeout(function(){dhRestTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal()},350);return}
+ if(d&&d.dealt&&cards.length&&dhViewOn()&&!dhDealing&&typeof dhDealMode==='function'&&dhDealMode()==='table'&&!dhRestTimer){dhRestTimer=setTimeout(function(){dhRestTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal()},40);return}
  if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing||dhGating)return;
  el.classList.add('fd-pre');
  if(dhDealTimer)return;
- dhDealTimer=setTimeout(function(){dhDealTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal();else if(!dhDealing){const h=document.getElementById('dailyHand');if(h)h.classList.remove('fd-pre')}},900);
+ dhDealTimer=setTimeout(function(){dhDealTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal();else if(!dhDealing){const h=document.getElementById('dailyHand');if(h)h.classList.remove('fd-pre')}},260);
 }
 /* ---- shuffle and lay-out: a riffle in a small stage, then each real card flies from the deck to its place (FLIP) ---- */
 function dhStage(){
@@ -242,6 +242,7 @@ async function dhMaybeDeal(replay){
   if(typeof dhDealMode==='function'&&dhDealMode()==='table'&&typeof dhTable3D==='function'&&!fxReduced()&&cards[0].animate){
    dhDealing=true;let rr=null;
    try{rr=await dhTable3D(el,cards,d,false,false,true)}catch(e){console.warn('[rest]',e)}finally{dhDealing=false;el.classList.remove('fd-pre')}
+   if(rr===false)document.documentElement.classList.remove('q3d');
    if(rr==='replay')setTimeout(function(){dhMaybeDeal(true)},60);
   }
   return;
@@ -264,6 +265,7 @@ async function dhMaybeDeal(replay){
    if(ok==='leave'){dhAbort=true;return}
    if(ok==='replay'){dhWantReplay=true;return}
    if(ok!==false)return;
+   document.documentElement.classList.remove('q3d');
    if(replay!==true&&typeof dhGate==='function'){/* no WebGL2: the flat splash, then the flat reading */
     let gr='go';dhGating=true;try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
     if(gr==='leave'){dhAbort=true;return}
@@ -302,8 +304,12 @@ async function dhMaybeDeal(replay){
  }
 }
 function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}
+/* the flat page must never flash: while the 3D table is going to open, the page behind it is hidden from the first frame */
+function dhQ3dWant(){try{return dhDealMode()==='table'&&!fxReduced()&&QFX.supported()}catch(e){return false}}
+function dhQ3dMark(v){const h=document.documentElement;if(v==='quests'&&dhQ3dWant()){h.classList.add('q3d');clearTimeout(dhQ3dT);dhQ3dT=setTimeout(function(){if(!document.getElementById('fateScene')&&!dhDealing&&!dhGating)h.classList.remove('q3d')},4000)}else h.classList.remove('q3d')}
+var dhQ3dT=0;
 var _dhNav=navigate;
-navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests')setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
+navigate=function(v){dhQ3dMark(v);const r=_dhNav.apply(this,arguments);if(v==='quests')setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
 window.LifeMaxDailyHand={deal:dhMaybeDeal,replay:dhReplayDeal,reveal:dhReveal,library:QUEST_LIBRARY,ensure:dhEnsure,reroll:dhReroll,cards:dhCards,verify:dhAutoVerify,verifyMet:dhVerifyMet,draw:dhDraw,weakest:dhWeakestAttr,cost:dhRerollCost};
 /* boot already rendered the board before this segment existed; deal and draw once now */
 try{dhEnsure();renderQuests()}catch(e){console.warn("[daily hand boot]",e)}
