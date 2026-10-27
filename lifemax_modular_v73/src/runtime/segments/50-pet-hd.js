@@ -71,13 +71,13 @@ function petHdEyeMask(rx,ry,pw,side,tilt,clip){
  return {m:m,W:W,H:H,cx:cx,cy:cy};
 }
 function petHdErode(M,n){let m=M.m;for(let k=0;k<n;k++){const o=m.map(function(r){return r.slice()});for(let y=0;y<M.H;y++)for(let x=0;x<M.W;x++)if(m[y][x]){if(!(y>0&&m[y-1][x]&&y<M.H-1&&m[y+1][x]&&x>0&&m[y][x-1]&&x<M.W-1&&m[y][x+1]))o[y][x]=false}m=o}return m}
-function petHdEye(px,CW,CH,cy,cx,kind,side,cols){
- const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
+function petHdEye(px,CW,CH,cy,cx,kind,side,cols,sc){
+ sc=sc||1;const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
  if(kind==='happy'||kind==='closed'){                     /* a soft arch ^ (happy) or curve u (closed) */
-  const rx=4.4;for(let dx=-Math.floor(rx);dx<=Math.floor(rx);dx++){const t=dx/rx,yy=kind==='happy'?-(1-t*t)*3.0:(1-t*t)*1.6,y0=cy+yy+(kind==='happy'?2:0);d(y0,cx+dx,150);d(y0+1,cx+dx,150)}
+  const rx=4.4*sc;for(let dx=-Math.floor(rx);dx<=Math.floor(rx);dx++){const t=dx/rx,yy=kind==='happy'?-(1-t*t)*3.0*sc:(1-t*t)*1.6*sc,y0=cy+yy+(kind==='happy'?2:0);d(y0,cx+dx,150);d(y0+1,cx+dx,150)}
   return;
  }
- const P={open:[5.4,4.9,2.1,.14],wide:[5.4,5.6,2.4,.08],sleepy:[5.4,4.9,2.1,.14],angry:[5.4,4.9,2.1,.14],sad:[5.4,4.9,2.1,.14]}[kind]||[5.4,4.9,2.1,.14];
+ const P0={open:[5.4,4.9,2.1,.14],wide:[5.4,5.6,2.4,.08],sleepy:[5.4,4.9,2.1,.14],angry:[5.4,4.9,2.1,.14],sad:[5.4,4.9,2.1,.14]}[kind]||[5.4,4.9,2.1,.14],P=[P0[0]*sc,P0[1]*sc,P0[2],P0[3]];
  const clip=kind==='angry'?function(xx,yy){return yy>=-P[1]*.18+(xx*-side)*.5-.2}:kind==='sad'?function(xx,yy){return yy>=-P[1]*.18-(xx*-side)*.5-.2}:kind==='sleepy'?function(xx,yy){return yy>=-P[1]*.05}:null;
  const M=petHdEyeMask(P[0],P[1],P[2],side,P[3],clip),inner=petHdErode(M,1);
  let top=M.H,bot=-1;for(let y=0;y<M.H;y++)for(let x=0;x<M.W;x++)if(inner[y][x]){top=Math.min(top,y);bot=Math.max(bot,y)}
@@ -98,16 +98,17 @@ function petHdEye(px,CW,CH,cy,cx,kind,side,cols){
 }
 /* expr: neutral, happy, sleepy, surprised, angry, sad, blink. a = {l,r,nose,mouth} in the 2x frame (already moved with the body). wk = whisker length factor */
 function petHdFace(px,CW,CH,a,expr,cols,wk){
+ const sc=a.sc||1,X=function(v){return Math.round(v*sc)};
  const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed']}[expr]||['open','open'];
  const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
- petHdEye(px,CW,CH,a.l[0],a.l[1],E[0],-1,cols);petHdEye(px,CW,CH,a.r[0],a.r[1],E[1],1,cols);
+ petHdEye(px,CW,CH,a.l[0],a.l[1],E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0],a.r[1],E[1],1,cols,sc);
  const ny=a.nose[0],nx=a.nose[1],my=ny+3.2;
  /* a small, soft pink nose (no dark edge) */
  [-1,0,1].forEach(function(x){d(ny-.5,nx+x,x<0?140:130)});d(ny+.5,nx,120);
  /* a short line down from the nose */
  d(ny+1.6,nx,200);d(ny+2.4,nx,200);
- const line=function(list,dy0){list.forEach(function(p){d(my+(dy0||0)+p[1],nx+p[0],200)})};
- if(expr==='happy'){[[-4,0],[-3,1],[-2,1],[-1,2],[0,2],[1,2],[2,1],[3,1],[4,0]].forEach(function(p){d(my-.5+p[1],nx+p[0],200)});[-1,0,1].forEach(function(x){d(my+2.5,nx+x,210);d(my+3.5,nx+x,x===0?210:210)})}
+ const line=function(list,dy0){list.forEach(function(p){d(my+(dy0||0)+p[1],nx+X(p[0]),200)})};
+ if(expr==='happy'){[[-4,0],[-3,1],[-2,1],[-1,2],[0,2],[1,2],[2,1],[3,1],[4,0]].forEach(function(p){d(my-.5+p[1],nx+X(p[0]),200)});[-1,0,1].forEach(function(x){d(my+2.5,nx+x,210);d(my+3.5,nx+x,x===0?210:210)})}
  else if(expr==='surprised'){for(let dy=0;dy<3;dy++)for(let dx=-1;dx<=1;dx++){const edge=dy===0||dy===2||dx!==0;if(!(dy===0||dy===2)||dx===0)d(my+dy,nx+dx,edge?200:120)}}
  else if(expr==='angry'){line([[-3,1],[-2,0],[-1,0],[0,0],[1,0],[2,0],[3,1]])}
  else if(expr==='sad'){line([[-3,2],[-2,1],[-1,0],[0,0],[1,0],[2,1],[3,2]])}
@@ -125,12 +126,27 @@ function petHdExpr(rt,p,c){
  try{
   const now=Date.now();
   if(rt.hdMood&&now<rt.hdMood.until)return rt.hdMood.expr;
-  if(petHour&&(petHour()<5||petHour()>=23)&&!/walk|run/.test(c.anim||''))return 'sleepy';
+  if(petHour&&(petHour()<5||petHour()>=23)&&/^(idle_sit|loaf|lookup)/.test(c.anim||''))return 'sleepy';
   if(typeof petCanFeed==='function'&&p&&p.alive&&petCanFeed(p,now)&&p.lastFed&&now-p.lastFed>9*3600e3)return 'sad';
  }catch(e){}
  return 'neutral';
 }
 function petHdMood(rt,expr,sec){rt.hdMood={expr:expr,until:Date.now()+sec*1000}}
+/* the cat's mood moves its ears and tail (flattened ears, a twitching tail tip): the same rig does it at 2x */
+function petHdPose(rt,anim){
+ try{
+  const br=rt.br;if(!br||!br.som||typeof petBrainArt!=='function')return null;
+  const art=petBrainArt(rt);let pose=null;
+  if(br.som.ear==='airplane_flat'&&art.earRows.indexOf(anim)>=0&&petGrowIdx(petData())<0)pose={ear0:-48,ear1:48,flat:1,tail:0,tw:0};
+  if(art.tailRows.indexOf(anim)>=0){let tw=0;if(br.som.tail==='tip_twitch')tw=[0,1,2,1][Math.floor(rt.t*14)%4];else if(Date.now()<br.remUntil)tw=[1,0,2,0][Math.floor(rt.t*10)%4];
+   if(tw){pose=pose||{ear0:0,ear1:0,flat:0,tw:0};pose.tail=(tw-1)*7;pose.tw=tw}}
+  return pose;
+ }catch(e){return null}
+}
+function petHdAnimOf(rt,kind,meta){
+ const dep=kind&&kind.charAt(0)==='d',tab=dep?(rt.A.depth&&rt.A.depth.anims):rt.A.anims;if(!tab||!meta)return null;
+ for(const k in tab)if(tab[k].row===meta.row)return k;return null;
+}
 /* ----- one finished frame: coloured body, shaped by the cat's genes, face on top ----- */
 function petHdPick(rt,p,kind,anim,f,meta,c){
  if(!kind||!petHdOn()||PET_HD.err>6)return null;
@@ -141,19 +157,21 @@ function petHdPick(rt,p,kind,anim,f,meta,c){
  try{
   const hs=B.hs||2,W=72*hs,H=48*hs;
   let morph=null;try{const ph=petPheno(p);if(ph&&ph.morph){const g=(kind==='adult'||kind==='depth')?1:petGrowth(p);morph=petRigGrown(ph.morph,g)}}catch(e){}
-  const expr=kind==='depth'&&anim==='walk_back'?'neutral':petHdExpr(rt,p,c);
+  const fi0=K.face[anim]&&K.face[anim][f],pose=petHdPose(rt,anim);
+  let expr=petHdExpr(rt,p,c);
+  if(fi0&&!fi0.o)expr=(K.ce&&K.ce[anim])||'closed';           /* a frame drawn with closed eyes keeps them closed */
   const mk=morph&&!petRigNeutral(morph)?[petRigQ(morph.em),petRigQ(morph.ew),petRigQ(morph.tl),petRigQ(morph.lg),petRigQ(morph.bl),petRigQ(morph.wk)].join(','):'n';
-  const key=[kind,p.coat,anim,f,mk,expr].join('|'),hit=PET_HD.fr.get(key);if(hit){PET_HD.hits++;return hit}
+  const key=[kind,p.coat,anim,f,mk,expr,pose?petRigPoseKey(pose):''].join('|'),hit=PET_HD.fr.get(key);if(hit){PET_HD.hits++;return hit}
   const src=petRigSrcPixels(sh,ri,f,W,H);
   let px,CW,CH,ox=0,oy=0,X=function(v){return v},Y=function(v){return v};
   const fr=petHdRigFrame(kind,anim,f),fi=K.face[anim]&&K.face[anim][f];
-  if(morph&&!petRigNeutral(morph)&&fr){
-   const m={em:morph.em,ew:morph.ew,tl:morph.bob?Math.min(morph.tl,0.3):morph.tl,lg:morph.lg,bl:morph.bl,wk:morph.wk};
-   const r=petRigCompose(src,petHdClaim(fr,src,W,H),m,null,W,H,hs);px=r.px;CW=r.CW;CH=r.CH;ox=r.MX;oy=r.MT;X=r.X;Y=r.Y;
+  if(fr&&((morph&&!petRigNeutral(morph))||pose)){
+   const m0=morph||{em:1,ew:1,tl:1,lg:1,bl:1,wk:1},m={em:m0.em,ew:m0.ew,tl:m0.bob?Math.min(m0.tl,0.3):m0.tl,lg:m0.lg,bl:m0.bl,wk:m0.wk};
+   const r=petRigCompose(src,petHdClaim(fr,src,W,H),m,pose,W,H,hs);px=r.px;CW=r.CW;CH=r.CH;ox=r.MX;oy=r.MT;X=r.X;Y=r.Y;
   }else{px=new Uint32Array(src);CW=W;CH=H}
   if(fi){
    const mp=function(pt){return [Y(pt[0]*hs)+oy,X(pt[1]*hs)+ox]};
-   const a={l:mp(fi.l),r:mp(fi.r),nose:mp(fi.nose),mouth:mp(fi.mouth)};
+   const a={l:mp(fi.l),r:mp(fi.r),nose:mp(fi.nose),mouth:mp(fi.mouth),sc:Math.max(.78,Math.min(1.12,fi.span*2/17.8))};
    petHdFace(px,CW,CH,a,expr,petHdCols(rt,p.coat),morph?morph.wk:1);
   }
   const cv=document.createElement('canvas');cv.width=CW;cv.height=CH;const x=cv.getContext('2d'),id=x.createImageData(CW,CH);

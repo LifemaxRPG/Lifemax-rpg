@@ -48,7 +48,7 @@ function petDrawCat(rt,o){
   else{const q=function(v){return Math.round(v*PET_OS)/PET_OS},dx=c.x+(c.wx||0),wide=(/sleep|loaf|knead/.test(c.anim)?22:/walk_front|walk_back|sniff|bonk/.test(c.anim)?11:15)*sc*shk,hh=Math.max(1,2*shk);
     o.fillStyle='rgba(30,16,40,'+(0.28*Math.min(1,shk/kz+0.2)).toFixed(3)+')';o.fillRect(q(dx-wide),q(gy-hh/2),q(wide*2),q(hh));o.fillRect(q(dx-wide+3*shk),q(gy+hh/2),q(wide*2-6*shk),q(Math.max(1,shk)))}
   /* HD walking frames (twice the pixel density); anything not redrawn yet falls through to the original art */
-  const HD=rigKind&&typeof petHdPick==='function'?petHdPick(rt,p,rigKind,c.anim,f,meta,c):null;
+  const HD=rigKind&&typeof petHdPick==='function'?petHdPick(rt,p,rigKind,petHdAnimOf(rt,rigKind,meta)||c.anim,f,meta,c):null;
   if(HD){const hs=HD.hs,hw=HD.cv.width/hs,hh=HD.cv.height/hs;
     if(k===1){const dy=Math.round(c.y-bottom+1),dx=Math.round(c.x)+(c.wx||0);o.save();o.translate(dx,0);if(c.dir<0)o.scale(-1,1);o.drawImage(HD.cv,0,0,HD.cv.width,HD.cv.height,-36-HD.ox/hs,dy-HD.oy/hs,hw,hh);o.restore();return}
     const X0=Math.round((c.x+(c.wx||0))*PET_OS)/PET_OS,Y0=Math.round(c.y*PET_OS)/PET_OS;

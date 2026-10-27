@@ -144,7 +144,8 @@ def face_info(fr):
     nose = [(y, x) for y in range(h) for x in range(w) if fr[y, x] in (120, 130, 140) and abs(x + .5 - mx) <= 3.2 and my < y + .5 <= my + 7]
     mouth = [(y, x) for y in range(h) for x in range(w) if fr[y, x] in (200, 210) and abs(x + .5 - mx) <= 5 and my < y + .5 <= my + 9]
     ny, nx = (np.mean([p[0] for p in nose]) + .5, np.mean([p[1] for p in nose]) + .5) if nose else (my + 3.2, mx)
-    return dict(l=(ly, lx), r=(ry, rx), mid=(my, mx), nose=(ny, nx), mouth=(np.mean([p[0] for p in mouth]) + .5, np.mean([p[1] for p in mouth]) + .5) if mouth else (ny + 1.5, nx), span=rx - lx, tilt=ry - ly)
+    iris = int(np.isin(fr, (160, 170)).sum())
+    return dict(o=1 if iris >= 3 else 0, l=(ly, lx), r=(ry, rx), mid=(my, mx), nose=(ny, nx), mouth=(np.mean([p[0] for p in mouth]) + .5, np.mean([p[1] for p in mouth]) + .5) if mouth else (ny + 1.5, nx), span=rx - lx, tilt=ry - ly)
 
 def clear_face(hr, info):
     """remove eyes, mouth, whiskers and the nose from a hi-res frame (neighbouring fur / muzzle fills in)."""
