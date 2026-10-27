@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v170 — the Quest Board is the table
+- With the 3D table deal mode (the default) the old Quest Board page is never shown. The whole Quests tab is the scene, above the bottom bar: first visit of the day is the gate and the reading; afterwards (and on every later visit) it is the resting table: the three cards face-up on the wood, candles, the void, and a progress line (pips plus "X / 3 FULFILLED" and the weekly count).
+- Tap a card to lift it to you (controls pill: Hold to claim or "fulfils itself", XP, Redraw, put back). It turns freely on any axis. Claiming or redrawing re-paints the card in 3D (a FULFILLED stamp, a spin and a burst).
+- Ledger button: weekly missions, your own quests, nutrition quests, epics and badges, each with a check. New Quest: a small form inside the scene. Reshuffle replays the reading.
+- The scene renders at full rate only while something moves (about 20 fps idle) to spare the battery, and is closed (GPU context freed) when you leave the tab. It ignores swipe-to-change-tab, so dragging cards never switches pages.
+- The flat Quest Board page is still used for Quick, Instant and Classic cinematic deal modes, reduced motion and phones without WebGL2.
+- Not carried over yet: the hero art, stats strip and badge grid of the old page (badges are in the Ledger).
+
 ## v169 — card art packs (Halloween deck)
 - Card art now lives in packs: `art/cards/packs/<id>/` with `pack.json` (name, optional season dates, where the parchment text sits) and `src/<attribute>.png` plus `back.png`. `python3 tools/make_card_art.py` builds every pack into `50-quests-art.js`. A card a pack lacks falls back to the Classic pack, so a new seasonal deck can be added a few cards at a time.
 - Packs: Classic and Halloween (Oct 1 to Nov 2). Settings → Look & feel → Card art: Automatic (uses the pack whose season is on today's date, else Classic) or pick one. Halloween has no Endurance (Wanderer) or Adventure (Fool) card yet, so those show the Classic paintings.

@@ -202,7 +202,7 @@ function dhCardHtml(q){
   +'</div>')+'</div>'+['tl','tr','bl','br'].map(function(k){return '<button class="dh-corner '+k+'" type="button" aria-label="Flip the card over" onclick="dhTurn('+q.slot+')"></button>'}).join('')+'</div>'
   +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
-var dhDealing=false,dhPrevDone=null,dhSig='',dhAbort=false;
+var dhDealing=false,dhPrevDone=null,dhSig='',dhAbort=false,dhWantReplay=false,dhRestTimer=0;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
@@ -219,6 +219,7 @@ function dhRenderHand(){
 /* the reading starts only if you stay on the Quest Board a moment, so swiping or scrubbing past it does not trigger it */
 var dhDealTimer=0;
 function dhSchedDeal(el,d,cards){
+ if(d&&d.dealt&&cards.length&&dhViewOn()&&!dhDealing&&typeof dhDealMode==='function'&&dhDealMode()==='table'&&!dhRestTimer){dhRestTimer=setTimeout(function(){dhRestTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal()},350);return}
  if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing||dhGating)return;
  el.classList.add('fd-pre');
  if(dhDealTimer)return;
@@ -234,8 +235,17 @@ function dhWait(anims){return Promise.all(anims.map(function(a){return a.finishe
 function dhTick(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n||'tap')}catch(e){}}
 async function dhMaybeDeal(replay){
  const el=document.getElementById('dailyHand'),d=state.dailyDraw;
- if(!el||!d||dhDealing||(d.dealt&&replay!==true)||!dhViewOn())return;
+ if(!el||!d||dhDealing||!dhViewOn())return;
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
+ if(d.dealt&&replay!==true){
+  /* already dealt today: the Quest Board is the 3D table itself */
+  if(typeof dhDealMode==='function'&&dhDealMode()==='table'&&typeof dhTable3D==='function'&&!fxReduced()&&cards[0].animate){
+   dhDealing=true;let rr=null;
+   try{rr=await dhTable3D(el,cards,d,false,false,true)}catch(e){console.warn('[rest]',e)}finally{dhDealing=false;el.classList.remove('fd-pre')}
+   if(rr==='replay')setTimeout(function(){dhMaybeDeal(true)},60);
+  }
+  return;
+ }
  if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
  const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
  if(replay!==true&&gmode==='cine'&&typeof dhGate==='function'){
@@ -252,6 +262,7 @@ async function dhMaybeDeal(replay){
   if(mode==='table'&&typeof dhTable3D==='function'){
    const ok=await dhTable3D(el,cards,d,replay===true,replay!==true);
    if(ok==='leave'){dhAbort=true;return}
+   if(ok==='replay'){dhWantReplay=true;return}
    if(ok!==false)return;
    if(replay!==true&&typeof dhGate==='function'){/* no WebGL2: the flat splash, then the flat reading */
     let gr='go';dhGating=true;try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
@@ -287,11 +298,12 @@ async function dhMaybeDeal(replay){
   dhDealing=false;el.classList.remove('fd-pre');cards.forEach(function(c){c.style.opacity=''});
   const st=document.getElementById('dailyStage');if(st){st.hidden=true}
   if(dhAbort){dhAbort=false}else{d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+  if(dhWantReplay){dhWantReplay=false;setTimeout(function(){dhMaybeDeal(true)},60)}
  }
 }
 function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}
 var _dhNav=navigate;
-navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests'&&state.dailyDraw&&!state.dailyDraw.dealt)setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
+navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests')setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
 window.LifeMaxDailyHand={deal:dhMaybeDeal,replay:dhReplayDeal,reveal:dhReveal,library:QUEST_LIBRARY,ensure:dhEnsure,reroll:dhReroll,cards:dhCards,verify:dhAutoVerify,verifyMet:dhVerifyMet,draw:dhDraw,weakest:dhWeakestAttr,cost:dhRerollCost};
 /* boot already rendered the board before this segment existed; deal and draw once now */
 try{dhEnsure();renderQuests()}catch(e){console.warn("[daily hand boot]",e)}

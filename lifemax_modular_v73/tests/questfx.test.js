@@ -4,7 +4,7 @@ const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', 
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x ? '  ' + JSON.stringify(x) : '')) } };
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const mk = async (init) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[qfx|\[deal|\[hand/.test(m.text())) p.errs.push(m.text()) }); await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));" + (init || '')); await p.goto('file://' + file); await p.waitForTimeout(700); return p };
+  const mk = async (init) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[qfx|\[deal|\[hand/.test(m.text())) p.errs.push(m.text()) }); await p.addInitScript("localStorage.setItem('lma_qdeal','quick');" + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));" + (init || '')); await p.goto('file://' + file); await p.waitForTimeout(700); return p };
   const p = await mk();
   const ev = (f, a) => p.evaluate(f, a);
   ok('WebGL2 is available here', await ev(() => QFX.supported()));

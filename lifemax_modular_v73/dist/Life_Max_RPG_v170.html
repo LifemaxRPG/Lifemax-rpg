@@ -3629,6 +3629,48 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 @keyframes g3breath{0%,100%{box-shadow:0 0 0 1px rgba(255,214,140,.9),0 0 0 4px #0a0518,0 0 0 5px rgba(255,214,140,.38),0 0 26px rgba(138,92,255,.4),inset 0 0 20px rgba(255,214,140,.08)}50%{box-shadow:0 0 0 1px rgba(255,214,140,1),0 0 0 4px #0a0518,0 0 0 5px rgba(255,214,140,.55),0 0 48px rgba(138,92,255,.75),inset 0 0 30px rgba(255,214,140,.18)}}
 @keyframes g3sweep{0%{transform:translateX(-130%)}35%,100%{transform:translateX(130%)}}
 @media (prefers-reduced-motion:reduce){.gate3-btn,.gate3-btn::after{animation:none}.gate3-top>*,.gate3-bot{animation-duration:.01s;animation-delay:0s!important}}
+
+/* ===== The Quest Board as the table: rest mode ===== */
+#fateScene.rest .fs-skip{display:none}
+.fs-rest{position:absolute;inset:0;pointer-events:none;z-index:4}
+.rest-prog{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 14px);display:flex;flex-direction:column;align-items:center;gap:6px;color:#e9cf9c;filter:drop-shadow(0 0 8px rgba(0,0,0,.9))}
+.rp-pips{display:flex;gap:7px}.rp-pips i{width:11px;height:11px;transform:rotate(45deg);background:rgba(255,255,255,.18)}.rp-pips i.on{background:#ffd98a;box-shadow:0 0 10px rgba(255,214,140,.9)}
+.rp-sub{color:#9d8fc4}
+.rest-bar{position:absolute;left:10px;right:10px;bottom:12px;display:flex;gap:8px;justify-content:center;pointer-events:auto}
+.rest-btn{flex:1;max-width:140px;min-height:48px;padding:0 8px;border-radius:8px;border:0;color:#f6e3b0;cursor:pointer;display:grid;place-items:center;background:radial-gradient(120% 160% at 50% 0%,#33205e,#170c30 60%,#0a0518);box-shadow:0 0 0 1px rgba(255,214,140,.7),0 0 0 3px #0a0518,0 0 0 4px rgba(255,214,140,.28),0 0 16px rgba(138,92,255,.35);-webkit-tap-highlight-color:transparent}
+.rest-btn:active{transform:scale(.97)}.rest-btn.dim{opacity:.7}
+.fs-dock3{position:absolute;left:12px;right:12px;bottom:72px;display:flex;align-items:center;gap:8px;min-height:58px;padding:6px 12px;border-radius:999px;background:rgba(18,14,30,.86);border:1px solid rgba(255,214,140,.32);box-shadow:0 4px 18px rgba(0,0,0,.5);z-index:5}
+.fs-dock3[hidden]{display:none}
+.fs-dock3 .dock-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#9d92c4}
+.fs-dock3 .dh-xp{color:#ffd35c}
+.fs-dock3 .dh-state{color:#a79fc2;flex:0 1 auto;max-width:44%;font:italic 11px Georgia,serif}
+.fs-dock3 .dh-claim{background:rgba(255,214,140,.12);color:#f4ecd8}
+.fs-dock3 .fd-track{stroke:rgba(255,214,140,.3)}.fs-dock3 .fd-prog{stroke:#7be0a0}
+.fs-dock3 .dh-reroll{color:#a79fc2;flex:0 0 auto;max-width:36%;text-align:right}
+.dock-x{flex:0 0 40px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:transparent;color:#cdb8ff;font-size:15px}
+.fs-ledger{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;background:rgba(4,2,10,.94);backdrop-filter:blur(3px)}
+.fs-ledger[hidden]{display:none}
+.lg-head{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 10px;color:#f6ecd0;border-bottom:1px solid rgba(255,214,140,.25)}
+.lg-close{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,214,140,.35);background:transparent;color:#e9cf9c;font-size:16px}
+.lg-body{flex:1;overflow-y:auto;padding:8px 16px 28px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.lg-sec{margin:20px 0 8px;color:#e9cf9c;display:flex}.lg-sec .qpxt{align-items:flex-start}
+.lg-row{display:flex;align-items:center;gap:12px;padding:11px 12px;margin-bottom:8px;border-radius:10px;border:1px solid rgba(190,160,255,.22);background:linear-gradient(180deg,rgba(40,24,70,.55),rgba(14,8,28,.7))}
+.lg-row.done{opacity:.6}.lg-row.locked{opacity:.5}
+.lg-chk{flex:0 0 38px;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,214,140,.65);background:rgba(0,0,0,.35);color:#7be0a0;font-size:18px;cursor:pointer}
+.lg-row.done .lg-chk{background:rgba(123,224,160,.18);border-color:#7be0a0}
+.lg-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lg-copy strong{color:#f4ecd8;font:700 15px/1.25 Georgia,'Times New Roman',serif}
+.lg-copy small{color:#a79fc2;font:italic 12px/1.3 Georgia,serif}
+.lg-xp{color:#ffd35c;font:700 12px ui-monospace,monospace}
+.lg-empty{color:#7d7499;font:italic 13px Georgia,serif;padding:4px 4px 8px}
+.lg-badges{display:flex;flex-wrap:wrap;gap:6px}.lg-badges span{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,214,140,.4);color:#e9cf9c;font:12px Georgia,serif}
+.fs-newq{position:absolute;inset:0;z-index:7;display:grid;place-items:center;background:rgba(4,2,10,.8);padding:20px}
+.fs-newq[hidden]{display:none}
+.nq-card{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:12px;background:linear-gradient(180deg,#1c1236,#0b0618);border:1px solid rgba(255,214,140,.5);box-shadow:0 0 40px rgba(138,92,255,.35);color:#f6ecd0}
+.nq-t{display:flex;justify-content:center;margin-bottom:4px}
+.nq-card input,.nq-card select{min-height:46px;border-radius:8px;border:1px solid rgba(190,160,255,.4);background:rgba(0,0,0,.4);color:#f4ecd8;padding:0 12px;font:16px Georgia,serif;width:100%;box-sizing:border-box}
+.nq-row{display:flex;gap:10px}
+.nq-row .rest-btn{max-width:none}
 /* ===== Meals: premium dish icons (v71) ===== */
 #view-meals .fs-top{display:none}
 .fs-icon{position:relative;overflow:hidden;width:100%;height:104px;flex:none;border-radius:14px;display:grid;place-items:center;
@@ -19270,7 +19312,7 @@ function dhCardHtml(q){
   +'</div>')+'</div>'+['tl','tr','bl','br'].map(function(k){return '<button class="dh-corner '+k+'" type="button" aria-label="Flip the card over" onclick="dhTurn('+q.slot+')"></button>'}).join('')+'</div>'
   +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
-var dhDealing=false,dhPrevDone=null,dhSig='',dhAbort=false;
+var dhDealing=false,dhPrevDone=null,dhSig='',dhAbort=false,dhWantReplay=false,dhRestTimer=0;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
@@ -19287,6 +19329,7 @@ function dhRenderHand(){
 /* the reading starts only if you stay on the Quest Board a moment, so swiping or scrubbing past it does not trigger it */
 var dhDealTimer=0;
 function dhSchedDeal(el,d,cards){
+ if(d&&d.dealt&&cards.length&&dhViewOn()&&!dhDealing&&typeof dhDealMode==='function'&&dhDealMode()==='table'&&!dhRestTimer){dhRestTimer=setTimeout(function(){dhRestTimer=0;if(dhViewOn()&&!dhDealing)dhMaybeDeal()},350);return}
  if(!d||d.dealt||!cards.length||!dhViewOn()||dhDealing||dhGating)return;
  el.classList.add('fd-pre');
  if(dhDealTimer)return;
@@ -19302,8 +19345,17 @@ function dhWait(anims){return Promise.all(anims.map(function(a){return a.finishe
 function dhTick(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n||'tap')}catch(e){}}
 async function dhMaybeDeal(replay){
  const el=document.getElementById('dailyHand'),d=state.dailyDraw;
- if(!el||!d||dhDealing||(d.dealt&&replay!==true)||!dhViewOn())return;
+ if(!el||!d||dhDealing||!dhViewOn())return;
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
+ if(d.dealt&&replay!==true){
+  /* already dealt today: the Quest Board is the 3D table itself */
+  if(typeof dhDealMode==='function'&&dhDealMode()==='table'&&typeof dhTable3D==='function'&&!fxReduced()&&cards[0].animate){
+   dhDealing=true;let rr=null;
+   try{rr=await dhTable3D(el,cards,d,false,false,true)}catch(e){console.warn('[rest]',e)}finally{dhDealing=false;el.classList.remove('fd-pre')}
+   if(rr==='replay')setTimeout(function(){dhMaybeDeal(true)},60);
+  }
+  return;
+ }
  if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
  const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
  if(replay!==true&&gmode==='cine'&&typeof dhGate==='function'){
@@ -19320,6 +19372,7 @@ async function dhMaybeDeal(replay){
   if(mode==='table'&&typeof dhTable3D==='function'){
    const ok=await dhTable3D(el,cards,d,replay===true,replay!==true);
    if(ok==='leave'){dhAbort=true;return}
+   if(ok==='replay'){dhWantReplay=true;return}
    if(ok!==false)return;
    if(replay!==true&&typeof dhGate==='function'){/* no WebGL2: the flat splash, then the flat reading */
     let gr='go';dhGating=true;try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
@@ -19355,11 +19408,12 @@ async function dhMaybeDeal(replay){
   dhDealing=false;el.classList.remove('fd-pre');cards.forEach(function(c){c.style.opacity=''});
   const st=document.getElementById('dailyStage');if(st){st.hidden=true}
   if(dhAbort){dhAbort=false}else{d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+  if(dhWantReplay){dhWantReplay=false;setTimeout(function(){dhMaybeDeal(true)},60)}
  }
 }
 function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}
 var _dhNav=navigate;
-navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests'&&state.dailyDraw&&!state.dailyDraw.dealt)setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
+navigate=function(v){const r=_dhNav.apply(this,arguments);if(v==='quests')setTimeout(function(){try{dhRenderHand()}catch(e){}},120);return r};
 window.LifeMaxDailyHand={deal:dhMaybeDeal,replay:dhReplayDeal,reveal:dhReveal,library:QUEST_LIBRARY,ensure:dhEnsure,reroll:dhReroll,cards:dhCards,verify:dhAutoVerify,verifyMet:dhVerifyMet,draw:dhDraw,weakest:dhWeakestAttr,cost:dhRerollCost};
 /* boot already rendered the board before this segment existed; deal and draw once now */
 try{dhEnsure();renderQuests()}catch(e){console.warn("[daily hand boot]",e)}
@@ -19720,7 +19774,7 @@ function t3px(ctx,text,cx,y,scale,color){
   for(var yy=0;yy<7;yy++)for(var xx=0;xx<5;xx++)if(g[yy]&(16>>xx))ctx.fillRect(Math.round(x+xx*scale),Math.round(y+yy*scale),scale,scale);x+=6*scale}
 }
 function t3img(url){return new Promise(function(res){var im=new Image();im.onload=function(){res(im)};im.onerror=function(){res(null)};im.src=url})}
-async function t3face(q,numeral){
+async function t3face(q,numeral,done){
  var W=640,H=1120,cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d'),u=qartUrl&&qartUrl(q.attribute);
  var im=u?await t3img(u):null;
  if(im)c.drawImage(im,0,0,W,H);else{c.fillStyle='#1a1428';c.fillRect(0,0,W,H)}
@@ -19732,6 +19786,7 @@ async function t3face(q,numeral){
  c.fillStyle='#4a2e14';c.font='italic 27px Georgia,serif';c.textAlign='center';
  var words=String(q.desc||'').split(/\s+/),line='',dl=[],maxW=x1-x0-10;words.forEach(function(w){var t=line?line+' '+w:w;if(c.measureText(t).width>maxW&&line){dl.push(line);line=w}else line=t});if(line)dl.push(line);dl=dl.slice(0,2);
  var dy=ny+lines.length*48+30;dl.forEach(function(l,k){c.fillText(l,cx,dy+k*31)});
+ if(done){c.save();c.translate(W/2,H*.40);c.rotate(-.24);var tw2=qpxWidth('FULFILLED')*7+36;c.fillStyle='rgba(8,18,12,.82)';c.fillRect(-tw2/2,-34,tw2,68);c.strokeStyle='#7be0a0';c.lineWidth=5;c.strokeRect(-tw2/2,-34,tw2,68);t3px(c,'FULFILLED',0,-24,7,'#7be0a0');c.restore();c.fillStyle='rgba(0,0,0,.18)';c.fillRect(0,0,W,H)}
  return cv;
 }
 var T3_SHARED=null;
@@ -19753,10 +19808,10 @@ function t3cardMesh(W,H,T,R,seg){
  return new Float32Array(o);
 }
 /* ---- the scene ---- */
-async function dhTable3D(el,cards,d,replay,gated){
- var vw=innerWidth,vh=innerHeight,sh;
+async function dhTable3D(el,cards,d,replay,gated,restOnly){
+ var BX=dhGateBox(),vw=innerWidth-BX.left-BX.right,vh=innerHeight-BX.top-BX.bottom,sh;
  try{sh=await t3load()}catch(e){console.warn('[table load]',e);return false}
- var sc=document.createElement('div');sc.id='fateScene';sc.className='fs-3d';
+ var sc=document.createElement('div');sc.id='fateScene';sc.className='fs-3d';sc.setAttribute('data-noswipe','1');sc.style.cssText='left:'+BX.left+'px;top:'+BX.top+'px;right:'+BX.right+'px;bottom:'+BX.bottom+'px';
  var gateHtml=gated?'<div class="fs-gate"><div class="gate3-top"><div class="gate3-eyebrow">'+qpxText('A NEW DAY. A NEW DRAW.',{s:1,w:300,lines:1})+'</div><h2 class="gate3-title">'+qpxText('YOUR CARDS ARE WAITING',{s:3,w:Math.min(330,vw-40),lines:3})+'<span class="sr">Your cards are waiting</span></h2><div class="gate3-rule"><i></i></div><p class="gate3-sub">Three quests, drawn from the dark.</p></div><div class="gate3-bot"><button class="gate3-btn" type="button" aria-label="Get your quests"><span class="g3c tl"></span><span class="g3c tr"></span><span class="g3c bl"></span><span class="g3c br"></span><span class="gate3-btn-t">'+qpxText('GET YOUR QUESTS',{s:2,w:240,lines:1})+'</span></button><button class="gate3-skip" type="button">'+qpxText('NOT NOW',{s:1,w:80,lines:1})+'</button></div></div>':'';
  sc.innerHTML='<canvas class="fs-gl"></canvas>'+gateHtml+'<div class="fs-title"></div><div class="fs-cap"></div><button class="fs-skip" type="button" aria-label="Skip the reading"'+(gated?' style="display:none"':'')+'>'+qpxText('SKIP',{s:2,w:60,lines:1})+'</button>';
  document.body.appendChild(sc);
@@ -19783,16 +19838,16 @@ async function dhTable3D(el,cards,d,replay,gated){
  var tBase=mkTex(sh.tex.base,true),tNorm=mkTex(sh.tex.normal,true),tOrm=mkTex(sh.tex.orm,true);
  var backUrl=qartUrl('back'),backImg=backUrl?await t3img(backUrl):null,tBack=mkTex(backImg||sh.tex.base,false);
  var qs=[0,1,2].map(function(i){return dhCards().find(function(z){return z.slot===i})||{tier:1,attribute:'discipline',name:'Quest',desc:''}});
- var faces=await Promise.all(qs.map(function(q,i){return t3face(q,DH_NUMERALS[i])})),tFace=faces.map(function(c){return mkTex(c,false)});
+ var faces=await Promise.all(qs.map(function(q,i){return t3face(q,DH_NUMERALS[i],isQuestDone(q))})),tFace=faces.map(function(c){return mkTex(c,false)});
  /* the cards */
  var rnd=function(a,b){return a+Math.random()*(b-a)};
  var faceDown=function(yaw){return t3qmul(t3qax([0,1,0],yaw+180),t3qax([1,0,0],90))},faceUp=function(yaw){return t3qmul(t3qax([0,1,0],yaw),t3qax([1,0,0],-90))};
  var C=[];for(var i=0;i<10;i++)C.push({p:[0,300,0],q:faceDown(0),front:null,sh:0,fade:1,yaw:0});
  var dealt=[C[9],C[8],C[7]];dealt.forEach(function(c,i){c.front=tFace[i]});
  /* camera */
- var EYE=[0,138,68],TGT=[0,72,-2],FAR_EYE=[60,150,340],FAR_TGT=[0,38,0],eyeB=FAR_EYE.slice(),tgtB=FAR_TGT.slice(),FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,3,1500),bas=t3basis(eyeB,tgtB),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
+ var EYE=[0,138,68],TGT=[0,72,-2],REST_EYE=[0,112,70],REST_TGT=[0,72,6],FAR_EYE=[60,150,340],FAR_TGT=[0,38,0],eyeB=FAR_EYE.slice(),tgtB=FAR_TGT.slice(),FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,3,1500),bas=t3basis(eyeB,tgtB),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
  var curEye=eyeB.slice(),viewM=t3view(eyeB,bas),vp=t3mul(proj,viewM);
- var project=function(w){var m=vp,x=m[0]*w[0]+m[4]*w[1]+m[8]*w[2]+m[12],y=m[1]*w[0]+m[5]*w[1]+m[9]*w[2]+m[13],ww=m[3]*w[0]+m[7]*w[1]+m[11]*w[2]+m[15];return [(x/ww*.5+.5)*vw,(1-(y/ww*.5+.5))*vh]};
+ var project=function(w){var m=vp,x=m[0]*w[0]+m[4]*w[1]+m[8]*w[2]+m[12],y=m[1]*w[0]+m[5]*w[1]+m[9]*w[2]+m[13],ww=m[3]*w[0]+m[7]*w[1]+m[11]*w[2]+m[15];return [BX.left+(x/ww*.5+.5)*vw,BX.top+(1-(y/ww*.5+.5))*vh]};
  var cardRect=function(c){var M=t3qmat(c.q,c.p,[1,1,1]),pts=[[-CW/2,-CH/2,0],[CW/2,-CH/2,0],[CW/2,CH/2,0],[-CW/2,CH/2,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])}),xs=pts.map(function(p){return p[0]}),ys=pts.map(function(p){return p[1]}),l=Math.min.apply(0,xs),r=Math.max.apply(0,xs),t=Math.min.apply(0,ys),b=Math.max.apply(0,ys);return {left:l,right:r,top:t,bottom:b,width:r-l,height:b-t}};
  var CANDLES=[[-23,72,-27],[23,72,-27]],flames=CANDLES.map(function(p){return [p[0],p[1]+13.2,p[2]]});
  /* helpers */
@@ -19837,7 +19892,8 @@ async function dhTable3D(el,cards,d,replay,gated){
   flames.forEach(function(f,i){gl.uniform3fv(UL(pFlame,'uC'),f);gl.uniform2f(UL(pFlame,'uS'),3.2,5.4);gl.uniform1f(UL(pFlame,'uA'),gutter*(.85+.15*Math.sin(t*14+i*2)));gl.uniform1f(UL(pFlame,'uT'),t);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)});
   gl.depthMask(true);gl.disable(gl.BLEND);
  };
- var loop=function(){if(!alive)return;var now=performance.now();for(var i=tw.length-1;i>=0;i--){var a=tw[i],p=a.ms?Math.min(1,(now-a.t0)/a.ms):1;a.fn(a.ease(p));if(p>=1){tw.splice(i,1);a.res()}}render();raf=requestAnimationFrame(loop)};
+ var lastDraw=0,dragging=false,restMode=false;
+ var loop=function(){if(!alive)return;var now=performance.now();if(document.hidden){raf=requestAnimationFrame(loop);return}if(restMode&&!tw.length&&!dragging&&!ST.shake&&ST.flash<.02&&now-lastDraw<48){raf=requestAnimationFrame(loop);return}lastDraw=now;for(var i=tw.length-1;i>=0;i--){var a=tw[i],p=a.ms?Math.min(1,(now-a.t0)/a.ms):1;a.fn(a.ease(p));if(p>=1){tw.splice(i,1);a.res()}}render();raf=requestAnimationFrame(loop)};
  var skip=function(){if(skipped)return;skipped=true;tw.forEach(function(a){a.ms=0});waits.forEach(function(w){clearTimeout(w[0]);w[1]()});if(awaitFlip)awaitFlip.finish()};
  sc.querySelector('.fs-skip').addEventListener('click',skip);
  /* the table pose of each dealt card and deck */
@@ -19870,6 +19926,12 @@ async function dhTable3D(el,cards,d,replay,gated){
   loop();
   await anim(700,function(t){sc.style.opacity=t},eO);
   var teardown=function(){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove()};
+  if(restOnly){
+   dealt.forEach(function(c,i){var yy=(i-1)*3;c.yaw=yy;c.front=tFace[i];c.p=[slots[i][0],TC,slots[i][2]];c.q=faceUp(yy);c.sh=.7});
+   for(var ii=0;ii<10;ii++){var oc=C[ii];if(dealt.indexOf(oc)<0){oc.p=[SIDE[0],TC+(ii)*DT*.6,SIDE[2]];oc.q=faceDown(rnd(-4,4));oc.sh=.7}}
+   eyeB=lerp3(FAR_EYE,EYE,.0);tgtB=FAR_TGT.slice();gutter=0;var up1=anim(1200,function(t){gutter=t},eO);
+   await Promise.all([anim(1700,function(t){eyeB=lerp3([40,120,230],REST_EYE,t);tgtB=lerp3([0,50,0],REST_TGT,t)},eIO),up1]);gutter=1;
+  }else{
   if(gated){
    /* the opening shot is the splash: the table floats in the void with the deck on it, and one button */
    C.forEach(function(c,i){c.p=[DECK[0],TC+i*DT,DECK[2]];c.q=faceDown(rnd(-3,3));c.sh=.7});
@@ -19931,18 +19993,123 @@ async function dhTable3D(el,cards,d,replay,gated){
    c.lift=false;anim(560,function(t){c.amb=4.2-2.9*t});c.p=curEye.slice();c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
    await move(c,[slot[0],TC,slot[2]],faceUp(c.yaw),560,{ease:eIO,arc:4});c.sh=.7;if(!skipped){thud([slot[0],TY,slot[2]],8,.6)}
   }
+ }
  }catch(e){console.warn('[table]',e)}
- /* hand-off: the real cards are already face-up behind the fade */
+
+ /* the reading ends (or was skipped): the scene stays as the Quest Board */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();
- d.up=[true,true,true];sc.dataset.await='';cap.innerHTML='';title.innerHTML='';sc.querySelector('.fs-skip').style.display='none';
+ await new Promise(function(r){setTimeout(r,30)});skipped=false;tw.length=0;
+ d.dealt=true;d.up=[true,true,true];try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ sc.dataset.await='';cap.innerHTML='';title.innerHTML='';var skb=sc.querySelector('.fs-skip');if(skb)skb.style.display='none';var gt=sc.querySelector('.fs-gate');if(gt)gt.remove();
  el.classList.remove('fd-pre');cards.forEach(function(c){c.classList.add('is-up')});
- dealt.forEach(function(c,i){c.front=tFace[i];c.q=faceUp(c.yaw||0);c.p=[slots[i][0],TC,slots[i][2]];c.sh=.7});
- await new Promise(function(r){var t1=performance.now(),f=function(){var t=Math.min(1,(performance.now()-t1)/700);sc.style.opacity=1-t;if(t<1)requestAnimationFrame(f);else r()};f()});
+ if(!restOnly){var e0=eyeB.slice(),t0b=tgtB.slice();await anim(800,function(t){eyeB=lerp3(e0,REST_EYE,t);tgtB=lerp3(t0b,REST_TGT,t)},eIO)}
+ eyeB=REST_EYE.slice();tgtB=REST_TGT.slice();idleDrift=false;gutter=1;
+ dealt.forEach(function(c,i){c.front=tFace[i];c.lift=false;c.amb=1.3;c.sheen=0;c.q=faceUp(c.yaw||0);c.p=[slots[i][0],TC,slots[i][2]];c.sh=.7});
+ restMode=true;sc.classList.add('rest');
+ var outcome=await new Promise(function(finishRest){
+  var inspecting=-1,busy=false,seen={ids:[],done:[]},spinStop=null,pdown=null;
+  var numerals=DH_NUMERALS;
+  sc.insertAdjacentHTML('beforeend','<div class="fs-rest"><div class="rest-prog"></div><div class="rest-bar"><button type="button" class="rest-btn" data-a="ledger">'+qpxText('LEDGER',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn" data-a="new">'+qpxText('NEW QUEST',{s:2,w:120,lines:1})+'</button><button type="button" class="rest-btn" data-a="again">'+qpxText('RESHUFFLE',{s:2,w:120,lines:1})+'</button></div></div><div class="fs-dock3" hidden></div><div class="fs-ledger" hidden></div><div class="fs-newq" hidden></div>');
+  var prog=sc.querySelector('.rest-prog'),dock=sc.querySelector('.fs-dock3'),ledger=sc.querySelector('.fs-ledger'),newq=sc.querySelector('.fs-newq');
+  var slotQuest=function(i){return dhCards().find(function(z){return z.slot===i})};
+  var quad=function(c){var M=t3qmat(c.q,c.p,[1,1,1]);return [[-CW/2,-CH/2,0],[CW/2,-CH/2,0],[CW/2,CH/2,0],[-CW/2,CH/2,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])})};
+  var inQuad=function(P,x,y){var sgn=0;for(var i=0;i<4;i++){var a=P[i],b=P[(i+1)%4],cr=(b[0]-a[0])*(y-a[1])-(b[1]-a[1])*(x-a[0]);if(Math.abs(cr)<1e-6)continue;var sg=cr>0?1:-1;if(sgn&&sg!==sgn)return false;sgn=sg}return true};
+  var hit=function(x,y){var best=-1,bd=1e9;dealt.forEach(function(c,i){if(inQuad(quad(c),x,y)){var dd=Math.hypot(c.p[0]-curEye[0],c.p[1]-curEye[1],c.p[2]-curEye[2]);if(dd<bd){bd=dd;best=i}}});return best};
+  var qOf=function(i){return slotQuest(i)||qs[i]};
+  var dockHtml=function(q){var done=isQuestDone(q),auto=!/^(self|none)/.test(q.verify||'self'),cost=dhRerollCost();
+   var foot=done?'<span class="dh-state">Fulfilled</span>':auto?'<span class="dh-state dh-auto">Fulfils itself when you log it</span>':'<button class="dh-claim" type="button" aria-label="Hold to claim '+esc(q.name)+'" onpointerdown="dhHoldStart(\''+q.id+'\',this)" onpointerup="dhHoldEnd()" onpointerleave="dhHoldEnd()" onpointercancel="dhHoldEnd()" oncontextmenu="return false"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="fd-track" cx="22" cy="22" r="19"/><circle class="fd-prog" cx="22" cy="22" r="19"/></svg><span class="dh-claim-t">Hold</span></button>';
+   var rr=done?'':'<button class="dh-reroll" type="button" onclick="dhSceneRedraw('+q.slot+')">Redraw · '+(cost?cost+' Sparks':'free')+'</button>';
+   return foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'<button class="dock-x" type="button" onclick="dhSceneBack()" aria-label="Put the card back">&#10005;</button>'};
+  var showDock=function(i){var q=qOf(i);dock.innerHTML=dockHtml(q);dock.hidden=false};
+  var refreshProg=function(){var n=0,t=0;for(var i=0;i<3;i++){var q=qOf(i);if(q){t++;if(isQuestDone(q))n++}}
+   var w=state.quests.filter(function(z){return z.cadence==='weekly'&&z.kind!=='nutrition'}),wd=w.filter(isQuestDone).length;
+   var pips='';for(var i=0;i<3;i++){var q=qOf(i);pips+='<i class="'+(q&&isQuestDone(q)?'on':'')+'"></i>'}
+   prog.innerHTML='<span class="rp-pips">'+pips+'</span>'+qpxText(n+' / '+t+' FULFILLED',{s:2,w:vw-40,lines:1})+(w.length?'<span class="rp-sub">'+qpxText('WEEKLY '+wd+' / '+w.length,{s:1,w:140,lines:1})+'</span>':'')};
+  var retexture=async function(i,animate,burst){
+   var q=qOf(i),cv=await t3face(q,numerals[i],isQuestDone(q)),tex=mkTex(cv,false),c=dealt[i],old=tFace[i];
+   if(animate&&c.lift&&inspecting===i){await anim(520,function(t){var a=t*360;c.q=t3qmul(t3qmul(camQ,t3qax([0,1,0],a)),QFRONT);if(t>.25&&c.front!==tex)c.front=tex},eIO);c.q=t3qmul(camQ,QFRONT)}
+   else c.front=tex;
+   tFace[i]=tex;c.front=tex;if(old)gl.deleteTexture(old);
+   if(burst){var tier=q.tier||1;try{QFX.claim(cardRect(c));hap('success');ST.flash=.8}catch(e){}}
+  };
+  var syncCards=async function(){
+   if(busy||!alive)return;busy=true;
+   try{for(var i=0;i<3;i++){var q=slotQuest(i);if(!q)continue;var dn=isQuestDone(q);
+     if(seen.ids[i]===undefined){seen.ids[i]=q.id;seen.done[i]=dn;continue}
+     if(seen.ids[i]!==q.id||seen.done[i]!==dn){var newly=dn&&!seen.done[i]&&seen.ids[i]===q.id;seen.ids[i]=q.id;seen.done[i]=dn;await retexture(i,true,newly);if(inspecting===i)showDock(i)}}
+   refreshProg();if(!ledger.hidden)renderLedger()}catch(e){console.warn('[rest sync]',e)}
+   busy=false};
+  for(var i0=0;i0<3;i0++){var q0=slotQuest(i0);if(q0){seen.ids[i0]=q0.id;seen.done[i0]=isQuestDone(q0)}}
+  refreshProg();
+  /* inspecting a card: it is lifted to you, turns freely on any axis, and the dock shows its controls */
+  var spinFree=function(c){
+   var qv=QFRONT.slice(),q0=qv.slice(),drag=false,sx=0,sy=0,samples=[],settling=0;
+   var apply=function(){c.q=t3qmul(camQ,qv);var nz=Math.abs(qrot(qv,[0,0,1])[2]);c.sheen=.08+.45*(1-nz);c.lift=true;c.amb=4.2};apply();
+   var rotFor=function(dx,dy,k){var len=Math.hypot(dx,dy);if(len<.5)return [0,0,0,1];return t3qax([-dy/len,dx/len,0],len*k)};
+   var down=function(e){if(settling||e.target.closest('button,.fs-dock3,.fs-ledger,.fs-newq,.fs-rest'))return;var P=quad(c);if(!inQuad(P,e.clientX,e.clientY))return;drag=true;dragging=true;sx=e.clientX;sy=e.clientY;q0=qv.slice();samples=[[performance.now(),0,0]];try{sc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()};
+   var mv=function(e){if(!drag)return;var dx=e.clientX-sx,dy=e.clientY-sy;qv=t3qmul(rotFor(dx,dy,.9),q0);apply();var now=performance.now();samples.push([now,dx,dy]);while(samples.length>2&&now-samples[0][0]>90)samples.shift()};
+   var up=function(){if(!drag)return;drag=false;dragging=false;var n=samples.length,vx=0,vy=0;if(n>1){var dt=Math.max(16,samples[n-1][0]-samples[0][0]);vx=(samples[n-1][1]-samples[0][1])/dt*1000;vy=(samples[n-1][2]-samples[0][2])/dt*1000}
+    var vl=Math.hypot(vx,vy),bq=vl>1?t3qax([-vy/vl,vx/vl,0],Math.min(45,vl*.04)):[0,0,0,1],front=qrot(t3qmul(bq,qv),[0,0,1])[2]>0,target=front?QFRONT:QBACK,from=qv.slice(),t1=performance.now();
+    var step=function(){var t=Math.min(1,(performance.now()-t1)/520),c1=1.2,c3=c1+1,e=1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);qv=t3slerp(from,target,e);apply();if(t<1)settling=requestAnimationFrame(step);else{settling=0;qv=target.slice();apply()}};settling=requestAnimationFrame(step)};
+   sc.addEventListener('pointerdown',down);sc.addEventListener('pointermove',mv);sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',up);
+   return function(){cancelAnimationFrame(settling);sc.removeEventListener('pointerdown',down);sc.removeEventListener('pointermove',mv);sc.removeEventListener('pointerup',up);sc.removeEventListener('pointercancel',up)};
+  };
+  var inspect=async function(i){
+   if(inspecting>=0||busy)return;busy=true;inspecting=i;var c=dealt[i];hap('tap');
+   var LD2=LD*1.1,lifted=[curEye[0]+bas.f[0]*LD2,curEye[1]+bas.f[1]*LD2,curEye[2]+bas.f[2]*LD2];c.sh=0;c.sheen=.2;c.lift=false;
+   var ab=anim(480,function(t){c.amb=1.3+2.9*t});await move(c,lifted,t3qmul(camQ,QFRONT),480,{ease:eIO});c.lift=true;c.amb=4.2;await ab;
+   spinStop=spinFree(c);showDock(i);busy=false};
+  var release=async function(){
+   if(inspecting<0||busy)return;busy=true;var i=inspecting,c=dealt[i];if(spinStop){spinStop();spinStop=null}dock.hidden=true;
+   c.lift=false;c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];c.q=c.q.slice();
+   anim(480,function(t){c.amb=4.2-2.9*t});await move(c,[slots[i][0],TC,slots[i][2]],faceUp(c.yaw||0),500,{ease:eIO,arc:4});c.sh=.7;c.sheen=0;thud([slots[i][0],TY,slots[i][2]],6,.4);inspecting=-1;busy=false};
+  /* the ledger: weekly missions, epics, your own quests and badges */
+  var lgRow=function(q){var done=isQuestDone(q),locked=questLocked(q),xp=Math.max(0,Number(q.xp)||0);
+   return '<div class="lg-row'+(done?' done':'')+(locked?' locked':'')+'"><button class="lg-chk" type="button" '+(locked?'disabled ':'')+'onclick="dhLedgerToggle(\''+q.id+'\')" aria-label="'+(done?'Undo ':'Complete ')+esc(q.name)+'">'+(done?'&#10003;':locked?'&#128274;':'')+'</button><div class="lg-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(locked?('Unlocks at level '+stageLvl(q.stage)):(q.desc||''))+'</small></div><span class="lg-xp">+'+xp+'</span></div>'};
+  var renderLedger=function(){
+   var cu=state.quests.filter(function(q){return q.cadence==='daily'&&q.kind!=='nutrition'&&!q.hand&&questToday(q)}),we=state.quests.filter(function(q){return q.cadence==='weekly'&&q.kind!=='nutrition'}),nu=state.quests.filter(function(q){return q.kind==='nutrition'&&(q.cadence!=='daily'||questToday(q))}),ep=state.quests.filter(function(q){return q.cadence==='epic'}).sort(function(a,b){return(a.stage||0)-(b.stage||0)});
+   var sec=function(t,list,empty){return '<div class="lg-sec">'+qpxText(t,{s:2,w:260,lines:1})+'</div>'+(list.length?list.map(lgRow).join(''):'<div class="lg-empty">'+esc(empty)+'</div>')};
+   var b=state.badges||{},earned=BADGES.filter(function(x){return b[x.id]});
+   ledger.innerHTML='<div class="lg-head"><div>'+qpxText('THE LEDGER',{s:3,w:260,lines:1})+'</div><button type="button" class="lg-close" onclick="dhSceneLedger(false)" aria-label="Close the ledger">&#10005;</button></div><div class="lg-body">'
+    +sec('WEEKLY MISSIONS',we,'None this week.')+sec('YOUR OWN QUESTS',cu,'Forge one with New Quest.')+(nu.length?sec('NUTRITION',nu,''):'')+sec('EPIC MILESTONES',ep,'Your first epic awaits.')
+    +'<div class="lg-sec">'+qpxText('BADGES '+earned.length+' / '+BADGES.length,{s:2,w:260,lines:1})+'</div><div class="lg-badges">'+(earned.length?earned.map(function(x){return '<span title="'+esc(x.desc)+'">'+esc(x.name)+'</span>'}).join(''):'<div class="lg-empty">None earned yet.</div>')+'</div></div>'};
+  var openNew=function(on){newq.hidden=!on;if(on){newq.innerHTML='<div class="nq-card"><div class="nq-t">'+qpxText('NEW QUEST',{s:3,w:260,lines:1})+'</div><input id="nqName" maxlength="60" placeholder="A goal worth pursuing" aria-label="Quest name"><div class="nq-row"><select id="nqCad" aria-label="Cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option></select><input id="nqXp" type="number" min="1" max="500" value="25" aria-label="XP"></div><div class="nq-row"><button type="button" class="rest-btn" onclick="dhSceneCreate()">'+qpxText('CREATE',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn dim" onclick="dhSceneNew(false)">'+qpxText('CANCEL',{s:2,w:90,lines:1})+'</button></div></div>'}};
+  var api={
+   back:release,redraw:function(slot){if(dhReroll(slot)){}},
+   ledger:function(on){if(on===undefined)on=ledger.hidden;if(on){renderLedger();ledger.hidden=false;release()}else ledger.hidden=true},
+   open:function(on){openNew(on===undefined?true:on)},
+   create:function(){var n=(document.getElementById('nqName').value||'').trim();if(!n){toast('Give your quest a name');return}
+    state.quests.push({id:'custom_'+Date.now(),name:n,desc:'Custom quest created by you.',cadence:document.getElementById('nqCad').value,xp:Math.min(500,Math.max(1,Number(document.getElementById('nqXp').value)||25)),kind:'custom'});openNew(false);save();toast('Quest created');api.ledger(true)},
+   toggle:function(id){var q=state.quests.find(function(z){return z.id===id});if(!q)return;qosToggle(id,!isQuestDone(q));setTimeout(function(){if(!ledger.hidden)renderLedger();refreshProg()},60)},
+   again:function(){finishRest('replay')}
+  };
+  window.dhRest=api;
+  sc.addEventListener('click',function(e){var b=e.target.closest('.rest-btn[data-a]');if(!b)return;var a=b.dataset.a;if(a==='ledger')api.ledger(true);else if(a==='new')api.open(true);else if(a==='again')api.again()});
+  /* taps on the table */
+  sc.addEventListener('pointerdown',function(e){if(e.target.closest('button,input,select,.fs-ledger,.fs-newq,.fs-dock3'))return;pdown={x:e.clientX,y:e.clientY,t:performance.now()}});
+  sc.addEventListener('pointerup',function(e){if(!pdown)return;var d0=pdown;pdown=null;if(Math.hypot(e.clientX-d0.x,e.clientY-d0.y)>10||performance.now()-d0.t>450)return;
+   if(!ledger.hidden||!newq.hidden)return;
+   if(inspecting>=0){if(!inQuad(quad(dealt[inspecting]),e.clientX,e.clientY))release();return}
+   var i=hit(e.clientX,e.clientY);if(i>=0)inspect(i)});
+  var tick=setInterval(syncCards,450);
+  var leave=setInterval(function(){if(!dhViewOn())finishRest('leave')},250);
+  var embers=setInterval(function(){if(document.hidden)return;try{flames.forEach(function(f){var q=project(f);QFX.emit(q[0]+rnd(-6,6),q[1]-8,rnd(-14,14),-rnd(30,70),rnd(1.2,2.2),rnd(3,7),[1,.55+rnd(0,.2),.2])})}catch(e){}},700);
+  api._stop=function(){clearInterval(tick);clearInterval(leave);clearInterval(embers);if(spinStop)spinStop()};
+ });
+ if(window.dhRest&&window.dhRest._stop)window.dhRest._stop();window.dhRest=null;
+ await new Promise(function(r){var t1=performance.now(),f=function(){var t=Math.min(1,(performance.now()-t1)/450);sc.style.opacity=1-t;if(t<1)requestAnimationFrame(f);else r()};f()});
  alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove();
  try{QFX.foilKick()}catch(e){}
- return true;
+ return outcome==='replay'?'replay':true;
  function S_flash(v){ST.flash=Math.max(ST.flash,v)}
 }
+
+function dhSceneBack(){if(window.dhRest)window.dhRest.back()}
+function dhSceneRedraw(n){if(window.dhRest)window.dhRest.redraw(n)}
+function dhSceneLedger(on){if(window.dhRest)window.dhRest.ledger(on)}
+function dhSceneNew(on){if(window.dhRest)window.dhRest.open(on)}
+function dhSceneCreate(){if(window.dhRest)window.dhRest.create()}
+function dhLedgerToggle(id){if(window.dhRest)window.dhRest.toggle(id)}
 /* ===== The threshold: the splash you see when you first open the Quest Board each day =====
    A dark void, a watching eye, candles and drifting embers, and one button. Pressing it lights the way into the reading. */
 var dhGating=false;
