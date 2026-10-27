@@ -2182,6 +2182,15 @@
    ],
    "symbols": []
   },  {
+   "file": "src/runtime/segments/50-quests-fx.js",
+   "bytes": 9000,
+   "statement_count": 0,
+   "tags": [
+    "quests"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/50-settings-tabs.js",
    "bytes": 2600,
    "statement_count": 0,

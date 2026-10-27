@@ -11,6 +11,10 @@
           <div class="settingsline"><div style="flex:1"><strong>Bar scrubbing speed</strong><div class="muted" style="font-size:12px">Slide a finger along the bottom bar to run through the tabs. Faster means a shorter slide gets you further.</div></div><select id="lmaScrubSpeed" onchange="lmaSetScrubSpeed(this.value)" aria-label="Bar scrubbing speed"><option value="normal">Normal</option><option value="fast" selected>Fast</option><option value="faster">Faster</option></select></div>
           <div class="muted" style="font-size:12px;margin-top:8px">The Android Back button or gesture closes a popup, then returns to the previous tab. It never closes the app.</div>
         </div>
+        <div class="card" style="margin-bottom:14px" id="qfxCard">
+          <h3>Quest effects</h3>
+          <div class="settingsline"><div style="flex:1"><strong>Card effects</strong><div class="muted" style="font-size:12px">GPU sparkles, holographic foil and tilt on the quest cards. Turn off for plain cards if your phone gets warm or you want to save battery.</div></div><input id="qfxToggle" type="checkbox" class="check" checked onchange="qfxSet(this.checked)" aria-label="Card effects"></div>
+        </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">
           <h3>Haptics</h3>
           <div id="hapBody"></div>

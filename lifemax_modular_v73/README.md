@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v157 — Fate Deck effects (WebGL2)
+- `50-quests-fx.js` adds a small GPU engine: particles whose motion is computed in the vertex shader from their age (one buffer write per particle at birth, nothing per frame), used for riffle sparks, deal trails, a burst when a card is turned over (bigger for 3-star) and a fountain plus ring when a quest is fulfilled, by hold or automatically.
+- Holographic foil on 2- and 3-star cards: one shared fragment shader (iridescence, diagonal sheen, sparkle, edge glow) is drawn per card at about 30 fps and copied onto the card. Cards also lean toward your finger, or with the phone's tilt.
+- Settings → Look & feel → Quest effects turns it all off (plain cards). It also turns itself off with reduced motion, without WebGL2, or if the GPU context is lost. Foil only runs while the Quest Board is on screen.
+- Tests: `tests/questfx.test.js` (15 checks, run with software GL).
+
 ## v156 — the Fate Deck (quests, tarot cards)
 - The three Daily Hand cards are now tarot-style cards in a swipeable row: a numeral, a medallion with the attribute icon and difficulty pips, the quest, and a round hold-to-claim seal that fills as you hold. 3-star cards get a gold frame; fulfilled cards get a stamp.
 - First visit each day: a face-down deck riffle-shuffles, then each real card flies from the deck to its place (FLIP animation, Web Animations API, GPU-composited). Cards deal face-down; tap one to turn it over. A redrawn card comes back face-down. "Shuffle again" replays it. Reduced-motion skips the show.

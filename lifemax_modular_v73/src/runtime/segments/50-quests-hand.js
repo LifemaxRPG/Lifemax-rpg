@@ -166,6 +166,7 @@ function dhReveal(slot){
  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.add('is-up');
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('double')}catch(e){}
+ try{if(el){const q=dhCards().find(function(x){return x.slot===slot});QFX.burst(el.getBoundingClientRect(),q?q.tier||1:1);setTimeout(QFX.foilKick,700)}}catch(e){}
 }
 function dhRingSvg(tier){
  let pips='';for(let i=0;i<3;i++){const a=(-90+(i-1)*22)*Math.PI/180,x=60+54*Math.cos(a),y=60+54*Math.sin(a);pips+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.2" class="'+(i<tier?'on':'off')+'"/>'}
@@ -188,12 +189,15 @@ function dhCardHtml(q){
   +'<div class="dh-actions">'+foot+rr+'</div></div>'
   +'</div></div>';
 }
-var dhDealing=false;
+var dhDealing=false,dhPrevDone=null;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
  const cards=dhCards().sort(function(a,b){return a.slot-b.slot}),keep=el.scrollLeft;
+ const prevDone=dhPrevDone||{};dhPrevDone={};
  el.innerHTML=cards.map(dhCardHtml).join('');el.scrollLeft=keep;
+ cards.forEach(function(q){const dn=isQuestDone(q);dhPrevDone[q.id]=dn;if(dn&&prevDone[q.id]===false&&dhViewOn()){const c=el.querySelector('.dh-card[data-slot="'+q.slot+'"]');if(c){try{QFX.claim(c.getBoundingClientRect());if(window.LifeMaxHaptics)LifeMaxHaptics.play('success')}catch(e){}}}});
+ try{QFX.foilKick()}catch(e){}
  if(d&&!d.dealt&&cards.length&&dhViewOn()){el.classList.add('fd-pre');setTimeout(dhMaybeDeal,60)}
 }
 /* ---- shuffle and lay-out: a riffle in a small stage, then each real card flies from the deck to its place (FLIP) ---- */
@@ -219,9 +223,9 @@ async function dhMaybeDeal(replay){
   await dhWait([st.animate([{opacity:0,transform:'scale(.9)'},{opacity:1,transform:'none'}],{duration:220,fill:'both'})]);
   for(let round=0;round<3;round++){
    const split=backs.map(function(b,i){const left=i%2===0,x=(left?-1:1)*(54+round*6);return b.animate([{transform:b.style.transform},{transform:'translate('+x+'px,'+(-i*0.8)+'px) rotate('+(left?-7:7)+'deg)'}],{duration:240,easing:'ease-out',fill:'forwards'})});
-   await dhWait(split);dhTick('tap');
+   await dhWait(split);dhTick('tap');try{const r=st.getBoundingClientRect();QFX.sparks(r.left+r.width/2,r.top+r.height/2+10,10+round*6,1+round%2);QFX.motes(r.left+r.width/2,r.top+r.height/2,6,1)}catch(e){}
    const merge=backs.map(function(b,i){const left=i%2===0,x=(left?-1:1)*(54+round*6);return b.animate([{transform:'translate('+x+'px,'+(-i*0.8)+'px) rotate('+(left?-7:7)+'deg)'},{transform:'translate('+(i*0.6)+'px,'+(-i*0.8)+'px)'}],{duration:260,delay:i*18,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'})});
-   await dhWait(merge);
+   await dhWait(merge);try{const r=st.getBoundingClientRect();QFX.sparks(r.left+r.width/2,r.top+r.height/2,8,2)}catch(e){}
   }
   /* lay out: stage fades while the three real cards fly from the deck to their places */
   const sr=st.getBoundingClientRect(),cx=sr.left+sr.width/2,cy=sr.top+sr.height/2;
@@ -230,8 +234,9 @@ async function dhMaybeDeal(replay){
    c.style.opacity='1';
    return c.animate([{transform:'translate('+dx+'px,'+dy+'px) scale(.45) rotate('+spin+'deg)',opacity:0},{opacity:1,offset:.15},{transform:'translate('+(dx*0.15)+'px,'+(dy*0.15-30)+'px) scale(1.04) rotate('+(-spin*0.4)+'deg)',offset:.8},{transform:'none',opacity:1}],{duration:620,delay:i*220,easing:'cubic-bezier(.2,.75,.25,1)',fill:'backwards'})});
   st.animate([{opacity:1},{opacity:0}],{duration:260,fill:'forwards'});
+  let flying=true;const trailLoop=function(){if(!flying)return;try{cards.forEach(function(c,i){const tier=+((c.className.match(/fd-t(\d)/)||[])[1])||1;QFX.trail(c.getBoundingClientRect(),tier);QFX.trail(c.getBoundingClientRect(),tier)})}catch(e){}requestAnimationFrame(trailLoop)};trailLoop();
   cards.forEach(function(c,i){setTimeout(function(){dhTick('tap')},i*220+520)});
-  await dhWait(fly);
+  await dhWait(fly);flying=false;
   st.hidden=true;st.innerHTML='';
  }catch(e){console.warn('[deal]',e)}
  finally{
