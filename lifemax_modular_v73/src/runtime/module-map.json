@@ -2166,6 +2166,15 @@
    "symbols": []
   },
   {
+   "file": "src/runtime/segments/50-haptics.js",
+   "bytes": 5157,
+   "statement_count": 0,
+   "tags": [
+    "haptics"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/51-boot-ok.js",
    "bytes": 523,
    "statement_count": 2,

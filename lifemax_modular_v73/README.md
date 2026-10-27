@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v143 — haptic strength
+
+Settings has a new **Haptics** card: a switch, four strengths (Light, Normal, Strong, Max), and "Try" buttons (tap, double tap, XP gain, level up). Every buzz in the app goes through it.
+- In the Android app (needs this build, which adds the Vibrate permission and two methods on the NavHaptics plugin) the strength is real: the phone's vibration motor is driven at an amplitude (Light 90, Normal 150, Strong 230, Max 255 of 255) with longer pulses at the stronger steps. The bottom-bar ticks stay the system's crisp tick at Normal and become motor pulses at the other strengths.
+- In a browser, or an older app build (it falls back by itself the first time the new calls are refused), a browser cannot ask for harder, so Strong and Max make each buzz longer instead (pauses in a pattern are kept; the longest buzz is capped at 260 ms).
+- It was not possible to feel the difference here. Before this build the app did not hold the Vibrate permission, so the browser-style buzzes may have done nothing on the phone at all.
+- Needs an APK install for the real strength; the web part alone gives the longer buzzes. `tests/haptics.test.js` (15 checks).
+
 ## v142 — thumbs up and down on every voice answer
 
 Under every voice answer (a result, a card waiting for a yes, a question, a cancel) there is now "Was this right?" with a thumbs up and a thumbs down. Thumbs up is thanked and saved as a good answer. Thumbs down opens a small optional box, "What went wrong?", with Send and Skip comment. One rating per answer; a half-typed note survives the card redrawing, and typing does not close the card.

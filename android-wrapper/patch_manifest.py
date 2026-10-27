@@ -29,7 +29,8 @@ xml = xml.replace(
     '    <uses-permission android:name="android.permission.health.READ_STEPS" />\n'
     '    <uses-permission android:name="android.permission.health.READ_SLEEP" />\n'
     '    <uses-permission android:name="android.permission.health.READ_WEIGHT" />\n'
-    '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n\n    <application',
+    '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+    '    <uses-permission android:name="android.permission.VIBRATE" />\n\n    <application',
     1,
 )
 
