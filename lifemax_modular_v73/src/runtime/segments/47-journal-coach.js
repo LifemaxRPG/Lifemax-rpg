@@ -53,6 +53,24 @@ function jcGap(d){let g=0;for(let i=1;i<400;i++){const k=jcAdd(d,-i),m=jcDay(k);
  /* only a gap if there was ever something before it */
  const first=(state.activities||[]).reduce(function(m,a){const k=activityDate(a);return !m||k<m?k:m},null);
  return first&&jcAdd(d,-g-1)>=first?g:0}
+const JC_ATTR_COL={physique:'#f87171',endurance:'#fb923c',intelligence:'#60a5fa',business:'#fbbf24',social:'#f472b6',discipline:'#a78bfa',adventure:'#34d399',wellbeing:'#2dd4bf'};
+function jcAttrColor(id){return JC_ATTR_COL[id]||'#7c9cff'}
+/* the Journal's header: four numbers and the last four weeks as a strip of colours */
+function jcHeroHtml(){
+ const today=getToday(),mo=today.slice(0,7);
+ let monthDays=0,refs=0,weekXp=0;
+ for(let i=0;i<31;i++){const d=jcAdd(today,-i);if(d.slice(0,7)===mo&&jcDay(d).n>0)monthDays++}
+ for(let i=0;i<7;i++)weekXp+=jcDay(jcAdd(today,-i)).xp;
+ Object.keys(state.dayReflections||{}).forEach(function(k){if((state.dayReflections[k]||'').trim())refs++});
+ let st=0;try{st=streak()}catch(e){}
+ const stat=function(v,l,c){return '<div class="jx-stat" style="--c:'+c+'"><b>'+v+'</b><small>'+l+'</small></div>'};
+ let cells='';
+ for(let i=27;i>=0;i--){const d=jcAdd(today,-i),a=jcArch(d),m=jcDay(d);
+  cells+='<i class="jx-cell'+(d===today?' now':'')+(a?'':' off')+'"'+(a?' style="--c:'+JC_ARCH[a].color+';--o:'+(Math.min(1,.35+m.xp/Math.max(1,m.avg*1.6)*.65)).toFixed(2)+'"':'')+' title="'+jcShort(d)+(a?': '+m.xp+' XP':'')+'"></i>'}
+ return '<div class="jx-hero-top"><div><div class="eyebrow">YOUR CHRONICLE</div><h2>Journal</h2></div><button type="button" class="jx-ghost" onclick="exportData()" aria-label="Export backup">Backup</button></div>'+
+  '<div class="jx-stats">'+stat(st,'day streak','#fb923c')+stat(monthDays,'days this month','#60a5fa')+stat(weekXp.toLocaleString(),'XP this week','#34d399')+stat(refs,'reflections','#f472b6')+'</div>'+
+  '<div class="jx-rhythm"><div class="jx-rhythm-h"><span>Last 4 weeks</span><span class="jx-legend">brighter = bigger day</span></div><div class="jx-cells">'+cells+'</div></div>';
+}
 /* ----- archetypes (priority order) ----- */
 const JC_ARCH={
  WELCOME_BACK:{label:'Chapter Resumed',color:'#F59E0B'},OVERDRIVE:{label:'High Output',color:'#EF4444'},DIRECTOR_SYNC:{label:'Dial Master',color:'#3B82F6'},
@@ -130,6 +148,7 @@ function jcCounter(el,d){
  const n=el.value.trim().length,rec=jcStore().days[d]||{},b=document.getElementById('jcCount');if(!b)return;
  b.textContent=rec.xpAwarded?'+'+JC.rewardReflect+' XP & +2 bond claimed':(d===getToday()||d===jcAdd(getToday(),-1))?(n>=JC.reflectMin?'Saves for +'+JC.rewardReflect+' XP':'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP ('+n+')'):'Reflections on older days earn no XP';
  b.className='jc-count'+(rec.xpAwarded||n>=JC.reflectMin?' on':'');
+ const mt=document.getElementById('jcMeter');if(mt)mt.style.width=(rec.xpAwarded?100:Math.min(100,n/JC.reflectMin*100))+'%';
 }
 /* ----- patterns over the last 21 days (one chip a day, a pattern rests 7 days after it is shown) ----- */
 function jcPatterns(d){
@@ -210,7 +229,7 @@ function jcWelcome(d){
   body='You have been away for '+g+' days. Your level ('+lv+'), Sparks and '+(cat?jcEsc(cn):'everything')+' are right where you left them, and your rolling average is reset for a week so today feels fair.';
   chips=chip('fresh','Start fresh · +25 XP','jcClaim(\'fresh\')',w.claimed.fresh);
  }
- return '<div class="jc-welcome"><div class="jc-wh">'+jcEsc(head)+'</div><p>'+body+'</p><div class="jc-chips">'+chips+'</div></div>';
+ return '<div class="jc-welcome"><svg class="jx-moon" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="jxg" cx="35%" cy="30%"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><circle cx="32" cy="32" r="22" fill="url(#jxg)"/><circle cx="43" cy="26" r="19" fill="var(--panel)"/></svg><div class="jc-wh">'+jcEsc(head)+'</div><p>'+body+'</p><div class="jc-chips">'+chips+'</div></div>';
 }
 function jcClaim(kind){
  const st=jcStore(),w=st.welcome[getToday()];if(!w||w.claimed[kind])return;
@@ -235,9 +254,12 @@ function jcTop(d){
  return h+jcReflectBox(d,jcPrompt(d));
 }
 function jcReflectBox(d,pr){
- const ref=(state.dayReflections&&state.dayReflections[d])||'',rec=jcStore().days[d]||{};
- return '<div class="j-reflect">'+(pr?'<div class="jc-q"><span>'+jcEsc(pr.text)+'</span><button type="button" class="jc-swap" onclick="jcSwap(\''+d+'\')" aria-label="Swap question">↻</button></div>':'<label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>')+
-  '<textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" oninput="jcCounter(this,\''+d+'\')" onchange="saveDayReflection(\''+d+'\',this.value)">'+jcEsc(ref)+'</textarea><div id="jcCount" class="jc-count'+(rec.xpAwarded?' on':'')+'">'+(rec.xpAwarded?'+'+JC.rewardReflect+' XP & +2 bond claimed':(d===getToday()||d===jcAdd(getToday(),-1)?'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP':'Reflections on older days earn no XP'))+'</div></div>';
+ const ref=(state.dayReflections&&state.dayReflections[d])||'',rec=jcStore().days[d]||{},n=ref.trim().length;
+ const canPay=d===getToday()||d===jcAdd(getToday(),-1);
+ const label=rec.xpAwarded?'+'+JC.rewardReflect+' XP & +2 bond claimed':canPay?(n>=JC.reflectMin?'Saves for +'+JC.rewardReflect+' XP':'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP'):'Reflections on older days earn no XP';
+ return '<div class="j-reflect jx-reflect">'+(pr?'<div class="jc-q"><span class="jx-qmark">Reflect</span><span>'+jcEsc(pr.text)+'</span><button type="button" class="jc-swap" onclick="jcSwap(\''+d+'\')" aria-label="Swap question">&#8635;</button></div>':'<label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>')+
+  '<textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" oninput="jcCounter(this,\''+d+'\')" onchange="saveDayReflection(\''+d+'\',this.value)">'+jcEsc(ref)+'</textarea>'+
+  '<div class="jx-meter"><i id="jcMeter" style="width:'+(rec.xpAwarded?100:Math.min(100,n/JC.reflectMin*100))+'%"></i></div><div id="jcCount" class="jc-count'+(rec.xpAwarded?' on':'')+'">'+label+'</div></div>';
 }
 /* ----- the day list: coloured dots, quiet stretches, weekly and monthly reviews ----- */
 function jcWeekId(d){const a=d.split('-').map(Number),t=new Date(Date.UTC(a[0],a[1]-1,a[2])),dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);const y=t.getUTCFullYear(),j=new Date(Date.UTC(y,0,4)),w=1+Math.round(((t-j)/86400000-3+((j.getUTCDay()+6)%7))/7);return y+'-W'+String(w).padStart(2,'0')}
@@ -259,17 +281,20 @@ function jcReviewList(days){
 function jcListHtml(days,sel){
  const items=days.map(function(d){return {sort:d,day:d}}).concat(jcReviewList(days).map(function(r){return {sort:r.sort,rev:r}}));
  items.sort(function(a,b){return b.sort.localeCompare(a.sort)});
- let html='',prevDay=null;
+ const today=getToday();let html='',prevDay=null,maxXp=1;
+ days.forEach(function(d){maxXp=Math.max(maxXp,jcDay(d).xp)});
  items.forEach(function(it){
   if(it.rev){
    const r=it.rev,on=sel===r.key?' on':'';
-   html+='<button type="button" class="journal-day-btn jc-rev'+on+'" onclick="selectJournalDay(\''+r.key+'\')">'+(r.kind==='W'?'Week '+r.key.split('-W')[1]+' review':new Date(r.start+'T12:00:00').toLocaleDateString(undefined,{month:'long'})+' chronicle')+'<small>'+(r.kind==='W'?'weekly':'monthly')+'</small></button>';return;
+   html+='<button type="button" class="jx-rev'+on+'" onclick="selectJournalDay(\''+r.key+'\')"><span class="jx-rev-ico">'+(r.kind==='W'?'W':'M')+'</span><span class="jx-rev-t">'+(r.kind==='W'?'Week '+r.key.split('-W')[1]:new Date(r.start+'T12:00:00').toLocaleDateString(undefined,{month:'long'}))+'</span><small>'+(r.kind==='W'?'weekly review':'monthly chronicle')+'</small></button>';return;
   }
   const d=it.day;
-  if(prevDay){const gap=(Date.parse(prevDay+'T12:00:00')-Date.parse(d+'T12:00:00'))/86400000-1;if(gap>=3)html+='<div class="jc-quiet">'+gap+' quiet days ('+jcShort(jcAdd(d,1))+' to '+jcShort(jcAdd(prevDay,-1))+')</div>'}
+  if(prevDay){const gap=(Date.parse(prevDay+'T12:00:00')-Date.parse(d+'T12:00:00'))/86400000-1;if(gap>=3)html+='<div class="jx-quiet"><span>'+gap+' quiet days</span></div>'}
   prevDay=d;
-  const a=jcArch(d),acts=actsForDay(d),hasRef=!!((state.dayReflections||{})[d]||'').trim();
-  html+='<button type="button" class="journal-day-btn '+(d===sel?'on':'')+'" onclick="selectJournalDay(\''+d+'\')">'+(a?'<i class="jc-dot" style="background:'+JC_ARCH[a].color+'"></i>':'')+jcEsc(journalDayLabel(d))+'<small>'+acts.length+' logged'+(hasRef?' · reflection':'')+'</small></button>';
+  const a=jcArch(d),m=jcDay(d),hasRef=!!((state.dayReflections||{})[d]||'').trim(),dt=new Date(d+'T12:00:00'),col=a?JC_ARCH[a].color:'#64748b';
+  html+='<button type="button" class="jx-tile'+(d===sel?' on':'')+(d===today?' today':'')+'" style="--c:'+col+'" onclick="selectJournalDay(\''+d+'\')" aria-label="'+jcEsc(journalDayLabel(d))+', '+m.xp+' XP">'+
+   '<span class="jx-tw">'+(d===today?'Today':dt.toLocaleDateString(undefined,{weekday:'short'}))+'</span><span class="jx-td">'+dt.getDate()+'</span>'+
+   '<span class="jx-tbar"><i style="width:'+Math.max(6,Math.round(m.xp/maxXp*100))+'%"></i></span><span class="jx-tf">'+(hasRef?'<u>&#9998;</u>':'')+m.xp+'</span></button>';
  });
  return html;
 }
@@ -309,10 +334,18 @@ function jcReviewHtml(key){
   qText='If '+mn+' was a chapter in your character\'s story, what was the title of this chapter, and what skill did you actually level up in real life?';bonus=JC.rewardMonthly;minLen=JC.monthlyMin;
  }
  const n=(rec.answer||'').trim().length;
- return '<div class="journal-date">'+jcEsc(head)+'</div><div class="journal-meta">'+jcShort(start)+' to '+jcShort(end)+'</div>'+
-  '<div class="jc-grid">'+grid.map(function(g){return '<div><small>'+jcEsc(g[0])+'</small><b>'+jcEsc(g[1])+'</b></div>'}).join('')+'</div>'+
+ let chart='';
+ const mx=Math.max.apply(null,ds.map(function(m){return m.xp}).concat([1]));
+ if(kind==='W'){
+  chart='<div class="jx-bars">'+ds.map(function(m){const a=jcArch(m.d),c=a?JC_ARCH[a].color:'#475569';return '<div class="jx-bar'+(m.d===getToday()?' now':'')+'" style="--c:'+c+'"><span class="jx-bv">'+(m.xp||'')+'</span><i style="height:'+Math.max(m.xp?8:3,Math.round(m.xp/mx*100))+'%"></i><small>'+new Date(m.d+'T12:00:00').toLocaleDateString(undefined,{weekday:'narrow'})+'</small></div>'}).join('')+'</div>';
+ }else{
+  const off=(jcDow(start)+6)%7;
+  chart='<div class="jx-heat"><div class="jx-heat-w">'+['M','T','W','T','F','S','S'].map(function(x){return '<small>'+x+'</small>'}).join('')+'</div><div class="jx-heat-g">'+Array(off).fill('<i class="jx-hc void"></i>').join('')+ds.map(function(m){const a=jcArch(m.d),c=a?JC_ARCH[a].color:'#475569';return '<i class="jx-hc'+(m.n?'':' off')+'" style="--c:'+c+';--o:'+(m.n?(Math.min(1,.3+m.xp/mx*.7)).toFixed(2):'.18')+'" title="'+jcShort(m.d)+': '+m.xp+' XP"><b>'+new Date(m.d+'T12:00:00').getDate()+'</b></i>'}).join('')+'</div></div>';
+ }
+ return '<div class="jx-dayhead jx-revhead"><div class="jx-bignum">'+(kind==='W'?'W'+id.split('-W')[1]:new Date(start+'T12:00:00').toLocaleDateString(undefined,{month:'short'}).toUpperCase())+'</div><div class="jx-dayname"><b>'+jcEsc(head)+'</b><span>'+jcShort(start)+' to '+jcShort(end)+'</span></div></div>'+
+  chart+'<div class="jc-grid">'+grid.map(function(g){return '<div><small>'+jcEsc(g[0])+'</small><b>'+jcEsc(g[1])+'</b></div>'}).join('')+'</div>'+
   '<div class="jc-card" style="--jc:#F59E0B"><span class="jc-badge">Coach</span><p>'+jcEsc(synth)+'</p></div>'+
-  '<div class="j-reflect"><div class="jc-q"><span>'+jcEsc(qText)+'</span></div><textarea maxlength="2000" placeholder="Write if you want to." onchange="jcSaveReview(\''+key+'\',this.value)">'+jcEsc(rec.answer||'')+'</textarea><div class="jc-count'+(rec.paid?' on':'')+'">'+(rec.paid?'+'+bonus+' XP claimed':'Write '+minLen+'+ characters for +'+bonus+' XP')+'</div></div>';
+  '<div class="j-reflect jx-reflect"><div class="jc-q"><span>'+jcEsc(qText)+'</span></div><textarea maxlength="2000" placeholder="Write if you want to." onchange="jcSaveReview(\''+key+'\',this.value)">'+jcEsc(rec.answer||'')+'</textarea><div class="jc-count'+(rec.paid?' on':'')+'">'+(rec.paid?'+'+bonus+' XP claimed':'Write '+minLen+'+ characters for +'+bonus+' XP')+'</div></div>';
 }
 function jcSaveReview(key,val){
  const st=jcStore(),rec=st.reviews[key]||(st.reviews[key]={}),t=String(val||'').trim();rec.answer=t.slice(0,2000);
@@ -321,3 +354,5 @@ function jcSaveReview(key,val){
  try{save()}catch(e){}renderHistory();
 }
 window.LifeMaxCoach=Object.freeze({day:jcDay,arch:jcArch,insight:jcInsight,prompt:jcPrompt,patterns:jcPatterns,gap:jcGap,reviewList:jcReviewList,reviewHtml:jcReviewHtml,reflect:jcOnReflect,store:jcStore,hash:jcHash,reset:function(){jcCache={sig:'',idx:null,day:{}}}});
+/* the Journal was first drawn during start-up, before this module existed: draw it again now */
+try{if(document.getElementById('journalDays')&&typeof renderHistory==='function')renderHistory()}catch(e){console.warn('[coach]',e)}

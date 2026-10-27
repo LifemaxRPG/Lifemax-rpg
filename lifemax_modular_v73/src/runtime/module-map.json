@@ -66,7 +66,7 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 28526,
+   "bytes": 29068,
    "statement_count": 64,
    "tags": [
     "training",
@@ -2003,7 +2003,7 @@
   },
   {
    "file": "src/runtime/segments/47-journal-coach.js",
-   "bytes": 34535,
+   "bytes": 39001,
    "statement_count": 45,
    "tags": [
     "journal",

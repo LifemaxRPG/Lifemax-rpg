@@ -77,6 +77,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   // tier 3 resets the baseline
   await seed([[30, 100, 9, 'Study', 'intelligence'], [31, 100, 9, 'Study', 'intelligence'], [32, 100, 9, 'Study', 'intelligence'], [0, 60, 9, 'Back', 'discipline']], true);
   await p.evaluate(() => { histSel = getToday(); renderHistory() });
+  ok('a quiet stretch collapses into one line in the day list', await p.evaluate(() => document.querySelectorAll('.jx-quiet').length === 1 && /quiet days/.test(document.querySelector('.jx-quiet').textContent)));
   ok('tier 3 (14+ days) resets the baseline to 120 for a week', await p.evaluate(() => { const t = jcStore().welcome[getToday()]; return t.tier === 3 && jcStore().base.value === 120 }));
   const f0 = await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0)); await p.evaluate(() => { jcClaim('fresh'); jcClaim('fresh') });
   ok('the welcome reward pays once', (await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0))) === f0 + 25);
@@ -94,11 +95,19 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('weekly bonus pays once (+30)', (await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0))) === rx + 30);
   // list rendering and selection of a review
   await p.evaluate(k => { histSel = k; renderHistory() }, rl[0]); ok('a review can be opened from the list', await p.evaluate(() => !!document.querySelector('#journalEntry .jc-grid')));
-  ok('the day list shows colour dots, quiet stretches and review rows', await p.evaluate(() => document.querySelectorAll('.jc-dot').length > 3 && document.querySelectorAll('.jc-rev').length > 2));
+  ok('the day list shows colour dots, quiet stretches and review rows', await p.evaluate(() => document.querySelectorAll('.jx-tile').length > 3 && document.querySelectorAll('.jx-rev').length > 2));
   // care note
   await seed([[0, 100, 9, 'Study', 'intelligence']], true); const dd = await dstr(0);
   await p.evaluate(d => { saveDayReflection(d, 'I feel like there is no reason to live and I want to die'); histSel = d; renderHistory() }, dd);
   const care = await p.evaluate(() => (document.querySelector('.jc-care') || {}).textContent || ''); ok('distress words get a gentle note with a crisis line and no coach card', /988/.test(care) && !(await p.evaluate(() => document.querySelector('.jc-card'))), care.slice(0, 60));
+  // loading the app with a saved history must not touch the coach before it exists (this once broke start-up)
+  await seed(wk, true); await p.evaluate(() => save());
+  const errs2 = []; const p2 = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p2.on('pageerror', e => errs2.push(String(e)));
+  const saved = await p.evaluate(() => localStorage.getItem('lifemax_rpg_prototype_v1')); await p2.addInitScript(v => localStorage.setItem('lifemax_rpg_prototype_v1', v), saved);
+  await p2.goto('file://' + file); await p2.waitForTimeout(1500);
+  ok('start-up with a saved history has no errors and the app is alive', errs2.length === 0 && await p2.evaluate(() => typeof lmaNavTo === 'function' && !!window.LifeMaxCoach), errs2);
+  await p2.evaluate(() => lmaNavTo('history')); await p2.waitForTimeout(400);
+  ok('the journal draws hero, tiles and a coach card after a cold start', await p2.evaluate(() => !!document.querySelector('.jx-hero .jx-stat') && document.querySelectorAll('.jx-tile').length > 3 && !!document.querySelector('.jc-card')));
   // never touches food or weight
   const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'runtime', 'segments', '47-journal-coach.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   ok('the coach never reads weight or food data', !/\b(kcal|calorie|calories|dayFoodLog|mealsMeta|\.wt\b|weigh(?:t|ins?)\b(?!:))/i.test(src.replace(/font-weight/g, '')));

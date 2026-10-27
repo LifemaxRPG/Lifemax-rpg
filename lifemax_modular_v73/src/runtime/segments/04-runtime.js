@@ -54,23 +54,24 @@ function renderBenchmarks(){document.getElementById('benchmarks').innerHTML=stat
 function renderHistory(){
   if(!state.dayReflections)state.dayReflections={};
   const days=journalDays();
-  if(typeof LifeMaxCoach!=='undefined')LifeMaxCoach.reset();
+  if(window.LifeMaxCoach)LifeMaxCoach.reset();
   if(!histSel||(!days.includes(histSel)&&!/^[WM]:/.test(histSel)))histSel=days[0]||getToday();
   const daysEl=document.getElementById('journalDays');
   const entryEl=document.getElementById('journalEntry');
   if(!daysEl||!entryEl)return;
+  const hero=document.getElementById('journalHero');if(hero&&window.LifeMaxCoach)hero.innerHTML=jcHeroHtml();
   if(!days.length){
     daysEl.innerHTML='';
     entryEl.innerHTML=`<div class="empty"><div>◷</div><strong>No journal entries yet</strong><br>Log an activity, complete a quest, or finish a plan session. Everything you enter will show up here by day.</div>`;
     return;
   }
-  daysEl.innerHTML=typeof jcListHtml==='function'?jcListHtml(days,histSel):days.map(d=>{
+  daysEl.innerHTML=window.LifeMaxCoach?jcListHtml(days,histSel):days.map(d=>{
     const acts=actsForDay(d);
     const hasRef=!!(state.dayReflections[d]||'').trim();
     const label=journalDayLabel(d);
     return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(label)}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
-  entryEl.innerHTML=/^[WM]:/.test(histSel)&&typeof jcReviewHtml==='function'?jcReviewHtml(histSel):renderJournalDay(histSel);
+  entryEl.innerHTML=/^[WM]:/.test(histSel)&&window.LifeMaxCoach?jcReviewHtml(histSel):renderJournalDay(histSel);
 }
 let histSel=null;
 function journalDays(){
@@ -111,19 +112,19 @@ function saveDayReflection(d,val){
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
   state.customRules=rules;
   try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
-  try{if(typeof jcOnReflect==='function')jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
+  try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
   if(daysEl){
-    if(typeof LifeMaxCoach!=='undefined')LifeMaxCoach.reset();
+    if(window.LifeMaxCoach)LifeMaxCoach.reset();
     const days=journalDays();
-    daysEl.innerHTML=typeof jcListHtml==='function'?jcListHtml(days,histSel):days.map(day=>{
+    daysEl.innerHTML=window.LifeMaxCoach?jcListHtml(days,histSel):days.map(day=>{
       const acts=actsForDay(day);
       const hasRef=!!(state.dayReflections[day]||'').trim();
       return `<button type="button" class="journal-day-btn ${day===histSel?'on':''}" onclick="selectJournalDay('${day}')">${esc(journalDayLabel(day))}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
     }).join('');
   }
-  const cnt=document.getElementById('jcCount');if(cnt&&typeof jcCounter==='function'){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
+  const cnt=document.getElementById('jcCount');if(cnt&&window.LifeMaxCoach){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
 }
 function planLogsForDay(d){
   if(!state.plan||!state.plan.checks||!state.plan.checks[d])return [];
@@ -149,31 +150,31 @@ function renderJournalDay(d){
   const logs=planLogsForDay(d);
   const ref=state.dayReflections&&state.dayReflections[d]||'';
   const totalXP=acts.reduce((s,a)=>s+(a.xp||0),0);
+  const col=a=>window.LifeMaxCoach?jcAttrColor(a.primary):'var(--accent)';
+  const planBlock=l=>`<div class="j-plan-logs">${l.map(x=>`<div><b>${esc(x.label)}</b>${x.weight?' · '+esc(x.weight):''}${x.note?' — '+esc(x.note):''}</div>`).join('')}</div>`;
   let body='';
   if(!acts.length&&!logs.length){
-    body=`<div class="empty" style="padding:24px 8px"><div>✎</div>Nothing logged this day yet.${d===getToday()?' Start with an activity, quest, or plan session.':''}</div>`;
+    body=`<div class="jx-empty"><div class="jx-empty-ico">✎</div><strong>Nothing logged this day yet</strong><span>${d===getToday()?'Start with an activity, quest, or plan session and it will land here.':'A blank page is still a page.'}</span></div>`;
   }else{
-    body=acts.map(a=>{
+    body='<div class="jx-timeline">'+acts.map((a,i)=>{
       const attr=(ATTRS.find(x=>x.id===a.primary)||{}).short||'';
-      const time=new Date(a.date).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+      const dt=new Date(a.date),time=dt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
       const notes=(a.notes||'').trim();
-      // For plan activities, attach that day's exercise logs under the plan block once
       let extra='';
-      if(a.type==='plan'&&logs.length){
-        extra=`<div class="j-plan-logs">${logs.map(l=>`<div><b>${esc(l.label)}</b>${l.weight?' · '+esc(l.weight):''}${l.note?' — '+esc(l.note):''}</div>`).join('')}</div>`;
-      }
-      return `<div class="j-item"><div class="j-item-top"><div class="acticon">${iconHtml(a.icon,18)}</div><div class="j-item-body"><div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap"><strong>${esc(a.name)}</strong><span class="j-time">${esc(time)}${attr?' · '+esc(attr):''}${a.duration?` · ${a.duration} min`:''}</span><span class="j-xp">+${a.xp||0}</span></div>${notes?`<div class="j-notes">${esc(notes)}</div>`:''}${extra}</div></div></div>`;
-    }).join('');
-    // If there are plan logs but no plan activity entry, still show them
+      if(a.type==='plan'&&logs.length)extra=planBlock(logs);
+      return `<div class="jx-item" style="--c:${col(a)};--i:${i}"><div class="jx-time">${esc(time)}</div><div class="jx-node"></div><div class="jx-card"><div class="jx-card-top"><div class="acticon">${iconHtml(a.icon,18)}</div><div class="jx-card-main"><strong>${esc(a.name)}</strong><div class="jx-sub">${attr?`<span class="jx-pill" style="--c:${col(a)}">${esc(attr)}</span>`:''}${a.duration?`<span>${a.duration} min</span>`:''}${a.skill&&a.skill!==a.name?`<span>${esc(a.skill)}</span>`:''}</div></div><div class="jx-xpv">+${a.xp||0}<small>XP</small></div></div>${notes?`<div class="j-notes">${esc(notes)}</div>`:''}${extra}</div></div>`;
+    }).join('')+'</div>';
     if(logs.length&&!acts.some(a=>a.type==='plan')){
-      body+=`<div class="j-item"><div class="j-item-top"><div class="acticon">${px('dumbbell',18)}</div><div class="j-item-body"><strong>Workout notes</strong><div class="j-plan-logs">${logs.map(l=>`<div><b>${esc(l.label)}</b>${l.weight?' · '+esc(l.weight):''}${l.note?' — '+esc(l.note):''}</div>`).join('')}</div></div></div></div>`;
+      body+=`<div class="jx-card jx-plan"><div class="jx-card-top"><div class="acticon">${px('dumbbell',18)}</div><div class="jx-card-main"><strong>Workout notes</strong></div></div>${planBlock(logs)}</div>`;
     }
   }
-  return `<div class="journal-date">${esc(journalDayTitle(d))}</div>
-    <div class="journal-meta">${acts.length} entr${acts.length===1?'y':'ies'} · ${totalXP} XP${logs.length?` · ${logs.length} exercise note${logs.length===1?'':'s'}`:''}</div>
-    ${typeof jcTop==='function'?jcTop(d):''}
-    ${body}
-    ${typeof jcTop==='function'?'':`<div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
+  let dtHtml;
+  try{
+    const dt=new Date(d+'T12:00:00');
+    dtHtml=`<div class="jx-dayhead"><div class="jx-bignum">${dt.getDate()}</div><div class="jx-dayname"><b>${esc(dt.toLocaleDateString(undefined,{weekday:'long'}))}</b><span>${esc(dt.toLocaleDateString(undefined,{month:'long',year:'numeric'}))}</span></div><div class="jx-dayxp"><b>${totalXP}</b><small>XP today</small></div></div>`;
+  }catch(e){dtHtml=`<div class="journal-date">${esc(journalDayTitle(d))}</div>`}
+  const meta=`<div class="jx-meta"><span>${acts.length} entr${acts.length===1?'y':'ies'}</span>${logs.length?`<span>${logs.length} exercise note${logs.length===1?'':'s'}</span>`:''}</div>`;
+  return `${dtHtml}${meta}${window.LifeMaxCoach?jcTop(d):''}${body}${window.LifeMaxCoach?'':`<div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
     <textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" onchange="saveDayReflection('${d}',this.value)">${esc(ref)}</textarea></div>`}`;
 }
 function renderStats(){const lvl=characterLevel();document.getElementById('heroName').textContent=state.name||'The Life Architect';document.getElementById('heroLevel').textContent=lvl.level;document.getElementById('heroXP').textContent=totalXP().toLocaleString()+' XP';document.getElementById('heroBar').style.width=lvl.pct+'%';document.getElementById('heroProgress').textContent=`${lvl.into} / ${lvl.needed} XP to next level`;document.getElementById('heroPercent').textContent=Math.round(lvl.pct)+'%';document.getElementById('achievementCount').textContent=Object.keys(state.questDone).length;document.getElementById('totalActivities').textContent=state.activities.length;document.getElementById('todayXP').textContent=todayActivities().reduce((s,a)=>s+a.xp,0)+' XP earned';document.getElementById('totalXPStat').textContent=totalXP().toLocaleString();let strongest=ATTRS.slice().sort((a,b)=>attrXP(b.id)-attrXP(a.id))[0];document.getElementById('strongestStat').textContent=attrXP(strongest.id)>0?strongest.short:'—';document.getElementById('skillsStat').textContent=Object.values(state.skillXP).filter(v=>v>0).length;document.getElementById('questsStat').textContent=Object.keys(state.questDone).length;let tq=todayActivities().length;let qd=state.quests.filter(q=>q.cadence==='daily'&&isQuestDone(q)).length;document.getElementById('dailyMini').innerHTML=`<div class="minirow"><span>Activities logged</span><strong>${tq}</strong></div><div class="minirow"><span>Quests completed</span><strong>${qd}</strong></div><div class="minirow"><span>Active skills</span><strong>${Object.values(state.skillXP).filter(v=>v>0).length}</strong></div>`;document.getElementById('todayLabel').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}
