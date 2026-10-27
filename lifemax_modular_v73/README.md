@@ -361,6 +361,9 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v160 — floating cards
+- The strip under each painted card is gone. The cards float on their own; the Hold seal, slot, XP and Redraw sit in a separate dark pill beneath, which appears once the card is turned over.
+
 ## v159 — painted tarot cards
 - The ChatGPT card paintings are in: Colossus (Physique), Wanderer (Endurance, the mountain path), Oracle (Intelligence), Merchant (Business), Bard (Social), Fool (Adventure, the hiker), Hermit (Wellbeing, with the cat), plus one shared card back. The quest name, arcana, difficulty and description are drawn on the parchment panel in dark ink; the Hold seal, XP and Redraw sit in a strip under the card.
 - Discipline has no painting yet, so it keeps the generated pixel card. To add or swap one: drop `art/cards/src/<attribute>.png` (attribute id, or `back`), run `python3 tools/make_card_art.py`, rebuild. The text panel position per card is in `QART_PANEL` (50-quests-cards.js).

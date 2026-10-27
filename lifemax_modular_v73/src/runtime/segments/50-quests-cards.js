@@ -89,6 +89,5 @@ function qartFace(q,ctx){
  return '<div class="qimgwrap"><img class="qimg" src="'+qartUrl(q.attribute)+'" alt="" draggable="false">'
   +'<div class="qtxt" style="top:'+pn[0]+'%;bottom:'+pn[1]+'%"><div class="qtl"><span class="qpips" title="Difficulty">'+pips+'</span>'+qpxText(arc.name,{s:1,w:150,lines:1})+'<span class="qslot">'+qpxText(ctx.numeral,{s:1,w:40,lines:1})+'</span></div>'
   +'<h4 class="dh-name ink">'+qpxText(q.name,{s:2,w:222,lines:2})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc ink">'+esc(q.desc||'')+'</small></div>'
-  +(ctx.done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')+'</div>'
-  +'<div class="qbar" style="background:'+(QART_EDGE[q.attribute]||'#d9bd80')+'">'+ctx.foot+'<span class="qbar-mid"><span class="qbar-slot">'+qpxText(ctx.slot,{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+ctx.rr+'</div>';
+  +(ctx.done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')+'</div>';
 }

@@ -3522,6 +3522,21 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 .fd-back:has(.qback.art){background:#d9bd80;border:0;box-shadow:0 6px 18px rgba(0,0,0,.55)}
 .qback-tag.pill{bottom:30px;padding:5px 10px;background:rgba(15,8,30,.7);border:1px solid rgba(255,214,140,.5);border-radius:999px;left:50%;right:auto;transform:translateX(-50%);color:#f6e3b0;white-space:nowrap}
 .fd-sback{background-color:#2a1850;background-size:cover;background-position:center;width:100px;height:175px;border-radius:12px}
+
+/* ===== floating cards: the controls live in their own pill under each card ===== */
+.dh-card{height:auto;aspect-ratio:auto;display:flex;flex-direction:column;gap:12px;transform:none!important;transition:none;perspective:none;flex:0 0 var(--cw)}
+.dh-card:not(.has-art){height:auto}
+.dh-flip{position:relative;width:100%;aspect-ratio:948/1659;perspective:1100px;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out}
+.fd-front.art{border-radius:18px;background:transparent}
+.dh-dock{display:flex;align-items:center;gap:8px;min-height:58px;padding:6px 12px;border-radius:999px;background:rgba(18,14,30,.78);border:1px solid rgba(255,214,140,.28);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .35s ease .25s}
+.dh-card.is-up .dh-dock{opacity:1;pointer-events:auto}
+.dock-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#9d92c4}
+.dh-dock .dh-xp{color:#ffd35c}
+.dh-dock .dh-state{color:#a79fc2;flex:0 1 auto;max-width:44%;font:italic 11px Georgia,serif}
+.dh-dock .dh-claim{background:rgba(255,214,140,.12);color:#f4ecd8}
+.dh-dock .fd-track{stroke:rgba(255,214,140,.3)}.dh-dock .fd-prog{stroke:#7be0a0}
+.dh-dock .dh-reroll{color:#a79fc2;flex:0 0 auto;max-width:36%;text-align:right}
+.dh-card.is-done .dh-dock{opacity:.8}
 /* ===== Meals: premium dish icons (v71) ===== */
 #view-meals .fs-top{display:none}
 .fs-icon{position:relative;overflow:hidden;width:100%;height:104px;flex:none;border-radius:14px;display:grid;place-items:center;
@@ -18933,8 +18948,7 @@ function qartFace(q,ctx){
  return '<div class="qimgwrap"><img class="qimg" src="'+qartUrl(q.attribute)+'" alt="" draggable="false">'
   +'<div class="qtxt" style="top:'+pn[0]+'%;bottom:'+pn[1]+'%"><div class="qtl"><span class="qpips" title="Difficulty">'+pips+'</span>'+qpxText(arc.name,{s:1,w:150,lines:1})+'<span class="qslot">'+qpxText(ctx.numeral,{s:1,w:40,lines:1})+'</span></div>'
   +'<h4 class="dh-name ink">'+qpxText(q.name,{s:2,w:222,lines:2})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc ink">'+esc(q.desc||'')+'</small></div>'
-  +(ctx.done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')+'</div>'
-  +'<div class="qbar" style="background:'+(QART_EDGE[q.attribute]||'#d9bd80')+'">'+ctx.foot+'<span class="qbar-mid"><span class="qbar-slot">'+qpxText(ctx.slot,{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+ctx.rr+'</div>';
+  +(ctx.done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')+'</div>';
 }
 /* ===== The Daily Hand: three drawn quest cards a day (Maintenance, Class, Wildcard) =====
    Cards are materialised as ordinary daily quests (id dh_<date>_<slot>_<n>, hand:true) so XP, the 3-a-day cap,
@@ -19120,17 +19134,17 @@ function dhCardHtml(q){
  let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
  const art=qartHas(q.attribute);
  return '<div class="dh-card fd-t'+tier+(art?' has-art':'')+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
-  +'<div class="fd-inner">'
+  +'<div class="dh-flip"><div class="fd-inner">'
   +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}">'+qcardBack(q.slot)+'</div>'
-  +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],slot:DH_SLOT_NAMES[q.slot],done:done,foot:foot,rr:rr})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
+  +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],done:done})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
   +'<div class="dh-top"><span class="fd-num">'+qpxText(DH_NUMERALS[q.slot],{s:2,w:60})+'</span><span class="dh-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:150,lines:1})+'</span></div>'
   +qcardArt(q)
   +'<div class="qarc">'+qpxText(arc.name,{s:2,w:230,lines:1})+'<span class="qtier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span></div>'
   +'<h4 class="dh-name">'+qpxText(q.name,{s:2,w:228,lines:3})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc">'+esc(q.desc||'')+'</small>'
   +'<div class="dh-meta"><span class="qpips" title="Difficulty">'+pips+'</span><span class="dh-attr">'+esc(A.short)+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></div>'
-  +'<div class="dh-actions">'+foot+rr+'</div>'
   +(done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')
-  +'</div>')+'</div></div>';
+  +'</div>')+'</div></div>'
+  +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
 var dhDealing=false,dhPrevDone=null;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}

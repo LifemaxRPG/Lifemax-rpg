@@ -182,17 +182,17 @@ function dhCardHtml(q){
  let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
  const art=qartHas(q.attribute);
  return '<div class="dh-card fd-t'+tier+(art?' has-art':'')+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
-  +'<div class="fd-inner">'
+  +'<div class="dh-flip"><div class="fd-inner">'
   +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}">'+qcardBack(q.slot)+'</div>'
-  +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],slot:DH_SLOT_NAMES[q.slot],done:done,foot:foot,rr:rr})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
+  +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],done:done})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
   +'<div class="dh-top"><span class="fd-num">'+qpxText(DH_NUMERALS[q.slot],{s:2,w:60})+'</span><span class="dh-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:150,lines:1})+'</span></div>'
   +qcardArt(q)
   +'<div class="qarc">'+qpxText(arc.name,{s:2,w:230,lines:1})+'<span class="qtier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span></div>'
   +'<h4 class="dh-name">'+qpxText(q.name,{s:2,w:228,lines:3})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc">'+esc(q.desc||'')+'</small>'
   +'<div class="dh-meta"><span class="qpips" title="Difficulty">'+pips+'</span><span class="dh-attr">'+esc(A.short)+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></div>'
-  +'<div class="dh-actions">'+foot+rr+'</div>'
   +(done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')
-  +'</div>')+'</div></div>';
+  +'</div>')+'</div></div>'
+  +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
 var dhDealing=false,dhPrevDone=null;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}

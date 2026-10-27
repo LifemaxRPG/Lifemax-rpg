@@ -304,3 +304,18 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 .fd-back:has(.qback.art){background:#d9bd80;border:0;box-shadow:0 6px 18px rgba(0,0,0,.55)}
 .qback-tag.pill{bottom:30px;padding:5px 10px;background:rgba(15,8,30,.7);border:1px solid rgba(255,214,140,.5);border-radius:999px;left:50%;right:auto;transform:translateX(-50%);color:#f6e3b0;white-space:nowrap}
 .fd-sback{background-color:#2a1850;background-size:cover;background-position:center;width:100px;height:175px;border-radius:12px}
+
+/* ===== floating cards: the controls live in their own pill under each card ===== */
+.dh-card{height:auto;aspect-ratio:auto;display:flex;flex-direction:column;gap:12px;transform:none!important;transition:none;perspective:none;flex:0 0 var(--cw)}
+.dh-card:not(.has-art){height:auto}
+.dh-flip{position:relative;width:100%;aspect-ratio:948/1659;perspective:1100px;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out}
+.fd-front.art{border-radius:18px;background:transparent}
+.dh-dock{display:flex;align-items:center;gap:8px;min-height:58px;padding:6px 12px;border-radius:999px;background:rgba(18,14,30,.78);border:1px solid rgba(255,214,140,.28);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .35s ease .25s}
+.dh-card.is-up .dh-dock{opacity:1;pointer-events:auto}
+.dock-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#9d92c4}
+.dh-dock .dh-xp{color:#ffd35c}
+.dh-dock .dh-state{color:#a79fc2;flex:0 1 auto;max-width:44%;font:italic 11px Georgia,serif}
+.dh-dock .dh-claim{background:rgba(255,214,140,.12);color:#f4ecd8}
+.dh-dock .fd-track{stroke:rgba(255,214,140,.3)}.dh-dock .fd-prog{stroke:#7be0a0}
+.dh-dock .dh-reroll{color:#a79fc2;flex:0 0 auto;max-width:36%;text-align:right}
+.dh-card.is-done .dh-dock{opacity:.8}
