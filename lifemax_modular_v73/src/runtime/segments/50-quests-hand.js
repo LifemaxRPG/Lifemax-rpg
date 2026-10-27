@@ -180,10 +180,11 @@ function dhCardHtml(q){
   '<button class="dh-claim" type="button" aria-label="Hold to claim '+esc(q.name)+'" onpointerdown="dhHoldStart(\''+q.id+'\',this)" onpointerup="dhHoldEnd()" onpointerleave="dhHoldEnd()" onpointercancel="dhHoldEnd()" oncontextmenu="return false" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();qosToggle(\''+q.id+'\',true)}"><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="fd-track" cx="22" cy="22" r="19"/><circle class="fd-prog" cx="22" cy="22" r="19"/></svg><span class="dh-claim-t">Hold</span></button>';
  const rr=done?'':'<button class="dh-reroll" type="button" onclick="dhReroll('+q.slot+')" aria-label="Redraw '+esc(q.name)+'">Redraw · '+(cost?cost+' Sparks':'free')+'</button>';
  let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
- return '<div class="dh-card fd-t'+tier+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
+ const art=qartHas(q.attribute);
+ return '<div class="dh-card fd-t'+tier+(art?' has-art':'')+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
   +'<div class="fd-inner">'
   +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}">'+qcardBack(q.slot)+'</div>'
-  +'<div class="fd-face fd-front">'+qcardCorners()
+  +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],slot:DH_SLOT_NAMES[q.slot],done:done,foot:foot,rr:rr})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
   +'<div class="dh-top"><span class="fd-num">'+qpxText(DH_NUMERALS[q.slot],{s:2,w:60})+'</span><span class="dh-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:150,lines:1})+'</span></div>'
   +qcardArt(q)
   +'<div class="qarc">'+qpxText(arc.name,{s:2,w:230,lines:1})+'<span class="qtier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span></div>'
@@ -191,7 +192,7 @@ function dhCardHtml(q){
   +'<div class="dh-meta"><span class="qpips" title="Difficulty">'+pips+'</span><span class="dh-attr">'+esc(A.short)+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></div>'
   +'<div class="dh-actions">'+foot+rr+'</div>'
   +(done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')
-  +'</div></div></div>';
+  +'</div>')+'</div></div>';
 }
 var dhDealing=false,dhPrevDone=null;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
@@ -223,7 +224,7 @@ async function dhMaybeDeal(replay){
   el.classList.add('fd-pre');el.scrollLeft=0;
   const st=dhStage();st.hidden=false;st.innerHTML='';
   const N=10,backs=[];
-  for(let i=0;i<N;i++){const b=document.createElement('div');b.className='fd-sback';b.style.zIndex=i;b.style.transform='translate('+(i*0.6)+'px,'+(-i*0.8)+'px)';st.appendChild(b);backs.push(b)}
+  for(let i=0;i<N;i++){const b=document.createElement('div');b.className='fd-sback';if(typeof qartUrl==='function'&&qartUrl('back'))b.style.backgroundImage='url('+qartUrl('back')+')';b.style.zIndex=i;b.style.transform='translate('+(i*0.6)+'px,'+(-i*0.8)+'px)';st.appendChild(b);backs.push(b)}
   await dhWait([st.animate([{opacity:0,transform:'scale(.9)'},{opacity:1,transform:'none'}],{duration:220,fill:'both'})]);
   for(let round=0;round<3;round++){
    const split=backs.map(function(b,i){const left=i%2===0,x=(left?-1:1)*(54+round*6);return b.animate([{transform:b.style.transform},{transform:'translate('+x+'px,'+(-i*0.8)+'px) rotate('+(left?-7:7)+'deg)'}],{duration:240,easing:'ease-out',fill:'forwards'})});

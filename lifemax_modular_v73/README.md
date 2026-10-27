@@ -361,6 +361,11 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v159 — painted tarot cards
+- The ChatGPT card paintings are in: Colossus (Physique), Wanderer (Endurance, the mountain path), Oracle (Intelligence), Merchant (Business), Bard (Social), Fool (Adventure, the hiker), Hermit (Wellbeing, with the cat), plus one shared card back. The quest name, arcana, difficulty and description are drawn on the parchment panel in dark ink; the Hold seal, XP and Redraw sit in a strip under the card.
+- Discipline has no painting yet, so it keeps the generated pixel card. To add or swap one: drop `art/cards/src/<attribute>.png` (attribute id, or `back`), run `python3 tools/make_card_art.py`, rebuild. The text panel position per card is in `QART_PANEL` (50-quests-cards.js).
+- Images are shrunk to 640 px WebP and embedded (about 1.9 MB added to the app); they become blob URLs once, so redraws are cheap.
+
 ## v158 — spooky fantasy tarot card faces
 - New card faces (`50-quests-cards.js`): a pixel font (5x7, drawn from a glyph table, no font file), pixel sprites (skull, bats, eye, crescent moon, candles, thorns) and a seeded night scene in an arched window. Each attribute is a named arcana with its own colour (Colossus, Wanderer, Oracle, Merchant, Bard, Monk, Fool, Hermit). Rarity: Minor (1 star), Rare (2, adds bats and an eye), Major (3, adds a skull and gold frame).
 - Quest names, numerals and XP are pixel text (real text stays in aria-labels); descriptions stay in a readable serif italic. Card backs show a glowing eye. Fulfilled cards get a pixel stamp.

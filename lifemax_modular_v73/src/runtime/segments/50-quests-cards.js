@@ -75,4 +75,20 @@ function qcardArt(q){
  return '<div class="qart">'+qcardScene(q)+'<span class="qglow"></span><span class="qcandle l">'+qpxSprite('candle',3,{F:'#ff7a2a',Y:'#ffd35c',C:'#efe6d2',B:'#6b4a2c'},'qfl')+'</span><span class="qcandle r">'+qpxSprite('candle',3,{F:'#ff7a2a',Y:'#ffd35c',C:'#efe6d2',B:'#6b4a2c'},'qfl')+'</span><span class="qicon">'+px(A.icon,56)+'</span></div>';
 }
 function qcardCorners(){const s=qpxSprite('brace',2);return '<span class="qcor tl">'+s+'</span><span class="qcor tr">'+s+'</span><span class="qcor bl">'+s+'</span><span class="qcor br">'+s+'</span>'}
-function qcardBack(slot){return '<div class="qback">'+qcardCorners()+'<span class="qback-num">'+qpxText(['I','II','III'][slot]||'I',{s:5,w:80})+'</span><span class="qback-eye">'+qpxSprite('eye',9,{X:'#cdb8ff',I:'#8a5cff',o:'#120d26'})+'</span><span class="qback-tag">'+qpxText('TAP TO TURN OVER',{s:1,w:200,lines:1})+'</span></div>'}
+function qcardBack(slot){
+ const u=typeof qartUrl==='function'&&qartUrl('back');
+ if(u)return '<div class="qback art"><img class="qimg" src="'+u+'" alt="" draggable="false"><span class="qback-tag pill">'+qpxText('TAP TO TURN OVER',{s:1,w:200,lines:1})+'</span></div>';
+ return '<div class="qback">'+qcardCorners()+'<span class="qback-num">'+qpxText(['I','II','III'][slot]||'I',{s:5,w:80})+'</span><span class="qback-eye">'+qpxSprite('eye',9,{X:'#cdb8ff',I:'#8a5cff',o:'#120d26'})+'</span><span class="qback-tag">'+qpxText('TAP TO TURN OVER',{s:1,w:200,lines:1})+'</span></div>'}
+
+/* ===== painted card faces: the artwork carries the frame, the parchment panel carries the words ===== */
+var QART_PANEL={physique:[69.6,10.4],endurance:[61.6,8.4],intelligence:[69.2,10.4],business:[70.4,10.4],social:[70.2,10.4],adventure:[69.2,10.4],wellbeing:[68.9,10.4]};
+function qartHas(attr){return !!(QART_PANEL[attr]&&typeof qartUrl==='function'&&qartUrl(attr))}
+function qartFace(q,ctx){
+ const A=ATTRS.find(function(a){return a.id===q.attribute})||ATTRS[0],arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,pn=QART_PANEL[q.attribute],tier=q.tier||1;
+ let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
+ return '<div class="qimgwrap"><img class="qimg" src="'+qartUrl(q.attribute)+'" alt="" draggable="false">'
+  +'<div class="qtxt" style="top:'+pn[0]+'%;bottom:'+pn[1]+'%"><div class="qtl"><span class="qpips" title="Difficulty">'+pips+'</span>'+qpxText(arc.name,{s:1,w:150,lines:1})+'<span class="qslot">'+qpxText(ctx.numeral,{s:1,w:40,lines:1})+'</span></div>'
+  +'<h4 class="dh-name ink">'+qpxText(q.name,{s:2,w:222,lines:2})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc ink">'+esc(q.desc||'')+'</small></div>'
+  +(ctx.done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')+'</div>'
+  +'<div class="qbar" style="background:'+(QART_EDGE[q.attribute]||'#d9bd80')+'">'+ctx.foot+'<span class="qbar-mid"><span class="qbar-slot">'+qpxText(ctx.slot,{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+ctx.rr+'</div>';
+}
