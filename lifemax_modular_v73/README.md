@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v133 — updates without installing an APK
+
+Web-only changes now reach the phone over the air. CI publishes `app.html` and a richer `version.json` (`nativeApi`, and a `web` block with a SHA-256) next to the APK. The launch check compares: if the release needs newer native abilities (`NativeApi.VALUE` in `android-wrapper/native/NativeApi.java`) it offers the APK as before; otherwise it quietly downloads the new web build, verifies it, and applies it on the next launch (or right away from the "Update ready · Restart" pill). A build that does not start properly is dropped after two tries and the bundled copy takes over. Native: `LiveWeb.java`, `LiveWebPlugin.java`, `NativeApi.java`; web: `35-android-upkeep.js`, `51-boot-ok.js`. See `ANDROID.md`. Tests: `tests/ota.test.js`.
+
 ## v132 — cute cat faces
 
 The HD faces are big, glossy and soft: a rounded almond eye with a thin one-pixel outline and a slightly heavier upper lid (like eyeliner), a green iris (darker at the top) with a big oval pupil, a large highlight up on the outer side and a small one low on the inner side; a small soft pink nose with no dark edge; a thin short mouth. Expressions: neutral, happy, sleepy, surprised, angry, sad, blink (`petHdEye`, `petHdFace` in `50-pet-hd.js`). An earlier bolder pass was too heavy and was pulled back.

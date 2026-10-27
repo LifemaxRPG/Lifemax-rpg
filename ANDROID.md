@@ -23,3 +23,13 @@ To ship a new version: put the new single-file build in `lifemax_modular_v73/dis
 ## Layout
 
 `android-wrapper/` is a Capacitor shell. The Android project is generated fresh in CI; `native/` (Java plugins and MainActivity), `res/` (pixel-art icon and splash) and the `patch_*.py` scripts are applied on top.
+
+
+## Over-the-air web updates (v133)
+Most changes touch only the web app (screens, logic, voice, journal, cat art). Those no longer need an APK install.
+- **Each build publishes three files** on the `latest` release: `LifeMax-RPG.apk`, `app.html` (the web app on its own) and `version.json`, which carries `nativeApi` and a `web` block (`build`, `url`, `sha256`, `size`, `minNativeApi`).
+- **The phone decides.** After the launch check (and from Settings > App updates): if the release's `nativeApi` is higher than the installed APK's, an APK is needed and the usual pop-up appears. Otherwise, if its web build is newer than the one running, the app downloads `app.html` quietly, checks the SHA-256, stores it in the app's own files (`files/live/<build>/index.html`), and shows a small "Update ready · Restart" pill. It also starts on the next launch by itself.
+- **Safety.** The copy inside the APK is always the fallback. A downloaded build is on trial until it reports healthy (the last segment, `51-boot-ok.js`, sets `window.__lmaBooted` and calls `LiveWeb.healthy()` six seconds after start); after two starts without that it is deleted and never fetched again. A newer APK than the stored build removes the stored build. Downloads are https only and must match their fingerprint.
+- **The one rule.** `android-wrapper/native/NativeApi.java` holds `VALUE`. **Bump it by one in any change where the web app starts relying on new native code** (a new plugin or plugin method, a new permission, a changed plugin). Web-only changes never bump it. If you forget, a phone with the old APK gets a web build that calls a plugin it does not have.
+- **Keep `51-boot-ok.js` the last segment** (new segments go before it).
+- The first APK containing this (build 55 or later) must be installed the normal way; after that, web-only changes arrive on their own.

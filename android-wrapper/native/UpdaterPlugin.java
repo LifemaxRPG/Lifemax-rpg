@@ -66,6 +66,16 @@ public class UpdaterPlugin extends Plugin {
                 ret.put("sha", j.optString("sha", ""));
                 ret.put("apk", j.optString("apk", ""));
                 ret.put("stable", j.optBoolean("stable", false));
+                ret.put("nativeApi", NativeApi.VALUE);                         /* this APK's abilities */
+                ret.put("latestNativeApi", j.optInt("nativeApi", 0));          /* what the newest web build was made for (0: old file, no web update) */
+                JSONObject w = j.optJSONObject("web");
+                if (w != null) {
+                    ret.put("webBuild", w.optLong("build", 0));
+                    ret.put("webUrl", w.optString("url", ""));
+                    ret.put("webSha", w.optString("sha256", ""));
+                    ret.put("webSize", w.optLong("size", 0));
+                    ret.put("webMinApi", w.optInt("minNativeApi", 0));
+                }
                 call.resolve(ret);
             } catch (Throwable e) {
                 call.reject("Update check failed: " + e);

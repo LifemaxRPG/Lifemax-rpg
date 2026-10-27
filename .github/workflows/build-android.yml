@@ -82,11 +82,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk LifeMax-RPG.apk
-          cat > version.json <<JSON
-          {"build": ${{ github.run_number }}, "sha": "$GITHUB_SHA", "stable": ${{ steps.key.outputs.stable == '1' }}, "apk": "https://github.com/$GITHUB_REPOSITORY/releases/download/latest/LifeMax-RPG.apk"}
-          JSON
-          sed -i 's/^ *//' version.json
+          # the web app on its own, so a phone can take web-only changes without installing an APK
+          NATIVE_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
+          cp android-wrapper/www/index.html app.html
+          WEB_SHA=$(sha256sum app.html | cut -d' ' -f1)
+          WEB_SIZE=$(stat -c %s app.html)
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/latest"
+          printf '{"build": %s, "sha": "%s", "stable": %s, "nativeApi": %s, "apk": "%s/LifeMax-RPG.apk", "web": {"build": %s, "url": "%s/app.html", "sha256": "%s", "size": %s, "minNativeApi": %s}}\n' \
+            "${{ github.run_number }}" "$GITHUB_SHA" "${{ steps.key.outputs.stable == '1' }}" "$NATIVE_API" "$BASE" \
+            "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
+          cat version.json
           gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
-          gh release create latest LifeMax-RPG.apk version.json --repo "$GITHUB_REPOSITORY" \
+          gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
             --title "LifeMax (latest build)" \
             --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"

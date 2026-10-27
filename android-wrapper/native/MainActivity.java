@@ -39,7 +39,10 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PageThumbPlugin.class);
         registerPlugin(VoiceEnginePlugin.class);
         registerPlugin(BiometricLockPlugin.class);
+        registerPlugin(LiveWebPlugin.class);
+        LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
+        LiveWeb.apply(getBridge(), this);
         if (getIntent() != null && getIntent().getStringExtra(EXTRA_OPEN) != null) launchTarget = getIntent().getStringExtra(EXTRA_OPEN);
 
         // Draw edge to edge, then keep the page clear of the status bar, camera cut-out,
