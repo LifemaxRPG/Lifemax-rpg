@@ -1,0 +1,42 @@
+/* Voice fallback log tests. Run:  NODE_PATH=$(npm root -g) node tests/voicefallback.test.js [built html] */
+const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]).pop()));
+let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 500) : '')) } };
+(async () => {
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, acceptDownloads: true })).newPage(); const errs = [];
+  p.on('pageerror', e => errs.push(String(e)));
+  await p.goto('file://' + file); await p.waitForTimeout(800);
+  await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } VoiceFallbackLogger.clearLogs(); LifeMaxVoice.reset() });
+  const say = (t, o) => p.evaluate(([t, o]) => LifeMaxVoice.simulateUtterance(t, o), [t, o || {}]);
+  const logs = () => p.evaluate(() => VoiceFallbackLogger.getLogs());
+  await p.evaluate(() => navigate('quests'));
+  await say('blorp the frobnicator?'); let L = await logs();
+  ok('an unrecognised sentence is logged with screen, session and time', L.length === 1 && L[0].transcript === 'blorp the frobnicator?' && L[0].screen === 'quests' && L[0].sessionId.length > 0 && L[0].timestamp > 0 && /^\d{4}-\d\d-\d\dT/.test(L[0].dateStr), L);
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('How many steps do I have today?'); await say('What are my quests today?');
+  ok('understood sentences are not logged', (await logs()).length === 1);
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('open the library', { confidence: 0.4 }); L = await logs();
+  ok('a low-confidence sentence is logged even though it was understood', L.length === 2 && L[1].transcript === 'open the library', L);
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('open the library', { confidence: 0.9 });
+  ok('a confident one is not', (await logs()).length === 2);
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('flibbertigibbet'); L = await logs();
+  ok('a sentence with no intent at all is logged', L.length === 3 && L[2].transcript === 'flibbertigibbet', L);
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('Schedule a workout tomorrow at 9 AM'); await say('9:30 please');
+  ok('answers to an open question are not logged', (await logs()).length === 3);
+  await p.evaluate(() => { const o = []; for (let i = 0; i < 230; i++) VoiceFallbackLogger.logFallback('x' + i, 'overview', 's1'); });
+  L = await logs(); ok('capped at the last 200', L.length === 200 && L[0].transcript === 'x30' && L[199].transcript === 'x229', [L.length, L[0] && L[0].transcript]);
+  await p.evaluate(() => { VoiceFallbackLogger.clearLogs(); VoiceFallbackLogger.logFallback('open the thing', 'quests', 's1'); VoiceFallbackLogger.logFallback('how is blah', 'pet', 's1') });
+  const txt = await p.evaluate(() => VoiceFallbackLogger.exportLogsAsText()); const lines = txt.trim().split('\n'); const ts = e => 1;
+  ok('export: header, count and rule', lines[0] === '=== LIFEMAX VOICE FALLBACK REPORT ===' && /^Exported: .+/.test(lines[1]) && lines[2] === 'Total Unresolved Queries: 2' && lines[3] === '----------------------------------------', lines.slice(0, 4));
+  ok('export: one numbered line per entry', /^1\. "open the thing" \| Screen: quests \| Time: .+/.test(lines[4]) && /^2\. "how is blah" \| Screen: pet \| Time: .+/.test(lines[5]) && lines.length === 6, lines.slice(4));
+  await p.evaluate(() => navigate('settings')); await p.waitForTimeout(600);
+  const ui = await p.evaluate(() => { const el = document.getElementById('lmvSettingsBody'); return el ? [...el.querySelectorAll('strong')].map(s => s.textContent) : null });
+  ok('Settings has the Export Voice Fallback Log row', ui && ui.includes('Export Voice Fallback Log'), ui);
+  const dl = p.waitForEvent('download', { timeout: 4000 }).catch(() => null);
+  await p.evaluate(() => { const r = [...document.querySelectorAll('#lmvSettingsBody .settingsline')].find(x => /Export Voice Fallback Log/.test(x.textContent)); r.querySelector('button').click() });
+  const d = await dl; ok('the button downloads lifemax-voice-fallbacks-<date>.txt', d && /^lifemax-voice-fallbacks-\d{4}-\d\d-\d\d\.txt$/.test(d.suggestedFilename()), d && d.suggestedFilename());
+  if (d) { const body = fs.readFileSync(await d.path(), 'utf8'); ok('the downloaded file is the report', body.startsWith('=== LIFEMAX VOICE FALLBACK REPORT ===') && /Total Unresolved Queries: 2/.test(body)) }
+  await p.evaluate(() => { VoiceFallbackLogger.clearLogs(); lmvSettingsRender && 0 });
+  ok('clear empties the log', (await logs()).length === 0);
+  ok('no page errors', errs.length === 0, errs);
+  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+})();

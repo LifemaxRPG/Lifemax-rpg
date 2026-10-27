@@ -2157,6 +2157,15 @@
    "symbols": []
   },
   {
+   "file": "src/runtime/segments/50-voice-fallback.js",
+   "bytes": 4170,
+   "statement_count": 0,
+   "tags": [
+    "voice"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/51-boot-ok.js",
    "bytes": 523,
    "statement_count": 2,
