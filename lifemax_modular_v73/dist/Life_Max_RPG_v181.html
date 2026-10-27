@@ -17423,20 +17423,20 @@ function petHdEye(px,CW,CH,cy,cx,kind,side,cols,sc){
   const rx=4.4*sc;for(let dx=-Math.floor(rx);dx<=Math.floor(rx);dx++){const t=dx/rx,yy=kind==='happy'?-(1-t*t)*3.0*sc:(1-t*t)*1.6*sc,y0=cy+yy+(kind==='happy'?2:0);d(y0,cx+dx,150);d(y0+1,cx+dx,150)}
   return;
  }
- const P0={open:[5.4,4.9,2.1,.14],wide:[5.4,5.6,2.4,.08],sleepy:[5.4,4.9,2.1,.14],angry:[5.4,4.9,2.1,.14],sad:[5.4,4.9,2.1,.14]}[kind]||[5.4,4.9,2.1,.14],P=[P0[0]*sc,P0[1]*sc,P0[2],P0[3]];
+ const P0={open:[6.0,4.5,1.5,.20],wide:[5.8,5.4,1.7,.12],sleepy:[6.0,4.2,1.5,.20],angry:[6.0,4.5,1.5,.20],sad:[6.0,4.5,1.5,.20]}[kind]||[6.0,4.5,1.5,.20],P=[P0[0]*sc,P0[1]*sc,P0[2],P0[3]];
  const clip=kind==='angry'?function(xx,yy){return yy>=-P[1]*.18+(xx*-side)*.5-.2}:kind==='sad'?function(xx,yy){return yy>=-P[1]*.18-(xx*-side)*.5-.2}:kind==='sleepy'?function(xx,yy){return yy>=-P[1]*.05}:null;
  const M=petHdEyeMask(P[0],P[1],P[2],side,P[3],clip),inner=petHdErode(M,1);
  let top=M.H,bot=-1;for(let y=0;y<M.H;y++)for(let x=0;x<M.W;x++)if(inner[y][x]){top=Math.min(top,y);bot=Math.max(bot,y)}
  /* the upper lid is one pixel heavier than the rest of the outline, like eyeliner */
  const lid=M.m.map(function(r){return r.map(function(){return false})});
  for(let x=0;x<M.W;x++){let y=0;while(y<M.H&&!inner[y][x])y++;if(y<M.H&&y<top+3)lid[y][x]=true}
- const mid=(top+bot)/2,ph=Math.max(1.5,(bot-top)*.40);
+ const mid=(top+bot)/2,ph=Math.max(1.8,(bot-top)*.56);
  for(let y=0;y<M.H;y++)for(let x=0;x<M.W;x++){
   if(!M.m[y][x])continue;const py=cy+y-M.cy,pxx=cx+x-M.cx;
   if(!inner[y][x]||lid[y][x]){d(py,pxx,150);continue}
   const xx=x-M.cx,v=(y-top)/Math.max(1,bot-top);
   let c=v<.5?160:170;
-  const pxo=xx-(side<0?-.4:.4);if(pxo*pxo/(1.7*1.7)+Math.pow((y-mid-.4)/ph,2)<=1)c=150;      /* a big, soft, oval pupil */
+  const pxo=xx-(side<0?-.4:.4);if(pxo*pxo/(1.1*1.1)+Math.pow((y-mid-.4)/ph,2)<=1)c=150;      /* a slit pupil */
   d(py,pxx,c);
  }
  /* two highlights: a big one up and towards the outer corner, a small one low on the other side */
@@ -17447,7 +17447,9 @@ function petHdFace(px,CW,CH,a,expr,cols,wk){
  const sc=a.sc||1,X=function(v){return Math.round(v*sc)};
  const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed']}[expr]||['open','open'];
  const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
- petHdEye(px,CW,CH,a.l[0],a.l[1],E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0],a.r[1],E[1],1,cols,sc);
+ /* cat eyes sit high on the face and fairly close together: lift them off the muzzle and draw them as almonds */
+ const ey=-4.4*sc,ex=1.0*sc;
+ petHdEye(px,CW,CH,a.l[0]+ey,a.l[1]+ex,E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0]+ey,a.r[1]-ex,E[1],1,cols,sc);
  const ny=a.nose[0],nx=a.nose[1],my=ny+3.2;
  /* a small, soft pink nose (no dark edge) */
  [-1,0,1].forEach(function(x){d(ny-.5,nx+x,x<0?140:130)});d(ny+.5,nx,120);
