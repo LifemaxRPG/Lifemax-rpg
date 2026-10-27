@@ -841,7 +841,9 @@ html.reduce-motion .sheet{opacity:0}html.reduce-motion .sheet-ov.show .sheet{opa
 html.reduce-motion #devChat,html.reduce-motion #devChat.open{transform:none}
 html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.reduce-motion .navbtn.active .ico,html.reduce-motion #pacOverlay{animation:none!important}
 
-/* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
-html.lma-swiping .view.active>*{animation:none!important}
-/* the page stays on its own layer all the time. Creating and dropping that layer at the start and end of every swipe made the fixed bottom bar blink out on some phones (it did not in the build where the layer was permanent). backface-visibility does this without turning the page into a containing block for fixed pop-ups. */
-main.content{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+/* after a swipe the new page's cards slide in from the side you swiped toward (same kind of animation as the normal card fade-in) */
+@keyframes viewSlideNext{from{opacity:0;transform:translate3d(22px,0,0)}to{opacity:1;transform:none}}
+@keyframes viewSlidePrev{from{opacity:0;transform:translate3d(-22px,0,0)}to{opacity:1;transform:none}}
+html[data-swipe-dir="next"] .view.active>*{animation:viewSlideNext .24s var(--ease-out) backwards}
+html[data-swipe-dir="prev"] .view.active>*{animation:viewSlidePrev .24s var(--ease-out) backwards}
+html.reduce-motion .view.active>*{animation:none!important}

@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v151 — a new swipe animation that never moves the page
+
+Moving the whole page was what made the bottom bar blink on your phone (with the animation off it was fine), and two layer fixes did not cure it. So the page container is no longer touched at all while you swipe.
+- **While you pull:** a small tag at the edge you are pulling toward names the next tab ("Character ›" on the right, "‹ Quests" on the left). It fades and slides in as you pull and turns blue when you have pulled far enough (a fifth of the screen, or a quick flick).
+- **When you let go:** the new page appears at once, with no waiting, and its cards slide in a short way from the side you swiped toward (22 px, 0.24 s). That is the same kind of per-card animation the app has always used for a page change, which never blinked the bar. Nothing is animated or transformed on the page container; the tests check that on every frame of a swipe.
+- Before the first tab and after the last there is no tag and nothing happens. Vertical scrolling, edges, sliders, the cat room and Life Director still never start a swipe. The Settings switch is now called **Swipe animation** (off: plain, instant tab switches; reduced motion does the same).
+- `tests/swipe.test.js` is 30 checks. Web-only. Removed: the page-following drag, the page layer and the fade.
+
 ## v150 — the bar blink: the page keeps its own layer
 
 The test with "Page slides with your finger" switched off showed the blink comes from the slide. Looking back through the builds: in v146 (page on a permanent layer) nobody saw the bar blink; in v147 I removed that permanent layer (I thought dropping it caused the post-swipe jump, but that was the cards re-fading, fixed separately), and the blink started. So the page is back on a permanent layer (`backface-visibility:hidden`, which does not make fixed pop-ups inside pages misbehave), plus `will-change` while a finger is down. The switch in Settings stays as a fallback. Web-only; `tests/swipe.test.js` is 28 checks.

@@ -78,7 +78,7 @@ window.lmaBack=lmaBack;
  const _nav=navigate;
  navigate=function(v){
   /* a swipe turns the cards' fade-in off; any other way of changing page turns it back on (before the page changes, so nothing replays) */
-  if(!lmaSwipeNav)document.documentElement.classList.remove('lma-swiping');
+  if(!lmaSwipeNav)delete document.documentElement.dataset.swipeDir;
   const prev=lmaView(),r=_nav.apply(this,arguments),now=lmaView();
   lmaSyncActive();
   if(!lmaNavSkip&&prev&&now&&prev!==now){
@@ -111,28 +111,25 @@ function lmaSwipeHint(btn,dir){
  h.textContent=dir<0?'›  '+name:name+'  ‹';h.className='show '+(dir<0?'to-next':'to-prev');
  clearTimeout(lmaHintTimer);lmaHintTimer=setTimeout(()=>{h.className=''},700);
 }
-/* The page follows your finger while you swipe, and on release it either finishes the slide or springs back.
-   (It used to wait until you let go, then start a screenshot-style transition, which felt like it lagged behind.) */
+/* Swiping between tabs, version 3. The page itself is never moved while you swipe (sliding the whole page made the bottom bar blink out
+   on some phones). Instead a small tag at the edge shows where you are heading and fills as you pull; let go and the new page appears
+   at once with its cards sliding in from the side you swiped toward: the same kind of card animation the app has always used. */
 const lmaMotionOff=()=>document.documentElement.classList.contains('reduce-motion')||(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)||lmaLoad().swipeAnim===false;
-function lmaSetSwipeAnim(on){lmaLoad().swipeAnim=!!on;lmaSave();toast(on?'Page slides with your finger: on':'Page slides with your finger: off. Swipes switch tabs instantly.')}
-function lmaContent(){return document.querySelector('main.content')}
-let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
-function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;c.style.transform='translate3d('+lmaDragDx+'px,0,0)'}
-function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
-function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity='';c.style.willChange=''}}
-function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
-/* ease from where the page is now to a place, quickly; resolves when it is there */
-function lmaSlide(from,to,fromOp,toOp,ms,easing){
- const c=lmaContent();return new Promise(res=>{
-  if(!c||!c.animate){res();return}
-  lmaStopAnim();
-  const an=c.animate([{transform:'translate3d('+from+'px,0,0)'},{transform:'translate3d('+to+'px,0,0)'}],{duration:ms,easing:easing||'cubic-bezier(.2,.8,.2,1)',fill:'both'});
-  lmaAnim=an;const fin=()=>{res()};an.onfinish=fin;an.oncancel=fin;
- });
+function lmaSetSwipeAnim(on){lmaLoad().swipeAnim=!!on;lmaSave();toast(on?'Swipe animation: on':'Swipe animation: off. Swipes switch tabs instantly.')}
+let lmaIndRaf=0,lmaIndState=null,lmaDragDx=0;
+function lmaInd(){let e=document.getElementById('lmaSwipeInd');if(!e){e=document.createElement('div');e.id='lmaSwipeInd';e.setAttribute('aria-hidden','true');document.body.appendChild(e)}return e}
+function lmaIndPaint(){
+ lmaIndRaf=0;const s=lmaIndState,e=lmaInd();
+ if(!s){e.className='';e.style.opacity='';e.style.transform='';return}
+ const p=Math.min(1,Math.abs(lmaDragDx)/(window.innerWidth*.22)),sg=s.dir>0?1:-1;
+ if(e.dataset.name!==s.name||e.dataset.dir!==String(s.dir)){e.dataset.name=s.name;e.dataset.dir=String(s.dir);e.textContent=s.dir>0?s.name+'  ›':'‹  '+s.name}
+ e.className='show '+(s.dir>0?'to-next':'to-prev')+(p>=1?' ready':'');
+ e.style.opacity=String(.3+.7*p);e.style.transform='translateY(-50%) translateX('+(sg*(1-p)*28)+'px) scale('+(.92+.08*p)+')';
 }
+function lmaIndSet(st,dx){lmaIndState=st;lmaDragDx=dx;if(!lmaIndRaf)lmaIndRaf=requestAnimationFrame(lmaIndPaint)}
+function lmaIndHide(){lmaIndState=null;lmaDragDx=0;if(lmaIndRaf){cancelAnimationFrame(lmaIndRaf);lmaIndRaf=0}const e=document.getElementById('lmaSwipeInd');if(e){e.className='';e.style.opacity='';e.style.transform='';delete e.dataset.name}}
 document.addEventListener('touchstart',e=>{
- lmaSw=null;
- if(lmaDragDx||document.documentElement.classList.contains('lma-swiping')){lmaStopAnim();lmaDragClear();lmaDragDx=0}
+ lmaSw=null;lmaIndHide();
  if(!lmaSwipeEnabled()||e.touches.length!==1||lmaTopOverlay()||document.body.classList.contains('noscroll'))return;
  if(window.visualViewport&&window.visualViewport.scale>1.02)return;
  const t=e.touches[0],w=window.innerWidth;
@@ -143,7 +140,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 document.addEventListener('touchmove',e=>{
  if(!lmaSw)return;
- if(e.touches.length!==1){const was=lmaSw.drag;lmaSw=null;if(was){lmaDragSet(0);lmaSlide(lmaDragDx,0,1,1,120).then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0})}return}
+ if(e.touches.length!==1){lmaSw=null;lmaIndHide();return}
  const t=e.touches[0],dx=t.clientX-lmaSw.x,dy=t.clientY-lmaSw.y;
  if(!lmaSw.drag&&Math.abs(dy)>LMA_SWIPE.slop&&Math.abs(dy)*LMA_SWIPE.ratio>Math.abs(dx))lmaSw.dead=true; /* it is a scroll, not a swipe */
  if(lmaSw.dead)return;
@@ -152,50 +149,35 @@ document.addEventListener('touchmove',e=>{
   if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.4&&!lmaMotionOff()){
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView()));
    if(cur<0)return;
-   lmaSw.drag=true;lmaSw.cur=cur;lmaSw.n=tabs.length;lmaStopAnim();
-   const cc=lmaContent();if(cc)cc.style.willChange='transform';
-   document.documentElement.classList.add('lma-swiping');
+   lmaSw.drag=true;lmaSw.cur=cur;lmaSw.tabs=tabs;
   }else return;
  }
- /* a rubber band where there is no further tab */
- const dir=dx<0?1:-1,nx=lmaSw.cur+dir,edge=nx<0||nx>=lmaSw.n;
- lmaDragSet(edge?dx*.25:dx*.9);
+ const dir=dx<0?1:-1,nx=lmaSw.cur+dir;
+ if(nx<0||nx>=lmaSw.tabs.length)lmaIndSet(null,dx);                       /* nowhere further to go: no tag */
+ else lmaIndSet({dir:dir,name:(lmaSw.tabs[nx].textContent||'').trim()},dx);
 },{passive:true});
-function lmaSwipeGo(v){lmaSwipeNav=true;try{lmaNavTo(v,{fast:true})}finally{lmaSwipeNav=false}lmaSyncActive()}
+/* go to a tab because of a swipe: its cards slide in from the side you swiped toward */
+function lmaSwipeGo(v,dir){
+ lmaSwipeNav=true;
+ try{if(dir&&!lmaMotionOff())document.documentElement.dataset.swipeDir=dir>0?'next':'prev';else delete document.documentElement.dataset.swipeDir;lmaNavTo(v,{fast:true})}finally{lmaSwipeNav=false}
+ lmaSyncActive();
+}
 function lmaSwipeEnd(e){
- const s=lmaSw;lmaSw=null;
+ const s=lmaSw;lmaSw=null;lmaIndHide();
  if(!s||s.dead)return;
- const t=e.changedTouches&&e.changedTouches[0];if(!t){if(s.drag){lmaDragClear();lmaDragDx=0}return}
- const dx=t.clientX-s.x,dy=t.clientY-s.y,dt=Date.now()-s.t,w=window.innerWidth;
+ const t=e.changedTouches&&e.changedTouches[0];if(!t)return;
+ const dx=t.clientX-s.x,dy=t.clientY-s.y,dt=Date.now()-s.t,w=window.innerWidth,dir=dx<0?1:-1;
  /* speed over the last moments of the swipe (px per ms) */
  let v=0;const p=s.pts;if(p.length>1){const a=p[0],b=p[p.length-1];if(b[0]>a[0])v=(b[1]-a[1])/(b[0]-a[0])}
- const dir=dx<0?1:-1;
- if(!s.drag){                                                   /* a quick flick that never became a drag (reduced motion, or very fast) */
-  if(lmaMotionOff()||dt<=LMA_SWIPE.maxMs&&Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio){
-   if(!(Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio))return;
-   if(lmaTopOverlay())return;
-   const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+dir;
-   if(cur<0||next<0||next>=tabs.length)return;
-   lmaSwipeGo(tabs[next].dataset.view);lmaSwipeHint(tabs[next],dir>0?-1:1);
-  }
-  return;
- }
  const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+dir;
- const can=!lmaTopOverlay()&&cur>=0&&next>=0&&next<tabs.length&&Math.abs(dx)>=Math.abs(dy)*1.2;
- const far=Math.abs(dx)>=w*.22,flick=Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx);
- const from=lmaDragDx,c=lmaContent();
- if(can&&(far||flick)){
-  const out=(dir>0?-1:1)*w*.55,left=Math.abs(out-from),ms=Math.max(70,Math.min(140,left/Math.max(.9,Math.abs(v)*1.2||.9)));
-  lmaSlide(from,out,Math.max(.5,1-Math.min(1,Math.abs(from)/w)*.35),0,ms,'cubic-bezier(.4,0,1,1)').then(()=>{
-   lmaSwipeGo(tabs[next].dataset.view);
-   lmaSwipeHint(tabs[next],dir>0?-1:1);
-   /* the new page arrives from the side you swiped toward */
-   requestAnimationFrame(()=>lmaSlide(-out*.55,0,0,1,190,'cubic-bezier(.2,.8,.2,1)').then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0}));
-  });
- }else{
-  lmaSlide(from,0,Math.max(.65,1-Math.min(1,Math.abs(from)/w)*.35),1,170,'cubic-bezier(.2,.8,.2,1)').then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0});
- }
+ if(cur<0||next<0||next>=tabs.length||lmaTopOverlay())return;
+ let go=false;
+ if(s.drag)go=Math.abs(dx)>=Math.abs(dy)*1.2&&(Math.abs(dx)>=w*.22||(Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx)));
+ else go=dt<=LMA_SWIPE.maxMs&&Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio;   /* a quick swipe that never became a drag (animation off) */
+ if(!go)return;
+ lmaSwipeGo(tabs[next].dataset.view,dir);
+ lmaSwipeHint(tabs[next],dir>0?-1:1);
 }
 document.addEventListener('touchend',lmaSwipeEnd,{passive:true});
-document.addEventListener('touchcancel',()=>{const s=lmaSw;lmaSw=null;if(s&&s.drag){lmaSlide(lmaDragDx,0,1,1,140).then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0})}},{passive:true});
+document.addEventListener('touchcancel',()=>{lmaSw=null;lmaIndHide()},{passive:true});
 setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false},500);
