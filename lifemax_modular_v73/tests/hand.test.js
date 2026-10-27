@@ -59,7 +59,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('the shuffle stage shows a stack of card backs', await ev(() => document.querySelectorAll('#dailyStage .fd-sback').length >= 8));
   await p.waitForTimeout(4600);
   ok('after the deal the stage is gone and the three cards are visible', await ev(() => document.getElementById('dailyStage').hidden && !document.getElementById('dailyHand').classList.contains('fd-pre') && state.dailyDraw.dealt && [...document.querySelectorAll('#dailyHand .dh-card')].every(c => getComputedStyle(c).opacity === '1')));
-  ok('dealt cards start face-down and turn over on tap', await ev(() => { const c = document.querySelector('#dailyHand .dh-card:not(.is-done)'); const was = c.classList.contains('is-up'); dhReveal(+c.dataset.slot); return !was && c.classList.contains('is-up') && state.dailyDraw.up[+c.dataset.slot] }));
+  await ev(() => document.querySelector('#dailyHand').scrollIntoView({ block: 'center' })); await p.waitForTimeout(300); const wasUp = await ev(() => document.querySelector('#dailyHand .dh-card:not(.is-done)').classList.contains('is-up')); await p.click('#dailyHand .dh-card:not(.is-done):not(.is-up) .fd-back', { position: { x: 100, y: 200 } }); await p.waitForTimeout(400);
+  ok('dealt cards start face-down and a real tap turns one over', !wasUp && await ev(() => !!document.querySelector('#dailyHand .dh-card.is-up') && state.dailyDraw.up.some(Boolean)));
   ok('a second render does not replay the deal', await ev(() => { renderQuests(); return !document.getElementById('dailyHand').classList.contains('fd-pre') }));
   ok('no page errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);

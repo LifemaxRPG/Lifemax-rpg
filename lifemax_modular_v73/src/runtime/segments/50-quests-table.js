@@ -10,7 +10,7 @@ var T3_FS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2 
  'void main(){vec3 N=normalize(vN),V=normalize(uEye-vP);vec3 alb,orm=vec3(1.,.7,0.);\n'+
  'if(uFlat>.5){alb=uColor;}else{alb=pow(texture(uBase,vUV).rgb,vec3(2.2));orm=texture(uORM,vUV).rgb;vec3 T=normalize(vT-N*dot(N,vT)),B=cross(N,T);vec3 nm=texture(uNorm,vUV).xyz*2.-1.;nm.y*=uNormY;N=normalize(mat3(T,B,N)*nm);}\n'+
  'float rough=orm.g,ao=orm.r;if(uFlat>.5){ao=1.;}vec3 c=alb*vec3(.07,.09,.16)*uAmb*ao+lightAt(vP,N,V,uL1,uI1,alb,rough)+lightAt(vP,N,V,uL2,uI2,alb,rough);\n'+
- 'c*=mix(1.,ao,.6);if(uFlat>.5)c+=uColor*vec3(1.,.8,.55)*.5;float dist=length(uEye-vP);c=mix(c,vec3(.03,.025,.06),1.-exp(-dist*uFogK));c=c/(c+vec3(.8));c=pow(c,vec3(1./2.2));o=vec4(c,1.);}';
+ 'c*=mix(1.,ao,.6);if(uFlat>.5)c+=uColor*vec3(1.,.8,.55)*.5;float dist=length(uEye-vP);c=mix(c,vec3(0.),1.-exp(-dist*uFogK));c=c/(c+vec3(.8));c=pow(c,vec3(1./2.2));o=vec4(c,1.);}';
 var T3_CVS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=1)in vec3 aN;layout(location=2)in vec2 aUV;layout(location=3)in float aF;uniform mat4 uM,uVP;out vec3 vP;out vec3 vN;out vec2 vUV;out float vF;\n'+
  'void main(){vec4 w=uM*vec4(aP,1.);vP=w.xyz;vN=mat3(uM)*aN;vUV=aUV;vF=aF;gl_Position=uVP*w;}';
 var T3_CFS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2 vUV;in float vF;out vec4 o;uniform sampler2D uFront,uBack;uniform vec3 uEye,uL1,uL2;uniform float uI1,uI2,uAmb,uSheen,uFogK,uFade;\n'+
@@ -18,7 +18,7 @@ var T3_CFS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2
  'void main(){vec3 N=normalize(vN);vec3 V=normalize(uEye-vP);vec3 alb=pow((vF<.5?texture(uFront,vUV):texture(uBack,vUV)).rgb,vec3(2.2));\n'+
  'vec3 c=alb*(vec3(.12,.13,.2)*uAmb+lt(vP,N,uL1,uI1)+lt(vP,N,uL2,uI2));\n'+
  'vec3 Lh=normalize(vec3(-.4,.7,.6));vec3 R=reflect(-Lh,N);c+=vec3(1.,.93,.78)*uSheen*pow(max(dot(R,V),0.),26.)*.3;\n'+
- 'float dist=length(uEye-vP);c=mix(c,vec3(.03,.025,.06),(1.-exp(-dist*uFogK))*.8);c=c/(c+vec3(.9));c=pow(c,vec3(1./2.2));o=vec4(c,1.)*uFade;}';
+ 'float dist=length(uEye-vP);c=mix(c,vec3(0.),(1.-exp(-dist*uFogK))*.8);c=c/(c+vec3(.9));c=pow(c,vec3(1./2.2));o=vec4(c,1.)*uFade;}';
 var T3_BVS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=2)in vec2 aUV;uniform mat4 uM,uVP;out vec2 vUV;void main(){vUV=aUV;gl_Position=uVP*uM*vec4(aP,1.);}';
 var T3_BFS='#version 300 es\nprecision mediump float;in vec2 vUV;out vec4 o;uniform float uA;void main(){float d=length(vUV*2.-1.);float a=smoothstep(1.,.15,d)*uA;o=vec4(0.,0.,0.,a);}';
 var T3_FLVS='#version 300 es\nlayout(location=0)in vec2 aQ;uniform mat4 uV,uP;uniform vec3 uC;uniform vec2 uS;out vec2 vQ;void main(){vQ=aQ;vec4 v=uV*vec4(uC,1.);v.xy+=aQ*uS;gl_Position=uP*v;}';
@@ -91,8 +91,8 @@ async function dhTable3D(el,cards,d,replay){
  var ST={flash:0,flare:1,shake:0},skipped=false,alive=true,raf=0,tw=[],waits=[],awaitFlip=null;
  var progs={},P=function(n,vs,fs){var p=gl.createProgram();[[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]].forEach(function(a){var s=gl.createShader(a[0]);gl.shaderSource(s,a[1]);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(n+': '+gl.getShaderInfoLog(s));gl.attachShader(p,s)});gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(n+' link: '+gl.getProgramInfoLog(p));p._u={};progs[n]=p;return p};
  var UL=function(p,n){if(!(n in p._u))p._u[n]=gl.getUniformLocation(p,n);return p._u[n]};
- var pTab,pCard,pBlob,pFlame,pFog;
- try{pTab=P('tab',T3_VS,T3_FS);pCard=P('card',T3_CVS,T3_CFS);pBlob=P('blob',T3_BVS,T3_BFS);pFlame=P('flame',T3_FLVS,T3_FLFS);pFog=P('fog',CINE_FOG_V,CINE_FOG_F)}
+ var pTab,pCard,pBlob,pFlame;
+ try{pTab=P('tab',T3_VS,T3_FS);pCard=P('card',T3_CVS,T3_CFS);pBlob=P('blob',T3_BVS,T3_BFS);pFlame=P('flame',T3_FLVS,T3_FLFS)}
  catch(e){console.warn('[table gl]',e);sc.remove();try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(x){}return false}
  /* geometry */
  var vao=function(data,layout){var v=gl.createVertexArray();gl.bindVertexArray(v);var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);layout.forEach(function(l){gl.enableVertexAttribArray(l[0]);gl.vertexAttribPointer(l[0],l[1],gl.FLOAT,false,l[3],l[2])});return v};
@@ -104,7 +104,6 @@ async function dhTable3D(el,cards,d,replay){
  var bq=new Float32Array([-.5,0,-.5,0,1,0,0,0,0, .5,0,-.5,0,1,0,1,0,0, .5,0,.5,0,1,0,1,1,0, -.5,0,-.5,0,1,0,0,0,0, .5,0,.5,0,1,0,1,1,0, -.5,0,.5,0,1,0,0,1,0]);
  var blobV=vao(bq,[[0,3,0,36],[2,2,24,36]]);
  var fq=vao(new Float32Array([-1,-1,1,-1,-1,1,1,1]),[[0,2,0,0]]);
- var fogQ=(function(){var v=gl.createVertexArray();gl.bindVertexArray(v);var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);var l=gl.getAttribLocation(pFog,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);return v})();
  /* textures */
  var mkTex=function(src,repeat){var t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);var w=repeat?gl.REPEAT:gl.CLAMP_TO_EDGE;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,w);var ex=gl.getExtension('EXT_texture_filter_anisotropic');if(ex)gl.texParameterf(gl.TEXTURE_2D,ex.TEXTURE_MAX_ANISOTROPY_EXT,4);return t};
  var tBase=mkTex(sh.tex.base,true),tNorm=mkTex(sh.tex.normal,true),tOrm=mkTex(sh.tex.orm,true);
@@ -117,8 +116,8 @@ async function dhTable3D(el,cards,d,replay){
  var C=[];for(var i=0;i<10;i++)C.push({p:[0,300,0],q:faceDown(0),front:null,sh:0,fade:1,yaw:0});
  var dealt=[C[9],C[8],C[7]];dealt.forEach(function(c,i){c.front=tFace[i]});
  /* camera */
- var EYE=[0,138,68],TGT=[0,72,-2],FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,2,600),bas=t3basis(EYE,TGT),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
- var curEye=EYE.slice(),viewM=t3view(EYE,bas),vp=t3mul(proj,viewM);
+ var EYE=[0,138,68],TGT=[0,72,-2],FAR_EYE=[85,170,430],FAR_TGT=[0,38,0],eyeB=FAR_EYE.slice(),tgtB=FAR_TGT.slice(),FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,3,1500),bas=t3basis(eyeB,tgtB),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
+ var curEye=eyeB.slice(),viewM=t3view(eyeB,bas),vp=t3mul(proj,viewM);
  var project=function(w){var m=vp,x=m[0]*w[0]+m[4]*w[1]+m[8]*w[2]+m[12],y=m[1]*w[0]+m[5]*w[1]+m[9]*w[2]+m[13],ww=m[3]*w[0]+m[7]*w[1]+m[11]*w[2]+m[15];return [(x/ww*.5+.5)*vw,(1-(y/ww*.5+.5))*vh]};
  var cardRect=function(c){var M=t3qmat(c.q,c.p,[CW,CH,1]),pts=[[-.5,-.5,0],[.5,-.5,0],[.5,.5,0],[-.5,.5,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])}),xs=pts.map(function(p){return p[0]}),ys=pts.map(function(p){return p[1]}),l=Math.min.apply(0,xs),r=Math.max.apply(0,xs),t=Math.min.apply(0,ys),b=Math.max.apply(0,ys);return {left:l,right:r,top:t,bottom:b,width:r-l,height:b-t}};
  var CANDLES=[[-23,72,-27],[23,72,-27]],flames=CANDLES.map(function(p){return [p[0],p[1]+13.2,p[2]]});
@@ -136,21 +135,19 @@ async function dhTable3D(el,cards,d,replay){
  /* render */
  var t0=performance.now(),mm=t3m();
  var drawCards=function(){gl.useProgram(pCard);gl.bindVertexArray(cardV);
-  gl.uniformMatrix4fv(UL(pCard,'uVP'),false,vp);gl.uniform3fv(UL(pCard,'uEye'),curEye);gl.uniform3fv(UL(pCard,'uL1'),flames[0]);gl.uniform3fv(UL(pCard,'uL2'),flames[1]);gl.uniform1f(UL(pCard,'uI1'),L1);gl.uniform1f(UL(pCard,'uI2'),L2);gl.uniform1f(UL(pCard,'uFogK'),.0042);gl.uniform1i(UL(pCard,'uFront'),3);gl.uniform1i(UL(pCard,'uBack'),4);
+  gl.uniformMatrix4fv(UL(pCard,'uVP'),false,vp);gl.uniform3fv(UL(pCard,'uEye'),curEye);gl.uniform3fv(UL(pCard,'uL1'),flames[0]);gl.uniform3fv(UL(pCard,'uL2'),flames[1]);gl.uniform1f(UL(pCard,'uI1'),L1);gl.uniform1f(UL(pCard,'uI2'),L2);gl.uniform1f(UL(pCard,'uFogK'),.0016);gl.uniform1i(UL(pCard,'uFront'),3);gl.uniform1i(UL(pCard,'uBack'),4);
   gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tBack);
   C.forEach(function(c){if(c.fade<=0)return;gl.uniformMatrix4fv(UL(pCard,'uM'),false,t3qmat(c.q,c.p,[CW,CH,1]));gl.uniform1f(UL(pCard,'uAmb'),c.amb||1.3);gl.uniform1f(UL(pCard,'uSheen'),c.sheen||0);gl.uniform1f(UL(pCard,'uFade'),c.fade);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,c.front||tBack);gl.drawArrays(gl.TRIANGLES,0,12)})};
  var L1=3,L2=3,gutter=1;
  var render=function(){
   var t=(performance.now()-t0)/1000;C.forEach(function(c){if(c.lift)c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD]});ST.flash*=.9;ST.shake*=.9;
-  L1=gutter*(5.2+.8*Math.sin(t*11)+.5*Math.sin(t*23+1))*(1+ST.flash*.6);L2=gutter*(5.2+.8*Math.sin(t*9+2)+.5*Math.sin(t*19))*(1+ST.flash*.6);
-  curEye=[EYE[0]+rnd(-1,1)*ST.shake*.5+Math.sin(t*.4)*.8,EYE[1]+rnd(-1,1)*ST.shake*.5,EYE[2]+Math.cos(t*.3)*.6];viewM=t3view(curEye,bas);vp=t3mul(proj,viewM);
-  gl.viewport(0,0,cvs.width,cvs.height);gl.clearColor(.01,.008,.03,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.useProgram(pFog);gl.bindVertexArray(fogQ);
-  var c1=project(flames[0]),c2=project(flames[1]);
-  gl.uniform1f(UL(pFog,'uT'),t);gl.uniform1f(UL(pFog,'uDim'),1);gl.uniform1f(UL(pFog,'uFlare'),ST.flare*gutter*.55);gl.uniform1f(UL(pFog,'uFlash'),ST.flash);gl.uniform2f(UL(pFog,'uRes'),cvs.width,cvs.height);gl.uniform2f(UL(pFog,'uC1'),c1[0]/vw,c1[1]/vh);gl.uniform2f(UL(pFog,'uC2'),c2[0]/vw,c2[1]/vh);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  L1=gutter*(5.2+.8*Math.sin(t*11)+.5*Math.sin(t*23+1))*(1+ST.flash*1.2);L2=gutter*(5.2+.8*Math.sin(t*9+2)+.5*Math.sin(t*19))*(1+ST.flash*1.2);
+  bas=t3basis(eyeB,tgtB);camQ=t3qfromBasis(bas.r,bas.u,bas.f);var sw=Math.min(1,Math.max(0,1-Math.hypot(eyeB[0]-EYE[0],eyeB[2]-EYE[2])/60));curEye=[eyeB[0]+rnd(-1,1)*ST.shake*.5+Math.sin(t*.4)*.8*sw,eyeB[1]+rnd(-1,1)*ST.shake*.5,eyeB[2]+Math.cos(t*.3)*.6*sw];viewM=t3view(curEye,bas);vp=t3mul(proj,viewM);
+  gl.viewport(0,0,cvs.width,cvs.height);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.BLEND);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   /* table and candles */
-  gl.useProgram(pTab);gl.uniformMatrix4fv(UL(pTab,'uVP'),false,vp);gl.uniform3fv(UL(pTab,'uEye'),curEye);gl.uniform3fv(UL(pTab,'uL1'),flames[0]);gl.uniform3fv(UL(pTab,'uL2'),flames[1]);gl.uniform1f(UL(pTab,'uI1'),L1);gl.uniform1f(UL(pTab,'uI2'),L2);gl.uniform1f(UL(pTab,'uNormY'),-1);gl.uniform1f(UL(pTab,'uAmb'),.55);gl.uniform1f(UL(pTab,'uFogK'),.0042);
+  gl.useProgram(pTab);gl.uniformMatrix4fv(UL(pTab,'uVP'),false,vp);gl.uniform3fv(UL(pTab,'uEye'),curEye);gl.uniform3fv(UL(pTab,'uL1'),flames[0]);gl.uniform3fv(UL(pTab,'uL2'),flames[1]);gl.uniform1f(UL(pTab,'uI1'),L1);gl.uniform1f(UL(pTab,'uI2'),L2);gl.uniform1f(UL(pTab,'uNormY'),-1);gl.uniform1f(UL(pTab,'uAmb'),.55);gl.uniform1f(UL(pTab,'uFogK'),.0016);
   gl.uniform1i(UL(pTab,'uBase'),0);gl.uniform1i(UL(pTab,'uNorm'),1);gl.uniform1i(UL(pTab,'uORM'),2);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tBase);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tNorm);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tOrm);
   gl.uniform1f(UL(pTab,'uFlat'),0);gl.uniformMatrix4fv(UL(pTab,'uM'),false,mm);gl.bindVertexArray(tabV);gl.drawArrays(gl.TRIANGLES,0,tabN);
@@ -171,19 +168,25 @@ async function dhTable3D(el,cards,d,replay){
  sc.querySelector('.fs-skip').addEventListener('click',skip);
  /* the table pose of each dealt card and deck */
  var LD=CH/(.74*2*Math.tan(FOV/2)),DECK=[22,0,12],slots=[[-12,0,6],[0,0,6],[12,0,6]];
- /* turning a lifted card with a finger (real 3D rotation about its vertical axis) */
+ /* turning a lifted card with a finger: it rotates about whatever axis your drag implies (arcball style), so a corner-to-corner
+    drag flips it diagonally. On release it settles upright onto whichever face is turned toward you. */
+ var qrot=function(q,v){var u=[q[0],q[1],q[2]],w=q[3],c1=t3cross(u,v),c2=t3cross(u,c1);return [v[0]+2*(w*c1[0]+c2[0]),v[1]+2*(w*c1[1]+c2[1]),v[2]+2*(w*c1[2]+c2[2])]};
+ var QBACK=t3qax([0,1,0],180),QFRONT=[0,0,0,1];
  var flipByHand=function(c,lifted){return new Promise(function(res){
-  var a=180,rx=0,drag=false,sx=0,sy=0,a0=180,samples=[],seen=false,settling=0,done=false,hint=document.createElement('span');hint.className='fs-hint';hint.innerHTML='<i></i>';sc.appendChild(hint);
-  var idle=setTimeout(function(){hint.classList.add('on')},2600),lp=lifted.slice();
-  var apply=function(){c.q=t3qmul(t3qmul(camQ,t3qax([0,1,0],a)),t3qax([1,0,0],rx));c.sheen=.08+.4*Math.abs(Math.sin(a*Math.PI/180));c.lift=true;c.amb=4.2};
+  var qv=QBACK.slice(),q0=QBACK.slice(),drag=false,sx=0,sy=0,samples=[],seen=false,settling=0,done=false,hint=document.createElement('span');hint.className='fs-hint';hint.innerHTML='<i></i>';sc.appendChild(hint);
+  var idle=setTimeout(function(){hint.classList.add('on')},2600);
+  var frontFacing=function(q){return qrot(q,[0,0,1])[2]>0};
+  var apply=function(){c.q=t3qmul(camQ,qv);var nz=Math.abs(qrot(qv,[0,0,1])[2]);c.sheen=.08+.45*(1-nz);c.lift=true;c.amb=4.2};
   apply();
-  var finish=function(){if(done)return;done=true;clearTimeout(idle);cancelAnimationFrame(settling);sc.removeEventListener('pointerdown',down);sc.removeEventListener('pointermove',mv);sc.removeEventListener('pointerup',up);sc.removeEventListener('pointercancel',up);hint.remove();a=0;rx=0;apply();awaitFlip=null;res()};
-  var front=function(){return Math.cos(a*Math.PI/180)>0};
-  var down=function(e){if(done||settling||e.target.closest('.fs-skip'))return;drag=true;sx=e.clientX;sy=e.clientY;a0=a;samples=[[performance.now(),a]];hint.classList.remove('on');clearTimeout(idle);try{sc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()};
-  var mv=function(e){if(!drag)return;a=a0+(e.clientX-sx)*.9;rx=Math.max(-26,Math.min(26,(e.clientY-sy)*-.12));apply();var now=performance.now();samples.push([now,a]);while(samples.length>2&&now-samples[0][0]>90)samples.shift();if(front()&&!seen){seen=true;ST.flash=Math.max(ST.flash,.2);hap('tap')}};
-  var up=function(){if(!drag)return;drag=false;var n=samples.length,v=n>1?(samples[n-1][1]-samples[0][1])/Math.max(16,samples[n-1][0]-samples[0][0])*1000:0,boost=Math.max(-45,Math.min(45,v*.04)),target=Math.round((a+boost)/180)*180,from=a,fromRx=rx,t1=performance.now(),dur=520;
-   var step=function(){var t=Math.min(1,(performance.now()-t1)/dur),c1=1.4,c3=c1+1,e=1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);a=from+(target-from)*e;rx=fromRx*(1-t);apply();
-    if(t<1)settling=requestAnimationFrame(step);else{settling=0;a=target;rx=0;apply();if(Math.round(target/180)%2===0)finish();else{seen=false;idle=setTimeout(function(){hint.classList.add('on')},2200)}}};settling=requestAnimationFrame(step)};
+  var finish=function(){if(done)return;done=true;clearTimeout(idle);cancelAnimationFrame(settling);sc.removeEventListener('pointerdown',down);sc.removeEventListener('pointermove',mv);sc.removeEventListener('pointerup',up);sc.removeEventListener('pointercancel',up);hint.remove();qv=QFRONT.slice();apply();awaitFlip=null;res()};
+  var down=function(e){if(done||settling||e.target.closest('.fs-skip'))return;drag=true;sx=e.clientX;sy=e.clientY;q0=qv.slice();samples=[[performance.now(),0,0]];hint.classList.remove('on');clearTimeout(idle);try{sc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()};
+  var rotFor=function(dx,dy,k){var len=Math.hypot(dx,dy);if(len<.5)return [0,0,0,1];/* axis is perpendicular to the drag, in the screen plane */return t3qax([-dy/len,dx/len,0],len*k)};
+  var mv=function(e){if(!drag)return;var dx=e.clientX-sx,dy=e.clientY-sy;qv=t3qmul(rotFor(dx,dy,.9),q0);apply();var now=performance.now();samples.push([now,dx,dy]);while(samples.length>2&&now-samples[0][0]>90)samples.shift();if(frontFacing(qv)&&!seen){seen=true;ST.flash=Math.max(ST.flash,.2);hap('tap')}};
+  var up=function(){if(!drag)return;drag=false;
+   var n=samples.length,vx=0,vy=0;if(n>1){var dt=Math.max(16,samples[n-1][0]-samples[0][0]);vx=(samples[n-1][1]-samples[0][1])/dt*1000;vy=(samples[n-1][2]-samples[0][2])/dt*1000}
+   var boost=rotFor(vx,vy,1);var vl=Math.hypot(vx,vy),bq=vl>1?t3qax([-vy/vl,vx/vl,0],Math.min(45,vl*.04)):[0,0,0,1],pred=t3qmul(bq,qv),towardFront=frontFacing(pred),target=towardFront?QFRONT:QBACK,from=qv.slice(),t1=performance.now(),dur=560;
+   var step=function(){var t=Math.min(1,(performance.now()-t1)/dur),c1=1.2,c3=c1+1,e=1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);qv=t3slerp(from,target,e);apply();
+    if(t<1)settling=requestAnimationFrame(step);else{settling=0;qv=target.slice();apply();if(towardFront)finish();else{seen=false;idle=setTimeout(function(){hint.classList.add('on')},2200)}}};settling=requestAnimationFrame(step)};
   sc.addEventListener('pointerdown',down);sc.addEventListener('pointermove',mv);sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',up);
   awaitFlip={finish:finish};
  })};
@@ -191,7 +194,8 @@ async function dhTable3D(el,cards,d,replay){
   loop();
   await anim(700,function(t){sc.style.opacity=t},eO);
   C.forEach(function(c){c.p=[DECK[0],400,DECK[2]]});
-  await type('THE TABLE IS SET',200);
+  gutter=0;var lightUp=anim(2600,function(t){gutter=t},eO),dolly=anim(3300,function(t){eyeB=lerp3(FAR_EYE,EYE,t);tgtB=lerp3(FAR_TGT,TGT,t)},eIO);
+  await type('THE TABLE IS SET',200);await Promise.all([lightUp,dolly]);gutter=1;
   /* the deck drops onto the wood */
   var drops=[];
   for(var i=0;i<10&&!skipped;i++){(function(i){var c=C[i],yaw=rnd(-5,5),x=DECK[0]+rnd(-.6,.6),z=DECK[2]+rnd(-.6,.6),from=[x+rnd(-8,8),TY+70+i*9,z+rnd(-8,8)],to=[x,TY+i*.16,z],q0=faceDown(rnd(-40,40)),q1=faceDown(yaw);c.yaw=yaw;
@@ -218,7 +222,7 @@ async function dhTable3D(el,cards,d,replay){
   var arcOf=function(q){return QPX_ARC[q.attribute]||QPX_ARC.discipline};
   if(!skipped){await type('YOUR CARDS AWAIT',150);gutter=.2;await wait(330);gutter=1;ST.flash=.5}
   for(var n=0;n<3&&!skipped;n++){
-   var c=dealt[n],q=qs[n],tier=q.tier||1,arc=arcOf(q),slot=slots[n],lifted=[EYE[0]+bas.f[0]*LD,EYE[1]+bas.f[1]*LD,EYE[2]+bas.f[2]*LD];
+   var c=dealt[n],q=qs[n],tier=q.tier||1,arc=arcOf(q),slot=slots[n],lifted=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
    var qBack=t3qmul(camQ,t3qax([0,1,0],180));
    c.amb=1.3;var ab=anim(700,function(t){c.amb=1.3+2.9*t});await move(c,lifted,qBack,700,{ease:eIO});c.lift=true;c.amb=4.2;if(skipped)break;
    c.sh=0;cap.innerHTML=qpxText('TURN THE CARD',{s:2,w:vw-40,lines:1});sc.dataset.await='flip';

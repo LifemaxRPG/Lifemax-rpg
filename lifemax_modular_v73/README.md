@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v164 — a table in the void, flip on any axis, corner flips
+- The 3D reading now opens on a black void: the whole table floats in the dark, the candles light up, and the camera dollies in from far away to the tabletop; then the deck drops, is shuffled and the cards are laid. The old fog backdrop is gone from the 3D scene.
+- Turning a lifted card is now arcball style: the card rotates about the axis perpendicular to your drag, so a corner-to-corner drag flips it diagonally. On release it settles upright on whichever face is turned toward you (front reveals, back springs back).
+- After the reading, tap any corner of a card (small gold curls mark them) to turn it over to its back; tap the back to turn it face-up again. Remembered for the day.
+- Fix: backface-hidden faces could swallow taps, so only the face turned toward you takes touches now.
+
 ## v163 — the 3D table
 - The reading is now a real 3D scene by default (`50-quests-table.js`): the wooden table model you supplied (OBJ, normal map and a packed AO/roughness map, shrunk from about 10 MB to about 240 KB), two candles that are the only light (flickering, falling off with distance), fog, soft card shadows, and the cards as 3D objects drawn from the painted art plus the quest text. The deck drops onto the wood, is riffled, three cards are laid down, then each is lifted to the camera and turned by hand in real 3D, then laid face-up on the table.
 - Settings → Quest effects → Card deal: 3D table (default), Classic cinematic (the flat version, also the automatic fallback if WebGL2 is missing), Quick, Instant.

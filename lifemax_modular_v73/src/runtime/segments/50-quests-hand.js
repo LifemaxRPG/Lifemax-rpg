@@ -161,8 +161,16 @@ function dhHoldEnd(silent){if(dhHoldT){clearTimeout(dhHoldT);dhHoldT=null}docume
 var DH_SLOT_NAMES=['Maintenance','Class','Wildcard'],DH_NUMERALS=['I','II','III'],dhDealtDate=null;
 /* ---- Fate Deck: face-down cards you turn over, in a swipeable row ---- */
 function dhIsUp(q){const d=state.dailyDraw;return !!(isQuestDone(q)||(d&&d.up&&d.up[q.slot]))}
+/* a revealed card can be turned over to its back by tapping a corner, and turned back by tapping the back */
+function dhTurn(slot){
+ const d=dhEnsure();if(!d||!d.up||!d.up[slot])return;d.turned=d.turned||[false,false,false];d.turned[slot]=!d.turned[slot];
+ try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.toggle('is-turned',!!d.turned[slot]);dhSig='';
+ try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('tap')}catch(e){}
+ try{if(el){const r=el.getBoundingClientRect();QFX.sparks(r.left+r.width/2,r.top+r.height*.4,10,1)}}catch(e){}
+}
 function dhReveal(slot){
- const d=dhEnsure();if(!d)return;d.up=d.up||[false,false,false];if(d.up[slot])return;d.up[slot]=true;
+ const d=dhEnsure();if(!d)return;d.up=d.up||[false,false,false];if(d.up[slot]){if(d.turned&&d.turned[slot])dhTurn(slot);return}d.up[slot]=true;
  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.add('is-up');
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('double')}catch(e){}
@@ -181,7 +189,7 @@ function dhCardHtml(q){
  const rr=done?'':'<button class="dh-reroll" type="button" onclick="dhReroll('+q.slot+')" aria-label="Redraw '+esc(q.name)+'">Redraw · '+(cost?cost+' Sparks':'free')+'</button>';
  let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
  const art=qartHas(q.attribute);
- return '<div class="dh-card fd-t'+tier+(art?' has-art':'')+(up?' is-up':'')+(done?' is-done':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
+ return '<div class="dh-card fd-t'+tier+(art?' has-art':'')+(up?' is-up':'')+(done?' is-done':'')+((state.dailyDraw&&state.dailyDraw.turned&&state.dailyDraw.turned[q.slot])?' is-turned':'')+'" data-slot="'+q.slot+'" style="--i:'+q.slot+';--ac:'+arc.ac+';--acr:'+qpxRgb(arc.ac)+'">'
   +'<div class="dh-flip"><div class="fd-inner">'
   +'<div class="fd-face fd-back" onclick="dhReveal('+q.slot+')" role="button" tabindex="0" aria-label="Turn over card '+DH_NUMERALS[q.slot]+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){dhReveal('+q.slot+')}">'+qcardBack(q.slot)+'</div>'
   +(art?'<div class="fd-face fd-front art">'+qartFace(q,{numeral:DH_NUMERALS[q.slot],done:done})+'</div>':'<div class="fd-face fd-front">'+qcardCorners()
@@ -191,7 +199,7 @@ function dhCardHtml(q){
   +'<h4 class="dh-name">'+qpxText(q.name,{s:2,w:228,lines:3})+'<span class="sr">'+esc(q.name)+'</span></h4><small class="dh-desc">'+esc(q.desc||'')+'</small>'
   +'<div class="dh-meta"><span class="qpips" title="Difficulty">'+pips+'</span><span class="dh-attr">'+esc(A.short)+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></div>'
   +(done?'<span class="qstamp">'+qpxText('FULFILLED',{s:3,w:240,lines:1})+'</span>':'')
-  +'</div>')+'</div></div>'
+  +'</div>')+'</div>'+['tl','tr','bl','br'].map(function(k){return '<button class="dh-corner '+k+'" type="button" aria-label="Flip the card over" onclick="dhTurn('+q.slot+')"></button>'}).join('')+'</div>'
   +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
 var dhDealing=false,dhPrevDone=null,dhSig='';
@@ -199,7 +207,7 @@ function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
  const cards=dhCards().sort(function(a,b){return a.slot-b.slot}),keep=el.scrollLeft;
- const sig=cards.map(function(q){return q.id+(isQuestDone(q)?'1':'0')+(dhIsUp(q)?'u':'d')}).join('|')+'|'+dhRerollCost()+'|'+(d&&d.dealt?1:0);
+ const sig=cards.map(function(q){return q.id+(isQuestDone(q)?'1':'0')+(dhIsUp(q)?'u':'d')+((d&&d.turned&&d.turned[q.slot])?'t':'f')}).join('|')+'|'+dhRerollCost()+'|'+(d&&d.dealt?1:0);
  if(sig===dhSig&&el.firstChild){dhSchedDeal(el,d,cards);return}
  dhSig=sig;
  const prevDone=dhPrevDone||{};dhPrevDone={};
