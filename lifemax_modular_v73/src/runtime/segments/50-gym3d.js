@@ -69,10 +69,12 @@ function g3Archetype(label){
 G3_MOVES.open={seat:'open',A:G3_MOVES.hinge.A,B:G3_MOVES.hinge.B,tempo:4};G3_MOVES.bench={seat:'bench',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};
 G3_MOVES.pullup={seat:'bar',A:G3_MOVES.pulldown.A,B:G3_MOVES.pulldown.B,tempo:4};G3_MOVES.bike={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};G3_MOVES.ellip={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};
 /* ---- designed exercise movements: G3_X (50-gym3d-moves.js) holds key poses and a cycle for each exercise ---- */
-function g3MoveFor(label){
- var ids=G3_COVER[label],t=String(label||'').toLowerCase(),id;
+function g3MoveFor(label,desc){
+ var ids=G3_COVER[label],t=String(label||'').toLowerCase(),id,use=function(k){var m=G3_X[k];m.id=k;return m};
+ /* warm-ups and cool-downs are all titled alike; the text under the title says what to do */
+ if(!ids&&/warm-up|cool-down/.test(t)&&desc){var d=g3Plain(desc).toLowerCase();for(var i=0;i<G3_DESC.length;i++)if(new RegExp(G3_DESC[i][0]).test(d))return use(G3_DESC[i][1]);return null}
  if(!ids){for(id in G3_X){if(new RegExp(G3_X[id].k).test(t)){ids=[id];break}}}
- if(!ids||!ids.length)return null;var m=G3_X[ids[0]];m.id=ids[0];return m;
+ return ids&&ids.length?use(ids[0]):null;
 }
 function g3MoveSeq(m){
  if(m.seq)return m.seq;var s=[],t=0,cur='A';
@@ -285,7 +287,7 @@ async function g3Open(){
  }catch(e){console.warn('[gym3d]',e);sc.remove();G3=null;return false}
  S.trainer=await g3TrainerInit(gl);
  /* stations, one per exercise of the day */
-d.items.forEach(function(it,i){var lbl=g3LabelOf(g,it),move=g3MoveFor(lbl),arch=move?move.a:g3Archetype(lbl),mv=G3_MOVES[arch];S.idxByKey[it.k]=i;var last=g3Last(lbl);
+d.items.forEach(function(it,i){var lbl=g3LabelOf(g,it),move=g3MoveFor(lbl,it.d),arch=move?move.a:g3Archetype(lbl),mv=G3_MOVES[arch];S.idxByKey[it.k]=i;var last=g3Last(lbl);
   var st={it:it,arch:arch,mv:mv,move:move,x:i*3.8,sel:last?Math.max(1,Math.min(10,Math.round(last.weight/12))):5,static:null};
   var fk=g3FK(move?g3MoveEval(move,0).P:g3Lerp(mv.A,mv.B,0));var T=t3m();T[12]=st.x;
   if(move)st.cam=g3Cam(move);

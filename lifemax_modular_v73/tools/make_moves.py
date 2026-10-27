@@ -20,6 +20,17 @@ for p in D['standing_quad_stretch'][1].values(): p[10] = p[11] = 199          # 
 p = D['seated_hamstring_stretch'][1]['A']; p[2] = 35; p[3] = 30; p[8] = p[9] = p[10] = p[11] = 141   # hinge forward, hands to the shin
 # the flow keeps its feet planted: anchor on the ankle instead of the hip
 D['full_body_mobility_flow'] = ('ankle', {k: [0, .08] + v[2:] for k, v in D['full_body_mobility_flow'][1].items()})
+
+# warm-up and cool-down movements authored here (same rig and angle rules); the plans describe these in text, see DESC
+def arm(u): return [0, .08, 0, 0, 180, 180, 180, 180, u, u, u, u]
+D['leg_swing'] = ('ankle', {'A': [0, .08, 0, 0, 180, 180, 140, 150, 150, 150, 150, 150], 'B': [0, .08, 0, 0, 180, 180, 215, 230, 150, 150, 150, 150]})
+D['neck_roll'] = ('ankle', {'A': [0, .08, 0, -35, 180, 180, 180, 180, 180, 180, 180, 180], 'B': [0, .08, 0, 55, 180, 180, 180, 180, 180, 180, 180, 180]})
+D['arm_circle'] = ('ankle', {'A': arm(0), 'B': arm(90), 'C': arm(180), 'D': arm(-90)})
+D['knee_to_chest'] = ('ankle', {'A': arm(180), 'B': [0, .08, 0, 0, 180, 180, 40, 170, 120, 60, 120, 60]})
+D['lying_breathing'] = ('hip', {'A': [0, .12, -90, -90, 90, 90, 90, 90, 90, 90, 90, 90]})
+D['childs_pose'] = ('hip', {'A': [0, .194, 100, 100, 105, -90, 105, -90, 95, 95, 95, 95]})
+D['legs_up_wall'] = ('hip', {'A': [0, .12, -90, -90, 0, 0, 0, 0, 90, 90, 90, 90]})
+D['forward_fold'] = ('ankle', {'A': [0, .08, 140, 140, 180, 180, 180, 180, 170, 170, 170, 170]})
 # id: (equipment, mode r/h/l/f, cycle, label regex, alternate sides)
 M = {
  'leg_press': ('legpress', 'r', 'B2,-.5,A2,-.5', 'leg press'), 'goblet_squat': ('hinge', 'r', 'B2,-.5,A2,-.5', 'goblet|squat'),
@@ -54,7 +65,15 @@ M = {
  'dead_bug': ('deadbug', 'r', 'B1.5,-1,A1.5,-.5', 'dead bug'), 'outdoor_walk': ('open', 'l', 'B.25,C.25,D.25,A.25', 'walk'),
  'worlds_greatest_stretch': ('mobility', 'f', 'B2,-2,C1.5,-2,D2,-2,A1.5,-1', "greatest stretch"), 'hamstring_adductor_flow': ('mobility', 'f', 'B3,-5,A3,-2', 'adductor'),
  'thoracic_extension_roller': ('mobility', 'r', 'B2,-2,A2,-1', 'thoracic|foam roll'),
+ 'leg_swing': ('open', 'r', 'B1,A1', 'leg swing'), 'neck_roll': ('open', 'r', 'B2,-.3,A2,-.3', 'neck'), 'arm_circle': ('open', 'l', 'B.6,C.6,D.6,A.6', 'arm circle'),
+ 'knee_to_chest': ('open', 'r', 'B1.5,-1,A1.5,-.5', 'knee-to-chest'), 'lying_breathing': ('mobility', 'h', '-4', 'breathing'), 'childs_pose': ('mobility', 'h', '-4', "child"),
+ 'legs_up_wall': ('mobility', 'h', '-4', 'legs-up'), 'forward_fold': ('open', 'h', '-4', 'forward fold'),
 }
+DESC = [['elliptical', 'elliptical'], ['jog', 'treadmill_jog'], ['incline walk|rowing', 'incline_walking'], ['cycling', 'stationary_bike'], ['walk|pacing', 'outdoor_walk'],
+ ['romanian', 'dumbbell_rdl'], ['leg press', 'leg_press'], ['calf raise|ankle roll', 'standing_calf_raise'], ['hip hinge', 'band_romanian_deadlift'], ['squat', 'bodyweight_squat'],
+ ['cat-cow', 'cat_cow'], ['leg swing', 'leg_swing'], ['figure-four', 'glute_bridge_hold'], ['lying', 'lying_breathing'], ['neck', 'neck_roll'], ['breathing', 'lying_breathing'], ['shrug|arm circle|torso twist|torso rotation', 'arm_circle'],
+ ['knee-to-chest', 'knee_to_chest'], ['pelvic tilt', 'glute_bridge'], ['calf stretch', 'standing_calf_stretch'], ["child", 'childs_pose'], ['chest', 'chest_stretch'], ['quad', 'standing_quad_stretch'],
+ ['hip flexor', 'kneeling_hip_flexor_stretch'], ['legs-up', 'legs_up_wall'], ['forward fold', 'forward_fold']]
 ALT = {'bird_dog', 'dead_bug'}
 bad = [i for i in M if i not in D] + [i for i in D if i not in M]
 assert not bad, bad
@@ -64,6 +83,6 @@ for i, (eq, mode, cyc, kw) in M.items():
     anc, P = D[i]
     out[i] = {'a': eq, 'm': mode, 'n': 'h' if anc == 'hip' else 'a', 'c': cyc, 'k': kw, 'P': {k: [round(x, 3) for x in v] for k, v in P.items()}}
     if i in ALT: out[i]['alt'] = 1
-js = '/* ===== Exercise movement data for the 3D gym, built by tools/make_moves.py. Do not edit by hand. ===== */\nvar G3_X=' + json.dumps(out, separators=(',', ':')) + ';\nvar G3_COVER=' + json.dumps(INDEX, separators=(',', ':')) + ';\n'
+js = '/* ===== Exercise movement data for the 3D gym, built by tools/make_moves.py. Do not edit by hand. ===== */\nvar G3_X=' + json.dumps(out, separators=(',', ':')) + ';\nvar G3_COVER=' + json.dumps(INDEX, separators=(',', ':')) + ';\nvar G3_DESC=' + json.dumps(DESC, separators=(',', ':')) + ';\n'
 open('src/runtime/segments/50-gym3d-moves.js', 'w').write(js)
 print('wrote', len(out), 'moves,', len(INDEX), 'plan names,', len(js) // 1024, 'KB')
