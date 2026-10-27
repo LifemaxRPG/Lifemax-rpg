@@ -8,8 +8,9 @@ ALLERGENS={'egg','dairy','gluten','soy','tree_nut','peanut','fish','shellfish','
 AISLES={'produce','meat_seafood','dairy_eggs','bakery_grains','canned_jarred','frozen','pantry','snacks','condiments_spices'}
 DAYS=['mon','tue','wed','thu','fri','sat','sun']
 LIMITS={'standard':dict(ings=14,active=40,steps=99,week_ings=60),'simple':dict(ings=8,active=15,steps=6,week_ings=35)}
-errs=[]
+errs=[];warns=[]
 def bad(msg): errs.append(msg)
+def warn(msg): warns.append(msg)
 def num(x): return isinstance(x,(int,float)) and not isinstance(x,bool)
 def load(p):
     try: return json.load(open(p,encoding='utf-8'))
@@ -32,6 +33,8 @@ def check_catalog(c):
             if abs(est-p['kcal'])>max(25,0.15*p['kcal']): bad(f'catalog {k}: kcal {p["kcal"]} does not match 4p+4c+9f = {est:.0f}')
             if p['p']+p['c']+p['f']>100.5: bad(f'catalog {k}: macros add up to more than 100 g per 100 g')
         s=i.get('shop',{})
+        if i.get('state')=='cooked' and s.get('unit') in ('lb','box','bag','bunch') and s.get('unit_g')==454: warn(f'catalog {k}: cooked weights but the purchase unit is a raw pack; set unit_g to the COOKED grams one pack makes (e.g. 1 lb dry rice is about 1350 g cooked)')
+        if s.get('pantry') is True and (s.get('keeps_days') or 99)<=14: warn(f'catalog {k}: marked pantry (already at home) but keeps only {s.get("keeps_days")} days')
         if s.get('aisle') not in AISLES: bad(f'catalog {k}: shop.aisle invalid')
         if not s.get('unit'): bad(f'catalog {k}: shop.unit missing')
         if not num(s.get('unit_g')) or s['unit_g']<=0: bad(f'catalog {k}: shop.unit_g must be > 0')
@@ -85,6 +88,12 @@ def check_plan(d,cat,name):
         for sw in m.get('swaps',[]):
             if sw.get('replace') not in [i['ing'] for i in ings]: bad(f'{name} {k}: swap replaces an ingredient the meal does not use')
             if sw.get('with') not in cat: bad(f'{name} {k}: swap uses unknown ingredient {sw.get("with")}')
+            else:
+                used_ing.add(sw['with'])
+                rg=[i['g'] for i in ings if i['ing']==sw.get('replace')]
+                if rg and num(sw.get('g')):
+                    p0=rg[0]/100*cat[sw['replace']]['per100g']['p'];p1=sw['g']/100*cat[sw['with']]['per100g']['p']
+                    if p0>5 and abs(p1-p0)>.20*p0: bad(f'{name} {k}: swap "{sw.get("label")}" changes protein from {p0:.0f} g to {p1:.0f} g (more than 20%); raise the grams')
     week=d.get('week',[])
     if [w.get('day') for w in week]!=DAYS: bad(f'{name}: week must be mon..sun in order')
     train=sum(1 for w in week if w.get('type')=='training');rest=sum(1 for w in week if w.get('type')=='rest')
@@ -112,9 +121,16 @@ def check_plan(d,cat,name):
         for lab,v,g in (('protein',p1,ref.get('protein_g',165)),('carbs',c1,ref.get('carbs_g',290)),('fat',f1,ref.get('fat_g',78))):
             if abs(v-g)>.10*g: bad(f'{name} {day}: {lab} {v:.0f} g (needs {g} ±10%)')
         if fb<30: bad(f'{name} {day}: fiber {fb:.0f} g (needs >= 30)')
+        na=tot('sodium_mg')
+        if na>3400: bad(f'{name} {day}: sodium {na:.0f} mg (target 2000 to 3200, hard limit 3400)')
         lo,hi=tot('kcal','min'),tot('kcal','max')
         if lo>.85*R: bad(f'{name} {day}: at minimum flex the day is {lo:.0f} kcal (must be <= {.85*R:.0f}); add more flexible carbs/fats')
         if hi<1.30*R: bad(f'{name} {day}: at maximum flex the day is {hi:.0f} kcal (must be >= {1.30*R:.0f}); widen flex ranges')
+    cnt={s:sum(1 for m in meals.values() if m.get('slot')==s) for s in SLOTS}
+    want={'breakfast':(5,7),'lunch':(6,9),'dinner':(6,9)}
+    for s,(lo,hi) in want.items():
+        if cnt[s]<lo: bad(f'{name}: only {cnt[s]} distinct {s} meals (brief asks for {lo} to {hi})')
+    if cnt['snack']+cnt['pre_workout']+cnt['post_workout']<5: bad(f'{name}: only {cnt["snack"]+cnt["pre_workout"]+cnt["post_workout"]} snack/pre/post meals (brief asks for 5 to 8)')
     for k in meals:
         if k not in usedm: bad(f'{name} {k}: meal is never used in the week')
     if len(week_ings)>L['week_ings']: bad(f'{name}: {len(week_ings)} distinct ingredients in the week (max {L["week_ings"]})')
@@ -133,6 +149,7 @@ def main():
         if d is not None: used|=check_plan(d,cat,p.split('/')[-1]) or set()
     for k in cat:
         if k not in used: bad(f'catalog {k}: not used by any meal')
+    if warns: print(f'{len(warns)} warning(s):');print('\n'.join(' ~ '+w for w in warns))
     if errs:
         print(f'{len(errs)} problem(s):');print('\n'.join(' - '+e for e in errs));sys.exit(1)
     print('OK: catalog and plans are consistent')
