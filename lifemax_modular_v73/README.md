@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v147 — swipe stutter and the stuck tab highlight
+
+- **Stutter after a swipe:** during a swipe the cards' fade-in is switched off so the page arrives in one piece, but the switch was turned back on the moment the swipe ended, and turning it on makes every card replay its fade-in from invisible. That was the little jump. The fade-in now stays off until you change page some other way (a tap on a tab, a button), and it is restored before that page change so nothing replays. I also dropped two layer hints (`will-change` on the page and `backface-visibility`) that made the page re-render once when they were taken away.
+- **A tab that stays lit:** on a touch screen the browser keeps the hover look on the last thing you tapped, so a tab you had tapped stayed shaded after you left it. The tab hover look now only applies with a mouse. As a second safeguard, after every page change (swipe, tap, scrub, voice, Back) the bar is set so that exactly one tab is lit: the one for the page you are on.
+- `tests/swipe.test.js` is now 21 checks (nothing replays after a swipe, one tab lit after many quick swipes and taps, hover only with a mouse). Web-only.
+
 ## v146 — swiping between tabs follows your finger
 
 Before, nothing moved while you swiped; after you let go the app waited, took a screenshot-style transition and then faded each card in one by one, which felt like it lagged. Now:

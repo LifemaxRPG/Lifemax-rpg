@@ -155,7 +155,7 @@ html.light-theme .sidebar{
   -webkit-backdrop-filter:blur(12px);
 }
 html.light-theme .navbtn{color:var(--muted)}
-html.light-theme .navbtn:hover{background:var(--panel2);color:var(--text)}
+@media (hover:hover) and (pointer:fine){html.light-theme .navbtn:hover{background:var(--panel2);color:var(--text)}}
 html.light-theme .navbtn.active{
   background:var(--accent-dim);
   color:var(--accent-strong);

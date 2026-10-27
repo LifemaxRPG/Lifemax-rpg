@@ -161,7 +161,7 @@ html.light-theme .sidebar{
   -webkit-backdrop-filter:blur(12px);
 }
 html.light-theme .navbtn{color:var(--muted)}
-html.light-theme .navbtn:hover{background:var(--panel2);color:var(--text)}
+@media (hover:hover) and (pointer:fine){html.light-theme .navbtn:hover{background:var(--panel2);color:var(--text)}}
 html.light-theme .navbtn.active{
   background:var(--accent-dim);
   color:var(--accent-strong);
@@ -294,7 +294,7 @@ a{color:var(--accent)}
   transition:background .12s,color .12s;
 }
 .navbtn .ico{width:22px;display:inline-flex;justify-content:center;align-items:center;opacity:.9}
-.navbtn:hover{background:var(--panel2);color:var(--text-dim)}
+@media (hover:hover) and (pointer:fine){.navbtn:hover{background:var(--panel2);color:var(--text-dim)}}   /* on a touch screen :hover sticks to the last tab you tapped and looks selected */
 .navbtn.active{
   background:var(--accent-dim);color:var(--accent-strong);
   font-weight:600;
@@ -1650,7 +1650,6 @@ html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.r
 
 /* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
 html.lma-swiping .view.active>*{animation:none!important}
-main.content{backface-visibility:hidden}
 /* ===== Character page ===== */
 .ch-hero{position:relative;overflow:hidden;text-align:center;padding:24px 16px 16px;margin-bottom:14px;background:radial-gradient(120% 80% at 50% -8%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 64%),var(--panel)}
 .ch-hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 60%,color-mix(in srgb,var(--panel) 80%,transparent))}
@@ -13723,12 +13722,16 @@ async function lmaDownload(text,filename,mime,label){
 /* v89 · Navigation: Android Back button / gesture, and swipe left/right between tabs.
    Native Back calls window.lmaBack() (see MainActivity); in a browser nothing here changes behaviour except swipe. */
 const LMA_SWIPE={minPx:72,minFrac:.2,ratio:2.2,maxMs:700,edge:36,slop:14};
-let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0;
+let lmaNavStack=[],lmaNavSkip=false,lmaSw=null,lmaHintTimer=0,lmaSwipeNav=false;
 function lmaView(){const v=document.querySelector('.view.active');return v?v.id.replace(/^view-/,''):''}
 /* Media and Journal live together under the Library tab */
 const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
 const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
 const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
+/* exactly one bottom-bar tab is lit: the one for the page you are on */
+function lmaSyncActive(){
+ try{const k=lmaTabKey(lmaView()),bs=[...document.querySelectorAll('.navbtn[data-view]')];if(bs.some(b=>b.dataset.view===k))bs.forEach(b=>b.classList.toggle('active',b.dataset.view===k))}catch(e){}
+}
 function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.dataset.view===v)}
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
@@ -13783,7 +13786,10 @@ window.lmaBack=lmaBack;
 (function lmaNavWrap(){
  const _nav=navigate;
  navigate=function(v){
+  /* a swipe turns the cards' fade-in off; any other way of changing page turns it back on (before the page changes, so nothing replays) */
+  if(!lmaSwipeNav)document.documentElement.classList.remove('lma-swiping');
   const prev=lmaView(),r=_nav.apply(this,arguments),now=lmaView();
+  lmaSyncActive();
   if(!lmaNavSkip&&prev&&now&&prev!==now){
    if(lmaNavStack[lmaNavStack.length-1]!==prev)lmaNavStack.push(prev);
    if(lmaNavStack.length>30)lmaNavStack.shift();
@@ -13821,7 +13827,7 @@ function lmaContent(){return document.querySelector('main.content')}
 let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
 function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;const w=window.innerWidth,k=Math.min(1,Math.abs(lmaDragDx)/w);c.style.transform='translate3d('+lmaDragDx+'px,0,0)';c.style.opacity=String(1-k*.35)}
 function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
-function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity='';c.style.willChange=''}document.documentElement.classList.remove('lma-swiping')}
+function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity=''}}
 function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
 /* ease from where the page is now to a place, quickly; resolves when it is there */
 function lmaSlide(from,to,fromOp,toOp,ms,easing){
@@ -13855,7 +13861,6 @@ document.addEventListener('touchmove',e=>{
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView()));
    if(cur<0)return;
    lmaSw.drag=true;lmaSw.cur=cur;lmaSw.n=tabs.length;lmaStopAnim();
-   const c=lmaContent();if(c)c.style.willChange='transform,opacity';
    document.documentElement.classList.add('lma-swiping');
   }else return;
  }
@@ -13863,6 +13868,7 @@ document.addEventListener('touchmove',e=>{
  const dir=dx<0?1:-1,nx=lmaSw.cur+dir,edge=nx<0||nx>=lmaSw.n;
  lmaDragSet(edge?dx*.25:dx*.9);
 },{passive:true});
+function lmaSwipeGo(v){lmaSwipeNav=true;try{lmaNavTo(v,{fast:true})}finally{lmaSwipeNav=false}lmaSyncActive()}
 function lmaSwipeEnd(e){
  const s=lmaSw;lmaSw=null;
  if(!s||s.dead)return;
@@ -13877,7 +13883,7 @@ function lmaSwipeEnd(e){
    if(lmaTopOverlay())return;
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+dir;
    if(cur<0||next<0||next>=tabs.length)return;
-   lmaNavTo(tabs[next].dataset.view,{fast:true});lmaSwipeHint(tabs[next],dir>0?-1:1);
+   lmaSwipeGo(tabs[next].dataset.view);lmaSwipeHint(tabs[next],dir>0?-1:1);
   }
   return;
  }
@@ -13888,7 +13894,7 @@ function lmaSwipeEnd(e){
  if(can&&(far||flick)){
   const out=(dir>0?-1:1)*w*.55,left=Math.abs(out-from),ms=Math.max(70,Math.min(140,left/Math.max(.9,Math.abs(v)*1.2||.9)));
   lmaSlide(from,out,Math.max(.5,1-Math.min(1,Math.abs(from)/w)*.35),0,ms,'cubic-bezier(.4,0,1,1)').then(()=>{
-   lmaNavTo(tabs[next].dataset.view,{fast:true});
+   lmaSwipeGo(tabs[next].dataset.view);
    lmaSwipeHint(tabs[next],dir>0?-1:1);
    /* the new page arrives from the side you swiped toward */
    requestAnimationFrame(()=>lmaSlide(-out*.55,0,0,1,190,'cubic-bezier(.2,.8,.2,1)').then(()=>{lmaStopAnim();lmaDragClear();lmaDragDx=0}));

@@ -843,4 +843,3 @@ html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.r
 
 /* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
 html.lma-swiping .view.active>*{animation:none!important}
-main.content{backface-visibility:hidden}

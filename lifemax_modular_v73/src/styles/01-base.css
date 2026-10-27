@@ -54,7 +54,7 @@
   transition:background .12s,color .12s;
 }
 .navbtn .ico{width:22px;display:inline-flex;justify-content:center;align-items:center;opacity:.9}
-.navbtn:hover{background:var(--panel2);color:var(--text-dim)}
+@media (hover:hover) and (pointer:fine){.navbtn:hover{background:var(--panel2);color:var(--text-dim)}}   /* on a touch screen :hover sticks to the last tab you tapped and looks selected */
 .navbtn.active{
   background:var(--accent-dim);color:var(--accent-strong);
   font-weight:600;

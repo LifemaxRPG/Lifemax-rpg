@@ -24,7 +24,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('a drag past a fifth of the screen switches to the next tab', (await view()) === 'character', await view());
   ok('and it does so quickly after release', lat < 400, lat);
   await settle();
-  ok('the movement is cleared afterwards (no leftover transform)', await p.evaluate(() => { const c = document.querySelector('main.content'); return !c.style.transform && !c.style.opacity && !document.documentElement.classList.contains('lma-swiping') }));
+  ok('the movement is cleared afterwards (no leftover transform)', await p.evaluate(() => { const c = document.querySelector('main.content'); return !c.style.transform && !c.style.opacity }));
   // a short, slow drag springs back
   const before = await view(); await swipe(260, 230, 400, 400, 6); await touch('touchend', 230, 402); await settle();
   ok('a short slow drag springs back and stays on the page', (await view()) === before && (await tx()) === 0 && await p.evaluate(() => !document.querySelector('main.content').style.transform), await view());
@@ -51,6 +51,22 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   // reduced motion falls back to the old release-and-go
   await p.evaluate(() => document.documentElement.classList.add('reduce-motion')); await swipe(330, 120, 400, 100, 6); await touch('touchend', 120, 402); await settle();
   ok('with reduced motion it still switches, without the movement', (await view()) === 'character' && (await tx()) === 0, await view());
+  // after the swipe nothing replays, and exactly one tab is lit
+  await p.evaluate(() => { document.documentElement.classList.remove('reduce-motion'); navigate('dashboard') }); await p.waitForTimeout(500);
+  await swipe(330, 130, 400, 120, 8); await touch('touchend', 130, 402); await settle(); await p.waitForTimeout(500);
+  const post = await p.evaluate(() => ({ anims: document.querySelectorAll('.view.active > *').length && [...document.querySelectorAll('.view.active > *')].filter(e => e.getAnimations().length).length, lit: [...document.querySelectorAll('.navbtn.active')].map(b => b.dataset.view), view: lmaView(), cls: document.documentElement.classList.contains('lma-swiping'), layer: getComputedStyle(document.querySelector('main.content')).willChange }));
+  ok('after a swipe the cards do not start fading in again (no stutter)', post.anims === 0 && post.cls, post);
+  ok('after a swipe exactly one tab is highlighted, the one you are on', post.lit.length === 1 && post.lit[0] === post.view, post);
+  ok('the page is not left on a promoted layer', post.layer === 'auto', post.layer);
+  await p.evaluate(() => lmaNavTo('quests')); await p.waitForTimeout(100);
+  ok('a normal tab change turns the card animations back on', await p.evaluate(() => !document.documentElement.classList.contains('lma-swiping')));
+  await p.waitForTimeout(600);
+  // many quick swipes and taps in a row never leave two tabs lit
+  for (let i = 0; i < 6; i++) { await swipe(320, 110, 400, 50, 4); await touch('touchend', 110, 402); await p.waitForTimeout(60); await p.evaluate(() => { const b = [...document.querySelectorAll('.navbtn[data-view]')]; b[Math.floor(Math.random() * b.length)].click() }); await p.waitForTimeout(40) }
+  await settle(); const lit = await p.evaluate(() => ({ lit: [...document.querySelectorAll('.navbtn.active')].map(b => b.dataset.view), view: lmaView() }));
+  ok('after many quick swipes and taps only the current tab is lit', lit.lit.length === 1 && lit.lit[0] === (lit.view === 'media' || lit.view === 'history' ? 'library' : lit.view === 'meals' || lit.view === 'recipes' ? 'food' : lit.view), lit);
+  const hov = await p.evaluate(() => { let bad = 0, seen = 0; for (const sh of document.styleSheets) { let rs; try { rs = sh.cssRules } catch (e) { continue } const walk = (rs, ok) => { for (const r of rs) { if (r.cssRules && r.media) walk(r.cssRules, ok || /hover:\s*hover/.test(r.media.mediaText)); else if (r.selectorText && /\.navbtn:hover/.test(r.selectorText)) { seen++; if (!ok) bad++ } } }; walk(rs, false) } return { bad, seen } });
+  ok('the tab hover look only applies with a mouse, so a tapped tab does not stay shaded on a phone', hov.seen >= 1 && hov.bad === 0, hov);
   ok('no page errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();
