@@ -361,9 +361,9 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
-## v132 — bolder cat faces
+## v132 — cute cat faces
 
-Eyes are now pointed almonds (the outer corner lifts a little) with a two-pixel dark rim, a green iris that shades darker at the top, a thin vertical slit pupil and a highlight; surprised eyes are rounder, sleepy and angry ones are clipped by the lid. The nose is a chunky pink triangle with a dark edge, the mouth and the line down to it are two pixels thick, and happy and blink are thick curves. (`petHdEye` and `petHdFace` in `50-pet-hd.js`.)
+The HD faces are big, glossy and soft: a rounded almond eye with a thin one-pixel outline and a slightly heavier upper lid (like eyeliner), a green iris (darker at the top) with a big oval pupil, a large highlight up on the outer side and a small one low on the inner side; a small soft pink nose with no dark edge; a thin short mouth. Expressions: neutral, happy, sleepy, surprised, angry, sad, blink (`petHdEye`, `petHdFace` in `50-pet-hd.js`). An earlier bolder pass was too heavy and was pulled back.
 
 ## v131 — HD cat: walking at twice the detail
 
