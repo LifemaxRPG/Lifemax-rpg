@@ -3894,6 +3894,13 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 .set-cats button{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:var(--muted,#9aa6ba);font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
 .set-cats button.on{background:var(--accent,#6aa6ff);color:#0b1220;border-color:transparent}
 #view-settings .set-hide{display:none!important}
+/* bottom bar editor */
+.navbtn.tab-off{display:none!important}
+.tabrow{align-items:center;gap:6px}
+.tabrow.off{opacity:.55}
+.tabrow-ico{display:inline-flex;width:24px;justify-content:center;color:var(--muted,#9aa6ba)}
+.tabrow .tb{min-width:40px;min-height:40px;border-radius:10px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:inherit;font-size:12px}
+.tabrow .tb:disabled{opacity:.3}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
@@ -4972,6 +4979,12 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="card" style="margin-bottom:14px">
           <h3>Appearance</h3>
           <div class="settingsline"><div style="flex:1"><strong>Light mode</strong><div class="muted" style="font-size:12px">Switch between the dark and light appearance. This only changes how the app looks.</div></div><input id="lightModeToggle" type="checkbox" class="check" onchange="setLightMode(this.checked)" aria-label="Enable light mode"></div>
+        </div>
+        <div class="card" style="margin-bottom:14px" id="tabsCard">
+          <h3>Bottom bar</h3>
+          <div class="muted" style="font-size:12px;margin:-5px 0 8px">Pick which tabs show and what order they sit in (use the arrows). Hidden pages are still reachable from links inside the app. Keep at least two.</div>
+          <div id="tabsEditBody"></div>
+          <div style="margin-top:10px"><button class="btn secondary" type="button" onclick="lmaTabsReset()">Reset to default</button></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaNavCard">
           <h3>Navigation</h3>
@@ -13780,7 +13793,7 @@ function lmaLoad(){
  if(lmaPrefs)return lmaPrefs;
  let raw=null;try{raw=JSON.parse(localStorage.getItem(LMA_PREF_KEY)||'null')}catch(e){}
  raw=raw&&typeof raw==='object'?raw:{};
- lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],swipe:raw.swipe!==false,updChecked:+raw.updChecked||0,backup:Object.assign({},LMA_DEFAULTS.backup,raw.backup||{})};
+ lmaPrefs=Object.assign({},raw,{notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],swipe:raw.swipe!==false,updChecked:+raw.updChecked||0,backup:Object.assign({},LMA_DEFAULTS.backup,raw.backup||{})});
  return lmaPrefs;
 }
 function lmaSave(){try{localStorage.setItem(LMA_PREF_KEY,JSON.stringify(lmaLoad()))}catch(e){console.warn('LMA prefs not saved',e)}}
@@ -19824,7 +19837,7 @@ async function dhTable3D(el,cards,d,replay){
 }
 /* ===== Settings categories: one group of cards at a time instead of one long list ===== */
 var SET_CATS=[
- {id:'look',name:'Look & feel',cards:['Appearance','Navigation','Tab previews','Cat graphics','Haptics','Quest effects']},
+ {id:'look',name:'Look & feel',cards:['Appearance','Bottom bar','Navigation','Tab previews','Cat graphics','Haptics','Quest effects']},
  {id:'voice',name:'Voice & journal',cards:['Voice (beta)','Journal privacy']},
  {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Automatic backup','Notifications']},
  {id:'game',name:'Character & game',cards:['Character profile','Rewards','Decay system','XP rules']},
@@ -19855,6 +19868,58 @@ function setPickCat(id){setCat=id;try{localStorage.setItem('lma_set_cat',id)}cat
  new MutationObserver(function(){if(busy)return;busy=true;try{setApplyCats()}finally{setTimeout(function(){busy=false},0)}}).observe(v,{childList:true,subtree:true});
  setApplyCats();
 })();
+/* ===== Edit the bottom bar: order, which tabs show, and optional extras =====
+   Works on the real buttons, so swiping between tabs and scrubbing along the bar follow the new order automatically. */
+var LMA_TAB_EXTRA=[{view:'settings',label:'Settings',icon:'gear'}];
+var LMA_TAB_DEFAULT=null;
+function lmaTabsBar(){return document.querySelector('.sidebar')}
+function lmaTabsButtons(){const sb=lmaTabsBar();return sb?[].slice.call(sb.querySelectorAll('.navbtn[data-view]')):[]}
+function lmaTabsCfg(){const t=lmaLoad().tabs;return {order:t&&Array.isArray(t.order)?t.order:[],hidden:t&&Array.isArray(t.hidden)?t.hidden:[],extra:t&&Array.isArray(t.extra)?t.extra:[]}}
+function lmaTabsStore(c){lmaLoad().tabs=c;lmaSave()}
+function lmaTabsApply(){
+ const sb=lmaTabsBar();if(!sb)return;const c=lmaTabsCfg();
+ if(!LMA_TAB_DEFAULT)LMA_TAB_DEFAULT=lmaTabsButtons().filter(function(b){return !b.dataset.extra}).map(function(b){return b.dataset.view});
+ const note=sb.querySelector('.sidebar-note');
+ LMA_TAB_EXTRA.forEach(function(x){
+  let b=sb.querySelector('.navbtn[data-view="'+x.view+'"]');
+  if(c.extra.indexOf(x.view)>=0){
+   if(!b){b=document.createElement('button');b.className='navbtn';b.dataset.view=x.view;b.dataset.extra='1';b.setAttribute('onclick',"navigate('"+x.view+"')");b.innerHTML='<span class="ico">'+px(x.icon,18)+'</span>'+x.label;sb.insertBefore(b,note||null)}
+  }else if(b&&b.dataset.extra){b.remove()}
+ });
+ const all=lmaTabsButtons(),views=all.map(function(b){return b.dataset.view}),ord=c.order.filter(function(v){return views.indexOf(v)>=0});
+ const sorted=ord.concat(views.filter(function(v){return ord.indexOf(v)<0}));
+ sorted.forEach(function(v){const b=sb.querySelector('.navbtn[data-view="'+v+'"]');if(b)sb.insertBefore(b,note||null)});
+ const hid=c.hidden.filter(function(v){return views.indexOf(v)>=0});
+ const hideOk=views.length-hid.length>=2;
+ all.forEach(function(b){b.classList.toggle('tab-off',hideOk&&hid.indexOf(b.dataset.view)>=0)});
+ try{lmaSyncActive()}catch(e){}
+}
+function lmaTabsRender(){
+ const el=document.getElementById('tabsEditBody');if(!el)return;
+ const c=lmaTabsCfg(),bs=lmaTabsButtons();
+ const row=function(v,label,ico,on,i,n,extra){return '<div class="settingsline tabrow'+(on?'':' off')+'"><span class="tabrow-ico">'+ico+'</span><div style="flex:1;min-width:0"><strong>'+esc(label)+'</strong></div>'
+  +(extra?'':'<button class="tb" type="button" onclick="lmaTabMove(\''+v+'\',-1)" aria-label="Move '+esc(label)+' earlier"'+(i===0?' disabled':'')+'>&#9664;</button><button class="tb" type="button" onclick="lmaTabMove(\''+v+'\',1)" aria-label="Move '+esc(label)+' later"'+(i===n-1?' disabled':'')+'>&#9654;</button>')
+  +'<input type="checkbox" class="check" '+(on?'checked ':'')+'onchange="lmaTabShow(\''+v+'\',this.checked)" aria-label="Show '+esc(label)+' in the bar"></div>'};
+ const n=bs.length;let h=bs.map(function(b,i){const v=b.dataset.view,ico=(b.querySelector('.ico')||{}).innerHTML||'';return row(v,b.textContent.trim(),ico,!b.classList.contains('tab-off'),i,n,false)}).join('');
+ LMA_TAB_EXTRA.forEach(function(x){if(c.extra.indexOf(x.view)<0)h+=row(x.view,x.label,px(x.icon,18),false,0,0,true)});
+ el.innerHTML=h;
+}
+function lmaTabMove(v,d){
+ const order=lmaTabsButtons().map(function(b){return b.dataset.view}),i=order.indexOf(v),j=i+d;if(i<0||j<0||j>=order.length)return;
+ order.splice(j,0,order.splice(i,1)[0]);const c=lmaTabsCfg();c.order=order;lmaTabsStore(c);lmaTabsApply();lmaTabsRender();
+}
+function lmaTabShow(v,on){
+ const c=lmaTabsCfg(),isExtra=LMA_TAB_EXTRA.some(function(x){return x.view===v});
+ if(isExtra){const k=c.extra.indexOf(v);if(on&&k<0)c.extra.push(v);if(!on&&k>=0)c.extra.splice(k,1);if(on){const o=lmaTabsButtons().map(function(b){return b.dataset.view});c.order=o.filter(function(x){return x!==v}).concat([v])}}
+ else{
+  const visible=lmaTabsButtons().filter(function(b){return !b.classList.contains('tab-off')&&b.dataset.view!==v||(b.dataset.view===v&&on)}).length;
+  if(!on&&visible<2){toast('Keep at least two tabs in the bar');lmaTabsRender();return}
+  const k=c.hidden.indexOf(v);if(!on&&k<0)c.hidden.push(v);if(on&&k>=0)c.hidden.splice(k,1);
+ }
+ lmaTabsStore(c);lmaTabsApply();lmaTabsRender();
+}
+function lmaTabsReset(){lmaLoad().tabs=null;lmaSave();const sb=lmaTabsBar();if(sb){sb.querySelectorAll('.navbtn[data-extra]').forEach(function(b){b.remove()});const note=sb.querySelector('.sidebar-note');(LMA_TAB_DEFAULT||[]).forEach(function(v){const b=sb.querySelector('.navbtn[data-view="'+v+'"]');if(b){b.classList.remove('tab-off');sb.insertBefore(b,note||null)}})}lmaTabsApply();lmaTabsRender();toast('Bottom bar reset')}
+setTimeout(function(){try{lmaTabsApply();lmaTabsRender()}catch(e){console.warn('[tabs]',e)}},0);
 /* Last segment: reaching this line means every segment before it ran. A web build that was downloaded over the air counts
    as on trial until it reports here; if it never does (a broken build), Android drops it and goes back to the bundled one.
    Keep this the final segment: add new ones before it. */

@@ -26,7 +26,7 @@ function lmaLoad(){
  if(lmaPrefs)return lmaPrefs;
  let raw=null;try{raw=JSON.parse(localStorage.getItem(LMA_PREF_KEY)||'null')}catch(e){}
  raw=raw&&typeof raw==='object'?raw:{};
- lmaPrefs={notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],swipe:raw.swipe!==false,updChecked:+raw.updChecked||0,backup:Object.assign({},LMA_DEFAULTS.backup,raw.backup||{})};
+ lmaPrefs=Object.assign({},raw,{notif:Object.assign({},LMA_DEFAULTS.notif,raw.notif||{}),apps:Array.isArray(raw.apps)?raw.apps:[],swipe:raw.swipe!==false,updChecked:+raw.updChecked||0,backup:Object.assign({},LMA_DEFAULTS.backup,raw.backup||{})});
  return lmaPrefs;
 }
 function lmaSave(){try{localStorage.setItem(LMA_PREF_KEY,JSON.stringify(lmaLoad()))}catch(e){console.warn('LMA prefs not saved',e)}}

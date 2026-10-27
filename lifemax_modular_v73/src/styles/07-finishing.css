@@ -311,3 +311,10 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 .set-cats button{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:var(--muted,#9aa6ba);font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
 .set-cats button.on{background:var(--accent,#6aa6ff);color:#0b1220;border-color:transparent}
 #view-settings .set-hide{display:none!important}
+/* bottom bar editor */
+.navbtn.tab-off{display:none!important}
+.tabrow{align-items:center;gap:6px}
+.tabrow.off{opacity:.55}
+.tabrow-ico{display:inline-flex;width:24px;justify-content:center;color:var(--muted,#9aa6ba)}
+.tabrow .tb{min-width:40px;min-height:40px;border-radius:10px;border:1px solid var(--line,rgba(255,255,255,.14));background:transparent;color:inherit;font-size:12px}
+.tabrow .tb:disabled{opacity:.3}

@@ -2243,7 +2243,16 @@
     "settings"
    ],
    "symbols": []
+  },  {
+   "file": "src/runtime/segments/50-tabs-edit.js",
+   "bytes": 1,
+   "statement_count": 0,
+   "tags": [
+    "navigation"
+   ],
+   "symbols": []
   },
+
 
 
   {
