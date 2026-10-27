@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v130 — voice: past questions, honest zeros, follow-ups, logging what happened
+
+"How many steps did I walk yesterday" now answers for yesterday (and says "0 steps yesterday" when that is true) instead of reporting today. One resolver understands past days and ranges (yesterday, 3 days ago, last Friday, this week, past 7 days, October 20...), and steps, workouts, XP, level progress, streak, achievements, food and "what did I do" all use it. "What about yesterday?" re-asks the last question. "Log a 30 minute run" / "I did yoga yesterday" saves an activity that already happened after a preview. Speech-to-text near misses are repaired, and every screen opens by voice. See `VOICE.md`; 222 voice checks.
+
 ## v129 — optional Journal lock
 
 Settings > Journal privacy > **Lock the Journal**. When on, opening the Journal asks for your fingerprint or face, or your screen lock (PIN, pattern, password) if there is none. Android does the checking (`BiometricLockPlugin.java`, AndroidX biometric); the app stores only the on/off choice. You confirm it is you to turn it on or off. It locks again when you leave the app, or a minute after you leave the Journal (quick back-and-forth does not nag). While the Journal is open the screen is hidden from the app switcher and screenshots, and tab previews never capture it. The Media | Journal switch stays usable on the lock screen. Works in the Android app only; `tests/lock.test.js` (mocked Android prompt). Needs the new build (native plugin and a Gradle dependency).

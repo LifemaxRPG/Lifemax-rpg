@@ -9,6 +9,17 @@
 - **Activity actions:** complete a session through Life Director's own completion (XP and quest hooks fire; only once it has started); move (shift or absolute time) and cancel always show a before / after preview and wait for confirmation. They work on planned sessions and on commitments, including ones made by voice.
 - Not done: logging food, water or workouts by voice; waking a specific one of several cats by name beyond the first two.
 
+## Past, present and ranges (v130)
+`49-voice-time.js` adds one temporal resolver (`lmvScope`) used by every read handler, so an answer is about the day that was asked.
+- **Days:** today, yesterday, the day before yesterday, N days ago (digits or words), last night, earlier today, this morning, tomorrow, last / this / next weekday, "October 20", "10/25". For questions, a bare weekday means the most recent one; for the schedule it means the coming one.
+- **Ranges:** this week (Monday to today), last week, past N days, this month, last month, all time.
+- **Honest zeros:** a day with nothing says so ("0 steps yesterday", "No workouts logged last Friday", "0 kcal yesterday") and shows that day's date; it never falls back to today. Steps are kept for 30 days, and older days say so. Range answers give the total and a daily average.
+- **Handlers:** steps, workouts, XP (earned on a day or range, total, until level N, level, title, streak, achievements), calories and macros, quests finished, and "what did I do / log yesterday" (reads your activity log; today and later still read the plan).
+- **Follow-ups:** for 90 seconds, "what about yesterday?", "and this week?", "how about tomorrow?" re-ask the last question for the new day, and "what about calories?" switches the metric and keeps the day.
+- **Logging what already happened:** "log a 30 minute run", "I did 20 minutes of yoga yesterday", "log 45 minutes of weight training earlier today". Shows a preview with the time, length and estimated XP, then saves the same record the Log activity screen makes, for that day (no "time already passed" error; the future is refused; scheduling still keeps that guard). Steps cannot be typed in, because they come from Samsung Health, and it says so.
+- **Speech repair:** common mishearings ("west" or "requests" for quests, "carona", "life direct her", "mack rose", "x p", "work out", "how many stairs") are fixed before the sentence is understood, then a one-letter fuzzy match against the app's own words.
+- **Screens:** every tab and feature opens by voice (overview, go home, character, log activity, quests, workout plan, library, settings, Life Director, Corona dial, cat room), with or without "open".
+
 ## Repository audit (what was actually found)
 - **Android shell:** Capacitor 7 app generated in CI (`android-wrapper/`, package `com.lifemax.rpg`, minSdk 26). One `MainActivity` (BridgeActivity); the page is the single-file web build loaded by Capacitor (origin `https://localhost`). Native code reaches JS only through Capacitor plugins registered in `MainActivity` (`AppLauncher`, `FileSaver`, `Updater`, `BackupFolder`, `HealthSync`, `WidgetBridge`, `NavHaptics`, `PageThumb`, and now `VoiceEngine`). There are no `@JavascriptInterface` methods and no `file://` loading, so the spec's origin-token fallback is not needed.
 - **Web layer:** plain JavaScript segments (`lifemax_modular_v73/src/runtime/segments/*.js`) concatenated into one script; no bundler or TypeScript. Voice lives in `45-voice.js`.
@@ -25,7 +36,7 @@
 **Web (ships with the web build):** `src/runtime/segments/45-voice.js` (new), `src/features/life-director/logic.js` (voice seam, 1.9.0), `src/views/settings.html` (Voice card), `src/styles/07-finishing.css`, `src/index.template.html`, `src/runtime/module-map.json`, `tests/voice.test.js` (new).
 
 ## Verification matrix
-| Verified automatically (`node tests/voice.test.js`, 117 checks) | Needs a real phone |
+| Verified automatically (`node tests/voice.test.js`, 222 checks) | Needs a real phone |
 |---|---|
 | canonical utterance, slot values, save into Life Director, Undo | live microphone capture |
 | multi-turn "gym time" -> "around six" -> "evening, for an hour", same operationId | Android 12+ on-device language pack present and working |

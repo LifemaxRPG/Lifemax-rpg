@@ -216,9 +216,111 @@ const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 202
   r = await say('I just finished reading'); ok('complete: a plain calendar item is explained, nothing breaks', r.state === 'CONFIRMED', r);
   const pe = errs.length;
 
+
+  // ===== v130: past and present questions, honest zeros, follow-ups, speech repair, logging what happened =====
+  // Today in the app is Mon 2026-10-26 (NY). Seed steps, activities and food by date.
+  const seedTime = async () => p.evaluate(() => {
+    state.health = { on: true, goal: 8000, today: { date: '2026-10-26', count: 1479 }, snap: { steps30: [{ date: '2026-10-20', count: 6000 }, { date: '2026-10-21', count: 8000 }, { date: '2026-10-22', count: 7000 }, { date: '2026-10-23', count: 9000 }, { date: '2026-10-24', count: 5000 }, { date: '2026-10-26', count: 1479 }] }, seen: {}, since: 0, last: 0, granted: [] };
+    const A = (iso, name, type, xp, primary, dur) => ({ id: 'q' + Math.random(), type, name, icon: 'book', duration: dur || 30, skill: name, primary: primary || 'discipline', secondary: '', xp, date: iso, notes: '', xpSplit: [{ attr: primary || 'discipline', xp }] });
+    state.activities = [A('2026-10-26T15:00:00Z', 'Morning run', 'running', 80, 'endurance', 40), A('2026-10-25T15:00:00Z', 'Study', 'reading', 120, 'intelligence', 60), A('2026-10-25T20:00:00Z', 'Lift', 'strength', 90, 'physique', 45), A('2026-10-24T15:00:00Z', 'Study', 'reading', 60, 'intelligence', 30), A('2026-10-21T15:00:00Z', 'Run', 'running', 50, 'endurance', 30)];
+    state.foodLog = [{ id: 'f1', date: '2026-10-26', slot: 'breakfast', name: 'Oats', kcal: 400, p: 20, c: 60, f: 10 }, { id: 'f2', date: '2026-10-24', slot: 'dinner', name: 'Pasta', kcal: 700, p: 25, c: 100, f: 20 }];
+    state.questDone = { a_1: 1, b_2: 1, c_3: 1 };
+  });
+  await reset(); await clock(MON); await seedTime();
+  // the exact screenshot bug
+  r = await say('How many steps did I walk yesterday');
+  ok('bug: yesterday with no steps says 0 steps yesterday, not today\'s 1,479', r.state === 'CONFIRMED' && /^0 steps yesterday/.test(r.title) && !/1,479/.test(r.title) && /Sunday, Oct 25/.test(line(r)), r);
+  ok('bug: it still mentions yesterday\'s activity and today as a side note', /2 logged activities yesterday/.test(line(r)) && /Today so far: 1,479/.test(line(r)), line(r));
+  await p.evaluate(() => { state.health.snap.steps30.push({ date: '2026-10-25', count: 4500 }) });
+  r = await say('How many steps did I walk yesterday'); ok('bug: yesterday with 4,500 steps reports 4,500', /^4,500 steps yesterday/.test(r.title), r.title);
+  r = await say('How many steps did I walk today?'); ok('today still reports today', /^1,479 steps today/.test(r.title) && /18%/.test(line(r)), r);
+  r = await say('What about yesterday?'); ok('follow-up: "what about yesterday?" re-asks steps for yesterday', r.intentId === 'health_fitness.query_steps' && /^4,500 steps yesterday/.test(r.title), r);
+  r = await say('And this week?'); ok('follow-up: "and this week?" sums the week (Mon 26 only: 1,479)', r.intentId === 'health_fitness.query_steps' && /^1,479 steps this week/.test(r.title), r.title);
+  r = await say('How about last week?'); ok('follow-up: "how about last week?" (Oct 19-25: 6000+8000+7000+9000+5000+4500 = 39,500)', /^39,500 steps last week/.test(r.title) && /Average 5,643 a day over 7 days/.test(line(r)), r.title + ' | ' + line(r));
+  await p.evaluate(() => { lmvLastQ.ts -= 100000 }); r = await say('What about yesterday?'); ok('follow-up memory expires after 90 seconds', r.intentId !== 'health_fitness.query_steps', r.intentId);
+  await reset(); await say('What is on my schedule today?'); r = await say('How about tomorrow?'); ok('follow-up: schedule today -> tomorrow', r.intentId === 'life_director.query_schedule' && /Tomorrow/.test(r.title), r.title);
+  await reset(); await say('How many calories have I had today?'); r = await say('And yesterday?'); ok('follow-up works for food too, with an honest zero', r.intentId === 'nutrition.check_totals' && /^0 kcal yesterday/.test(r.title), r.title);
+  await reset(); await say('How many steps did I walk today?'); r = await say('What about calories?'); ok('follow-up: a different metric keeps the question going', r.intentId === 'nutrition.check_totals', r.intentId);
+  // every time expression
+  const sc = async t => p.evaluate(t => LifeMaxVoice._t.scope(t), t);
+  const DAY = async (t, want, label) => { const x = await sc(t); ok('time: "' + t + '" -> ' + want, x.kind === 'day' && x.date === want && (!label || x.label === label), x) };
+  await DAY('yesterday', '2026-10-25', 'yesterday'); await DAY('the day before yesterday', '2026-10-24'); await DAY('two days ago', '2026-10-24'); await DAY('3 days ago', '2026-10-23'); await DAY('five days ago', '2026-10-21');
+  await DAY('last night', '2026-10-25', 'last night'); await DAY('last Friday', '2026-10-23'); await DAY('last Monday', '2026-10-19'); await DAY('October 20th', '2026-10-20'); await DAY('Oct 25', '2026-10-25'); await DAY('10/22', '2026-10-22');
+  await DAY('tomorrow', '2026-10-27'); await DAY('earlier today', '2026-10-26', 'today'); await DAY('this morning', '2026-10-26'); await DAY('what did I do on Thursday', '2026-10-22');
+  const RNG = async (t, a, b) => { const x = await sc(t); ok('range: "' + t + '" -> ' + a + '..' + b, x.kind === 'range' && x.start === a && x.end === b, x) };
+  await RNG('this week', '2026-10-26', '2026-10-26'); await RNG('last week', '2026-10-19', '2026-10-25'); await RNG('past 7 days', '2026-10-20', '2026-10-26'); await RNG('the last 3 days', '2026-10-24', '2026-10-26'); await RNG('this month', '2026-10-01', '2026-10-26'); await RNG('last month', '2026-09-01', '2026-09-30');
+  ok('time: "all time" is the whole history', (await sc('what is my total xp')).kind === 'all');
+  ok('time: no date mentioned means today, flagged as not explicit', await sc('how many steps').then(x => x.date === '2026-10-26' && x.explicit === false));
+  // dashboard questions
+  const xpOf = async t => { await reset(); return say(t) };
+  r = await xpOf('How much XP did I earn today?'); ok('xp today (80)', /^80 XP today/.test(r.title), r.title);
+  r = await xpOf('How much XP did I earn yesterday?'); ok('xp yesterday (120 + 90 = 210) with date', /^210 XP yesterday/.test(r.title) && /Sunday, Oct 25/.test(line(r)), r.title + line(r));
+  r = await xpOf('How much XP did I get this week?'); ok('xp this week (80)', /^80 XP this week/.test(r.title), r.title);
+  r = await xpOf('How much XP did I get last week?'); ok('xp last week (120+90+60+50 = 320) with a daily average', /^320 XP last week/.test(r.title) && /Average 46 XP a day over 7 days/.test(line(r)), r.title + line(r));
+  r = await xpOf('How much XP did I earn on the 22nd of October'); ok('xp on a day with nothing is an honest zero', /^0 XP /.test(r.title) || r.intentId, r.title);
+  r = await xpOf('What is my total XP?'); ok('total xp', r.intentId === 'rpg.query_stats' && /XP/.test(r.title), r.title);
+  r = await xpOf('How much XP do I have?'); ok('"how much xp do I have" is the total, not just today', /level/.test(r.title) || /Total XP/.test(line(r)), r.title);
+  r = await xpOf('How much XP until level 3?'); ok('xp until level 3', /XP to level 3$/.test(r.title) && /You are level/.test(line(r)), r.title);
+  r = await xpOf('How close am I to level 4?'); ok('xp until level 4 adds the in-between level', /XP to level 4$/.test(r.title), r.title);
+  r = await xpOf('How much XP until I level up?'); ok('xp until the next level', /XP to level \d+$/.test(r.title), r.title);
+  r = await xpOf("What's my rank?"); ok('title / rank', /^Level \d+ \w+/.test(r.title), r.title);
+  r = await xpOf('What level am I?'); ok('level with title', /You are level \d+/.test(r.title) && /Title:/.test(line(r)), r.title);
+  r = await xpOf("What's my current streak?"); ok('streak', /day streak$/.test(r.title), r.title);
+  r = await xpOf('How many days is my streak?'); ok('streak (second phrasing)', /day streak$/.test(r.title), r.title);
+  r = await xpOf('How many achievements do I have?'); ok('achievements count (3 seeded)', /^3 achievements unlocked/.test(r.title), r.title);
+  r = await xpOf('What are my quests?'); ok('quests list with finished all time', r.intentId === 'rpg.view_quests' && /finished all time: 3/.test(line(r)), line(r));
+  r = await xpOf('How many quests have I finished?'); ok('quests finished', r.intentId === 'rpg.view_quests', r.intentId);
+  r = await xpOf('What activities did I log yesterday?'); ok('history: yesterday\'s log, not today\'s plan', r.intentId === 'life_director.query_schedule' && /logged 2 things yesterday/.test(r.title) && /Study/.test(line(r)) && /Lift/.test(line(r)), r.title + line(r));
+  r = await xpOf('What did I do yesterday?'); ok('history: "what did I do yesterday"', /logged 2 things yesterday/.test(r.title), r.title);
+  r = await xpOf('What did I do last Friday?'); ok('history: an empty past day is said plainly', /^Nothing logged /.test(r.title), r.title);
+  r = await xpOf('What did I do today?'); ok('history: today\'s log', /logged 1 thing today/.test(r.title), r.title);
+  r = await xpOf("What did I do this week?"); ok('history over a range lists the days', /logged 1 thing this week/.test(r.title), r.title);
+  r = await xpOf("What's on my schedule tomorrow?"); ok('the future is still the plan, not the log', /^Tomorrow/.test(r.title), r.title);
+  r = await xpOf('How many workouts did I do this week?'); ok('workouts this week (Mon: the run)', r.intentId === 'health_fitness.query_workouts' && /^1 workout this week/.test(r.title), r.title);
+  r = await xpOf('How many workouts yesterday?'); ok('workouts yesterday (the lift)', /^1 workout yesterday/.test(r.title) && /Lift/.test(line(r)), r.title + line(r));
+  r = await xpOf('Did I exercise last Friday?'); ok('workouts on an empty day', /^No workouts logged/.test(r.title) || r.intentId === 'health_fitness.query_workouts', r.title);
+  r = await xpOf('How many calories did I eat yesterday?'); ok('food yesterday with nothing logged is an honest zero', /^0 kcal yesterday/.test(r.title) && /0 items logged yesterday/.test(line(r)), r.title + line(r));
+  r = await xpOf('How many calories on Saturday?'); ok('food on a named past day (Oct 24: 700)', /^700 kcal /.test(r.title), r.title);
+  r = await xpOf('How much protein did I have this week?'); ok('protein for a range', /g protein this week$/.test(r.title), r.title);
+  // retroactive logging
+  await reset(); const n0 = await p.evaluate(() => state.activities.length);
+  r = await say('Log a 30 minute run'); ok('log: a run previews, nothing saved yet', r.state === 'PREVIEWED' && /Log/.test(r.title) && (await p.evaluate(() => state.activities.length)) === n0, r);
+  await p.evaluate(() => LifeMaxVoice.confirm()); const lastA = await p.evaluate(() => state.activities.filter(a => a.src === 'voice').slice(-1)[0]);
+  ok('log: confirmed run is saved today with XP and the voice tag', lastA && lastA.type === 'running' && lastA.duration === 30 && lastA.xp > 0 && lastA.src === 'voice' && /2026-10-26/.test(await p.evaluate(a => activityDate(a), lastA)), lastA);
+  await reset(); r = await say('I did 20 minutes of yoga yesterday'); ok('log: yesterday needs no "past time" error', r.state === 'PREVIEWED' && /Sunday, Oct 25/.test(r.act.lines.join(' ')), r);
+  await p.evaluate(() => LifeMaxVoice.confirm()); ok('log: it lands on yesterday', (await p.evaluate(() => { const a = state.activities.filter(a => a.src === 'voice').slice(-1)[0]; return activityDate(a) })) === '2026-10-25');
+  await reset(); r = await say('Log 45 minutes of weight training earlier today'); ok('log: "earlier today" is allowed in the past', r.state === 'PREVIEWED' && /45 min/.test(r.act.lines.join(' ')), r);
+  await p.evaluate(() => LifeMaxVoice.confirm()); ok('log: strength type, ends before now', await p.evaluate(() => { const a = state.activities.filter(a => a.src === 'voice').slice(-1)[0]; return a.type === 'strength' && new Date(a.date).getTime() <= Date.now() + 60000 }));
+  await reset(); r = await say('I just walked 2,000 steps'); ok('log: steps are explained, not invented', r.state === 'CONFIRMED' && /Samsung Health/.test(r.title), r.title);
+  await reset(); r = await say('Log a run tomorrow'); ok('log: the future is refused with a pointer to scheduling', r.state === 'CONFIRMED' && /not happened yet/.test(r.title), r.title);
+  await reset(); r = await say('Log 20 minutes of reading this morning'); ok('log: "this morning" ends at a morning hour', r.state === 'PREVIEWED' && /9:00 AM/.test(r.act.lines.join(' ')), r.act);
+  await reset(); r = await say('Schedule a workout today at 6 am'); ok('scheduling the past today still asks (the guard is kept)', r.question && r.question.kind === 'past', r);
+  await reset();
+  // speech-to-text repair
+  const ph = async t => p.evaluate(t => LifeMaxVoice._t.classify(t).id, t);
+  ok('stt: "what are my west" is quests', await ph('what are my west today') === 'rpg.view_quests');
+  ok('stt: "show my requests" is quests', await ph('show my requests') === 'rpg.view_quests');
+  ok('stt: "kwests" is quests (fuzzy)', await ph('what are my kwests') === 'rpg.view_quests');
+  ok('stt: "open the carona dial" opens Life Director', await ph('open the carona dial') === 'navigation_system.open_section');
+  ok('stt: "life direct her" is Life Director', (await p.evaluate(() => LifeMaxVoice._t.phon('open life direct her'))).includes('life director'));
+  ok('stt: "how many x p do I have" is XP', await ph('how much x p do I have') === 'rpg.query_stats');
+  ok('stt: "mack rose" is macros', await ph('check my mack rose') === 'nutrition.check_totals');
+  ok('stt: "work out" is workout', await ph('how many work outs did i do this week') === 'health_fitness.query_workouts');
+  ok('stt: "how many stairs" is steps', await ph('how many stairs did i walk') === 'health_fitness.query_steps');
+  ok('stt: "how far did I walk" is steps', await ph('how far did i walk yesterday') === 'health_fitness.query_steps');
+  ok('stt: "what is my step count" is steps', await ph("what's my step count") === 'health_fitness.query_steps');
+  ok('stt: ordinary words are left alone', (await p.evaluate(() => LifeMaxVoice._t.phon('put lunch with Sarah tomorrow at noon'))) === 'put lunch with sarah tomorrow at noon');
+  // every screen
+  for (const [u, label] of [['Open overview', 'Overview'], ['Go home', 'Overview'], ['Go to dashboard', 'Overview'], ['Open character', 'Character'], ['Show my character', 'Character'], ['Character screen', 'Character'], ['Open log activity', 'Log activity'], ['Log an activity', 'Log activity'], ['Open quests', 'Quests'], ['Show quests', null], ['Open workout plan', 'Workout plan'], ['Show my workout plan', 'Workout plan'], ['Open workouts', 'Workout plan'], ['Open library', 'Library'], ['Go to library', 'Library'], ['Open settings', 'Settings'], ['Open life director', 'Life Director'], ['Show corona dial', 'Life Director']]) {
+    await reset(); r = await say(u);
+    if (label) ok('nav: "' + u + '" -> ' + label, r.intentId === 'navigation_system.open_section' && r.title === label, { i: r.intentId, t: r.title }); else ok('"' + u + '" reads the quests', r.intentId === 'rpg.view_quests');
+  }
+  await reset(); await say('Open library'); await p.waitForTimeout(500); ok('nav: the screen really changes', await p.evaluate(() => document.querySelector('.view.active').id === 'view-media'));
+  await reset(); await say('Open workout plan'); await p.waitForTimeout(500); ok('nav: workout plan really opens', await p.evaluate(() => document.querySelector('.view.active').id === 'view-plan'));
+
   // 8 registry + policy
   const reg = await p.evaluate(() => LifeMaxVoice.registry());
-  ok('registry: scheduling and every domain handler executable', ['life_director.create_activity','life_director.query_schedule','life_director.find_free_time','life_director.complete_activity','life_director.move_activity','life_director.cancel_activity','rpg.view_quests','rpg.query_stats','health_fitness.query_steps','nutrition.check_totals','virtual_pets.check_status','virtual_pets.perform_action','navigation_system.open_section'].every(i => (reg.find(c => c.intentId === i) || {}).status === 'EXECUTABLE'), reg.map(c => c.intentId + ':' + c.status));
+  ok('registry: scheduling and every domain handler executable', ['health_fitness.query_workouts','health_fitness.log_activity','life_director.create_activity','life_director.query_schedule','life_director.find_free_time','life_director.complete_activity','life_director.move_activity','life_director.cancel_activity','rpg.view_quests','rpg.query_stats','health_fitness.query_steps','nutrition.check_totals','virtual_pets.check_status','virtual_pets.perform_action','navigation_system.open_section'].every(i => (reg.find(c => c.intentId === i) || {}).status === 'EXECUTABLE'), reg.map(c => c.intentId + ':' + c.status));
   const native = fs.readFileSync(path.join(__dirname, '..', '..', 'android-wrapper', 'native', 'VoiceEnginePlugin.java'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   ok('offline policy: createSpeechRecognizer never called, on-device only', !/createSpeechRecognizer\s*\(/.test(native) && /createOnDeviceSpeechRecognizer\s*\(/.test(native) && /isOnDeviceRecognitionAvailable/.test(native) && !/EXTRA_PREFER_OFFLINE/.test(native));
   ok('no page errors', errs.length === 0, errs);

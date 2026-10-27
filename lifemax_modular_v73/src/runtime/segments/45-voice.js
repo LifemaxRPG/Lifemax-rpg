@@ -211,6 +211,8 @@ const LMV_CAPS=[
  {intentId:'life_director.cancel_activity',domain:'life_director',title:'Cancel an activity',exampleUtterance:'Cancel my workout today',evaluateStatus:function(){return lmvCapStatus(true)}},
  {intentId:'rpg.view_quests',domain:'rpg',title:'Quests',exampleUtterance:'What are my quests today',evaluateStatus:function(){return 'EXECUTABLE'}},
  {intentId:'rpg.query_stats',domain:'rpg',title:'Character, XP and level',exampleUtterance:'What level am I',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'health_fitness.query_workouts',domain:'health_fitness',title:'Workouts',exampleUtterance:'How many workouts did I do this week',evaluateStatus:function(){return 'EXECUTABLE'}},
+ {intentId:'health_fitness.log_activity',domain:'health_fitness',title:'Log what you did',exampleUtterance:'Log a 30 minute run',evaluateStatus:function(){return 'EXECUTABLE'}},
  {intentId:'health_fitness.query_steps',domain:'health_fitness',title:'Steps and activity',exampleUtterance:'How many steps do I have today',evaluateStatus:function(){return 'EXECUTABLE'}},
  {intentId:'nutrition.check_totals',domain:'nutrition',title:'Calories and macros',exampleUtterance:'How many calories have I had today',evaluateStatus:function(){return 'EXECUTABLE'}},
  {intentId:'virtual_pets.check_status',domain:'virtual_pets',title:'How is my cat',exampleUtterance:'How is my cat doing',evaluateStatus:function(){return 'EXECUTABLE'}},
@@ -251,7 +253,7 @@ function lmvMerge(frame,patch){
  Object.keys(patch).forEach(function(k){if(k==='intent'||patch[k]===undefined)return;frame.raw[k]=patch[k]});
 }
 function lmvLogLine(s){lmvLog.push(new Date().toLocaleTimeString()+'  '+s);if(lmvLog.length>60)lmvLog.shift()}
-function lmvSnapshot(){const f=lmvFrame;return f?{operationId:f.operationId,intentId:f.intentId,head:f.head||null,actions:(f.actions||[]).map(function(a){return a.label}),state:f.state,question:f.question,slot:f.slot,title:f.title,notices:f.notices.slice(),conflicts:f.conflicts.slice(),dup:f.dup,entityId:f.entityId,undo:f.undo,error:f.error,raw:f.raw}:{state:'IDLE'}}
+function lmvSnapshot(){const f=lmvFrame;return f?{act:f.act?{lines:f.act.lines.slice(),label:f.act.label}:null,operationId:f.operationId,intentId:f.intentId,head:f.head||null,actions:(f.actions||[]).map(function(a){return a.label}),state:f.state,question:f.question,slot:f.slot,title:f.title,notices:f.notices.slice(),conflicts:f.conflicts.slice(),dup:f.dup,entityId:f.entityId,undo:f.undo,error:f.error,raw:f.raw}:{state:'IDLE'}}
 /* advance a frame as far as it can go without the user */
 function lmvAdvance(f,ctx){
  const res=lmvFinalize(f.raw,ctx);
@@ -341,12 +343,14 @@ function lmvHandle(text,meta){
    lmvRender();return lmvSnapshot();
   }
  }
+ /* "what about yesterday?": the last question again, with a new day */
+ if(!active){const fu=lmvFollowUp(clean,ctx);if(fu){f=lmvFrame=lmvNewFrame();f.confidence=meta.confidence==null?1:meta.confidence;const r=lmvDomain(fu.cls,fu.text,f,ctx);lmvRender();return r||lmvSnapshot()}}
  /* what is this sentence FOR? A question or another domain never becomes a new activity. */
- const cls=lmvClassify(clean);
+ const cleanP=lmvPhon(clean),cls=lmvClassify(cleanP);
  if(cls.id!=='life_director.create_activity'&&cls.conf>=.78){
   if(active)f.state='CANCELLED';          /* barge-in: a new complete command replaces the half-finished one */
   f=lmvFrame=lmvNewFrame();f.confidence=meta.confidence==null?1:meta.confidence;
-  const r=lmvDomain(cls,clean,f,ctx);lmvRender();return r||lmvSnapshot();
+  const r=lmvDomain(cls,cleanP,f,ctx);lmvRender();return r||lmvSnapshot();
  }
  const fresh=!active;
  if(fresh){f=lmvFrame=lmvNewFrame();f.raw=null}
@@ -581,7 +585,7 @@ window.LifeMaxVoice=Object.freeze({
  setClock:function(o){lmvOverride=o?{now:o.now,tz:o.tz,workOn:o.workOn,sticky:true}:null},
  answer:lmvAnswer,confirm:lmvConfirm,cancel:lmvCancel,undo:lmvUndo,reset:lmvReset,snapshot:lmvSnapshot,
  registry:function(){return LMV_CAPS.map(function(c){return {intentId:c.intentId,domain:c.domain,title:c.title,status:c.evaluateStatus()}})},
- _t:{applyFlag:lmvApplyFlag,buildUI:lmvBuildUI,normalize:lmvNormalize,extract:lmvExtract,finalize:lmvFinalize,localToEpoch:lmvLocalToEpoch,journal:lmvJLoad,journalPut:lmvJPut,execute:function(op){return lmvFrame&&lmvFrame.operationId===op?lmvExecute(lmvFrame):null},fingerprint:lmvFingerprint,recover:lmvRecover,frame:function(){return lmvFrame},ctx:lmvCtx}
+ _t:{scope:function(t){return lmvScope(t,lmvCtx())},phon:function(t){return lmvPhon(t)},classify:function(t){return lmvClassify(lmvPhon(t))},applyFlag:lmvApplyFlag,buildUI:lmvBuildUI,normalize:lmvNormalize,extract:lmvExtract,finalize:lmvFinalize,localToEpoch:lmvLocalToEpoch,journal:lmvJLoad,journalPut:lmvJPut,execute:function(op){return lmvFrame&&lmvFrame.operationId===op?lmvExecute(lmvFrame):null},fingerprint:lmvFingerprint,recover:lmvRecover,frame:function(){return lmvFrame},ctx:lmvCtx}
 });
 (function lmvBoot2(){
  setTimeout(function(){try{lmvRecover();lmvApplyFlag();lmvBridgeInit();lmvSettingsRender()}catch(e){console.warn('[voice]',e)}},2500);

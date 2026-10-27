@@ -1934,7 +1934,7 @@
   },
   {
    "file": "src/runtime/segments/45-voice.js",
-   "bytes": 50219,
+   "bytes": 50523,
    "statement_count": 120,
    "tags": [
     "voice"
@@ -1954,7 +1954,7 @@
   },
   {
    "file": "src/runtime/segments/46-voice-nlu.js",
-   "bytes": 30481,
+   "bytes": 40570,
    "statement_count": 39,
    "tags": [
     "voice"
@@ -2059,7 +2059,7 @@
   },
   {
    "file": "src/runtime/segments/48-journal-lock.js",
-   "bytes": 5843,
+   "bytes": 5883,
    "statement_count": 15,
    "tags": [
     "journal",
@@ -2081,6 +2081,36 @@
     "jlRelock",
     "jlOnNavigate",
     "jlSettingsRender"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/49-voice-time.js",
+   "bytes": 15092,
+   "statement_count": 20,
+   "tags": [
+    "voice"
+   ],
+   "symbols": [
+    "LMV_DICT",
+    "lmvLev",
+    "lmvPhon",
+    "LMV_WORDN",
+    "lmvWeekStart",
+    "lmvNice",
+    "lmvDayScope",
+    "lmvScope",
+    "lmvDays",
+    "lmvActsOn",
+    "lmvActsIn",
+    "lmvXpOf",
+    "lmvLastQ",
+    "LMV_FOLLOW",
+    "lmvFollowUp",
+    "LMV_TYPES",
+    "lmvActType",
+    "lmvLogXp",
+    "lmvLogNow",
+    "lmvHLog"
    ]
   }
  ]

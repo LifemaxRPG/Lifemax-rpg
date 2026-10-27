@@ -14,12 +14,13 @@ const LMV_B={
  free:/\b(free|open|available|empty)\b/,
  pets:/\b(cats?|kitt(?:y|ies|ens?)|pets?|furballs?)\b/,
  petAct:/\b(feed|pet|cuddle|stroke|play with|play|brush|visit|check on|check in on)\b/,
- steps:/\b(steps?|step count|walked|walking|active minutes|workouts?|exercise|fitness|activity today)\b/,
+ steps:/\b(steps?|step count|walked|walking|active minutes|fitness|activity today)\b/,
+ workouts:/\b(workouts?|exercise|exercised|work(?:ed)? out|trained|training)\b/,
  food:/\b(calories|calorie|kcal|macros?|protein|carbs?|carbohydrates?|fat|fats|water|hydration|nutrition|meals?|eaten|ate|food)\b/,
  done:/\b(complete|completed|finish|finished|done with|i did|just did|check off|checked off|mark|tick off|cross off|crossed off|i just finished|i've finished|ive finished|did my)\b/,
  move:/\b(move|reschedule|push|push back|bump|shift|postpone|delay|change the time of|bring forward)\b/,
  cancelAct:/\b(cancel|delete|remove|clear|take off|drop|skip|scrap)\b/,
- nav:/^ (?:open|go to|take me to|switch to|bring up|launch|navigate to|go back to|back to|show me the|pull up|jump to) /,
+ nav:/^ (?:open|go to|take me to|switch to|bring up|launch|navigate to|go back to|back to|show me the|pull up|jump to|go) /,
  abort:/^(?:cancel|never ?mind|forget it|forget that|stop|nothing|abort|scratch that|no thanks|leave it|drop it|exit)$/,
  any:/^(?:any ?time|anytime|whenever(?: i'?m free| is fine| works| you want| you like| is good)?|you pick|you choose|up to you|doesn'?t matter|does not matter|don'?t care|dont care|no preference|open|any|surprise me|(?:the )?(?:first|next) (?:free|open|available)(?: slot| time| window)?|any time works|anything|either)$/,
  now:/^(?:now|right now|starting now|immediately|asap|as soon as possible|right away|this minute)$/,
@@ -32,7 +33,7 @@ const LMV_SECTIONS=[
  {re:/\b(character|profile|rpg|stats|level)\b/,id:'character',label:'Character'},
  {re:/\b(quests?|missions?|dailies)\b/,id:'quests',label:'Quests'},
  {re:/\b(log activity|log|add activity)\b/,id:'log',label:'Log activity'},
- {re:/\b(workout plan|plan|training plan)\b/,id:'plan',label:'Workout plan'},
+ {re:/\b(workout plan|plan|training plan|workouts?)\b/,id:'plan',label:'Workout plan'},
  {re:/\b(library|media|books|journal|history)\b/,id:'media',label:'Library'},
  {re:/\b(recipes?|cookbook)\b/,id:'recipes',label:'Recipes'},
  {re:/\b(food|meals?|nutrition|macros|calories)\b/,id:'meals',label:'Food'},
@@ -60,6 +61,18 @@ function lmvClassify(text){
   const rest=s.replace(LMV_B.nav,' ');
   for(let i=0;i<LMV_SECTIONS.length;i++)if(LMV_SECTIONS[i].re.test(rest))return out('navigation_system.open_section',.92,{section:LMV_SECTIONS[i]});
  }
+ /* screens named after show/view with no open verb ("show my character"), and "log an activity" as the screen */
+ const bareNav=/^ (?:show|show me|view|display|go|open) (?:my |the |a |an )?(character|workout plan|library|settings|overview|dashboard|log activity|activity|life director|corona dial|corona|cat room|journal|recipes)(?: screen| page| tab)? ?\??$/.exec(s);
+ const nounNav=/^ (character|overview|dashboard|workout plan|library|settings|quests|life director|corona dial|cat room) (?:screen|page|tab) ?\??$/.exec(s);
+ if(nounNav){for(let i=0;i<LMV_SECTIONS.length;i++)if(LMV_SECTIONS[i].re.test(nounNav[1]))return out('navigation_system.open_section',.9,{section:LMV_SECTIONS[i]})}
+ if(bareNav){const key=bareNav[1]==='activity'?'log activity':bareNav[1];for(let i=0;i<LMV_SECTIONS.length;i++)if(LMV_SECTIONS[i].re.test(key))return out('navigation_system.open_section',.9,{section:LMV_SECTIONS[i]})}
+ if(/^ (?:(?:can|could|would|will) you )?(?:please )?(?:log|add|record) (?:an? |my )?activity ?\??$/.test(s)){for(let i=0;i<LMV_SECTIONS.length;i++)if(LMV_SECTIONS[i].id==='log')return out('navigation_system.open_section',.9,{section:LMV_SECTIONS[i]})}
+ /* logging something that already happened: "log a 30 minute run", "I did 20 minutes of yoga yesterday" */
+ const logVerb=/^ (?:(?:can|could|would|will) you )?(?:please )?(?:log|record|track|add (?:a |an |my )?(?:activity|workout|session|run|walk))\b/.test(s);
+ const didVerb=/\bi (?:just |also )?(?:did|ran|walked|jogged|lifted|studied|worked out|exercised|trained|practiced|meditated|stretched|swam|cycled|biked|hiked|read|cooked|cleaned)\b/.test(s);
+ const hasDur=/\b\d+(?:\.\d+)?\s*(?:minutes?|mins?|hours?|hrs?)\b/.test(s)||/\b(?:an|a|half an|one) hour\b/.test(s);
+ const stepsLog=/\b(?:i|ive|i've) (?:just |also )?(?:walked|took|did|got|hit) \d[\d ,.]*k? steps\b|^ (?:log|record|add) \d[\d ,.]*k? steps\b/.test(s);
+ if(!q&&(logVerb||stepsLog||(didVerb&&hasDur)))return out('health_fitness.log_activity',.9);
  if(cmd&&!(has('move')||has('cancelAct')||has('done')))return out('life_director.create_activity',.9);
  /* things you do to an existing activity */
  if(!q||/^ (?:can|could|would|will) you /.test(s0)){
@@ -75,9 +88,20 @@ function lmvClassify(text){
  }
  /* quests, character, steps, food */
  if(has('quest')&&(q||!has('createVerb')))return out('rpg.view_quests',q?.93:.8,{left:/\b(left|remaining|to do|outstanding|undone|unfinished)\b/.test(s)});
+ if(/^ (?:what|which)\b.*\b(?:did i (?:do|log|complete|finish|get done)|have i (?:done|logged|completed)|activities (?:did i|have i)|things did i)\b/.test(s)||/^ (?:what|which) activities\b.*\b(?:logged|did|done)\b/.test(s))return out('life_director.query_schedule',.9,{history:true});
+ if(has('workouts')&&q&&!has('steps'))return out('health_fitness.query_workouts',.9);
  if(has('steps')&&(q||/^ (?:log|record|track)\b/.test(s))&&!/\blog\b/.test(s))return out('health_fitness.query_steps',.9);
- if(has('food')&&q&&!has('sched'))return out('nutrition.check_totals',.9,{water:/\b(water|hydration)\b/.test(s)});
- if(has('stats')&&q&&!has('sched')&&!has('quest'))return out('rpg.query_stats',.9,{streak:/\bstreaks?\b/.test(s),level:/\blevel\b/.test(s)});
+ if(has('food')&&q&&!has('sched'))return out('nutrition.check_totals',.9,{water:/\b(water|hydration)\b/.test(s),macro:/\bprotein\b/.test(s)?'protein':/\bcarbs?\b|\bcarbohydrates?\b/.test(s)?'carbs':/\bfats?\b/.test(s)&&!/\bfat(?:igue)\b/.test(s)?'fat':''});
+ if(has('stats')&&q&&!has('sched')&&!has('quest')){
+  let metric='';const lvm=/\b(?:level|lv)\s*(\d+)\b/.exec(s);
+  if(/\b(until|till|to reach|to get to|before)\b.*\b(level|lv)\b|\blevel up\b|\bnext level\b|\bhow close\b|\bhow far\b.*\b(level|lv)\b/.test(s))metric='toLevel';
+  else if(/\bstreaks?\b/.test(s))metric='streak';
+  else if(/\bachievements?\b/.test(s))metric='achievements';
+  else if(/\b(rank|title)\b/.test(s))metric='title';
+  else if(/\b(what|which) (?:level|lv)\b|\bmy level\b|\bwhat's my level\b/.test(s))metric='level';
+  else if(/\bxp\b/.test(s)&&(/\b(earn|earned|get|got|gain|gained|make|made|did i)\b/.test(s)||/\b(today|yesterday|this week|last week|this month|ago|last night)\b/.test(s)))metric='xp';
+  return out('rpg.query_stats',.9,{metric:metric,targetLevel:lvm?+lvm[1]:null,streak:metric==='streak',level:metric==='level'});
+ }
  /* schedule: free time, then the plain schedule question */
  if(q&&(has('free')&&(/\b(when|am i|do i have|any)\b/.test(s)||has('sched')||/\b(time|slot|window|gap)\b/.test(s))&&!/\bquests?\b/.test(s)))return out('life_director.find_free_time',.88);
  if(q&&(has('sched')||/\b(today|tomorrow|tonight|this (?:morning|afternoon|evening)|on monday|on tuesday|on wednesday|on thursday|on friday|on saturday|on sunday|this week)\b/.test(s)&&/\b(what|anything|do i have|am i)\b/.test(s)))return out('life_director.query_schedule',.9);
@@ -189,22 +213,27 @@ function lmvDatesFor(text,ctx){const e=lmvExtract(text,ctx,null),t=lmvToday(ctx)
 /* ===== handlers for each domain ===== */
 function lmvDomain(cls,text,f,ctx){
  const id=cls.id;f.intentId=id;f.transcript=text;
+ const scope=cls.scope||lmvScope(text,ctx,!/^life_director\.(query_schedule|find)/.test(id)||!!cls.history);cls.scope=scope;cls.text=cls.text||text;
  try{
-  if(id==='rpg.view_quests')return lmvHQuests(f,cls);
-  if(id==='rpg.query_stats')return lmvHStats(f,cls);
-  if(id==='life_director.query_schedule')return lmvHSchedule(f,text,ctx);
-  if(id==='life_director.find_free_time')return lmvHFree(f,text,ctx);
-  if(id==='virtual_pets.check_status')return lmvHPetStatus(f,cls);
-  if(id==='virtual_pets.perform_action')return lmvHPetAct(f,cls);
-  if(id==='health_fitness.query_steps')return lmvHSteps(f);
-  if(id==='nutrition.check_totals')return lmvHFood(f,cls);
-  if(id==='navigation_system.open_section'){lmvGo(cls.section);return lmvLines(f,'Opening',cls.section.label,['Opening '+cls.section.label+'.'],[])}
-  if(id==='life_director.complete_activity')return lmvHComplete(f,text,ctx);
-  if(id==='life_director.move_activity')return lmvHMove(f,text,ctx);
-  if(id==='life_director.cancel_activity')return lmvHCancel(f,text,ctx);
-  if(id==='unknown_query')return lmvLines(f,'Voice','I did not catch that',['I can schedule things, read your schedule and free time, check quests, XP, your cats, steps and food, complete, move or cancel an activity, and open any screen.','Try “what are my quests today” or “open the cat room”.'],[]);
+  let r=null;
+  if(id==='rpg.view_quests')r=lmvHQuests(f,cls);
+  else if(id==='rpg.query_stats')r=lmvHStats(f,cls,scope,ctx);
+  else if(id==='life_director.query_schedule')r=lmvHSchedule(f,text,ctx,scope,cls);
+  else if(id==='life_director.find_free_time')r=lmvHFree(f,text,ctx,scope);
+  else if(id==='virtual_pets.check_status')r=lmvHPetStatus(f,cls);
+  else if(id==='virtual_pets.perform_action')r=lmvHPetAct(f,cls);
+  else if(id==='health_fitness.query_steps')r=lmvHSteps(f,scope,ctx);
+  else if(id==='health_fitness.query_workouts')r=lmvHWorkouts(f,scope,ctx);
+  else if(id==='health_fitness.log_activity')return lmvHLog(f,text,ctx,scope);
+  else if(id==='nutrition.check_totals')r=lmvHFood(f,cls,scope,ctx);
+  else if(id==='navigation_system.open_section'){lmvGo(cls.section);return lmvLines(f,'Opening',cls.section.label,['Opening '+cls.section.label+'.'],[])}
+  else if(id==='life_director.complete_activity')return lmvHComplete(f,text,ctx);
+  else if(id==='life_director.move_activity')return lmvHMove(f,text,ctx);
+  else if(id==='life_director.cancel_activity')return lmvHCancel(f,text,ctx);
+  else if(id==='unknown_query')return lmvLines(f,'Voice','I did not catch that',['I can schedule things, log what you did, read your schedule, free time, steps, workouts, XP, quests, food and cats, move or cancel an activity, and open any screen.','Try “how many steps did I walk yesterday” or “open the cat room”.'],[]);
+  if(r&&/^(rpg|health_fitness|nutrition|life_director\.(query|find))/.test(id))lmvLastQ={id:id,cls:Object.assign({},cls),text:text,scope:scope,ts:Date.now()};
+  return r;
  }catch(e){console.warn('[voice domain]',e);return lmvLines(f,'Voice','Something went wrong',['I could not do that: '+(e&&e.message||e)],[])}
- return null;
 }
 function lmvHQuests(f,cls){
  if(typeof state==='undefined'||!Array.isArray(state.quests))return lmvLines(f,'Quests','Quests are not available',[],[]);
@@ -214,34 +243,68 @@ function lmvHQuests(f,cls){
  let all=day.concat(week).filter(function(r){return !r.locked});
  const total=all.length,left=all.filter(function(r){return !r.done});
  if(cls.left)all=left;
+ const fin=Object.keys(state.questDone||{}).length;
  const rows=all.slice(0,10).map(function(r,i){return (i+1)+'. '+r.q.name+(r.done?' (done)':'')+(r.q.cadence==='weekly'?' (weekly)':'')});
  const head=cls.left?(left.length?left.length+' quest'+(left.length===1?'':'s')+' left':'Every quest is done'):(total?total+' active quest'+(total===1?'':'s')+' today · '+left.length+' to go':'No active quests');
+ if(rows.length&&cls.finished!==false)rows.push('Quests finished all time: '+fin);
  return lmvLines(f,'Quests',head,rows.length?rows:['Nothing here yet.'],[lmvOpenChip('quests','Quests')]);
 }
-function lmvHStats(f,cls){
- const lv=characterLevel(),tot=typeof totalXP==='function'?totalXP():0;
- let today=0;try{today=todayActivities().reduce(function(s,a){return s+a.xp},0)}catch(e){}
+function lmvHStats(f,cls,scope,ctx){
+ const lv=characterLevel(),tot=typeof totalXP==='function'?totalXP():0,today=lmvToday(ctx);
  let st=0;try{st=streak()}catch(e){}
- const ach=Object.keys(state.questDone||{}).length;
- const lines=['Level '+lv.level+' · '+Math.round(lv.into)+' / '+Math.round(lv.needed)+' XP to level '+(lv.level+1),'Total XP: '+Math.round(tot).toLocaleString()+' · today '+today,'Streak: '+st+' day'+(st===1?'':'s')+' · achievements '+ach];
+ const ach=Object.keys(state.questDone||{}).length,tx=cls.text||'',mt=cls.metric||'';
+ const title=(function(){try{return titleFor(lv.level)}catch(e){return ''}})();
+ const done=scope.explicit?lmvXpOf(lmvActsIn(scope)):null;
+ const nice=lmvNice;
+ /* xp needed for a level */
+ if(mt==='toLevel'){
+  let target=cls.targetLevel||lv.level+1;if(target<=lv.level)target=lv.level+1;
+  let need=Math.max(0,Math.round(lv.needed-lv.into));
+  for(let l=lv.level+1;l<target;l++){try{need+=charXpForLevel(l)}catch(e){}}
+  return lmvLines(f,'Character',need.toLocaleString()+' XP to level '+target,['You are level '+lv.level+' ('+Math.round(lv.into)+' / '+Math.round(lv.needed)+' XP into it)','Total XP: '+Math.round(tot).toLocaleString()],[lmvOpenChip('character','Character')]);
+ }
+ if(mt==='level')return lmvLines(f,'Character','You are level '+lv.level,['Title: '+title,Math.round(lv.into)+' / '+Math.round(lv.needed)+' XP to level '+(lv.level+1),'Total XP: '+Math.round(tot).toLocaleString()],[lmvOpenChip('character','Character')]);
+ if(mt==='title')return lmvLines(f,'Character','Level '+lv.level+' '+title,['Total XP: '+Math.round(tot).toLocaleString()],[lmvOpenChip('character','Character')]);
+ if(mt==='streak')return lmvLines(f,'Character',st+' day streak',[st?'Keep it going with one small thing today.':'Log anything today to start one.'],[lmvOpenChip('dashboard','Overview')]);
+ if(mt==='achievements')return lmvLines(f,'Character',ach+' achievement'+(ach===1?'':'s')+' unlocked',['Quests finished all time: '+ach],[lmvOpenChip('quests','Quests')]);
+ if(mt==='xp'&&scope.kind!=='all'){
+  const list=lmvActsIn(scope),x=lmvXpOf(list),lines=[];
+  if(scope.kind==='day'&&scope.date!==today)lines.push(scope.full);
+  if(scope.kind==='range'){const d=lmvDays(scope).length;lines.push('Average '+Math.round(x/Math.max(1,d))+' XP a day over '+d+' days')}
+  lines.push(list.length+' logged activit'+(list.length===1?'y':'ies'));
+  if(scope.kind==='day'&&scope.date===today){lines.push('Total XP: '+Math.round(tot).toLocaleString()+' · level '+lv.level)}
+  return lmvLines(f,'Character',x.toLocaleString()+' XP '+scope.label,lines,[lmvOpenChip('character','Character')]);
+ }
+ let todayXp=0;try{todayXp=lmvXpOf(lmvActsOn(today))}catch(e){}
+ const lines=['Level '+lv.level+' · '+title+' · '+Math.round(lv.into)+' / '+Math.round(lv.needed)+' XP to level '+(lv.level+1),'Total XP: '+Math.round(tot).toLocaleString()+' · today '+todayXp,'Streak: '+st+' day'+(st===1?'':'s')+' · achievements '+ach];
  try{const top=ATTRS.slice().sort(function(a,b){return attrXP(b.id)-attrXP(a.id)})[0];if(top&&attrXP(top.id)>0)lines.push('Strongest: '+top.name+' ('+Math.round(attrXP(top.id))+' XP)')}catch(e){}
- const head=cls.level?'You are level '+lv.level:cls.streak?st+' day streak':Math.round(tot).toLocaleString()+' XP · level '+lv.level;
- return lmvLines(f,'Character',head,lines,[lmvOpenChip('character','Character')]);
+ return lmvLines(f,'Character',Math.round(tot).toLocaleString()+' XP · level '+lv.level,lines,[lmvOpenChip('character','Character')]);
 }
-function lmvHSchedule(f,text,ctx){
- const e=lmvExtract(text,ctx,null),today=lmvToday(ctx),date=e.date||today,a=lmvLD.api();
- let items=null;try{items=a&&a.ready()?a.dayItems(date):null}catch(x){}
+function lmvHSchedule(f,text,ctx,scope,cls){
+ const today=lmvToday(ctx),a=lmvLD.api();
+ const history=(cls&&cls.history)||(scope.kind==='day'&&scope.date<today)||scope.kind==='range'||scope.kind==='all';
+ if(history){
+  /* what was done: the activity log, never today's plan */
+  if(scope.isFuture)return lmvLines(f,'Schedule',scope.label+' has not happened yet',['Ask “what is on my schedule '+scope.label+'” to see the plan.'],[]);
+  const list=lmvActsIn(scope).filter(function(x){return x.type!=='coach'}).sort(function(a,b){return new Date(a.date)-new Date(b.date)});
+  const head=list.length?'You logged '+list.length+' thing'+(list.length===1?'':'s')+' '+scope.label+' · '+lmvXpOf(list)+' XP':'Nothing logged '+scope.label;
+  const lines=[];if(scope.kind==='day'&&scope.date!==today)lines.push(scope.full);
+  list.slice(0,12).forEach(function(x){lines.push((scope.kind==='day'?'':lmvNice(activityDate(x))+'  ')+lmvClock(new Date(x.date).getTime(),ctx.tz)+'  '+x.name+' (+'+(x.xp||0)+')')});
+  return lmvLines(f,'Your log',head,lines.length?lines:['Your Journal has nothing for that.'],[lmvOpenChip('history','Journal')]);
+ }
+ const date=scope.date;let items=null;try{items=a&&a.ready()?a.dayItems(date):null}catch(x){}
  if(items===null)return lmvLines(f,'Schedule','Life Director is not set up yet',['Open Life Director to set your sleep and work hours first.'],[lmvOpenChip('life-director','Life Director',true)]);
- const w=e.daypart?lmvDaypartWin(e.daypart):null;
+ const w=scope.dayPart?lmvDaypartWin(scope.dayPart):null;
  if(w)items=items.filter(function(it){const p=lmvParts(it.startEpoch*1000,ctx.tz),m=p.h*60+p.mi;return m>=w[0]&&m<w[1]});
- const label=(date===today?'Today':date===lmvAddDays(today,1)?'Tomorrow':lmvNiceDate(date))+(e.daypart&&e.daypart!=='night'?' '+(e.daypart==='evening'||e.daypart==='tonight'?'evening':e.daypart):'');
+ const label=(date===today?'Today':date===lmvAddDays(today,1)?'Tomorrow':lmvNice(date))+(scope.dayPart&&scope.dayPart!=='night'?' '+(scope.dayPart==='evening'?'evening':scope.dayPart):'');
  const lines=items.slice(0,10).map(function(it){return lmvClock(it.startEpoch*1000,ctx.tz)+'  '+it.title});
  const head=items.length?label+': '+items.length+' thing'+(items.length===1?'':'s')+' planned':label+': nothing planned';
  return lmvLines(f,'Your schedule',head,lines.length?lines:['Your schedule is clear.'],[lmvOpenChip('life-director','Life Director',true)]);
 }
-function lmvHFree(f,text,ctx){
- const e=lmvExtract(text,ctx,null),today=lmvToday(ctx),date=e.date||today,busy=lmvBusy(date,ctx);
+function lmvHFree(f,text,ctx,scope){
+ const e={daypart:scope&&scope.dayPart},today=lmvToday(ctx),date=(scope&&scope.date)||today,busy=lmvBusy(date,ctx);
  if(!busy)return lmvLines(f,'Schedule','Life Director is not set up yet',[],[lmvOpenChip('life-director','Life Director',true)]);
+ if(date<today)return lmvLines(f,'Free time','That day is over',['I can only look for open time today or later.'],[]);
  const w=e.daypart?lmvDaypartWin(e.daypart):[7*60,22*60],gaps=[];
  let from=Math.max(w[0],date===today?lmvNowMin(ctx,15):0);
  while(from<w[1]&&gaps.length<5){
@@ -284,28 +347,68 @@ function lmvHPetAct(f,cls){
  lmvGo({id:'pet'});
  return lmvLines(f,'Cat','Opening the cat room',[p.name+' is waiting.'],[]);
 }
-function lmvHSteps(f){
+function lmvStepMap(){
  let H=null;try{H=lmaHealthCfg()}catch(e){}
- const lines=[];let head='Steps';
- if(H&&H.on&&H.today&&H.today.date===getToday()){
-  const goal=H.goal||8000;head=H.today.count.toLocaleString()+' steps today';
-  lines.push(Math.round(H.today.count/goal*100)+'% of your '+goal.toLocaleString()+' goal');
- }else head=H&&H.on?'No step count yet today':'Step counting is not connected';
- try{const acts=todayActivities();lines.push(acts.length+' logged activit'+(acts.length===1?'y':'ies')+' today · '+acts.reduce(function(s,a){return s+a.xp},0)+' XP')}catch(e){}
- if(!(H&&H.on))lines.push('Connect Samsung Health on the Overview to track steps.');
+ const map={},S=(H&&H.snap)||{};(S.steps30||S.steps||[]).forEach(function(d){map[d.date]=d.count});
+ if(H&&H.today&&H.today.date)map[H.today.date]=H.today.count;
+ return {H:H,map:map,first:Object.keys(map).sort()[0]||null};
+}
+function lmvHSteps(f,scope,ctx){
+ const sm=lmvStepMap(),H=sm.H,today=lmvToday(ctx),days=lmvDays(scope);
+ const acts=lmvActsIn(scope),xp=lmvXpOf(acts),lines=[];
+ const goal=(H&&H.goal)||8000;
+ if(!(H&&H.on)){
+  lines.push(acts.length+' logged activit'+(acts.length===1?'y':'ies')+' '+scope.label+' · '+xp+' XP','Connect Samsung Health on the Overview to count steps.');
+  return lmvLines(f,'Activity','Step counting is not connected',lines,[lmvOpenChip('dashboard','Overview')]);
+ }
+ let head;
+ if(scope.kind==='day'){
+  const known=sm.map[scope.date]!=null,cnt=known?sm.map[scope.date]:0;
+  if(!known&&sm.first&&scope.date<sm.first)return lmvLines(f,'Activity','I do not have steps that far back',['Steps are kept for the last 30 days.'],[lmvOpenChip('dashboard','Overview')]);
+  if(scope.isFuture)return lmvLines(f,'Activity','That day has not happened yet',[],[]);
+  head=cnt.toLocaleString()+' step'+(cnt===1?'':'s')+' '+scope.label;
+  if(scope.date!==today)lines.push(scope.full);
+  lines.push(Math.round(cnt/goal*100)+'% of your '+goal.toLocaleString()+' goal');
+  lines.push(acts.length+' logged activit'+(acts.length===1?'y':'ies')+' '+scope.label+' · '+xp+' XP');
+  if(scope.date!==today&&sm.map[today]!=null)lines.push('Today so far: '+sm.map[today].toLocaleString()+' steps');
+ }else{
+  const have=days.filter(function(d){return sm.map[d]!=null}),tot=have.reduce(function(a,d){return a+sm.map[d]},0),span=scope.kind==='all'?have.length:days.length;
+  head=tot.toLocaleString()+' steps '+scope.label;
+  lines.push('Average '+(span?Math.round(tot/span).toLocaleString():0)+' a day over '+span+' day'+(span===1?'':'s'));
+  const best=have.slice().sort(function(a,b){return sm.map[b]-sm.map[a]})[0];if(best)lines.push('Best day: '+lmvNice(best)+' ('+sm.map[best].toLocaleString()+')');
+  lines.push(acts.length+' logged activit'+(acts.length===1?'y':'ies')+' · '+xp+' XP');
+ }
  return lmvLines(f,'Activity',head,lines,[lmvOpenChip('dashboard','Overview')]);
 }
-function lmvHFood(f,cls){
+function lmvHWorkouts(f,scope,ctx){
+ const isEx=function(a){try{if(ecoPassive(a)||a.type==='coach'||a.type==='quest')return false}catch(e){}return a.type==='strength'||a.type==='running'||a.type==='plan'||a.primary==='physique'||a.primary==='endurance'};
+ const ex=lmvActsIn(scope).filter(isEx),mins=ex.reduce(function(s,a){return s+(Number(a.duration)||0)},0);
+ if(scope.isFuture)return lmvLines(f,'Workouts','That day has not happened yet',[],[]);
+ const head=ex.length?ex.length+' workout'+(ex.length===1?'':'s')+' '+scope.label+' · '+lmvDurText(mins):'No workouts logged '+scope.label;
+ const lines=[];if(scope.kind==='day'&&scope.date!==lmvToday(ctx))lines.push(scope.full);
+ ex.slice(0,8).forEach(function(a){lines.push((scope.kind==='day'?'':lmvNice(activityDate(a))+'  ')+lmvClock(new Date(a.date).getTime(),ctx.tz)+'  '+a.name+(a.duration?' · '+a.duration+' min':''))});
+ if(!ex.length)lines.push('Nothing under strength, cardio or the workout plan.');
+ return lmvLines(f,'Workouts',head,lines,[lmvOpenChip('plan','Workout plan'),lmvOpenChip('log','Log activity')]);
+}
+function lmvHFood(f,cls,scope,ctx){
  if(cls.water)return lmvLines(f,'Nutrition','Water is not tracked yet',['I can read calories and macros from your food log.'],[lmvOpenChip('meals','Food')]);
- let entries=[];try{entries=dayFoodLog(getToday())}catch(e){}
+ if(scope.isFuture)return lmvLines(f,'Nutrition','That day has not happened yet',[],[]);
+ const days=scope.kind==='all'?[]:lmvDays(scope);let entries=[];
+ try{mealsEnsure();entries=scope.kind==='all'?state.foodLog.slice():state.foodLog.filter(function(x){return x.date>=scope.start&&x.date<=scope.end})}catch(e){}
  const t=entries.reduce(function(a,e){return {k:a.k+(Number(e.kcal)||0),p:a.p+(Number(e.p)||0),c:a.c+(Number(e.c)||0),f:a.f+(Number(e.f)||0)}},{k:0,p:0,c:0,f:0});
  const goal=Math.max(0,Number(state.mealsMeta&&state.mealsMeta.calGoal)||0);
- const head=Math.round(t.k).toLocaleString()+' kcal today'+(goal?' of '+goal.toLocaleString():'');
- const lines=['Protein '+Math.round(t.p)+' g · carbs '+Math.round(t.c)+' g · fat '+Math.round(t.f)+' g',entries.length+' item'+(entries.length===1?'':'s')+' logged'];
- if(goal)lines.push(t.k>goal?Math.round(t.k-goal)+' kcal over your goal':Math.round(goal-t.k)+' kcal left');
+ const span=Math.max(1,scope.kind==='day'?1:days.length||1);
+ const only=cls.macro||'';
+ let head;
+ if(only==='protein')head=Math.round(t.p)+' g protein '+scope.label;else if(only==='carbs')head=Math.round(t.c)+' g carbs '+scope.label;else if(only==='fat')head=Math.round(t.f)+' g fat '+scope.label;
+ else head=Math.round(t.k).toLocaleString()+' kcal '+scope.label+(goal&&scope.kind==='day'?' of '+goal.toLocaleString():'');
+ const lines=[];if(scope.kind==='day'&&scope.date!==lmvToday(ctx))lines.push(scope.full);
+ lines.push('Protein '+Math.round(t.p)+' g · carbs '+Math.round(t.c)+' g · fat '+Math.round(t.f)+' g');
+ lines.push(entries.length+' item'+(entries.length===1?'':'s')+' logged'+(entries.length?'':' '+scope.label));
+ if(scope.kind!=='day')lines.push('Average '+Math.round(t.k/span).toLocaleString()+' kcal a day');
+ else if(goal&&entries.length)lines.push(t.k>goal?Math.round(t.k-goal)+' kcal over your goal':Math.round(goal-t.k)+' kcal left');
  return lmvLines(f,'Nutrition',head,lines,[lmvOpenChip('meals','Food')]);
 }
-
 /* ===== acting on an existing activity: complete (now), move / cancel (preview, then confirm) ===== */
 function lmvPick(f,r,what){
  if(r.none)return lmvLines(f,'Voice','I could not find that activity',['Nothing matching on '+(what||'those days')+'. Say its name as it appears on your schedule.'],[lmvOpenChip('life-director','Life Director',true)]);
