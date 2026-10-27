@@ -15,6 +15,8 @@ jobs:
       BRANCH_OK: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -61,6 +63,25 @@ jobs:
           npx cap sync android
           echo "--- launcher resources ---"; find android/app/src/main/res -name 'ic_launcher*' | sort
           echo "--- styles.xml ---"; cat android/app/src/main/res/values/styles.xml
+
+      - name: Guard - native changes must bump NativeApi
+        run: |
+          # If the Android side changed since the last published build, the web app must not be offered as a quiet update to older APKs:
+          # NativeApi.VALUE has to go up so the update check sends phones to the new APK instead.
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/latest"
+          if curl -fsSL "$BASE/version.json" -o prev.json; then
+            PREV_SHA=$(python3 -c "import json;print(json.load(open('prev.json')).get('sha',''))")
+            PREV_API=$(python3 -c "import json;print(json.load(open('prev.json')).get('nativeApi',0))")
+            NOW_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
+            if [ -n "$PREV_SHA" ] && git cat-file -e "$PREV_SHA^{commit}" 2>/dev/null; then
+              CHANGED=$(git diff --name-only "$PREV_SHA" HEAD -- android-wrapper/native android-wrapper/patch_manifest.py android-wrapper/patch_gradle.py android-wrapper/patch_project.py android-wrapper/patch_styles.py | grep -v 'NativeApi.java' || true)
+              echo "previous build $PREV_SHA had nativeApi $PREV_API; now $NOW_API"
+              if [ -n "$CHANGED" ] && [ "$NOW_API" -le "$PREV_API" ]; then
+                echo "::error::The Android side changed but NativeApi.VALUE was not raised (still $NOW_API). Raise it in android-wrapper/native/NativeApi.java so phones are offered the new APK. Changed: $CHANGED"
+                exit 1
+              fi
+            fi
+          fi
 
       - name: Build debug APK
         working-directory: android-wrapper/android

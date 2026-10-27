@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v144 — haptics update now asks for the APK
+
+The v143 haptic strength needs the new Android pieces (Vibrate permission, two NavHaptics methods), so `NativeApi.VALUE` went from 1 to 2. A phone on an older APK is now offered the new APK by the update check instead of a quiet web update (the web update only goes to phones whose APK is new enough). To keep this from being forgotten: the build now has a guard step that compares the Android files (`android-wrapper/native`, the four `patch_*.py` scripts) with the last published build and **fails** if they changed while `NativeApi.VALUE` was not raised.
+
 ## v143 — haptic strength
 
 Settings has a new **Haptics** card: a switch, four strengths (Light, Normal, Strong, Max), and "Try" buttons (tap, double tap, XP gain, level up). Every buzz in the app goes through it.
