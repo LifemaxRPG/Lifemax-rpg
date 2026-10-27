@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v156 — the Fate Deck (quests, tarot cards)
+- The three Daily Hand cards are now tarot-style cards in a swipeable row: a numeral, a medallion with the attribute icon and difficulty pips, the quest, and a round hold-to-claim seal that fills as you hold. 3-star cards get a gold frame; fulfilled cards get a stamp.
+- First visit each day: a face-down deck riffle-shuffles, then each real card flies from the deck to its place (FLIP animation, Web Animations API, GPU-composited). Cards deal face-down; tap one to turn it over. A redrawn card comes back face-down. "Shuffle again" replays it. Reduced-motion skips the show.
+- Next (phase 2): a WebGL foil shader for 3-star cards and a claim burst, with a Settings switch and a 2D fallback.
+- Tests: `tests/hand.test.js` (27 checks).
+
 ## v155 — Settings in categories
 - A pill row under the Settings title switches between Look & feel, Voice & journal, Phone & sync, Character & game, and Data & advanced. Only that group's cards show; the last choice is remembered. Cards are grouped by their heading in `50-settings-tabs.js`, so new cards need adding to a group there (unlisted cards stay visible everywhere).
 

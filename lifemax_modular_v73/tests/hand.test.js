@@ -41,7 +41,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('rest day never draws a hard (tier 3) card', rest === 0, rest);
   // hold to claim
   await ev(() => { state.restDays = {}; state.quests = state.quests.filter(x => !x.hand); const d = state.dailyDraw; const t = LifeMaxDailyHand.library.find(x => x.verify === 'self'); d.cards[2] = { tpl: t.id, id: 'dh_' + d.date + '_2_7', n: 7 }; LifeMaxDailyHand.ensure(); renderQuests() });
-  await ev(() => { navigate('quests'); document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()) }); await p.waitForTimeout(500); const btn = await p.$('#dailyHand .dh-claim[onpointerdown*="_2_7"]'); ok('self-reported card shows a hold-to-claim button', !!btn);
+  await ev(() => { state.dailyDraw.dealt = true; navigate('quests'); document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()) }); await p.waitForTimeout(500); await ev(() => { LifeMaxDailyHand.cards().forEach(q => dhReveal(q.slot)) }); await p.waitForTimeout(900); const btn = await p.$('#dailyHand .dh-claim[onpointerdown*="_2_7"]'); ok('self-reported card shows a hold-to-claim button', !!btn);
   await btn.scrollIntoViewIfNeeded(); const bb = await btn.boundingBox();
   await p.mouse.move(bb.x + 10, bb.y + 10); await p.mouse.down(); await p.waitForTimeout(300); await p.mouse.up(); await p.waitForTimeout(1100);
   ok('a quick tap does not claim', await ev(() => !isQuestDone(LifeMaxDailyHand.cards().find(x => x.slot === 2))));
@@ -52,6 +52,15 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const nd = await ev(() => { const old = state.dailyDraw.date; state.dailyDraw.date = '2000-01-01'; state.quests.forEach(q => { if (q.hand) q.id = q.id.replace(old, '2000-01-01') }); LifeMaxDailyHand.ensure(); return { n: LifeMaxDailyHand.cards().length, ids: LifeMaxDailyHand.cards().every(q => q.id.includes(getToday())), hist: state.activities.filter(a => a.type === 'quest').length } });
   ok('a new day deals three fresh cards and keeps quest history', nd.n === 3 && nd.ids && nd.hist >= 1, nd);
   ok('progress summary counts hand cards', await ev(() => { renderQuests(); return /\/ \d+/.test(document.getElementById('qosDailyProgress').textContent) && !/\/ 0$/.test(document.getElementById('qosDailyProgress').textContent) }));
+  // shuffle and deal
+  await ev(() => { state.dailyDraw.dealt = false; state.dailyDraw.up = [false, false, false]; renderQuests() });
+  await p.waitForTimeout(300);
+  ok('cards stay hidden while the deck shuffles', await ev(() => document.getElementById('dailyHand').classList.contains('fd-pre') && !document.getElementById('dailyStage').hidden));
+  ok('the shuffle stage shows a stack of card backs', await ev(() => document.querySelectorAll('#dailyStage .fd-sback').length >= 8));
+  await p.waitForTimeout(5200);
+  ok('after the deal the stage is gone and the three cards are visible', await ev(() => document.getElementById('dailyStage').hidden && !document.getElementById('dailyHand').classList.contains('fd-pre') && state.dailyDraw.dealt && [...document.querySelectorAll('#dailyHand .dh-card')].every(c => getComputedStyle(c).opacity === '1')));
+  ok('dealt cards start face-down and turn over on tap', await ev(() => { const c = document.querySelector('#dailyHand .dh-card:not(.is-done)'); const was = c.classList.contains('is-up'); dhReveal(+c.dataset.slot); return !was && c.classList.contains('is-up') && state.dailyDraw.up[+c.dataset.slot] }));
+  ok('a second render does not replay the deal', await ev(() => { renderQuests(); return !document.getElementById('dailyHand').classList.contains('fd-pre') }));
   ok('no page errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();
