@@ -10,3 +10,6 @@ lifemax_modular_v73/gemini/LifeMax_RPG_v*_lean.html
 
 # rig audit per-row images
 lifemax_modular_v73/tools/qa/audit/*__*.png
+
+# placeholder third-party trainer model: local only, never commit
+lifemax_modular_v73/art/trainer/

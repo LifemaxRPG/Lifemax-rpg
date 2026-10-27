@@ -19651,6 +19651,9 @@ var QFX=(function(){
 })();
 function qfxSet(v){QFX.setOn(v);toast(v?'Quest effects: on':'Quest effects: off');if(typeof dhRenderHand==='function')dhRenderHand()}
 setTimeout(function(){try{var c=document.getElementById('qfxToggle');if(c)c.checked=QFX.enabled()}catch(e){}},0);
+/* Placeholder trainer model data. The public repo ships only this empty stub, so the built-in trainer is used.
+   A local build can replace this file with the generated one (tools/make_trainer.py); it is kept out of git on purpose. */
+var TRAINER_DATA;
 /* ===== Guided workout in a 3D gym =====
    A scene layer on top of the existing guided-workout state machine (21/22-runtime). It never changes how sets are saved: it reads
    gwrCurrent(), draws the gym, walks the camera from machine to machine, plays a little trainer doing the exercise at pace, and
@@ -19763,6 +19766,60 @@ function g3Figure(fk,acc,shirtCol){
  parts.push({m:'sph',M:g3MSph(V(fk.armN.wr,.18),.05),c:skin});
  return parts;
 }
+/* ---- the skinned trainer (placeholder model, see art/trainer/PLACEHOLDER.md). Falls back to the built-in low-poly figure when absent. ---- */
+var G3T_VS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=1)in vec3 aN;layout(location=2)in vec2 aUV;layout(location=3)in uvec4 aJ;layout(location=4)in vec4 aW;uniform mat4 uB[54];uniform mat4 uVP;uniform mat4 uM;out vec3 vP;out vec3 vN;out vec2 vUV;\n'+
+ 'void main(){mat4 S=aW.x*uB[aJ.x]+aW.y*uB[aJ.y]+aW.z*uB[aJ.z]+aW.w*uB[aJ.w];vec4 w=uM*(S*vec4(aP,1.));vP=w.xyz;vN=mat3(uM)*mat3(S)*aN;vUV=aUV;gl_Position=uVP*w;}';
+var G3T_FS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2 vUV;out vec4 o;uniform sampler2D uTex;uniform vec3 uEye,uFocus,uAcc;uniform float uAlpha;\n'+
+ 'void main(){vec4 t=texture(uTex,vUV);if(t.a<.35&&uAlpha>.5)discard;vec3 base=pow(t.rgb,vec3(2.2));vec3 N=normalize(vN),V=normalize(uEye-vP);vec3 L1=normalize(vec3(-.35,.9,.45)),L2=normalize(vec3(.6,.4,-.2));\n'+
+ 'float d1=max(dot(N,L1),0.),d2=max(dot(N,L2),0.)*.5;float spot=exp(-pow(length((vP.xz-uFocus.xz)*vec2(.34,.5)),2.));float lit=.2+.4*d1+d2*.5+spot*.9*d1+spot*.14;\n'+
+ 'vec3 c=base*lit+uAcc*pow(1.-max(dot(N,V),0.),3.)*.12;float dist=length(uEye-vP);c=mix(c,vec3(.02,.025,.035),1.-exp(-dist*.035));c=c/(c+vec3(.75));c=pow(c,vec3(1./2.2));o=vec4(c,1.);}';
+function g3Qv(q,v){var u=[q[0],q[1],q[2]],w=q[3],c1=t3cross(u,v),c2=t3cross(u,c1);return [v[0]+2*(w*c1[0]+c2[0]),v[1]+2*(w*c1[1]+c2[1]),v[2]+2*(w*c1[2]+c2[2])]}
+function g3Arc(a,b){a=t3norm(a);b=t3norm(b);var d=t3dot(a,b);if(d<-.9999){var ax=Math.abs(a[0])<.9?[1,0,0]:[0,1,0];ax=t3norm(t3cross(a,ax));return [ax[0],ax[1],ax[2],0]}var c=t3cross(a,b),q=[c[0],c[1],c[2],1+d],l=Math.hypot(q[0],q[1],q[2],q[3]);return [q[0]/l,q[1]/l,q[2]/l,q[3]/l]}
+function g3Dp(a){var r=a*Math.PI/180;return [Math.sin(r),Math.cos(r),0]}
+function g3Dlat(a,side,deg){var r=a*Math.PI/180,f=deg*Math.PI/180;return [Math.sin(r)*Math.cos(f),Math.cos(r)*Math.cos(f),side*Math.sin(f)]}
+async function g3TrainerInit(gl){
+ if(typeof TRAINER_DATA==='undefined')return null;
+ try{
+  if(gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS)<240)return null;
+  var D=TRAINER_DATA,b64=function(s){var bin=atob(s),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+  var mk=function(t,src){var s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
+  var pr=gl.createProgram();gl.attachShader(pr,mk(gl.VERTEX_SHADER,G3T_VS));gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,G3T_FS));gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
+  var U={};['uB','uVP','uM','uTex','uEye','uFocus','uAcc','uAlpha'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n)});
+  var mkVao=function(vb,ib){var v=gl.createVertexArray();gl.bindVertexArray(v);var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,b64(vb),gl.STATIC_DRAW);
+   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,40,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,40,12);gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,2,gl.FLOAT,false,40,24);
+   gl.enableVertexAttribArray(3);gl.vertexAttribIPointer(3,4,gl.UNSIGNED_BYTE,40,32);gl.enableVertexAttribArray(4);gl.vertexAttribPointer(4,4,gl.UNSIGNED_BYTE,true,40,36);
+   var e=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,e);var ia=b64(ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,ia,gl.STATIC_DRAW);return v};
+  var body=mkVao(D.verts,D.idx),face=mkVao(D.fverts,D.fidx),tex={};
+  for(var k in D.tex){tex[k]=await new Promise(function(res){var im=new Image();im.onload=function(){var t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);res(t)};im.onerror=function(){res(null)};im.src='data:image/png;base64,'+D.tex[k]})}
+  var idx={};D.joints.forEach(function(j,i){idx[j.n]=i});
+  return {gl:gl,pr:pr,U:U,body:body,face:face,tex:tex,D:D,idx:idx,b:D.joints.map(function(j){return j.b}),par:D.joints.map(function(j){return j.p}),mats:new Float32Array(54*16),order:null};
+ }catch(e){console.warn('[gym3d trainer]',e);return null}
+}
+/* poses the skeleton from the planar rig (angles in degrees) */
+function g3TrainerPose(T,P,anchorPoint){
+ var I=T.idx,b=T.b,n=b.length,Q=new Array(n),pp=new Array(n),id=[0,0,0,1],rv=function(a,c){return t3sub(b[I[c]],b[I[a]])};
+ var QT=g3Arc(rv('spine_1','spine_4'),g3Dp(P.torso)),QN=g3Arc(rv('neck','head'),g3Dp(P.torso*.4)),QH=t3slerp(id,QT,.45);
+ var side={r:{s:1,leg:P.legs,arm:P.arms},l:{s:-1,leg:P.legsF||P.legs,arm:P.armsF||P.arms}};
+ for(var j=0;j<n;j++)Q[j]=id;
+ Q[I.hip]=QH;['spine_1','spine_2','spine_3','spine_4','clavicle_l','clavicle_r'].forEach(function(k){Q[I[k]]=QT});Q[I.neck]=QN;Q[I.head]=QN;
+ ['l','r'].forEach(function(x){var S=side[x],q1=g3Arc(rv('leg_'+x+'1','leg_'+x+'2'),g3Dp(S.leg.th)),q2=g3Arc(rv('leg_'+x+'2','ankle_'+x),g3Dp(S.leg.sh)),q3=g3Arc(rv('ankle_'+x,'toe_'+x),g3Dp(S.leg.sh-90+10)),
+  a1=g3Arc(rv('arm_'+x+'1','arm_'+x+'2'),g3Dlat(S.arm.ua,S.s,12)),a2=g3Arc(rv('arm_'+x+'2','wrist_'+x),g3Dlat(S.arm.fa,S.s,6));
+  Q[I['leg_'+x+'1']]=q1;Q[I['leg_'+x+'2']]=q2;Q[I['ankle_'+x]]=q3;Q[I['toe_'+x]]=q3;Q[I['arm_'+x+'1']]=a1;Q[I['arm_'+x+'2']]=a2;
+  Object.keys(I).forEach(function(k){if(k.indexOf('wrist_'+x)===0||new RegExp('(finger|thumb)_'+x+'\\d').test(k))Q[I[k]]=a2})});
+ var H=[0,0,0];
+ var fk=function(H){pp[I.center]=H.slice();var seen={};(function go(j){if(seen[j])return;seen[j]=1;for(var c=0;c<n;c++)if(T.par[c]===j){var off=t3sub(b[c],b[j]),q=Q[j];if(j===I.hip||j===I.center&&c===I.hip)q=id;var r=g3Qv(q,off);pp[c]=[pp[j][0]+r[0],pp[j][1]+r[1],pp[j][2]+r[2]];go(c)}})(I.center)};
+ fk(H);
+ if(anchorPoint.mode==='ankle'){var a=pp[I.ankle_r];H=[anchorPoint.x-a[0],anchorPoint.y-a[1],0];fk(H)}else{H=[anchorPoint.x,anchorPoint.y+.16,0];fk(H)}
+ for(var j=0;j<n;j++){var q=Q[j],r=g3Qv(q,b[j]),M=t3qmat(q,[pp[j][0]-r[0],pp[j][1]-r[1],pp[j][2]-r[2]]);T.mats.set(M,j*16)}
+ return T.mats;
+}
+function g3TrainerDraw(T,S,vp,eye,M,mats,focus,acc){
+ var gl=T.gl,U=T.U,D=T.D;gl.useProgram(T.pr);gl.uniformMatrix4fv(U.uVP,false,vp);gl.uniformMatrix4fv(U.uM,false,M);gl.uniformMatrix4fv(U.uB,false,mats);gl.uniform3fv(U.uEye,eye);gl.uniform3fv(U.uFocus,focus);gl.uniform3fv(U.uAcc,acc);gl.uniform1i(U.uTex,0);gl.activeTexture(gl.TEXTURE0);
+ var draw=function(vao,groups,skip,alpha){gl.bindVertexArray(vao);groups.forEach(function(g){if(skip&&skip.indexOf(g.tex)>=0)return;var t=T.tex[g.tex];if(!t)return;gl.bindTexture(gl.TEXTURE_2D,t);gl.uniform1f(U.uAlpha,(g.tex==='logo'||g.tex==='eye')?1:0);
+  if(g.tex==='logo'){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-2,-2)}gl.drawElements(gl.TRIANGLES,g.count,gl.UNSIGNED_SHORT,g.start*2);if(g.tex==='logo')gl.disable(gl.POLYGON_OFFSET_FILL)})};
+ gl.disable(gl.CULL_FACE);draw(T.body,D.groups,['hair_B','hair_C']);draw(T.face,D.fgroups.filter(function(g){return g.tex==='face'}),null);
+ gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-4,-4);gl.disable(gl.DEPTH_TEST);draw(T.face,D.fgroups.filter(function(g){return g.tex==='eye'}),null);gl.enable(gl.DEPTH_TEST);gl.disable(gl.POLYGON_OFFSET_FILL);
+}
 /* ---- the scene ---- */
 var G3=null;
 function g3Pref(){try{return localStorage.getItem('lma_gwr3d')!=='off'}catch(e){return true}}
@@ -19791,6 +19848,7 @@ async function g3Open(){
   var mkVao=function(data){var v=gl.createVertexArray();gl.bindVertexArray(v);var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);return {v:v,n:data.length/6}};
   S.mesh={box:mkVao(g3MeshBox()),cyl:mkVao(g3MeshCyl(12)),sph:mkVao(g3MeshSphere(8,12))};
  }catch(e){console.warn('[gym3d]',e);sc.remove();G3=null;return false}
+ S.trainer=await g3TrainerInit(gl);
  /* stations, one per exercise of the day */
  d.items.forEach(function(it,i){var arch=g3Archetype(g3LabelOf(g,it)),mv=G3_MOVES[arch];S.idxByKey[it.k]=i;var last=g3Last(g3LabelOf(g,it));
   var st={it:it,arch:arch,mv:mv,x:i*3.8,sel:last?Math.max(1,Math.min(10,Math.round(last.weight/12))):5,static:null};
@@ -19842,8 +19900,9 @@ function g3Loop(){
   else{u=hold?0:.0;S.rep=0}
   var P=g3Lerp(mv.A,mv.B,u);P.pos=[P.pos[0],P.pos[1]+(ph==='active'||ph==='timing'?0:Math.sin(t*1.6)*.006)];
   var fk=g3FK(P),T=t3m();T[12]=cur.x;
-  var par=g3StationParts(cur.arch,mv,S.acc,u,fk,cur.sel).concat(g3Figure(fk,S.acc));
+  var par=g3StationParts(cur.arch,mv,S.acc,u,fk,cur.sel).concat(S.trainer?[]:g3Figure(fk,S.acc));
   par.forEach(function(p){draw({m:p.m,M:t3mul(T,p.M),c:p.c,e:p.e})});
+  if(S.trainer){var mats=g3TrainerPose(S.trainer,P,{mode:P.anchor,x:P.pos[0],y:P.pos[1]});gl.useProgram(S.pr);g3TrainerDraw(S.trainer,S,vp,eye,T,mats,S.focus,S.acc)}
   /* a plate clink at the bottom of each rep on machines */
   if(ph==='active'&&mv.seat==='machine'&&rep!==S.lastRep){S.lastRep=rep;if(rep>0){try{QSFX.play('chips-stack',{vol:.35})}catch(e){}}}
   if(ph!=='active')S.lastRep=-1;
