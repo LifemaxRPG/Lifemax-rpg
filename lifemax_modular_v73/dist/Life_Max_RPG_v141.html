@@ -15676,6 +15676,13 @@ function lmvBuildUI(){
  const gear=document.querySelector('.top-actions .topgear');if(gear&&gear.parentNode)gear.parentNode.insertBefore(fab,gear);else document.body.appendChild(fab);document.body.appendChild(hud);
  fab.style.display='none';
  lmvUI={fab:fab,hud:hud,open:false};
+ /* a touch anywhere else on the screen closes it (the touch still goes through, so you can scroll the page right away) */
+ document.addEventListener('pointerdown',function(e){
+  if(!lmvUI||!lmvUI.open)return;
+  const t=e.target;if(t&&t.closest&&(t.closest('.lmv-hud')||t.closest('.lmv-fab')||t.closest('[class*="lmv-"]')))return;
+  lmvStopListening();const f=lmvFrame;if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))f.state='CANCELLED';
+  lmvHudOpen(false);
+ },true);
 }
 function lmvHudOpen(on){if(!lmvUI)return;lmvUI.open=on;lmvUI.hud.classList.toggle('on',on);if(on)lmvRender()}
 function lmvRender(){

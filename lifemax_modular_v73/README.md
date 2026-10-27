@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v141 — tap outside to close voice
+
+With the voice card open (listening, a result, or a card waiting for a yes), touching anywhere on the page behind it closes it. The touch still goes through, so you can scroll right away. A card that was waiting for a yes is dropped, the same as the ✕ button. Touches inside the card, on the mic button and in the typing box do not close it.
+
 ## v140 — Voice fallback log
 
 Whatever the voice engine cannot understand is now saved on the phone (`lifemax_voice_fallback_logs_v1`, last 200): the sentence, the screen you were on, the voice session and the time. A sentence is saved when it matches no intent at all, or when the recogniser's own confidence was under 0.55. Answers to an open question and normal commands are not saved. Settings > Voice (beta) has a new **Export Voice Fallback Log** row (Export and Clear) that downloads `lifemax-voice-fallbacks-<date>.txt`. Code: `src/runtime/segments/50-voice-fallback.js` (`VoiceFallbackLogger`: `logFallback`, `getLogs`, `clearLogs`, `exportLogsAsText`); tests: `tests/voicefallback.test.js` (14 checks). Written in plain JavaScript like the rest of the runtime, not TypeScript.

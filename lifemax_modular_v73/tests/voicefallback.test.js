@@ -37,6 +37,18 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   if (d) { const body = fs.readFileSync(await d.path(), 'utf8'); ok('the downloaded file is the report', body.startsWith('=== LIFEMAX VOICE FALLBACK REPORT ===') && /Total Unresolved Queries: 2/.test(body)) }
   await p.evaluate(() => { VoiceFallbackLogger.clearLogs(); lmvSettingsRender && 0 });
   ok('clear empties the log', (await logs()).length === 0);
+  // tapping outside the voice card closes it
+  await p.evaluate(() => { navigate('dashboard'); LifeMaxVoice._t.buildUI(); LifeMaxVoice.reset() }); await say('How many steps do I have today?');
+  const hudOn = () => p.evaluate(() => document.querySelector('.lmv-hud').classList.contains('on'));
+  ok('the voice card is open after a command', await hudOn());
+  await p.evaluate(() => document.querySelector('.lmv-hud').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+  ok('a touch inside the card leaves it open', await hudOn());
+  await p.evaluate(() => document.querySelector('#view-dashboard').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+  ok('a touch on the page behind it closes it', !(await hudOn()));
+  await p.evaluate(() => LifeMaxVoice.reset()); await say('Schedule a workout tomorrow at 9 AM');
+  ok('a card waiting for a yes is open', await hudOn() && (await p.evaluate(() => LifeMaxVoice.snapshot().state)) === 'PREVIEWED');
+  await p.evaluate(() => document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+  ok('an outside touch closes it and drops the unsaved card', !(await hudOn()) && (await p.evaluate(() => LifeMaxVoice.snapshot().state)) === 'CANCELLED');
   ok('no page errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();
