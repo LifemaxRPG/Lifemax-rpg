@@ -2226,15 +2226,6 @@
    ],
    "symbols": []
   },  {
-   "file": "src/runtime/segments/50-trainer-data.js",
-   "bytes": 1,
-   "statement_count": 0,
-   "tags": [
-    "training"
-   ],
-   "symbols": []
-  },
-  {
    "file": "src/runtime/segments/50-gym3d.js",
    "bytes": 1,
    "statement_count": 0,

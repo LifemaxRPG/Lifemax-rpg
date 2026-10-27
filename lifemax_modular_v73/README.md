@@ -361,9 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
-## v174 — skinned trainer support (placeholder model stays local)
-- The 3D gym can draw a skinned, 54-joint character instead of the built-in low-poly trainer: `tools/make_trainer.py` converts a Collada model in `art/trainer/src` into `50-trainer-data.js`, a retargeter turns the planar rep poses into joint rotations (shortest-arc per bone, bone lengths from the model), and a skinning shader draws it. The chest logo is repainted to read LIFEMAX.
-- The model currently used on the owner's machine is a third-party placeholder. It is deliberately **not** in git: `art/trainer/` is ignored and `50-trainer-data.js` is committed as an empty stub (`var TRAINER_DATA;`), so public builds use the built-in trainer. See `art/trainer/PLACEHOLDER.md` (local only). Replace it with an original or properly licensed model before using this in a release.
+## v175 — load a trainer from a file (the model is never in the repo)
+- The 3D gym can draw a skinned 54-joint character. It comes from a **trainer pack** file you choose in Settings → Look & feel → Guided workout → *Load trainer pack*; the app validates it, stores it in this device's IndexedDB, and uses it from then on (Remove puts the built-in low-poly trainer back). Nothing of any such model is in the repo, the app or the releases; only the picker, the loader, the skinning shader and the pose retargeter are.
+- `python3 tools/make_trainer.py` converts a skinned Collada character from `art/trainer/src` into `art/trainer/trainer-pack.json` (git-ignored). The converter repaints the chest logo to read LIFEMAX. Send the pack file to the phone yourself (chat, cloud storage) and pick it with the button.
+- Pack format: JSON, `format:"lifemax-trainer-pack"`, `version:1`, 54 joints (center, hip, legs, spine 1 to 4, clavicles, arms, wrist and fingers, neck, head), skinned vertices/indices for the body and a rigid face mask, and PNG textures.
+- Face fix attempt: face and eyes are drawn with polygon offset so the head skin does not hide them.
+- Tests in `tests/gym3d.test.js` cover the picker, validation and persistence; the pack-dependent ones run only when a pack exists locally.
 
 ## v173 — the 3D gym (first version of the new guided workout)
 - `50-gym3d.js` puts a 3D gym scene over the existing guided-workout logic (21/22-runtime stay the source of truth; sets are still saved by `gwrLogSet`). Opening a guided workout shows today's plan on a board ("step onto the floor"); then the camera walks to each machine in turn, with chevrons on the floor pointing the way, and ends on a wide shot with a summary board.

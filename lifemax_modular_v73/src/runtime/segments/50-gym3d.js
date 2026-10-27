@@ -121,11 +121,33 @@ function g3Qv(q,v){var u=[q[0],q[1],q[2]],w=q[3],c1=t3cross(u,v),c2=t3cross(u,c1
 function g3Arc(a,b){a=t3norm(a);b=t3norm(b);var d=t3dot(a,b);if(d<-.9999){var ax=Math.abs(a[0])<.9?[1,0,0]:[0,1,0];ax=t3norm(t3cross(a,ax));return [ax[0],ax[1],ax[2],0]}var c=t3cross(a,b),q=[c[0],c[1],c[2],1+d],l=Math.hypot(q[0],q[1],q[2],q[3]);return [q[0]/l,q[1]/l,q[2]/l,q[3]/l]}
 function g3Dp(a){var r=a*Math.PI/180;return [Math.sin(r),Math.cos(r),0]}
 function g3Dlat(a,side,deg){var r=a*Math.PI/180,f=deg*Math.PI/180;return [Math.sin(r)*Math.cos(f),Math.cos(r)*Math.cos(f),side*Math.sin(f)]}
+/* ---- the trainer pack: an optional character model the player loads from a file. It lives only in this device's browser storage
+   (IndexedDB); nothing about it ships with the app. Without one, the built-in low-poly trainer is used. ---- */
+var G3_PACK=undefined;
+function g3Idb(){return new Promise(function(res,rej){try{var r=indexedDB.open('lma_trainer',1);r.onupgradeneeded=function(){r.result.createObjectStore('pack')};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
+async function g3PackGet(){
+ if(G3_PACK!==undefined)return G3_PACK;
+ try{var db=await g3Idb();G3_PACK=await new Promise(function(res){var q=db.transaction('pack').objectStore('pack').get('current');q.onsuccess=function(){res(q.result||null)};q.onerror=function(){res(null)}});db.close()}catch(e){G3_PACK=null}
+ if(G3_PACK&&!g3PackValid(G3_PACK))G3_PACK=null;
+ return G3_PACK;
+}
+function g3PackValid(d){return !!(d&&d.format==='lifemax-trainer-pack'&&d.version===1&&Array.isArray(d.joints)&&d.joints.length===54&&typeof d.verts==='string'&&typeof d.idx==='string'&&typeof d.fverts==='string'&&typeof d.fidx==='string'&&Array.isArray(d.groups)&&Array.isArray(d.fgroups)&&d.tex&&d.tex.body&&d.tex.upper)}
+async function g3PackLoadFile(file){
+ try{
+  if(!file)return false;if(file.size>40*1024*1024){toast('That file is too large to be a trainer pack');return false}
+  var d=JSON.parse(await file.text());
+  if(!g3PackValid(d)){toast('That is not a LifeMax trainer pack');return false}
+  var db=await g3Idb();await new Promise(function(res,rej){var tx=db.transaction('pack','readwrite');tx.objectStore('pack').put(d,'current');tx.oncomplete=res;tx.onerror=function(){rej(tx.error)}});db.close();
+  G3_PACK=d;toast('Trainer pack loaded: '+(d.name||'Trainer'));g3PackStatus();return true;
+ }catch(e){toast('Could not read that file');return false}
+}
+async function g3PackClear(){try{var db=await g3Idb();await new Promise(function(res){var tx=db.transaction('pack','readwrite');tx.objectStore('pack').delete('current');tx.oncomplete=res;tx.onerror=res});db.close()}catch(e){}G3_PACK=null;toast('Trainer pack removed. The built-in trainer is used.');g3PackStatus()}
+async function g3PackStatus(){var el=document.getElementById('g3PackStatus');if(!el)return;var d=await g3PackGet();el.textContent=d?('Loaded: '+(d.name||'Trainer')):'None loaded. The built-in trainer is used.';var rm=document.getElementById('g3PackRemove');if(rm)rm.style.display=d?'':'none'}
 async function g3TrainerInit(gl){
- if(typeof TRAINER_DATA==='undefined')return null;
+ var D=await g3PackGet();if(!D)return null;
  try{
   if(gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS)<240)return null;
-  var D=TRAINER_DATA,b64=function(s){var bin=atob(s),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+  var b64=function(s){var bin=atob(s),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
   var mk=function(t,src){var s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
   var pr=gl.createProgram();gl.attachShader(pr,mk(gl.VERTEX_SHADER,G3T_VS));gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,G3T_FS));gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
   var U={};['uB','uVP','uM','uTex','uEye','uFocus','uAcc','uAlpha'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n)});
@@ -161,8 +183,10 @@ function g3TrainerDraw(T,S,vp,eye,M,mats,focus,acc){
  var gl=T.gl,U=T.U,D=T.D;gl.useProgram(T.pr);gl.uniformMatrix4fv(U.uVP,false,vp);gl.uniformMatrix4fv(U.uM,false,M);gl.uniformMatrix4fv(U.uB,false,mats);gl.uniform3fv(U.uEye,eye);gl.uniform3fv(U.uFocus,focus);gl.uniform3fv(U.uAcc,acc);gl.uniform1i(U.uTex,0);gl.activeTexture(gl.TEXTURE0);
  var draw=function(vao,groups,skip,alpha){gl.bindVertexArray(vao);groups.forEach(function(g){if(skip&&skip.indexOf(g.tex)>=0)return;var t=T.tex[g.tex];if(!t)return;gl.bindTexture(gl.TEXTURE_2D,t);gl.uniform1f(U.uAlpha,(g.tex==='logo'||g.tex==='eye')?1:0);
   if(g.tex==='logo'){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-2,-2)}gl.drawElements(gl.TRIANGLES,g.count,gl.UNSIGNED_SHORT,g.start*2);if(g.tex==='logo')gl.disable(gl.POLYGON_OFFSET_FILL)})};
- gl.disable(gl.CULL_FACE);draw(T.body,D.groups,['hair_B','hair_C']);draw(T.face,D.fgroups.filter(function(g){return g.tex==='face'}),null);
- gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-4,-4);gl.disable(gl.DEPTH_TEST);draw(T.face,D.fgroups.filter(function(g){return g.tex==='eye'}),null);gl.enable(gl.DEPTH_TEST);gl.disable(gl.POLYGON_OFFSET_FILL);
+ gl.disable(gl.CULL_FACE);draw(T.body,D.groups,['hair_B','hair_C']);
+ /* the face is a mask laid over the head, so it is pulled toward the camera or the head skin would hide it */
+ gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-8,-8);draw(T.face,D.fgroups.filter(function(g){return g.tex==='face'}),null);
+ gl.polygonOffset(-14,-14);draw(T.face,D.fgroups.filter(function(g){return g.tex==='eye'}),null);gl.disable(gl.POLYGON_OFFSET_FILL);
 }
 /* ---- the scene ---- */
 var G3=null;
@@ -353,4 +377,4 @@ function g3HudClick(e){
  gwrOpen=function(){oOpen.apply(this,arguments);try{if(!G3&&g3Want())g3Open()}catch(e){console.warn('[gym3d open]',e)}};
  gwrRender=function(){oRender.apply(this,arguments);try{if(G3)g3Sync()}catch(e){console.warn('[gym3d sync]',e)}};
 })();
-setTimeout(function(){try{var s=document.getElementById('gwr3dSel');if(s)s.value=g3Pref()?'on':'off'}catch(e){}},0);
+setTimeout(function(){try{var s=document.getElementById('gwr3dSel');if(s)s.value=g3Pref()?'on':'off';g3PackStatus()}catch(e){}},0);
