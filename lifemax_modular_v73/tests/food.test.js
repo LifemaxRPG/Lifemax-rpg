@@ -35,6 +35,11 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.click('[data-a=step][data-n="-1"]'); await p.waitForTimeout(300); await p.click('[data-a=step][data-n="1"]'); await p.waitForTimeout(300);
   await p.click('[data-a=copy]'); await p.waitForTimeout(200);
   ok('Copy yesterday brings a meal forward', await p.evaluate(() => dayFoodLog(getToday()).filter(e => e.kcal === 450).length >= 1));
+  await p.evaluate(() => { window.scrollTo(0, 0); document.querySelector('.fv2-svg').scrollIntoView({ block: 'center' }) }); await p.waitForTimeout(300);
+  { const bx = await p.locator('.fv2-svg').boundingBox(), sc = bx.width / 320; await p.mouse.click(bx.x + bx.width / 2 + 101 * sc, bx.y + bx.height / 2); } await p.waitForTimeout(300);
+  ok('tapping a ring puts that macro in the middle', await p.evaluate(() => { const m = document.querySelector('.fv2-mid.sel'); return !!m && /CARBS/.test(m.textContent) && /GRAMS/.test(m.textContent) && document.querySelectorAll('.fv2-ring.dim').length === 2 }));
+  await p.click('.fv2-mid.sel'); await p.waitForTimeout(300);
+  ok('tapping the middle goes back to calories', await p.evaluate(() => /KCAL/.test(document.querySelector('.fv2-mid').textContent) && !document.querySelector('.fv2-mid.sel')));
   ok('no script errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

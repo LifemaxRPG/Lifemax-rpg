@@ -214,3 +214,8 @@ html.light-theme .fv2-hero{background:radial-gradient(120% 80% at 50% -10%,#3b5b
 @media(max-width:420px){.fv2-macros{gap:6px}.fv2-mt{padding:10px 9px}.fv2-mt .v{font-size:18px}}
 @media(prefers-reduced-motion:reduce){.fv2-arc,.fv2-mt .b b,.fv2-sheet{transition:none}.fv2-e.new{animation:none}}
 html.light-theme .fv2-foot button.pri,html.light-theme .fv2-dock i{color:#fff}
+.fv2-hit{fill:none;stroke:transparent;pointer-events:stroke;cursor:pointer}
+.fv2-ring.sel .fv2-arc{filter:drop-shadow(0 0 9px currentColor) drop-shadow(0 0 3px #ffffff55)}
+.fv2-mid.sel .v{color:var(--mc)}
+.fv2-mid.sel .l{color:var(--muted)}
+.fv2-mid.sel .s{white-space:normal;text-align:center;line-height:1.3;max-width:108px}

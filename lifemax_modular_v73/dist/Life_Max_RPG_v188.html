@@ -4261,6 +4261,11 @@ html.light-theme .fv2-hero{background:radial-gradient(120% 80% at 50% -10%,#3b5b
 @media(max-width:420px){.fv2-macros{gap:6px}.fv2-mt{padding:10px 9px}.fv2-mt .v{font-size:18px}}
 @media(prefers-reduced-motion:reduce){.fv2-arc,.fv2-mt .b b,.fv2-sheet{transition:none}.fv2-e.new{animation:none}}
 html.light-theme .fv2-foot button.pri,html.light-theme .fv2-dock i{color:#fff}
+.fv2-hit{fill:none;stroke:transparent;pointer-events:stroke;cursor:pointer}
+.fv2-ring.sel .fv2-arc{filter:drop-shadow(0 0 9px currentColor) drop-shadow(0 0 3px #ffffff55)}
+.fv2-mid.sel .v{color:var(--mc)}
+.fv2-mid.sel .l{color:var(--muted)}
+.fv2-mid.sel .s{white-space:normal;text-align:center;line-height:1.3;max-width:108px}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
@@ -21010,10 +21015,14 @@ function fv2RingSvg(t,g,sel,prev){
  const pct=g.cal?t.kcal/g.cal:0,over=pct>1.0001;let s='<svg class="fv2-svg" viewBox="0 0 320 320" role="img" aria-label="Calories and macros"><defs><linearGradient id="fv2g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c9cff"/><stop offset="1" stop-color="#a77cff"/></linearGradient></defs>';
  for(let i=0;i<72;i++){const a=i/72*Math.PI*2-Math.PI/2,r0=i%6===0?137:141,r1=151,on=pct>0&&i/72<Math.min(1,pct);s+='<line x1="'+(160+Math.cos(a)*r0).toFixed(1)+'" y1="'+(160+Math.sin(a)*r0).toFixed(1)+'" x2="'+(160+Math.cos(a)*r1).toFixed(1)+'" y2="'+(160+Math.sin(a)*r1).toFixed(1)+'" class="fv2-tick'+(on?(over?' bad':' on'):'')+'"/>'}
  rings.forEach(function(r){const k=r[0],rad=r[1],w=r[2],circ=2*Math.PI*rad,frac=r[4]?Math.min(1,r[3]/r[4]):0,ov=r[4]?Math.max(0,Math.min(1,r[3]/r[4]-1)):0,pf=Math.min(1,prev[k]||0),dim=sel&&sel!==k?' dim':'';
-  s+='<g class="fv2-ring'+dim+'"><circle cx="160" cy="160" r="'+rad+'" class="fv2-track" stroke-width="'+w+'"/><circle cx="160" cy="160" r="'+rad+'" class="fv2-arc" stroke="'+r[5]+'" stroke-width="'+w+'" transform="rotate(-90 160 160)" style="opacity:'+(pf>0?1:0)+';stroke-dasharray:'+(circ*pf).toFixed(2)+' '+circ.toFixed(2)+'" data-to="'+(circ*frac).toFixed(2)+'" data-c="'+circ.toFixed(2)+'"/>'
-  +(ov>0?'<circle cx="160" cy="160" r="'+rad+'" class="fv2-over" stroke-width="'+(w-5)+'" transform="rotate(-90 160 160)" style="stroke-dasharray:'+(circ*ov).toFixed(2)+' '+circ.toFixed(2)+'"/>':'')+'</g>'});
+  s+='<g class="fv2-ring'+dim+(sel===k?' sel':'')+'"><circle cx="160" cy="160" r="'+rad+'" class="fv2-track" stroke-width="'+w+'"/><circle cx="160" cy="160" r="'+rad+'" class="fv2-arc" stroke="'+r[5]+'" stroke-width="'+w+'" transform="rotate(-90 160 160)" style="opacity:'+(pf>0?1:0)+';stroke-dasharray:'+(circ*pf).toFixed(2)+' '+circ.toFixed(2)+'" data-to="'+(circ*frac).toFixed(2)+'" data-c="'+circ.toFixed(2)+'"/>'
+  +(ov>0?'<circle cx="160" cy="160" r="'+rad+'" class="fv2-over" stroke-width="'+(w-5)+'" transform="rotate(-90 160 160)" style="stroke-dasharray:'+(circ*ov).toFixed(2)+' '+circ.toFixed(2)+'"/>':'')+'<circle cx="160" cy="160" r="'+rad+'" class="fv2-hit" stroke-width="'+(w+8)+'" data-a="macro" data-m="'+k+'"><title>'+fv2Mac()[k][0]+'</title></circle></g>'});
  return s+'</svg>';
 }
+function fv2Mid(t,g,S,left){const k=S.ringSel;
+ if(k){const m=fv2Mac()[k],v=Math.round(t[k]),gl=g[k],lf=gl-t[k];return '<button type="button" class="fv2-mid sel" data-a="macro" data-m="'+k+'" style="--mc:'+m[1]+'" aria-label="'+m[0]+': '+v+' grams. Tap to go back to calories"><span class="l" style="color:'+m[1]+'">'+m[0].toUpperCase()+'</span><span class="v" id="fv2Big" data-to="'+v+'" data-from="'+v+'">'+fv2Fmt(v)+'</span><span class="l">GRAMS</span><span class="s">'+(gl?(lf>=0?'of '+gl+' g · '+Math.round(lf)+' left':Math.round(-lf)+' g over '+gl+' g'):'no target set')+'</span></button>'}
+ return '<button type="button" class="fv2-mid" data-a="goal" aria-label="Edit daily targets">'+(g.cal?'<span class="v" id="fv2Big" data-to="'+Math.round(Math.abs(left))+'" data-from="'+Math.round(Math.abs(S.prev.n||0))+'">'+fv2Fmt(Math.abs(left))+'</span><span class="l'+(left<0?' bad':'')+'">'+(left<0?'KCAL OVER':'KCAL LEFT')+'</span><span class="s">'+fv2Fmt(t.kcal)+' of '+fv2Fmt(g.cal)+'</span>'
+  :'<span class="v" id="fv2Big" data-to="'+Math.round(t.kcal)+'" data-from="'+Math.round(S.prev.n||0)+'">'+fv2Fmt(t.kcal)+'</span><span class="l">KCAL TODAY</span><span class="s set">Set a daily target</span>')+'</button>'}
 function fv2WeekStrip(day,g){const d=new Date(day+'T12:00:00'),dow=(d.getDay()+6)%7,mon=fv2DayShift(day,-dow),today=getToday();let h='';
  for(let i=0;i<7;i++){const k=fv2DayShift(mon,i),es=dayFoodLog(k),kc=fv2Tot(es).kcal,fr=g.cal?kc/g.cal:(kc?.5:0),ok=g.cal&&fr>=.9&&fr<=1.08,over=g.cal&&fr>1.08,circ=2*Math.PI*11,dd=new Date(k+'T12:00:00');
   h+='<button type="button" class="fv2-d'+(k===day?' on':'')+(k===today?' today':'')+'" data-a="day" data-d="'+k+'" aria-label="'+esc(dd.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))+'"><span class="w">'+'MTWTFSS'[i]+'</span><span class="rg"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11" class="t"/><circle cx="14" cy="14" r="11" class="a'+(ok?' ok':over?' bad':'')+'" transform="rotate(-90 14 14)" style="stroke-dasharray:'+(circ*Math.min(1,fr)).toFixed(1)+' '+circ.toFixed(1)+'"/></svg><span class="n">'+dd.getDate()+'</span></span></button>'}
@@ -21026,12 +21035,10 @@ function renderMeals(){
  if(!S.wired)fv2Wire(root);
  const left=g.cal-t.kcal,pct=g.cal?t.kcal/g.cal:0,dd=new Date(day+'T12:00:00');
  let h='<div class="fv2-head"><div><div class="fv2-eyebrow">'+(day===today?'Today':day===fv2DayShift(today,-1)?'Yesterday':'Viewing')+'</div><h1>'+esc(dd.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}))+'</h1></div>'
-  +'<div class="fv2-nav"><button type="button" data-a="step" data-n="-1" aria-label="Previous day">‹</button><button type="button" data-a="step" data-n="1" aria-label="Next day">›</button>'+(day!==today?'<button type="button" class="tx" data-a="today">Today</button>':'')+'</div></div>'
+  +'<div class="fv2-nav"><button type="button" class="tx" data-a="goal">Targets</button><button type="button" data-a="step" data-n="-1" aria-label="Previous day">‹</button><button type="button" data-a="step" data-n="1" aria-label="Next day">›</button>'+(day!==today?'<button type="button" class="tx" data-a="today">Today</button>':'')+'</div></div>'
   +'<div class="fv2-week">'+fv2WeekStrip(day,g)+'</div>';
  /* hero */
- h+='<section class="fv2-hero"><div class="fv2-dial"><div class="fv2-dial-in">'+fv2RingSvg(t,g,S.ringSel,S.prev)+'<button type="button" class="fv2-mid" data-a="goal" aria-label="Edit daily targets">'
-  +(g.cal?'<span class="v" id="fv2Big" data-to="'+Math.round(Math.abs(left))+'" data-from="'+Math.round(Math.abs(S.prev.n||0))+'">'+fv2Fmt(Math.abs(left))+'</span><span class="l'+(left<0?' bad':'')+'">'+(left<0?'KCAL OVER':'KCAL LEFT')+'</span><span class="s">'+fv2Fmt(t.kcal)+' of '+fv2Fmt(g.cal)+'</span>'
-   :'<span class="v" id="fv2Big" data-to="'+Math.round(t.kcal)+'" data-from="'+Math.round(S.prev.n||0)+'">'+fv2Fmt(t.kcal)+'</span><span class="l">KCAL TODAY</span><span class="s set">Set a daily target</span>')+'</button></div></div>'
+ h+='<section class="fv2-hero"><div class="fv2-dial"><div class="fv2-dial-in">'+fv2RingSvg(t,g,S.ringSel,S.prev)+fv2Mid(t,g,S,left)+'</div></div>'
   +'<div class="fv2-macros">'+['p','c','f'].map(function(k){const m=fv2Mac()[k],v=t[k],gl=g[k],lf=gl-v;return '<button type="button" class="fv2-mt'+(S.ringSel===k?' on':'')+'" data-a="macro" data-m="'+k+'" style="--mc:'+m[1]+'"><span class="n"><i></i>'+m[0]+'</span><span class="v">'+Math.round(v)+'<small>'+(gl?' / '+gl+' g':' g')+'</small></span><span class="b"><b style="width:'+(gl?Math.min(100,v/gl*100):0)+'%"></b></span><span class="r'+(lf<0?' bad':'')+'">'+(gl?(lf>=0?Math.round(lf)+' g left':Math.round(-lf)+' g over'):'no target')+'</span></button>'}).join('')+'</div></section>';
  /* quick add */
  const rc=fv2Recents(8);

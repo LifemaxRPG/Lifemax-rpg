@@ -698,3 +698,6 @@ The whole Food tab (Meals) is new: a macro-ring instrument (calories outside, pr
 
 ## v187 — calories are no longer a ring
 The dial now holds only the three macro rings (protein, carbs, fat). Calories are the tick bezel around it, which lights up clockwise, and the number in the middle.
+
+## v188 — tap a ring
+Tapping the protein, carbs or fat ring (or its tile) isolates it and shows its grams, target and amount left in the middle of the dial; tap it again, or the middle, to go back to calories. Daily targets now have their own "Targets" button beside the day arrows.
