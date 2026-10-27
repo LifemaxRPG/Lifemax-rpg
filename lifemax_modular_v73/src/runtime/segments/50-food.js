@@ -46,10 +46,10 @@ function fv2AddWater(ml){state.waterLog=state.waterLog||[];const id='water_'+Dat
 
 /* ------------------------------------------------------------------ the page */
 function fv2RingSvg(t,g,sel,prev){
- const rings=[['k',124,14,t.kcal,g.cal,'url(#fv2g)'],['p',100,12,t.p,g.p,'#ff7a8a'],['c',79,12,t.c,g.c,'#ffc15e'],['f',58,12,t.f,g.f,'#4fd6c0']];
+ const rings=[['p',126,16,t.p,g.p,'#ff7a8a'],['c',101,16,t.c,g.c,'#ffc15e'],['f',76,16,t.f,g.f,'#4fd6c0']];
  const pct=g.cal?t.kcal/g.cal:0,over=pct>1.0001;let s='<svg class="fv2-svg" viewBox="0 0 320 320" role="img" aria-label="Calories and macros"><defs><linearGradient id="fv2g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c9cff"/><stop offset="1" stop-color="#a77cff"/></linearGradient></defs>';
- for(let i=0;i<72;i++){const a=i/72*Math.PI*2-Math.PI/2,r0=i%6===0?139:142,r1=150,on=pct>0&&i/72<Math.min(1,pct);s+='<line x1="'+(160+Math.cos(a)*r0).toFixed(1)+'" y1="'+(160+Math.sin(a)*r0).toFixed(1)+'" x2="'+(160+Math.cos(a)*r1).toFixed(1)+'" y2="'+(160+Math.sin(a)*r1).toFixed(1)+'" class="fv2-tick'+(on?(over?' bad':' on'):'')+'"/>'}
- rings.forEach(function(r){const k=r[0],rad=r[1],w=r[2],circ=2*Math.PI*rad,frac=r[4]?Math.min(1,r[3]/r[4]):0,ov=r[4]?Math.max(0,Math.min(1,r[3]/r[4]-1)):0,pf=Math.min(1,prev[k]||0),dim=sel&&sel!==k&&k!=='k'?' dim':'';
+ for(let i=0;i<72;i++){const a=i/72*Math.PI*2-Math.PI/2,r0=i%6===0?137:141,r1=151,on=pct>0&&i/72<Math.min(1,pct);s+='<line x1="'+(160+Math.cos(a)*r0).toFixed(1)+'" y1="'+(160+Math.sin(a)*r0).toFixed(1)+'" x2="'+(160+Math.cos(a)*r1).toFixed(1)+'" y2="'+(160+Math.sin(a)*r1).toFixed(1)+'" class="fv2-tick'+(on?(over?' bad':' on'):'')+'"/>'}
+ rings.forEach(function(r){const k=r[0],rad=r[1],w=r[2],circ=2*Math.PI*rad,frac=r[4]?Math.min(1,r[3]/r[4]):0,ov=r[4]?Math.max(0,Math.min(1,r[3]/r[4]-1)):0,pf=Math.min(1,prev[k]||0),dim=sel&&sel!==k?' dim':'';
   s+='<g class="fv2-ring'+dim+'"><circle cx="160" cy="160" r="'+rad+'" class="fv2-track" stroke-width="'+w+'"/><circle cx="160" cy="160" r="'+rad+'" class="fv2-arc" stroke="'+r[5]+'" stroke-width="'+w+'" transform="rotate(-90 160 160)" style="opacity:'+(pf>0?1:0)+';stroke-dasharray:'+(circ*pf).toFixed(2)+' '+circ.toFixed(2)+'" data-to="'+(circ*frac).toFixed(2)+'" data-c="'+circ.toFixed(2)+'"/>'
   +(ov>0?'<circle cx="160" cy="160" r="'+rad+'" class="fv2-over" stroke-width="'+(w-5)+'" transform="rotate(-90 160 160)" style="stroke-dasharray:'+(circ*ov).toFixed(2)+' '+circ.toFixed(2)+'"/>':'')+'</g>'});
  return s+'</svg>';

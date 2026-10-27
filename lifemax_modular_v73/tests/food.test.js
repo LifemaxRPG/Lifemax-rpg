@@ -31,7 +31,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('water adds to the water log', await p.evaluate(() => (state.waterLog || []).length === 1));
   await p.click('#fv2Dock'); await p.waitForTimeout(300); await p.click('[data-s2=quick]'); await p.waitForTimeout(200); await p.fill('#fv2QK', '450'); await p.click('[data-s2=quicksave]'); await p.waitForTimeout(400);
   ok('quick calories logs a plain kcal entry', await p.evaluate(() => dayFoodLog(getToday()).some(e => e.kcal === 450)));
-  await p.evaluate(() => { const e = state.foodLog.find(x => x.name === 'Quick calories'); e.date = fv2DayShift(getToday(), -1); e.slot = 'snacks'; save(); renderMeals() });
+  await p.evaluate(() => { const e = state.foodLog.find(x => x.name === 'Quick calories'); e.date = fv2DayShift(getToday(), -1); e.slot = ['breakfast','lunch','dinner','snacks'].find(s => !dayFoodLog(getToday()).some(x => x.slot === s)); save(); renderMeals() });
   await p.click('[data-a=step][data-n="-1"]'); await p.waitForTimeout(300); await p.click('[data-a=step][data-n="1"]'); await p.waitForTimeout(300);
   await p.click('[data-a=copy]'); await p.waitForTimeout(200);
   ok('Copy yesterday brings a meal forward', await p.evaluate(() => dayFoodLog(getToday()).filter(e => e.kcal === 450).length >= 1));

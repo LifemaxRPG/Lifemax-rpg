@@ -695,3 +695,6 @@ The resting 3D table had no leave check during its first ~2.5 seconds (the camer
 
 ## v186 — Food tab rebuilt
 The whole Food tab (Meals) is new: a macro-ring instrument (calories outside, protein / carbs / fat inside, tap a macro to isolate its ring, tap the middle to set targets), a week strip with a ring per day, one-tap quick add from recent foods, water, four meal cards, and a nutrition-details drawer (fiber, sugar, sodium, 7-day chart). The old Food Studio form and add sheet are replaced by one full sheet: search (bundled foods plus the optional USDA database), Recent / Favorites / My foods, a portion screen (serving chips, grams stepper, multipliers, live effect on today's macros), edit entry, create food (enter the label values for a serving), quick calories, and daily targets with presets. Code: `src/runtime/segments/50-food.js`, `src/styles/08-food.css`, `tests/food.test.js`. Data is unchanged (`foodLog`, `customFoods`, `waterLog`, `mealsMeta`, plus `protGoal`, `carbGoal`, `fatGoal`, `favs`).
+
+## v187 — calories are no longer a ring
+The dial now holds only the three macro rings (protein, carbs, fat). Calories are the tick bezel around it, which lights up clockwise, and the number in the middle.
