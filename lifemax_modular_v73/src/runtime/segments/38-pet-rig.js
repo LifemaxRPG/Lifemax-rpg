@@ -44,8 +44,9 @@ function petRigNeutral(m){
 function petRigQ(v){return Math.round((v||1)*20)/20}
 function petRigPoseKey(p){return p?[p.ear0||0,p.ear1||0,p.tail||0,p.flat?1:0,p.tw||0].join(','):''}
 /* ---- the compositor ---- */
-function petRigCompose(src,fr,m,pose,W,H){
-  const MX=PET_RIG_MX,MT=PET_RIG_MT,CW=W+MX+PET_RIG_MR,CH=H+MT+PET_RIG_MB,out=new Uint32Array(CW*CH);
+function petRigCompose(src,fr,m,pose,W,H,hs){
+  hs=hs||1;
+  const MX=PET_RIG_MX*hs,MT=PET_RIG_MT*hs,CW=W+MX+PET_RIG_MR*hs,CH=H+MT+PET_RIG_MB*hs,out=new Uint32Array(CW*CH);
   const part=new Uint8Array(W*H);            /* 0 = body, 1.. = a part that gets re-drawn */
   fr.ears.forEach(function(e,i){e.px.forEach(function(p){part[p]=1+i})});
   if(fr.tail)fr.tail.px.forEach(function(p){part[p]=3});
@@ -84,7 +85,7 @@ function petRigCompose(src,fr,m,pose,W,H){
     for(let i=0;i<n-1;i++){const dx=A[i+1][0]-A[i][0],dy=A[i+1][1]-A[i][1],l=Math.hypot(dx,dy)||1;len.push(l);dir.push([dx/l,dy/l])}
     let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;A.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])});
     const sd=[],sl2=[];for(let i=0;i<n-1;i++){const dx=T.a[i+1][0]-T.a[i][0],dy=T.a[i+1][1]-T.a[i][1],l=Math.hypot(dx,dy)||1;sd.push([dx/l,dy/l]);sl2.push(l)}
-    const R=7;
+    const R=7*hs;
     for(let y=Math.floor(y0-R);y<=Math.ceil(y1+R);y++)for(let x=Math.floor(x0-R);x<=Math.ceil(x1+R);x++){
       const qx=x+0.5,qy=y+0.5;let best=1e9,bi=0,bl=0;
       for(let i=0;i<n-1;i++){const vx=qx-A[i][0],vy=qy-A[i][1],l=vx*dir[i][0]+vy*dir[i][1],t=Math.max(0,Math.min(len[i],l)),dx=vx-dir[i][0]*t,dy=vy-dir[i][1]*t,d=dx*dx+dy*dy;
@@ -133,7 +134,7 @@ function petRigCompose(src,fr,m,pose,W,H){
   for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const i=y*CW+x;
     if(!bedge[i]||!(res[i]>>>24)||res[i]!==body[i]||(top[i]>>>24))continue;
     if(x===0||y===0||x===CW-1||y===CH-1||!(res[i-1]>>>24)||!(res[i+1]>>>24)||!(res[i-CW]>>>24)||!(res[i+CW]>>>24))res[i]=PET_RIG_OUTLINE}
-  return {px:res,CW:CW,CH:CH};
+  return {px:res,CW:CW,CH:CH,MX:MX,MT:MT,X:X,Y:Y};
 }
 function petRigFrame(rt,sh,kind,anim,f,morph,pose,meta){
   try{

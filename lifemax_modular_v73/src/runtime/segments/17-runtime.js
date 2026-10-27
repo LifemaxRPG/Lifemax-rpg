@@ -47,6 +47,12 @@ function petDrawCat(rt,o){
     o.fillStyle='rgba(30,16,40,0.28)';o.fillRect(dx-wide,Math.round(c.y)-1,wide*2,2);o.fillRect(dx-wide+3,Math.round(c.y)+1,wide*2-6,1)}
   else{const q=function(v){return Math.round(v*PET_OS)/PET_OS},dx=c.x+(c.wx||0),wide=(/sleep|loaf|knead/.test(c.anim)?22:/walk_front|walk_back|sniff|bonk/.test(c.anim)?11:15)*sc*shk,hh=Math.max(1,2*shk);
     o.fillStyle='rgba(30,16,40,'+(0.28*Math.min(1,shk/kz+0.2)).toFixed(3)+')';o.fillRect(q(dx-wide),q(gy-hh/2),q(wide*2),q(hh));o.fillRect(q(dx-wide+3*shk),q(gy+hh/2),q(wide*2-6*shk),q(Math.max(1,shk)))}
+  /* HD walking frames (twice the pixel density); anything not redrawn yet falls through to the original art */
+  const HD=rigKind&&typeof petHdPick==='function'?petHdPick(rt,p,rigKind,c.anim,f,meta,c):null;
+  if(HD){const hs=HD.hs,hw=HD.cv.width/hs,hh=HD.cv.height/hs;
+    if(k===1){const dy=Math.round(c.y-bottom+1),dx=Math.round(c.x)+(c.wx||0);o.save();o.translate(dx,0);if(c.dir<0)o.scale(-1,1);o.drawImage(HD.cv,0,0,HD.cv.width,HD.cv.height,-36-HD.ox/hs,dy-HD.oy/hs,hw,hh);o.restore();return}
+    const X0=Math.round((c.x+(c.wx||0))*PET_OS)/PET_OS,Y0=Math.round(c.y*PET_OS)/PET_OS;
+    o.save();o.translate(X0,Y0);o.scale(c.dir<0?-k:k,k);o.drawImage(HD.cv,0,0,HD.cv.width,HD.cv.height,-36-HD.ox/hs,-(bottom-1)-HD.oy/hs,hw,hh);o.restore();return}
   if(k===1){const dy=Math.round(c.y-bottom+1),dx=Math.round(c.x)+(c.wx||0);
     o.save();o.translate(dx,0);if(c.dir<0)o.scale(-1,1);if(RG)o.drawImage(RG.cv,0,0,RG.cv.width,RG.cv.height,-36-RG.ox,dy-RG.oy,RG.cv.width,RG.cv.height);else o.drawImage(sh,f*W,sy,W,H,-36,dy,W,H);o.restore();return}
   /* scaled: anchored at the feet, snapped to the 3x grid so pixels stay crisp */

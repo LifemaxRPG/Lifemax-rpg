@@ -285,6 +285,7 @@ function petDnaSrcUrls(kind){
   if(kind==='depth')return A.depth&&A.depth.coats;
   if((m=/^st(\d)$/.exec(kind)))return S.G&&S.G.stages[+m[1]]&&S.G.stages[+m[1]].coats;
   if((m=/^dst(\d)$/.exec(kind)))return A.depth&&A.depth.stages&&A.depth.stages[+m[1]]&&A.depth.stages[+m[1]].coats;
+  if((m=/^hd(.+)$/.exec(kind))){const B=typeof petHdJson==='function'?petHdJson():null;return B&&B.kinds[m[1]]&&B.kinds[m[1]].sheet}      /* the 2x walking sheets */
   return null;
 }
 var PET_DNA_IDX={};   /* small cache of decoded index sheets, by kind */
@@ -302,26 +303,31 @@ function petDnaIsS(v){return v===60||v===70||v===80}
 function petDnaIsF(v){return v>=20&&v<=50}
 function petDnaIsP(v){return v===75||v===85}        /* tortoiseshell red patches */
 function petDnaCompose(kind,rec,S){
+  const sc=/^hd/.test(kind)?2:1;kind=String(kind).replace(/^hd/,'');        /* 2x sheets: every width and distance below doubles */
   const w=S.w,h=S.h,n=w*h,G=S.ginger,Y=S.gray,B=S.black;let o;
   const tabGeom=!!(rec.tab||rec.tortie||rec.base==='red'||rec.base==='cream');
   if(tabGeom){o=G.slice();for(let i=0;i<n;i++)if(petDnaIsW(G[i]))o[i]=petDnaIsW(Y[i])?B[i]:Y[i]}else o=B.slice();
   /* classic tabby: wider, blotchier markings (one light stripe pixel either side, half below) */
   if(rec.tab==='classic'&&!rec.tortie){const s=o.slice();
     for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(!petDnaIsF(s[i]))continue;
-      if(s[i-1]===80||s[i+1]===80||(s[i-w]===80&&((x+y)&1)))o[i]=80}}
+      let hit=false;for(let k=1;k<=sc&&!hit;k++){if((x-k>=0&&s[i-k]===80)||(x+k<w&&s[i+k]===80))hit=true}
+      if(!hit&&y>=sc&&s[i-sc*w]===80&&((x+y)&1))hit=true;
+      if(hit)o[i]=80}}
   /* tortoiseshell: the stripe layer, spread into patches, plus the sunlit fur on the back and head */
   if(rec.tortie){const s=o.slice();
     for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(!petDnaIsF(s[i]))continue;
-      if(petDnaIsS(s[i-1])||petDnaIsS(s[i+1])||(petDnaIsS(s[i-w])&&((x+y)&1)))o[i]=s[i]===20?75:85}
+      let hit=false;for(let k=1;k<=sc&&!hit;k++){if((x-k>=0&&petDnaIsS(s[i-k]))||(x+k<w&&petDnaIsS(s[i+k])))hit=true}
+      if(!hit&&y>=sc&&petDnaIsS(s[i-sc*w])&&((x+y)&1))hit=true;
+      if(hit)o[i]=s[i]===20?75:85}
     if(!rec.tab)for(let i=0;i<n;i++){if(o[i]===80||o[i]===70)o[i]=85;else if(o[i]===60)o[i]=75}}
   /* colourpoints: legs, tail, ears (thin parts) and a mask around the eyes and nose */
   if(rec.point){
-    const st=/^d?st(\d)$/.exec(kind),gi=st?+st[1]:6,off=gi<=1?2:gi<=3?1:0,thin=gi<=3?3:4;
+    const st=/^d?st(\d)$/.exec(kind),gi=st?+st[1]:6,off=gi<=1?2:gi<=3?1:0,thin=(gi<=3?3:4)*sc;
     const body=function(v){return v!==0&&v!==10},hr=new Uint8Array(n),vr=new Uint8Array(n);
     for(let y=0;y<h;y++){let x=0;while(x<w){if(!body(o[y*w+x])){x++;continue}let e=x;while(e<w&&body(o[y*w+e]))e++;const L=Math.min(255,e-x);for(let k=x;k<e;k++)hr[y*w+k]=L;x=e}}
     for(let x=0;x<w;x++){let y=0;while(y<h){if(!body(o[y*w+x])){y++;continue}let e=y;while(e<h&&body(o[e*w+x]))e++;const L=Math.min(255,e-y);for(let k=y;k<e;k++)vr[k*w+x]=L;y=e}}
     const face=new Uint8Array(n);
-    for(let i=0;i<n;i++){const v=o[i];if(v>=120&&v<=180){const x=i%w,y=(i/w)|0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<w&&yy<h)face[yy*w+xx]=1}}}
+    for(let i=0;i<n;i++){const v=o[i];if(v>=120&&v<=180){const x=i%w,y=(i/w)|0;for(let dy=-2*sc;dy<=2*sc;dy++)for(let dx=-2*sc;dx<=2*sc;dx++){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<w&&yy<h)face[yy*w+xx]=1}}}
     const s=o.slice();
     for(let i=0;i<n;i++){const v=s[i];if(!(petDnaIsF(v)||petDnaIsS(v)||petDnaIsP(v)))continue;
       const inPt=Math.min(hr[i],vr[i])<=thin||face[i];
@@ -334,10 +340,10 @@ function petDnaCompose(kind,rec,S){
   /* long hair: a fringed outline on the top and the sides (never under the feet) */
   if(rec.long){const s=o.slice();
     for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(s[i]!==10)continue;
-      const fx=x%72,fy=y%48;if(fy>=44)continue;
+      const fx=x%(72*sc),fy=y%(48*sc);if(fy>=44*sc)continue;
       /* a soft tuft: the outline steps out one pixel and the fur shows through where it was */
       const fur=function(v){return petDnaIsF(v)||petDnaIsS(v)||petDnaIsW(v)||petDnaIsP(v)};
-      if(s[i-w]===0&&fur(s[i+w])&&((fx+fy*2)%3===0)&&fy>4){o[i]=s[i+w];o[i-w]=10}
+      if(s[i-w]===0&&fur(s[i+w])&&((fx+fy*2)%3===0)&&fy>4*sc){o[i]=s[i+w];o[i-w]=10}
       else if(s[i-1]===0&&fur(s[i+1])&&((fy*3+fx)%3===0)){o[i]=s[i+1];o[i-1]=10}
       else if(s[i+1]===0&&fur(s[i-1])&&((fy*3+fx)%3===0)){o[i]=s[i-1];o[i+1]=10}}}
   return o;

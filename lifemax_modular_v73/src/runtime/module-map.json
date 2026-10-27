@@ -794,7 +794,7 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 34914,
+   "bytes": 35665,
    "statement_count": 59,
    "tags": [
     "pet",
@@ -1104,7 +1104,7 @@
   },
   {
    "file": "src/runtime/segments/24-pet-depth.js",
-   "bytes": 23158,
+   "bytes": 23210,
    "statement_count": 51,
    "tags": [
     "pet",
@@ -1513,7 +1513,7 @@
   },
   {
    "file": "src/runtime/segments/32-pet-dna.js",
-   "bytes": 56733,
+   "bytes": 57298,
    "statement_count": 87,
    "tags": [
     "pet",
@@ -1776,7 +1776,7 @@
   },
   {
    "file": "src/runtime/segments/38-pet-rig.js",
-   "bytes": 12590,
+   "bytes": 12640,
    "statement_count": 13,
    "tags": [
     "pet",
@@ -1934,7 +1934,7 @@
   },
   {
    "file": "src/runtime/segments/45-voice.js",
-   "bytes": 50523,
+   "bytes": 51087,
    "statement_count": 120,
    "tags": [
     "voice"
@@ -1954,7 +1954,7 @@
   },
   {
    "file": "src/runtime/segments/46-voice-nlu.js",
-   "bytes": 40570,
+   "bytes": 41118,
    "statement_count": 39,
    "tags": [
     "voice"
@@ -2085,7 +2085,7 @@
   },
   {
    "file": "src/runtime/segments/49-voice-time.js",
-   "bytes": 15092,
+   "bytes": 15114,
    "statement_count": 20,
    "tags": [
     "voice"
@@ -2111,6 +2111,31 @@
     "lmvLogXp",
     "lmvLogNow",
     "lmvHLog"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-pet-hd.js",
+   "bytes": 10934,
+   "statement_count": 12,
+   "tags": [
+    "pet",
+    "hd"
+   ],
+   "symbols": [
+    "PET_HD",
+    "petHdOn",
+    "petHdJson",
+    "petHdSheet",
+    "petHdRigFrame",
+    "petHdClaim",
+    "petHdCols",
+    "petHdDot",
+    "petHdEye",
+    "petHdFace",
+    "petHdExpr",
+    "petHdMood",
+    "petHdPick",
+    "petHdSettingsRender"
    ]
   }
  ]

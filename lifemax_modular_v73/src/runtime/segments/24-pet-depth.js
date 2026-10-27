@@ -4,7 +4,7 @@
    instead of with CSS z-index planes. posZ 0 = the back wall, 100 = pressed against the screen.
    Scale uses the brief's formula exactly. Feet height uses a one-point perspective calibrated to
    this house: a cat at posZ 35 stands at y 132 at 100%, exactly where the cat always stood. */
-var PET_OS=3;                       /* the room is drawn at 3x so a scaled cat stays crisp */
+var PET_OS=4;                       /* the room is drawn at 4x so a scaled cat stays crisp (4 = two canvas pixels per pixel of a 2x HD sprite) */
 var PET_DEPTH={
   POS_X_MIN:-100,POS_X_MAX:100,POS_Z_MIN:0,POS_Z_MAX:100,ELEVATION_Y_MIN:0,ELEVATION_Y_MAX:40,
   SCALE_AT_Z_MIN_PCT:55,SCALE_Z_RANGE_PCT:130,

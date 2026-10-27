@@ -154,9 +154,16 @@ def clear_face(hr, info):
     reg = np.zeros(hr.shape, bool); reg[max(0, y0):y1, max(0, x0):x1] = True
     kill |= reg & np.isin(hr, (150, 160, 170, 180, 200, 210))
     kill |= reg & np.isin(hr, (120, 130, 140)) & (np.abs(np.arange(hr.shape[1])[None, :] - mx * 2) < s)   # the nose, not the inner ears
-    # whiskers sit just outside the face
-    kill |= (hr == 190)
-    return inpaint(hr, kill)
+    # whiskers poke out past the head: where nothing surrounds them they just disappear, only the ones lying on fur are filled in
+    wk = (hr == 190); h2 = hr.copy(); h2[wk] = 0
+    P = np.pad(h2 != 0, 1, mode='constant')
+    for y, x in zip(*np.nonzero(wk)):
+        n = int(P[y, x + 1]) + int(P[y + 2, x + 1]) + int(P[y + 1, x]) + int(P[y + 1, x + 2])
+        if n >= 3: h2[y, x] = 255; kill[y, x] = True
+    kill &= (h2 != 0) | wk
+    out = inpaint(h2, kill)
+    out[out == 255] = 0
+    return out
 
 def _px(hr, y, x, v):
     y = int(round(y)); x = int(round(x))
