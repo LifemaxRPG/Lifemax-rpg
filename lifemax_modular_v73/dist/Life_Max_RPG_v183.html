@@ -17423,7 +17423,7 @@ function petHdEye(px,CW,CH,cy,cx,kind,side,cols,sc){
   const rx=4.4*sc;for(let dx=-Math.floor(rx);dx<=Math.floor(rx);dx++){const t=dx/rx,yy=kind==='happy'?-(1-t*t)*3.0*sc:(1-t*t)*1.6*sc,y0=cy+yy+(kind==='happy'?2:0);d(y0,cx+dx,150);d(y0+1,cx+dx,150)}
   return;
  }
- const P0={open:[6.0,4.5,1.5,.20],wide:[5.8,5.4,1.7,.12],sleepy:[5.4,4.9,2.1,.14],angry:[5.4,4.9,2.1,.14],sad:[5.4,4.9,2.1,.14]}[kind]||[6.0,4.5,1.5,.20],P=[P0[0]*sc,P0[1]*sc,P0[2],P0[3]];
+ const P0={open:[6.2,5.7,1.8,.12],wide:[6.0,6.4,1.95,.08],sleepy:[5.4,4.9,2.1,.14],angry:[5.4,4.9,2.1,.14],sad:[5.4,4.9,2.1,.14]}[kind]||[6.2,5.7,1.8,.12],P=[P0[0]*sc,P0[1]*sc,P0[2],P0[3]];
  const clip=kind==='angry'?function(xx,yy){return yy>=-P[1]*.18+(xx*-side)*.5-.2}:kind==='sad'?function(xx,yy){return yy>=-P[1]*.18-(xx*-side)*.5-.2}:kind==='sleepy'?function(xx,yy){return yy>=-P[1]*.05}:null;
  const M=petHdEyeMask(P[0],P[1],P[2],side,P[3],clip),inner=petHdErode(M,1);
  let top=M.H,bot=-1;for(let y=0;y<M.H;y++)for(let x=0;x<M.W;x++)if(inner[y][x]){top=Math.min(top,y);bot=Math.max(bot,y)}
@@ -17436,7 +17436,7 @@ function petHdEye(px,CW,CH,cy,cx,kind,side,cols,sc){
   if(!inner[y][x]||lid[y][x]){d(py,pxx,150);continue}
   const xx=x-M.cx,v=(y-top)/Math.max(1,bot-top);
   let c=v<.5?160:170;
-  const pxo=xx-(side<0?-.4:.4);if(pxo*pxo/(1.1*1.1)+Math.pow((y-mid-.4)/ph,2)<=1)c=150;      /* a slit pupil */
+  const pxo=xx-(side<0?-.4:.4);if(pxo*pxo/(1.5*1.5)+Math.pow((y-mid-.4)/ph,2)<=1)c=150;      /* a tall, soft pupil */
   d(py,pxx,c);
  }
  /* two highlights: a big one up and towards the outer corner, a small one low on the other side */
@@ -17448,7 +17448,7 @@ function petHdFace(px,CW,CH,a,expr,cols,wk){
  const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed']}[expr]||['open','open'];
  const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
  /* every eye sits a little higher on the face and closer together, so a blink or a mood change never makes the eyes jump; only the plain round eyes (neutral, surprised) get the almond shape, the others keep theirs */
- const ey=-4.4*sc,ex=1.0*sc;
+ const ey=-4.6*sc,ex=.5*sc;
  petHdEye(px,CW,CH,a.l[0]+ey,a.l[1]+ex,E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0]+ey,a.r[1]-ex,E[1],1,cols,sc);
  const ny=a.nose[0],nx=a.nose[1],my=ny+3.2;
  /* a small, soft pink nose (no dark edge) */
