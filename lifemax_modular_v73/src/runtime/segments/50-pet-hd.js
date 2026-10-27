@@ -97,14 +97,23 @@ function petHdEye(px,CW,CH,cy,cx,kind,side,cols,sc){
  {const hy=cy+top+1.6-M.cy,hx=cx+(side<0?-2.6:1.4);[[0,0],[0,1],[1,0],[1,1]].forEach(function(q){d(hy+q[0],hx+q[1],180)});d(cy+bot-1.4-M.cy+.4,cx+(side<0?2.4:-2.4),180)}
 }
 /* expr: neutral, happy, sleepy, surprised, angry, sad, blink. a = {l,r,nose,mouth} in the 2x frame (already moved with the body). wk = whisker length factor */
+/* where the face sits in the head: the painted head is not always symmetric (a kitten's cheek can be wider on one side), so the eyes are nudged toward the middle of the head at eye height */
+function petHdHeadShift(px,CW,CH,a){
+ const mid=(a.l[1]+a.r[1])/2,span=a.r[1]-a.l[1],y0=Math.round((a.l[0]+a.r[0])/2-2*(a.sc||1));let sum=0,n=0;
+ for(let k=-2;k<=2;k+=2){const y=y0+k;if(y<0||y>=CH)continue;
+  const on=function(x){return x>=0&&x<CW&&(px[y*CW+x]>>>24)>24};
+  let x=Math.round(mid);if(!on(x))continue;let l=x,r=x;while(on(l-1)&&x-l<span*2)l--;while(on(r+1)&&r-x<span*2)r++;
+  const w=r-l+1;if(w<span*1.6||w>span*3.4)continue;sum+=(l+r)/2-mid;n++}
+ if(!n)return 0;const sc=a.sc||1;return Math.max(-5*sc,Math.min(5*sc,sum/n*.9));
+}
 function petHdFace(px,CW,CH,a,expr,cols,wk){
  const sc=a.sc||1,X=function(v){return Math.round(v*sc)};
  const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed']}[expr]||['open','open'];
  const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
  /* every eye sits a little higher on the face and closer together, so a blink or a mood change never makes the eyes jump; only the plain round eyes (neutral, surprised) get the almond shape, the others keep theirs */
- const ey=-4.6*sc,ex=.5*sc;
- petHdEye(px,CW,CH,a.l[0]+ey,a.l[1]+ex,E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0]+ey,a.r[1]-ex,E[1],1,cols,sc);
- const ny=a.nose[0],nx=a.nose[1],my=ny+3.2;
+ const ey=-4.6*sc,ex=.5*sc,hx=petHdHeadShift(px,CW,CH,a);
+ petHdEye(px,CW,CH,a.l[0]+ey,a.l[1]+ex+hx,E[0],-1,cols,sc);petHdEye(px,CW,CH,a.r[0]+ey,a.r[1]-ex+hx,E[1],1,cols,sc);
+ const ny=a.nose[0],nx=Math.round(a.nose[1]+hx*.75),my=ny+3.2;
  /* a small, soft pink nose (no dark edge) */
  [-1,0,1].forEach(function(x){d(ny-.5,nx+x,x<0?140:130)});d(ny+.5,nx,120);
  /* a short line down from the nose */

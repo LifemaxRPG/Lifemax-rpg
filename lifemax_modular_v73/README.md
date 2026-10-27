@@ -701,3 +701,6 @@ The dial now holds only the three macro rings (protein, carbs, fat). Calories ar
 
 ## v188 — tap a ring
 Tapping the protein, carbs or fat ring (or its tile) isolates it and shows its grams, target and amount left in the middle of the dial; tap it again, or the middle, to go back to calories. Daily targets now have their own "Targets" button beside the day arrows.
+
+## v189 — cat and kitten eyes sit in the middle of the head
+The painted heads are not always symmetric (a kitten's cheek can be wider on one side), so eyes placed from the face anchors looked off-centre. The face is now centred on the head at eye height: each frame measures the head's width in the body pixels and moves the eyes (and, a little less, the nose, mouth and whiskers) toward its middle, capped at 5 px and skipped when the head merges with the body.
