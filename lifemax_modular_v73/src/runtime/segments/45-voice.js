@@ -376,10 +376,11 @@ function lmvHandle(text,meta){
 function lmvAnswer(patch){
  const f=lmvFrame;if(!f||f.state!=='AWAITING_CLARIFICATION')return lmvSnapshot();
  lmvMerge(f,patch);
- lmvAdvance(f,lmvCtx());lmvRender();return lmvSnapshot();
+ lmvAdvance(f,lmvCtx());lmvPump();lmvRender();return lmvSnapshot();
 }
-function lmvConfirm(){const f=lmvFrame;if(!f||f.state!=='PREVIEWED')return lmvSnapshot();if(f.act){lmvRunAct(f);lmvRender();return lmvSnapshot()}if(f.dup)f.dupOk=true;lmvAuthorize(f);lmvRender();return lmvSnapshot()}
-function lmvCancel(){const f=lmvFrame;if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))lmvEnd(f,'Okay, cancelled.');lmvRender();return lmvSnapshot()}
+function lmvPump(){if(typeof g4Pump==='function')try{g4Pump()}catch(e){console.warn('[voice]',e)}}
+function lmvConfirm(){const f=lmvFrame;if(!f||f.state!=='PREVIEWED')return lmvSnapshot();if(f.act){lmvRunAct(f);lmvPump();lmvRender();return lmvSnapshot()}if(f.dup)f.dupOk=true;lmvAuthorize(f);lmvPump();lmvRender();return lmvSnapshot()}
+function lmvCancel(){const f=lmvFrame;if(f&&(f.state==='AWAITING_CLARIFICATION'||f.state==='PREVIEWED'))lmvEnd(f,'Okay, cancelled.');lmvPump();lmvRender();return lmvSnapshot()}
 function lmvReset(){lmvFrame=null;lmvDelivered=new Set();lmvExec={};lmvRender()}
 /* read-only query */
 function lmvQuery(f,raw,ctx){

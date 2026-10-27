@@ -361,6 +361,19 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v138 — Voice generation 4: how people really talk
+
+New segment `50-voice-gen4.js` (wraps the earlier voice segments; web only, no native change) and `tests/voice4.test.js` (90 checks).
+- **Self-correction:** "schedule a workout tomorrow at 8, wait no, make it 9 for 45 minutes". The words after the last pivot ("wait no", "actually make that", "sorry I meant", "scratch that", "make it") replace the same kind of detail before it (time, day, length); everything else stays.
+- **Two things at once:** "log a 30 minute walk and check my XP". Split only where the second half starts with a clear request word, or is a length + name + time after a scheduling first half; never inside "stretching and mobility", "between 2 and 4 PM" or "an hour and a half". The first one waits for your yes, the second follows, and one card shows both. Cancel the first and the second is dropped. The second scheduling request inherits the first one's day.
+- **Edit the card on screen:** while a card is showing, "make it 45 minutes", "actually at 9:30", "move it to Wednesday", "push it back 30 minutes", "call it Leg Day", "for an hour and a half instead" change only that one detail and re-check overlaps. Anything that is not a pure edit (a question, a new command) still works as before.
+- **"Right after that" / "right before deep work":** uses the last thing scheduled, or the activity you name; "after work" is still the work-hours anchor.
+- **Briefing and coaching:** "how am I doing today" (XP against the daily pace, streak, steps, quests, what is next), "what's next / what am I supposed to be doing" (now, minutes left, next and how far away), "how close am I to my goals" (exact amounts left), "I have 30 minutes free, what should I do" (best fit from quests, today's plan, the walk you still need, the cat) with a one-tap chip.
+- **Comparisons:** "did I walk more today than yesterday", "compare my XP this week to last week" (same number of days of each), "best / worst day for steps last week", "average daily steps". Days with nothing logged count as 0.
+- **Plan, library, timer, apps:** "what's on my workout plan", "search my library for dune" (opens the Library with the search filled), a focus timer ("start a 25 minute focus timer", "how much time is left", "cancel timer"; ends with a note, a vibration and, in the app, a notification), "open Firefox / Claude / Gemini / Myspoti / Android settings" (matched against the phone's app list; "open settings" is still this app's Settings).
+- **Help and shortcuts:** "what can I say" shows tappable examples by category. "Start my morning routine" gives the day. "When I say gym time, do log a 45 minute workout" teaches a shortcut (up to 20; "forget gym time" removes it).
+- Tested in a browser only. The microphone and the on-device recogniser behave as before; opening other apps needs the Android app.
+
 ## v137 — Cat tab back on the bottom bar
 
 The Cat tab is back in the bottom navigation, right after Character, and lights up when you are on the Cat page (it used to light Overview). The Overview tile still opens it too.
