@@ -361,6 +361,11 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v168 — the splash is the opening shot; thick cards; Halloween icon
+- The Quest Board's first-visit splash is no longer a separate screen. The 3D scene opens straight on a wide shot of the table floating in the void, candles lit, deck waiting, with "YOUR CARDS ARE WAITING" above and a gold-framed "GET YOUR QUESTS" button below (light sweep, breathing glow, corner studs). Pressing it flares the button and candles and the camera is drawn in to the table, then the shuffle begins. "Not now" fades out and leaves the cards face-down; leaving the page closes the scene and it returns next visit. Without WebGL2 the older flat splash is used. (`50-quests-gate.js` is now only that fallback.)
+- 3D cards now have real thickness (0.34 on a card 11.2 wide), a rounded-rectangle outline with a warm paper edge, so they no longer vanish when seen edge-on. Deck cards stack with spacing and rest on the wood.
+- Halloween launcher icon and splash (`android-wrapper/icon-source.png`; the normal icon is kept as `icon-source-default.png`, swap them back and run `make_icons.py` after Halloween). Native change, so NativeApi is now 4 and needs a new APK.
+
 ## v167 — the threshold splash
 - The first visit to the Quest Board each day (after you linger about a second) now opens on a dark void: a watching pixel eye, two flickering candles with rising embers, "YOUR CARDS ARE WAITING" and a "GET YOUR QUESTS" button. Pressing it ignites the button, opens the eye and fades into the 3D reading. "Not now" skips the reading and leaves the cards face-down; leaving the page removes it until next visit. It stops above the bottom bar so you can always leave.
 - It appears for the 3D table and classic cinematic deal modes only (not Quick or Instant), and "Shuffle again" goes straight to the reading.

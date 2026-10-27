@@ -202,7 +202,7 @@ function dhCardHtml(q){
   +'</div>')+'</div>'+['tl','tr','bl','br'].map(function(k){return '<button class="dh-corner '+k+'" type="button" aria-label="Flip the card over" onclick="dhTurn('+q.slot+')"></button>'}).join('')+'</div>'
   +'<div class="dh-dock">'+foot+'<span class="dock-mid"><span class="dock-slot">'+qpxText(DH_SLOT_NAMES[q.slot],{s:1,w:110,lines:1})+'</span><span class="dh-xp">'+qpxText('+'+Math.max(0,Number(q.xp)||0)+' XP',{s:2,w:100,lines:1})+'</span></span>'+rr+'</div></div>';
 }
-var dhDealing=false,dhPrevDone=null,dhSig='';
+var dhDealing=false,dhPrevDone=null,dhSig='',dhAbort=false;
 function dhViewOn(){const v=document.getElementById('view-quests');return !!(v&&v.classList.contains('active'))}
 function dhRenderHand(){
  const el=document.getElementById('dailyHand');if(!el||dhDealing)return;const d=dhEnsure();
@@ -238,7 +238,7 @@ async function dhMaybeDeal(replay){
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
  if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
  const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
- if(replay!==true&&(gmode==='table'||gmode==='cine')&&typeof dhGate==='function'){
+ if(replay!==true&&gmode==='cine'&&typeof dhGate==='function'){
   if(dhGating)return;dhGating=true;el.classList.add('fd-pre');let gr='go';
   try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
   if(gr==='leave'){el.classList.remove('fd-pre');return}
@@ -249,7 +249,16 @@ async function dhMaybeDeal(replay){
   if(replay===true){cards.forEach(function(c){c.classList.remove('is-up')});d.up=[false,false,false]}
   el.classList.add('fd-pre');el.scrollLeft=0;
   const mode=typeof dhDealMode==='function'?dhDealMode():'quick';
-  if(mode==='table'&&typeof dhTable3D==='function'){const ok=await dhTable3D(el,cards,d,replay===true);if(ok!==false)return}
+  if(mode==='table'&&typeof dhTable3D==='function'){
+   const ok=await dhTable3D(el,cards,d,replay===true,replay!==true);
+   if(ok==='leave'){dhAbort=true;return}
+   if(ok!==false)return;
+   if(replay!==true&&typeof dhGate==='function'){/* no WebGL2: the flat splash, then the flat reading */
+    let gr='go';dhGating=true;try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
+    if(gr==='leave'){dhAbort=true;return}
+    if(gr==='skip')return;
+   }
+  }
   if((mode==='cine'||mode==='table')&&typeof dhCinematic==='function'){await dhCinematic(el,cards,d,replay===true);return}
   if(mode==='off')return;
   const st=dhStage();st.hidden=false;st.innerHTML='';
@@ -277,7 +286,7 @@ async function dhMaybeDeal(replay){
  finally{
   dhDealing=false;el.classList.remove('fd-pre');cards.forEach(function(c){c.style.opacity=''});
   const st=document.getElementById('dailyStage');if(st){st.hidden=true}
-  d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  if(dhAbort){dhAbort=false}else{d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
  }
 }
 function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}

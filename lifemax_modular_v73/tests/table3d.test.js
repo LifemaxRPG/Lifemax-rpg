@@ -4,7 +4,7 @@ const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', 
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x ? '  ' + JSON.stringify(x) : '')) } };
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const mk = async (init, mode) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[table|\[deal|\[hand|\[cine/.test(m.text())) p.errs.push(m.text().slice(0, 300)) }); await p.addInitScript((init || '') + (mode ? "localStorage.setItem('lma_qdeal','" + mode + "');" : '') + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') }); if (!mode || mode === 'table' || mode === 'cine') { await p.waitForSelector('#dhGate .gate-btn', { timeout: 6000 }); await p.click('#dhGate .gate-btn') } return p };
+  const mk = async (init, mode, gateSel) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[table|\[deal|\[hand|\[cine/.test(m.text())) p.errs.push(m.text().slice(0, 300)) }); await p.addInitScript((init || '') + (mode ? "localStorage.setItem('lma_qdeal','" + mode + "');" : '') + "localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') }); if (!mode || mode === 'table' || mode === 'cine') { const gs = gateSel || (mode === 'cine' ? '#dhGate .gate-btn' : '#fateScene .gate3-btn'); await p.waitForSelector(gs, { timeout: 8000 }); await p.click(gs) } return p };
   let p = await mk();
   await p.waitForSelector('#fateScene.fs-3d', { timeout: 8000 });
   ok('the 3D table scene is the default reading', true);
@@ -35,7 +35,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('every corner works, and cards turn independently', await p.evaluate(() => document.querySelector('#dailyHand .dh-card[data-slot="2"]').classList.contains('is-turned') && !document.querySelector('#dailyHand .dh-card[data-slot="1"]').classList.contains('is-turned')));
   ok('no page errors', p.errs.length === 0, p.errs);
   // fallback when WebGL2 is unavailable
-  const f = await mk("(function(){var g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t){if(t==='webgl2'&&this.classList.contains('fs-gl'))return null;return g.apply(this,arguments)}})();");
+  const f = await mk("(function(){var g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t){if(t==='webgl2'&&this.classList.contains('fs-gl'))return null;return g.apply(this,arguments)}})();", undefined, '#dhGate .gate-btn');
   await f.waitForSelector('#fateScene', { timeout: 8000 });
   ok('without WebGL2 it falls back to the flat reading', await f.evaluate(() => !document.querySelector('#fateScene.fs-3d') && !!document.querySelector('#fateScene .cine-card')));
   await f.click('.fs-skip'); await f.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 8000 });
@@ -44,23 +44,23 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const s = await mk(null, 'quick'); await s.waitForTimeout(800);
   ok('Quick mode does not start the 3D scene', await s.evaluate(() => !document.getElementById('fateScene')));
   ok('Settings lists the 3D table choice', await s.evaluate(() => { setPickCat('look'); const o = [...document.querySelectorAll('#qdealSel option')].map(x => x.value); return o.includes('table') && o.includes('cine') && o.includes('quick') && o.includes('off') }));
-  // the threshold splash
+  // the threshold: the opening shot of the 3D scene is the splash
   const gp = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); gp.errs = []; gp.on('pageerror', e => gp.errs.push(String(e)));
   await gp.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
   await gp.goto('file://' + file); await gp.waitForTimeout(800); await gp.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('quests') });
-  await gp.waitForSelector('#dhGate .gate-btn', { timeout: 6000 }); await gp.waitForTimeout(900);
-  ok('a splash with a "Get your quests" button greets the first visit of the day', await gp.evaluate(() => /Get your quests/i.test(document.querySelector('#dhGate .gate-btn').getAttribute('aria-label')) && !document.getElementById('fateScene')));
-  ok('the splash stops above the bottom bar so you can still leave', await gp.evaluate(() => { const g = document.getElementById('dhGate').getBoundingClientRect(), s = document.querySelector('.sidebar').getBoundingClientRect(); return g.bottom <= s.top + 1 && g.top <= 1 }));
+  await gp.waitForSelector('#fateScene .gate3-btn', { timeout: 8000 }); await gp.waitForTimeout(2200);
+  ok('the first visit opens on the 3D table with a "Get your quests" button, no separate splash', await gp.evaluate(() => /Get your quests/i.test(document.querySelector('.gate3-btn').getAttribute('aria-label')) && !document.getElementById('dhGate') && !!document.querySelector('#fateScene.fs-3d .fs-gl')));
+  ok('the Skip button stays hidden until you press it', await gp.evaluate(() => getComputedStyle(document.querySelector('.fs-skip')).display === 'none'));
   ok('the quest cards stay hidden behind it', await gp.evaluate(() => document.getElementById('dailyHand').classList.contains('fd-pre') && !state.dailyDraw.dealt));
   await gp.evaluate(() => navigate('dashboard')); await gp.waitForTimeout(900);
-  ok('leaving the Quest Board removes the splash, and it returns next visit', await gp.evaluate(() => !document.getElementById('dhGate') && !state.dailyDraw.dealt));
-  await gp.evaluate(() => navigate('quests')); await gp.waitForSelector('#dhGate .gate-skip', { timeout: 6000 }); await gp.waitForTimeout(800);
-  await gp.click('#dhGate .gate-skip'); await gp.waitForTimeout(900);
-  ok('"Not now" skips the reading and shows the cards face-down', await gp.evaluate(() => !document.getElementById('dhGate') && !document.getElementById('fateScene') && state.dailyDraw.dealt && ![...document.querySelectorAll('#dailyHand .dh-card')].some(c => c.classList.contains('is-up')) && !document.getElementById('dailyHand').classList.contains('fd-pre')));
-  await gp.evaluate(() => LifeMaxDailyHand.replay()); await gp.waitForSelector('#fateScene', { timeout: 6000 });
-  ok('"Shuffle again" goes straight to the reading, no splash', await gp.evaluate(() => !document.getElementById('dhGate')));
+  ok('leaving the Quest Board closes the scene, and it returns next visit', await gp.evaluate(() => !document.getElementById('fateScene') && !state.dailyDraw.dealt && !document.getElementById('dailyHand').classList.contains('fd-pre')));
+  await gp.evaluate(() => navigate('quests')); await gp.waitForSelector('#fateScene .gate3-skip', { timeout: 8000 }); await gp.waitForTimeout(800);
+  await gp.click('.gate3-skip'); await gp.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 5000 }); await gp.waitForTimeout(300);
+  ok('"Not now" skips the reading and shows the cards face-down', await gp.evaluate(() => state.dailyDraw.dealt && ![...document.querySelectorAll('#dailyHand .dh-card')].some(c => c.classList.contains('is-up')) && !document.getElementById('dailyHand').classList.contains('fd-pre')));
+  await gp.evaluate(() => LifeMaxDailyHand.replay()); await gp.waitForSelector('#fateScene', { timeout: 6000 }); await gp.waitForTimeout(500);
+  ok('"Shuffle again" goes straight to the reading, no gate', await gp.evaluate(() => !document.querySelector('.gate3-btn')));
   await gp.click('.fs-skip'); await gp.waitForFunction(() => !document.getElementById('fateScene'), null, { timeout: 8000 });
-  ok('the splash raises no page errors', gp.errs.length === 0, gp.errs);
+  ok('the gate raises no page errors', gp.errs.length === 0, gp.errs);
   // a full run, turning each card
   const q = await mk(); await q.waitForSelector('#fateScene.fs-3d', { timeout: 8000 }); const t2 = Date.now();
   let turnNo = 0; const d2 = async () => { const v = [[26, 0], [19, 19], [0, 26]][turnNo++ % 3]; await q.mouse.move(206, 430); await q.mouse.down(); for (let i = 1; i <= 9; i++) { await q.mouse.move(206 + v[0] * i, 430 + v[1] * i); await q.waitForTimeout(16) } await q.mouse.up() };

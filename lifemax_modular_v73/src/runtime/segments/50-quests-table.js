@@ -15,7 +15,7 @@ var T3_CVS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=1)in v
  'void main(){vec4 w=uM*vec4(aP,1.);vP=w.xyz;vN=mat3(uM)*aN;vUV=aUV;vF=aF;gl_Position=uVP*w;}';
 var T3_CFS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2 vUV;in float vF;out vec4 o;uniform sampler2D uFront,uBack;uniform vec3 uEye,uL1,uL2;uniform float uI1,uI2,uAmb,uSheen,uFogK,uFade;\n'+
  'vec3 lt(vec3 P,vec3 N,vec3 lp,float I){vec3 d=lp-P;float r2=dot(d,d);float att=I/(1.+r2*.0075);return vec3(1.,.7,.42)*max(dot(N,normalize(d)),0.)*att;}\n'+
- 'void main(){vec2 rp=(vUV-.5)*vec2(1.,1.7506);vec2 hf=vec2(.5,.5*1.7506);float rr=.05;if(length(max(abs(rp)-hf+rr,0.))-rr>0.)discard;vec3 N=normalize(vN);vec3 V=normalize(uEye-vP);vec3 alb=pow((vF<.5?texture(uFront,vUV):texture(uBack,vUV)).rgb,vec3(2.2));\n'+
+ 'void main(){vec3 N=normalize(vN);vec3 V=normalize(uEye-vP);vec3 alb=vF>1.5?pow(vec3(.95,.8,.5),vec3(2.2)):pow((vF<.5?texture(uFront,vUV):texture(uBack,vUV)).rgb,vec3(2.2));\n'+
  'vec3 c=alb*(vec3(.12,.13,.2)*uAmb+lt(vP,N,uL1,uI1)+lt(vP,N,uL2,uI2));\n'+
  'vec3 Lh=normalize(vec3(-.4,.7,.6));vec3 R=reflect(-Lh,N);c+=vec3(1.,.93,.78)*uSheen*pow(max(dot(R,V),0.),26.)*.3;\n'+
  'float dist=length(uEye-vP);c=mix(c,vec3(0.),(1.-exp(-dist*uFogK))*.8);c=c/(c+vec3(.9));c=pow(c,vec3(1./2.2));o=vec4(c,1.)*uFade;}';
@@ -78,12 +78,25 @@ async function t3load(){
  var tex={};for(var k in TABLE_TEX)tex[k]=await t3img('data:image/webp;base64,'+TABLE_TEX[k]);
  T3_SHARED={tex:tex,mesh:t3parseObj(TABLE_OBJ),cyl:t3cylinder(2.3,11,18)};return T3_SHARED;
 }
+function t3cardMesh(W,H,T,R,seg){
+ var hx=W/2,hy=H/2,pts=[],cs=[[hx-R,hy-R,0],[-hx+R,hy-R,90],[-hx+R,-hy+R,180],[hx-R,-hy+R,270]];
+ cs.forEach(function(c){for(var i=0;i<=seg;i++){var a=(c[2]+i*90/seg)*Math.PI/180;pts.push([c[0]+R*Math.cos(a),c[1]+R*Math.sin(a)])}});
+ var n=pts.length,o=[],V=function(x,y,z,nx,ny,nz,u,v,f){o.push(x,y,z,nx,ny,nz,u,v,f)};
+ for(var i=0;i<n;i++){var p=pts[i],q=pts[(i+1)%n];
+  V(0,0,T/2,0,0,1,.5,.5,0);V(p[0],p[1],T/2,0,0,1,p[0]/W+.5,.5-p[1]/H,0);V(q[0],q[1],T/2,0,0,1,q[0]/W+.5,.5-q[1]/H,0);
+  V(0,0,-T/2,0,0,-1,.5,.5,1);V(q[0],q[1],-T/2,0,0,-1,.5-q[0]/W,.5-q[1]/H,1);V(p[0],p[1],-T/2,0,0,-1,.5-p[0]/W,.5-p[1]/H,1);
+  var dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy)||1,nx=dy/l,ny=-dx/l;
+  V(p[0],p[1],T/2,nx,ny,0,0,0,2);V(q[0],q[1],T/2,nx,ny,0,0,0,2);V(q[0],q[1],-T/2,nx,ny,0,0,0,2);
+  V(p[0],p[1],T/2,nx,ny,0,0,0,2);V(q[0],q[1],-T/2,nx,ny,0,0,0,2);V(p[0],p[1],-T/2,nx,ny,0,0,0,2)}
+ return new Float32Array(o);
+}
 /* ---- the scene ---- */
-async function dhTable3D(el,cards,d,replay){
+async function dhTable3D(el,cards,d,replay,gated){
  var vw=innerWidth,vh=innerHeight,sh;
  try{sh=await t3load()}catch(e){console.warn('[table load]',e);return false}
  var sc=document.createElement('div');sc.id='fateScene';sc.className='fs-3d';
- sc.innerHTML='<canvas class="fs-gl"></canvas><div class="fs-title"></div><div class="fs-cap"></div><button class="fs-skip" type="button" aria-label="Skip the reading">'+qpxText('SKIP',{s:2,w:60,lines:1})+'</button>';
+ var gateHtml=gated?'<div class="fs-gate"><div class="gate3-top"><div class="gate3-eyebrow">'+qpxText('A NEW DAY. A NEW DRAW.',{s:1,w:300,lines:1})+'</div><h2 class="gate3-title">'+qpxText('YOUR CARDS ARE WAITING',{s:3,w:Math.min(330,vw-40),lines:3})+'<span class="sr">Your cards are waiting</span></h2><div class="gate3-rule"><i></i></div><p class="gate3-sub">Three quests, drawn from the dark.</p></div><div class="gate3-bot"><button class="gate3-btn" type="button" aria-label="Get your quests"><span class="g3c tl"></span><span class="g3c tr"></span><span class="g3c bl"></span><span class="g3c br"></span><span class="gate3-btn-t">'+qpxText('GET YOUR QUESTS',{s:2,w:240,lines:1})+'</span></button><button class="gate3-skip" type="button">'+qpxText('NOT NOW',{s:1,w:80,lines:1})+'</button></div></div>':'';
+ sc.innerHTML='<canvas class="fs-gl"></canvas>'+gateHtml+'<div class="fs-title"></div><div class="fs-cap"></div><button class="fs-skip" type="button" aria-label="Skip the reading"'+(gated?' style="display:none"':'')+'>'+qpxText('SKIP',{s:2,w:60,lines:1})+'</button>';
  document.body.appendChild(sc);
  var cvs=sc.querySelector('.fs-gl'),dprs=Math.min(1.75,window.devicePixelRatio||1);cvs.width=Math.round(vw*dprs);cvs.height=Math.round(vh*dprs);
  var gl=cvs.getContext('webgl2',{alpha:false,antialias:true,depth:true,powerPreference:'high-performance'});
@@ -98,9 +111,8 @@ async function dhTable3D(el,cards,d,replay){
  var vao=function(data,layout){var v=gl.createVertexArray();gl.bindVertexArray(v);var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);layout.forEach(function(l){gl.enableVertexAttribArray(l[0]);gl.vertexAttribPointer(l[0],l[1],gl.FLOAT,false,l[3],l[2])});return v};
  var tabV=vao(sh.mesh,[[0,3,0,44],[1,3,12,44],[2,2,24,44],[3,3,32,44]]),tabN=sh.mesh.length/11;
  var cylV=vao(sh.cyl,[[0,3,0,44],[1,3,12,44],[2,2,24,44],[3,3,32,44]]),cylN=sh.cyl.length/11;
- var cq=new Float32Array([-.5,-.5,.01,0,0,1,0,1,0, .5,-.5,.01,0,0,1,1,1,0, .5,.5,.01,0,0,1,1,0,0, -.5,-.5,.01,0,0,1,0,1,0, .5,.5,.01,0,0,1,1,0,0, -.5,.5,.01,0,0,1,0,0,0,
-  .5,-.5,-.01,0,0,-1,0,1,1, -.5,-.5,-.01,0,0,-1,1,1,1, -.5,.5,-.01,0,0,-1,1,0,1, .5,-.5,-.01,0,0,-1,0,1,1, -.5,.5,-.01,0,0,-1,1,0,1, .5,.5,-.01,0,0,-1,0,0,1]);
- var cardV=vao(cq,[[0,3,0,36],[1,3,12,36],[2,2,24,36],[3,1,32,36]]);
+ var CW=11.2,CH=CW*1659/948,CT=.34,DT=.38,TY=72.05,TC=TY+CT/2,cardM=t3cardMesh(CW,CH,CT,.62,5),cardN=cardM.length/9;
+ var cardV=vao(cardM,[[0,3,0,36],[1,3,12,36],[2,2,24,36],[3,1,32,36]]);
  var bq=new Float32Array([-.5,0,-.5,0,1,0,0,0,0, .5,0,-.5,0,1,0,1,0,0, .5,0,.5,0,1,0,1,1,0, -.5,0,-.5,0,1,0,0,0,0, .5,0,.5,0,1,0,1,1,0, -.5,0,.5,0,1,0,0,1,0]);
  var blobV=vao(bq,[[0,3,0,36],[2,2,24,36]]);
  var fq=vao(new Float32Array([-1,-1,1,-1,-1,1,1,1]),[[0,2,0,0]]);
@@ -111,15 +123,15 @@ async function dhTable3D(el,cards,d,replay){
  var qs=[0,1,2].map(function(i){return dhCards().find(function(z){return z.slot===i})||{tier:1,attribute:'discipline',name:'Quest',desc:''}});
  var faces=await Promise.all(qs.map(function(q,i){return t3face(q,DH_NUMERALS[i])})),tFace=faces.map(function(c){return mkTex(c,false)});
  /* the cards */
- var CW=11.2,CH=CW*1659/948,TY=72.05,rnd=function(a,b){return a+Math.random()*(b-a)};
+ var rnd=function(a,b){return a+Math.random()*(b-a)};
  var faceDown=function(yaw){return t3qmul(t3qax([0,1,0],yaw+180),t3qax([1,0,0],90))},faceUp=function(yaw){return t3qmul(t3qax([0,1,0],yaw),t3qax([1,0,0],-90))};
  var C=[];for(var i=0;i<10;i++)C.push({p:[0,300,0],q:faceDown(0),front:null,sh:0,fade:1,yaw:0});
  var dealt=[C[9],C[8],C[7]];dealt.forEach(function(c,i){c.front=tFace[i]});
  /* camera */
- var EYE=[0,138,68],TGT=[0,72,-2],FAR_EYE=[85,170,430],FAR_TGT=[0,38,0],eyeB=FAR_EYE.slice(),tgtB=FAR_TGT.slice(),FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,3,1500),bas=t3basis(eyeB,tgtB),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
+ var EYE=[0,138,68],TGT=[0,72,-2],FAR_EYE=[60,150,340],FAR_TGT=[0,38,0],eyeB=FAR_EYE.slice(),tgtB=FAR_TGT.slice(),FOV=56*Math.PI/180,asp=cvs.width/cvs.height,proj=t3persp(FOV,asp,3,1500),bas=t3basis(eyeB,tgtB),camQ=t3qfromBasis(bas.r,bas.u,bas.f);
  var curEye=eyeB.slice(),viewM=t3view(eyeB,bas),vp=t3mul(proj,viewM);
  var project=function(w){var m=vp,x=m[0]*w[0]+m[4]*w[1]+m[8]*w[2]+m[12],y=m[1]*w[0]+m[5]*w[1]+m[9]*w[2]+m[13],ww=m[3]*w[0]+m[7]*w[1]+m[11]*w[2]+m[15];return [(x/ww*.5+.5)*vw,(1-(y/ww*.5+.5))*vh]};
- var cardRect=function(c){var M=t3qmat(c.q,c.p,[CW,CH,1]),pts=[[-.5,-.5,0],[.5,-.5,0],[.5,.5,0],[-.5,.5,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])}),xs=pts.map(function(p){return p[0]}),ys=pts.map(function(p){return p[1]}),l=Math.min.apply(0,xs),r=Math.max.apply(0,xs),t=Math.min.apply(0,ys),b=Math.max.apply(0,ys);return {left:l,right:r,top:t,bottom:b,width:r-l,height:b-t}};
+ var cardRect=function(c){var M=t3qmat(c.q,c.p,[1,1,1]),pts=[[-CW/2,-CH/2,0],[CW/2,-CH/2,0],[CW/2,CH/2,0],[-CW/2,CH/2,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])}),xs=pts.map(function(p){return p[0]}),ys=pts.map(function(p){return p[1]}),l=Math.min.apply(0,xs),r=Math.max.apply(0,xs),t=Math.min.apply(0,ys),b=Math.max.apply(0,ys);return {left:l,right:r,top:t,bottom:b,width:r-l,height:b-t}};
  var CANDLES=[[-23,72,-27],[23,72,-27]],flames=CANDLES.map(function(p){return [p[0],p[1]+13.2,p[2]]});
  /* helpers */
  var hap=function(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n)}catch(e){}};
@@ -137,12 +149,12 @@ async function dhTable3D(el,cards,d,replay){
  var drawCards=function(){gl.useProgram(pCard);gl.bindVertexArray(cardV);
   gl.uniformMatrix4fv(UL(pCard,'uVP'),false,vp);gl.uniform3fv(UL(pCard,'uEye'),curEye);gl.uniform3fv(UL(pCard,'uL1'),flames[0]);gl.uniform3fv(UL(pCard,'uL2'),flames[1]);gl.uniform1f(UL(pCard,'uI1'),L1);gl.uniform1f(UL(pCard,'uI2'),L2);gl.uniform1f(UL(pCard,'uFogK'),.0016);gl.uniform1i(UL(pCard,'uFront'),3);gl.uniform1i(UL(pCard,'uBack'),4);
   gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,tBack);
-  C.forEach(function(c){if(c.fade<=0)return;gl.uniformMatrix4fv(UL(pCard,'uM'),false,t3qmat(c.q,c.p,[CW,CH,1]));gl.uniform1f(UL(pCard,'uAmb'),c.amb||1.3);gl.uniform1f(UL(pCard,'uSheen'),c.sheen||0);gl.uniform1f(UL(pCard,'uFade'),c.fade);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,c.front||tBack);gl.drawArrays(gl.TRIANGLES,0,12)})};
- var L1=3,L2=3,gutter=1;
+  C.forEach(function(c){if(c.fade<=0)return;gl.uniformMatrix4fv(UL(pCard,'uM'),false,t3qmat(c.q,c.p,[1,1,1]));gl.uniform1f(UL(pCard,'uAmb'),c.amb||1.3);gl.uniform1f(UL(pCard,'uSheen'),c.sheen||0);gl.uniform1f(UL(pCard,'uFade'),c.fade);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,c.front||tBack);gl.drawArrays(gl.TRIANGLES,0,cardN)})};
+ var L1=3,L2=3,gutter=1,idleDrift=false,lastDrift=[0,0,0];
  var render=function(){
   var t=(performance.now()-t0)/1000;C.forEach(function(c){if(c.lift)c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD]});ST.flash*=.9;ST.shake*=.9;
   L1=gutter*(5.2+.8*Math.sin(t*11)+.5*Math.sin(t*23+1))*(1+ST.flash*1.2);L2=gutter*(5.2+.8*Math.sin(t*9+2)+.5*Math.sin(t*19))*(1+ST.flash*1.2);
-  bas=t3basis(eyeB,tgtB);camQ=t3qfromBasis(bas.r,bas.u,bas.f);var sw=Math.min(1,Math.max(0,1-Math.hypot(eyeB[0]-EYE[0],eyeB[2]-EYE[2])/60));curEye=[eyeB[0]+rnd(-1,1)*ST.shake*.5+Math.sin(t*.4)*.8*sw,eyeB[1]+rnd(-1,1)*ST.shake*.5,eyeB[2]+Math.cos(t*.3)*.6*sw];viewM=t3view(curEye,bas);vp=t3mul(proj,viewM);
+  bas=t3basis(eyeB,tgtB);camQ=t3qfromBasis(bas.r,bas.u,bas.f);var sw=Math.min(1,Math.max(0,1-Math.hypot(eyeB[0]-EYE[0],eyeB[2]-EYE[2])/60));lastDrift=idleDrift?[Math.sin(t*.22)*16,Math.sin(t*.17)*5,Math.cos(t*.2)*9]:[0,0,0];curEye=[eyeB[0]+lastDrift[0]+rnd(-1,1)*ST.shake*.5+Math.sin(t*.4)*.8*sw,eyeB[1]+lastDrift[1]+rnd(-1,1)*ST.shake*.5,eyeB[2]+lastDrift[2]+Math.cos(t*.3)*.6*sw];viewM=t3view(curEye,bas);vp=t3mul(proj,viewM);
   gl.viewport(0,0,cvs.width,cvs.height);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.disable(gl.BLEND);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
@@ -191,33 +203,55 @@ async function dhTable3D(el,cards,d,replay){
   awaitFlip={finish:finish};
  })};
  try{
+  var gateP=null,gateEmbers=null,gateWatch=null;
+  if(gated){gateP=new Promise(function(res){var done=false,end=function(v){if(done)return;done=true;clearInterval(gateEmbers);clearInterval(gateWatch);res(v)};sc.querySelector('.gate3-btn').addEventListener('click',function(){end('go')});sc.querySelector('.gate3-skip').addEventListener('click',function(){end('skip')});gateWatch=setInterval(function(){if(!dhViewOn())end('leave')},250)})}
   loop();
   await anim(700,function(t){sc.style.opacity=t},eO);
+  var teardown=function(){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove()};
+  if(gated){
+   /* the opening shot is the splash: the table floats in the void with the deck on it, and one button */
+   C.forEach(function(c,i){c.p=[DECK[0],TC+i*DT,DECK[2]];c.q=faceDown(rnd(-3,3));c.sh=.7});
+   gutter=0;idleDrift=true;var lightUp=anim(2200,function(t){gutter=t},eO);
+   var gate=sc.querySelector('.fs-gate');gate.classList.add('on');
+   gateEmbers=setInterval(function(){try{flames.forEach(function(f){var q=project(f);QFX.emit(q[0]+rnd(-6,6),q[1]-8,rnd(-14,14),-rnd(30,70),rnd(1.2,2.2),rnd(3,7),[1,.55+rnd(0,.2),.2])})}catch(e){}},300);
+   var choice=await gateP;clearInterval(gateEmbers);
+   if(choice==='leave'){teardown();return 'leave'}
+   if(choice==='skip'){hap('tap');await anim(350,function(t){sc.style.opacity=1-t});teardown();return 'skip'}
+   /* pressed: the button flares, the candles surge, then the camera is drawn in */
+   var gb=sc.querySelector('.gate3-btn'),gr=gb.getBoundingClientRect();gb.classList.add('lit');hap('success');ST.flash=1;ST.shake=1.2;ST.flare=1;
+   try{QFX.burst({left:gr.left,top:gr.top,width:gr.width,height:gr.height,right:gr.right,bottom:gr.bottom},3)}catch(e){}
+   await wait(380);hap('big');
+   sc.querySelector('.fs-skip').style.display='';
+   var startEye=[eyeB[0]+lastDrift[0],eyeB[1]+lastDrift[1],eyeB[2]+lastDrift[2]];eyeB=startEye;idleDrift=false;
+   anim(520,function(t){gate.style.opacity=1-t});
+   await Promise.all([anim(3300,function(t){eyeB=lerp3(startEye,EYE,t);tgtB=lerp3(FAR_TGT,TGT,t)},eIO),lightUp]);gutter=1;gate.remove();
+  }else{
   C.forEach(function(c){c.p=[DECK[0],400,DECK[2]]});
-  gutter=0;var lightUp=anim(2600,function(t){gutter=t},eO),dolly=anim(3300,function(t){eyeB=lerp3(FAR_EYE,EYE,t);tgtB=lerp3(FAR_TGT,TGT,t)},eIO);
-  await type('THE TABLE IS SET',200);await Promise.all([lightUp,dolly]);gutter=1;
+  gutter=0;var lightUp2=anim(2600,function(t){gutter=t},eO),dolly=anim(3300,function(t){eyeB=lerp3(FAR_EYE,EYE,t);tgtB=lerp3(FAR_TGT,TGT,t)},eIO);
+  await type('THE TABLE IS SET',200);await Promise.all([lightUp2,dolly]);gutter=1;
   /* the deck drops onto the wood */
   var drops=[];
-  for(var i=0;i<10&&!skipped;i++){(function(i){var c=C[i],yaw=rnd(-5,5),x=DECK[0]+rnd(-.6,.6),z=DECK[2]+rnd(-.6,.6),from=[x+rnd(-8,8),TY+70+i*9,z+rnd(-8,8)],to=[x,TY+i*.16,z],q0=faceDown(rnd(-40,40)),q1=faceDown(yaw);c.yaw=yaw;
+  for(var i=0;i<10&&!skipped;i++){(function(i){var c=C[i],yaw=rnd(-5,5),x=DECK[0]+rnd(-.6,.6),z=DECK[2]+rnd(-.6,.6),from=[x+rnd(-8,8),TC+70+i*9,z+rnd(-8,8)],to=[x,TC+i*DT,z],q0=faceDown(rnd(-40,40)),q1=faceDown(yaw);c.yaw=yaw;
    drops.push(wait(i*60).then(function(){if(skipped){c.p=to;c.q=q1;c.sh=.7;return}return anim(520,function(t){c.p=lerp3(from,to,t);c.q=t3slerp(q0,q1,t);c.sh=Math.min(.8,t*1.2)},eBounce)}))})(i)}
   await Promise.all(drops);if(!skipped)thud([DECK[0],TY,DECK[2]],22,2);
+  }
   /* it begins to move: the deck slides to the middle of the table */
   var mid=[DECK[0],TY,DECK[2]];
-  await Promise.all(C.map(function(c,i){return move(c,[mid[0],TY+i*.16,mid[2]],faceDown(rnd(-3,3)),600)}));
+  await Promise.all(C.map(function(c,i){return move(c,[mid[0],TC+i*DT,mid[2]],faceDown(rnd(-3,3)),600)}));
   await type('THE DECK IS SHUFFLED',120);
   for(var r=0;r<2&&!skipped;r++){
-   await Promise.all(C.map(function(c,i){var left=i%2===0;return move(c,[mid[0]+(left?-9:9),TY+(i>>1)*.16+.3,mid[2]],faceDown((left?-1:1)*7),260,{arc:3,ease:eO})}));
+   await Promise.all(C.map(function(c,i){var left=i%2===0;return move(c,[mid[0]+(left?-9:9),TC+(i>>1)*DT+.3,mid[2]],faceDown((left?-1:1)*7),260,{arc:3,ease:eO})}));
    hap('tap');try{var s=project([0,TY,mid[2]]);QFX.sparks(s[0],s[1],12+r*6,1+r%2)}catch(e){}
-   await Promise.all(C.map(function(c,i){return wait(i*18).then(function(){return move(c,[mid[0],TY+i*.16,mid[2]],faceDown(rnd(-2,2)),280,{arc:4})})}));
+   await Promise.all(C.map(function(c,i){return wait(i*18).then(function(){return move(c,[mid[0],TC+i*DT,mid[2]],faceDown(rnd(-2,2)),280,{arc:4})})}));
   }
   /* three cards are laid */
   await type('THE CARDS ARE LAID',100);
   for(var k=0;k<3&&!skipped;k++){
-   var c=dealt[k],sp=slots[k],yaw=(k-1)*3+rnd(-1.5,1.5),to=[sp[0],TY+.05,sp[2]];c.yaw=yaw;
+   var c=dealt[k],sp=slots[k],yaw=(k-1)*3+rnd(-1.5,1.5),to=[sp[0],TC,sp[2]];c.yaw=yaw;
    var mv1=move(c,to,faceDown(yaw),640,{arc:9,ease:eO});await wait(500);if(skipped)break;thud([to[0],TY,to[2]],14,1.4);S_flash(.18);await mv1;await wait(100);
   }
   /* the rest of the deck is pushed aside */
-  if(!skipped)await Promise.all(C.filter(function(c){return dealt.indexOf(c)<0}).map(function(c,i){return move(c,[SIDE[0],TY+i*.16,SIDE[2]],faceDown(rnd(-4,4)),520,{arc:3})}));
+  if(!skipped)await Promise.all(C.filter(function(c){return dealt.indexOf(c)<0}).map(function(c,i){return move(c,[SIDE[0],TC+i*DT,SIDE[2]],faceDown(rnd(-4,4)),520,{arc:3})}));
   /* the reading */
   var arcOf=function(q){return QPX_ARC[q.attribute]||QPX_ARC.discipline};
   if(!skipped){await type('YOUR CARDS AWAIT',150);gutter=.2;await wait(330);gutter=1;ST.flash=.5}
@@ -233,14 +267,14 @@ async function dhTable3D(el,cards,d,replay){
    await wait(tier>=3?1250:800);if(skipped)break;
    anim(300,function(t){title.style.opacity=1-t});c.sheen=0;
    c.lift=false;anim(560,function(t){c.amb=4.2-2.9*t});c.p=curEye.slice();c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
-   await move(c,[slot[0],TY+.05,slot[2]],faceUp(c.yaw),560,{ease:eIO,arc:4});c.sh=.7;if(!skipped){thud([slot[0],TY,slot[2]],8,.6)}
+   await move(c,[slot[0],TC,slot[2]],faceUp(c.yaw),560,{ease:eIO,arc:4});c.sh=.7;if(!skipped){thud([slot[0],TY,slot[2]],8,.6)}
   }
  }catch(e){console.warn('[table]',e)}
  /* hand-off: the real cards are already face-up behind the fade */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();
  d.up=[true,true,true];sc.dataset.await='';cap.innerHTML='';title.innerHTML='';sc.querySelector('.fs-skip').style.display='none';
  el.classList.remove('fd-pre');cards.forEach(function(c){c.classList.add('is-up')});
- dealt.forEach(function(c,i){c.front=tFace[i];c.q=faceUp(c.yaw||0);c.p=[slots[i][0],TY+.05,slots[i][2]];c.sh=.7});
+ dealt.forEach(function(c,i){c.front=tFace[i];c.q=faceUp(c.yaw||0);c.p=[slots[i][0],TC,slots[i][2]];c.sh=.7});
  await new Promise(function(r){var t1=performance.now(),f=function(){var t=Math.min(1,(performance.now()-t1)/700);sc.style.opacity=1-t;if(t<1)requestAnimationFrame(f);else r()};f()});
  alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove();
  try{QFX.foilKick()}catch(e){}

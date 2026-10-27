@@ -384,3 +384,30 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 @keyframes gateEye{0%,100%{transform:scale(1);opacity:.85}48%{transform:scale(1.06);opacity:1}52%{transform:scaleY(.12);opacity:1}56%{transform:scale(1.06)}}
 @keyframes gateBtn{0%,100%{box-shadow:0 0 18px rgba(138,92,255,.4),inset 0 0 14px rgba(255,214,140,.1)}50%{box-shadow:0 0 34px rgba(138,92,255,.75),inset 0 0 22px rgba(255,214,140,.22)}}
 @media (prefers-reduced-motion:reduce){#dhGate .gate-eye,#dhGate .gate-btn,#dhGate .gate-glow,#dhGate .gate-flame{animation:none}}
+
+/* ===== The threshold, inside the 3D opening shot ===== */
+#fateScene .fs-gate{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 9%) 22px 11%;z-index:4;opacity:0}
+#fateScene .fs-gate.on{opacity:1}
+.gate3-top{display:flex;flex-direction:column;align-items:center;gap:13px;text-align:center;max-width:360px}
+.gate3-top>*{opacity:0;transform:translateY(10px);animation:g3in .9s cubic-bezier(.2,.7,.2,1) forwards}
+.gate3-eyebrow{color:#9d8fc4;animation-delay:.5s!important}
+.gate3-title{margin:0;font-weight:400;color:#f6ecd0;filter:drop-shadow(0 0 16px rgba(138,92,255,.55)) drop-shadow(0 2px 0 rgba(0,0,0,.6));animation-delay:.8s!important}
+.gate3-rule{width:190px;height:1px;position:relative;background:linear-gradient(90deg,transparent,rgba(255,214,140,.85),transparent);animation-delay:1.15s!important}
+.gate3-rule i{position:absolute;left:50%;top:-4px;width:9px;height:9px;margin-left:-4.5px;transform:rotate(45deg);background:#ffd98a;box-shadow:0 0 10px rgba(255,214,140,.9)}
+.gate3-sub{margin:0;color:#b6add0;font:italic 15px/1.4 Georgia,'Times New Roman',serif;animation-delay:1.35s!important}
+.gate3-bot{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;animation:g3in .9s cubic-bezier(.2,.7,.2,1) 1.7s forwards}
+.gate3-btn{position:relative;pointer-events:auto;overflow:hidden;min-width:290px;min-height:66px;padding:0 28px;display:grid;place-items:center;cursor:pointer;color:#f6e3b0;border:0;border-radius:8px;-webkit-tap-highlight-color:transparent;
+ background:radial-gradient(120% 160% at 50% 0%,#33205e 0%,#170c30 55%,#0a0518 100%);
+ box-shadow:0 0 0 1px rgba(255,214,140,.9),0 0 0 4px #0a0518,0 0 0 5px rgba(255,214,140,.38),0 0 34px rgba(138,92,255,.5),inset 0 0 26px rgba(255,214,140,.1);animation:g3breath 3s ease-in-out infinite}
+.gate3-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 38%,rgba(255,236,190,.38) 50%,transparent 62%);transform:translateX(-130%);animation:g3sweep 3.6s ease-in-out infinite 2.2s}
+.gate3-btn:active{transform:scale(.975)}
+.gate3-btn-t{position:relative;filter:drop-shadow(0 1px 0 #000) drop-shadow(0 0 8px rgba(255,200,110,.55))}
+.g3c{position:absolute;width:9px;height:9px;transform:rotate(45deg);background:#ffd98a;box-shadow:0 0 8px rgba(255,214,140,.9)}
+.g3c.tl{left:-5px;top:-5px}.g3c.tr{right:-5px;top:-5px}.g3c.bl{left:-5px;bottom:-5px}.g3c.br{right:-5px;bottom:-5px}
+.gate3-btn.lit{animation:none;color:#2b1608;background:linear-gradient(180deg,#ffe7a8,#d9902e);box-shadow:0 0 0 1px #fff3cf,0 0 0 4px #0a0518,0 0 0 5px #ffd98a,0 0 90px 22px rgba(255,200,100,.9);transition:all .3s}
+.gate3-btn.lit .gate3-btn-t{filter:none}
+.gate3-skip{pointer-events:auto;min-height:44px;padding:0 18px;border:0;background:transparent;color:#7d7499;cursor:pointer}
+@keyframes g3in{to{opacity:1;transform:none}}
+@keyframes g3breath{0%,100%{box-shadow:0 0 0 1px rgba(255,214,140,.9),0 0 0 4px #0a0518,0 0 0 5px rgba(255,214,140,.38),0 0 26px rgba(138,92,255,.4),inset 0 0 20px rgba(255,214,140,.08)}50%{box-shadow:0 0 0 1px rgba(255,214,140,1),0 0 0 4px #0a0518,0 0 0 5px rgba(255,214,140,.55),0 0 48px rgba(138,92,255,.75),inset 0 0 30px rgba(255,214,140,.18)}}
+@keyframes g3sweep{0%{transform:translateX(-130%)}35%,100%{transform:translateX(130%)}}
+@media (prefers-reduced-motion:reduce){.gate3-btn,.gate3-btn::after{animation:none}.gate3-top>*,.gate3-bot{animation-duration:.01s;animation-delay:0s!important}}
