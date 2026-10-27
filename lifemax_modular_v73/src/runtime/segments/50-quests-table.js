@@ -62,7 +62,7 @@ async function t3face(q,numeral){
  var W=640,H=1120,cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d'),u=qartUrl&&qartUrl(q.attribute);
  var im=u?await t3img(u):null;
  if(im)c.drawImage(im,0,0,W,H);else{c.fillStyle='#1a1428';c.fillRect(0,0,W,H)}
- var pn=QART_PANEL[q.attribute]||[69,10.4],top=H*pn[0]/100,bot=H*(1-pn[1]/100),x0=W*.09,x1=W*.91,cx=W/2,arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,tier=q.tier||1;
+ var pn=qartPanelOf(q.attribute),top=H*pn[0]/100,bot=H*(1-pn[1]/100),x0=W*.09,x1=W*.91,cx=W/2,arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,tier=q.tier||1;
  var ph=bot-top,y=top+ph*.1;
  for(var i=0;i<3;i++){c.save();c.translate(x0+14+i*22,y+12);c.rotate(Math.PI/4);c.fillStyle=i<tier?'#b8761a':'rgba(70,40,10,.25)';c.fillRect(-7,-7,14,14);c.restore()}
  t3px(c,arc.name,cx,y,3,'#7a4a12');t3px(c,numeral,x1-10-qpxWidth(numeral)*3/2,y,3,'#7a4a12');

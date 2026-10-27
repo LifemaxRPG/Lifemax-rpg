@@ -1,10 +1,13 @@
-"""Rebuilds every launcher icon from icon-source.png (the artwork with its rounded black corners).
-Run from android-wrapper:  python3 make_icons.py
+"""Rebuilds every launcher icon from an icon pack: icons/<id>.png (the artwork with its rounded black corners).
+Run from android-wrapper:  python3 make_icons.py [id]   (no id = the one named in icons/ACTIVE; an id is remembered there)
+Switching packs changes native resources, so also raise VALUE in native/NativeApi.java so phones are offered a new APK.
  - adaptive foreground: the artwork with the corners cropped off, filling the whole 108 dp canvas (Android masks it)
  - legacy square and round icons, and the splash picture, with their own rounded shapes"""
 from PIL import Image, ImageDraw
-import os
-SRC = Image.open('icon-source.png').convert('RGB')
+import os, sys
+PACK = sys.argv[1] if len(sys.argv) > 1 else open('icons/ACTIVE').read().strip()
+open('icons/ACTIVE', 'w').write(PACK + '\n')
+SRC = Image.open(f'icons/{PACK}.png').convert('RGB')
 INSET = 112                                    # drops the rounded black corners of the supplied picture
 ART = SRC.crop((INSET, INSET, SRC.width - INSET, SRC.height - INSET))
 def rounded(im, size, frac):
@@ -23,4 +26,4 @@ for name, k in D.items():
     rounded(ART, int(48 * k), .22).save(f'{d}/ic_launcher.png', optimize=True)
     circle(ART, int(48 * k)).save(f'{d}/ic_launcher_round.png', optimize=True)
 rounded(ART, 512, .22).save('res/drawable/splash.png', optimize=True)
-print('icons written')
+print('icons written from pack', PACK)

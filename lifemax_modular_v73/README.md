@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v169 — card art packs (Halloween deck)
+- Card art now lives in packs: `art/cards/packs/<id>/` with `pack.json` (name, optional season dates, where the parchment text sits) and `src/<attribute>.png` plus `back.png`. `python3 tools/make_card_art.py` builds every pack into `50-quests-art.js`. A card a pack lacks falls back to the Classic pack, so a new seasonal deck can be added a few cards at a time.
+- Packs: Classic and Halloween (Oct 1 to Nov 2). Settings → Look & feel → Card art: Automatic (uses the pack whose season is on today's date, else Classic) or pick one. Halloween has no Endurance (Wanderer) or Adventure (Fool) card yet, so those show the Classic paintings.
+- Launcher icons use packs too: `android-wrapper/icons/<id>.png`, `python3 make_icons.py <id>` (remembered in `icons/ACTIVE`). The icon is native, so it cannot change by date at runtime, and switching it needs a NativeApi bump and a new APK.
+- Size: each full pack adds about 1.5 to 2 MB to the app.
+
 ## v168 — the splash is the opening shot; thick cards; Halloween icon
 - The Quest Board's first-visit splash is no longer a separate screen. The 3D scene opens straight on a wide shot of the table floating in the void, candles lit, deck waiting, with "YOUR CARDS ARE WAITING" above and a gold-framed "GET YOUR QUESTS" button below (light sweep, breathing glow, corner studs). Pressing it flares the button and candles and the camera is drawn in to the table, then the shuffle begins. "Not now" fades out and leaves the cards face-down; leaving the page closes the scene and it returns next visit. Without WebGL2 the older flat splash is used. (`50-quests-gate.js` is now only that fallback.)
 - 3D cards now have real thickness (0.34 on a card 11.2 wide), a rounded-rectangle outline with a warm paper edge, so they no longer vanish when seen edge-on. Deck cards stack with spacing and rest on the wood.

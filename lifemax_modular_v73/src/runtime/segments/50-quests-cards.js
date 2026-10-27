@@ -81,10 +81,10 @@ function qcardBack(slot){
  return '<div class="qback">'+qcardCorners()+'<span class="qback-num">'+qpxText(['I','II','III'][slot]||'I',{s:5,w:80})+'</span><span class="qback-eye">'+qpxSprite('eye',9,{X:'#cdb8ff',I:'#8a5cff',o:'#120d26'})+'</span><span class="qback-tag">'+qpxText('TAP TO TURN OVER',{s:1,w:200,lines:1})+'</span></div>'}
 
 /* ===== painted card faces: the artwork carries the frame, the parchment panel carries the words ===== */
-var QART_PANEL={physique:[69.6,10.4],endurance:[61.6,8.4],intelligence:[69.2,10.4],business:[70.4,10.4],social:[70.2,10.4],adventure:[69.2,10.4],wellbeing:[68.9,10.4],discipline:[68.8,10.3]};
-function qartHas(attr){return !!(QART_PANEL[attr]&&typeof qartUrl==='function'&&qartUrl(attr))}
+function qartPanelOf(attr){return typeof qartPanel==='function'?qartPanel(attr):[69.3,10.6]}
+function qartHas(attr){return !!(typeof qartUrl==='function'&&qartUrl(attr))}
 function qartFace(q,ctx){
- const A=ATTRS.find(function(a){return a.id===q.attribute})||ATTRS[0],arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,pn=QART_PANEL[q.attribute],tier=q.tier||1;
+ const A=ATTRS.find(function(a){return a.id===q.attribute})||ATTRS[0],arc=QPX_ARC[q.attribute]||QPX_ARC.discipline,pn=qartPanelOf(q.attribute),tier=q.tier||1;
  let pips='';for(let i=0;i<3;i++)pips+='<i class="'+(i<tier?'on':'')+'"></i>';
  return '<div class="qimgwrap"><img class="qimg" src="'+qartUrl(q.attribute)+'" alt="" draggable="false">'
   +'<div class="qtxt" style="top:'+pn[0]+'%;bottom:'+pn[1]+'%"><div class="qtl"><span class="qpips" title="Difficulty">'+pips+'</span>'+qpxText(arc.name,{s:1,w:150,lines:1})+'<span class="qslot">'+qpxText(ctx.numeral,{s:1,w:40,lines:1})+'</span></div>'
