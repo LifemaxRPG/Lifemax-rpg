@@ -209,6 +209,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   var gateP=null,gateEmbers=null,gateWatch=null;
   if(gated){gateP=new Promise(function(res){var done=false,end=function(v){if(done)return;done=true;clearInterval(gateEmbers);clearInterval(gateWatch);res(v)};sc.querySelector('.gate3-btn').addEventListener('click',function(){end('go')});sc.querySelector('.gate3-skip').addEventListener('click',function(){end('skip')});gateWatch=setInterval(function(){if(!dhViewOn())end('leave')},250)})}
   loop();
+  /* leaving the Quests tab in the middle of the reading (the tab bar, a swipe, the scrubber) ends it: the scene goes, the day is not used up */
+  var leftEarly=false,leaveWatch=restOnly?0:setInterval(function(){if(!alive){clearInterval(leaveWatch);return}if(!dhViewOn()){leftEarly=true;clearInterval(leaveWatch);skip()}},200);
   await anim(700,function(t){sc.style.opacity=t},eO);
   var teardown=function(){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove()};
   if(restOnly){
@@ -281,6 +283,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   }
  }
  }catch(e){console.warn('[table]',e)}
+ clearInterval(leaveWatch);
+ if(leftEarly){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove();return 'leave'}
 
  /* the reading ends (or was skipped): the scene stays as the Quest Board */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();

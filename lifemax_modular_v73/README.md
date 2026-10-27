@@ -686,3 +686,6 @@ The first movements (from Gemini's angle tables) looked janky: legs slid, feet f
 
 ## v181–v183 — cat eyes: big almond, set higher
 The plain round eyes (neutral and surprised) are now big, soft almonds (a little wider than tall, gently pointed corners that lift slightly toward the outside, a tall soft pupil). Every eye sits about two pixels (at 1x) higher on the face and slightly closer together, so a blink or a mood change never makes the eyes jump; the happy, closed, sleepy, angry and sad eyes keep their own shapes. Whisker origins and the nose are unchanged. Tune `P0` and `ey, ex` in `50-pet-hd.js`.
+
+## v184 — the quest reading no longer follows you to other tabs
+Leaving the Quests tab in the middle of the 3D reading (tab bar, swipe, scrubber) now ends it: the scene is removed within a fifth of a second and the day is not used up, so the reading plays again when you return. While you scrub the tab bar, the blurred picture of the tab you are over also covers the 3D quest table (it used to sit above the blur), and a reading that would start while you are still scrubbing waits until you let go.

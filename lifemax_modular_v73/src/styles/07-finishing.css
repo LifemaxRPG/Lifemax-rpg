@@ -95,6 +95,7 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 
 /* v112 · scrub veil: a blurred picture of the tab you are over, shown while the bottom bar is being scrubbed */
 .scrubveil{display:none}
+html.sv-on #fateScene{visibility:hidden!important}
 @media(max-width:860px){
   .scrubveil{display:block;position:fixed;inset:0;z-index:29;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .12s ease-out;
     background:radial-gradient(120% 80% at 50% 25%,hsl(var(--sv-hue,220) 40% 24%),#0a0c12 70%)}

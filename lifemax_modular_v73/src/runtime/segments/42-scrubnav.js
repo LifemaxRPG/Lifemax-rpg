@@ -101,6 +101,7 @@ function lmaVeil(show){
  const S=lmaScrub;if(!S.veil)return;
  if(show===S.veilOn)return;S.veilOn=show;
  S.veil.classList.toggle('on',show);
+ document.documentElement.classList.toggle('sv-on',!!show);      /* the 3D quest table is a full-screen layer above the veil: hide it while scrubbing so the blurred tab picture shows, like every other tab */
 }
 function lmaVeilSet(i){
  const S=lmaScrub,b=S.items[i];if(!b||!S.veil)return;

@@ -3821,6 +3821,7 @@ html[data-vt=back]::view-transition-new(page){animation:vtInL .26s cubic-bezier(
 
 /* v112 · scrub veil: a blurred picture of the tab you are over, shown while the bottom bar is being scrubbed */
 .scrubveil{display:none}
+html.sv-on #fateScene{visibility:hidden!important}
 @media(max-width:860px){
   .scrubveil{display:block;position:fixed;inset:0;z-index:29;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .12s ease-out;
     background:radial-gradient(120% 80% at 50% 25%,hsl(var(--sv-hue,220) 40% 24%),#0a0c12 70%)}
@@ -15419,6 +15420,7 @@ function lmaVeil(show){
  const S=lmaScrub;if(!S.veil)return;
  if(show===S.veilOn)return;S.veilOn=show;
  S.veil.classList.toggle('on',show);
+ document.documentElement.classList.toggle('sv-on',!!show);      /* the 3D quest table is a full-screen layer above the veil: hide it while scrubbing so the blurred tab picture shows, like every other tab */
 }
 function lmaVeilSet(i){
  const S=lmaScrub,b=S.items[i];if(!b||!S.veil)return;
@@ -19409,6 +19411,8 @@ function dhStage(){
 function dhWait(anims){return Promise.all(anims.map(function(a){return a.finished.catch(function(){})}))}
 function dhTick(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n||'tap')}catch(e){}}
 async function dhMaybeDeal(replay){
+ /* while a finger is still scrubbing the tab bar, wait: the scene should not start (or sit unblurred) behind the scrubbing veil */
+ if(typeof lmaScrub!=='undefined'&&lmaScrub&&lmaScrub.veilOn){setTimeout(function(){dhMaybeDeal(replay)},300);return}
  const el=document.getElementById('dailyHand'),d=state.dailyDraw;
  if(!el||!d||dhDealing||!dhViewOn())return;
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
@@ -20547,6 +20551,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   var gateP=null,gateEmbers=null,gateWatch=null;
   if(gated){gateP=new Promise(function(res){var done=false,end=function(v){if(done)return;done=true;clearInterval(gateEmbers);clearInterval(gateWatch);res(v)};sc.querySelector('.gate3-btn').addEventListener('click',function(){end('go')});sc.querySelector('.gate3-skip').addEventListener('click',function(){end('skip')});gateWatch=setInterval(function(){if(!dhViewOn())end('leave')},250)})}
   loop();
+  /* leaving the Quests tab in the middle of the reading (the tab bar, a swipe, the scrubber) ends it: the scene goes, the day is not used up */
+  var leftEarly=false,leaveWatch=restOnly?0:setInterval(function(){if(!alive){clearInterval(leaveWatch);return}if(!dhViewOn()){leftEarly=true;clearInterval(leaveWatch);skip()}},200);
   await anim(700,function(t){sc.style.opacity=t},eO);
   var teardown=function(){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove()};
   if(restOnly){
@@ -20619,6 +20625,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   }
  }
  }catch(e){console.warn('[table]',e)}
+ clearInterval(leaveWatch);
+ if(leftEarly){alive=false;cancelAnimationFrame(raf);try{gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}sc.remove();return 'leave'}
 
  /* the reading ends (or was skipped): the scene stays as the Quest Board */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();

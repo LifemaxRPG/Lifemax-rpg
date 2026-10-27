@@ -67,6 +67,14 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('"Not now" closes the scene and marks the day as dealt', await g.evaluate(() => state.dailyDraw.dealt));
   await g.evaluate(() => { navigate('dashboard'); navigate('quests') }); await g.waitForSelector('#fateScene.rest', { timeout: 12000 });
   ok('and the next visit shows the table directly', true);
+  // ---- leaving in the middle of the reading
+  const lv = await mk(); await lv.waitForSelector('.gate3-btn', { timeout: 8000 }); await lv.waitForTimeout(800); await lv.click('.gate3-btn'); await lv.waitForTimeout(5200);
+  ok('the reading is playing', await lv.evaluate(() => !!document.getElementById('fateScene') && !document.querySelector('#fateScene.rest')));
+  await lv.evaluate(() => navigate('food')); await sceneGone(lv, 5000);
+  ok('leaving the Quests tab in the middle of the reading ends it', await lv.evaluate(() => !document.getElementById('fateScene')));
+  ok('and the day is not used up, so the reading plays when you come back', await lv.evaluate(() => !state.dailyDraw.dealt));
+  await lv.evaluate(() => { document.documentElement.classList.add('sv-on') });
+  ok('the scrubbing veil hides the 3D table layer', await lv.evaluate(() => { const e = document.createElement('div'); e.id = 'fateScene'; document.body.appendChild(e); const hidden = getComputedStyle(e).visibility === 'hidden'; e.remove(); document.documentElement.classList.remove('sv-on'); return hidden }));
   // ---- no WebGL2: the old flat page and splash
   const f = await mk("(function(){var o=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t){if(t==='webgl2'&&this.classList.contains('fs-gl'))return null;return o.apply(this,arguments)}})();");
   await f.waitForSelector('#dhGate .gate-btn', { timeout: 8000 });

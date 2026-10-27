@@ -236,6 +236,8 @@ function dhStage(){
 function dhWait(anims){return Promise.all(anims.map(function(a){return a.finished.catch(function(){})}))}
 function dhTick(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n||'tap')}catch(e){}}
 async function dhMaybeDeal(replay){
+ /* while a finger is still scrubbing the tab bar, wait: the scene should not start (or sit unblurred) behind the scrubbing veil */
+ if(typeof lmaScrub!=='undefined'&&lmaScrub&&lmaScrub.veilOn){setTimeout(function(){dhMaybeDeal(replay)},300);return}
  const el=document.getElementById('dailyHand'),d=state.dailyDraw;
  if(!el||!d||dhDealing||!dhViewOn())return;
  const cards=[].slice.call(el.querySelectorAll('.dh-card'));if(!cards.length)return;
