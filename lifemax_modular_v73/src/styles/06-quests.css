@@ -170,3 +170,27 @@ html.reduce-motion #view-quests .qos-scene-art,html.reduce-motion #view-quests .
 .meal-hit{display:flex;align-items:center;gap:12px}
 .mh-txt{min-width:0;flex:1}.mh-txt strong{display:block;line-height:1.25}
 
+/* ===== Daily Hand ===== */
+#view-quests .dh-hand{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding-top:13px;margin-bottom:6px}
+#view-quests .dh-hand:empty{display:none}
+.dh-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:13px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.12));background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015));animation:dhDeal .35s ease both}
+.dh-card.dh-t2{border-color:rgba(120,170,255,.45)}
+.dh-card.dh-t3{border-color:rgba(255,200,90,.6);box-shadow:0 0 18px rgba(255,200,90,.12)}
+.dh-card.is-done{opacity:.62}
+.dh-card.is-done .dh-name{text-decoration:line-through}
+.dh-top,.dh-meta,.dh-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dh-slot{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2,#8b97ab)}
+.dh-tier{font-size:11px;color:#ffd35c;letter-spacing:1px}
+.dh-name{font-size:15px;line-height:1.25}
+.dh-desc{color:var(--muted,#9aa6ba);font-size:12px;line-height:1.35}
+.dh-meta{font-size:11px;color:var(--muted2,#8b97ab);margin-top:2px}
+.dh-xp{color:var(--gold,#ffd35c);font-weight:700}
+.dh-state{font-size:11px;color:var(--muted2,#8b97ab)}
+.dh-auto{font-style:italic}
+.dh-claim{position:relative;overflow:hidden;flex:1;min-height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;font:inherit;font-weight:600;font-size:13px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.dh-claim .dh-fill{position:absolute;inset:0;transform:scaleX(0);transform-origin:left;background:rgba(120,220,150,.45);transition:transform .15s}
+.dh-claim.holding .dh-fill{transform:scaleX(1);transition:transform .9s linear}
+.dh-claim-t{position:relative}
+.dh-reroll{min-height:40px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--muted,#9aa6ba);font:inherit;font-size:11px}
+@keyframes dhDeal{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dh-card{animation:none}.dh-claim.holding .dh-fill{transition:none}}

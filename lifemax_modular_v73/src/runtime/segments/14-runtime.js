@@ -32,11 +32,12 @@ function qosUpdateSummary(daily,weekly,nut){
  const fill=document.getElementById('qosDailyFill');if(fill)fill.style.width=pct+'%';
 }
 function renderQuests(){
+ try{dhAutoVerify();dhRenderHand()}catch(e){console.warn('[hand]',e)}
  const daily=state.quests.filter(q=>q.cadence==='daily'&&q.kind!=='nutrition'&&questToday(q));
  const weekly=state.quests.filter(q=>q.cadence==='weekly'&&q.kind!=='nutrition');
  const nut=state.quests.filter(q=>q.kind==='nutrition'&&(q.cadence!=='daily'||questToday(q)));
  const empty=label=>`<div class="qos-empty"><span class="qos-empty-icon">${px('flag')}</span><span>${label}</span></div>`;
- document.getElementById('dailyQuests').innerHTML=daily.length?daily.map(questRow).join(''):empty('No daily missions yet. Forge one of your own.');
+ document.getElementById('dailyQuests').innerHTML=daily.filter(q=>!q.hand).map(questRow).join('')||(daily.length?'':empty('No daily missions yet. Forge one of your own.'));
  document.getElementById('weeklyQuests').innerHTML=weekly.length?weekly.map(questRow).join(''):empty('No weekly missions yet. Build your next objective.');
  const nc=document.getElementById('nutritionCard'),ne=document.getElementById('nutritionQuests');
  if(nc)nc.style.display=nut.length?'':'none';if(ne)ne.innerHTML=nut.map(questRow).join('');

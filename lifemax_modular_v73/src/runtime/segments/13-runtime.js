@@ -265,8 +265,8 @@ function applyClassContent(){
  var cc=CLASS_CONTENT[state.classId]||null,cur=state.classContent||null;
  if((cc?state.classId:null)===cur)return;
  state.quests=(state.quests||[]).filter(function(q){return !/^(q[1-6]|cc_.*)$/.test(q.id)});
- if(cc)state.quests=cc.quests.map(function(q){return Object.assign({},q)}).concat(state.quests);
- else defaultQuests.forEach(function(q){if(!state.quests.some(function(x){return x.id===q.id}))state.quests.push(Object.assign({},q))});
+ if(cc)state.quests=cc.quests.filter(function(q){return !(q.cadence==='daily'&&q.kind!=='nutrition'&&q.kind!=='hydration')}).map(function(q){return Object.assign({},q)}).concat(state.quests);
+ else defaultQuests.filter(function(q){return q.cadence!=='daily'}).forEach(function(q){if(!state.quests.some(function(x){return x.id===q.id}))state.quests.push(Object.assign({},q))});
  state.classContent=cc?state.classId:null}
 function questToday(q){return !q.day||q.day==='any'||q.day===['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()]}
 function stageLvl(s){return [0,1,3,5,8,12][s]||1}

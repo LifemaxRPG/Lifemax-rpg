@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v154 — the Daily Hand (quests, phase 1 and 2)
+- Each day the Quest Board deals three cards: Maintenance (your weakest attribute over the last 7 days), Class (an attribute your class cares about) and Wildcard. The draw is seeded by the date, your Luck score and the reroll count, so it is stable all day. Luck nudges the odds toward harder cards; a rest day never deals a hard (3-star) card.
+- 54 templates in `QUEST_LIBRARY` (`50-quests-hand.js`) across all eight attributes. Cards that match something you log (a strength/cardio/reading/business/language/recovery activity of enough minutes, water goal, feeding/petting/playing the cat, today's workout plan) complete themselves. The rest use a hold-to-claim button (about a second; Enter/Space also works).
+- Reroll: one free per day, then 50 Sparks. A finished card cannot be rerolled.
+- Cards are ordinary daily quests underneath, so XP, the 3-a-day cap, undo, badges and voice commands keep working. Custom quests, weeklies and epics are untouched. The old fixed class dailies (and the starter dailies) are retired once, and class swaps no longer add them back.
+- Not done yet: voice-specific phrases for the Hand ("reroll my second quest"), weakness-targeting beyond the weekly attribute check, and a card history screen.
+- Test: `tests/hand.test.js` (22 checks).
+
 ## v153 — the swipe follows your finger again, without moving the page container
 
 v151's edge tag worked but was not the fluid swipe. Now the page follows the finger as it used to, done differently so the bottom bar is left alone:
