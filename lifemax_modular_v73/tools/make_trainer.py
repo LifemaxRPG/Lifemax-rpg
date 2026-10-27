@@ -69,7 +69,7 @@ for gid, tex in (('Geometry', 'eye'), ('Geometry1', 'face')):
     m = fmesh[gid]; s = {x.get('id'): np.array(x.find('c:float_array', ns).text.split(), float) for x in m.findall('c:source', ns)}
     ks = sorted(s); Pf = s[ks[0]].reshape(-1, 3); Nf = s[ks[1]].reshape(-1, 3); Tf = s[ks[2]].reshape(-1, 2)
     Jf = np.zeros((len(Pf), 4), np.uint8); Jf[:, 0] = names.index('head'); Wf = np.zeros((len(Pf), 4), np.float32); Wf[:, 0] = 1
-    FR = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]], float)   # the face file is Y-forward, X-sideways
+    FR = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0]], float)   # the face file is Z-forward, X-sideways, Y-up (its scene node says so)
     fverts += pack(Pf @ FR.T + head, Nf @ FR.T, Tf, Jf, Wf)
     ids = [i + base for i in map(int, m.find('c:triangles', ns).find('c:p', ns).text.split())]; fidx += struct.pack('<%dH' % len(ids), *ids)
     fgroups.append({'tex': tex, 'start': foff, 'count': len(ids)}); foff += len(ids); base += len(Pf)
