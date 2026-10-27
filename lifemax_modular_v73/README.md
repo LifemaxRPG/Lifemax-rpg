@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v135 — wary cats' flat ears
+
+A cautious cat (a new stray, say) pins its ears back. The HD redraw rotated the ears 48 degrees without shortening them, so they stuck out as long thin spikes. Flat ears now turn 36 degrees, shrink to 60% of their length and widen by 30%, so they lie sideways like airplane ears.
+
 ## v134 — every cat animation in HD
 
 All 28 adult animations, the six kitten growth stages and the four front/back views (walk toward and away, sniff, bonk) are now drawn at 2x, for every coat and genetic coat (`tools/hires_build.py` -> `src/data/petHd.html`, about 3 MB). Details that make it work across every row: the face is redrawn live where both eyes are found (every frame except sleep, the two sleeping rows and the back views, which keep their own art); a frame drawn with closed eyes (blinks, purring, kneading, rubbing) keeps them closed (shut curves, or happy arches for purr, knead and rub); the face scales to the head so kittens do not get adult-sized eyes; the cat's mood body language (flattened ears, flicking tail tip) is applied through the same rig at 2x; and the animation is matched by its sheet row, so a kitten missing a pose falls back exactly as before. At night the cat looks sleepy only while sitting, loafing or looking up. Settings > Cat graphics > HD still turns it all off. `tests/pethd.test.js` (16 checks).

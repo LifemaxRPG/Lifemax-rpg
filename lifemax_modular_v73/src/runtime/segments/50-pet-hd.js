@@ -137,7 +137,7 @@ function petHdPose(rt,anim){
  try{
   const br=rt.br;if(!br||!br.som||typeof petBrainArt!=='function')return null;
   const art=petBrainArt(rt);let pose=null;
-  if(br.som.ear==='airplane_flat'&&art.earRows.indexOf(anim)>=0&&petGrowIdx(petData())<0)pose={ear0:-48,ear1:48,flat:1,tail:0,tw:0};
+  if(br.som.ear==='airplane_flat'&&art.earRows.indexOf(anim)>=0&&petGrowIdx(petData())<0)pose={ear0:-36,ear1:36,flat:1,tail:0,tw:0};
   if(art.tailRows.indexOf(anim)>=0){let tw=0;if(br.som.tail==='tip_twitch')tw=[0,1,2,1][Math.floor(rt.t*14)%4];else if(Date.now()<br.remUntil)tw=[1,0,2,0][Math.floor(rt.t*10)%4];
    if(tw){pose=pose||{ear0:0,ear1:0,flat:0,tw:0};pose.tail=(tw-1)*7;pose.tw=tw}}
   return pose;
