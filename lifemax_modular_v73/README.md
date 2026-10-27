@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v150 — the bar blink: the page keeps its own layer
+
+The test with "Page slides with your finger" switched off showed the blink comes from the slide. Looking back through the builds: in v146 (page on a permanent layer) nobody saw the bar blink; in v147 I removed that permanent layer (I thought dropping it caused the post-swipe jump, but that was the cards re-fading, fixed separately), and the blink started. So the page is back on a permanent layer (`backface-visibility:hidden`, which does not make fixed pop-ups inside pages misbehave), plus `will-change` while a finger is down. The switch in Settings stays as a fallback. Web-only; `tests/swipe.test.js` is 28 checks.
+
 ## v149 — the bottom bar while swiping, take two
 
 Reports: the bar still disappeared and jumped as you swipe through tabs. I could not make that happen in my browser test, so these are the real fault I could find plus three ways of making the rest less likely:

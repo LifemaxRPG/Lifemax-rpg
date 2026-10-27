@@ -119,7 +119,7 @@ function lmaContent(){return document.querySelector('main.content')}
 let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
 function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;c.style.transform='translate3d('+lmaDragDx+'px,0,0)'}
 function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
-function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity=''}}
+function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity='';c.style.willChange=''}}
 function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
 /* ease from where the page is now to a place, quickly; resolves when it is there */
 function lmaSlide(from,to,fromOp,toOp,ms,easing){
@@ -153,6 +153,7 @@ document.addEventListener('touchmove',e=>{
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView()));
    if(cur<0)return;
    lmaSw.drag=true;lmaSw.cur=cur;lmaSw.n=tabs.length;lmaStopAnim();
+   const cc=lmaContent();if(cc)cc.style.willChange='transform';
    document.documentElement.classList.add('lma-swiping');
   }else return;
  }

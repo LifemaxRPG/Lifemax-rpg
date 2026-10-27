@@ -1650,6 +1650,8 @@ html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.r
 
 /* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
 html.lma-swiping .view.active>*{animation:none!important}
+/* the page stays on its own layer all the time. Creating and dropping that layer at the start and end of every swipe made the fixed bottom bar blink out on some phones (it did not in the build where the layer was permanent). backface-visibility does this without turning the page into a containing block for fixed pop-ups. */
+main.content{backface-visibility:hidden;-webkit-backface-visibility:hidden}
 /* ===== Character page ===== */
 .ch-hero{position:relative;overflow:hidden;text-align:center;padding:24px 16px 16px;margin-bottom:14px;background:radial-gradient(120% 80% at 50% -8%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 64%),var(--panel)}
 .ch-hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 60%,color-mix(in srgb,var(--panel) 80%,transparent))}
@@ -13847,7 +13849,7 @@ function lmaContent(){return document.querySelector('main.content')}
 let lmaDragRaf=0,lmaDragDx=0,lmaAnim=null;
 function lmaDragPaint(){lmaDragRaf=0;const c=lmaContent();if(!c)return;c.style.transform='translate3d('+lmaDragDx+'px,0,0)'}
 function lmaDragSet(dx){lmaDragDx=dx;if(!lmaDragRaf)lmaDragRaf=requestAnimationFrame(lmaDragPaint)}
-function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity=''}}
+function lmaDragClear(){const c=lmaContent();if(lmaDragRaf){cancelAnimationFrame(lmaDragRaf);lmaDragRaf=0}if(c){c.style.transform='';c.style.opacity='';c.style.willChange=''}}
 function lmaStopAnim(){if(lmaAnim){try{lmaAnim.cancel()}catch(e){}lmaAnim=null}}
 /* ease from where the page is now to a place, quickly; resolves when it is there */
 function lmaSlide(from,to,fromOp,toOp,ms,easing){
@@ -13881,6 +13883,7 @@ document.addEventListener('touchmove',e=>{
    const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView()));
    if(cur<0)return;
    lmaSw.drag=true;lmaSw.cur=cur;lmaSw.n=tabs.length;lmaStopAnim();
+   const cc=lmaContent();if(cc)cc.style.willChange='transform';
    document.documentElement.classList.add('lma-swiping');
   }else return;
  }

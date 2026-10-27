@@ -56,7 +56,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const post = await p.evaluate(() => ({ anims: document.querySelectorAll('.view.active > *').length && [...document.querySelectorAll('.view.active > *')].filter(e => e.getAnimations().length).length, lit: [...document.querySelectorAll('.navbtn.active')].map(b => b.dataset.view), view: lmaView(), cls: document.documentElement.classList.contains('lma-swiping'), layer: getComputedStyle(document.querySelector('main.content')).willChange }));
   ok('after a swipe the cards do not start fading in again (no stutter)', post.anims === 0 && post.cls, post);
   ok('after a swipe exactly one tab is highlighted, the one you are on', post.lit.length === 1 && post.lit[0] === post.view, post);
-  ok('the page is not left on a promoted layer', post.layer === 'auto', post.layer);
+  ok('the page keeps its own layer between swipes (no layer churn that blinks the bar)', await p.evaluate(() => getComputedStyle(document.querySelector('main.content')).backfaceVisibility === 'hidden') && post.layer === 'auto', post.layer);
   await p.evaluate(() => lmaNavTo('quests')); await p.waitForTimeout(100);
   ok('a normal tab change turns the card animations back on', await p.evaluate(() => !document.documentElement.classList.contains('lma-swiping')));
   await p.waitForTimeout(600);

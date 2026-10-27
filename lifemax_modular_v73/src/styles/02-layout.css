@@ -843,3 +843,5 @@ html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.r
 
 /* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
 html.lma-swiping .view.active>*{animation:none!important}
+/* the page stays on its own layer all the time. Creating and dropping that layer at the start and end of every swipe made the fixed bottom bar blink out on some phones (it did not in the build where the layer was permanent). backface-visibility does this without turning the page into a containing block for fixed pop-ups. */
+main.content{backface-visibility:hidden;-webkit-backface-visibility:hidden}
