@@ -361,6 +361,12 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v172 — sound for the quest table and the Luck dice
+- Recorded effects (Kenney Casino Audio, CC0, licence kept in `art/sfx/KENNEY_LICENSE.txt`, plus your notification bell) are packed by `python3 tools/make_sfx.py` into `50-sfx-data.js` (about 0.55 MB, mono Vorbis) and played by `QSFX` in `50-sfx.js` through one shared AudioContext. They honour the main Sound switch and have their own volume (Settings → Look & feel → Quest effects: Off / Low / Medium / High).
+- Quest table: the bell rings when you press Get your quests and when you press Shuffle / Shuffle again; card-pack and slide sounds for the deck drop, the riffle, each card laid (with a thud), pushing the spare deck aside, lifting and putting back a card, turning a card face-up, and coins when a quest is fulfilled. The flat page's card turns and claims use them too.
+- Luck dice: grab, shake and a throw as each die is released, and the recorded die sounds for every bounce (the old synthesized click is the fallback).
+- Tests: `tests/sfx.test.js`.
+
 ## v171 — no flat-page flash; Halloween deck complete
 - While the 3D table is opening (first visit, coming back, Reshuffle) the flat Quest Board page is hidden from the first frame (`html.q3d`), so it no longer flashes. The scene opens sooner, and Reshuffle swaps scenes without a fade.
 - Halloween deck now has all eight cards: Endurance is the backpack and compass at the signpost, Adventure is the Fool's staircase with the jester emblem.

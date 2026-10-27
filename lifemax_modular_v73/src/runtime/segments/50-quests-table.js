@@ -136,13 +136,14 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
  var CANDLES=[[-23,72,-27],[23,72,-27]],flames=CANDLES.map(function(p){return [p[0],p[1]+13.2,p[2]]});
  /* helpers */
  var hap=function(n){try{if(window.LifeMaxHaptics)LifeMaxHaptics.play(n)}catch(e){}};
+ var sfx=function(n,o){try{QSFX.play(n,o)}catch(e){}};
  var eIO=function(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2},eO=function(t){return 1-Math.pow(1-t,3)},eBounce=function(t){var n=7.5625,dd=2.75;if(t<1/dd)return n*t*t;if(t<2/dd){t-=1.5/dd;return n*t*t+.75}if(t<2.5/dd){t-=2.25/dd;return n*t*t+.9375}t-=2.625/dd;return n*t*t+.984375};
  var anim=function(ms,fn,ease){return new Promise(function(res){tw.push({t0:performance.now(),ms:skipped?0:ms,fn:fn,ease:ease||eIO,res:res})})};
  var wait=function(ms){return new Promise(function(r){var t=setTimeout(r,skipped?0:ms);waits.push([t,r])})};
  var lerp=function(a,b,t){return a+(b-a)*t},lerp3=function(a,b,t){return [lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)]};
  var move=function(c,p1,q1,ms,o){o=o||{};var p0=c.p.slice(),q0=c.q.slice();return anim(ms,function(t){var pp=lerp3(p0,p1,t);if(o.arc)pp[1]+=o.arc*Math.sin(Math.PI*t);c.p=pp;c.q=t3slerp(q0,q1,t)},o.ease)};
  var dust=function(w,n){try{var s=project(w);for(var k=0;k<(n||14);k++)QFX.emit(s[0]+rnd(-34,34),s[1]+rnd(-8,14),rnd(-90,90),rnd(-50,10),rnd(.7,1.3),rnd(12,26),[.5,.42,.34])}catch(e){}};
- var thud=function(w,n,big){ST.shake=Math.max(ST.shake,big||1);hap('success');dust(w,n);ST.flare=1};
+ var thud=function(w,n,big){ST.shake=Math.max(ST.shake,big||1);hap('success');dust(w,n);ST.flare=1;sfx('card-place',{vol:Math.min(1,.45+(big||1)*.3)})};
  var cap=sc.querySelector('.fs-cap'),title=sc.querySelector('.fs-title');
  var type=async function(text,hold){for(var i=1;i<=text.length&&!skipped;i++){cap.innerHTML=qpxText(text.slice(0,i),{s:2,w:vw-40,lines:1});await wait(30)}await wait(hold||400)};
  /* render */
@@ -195,7 +196,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   var finish=function(){if(done)return;done=true;clearTimeout(idle);cancelAnimationFrame(settling);sc.removeEventListener('pointerdown',down);sc.removeEventListener('pointermove',mv);sc.removeEventListener('pointerup',up);sc.removeEventListener('pointercancel',up);hint.remove();qv=QFRONT.slice();apply();awaitFlip=null;res()};
   var down=function(e){if(done||settling||e.target.closest('.fs-skip'))return;drag=true;sx=e.clientX;sy=e.clientY;q0=qv.slice();samples=[[performance.now(),0,0]];hint.classList.remove('on');clearTimeout(idle);try{sc.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()};
   var rotFor=function(dx,dy,k){var len=Math.hypot(dx,dy);if(len<.5)return [0,0,0,1];/* axis is perpendicular to the drag, in the screen plane */return t3qax([-dy/len,dx/len,0],len*k)};
-  var mv=function(e){if(!drag)return;var dx=e.clientX-sx,dy=e.clientY-sy;qv=t3qmul(rotFor(dx,dy,.9),q0);apply();var now=performance.now();samples.push([now,dx,dy]);while(samples.length>2&&now-samples[0][0]>90)samples.shift();if(frontFacing(qv)&&!seen){seen=true;ST.flash=Math.max(ST.flash,.2);hap('tap')}};
+  var mv=function(e){if(!drag)return;var dx=e.clientX-sx,dy=e.clientY-sy;qv=t3qmul(rotFor(dx,dy,.9),q0);apply();var now=performance.now();samples.push([now,dx,dy]);while(samples.length>2&&now-samples[0][0]>90)samples.shift();if(frontFacing(qv)&&!seen){seen=true;ST.flash=Math.max(ST.flash,.2);hap('tap');sfx('card-fan',{vol:.5})}};
   var up=function(){if(!drag)return;drag=false;
    var n=samples.length,vx=0,vy=0;if(n>1){var dt=Math.max(16,samples[n-1][0]-samples[0][0]);vx=(samples[n-1][1]-samples[0][1])/dt*1000;vy=(samples[n-1][2]-samples[0][2])/dt*1000}
    var boost=rotFor(vx,vy,1);var vl=Math.hypot(vx,vy),bq=vl>1?t3qax([-vy/vl,vx/vl,0],Math.min(45,vl*.04)):[0,0,0,1],pred=t3qmul(bq,qv),towardFront=frontFacing(pred),target=towardFront?QFRONT:QBACK,from=qv.slice(),t1=performance.now(),dur=560;
@@ -226,7 +227,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    if(choice==='leave'){teardown();return 'leave'}
    if(choice==='skip'){hap('tap');await anim(350,function(t){sc.style.opacity=1-t});teardown();return 'skip'}
    /* pressed: the button flares, the candles surge, then the camera is drawn in */
-   var gb=sc.querySelector('.gate3-btn'),gr=gb.getBoundingClientRect();gb.classList.add('lit');hap('success');ST.flash=1;ST.shake=1.2;ST.flare=1;
+   var gb=sc.querySelector('.gate3-btn'),gr=gb.getBoundingClientRect();gb.classList.add('lit');hap('success');sfx('ui-bell',{vol:1});sfx('card-fan',{vol:.9});sfx('cards-pack-take-out',{vol:.7,delay:.15});ST.flash=1;ST.shake=1.2;ST.flare=1;
    try{QFX.burst({left:gr.left,top:gr.top,width:gr.width,height:gr.height,right:gr.right,bottom:gr.bottom},3)}catch(e){}
    await wait(380);hap('big');
    sc.querySelector('.fs-skip').style.display='';
@@ -238,27 +239,28 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   gutter=0;var lightUp2=anim(2600,function(t){gutter=t},eO),dolly=anim(3300,function(t){eyeB=lerp3(FAR_EYE,EYE,t);tgtB=lerp3(FAR_TGT,TGT,t)},eIO);
   await type('THE TABLE IS SET',200);await Promise.all([lightUp2,dolly]);gutter=1;
   /* the deck drops onto the wood */
-  var drops=[];
+  var drops=[];sfx('cards-pack-take-out',{vol:.9});
   for(var i=0;i<10&&!skipped;i++){(function(i){var c=C[i],yaw=rnd(-5,5),x=DECK[0]+rnd(-.6,.6),z=DECK[2]+rnd(-.6,.6),from=[x+rnd(-8,8),TC+70+i*9,z+rnd(-8,8)],to=[x,TC+i*DT,z],q0=faceDown(rnd(-40,40)),q1=faceDown(yaw);c.yaw=yaw;
    drops.push(wait(i*60).then(function(){if(skipped){c.p=to;c.q=q1;c.sh=.7;return}return anim(520,function(t){c.p=lerp3(from,to,t);c.q=t3slerp(q0,q1,t);c.sh=Math.min(.8,t*1.2)},eBounce)}))})(i)}
   await Promise.all(drops);if(!skipped)thud([DECK[0],TY,DECK[2]],22,2);
   }
   /* it begins to move: the deck slides to the middle of the table */
-  var mid=[DECK[0],TY,DECK[2]];
+  var mid=[DECK[0],TY,DECK[2]];sfx('card-slide',{vol:.8});
   await Promise.all(C.map(function(c,i){return move(c,[mid[0],TC+i*DT,mid[2]],faceDown(rnd(-3,3)),600)}));
-  await type('THE DECK IS SHUFFLED',120);
+  await type('THE DECK IS SHUFFLED',120);sfx('card-shuffle',{vol:.9,rate:1.9});
   for(var r=0;r<2&&!skipped;r++){
    await Promise.all(C.map(function(c,i){var left=i%2===0;return move(c,[mid[0]+(left?-9:9),TC+(i>>1)*DT+.3,mid[2]],faceDown((left?-1:1)*7),260,{arc:3,ease:eO})}));
-   hap('tap');try{var s=project([0,TY,mid[2]]);QFX.sparks(s[0],s[1],12+r*6,1+r%2)}catch(e){}
+   hap('tap');sfx('card-fan',{vol:.55});try{var s=project([0,TY,mid[2]]);QFX.sparks(s[0],s[1],12+r*6,1+r%2)}catch(e){}
    await Promise.all(C.map(function(c,i){return wait(i*18).then(function(){return move(c,[mid[0],TC+i*DT,mid[2]],faceDown(rnd(-2,2)),280,{arc:4})})}));
   }
   /* three cards are laid */
   await type('THE CARDS ARE LAID',100);
   for(var k=0;k<3&&!skipped;k++){
    var c=dealt[k],sp=slots[k],yaw=(k-1)*3+rnd(-1.5,1.5),to=[sp[0],TC,sp[2]];c.yaw=yaw;
-   var mv1=move(c,to,faceDown(yaw),640,{arc:9,ease:eO});await wait(500);if(skipped)break;thud([to[0],TY,to[2]],14,1.4);S_flash(.18);await mv1;await wait(100);
+   sfx('card-slide',{vol:.8});var mv1=move(c,to,faceDown(yaw),640,{arc:9,ease:eO});await wait(500);if(skipped)break;thud([to[0],TY,to[2]],14,1.4);S_flash(.18);await mv1;await wait(100);
   }
   /* the rest of the deck is pushed aside */
+  if(!skipped)sfx('card-shove',{vol:.8});
   if(!skipped)await Promise.all(C.filter(function(c){return dealt.indexOf(c)<0}).map(function(c,i){return move(c,[SIDE[0],TC+i*DT,SIDE[2]],faceDown(rnd(-4,4)),520,{arc:3})}));
   /* the reading */
   var arcOf=function(q){return QPX_ARC[q.attribute]||QPX_ARC.discipline};
@@ -266,15 +268,15 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   for(var n=0;n<3&&!skipped;n++){
    var c=dealt[n],q=qs[n],tier=q.tier||1,arc=arcOf(q),slot=slots[n],lifted=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
    var qBack=t3qmul(camQ,t3qax([0,1,0],180));
-   c.amb=1.3;var ab=anim(700,function(t){c.amb=1.3+2.9*t});await move(c,lifted,qBack,700,{ease:eIO});c.lift=true;c.amb=4.2;if(skipped)break;
+   sfx('card-slide',{vol:.8});c.amb=1.3;var ab=anim(700,function(t){c.amb=1.3+2.9*t});await move(c,lifted,qBack,700,{ease:eIO});c.lift=true;c.amb=4.2;if(skipped)break;
    c.sh=0;cap.innerHTML=qpxText('TURN THE CARD',{s:2,w:vw-40,lines:1});sc.dataset.await='flip';
    await flipByHand(c,lifted);sc.dataset.await='';cap.innerHTML='';if(skipped)break;
-   ST.flash=tier>=3?1:tier===2?.7:.45;hap(tier>=3?'big':'double');try{QFX.burst(cardRect(c),tier)}catch(e){}
+   ST.flash=tier>=3?1:tier===2?.7:.45;hap(tier>=3?'big':'double');sfx('card-place',{vol:.6});sfx(tier>=3?'chips-stack':'chips-handle',{vol:.7,delay:.08});try{QFX.burst(cardRect(c),tier)}catch(e){}
    title.innerHTML='<span style="color:#f6ecd0;filter:drop-shadow(0 0 10px '+arc.ac+') drop-shadow(0 0 3px '+arc.ac+')">'+qpxText(arc.name,{s:3,w:vw-20,lines:1})+'</span><span class="fs-tier">'+qpxText(QPX_TIER[tier],{s:1,w:200,lines:1})+'</span>';
    anim(420,function(t){title.style.opacity=t;title.style.transform='translateY('+(10-10*t)+'px)'},eO);
    await wait(tier>=3?1250:800);if(skipped)break;
    anim(300,function(t){title.style.opacity=1-t});c.sheen=0;
-   c.lift=false;anim(560,function(t){c.amb=4.2-2.9*t});c.p=curEye.slice();c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
+   sfx('card-slide',{vol:.7});c.lift=false;anim(560,function(t){c.amb=4.2-2.9*t});c.p=curEye.slice();c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];
    await move(c,[slot[0],TC,slot[2]],faceUp(c.yaw),560,{ease:eIO,arc:4});c.sh=.7;if(!skipped){thud([slot[0],TY,slot[2]],8,.6)}
   }
  }
@@ -314,7 +316,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    if(animate&&c.lift&&inspecting===i){await anim(520,function(t){var a=t*360;c.q=t3qmul(t3qmul(camQ,t3qax([0,1,0],a)),QFRONT);if(t>.25&&c.front!==tex)c.front=tex},eIO);c.q=t3qmul(camQ,QFRONT)}
    else c.front=tex;
    tFace[i]=tex;c.front=tex;if(old)gl.deleteTexture(old);
-   if(burst){var tier=q.tier||1;try{QFX.claim(cardRect(c));hap('success');ST.flash=.8}catch(e){}}
+   if(burst){var tier=q.tier||1;sfx('chips-handle',{vol:1});sfx('chips-stack',{vol:.9,delay:.18});try{QFX.claim(cardRect(c));hap('success');ST.flash=.8}catch(e){}}
   };
   var syncCards=async function(){
    if(busy||!alive)return;busy=true;
@@ -339,7 +341,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    return function(){cancelAnimationFrame(settling);sc.removeEventListener('pointerdown',down);sc.removeEventListener('pointermove',mv);sc.removeEventListener('pointerup',up);sc.removeEventListener('pointercancel',up)};
   };
   var inspect=async function(i){
-   if(inspecting>=0||busy)return;busy=true;inspecting=i;var c=dealt[i];hap('tap');
+   if(inspecting>=0||busy)return;busy=true;inspecting=i;var c=dealt[i];hap('tap');sfx('card-slide',{vol:.7});
    var LD2=LD*1.1,lifted=[curEye[0]+bas.f[0]*LD2,curEye[1]+bas.f[1]*LD2,curEye[2]+bas.f[2]*LD2];c.sh=0;c.sheen=.2;c.lift=false;
    var ab=anim(480,function(t){c.amb=1.3+2.9*t});await move(c,lifted,t3qmul(camQ,QFRONT),480,{ease:eIO});c.lift=true;c.amb=4.2;await ab;
    spinStop=spinFree(c);showDock(i);busy=false};
@@ -368,7 +370,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    again:function(){finishRest('replay')}
   };
   window.dhRest=api;
-  sc.addEventListener('click',function(e){var b=e.target.closest('.rest-btn[data-a]');if(!b)return;var a=b.dataset.a;if(a==='ledger')api.ledger(true);else if(a==='new')api.open(true);else if(a==='again')api.again()});
+  sc.addEventListener('click',function(e){var b=e.target.closest('.rest-btn[data-a]');if(!b)return;var a=b.dataset.a;if(a==='ledger')api.ledger(true);else if(a==='new')api.open(true);else if(a==='again'){sfx('ui-bell',{vol:1});api.again()}});
   /* taps on the table */
   sc.addEventListener('pointerdown',function(e){if(e.target.closest('button,input,select,.fs-ledger,.fs-newq,.fs-dock3'))return;pdown={x:e.clientX,y:e.clientY,t:performance.now()}});
   sc.addEventListener('pointerup',function(e){if(!pdown)return;var d0=pdown;pdown=null;if(Math.hypot(e.clientX-d0.x,e.clientY-d0.y)>10||performance.now()-d0.t>450)return;

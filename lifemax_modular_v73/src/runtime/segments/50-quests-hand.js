@@ -167,6 +167,7 @@ function dhTurn(slot){
  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.toggle('is-turned',!!d.turned[slot]);dhSig='';
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('tap')}catch(e){}
+ try{QSFX.play('card-slide',{vol:.7})}catch(e){}
  try{if(el){const r=el.getBoundingClientRect();QFX.sparks(r.left+r.width/2,r.top+r.height*.4,10,1)}}catch(e){}
 }
 function dhReveal(slot){
@@ -174,6 +175,7 @@ function dhReveal(slot){
  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.add('is-up');
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('double')}catch(e){}
+ try{QSFX.play('card-slide',{vol:.8})}catch(e){}
  try{if(el){const q=dhCards().find(function(x){return x.slot===slot});QFX.burst(el.getBoundingClientRect(),q?q.tier||1:1);setTimeout(QFX.foilKick,700)}}catch(e){}
 }
 function dhRingSvg(tier){
@@ -212,7 +214,7 @@ function dhRenderHand(){
  dhSig=sig;
  const prevDone=dhPrevDone||{};dhPrevDone={};
  el.innerHTML=cards.map(dhCardHtml).join('');el.scrollLeft=keep;
- cards.forEach(function(q){const dn=isQuestDone(q);dhPrevDone[q.id]=dn;if(dn&&prevDone[q.id]===false&&dhViewOn()){const c=el.querySelector('.dh-card[data-slot="'+q.slot+'"]');if(c){try{QFX.claim(c.getBoundingClientRect());if(window.LifeMaxHaptics)LifeMaxHaptics.play('success')}catch(e){}}}});
+ cards.forEach(function(q){const dn=isQuestDone(q);dhPrevDone[q.id]=dn;if(dn&&prevDone[q.id]===false&&dhViewOn()){const c=el.querySelector('.dh-card[data-slot="'+q.slot+'"]');if(c){try{QFX.claim(c.getBoundingClientRect());if(window.LifeMaxHaptics)LifeMaxHaptics.play('success');QSFX.play('chips-handle',{vol:1});QSFX.play('chips-stack',{vol:.9,delay:.18})}catch(e){}}}});
  try{QFX.foilKick()}catch(e){}
  dhSchedDeal(el,d,cards);
 }
@@ -303,7 +305,7 @@ async function dhMaybeDeal(replay){
   if(dhWantReplay){dhWantReplay=false;setTimeout(function(){dhMaybeDeal(true)},60)}
  }
 }
-function dhReplayDeal(){if(!dhDealing)dhMaybeDeal(true)}
+function dhReplayDeal(){if(!dhDealing){try{QSFX.play('ui-bell',{vol:1})}catch(e){}dhMaybeDeal(true)}}
 /* the flat page must never flash: while the 3D table is going to open, the page behind it is hidden from the first frame */
 function dhQ3dWant(){try{return dhDealMode()==='table'&&!fxReduced()&&QFX.supported()}catch(e){return false}}
 function dhQ3dMark(v){const h=document.documentElement;if(v==='quests'&&dhQ3dWant()){h.classList.add('q3d');clearTimeout(dhQ3dT);dhQ3dT=setTimeout(function(){if(!document.getElementById('fateScene')&&!dhDealing&&!dhGating)h.classList.remove('q3d')},4000)}else h.classList.remove('q3d')}

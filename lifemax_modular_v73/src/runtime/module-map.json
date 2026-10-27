@@ -2200,6 +2200,24 @@
    ],
    "symbols": []
   },  {
+   "file": "src/runtime/segments/50-sfx-data.js",
+   "bytes": 1,
+   "statement_count": 0,
+   "tags": [
+    "audio"
+   ],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-sfx.js",
+   "bytes": 1,
+   "statement_count": 0,
+   "tags": [
+    "audio"
+   ],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/50-quests-fx.js",
    "bytes": 9000,
    "statement_count": 0,

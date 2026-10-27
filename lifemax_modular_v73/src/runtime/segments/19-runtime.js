@@ -9,6 +9,7 @@ function luckShake(){var now=performance.now();if(now-LK.lastShake<140||fxReduce
 function luckRoll(rec,tok){return new Promise(function(res){var tracks=rec.d.map(function(v,i){return lkTrack(i,v,Math.random)});
  if(fxReduced()){luckLand(rec,tracks);res();return}
  var delay=[0,170,340,510],dur=2300,end=dur+510,fired=[0,0,0,0],t0=performance.now();
+ if(typeof QSFX!=='undefined'){QSFX.play('dice-grab',{vol:.8});QSFX.play('dice-shake',{vol:.9,delay:.12});delay.forEach(function(d){setTimeout(function(){if(tok===LK.run)QSFX.play('dice-throw',{vol:.8})},d*LK.k+260)})}
  function frame(now){if(tok!==LK.run){res();return}var el=(now-t0)/LK.k;
   for(var i=0;i<4;i++){var u=(el-delay[i])/dur;if(u<0)continue;var p=tracks[i].pose(u);luckApplyPose(i,p);var im=tracks[i].impacts;while(fired[i]<im.length&&u>=im[fired[i]]){luckImpact(.6*Math.pow(.55,fired[i]));if(fired[i]===0)luckShake();fired[i]++}}
   if(el<end)requestAnimationFrame(frame);else{luckLand(rec,tracks);luckImpact(.25);res()}}
