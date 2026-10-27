@@ -104,7 +104,8 @@ function petRigCompose(src,fr,m,pose,W,H,hs){
   fr.ears.forEach(function(e,k){
     const b=e.b,ux=e.t[0]-b[0],uy=e.t[1]-b[1],L=Math.hypot(ux,uy)||1,u=[ux/L,uy/L],nrm=[-u[1],u[0]];
     const th=(pose&&(k===0?pose.ear0:pose.ear1)||0)*Math.PI/180,ca=Math.cos(th),sa=Math.sin(th);
-    const u2=[u[0]*ca-u[1]*sa,u[0]*sa+u[1]*ca],n2=[-u2[1],u2[0]],sl=earS[1]*(pose&&pose.flat?0.6:1),sw=earS[0]*(pose&&pose.flat?1.3:1);
+    const u2=[u[0]*ca-u[1]*sa,u[0]*sa+u[1]*ca],n2=[-u2[1],u2[0]],vl=earS[1]>=1?1+(earS[1]-1)*0.55:1-(1-earS[1])*0.6,   /* the visible length: the genes run from tiny to enormous, the drawing is eased so neither end turns into a stub or a spike */
+      sl=pose&&pose.flat?Math.max(0.55,vl*0.7):vl,sw=earS[0]*Math.pow(vl,0.6)*(pose&&pose.flat?1.3:1);
     const sx=X(b[0])-b[0],sy=Y(b[1])-b[1];
     if(sl===1&&sw===1&&!th){e.px.forEach(function(p){put(Math.round(p%W+sx)+MX,Math.round(Math.floor(p/W)+sy)+MT,src[p])});return}   /* untouched ear: original pixels */
     let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;

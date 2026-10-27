@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v136 — ear sizes eased
+
+The ear-length gene runs from 0.4x (tiny) to 2.5x (enormous). Drawn literally, the big end made long thin spikes and the small end made stubs, and flat ears of a small-eared cat nearly vanished. The drawing now eases the length (the gene values and chips are unchanged), widens the ear with its length, and gives flat ears a minimum size.
+
 ## v135 — wary cats' flat ears
 
 A cautious cat (a new stray, say) pins its ears back. The HD redraw rotated the ears 48 degrees without shortening them, so they stuck out as long thin spikes. Flat ears now turn 36 degrees, shrink to 60% of their length and widen by 30%, so they lie sideways like airplane ears.
