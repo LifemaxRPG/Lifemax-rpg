@@ -677,3 +677,6 @@ The trainer no longer uses one of a dozen generic poses. 63 movements (about 17 
 
 ## v178 — warm-ups and cool-downs move too
 Every warm-up and cool-down step is titled alike ("Warm-up", "Cool-down") and showed the same standing pose. They now pick a movement from the text under the title (`G3_DESC` in `tools/make_moves.py`: cycling, jogging, squats, cat-cow, leg swings, neck rolls, arm circles, knee-to-chest, child's pose, legs up the wall, forward fold, chest/quad/calf/hip-flexor stretches, breathing, and so on). 8 new movements were authored for these (71 in all).
+
+## v179 — 3D diagnostics
+Settings → Look & feel → Guided workout → 3D diagnostics shows a small readout on the workout screen: frames drawn, frames per second, the guided-workout phase, which movement is playing, how long the set has been running, how long the trainer takes to draw (ms), and any error. A frame that throws no longer stops the screen silently: the error is caught and shown in the same readout.

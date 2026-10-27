@@ -5146,6 +5146,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
         <div class="card" style="margin-bottom:14px" id="gwrCard">
           <h3>Guided workout</h3>
           <div class="settingsline"><div style="flex:1"><strong>Workout screen</strong><div class="muted" style="font-size:12px">3D gym walks you from machine to machine with a trainer showing the pace of each rep. Classic is the plain screen. Reduced motion always uses classic.</div></div><select id="gwr3dSel" onchange="g3SetPref(this.value==='on')" aria-label="Workout screen"><option value="on">3D gym</option><option value="off">Classic</option></select></div>
+          <div class="settingsline"><div style="flex:1"><strong>3D diagnostics</strong><div class="muted" style="font-size:12px">Shows a small readout on the workout screen (frames per second, phase, which movement is playing, any error). Useful when something looks wrong.</div></div><select id="g3DbgSel" onchange="g3SetDbg(this.value==='on')" aria-label="3D diagnostics"><option value="off">Off</option><option value="on">On</option></select></div>
           <div class="settingsline"><div style="flex:1"><strong>Trainer pack</strong><div class="muted" style="font-size:12px">Optionally replace the built-in trainer with a character from a trainer pack file (made with tools/make_trainer.py). The file stays on this device only and nothing from it is part of the app. <span id="g3PackStatus"></span></div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn secondary" type="button" onclick="document.getElementById('g3PackFile').click()">Load trainer pack</button><button class="btn secondary" type="button" id="g3PackRemove" style="display:none" onclick="g3PackClear()">Remove</button></div><input id="g3PackFile" type="file" accept=".json,application/json" style="display:none" onchange="g3PackLoadFile(this.files[0]).then(function(){document.getElementById('g3PackFile').value=''})"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="hapCard">
@@ -19972,11 +19973,23 @@ d.items.forEach(function(it,i){var lbl=g3LabelOf(g,it),move=g3MoveFor(lbl,it.d),
 }
 function g3Close(){var S=G3;if(!S)return;S.alive=false;cancelAnimationFrame(S.raf);clearInterval(S.watch);window.removeEventListener('resize',S.onResize);try{S.gl.getExtension('WEBGL_lose_context').loseContext()}catch(e){}S.sc.remove();G3=null}
 /* camera + trainer per frame */
+function g3DbgOn(){try{return localStorage.getItem('lma_g3dbg')==='on'}catch(e){return false}}
+function g3SetDbg(v){try{localStorage.setItem('lma_g3dbg',v?'on':'off')}catch(e){}toast('3D diagnostics '+(v?'on':'off'))}
+/* a small readout for finding out why the trainer misbehaves on a particular phone; also appears by itself when a frame throws */
+function g3Dbg(S){
+ if(!S||!S.alive||!(g3DbgOn()||S.err))return;var el=S.sc.querySelector('.g3-dbg');
+ if(!el){el=document.createElement('div');el.className='g3-dbg';el.style.cssText='position:absolute;left:6px;right:6px;top:'+(S.err?'96':'250')+'px;z-index:9;font:10px/1.35 monospace;color:#9ff;background:rgba(0,0,0,.55);padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre-wrap';S.sc.appendChild(el)}
+ var g=gwrCurrent(),c=S.cur>=0?S.stations[S.cur]:null,now=performance.now();
+ el.textContent='frames '+(S.frames||0)+'  fps '+(S.fps||0)+'  phase '+(g&&g.phase)+'  move '+(c&&c.move?c.move.id:c?'generic:'+c.arch:'-')+'\nactive for '+(S.activeStart?((now-S.activeStart)/1000).toFixed(1):'-')+' s  rep '+(S.rep||0)+'  trainer '+(S.trainer?'pack':S.trainerErr?'fallback':'built-in')+(S.trainerErr?'\ntrainer error: '+S.trainerErr:'')+(S.err?'\nFRAME ERROR: '+S.err:'');
+}
 function g3Loop(){
  var S=G3;if(!S||!S.alive)return;S.raf=requestAnimationFrame(g3Loop);
+ try{g3Frame(S)}catch(e){S.err=String(e&&e.message||e).slice(0,160);S.errN=(S.errN||0)+1;if(S.errN<4)console.warn('[gym3d frame]',e);g3Dbg(S)}
+}
+function g3Frame(S){
  var now=performance.now(),g=gwrCurrent();if(!g)return;
  var moving=!!S.walk||g.phase==='active'||g.phase==='timing'||S.sheetAnim;
- if(document.hidden||(!moving&&now-S.lastDraw<60))return;S.lastDraw=now;
+ if(document.hidden||(!moving&&now-S.lastDraw<60))return;S.lastDraw=now;S.frames=(S.frames||0)+1;if(now-(S.fpsT||0)>1000){S.fps=Math.round((S.frames-(S.fpsF||0))*1000/(now-(S.fpsT||now)));S.fpsT=now;S.fpsF=S.frames}
  var t=(now-S.t0)/1000,gl=S.gl,U=S.U;
  /* walking between machines */
  if(S.walk){var w=S.walk,p=Math.min(1,(now-w.t)/w.ms),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;S.eye=[w.e0[0]+(w.e1[0]-w.e0[0])*e,w.e0[1]+(w.e1[1]-w.e0[1])*e+Math.sin(p*Math.PI)*.12,w.e0[2]+(w.e1[2]-w.e0[2])*e];S.tgt=[w.t0[0]+(w.t1[0]-w.t0[0])*e,w.t0[1]+(w.t1[1]-w.t0[1])*e,w.t0[2]+(w.t1[2]-w.t0[2])*e];S.focus=[S.tgt[0],0,S.tgt[2]];if(p>=1){S.walk=null;S.hudSig=''}}
@@ -20001,7 +20014,7 @@ function g3Loop(){
   var fk=g3FK(P),T=t3m();T[12]=cur.x;
   var par=g3StationParts(cur.arch,mv,S.acc,u,fk,cur.sel).concat(S.trainer?[]:g3Figure(fk,S.acc));
   par.forEach(function(p){draw({m:p.m,M:t3mul(T,p.M),c:p.c,e:p.e})});
-  if(S.trainer){try{var mats=g3TrainerPose(S.trainer,P,{mode:P.anchor,x:P.pos[0],y:P.pos[1]});g3TrainerDraw(S.trainer,S,vp,eye,T,mats,S.focus,S.acc);var er=gl.getError();if(er)throw new Error('GL error '+er)}
+  if(S.trainer){try{var tm0=performance.now();var mats=g3TrainerPose(S.trainer,P,{mode:P.anchor,x:P.pos[0],y:P.pos[1]});g3TrainerDraw(S.trainer,S,vp,eye,T,mats,S.focus,S.acc);S.trainerMs=(S.trainerMs||0)*.9+(performance.now()-tm0)*.1;var er=gl.getError();if(er)throw new Error('GL error '+er)}
    catch(e){console.warn('[gym3d] trainer pack failed, using the built-in trainer',e);S.trainerErr=String(e);S.trainer=null}
    gl.useProgram(S.pr)}
   /* a plate clink at the bottom of each rep on machines */
@@ -20055,7 +20068,7 @@ function g3Hud(g,d,st){
 function g3Tick(){
  var S=G3;if(!S||!S.alive)return;var now=performance.now();if(now-(S.lastTick||0)<200)return;S.lastTick=now;
  var g=gwrCurrent();if(!g)return;var hud=S.sc.querySelector('.g3-hud');
- var el=hud.querySelector('[data-g3-elapsed]');if(el)el.textContent=gwrFmtDuration(gwrElapsed(g));
+ g3Dbg(S);var el=hud.querySelector('[data-g3-elapsed]');if(el)el.textContent=gwrFmtDuration(gwrElapsed(g));
  var rp=hud.querySelector('[data-g3-rep]');if(rp&&S.rep)rp.textContent=S.rep;
  if(g.phase==='rest'){var left=Math.max(0,Math.ceil((g.restUntil-Date.now())/1000)),r=hud.querySelector('[data-g3-rest]');if(r){r.textContent=gwrFmtDuration(left*1000);r.classList.toggle('hot',left<=10)}
   if(left!==S.lastLeft){S.lastLeft=left;if(left>0&&left<=3)g3Beep(880,.12);if(left===0)g3Beep(1320,.5,.07)}}
@@ -20110,7 +20123,7 @@ function g3HudClick(e){
  gwrOpen=function(){oOpen.apply(this,arguments);try{if(!G3&&g3Want())g3Open()}catch(e){console.warn('[gym3d open]',e)}};
  gwrRender=function(){oRender.apply(this,arguments);try{if(G3)g3Sync()}catch(e){console.warn('[gym3d sync]',e)}};
 })();
-setTimeout(function(){try{var s=document.getElementById('gwr3dSel');if(s)s.value=g3Pref()?'on':'off';g3PackStatus()}catch(e){}},0);
+setTimeout(function(){try{var s=document.getElementById('gwr3dSel');if(s)s.value=g3Pref()?'on':'off';var d=document.getElementById('g3DbgSel');if(d)d.value=g3DbgOn()?'on':'off';g3PackStatus()}catch(e){}},0);
 /* ===== The Reading: the first deal of the day as a short film =====
    A candlelit table in fog (one fullscreen shader), the deck dropped from the dark, a riffle shuffle, three cards laid
    with a thud, then each card is lifted, turned and named. Skip is always one tap away. */
