@@ -66,6 +66,41 @@ function g3Archetype(label){
  if(/treadmill|elliptical|cycling|cardio|bike|walking|running|endurance|aerobic|conditioning/.test(t))return 'walk';
  return 'mobility';
 }
+G3_MOVES.open={seat:'open',A:G3_MOVES.hinge.A,B:G3_MOVES.hinge.B,tempo:4};G3_MOVES.bench={seat:'bench',A:G3_MOVES.chest.A,B:G3_MOVES.chest.B,tempo:4};
+G3_MOVES.pullup={seat:'bar',A:G3_MOVES.pulldown.A,B:G3_MOVES.pulldown.B,tempo:4};G3_MOVES.bike={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};G3_MOVES.ellip={seat:'cardio',A:G3_MOVES.walk.A,B:G3_MOVES.walk.B,tempo:1.2};
+/* ---- designed exercise movements: G3_X (50-gym3d-moves.js) holds key poses and a cycle for each exercise ---- */
+function g3MoveFor(label){
+ var ids=G3_COVER[label],t=String(label||'').toLowerCase(),id;
+ if(!ids){for(id in G3_X){if(new RegExp(G3_X[id].k).test(t)){ids=[id];break}}}
+ if(!ids||!ids.length)return null;var m=G3_X[ids[0]];m.id=ids[0];return m;
+}
+function g3MoveSeq(m){
+ if(m.seq)return m.seq;var s=[],t=0,cur='A';
+ m.c.split(',').forEach(function(tok){var h=tok.charAt(0)==='-',d=parseFloat(tok.slice(1)),to=h?cur:tok.charAt(0);s.push({f:cur,to:to,t0:t,t1:t+d});t+=d;cur=to});
+ m.total=t;m.seq=s;return s;
+}
+function g3Ang(a,b,u){
+ var d=((b-a+540)%360)-180;
+ if(Math.abs(d)>179.9){var up=Math.abs(((a+90-90+540)%360)-180),dn=Math.abs(((a-90-90+540)%360)-180);d=up<=dn?180:-180}
+ return a+d*u;
+}
+function g3MoveEval(m,t){
+ var s=g3MoveSeq(m),T=m.total,rep=Math.floor(t/T),tt=t-rep*T,seg=s[s.length-1],i;
+ for(i=0;i<s.length;i++)if(tt<s[i].t1){seg=s[i];break}
+ var u=seg.t1>seg.t0?Math.min(1,Math.max(0,(tt-seg.t0)/(seg.t1-seg.t0))):0;if(m.m!=='l')u=u*u*(3-2*u);
+ var A=m.P[seg.f],B=m.P[seg.to],a=[];
+ for(i=0;i<12;i++)a.push(i<2?A[i]+(B[i]-A[i])*u:g3Ang(A[i],B[i],u));
+ if(m.alt&&rep%2)a=[a[0],a[1],a[2],a[3],a[6],a[7],a[4],a[5],a[10],a[11],a[8],a[9]];
+ if(m.m==='h')a[2]+=1.5*Math.sin(t*1.57);
+ var eff=seg.f==='A'&&seg.to==='B'?u:seg.f==='B'&&seg.to==='A'?1-u:(seg.f==='B'?1:0);
+ return {P:{anchor:m.n==='h'?'hip':'ankle',pos:[a[0],a[1]],torso:a[2],neck:a[3],legs:{th:a[4],sh:a[5]},legsF:{th:a[6],sh:a[7]},arms:{ua:a[8],fa:a[9]},armsF:{ua:a[10],fa:a[11]}},u:eff,rep:rep};
+}
+/* where the camera frames a movement: the middle and size of everything the trainer reaches over one cycle */
+function g3Cam(move){
+ var x0=9,x1=-9,y1=0;g3MoveSeq(move);
+ for(var q=0;q<24;q++){var fq=g3FK(g3MoveEval(move,move.total*q/24).P);[fq.hip,fq.head,fq.legN.ank,fq.legF.ank,fq.armN.wr,fq.armF.wr,fq.legN.knee].forEach(function(pt){x0=Math.min(x0,pt[0]);x1=Math.max(x1,pt[0]);y1=Math.max(y1,pt[1])})}
+ return {x:(x0+x1)/2,y:Math.max(.55,Math.min(1.25,y1*.55)),d:Math.max(5,Math.min(7.2,3.2+(x1-x0)*1.6+y1*.9))};
+}
 /* ---- equipment: parts in station space (+x is the way the trainer faces, +z toward the camera) ---- */
 var G3_C={frame:[.17,.19,.23],pad:null,plate:[.55,.58,.64],plateUp:[.78,.8,.86],pin:[.9,.15,.12],rubber:[.08,.085,.1],steel:[.5,.53,.58],bench:[.15,.16,.2]};
 function g3StationParts(arch,mv,acc,lift,fk,selIdx){
@@ -80,7 +115,7 @@ function g3StationParts(arch,mv,acc,lift,fk,selIdx){
   B(-.62,1.05,.3,.1,2.1,.08,G3_C.frame);B(-.62,1.05,-.3,.1,2.1,.08,G3_C.frame);
   stack(-.62);
   var hip=fk.hip;B(hip[0]-.02,hip[1]-.07,0,.46,.1,.42,pad);   /* seat */
-  if(arch==='legpress'){B(hip[0]-.36,hip[1]+.32,0,.1,.95,.42,pad,null,-.2);B(.88+lift*.14,.62,0,.08,.7,.7,G3_C.frame);C([-.1,.2,.28],[1.1,.2,.28],.025,G3_C.steel);C([-.1,.2,-.28],[1.1,.2,-.28],.025,G3_C.steel)}
+  if(arch==='legpress'){B(hip[0]-.36,hip[1]+.32,0,.1,.95,.42,pad,null,-.2);var pa=fk.legN.ank;P.push({m:'box',M:g3MBoxZ(pa[0]+.07,pa[1]+.04,0,.08,.7,.7,.0),c:G3_C.frame});C([-.1,.2,.28],[1.1,.2,.28],.025,G3_C.steel);C([-.1,.2,-.28],[1.1,.2,-.28],.025,G3_C.steel)}
   else{B(hip[0]-.2,hip[1]+.36,0,.1,.74,.38,pad)}
   if(arch==='chest'||arch==='shoulder'||arch==='row'){var w=fk.armN.wr;B(w[0],w[1],0,.05,.05,.46,G3_C.steel);C([-.4,w[1],0],[w[0],w[1],0],.035,G3_C.frame);}
   if(arch==='pulldown'){var w2=fk.armN.wr;B(.1,2.1,0,.06,.06,.5,G3_C.frame);B(w2[0]+.05,w2[1],0,.05,.05,.8,G3_C.steel);C([.1,2.1,.15],[w2[0]+.05,w2[1],.15],.012,G3_C.steel);C([.1,2.1,-.15],[w2[0]+.05,w2[1],-.15],.012,G3_C.steel)}
@@ -91,6 +126,20 @@ function g3StationParts(arch,mv,acc,lift,fk,selIdx){
   else{B(.1,.02,0,.7,.06,.4,G3_C.frame)}
  }else if(mv.seat==='mat'){
   B(.1,.01,0,1.9,.04,.8,pad);C([-.7,.07,.5],[-.7,.07,-.5],.09,[.2,.2,.24]);B(1.2,.1,.5,.14,.2,.14,[.2,.2,.24]);
+ }else if(mv.seat==='bench'){
+  var dx=fk.sh[0]-fk.hip[0],dy=fk.sh[1]-fk.hip[1],dl=Math.hypot(dx,dy)||1,dd=[dx/dl,dy/dl],nn=[dd[1],-dd[0]],hp=fk.hip;
+  P.push({m:'box',M:g3MBoxZ(hp[0]+dd[0]*.28-nn[0]*.08,hp[1]+dd[1]*.28-nn[1]*.08,0,.82,.1,.34,Math.atan2(dd[1],dd[0])),c:pad});
+  B(hp[0]-.05,hp[1]-.09,0,.42,.08,.34,pad);B(hp[0]+.1,(hp[1]-.12)/2,.13,.06,hp[1]-.12,.06,G3_C.frame);B(hp[0]+.1,(hp[1]-.12)/2,-.13,.06,hp[1]-.12,.06,G3_C.frame);B(hp[0]-.45,.2,0,.06,.4,.4,G3_C.frame);
+  [fk.armN.wr,fk.armF.wr].forEach(function(w,i){var z=i?-.14:.14;C([w[0],w[1],z-.07],[w[0],w[1],z+.07],.025,G3_C.steel);B(w[0],w[1],z-.1,.09,.09,.06,G3_C.rubber);B(w[0],w[1],z+.1,.09,.09,.06,G3_C.rubber)})
+ }else if(mv.seat==='bar'){
+  var wb=fk.armN.wr,kn=fk.legN.knee;B(wb[0]+.02,wb[1],0,.06,.06,.9,G3_C.steel);B(wb[0]+.02,1.05,.42,.07,2.1,.07,G3_C.frame);B(wb[0]+.02,1.05,-.42,.07,2.1,.07,G3_C.frame);
+  B(kn[0],kn[1]-.1,0,.3,.06,.34,pad);B(kn[0],(kn[1]-.1)/2,0,.06,kn[1]-.1,.06,G3_C.frame);B(-.5,.04,0,1.4,.08,.7,G3_C.frame)
+ }else if(mv.seat==='cardio'){
+  var h2=fk.hip,w3=fk.armN.wr,an=[fk.legN.ank,fk.legF.ank];
+  B(h2[0]+.15,.05,0,1.5,.08,.5,G3_C.frame);B(h2[0]+.65,.75,0,.1,1.35,.2,G3_C.frame);B(h2[0]+.6,1.5,0,.14,.3,.5,G3_C.frame,[.0,.12,.2]);
+  B(w3[0],w3[1],0,.06,.05,.46,G3_C.steel);C([h2[0]+.6,.9,0],[w3[0],w3[1],0],.03,G3_C.frame);
+  if(arch==='bike'){B(h2[0]-.1,h2[1]-.08,0,.3,.07,.2,pad);C([h2[0]-.1,.08,0],[h2[0]-.1,h2[1]-.1,0],.04,G3_C.frame);C([h2[0]+.15,.45,0],[h2[0]+.15,.45,0],.2,G3_C.frame);an.forEach(function(a,i){B(a[0],a[1]-.06,i?-.14:.14,.2,.03,.1,G3_C.steel)})}
+  else{an.forEach(function(a,i){B(a[0]+.02,a[1]-.05,i?-.16:.16,.46,.05,.14,G3_C.rubber)})}
  }else if(mv.seat==='tread'){
   B(.15,.1,0,1.5,.14,.62,G3_C.rubber);B(.15,.19,0,1.34,.02,.5,[.13,.14,.17]);B(.98,.78,.36,.06,1.35,.06,G3_C.frame);B(.98,.78,-.36,.06,1.35,.06,G3_C.frame);B(.98,1.44,0,.2,.34,.8,G3_C.frame,[.0,.12,.2]);B(.88,1.44,0,.02,.3,.7,[.02,.3,.5],[0,.35,.55]);
  }
@@ -170,7 +219,7 @@ async function g3TrainerInit(gl){
 /* poses the skeleton from the planar rig (angles in degrees) */
 function g3TrainerPose(T,P,anchorPoint){
  var I=T.idx,b=T.b,n=b.length,Q=new Array(n),pp=new Array(n),id=[0,0,0,1],rv=function(a,c){return t3sub(b[I[c]],b[I[a]])};
- var QT=g3Arc(rv('spine_1','spine_4'),g3Dp(P.torso)),QN=g3Arc(rv('neck','head'),g3Dp(P.torso*.4)),QH=t3slerp(id,QT,.45);
+ var QT=g3Arc(rv('spine_1','spine_4'),g3Dp(P.torso)),QN=g3Arc(rv('neck','head'),g3Dp(P.neck!=null?P.neck:P.torso*.4)),QH=t3slerp(id,QT,.45);
  var side={r:{s:1,leg:P.legs,arm:P.arms},l:{s:-1,leg:P.legsF||P.legs,arm:P.armsF||P.arms}};
  for(var j=0;j<n;j++)Q[j]=id;
  Q[I.hip]=QH;['spine_1','spine_2','spine_3','spine_4','clavicle_l','clavicle_r'].forEach(function(k){Q[I[k]]=QT});Q[I.neck]=QN;Q[I.head]=QN;
@@ -236,9 +285,10 @@ async function g3Open(){
  }catch(e){console.warn('[gym3d]',e);sc.remove();G3=null;return false}
  S.trainer=await g3TrainerInit(gl);
  /* stations, one per exercise of the day */
- d.items.forEach(function(it,i){var arch=g3Archetype(g3LabelOf(g,it)),mv=G3_MOVES[arch];S.idxByKey[it.k]=i;var last=g3Last(g3LabelOf(g,it));
-  var st={it:it,arch:arch,mv:mv,x:i*3.8,sel:last?Math.max(1,Math.min(10,Math.round(last.weight/12))):5,static:null};
-  var fk=g3FK(g3Lerp(mv.A,mv.B,0));var T=t3m();T[12]=st.x;
+d.items.forEach(function(it,i){var lbl=g3LabelOf(g,it),move=g3MoveFor(lbl),arch=move?move.a:g3Archetype(lbl),mv=G3_MOVES[arch];S.idxByKey[it.k]=i;var last=g3Last(lbl);
+  var st={it:it,arch:arch,mv:mv,move:move,x:i*3.8,sel:last?Math.max(1,Math.min(10,Math.round(last.weight/12))):5,static:null};
+  var fk=g3FK(move?g3MoveEval(move,0).P:g3Lerp(mv.A,mv.B,0));var T=t3m();T[12]=st.x;
+  if(move)st.cam=g3Cam(move);
   st.static=g3StationParts(arch,mv,S.acc,0,fk,st.sel).map(function(p){return {m:p.m,M:t3mul(T,p.M),c:p.c,e:p.e}});S.stations.push(st)});
  S.N=S.stations.length;
  /* the room */
@@ -280,11 +330,14 @@ function g3Loop(){
  /* the way ahead: moving chevrons on the floor toward the next machine */
  if(cur&&S.cur<S.N-1){var nx=S.stations[S.cur+1].x,x0=cur.x+1.7;for(var k=0;k<9;k++){var u=((t*.6+k/9)%1),px=x0+(nx-x0-1.4)*u;draw({m:'box',M:g3MBox(px,.012,2.05,.34,.01,.1,.0),c:S.acc,e:S.acc.map(function(x){return x*(1.1-u)})})}}
  if(cur){
-  var mv=cur.mv,u=0,rep=0,ph=gwrCurrent().phase;
-  var hold=cur.arch==='plank';
-  if(ph==='active'||ph==='timing'){var cyc=(now-S.activeStart)/(mv.tempo*1000);rep=Math.floor(cyc);var f=cyc-rep;u=hold?(.5+.5*Math.sin(t*1.1))*.2:(.5-.5*Math.cos(f*6.2832));S.rep=rep+1}
-  else{u=hold?0:.0;S.rep=0}
-  var P=g3Lerp(mv.A,mv.B,u);P.pos=[P.pos[0],P.pos[1]+(ph==='active'||ph==='timing'?0:Math.sin(t*1.6)*.006)];
+  var mv=cur.mv,u=0,rep=0,ph=gwrCurrent().phase,act=ph==='active'||ph==='timing',P;
+  if(cur.move){var ev=g3MoveEval(cur.move,act?(now-S.activeStart)/1000:0);P=ev.P;u=ev.u;rep=ev.rep;S.rep=act?rep+1:0;
+   if(!act)P.pos=[P.pos[0],P.pos[1]+Math.sin(t*1.6)*.006]}
+  else{
+   var hold=cur.arch==='plank';
+   if(act){var cyc=(now-S.activeStart)/(mv.tempo*1000);rep=Math.floor(cyc);var f=cyc-rep;u=hold?(.5+.5*Math.sin(t*1.1))*.2:(.5-.5*Math.cos(f*6.2832));S.rep=rep+1}
+   else{u=hold?0:.0;S.rep=0}
+   P=g3Lerp(mv.A,mv.B,u);P.pos=[P.pos[0],P.pos[1]+(act?0:Math.sin(t*1.6)*.006)]}
   var fk=g3FK(P),T=t3m();T[12]=cur.x;
   var par=g3StationParts(cur.arch,mv,S.acc,u,fk,cur.sel).concat(S.trainer?[]:g3Figure(fk,S.acc));
   par.forEach(function(p){draw({m:p.m,M:t3mul(T,p.M),c:p.c,e:p.e})});
@@ -300,7 +353,7 @@ function g3Loop(){
 /* ---- HUD ---- */
 function g3Num(n){return Math.max(0,n|0)}
 function g3Walk(to){
- var S=G3,st=S.stations[to],tgt=st?[st.x+.12,1.2,0]:[S.stations[0].x,1.2,0],eye=st?[st.x+.35,1.55,5.0]:[0,1.9,6.5];
+ var S=G3,st=S.stations[to],cm=st&&st.cam,tgt=st?[st.x+(cm?cm.x:.12),cm?cm.y:1.2,0]:[S.stations[0].x,1.2,0],eye=st?[tgt[0]+.23,tgt[1]+.35,cm?cm.d:5.0]:[0,1.9,6.5];
  S.walk={t:performance.now(),ms:S.cur<0?1400:1900,e0:S.eye.slice(),e1:eye,t0:S.tgt.slice(),t1:tgt};
 }
 function g3Sync(){

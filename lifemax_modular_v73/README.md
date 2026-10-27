@@ -671,3 +671,6 @@ A meeting or appointment set by voice now draws on the dial's inner ring with yo
 
 ## v176 — trainer is skinned on the CPU
 The trainer pack was invisible on a real phone GPU (integer vertex attributes plus a 54-matrix uniform array). The character is now skinned on the CPU each frame and drawn with a plain shader. If the pack ever fails to draw (GL error, textures not decoding), the built-in trainer is shown instead of nothing. The gym no longer syncs before its stations are built. The pack file format is unchanged, so the pack already on the phone still works.
+
+## v177 — every exercise has its own designed movement
+The trainer no longer uses one of a dozen generic poses. 63 movements (about 17 KB, `src/runtime/segments/50-gym3d-moves.js`) were designed with Gemini from `gemini/workouts/` prompts and checked against the rig with `moves-v1-*-validate.py` (feet on the floor, knees bending the right way, hands on the bar or floor, head and legs opposing when lying down). Each has key poses and a cycle (reps, holds, walking loops, flows). All 85 plan exercise names map to a movement (`moves-index.json`); other names (swaps) fall back to a keyword match, then to the old generic poses. The camera frames each movement from its reach. New props: bench, bike and elliptical, pull-up bar and assist platform. `tools/make_moves.py` regenerates the data segment.
