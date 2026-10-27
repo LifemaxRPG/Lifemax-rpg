@@ -361,6 +361,14 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v142 — thumbs up and down on every voice answer
+
+Under every voice answer (a result, a card waiting for a yes, a question, a cancel) there is now "Was this right?" with a thumbs up and a thumbs down. Thumbs up is thanked and saved as a good answer. Thumbs down opens a small optional box, "What went wrong?", with Send and Skip comment. One rating per answer; a half-typed note survives the card redrawing, and typing does not close the card.
+- A thumbs down is saved in the same log as the automatic flags: your sentence (as you said it), the screen, what the engine heard it as, its reply, and your comment. If the engine had already flagged that sentence, the comment is added to that entry instead of making a duplicate.
+- Thumbs ups are saved separately (last 100) and appear at the end of the export under "Thumbs up".
+- Settings > Voice (beta) > Export Voice Fallback Log counts both ("3 flagged answers ... and 2 marked good"). Clear removes both.
+- `tests/voicefallback.test.js` is now 29 checks.
+
 ## v141 — tap outside to close voice
 
 With the voice card open (listening, a result, or a card waiting for a yes), touching anywhere on the page behind it closes it. The touch still goes through, so you can scroll right away. A card that was waiting for a yes is dropped, the same as the ✕ button. Touches inside the card, on the mic button and in the typing box do not close it.
