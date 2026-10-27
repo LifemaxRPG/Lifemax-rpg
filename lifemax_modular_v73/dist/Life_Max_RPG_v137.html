@@ -4380,6 +4380,7 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
     <aside class="sidebar">
       <button class="navbtn active" data-view="dashboard" onclick="navigate('dashboard')"><span class="ico"><i data-px="grid" data-s="18"></i></span>Overview</button>
       <button class="navbtn" data-view="character" onclick="navigate('character')"><span class="ico"><i data-px="person" data-s="18"></i></span>Character</button>
+      <button class="navbtn" data-view="pet" onclick="navigate('pet')"><span class="ico"><i data-px="paw" data-s="18"></i></span>Cat</button>
       <button class="navbtn" data-view="log" onclick="navigate('log')"><span class="ico"><i data-px="plus" data-s="18"></i></span>Log activity</button>
       <button class="navbtn" data-view="quests" onclick="navigate('quests')"><span class="ico"><i data-px="flag" data-s="18"></i></span>Quests</button>
       <button class="navbtn" data-view="plan" onclick="navigate('plan')"><span class="ico"><i data-px="list" data-s="18"></i></span>Workout plan</button>
@@ -15044,8 +15045,8 @@ function lmaScrubInit(){
   try{
    const g=lmaTabKey(v);
    if(g==='library')state.libPane=v;if(g==='food')state.foodPane=v;
-   /* grouped pages, and the pages reached from the Overview (Character, Cat), light up their tab on the bar */
-   const lit=g!==v?g:v==='pet'?'dashboard':null;
+   /* grouped pages, and the pages reached from the Overview (Character), light up their tab on the bar */
+   const lit=g!==v?g:null;
    if(lit)document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===lit));
    document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
    lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));

@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v137 — Cat tab back on the bottom bar
+
+The Cat tab is back in the bottom navigation, right after Character, and lights up when you are on the Cat page (it used to light Overview). The Overview tile still opens it too.
+
 ## v136 — ear sizes eased
 
 The ear-length gene runs from 0.4x (tiny) to 2.5x (enormous). Drawn literally, the big end made long thin spikes and the small end made stubs, and flat ears of a small-eared cat nearly vanished. The drawing now eases the length (the gene values and chips are unchanged), widens the ear with its length, and gives flat ears a minimum size.

@@ -196,8 +196,8 @@ function lmaScrubInit(){
   try{
    const g=lmaTabKey(v);
    if(g==='library')state.libPane=v;if(g==='food')state.foodPane=v;
-   /* grouped pages, and the pages reached from the Overview (Character, Cat), light up their tab on the bar */
-   const lit=g!==v?g:v==='pet'?'dashboard':null;
+   /* grouped pages, and the pages reached from the Overview (Character), light up their tab on the bar */
+   const lit=g!==v?g:null;
    if(lit)document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===lit));
    document.querySelectorAll('.libseg button').forEach(b=>b.classList.toggle('on',b.dataset.lib===v));
    lmaScrubSync(v);lmaThumbSchedule(lmaTabKey(lmaView()));
