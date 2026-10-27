@@ -361,6 +361,10 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v148 — the bottom bar no longer blinks during a swipe
+
+The bar was a frosted-glass strip (80% opaque, blurring the page behind it). While the page slides and fades under it, the phone has to redo that blur every frame, and on some phones that makes the bar drop out for a moment. On phones the bar is now solid (dark `#12151c`, white in the light theme), with no blur, on its own layer. Side effect, in a good way: the page used to faintly show through the bar (a dark card edge could look like a highlighted tab); that is gone too. I could not make the blink happen in my browser test (it is a phone graphics issue), so the test checks the bar is in place and visible on every frame of a swipe and that it no longer blurs. Please tell me if it still blinks. `tests/swipe.test.js` is 23 checks. Web-only.
+
 ## v147 — swipe stutter and the stuck tab highlight
 
 - **Stutter after a swipe:** during a swipe the cards' fade-in is switched off so the page arrives in one piece, but the switch was turned back on the moment the swipe ended, and turning it on makes every card replay its fade-in from invisible. That was the little jump. The fade-in now stays off until you change page some other way (a tap on a tab, a button), and it is restored before that page change so nothing replays. I also dropped two layer hints (`will-change` on the page and `backface-visibility`) that made the page re-render once when they were taken away.

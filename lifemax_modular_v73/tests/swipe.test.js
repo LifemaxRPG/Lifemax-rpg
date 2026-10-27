@@ -67,6 +67,12 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('after many quick swipes and taps only the current tab is lit', lit.lit.length === 1 && lit.lit[0] === (lit.view === 'media' || lit.view === 'history' ? 'library' : lit.view === 'meals' || lit.view === 'recipes' ? 'food' : lit.view), lit);
   const hov = await p.evaluate(() => { let bad = 0, seen = 0; for (const sh of document.styleSheets) { let rs; try { rs = sh.cssRules } catch (e) { continue } const walk = (rs, ok) => { for (const r of rs) { if (r.cssRules && r.media) walk(r.cssRules, ok || /hover:\s*hover/.test(r.media.mediaText)); else if (r.selectorText && /\.navbtn:hover/.test(r.selectorText)) { seen++; if (!ok) bad++ } } }; walk(rs, false) } return { bad, seen } });
   ok('the tab hover look only applies with a mouse, so a tapped tab does not stay shaded on a phone', hov.seen >= 1 && hov.bad === 0, hov);
+  // the bottom bar never goes missing while the page slides
+  await p.evaluate(() => { navigate('dashboard'); window.__s = []; const bar = document.querySelector('.sidebar'); const f = () => { const r = bar.getBoundingClientRect(), cs = getComputedStyle(bar); window.__s.push([r.top, cs.opacity, cs.visibility, cs.display]); window.__raf = requestAnimationFrame(f) }; f() });
+  await p.waitForTimeout(400); await swipe(330, 130, 400, 100, 8); await touch('touchend', 130, 402); await p.waitForTimeout(900);
+  const bar = await p.evaluate(() => { cancelAnimationFrame(window.__raf); const s = window.__s, bad = s.filter(x => x[0] < 700 || x[1] !== '1' || x[2] !== 'visible' || x[3] === 'none'); const cs = getComputedStyle(document.querySelector('.sidebar')); return { frames: s.length, bad: bad.length, blur: cs.backdropFilter, bg: cs.backgroundColor } });
+  ok('the bottom bar stays in place and visible on every frame of a swipe', bar.frames > 20 && bar.bad === 0, bar);
+  ok('the bottom bar does not blur the page behind it on a phone', bar.blur === 'none', bar);
   ok('no page errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

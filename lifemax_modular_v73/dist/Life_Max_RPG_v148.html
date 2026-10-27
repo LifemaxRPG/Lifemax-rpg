@@ -3683,6 +3683,12 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 .lmaweb-pill button[data-w=x]{background:#ffffff14;padding:7px 10px;color:var(--muted)}
 .lmv-help{max-height:42vh;overflow:auto;margin:6px 0;padding-right:2px}.lmv-hcat{margin:10px 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.lmv-help .lmv-chips{flex-wrap:wrap}
 .lmv-fb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.lmv-fb-q,.lmv-fb-msg{font-size:12.5px;color:var(--muted);flex:1}.lmv-fb-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}.lmv-fb-btn:active{transform:scale(.94)}.lmv-fb-text{width:100%;box-sizing:border-box;resize:none;font:inherit;font-size:14px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 10px}.lmv-fb-btns{display:flex;gap:8px;width:100%}
+/* the bottom bar is solid enough not to need to blur what is behind it. Blurring the page behind a fixed bar while the page slides and fades under it
+   made the bar flicker out for a moment on some phones; a nearly solid bar on its own layer cannot. */
+@media(max-width:860px){
+  .sidebar{background:#12151c;backdrop-filter:none;-webkit-backdrop-filter:none;transform:translate3d(0,0,0)}
+  html.light-theme .sidebar{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+}
 </style>
 <style id="lifemax-feature-styles">
 /* Feature apps v1.3.0 */
