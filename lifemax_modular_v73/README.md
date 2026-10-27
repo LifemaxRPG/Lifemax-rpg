@@ -361,6 +361,15 @@ See `VOICE.md` at the repo root. Offline-only voice/typed scheduling into Life D
 ## v118 — Character tab restored
 The Character tab is back on the bottom bar with its original person icon, right after Overview (9 tabs). Tapping the level tile on the Overview still opens it too.
 
+## v146 — swiping between tabs follows your finger
+
+Before, nothing moved while you swiped; after you let go the app waited, took a screenshot-style transition and then faded each card in one by one, which felt like it lagged. Now:
+- The page slides with your finger as soon as the swipe is clearly sideways (a light fade as it goes; a rubber-band stretch at the first and last tab).
+- On release it finishes the slide: past a fifth of the screen, or a quick flick of even 36 px (speed counts), commits; otherwise it springs back. The slide-out takes 70 to 140 ms depending on how fast you flicked, then the new page arrives from the side in 190 ms, all as compositor animations (transform and opacity only).
+- The page switch itself happens while the page is off-screen, and the cards no longer fade in one after another during a swipe.
+- Tapping a tab in the bar is unchanged. Vertical scrolling, the screen edges, the cat room, Life Director, sliders and carousels still never start a swipe. With reduced motion on, it switches on release with no movement, as before.
+- `tests/swipe.test.js` (15 checks, with synthetic touches). A tab switch costs 2 to 13 ms here, so a phone should hide it easily. Not felt on a device yet: please tell me how it feels and I will tune the distances and speeds.
+
 ## v145 — new app icon
 
 New launcher icon (a pixel-art landscape with the LM monogram): `android-wrapper/icon-source.png` is the supplied artwork and `android-wrapper/make_icons.py` rebuilds the adaptive foreground (corners cropped, full bleed), the legacy square and round icons and the splash picture at every density. The icon is part of the APK, so `NativeApi.VALUE` is now 3 and the update check offers the new APK. The build guard now also watches `android-wrapper/res`.

@@ -840,3 +840,7 @@ html.reduce-motion .sheet,html.reduce-motion .sheet-ov.show .sheet{transform:non
 html.reduce-motion .sheet{opacity:0}html.reduce-motion .sheet-ov.show .sheet{opacity:1}
 html.reduce-motion #devChat,html.reduce-motion #devChat.open{transform:none}
 html.reduce-motion .sheet.sheet-enter>*,html.reduce-motion .view.active>*,html.reduce-motion .navbtn.active .ico,html.reduce-motion #pacOverlay{animation:none!important}
+
+/* swiping between tabs: the page content arrives as one piece, not staggered, and only the compositor-friendly properties move */
+html.lma-swiping .view.active>*{animation:none!important}
+main.content{backface-visibility:hidden}
