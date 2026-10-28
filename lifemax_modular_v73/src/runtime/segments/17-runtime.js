@@ -85,8 +85,12 @@ function petCamUpdate(rt,dt){
   const target=c.x+(moving?c.dir*(s.run?26:14):0);
   const d=target-rt.cam.cx;
   if(Math.abs(d)>260){rt.cam.cx=target;return}            /* the cat was placed somewhere new: cut, don't pan */
+  /* a cat that is resting never makes the room drift: small offsets are left alone, and once the camera is going it settles on a whole pixel */
+  if(!moving&&!rt.camGo&&Math.abs(d)<14)return;
+  rt.camGo=true;
   const k=s&&s.run?4.2:moving?2.6:1.6;
   rt.cam.cx+=d*(1-Math.exp(-k*dt));
+  if(!moving&&Math.abs(target-rt.cam.cx)<0.6){rt.cam.cx=Math.round(target);rt.camGo=false}
 }
 /* left edge of a vw-wide view, kept inside the house */
 function petCamLeft(rt,vw){const cx=rt.cam?rt.cam.cx:rt.c.x;return Math.max(PET_HX0,Math.min(PET_HX1-vw,cx-vw/2))}

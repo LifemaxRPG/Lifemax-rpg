@@ -747,3 +747,8 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v201: Life Director nav icon
 - The Life Director tab used a plain "✦" text glyph, which sat lower than the pixel icons. It now uses a pixel `dial` icon (ring with a filled wedge, like the day dial). Features can set `"px": "<icon name>"` in `feature.json`; `forge_features.py` emits it as `<i data-px>`.
+
+## v202: sleeping eyes, blink rate, steady room
+- Bug: the HD face table had no `closed` entry, so every frame that is meant to have shut eyes fell back to open ones. Sleeping cats now close their eyes (any sleep step, light or deep).
+- Awake cats blink every ~3.3 s (was 4.6 s) for 0.17 s, with an occasional double blink; each cat has its own timing.
+- Camera: a cat that is resting no longer lets the room drift. Offsets under 14 px are ignored, and when the camera does pan it ends on a whole pixel.

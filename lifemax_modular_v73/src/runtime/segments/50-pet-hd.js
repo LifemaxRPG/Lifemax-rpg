@@ -108,7 +108,7 @@ function petHdHeadShift(px,CW,CH,a){
 }
 function petHdFace(px,CW,CH,a,expr,cols,wk){
  const sc=a.sc||1,X=function(v){return Math.round(v*sc)};
- const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed']}[expr]||['open','open'];
+ const E={neutral:['open','open'],happy:['happy','happy'],sleepy:['sleepy','sleepy'],surprised:['wide','wide'],angry:['angry','angry'],sad:['sad','sad'],blink:['closed','closed'],closed:['closed','closed']}[expr]||['open','open'];
  const d=function(y,x,v){petHdDot(px,CW,CH,y,x,v,cols)};
  /* every eye sits a little higher on the face and closer together, so a blink or a mood change never makes the eyes jump; only the plain round eyes (neutral, surprised) get the almond shape, the others keep theirs */
  const ey=-4.6*sc,ex=.5*sc,hx=petHdHeadShift(px,CW,CH,a);
@@ -132,8 +132,11 @@ function petHdFace(px,CW,CH,a,expr,cols,wk){
 /* ----- expression: how the cat feels right now ----- */
 function petHdExpr(rt,p,c){
  const t=rt.t||0;
- /* a blink every few seconds */
- const cyc=(t%4.6);if(cyc>4.46)return 'blink';
+ /* asleep means eyes shut, whatever pose it is lying in; the rest of the time a blink every few seconds, and now and then two in a row */
+ try{const s=c.step;if(s&&s.k==='act'&&s.a==='sleep')return 'blink'}catch(e){}
+ const per=3.3,n=Math.floor(t/per),ph=t-n*per,hs=Math.abs(Math.sin(n*12.9898+(rt.hdSeed||(rt.hdSeed=Math.random()*50)))*43758.5453)%1,w=0.17;
+ if(ph>per-w)return 'blink';
+ if(hs<0.3&&ph>per-w-0.3&&ph<per-0.3)return 'blink';
  try{
   const now=Date.now();
   if(rt.hdMood&&now<rt.hdMood.until)return rt.hdMood.expr;

@@ -46,5 +46,14 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.evaluate(() => { navigate('pet') }); await p.waitForTimeout(500);
   await p.evaluate(() => { petDevScratch() }); await p.waitForTimeout(1500); await p.evaluate(() => { petDevPlay2(1) }); await p.waitForTimeout(2200);
   ok('scratching and playing still draw at the new room scale without errors', errs.length === 0, errs);
+  /* v202: sleeping eyes, blink rate, camera stillness */
+  ok('a frame meant to have closed eyes really draws them closed (the "closed" expression exists)', await p.evaluate(() => { const px = new Uint32Array(100 * 100); const a = { l: [50, 40], r: [50, 60], nose: [55, 50], mouth: [58, 50], sc: 1 }; try { petHdFace(px, 100, 100, a, 'closed', petHdCols(PET_RT, petData().coat), 1); return true } catch (e) { return false } }) && await p.evaluate(() => { const s = petHdFace.toString(); return /closed:\['closed','closed'\]/.test(s) }));
+  const sl = await p.evaluate(() => { const rt = PET_RT, c = rt.c, old = c.step; c.step = { k: 'act', a: 'sleep', t: 0, d: 99, depth: 0.1 }; const e1 = petHdExpr(rt, petData(), c); c.step = { k: 'act', a: 'sleep', t: 0, d: 99, depth: 0.9 }; const e2 = petHdExpr(rt, petData(), c); c.step = old; return [e1, e2] });
+  ok('a sleeping cat has its eyes shut, light doze or deep', sl[0] === 'blink' && sl[1] === 'blink', sl);
+  const bl = await p.evaluate(() => { const rt = PET_RT, c = rt.c, old = c.step; c.step = null; const t0 = rt.t; let n = 0, prev = false, tot = 0; for (let i = 0; i < 6000; i++) { rt.t = 10 + i * 0.01; const e = petHdExpr(rt, petData(), c) === 'blink'; if (e && !prev) n++; if (e) tot++; prev = e } rt.t = t0; c.step = old; return { perMin: n, shut: tot / 6000 } });
+  ok('an awake cat blinks about every 3 seconds, eyes shut for a fraction of a second', bl.perMin >= 17 && bl.perMin <= 34 && bl.shut > 0.04 && bl.shut < 0.12, bl);
+  const cam = await p.evaluate(() => { const rt = PET_RT, c = rt.c; c.step = { k: 'act', a: 'loaf', t: 0, d: 999 }; rt.cam.cx = c.x - 7; rt.camGo = false; const x0 = rt.cam.cx; for (let i = 0; i < 200; i++) petCamUpdate(rt, 0.05); const still = rt.cam.cx === x0; rt.cam.cx = c.x - 40; for (let i = 0; i < 400; i++) petCamUpdate(rt, 0.05); return { still, settled: Math.abs(rt.cam.cx - c.x) < 1, whole: rt.cam.cx === Math.round(rt.cam.cx) } });
+  ok('a resting cat does not make the room drift (small offsets are ignored)', cam.still, cam);
+  ok('a real offset still pans and settles on a whole pixel', cam.settled && cam.whole, cam);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();
