@@ -741,3 +741,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v199: Plan is the default Food pane
 - The Food tab opens on Plan (tabs are now Plan, Log, Shopping). Classes without a Smart Diet plan still open on Log.
+
+## v200: candle flames
+- The quest-table candle flame is a procedural shader: teardrop body, blue base, white-hot core, orange tip that detaches and flickers, noise-driven sway and a soft halo. Each candle has its own seed (`uK`) and its size breathes slightly over time.

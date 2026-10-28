@@ -22,7 +22,7 @@ var T3_CFS='#version 300 es\nprecision highp float;in vec3 vP;in vec3 vN;in vec2
 var T3_BVS='#version 300 es\nlayout(location=0)in vec3 aP;layout(location=2)in vec2 aUV;uniform mat4 uM,uVP;out vec2 vUV;void main(){vUV=aUV;gl_Position=uVP*uM*vec4(aP,1.);}';
 var T3_BFS='#version 300 es\nprecision mediump float;in vec2 vUV;out vec4 o;uniform float uA;void main(){float d=length(vUV*2.-1.);float a=smoothstep(1.,.15,d)*uA;o=vec4(0.,0.,0.,a);}';
 var T3_FLVS='#version 300 es\nlayout(location=0)in vec2 aQ;uniform mat4 uV,uP;uniform vec3 uC;uniform vec2 uS;out vec2 vQ;void main(){vQ=aQ;vec4 v=uV*vec4(uC,1.);v.xy+=aQ*uS;gl_Position=uP*v;}';
-var T3_FLFS='#version 300 es\nprecision mediump float;in vec2 vQ;out vec4 o;uniform float uA,uT;void main(){vec2 q=vQ;q.y=q.y*.62-.1;q.x*=1.+q.y*.9;float d=length(q*vec2(1.8,1.));float a=pow(smoothstep(1.,0.,d),1.6)*uA;vec3 c=mix(vec3(1.,.55,.18),vec3(1.,.93,.7),smoothstep(.5,0.,d));o=vec4(c*a,a);}';
+var T3_FLFS='#version 300 es\nprecision mediump float;in vec2 vQ;out vec4 o;uniform float uA,uT,uK;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}void main(){vec2 q=vQ;float t=uT+uK*7.3;float y=clamp((q.y+.42)/1.34,0.,1.);float sw=(n(vec2(t*1.3,uK))-.5)*.34*y*y+sin(t*2.1+uK*3.)*.05*y;float tb=(n(vec2(q.x*2.6+uK,y*2.4-t*3.6))-.5)*.30*y;float x=q.x-sw-tb;float w=.95*sqrt(y)*pow(1.-y,.95)+.02;float d=abs(x)/w;float tip=1.-smoothstep(.72+.14*n(vec2(t*5.,uK*2.)),1.,y);float body=smoothstep(1.,.35,d)*tip*step(0.,q.y+.42);float core=smoothstep(.62,0.,d)*smoothstep(.0,.16,y)*(1.-smoothstep(.2,.7,y));vec3 hot=mix(vec3(1.,.97,.82),vec3(1.,.55,.12),smoothstep(.08,.78,y));vec3 col=hot*body+vec3(1.,.96,.8)*core*.75;float bl=smoothstep(.22,0.,y)*smoothstep(1.,.2,d)*smoothstep(.0,.04,y);col=mix(col,vec3(.22,.42,1.)*(body+.15),bl*.75);vec2 g=vec2(q.x,(q.y+.05)*.85);float halo=pow(smoothstep(1.,0.,length(g)),2.4)*.34;vec3 gl=vec3(1.,.52,.16)*halo;float a=uA;o=vec4((col+gl)*a,(body+halo*.5)*a);}';
 /* ---- tiny maths ---- */
 function t3m(){var m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m}
 function t3mul(a,b){var o=new Float32Array(16);for(var c=0;c<4;c++)for(var r=0;r<4;r++){var s=0;for(var k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}return o}
@@ -175,7 +175,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
   drawCards();
   /* flames */
   gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.depthMask(false);gl.useProgram(pFlame);gl.bindVertexArray(fq);gl.uniformMatrix4fv(UL(pFlame,'uV'),false,viewM);gl.uniformMatrix4fv(UL(pFlame,'uP'),false,proj);
-  flames.forEach(function(f,i){gl.uniform3fv(UL(pFlame,'uC'),f);gl.uniform2f(UL(pFlame,'uS'),3.2,5.4);gl.uniform1f(UL(pFlame,'uA'),gutter*(.85+.15*Math.sin(t*14+i*2)));gl.uniform1f(UL(pFlame,'uT'),t);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)});
+  flames.forEach(function(f,i){gl.uniform3fv(UL(pFlame,'uC'),f);gl.uniform2f(UL(pFlame,'uS'),3.2*(1+.05*Math.sin(t*5.3+i)),5.4*(1+.07*Math.sin(t*9.1+i*1.7)+.05*Math.sin(t*3.3+i*4)));gl.uniform1f(UL(pFlame,'uK'),i*1.37+.5);gl.uniform1f(UL(pFlame,'uA'),gutter*(.85+.15*Math.sin(t*14+i*2)));gl.uniform1f(UL(pFlame,'uT'),t);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)});
   gl.depthMask(true);gl.disable(gl.BLEND);
  };
  var lastDraw=0,dragging=false,restMode=false;
