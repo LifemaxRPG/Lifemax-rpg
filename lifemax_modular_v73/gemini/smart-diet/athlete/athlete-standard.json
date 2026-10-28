@@ -1,0 +1,1922 @@
+{
+ "schema": "smartdiet.plan.v1",
+ "plan_id": "athlete",
+ "diet_id": "standard",
+ "name": "Standard Diet",
+ "summary": "Balanced whole-food eating focused on lean meats, whole grains, and fresh vegetables to fuel an active training schedule.",
+ "reference": {
+  "kcal": 2500,
+  "protein_g": 165,
+  "carbs_g": 290,
+  "fat_g": 78,
+  "fiber_g": 35
+ },
+ "meals": [
+  {
+   "id": "std_b01",
+   "slot": "breakfast",
+   "name": "Protein Oat & Yogurt Bowl",
+   "tags": [
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy",
+    "tree_nut"
+   ],
+   "active_min": 5,
+   "total_min": 10,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_oats_rolled_dry",
+     "g": 60,
+     "label": "3/4 cup rolled oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_milk_2",
+     "g": 200,
+     "label": "3/4 cup 2% milk",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_greek_yogurt_nonfat",
+     "g": 150,
+     "label": "2/3 cup nonfat Greek yogurt",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 15,
+     "label": "1 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the oats and milk in a bowl for 2 minutes.",
+    "Stir in the Greek yogurt until smooth.",
+    "Top with sliced banana and crushed almonds."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 592,
+    "p": 33.8,
+    "c": 81.6,
+    "f": 16.3,
+    "fiber": 10.5,
+    "sugar": 28.3,
+    "sodium_mg": 143
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Yogurt",
+     "replace": "ing_greek_yogurt_nonfat",
+     "with": "ing_soy_yogurt_high_protein",
+     "g": 150
+    },
+    {
+     "label": "Dairy-free Milk",
+     "replace": "ing_milk_2",
+     "with": "ing_milk_soy_unsweetened",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "std_b02",
+   "slot": "breakfast",
+   "name": "Eggs & Spinach Toast",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "egg",
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 12,
+   "equipment": [
+    "nonstick pan",
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_eggs_whole_raw",
+     "g": 200,
+     "label": "4 large eggs",
+     "flex": null
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 80,
+     "label": "2 slices whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 100,
+     "label": "1 small apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Wilt the spinach in a warm nonstick pan, then scramble the eggs in until cooked through.",
+    "Toast the bread and serve the scramble on top.",
+    "Eat the apple on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 563,
+    "p": 38.4,
+    "c": 53.1,
+    "f": 22.3,
+    "fiber": 9.4,
+    "sugar": 15.6,
+    "sodium_mg": 716
+   }
+  },
+  {
+   "id": "std_b03",
+   "slot": "breakfast",
+   "name": "Peanut Butter Protein Oats",
+   "tags": [
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy",
+    "peanut"
+   ],
+   "active_min": 5,
+   "total_min": 10,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_oats_rolled_dry",
+     "g": 80,
+     "label": "1 cup rolled oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_whey_protein",
+     "g": 30,
+     "label": "1 scoop whey protein",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_peanut_butter",
+     "g": 15,
+     "label": "1 tbsp peanut butter",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Cook the oats with water in the microwave for 2 to 3 minutes.",
+    "Stir in the protein powder and peanut butter while warm.",
+    "Top with sliced banana."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 594,
+    "p": 39.4,
+    "c": 83.0,
+    "f": 13.6,
+    "fiber": 11.6,
+    "sugar": 19.3,
+    "sodium_mg": 213
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Protein",
+     "replace": "ing_whey_protein",
+     "with": "ing_protein_powder_plant",
+     "g": 30
+    }
+   ]
+  },
+  {
+   "id": "std_b04",
+   "slot": "breakfast",
+   "name": "Cottage Cheese & Fruit Bowl",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "dairy",
+    "tree_nut"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_cottage_cheese_lowfat",
+     "g": 250,
+     "label": "1 cup lowfat cottage cheese",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_oats_rolled_dry",
+     "g": 50,
+     "label": "1/2 cup rolled oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 15,
+     "label": "1 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Mix the cottage cheese and dry oats in a bowl.",
+    "Top with diced apple and crushed almonds."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 559,
+    "p": 37.7,
+    "c": 67.8,
+    "f": 16.0,
+    "fiber": 10.6,
+    "sugar": 26.3,
+    "sodium_mg": 752
+   }
+  },
+  {
+   "id": "std_b05",
+   "slot": "breakfast",
+   "name": "Tofu Scramble & Toast",
+   "tags": [
+    "vegan"
+   ],
+   "allergens": [
+    "soy",
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 12,
+   "equipment": [
+    "skillet",
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tofu_firm",
+     "g": 200,
+     "label": "7 oz firm tofu",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 100,
+     "label": "2 large slices whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    }
+   ],
+   "steps": [
+    "Crumble the tofu into a skillet and cook over medium heat until warm.",
+    "Fold in the spinach until wilted, seasoning with salt and pepper.",
+    "Serve the scramble alongside the toasted bread."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 563,
+    "p": 47.4,
+    "c": 52.5,
+    "f": 21.8,
+    "fiber": 12.2,
+    "sugar": 5.7,
+    "sodium_mg": 549
+   }
+  },
+  {
+   "id": "std_l01",
+   "slot": "lunch",
+   "name": "Chicken, Rice & Broccoli",
+   "tags": [],
+   "allergens": [],
+   "active_min": 15,
+   "total_min": 25,
+   "equipment": [
+    "pan",
+    "pot"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_breast_raw",
+     "g": 160,
+     "label": "5.5 oz raw chicken breast",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_white_cooked",
+     "g": 275,
+     "label": "1.75 cups cooked white rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Chop the chicken and cook it in the olive oil over medium-high heat until it hits 165°F inside.",
+    "Steam the broccoli until tender.",
+    "Serve the chicken and broccoli over the cooked rice."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 689,
+    "p": 47.6,
+    "c": 86.9,
+    "f": 15.6,
+    "fiber": 5.0,
+    "sugar": 2.8,
+    "sodium_mg": 124
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_breast_raw",
+     "with": "ing_tofu_firm",
+     "g": 225
+    }
+   ]
+  },
+  {
+   "id": "std_l02",
+   "slot": "lunch",
+   "name": "Leftover Beef & Spinach Pasta",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 140,
+     "label": "5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 120,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover beef pasta in the microwave until warm."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 688,
+    "p": 45.8,
+    "c": 79.6,
+    "f": 22.5,
+    "fiber": 12.3,
+    "sugar": 7.6,
+    "sodium_mg": 652
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 175
+    }
+   ]
+  },
+  {
+   "id": "std_l03",
+   "slot": "lunch",
+   "name": "Leftover Chicken Spinach Pasta",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_breast_raw",
+     "g": 140,
+     "label": "5 oz raw chicken breast",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    }
+   ],
+   "steps": [
+    "Reheat the leftover chicken pasta in the microwave until warm."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 593,
+    "p": 47.5,
+    "c": 71.1,
+    "f": 15.3,
+    "fiber": 10.5,
+    "sugar": 2.8,
+    "sodium_mg": 144
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_breast_raw",
+     "with": "ing_tofu_firm",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "std_l04",
+   "slot": "lunch",
+   "name": "Leftover Turkey & Sweet Potato Hash",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_turkey_ground_raw",
+     "g": 150,
+     "label": "5.5 oz raw ground turkey",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_potato_sweet_raw",
+     "g": 300,
+     "label": "10.5 oz sweet potato",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 100,
+     "label": "1/2 cup canned black beans",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover turkey and sweet potato hash in the microwave until warm."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 684,
+    "p": 43.7,
+    "c": 79.6,
+    "f": 21.6,
+    "fiber": 16.2,
+    "sugar": 13.0,
+    "sodium_mg": 753
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_turkey_ground_raw",
+     "with": "ing_tofu_firm",
+     "g": 190
+    }
+   ]
+  },
+  {
+   "id": "std_l05",
+   "slot": "lunch",
+   "name": "Leftover Tofu Veggie Bowl",
+   "tags": [
+    "leftover",
+    "vegan"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tofu_firm",
+     "g": 200,
+     "label": "7 oz firm tofu",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_white_cooked",
+     "g": 200,
+     "label": "1.5 cups cooked white rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover tofu bowl in the microwave until warm."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 643,
+    "p": 41.6,
+    "c": 71.9,
+    "f": 24.2,
+    "fiber": 7.9,
+    "sugar": 3.6,
+    "sodium_mg": 81
+   },
+   "swaps": [
+    {
+     "label": "Meat",
+     "replace": "ing_tofu_firm",
+     "with": "ing_chicken_breast_raw",
+     "g": 140
+    }
+   ]
+  },
+  {
+   "id": "std_l06",
+   "slot": "lunch",
+   "name": "Leftover Pork & Sweet Potato",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_pork_tenderloin_raw",
+     "g": 160,
+     "label": "5.5 oz raw pork tenderloin",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_potato_sweet_raw",
+     "g": 300,
+     "label": "10.5 oz sweet potato",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 50,
+     "label": "1/3 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover pork and sweet potato in the microwave.",
+    "Eat the apple slice on the side."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 660,
+    "p": 42.8,
+    "c": 77.1,
+    "f": 20.8,
+    "fiber": 14.1,
+    "sugar": 20.3,
+    "sodium_mg": 294
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_pork_tenderloin_raw",
+     "with": "ing_tofu_firm",
+     "g": 210
+    }
+   ]
+  },
+  {
+   "id": "std_d01",
+   "slot": "dinner",
+   "name": "Beef & Spinach Pasta",
+   "tags": [],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 20,
+   "total_min": 25,
+   "equipment": [
+    "pot",
+    "skillet"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 140,
+     "label": "5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 120,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Boil the pasta according to package directions and drain.",
+    "Brown the beef in a skillet with the oil over medium-high heat until it reaches 165°F.",
+    "Add the marinara and spinach to the skillet until the spinach wilts, then toss in the pasta."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 688,
+    "p": 45.8,
+    "c": 79.6,
+    "f": 22.5,
+    "fiber": 12.3,
+    "sugar": 7.6,
+    "sodium_mg": 652
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 175
+    }
+   ]
+  },
+  {
+   "id": "std_d02",
+   "slot": "dinner",
+   "name": "Chicken Spinach Pasta",
+   "tags": [],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 20,
+   "total_min": 25,
+   "equipment": [
+    "pot",
+    "skillet"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_breast_raw",
+     "g": 140,
+     "label": "5 oz raw chicken breast",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    }
+   ],
+   "steps": [
+    "Boil the pasta and drain, saving a splash of pasta water.",
+    "Dice the chicken and cook in the olive oil until 165°F inside.",
+    "Toss the pasta, chicken, spinach, and pasta water together until wilted."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 593,
+    "p": 47.5,
+    "c": 71.1,
+    "f": 15.3,
+    "fiber": 10.5,
+    "sugar": 2.8,
+    "sodium_mg": 144
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_breast_raw",
+     "with": "ing_tofu_firm",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "std_d03",
+   "slot": "dinner",
+   "name": "Turkey & Sweet Potato Hash",
+   "tags": [],
+   "allergens": [],
+   "active_min": 15,
+   "total_min": 25,
+   "equipment": [
+    "skillet",
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_turkey_ground_raw",
+     "g": 150,
+     "label": "5.5 oz raw ground turkey",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_potato_sweet_raw",
+     "g": 300,
+     "label": "10.5 oz sweet potato",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 100,
+     "label": "1/2 cup canned black beans",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the sweet potato for 4 minutes to soften, then dice it.",
+    "Brown the turkey in a skillet with the oil until cooked through (165°F).",
+    "Add the diced sweet potato, drained black beans, and spinach to the skillet and cook until heated through."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 684,
+    "p": 43.7,
+    "c": 79.6,
+    "f": 21.6,
+    "fiber": 16.2,
+    "sugar": 13.0,
+    "sodium_mg": 753
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_turkey_ground_raw",
+     "with": "ing_tofu_firm",
+     "g": 190
+    }
+   ]
+  },
+  {
+   "id": "std_d04",
+   "slot": "dinner",
+   "name": "Tofu Veggie Rice Bowl",
+   "tags": [
+    "vegan"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "active_min": 15,
+   "total_min": 20,
+   "equipment": [
+    "pan",
+    "pot"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tofu_firm",
+     "g": 200,
+     "label": "7 oz firm tofu",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_white_cooked",
+     "g": 200,
+     "label": "1.5 cups cooked white rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Dice the tofu and pan-fry in the olive oil until golden brown.",
+    "Steam the broccoli until tender.",
+    "Serve the tofu and broccoli over the warm rice."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 643,
+    "p": 41.6,
+    "c": 71.9,
+    "f": 24.2,
+    "fiber": 7.9,
+    "sugar": 3.6,
+    "sodium_mg": 81
+   },
+   "swaps": [
+    {
+     "label": "Meat",
+     "replace": "ing_tofu_firm",
+     "with": "ing_chicken_breast_raw",
+     "g": 140
+    }
+   ]
+  },
+  {
+   "id": "std_d05",
+   "slot": "dinner",
+   "name": "Pork & Sweet Potato Roast",
+   "tags": [],
+   "allergens": [],
+   "active_min": 15,
+   "total_min": 35,
+   "equipment": [
+    "oven",
+    "baking sheet"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_pork_tenderloin_raw",
+     "g": 160,
+     "label": "5.5 oz raw pork tenderloin",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_potato_sweet_raw",
+     "g": 300,
+     "label": "10.5 oz sweet potato",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 50,
+     "label": "1/3 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Dice the sweet potato, toss in some oil, and roast at 400°F for 15 minutes.",
+    "Add the pork tenderloin and broccoli (tossed in remaining oil) to the pan.",
+    "Roast another 15 to 20 minutes until the pork reaches 145°F.",
+    "Serve warm, eating the apple slice on the side."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 660,
+    "p": 42.8,
+    "c": 77.1,
+    "f": 20.8,
+    "fiber": 14.1,
+    "sugar": 20.3,
+    "sodium_mg": 294
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_pork_tenderloin_raw",
+     "with": "ing_tofu_firm",
+     "g": 210
+    }
+   ]
+  },
+  {
+   "id": "std_d06",
+   "slot": "dinner",
+   "name": "Shrimp & Rice Bowl",
+   "tags": [],
+   "allergens": [
+    "shellfish"
+   ],
+   "active_min": 10,
+   "total_min": 15,
+   "equipment": [
+    "pan"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_shrimp_raw",
+     "g": 200,
+     "label": "7 oz raw shrimp",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_white_cooked",
+     "g": 250,
+     "label": "1.5 cups cooked white rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_broccoli_raw",
+     "g": 150,
+     "label": "1.5 cups broccoli florets",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Sauté the shrimp in the olive oil until pink and cooked through.",
+    "Steam the broccoli until tender.",
+    "Serve the shrimp and broccoli over the warmed rice."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 679,
+    "p": 51.0,
+    "c": 79.9,
+    "f": 17.4,
+    "fiber": 4.9,
+    "sugar": 2.8,
+    "sodium_mg": 292
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_shrimp_raw",
+     "with": "ing_tofu_firm",
+     "g": 250
+    }
+   ]
+  },
+  {
+   "id": "std_d07",
+   "slot": "dinner",
+   "name": "Chicken & Black Bean Rice Bowl",
+   "tags": [],
+   "allergens": [],
+   "active_min": 15,
+   "total_min": 20,
+   "equipment": [
+    "pan"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_breast_raw",
+     "g": 120,
+     "label": "4.5 oz raw chicken breast",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 250,
+     "label": "1 cup canned black beans",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_rice_white_cooked",
+     "g": 150,
+     "label": "1 cup cooked white rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_avocado_raw",
+     "g": 100,
+     "label": "1/2 avocado",
+     "flex": null
+    }
+   ],
+   "steps": [
+    "Dice and cook the chicken in a hot pan until 165°F inside.",
+    "Warm the black beans and rice.",
+    "Assemble the bowl and top with the diced avocado."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 724,
+    "p": 48.1,
+    "c": 90.5,
+    "f": 19.5,
+    "fiber": 19.8,
+    "sugar": 0.8,
+    "sodium_mg": 813
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_breast_raw",
+     "with": "ing_tofu_firm",
+     "g": 170
+    }
+   ]
+  },
+  {
+   "id": "std_pre01",
+   "slot": "pre_workout",
+   "name": "Apple & Peanut Butter",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "peanut"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [],
+   "ingredients": [
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_peanut_butter",
+     "g": 30,
+     "label": "2 tbsp peanut butter",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Slice the apple and dip into the peanut butter."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 254,
+    "p": 8.0,
+    "c": 26.7,
+    "f": 15.3,
+    "fiber": 5.4,
+    "sugar": 18.3,
+    "sodium_mg": 122
+   }
+  },
+  {
+   "id": "std_pre02",
+   "slot": "pre_workout",
+   "name": "Banana & Almonds",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "tree_nut"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [],
+   "ingredients": [
+    {
+     "ing": "ing_banana_raw",
+     "g": 150,
+     "label": "1 large banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 35,
+     "label": "3 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Eat the banana and almonds together."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 336,
+    "p": 9.1,
+    "c": 41.8,
+    "f": 17.9,
+    "fiber": 8.3,
+    "sugar": 19.8,
+    "sodium_mg": 2
+   }
+  },
+  {
+   "id": "std_post01",
+   "slot": "post_workout",
+   "name": "Whey Banana Shake",
+   "tags": [
+    "shake",
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [
+    "blender"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_whey_protein",
+     "g": 30,
+     "label": "1 scoop whey protein",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_milk_2",
+     "g": 200,
+     "label": "3/4 cup 2% milk",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Blend the whey protein, milk, and banana until smooth."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 303,
+    "p": 31.7,
+    "c": 35.4,
+    "f": 4.9,
+    "fiber": 2.6,
+    "sugar": 23.7,
+    "sodium_mg": 132
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Protein",
+     "replace": "ing_whey_protein",
+     "with": "ing_protein_powder_plant",
+     "g": 30
+    },
+    {
+     "label": "Dairy-free Milk",
+     "replace": "ing_milk_2",
+     "with": "ing_milk_soy_unsweetened",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "std_s01",
+   "slot": "snack",
+   "name": "Avocado Egg Toast & Yogurt",
+   "tags": [
+    "high_protein"
+   ],
+   "allergens": [
+    "egg",
+    "dairy",
+    "gluten"
+   ],
+   "active_min": 5,
+   "total_min": 10,
+   "equipment": [
+    "pan",
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 50,
+     "label": "1 large slice whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_eggs_whole_raw",
+     "g": 50,
+     "label": "1 large egg",
+     "flex": null
+    },
+    {
+     "ing": "ing_avocado_raw",
+     "g": 30,
+     "label": "1/5 avocado",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_greek_yogurt_nonfat",
+     "g": 100,
+     "label": "1/2 cup nonfat Greek yogurt",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    }
+   ],
+   "steps": [
+    "Fry the egg to your liking.",
+    "Mash the avocado on the toasted bread, and top with the egg.",
+    "Eat the Greek yogurt on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 304,
+    "p": 23.1,
+    "c": 27.8,
+    "f": 11.2,
+    "fiber": 5.2,
+    "sugar": 5.7,
+    "sodium_mg": 329
+   }
+  },
+  {
+   "id": "std_s02",
+   "slot": "snack",
+   "name": "Tuna & Apple Snack",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "fish",
+    "gluten"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tuna_canned_water",
+     "g": 80,
+     "label": "3 oz canned tuna, drained",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 50,
+     "label": "1 large slice whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 100,
+     "label": "1 small apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Serve the drained tuna with the bread.",
+    "Eat the apple on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 271,
+    "p": 26.9,
+    "c": 35.2,
+    "f": 2.5,
+    "fiber": 5.4,
+    "sugar": 12.5,
+    "sodium_mg": 491
+   }
+  },
+  {
+   "id": "std_s03",
+   "slot": "snack",
+   "name": "Oat, Apple & Whey Snack",
+   "tags": [
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy"
+   ],
+   "active_min": 5,
+   "total_min": 5,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_oats_rolled_dry",
+     "g": 40,
+     "label": "1/2 cup rolled oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_milk_2",
+     "g": 150,
+     "label": "1/2 cup 2% milk",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_whey_protein",
+     "g": 15,
+     "label": "1/2 scoop whey protein",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 100,
+     "label": "1 small apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the oats and milk for 2 minutes.",
+    "Stir in the whey protein while warm.",
+    "Eat the apple on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 335,
+    "p": 22.4,
+    "c": 49.5,
+    "f": 5.9,
+    "fiber": 6.4,
+    "sugar": 18.7,
+    "sodium_mg": 88
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Protein",
+     "replace": "ing_whey_protein",
+     "with": "ing_protein_powder_plant",
+     "g": 15
+    },
+    {
+     "label": "Dairy-free Milk",
+     "replace": "ing_milk_2",
+     "with": "ing_milk_soy_unsweetened",
+     "g": 150
+    }
+   ]
+  },
+  {
+   "id": "std_s04",
+   "slot": "snack",
+   "name": "Cottage Cheese & Almonds",
+   "tags": [
+    "no_cook",
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy",
+    "tree_nut"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_cottage_cheese_lowfat",
+     "g": 150,
+     "label": "2/3 cup lowfat cottage cheese",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 15,
+     "label": "1 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Top the cottage cheese with the crushed almonds.",
+    "Eat the apple on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 288,
+    "p": 20.1,
+    "c": 30.0,
+    "f": 10.8,
+    "fiber": 5.5,
+    "sugar": 22.3,
+    "sodium_mg": 452
+   }
+  }
+ ],
+ "week": [
+  {
+   "day": "mon",
+   "type": "training",
+   "meals": [
+    "std_b01",
+    "std_l01",
+    "std_pre01",
+    "std_post01",
+    "std_d01"
+   ],
+   "note": "Training A"
+  },
+  {
+   "day": "tue",
+   "type": "training",
+   "meals": [
+    "std_b02",
+    "std_l02",
+    "std_pre02",
+    "std_post01",
+    "std_d02"
+   ],
+   "note": "Training B"
+  },
+  {
+   "day": "wed",
+   "type": "rest",
+   "meals": [
+    "std_b03",
+    "std_l03",
+    "std_s01",
+    "std_s04",
+    "std_d03"
+   ],
+   "note": "Rest A"
+  },
+  {
+   "day": "thu",
+   "type": "training",
+   "meals": [
+    "std_b04",
+    "std_l04",
+    "std_pre01",
+    "std_post01",
+    "std_d04"
+   ],
+   "note": "Training C"
+  },
+  {
+   "day": "fri",
+   "type": "rest",
+   "meals": [
+    "std_b05",
+    "std_l05",
+    "std_s02",
+    "std_s03",
+    "std_d05"
+   ],
+   "note": "Rest B"
+  },
+  {
+   "day": "sat",
+   "type": "training",
+   "meals": [
+    "std_b01",
+    "std_l06",
+    "std_pre02",
+    "std_post01",
+    "std_d06"
+   ],
+   "note": "Training D"
+  },
+  {
+   "day": "sun",
+   "type": "rest",
+   "meals": [
+    "std_b02",
+    "std_l01",
+    "std_s01",
+    "std_s04",
+    "std_d07"
+   ],
+   "note": "Rest C"
+  }
+ ],
+ "prep": [
+  {
+   "when": "sun",
+   "task": "Batch cook the Beef Pasta and Chicken Pasta (double portions) for Mon/Tue dinners and Tue/Wed lunches.",
+   "minutes": 40,
+   "covers": [
+    "std_d01",
+    "std_l02",
+    "std_d02",
+    "std_l03"
+   ]
+  },
+  {
+   "when": "wed",
+   "task": "Batch cook the Turkey Hash and Tofu Rice Bowl for Wed/Thu dinners and Thu/Fri lunches.",
+   "minutes": 35,
+   "covers": [
+    "std_d03",
+    "std_l04",
+    "std_d04",
+    "std_l05"
+   ]
+  },
+  {
+   "when": "fri",
+   "task": "Batch cook the Pork Tenderloin for Friday dinner and Saturday lunch.",
+   "minutes": 25,
+   "covers": [
+    "std_d05",
+    "std_l06"
+   ]
+  }
+ ],
+ "shopping_notes": [
+  "Buy proteins for the first half of the week fresh, and freeze the rest for later."
+ ]
+}

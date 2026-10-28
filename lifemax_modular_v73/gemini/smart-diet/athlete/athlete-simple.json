@@ -1,0 +1,1857 @@
+{
+ "schema": "smartdiet.plan.v1",
+ "plan_id": "athlete",
+ "diet_id": "simple",
+ "name": "Simple Recipes",
+ "summary": "The absolute fastest way to hit your macros using smart shortcuts and minimal prep.",
+ "reference": {
+  "kcal": 2500,
+  "protein_g": 165,
+  "carbs_g": 290,
+  "fat_g": 78,
+  "fiber_g": 35
+ },
+ "meals": [
+  {
+   "id": "sim_b01",
+   "slot": "breakfast",
+   "name": "Instant Oats & Protein Shake",
+   "tags": [
+    "shake",
+    "no_cook",
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy"
+   ],
+   "active_min": 2,
+   "total_min": 4,
+   "equipment": [
+    "microwave",
+    "shaker bottle"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_oats_instant_dry",
+     "g": 75,
+     "label": "2 packets instant oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_whey_protein",
+     "g": 30,
+     "label": "1 scoop whey protein",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_milk_2",
+     "g": 200,
+     "label": "3/4 cup 2% milk",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the instant oats with water for 1 to 2 minutes.",
+    "Shake the whey protein with the milk.",
+    "Eat the oats with the sliced banana and drink the shake."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 581,
+    "p": 40.7,
+    "c": 86.4,
+    "f": 9.4,
+    "fiber": 9.4,
+    "sugar": 29.5,
+    "sodium_mg": 132
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Protein",
+     "replace": "ing_whey_protein",
+     "with": "ing_protein_powder_plant",
+     "g": 30
+    },
+    {
+     "label": "Dairy-free Milk",
+     "replace": "ing_milk_2",
+     "with": "ing_milk_soy_unsweetened",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "sim_b02",
+   "slot": "breakfast",
+   "name": "Quick Eggs & Toast",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "egg",
+    "gluten"
+   ],
+   "active_min": 5,
+   "total_min": 7,
+   "equipment": [
+    "nonstick pan",
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_eggs_whole_raw",
+     "g": 200,
+     "label": "4 large eggs",
+     "flex": null
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 80,
+     "label": "2 slices whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Scramble the eggs quickly in a warm nonstick pan.",
+    "Toast the bread.",
+    "Serve the eggs with the toast and eat the apple."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 566,
+    "p": 35.6,
+    "c": 56.4,
+    "f": 22.0,
+    "fiber": 8.4,
+    "sugar": 19.4,
+    "sodium_mg": 636
+   }
+  },
+  {
+   "id": "sim_b03",
+   "slot": "breakfast",
+   "name": "Yogurt, PB & Banana Bowl",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "dairy",
+    "peanut"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_greek_yogurt_nonfat",
+     "g": 250,
+     "label": "1 cup nonfat Greek yogurt",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_peanut_butter",
+     "g": 30,
+     "label": "2 tbsp peanut butter",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 150,
+     "label": "1 large banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_oats_instant_dry",
+     "g": 40,
+     "label": "1 packet instant oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Stir the peanut butter and dry oats into the yogurt.",
+    "Top with sliced banana."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 605,
+    "p": 39.0,
+    "c": 76.4,
+    "f": 18.9,
+    "fiber": 9.3,
+    "sugar": 29.4,
+    "sodium_mg": 212
+   }
+  },
+  {
+   "id": "sim_b04",
+   "slot": "breakfast",
+   "name": "Cottage Cheese & Fruit",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "dairy",
+    "tree_nut"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_cottage_cheese_lowfat",
+     "g": 250,
+     "label": "1 cup lowfat cottage cheese",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 30,
+     "label": "2 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_oats_instant_dry",
+     "g": 50,
+     "label": "1/2 cup instant oats",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Mix the cottage cheese and dry oats in a bowl.",
+    "Top with diced apple and crushed almonds."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 642,
+    "p": 40.3,
+    "c": 71.2,
+    "f": 23.3,
+    "fiber": 11.9,
+    "sugar": 26.1,
+    "sodium_mg": 752
+   }
+  },
+  {
+   "id": "sim_b05",
+   "slot": "breakfast",
+   "name": "Microwave Egg & Spinach Bowl",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "egg",
+    "gluten"
+   ],
+   "active_min": 3,
+   "total_min": 5,
+   "equipment": [
+    "microwave",
+    "mug",
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_eggs_whole_raw",
+     "g": 200,
+     "label": "4 large eggs",
+     "flex": null
+    },
+    {
+     "ing": "ing_spinach_raw",
+     "g": 100,
+     "label": "3 big handfuls baby spinach",
+     "flex": null
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 80,
+     "label": "2 slices whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Place the spinach in a mug and microwave for 30 seconds to wilt.",
+    "Crack the eggs into the mug, stir, and microwave in 45-second bursts until set.",
+    "Serve with the toasted bread and the banana."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 600,
+    "p": 39.2,
+    "c": 62.1,
+    "f": 22.4,
+    "fiber": 9.6,
+    "sugar": 16.8,
+    "sodium_mg": 716
+   }
+  },
+  {
+   "id": "sim_l01",
+   "slot": "lunch",
+   "name": "Rotisserie Chicken Veggie Bowl",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [],
+   "active_min": 3,
+   "total_min": 5,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_rotisserie_cooked",
+     "g": 130,
+     "label": "4.5 oz rotisserie chicken breast",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 150,
+     "label": "1.5 cups frozen mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the rice pouch and frozen vegetables.",
+    "Shred the rotisserie chicken.",
+    "Mix everything in a bowl and drizzle with the olive oil."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 697,
+    "p": 42.4,
+    "c": 74.0,
+    "f": 24.2,
+    "fiber": 6.8,
+    "sugar": 4.7,
+    "sodium_mg": 455
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_rotisserie_cooked",
+     "with": "ing_tofu_firm",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "sim_l02",
+   "slot": "lunch",
+   "name": "Leftover Beef & Bean Bowl",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 130,
+     "label": "4.5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 130,
+     "label": "1/2 cup canned black beans",
+     "flex": null
+    },
+    {
+     "ing": "ing_avocado_raw",
+     "g": 60,
+     "label": "1/3 avocado",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover beef and beans bowl in the microwave."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 702,
+    "p": 40.4,
+    "c": 81.9,
+    "f": 23.1,
+    "fiber": 7.5,
+    "sugar": 0.2,
+    "sodium_mg": 476
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 160
+    }
+   ]
+  },
+  {
+   "id": "sim_l03",
+   "slot": "lunch",
+   "name": "Leftover Rotisserie Chicken Pasta",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_rotisserie_cooked",
+     "g": 140,
+     "label": "5 oz rotisserie chicken",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 100,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover chicken pasta in the microwave."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 639,
+    "p": 49.6,
+    "c": 74.6,
+    "f": 17.0,
+    "fiber": 9.8,
+    "sugar": 6.4,
+    "sodium_mg": 822
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_rotisserie_cooked",
+     "with": "ing_tofu_firm",
+     "g": 220
+    }
+   ]
+  },
+  {
+   "id": "sim_l04",
+   "slot": "lunch",
+   "name": "Leftover Beef Pasta",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 130,
+     "label": "4.5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 80,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 100,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 100,
+     "label": "1 cup mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover beef and vegetable pasta in the microwave."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 662,
+    "p": 42.2,
+    "c": 79.1,
+    "f": 20.6,
+    "fiber": 12.9,
+    "sugar": 9.2,
+    "sodium_mg": 527
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 160
+    }
+   ]
+  },
+  {
+   "id": "sim_l05",
+   "slot": "lunch",
+   "name": "Leftover Chicken & Lentils",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_rotisserie_cooked",
+     "g": 130,
+     "label": "4.5 oz rotisserie chicken",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_lentils_cooked",
+     "g": 130,
+     "label": "1/2 cup canned lentils",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover chicken and lentil bowl in the microwave."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 670,
+    "p": 49.6,
+    "c": 82.1,
+    "f": 14.7,
+    "fiber": 11.1,
+    "sugar": 2.5,
+    "sodium_mg": 395
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_rotisserie_cooked",
+     "with": "ing_tofu_firm",
+     "g": 220
+    }
+   ]
+  },
+  {
+   "id": "sim_l06",
+   "slot": "lunch",
+   "name": "Leftover Tuna Pasta",
+   "tags": [
+    "leftover"
+   ],
+   "allergens": [
+    "fish",
+    "gluten"
+   ],
+   "active_min": 2,
+   "total_min": 3,
+   "equipment": [
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tuna_canned_water",
+     "g": 110,
+     "label": "1 can light tuna",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 150,
+     "label": "1.5 cups mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Reheat the leftover tuna and vegetable pasta in the microwave."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 663,
+    "p": 45.6,
+    "c": 85.5,
+    "f": 17.1,
+    "fiber": 14.3,
+    "sugar": 6.9,
+    "sodium_mg": 434
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_tuna_canned_water",
+     "with": "ing_tofu_firm",
+     "g": 175
+    }
+   ]
+  },
+  {
+   "id": "sim_l07",
+   "slot": "lunch",
+   "name": "Deli Turkey Sandwich",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 3,
+   "total_min": 3,
+   "equipment": [],
+   "ingredients": [
+    {
+     "ing": "ing_turkey_deli_sliced_low_sodium",
+     "g": 150,
+     "label": "5.5 oz low sodium deli turkey",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 100,
+     "label": "2 large slices whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_avocado_raw",
+     "g": 50,
+     "label": "1/4 avocado",
+     "flex": null
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Mash the avocado onto the bread and layer with the turkey.",
+    "Eat the banana on the side."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 577,
+    "p": 38.6,
+    "c": 76.0,
+    "f": 14.1,
+    "fiber": 12.0,
+    "sugar": 23.3,
+    "sodium_mg": 1120
+   }
+  },
+  {
+   "id": "sim_d01",
+   "slot": "dinner",
+   "name": "Beef & Black Bean Rice Bowl",
+   "tags": [],
+   "allergens": [],
+   "active_min": 10,
+   "total_min": 12,
+   "equipment": [
+    "skillet",
+    "microwave"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 130,
+     "label": "4.5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 130,
+     "label": "1/2 cup canned black beans",
+     "flex": null
+    },
+    {
+     "ing": "ing_avocado_raw",
+     "g": 60,
+     "label": "1/3 avocado",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Brown the beef in a skillet until cooked through.",
+    "Microwave the rice pouch.",
+    "Mix the beef, rice, and drained black beans in a bowl and top with diced avocado."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 702,
+    "p": 40.4,
+    "c": 81.9,
+    "f": 23.1,
+    "fiber": 7.5,
+    "sugar": 0.2,
+    "sodium_mg": 476
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 160
+    }
+   ]
+  },
+  {
+   "id": "sim_d02",
+   "slot": "dinner",
+   "name": "Rotisserie Chicken Pasta",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 15,
+   "equipment": [
+    "pot"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_rotisserie_cooked",
+     "g": 140,
+     "label": "5 oz rotisserie chicken",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 100,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Boil the pasta according to package directions and drain.",
+    "Toss the hot pasta with the olive oil, marinara, and shredded rotisserie chicken."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 639,
+    "p": 49.6,
+    "c": 74.6,
+    "f": 17.0,
+    "fiber": 9.8,
+    "sugar": 6.4,
+    "sodium_mg": 822
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_rotisserie_cooked",
+     "with": "ing_tofu_firm",
+     "g": 220
+    }
+   ]
+  },
+  {
+   "id": "sim_d03",
+   "slot": "dinner",
+   "name": "Beef & Veggie Pasta",
+   "tags": [],
+   "allergens": [
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 15,
+   "equipment": [
+    "pot",
+    "skillet"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_beef_ground_90_raw",
+     "g": 130,
+     "label": "4.5 oz 90% lean ground beef",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 80,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 100,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 100,
+     "label": "1 cup mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Boil the pasta and drain.",
+    "Brown the ground beef in a skillet.",
+    "Toss the pasta, beef, frozen veg, marinara, and oil together until heated through."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 662,
+    "p": 42.2,
+    "c": 79.1,
+    "f": 20.6,
+    "fiber": 12.9,
+    "sugar": 9.2,
+    "sodium_mg": 527
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_beef_ground_90_raw",
+     "with": "ing_tofu_firm",
+     "g": 160
+    }
+   ]
+  },
+  {
+   "id": "sim_d04",
+   "slot": "dinner",
+   "name": "Chicken & Lentil Bowl",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [],
+   "active_min": 3,
+   "total_min": 5,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_chicken_rotisserie_cooked",
+     "g": 130,
+     "label": "4.5 oz rotisserie chicken",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_lentils_cooked",
+     "g": 130,
+     "label": "1/2 cup canned lentils",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Microwave the rice and canned lentils.",
+    "Shred the chicken and mix into the bowl, drizzling with olive oil."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 670,
+    "p": 49.6,
+    "c": 82.1,
+    "f": 14.7,
+    "fiber": 11.1,
+    "sugar": 2.5,
+    "sodium_mg": 395
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_chicken_rotisserie_cooked",
+     "with": "ing_tofu_firm",
+     "g": 220
+    }
+   ]
+  },
+  {
+   "id": "sim_d05",
+   "slot": "dinner",
+   "name": "Tuna & Veggie Pasta",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "fish",
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 15,
+   "equipment": [
+    "pot"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tuna_canned_water",
+     "g": 110,
+     "label": "1 can light tuna",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 90,
+     "label": "3 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 150,
+     "label": "1.5 cups mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 15,
+     "label": "1 tbsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Boil the pasta and add the frozen veg in the last 3 minutes, then drain.",
+    "Toss the hot pasta and veg with the olive oil and drained tuna."
+   ],
+   "leftover_ok": true,
+   "macros": {
+    "kcal": 663,
+    "p": 45.6,
+    "c": 85.5,
+    "f": 17.1,
+    "fiber": 14.3,
+    "sugar": 6.9,
+    "sodium_mg": 434
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_tuna_canned_water",
+     "with": "ing_tofu_firm",
+     "g": 175
+    }
+   ]
+  },
+  {
+   "id": "sim_d06",
+   "slot": "dinner",
+   "name": "Tofu & Black Bean Bowl",
+   "tags": [
+    "quick",
+    "vegan"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "active_min": 4,
+   "total_min": 5,
+   "equipment": [
+    "microwave",
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tofu_firm",
+     "g": 200,
+     "label": "7 oz firm tofu",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_beans_black_canned",
+     "g": 130,
+     "label": "1/2 cup canned black beans",
+     "flex": null
+    },
+    {
+     "ing": "ing_rice_microwave_cooked",
+     "g": 200,
+     "label": "1 pouch microwave rice",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Dice the tofu.",
+    "Microwave the rice and black beans.",
+    "Assemble the bowl and drizzle with olive oil."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 709,
+    "p": 45.2,
+    "c": 82.8,
+    "f": 24.3,
+    "fiber": 11.3,
+    "sugar": 1.2,
+    "sodium_mg": 422
+   },
+   "swaps": [
+    {
+     "label": "Meat",
+     "replace": "ing_tofu_firm",
+     "with": "ing_chicken_rotisserie_cooked",
+     "g": 130
+    }
+   ]
+  },
+  {
+   "id": "sim_d07",
+   "slot": "dinner",
+   "name": "Salmon & Pasta",
+   "tags": [
+    "quick"
+   ],
+   "allergens": [
+    "fish",
+    "gluten"
+   ],
+   "active_min": 10,
+   "total_min": 15,
+   "equipment": [
+    "pot"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_salmon_canned_water",
+     "g": 150,
+     "label": "5 oz canned salmon, drained",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_pasta_whole_wheat_dry",
+     "g": 80,
+     "label": "2.5 oz dry whole wheat pasta",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_sauce_marinara",
+     "g": 100,
+     "label": "1/2 cup marinara sauce",
+     "flex": null
+    },
+    {
+     "ing": "ing_vegetables_mixed_frozen",
+     "g": 100,
+     "label": "1 cup mixed vegetables",
+     "flex": null
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 10,
+     "label": "2 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Boil the pasta and add the veg in the last 3 minutes, then drain.",
+    "Toss the hot pasta and veg with the marinara, olive oil, and drained salmon."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 682,
+    "p": 46.2,
+    "c": 79.1,
+    "f": 20.1,
+    "fiber": 12.9,
+    "sugar": 9.2,
+    "sodium_mg": 892
+   },
+   "swaps": [
+    {
+     "label": "Vegetarian",
+     "replace": "ing_salmon_canned_water",
+     "with": "ing_tofu_firm",
+     "g": 190
+    }
+   ]
+  },
+  {
+   "id": "sim_pre01",
+   "slot": "pre_workout",
+   "name": "Large Apple & Almonds",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "tree_nut"
+   ],
+   "active_min": 1,
+   "total_min": 1,
+   "equipment": [],
+   "ingredients": [
+    {
+     "ing": "ing_apple_raw",
+     "g": 200,
+     "label": "1 large apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 35,
+     "label": "3 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Eat the apple and grab a handful of almonds."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 307,
+    "p": 8.0,
+    "c": 35.2,
+    "f": 17.5,
+    "fiber": 9.2,
+    "sugar": 22.3,
+    "sodium_mg": 2
+   }
+  },
+  {
+   "id": "sim_pre02",
+   "slot": "pre_workout",
+   "name": "Banana & Peanut Butter",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "peanut"
+   ],
+   "active_min": 1,
+   "total_min": 1,
+   "equipment": [],
+   "ingredients": [
+    {
+     "ing": "ing_banana_raw",
+     "g": 150,
+     "label": "1 large banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_peanut_butter",
+     "g": 30,
+     "label": "2 tbsp peanut butter",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Slice the banana and eat with peanut butter."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 310,
+    "p": 9.2,
+    "c": 40.2,
+    "f": 15.5,
+    "fiber": 5.7,
+    "sugar": 21.0,
+    "sodium_mg": 122
+   }
+  },
+  {
+   "id": "sim_post01",
+   "slot": "post_workout",
+   "name": "Tuna & Toast",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "fish",
+    "gluten"
+   ],
+   "active_min": 3,
+   "total_min": 5,
+   "equipment": [
+    "toaster"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_tuna_canned_water",
+     "g": 110,
+     "label": "1 can light tuna",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_bread_whole_wheat",
+     "g": 50,
+     "label": "1 slice whole wheat bread",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_olive_oil",
+     "g": 5,
+     "label": "1 tsp olive oil",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Toast the bread.",
+    "Mix the drained tuna with the olive oil and serve over the toast."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 298,
+    "p": 34.3,
+    "c": 21.5,
+    "f": 7.6,
+    "fiber": 3.0,
+    "sugar": 2.2,
+    "sodium_mg": 592
+   }
+  },
+  {
+   "id": "sim_post02",
+   "slot": "post_workout",
+   "name": "Whey & Banana",
+   "tags": [
+    "shake",
+    "no_cook",
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [
+    "shaker bottle"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_whey_protein",
+     "g": 30,
+     "label": "1 scoop whey protein",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_milk_2",
+     "g": 200,
+     "label": "3/4 cup 2% milk",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Shake the whey with the milk and drink alongside the banana."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 303,
+    "p": 31.7,
+    "c": 35.4,
+    "f": 4.9,
+    "fiber": 2.6,
+    "sugar": 23.7,
+    "sodium_mg": 132
+   },
+   "swaps": [
+    {
+     "label": "Dairy-free Protein",
+     "replace": "ing_whey_protein",
+     "with": "ing_protein_powder_plant",
+     "g": 30
+    },
+    {
+     "label": "Dairy-free Milk",
+     "replace": "ing_milk_2",
+     "with": "ing_milk_soy_unsweetened",
+     "g": 200
+    }
+   ]
+  },
+  {
+   "id": "sim_s01",
+   "slot": "snack",
+   "name": "Yogurt & Apple Snack",
+   "tags": [
+    "no_cook"
+   ],
+   "allergens": [
+    "dairy",
+    "tree_nut"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_greek_yogurt_nonfat",
+     "g": 150,
+     "label": "2/3 cup nonfat Greek yogurt",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_apple_raw",
+     "g": 150,
+     "label": "1 medium apple",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_almonds_raw",
+     "g": 25,
+     "label": "2 tbsp raw almonds",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Eat the yogurt topped with diced apple and crushed almonds."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 311,
+    "p": 20.7,
+    "c": 31.5,
+    "f": 13.4,
+    "fiber": 5.5,
+    "sugar": 21.5,
+    "sodium_mg": 56
+   }
+  },
+  {
+   "id": "sim_s02",
+   "slot": "snack",
+   "name": "Cottage Cheese, PB & Banana",
+   "tags": [
+    "no_cook",
+    "high_protein"
+   ],
+   "allergens": [
+    "dairy",
+    "peanut"
+   ],
+   "active_min": 2,
+   "total_min": 2,
+   "equipment": [
+    "bowl"
+   ],
+   "ingredients": [
+    {
+     "ing": "ing_cottage_cheese_lowfat",
+     "g": 150,
+     "label": "2/3 cup lowfat cottage cheese",
+     "flex": {
+      "min": 0.85,
+      "max": 1.3
+     }
+    },
+    {
+     "ing": "ing_peanut_butter",
+     "g": 20,
+     "label": "1.5 tbsp peanut butter",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    },
+    {
+     "ing": "ing_banana_raw",
+     "g": 100,
+     "label": "1 small banana",
+     "flex": {
+      "min": 0.6,
+      "max": 1.6
+     }
+    }
+   ],
+   "steps": [
+    "Serve the cottage cheese topped with peanut butter and sliced banana."
+   ],
+   "leftover_ok": false,
+   "macros": {
+    "kcal": 330,
+    "p": 22.6,
+    "c": 32.8,
+    "f": 13.3,
+    "fiber": 3.8,
+    "sugar": 20.0,
+    "sodium_mg": 531
+   }
+  }
+ ],
+ "week": [
+  {
+   "day": "mon",
+   "type": "training",
+   "meals": [
+    "sim_b01",
+    "sim_l01",
+    "sim_pre02",
+    "sim_post02",
+    "sim_d01"
+   ],
+   "note": "Training A"
+  },
+  {
+   "day": "tue",
+   "type": "training",
+   "meals": [
+    "sim_b02",
+    "sim_l02",
+    "sim_pre02",
+    "sim_post01",
+    "sim_d02"
+   ],
+   "note": "Training B"
+  },
+  {
+   "day": "wed",
+   "type": "rest",
+   "meals": [
+    "sim_b03",
+    "sim_l03",
+    "sim_s01",
+    "sim_s02",
+    "sim_d03"
+   ],
+   "note": "Rest A"
+  },
+  {
+   "day": "thu",
+   "type": "training",
+   "meals": [
+    "sim_b04",
+    "sim_l04",
+    "sim_pre02",
+    "sim_post02",
+    "sim_d04"
+   ],
+   "note": "Training C"
+  },
+  {
+   "day": "fri",
+   "type": "rest",
+   "meals": [
+    "sim_b05",
+    "sim_l05",
+    "sim_s01",
+    "sim_s02",
+    "sim_d05"
+   ],
+   "note": "Rest B"
+  },
+  {
+   "day": "sat",
+   "type": "training",
+   "meals": [
+    "sim_b01",
+    "sim_l06",
+    "sim_pre01",
+    "sim_post01",
+    "sim_d06"
+   ],
+   "note": "Training D"
+  },
+  {
+   "day": "sun",
+   "type": "rest",
+   "meals": [
+    "sim_b02",
+    "sim_l07",
+    "sim_s01",
+    "sim_s02",
+    "sim_d07"
+   ],
+   "note": "Rest C"
+  }
+ ],
+ "prep": [
+  {
+   "when": "sun",
+   "task": "Cook Monday and Tuesday night dinners in double portions so you have lunch for Tuesday and Wednesday ready.",
+   "minutes": 20,
+   "covers": [
+    "sim_d01",
+    "sim_l02",
+    "sim_d02",
+    "sim_l03"
+   ]
+  },
+  {
+   "when": "wed",
+   "task": "Batch cook the remaining dinners (Beef Pasta, Chicken Lentils, Tuna Pasta) in double portions to cover lunches through Saturday.",
+   "minutes": 25,
+   "covers": [
+    "sim_d03",
+    "sim_l04",
+    "sim_d04",
+    "sim_l05",
+    "sim_d05",
+    "sim_l06"
+   ]
+  }
+ ],
+ "shopping_notes": [
+  "Buy rotisserie chicken fresh and shred everything immediately to use throughout the week."
+ ]
+}
