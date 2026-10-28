@@ -4315,14 +4315,19 @@ html.light-theme .sd-actions .pri{color:#fff}
 .sd-prep p{margin:0;font-size:13px;color:var(--text-dim);line-height:1.5}.sd-prep p b{color:var(--accent-strong)}
 .sd-sub{display:flex;gap:8px;font-size:13px;color:var(--muted);font-weight:600;flex-wrap:wrap}.sd-sub b{color:var(--text)}
 .sd-flwrap{padding:2px 2px 0}
-.sd-fl{display:flex;gap:4px;height:44px}
-.sd-fl .seg{position:relative;min-width:26px;border-radius:12px;overflow:hidden;background:var(--panel);border:1px solid var(--line-soft);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;transition:flex .5s cubic-bezier(.2,.9,.25,1)}
-.sd-fl .seg i{position:absolute;inset:0;background:var(--sc);opacity:.14;transition:.3s}
-.sd-fl .seg span{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
-.sd-fl .seg.done i{opacity:1;box-shadow:0 0 14px color-mix(in srgb,var(--sc) 60%,transparent)}.sd-fl .seg.done span{color:#0b1020}
-.sd-fl .seg.next{border-color:var(--sc);animation:sdpulse 2.2s ease-in-out infinite}.sd-fl .seg.next i{opacity:.32}.sd-fl .seg.next span{color:var(--text)}
-.sd-fl .seg.skip i{opacity:.12;background:repeating-linear-gradient(135deg,var(--sc) 0 4px,transparent 4px 8px)}
-.sd-fl .seg.extra{border-style:dashed}.sd-fl .seg.extra i{background:var(--muted);opacity:.5}
+.sd-fl{display:flex;gap:5px;height:56px}
+.sd-fl .seg{position:relative;min-width:34px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,color-mix(in srgb,var(--sc) 16%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--sc) 24%,var(--line-soft));box-shadow:inset 0 1px 0 rgba(255,255,255,.07);display:grid;place-items:center;color:var(--sc);transition:flex .5s cubic-bezier(.2,.9,.25,1),transform .2s}
+.sd-fl .seg::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;border-radius:0 0 3px 3px;background:var(--sc);opacity:.75}
+.sd-fl .seg i{position:absolute;inset:0;background:radial-gradient(90% 90% at 50% 0%,color-mix(in srgb,var(--sc) 30%,transparent),transparent 70%);opacity:.7;transition:.3s}
+.sd-fl .seg svg{position:relative;width:22px;height:22px;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--sc) 45%,transparent))}
+.sd-fl .seg.todo{opacity:.82}
+.sd-fl .seg.done{background:linear-gradient(160deg,color-mix(in srgb,var(--sc) 92%,#fff),color-mix(in srgb,var(--sc) 62%,#000));border-color:transparent;color:#0b1020;box-shadow:0 4px 16px color-mix(in srgb,var(--sc) 38%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+.sd-fl .seg.done::before{display:none}.sd-fl .seg.done i{opacity:.25;background:radial-gradient(80% 80% at 30% 0%,#fff,transparent 70%)}.sd-fl .seg.done svg{filter:none}
+.sd-fl .seg .ck{position:absolute;right:6px;top:6px;width:9px;height:9px;border-radius:50%;background:#0b1020;box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+.sd-fl .seg .ck::after{content:"";position:absolute;left:2.5px;top:1.6px;width:2.5px;height:4.5px;border:solid #fff;border-width:0 1.4px 1.4px 0;transform:rotate(40deg)}
+.sd-fl .seg.next{opacity:1;border-color:var(--sc);box-shadow:0 0 0 1px var(--sc),0 0 18px color-mix(in srgb,var(--sc) 40%,transparent);animation:sdpulse 2.2s ease-in-out infinite}.sd-fl .seg.next i{opacity:1}
+.sd-fl .seg.skip{opacity:.5;border-style:dashed;background:var(--panel)}.sd-fl .seg.skip::before{display:none}.sd-fl .seg.skip svg{filter:none}
+.sd-fl .seg.extra{border-style:dashed;color:var(--muted);background:var(--panel)}.sd-fl .seg.extra::before{display:none}.sd-fl .seg.extra svg{filter:none;width:18px;height:18px}
 @keyframes sdpulse{50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--sc) 30%,transparent)}}
 .sd-coach{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,var(--accent-dim),transparent);border:1px solid var(--line-soft)}
 .sd-coach i{flex:none;width:28px;height:28px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800;background:var(--panel3);color:var(--accent-strong)}
@@ -21503,13 +21508,17 @@ function sdSettingsHtml(d){const S=sdS(),D=sdData();
    +'<div class="sd-prefs"><button type="button" class="'+(S.veg?'on':'')+'" data-a="sd-pref" data-v="veg">Vegetarian</button><button type="button" class="'+(S.df?'on':'')+'" data-a="sd-pref" data-v="df">Dairy-free</button></div></details>'}
 function sdSlotWhen(s){return {breakfast:'Morning',lunch:'Midday',snack:'Afternoon',dinner:'Evening',pre_workout:'Before training',post_workout:'After training'}[s]||''}
 function sdSlotColor(s){return {breakfast:'#f2b84a',lunch:'#5fd08a',dinner:'#6aa4f0',snack:'#ef7a85',pre_workout:'#b58cff',post_workout:'#4fd6c0'}[s]||'#ef7a85'}
+function sdSlotIcon(s){
+  const P={breakfast:'M3 18h18M6.5 18a5.5 5.5 0 0 1 11 0M12 5.5v2.5M4.8 9.8l1.7 1.7M19.2 9.8l-1.7 1.7',lunch:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',dinner:'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z',snack:'M12 8c-3-2-7 0-7 4.5 0 4 3 8 5 8 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 5-4 5-8C19 8 15 6 12 8zM12 8c0-2 1-3.5 3-4',pre_workout:'M13 3 5 14h6l-1 7 8-11h-6z',post_workout:'M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5',extra:'M12 5v14M5 12h14'}[s]||'M12 5v14M5 12h14';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+P+'"/></svg>';
+}
 function sdSlotLetter(s){return {breakfast:'B',lunch:'L',dinner:'D',snack:'S',pre_workout:'Pre',post_workout:'Post'}[s]||'?'}
 /* the fuel line: the day as one bar, a segment per meal sized by its calories */
 function sdFuelLine(d){
   const ex=d.extra.kcal,segs=d.items.map(function(it){return {w:Math.max(it.skipped?sdTotals(it.ings,d.s).kcal:it.tot.kcal,60),it:it}}),tot=segs.reduce(function(a,x){return a+x.w},0)+(ex>0?Math.max(ex,60):0);
   let h='<div class="sd-fl" role="img" aria-label="Today\'s meals">';
-  segs.forEach(function(x,i){const it=x.it,st=it.logged?'done':it.skipped?'skip':i===d.next?'next':'todo';h+='<div class="seg '+st+'" style="flex:'+x.w/tot+';--sc:'+sdSlotColor(it.meal.slot)+'"><i></i><span>'+sdSlotLetter(it.meal.slot)+'</span></div>'});
-  if(ex>0)h+='<div class="seg extra" style="flex:'+Math.max(ex,60)/tot+'"><i></i><span>+</span></div>';
+  segs.forEach(function(x,i){const it=x.it,st=it.logged?'done':it.skipped?'skip':i===d.next?'next':'todo';h+='<div class="seg '+st+'" style="flex:'+x.w/tot+';--sc:'+sdSlotColor(it.meal.slot)+'"><i></i>'+sdSlotIcon(it.meal.slot)+(st==='done'?'<b class="ck"></b>':'')+'</div>'});
+  if(ex>0)h+='<div class="seg extra" style="flex:'+Math.max(ex,60)/tot+'"><i></i>'+sdSlotIcon('extra')+'</div>';
   return h+'</div>';
 }
 /* a short line of advice from the numbers, in plain words */

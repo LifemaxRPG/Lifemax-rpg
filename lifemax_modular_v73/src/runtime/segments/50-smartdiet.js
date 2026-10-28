@@ -78,13 +78,17 @@ function sdSettingsHtml(d){const S=sdS(),D=sdData();
    +'<div class="sd-prefs"><button type="button" class="'+(S.veg?'on':'')+'" data-a="sd-pref" data-v="veg">Vegetarian</button><button type="button" class="'+(S.df?'on':'')+'" data-a="sd-pref" data-v="df">Dairy-free</button></div></details>'}
 function sdSlotWhen(s){return {breakfast:'Morning',lunch:'Midday',snack:'Afternoon',dinner:'Evening',pre_workout:'Before training',post_workout:'After training'}[s]||''}
 function sdSlotColor(s){return {breakfast:'#f2b84a',lunch:'#5fd08a',dinner:'#6aa4f0',snack:'#ef7a85',pre_workout:'#b58cff',post_workout:'#4fd6c0'}[s]||'#ef7a85'}
+function sdSlotIcon(s){
+  const P={breakfast:'M3 18h18M6.5 18a5.5 5.5 0 0 1 11 0M12 5.5v2.5M4.8 9.8l1.7 1.7M19.2 9.8l-1.7 1.7',lunch:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',dinner:'M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z',snack:'M12 8c-3-2-7 0-7 4.5 0 4 3 8 5 8 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 5-4 5-8C19 8 15 6 12 8zM12 8c0-2 1-3.5 3-4',pre_workout:'M13 3 5 14h6l-1 7 8-11h-6z',post_workout:'M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5',extra:'M12 5v14M5 12h14'}[s]||'M12 5v14M5 12h14';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+P+'"/></svg>';
+}
 function sdSlotLetter(s){return {breakfast:'B',lunch:'L',dinner:'D',snack:'S',pre_workout:'Pre',post_workout:'Post'}[s]||'?'}
 /* the fuel line: the day as one bar, a segment per meal sized by its calories */
 function sdFuelLine(d){
   const ex=d.extra.kcal,segs=d.items.map(function(it){return {w:Math.max(it.skipped?sdTotals(it.ings,d.s).kcal:it.tot.kcal,60),it:it}}),tot=segs.reduce(function(a,x){return a+x.w},0)+(ex>0?Math.max(ex,60):0);
   let h='<div class="sd-fl" role="img" aria-label="Today\'s meals">';
-  segs.forEach(function(x,i){const it=x.it,st=it.logged?'done':it.skipped?'skip':i===d.next?'next':'todo';h+='<div class="seg '+st+'" style="flex:'+x.w/tot+';--sc:'+sdSlotColor(it.meal.slot)+'"><i></i><span>'+sdSlotLetter(it.meal.slot)+'</span></div>'});
-  if(ex>0)h+='<div class="seg extra" style="flex:'+Math.max(ex,60)/tot+'"><i></i><span>+</span></div>';
+  segs.forEach(function(x,i){const it=x.it,st=it.logged?'done':it.skipped?'skip':i===d.next?'next':'todo';h+='<div class="seg '+st+'" style="flex:'+x.w/tot+';--sc:'+sdSlotColor(it.meal.slot)+'"><i></i>'+sdSlotIcon(it.meal.slot)+(st==='done'?'<b class="ck"></b>':'')+'</div>'});
+  if(ex>0)h+='<div class="seg extra" style="flex:'+Math.max(ex,60)/tot+'"><i></i>'+sdSlotIcon('extra')+'</div>';
   return h+'</div>';
 }
 /* a short line of advice from the numbers, in plain words */

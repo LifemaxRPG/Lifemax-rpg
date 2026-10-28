@@ -725,3 +725,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - `50-voice-gemini.js`: opt-in (Settings > Voice (beta)), key kept on the phone. The offline engine runs first; only when it does not understand (no intent, weak create guess, or low recogniser confidence) the one sentence plus today's date go to the Gemini API (`generateContent`, key in the `x-goog-api-key` header) with three functions: `add_to_schedule(title, date, time, duration_minutes)`, `feed_cats`, `open_screen`.
 - A schedule call is turned back into a normal sentence ("Put X on my schedule on November 3 at 3:00 PM for 45 minutes") so the usual preview and confirm step still applies. Feeding and opening run directly.
 - Tests: `tests/gemini.test.js` (10, fetch stubbed). `voice5` "end of day review" is time-of-day dependent and fails on earlier builds too.
+
+## v195: meal strip redesign
+- The B/L/Pre/Post/D letter buttons in the Plan hero are now glass tiles with a line icon per meal (sunrise, sun, moon, apple, bolt, recover), tinted by slot. Logged meals fill with the slot colour and a check badge, the next meal glows, skipped ones are dashed.
