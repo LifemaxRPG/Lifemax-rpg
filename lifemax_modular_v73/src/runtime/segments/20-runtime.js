@@ -271,8 +271,15 @@ function openPacman(){
  live={ov:ov,game:game,kd:kd,ovf:ovf}}
 window.openPacman=openPacman;window.closePacman=closePacman;
 document.addEventListener('input',function(e){var t=e.target;
- if(!t||(t.id!=='mealSearch'&&t.id!=='msSearch'))return;
- if(String(t.value).toLowerCase().replace(/[^a-z]/g,'')==='pacman'){t.value='';if(t.blur)t.blur();openPacman()}},true);
+ if(!t||(t.id!=='mealSearch'&&t.id!=='msSearch'&&t.id!=='fv2Q'))return;
+ if(String(t.value).toLowerCase().replace(/[^a-z]/g,'')==='pacman'){
+  t.value='';
+  if(t.id==='fv2Q'){
+   var sh=fv2S().sh;clearTimeout(sh._t);sh.serial++;sh.q='';sh.list=[];
+   fv2Close();e.stopPropagation();
+  }
+  if(t.blur)t.blur();openPacman()
+ }},true);
 })();
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
