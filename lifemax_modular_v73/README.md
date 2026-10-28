@@ -752,3 +752,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Bug: the HD face table had no `closed` entry, so every frame that is meant to have shut eyes fell back to open ones. Sleeping cats now close their eyes (any sleep step, light or deep).
 - Awake cats blink every ~3.3 s (was 4.6 s) for 0.17 s, with an occasional double blink; each cat has its own timing.
 - Camera: a cat that is resting no longer lets the room drift. Offsets under 14 px are ignored, and when the camera does pan it ends on a whole pixel.
+
+## v203: Life Director sheets above the bottom bar
+- `.content` has a view-transition name, which makes it a stacking context below the bottom bar, so Life Director's bottom sheets (add a goal, the goal form) were drawn behind the bar, and the page footer showed through them. While a sheet or the tour is open (`.content:has(.ld-sheet:not([hidden]))`) the name is dropped, so the sheet sits above both. Test: `tests/ldsheet.test.js`.

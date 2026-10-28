@@ -5084,6 +5084,8 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 .ld-glance .ld-gl-foot span{color:var(--good)}
 .ld-glance .ld-gl-empty{padding:6px 4px 2px}
 .ld-glance .ld-gl-empty p{color:var(--ink2);font-size:.88rem;line-height:1.5;margin:4px 0 12px}
+/* the page has a view-transition name, which makes it a stacking context below the bottom bar; while a sheet or the tour is open the name is dropped so they sit above the bar and the footer */
+.content:has(.ld-sheet:not([hidden])),.content:has(.ld-tour:not([hidden])){view-transition-name:none}
 
 </style>
 </head>
