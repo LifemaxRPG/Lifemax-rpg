@@ -18,7 +18,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('at a 2,500 base the plan can scale from at most 2,125 to at least 3,250 kcal', walk.every(w => w.lo <= 2130 && w.hi >= 3240), walk.filter(w => w.lo > 2130 || w.hi < 3240).slice(0, 2));
   await p.evaluate(() => { const S = sdS(); S.diet = 'standard'; S.level = 'moderate'; S.veg = false; S.df = false; S.over = {}; save(); renderMeals() });
   const day = await p.evaluate(() => mealsDayKey());
-  const before = await p.evaluate(() => dayFoodLog(mealsDayKey()).length);
+  const openAll = () => p.evaluate(() => { const U = sdUi(); U.open = {}; for (let i = 0; i < 8; i++) U.open[mealsDayKey() + ':' + i] = true; renderMeals() });
+  await openAll();
   await p.click('[data-a=sd-log][data-i="0"]'); await p.waitForTimeout(400);
   const e = await p.evaluate(() => dayFoodLog(mealsDayKey()).find(x => x.sd));
   ok('one tap logs the planned meal with its scaled calories and macros', !!e && e.kcal > 100 && e.p > 5 && e.sd.i === 0 && e.foodId.indexOf('smartdiet:') === 0, e);
@@ -32,11 +33,27 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('Dairy-free removes milk and whey from the day', await p.evaluate(() => { const d = sdDay(mealsDayKey()), ings = [].concat.apply([], d.items.map(i => i.ings.map(x => x.ing))); return !ings.some(x => /milk_2|whey_protein|greek_yogurt|cottage_cheese/.test(x)) }));
   await p.click('[data-a=sd-pref][data-v=df]');
   ok('every day of both diets can be made vegetarian and dairy-free', await p.evaluate(() => { const S = sdS(); S.veg = true; S.df = true; let bad = 0; for (const diet of ['standard', 'simple']) for (let i = 0; i < 7; i++) { S.diet = diet; const d = sdDay(fv2DayShift('2026-10-26', i)); [].concat.apply([], d.items.map(x => x.ings.map(y => y.ing))).forEach(id => { if (SD_DAIRY.indexOf(id) >= 0 || SD_MEAT.indexOf(id) >= 0) bad++ }) } S.veg = false; S.df = false; S.diet = 'standard'; return bad === 0 }));
+  await openAll();
   const first = await p.evaluate(() => sdDay(mealsDayKey()).items[1].meal.id);
   await p.click('[data-a=sd-swap][data-i="1"]'); await p.waitForTimeout(400);
   await p.click('.sd-sw'); await p.waitForTimeout(400);
   const second = await p.evaluate(() => sdDay(mealsDayKey()).items[1].meal.id);
   ok('Swap meal replaces it with another of the same kind and the day still hits its target', second !== first && await p.evaluate(() => { const d = sdDay(mealsDayKey()); return Math.abs(d.tot.kcal - d.target) < 12 }), { first, second });
+  // ---- smarter: the rest of the day follows what you actually ate
+  await p.evaluate(() => { const S = sdS(); S.diet = 'standard'; S.level = 'moderate'; S.veg = false; S.df = false; S.over = {}; S.skip = {}; state.foodLog = state.foodLog.filter(x => !x.sd && x.name !== 'Burger'); save(); renderMeals() });
+  const base = await p.evaluate(() => { const d = sdDay(mealsDayKey()); return { s: d.s, open: d.openN, tot: d.tot.kcal, target: d.target } });
+  await p.evaluate(() => { state.foodLog.push({ id: 'x1', date: mealsDayKey(), slot: 'lunch', foodId: 'x', name: 'Burger', grams: 250, kcal: 700, p: 30, c: 50, f: 40, fib: 2, sug: 5, na: 900, at: new Date().toISOString() }); save(); renderMeals() });
+  const after = await p.evaluate(() => { const d = sdDay(mealsDayKey()); return { s: d.s, extra: d.extra.kcal, tot: d.tot.kcal, target: d.target, coach: sdCoach(d).t } });
+  ok('food eaten off the plan trims the meals still to come', after.s < base.s - 0.05 && after.extra === 700, { base, after });
+  ok('and the day still lands on its target', Math.abs(after.tot - after.target) < 15, after);
+  ok('the coach line says what happened', /outside the plan/.test(after.coach), after.coach);
+  await p.evaluate(() => { state.foodLog = state.foodLog.filter(x => x.name !== 'Burger'); save(); renderMeals() });
+  await openAll(); await p.click('[data-a=sd-skip][data-i="1"]'); await p.waitForTimeout(300);
+  const sk = await p.evaluate(() => { const d = sdDay(mealsDayKey()); return { skipped: d.items[1].skipped, s: d.s, s0: d.s0, tot: d.tot.kcal, target: d.target, fl: document.querySelectorAll('.sd-fl .seg.skip').length } });
+  ok('skipping a meal drops it and the rest of the day grows to cover it', sk.skipped && sk.s > sk.s0 + 0.03 && sk.tot > sk.target - 130 && sk.fl === 1, sk);
+  await openAll(); await p.click('[data-a=sd-unskip][data-i="1"]'); await p.waitForTimeout(300);
+  ok('Restore brings it back', await p.evaluate(() => !sdDay(mealsDayKey()).items[1].skipped));
+  ok('the fuel line has a segment per meal and marks the next one', await p.evaluate(() => document.querySelectorAll('.sd-fl .seg').length >= 5 && document.querySelectorAll('.sd-fl .seg.next').length === 1));
   await p.click('[data-a=pane][data-v=shop]'); await p.waitForTimeout(500);
   const shop = await p.evaluate(() => { const l = sdShopList(sdMonday(mealsDayKey())); return { n: l.length, bad: l.filter(x => x.packs < 1 || x.g <= 0).length, rice: l.find(x => /rice/i.test(x.n)) } });
   ok('the shopping list totals the week with whole packs', shop.n >= 15 && shop.bad === 0, shop);

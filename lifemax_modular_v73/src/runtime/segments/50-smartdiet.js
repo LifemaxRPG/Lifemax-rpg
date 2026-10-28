@@ -37,7 +37,9 @@ function sdSolve(lists,target){const all=[].concat.apply([],lists),k=function(s)
   for(let n=0;n<40;n++){const m=(lo+hi)/2;if(k(m)<target)lo=m;else hi=m}return (lo+hi)/2}
 function sdActivityMin(day){let m=0;try{(state.activities||[]).forEach(function(a){if(a&&a.date&&new Date(a.date).toLocaleDateString('en-CA')===day&&['physique','endurance','adventure'].indexOf(a.primary)>=0)m+=Number(a.duration)||0})}catch(e){}return m}
 function sdAutoLevel(day,w,forShop){if(forShop)return w.type==='training'?'light':'rest';const m=sdActivityMin(day);return m>=60?'hard':m>=30?'moderate':m>0?'light':(w.type==='training'?'light':'rest')}
-/* the plan for one day, scaled */
+/* the plan for one day. Meals you have logged keep what you logged, skipped meals drop out, and the meals still to come are
+   scaled so the whole day lands on the target given everything already eaten (including food that was not on the plan). */
+function sdLogged(day,it,i){return dayFoodLog(day).find(function(e){return e.sd&&e.sd.meal===it.meal.id&&e.sd.i===i})}
 function sdDay(day,forShop){
   const S=sdS(),D=sdData(),P=D.plans[S.diet]||D.plans.standard;if(!P)return null;
   const w=P.week.find(function(x){return x.day===sdWeekday(day)});if(!w)return null;
@@ -45,12 +47,18 @@ function sdDay(day,forShop){
   const dk=['mon','tue','wed','thu','fri','sat','sun'].indexOf(w.day),meals=ids.map(function(id,i){return sdFit(P,P.meals[id],S,dk+i)}),lists=meals.map(function(m){return sdMealIngs(m,S)});
   const auto=S.level==='auto',level=auto||!sdLevels().some(function(l){return l[0]===S.level})?sdAutoLevel(day,w,forShop):S.level;
   const base=Math.max(0,+(state.mealsMeta&&state.mealsMeta.calGoal)||0)||P.ref.kcal,mult=sdLevels().find(function(l){return l[0]===level})[2],target=Math.round(base*mult/10)*10;
-  const s=sdSolve(lists,target),items=meals.map(function(m,i){return {meal:m,ings:lists[i],tot:sdTotals(lists[i],s)}});
-  const tot=items.reduce(function(a,it){['kcal','p','c','f','fib','sug','na','g'].forEach(function(k){a[k]+=it.tot[k]});return a},{kcal:0,p:0,c:0,f:0,fib:0,sug:0,na:0,g:0});
-  const all=[].concat.apply([],lists),kmin=sdTotals(all,0.3).kcal,kmax=sdTotals(all,2).kcal;
-  return {day:day,P:P,w:w,items:items,s:s,level:level,auto:auto,target:target,base:base,tot:tot,kmin:kmin,kmax:kmax,actMin:sdActivityMin(day)};
+  const skip=forShop?{}:(S.skip&&S.skip[day])||{},entries=forShop?[]:dayFoodLog(day);
+  const items=meals.map(function(m,i){const it={meal:m,ings:lists[i],i:i,skipped:!!skip[i]};const e=forShop?null:sdLogged(day,{meal:m},i);if(e){it.logged=e;it.tot={kcal:+e.kcal||0,p:+e.p||0,c:+e.c||0,f:+e.f||0,fib:+e.fib||0,sug:+e.sug||0,na:+e.na||0,g:+e.grams||0}}return it});
+  const eaten=entries.reduce(function(a,e){return a+(+e.kcal||0)},0),open=items.filter(function(it){return !it.logged&&!it.skipped}),openLists=open.map(function(it){return it.ings});
+  const s0=sdSolve(lists,target),rem=Math.max(0,target-eaten),s=open.length?sdSolve(openLists,rem):1;
+  items.forEach(function(it){if(it.logged)return;it.tot=it.skipped?{kcal:0,p:0,c:0,f:0,fib:0,sug:0,na:0,g:0}:sdTotals(it.ings,s)});
+  const sum=function(list){return list.reduce(function(a,it){['kcal','p','c','f','fib','sug','na','g'].forEach(function(k){a[k]+=it.tot[k]});return a},{kcal:0,p:0,c:0,f:0,fib:0,sug:0,na:0,g:0})};
+  const planTot=sum(items),extra={kcal:0,p:0,c:0,f:0,fib:0};entries.forEach(function(e){if(!e.sd){extra.kcal+=+e.kcal||0;extra.p+=+e.p||0;extra.c+=+e.c||0;extra.f+=+e.f||0;extra.fib+=+e.fib||0}});
+  const all=[].concat.apply([],openLists),kmin=sdTotals(all,0.3).kcal,kmax=sdTotals(all,2).kcal;
+  const tot={kcal:planTot.kcal+extra.kcal,p:planTot.p+extra.p,c:planTot.c+extra.c,f:planTot.f+extra.f,fib:planTot.fib+extra.fib,na:planTot.na,sug:planTot.sug,g:planTot.g};
+  const nextIdx=items.findIndex(function(it){return !it.logged&&!it.skipped});
+  return {day:day,P:P,w:w,items:items,s:s,s0:s0,level:level,auto:auto,target:target,base:base,tot:tot,eaten:eaten,extra:extra,rem:rem,next:nextIdx,openN:open.length,kmin:kmin,kmax:kmax,actMin:sdActivityMin(day)};
 }
-function sdLogged(day,it,i){return dayFoodLog(day).find(function(e){return e.sd&&e.sd.meal===it.meal.id&&e.sd.i===i})}
 function sdLogMeal(day,i,quiet){
   const d=sdDay(day);if(!d)return null;const it=d.items[i];if(!it||sdLogged(day,it,i))return null;const t=it.tot,r=function(v){return Math.round(v*10)/10};
   const e={id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:day,slot:sdSlotOf(it.meal.slot),foodId:'smartdiet:'+it.meal.id,name:it.meal.name,grams:Math.max(1,Math.round(t.g)),kcal:Math.round(t.kcal),kcalEstimated:false,p:r(t.p),c:r(t.c),f:r(t.f),fib:r(t.fib),sug:r(t.sug),na:Math.round(t.na),at:new Date().toISOString(),sd:{diet:sdS().diet,meal:it.meal.id,i:i}};
@@ -64,34 +72,59 @@ function sdPaneSwitch(pane){const I={log:'<path d="M4 7h16M4 12h16M4 17h10"/>',p
 function sdSettingsHtml(d){const S=sdS(),D=sdData();
   const diets=Object.keys(D.plans).map(function(k){return '<button type="button" class="'+(S.diet===k?'on':'')+'" data-a="sd-diet" data-v="'+k+'"><b>'+esc(D.plans[k].name)+'</b><small>'+(k==='simple'?'Fewest steps and ingredients':'Real recipes, batch cooking')+'</small></button>'}).join('');
   const lv=[['auto','Auto']].concat(sdLevels().map(function(l){return [l[0],l[1]]})).map(function(l){const on=S.level===l[0]||(l[0]==='auto'&&!sdLevels().some(function(x){return x[0]===S.level}));return '<button type="button" class="'+(on?'on':'')+'" data-a="sd-level" data-v="'+l[0]+'"><i style="--h:'+(['auto','rest','light','moderate','hard'].indexOf(l[0])*25)+'%"></i>'+l[1]+'</button>'}).join('');
-  const why=S.level==='auto'?'Auto picked <b>'+sdLevels().find(function(l){return l[0]===d.level})[1]+'</b> '+(d.actMin?'because you logged '+d.actMin+' min of training today':'from today\'s '+(d.w.type==='training'?'training':'rest')+' day'):'You set <b>'+sdLevels().find(function(l){return l[0]===d.level})[1]+'</b> for this plan';
   const lvName=sdLevels().find(function(l){return l[0]===d.level})[1];
+  const why=S.level==='auto'?'Auto picked <b>'+lvName+'</b> '+(d.actMin?'because you logged '+d.actMin+' min of training today':'from today\'s '+(d.w.type==='training'?'training':'rest')+' day'):'You set <b>'+lvName+'</b> for this plan';
   return '<details class="sd-set"'+(sdUi().setOpen?' open':'')+'><summary data-a="sd-toggle"><span><b>'+esc(D.plans[S.diet].name)+'</b><small>'+(S.level==='auto'?'Auto · ':'')+lvName+(S.veg?' · Vegetarian':'')+(S.df?' · Dairy-free':'')+'</small></span><i>Adjust</i></summary><div class="sd-diets">'+diets+'</div><div class="sd-eyebrow">FUEL LEVEL</div><div class="sd-lv">'+lv+'</div><p class="sd-why">'+why+'. Target '+fv2Fmt(d.target)+' kcal'+(state.mealsMeta&&+state.mealsMeta.calGoal?' ('+fv2Fmt(d.base)+' base × '+sdLevels().find(function(l){return l[0]===d.level})[2]+')':'')+'.</p>'
    +'<div class="sd-prefs"><button type="button" class="'+(S.veg?'on':'')+'" data-a="sd-pref" data-v="veg">Vegetarian</button><button type="button" class="'+(S.df?'on':'')+'" data-a="sd-pref" data-v="df">Dairy-free</button></div></details>'}
-function sdMacroBar(t){const p=t.p*4,c=t.c*4,f=t.f*9,s=p+c+f||1;return '<span class="sd-mb"><i style="width:'+p/s*100+'%;background:#ff7a8a"></i><i style="width:'+c/s*100+'%;background:#ffc15e"></i><i style="width:'+f/s*100+'%;background:#4fd6c0"></i></span>'}
+function sdSlotWhen(s){return {breakfast:'Morning',lunch:'Midday',snack:'Afternoon',dinner:'Evening',pre_workout:'Before training',post_workout:'After training'}[s]||''}
+function sdSlotColor(s){return {breakfast:'#f2b84a',lunch:'#5fd08a',dinner:'#6aa4f0',snack:'#ef7a85',pre_workout:'#b58cff',post_workout:'#4fd6c0'}[s]||'#ef7a85'}
+function sdSlotLetter(s){return {breakfast:'B',lunch:'L',dinner:'D',snack:'S',pre_workout:'Pre',post_workout:'Post'}[s]||'?'}
+/* the fuel line: the day as one bar, a segment per meal sized by its calories */
+function sdFuelLine(d){
+  const ex=d.extra.kcal,segs=d.items.map(function(it){return {w:Math.max(it.skipped?sdTotals(it.ings,d.s).kcal:it.tot.kcal,60),it:it}}),tot=segs.reduce(function(a,x){return a+x.w},0)+(ex>0?Math.max(ex,60):0);
+  let h='<div class="sd-fl" role="img" aria-label="Today\'s meals">';
+  segs.forEach(function(x,i){const it=x.it,st=it.logged?'done':it.skipped?'skip':i===d.next?'next':'todo';h+='<div class="seg '+st+'" style="flex:'+x.w/tot+';--sc:'+sdSlotColor(it.meal.slot)+'"><i></i><span>'+sdSlotLetter(it.meal.slot)+'</span></div>'});
+  if(ex>0)h+='<div class="seg extra" style="flex:'+Math.max(ex,60)/tot+'"><i></i><span>+</span></div>';
+  return h+'</div>';
+}
+/* a short line of advice from the numbers, in plain words */
+function sdCoach(d){
+  const today=d.day===getToday(),hr=new Date().getHours(),nx=d.next>=0?d.items[d.next]:null,done=d.items.filter(function(i){return i.logged}).length,skipped=d.items.filter(function(i){return i.skipped});
+  const planP=d.items.reduce(function(a,i){return a+(i.skipped?0:(i.logged?i.tot.p:sdTotals(i.ings,d.s0).p))},0)+d.extra.p,eatenP=dayFoodLog(d.day).reduce(function(a,e){return a+(+e.p||0)},0);
+  if(!nx&&d.openN===0&&(done||skipped.length))return {i:'✓',t:'Day complete. <b>'+Math.round(eatenP)+' g protein</b> and <b>'+Math.round(d.tot.fib)+' g fiber</b>. Nicely done.'};
+  if(d.extra.kcal>40&&d.openN)return {i:'↺',t:'You ate <b>'+fv2Fmt(d.extra.kcal)+' kcal</b> outside the plan, so I '+(d.s<d.s0?'trimmed':'adjusted')+' the meals still to come'+(Math.abs(d.s/d.s0-1)>0.01?' by about <b>'+Math.round(Math.abs(d.s/d.s0-1)*100)+'%</b>':'')+' to keep your '+fv2Fmt(d.target)+' kcal.'};
+  if(skipped.length&&d.openN)return {i:'↺',t:'You skipped <b>'+esc(skipped[0].meal.name)+'</b>, so the rest of the day grew '+(d.s>d.s0?'by about <b>'+Math.round((d.s/d.s0-1)*100)+'%</b>':'a little')+' to cover it.'};
+  if(today&&nx&&hr>=14&&eatenP<planP*0.4)return {i:'!',t:'Protein is behind today. <b>'+esc(nx.meal.name)+'</b> brings <b>'+Math.round(nx.tot.p)+' g</b>.'};
+  if(nx&&!done&&today&&hr<11)return {i:'☀',t:'Start with <b>'+esc(nx.meal.name)+'</b>. '+(d.w.type==='training'?'Carbs up front fuel today\'s session.':'A steady start keeps the day on track.')};
+  if(nx&&d.level==='hard')return {i:'⚡',t:'Hard day: portions are at the high end. <b>'+esc(nx.meal.name)+'</b> is up next.'};
+  if(nx)return {i:'›',t:'<b>'+esc(nx.meal.name)+'</b> is up next: <b>'+fv2Fmt(nx.tot.kcal)+' kcal</b>, <b>'+Math.round(nx.tot.p)+' g</b> protein.'};
+  return {i:'✓',t:'Everything for today is handled.'};
+}
 function sdIngLine(i,s){const C=sdData().cat,g=Math.round(i.g*sdFactor(i,s)),n=C[i.ing].n;return '<li><span>'+esc(n)+'</span><b>'+g+' g</b></li>'}
 function sdMealCard(d,it,idx){
-  const m=it.meal,t=it.tot,done=sdLogged(d.day,it,idx),slotc={breakfast:'#f2b84a',lunch:'#5fd08a',dinner:'#6aa4f0'}[m.slot]||'#ef7a85';
+  const m=it.meal,t=it.tot,U=sdUi(),ov=U.open&&U.open[d.day+':'+idx],open=ov===undefined?idx===d.next:ov,sc=sdSlotColor(m.slot),st=it.logged?'done':it.skipped?'skipped':'';
+  const shown=it.skipped?sdTotals(it.ings,d.s):t;
   const tags=(m.tags||[]).filter(function(x){return x==='leftover'||x==='vegan'||x==='no_cook'||x==='shake'||x==='quick'}).map(function(x){return '<em>'+({leftover:'Leftover',vegan:'Vegan',no_cook:'No cooking',shake:'Shake',quick:'Quick'}[x])+'</em>'}).join('');
-  return '<article class="sd-meal'+(done?' done':'')+'" style="--sc:'+slotc+'"><div class="sd-rail"><i></i></div><div class="sd-body">'
-   +'<header><div><div class="sd-slot">'+sdSlotName(m.slot)+'<span>· '+(m.active_min||0)+' min</span></div><h3>'+esc(m.name)+'</h3></div><div class="sd-k"><b>'+fv2Fmt(t.kcal)+'</b><small>kcal</small></div></header>'
-   +'<div class="sd-tags">'+tags+'</div>'+sdMacroBar(t)+'<div class="sd-mm"><span style="color:#ff7a8a">P <b>'+Math.round(t.p)+'</b></span><span style="color:#ffc15e">C <b>'+Math.round(t.c)+'</b></span><span style="color:#4fd6c0">F <b>'+Math.round(t.f)+'</b></span><span>Fiber <b>'+Math.round(t.fib)+'</b></span></div>'
+  const state=it.logged?'<span class="sd-st ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7"/></svg></span>':it.skipped?'<span class="sd-st sk">skipped</span>':idx===d.next?'<span class="sd-st nx">next</span>':'';
+  return '<details class="sd-meal '+st+(idx===d.next?' isnext':'')+'" style="--sc:'+sc+'"'+(open?' open':'')+' data-i="'+idx+'"><summary data-a="sd-tg" data-i="'+idx+'"><i class="dot"></i><span class="who"><small>'+sdSlotName(m.slot)+' · '+sdSlotWhen(m.slot)+'</small><b>'+esc(m.name)+'</b></span>'+state+'<span class="k"><b>'+fv2Fmt(it.skipped?shown.kcal:t.kcal)+'</b><small>kcal</small></span></summary>'
+   +'<div class="sd-more"><div class="sd-tags">'+tags+'<em>'+(m.active_min||0)+' min</em></div>'+sdMacroBar(shown)+'<div class="sd-mm"><span style="color:#ff7a8a">P <b>'+Math.round(shown.p)+'</b></span><span style="color:#ffc15e">C <b>'+Math.round(shown.c)+'</b></span><span style="color:#4fd6c0">F <b>'+Math.round(shown.f)+'</b></span><span>Fiber <b>'+Math.round(shown.fib)+'</b></span></div>'
    +'<ul class="sd-ings">'+it.ings.map(function(i){return sdIngLine(i,d.s)}).join('')+'</ul>'
    +'<details class="sd-how"><summary>Method</summary><ol>'+m.steps.map(function(s){return '<li>'+esc(s)+'</li>'}).join('')+'</ol>'+((m.equipment||[]).length?'<p>You need: '+esc(m.equipment.join(', '))+'.</p>':'')+'</details>'
-   +'<footer>'+(done?'<span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7"/></svg>Logged</span><button type="button" class="ghost" data-a="sd-unlog" data-i="'+idx+'">Undo</button>':'<button type="button" class="pri" data-a="sd-log" data-i="'+idx+'">Log this meal</button><button type="button" class="ghost" data-a="sd-swap" data-i="'+idx+'">Swap meal</button>')+'</footer></div></article>';
+   +'<footer>'+(it.logged?'<span class="ok">Logged · '+fv2Fmt(it.logged.kcal)+' kcal</span><button type="button" class="ghost" data-a="sd-unlog" data-i="'+idx+'">Undo</button>':it.skipped?'<span class="sk">Skipped</span><button type="button" class="ghost" data-a="sd-unskip" data-i="'+idx+'">Restore</button>':'<button type="button" class="pri" data-a="sd-log" data-i="'+idx+'">Log this meal</button><button type="button" class="ghost" data-a="sd-skip" data-i="'+idx+'">Skip</button><button type="button" class="ghost" data-a="sd-swap" data-i="'+idx+'">Swap</button>')+'</footer></div></details>';
 }
+function sdMacroBar(t){const p=t.p*4,c=t.c*4,f=t.f*9,s=p+c+f||1;return '<span class="sd-mb"><i style="width:'+p/s*100+'%;background:#ff7a8a"></i><i style="width:'+c/s*100+'%;background:#ffc15e"></i><i style="width:'+f/s*100+'%;background:#4fd6c0"></i></span>'}
 function sdPlanHtml(){
   const day=mealsDayKey(),d=sdDay(day);if(!d)return '<div class="fv2-none"><b>No plan for this day</b><span>The Smart Diet plan is built for the Athlete class.</span></div>';
-  const done=d.items.filter(function(it,i){return sdLogged(day,it,i)}).length,loggedK=dayFoodLog(day).filter(function(e){return e.sd}).reduce(function(a,e){return a+(+e.kcal||0)},0);
-  const prepToday=(d.P.prep||[]).filter(function(p){return p.when===sdWeekday(day)});
-  const lowNote=d.target<d.kmin-5?'<p class="sd-warn">The lowest this plan goes is about '+fv2Fmt(d.kmin)+' kcal, so portions are at their minimum.</p>':d.target>d.kmax+5?'<p class="sd-warn">The most this plan holds is about '+fv2Fmt(d.kmax)+' kcal, so portions are at their maximum.</p>':'';
-  let h=sdPaneSwitch('plan')+'<section class="sd-hero"><div class="sd-hl"><div class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</div><div class="sd-big"><b>'+fv2Fmt(d.tot.kcal)+'</b><small>kcal planned</small></div>'
-   +'<div class="sd-mac"><span style="--mc:#ff7a8a"><i></i>P <b>'+Math.round(d.tot.p)+'</b></span><span style="--mc:#ffc15e"><i></i>C <b>'+Math.round(d.tot.c)+'</b></span><span style="--mc:#4fd6c0"><i></i>F <b>'+Math.round(d.tot.f)+'</b></span></div></div>'
-   +'<div class="sd-hr">'+sdRing(d.tot.kcal?loggedK/d.tot.kcal:0,'var(--accent)')+'<div class="sd-hrt"><b>'+done+'/'+d.items.length+'</b><small>logged</small></div></div></section>'+lowNote
-   +'<div class="sd-actions"><button type="button" class="pri" data-a="sd-logall"'+(done===d.items.length?' disabled':'')+'>Log the whole day</button></div>'+sdSettingsHtml(d);
+  const co=sdCoach(d),prepToday=(d.P.prep||[]).filter(function(p){return p.when===sdWeekday(day)}),left=Math.max(0,d.target-d.eaten),pP=d.items.reduce(function(a,i){return a+(i.skipped?0:i.tot.p)},0)+d.extra.p;
+  const eatenP=dayFoodLog(day).reduce(function(a,e){return a+(+e.p||0)},0);
+  const warn=d.openN&&d.rem<d.kmin-5?'<p class="sd-warn">You are already close to your target: the meals still to come are at their smallest ('+fv2Fmt(d.kmin)+' kcal).</p>':d.openN&&d.rem>d.kmax+5?'<p class="sd-warn">The meals left top out at about '+fv2Fmt(d.kmax)+' kcal, so you will finish a little under your target.</p>':'';
+  let h=sdPaneSwitch('plan')+'<section class="sd-hero"><div class="sd-hl"><div class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</div>'
+   +'<div class="sd-big"><b>'+fv2Fmt(d.eaten)+'</b><small>of '+fv2Fmt(d.tot.kcal)+' kcal</small></div><div class="sd-sub"><span>'+fv2Fmt(left)+' to go</span><span>·</span><span>P <b>'+Math.round(eatenP)+'</b>/'+Math.round(pP)+' g</span></div></div></section>'
+   +'<section class="sd-flwrap">'+sdFuelLine(d)+'</section><div class="sd-coach"><i>'+co.i+'</i><p>'+co.t+'</p></div>'+warn
+   +'<div class="sd-actions"><button type="button" class="pri" data-a="sd-logall"'+(d.openN===0?' disabled':'')+'>Log the rest of the day</button></div>'+sdSettingsHtml(d);
   if(prepToday.length)h+='<section class="sd-prep"><div class="sd-eyebrow">PREP TODAY</div>'+prepToday.map(function(p){return '<p><b>'+p.minutes+' min</b> '+esc(p.task)+'</p>'}).join('')+'</section>';
   h+='<div class="sd-timeline">'+d.items.map(function(it,i){return sdMealCard(d,it,i)}).join('')+'</div>';
-  h+='<p class="sd-foot">Portions scale to your target using each ingredient\'s flexible range, so protein stays steady while carbs and fats move with your activity. Numbers come from standard food-composition values and are estimates.</p>';
+  h+='<p class="sd-foot">Portions follow your target and what you have already logged, using each ingredient\'s flexible range, so protein stays steady while carbs and fats move. Numbers are estimates from standard food-composition values.</p>';
   return h;
 }
 /* ---------------------------------------------------------------- the Shopping pane */
@@ -121,11 +154,14 @@ function sdShopText(){const S=sdS(),U=sdUi(),start=fv2DayShift(sdMonday(mealsDay
 /* ---------------------------------------------------------------- actions */
 function sdAct(b){const a=b.dataset.a,S=sdS(),U=sdUi(),day=mealsDayKey();
   if(a==='sd-toggle'){U.setOpen=!U.setOpen;return}
+  if(a==='sd-tg'){U.open=U.open||{};const k=day+':'+b.dataset.i,det=b.parentNode;U.open[k]=!det.open;return}
   if(a==='sd-diet'||a==='sd-level'||a==='sd-pref')U.setOpen=true;
   if(a==='sd-diet'){S.diet=b.dataset.v;save();renderMeals()}
   else if(a==='sd-level'){S.level=b.dataset.v;save();renderMeals()}
   else if(a==='sd-pref'){S[b.dataset.v]=!S[b.dataset.v];save();renderMeals()}
-  else if(a==='sd-log')sdLogMeal(day,+b.dataset.i);
+  else if(a==='sd-log'){if(S.skip&&S.skip[day])delete S.skip[day][+b.dataset.i];sdLogMeal(day,+b.dataset.i)}
+  else if(a==='sd-skip'){S.skip=S.skip||{};(S.skip[day]=S.skip[day]||{})[+b.dataset.i]=true;save();fv2Hap('tap');renderMeals()}
+  else if(a==='sd-unskip'){if(S.skip&&S.skip[day])delete S.skip[day][+b.dataset.i];save();renderMeals()}
   else if(a==='sd-unlog'){const d=sdDay(day),it=d&&d.items[+b.dataset.i];const e=it&&sdLogged(day,it,+b.dataset.i);if(e){state.foodLog=state.foodLog.filter(function(x){return x.id!==e.id});save();renderMeals()}}
   else if(a==='sd-logall'){const d=sdDay(day);if(!d)return;const ids=[];d.items.forEach(function(it,i){const e=sdLogMeal(day,i,true);if(e)ids.push(e.id)});if(ids.length){save();fv2Hap('success');renderMeals();fv2Snack('Logged '+ids.length+' meal'+(ids.length>1?'s':''),'Undo',function(){state.foodLog=state.foodLog.filter(function(x){return ids.indexOf(x.id)<0});save();renderMeals()})}}
   else if(a==='sd-swap')sdOpenSwap(+b.dataset.i);
