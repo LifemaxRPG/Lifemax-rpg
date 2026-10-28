@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lm_sc_schedule_short">Add to schedule</string>
+    <string name="lm_sc_schedule_long">Add to your Life Director schedule</string>
+    <string name="lm_sc_feed_short">Feed cats</string>
+    <string name="lm_sc_feed_long">Feed your cats</string>
+    <string name="lm_sc_quests_short">Quests</string>
+    <string name="lm_sc_quests_long">Open today\'s quests</string>
+
+    <!-- What people may say for each feature (Assistant matches these against the "feature" parameter) -->
+    <string-array name="lm_feature_schedule">
+        <item>schedule</item>
+        <item>my schedule</item>
+        <item>life director</item>
+        <item>add to schedule</item>
+        <item>add to my schedule</item>
+        <item>calendar</item>
+    </string-array>
+    <string-array name="lm_feature_feed">
+        <item>feed cats</item>
+        <item>feed the cats</item>
+        <item>feed my cats</item>
+        <item>feed cat</item>
+        <item>feed the cat</item>
+        <item>feed my cat</item>
+        <item>cat food</item>
+        <item>feeding</item>
+    </string-array>
+    <string-array name="lm_feature_quests">
+        <item>quests</item>
+        <item>my quests</item>
+        <item>daily quests</item>
+        <item>quest board</item>
+    </string-array>
+</resources>

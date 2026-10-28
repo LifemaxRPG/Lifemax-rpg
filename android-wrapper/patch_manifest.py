@@ -49,5 +49,20 @@ xml = xml.replace(
     '        </receiver>\n    </application>',
     1,
 )
+# Deep links (lifemax://...) and App Actions: the shortcuts file declares the capabilities Google routes voice requests through.
+if "android.app.shortcuts" not in xml:
+    m = re.search(r'android.intent.category.LAUNCHER"\s*/>.*?</intent-filter>', xml, re.S)
+    assert m, "launcher intent-filter not found"
+    extra = (
+        '\n            <intent-filter>\n'
+        '                <action android:name="android.intent.action.VIEW" />\n'
+        '                <category android:name="android.intent.category.DEFAULT" />\n'
+        '                <category android:name="android.intent.category.BROWSABLE" />\n'
+        '                <data android:scheme="lifemax" />\n'
+        '            </intent-filter>\n'
+        '            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />'
+    )
+    xml = xml[:m.end()] + extra + xml[m.end():]
+assert 'android:scheme="lifemax"' in xml and "android.app.shortcuts" in xml
 assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "RecognitionService" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

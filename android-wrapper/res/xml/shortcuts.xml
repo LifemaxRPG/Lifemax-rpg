@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LifeMax shortcuts and App Actions capabilities.
+     Static shortcuts: long-press the app icon (no Google needed).
+     Capabilities: lets Google Assistant / Gemini route voice requests into the app through deep links (lifemax://...).
+     The deep links are handled by src/runtime/segments/50-deeplink.js. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ===== Static shortcuts (also the inventory for "open <feature>") ===== -->
+
+    <shortcut
+        android:shortcutId="lifemax_add_schedule"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/lm_sc_schedule_short"
+        android:shortcutLongLabel="@string/lm_sc_schedule_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lifemax://schedule/add"
+            android:targetPackage="com.lifemax.rpg"
+            android:targetClass="com.lifemax.rpg.MainActivity" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/lm_feature_schedule" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="lifemax_feed_cats"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/lm_sc_feed_short"
+        android:shortcutLongLabel="@string/lm_sc_feed_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lifemax://cats/feed"
+            android:targetPackage="com.lifemax.rpg"
+            android:targetClass="com.lifemax.rpg.MainActivity" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/lm_feature_feed" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="lifemax_quests"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/lm_sc_quests_short"
+        android:shortcutLongLabel="@string/lm_sc_quests_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lifemax://open?feature=quests"
+            android:targetPackage="com.lifemax.rpg"
+            android:targetClass="com.lifemax.rpg.MainActivity" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/lm_feature_quests" />
+        </capability-binding>
+    </shortcut>
+
+    <!-- ===== Built-in intent: "Create <name> in LifeMax" -> add to the Life Director schedule ===== -->
+    <!-- actions.intent.CREATE_THING only carries a name and a description; the app asks for the time itself. -->
+    <capability android:name="actions.intent.CREATE_THING">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lifemax.rpg"
+            android:targetClass="com.lifemax.rpg.MainActivity">
+            <url-template android:value="lifemax://schedule/add{?title,description}" />
+            <parameter android:name="thing.name" android:key="title" />
+            <parameter android:name="thing.description" android:key="description" />
+        </intent>
+    </capability>
+
+    <!-- ===== Built-in intent: "Open <feature> in LifeMax" (feed cats, quests, schedule) ===== -->
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lifemax.rpg"
+            android:targetClass="com.lifemax.rpg.MainActivity">
+            <url-template android:value="lifemax://open{?feature}" />
+            <parameter android:name="feature" android:key="feature" />
+        </intent>
+    </capability>
+
+</shortcuts>

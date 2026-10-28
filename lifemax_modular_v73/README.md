@@ -713,3 +713,10 @@ The Food tab has three panes (Log, Plan, Shopping). Plan shows exactly what to e
 
 ## v192 — Smart Diet gets smarter
 The Plan pane now follows the day as it happens. Meals you log keep what you logged, **Skip** drops a meal, and the meals still to come are re-solved so the day lands on the target given everything already eaten, including food that was not on the plan ("You ate 420 kcal outside the plan, so I trimmed the meals still to come by about 16%"). A coach line explains what changed or what to do next (protein behind after 2pm, start-of-day nudge, hard-day note, day complete). The hero is now a **fuel line**: one segment per meal, sized by calories, filled when logged, hatched when skipped, pulsing on the next one, with a grey segment for off-plan food. Meals are compact rows (time of day, name, calories, a tick or "next"); the next one is open by default and the rest expand on tap. Tests: 22 in `tests/smartdiet.test.js`.
+
+## v193: Assistant / Gemini actions (deep links)
+- `src/runtime/segments/50-deeplink.js` handles `lifemax://schedule/add?title=`, `lifemax://cats/feed`, `lifemax://open?feature=` (schedule, cats, feed, quests). Links that arrive before the app is ready are queued; a repeat within 3 s is ignored.
+- Schedule links hand the title to the voice engine ("Put X on my schedule"), which asks for the time. Feed links feed every living cat (data-level, so it works with one or two cats).
+- Android (needs a new APK, `NativeApi.VALUE` = 5): `android-wrapper/res/xml/shortcuts.xml` (static shortcuts plus `CREATE_THING` and `OPEN_APP_FEATURE` capabilities), `lifemax_shortcuts.xml` strings, `patch_manifest.py` adds the `lifemax://` intent-filter and the shortcuts meta-data, `@capacitor/app` added.
+- Test without Google: `adb shell am start -a android.intent.action.VIEW -d "lifemax://cats/feed" com.lifemax.rpg`.
+- Tests: `tests/deeplink.test.js` (15).
