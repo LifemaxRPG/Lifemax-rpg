@@ -2317,10 +2317,15 @@
   },
   {
    "file": "src/runtime/segments/50-smartdiet.js",
-   "bytes": 31769,
+   "bytes": 34499,
    "statement_count": 0,
    "tags": [],
-   "symbols": []
+   "symbols": [
+    "sdDirectorDay",
+    "sdDirectorSlot",
+    "sdDirectorMeal",
+    "sdOpenDirectorMeal"
+   ]
   },
   {
    "file": "src/runtime/segments/50-deeplink.js",

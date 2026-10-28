@@ -2889,7 +2889,7 @@ const LifeDirectorApp = (function () {
     for (const g of sched.segments || []) {
       if (g.endEpoch <= s || g.startEpoch >= e) continue;
       if (['FREE', 'SCHEDULED_TASK', 'USER_LOCKED_ACTIVITY'].includes(g.code)) continue;
-      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, clipped: g.startEpoch < s || g.endEpoch > e });
+      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, mealStartEpoch: g.kind === 'MEAL' ? g.startEpoch : undefined, clipped: g.startEpoch < s || g.endEpoch > e });
     }
     const insts = (sched.scheduledInstances || []).concat(sched.historyInstances || []).filter(i => i.endEpoch > s && i.startEpoch < e && !['EXCUSED_DISPLACED', 'CANCELLED_BY_QUEST'].includes(i.lifecycleState));
     for (const i of insts) out.push({ startEpoch: i.startEpoch, endEpoch: i.endEpoch, code: 'TASK', kind: 'TASK', title: i.title, inst: i });
@@ -3129,7 +3129,7 @@ const LifeDirectorApp = (function () {
         const d = arcD(DIAL.RI, a0, a1), chord = (a1 - a0) * Math.PI / 180 * DIAL.RI;
         let ic = '';
         if (chord >= 9) { const sz = Math.min(12, Math.floor(chord - 1)), [x, y] = polar(DIAL.RI, (a0 + a1) / 2); ic = mealPx(sz, 'ld-sico').replace('<svg class="px ld-sico"', '<svg class="px ld-sico" x="' + (x - sz / 2).toFixed(1) + '" y="' + (y - sz / 2).toFixed(1) + '"'); }
-        inner += '<g class="ld-meal" data-act="anchor" data-k="meal" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" role="button" tabindex="0" aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '">' +
+        inner += '<g class="ld-meal"' + mealAnchor(b) + ' aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '">' +
           '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ma" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + ic + '</g>';
       } else if (k === 'rest') {
         inner += '<path class="ld-rest" d="' + arcD(DIAL.RI, a0, a1) + '" stroke-width="5" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '"/>';
@@ -3404,10 +3404,30 @@ const LifeDirectorApp = (function () {
     }
     return out;
   }
+  /* Meal blocks retain their original scheduling identity. Recipes are read
+     from Smart Diet at display/tap time, including swaps and diet preferences. */
+  function scheduledMealRef(b) {
+    const start = b.mealStartEpoch || b.startEpoch;
+    return { title: b.title, startEpoch: start, day: U.ymdKey(U.localParts(start, tz())) };
+  }
+  function scheduledMeal(b) {
+    if (b.inst || blockClass(b) !== 'meal') return null;
+    try { return window.LifeMaxMeals && LifeMaxMeals.resolveScheduled(scheduledMealRef(b)); } catch (e) { return null; }
+  }
+  function mealAnchor(b) {
+    return ' data-act="anchor" data-k="meal" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-ms="' + (b.mealStartEpoch || b.startEpoch) + '" role="button" tabindex="0"';
+  }
+  function openScheduledMeal(d) {
+    if (!window.LifeMaxMeals || typeof LifeMaxMeals.openScheduled !== 'function') return false;
+    try { return LifeMaxMeals.openScheduled(scheduledMealRef({title: d.t, startEpoch: +d.s, mealStartEpoch: +d.ms || +d.s})); }
+    catch (e) { console.warn('[Life Director] meal link', e); say('Could not open this meal. Try Food → Plan.'); return true; }
+  }
   /* what to call the thing you are doing */
   function doingName(b) {
     if (b.inst) return b.inst.title;
     const k = blockClass(b);
+    const meal = k === 'meal' ? scheduledMeal(b) : null;
+    if (meal) return meal.name;
     if (k === 'free') return 'Free time';
     if (k === 'rest') return 'Downtime';
     if (b.kind === 'SLEEP' || k === 'sleep') return 'Sleeping';
@@ -3459,6 +3479,7 @@ const LifeDirectorApp = (function () {
       sub = (done ? 'free until ' : 'left · until ') + fC(c.endEpoch);
       if (st.isSes) btn = '<button class="ld-core-btn ld-core-btn-go" data-act="focusStart" data-id="' + esc(c.inst.instanceId) + '">Start</button>';
       else if (c.inst) btn = '<button class="ld-core-btn" data-act="inst" data-id="' + esc(c.inst.instanceId) + '">Details</button>';
+      else if (cc === 'meal' && window.LifeMaxMeals) btn = '<button class="ld-core-btn"' + mealAnchor(c) + '>View meal</button>';
     } else {
       k = '<small class="ld-core-k">Now</small>'; title = 'Free time'; big = ''; sub = '';
     }
@@ -3469,7 +3490,7 @@ const LifeDirectorApp = (function () {
       if (!fi && !st.isSes) btn = '<button class="ld-core-btn ld-core-btn-go" data-act="focusStart" data-id="' + esc(b.inst.instanceId) + '">Start early</button>';
     } else if (st.next) {
       const b = st.next, same = U.ymdKey(U.localParts(b.startEpoch, tz())) === U.ymdKey(U.localParts(now, tz()));
-      nx = '<div class="ld-core-nx"><span>Next' + (b.startEpoch - now < 3 * 3600 ? ' in ' + relText(b.startEpoch - now) : ' · ' + (same ? '' : 'Tomorrow ') + fC(b.startEpoch)) + '</span><b>' + esc(doingName(b)) + '</b></div>';
+      nx = '<div class="ld-core-nx"' + (!b.inst && blockClass(b) === 'meal' ? mealAnchor(b) : '') + '><span>Next' + (b.startEpoch - now < 3 * 3600 ? ' in ' + relText(b.startEpoch - now) : ' · ' + (same ? '' : 'Tomorrow ') + fC(b.startEpoch)) + '</span><b>' + esc(doingName(b)) + '</b></div>';
     } else nx = '<div class="ld-core-nx"><span>Nothing else planned today</span></div>';
     return '<div class="ld-core-in' + cls + (btn ? ' ld-has-btn' : '') + '" data-kick="' + (st.kick ? st.kick.kind : '') + '" data-soon="' + (st.soon ? 1 : '') + '">' + k + '<b class="ld-core-t">' + esc(title) + '</b>' + big + (sub ? '<span class="ld-core-s">' + sub + '</span>' : '') + nx + btn + '</div>';
   }
@@ -3531,8 +3552,9 @@ const LifeDirectorApp = (function () {
         const q = b.inst.linkedQuestRequirementIds.length ? '<span class="ld-chip ld-chip-quest">' + icon('flag', 10) + ' ' + esc(b.inst.linkedQuestRequirementIds.map(l => l.questTitle).join(', ')) + '</span>' : '';
         chips = '<div class="ld-chips">' + q + (b.inst.goalTitle ? '<span class="ld-chip">' + esc(b.inst.goalTitle) + '</span>' : '') + (st === 'PLANNED' && !opts.lab ? xpChip(b.inst) : '') + (b.inst.isUserLocked ? '<span class="ld-chip">' + icon('lock', 10) + ' Pinned</span>' : '') + '</div>';
       }
-      const sub = !b.inst && k === 'rest' ? '<div class="ld-ri-sub">Kept clear. Nothing gets booked here.</div>' : '';
-      const attrs = b.inst ? ' data-act="' + (opts.lab ? 'labInst' : 'inst') + '" data-id="' + esc(b.inst.instanceId) + '" role="button" tabindex="0"' : '';
+      const meal = !opts.lab && k === 'meal' ? scheduledMeal(b) : null;
+      const sub = meal ? '<div class="ld-ri-sub ld-meal-recipe">' + esc(meal.name) + ' · ' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : meal.kcal + ' kcal') + ' · View meal ›</div>' : !b.inst && k === 'rest' ? '<div class="ld-ri-sub">Kept clear. Nothing gets booked here.</div>' : '';
+      const attrs = b.inst ? ' data-act="' + (opts.lab ? 'labInst' : 'inst') + '" data-id="' + esc(b.inst.instanceId) + '" role="button" tabindex="0"' : !opts.lab && k === 'meal' ? mealAnchor(b) : '';
       return '<li class="ld-ri ld-c-' + k + (b.inst ? ' ld-ri-ses ld-s-' + sesState(st) : '') + (isNow ? ' ld-now' : '') + (past ? ' ld-past' : '') + fx.cls + justDone + '"' + attrs + (fx.tag ? ' data-fx="' + fx.tag + '"' : '') + '>' +
         '<time><b>' + fTime(b.startEpoch, z) + '</b><small>' + mins(m) + '</small></time><i class="ld-rail" aria-hidden="true"></i>' +
         '<div class="ld-ri-b"><div class="ld-ri-t">' + (b.inst ? icon(tagIcon(b.inst.tag), 13) : kindIcon(k, 13)) + '<span>' + esc(b.title) + '</span>' + stl + (isNow ? '<span class="ld-nowtag">Now</span>' : '') + '</div>' + chips + sub + '</div></li>';
@@ -4281,6 +4303,7 @@ const LifeDirectorApp = (function () {
       case 'earlier': ui.earlierOpen = !b.parentElement.open; break;
       case 'anchor': {
         const k = b.dataset.k, when = fTime(+b.dataset.s) + '–' + fTime(+b.dataset.e);
+        if (k === 'meal' && openScheduledMeal(b.dataset)) { closeSheet(); break; }
         say(b.dataset.t + ' · ' + when + (k === 'sleep' || k === 'work' ? '. Drag its handle to change it.' : k === 'maint' || k === 'meal' ? '. ' + (k === 'meal' ? 'Meals' : 'Routines') + ' are set in My time.' : ''));
         break;
       }
@@ -4573,6 +4596,7 @@ const LifeDirectorApp = (function () {
   }
   /* jump from the Overview into Life Director, then repeat the tap there */
   function openFromGlance(t) {
+    if (t && t.dataset.act === 'anchor' && t.dataset.k === 'meal' && openScheduledMeal(t.dataset)) return;
     if (typeof navigate === 'function') navigate('life-director');
     if (ST) { ui.tab = ST.setupComplete ? 'today' : 'setup'; ui.dayIdx = 0; ST.ui.tab = ui.tab; }
     const v = document.getElementById('view-life-director');

@@ -778,3 +778,9 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Update selection compares the installed APK separately from the active OTA web build. Both the release native API and the web minimum API can require an APK. Invalid or incompatible release metadata is shown as an error instead of "latest". Manual checks show the APK update prompt too; Android still handles install permission and confirmation.
 - Settings displays the latest release build and native API comparison for diagnosis. Existing APKs need the native updater fix installed once; new checks cannot replace code already running inside an older APK.
 - Checks: `node tests/updater-plan.test.js` (16 plan/flow checks); `python3 tests/updater-network.test.py` (Java source-launch test of actual HTTP methods with an offline redirect server substitute). The existing browser OTA suite reflects APK selection from either native requirement.
+
+## v209: Life Director meals open Smart Diet
+- Breakfast, Lunch and Dinner blocks in Life Director now link to the matching meal in that date's Smart Diet plan. The running order shows the current recipe, calories and logged/skipped status. The dial, current/next meal and Overview dial also open the meal.
+- Links use the meal slot and scheduled date, resolved at tap time, so swaps, dietary preferences, portion changes and logging stay current. The schedule's timezone is used; meal blocks clipped at midnight retain their original date. No food entries are created by viewing a meal.
+- Food opens on Plan with the selected meal's ingredients expanded and focused. Unknown meal names fall back to that day's plan with an explanation. Standalone Life Director remains usable without the Smart Diet bridge.
+- Web-only change; native API stays at 8. Check: `node tests/director-meals.test.js` (17 checks using real meal data and Life Director handlers).

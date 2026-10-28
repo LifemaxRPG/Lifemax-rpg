@@ -123,7 +123,7 @@ function sdNextCard(d){
   const tags=(m.tags||[]).filter(function(x){return x==='leftover'||x==='vegan'||x==='no_cook'||x==='shake'||x==='quick'}).map(function(x){return {leftover:'Leftover',vegan:'Vegan',no_cook:'No cooking',shake:'Shake',quick:'Quick'}[x]}).join(' · ');
   const cell=function(v,l,c,cls){return '<div class="'+(cls||'')+'"><b'+(c?' style="color:'+c+'"':'')+'>'+v+'</b><small>'+l+'</small></div>'};
   const top=it.ings.slice().sort(function(a,b){return b.g*sdFactor(b,d.s)-a.g*sdFactor(a,d.s)}).slice(0,4).map(function(x){return esc(sdData().cat[x.ing].n)}).join(' · ');
-  return '<section class="sd-next" style="--sc:'+sc+'"><div class="sd-nh"><span class="sd-eyebrow"><i></i>Up next · '+esc(sdSlotName(m.slot))+' · '+esc(sdSlotWhen(m.slot))+'</span><span class="sd-nt">'+(m.active_min||0)+' min'+(tags?' · '+tags:'')+'</span></div>'
+  return '<section class="sd-next" data-i="'+i+'" style="--sc:'+sc+'"><div class="sd-nh"><span class="sd-eyebrow"><i></i>Up next · '+esc(sdSlotName(m.slot))+' · '+esc(sdSlotWhen(m.slot))+'</span><span class="sd-nt">'+(m.active_min||0)+' min'+(tags?' · '+tags:'')+'</span></div>'
    +'<h3>'+esc(m.name)+'</h3>'
    +'<div class="sd-stats">'+cell(fv2Fmt(t.kcal),'kcal','','k')+cell(Math.round(t.p)+'<u>g</u>','protein','#ff7a8a')+cell(Math.round(t.c)+'<u>g</u>','carbs','#ffc15e')+cell(Math.round(t.f)+'<u>g</u>','fat','#4fd6c0')+'</div>'
    +(ing?'':'<p class="sd-top">'+top+'</p>')
@@ -208,3 +208,46 @@ function sdOpenSwap(i){
    +((sdS().over[day]&&sdS().over[day][i])?'<div class="fv2-foot"><button type="button" data-sw="reset">Back to the plan</button></div>':'');
   o.classList.add('show');document.body.classList.add('noscroll');requestAnimationFrame(function(){o.querySelector('.sheet').classList.add('fv2-in')});
 }
+
+/* Life Director links by the scheduled calendar date and meal slot, never by a
+   persisted recipe ID or clock hour. Resolve again on every tap so swaps,
+   preferences, portion changes, and logged/skipped meals stay current. */
+function sdDirectorDay(ref){
+  if(!ref)return null;
+  if(ref.day){
+    const day=String(ref.day);if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+    const d=new Date(day+'T12:00:00');return !isNaN(d)&&d.getFullYear()===+day.slice(0,4)&&d.getMonth()+1===+day.slice(5,7)&&d.getDate()===+day.slice(8,10)?day:null;
+  }
+  const epoch=Number(ref.startEpoch);if(!Number.isFinite(epoch)||epoch<=0)return null;
+  const d=new Date(epoch*1000);if(isNaN(d))return null;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function sdDirectorSlot(ref){
+  const key=String(ref&&(ref.slot||ref.title)||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
+  return {breakfast:'breakfast',lunch:'lunch',dinner:'dinner',snack:'snack',snacks:'snack',before_training:'pre_workout',pre_workout:'pre_workout',after_training:'post_workout',post_workout:'post_workout'}[key]||null;
+}
+function sdDirectorMeal(ref){
+  const day=sdDirectorDay(ref),slot=sdDirectorSlot(ref);if(!day||!slot)return null;
+  const d=sdDay(day);if(!d)return null;
+  const i=d.items.findIndex(function(it){return it.meal.slot===slot});if(i<0)return null;
+  const it=d.items[i];return {day:day,index:i,slot:slot,name:it.meal.name,kcal:Math.round(it.tot.kcal),logged:!!it.logged,skipped:!!it.skipped};
+}
+function sdOpenDirectorMeal(ref){
+  const day=sdDirectorDay(ref);if(!day)return false;
+  const match=sdDirectorMeal(ref),U=sdUi();
+  mealsDay=day;fv2S().pane='plan';
+  if(match){const key=day+':'+match.index;U.open=U.open||{};U.ing=U.ing||{};U.open[key]=true;U.ing[key]=true}
+  if(typeof lmaNavTo==='function')lmaNavTo('meals',{fast:true});else navigate('meals');
+  renderMeals();
+  if(!match){toast('No Smart Diet meal is linked to this block. Here is the plan for that day.');return true}
+  requestAnimationFrame(function(){
+    const root=document.getElementById('fv2Root');if(!root||mealsDayKey()!==day)return;
+    const card=root.querySelector('.sd-next[data-i="'+match.index+'"],.sd-meal[data-i="'+match.index+'"]');if(!card)return;
+    if(card.tagName==='DETAILS')card.open=true;
+    const method=card.querySelector('.sd-how');if(method)method.open=true;
+    card.setAttribute('tabindex','-1');card.focus({preventScroll:true});
+    card.scrollIntoView({block:'start',behavior:typeof lmaMotionOff==='function'&&lmaMotionOff()?'auto':'smooth'});
+  });
+  return true;
+}
+window.LifeMaxMeals=Object.freeze({resolveScheduled:sdDirectorMeal,openScheduled:sdOpenDirectorMeal});
