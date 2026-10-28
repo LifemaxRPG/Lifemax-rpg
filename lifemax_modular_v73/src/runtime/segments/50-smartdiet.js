@@ -120,14 +120,16 @@ function sdMacroBar(t){const p=t.p*4,c=t.c*4,f=t.f*9,s=p+c+f||1;return '<span cl
 /* the next meal, up top: what it is, what is in it, and the buttons to act on it */
 function sdNextCard(d){
   const i=d.next,it=d.items[i],m=it.meal,t=it.tot,U=sdUi(),key=d.day+':'+i,ing=!!(U.ing&&U.ing[key]),sc=sdSlotColor(m.slot);
-  const tags=(m.tags||[]).filter(function(x){return x==='leftover'||x==='vegan'||x==='no_cook'||x==='shake'||x==='quick'}).map(function(x){return '<em>'+({leftover:'Leftover',vegan:'Vegan',no_cook:'No cooking',shake:'Shake',quick:'Quick'}[x])+'</em>'}).join('');
-  const mac=function(l,v,c){return '<span class="mc" style="--c:'+c+'"><b>'+Math.round(v)+'</b><small>'+l+'</small></span>'};
+  const tags=(m.tags||[]).filter(function(x){return x==='leftover'||x==='vegan'||x==='no_cook'||x==='shake'||x==='quick'}).map(function(x){return {leftover:'Leftover',vegan:'Vegan',no_cook:'No cooking',shake:'Shake',quick:'Quick'}[x]}).join(' · ');
+  const cell=function(v,l,c,cls){return '<div class="'+(cls||'')+'"><b'+(c?' style="color:'+c+'"':'')+'>'+v+'</b><small>'+l+'</small></div>'};
   const top=it.ings.slice().sort(function(a,b){return b.g*sdFactor(b,d.s)-a.g*sdFactor(a,d.s)}).slice(0,4).map(function(x){return esc(sdData().cat[x.ing].n)}).join(' · ');
-  return '<section class="sd-next" style="--sc:'+sc+'"><div class="sd-nh"><span class="sd-eyebrow">UP NEXT · '+esc(sdSlotName(m.slot)).toUpperCase()+' · '+esc(sdSlotWhen(m.slot)).toUpperCase()+'</span><span class="sd-nt">'+(m.active_min||0)+' min</span></div>'
-   +'<h3>'+esc(m.name)+'</h3><div class="sd-nk"><b>'+fv2Fmt(t.kcal)+'</b><small>kcal</small><div class="sd-nm">'+mac('P',t.p,'#ff7a8a')+mac('C',t.c,'#ffc15e')+mac('F',t.f,'#4fd6c0')+mac('Fiber',t.fib,'#9aa6c8')+'</div></div>'
-   +(tags?'<div class="sd-tags">'+tags+'</div>':'')+(ing?'':'<p class="sd-top">'+top+'</p>')
+  return '<section class="sd-next" style="--sc:'+sc+'"><div class="sd-nh"><span class="sd-eyebrow"><i></i>Up next · '+esc(sdSlotName(m.slot))+' · '+esc(sdSlotWhen(m.slot))+'</span><span class="sd-nt">'+(m.active_min||0)+' min'+(tags?' · '+tags:'')+'</span></div>'
+   +'<h3>'+esc(m.name)+'</h3>'
+   +'<div class="sd-stats">'+cell(fv2Fmt(t.kcal),'kcal','','k')+cell(Math.round(t.p)+'<u>g</u>','protein','#ff7a8a')+cell(Math.round(t.c)+'<u>g</u>','carbs','#ffc15e')+cell(Math.round(t.f)+'<u>g</u>','fat','#4fd6c0')+'</div>'
+   +(ing?'':'<p class="sd-top">'+top+'</p>')
    +(ing?'<ul class="sd-ings">'+it.ings.map(function(x){return sdIngLine(x,d.s)}).join('')+'</ul><ol class="sd-steps">'+m.steps.map(function(s){return '<li>'+esc(s)+'</li>'}).join('')+'</ol>'+((m.equipment||[]).length?'<p class="sd-eq">You need: '+esc(m.equipment.join(', '))+'.</p>':''):'')
-   +'<div class="sd-na"><button type="button" class="pri" data-a="sd-log" data-i="'+i+'">Log meal</button><button type="button" data-a="sd-ing" data-i="'+i+'">'+(ing?'Hide details':'Ingredients')+'</button><button type="button" data-a="sd-swap" data-i="'+i+'">Swap</button><button type="button" data-a="sd-skip" data-i="'+i+'">Skip</button></div></section>';
+   +'<button type="button" class="sd-go" data-a="sd-log" data-i="'+i+'">Log this meal</button>'
+   +'<div class="sd-na"><button type="button" data-a="sd-ing" data-i="'+i+'">'+(ing?'Hide details':'Ingredients')+'</button><button type="button" data-a="sd-swap" data-i="'+i+'">Swap</button><button type="button" data-a="sd-skip" data-i="'+i+'">Skip</button></div></section>';
 }
 function sdPlanHtml(){
   const day=mealsDayKey(),d=sdDay(day);if(!d)return '<div class="fv2-none"><b>No plan for this day</b><span>The Smart Diet plan is built for the Athlete class.</span></div>';

@@ -732,3 +732,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 ## v196: Plan pane leads with the next meal
 - The meal-icon strip is gone. The Plan pane now opens with a slim day bar (kcal, to go, protein), then an **Up next** card: meal name, kcal and P/C/F/Fiber, its main ingredients, and buttons for Log meal, Ingredients (expands the full list and method in place), Swap and Skip.
 - Below it: the coach line, prep tasks, diet settings, and **Rest of today** (the other meals, collapsed). When every meal is handled the card gives way to the day-complete message.
+
+## v197: Up next, flat
+- The Up next card lost its box, glow and accent bar. It is now open type on the page: a slot dot and time, the meal name large, a hairline stat row (kcal, protein, carbs, fat), the main ingredients, a solid Log this meal button and quiet Ingredients / Swap / Skip text actions.

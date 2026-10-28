@@ -352,3 +352,18 @@ html.light-theme .sd-more footer .pri{color:#fff}
 .sd-rest{margin:6px 4px -4px}
 .sd-slim .sd-hl{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:2px 12px}.sd-slim .sd-eyebrow{grid-column:1/3}.sd-slim .sd-sub{justify-content:flex-end;text-align:right;font-size:12.5px;gap:6px}
 .sd-na{grid-template-columns:1.3fr 1.35fr .8fr .8fr}.sd-na button{padding:12px 4px;font-size:12.5px}.sd-na .pri{font-size:13.5px}
+
+/* v197: Up next as an open, flat layout (no card, no glow) */
+.sd-next{background:none;box-shadow:none;border:0;border-radius:0;padding:6px 2px 2px;gap:12px}.sd-next::before{display:none}
+.sd-nh .sd-eyebrow{color:var(--muted);display:flex;align-items:center;gap:8px}.sd-nh .sd-eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--sc);flex:none}
+.sd-nt{font-size:12px;font-weight:600;color:var(--muted)}
+.sd-next h3{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.12}
+.sd-stats{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.sd-stats>div{display:flex;flex-direction:column;gap:2px;padding:12px 0 11px 14px;border-left:1px solid var(--line-soft)}.sd-stats>div:first-child{border-left:0;padding-left:0}
+.sd-stats b{font-size:21px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}.sd-stats .k b{font-size:30px}
+.sd-stats u{text-decoration:none;font-size:12px;font-weight:700;margin-left:1px;opacity:.7}.sd-stats small{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sd-top{font-size:13.5px;color:var(--text-dim)}
+.sd-go{width:100%;padding:15px;border-radius:16px;border:0;background:var(--text);color:var(--bg);font:inherit;font-size:15px;font-weight:800;letter-spacing:.01em;cursor:pointer}.sd-go:active{transform:scale(.98)}
+.sd-na{display:flex;justify-content:space-around;margin-top:0;padding:0}.sd-na button{flex:1;background:none;border:0;padding:6px 4px;color:var(--text-dim);font-size:13px;font-weight:700}
+.sd-na button+button{border-left:1px solid var(--line-soft)}
+.sd-na button{border-radius:0}.sd-na button+button{border-top:0;border-right:0;border-bottom:0}
