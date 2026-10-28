@@ -44,7 +44,8 @@ public class LiveWebPlugin extends Plugin {
         new Thread(() -> {
             File tmp = new File(LiveWeb.root(getContext()), "download.tmp");
             try {
-                HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                HttpURLConnection c = (HttpURLConnection) new URL(UpdaterPlugin.freshUrl(url)).openConnection();
+                c.setUseCaches(false);
                 c.setConnectTimeout(15000); c.setReadTimeout(30000); c.setInstanceFollowRedirects(true);
                 if (c.getResponseCode() != 200) { call.reject("server answered " + c.getResponseCode()); return; }
                 long total = c.getContentLengthLong(), got = 0; int last = -1;

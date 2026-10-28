@@ -1711,7 +1711,7 @@
   },
   {
    "file": "src/runtime/segments/35-android-upkeep.js",
-   "bytes": 12771,
+   "bytes": 13888,
    "statement_count": 11,
    "tags": [
     "android",

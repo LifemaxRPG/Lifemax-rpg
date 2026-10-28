@@ -6,10 +6,21 @@ const lmaAgo=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);r
 /* ---------- updates ---------- */
 /* What a new release needs: 'apk' (the Android shell changed), 'web' (only the app itself changed: download it, no install), or 'none'. */
 function lmaUpdPlan(r,st){
- const apkNewer=r.latest>r.current&&!!r.apk;
- if(!st||!r.latestNativeApi||!r.webBuild)return apkNewer?'apk':'none';           /* an older shell or an old-style release file: the APK is the only way */
- if(r.latestNativeApi>st.nativeApi)return apkNewer?'apk':'none';                 /* the new build needs abilities this APK does not have */
- if(r.webBuild>Math.max(r.current,st.activeBuild||0)&&r.webMinApi<=st.nativeApi)return 'web';
+ const latest=Number(r.latest),current=Number(st&&st.installedBuild)||Number(r.current);
+ if(!Number.isFinite(latest)||latest<=0||!Number.isFinite(current)||current<=0)throw Error('Could not verify the installed and latest APK versions. Try checking again.');
+ if(latest<Math.max(current,Number(st&&st.activeBuild)||0,Number(st&&st.staged)||0))throw Error('The server returned older release information than this app has already seen. Try checking again shortly.');
+ const apkNewer=latest>current&&typeof r.apk==='string'&&r.apk.startsWith('https://');
+ const native=Number(st&&st.nativeApi)||Number(r.nativeApi)||0;
+ const required=Math.max(Number(r.latestNativeApi)||0,Number(r.webMinApi)||0);
+ if(required&&native&&required>native){
+  if(apkNewer)return 'apk';
+  throw Error('This release requires a newer Android app, but no newer installable APK was provided.');
+ }
+ if(!st||!required||!Number(r.webBuild)||!native)return apkNewer?'apk':'none';
+ if(Number(r.webBuild)>Math.max(current,Number(st.activeBuild)||0)){
+  if(!r.webUrl||!/^https:\/\//.test(r.webUrl)||!r.webSha||!/^[a-f0-9]{64}$/i.test(r.webSha))throw Error('The web update is missing its download details. Try checking again.');
+  return 'web';
+ }
  return 'none';
 }
 async function lmaCheckUpdate(silent){
@@ -23,7 +34,7 @@ async function lmaCheckUpdate(silent){
   lmaUpd.state=lmaUpd.plan==='apk'?'available':lmaUpd.plan==='web'?'web':'latest';
   lmaLoad().updChecked=Date.now();lmaSave();lmaUpd.autoErr='';lmaUpdTries=0;
   if(lmaUpd.plan==='web'&&(silent||lmaLoad().webAuto!==false)){await lmaWebUpdate();return}
-  if(silent&&lmaUpd.state==='available')lmaUpdPopOpen();
+  if(lmaUpd.state==='available')lmaUpdPopOpen();
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent){lmaUpd.state='idle';lmaUpd.autoErr=lmaUpd.err;if(lmaUpdTries<3)setTimeout(()=>lmaCheckUpdate(true),[15000,45000,120000][lmaUpdTries++])}}
  lmaRenderUpdates();
 }
@@ -91,9 +102,10 @@ function lmaRenderUpdates(){
  if(!lmaNative()){lmaSetHtml('lmaUpdBody','<div class="note">Updates are managed inside the Android app.</div>');return}
  const u=lmaUpd,i=u.info,cur=i?i.current:'';
  const live=u.live&&u.live.activeBuild?' · app updated over the air to build '+u.live.activeBuild:'';
+ const native=i&&(Number(u.live&&u.live.nativeApi)||Number(i.nativeApi)),required=i&&Math.max(Number(i.latestNativeApi)||0,Number(i.webMinApi)||0);
  let h='<div class="settingsline"><div style="flex:1"><strong>'+(i?'Installed build '+cur:'Installed build')+live+'</strong><div class="muted" style="font-size:12px">';
- h+=u.state==='checking'?'Checking…':u.state==='latest'?'You have the newest build.':u.state==='web'?'A web update is available.':u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
- h+='</div></div>';
+ h+=u.state==='checking'?'Checking…':u.state==='latest'?'No newer compatible update was reported by the server.':u.state==='web'?'A web update is available.':u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
+ h+='</div>'+(i?'<div class="muted" style="font-size:12px">Latest release: '+esc(i.latest)+(native?' · Android API '+native+(required?' / requires '+required:''):'')+'</div>':'')+'</div>';
  if(u.state==='available'||u.state==='permission')h+='<button class="btn" onclick="lmaInstallUpdate()">Update</button>';
  else if(u.state==='webready')h+='<button class="btn" onclick="lmaWebRestart()">Restart</button>';
  else if(u.state==='web')h+='<button class="btn" onclick="lmaWebUpdate()">Download</button>';

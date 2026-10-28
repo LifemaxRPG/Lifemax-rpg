@@ -7,19 +7,19 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   p.on('pageerror', e => errs.push(String(e)));
   await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true}));");
   await p.goto('file://' + file); await p.waitForTimeout(900);
-  const plan = (r, st) => p.evaluate(([r, st]) => lmaUpdPlan(r, st), [r, st]);
+  const plan = (r, st) => p.evaluate(([r, st]) => (() => {try{return lmaUpdPlan(r,st)}catch(e){return 'error'}})(), [r, st]);
   const REL = { current: 100, latest: 105, apk: 'https://x/apk', nativeApi: 1, latestNativeApi: 1, webBuild: 105, webUrl: 'https://x/app.html', webSha: 'a'.repeat(64), webMinApi: 1 };
   const ST = { nativeApi: 1, installedBuild: 100, activeBuild: 0, staged: 0 };
   ok('web-only release: a web update, no APK', await plan(REL, ST) === 'web');
   ok('the release needs newer native abilities: the APK is offered', await plan({ ...REL, latestNativeApi: 2, webMinApi: 2 }, ST) === 'apk');
-  ok('new abilities but the APK is not newer: nothing to install', await plan({ ...REL, latestNativeApi: 2, webMinApi: 2, latest: 100 }, ST) === 'none');
+  ok('new abilities without a newer APK: invalid release is surfaced', await plan({ ...REL, latestNativeApi: 2, webMinApi: 2, latest: 100 }, ST) === 'error');
   ok('already running that web build over the air: nothing to do', await plan(REL, { ...ST, activeBuild: 105 }) === 'none');
   ok('an installed APK as new as the release: nothing to do', await plan({ ...REL, current: 105 }, { ...ST, installedBuild: 105 }) === 'none');
   ok('an older web build over the air is replaced by a newer release', await plan(REL, { ...ST, activeBuild: 103 }) === 'web');
-  ok('an old-style release file (no web block): the APK, as before', await plan({ current: 100, latest: 105, apk: 'u' }, ST) === 'apk');
+  ok('an old-style release file (no web block): the APK, as before', await plan({ current: 100, latest: 105, apk: 'https://x/apk' }, ST) === 'apk');
   ok('a shell without the over-the-air plugin: the APK, as before', await plan(REL, null) === 'apk');
   ok('nothing newer: up to date', await plan({ ...REL, latest: 100, webBuild: 100 }, ST) === 'none');
-  ok('the web build is for newer abilities than this APK has: not applied', await plan({ ...REL, webMinApi: 2 }, ST) === 'none');
+  ok('higher web minimum also offers the APK', await plan({ ...REL, webMinApi: 2 }, ST) === 'apk');
   // the flow with a mocked shell
   await p.evaluate(({ REL, ST }) => {
     window.__calls = []; window.__st = Object.assign({}, ST);

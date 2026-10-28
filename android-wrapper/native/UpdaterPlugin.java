@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.UUID;
 
 /** Checks the GitHub release for a newer build and hands the downloaded APK to Android's installer. */
 @CapacitorPlugin(name = "Updater")
@@ -45,6 +46,11 @@ public class UpdaterPlugin extends Plugin {
             c.setConnectTimeout(15000);
             c.setReadTimeout(30000);
             c.setInstanceFollowRedirects(false);
+            c.setUseCaches(false);
+            if (hop == 0) {
+                c.setRequestProperty("Cache-Control", "no-cache, no-store, max-age=0");
+                c.setRequestProperty("Pragma", "no-cache");
+            }
             c.setRequestProperty("User-Agent", "LifeMax-Updater");
             int code = c.getResponseCode();
             if (code >= 300 && code < 400) {
@@ -59,11 +65,17 @@ public class UpdaterPlugin extends Plugin {
         throw new Exception("too many redirects");
     }
 
+    // The release tag is reused. A unique URL prevents Android and GitHub's
+    // redirect caches from answering a manual check with an older manifest.
+    static String freshUrl(String url) {
+        return url + (url.contains("?") ? "&" : "?") + "lma_check=" + UUID.randomUUID();
+    }
+
     @PluginMethod
     public void check(final PluginCall call) {
         new Thread(() -> {
             try {
-                HttpURLConnection c = open(VERSION_URL);
+                HttpURLConnection c = open(freshUrl(VERSION_URL));
                 if (c.getResponseCode() != 200) { call.reject("Server answered " + c.getResponseCode()); return; }
                 ByteArrayOutputStream bo = new ByteArrayOutputStream();
                 try (InputStream in = c.getInputStream()) {
@@ -72,7 +84,10 @@ public class UpdaterPlugin extends Plugin {
                     while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
                 }
                 JSONObject j = new JSONObject(bo.toString("UTF-8"));
+                if (j.optLong("build", 0) <= 0 || !j.optString("apk", "").startsWith("https://"))
+                    throw new Exception("The server did not provide a valid release version. Try again shortly.");
                 JSObject ret = new JSObject();
+                ret.put("checkedAt", System.currentTimeMillis());
                 ret.put("current", installedBuild());
                 ret.put("latest", j.optLong("build", 0));
                 ret.put("sha", j.optString("sha", ""));
@@ -115,7 +130,7 @@ public class UpdaterPlugin extends Plugin {
                 File dir = new File(getContext().getCacheDir(), "update");
                 if (!dir.exists()) dir.mkdirs();
                 File apk = new File(dir, "LifeMax-RPG.apk");
-                HttpURLConnection c = open(url);
+                HttpURLConnection c = open(freshUrl(url));
                 if (c.getResponseCode() != 200) { call.reject("Download answered " + c.getResponseCode()); return; }
                 long total = c.getContentLengthLong(), got = 0;
                 int lastPct = -1;
