@@ -3426,8 +3426,7 @@ const LifeDirectorApp = (function () {
   function doingName(b) {
     if (b.inst) return b.inst.title;
     const k = blockClass(b);
-    const meal = k === 'meal' ? scheduledMeal(b) : null;
-    if (meal) return meal.name;
+    if (k === 'meal') return b.title || 'Meal';
     if (k === 'free') return 'Free time';
     if (k === 'rest') return 'Downtime';
     if (b.kind === 'SLEEP' || k === 'sleep') return 'Sleeping';

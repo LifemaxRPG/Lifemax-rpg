@@ -61,13 +61,20 @@ check('unmatched meal falls back to the date plan with an explanation',()=>{asse
 // production has no test API and the scheduler itself remains unchanged.
 let director=read('src/features/life-director/logic.js');
 const marker='  return { mount, glance, widgetSnapshot, voice: voiceApi';assert(director.includes(marker));
-director=director.replace(marker,`  return { test: { scheduledMealRef, scheduledMeal, mealAnchor, roHtml, onClick, openFromGlance, dayBlocks,
+director=director.replace(marker,`  return { test: { doingName, scheduledMealRef, scheduledMeal, mealAnchor, roHtml, onClick, openFromGlance, dayBlocks,
  setRoot(r){root=r;ST={availability:{timezone:'Asia/Tokyo'},ui:{},schedule:null};} }, mount, glance, widgetSnapshot, voice: voiceApi`);
 vm.runInContext(director,s);const test=vm.runInContext('LifeDirectorApp.test',s);
 const fakeSheet={hidden:true,classList:{contains:()=>false}};
 test.setRoot({contains:()=>true,querySelector:()=>fakeSheet});
 const start=Date.parse('2026-10-28T23:00:00Z')/1000;
 const block={kind:'MEAL',code:'MAINT',title:'Lunch',startEpoch:start,endEpoch:start+1800};
+check('dial shows meal labels while recipes stay available through meal links',()=>{
+ for(const title of ['Breakfast','Lunch','Dinner']){
+  const b={...block,title};assert.equal(test.doingName(b),title);
+  assert(test.scheduledMeal(b));assert(test.mealAnchor(b).includes('data-act="anchor"'));
+ }
+ assert.equal(test.doingName({...block,title:''}),'Meal');
+});
 check('Life Director passes its own timezone date, not the phone clock date',()=>assert.equal(test.scheduledMealRef(block).day,'2026-10-29'));
 const html=test.roHtml([block],'Asia/Tokyo');
 check('running order shows current recipe and accessible meal link',()=>{assert(html.includes('data-act="anchor"'));assert(html.includes('role="button" tabindex="0"'));assert(html.includes(s.esc(s.sdDirectorMeal({title:'Lunch',day:'2026-10-29'}).name)))});
@@ -83,3 +90,4 @@ const original=s.LifeMaxMeals;s.LifeMaxMeals=null;
 check('Life Director remains usable without Smart Diet in a standalone build',()=>{assert.equal(test.scheduledMeal(block),null);test.onClick({target:{closest:()=>button}})});
 s.LifeMaxMeals=original;
 console.log(passed+' checks passed');
+

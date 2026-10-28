@@ -30,9 +30,9 @@ jobs:
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
-          latest=$(ls -v lifemax_modular_v73/dist/Life_Max_RPG_v*.html | tail -1)
-          echo "Using $latest"
-          cp "$latest" android-wrapper/www/index.html
+          node lifemax_modular_v73/tests/director-meals.test.js
+          python3 lifemax_modular_v73/build.py
+          python3 lifemax_modular_v73/forge_features.py lifemax_modular_v73/dist/Life_Max_RPG_v73_modular_build.html android-wrapper/www/index.html
 
       - name: Prepare the permanent signing key
         id: key
