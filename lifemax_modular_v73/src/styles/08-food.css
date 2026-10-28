@@ -367,3 +367,9 @@ html.light-theme .sd-more footer .pri{color:#fff}
 .sd-na{display:flex;justify-content:space-around;margin-top:0;padding:0}.sd-na button{flex:1;background:none;border:0;padding:6px 4px;color:var(--text-dim);font-size:13px;font-weight:700}
 .sd-na button+button{border-left:1px solid var(--line-soft)}
 .sd-na button{border-radius:0}.sd-na button+button{border-top:0;border-right:0;border-bottom:0}
+
+/* v198: the day summary as a flat line with a progress bar */
+.sd-day{display:flex;flex-direction:column;gap:9px;padding:2px 2px 4px}
+.sd-dl{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.sd-left{font-size:13px;font-weight:600;color:var(--muted)}.sd-left b{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sd-day .sd-pbar{margin:0;height:6px}
+.sd-dn{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;color:var(--muted)}.sd-dn b{color:var(--text);font-variant-numeric:tabular-nums}

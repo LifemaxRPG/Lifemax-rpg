@@ -735,3 +735,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v197: Up next, flat
 - The Up next card lost its box, glow and accent bar. It is now open type on the page: a slot dot and time, the meal name large, a hairline stat row (kcal, protein, carbs, fat), the main ingredients, a solid Log this meal button and quiet Ingredients / Swap / Skip text actions.
+
+## v198: day summary without the box
+- The Plan pane's day header is a flat line: day type and "N kcal to go" on top, a slim progress bar, then "eaten of total kcal" and protein progress beneath it.

@@ -136,9 +136,9 @@ function sdPlanHtml(){
   const co=sdCoach(d),prepToday=(d.P.prep||[]).filter(function(p){return p.when===sdWeekday(day)}),left=Math.max(0,d.target-d.eaten),pP=d.items.reduce(function(a,i){return a+(i.skipped?0:i.tot.p)},0)+d.extra.p;
   const eatenP=dayFoodLog(day).reduce(function(a,e){return a+(+e.p||0)},0);
   const warn=d.openN&&d.rem<d.kmin-5?'<p class="sd-warn">You are already close to your target: the meals still to come are at their smallest ('+fv2Fmt(d.kmin)+' kcal).</p>':d.openN&&d.rem>d.kmax+5?'<p class="sd-warn">The meals left top out at about '+fv2Fmt(d.kmax)+' kcal, so you will finish a little under your target.</p>':'';
-  let h=sdPaneSwitch('plan')+'<section class="sd-hero sd-slim"><div class="sd-hl"><div class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</div>'
-   +'<div class="sd-big"><b>'+fv2Fmt(d.eaten)+'</b><small>of '+fv2Fmt(d.tot.kcal)+' kcal</small></div><div class="sd-sub"><span>'+fv2Fmt(left)+' to go</span><span>·</span><span>P <b>'+Math.round(eatenP)+'</b>/'+Math.round(pP)+' g</span></div></div></section>'
-   +'<div class="sd-pbar"><i style="width:'+Math.min(100,d.eaten/Math.max(1,d.target)*100)+'%"></i></div>';
+  let h=sdPaneSwitch('plan')+'<section class="sd-day"><div class="sd-dl"><span class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</span><span class="sd-left"><b>'+fv2Fmt(left)+'</b> kcal to go</span></div>'
+   +'<div class="sd-pbar"><i style="width:'+Math.min(100,d.eaten/Math.max(1,d.target)*100)+'%"></i></div>'
+   +'<div class="sd-dn"><span><b>'+fv2Fmt(d.eaten)+'</b> of '+fv2Fmt(d.tot.kcal)+' kcal</span><span>Protein <b>'+Math.round(eatenP)+'</b> / '+Math.round(pP)+' g</span></div></section>';
   h+=d.next>=0?sdNextCard(d):'<div class="sd-coach sd-done"><i>'+co.i+'</i><p>'+co.t+'</p></div>';
   if(d.next>=0)h+='<div class="sd-coach"><i>'+co.i+'</i><p>'+co.t+'</p></div>';
   h+=warn;
