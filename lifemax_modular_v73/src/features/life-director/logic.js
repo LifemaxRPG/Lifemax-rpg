@@ -3426,10 +3426,12 @@ const LifeDirectorApp = (function () {
     const b = { title: d.t, startEpoch: +d.s, endEpoch: +d.e, mealStartEpoch: +d.ms || +d.s, kind: 'MEAL' };
     const meal = scheduledMeal(b);
     const attrs = mealAnchor(b).replace('data-act="anchor"', 'data-act="mealOpen"').replace(' role="button" tabindex="0"', '');
-    openSheet('<h2>Meal preview</h2><button type="button" class="ld-btn" style="display:block;width:100%;text-align:left;white-space:normal;padding:20px"' + attrs + '>' +
-      '<span class="ld-muted">' + esc(d.t || 'Meal') + ' · ' + esc(fTime(+d.s) + '–' + fTime(+d.e)) + '</span><br><strong>' + esc(meal ? meal.name : 'View your meal plan') + '</strong><br>' +
-      (meal ? '<span>' + meal.kcal + ' kcal' + (meal.logged ? ' · Logged' : meal.skipped ? ' · Skipped' : '') + '</span><br>' : '') +
-      '<span>Open meal menu ›</span></button>');
+    openSheet('<button type="button" class="ld-meal-preview"' + attrs + '>' +
+      '<span class="ld-mp-top"><span class="ld-mp-eyebrow"><i></i> DAILY FUEL</span><span class="ld-mp-status">' + (meal && meal.logged ? 'Logged' : meal && meal.skipped ? 'Skipped' : 'On your plan') + '</span></span>' +
+      '<span class="ld-mp-hero"><span class="ld-mp-emblem" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="36"/><circle cx="50" cy="50" r="26"/><path d="M13 29v13m6-13v13m-12-13v13q0 8 6 8v22m74-43v43m0-43q-10 8-10 22h10"/></svg></span><span class="ld-mp-slot">' + esc(d.t || 'Meal') + '</span><span class="ld-mp-time">' + esc(fTime(+d.s) + ' – ' + fTime(+d.e)) + '</span></span>' +
+      '<span class="ld-mp-name">' + esc(meal ? meal.name : 'Your next meal awaits') + '</span>' +
+      (meal ? '<span class="ld-mp-energy"><span><b>' + meal.kcal + '</b><span> kcal</span></span><span class="ld-mp-energy-label">MEAL ENERGY</span></span>' : '') +
+      '<span class="ld-mp-footer"><span><strong>View meal</strong><small>Ingredients &amp; meal details</small></span><span class="ld-mp-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6h12v12"/></svg></span></span></button>');
   }
   /* what to call the thing you are doing */
   function doingName(b) {
