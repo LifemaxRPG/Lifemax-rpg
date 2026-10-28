@@ -1,6 +1,7 @@
 {
   "protocol": 1,
   "id": "life-director",
+  "px": "dial",
   "name": "Life Director",
   "version": "1.9.3",
   "type": "tab",

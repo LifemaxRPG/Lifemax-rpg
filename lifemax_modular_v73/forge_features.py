@@ -38,7 +38,7 @@ def inject(html):
     css = '<style id="lifemax-feature-styles">\n' + "".join(
         f"/* Feature {m['id']} v{m['version']} */\n{c}\n" for m, v, c, j in feats) + "</style>\n</head>"
     html = once(html, "</style>\n</head>", "</style>\n" + css, "styles")
-    nav = "".join(f"""      <button class="navbtn" data-view="{m['id']}" onclick="navigate('{m['id']}')"><span class="ico">{m.get('icon','✦')}</span>{m['name']}</button>\n""" for m, v, c, j in feats if m.get('nav', True))
+    nav = "".join(f"""      <button class="navbtn" data-view="{m['id']}" onclick="navigate('{m['id']}')"><span class="ico">{('<i data-px="%s" data-s="18"></i>' % m['px']) if m.get('px') else m.get('icon','✦')}</span>{m['name']}</button>\n""" for m, v, c, j in feats if m.get('nav', True))
     html = once(html, NOTE, nav + NOTE.lstrip(), "nav")
     secs = "".join(f'      <section id="view-{m["id"]}" class="view lmf-feature" data-feature="{m["id"]}">{v}</section>\n' for m, v, c, j in feats)
     html = once(html, DASH, secs + DASH.lstrip(), "views")

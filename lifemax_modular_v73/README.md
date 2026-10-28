@@ -744,3 +744,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v200: candle flames
 - The quest-table candle flame is a procedural shader: teardrop body, blue base, white-hot core, orange tip that detaches and flickers, noise-driven sway and a soft halo. Each candle has its own seed (`uK`) and its size breathes slightly over time.
+
+## v201: Life Director nav icon
+- The Life Director tab used a plain "✦" text glyph, which sat lower than the pixel icons. It now uses a pixel `dial` icon (ring with a filled wedge, like the day dial). Features can set `"px": "<icon name>"` in `feature.json`; `forge_features.py` emits it as `<i data-px>`.
