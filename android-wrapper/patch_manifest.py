@@ -30,6 +30,7 @@ xml = xml.replace(
     '    <uses-permission android:name="android.permission.health.READ_SLEEP" />\n'
     '    <uses-permission android:name="android.permission.health.READ_WEIGHT" />\n'
     '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+    '    <uses-permission android:name="android.permission.READ_CALENDAR" />\n'
     '    <uses-permission android:name="android.permission.VIBRATE" />\n\n    <application',
     1,
 )
@@ -64,5 +65,5 @@ if "android.app.shortcuts" not in xml:
     )
     xml = xml[:m.end()] + extra + xml[m.end():]
 assert 'android:scheme="lifemax"' in xml and "android.app.shortcuts" in xml
-assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "RecognitionService" in xml, "manifest patch failed"
+assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "READ_CALENDAR" in xml and "RecognitionService" in xml, "manifest patch failed"
 open(path, "w", encoding="utf-8").write(xml)

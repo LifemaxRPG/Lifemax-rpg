@@ -755,3 +755,9 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v203: Life Director sheets above the bottom bar
 - `.content` has a view-transition name, which makes it a stacking context below the bottom bar, so Life Director's bottom sheets (add a goal, the goal form) were drawn behind the bar, and the page footer showed through them. While a sheet or the tour is open (`.content:has(.ld-sheet:not([hidden]))`) the name is dropped, so the sheet sits above both. Test: `tests/ldsheet.test.js`.
+
+## v204: Calendar import (Gemini to LifeMax, via the calendar) and the v194 setting hidden
+- Gemini can add events to Google Calendar, and Google Calendar syncs to the phone. LifeMax now reads the phone's calendar (read only) and turns timed events in the next 14 days into fixed Life Director commitments through `LifeDirector.voice.add` (NEW_COMMITMENT, so the day re-plans). Moved or deleted events are followed. All-day, declined, 12h+ and untitled events are skipped.
+- Native: `CalendarSyncPlugin.java` (`status`, `request`, `events` over `CalendarContract.Instances`), `READ_CALENDAR` in the manifest patch, `NativeApi.VALUE` 6 (needs a new APK).
+- JS: `50-calsync.js` (settings card "Calendar import" under Phone & sync; checks on app resume and every 5 min). Tests: `tests/calsync.test.js` (12, native plugin and Life Director stubbed).
+- The Gemini key rows from v194 are hidden from Settings (LifeMax calling Gemini was not what was asked). `localStorage.lifemax_gemini_ui = '1'` shows them again.

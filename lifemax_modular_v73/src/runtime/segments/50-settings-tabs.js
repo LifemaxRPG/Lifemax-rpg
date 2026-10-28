@@ -2,7 +2,7 @@
 var SET_CATS=[
  {id:'look',name:'Look & feel',cards:['Appearance','Bottom bar','Navigation','Tab previews','Cat graphics','Haptics','Quest effects','Guided workout']},
  {id:'voice',name:'Voice & journal',cards:['Voice (beta)','Journal privacy']},
- {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Automatic backup','Notifications']},
+ {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Calendar import','Automatic backup','Notifications']},
  {id:'game',name:'Character & game',cards:['Character profile','Rewards','Decay system','XP rules']},
  {id:'data',name:'Data & advanced',cards:['Data management','Developer mode']}
 ];

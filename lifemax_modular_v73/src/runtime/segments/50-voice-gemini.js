@@ -80,6 +80,8 @@ function lmgMiss(clean,r,meta){
  var sr=lmvSettingsRender;
  lmvSettingsRender=function(){
   sr.apply(this,arguments);
+  /* hidden: this is LifeMax calling Gemini, not Gemini controlling LifeMax. Turn the rows back on with localStorage lifemax_gemini_ui = 1. */
+  try{if(localStorage.getItem('lifemax_gemini_ui')!=='1')return}catch(e){return}
   var el=document.getElementById('lmvSettingsBody');if(!el)return;
   var row=lmvEl('div','settingsline'),left=lmvEl('div');left.style.flex='1';
   left.appendChild(lmvEl('strong','','Gemini understanding (online)'));
