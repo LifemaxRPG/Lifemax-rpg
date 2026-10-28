@@ -238,3 +238,18 @@ function fv2Preset(p){const c=+document.getElementById('fv2GC').value||2000,sp={
 function fv2SaveGoal(){const n=id=>Math.max(0,Math.round(+(document.getElementById(id)||{}).value||0));mealsEnsure();const m=state.mealsMeta;m.calGoal=n('fv2GC');m.protGoal=n('fv2GP');m.carbGoal=n('fv2GCb');m.fatGoal=n('fv2GF');m.waterGoalMl=n('fv2GW')||2000;save();fv2Close();renderMeals();fv2Hap('success')}
 (function(){document.addEventListener('click',function(ev){const b=ev.target.closest&&ev.target.closest('#fv2Ov [data-s2="goalstep"]');if(!b)return;const i=document.getElementById('fv2GC');i.value=Math.max(0,(+i.value||0)+(+b.dataset.d));fv2GoalLive()});
  document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&fv2S().sh.open)fv2Back()})})();
+
+/* ---------- Settings: the optional USDA branded-foods database (import, count, remove). The import button used to live on the old Food page. ---------- */
+function fv2UsdaRender(){
+  const el=document.getElementById('usdaSettingsBody');if(!el)return;
+  el.innerHTML='<div class="settingsline"><div style="flex:1"><strong>Branded foods (USDA)</strong><div class="muted" style="font-size:12px">An optional database of packaged foods, kept on this device only. Choose the compact USDA <b>.jsonl.gz</b> file once, then search it from Food, Add food.</div></div></div>'
+   +'<div class="settingsline"><div style="flex:1;min-width:0"><span id="usdaImportStatus" class="muted" style="font-size:12.5px">Checking…</span></div><button type="button" class="btn small" onclick="document.getElementById(\'usdaImportFile\').click()">Import file</button><input id="usdaImportFile" type="file" accept=".gz,application/gzip" style="display:none" onchange="importUsdaFoods(event).then(fv2UsdaRender)"><button type="button" id="usdaRemoveBtn" class="btn small secondary" style="margin-left:6px" onclick="fv2UsdaClear(this)">Remove</button></div>';
+  usdaCount().then(function(n){usdaStatus(n?'USDA database ready · '+n.toLocaleString()+' foods stored on this device':'Not imported yet · optional');const b=document.getElementById('usdaRemoveBtn');if(b)b.disabled=!n})
+}
+function fv2UsdaClear(b){
+  if(!b._arm){b._arm=1;b.textContent='Tap again to remove';setTimeout(function(){b._arm=0;if(b.isConnected)b.textContent='Remove'},4000);return}
+  b._arm=0;
+  const req=indexedDB.deleteDatabase(USDA_DB_NAME);
+  req.onsuccess=req.onerror=req.onblocked=function(){try{for(const k in usdaFoodsCache)delete usdaFoodsCache[k]}catch(e){}toast('USDA database removed');fv2UsdaRender()}
+}
+(function(){const nav=navigate;navigate=function(v){const r=nav.apply(this,arguments);if(v==='settings')try{fv2UsdaRender()}catch(e){}return r};setTimeout(function(){try{fv2UsdaRender()}catch(e){}},1500)})();

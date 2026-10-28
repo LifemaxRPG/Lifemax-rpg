@@ -761,3 +761,7 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Native: `CalendarSyncPlugin.java` (`status`, `request`, `events` over `CalendarContract.Instances`), `READ_CALENDAR` in the manifest patch, `NativeApi.VALUE` 6 (needs a new APK).
 - JS: `50-calsync.js` (settings card "Calendar import" under Phone & sync; checks on app resume and every 5 min). Tests: `tests/calsync.test.js` (12, native plugin and Life Director stubbed).
 - The Gemini key rows from v194 are hidden from Settings (LifeMax calling Gemini was not what was asked). `localStorage.lifemax_gemini_ui = '1'` shows them again.
+
+## v205: USDA branded-foods import is back in Settings
+- The "Import USDA branded foods" button lived on the old Food page and disappeared with the v186 rebuild (the database and search kept working, there was just nothing to import with). Settings > Data & advanced now has a **Food database** card: Import file (the compact `.jsonl.gz`), a count, and Remove (two taps). Search for the foods in Food > Add food.
+- Test: `tests/usda.test.js` (9) with a 2-food fixture in `tests/fixtures/usda-mini.jsonl.gz`.

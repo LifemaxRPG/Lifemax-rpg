@@ -4,7 +4,7 @@ var SET_CATS=[
  {id:'voice',name:'Voice & journal',cards:['Voice (beta)','Journal privacy']},
  {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Calendar import','Automatic backup','Notifications']},
  {id:'game',name:'Character & game',cards:['Character profile','Rewards','Decay system','XP rules']},
- {id:'data',name:'Data & advanced',cards:['Data management','Developer mode']}
+ {id:'data',name:'Data & advanced',cards:['Food database','Data management','Developer mode']}
 ];
 var setCat=(function(){try{return localStorage.getItem('lma_set_cat')}catch(e){return null}})()||'look';
 function setCatOf(card){const h=card.querySelector(':scope>h3');if(!h)return null;const t=h.textContent.trim();const c=SET_CATS.find(function(x){return x.cards.indexOf(t)>=0});return c?c.id:null}
