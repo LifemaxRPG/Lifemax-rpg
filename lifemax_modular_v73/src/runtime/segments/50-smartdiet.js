@@ -117,17 +117,34 @@ function sdMealCard(d,it,idx){
    +'<footer>'+(it.logged?'<span class="ok">Logged · '+fv2Fmt(it.logged.kcal)+' kcal</span><button type="button" class="ghost" data-a="sd-unlog" data-i="'+idx+'">Undo</button>':it.skipped?'<span class="sk">Skipped</span><button type="button" class="ghost" data-a="sd-unskip" data-i="'+idx+'">Restore</button>':'<button type="button" class="pri" data-a="sd-log" data-i="'+idx+'">Log this meal</button><button type="button" class="ghost" data-a="sd-skip" data-i="'+idx+'">Skip</button><button type="button" class="ghost" data-a="sd-swap" data-i="'+idx+'">Swap</button>')+'</footer></div></details>';
 }
 function sdMacroBar(t){const p=t.p*4,c=t.c*4,f=t.f*9,s=p+c+f||1;return '<span class="sd-mb"><i style="width:'+p/s*100+'%;background:#ff7a8a"></i><i style="width:'+c/s*100+'%;background:#ffc15e"></i><i style="width:'+f/s*100+'%;background:#4fd6c0"></i></span>'}
+/* the next meal, up top: what it is, what is in it, and the buttons to act on it */
+function sdNextCard(d){
+  const i=d.next,it=d.items[i],m=it.meal,t=it.tot,U=sdUi(),key=d.day+':'+i,ing=!!(U.ing&&U.ing[key]),sc=sdSlotColor(m.slot);
+  const tags=(m.tags||[]).filter(function(x){return x==='leftover'||x==='vegan'||x==='no_cook'||x==='shake'||x==='quick'}).map(function(x){return '<em>'+({leftover:'Leftover',vegan:'Vegan',no_cook:'No cooking',shake:'Shake',quick:'Quick'}[x])+'</em>'}).join('');
+  const mac=function(l,v,c){return '<span class="mc" style="--c:'+c+'"><b>'+Math.round(v)+'</b><small>'+l+'</small></span>'};
+  const top=it.ings.slice().sort(function(a,b){return b.g*sdFactor(b,d.s)-a.g*sdFactor(a,d.s)}).slice(0,4).map(function(x){return esc(sdData().cat[x.ing].n)}).join(' · ');
+  return '<section class="sd-next" style="--sc:'+sc+'"><div class="sd-nh"><span class="sd-eyebrow">UP NEXT · '+esc(sdSlotName(m.slot)).toUpperCase()+' · '+esc(sdSlotWhen(m.slot)).toUpperCase()+'</span><span class="sd-nt">'+(m.active_min||0)+' min</span></div>'
+   +'<h3>'+esc(m.name)+'</h3><div class="sd-nk"><b>'+fv2Fmt(t.kcal)+'</b><small>kcal</small><div class="sd-nm">'+mac('P',t.p,'#ff7a8a')+mac('C',t.c,'#ffc15e')+mac('F',t.f,'#4fd6c0')+mac('Fiber',t.fib,'#9aa6c8')+'</div></div>'
+   +(tags?'<div class="sd-tags">'+tags+'</div>':'')+(ing?'':'<p class="sd-top">'+top+'</p>')
+   +(ing?'<ul class="sd-ings">'+it.ings.map(function(x){return sdIngLine(x,d.s)}).join('')+'</ul><ol class="sd-steps">'+m.steps.map(function(s){return '<li>'+esc(s)+'</li>'}).join('')+'</ol>'+((m.equipment||[]).length?'<p class="sd-eq">You need: '+esc(m.equipment.join(', '))+'.</p>':''):'')
+   +'<div class="sd-na"><button type="button" class="pri" data-a="sd-log" data-i="'+i+'">Log meal</button><button type="button" data-a="sd-ing" data-i="'+i+'">'+(ing?'Hide details':'Ingredients')+'</button><button type="button" data-a="sd-swap" data-i="'+i+'">Swap</button><button type="button" data-a="sd-skip" data-i="'+i+'">Skip</button></div></section>';
+}
 function sdPlanHtml(){
   const day=mealsDayKey(),d=sdDay(day);if(!d)return '<div class="fv2-none"><b>No plan for this day</b><span>The Smart Diet plan is built for the Athlete class.</span></div>';
   const co=sdCoach(d),prepToday=(d.P.prep||[]).filter(function(p){return p.when===sdWeekday(day)}),left=Math.max(0,d.target-d.eaten),pP=d.items.reduce(function(a,i){return a+(i.skipped?0:i.tot.p)},0)+d.extra.p;
   const eatenP=dayFoodLog(day).reduce(function(a,e){return a+(+e.p||0)},0);
   const warn=d.openN&&d.rem<d.kmin-5?'<p class="sd-warn">You are already close to your target: the meals still to come are at their smallest ('+fv2Fmt(d.kmin)+' kcal).</p>':d.openN&&d.rem>d.kmax+5?'<p class="sd-warn">The meals left top out at about '+fv2Fmt(d.kmax)+' kcal, so you will finish a little under your target.</p>':'';
-  let h=sdPaneSwitch('plan')+'<section class="sd-hero"><div class="sd-hl"><div class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</div>'
+  let h=sdPaneSwitch('plan')+'<section class="sd-hero sd-slim"><div class="sd-hl"><div class="sd-eyebrow">'+esc(d.w.note||'TODAY')+' · '+(d.w.type==='training'?'TRAINING DAY':'REST DAY')+'</div>'
    +'<div class="sd-big"><b>'+fv2Fmt(d.eaten)+'</b><small>of '+fv2Fmt(d.tot.kcal)+' kcal</small></div><div class="sd-sub"><span>'+fv2Fmt(left)+' to go</span><span>·</span><span>P <b>'+Math.round(eatenP)+'</b>/'+Math.round(pP)+' g</span></div></div></section>'
-   +'<section class="sd-flwrap">'+sdFuelLine(d)+'</section><div class="sd-coach"><i>'+co.i+'</i><p>'+co.t+'</p></div>'+warn
-   +'<div class="sd-actions"><button type="button" class="pri" data-a="sd-logall"'+(d.openN===0?' disabled':'')+'>Log the rest of the day</button></div>'+sdSettingsHtml(d);
+   +'<div class="sd-pbar"><i style="width:'+Math.min(100,d.eaten/Math.max(1,d.target)*100)+'%"></i></div>';
+  h+=d.next>=0?sdNextCard(d):'<div class="sd-coach sd-done"><i>'+co.i+'</i><p>'+co.t+'</p></div>';
+  if(d.next>=0)h+='<div class="sd-coach"><i>'+co.i+'</i><p>'+co.t+'</p></div>';
+  h+=warn;
   if(prepToday.length)h+='<section class="sd-prep"><div class="sd-eyebrow">PREP TODAY</div>'+prepToday.map(function(p){return '<p><b>'+p.minutes+' min</b> '+esc(p.task)+'</p>'}).join('')+'</section>';
-  h+='<div class="sd-timeline">'+d.items.map(function(it,i){return sdMealCard(d,it,i)}).join('')+'</div>';
+  h+=sdSettingsHtml(d);
+  const rest=d.items.map(function(it,i){return i===d.next?'':sdMealCard(d,it,i)}).join('');
+  if(rest)h+='<div class="sd-eyebrow sd-rest">'+(d.next>=0?'REST OF TODAY':'TODAY')+'</div><div class="sd-timeline">'+rest+'</div>';
+  h+='<div class="sd-actions"><button type="button" class="pri" data-a="sd-logall"'+(d.openN===0?' disabled':'')+'>Log the rest of the day</button></div>';
   h+='<p class="sd-foot">Portions follow your target and what you have already logged, using each ingredient\'s flexible range, so protein stays steady while carbs and fats move. Numbers are estimates from standard food-composition values.</p>';
   return h;
 }
@@ -158,6 +175,7 @@ function sdShopText(){const S=sdS(),U=sdUi(),start=fv2DayShift(sdMonday(mealsDay
 /* ---------------------------------------------------------------- actions */
 function sdAct(b){const a=b.dataset.a,S=sdS(),U=sdUi(),day=mealsDayKey();
   if(a==='sd-toggle'){U.setOpen=!U.setOpen;return}
+  if(a==='sd-ing'){U.ing=U.ing||{};const k=day+':'+b.dataset.i;U.ing[k]=!U.ing[k];renderMeals();return}
   if(a==='sd-tg'){U.open=U.open||{};const k=day+':'+b.dataset.i,det=b.parentNode;U.open[k]=!det.open;return}
   if(a==='sd-diet'||a==='sd-level'||a==='sd-pref')U.setOpen=true;
   if(a==='sd-diet'){S.diet=b.dataset.v;save();renderMeals()}

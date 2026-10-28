@@ -49,11 +49,12 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('the coach line says what happened', /outside the plan/.test(after.coach), after.coach);
   await p.evaluate(() => { state.foodLog = state.foodLog.filter(x => x.name !== 'Burger'); save(); renderMeals() });
   await openAll(); await p.click('[data-a=sd-skip][data-i="1"]'); await p.waitForTimeout(300);
-  const sk = await p.evaluate(() => { const d = sdDay(mealsDayKey()); return { skipped: d.items[1].skipped, s: d.s, s0: d.s0, tot: d.tot.kcal, target: d.target, fl: document.querySelectorAll('.sd-fl .seg.skip').length } });
+  const sk = await p.evaluate(() => { const d = sdDay(mealsDayKey()); return { skipped: d.items[1].skipped, s: d.s, s0: d.s0, tot: d.tot.kcal, target: d.target, fl: document.querySelectorAll('.sd-meal.skipped').length } });
   ok('skipping a meal drops it and the rest of the day grows to cover it', sk.skipped && sk.s > sk.s0 + 0.03 && sk.tot > sk.target - 130 && sk.fl === 1, sk);
   await openAll(); await p.click('[data-a=sd-unskip][data-i="1"]'); await p.waitForTimeout(300);
   ok('Restore brings it back', await p.evaluate(() => !sdDay(mealsDayKey()).items[1].skipped));
-  ok('the fuel line has a segment per meal and marks the next one', await p.evaluate(() => document.querySelectorAll('.sd-fl .seg').length >= 5 && document.querySelectorAll('.sd-fl .seg.next').length === 1));
+  ok('the next meal leads the pane with Log, Ingredients, Swap and Skip', await p.evaluate(() => { const n = document.querySelector('.sd-next'); return !!n && n.querySelectorAll('.sd-na button').length === 4 && !!n.querySelector('[data-a=sd-log]') && !!n.querySelector('[data-a=sd-ing]') && n.getBoundingClientRect().top < 520 }));
+  ok('Ingredients expands the list and method in place', await p.evaluate(async () => { document.querySelector('.sd-next [data-a=sd-ing]').click(); await new Promise(r => setTimeout(r, 200)); return document.querySelectorAll('.sd-next .sd-ings li').length >= 2 && !!document.querySelector('.sd-next .sd-steps li') }));
   await p.click('[data-a=pane][data-v=shop]'); await p.waitForTimeout(500);
   const shop = await p.evaluate(() => { const l = sdShopList(sdMonday(mealsDayKey())); return { n: l.length, bad: l.filter(x => x.packs < 1 || x.g <= 0).length, rice: l.find(x => /rice/i.test(x.n)) } });
   ok('the shopping list totals the week with whole packs', shop.n >= 15 && shop.bad === 0, shop);

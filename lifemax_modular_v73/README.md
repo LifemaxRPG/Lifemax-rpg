@@ -728,3 +728,7 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v195: meal strip redesign
 - The B/L/Pre/Post/D letter buttons in the Plan hero are now glass tiles with a line icon per meal (sunrise, sun, moon, apple, bolt, recover), tinted by slot. Logged meals fill with the slot colour and a check badge, the next meal glows, skipped ones are dashed.
+
+## v196: Plan pane leads with the next meal
+- The meal-icon strip is gone. The Plan pane now opens with a slim day bar (kcal, to go, protein), then an **Up next** card: meal name, kcal and P/C/F/Fiber, its main ingredients, and buttons for Log meal, Ingredients (expands the full list and method in place), Swap and Skip.
+- Below it: the coach line, prep tasks, diet settings, and **Rest of today** (the other meals, collapsed). When every meal is handled the card gives way to the day-complete message.
