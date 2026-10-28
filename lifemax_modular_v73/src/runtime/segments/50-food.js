@@ -72,7 +72,7 @@ function renderMeals(){
  let h='<div class="fv2-head"><div><div class="fv2-eyebrow">'+(day===today?'Today':day===fv2DayShift(today,-1)?'Yesterday':'Viewing')+'</div><h1>'+esc(dd.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}))+'</h1></div>'
   +'<div class="fv2-nav"><button type="button" class="tx" data-a="goal">Targets</button><button type="button" data-a="step" data-n="-1" aria-label="Previous day">‹</button><button type="button" data-a="step" data-n="1" aria-label="Next day">›</button>'+(day!==today?'<button type="button" class="tx" data-a="today">Today</button>':'')+'</div></div>'
   +'<div class="fv2-week">'+fv2WeekStrip(day,g)+'</div>';
- const pane=S.pane||'log';
+ const pane=S.pane||(typeof sdDay==='function'&&sdDay(mealsDayKey())?'plan':'log');
  if(pane!=='log'){h+=(pane==='plan'?sdPlanHtml():sdShopHtml());root.innerHTML=h;fv2Dock();return}
  h+=sdPaneSwitch('log');
  /* hero */

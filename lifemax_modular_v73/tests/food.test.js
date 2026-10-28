@@ -8,6 +8,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
   await p.goto('file://' + file); await p.waitForTimeout(900);
   await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); navigate('meals') }); await p.waitForTimeout(400);
+  ok('the Plan pane is the default when a plan exists', await p.evaluate(() => !!document.querySelector('.sd-next') && document.querySelector('.sd-panes button.on').dataset.v === 'plan' && [...document.querySelectorAll('.sd-panes button')].map(b => b.dataset.v).join() === 'plan,log,shop'));
+  await p.click('[data-a=pane][data-v=log]'); await p.waitForTimeout(400);
   ok('the new Food tab renders the dial, week strip and four meals', await p.evaluate(() => !!document.querySelector('.fv2-svg') && document.querySelectorAll('.fv2-d').length === 7 && document.querySelectorAll('.fv2-meal').length === 4));
   ok('empty rings draw no stray dots', await p.evaluate(() => [...document.querySelectorAll('.fv2-arc')].every(a => getComputedStyle(a).opacity === '0')));
   await p.click('.fv2-mid'); await p.waitForTimeout(400); await p.click('[data-s2=preset][data-p=hi]'); await p.click('[data-s2=goalsave]'); await p.waitForTimeout(500);

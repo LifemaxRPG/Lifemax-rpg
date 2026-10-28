@@ -738,3 +738,6 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 
 ## v198: day summary without the box
 - The Plan pane's day header is a flat line: day type and "N kcal to go" on top, a slim progress bar, then "eaten of total kcal" and protein progress beneath it.
+
+## v199: Plan is the default Food pane
+- The Food tab opens on Plan (tabs are now Plan, Log, Shopping). Classes without a Smart Diet plan still open on Log.
