@@ -720,3 +720,8 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Android (needs a new APK, `NativeApi.VALUE` = 5): `android-wrapper/res/xml/shortcuts.xml` (static shortcuts plus `CREATE_THING` and `OPEN_APP_FEATURE` capabilities), `lifemax_shortcuts.xml` strings, `patch_manifest.py` adds the `lifemax://` intent-filter and the shortcuts meta-data, `@capacitor/app` added.
 - Test without Google: `adb shell am start -a android.intent.action.VIEW -d "lifemax://cats/feed" com.lifemax.rpg`.
 - Tests: `tests/deeplink.test.js` (15).
+
+## v194: Gemini understanding for the voice engine
+- `50-voice-gemini.js`: opt-in (Settings > Voice (beta)), key kept on the phone. The offline engine runs first; only when it does not understand (no intent, weak create guess, or low recogniser confidence) the one sentence plus today's date go to the Gemini API (`generateContent`, key in the `x-goog-api-key` header) with three functions: `add_to_schedule(title, date, time, duration_minutes)`, `feed_cats`, `open_screen`.
+- A schedule call is turned back into a normal sentence ("Put X on my schedule on November 3 at 3:00 PM for 45 minutes") so the usual preview and confirm step still applies. Feeding and opening run directly.
+- Tests: `tests/gemini.test.js` (10, fetch stubbed). `voice5` "end of day review" is time-of-day dependent and fails on earlier builds too.
