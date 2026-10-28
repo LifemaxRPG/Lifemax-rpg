@@ -72,6 +72,9 @@ function renderMeals(){
  let h='<div class="fv2-head"><div><div class="fv2-eyebrow">'+(day===today?'Today':day===fv2DayShift(today,-1)?'Yesterday':'Viewing')+'</div><h1>'+esc(dd.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}))+'</h1></div>'
   +'<div class="fv2-nav"><button type="button" class="tx" data-a="goal">Targets</button><button type="button" data-a="step" data-n="-1" aria-label="Previous day">‹</button><button type="button" data-a="step" data-n="1" aria-label="Next day">›</button>'+(day!==today?'<button type="button" class="tx" data-a="today">Today</button>':'')+'</div></div>'
   +'<div class="fv2-week">'+fv2WeekStrip(day,g)+'</div>';
+ const pane=S.pane||'log';
+ if(pane!=='log'){h+=(pane==='plan'?sdPlanHtml():sdShopHtml());root.innerHTML=h;fv2Dock();return}
+ h+=sdPaneSwitch('log');
  /* hero */
  h+='<section class="fv2-hero"><div class="fv2-dial"><div class="fv2-dial-in">'+fv2RingSvg(t,g,S.ringSel,S.prev)+fv2Mid(t,g,S,left)+'</div></div>'
   +'<div class="fv2-macros">'+['p','c','f'].map(function(k){const m=fv2Mac()[k],v=t[k],gl=g[k],lf=gl-v;return '<button type="button" class="fv2-mt'+(S.ringSel===k?' on':'')+'" data-a="macro" data-m="'+k+'" style="--mc:'+m[1]+'"><span class="n"><i></i>'+m[0]+'</span><span class="v">'+Math.round(v)+'<small>'+(gl?' / '+gl+' g':' g')+'</small></span><span class="b"><b style="width:'+(gl?Math.min(100,v/gl*100):0)+'%"></b></span><span class="r'+(lf<0?' bad':'')+'">'+(gl?(lf>=0?Math.round(lf)+' g left':Math.round(-lf)+' g over'):'no target')+'</span></button>'}).join('')+'</div></section>';
@@ -116,7 +119,9 @@ function fv2Wire(root){const S=fv2S();S.wired=true;
   else if(a==='quick'){const f=S.recents[+b.dataset.i];if(f)fv2Log(f,f._grams,fv2Slot())}
   else if(a==='water')fv2AddWater(+b.dataset.ml);
   else if(a==='copy')fv2CopySlot(b.dataset.s);
-  else if(a==='entry')fv2OpenEntry(b.dataset.id)});
+  else if(a==='entry')fv2OpenEntry(b.dataset.id)
+  else if(a==='pane'){S.pane=b.dataset.v;renderMeals()}
+  else if(a.slice(0,3)==='sd-')sdAct(b)});
  window.addEventListener('resize',fv2Dock)}
 function setMealsDay(d){mealsDay=d;renderMeals();const r=document.getElementById('fv2Root');if(r&&!(window.fxReduced&&fxReduced())&&r.animate)r.animate([{opacity:.4,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.8,.3,1)'})}
 function pickMacro(k){const S=fv2S();S.ringSel=S.ringSel===k?null:k;renderMeals()}
