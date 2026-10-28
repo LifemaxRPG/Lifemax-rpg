@@ -64,7 +64,9 @@ const marker='  return { mount, glance, widgetSnapshot, voice: voiceApi';assert(
 director=director.replace(marker,`  return { test: { doingName, scheduledMealRef, scheduledMeal, mealAnchor, roHtml, onClick, openFromGlance, dayBlocks,
  setRoot(r){root=r;ST={availability:{timezone:'Asia/Tokyo'},ui:{},schedule:null};} }, mount, glance, widgetSnapshot, voice: voiceApi`);
 vm.runInContext(director,s);const test=vm.runInContext('LifeDirectorApp.test',s);
-const fakeSheet={hidden:true,classList:{contains:()=>false}};
+const classes=new Set(),previewBody={innerHTML:''},panel={style:{},querySelector:()=>({})},backdrop={style:{}};
+const fakeSheet={hidden:true,classList:{contains:k=>classes.has(k),add:k=>classes.add(k),remove:k=>classes.delete(k)},querySelector:q=>q==='.ld-sheet-panel'?panel:q==='.ld-sheet-body'?previewBody:q==='.ld-sheet-bg'?backdrop:null};
+s.matchMedia=()=>({matches:true});
 test.setRoot({contains:()=>true,querySelector:()=>fakeSheet});
 const start=Date.parse('2026-10-28T23:00:00Z')/1000;
 const block={kind:'MEAL',code:'MAINT',title:'Lunch',startEpoch:start,endEpoch:start+1800};
@@ -79,10 +81,19 @@ check('Life Director passes its own timezone date, not the phone clock date',()=
 const html=test.roHtml([block],'Asia/Tokyo');
 check('running order shows current recipe and accessible meal link',()=>{assert(html.includes('data-act="anchor"'));assert(html.includes('role="button" tabindex="0"'));assert(html.includes(s.esc(s.sdDirectorMeal({title:'Lunch',day:'2026-10-29'}).name)))});
 const button={tagName:'LI',dataset:{act:'anchor',k:'meal',t:'Lunch',s:String(start),e:String(start+1800)},closest:()=>null};
+view='life-director';const logBeforePreview=JSON.stringify(s.state.foodLog);
 test.onClick({target:{closest:()=>button}});
-check('the actual Life Director click handler opens the linked meal',()=>{assert.equal(view,'meals');assert.equal(s.mealsDay,'2026-10-29')});
-view='dashboard';test.openFromGlance(button);
-check('Overview dial meal links open the meal directly',()=>assert.equal(view,'meals'));
+check('first tap previews the recipe without navigating or logging',()=>{
+ assert.equal(view,'life-director');assert.equal(fakeSheet.hidden,false);
+ assert(previewBody.innerHTML.includes(s.esc(s.sdDirectorMeal({title:'Lunch',day:'2026-10-29'}).name)));
+ assert(previewBody.innerHTML.includes('kcal'));assert(previewBody.innerHTML.includes('data-act="mealOpen"'));
+ assert.equal(JSON.stringify(s.state.foodLog),logBeforePreview);
+});
+test.onClick({target:{closest:()=>({tagName:'DIV',dataset:{act:'sheetBg'},closest:()=>null})}});
+check('tapping outside dismisses preview without navigation',()=>{assert(fakeSheet.hidden);assert.equal(view,'life-director')});
+test.onClick({target:{closest:()=>button}});
+test.onClick({target:{closest:()=>({...button,dataset:{...button.dataset,act:'mealOpen'}})}});
+check('second tap opens the scheduled meal menu and closes preview',()=>{assert.equal(view,'meals');assert.equal(s.mealsDay,'2026-10-29');assert(fakeSheet.hidden)});
 const midnight=Date.parse('2026-10-29T15:00:00Z')/1000;
 const split=test.dayBlocks({segments:[{...block,title:'Dinner',startEpoch:midnight-900,endEpoch:midnight+900}],scheduledInstances:[]},{startEpoch:midnight,endEpoch:midnight+86400},'Asia/Tokyo').find(x=>x.kind==='MEAL');
 check('cross-midnight clipping retains the original dinner date',()=>{assert.equal(test.scheduledMealRef(split).day,'2026-10-29');assert(test.mealAnchor(split).includes('data-ms="'+(midnight-900)+'"'))});

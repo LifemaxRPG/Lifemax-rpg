@@ -3422,6 +3422,15 @@ const LifeDirectorApp = (function () {
     try { return LifeMaxMeals.openScheduled(scheduledMealRef({title: d.t, startEpoch: +d.s, mealStartEpoch: +d.ms || +d.s})); }
     catch (e) { console.warn('[Life Director] meal link', e); say('Could not open this meal. Try Food → Plan.'); return true; }
   }
+  function mealPreview(d) {
+    const b = { title: d.t, startEpoch: +d.s, endEpoch: +d.e, mealStartEpoch: +d.ms || +d.s, kind: 'MEAL' };
+    const meal = scheduledMeal(b);
+    const attrs = mealAnchor(b).replace('data-act="anchor"', 'data-act="mealOpen"').replace(' role="button" tabindex="0"', '');
+    openSheet('<h2>Meal preview</h2><button type="button" class="ld-btn" style="display:block;width:100%;text-align:left;white-space:normal;padding:20px"' + attrs + '>' +
+      '<span class="ld-muted">' + esc(d.t || 'Meal') + ' · ' + esc(fTime(+d.s) + '–' + fTime(+d.e)) + '</span><br><strong>' + esc(meal ? meal.name : 'View your meal plan') + '</strong><br>' +
+      (meal ? '<span>' + meal.kcal + ' kcal' + (meal.logged ? ' · Logged' : meal.skipped ? ' · Skipped' : '') + '</span><br>' : '') +
+      '<span>Open meal menu ›</span></button>');
+  }
   /* what to call the thing you are doing */
   function doingName(b) {
     if (b.inst) return b.inst.title;
@@ -4302,10 +4311,11 @@ const LifeDirectorApp = (function () {
       case 'earlier': ui.earlierOpen = !b.parentElement.open; break;
       case 'anchor': {
         const k = b.dataset.k, when = fTime(+b.dataset.s) + '–' + fTime(+b.dataset.e);
-        if (k === 'meal' && openScheduledMeal(b.dataset)) { closeSheet(); break; }
+        if (k === 'meal') { mealPreview(b.dataset); break; }
         say(b.dataset.t + ' · ' + when + (k === 'sleep' || k === 'work' ? '. Drag its handle to change it.' : k === 'maint' || k === 'meal' ? '. ' + (k === 'meal' ? 'Meals' : 'Routines') + ' are set in My time.' : ''));
         break;
       }
+      case 'mealOpen': closeSheet(); openScheduledMeal(b.dataset); break;
       case 'dialApply': {
         const P = ui.pendingDial, r = P && ST.availability.rules.find(x => x.id === P.ruleId);
         ui.pendingDial = null;
@@ -4595,7 +4605,6 @@ const LifeDirectorApp = (function () {
   }
   /* jump from the Overview into Life Director, then repeat the tap there */
   function openFromGlance(t) {
-    if (t && t.dataset.act === 'anchor' && t.dataset.k === 'meal' && openScheduledMeal(t.dataset)) return;
     if (typeof navigate === 'function') navigate('life-director');
     if (ST) { ui.tab = ST.setupComplete ? 'today' : 'setup'; ui.dayIdx = 0; ST.ui.tab = ui.tab; }
     const v = document.getElementById('view-life-director');
