@@ -16,6 +16,34 @@
    ]
   },
   {
+   "file": "src/runtime/segments/43-economy.js",
+   "bytes": 6151,
+   "statement_count": 20,
+   "tags": [
+    "economy",
+    "xp"
+   ],
+   "symbols": [
+    "ECO",
+    "ECO_OLD_RULES",
+    "charXpForLevel",
+    "charCumXP",
+    "ecoPassive",
+    "ecoDayKey",
+    "ecoActsOn",
+    "ecoDur",
+    "ecoDayXP",
+    "ecoRestedTake",
+    "ecoCap",
+    "ecoAward",
+    "ecoQuestXP",
+    "ecoRestDay",
+    "ecoRestUsed",
+    "ecoTakeRest",
+    "ecoMigrate"
+   ]
+  },
+  {
    "file": "src/runtime/segments/01-runtime.js",
    "bytes": 84379,
    "statement_count": 7,
@@ -144,7 +172,7 @@
   },
   {
    "file": "src/runtime/segments/05-runtime.js",
-   "bytes": 29537,
+   "bytes": 30124,
    "statement_count": 35,
    "tags": [
     "training",
@@ -185,7 +213,10 @@
     "saveAccount",
     "renderMoney",
     "planSel",
-    "CLASSES"
+    "CLASSES",
+    "recordMoneyTransaction",
+    "removeMoneyTransaction",
+    "updateMoneyAccount"
    ]
   },
   {
@@ -1463,6 +1494,13 @@
    ]
   },
   {
+   "file": "src/runtime/segments/29-pet-rank.js",
+   "bytes": 6881,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/30-pet-sleep.js",
    "bytes": 10743,
    "statement_count": 14,
@@ -1873,34 +1911,6 @@
    ]
   },
   {
-   "file": "src/runtime/segments/43-economy.js",
-   "bytes": 6151,
-   "statement_count": 20,
-   "tags": [
-    "economy",
-    "xp"
-   ],
-   "symbols": [
-    "ECO",
-    "ECO_OLD_RULES",
-    "charXpForLevel",
-    "charCumXP",
-    "ecoPassive",
-    "ecoDayKey",
-    "ecoActsOn",
-    "ecoDur",
-    "ecoDayXP",
-    "ecoRestedTake",
-    "ecoCap",
-    "ecoAward",
-    "ecoQuestXP",
-    "ecoRestDay",
-    "ecoRestUsed",
-    "ecoTakeRest",
-    "ecoMigrate"
-   ]
-  },
-  {
    "file": "src/runtime/segments/44-rewards.js",
    "bytes": 12796,
    "statement_count": 26,
@@ -2173,7 +2183,8 @@
     "haptics"
    ],
    "symbols": []
-  },  {
+  },
+  {
    "file": "src/runtime/segments/50-quests-art.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2199,7 +2210,8 @@
     "quests"
    ],
    "symbols": []
-  },  {
+  },
+  {
    "file": "src/runtime/segments/50-sfx-data.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2225,7 +2237,15 @@
     "quests"
    ],
    "symbols": []
-  },  {
+  },
+  {
+   "file": "src/runtime/segments/50-gym3d-moves.js",
+   "bytes": 205857,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
    "file": "src/runtime/segments/50-gym3d.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2242,7 +2262,8 @@
     "quests"
    ],
    "symbols": []
-  },  {
+  },
+  {
    "file": "src/runtime/segments/50-quests-table-data.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2259,7 +2280,8 @@
     "quests"
    ],
    "symbols": []
-  },  {
+  },
+  {
    "file": "src/runtime/segments/50-quests-gate.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2268,9 +2290,6 @@
    ],
    "symbols": []
   },
-
-
-
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
    "bytes": 2600,
@@ -2279,7 +2298,8 @@
     "settings"
    ],
    "symbols": []
-  },  {
+  },
+  {
    "file": "src/runtime/segments/50-tabs-edit.js",
    "bytes": 1,
    "statement_count": 0,
@@ -2288,9 +2308,51 @@
    ],
    "symbols": []
   },
-
-
-
+  {
+   "file": "src/runtime/segments/50-food.js",
+   "bytes": 40272,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-smartdiet.js",
+   "bytes": 31769,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-deeplink.js",
+   "bytes": 4021,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-voice-gemini.js",
+   "bytes": 7685,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-calsync.js",
+   "bytes": 5382,
+   "statement_count": 0,
+   "tags": [],
+   "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-native-cash.js",
+   "bytes": 5464,
+   "statement_count": 0,
+   "tags": [
+    "android",
+    "money"
+   ],
+   "symbols": []
+  },
   {
    "file": "src/runtime/segments/51-boot-ok.js",
    "bytes": 523,

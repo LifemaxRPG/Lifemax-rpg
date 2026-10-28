@@ -160,20 +160,32 @@ function exportReport(kind){const doc=kind==='doc',content=doc?reportDoc():'\ufe
 function M(){if(!state.money)state.money={account:'',start:0,goal:0,tx:[]};return state.money}
 function fmt(n){return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n)}
 function moneyBalance(){const m=M();return Math.round(((Number(m.start)||0)+m.tx.reduce((s,t)=>s+(t.type==='deposit'?t.amount:-t.amount),0))*100)/100}
-function addTx(){const amt=Math.round((parseFloat(document.getElementById('txAmount').value)||0)*100)/100;if(!(amt>0)){toast('Enter an amount');return}
- const type=document.getElementById('txType').value,note=document.getElementById('txNote').value.trim(),iso=new Date().toISOString();
- if(type==='withdraw'&&amt>moneyBalance()){toast('Not enough in the account');return}
+/* Shared money commands: both the web fallback and native Cash use these rules. */
+function recordMoneyTransaction(type,amount,note){
+ const amt=Math.round(Number(amount)*100)/100;
+ if(!Number.isFinite(amt)||amt<=0||amt>1e12)return {ok:false,message:'Enter a valid amount'};
+ if(type!=='deposit'&&type!=='withdraw')return {ok:false,message:'Choose a transaction type'};
+ if(type==='withdraw'&&amt>moneyBalance())return {ok:false,message:'Not enough in the account'};
+ note=String(note||'').trim().slice(0,60);const iso=new Date().toISOString();
  const tx={id:'tx_'+Date.now(),type,amount:amt,note,date:iso};let xp=0;
  if(type==='deposit'){const bal=moneyBalance(),peak=Math.max(Number(M().peakBalance)||0,bal),net=Math.max(0,bal+amt-peak);M().peakBalance=Math.max(peak,bal+amt);
   const wk=new Date();wk.setDate(wk.getDate()-6);const wks=wk.toLocaleDateString('en-CA'),moneyActs=state.activities.filter(a=>a.type==='money'),weekXP=moneyActs.filter(a=>activityDate(a)>=wks).reduce((n,a)=>n+(Number(a.xp)||0),0),doneToday=moneyActs.some(a=>activityDate(a)===getToday())||state.activities.some(a=>a.link==='business.transfer-money-into-savings'&&activityDate(a)===getToday());
   if(!doneToday&&net>=ECO.depositMin){xp=Math.min(ECO.depositCapDay,Math.max(5,Math.round(net/10)),Math.max(0,ECO.depositCapWeek-weekXP));xp=xp>0?ecoCap(ecoRestedTake(xp),getToday()):0}
   if(xp>0){const pX=Math.round(xp*.7),sX=xp-pX;const act={id:'act_'+Date.now(),type:'money',name:'Deposit '+fmt(amt),icon:'coin',duration:0,skill:'Saving',primary:'business',secondary:'discipline',xp,date:iso,notes:note,xpSplit:[{attr:'business',xp:pX},{attr:'discipline',xp:sX}]};
   state.activities.push(act);state.attrXP.business=(state.attrXP.business||0)+pX;state.attrXP.discipline=(state.attrXP.discipline||0)+sX;state.skillXP.Saving=(state.skillXP.Saving||0)+xp;tx.actId=act.id}}
- M().tx.push(tx);document.getElementById('txAmount').value='';document.getElementById('txNote').value='';save();toast(type==='deposit'?`Deposit recorded${xp?' · +'+xp+' XP':''}`:'Withdrawal recorded')}
-function deleteTx(id){const m=M(),t=m.tx.find(x=>x.id===id);if(!t||!confirm('Remove this transaction? Any XP it earned is removed too.'))return;
- if(t.actId){const a=state.activities.find(x=>x.id===t.actId);if(a){state.attrXP.business=Math.max(0,(state.attrXP.business||0)-a.xp);state.skillXP.Saving=Math.max(0,(state.skillXP.Saving||0)-a.xp);if(!state.skillXP.Saving)delete state.skillXP.Saving;state.activities=state.activities.filter(x=>x.id!==t.actId)}}
- m.tx=m.tx.filter(x=>x.id!==id);save();toast('Transaction removed')}
-function saveAccount(){const m=M();m.account=document.getElementById('acctName').value.trim().slice(0,40);m.start=parseFloat(document.getElementById('acctStart').value)||0;m.goal=Math.max(0,parseFloat(document.getElementById('acctGoal').value)||0);save();toast('Account saved')}
+ M().tx.push(tx);save();return {ok:true,message:type==='deposit'?`Deposit recorded${xp?' · +'+xp+' XP':''}`:'Withdrawal recorded'};}
+function addTx(){const r=recordMoneyTransaction(document.getElementById('txType').value,document.getElementById('txAmount').value,document.getElementById('txNote').value);
+ if(r.ok){document.getElementById('txAmount').value='';document.getElementById('txNote').value=''}toast(r.message)}
+function removeMoneyTransaction(id){const m=M(),t=m.tx.find(x=>x.id===id);if(!t)return false;
+ if(t.actId)state.activities=state.activities.filter(x=>x.id!==t.actId);
+ m.tx=m.tx.filter(x=>x.id!==id);save();return true}
+function deleteTx(id){if(!confirm('Remove this transaction? Any XP it earned is removed too.'))return;if(removeMoneyTransaction(id))toast('Transaction removed')}
+function updateMoneyAccount(account,start,goal){
+ start=Number(start);goal=Number(goal);
+ if(!Number.isFinite(start)||!Number.isFinite(goal)||goal<0||Math.abs(start)>1e12||goal>1e12)return {ok:false,message:'Check your balance and goal'};
+ const m=M();m.account=String(account||'').trim().slice(0,40);m.start=Math.round(start*100)/100;m.goal=Math.round(goal*100)/100;save();return {ok:true,message:'Account saved'}
+}
+function saveAccount(){const r=updateMoneyAccount(document.getElementById('acctName').value,document.getElementById('acctStart').value||0,document.getElementById('acctGoal').value||0);toast(r.message)}
 function renderMoney(){const m=M(),bal=moneyBalance(),el=id=>document.getElementById(id);if(!el('moneyBalance'))return;
  el('moneyBalance').textContent=fmt(bal);el('moneyAccount').textContent=m.account||'Savings account';
  const pct=m.goal>0?Math.min(100,Math.max(0,bal/m.goal*100)):0;el('moneyGoalBar').style.width=pct+'%';

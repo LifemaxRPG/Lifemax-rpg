@@ -41,6 +41,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(BiometricLockPlugin.class);
         registerPlugin(LiveWebPlugin.class);
         registerPlugin(CalendarSyncPlugin.class);
+        registerPlugin(NativeCashPlugin.class);
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
         LiveWeb.apply(getBridge(), this);

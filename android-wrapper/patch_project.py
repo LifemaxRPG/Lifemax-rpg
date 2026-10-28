@@ -45,3 +45,17 @@ s, n = re.subn(r"minSdkVersion\s*=\s*\d+", "minSdkVersion = 26", s)
 assert n >= 1, 'could not find minSdkVersion'
 p.write_text(s, encoding='utf-8')
 print('project patched for Kotlin and Health Connect')
+
+# Native Cash: the Compose compiler version follows Kotlin (2.0.21).
+p = root / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'compose-compiler-gradle-plugin' not in s:
+    s = s.replace("classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'", "classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'\n        classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.0.21'")
+    p.write_text(s, encoding='utf-8')
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if "apply plugin: 'org.jetbrains.kotlin.plugin.compose'" not in s:
+    s = s.replace("apply plugin: 'kotlin-android'", "apply plugin: 'kotlin-android'\napply plugin: 'org.jetbrains.kotlin.plugin.compose'")
+    s = s.replace('android {', 'android {\n    buildFeatures { compose true }', 1)
+    s = s.replace('dependencies {', "dependencies {\n    implementation platform('androidx.compose:compose-bom:2024.12.01')\n    implementation 'androidx.activity:activity-compose:1.9.3'\n    implementation 'androidx.compose.material3:material3'\n    implementation 'androidx.compose.material:material-icons-extended'\n    implementation 'androidx.compose.ui:ui-tooling-preview'", 1)
+    p.write_text(s, encoding='utf-8')
