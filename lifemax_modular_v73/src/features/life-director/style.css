@@ -700,3 +700,14 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
   font-size:clamp(10px,2.4vw,12px);line-height:1.14;
   text-align:center;margin:1px auto 0;
 }
+
+/* Overview dial: protect the inner ring and keep the countdown prominent. */
+.ld-glance .ld-core{width:43%;max-width:43%;pointer-events:none}
+.ld-glance .ld-core-in{width:100%;min-width:0;gap:3px;text-align:center;align-items:center}
+.ld-glance .ld-core-in .ld-core-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;max-width:100%;font-size:clamp(.7rem,2.6vw,.94rem);line-height:1.2}
+.ld-glance .ld-core-in .ld-core-k{max-width:100%;font-size:clamp(.53rem,1.8vw,.64rem);letter-spacing:.015em;white-space:normal;justify-content:center}
+.ld-glance .ld-core-in .ld-core-big{max-width:100%;font-size:clamp(1.2rem,5.2vw,1.9rem);line-height:1.08;white-space:nowrap;pointer-events:auto}
+.ld-glance .ld-core-in [data-act="focusOpen"]{cursor:pointer;touch-action:manipulation}
+.ld-glance .ld-core-in [data-act="focusOpen"]:focus-visible{outline:2px solid #7dd3fc;outline-offset:4px;border-radius:5px}
+.ld-glance .ld-core-in .ld-core-s{max-width:100%;font-size:clamp(.57rem,2vw,.7rem);line-height:1.2}
+.ld-glance .ld-core-in .ld-core-nx{max-width:100%;margin-top:3px;padding-top:3px}
