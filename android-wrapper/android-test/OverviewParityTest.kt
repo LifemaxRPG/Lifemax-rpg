@@ -35,8 +35,16 @@ class OverviewParityTest {
         assertTrue(done.await(10,TimeUnit.SECONDS));return result
     }
     private fun export(name: String) {
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("mkdir -p /sdcard/Download")).use { it.readBytes() }
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("sh -c 'run-as com.lifemax.rpg cat files/$name > /sdcard/Download/$name'")).use { it.readBytes() }
+        if(android.os.Build.VERSION.SDK_INT<29)return
+        val context=instrumentation.targetContext
+        val values=android.content.ContentValues().apply {
+            put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME,name)
+            put(android.provider.MediaStore.MediaColumns.MIME_TYPE,if(name.endsWith(".png"))"image/png" else "application/json")
+            put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,android.os.Environment.DIRECTORY_DOWNLOADS)
+        }
+        val resolver=context.contentResolver
+        val uri=resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,values) ?: error("Could not export $name")
+        resolver.openOutputStream(uri)!!.use { output -> File(context.filesDir,name).inputStream().use { it.copyTo(output) } }
     }
     private fun shot(view: View, name: String): Bitmap {
         val rect=Rect();instrumentation.runOnMainSync{view.getGlobalVisibleRect(rect)}
