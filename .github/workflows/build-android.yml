@@ -130,10 +130,10 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           emulator-boot-timeout: 180
-          ram-size: 1536M
-          heap-size: 256M
+          ram-size: 3072M
+          heap-size: 384M
           api-level: 34
-          target: google_apis
+          target: default
           arch: x86_64
           profile: pixel_2
           disable-animations: true
