@@ -14,6 +14,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.core.graphics.PathParser
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -151,6 +152,19 @@ internal class OverviewLayer(val data: JSONObject) {
     val height = data.f("height", 1f)
     val nodes = data.optJSONArray("nodes").items()
     val hits = data.optJSONArray("hits").items()
+    private val regions = hits.map { hit ->
+        try {
+            val path=hit.optString("path");val transform=hit.optJSONArray("matrix")
+            if(path.isBlank()||transform==null)null else {
+                val input=PathParser.createPathFromPathData(path)
+                val shape=Path();Paint().apply{style=Paint.Style.STROKE;strokeWidth=hit.f("stroke",40f)}.getFillPath(input,shape)
+                shape.transform(Matrix().apply { setValues(FloatArray(9){transform.optDouble(it).toFloat()}) })
+                shape.transform(Matrix().apply { setScale(4f,4f) })
+                Region().apply { setPath(shape,Region(-10000,-10000,1000000,1000000)) }
+            }
+        } catch (_:Exception) { null }
+    }
+    fun contains(index:Int,x:Float,y:Float):Boolean=regions[index]?.contains((x*4).toInt(),(y*4).toInt()) ?: hits[index].rect().contains(x,y)
     val images = nodes.filter { it.optString("kind") in listOf("image", "backgroundImage") }.associate { it.optString("data") to bitmap(it.optString("data")) }
 }
 private class OverviewScene(data: JSONObject) {
@@ -202,7 +216,7 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
         scale = if (horizontal) resources.displayMetrics.density else available / sceneWidth.coerceAtLeast(1f)
         setMeasuredDimension(if (horizontal) (sceneWidth * scale).roundToInt() else available, (sceneHeight * scale).roundToInt().coerceAtLeast(1))
     }
-    private fun hit(x: Float, y: Float, actionsOnly: Boolean = false): Int = layer?.hits?.indices?.reversed()?.firstOrNull { (!actionsOnly || layer!!.hits[it].optString("id").isNotBlank()) && layer!!.hits[it].rect().contains(x/scale, y/scale) } ?: ExploreByTouchHelper.INVALID_ID
+    private fun hit(x: Float, y: Float, actionsOnly: Boolean = false): Int = layer?.hits?.indices?.reversed()?.firstOrNull { (!actionsOnly || layer!!.hits[it].optString("id").isNotBlank()) && layer!!.contains(it,x/scale,y/scale) } ?: ExploreByTouchHelper.INVALID_ID
     private fun click(id: Int): Boolean {
         val target = layer?.hits?.getOrNull(id) ?: return false
         if(target.optString("id").isBlank())return false
