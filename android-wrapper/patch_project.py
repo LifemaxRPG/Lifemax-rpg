@@ -75,3 +75,22 @@ if 'androidx.customview:customview' not in s:
 """, 1)
     p.write_text(s, encoding='utf-8')
 
+
+# New native code is compiled from its canonical authored tree, never copied.
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'lifemax-authored-source-roots' not in s:
+    s += """
+// lifemax-authored-source-roots
+android.sourceSets {
+    main.java.srcDir '../../native/src/main/java'
+    test.java.srcDir '../../native/src/test/java'
+    test.resources.srcDir '../../native/src/test/resources'
+}
+dependencies {
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
+"""
+    p.write_text(s, encoding='utf-8')

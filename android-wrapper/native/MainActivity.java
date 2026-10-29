@@ -43,6 +43,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(CalendarSyncPlugin.class);
         registerPlugin(NativeCashPlugin.class);
         registerPlugin(NativeOverviewPlugin.class);
+        registerPlugin(com.lifemax.rpg.bridge.web.NativeCharacterPlugin.class);
         registerPlugin(NativeNutritionPlugin.class);
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
@@ -89,4 +90,5 @@ public class MainActivity extends BridgeActivity {
         });
     }
 }
+
 

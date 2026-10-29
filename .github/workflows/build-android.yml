@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, claude/github-android-app-d3wlth, codex/native-overview]
+    branches: [main, claude/github-android-app-d3wlth, codex/native-overview, codex/native-character]
   workflow_dispatch:
 
 permissions:
@@ -32,11 +32,18 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Check canonical native Kotlin formatting
+        run: |
+          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 60 https://repo.maven.apache.org/maven2/com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -o "$RUNNER_TEMP/ktfmt.jar"
+          printf '%s  %s\n' '76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1' "$RUNNER_TEMP/ktfmt.jar" | sha256sum --check
+          python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"
+
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
           node lifemax_modular_v73/tests/native-nutrition-integration.test.js
           node lifemax_modular_v73/tests/native-overview.test.js
+          node lifemax_modular_v73/tests/native-character.test.js
           node lifemax_modular_v73/tests/native-overview-preference.test.js
           node lifemax_modular_v73/tests/updater-plan.test.js
           node lifemax_modular_v73/tests/director-meals.test.js
@@ -99,7 +106,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: android-wrapper/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug testDebugUnitTest
 
       - uses: actions/upload-artifact@v4
         with:
@@ -107,18 +114,18 @@ jobs:
           path: android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Release build daemon before starting the emulator
-        if: github.ref == 'refs/heads/codex/native-overview'
+        if: (github.ref == 'refs/heads/codex/native-overview' || github.ref == 'refs/heads/codex/native-character')
         run: ./android-wrapper/android/gradlew -p android-wrapper/android --stop
 
       - name: Enable emulator acceleration
-        if: github.ref == 'refs/heads/codex/native-overview'
+        if: (github.ref == 'refs/heads/codex/native-overview' || github.ref == 'refs/heads/codex/native-character')
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
       - name: Verify native Overview against the original Android page
-        if: github.ref == 'refs/heads/codex/native-overview'
+        if: (github.ref == 'refs/heads/codex/native-overview' || github.ref == 'refs/heads/codex/native-character')
         timeout-minutes: 8
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -133,7 +140,7 @@ jobs:
           script: python3 android-wrapper/verify_overview.py
 
       - uses: actions/upload-artifact@v4
-        if: always() && github.ref == 'refs/heads/codex/native-overview'
+        if: always() && (github.ref == 'refs/heads/codex/native-overview' || github.ref == 'refs/heads/codex/native-character')
         with:
           name: Native-Overview-review
           path: |
@@ -166,4 +173,5 @@ jobs:
           gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
             --title "LifeMax (latest build)" \
             --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"
+
 

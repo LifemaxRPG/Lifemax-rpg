@@ -87,4 +87,45 @@ class OverviewParityTest {
             File(instrumentation.targetContext.filesDir,"overview-parity.json").writeText(JSONObject().put("renderer","live-web-with-native-controls").put("liveAnimation",true).put("liveTimers",true).put("hardwareScrolling",true).put("sameActivity",true).toString(2));export("overview-parity.json")
         }
     }
+    @Test fun characterUsesComposeInMainActivityWithoutGameplayWrites() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var main:MainActivity;scenario.onActivity{main=it}
+            waitUntil("Character bridge ready"){evaluate(main,"typeof openNativeCharacter==='function'")=="true"}
+            evaluate(main,"window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;state.classId='athlete';document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.setProperty('display','none','important');e.setAttribute('aria-hidden','true')});document.body.classList.remove('noscroll');document.body.style.overflow='';document.activeElement?.blur();save();renderAll();navigate('character');true")
+            SystemClock.sleep(800)
+            evaluate(main,"document.activeElement?.blur();document.body.style.overflow='';true")
+            SystemClock.sleep(1000)
+            assertEquals("Reference Character visible","\"character\"",evaluate(main,"lmaView()"))
+            assertEquals("Onboarding hidden","\"none\"",evaluate(main,"getComputedStyle(document.getElementById('onboarding')).display"))
+            val saved=evaluate(main,"localStorage.getItem(STORE)")
+            shot(main.bridge.webView,"character-web.png")
+            evaluate(main,"openNativeCharacter().then(r=>window.__characterOpened=r);true")
+            waitUntil("Compose Character attached"){var ready=false;instrumentation.runOnMainSync{ready=main.window.decorView.findViewWithTag<View>("native-character-screen")!=null};ready}
+            waitUntil("Character open response"){evaluate(main,"window.__characterOpened===true")=="true"}
+            SystemClock.sleep(800)
+            instrumentation.runOnMainSync{val content=main.window.decorView.findViewWithTag<View>("native-character-screen");assertEquals(0,webViews(content));assertTrue(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).contains(main))}
+            val nativeImage=shot(main.bridge.webView,"character-native.png")
+            var brightText=0
+            for(y in (nativeImage.height*.35).toInt() until (nativeImage.height*.52).toInt() step 2)for(x in 0 until nativeImage.width step 2){val pixel=nativeImage.getPixel(x,y);if(android.graphics.Color.red(pixel)>200&&android.graphics.Color.green(pixel)>200&&android.graphics.Color.blue(pixel)>200)brightText++}
+            assertTrue("Dark theme hero text must be readable",brightText>100)
+            fun swipeCharacter(){
+                val bounds=Rect();instrumentation.runOnMainSync{main.bridge.webView.getGlobalVisibleRect(bounds)}
+                val start=SystemClock.uptimeMillis();val x=bounds.centerX().toFloat();val y0=bounds.bottom-240f;val y1=bounds.top+220f
+                fun event(kind:Int,y:Float,time:Long){val e=android.view.MotionEvent.obtain(start,time,kind,x,y,0);instrumentation.uiAutomation.injectInputEvent(e,true);e.recycle()}
+                event(android.view.MotionEvent.ACTION_DOWN,y0,start)
+                for(i in 1..12){SystemClock.sleep(25);event(android.view.MotionEvent.ACTION_MOVE,y0+(y1-y0)*i/12,SystemClock.uptimeMillis())}
+                event(android.view.MotionEvent.ACTION_UP,y1,SystemClock.uptimeMillis());SystemClock.sleep(500)
+            }
+            swipeCharacter();shot(main.bridge.webView,"character-radar.png")
+            swipeCharacter();shot(main.bridge.webView,"character-attributes.png")
+            swipeCharacter();swipeCharacter();shot(main.bridge.webView,"character-bottom.png")
+            evaluate(main,"setLightMode(true);Capacitor.Plugins.NativeCharacter.update({snapshot:NativeCharacterProjection.snapshot()});true")
+            SystemClock.sleep(500);shot(main.bridge.webView,"character-light.png")
+
+            assertEquals("Read projection never changes save",saved,evaluate(main,"localStorage.getItem(STORE)"))
+            evaluate(main,"setNativeCharacterEnabled(false);true")
+            waitUntil("Classic Character restored"){var gone=false;instrumentation.runOnMainSync{gone=main.window.decorView.findViewWithTag<View>("native-character-screen")==null};gone}
+        }
+    }
+
 }

@@ -20,7 +20,7 @@ assert.doesNotMatch(bridge,/state\.foodLog\.push|state\.waterLog\.push|localStor
 assert.match(template,/50-native-nutrition\.js/,'Bridge must be included in HTML build');
 assert.match(settings,/id="nativeNutritionToggle"/,'Setting must be visible under Appearance');
 assert.match(settings,/setNativeNutritionEnabled/,'Setting must be wired');
-assert.match(api,/VALUE = 11/,'New native plugin requires Native API 11');
+assert.ok(Number(api.match(/VALUE = (\d+)/)?.[1]) >= 11,'Native Nutrition requires Native API 11 or newer');
 assert.match(native,/@CapacitorPlugin\(name = "NativeNutrition"\)/);
 assert.match(native,/data\.has\("totals"\)/);
 assert.doesNotMatch(native,/DeterministicNutritionFixtures|MockNutritionRepository/,'Never publish fixture data as live Food');
