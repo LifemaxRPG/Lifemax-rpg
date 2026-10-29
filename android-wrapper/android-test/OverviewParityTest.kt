@@ -146,7 +146,16 @@ class OverviewParityTest {
                 }
                 ready && evaluate(main, "window.__sharedCharacterOpened===true") == "true"
             }
-            evaluate(main, "setNativeNutritionEnabled(true);navigate('meals');true")
+            evaluate(main, "navigate('meals');true")
+            waitUntil("Character overlay removed") {
+                var gone = false
+                instrumentation.runOnMainSync {
+                    gone = main.window.decorView.findViewWithTag<View>("native-character-screen") == null
+                }
+                gone
+            }
+            shot(main.bridge.webView, "food-web.png")
+            evaluate(main, "setNativeNutritionEnabled(true);true")
             waitUntil("Food with shared chrome") {
                 var ready = false
                 instrumentation.runOnMainSync {
@@ -157,6 +166,7 @@ class OverviewParityTest {
                 }
                 ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
             }
+            shot(main.bridge.webView, "food-native.png")
             evaluate(main, "navigate('dashboard');true")
             waitUntil("native Food chrome removed") {
                 var gone = false
