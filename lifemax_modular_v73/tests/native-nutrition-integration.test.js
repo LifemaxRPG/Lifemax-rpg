@@ -13,7 +13,7 @@ new Function(bridge);
 assert.match(bridge,/nativeNutrition===true/,'Native beta must be OFF by default');
 assert.match(bridge,/isNativePlatform/,'Do not open native UI on web');
 assert.match(bridge,/isPluginAvailable\('NativeNutrition'\)/,'Gate on plugin support');
-for(const v of ['dayFoodLog','fv2Tot','fv2Goals','fv2Water','addMealsWater','renderMeals']){
+for(const v of ['dayFoodLog','fv2Tot','fv2Goals','fv2Water','fv2AddWater','renderMeals']){
  assert.match(bridge,new RegExp(v),'Bridge must use the existing canonical model: '+v);
 }
 assert.doesNotMatch(bridge,/state\.foodLog\.push|state\.waterLog\.push|localStorage\.setItem/,'Native bridge must not duplicate persistence');
