@@ -59,3 +59,19 @@ if "apply plugin: 'org.jetbrains.kotlin.plugin.compose'" not in s:
     s = s.replace('android {', 'android {\n    buildFeatures { compose true }', 1)
     s = s.replace('dependencies {', "dependencies {\n    implementation platform('androidx.compose:compose-bom:2024.12.01')\n    implementation 'androidx.activity:activity-compose:1.9.3'\n    implementation 'androidx.compose.material3:material3'\n    implementation 'androidx.compose.material:material-icons-extended'\n    implementation 'androidx.compose.ui:ui-tooling-preview'", 1)
     p.write_text(s, encoding='utf-8')
+
+# Native Overview uses Android Canvas and native virtual accessibility controls.
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'androidx.customview:customview' not in s:
+    s = s.replace('dependencies {', """dependencies {
+    implementation 'androidx.customview:customview:1.2.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+""", 1)
+    s = s.replace('android {', """android {
+    defaultConfig { testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
+""", 1)
+    p.write_text(s, encoding='utf-8')
+

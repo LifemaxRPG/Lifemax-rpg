@@ -2,15 +2,20 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, claude/github-android-app-d3wlth]
+    branches: [main, claude/github-android-app-d3wlth, codex/native-overview]
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       BRANCH_OK: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' }}
     steps:
@@ -30,6 +35,9 @@ jobs:
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
+          node lifemax_modular_v73/tests/native-overview.test.js
+          node lifemax_modular_v73/tests/native-overview-preference.test.js
+          node lifemax_modular_v73/tests/updater-plan.test.js
           node lifemax_modular_v73/tests/director-meals.test.js
           node lifemax_modular_v73/tests/director-finish.test.js
           node lifemax_modular_v73/tests/director-sleep.test.js
@@ -57,6 +65,9 @@ jobs:
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
           cp native/*.java native/*.kt android/app/src/main/java/com/lifemax/rpg/
           python3 patch_project.py android
+          mkdir -p android/app/src/androidTest/java/com/lifemax/rpg
+          rm -rf android/app/src/androidTest/java/com/getcapacitor
+          cp android-test/*.kt android/app/src/androidTest/java/com/lifemax/rpg/
           cp -r res/. android/app/src/main/res/
           find android/app/src/main/res -name 'splash.png' -exec cp res/drawable/splash.png {} \;
           [ -f lifemax.p12 ] && cp lifemax.p12 android/app/lifemax.p12 || true
@@ -89,15 +100,50 @@ jobs:
         working-directory: android-wrapper/android
         run: ./gradlew assembleDebug
 
-      - name: Show the signing certificate
-        run: |
-          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          "$apksigner" verify --print-certs android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" || true
-
       - uses: actions/upload-artifact@v4
         with:
           name: LifeMax-RPG-apk
           path: android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Release build daemon before starting the emulator
+        if: github.ref == 'refs/heads/codex/native-overview'
+        run: ./android-wrapper/android/gradlew -p android-wrapper/android --stop
+
+      - name: Enable emulator acceleration
+        if: github.ref == 'refs/heads/codex/native-overview'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Verify native Overview against the original Android page
+        if: github.ref == 'refs/heads/codex/native-overview'
+        timeout-minutes: 8
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-boot-timeout: 180
+          ram-size: 1536M
+          heap-size: 256M
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: python3 android-wrapper/verify_overview.py
+
+      - uses: actions/upload-artifact@v4
+        if: always() && github.ref == 'refs/heads/codex/native-overview'
+        with:
+          name: Native-Overview-review
+          path: |
+            native-overview-review/
+            android-wrapper/android/app/build/reports/androidTests/
+            android-wrapper/android/app/build/outputs/androidTest-results/
+
+      - name: Show the signing certificate
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" || true
 
       - name: Publish to a GitHub Release (easy phone download)
         if: env.BRANCH_OK == 'true'
@@ -119,3 +165,4 @@ jobs:
           gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
             --title "LifeMax (latest build)" \
             --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"
+
