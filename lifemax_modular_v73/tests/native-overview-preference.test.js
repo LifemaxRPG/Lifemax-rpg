@@ -6,7 +6,7 @@ const android=fs.readFileSync(path.join(root,'src/runtime/segments/33-android.js
 const storage=new Map();
 function start(){
  const input={},hint={};
- const context={console,Map,WeakMap,setTimeout(){},innerWidth:390,state:{onboardingComplete:true},lmaView:()=> 'settings',navigate(){},renderOverview(){},
+ const context={MutationObserver:class{observe(){}},console,Map,WeakMap,setTimeout(){},innerWidth:390,state:{onboardingComplete:true},lmaView:()=> 'settings',navigate(){},renderOverview(){},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
   document:{body:{className:'',classList:{contains:()=>false}},querySelector:()=>null,getElementById:id=>id==='nativeOverviewToggle'?input:id==='nativeOverviewHint'?hint:null,createElement:()=>({getContext:()=>({})})},
   Capacitor:{isNativePlatform:()=>true,isPluginAvailable:()=>true,Plugins:{NativeOverview:{}}}};
