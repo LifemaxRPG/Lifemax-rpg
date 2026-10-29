@@ -3,6 +3,9 @@ package com.lifemax.rpg.bridge.web
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.ViewModelProvider
@@ -20,6 +23,8 @@ class NativeCharacterPlugin : Plugin() {
     private val store = ViewModelStore()
     private var view: ComposeView? = null
     private var chrome: LiveOverviewShell? = null
+    private var topInsetDp by mutableFloatStateOf(64f)
+    private var bottomInsetDp by mutableFloatStateOf(72f)
 
     @PluginMethod
     fun handshake(call: PluginCall) {
@@ -51,7 +56,7 @@ class NativeCharacterPlugin : Plugin() {
                                 ViewCompositionStrategy.DisposeOnDetachedFromWindow
                             )
                             setContent {
-                                CharacterRoute(vm) { action, id ->
+                                CharacterRoute(vm, topInsetDp, bottomInsetDp) { action, id ->
                                     val event = JSObject()
                                     if (action == "navigate") event.put("view", id)
                                     else {
@@ -112,6 +117,10 @@ class NativeCharacterPlugin : Plugin() {
                 }
 
         chrome?.show(scene)
+        chrome?.contentInsetsDp()?.let { (top, bottom) ->
+            topInsetDp = top
+            bottomInsetDp = bottom
+        }
     }
 
     private fun remove() {
