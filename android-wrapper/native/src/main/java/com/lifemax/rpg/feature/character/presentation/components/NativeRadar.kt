@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.character.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +29,33 @@ internal fun NativeRadar(
     // Presentation geometry only: levels/cap/previous values come from the owner.
     BoxWithConstraints(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         val side = maxWidth
-        Canvas(Modifier.fillMaxWidth().height(side)) {
+        Canvas(
+            Modifier.fillMaxWidth().height(side).pointerInput(attrs, cap) {
+                detectTapGestures { tap ->
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val radius = size.width * .30f
+                    val closest =
+                        attrs
+                            .mapIndexed { i, a ->
+                                val angle = -PI / 2 + i * PI / 4
+                                val fraction =
+                                    .1f +
+                                        .9f * (a.level.coerceIn(1, cap) - 1f) /
+                                            (cap - 1).coerceAtLeast(1)
+                                a.id to
+                                    (tap -
+                                            center -
+                                            Offset(
+                                                cos(angle).toFloat() * radius * fraction,
+                                                sin(angle).toFloat() * radius * fraction,
+                                            ))
+                                        .getDistance()
+                            }
+                            .minByOrNull { it.second }
+                    if (closest != null && closest.second <= 22.dp.toPx()) onSelect(closest.first)
+                }
+            }
+        ) {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = size.minDimension * .30f
             fun point(i: Int, level: Float): Offset {
@@ -53,8 +81,14 @@ internal fun NativeRadar(
                 Color(0xff6b7384).copy(alpha = .3f),
                 style = Stroke(1.dp.toPx()),
             )
-            attrs.forEachIndexed { i, _ ->
-                drawLine(Color(0xff6b7384).copy(alpha = .25f), center, point(i, cap.toFloat()))
+            attrs.forEachIndexed { i, a ->
+                drawLine(
+                    if (a.id == selected) Color(a.color.toInt()).copy(alpha = .8f)
+                    else Color(0xff6b7384).copy(alpha = .25f),
+                    center,
+                    point(i, cap.toFloat()),
+                    strokeWidth = if (a.id == selected) 1.6.dp.toPx() else 1.dp.toPx(),
+                )
             }
             if (compare)
                 drawPath(
@@ -97,13 +131,18 @@ internal fun NativeRadar(
                 Text(
                     a.short + if (a.focus) " ★" else "",
                     fontSize = 10.sp,
-                    color = Color(a.color.toInt()),
+                    color =
+                        MaterialTheme.colorScheme.onSurface.copy(
+                            alpha = if (a.id == selected) 1f else .8f
+                        ),
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     "LV ${a.level}",
                     fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .65f),
+                    color =
+                        if (a.id == selected) Color(a.color.toInt())
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = .65f),
                 )
             }
         }

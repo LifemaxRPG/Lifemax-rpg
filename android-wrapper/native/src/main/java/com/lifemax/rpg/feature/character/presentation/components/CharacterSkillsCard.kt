@@ -20,6 +20,12 @@ internal fun CharacterSkillsCard(
 ) {
     CharacterCard {
         Text("Skill progression", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "Practice level is logged effort only. Gaps in training show up over time.",
+            color = p.tokenColor("muted"),
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 6.dp, bottom = 8.dp),
+        )
         if (p.skills.isEmpty())
             Text(
                 "Skills appear here as you practice them.",

@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.character.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -26,27 +28,138 @@ internal fun CharacterBuildCard(
     onAction: (String, String) -> Unit,
 ) {
     CharacterCard {
-        Text("Build shape", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-        Row {
-            FilterChip(!ui.compare, { onCompare(false) }, { Text("Now") })
-            Spacer(Modifier.width(8.dp))
-            FilterChip(ui.compare, { onCompare(true) }, { Text("vs last week") })
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Build shape", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.clip(RoundedCornerShape(50))
+                    .background(p.tokenColor("bg"))
+                    .border(1.dp, p.tokenColor("line").copy(alpha = .5f), RoundedCornerShape(50))
+                    .padding(3.dp)
+            ) {
+                for ((compare, label) in listOf(false to "Now", true to "vs last week")) {
+                    Text(
+                        label,
+                        Modifier.clip(RoundedCornerShape(50))
+                            .background(
+                                if (ui.compare == compare) p.tokenColor("panel2")
+                                else Color.Transparent
+                            )
+                            .clickable { onCompare(compare) }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color =
+                            if (ui.compare == compare) p.tokenColor("text")
+                            else p.tokenColor("muted"),
+                    )
+                }
+            }
         }
-        Text(p.archetype, color = p.tokenColor("accent"), fontSize = 12.sp)
+        Text(
+            p.archetype,
+            Modifier.padding(top = 10.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xffc58bff).copy(alpha = .14f))
+                .border(1.dp, Color(0xffc58bff).copy(alpha = .38f), RoundedCornerShape(50))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            color = p.tokenColor("text"),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+        )
         NativeRadar(p.attributes, p.cap, ui.compare, selected.id, onSelect)
-        Text(selected.name, fontWeight = FontWeight.Bold)
-        Text(
-            "LV ${selected.level} · ${selected.into.toLong()} / ${selected.needed.toLong()} XP",
-            color = p.tokenColor("muted"),
-            fontSize = 12.sp,
+        if (ui.compare)
+            Text(
+                "Dashed outline: last week",
+                Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                color = p.tokenColor("muted"),
+                fontSize = 11.5.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        HorizontalDivider(
+            Modifier.padding(top = 10.dp, bottom = 15.dp),
+            color = p.tokenColor("line").copy(alpha = .5f),
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                Modifier.size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(selected.color.toInt()).copy(alpha = .16f))
+                    .border(
+                        1.dp,
+                        Color(selected.color.toInt()).copy(alpha = .45f),
+                        RoundedCornerShape(14.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                CharacterPixelIcon(
+                    attributeIcon(selected.id),
+                    Color(selected.color.toInt()),
+                    Modifier.size(22.dp),
+                )
+            }
+            Column(Modifier.weight(1f)) {
+                Text(selected.name, fontWeight = FontWeight.ExtraBold, fontSize = 15.5.sp)
+                Text(
+                    "${selected.into.toLong()} / ${selected.needed.toLong()} XP to next · ${selected.total.toLong()} total",
+                    color = p.tokenColor("muted"),
+                    fontSize = 11.sp,
+                )
+            }
+            Text(
+                "LV ${selected.level}",
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(selected.color.toInt()),
+            )
+        }
         CharacterProgress(selected.pct, Color(selected.color.toInt()))
-        Text(
-            "THIS WEEK  +${selected.week.toLong()} XP   ·   LAST TRAINED  ${selected.last}",
-            fontSize = 10.sp,
-            color = p.tokenColor("muted"),
-            modifier = Modifier.padding(top = 10.dp),
-        )
+        Row(
+            Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            for ((label, value) in
+                listOf(
+                    "THIS WEEK" to
+                        if (selected.week > 0) "+${selected.week.toLong()} XP" else "None",
+                    "LAST TRAINED" to selected.last,
+                )) {
+                Column(
+                    Modifier.weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(p.tokenColor("panel2"))
+                        .border(
+                            1.dp,
+                            p.tokenColor("line").copy(alpha = .5f),
+                            RoundedCornerShape(12.dp),
+                        )
+                        .padding(horizontal = 10.dp, vertical = 9.dp)
+                ) {
+                    Text(
+                        label,
+                        fontSize = 8.5.sp,
+                        letterSpacing = 1.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = p.tokenColor("muted"),
+                    )
+                    Text(
+                        value,
+                        Modifier.padding(top = 4.dp),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color =
+                            if (label == "THIS WEEK" && selected.week > 0) p.tokenColor("good")
+                            else p.tokenColor("text"),
+                    )
+                }
+            }
+        }
         Text(selected.status, color = p.tokenColor("muted"), fontSize = 12.sp)
         Row(
             Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp),
@@ -70,7 +183,11 @@ internal fun CharacterBuildCard(
                 }
             }
         }
-        TextButton(onClick = { onAction("attribute", selected.id) }) {
+        Button(
+            onClick = { onAction("attribute", selected.id) },
+            modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+            shape = RoundedCornerShape(10.dp),
+        ) {
             Text("Log ${selected.short} activity ›")
         }
     }

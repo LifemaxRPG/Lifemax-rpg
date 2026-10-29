@@ -18,17 +18,22 @@ internal fun CharacterProjection.tokenColor(key: String) =
     Color((tokens[key] ?: 0xffeef1f6).toInt())
 
 @Composable
-internal fun CharacterCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun CharacterCard(
+    modifier: Modifier = Modifier,
+    padding: PaddingValues = PaddingValues(16.dp),
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(
-        Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = .3f),
-                RoundedCornerShape(20.dp),
+                RoundedCornerShape(14.dp),
             )
-            .padding(16.dp),
+            .padding(padding),
         content = content,
     )
 }
@@ -38,10 +43,15 @@ internal fun CharacterProgress(pct: Float, color: Color) {
     Box(
         Modifier.fillMaxWidth()
             .padding(top = 8.dp)
-            .height(5.dp)
+            .height(8.dp)
             .clip(CircleShape)
-            .background(color.copy(alpha = .12f))
+            .background(MaterialTheme.colorScheme.background)
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .5f), CircleShape)
     ) {
-        Box(Modifier.fillMaxWidth((pct / 100).coerceIn(0f, 1f)).fillMaxHeight().background(color))
+        Box(
+            Modifier.fillMaxWidth((pct / 100).coerceIn(0f, 1f))
+                .fillMaxHeight()
+                .background(Brush.horizontalGradient(listOf(color.copy(alpha = .62f), color)))
+        )
     }
 }
