@@ -87,4 +87,24 @@ class OverviewParityTest {
             File(instrumentation.targetContext.filesDir,"overview-parity.json").writeText(JSONObject().put("renderer","live-web-with-native-controls").put("liveAnimation",true).put("liveTimers",true).put("hardwareScrolling",true).put("sameActivity",true).toString(2));export("overview-parity.json")
         }
     }
+    @Test fun characterUsesComposeInMainActivityWithoutGameplayWrites() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var main:MainActivity;scenario.onActivity{main=it}
+            waitUntil("Character bridge ready"){evaluate(main,"typeof openNativeCharacter==='function'")=="true"}
+            evaluate(main,"window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');save();renderAll();navigate('character');true")
+            SystemClock.sleep(800)
+            val saved=evaluate(main,"localStorage.getItem(STORE)")
+            shot(main.bridge.webView,"character-web.png")
+            evaluate(main,"openNativeCharacter().then(r=>window.__characterOpened=r);true")
+            waitUntil("Compose Character attached"){var ready=false;instrumentation.runOnMainSync{ready=main.window.decorView.findViewWithTag<View>("native-character-screen")!=null};ready}
+            waitUntil("Character open response"){evaluate(main,"window.__characterOpened===true")=="true"}
+            SystemClock.sleep(800)
+            instrumentation.runOnMainSync{val content=main.window.decorView.findViewWithTag<View>("native-character-screen");assertEquals(0,webViews(content));assertTrue(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).contains(main))}
+            shot(main.bridge.webView,"character-native.png")
+            assertEquals("Read projection never changes save",saved,evaluate(main,"localStorage.getItem(STORE)"))
+            evaluate(main,"setNativeCharacterEnabled(false);true")
+            waitUntil("Classic Character restored"){var gone=false;instrumentation.runOnMainSync{gone=main.window.decorView.findViewWithTag<View>("native-character-screen")==null};gone}
+        }
+    }
+
 }
