@@ -5,7 +5,20 @@
  const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false};
  const ids=new WeakMap(),assets=new Map();let nextId=0;
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
- function color(value){if(!value||value==='none'||value==='transparent')return 0;colorCtx.clearRect(0,0,1,1);colorCtx.fillStyle=value;colorCtx.fillRect(0,0,1,1);const a=colorCtx.getImageData(0,0,1,1).data;return ((a[3]<<24)|(a[0]<<16)|(a[1]<<8)|a[2])>>>0}
+ let colorProbe;
+ function color(value){
+  if(!value||value==='none'||value==='transparent')return 0;
+  // CSS color-mix resolves to color(srgb ...) on Android. Some WebView Canvas
+  // versions cannot parse that syntax and silently retain the previous fill.
+  if(value.startsWith('color-mix(')){
+   if(!colorProbe){colorProbe=document.createElement('span');colorProbe.style.cssText='display:none;position:fixed;pointer-events:none';document.documentElement.appendChild(colorProbe)}
+   colorProbe.style.color=value;const resolved=getComputedStyle(colorProbe).color;
+   if(resolved!==value)return color(resolved);
+  }
+  const srgb=value.match(/^color\(\s*srgb\s+([^\s]+)\s+([^\s]+)\s+([^\s/)]+)(?:\s*\/\s*([^\s)]+))?\s*\)$/);
+  if(srgb){const channel=v=>Math.round(Math.max(0,Math.min(1,parseFloat(v)/(v.endsWith('%')?100:1)))*255);return((channel(srgb[4]||'1')<<24)|(channel(srgb[1])<<16)|(channel(srgb[2])<<8)|channel(srgb[3]))>>>0}
+  colorCtx.clearRect(0,0,1,1);colorCtx.fillStyle=value;colorCtx.fillRect(0,0,1,1);const a=colorCtx.getImageData(0,0,1,1).data;return ((a[3]<<24)|(a[0]<<16)|(a[1]<<8)|a[2])>>>0
+ }
  const num=v=>parseFloat(v)||0;
  // innerWidth rounds CSS pixels on Android; the fractional layout width keeps
  // native coordinates aligned with the WebView at non-integer screen densities.
@@ -17,7 +30,7 @@
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
  async function raster(src,w,h){const key=src+'|'+w+'|'+h;if(assets.has(key))return assets.get(key);const task=new Promise((ok,no)=>{const im=new Image();im.onload=()=>{try{const cv=document.createElement('canvas');const d=Math.min(devicePixelRatio||1,3);cv.width=Math.max(1,Math.ceil(w*d));cv.height=Math.max(1,Math.ceil(h*d));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);ok(cv.toDataURL('image/png'))}catch(e){no(e)}};im.onerror=no;im.src=src});assets.set(key,task);if(assets.size>160)assets.delete(assets.keys().next().value);return task}
- function gradients(s){return split(s.backgroundImage||'none').filter(v=>/^(linear|radial)-gradient/.test(v)).map(v=>{const terms=split(v.slice(v.indexOf('(')+1,-1)),first=terms[0];const colors=terms.filter(t=>/^(rgba?\(|#[\da-f]|color\(|transparent)/i.test(t));return{radial:v.startsWith('radial'),direction:first,positions:colors.map((t,i)=>{const m=t.match(/\)\s+(-?[\d.]+)%$|transparent\s+(-?[\d.]+)%$|#[\da-f]+\s+(-?[\d.]+)%$/i);return m?num(m[1]||m[2]||m[3])/100:i/Math.max(1,colors.length-1)}),colors:colors.map(t=>{const match=t.match(/^(rgba?\([^)]*\)|color\([^)]*\)|#[\da-f]+|transparent)/i);return match?color(match[1]):0})}})}
+ function gradients(s){return split(s.backgroundImage||'none').filter(v=>/^(linear|radial)-gradient/.test(v)).map(v=>{const terms=split(v.slice(v.indexOf('(')+1,-1)),first=terms[0];const colors=terms.filter(t=>/^(rgba?\(|#[\da-f]|color(?:-mix)?\(|transparent)/i.test(t));return{radial:v.startsWith('radial'),direction:first,positions:colors.map((t,i)=>{const m=t.match(/\)\s+(-?[\d.]+)%$|transparent\s+(-?[\d.]+)%$|#[\da-f]+\s+(-?[\d.]+)%$/i);return m?num(m[1]||m[2]||m[3])/100:i/Math.max(1,colors.length-1)}),colors:colors.map(t=>color(t.replace(/\s+-?[\d.]+%$/, '')))}})}
  async function capture(roots,nav){const nodes=[],hits=[],offset=nav?roots[0].getBoundingClientRect():{x:0,y:-scrollY};let maxY=0;
   const actionSelector='button,[onclick],[role="button"],.ov-bar,#ovHero,#petPeek,#ovHealth,#ovRewards,.ova-app,.ld-glance';
   const rect=el=>{const r=el.getBoundingClientRect();if(nav&&el===roots[0])return{x:0,y:0,w:el.scrollWidth,h:r.height};return{x:r.x-offset.x+(nav?roots[0].scrollLeft:0),y:r.y-offset.y,w:r.width,h:r.height}};
