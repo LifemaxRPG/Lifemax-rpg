@@ -14,10 +14,20 @@ import com.lifemax.rpg.feature.character.presentation.components.*
 import kotlin.math.*
 
 @Composable
-fun CharacterRoute(vm: CharacterViewModel, onAction: (String, String) -> Unit) {
+fun CharacterRoute(
+    vm: CharacterViewModel,
+    topInsetDp: Float = 64f,
+    bottomInsetDp: Float = 72f,
+    onAction: (String, String) -> Unit,
+) {
     val data by vm.projection.collectAsState()
     val ui by vm.selection.collectAsState()
-    data?.let { CharacterScreen(it, ui, vm::select, vm::compare, vm::sort, vm::skills, onAction) }
+    data?.let {
+        CharacterScreen(
+            it, ui, vm::select, vm::compare, vm::sort, vm::skills, topInsetDp, bottomInsetDp,
+            onAction,
+        )
+    }
 }
 
 @Composable
@@ -28,6 +38,8 @@ fun CharacterScreen(
     onCompare: (Boolean) -> Unit,
     onSort: (String) -> Unit,
     onSkills: () -> Unit,
+    topInsetDp: Float = 64f,
+    bottomInsetDp: Float = 72f,
     onAction: (String, String) -> Unit,
 ) {
     val selected =
@@ -37,7 +49,7 @@ fun CharacterScreen(
             ?: p.attributes.first()
     LifeMaxTheme(p.tokens, p.light) {
         Column(Modifier.fillMaxSize().background(p.tokenColor("bg"))) {
-            Spacer(Modifier.height(64.dp))
+            Spacer(Modifier.height(topInsetDp.dp))
             HorizontalDivider(color = p.tokenColor("line"))
             LazyColumn(
                 Modifier.weight(1f),
@@ -51,7 +63,7 @@ fun CharacterScreen(
                 item { CharacterBenchmarksCard(p, onAction) }
             }
             HorizontalDivider(color = p.tokenColor("line"))
-            Spacer(Modifier.height(72.dp))
+            Spacer(Modifier.height(bottomInsetDp.dp))
         }
     }
 }
