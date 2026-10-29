@@ -152,20 +152,10 @@ class OverviewParityTest {
                 instrumentation.runOnMainSync {
                     val root = main.window.decorView
                     ready = root.findViewWithTag<View>("native-character-screen") == null &&
-                        root.findViewWithTag<View>("native-shared-chrome") != null
+                        root.findViewWithTag<View>("native-shared-chrome") != null &&
+                        root.findViewWithTag<View>("native-nutrition-screen") != null
                 }
                 ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
-            }
-            waitUntil("Food overlay attached") {
-                var count = 0
-                instrumentation.runOnMainSync {
-                    fun visit(view: View) {
-                        if (view is androidx.compose.ui.platform.ComposeView) count++
-                        if (view is ViewGroup) for (i in 0 until view.childCount) visit(view.getChildAt(i))
-                    }
-                    visit(main.window.decorView)
-                }
-                count > 0
             }
             evaluate(main, "navigate('dashboard');true")
             waitUntil("native Food chrome removed") {
@@ -175,7 +165,7 @@ class OverviewParityTest {
                 }
                 gone
             }
-            assertEquals("Default native tabs stay adjacent", "true", evaluate(main, "(()=>{let ids=[...document.querySelectorAll('.sidebar [data-view]')].map(e=>e.dataset.view);let i=ids.indexOf('dashboard');return i>=0&&ids[i+1]==='character'&&ids[i+2]==='meals'})()"))
+            assertEquals("Default native tabs stay adjacent", "true", evaluate(main, "(()=>{let ids=[...document.querySelectorAll('.sidebar [data-view]')].map(e=>e.dataset.view);let i=ids.indexOf('dashboard');return i>=0&&ids[i+1]==='character'&&ids[i+2]==='food'})()"))
         }
     }
 
