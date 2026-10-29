@@ -7,7 +7,7 @@ function fixture(source){
  px:(name,size)=>'<svg class="px" width="'+size+'" height="'+size+'" viewBox="0 0 16 16" fill="currentColor"><path d="M1 5h3V3h2v4h4V3h2v2h3v6h-3v2h-2V9H6v4H4v-2H1z"/></svg>'};
  context.window=context;vm.createContext(context);
  const marker='  return { mount, glance, widgetSnapshot, voice: voiceApi';
- const code=(source||fs.readFileSync(path.join(root,'src/features/life-director/logic.js'),'utf8')).replace(marker,'  return { finishTest:{dialHtml,faceHtml,dayBlocks,updateDialHand:typeof updateDialHand==="function"?updateDialHand:null,runBuild,setState(s){ST=s}}, mount, glance, widgetSnapshot, voice: voiceApi');
+ const code=(source||fs.readFileSync(path.join(root,'src/features/life-director/logic.js'),'utf8')).replace(marker,'  return { finishTest:{dragOn,planTimeChange:typeof planTimeChange==="function"?planTimeChange:null,dialHtml,faceHtml,dayBlocks,updateDialHand:typeof updateDialHand==="function"?updateDialHand:null,runBuild,setState(s){ST=s}}, mount, glance, widgetSnapshot, voice: voiceApi');
  vm.runInContext(code,context);const api=vm.runInContext('LifeDirectorApp.finishTest',context);
  const start=Date.parse('2026-10-28T00:00:00Z')/1000,at=h=>start+h*3600;
  const segment=(kind,title,s,e)=>({kind,title,code:kind,startEpoch:at(s),endEpoch:at(e)});

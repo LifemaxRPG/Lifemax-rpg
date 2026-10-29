@@ -678,3 +678,6 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 .ld-hand{transform-box:view-box;transform-origin:0 0}
 .ld-core-in .ld-core-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.25)}
 .ld-core-in .ld-core-btn:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.24)}
+
+/* SVG groups alone do not prevent Android from claiming a handle gesture. */
+.ld-draggable>svg{touch-action:none}

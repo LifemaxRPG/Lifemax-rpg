@@ -1614,7 +1614,7 @@ function validateSchedule(v) {
 }
 
 /* ── rescheduleActivity (spec §9.4 Local Ripple Containment, §14 #6) ─────────
-   trigger.type: MISSED | SKIPPED | RESIDUAL | MOVE | NEW_COMMITMENT | BLOCK_HOURS | BLACKOUT_DAY | SICK | QUEST_CHANGED
+   trigger.type: MISSED | SKIPPED | RESIDUAL | MOVE | NEW_COMMITMENT | BLOCK_HOURS | BLACKOUT_DAY | SICK | QUEST_CHANGED | TIME_CHANGED
    Returns { updatedSchedule, engineInput (with any new commitment/blackout), changeRecord, rejectedMove } */
 function rescheduleActivity(req) {
   const t0 = clockMs();
@@ -1679,6 +1679,16 @@ function rescheduleActivity(req) {
           toPlace.push({ source: Object.assign({}, inst.source, { tier, tierReason: tier === 4 ? 'CRITICAL_DEADLINE' : inst.source.tierReason, windowEnd: Math.min(inst.source.windowEnd || dl, dl) }), reason: 'REPLACEMENT', origInstanceId: inst.instanceId, preferBwcEpoch: now });
           actions.push({ action: 'EXCUSE', instanceId: inst.instanceId, reason: 'QUEST_DEADLINE_CHANGED' });
         } else actions.push({ action: 'RELINK', instanceId: inst.instanceId });
+      }
+      break;
+    }
+    case 'TIME_CHANGED': {
+      // Existing sessions are held by the repair pass below. Only unmet tasks
+      // that the new availability can support are proposed as additions.
+      const existing = new Set(prevPlanned.map(i => i.taskId));
+      const proposed = generateSchedule(input);
+      if (proposed.status !== 'INVARIANT_VIOLATION') for (const i of proposed.scheduledInstances) {
+        if (i.source && !existing.has(i.taskId)) toPlace.push({ source: i.source, reason: 'TIME_FREED', preferBwcEpoch: now });
       }
       break;
     }
@@ -2674,6 +2684,11 @@ const LifeDirectorApp = (function () {
   }
   /* changes to your time rebuild the plan straight away, once setup is done */
   function autoReplan(reason) { if (ST.setupComplete) regenerate(reason, true); else persist(); }
+  /* Local repair holds compatible sessions and protects recovery. */
+  function planTimeChange(input) {
+    return E.rescheduleActivity({ engineInput: input, currentOutput: ST.schedule,
+      trigger: { type: 'TIME_CHANGED' } }).updatedSchedule;
+  }
   function weekKey(now) { const p = U.localParts(now, tz()); const mon = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, -((p.dow + 6) % 7)); return U.ymdKey(mon); }
   function reschedule(trigger) {
     const now = nowEpoch();
@@ -3915,16 +3930,19 @@ const LifeDirectorApp = (function () {
     const mv = ev => { if (ev.pointerId === e.pointerId) onMove(dialAngle(svg, ev)); };
     const up = ev => {
       if (ev.pointerId !== e.pointerId) return;
-      svg.removeEventListener('pointermove', mv); svg.removeEventListener('pointerup', up); svg.removeEventListener('pointercancel', up);
+      svg.removeEventListener('pointermove', mv); svg.removeEventListener('pointerup', up); svg.removeEventListener('pointercancel', up); svg.removeEventListener('lostpointercapture', up);
+      try { svg.releasePointerCapture(e.pointerId); } catch (err) { /* already released */ }
       host.classList.remove('drag'); hd.classList.remove('on'); ui.drag = false; ui.dragEnd = Date.now();
-      onEnd(ev.type === 'pointercancel');
+      onEnd(ev.type === 'pointercancel' || ev.type === 'lostpointercapture');
     };
     svg.addEventListener('pointermove', mv); svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
+    svg.addEventListener('lostpointercapture', up);
     onMove(dialAngle(svg, e));
   }
   function moveHandle(hd, a, r) { const [x, y] = polar(r, a); hd.querySelectorAll('circle').forEach(c => { c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); }); }
   /* Today's dial: drag a sleep or work handle; release asks before the rule changes */
   function attachDial(dial) {
+    dial.classList.add('ld-draggable');
     const svg = dial.querySelector('svg'), d0 = +dial.dataset.d0, d1 = +dial.dataset.d1, ghost = svg.querySelector('.ld-drag-arc'), core = dial.querySelector('.ld-core');
     const snap = a => {
       const ep = d0 + a / 360 * (d1 - d0), p = U.localParts(ep, tz());
@@ -3982,12 +4000,13 @@ const LifeDirectorApp = (function () {
     openSheet('<h3>' + (isSleep ? (P.end === 'start' ? 'Change your bedtime?' : 'Change your wake-up time?') : 'Change when ' + esc(r.title) + (P.end === 'start' ? ' starts?' : ' ends?')) + '</h3>' +
       '<p class="ld-change"><s>' + fHm(P.from) + '</s><span aria-hidden="true">→</span><b>' + fHm(P.to) + '</b></p>' +
       (problem ? '<p class="ld-note ld-warn-t">' + problem + ' Try a different time.</p><div class="ld-row"><button class="ld-btn ld-primary" data-act="dialCancel">OK</button></div>' :
-        '<p class="ld-muted">This changes the ' + what + ' for ' + who + ', not just this one day. Life Director re-plans around it right away.</p>' +
+        '<p class="ld-muted">This changes the ' + what + ' for ' + who + ', not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.</p>' +
         '<div class="ld-row"><button class="ld-btn ld-primary" data-act="dialApply">Change it</button><button class="ld-btn ld-ghost" data-act="dialCancel">Keep ' + fHm(P.from) + '</button></div>' +
         '<p class="ld-muted ld-small-print">Only today is different? Close this and use “Something came up” instead.</p>'));
   }
   /* My time: the sleep dial. Handles move freely; the inputs follow; Save commits. */
   function attachMini(mini) {
+    mini.classList.add('ld-draggable');
     const svg = mini.querySelector('svg');
     const set = (bed, wake) => {
       mini.dataset.bed = bed; mini.dataset.wake = wake;
@@ -4362,7 +4381,18 @@ const LifeDirectorApp = (function () {
       case 'dialApply': {
         const P = ui.pendingDial, r = P && ST.availability.rules.find(x => x.id === P.ruleId);
         ui.pendingDial = null;
-        if (r) { r.startMin = P.startMin; r.durationMin = P.durationMin; if (r.kind === 'SLEEP' && r.id === 'sleep-wk') ST.availability.sleepRequirementMinutes = P.durationMin; closeSheet(); autoReplan('time changed'); render(); say(handleLabel(r, P.end) + ' now ' + fHm(P.to) + ' · plan rebuilt'); }
+        if (r) {
+          const before = { startMin: r.startMin, durationMin: r.durationMin };
+          r.startMin = P.startMin; r.durationMin = P.durationMin;
+          if (ST.setupComplete) {
+            const old = ST.schedule, out = planTimeChange(buildInput(now));
+            if (!applyOutput(out, 'Time adjusted', 'repair')) { Object.assign(r, before); persist(); closeSheet(); render(); break; }
+            const positions = new Map((old ? old.scheduledInstances : []).map(i => [i.instanceId, i.startEpoch + ':' + i.endEpoch]));
+            const changed = out.scheduledInstances.some(i => positions.get(i.instanceId) !== i.startEpoch + ':' + i.endEpoch) || positions.size !== out.scheduledInstances.length;
+            if (!changed) ui.bfQ = null;
+            persist(); closeSheet(); render(); say(handleLabel(r, P.end) + ' now ' + fHm(P.to) + (changed ? ' · schedule adjusted' : ' · sessions kept in place'));
+          } else { persist(); closeSheet(); render(); }
+        }
         break;
       }
       case 'dialCancel': ui.pendingDial = null; closeSheet(); render(); break;
