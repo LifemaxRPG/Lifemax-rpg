@@ -154,6 +154,8 @@ class OverviewParityTest {
                 }
                 gone
             }
+            waitUntil("Web Food page active") { evaluate(main, "lmaView()") == "\"meals\"" }
+            SystemClock.sleep(500)
             val webFood = shot(main.bridge.webView, "food-web.png")
             evaluate(main, "setNativeNutritionEnabled(true);true")
             waitUntil("Food with shared chrome") {
