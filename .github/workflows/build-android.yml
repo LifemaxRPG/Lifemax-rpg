@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, claude/github-android-app-d3wlth, codex/native-overview, codex/native-character]
+    branches: [main, claude/github-android-app-d3wlth, codex/native-overview, codex/native-character, codex/native-food-parity]
   workflow_dispatch:
 
 permissions:
