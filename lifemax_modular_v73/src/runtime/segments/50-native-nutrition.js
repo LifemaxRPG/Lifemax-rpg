@@ -112,8 +112,8 @@
       }catch(err){console.warn('Native Nutrition day',err);fallback('web')}
     }else if(command==='water'){
       try{
-        if(typeof addMealsWater!=='function'||mealsDayKey()!==getToday())return fallback('web');
-        addMealsWater(250);
+        if(typeof fv2AddWater!=='function'||mealsDayKey()!==getToday())return fallback('web');
+        fv2AddWater(250);
         if(typeof renderMeals==='function')renderMeals();
         scheduleSync();
       }catch(err){console.warn('Native Nutrition water',err);fallback('web')}
