@@ -110,3 +110,56 @@ console.log(
 
 if (process.env.CHARACTER_FIXTURE)
   fs.writeFileSync(process.env.CHARACTER_FIXTURE, JSON.stringify(a, null, 2));
+
+(async () => {
+  const callbacks = {};
+  let opened = 0;
+  let closed = 0;
+  let delegatedAttribute = "";
+  let delegatedView = "";
+  c.document.body = { classList: { contains: () => false } };
+  c.openAttr = (id) => {
+    delegatedAttribute = id;
+  };
+  c.lmaNavTo = (view) => {
+    delegatedView = view;
+  };
+  c.Capacitor = {
+    isNativePlatform: () => true,
+    isPluginAvailable: () => true,
+    Plugins: {
+      NativeCharacter: {
+        handshake: async () => ({
+          protocol: 1,
+          capabilities: ["character.projection.v1"],
+        }),
+        addListener: async (event, callback) => {
+          callbacks[event] = callback;
+        },
+        open: async () => {
+          opened++;
+        },
+        close: async () => {
+          closed++;
+          callbacks.closed();
+        },
+      },
+    },
+  };
+  assert.equal(await c.openNativeCharacter(), true);
+  await callbacks.action({ action: "attribute", id: "physique" });
+  assert.equal(delegatedAttribute, "physique");
+  assert.equal(closed, 1);
+  assert.equal(await c.openNativeCharacter(), true);
+  await callbacks.action({ view: "dashboard" });
+  assert.equal(delegatedView, "dashboard");
+  assert.equal(opened, 2);
+  assert.equal(closed, 2);
+  assert.equal(saves, 0);
+  console.log(
+    "PASS native Character action closes its host, delegates original attribute/navigation handlers, and performs no gameplay save",
+  );
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
