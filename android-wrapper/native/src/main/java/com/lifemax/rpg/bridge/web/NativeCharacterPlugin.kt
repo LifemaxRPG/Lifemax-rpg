@@ -1,18 +1,15 @@
 package com.lifemax.rpg.bridge.web
 
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.*
 import com.getcapacitor.annotation.CapacitorPlugin
-import com.lifemax.rpg.OverviewLayer
-import com.lifemax.rpg.OverviewSurface
+import com.lifemax.rpg.LiveOverviewShell
 import com.lifemax.rpg.feature.character.presentation.*
 import org.json.JSONArray
 
@@ -22,8 +19,7 @@ class NativeCharacterPlugin : Plugin() {
     private val repository = container.repository
     private val store = ViewModelStore()
     private var view: ComposeView? = null
-    private var navHost: HorizontalScrollView? = null
-    private var navSurface: OverviewSurface? = null
+    private var chrome: LiveOverviewShell? = null
 
     @PluginMethod
     fun handshake(call: PluginCall) {
@@ -108,42 +104,21 @@ class NativeCharacterPlugin : Plugin() {
     }
 
     private fun showNav(scene: org.json.JSONObject?) {
-        requireNotNull(scene) { "Missing shared Overview navigation" }
-        if (navHost == null) {
-            val bar =
-                OverviewSurface(activity) { id, _ ->
-                    notifyListeners("nav-action", JSObject().put("id", id))
-                }
-            bar.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-            val host =
-                HorizontalScrollView(activity).apply {
-                    isHorizontalScrollBarEnabled = false
-                    addView(bar)
-                }
-            activity.findViewById<ViewGroup>(android.R.id.content).addView(host)
-            navSurface = bar
-            navHost = host
-        }
-        val bar = navSurface ?: return
-        bar.applyScene(
-            OverviewLayer(scene),
-            scene.getDouble("width").toFloat(),
-            scene.getDouble("height").toFloat(),
-            android.graphics.Color.TRANSPARENT,
-            true,
-        )
-        navHost?.layoutParams =
-            FrameLayout.LayoutParams(
-                -1,
-                (scene.getDouble("height") * activity.resources.displayMetrics.density).toInt(),
-                Gravity.BOTTOM,
-            )
+        requireNotNull(scene) { "Missing shared Overview chrome" }
+        if (chrome == null)
+            chrome =
+                LiveOverviewShell(
+                    activity,
+                    bridge.webView,
+                    { id -> notifyListeners("nav-action", JSObject().put("id", id)) },
+                    chromeOnly = true,
+                )
+        chrome?.show(scene)
     }
 
     private fun remove() {
-        navHost?.let { (it.parent as? ViewGroup)?.removeView(it) }
-        navHost = null
-        navSurface = null
+        chrome?.close()
+        chrome = null
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
             it.disposeComposition()

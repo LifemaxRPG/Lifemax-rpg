@@ -37,7 +37,7 @@ fun CharacterScreen(
             ?: p.attributes.first()
     LifeMaxTheme(p.tokens, p.light) {
         Column(Modifier.fillMaxSize().background(p.tokenColor("bg"))) {
-            CharacterHeader(p, onAction)
+            Spacer(Modifier.height(64.dp))
             HorizontalDivider(color = p.tokenColor("line"))
             LazyColumn(
                 Modifier.weight(1f),

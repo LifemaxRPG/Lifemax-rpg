@@ -119,7 +119,7 @@ if (process.env.CHARACTER_FIXTURE)
   let delegatedView = "";
   c.document.body = { classList: { contains: () => false } };
   c.document.querySelector = () => ({});
-  c.NativeOverviewSnapshot = { capture: async () => ({ nodes: [], hits: [], height: 64, width: 320 }) };
+  c.NativeOverviewSnapshot = { snapshot: async () => ({ width: 320, header: { nodes: [], hits: [], height: 64, width: 320 }, nav: { nodes: [], hits: [], height: 64, width: 320 } }) };
   c.openAttr = (id) => {
     delegatedAttribute = id;
   };

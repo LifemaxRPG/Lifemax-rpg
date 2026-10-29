@@ -141,9 +141,8 @@
     };
   }
   async function navScene() {
-    const sidebar = document.querySelector(".sidebar");
-    if (!sidebar || !window.NativeOverviewSnapshot) throw Error("Overview navigation unavailable");
-    return NativeOverviewSnapshot.capture([sidebar], true);
+    if (!window.NativeOverviewSnapshot) throw Error("Overview chrome unavailable");
+    return NativeOverviewSnapshot.snapshot();
   }
   function sync() {
     const input = document.getElementById("nativeCharacterToggle");
