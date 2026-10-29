@@ -154,7 +154,7 @@ class OverviewParityTest {
                 }
                 gone
             }
-            shot(main.bridge.webView, "food-web.png")
+            val webFood = shot(main.bridge.webView, "food-web.png")
             evaluate(main, "setNativeNutritionEnabled(true);true")
             waitUntil("Food with shared chrome") {
                 var ready = false
@@ -166,7 +166,15 @@ class OverviewParityTest {
                 }
                 ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
             }
-            shot(main.bridge.webView, "food-native.png")
+            SystemClock.sleep(900)
+            val nativeFood = shot(main.bridge.webView, "food-native.png")
+            var changedPixels = 0
+            for (y in nativeFood.height / 4 until nativeFood.height * 3 / 4 step 4) {
+                for (x in 0 until nativeFood.width step 4) {
+                    if (nativeFood.getPixel(x, y) != webFood.getPixel(x, y)) changedPixels++
+                }
+            }
+            assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
             evaluate(main, "navigate('dashboard');true")
             waitUntil("native Food chrome removed") {
                 var gone = false
