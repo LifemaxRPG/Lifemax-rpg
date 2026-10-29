@@ -3100,7 +3100,26 @@ const LifeDirectorApp = (function () {
     for (let h = 0; h < 24; h += 3) {
       let [x, y] = polar(DIAL.RL, h * 15), anc = '';
       if (h === 6) { x = 359; anc = ' style="text-anchor:end"'; } else if (h === 18) { x = 1; anc = ' style="text-anchor:start"'; } else if (h === 0) y = 13; else if (h === 12) y = 347;
-      l += '<text class="ld-hl' + (h % 6 ? '' : ' ld-hl6') + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '"' + anc + '>' + hourWord(h) + '</text>';
+      if (h % 6 !== 0) {
+        // Engrave diagonal hour labels along the circular bezel, rather than
+        // placing horizontal text across the edge of the clock face.
+        const angle = h * 15;
+        const radius = DIAL.RL;
+        const start = angle - 13, end = angle + 13;
+        const point = deg => polar(radius, deg);
+        const p0 = point(start), p1 = point(end);
+        // Reverse the lower semicircle so glyphs remain upright.
+        const reverse = angle > 90 && angle < 270;
+        const a = reverse ? p1 : p0, b = reverse ? p0 : p1;
+        const pathId = id + '-hour-' + h;
+        l += '<defs><path id="' + pathId + '" d="M' + a[0].toFixed(2) + ' ' + a[1].toFixed(2) +
+          ' A' + radius + ' ' + radius + ' 0 0 ' + (reverse ? 0 : 1) + ' ' +
+          b[0].toFixed(2) + ' ' + b[1].toFixed(2) + '"/></defs>';
+        l += '<text class="ld-hl"><textPath href="#' + pathId +
+          '" startOffset="50%" text-anchor="middle">' + hourWord(h) + '</textPath></text>';
+      } else {
+        l += '<text class="ld-hl ld-hl6" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '"' + anc + '>' + hourWord(h) + '</text>';
+      }
     }
     /* night above, day below: midnight sits at the top */
     /* small sun and moon beside Noon and Midnight, outside the rings */
