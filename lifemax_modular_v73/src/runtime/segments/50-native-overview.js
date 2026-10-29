@@ -9,7 +9,7 @@
  const num=v=>parseFloat(v)||0;
  const split=v=>{let depth=0,start=0,out=[];for(let i=0;i<v.length;i++){if(v[i]==='(')depth++;if(v[i]===')')depth--;if(v[i]===','&&!depth){out.push(v.slice(start,i).trim());start=i+1}}out.push(v.slice(start).trim());return out};
  function plugin(){try{const c=window.Capacitor;return c&&c.isNativePlatform()&&c.isPluginAvailable('NativeOverview')?c.Plugins.NativeOverview:null}catch(_){return null}}
- function blocked(){return !state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
+ function blocked(){return !state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
  function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
@@ -51,6 +51,10 @@
 
  const nav=navigate;navigate=function(v){N.suspended=false;const result=nav.apply(this,arguments);if(v==='dashboard')setTimeout(open,80);return result};
  window.openNativeOverview=()=>open(true);
+ // The first-install tab-thumbnail pass navigates through every web page. It must
+ // not navigate the shared host behind a visible native Overview. Settings can
+ // still request that pass after returning to the web tools.
+ if(typeof lmaThumbWarm==='function'){const warm=lmaThumbWarm;lmaThumbWarm=function(){if(N.open||N.opening)return Promise.resolve();return warm.apply(this,arguments)}}
  // Refresh only after the shared model has rendered; native owns no gameplay state.
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);

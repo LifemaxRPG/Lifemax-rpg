@@ -62,6 +62,10 @@ class OverviewParityTest {
             scenario.onActivity { main=it }
             waitUntil("web app ready"){evaluate(main,"typeof window.openNativeOverview==='function'")=="true"}
             evaluate(main,"""window.__nativeOverviewManual=true;window.__overviewNavHistory=[];const originalNavigate=navigate;navigate=function(v){if(v!=='dashboard')__overviewNavHistory.push({v,stack:new Error().stack});return originalNavigate.apply(this,arguments)};state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');document.body.style.overflow='';document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
+            // A fresh install warms scrub-bar thumbnails by visiting every tab.
+            // Isolate the screen comparison from that unrelated navigation pass.
+            evaluate(main,"lmaThumbWarm=async()=>{};document.dispatchEvent(new TouchEvent('touchstart',{touches:[],changedTouches:[]}));true")
+            waitUntil("thumbnail navigation settled"){evaluate(main,"!lmaThumbWarmBusy")=="true"}
             SystemClock.sleep(1800)
             evaluate(main,"window.scrollTo(0,0);true")
             evaluate(main,"document.activeElement?.blur();lmaNavTo('dashboard',{fast:true,skip:true});window.scrollTo(0,0);true")

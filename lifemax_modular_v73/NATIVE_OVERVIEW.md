@@ -19,6 +19,11 @@ Only existing, connected DOM targets in the displayed scene can be activated.
 ## Checking
 
 - `node tests/native-overview.test.js`: fallback and bridge contracts.
+- `node tests/native-overview.browser.js`: measured text/artwork, themes and original
+  tool actions (set `NATIVE_REFERENCE` to the modular source directory when running
+  outside a full checkout).
+- `python3 lifemax_modular_v73/tests/native-overview-build.test.py` from repository
+  root: repeatable build/manifest patches and plugin registration.
 - `python3 tests/native-cash-build.test.py` from repository root: existing build patches.
 - The `codex/native-overview` branch builds an APK and runs `OverviewParityTest`
   in an API 34 emulator before any release is published. The test seeds sample data,
