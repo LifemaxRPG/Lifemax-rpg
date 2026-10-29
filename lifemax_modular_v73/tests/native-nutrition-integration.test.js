@@ -25,4 +25,36 @@ assert.match(native,/@CapacitorPlugin\(name = "NativeNutrition"\)/);
 assert.match(native,/data\.has\("totals"\)/);
 assert.doesNotMatch(native,/DeterministicNutritionFixtures|MockNutritionRepository/,'Never publish fixture data as live Food');
 assert.match(original,/function fv2Goals/,'Original Food engine must remain intact');
+
+const vm=require('node:vm');
+const day='2026-10-29';
+const savedEntry={id:'saved-meal-42',date:day,slot:'lunch',name:'Real lunch',grams:180,kcal:472,p:32,c:49,f:14};
+const runtime={
+ console,Date,setTimeout(){},clearTimeout(){},requestAnimationFrame(){},
+ document:{
+  getElementById(){return null},querySelector(){return null},
+  documentElement:{classList:{contains(){return false}}}
+ },
+ lmaLoad(){return {nativeNutrition:false}},lmaSave(){},lmaView(){return 'meals'},
+ dayFoodLog(key){return key===day?[savedEntry]:[]},mealsDayKey(){return day},
+ fv2Tot(entries){return entries.reduce((a,e)=>({
+  kcal:a.kcal+e.kcal,p:a.p+e.p,c:a.c+e.c,f:a.f+e.f,fib:0,sug:0,na:0
+ }),{kcal:0,p:0,c:0,f:0,fib:0,sug:0,na:0})},
+ fv2Goals(){return {cal:2200,p:150,c:220,f:70,water:2000}},
+ fv2Water(){return 750},getToday(){return day},
+ fv2DayShift(key,delta){const d=new Date(key+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+delta);return d.toISOString().slice(0,10)},
+ fv2S(){return {pane:'log'}},fv2Slot(){return 'lunch'},fv2Recents(){return []},
+ navigate(){},renderMeals(){},save(){}
+};
+runtime.window=runtime;
+vm.runInNewContext(bridge,runtime,{filename:'50-native-nutrition.js'});
+const projection=runtime.NativeNutritionBeta.snapshot();
+assert.equal(projection.entries.length,1);
+assert.equal(projection.entries[0].id,savedEntry.id);
+assert.equal(projection.totals.kcal,savedEntry.kcal);
+assert.equal(projection.waterMl,750);
+assert.equal(projection.week.length,7);
+assert.equal(projection.plan,null,'Unavailable Smart Diet data must not become a sample plan');
+assert.equal(projection.shop,null,'Unavailable shopping data must not become a sample list');
+
 console.log('Native Nutrition opt-in / no-demo-data contracts PASS');
