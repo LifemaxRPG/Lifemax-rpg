@@ -105,6 +105,35 @@ class OverviewParityTest {
             export("overview-parity.json")
             // Geometry is measured from the actual Android WebView, not a separate desktop font layout.
             assertTrue("Native rendering differs too much: $report",mean<25.0)
+            // A whole-screen average can hide erased labels or a missing nav bar.
+            // Check visible foreground in each measured text region as well.
+            fun foreground(image:Bitmap,rect:Rect):Int {
+                var count=0
+                for(y in maxOf(0,rect.top) until minOf(image.height,rect.bottom) step 2)
+                    for(x in maxOf(0,rect.left) until minOf(image.width,rect.right) step 2) {
+                        val pixel=image.getPixel(x,y)
+                        if(maxOf(android.graphics.Color.red(pixel),android.graphics.Color.green(pixel),android.graphics.Color.blue(pixel))>140)count++
+                    }
+                return count
+            }
+            val snapshot=OverviewHost.session!!.snapshot
+            val scale=original.width/snapshot.getDouble("width")
+            val nodes=snapshot.getJSONObject("body").getJSONArray("nodes")
+            val navHeight=(snapshot.optJSONObject("nav")?.optDouble("height") ?: 0.0)*instrumentation.targetContext.resources.displayMetrics.density
+            for(index in 0 until nodes.length()) {
+                val node=nodes.getJSONObject(index)
+                if(node.optString("kind")!="text")continue
+                val left=node.getDouble("x")*scale;val top=node.getDouble("y")*scale
+                val right=left+node.getDouble("w")*scale;val bottom=top+node.getDouble("h")*scale
+                if(top<0||bottom>original.height-navHeight)continue
+                val rect=Rect(left.toInt(),top.toInt(),right.toInt(),bottom.toInt())
+                val expected=foreground(original,rect)
+                if(expected>30)assertTrue("Missing native text: "+node.optString("text"),foreground(rendered,rect)>=expected*.6)
+            }
+            if(navHeight>0) {
+                val rect=Rect(0,(original.height-navHeight).toInt(),original.width,original.height)
+                assertTrue("Native navigation bar is missing",foreground(rendered,rect)>=foreground(original,rect)*.6)
+            }
             instrumentation.runOnMainSync { native!!.finish() }
             waitUntil("native screen closed"){var closed=false;instrumentation.runOnMainSync{closed=OverviewHost.session==null};closed}
             assertEquals("shared web state preserved", "\"Native preview\"", evaluate(main,"state.name"))
