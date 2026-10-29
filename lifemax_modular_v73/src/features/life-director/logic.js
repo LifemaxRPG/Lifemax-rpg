@@ -4684,6 +4684,28 @@ const LifeDirectorApp = (function () {
         el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button]')) { e.preventDefault(); e.target.click(); } });
       }
       el.innerHTML = glanceHtml();
+      // Overview-only display changes; preserve the full session title in data.
+      const glanceCore = el.querySelector('.ld-core-in');
+      if (glanceCore) {
+        const name = glanceCore.querySelector('.ld-core-t');
+        if (name) {
+          const cleaned = name.textContent.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+          if (cleaned) { name.title = name.textContent; name.textContent = cleaned; }
+        }
+        const openTimer = glanceCore.querySelector('[data-act="focusOpen"]');
+        if (openTimer) {
+          openTimer.remove();
+          const clock = glanceCore.querySelector('[data-fclock]');
+          if (clock) {
+            clock.setAttribute('role', 'button');
+            clock.setAttribute('tabindex', '0');
+            clock.setAttribute('aria-label', 'Open running timer');
+            clock.dataset.act = 'focusOpen';
+          }
+        }
+        const redundant = glanceCore.querySelector('.ld-core-nx:not([data-act])');
+        if (redundant && /nothing else planned today/i.test(redundant.textContent)) redundant.remove();
+      }
       el.hidden = false;
       const dial = el.querySelector('.ld-dial');
       if (dial) { dial.querySelectorAll('.ld-hd').forEach(h => h.remove()); if (opts && opts.intro && !reduced()) play(dial, 'ld-dial-in'); }
