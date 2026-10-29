@@ -15,6 +15,10 @@ used. Tool actions return to the existing web tools and their original handlers.
 This preserves a single authoritative save and the current customization/order.
 
 The browser and older APKs retain the web Overview. Native API 9 is required.
+Settings → Look & feel → Appearance → Native Overview switches between the
+native presentation and the classic web Overview. The choice is stored with
+the existing Android preferences and included in their normal backups. Disabling
+it closes an active native Overview and also blocks later automatic/explicit opens.
 A failed opening falls back to the original screen. A process restart also falls
 back to the web host until the next valid snapshot. The native activity is private.
 Only existing, connected DOM targets in the displayed scene can be activated.
@@ -22,6 +26,8 @@ Only existing, connected DOM targets in the displayed scene can be activated.
 ## Checking
 
 - `node tests/native-overview.test.js`: fallback and bridge contracts.
+- `node tests/native-overview-preference.test.js`: persistent Classic selection,
+  re-enabling native and preservation of unrelated preferences.
 - `node tests/native-overview.browser.js`: measured text/artwork, themes and original
   tool actions (set `NATIVE_REFERENCE` to the modular source directory when running
   outside a full checkout).

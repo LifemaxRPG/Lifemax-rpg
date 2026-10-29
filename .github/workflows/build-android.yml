@@ -36,6 +36,8 @@ jobs:
         run: |
           mkdir -p android-wrapper/www
           node lifemax_modular_v73/tests/native-overview.test.js
+          node lifemax_modular_v73/tests/native-overview-preference.test.js
+          node lifemax_modular_v73/tests/updater-plan.test.js
           node lifemax_modular_v73/tests/director-meals.test.js
           node lifemax_modular_v73/tests/director-finish.test.js
           node lifemax_modular_v73/tests/director-sleep.test.js

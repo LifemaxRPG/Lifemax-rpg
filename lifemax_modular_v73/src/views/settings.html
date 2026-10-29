@@ -3,6 +3,7 @@
         <div class="card" style="margin-bottom:14px">
           <h3>Appearance</h3>
           <div class="settingsline"><div style="flex:1"><strong>Light mode</strong><div class="muted" style="font-size:12px">Switch between the dark and light appearance. This only changes how the app looks.</div></div><input id="lightModeToggle" type="checkbox" class="check" onchange="setLightMode(this.checked)" aria-label="Enable light mode"></div>
+          <div class="settingsline" id="nativeOverviewSetting"><div style="flex:1"><strong>Native Overview</strong><div id="nativeOverviewHint" class="muted" style="font-size:12px">Use the Android Overview screen. Turn off to return to the classic Overview.</div></div><input id="nativeOverviewToggle" type="checkbox" class="check" onchange="setNativeOverviewEnabled(this.checked)" aria-label="Native Overview"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="tabsCard">
           <h3>Bottom bar</h3>

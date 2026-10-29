@@ -25,7 +25,22 @@
  const viewportWidth=()=>document.documentElement.getBoundingClientRect().width||innerWidth;
  const split=v=>{let depth=0,start=0,out=[];for(let i=0;i<v.length;i++){if(v[i]==='(')depth++;if(v[i]===')')depth--;if(v[i]===','&&!depth){out.push(v.slice(start,i).trim());start=i+1}}out.push(v.slice(start).trim());return out};
  function plugin(){try{const c=window.Capacitor;return c&&c.isNativePlatform()&&c.isPluginAvailable('NativeOverview')?c.Plugins.NativeOverview:null}catch(_){return null}}
- function blocked(){return !state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
+ function enabled(){return typeof lmaLoad!=='function'||lmaLoad().nativeOverview!==false}
+ function syncSetting(){
+  const input=document.getElementById('nativeOverviewToggle'),hint=document.getElementById('nativeOverviewHint');
+  if(!input)return;
+  const available=!!plugin();input.checked=available&&enabled();input.disabled=!available;
+  if(hint)hint.textContent=available?'Use the Android Overview screen. Turn off to return to the classic Overview.':typeof lmaNative==='function'&&lmaNative()?'Install the latest Android update to use this Overview.':'Available in the Android app.';
+ }
+ async function setEnabled(on){
+  if(typeof lmaLoad!=='function'||typeof lmaSave!=='function')return;
+  lmaLoad().nativeOverview=!!on;lmaSave();syncSetting();
+  if(!on&&(N.open||N.opening)&&N.plugin&&N.session)await N.plugin.close({session:N.session});
+  if(on&&lmaView()==='dashboard')await open(true);
+ }
+ window.setNativeOverviewEnabled=setEnabled;
+ window.syncNativeOverviewSetting=syncSetting;
+ function blocked(){return !enabled()||!state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
  function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
@@ -61,11 +76,11 @@
   const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
   N.opening=true;N.plugin=p;
   try{await ready(p);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))]);if(blocked())return{opened:false,diagnostics:diagnostics()};
-   const scene=await snapshot();N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});N.lastPaint=signature(scene);return{opened:true};
+   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});N.lastPaint=signature(scene);return{opened:true};
   }catch(e){N.open=false;console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
  }
 
- const nav=navigate;navigate=function(v){N.suspended=false;const result=nav.apply(this,arguments);if(v==='dashboard')setTimeout(open,80);return result};
+ const nav=navigate;navigate=function(v){N.suspended=false;const result=nav.apply(this,arguments);if(v==='dashboard')setTimeout(open,80);if(v==='settings')syncSetting();return result};
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
@@ -74,5 +89,6 @@
  // Refresh only after the shared model has rendered; native owns no gameplay state.
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
+ syncSetting();setTimeout(syncSetting,700);
  window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics};
 })();

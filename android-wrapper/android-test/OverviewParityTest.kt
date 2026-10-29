@@ -137,6 +137,13 @@ class OverviewParityTest {
             instrumentation.runOnMainSync { native!!.finish() }
             waitUntil("native screen closed"){var closed=false;instrumentation.runOnMainSync{closed=OverviewHost.session==null};closed}
             assertEquals("shared web state preserved", "\"Native preview\"", evaluate(main,"state.name"))
+            evaluate(main,"lmaNavTo('settings',{fast:true});setNativeOverviewEnabled(false);true")
+            assertEquals("Appearance switch selects Classic", "false", evaluate(main,"document.getElementById('nativeOverviewToggle').checked"))
+            assertEquals("Classic preference is saved", "false", evaluate(main,"JSON.parse(localStorage.getItem(LMA_PREF_KEY)).nativeOverview"))
+            evaluate(main,"lmaNavTo('dashboard',{fast:true});openNativeOverview().then(r=>window.__classicAttempt=r);true")
+            waitUntil("Classic stays web"){evaluate(main,"window.__classicAttempt?.opened===false")=="true"}
+            evaluate(main,"lmaNavTo('settings',{fast:true});setNativeOverviewEnabled(true);true")
+            assertEquals("Native can be re-enabled", "true", evaluate(main,"document.getElementById('nativeOverviewToggle').checked"))
         }
     }
 }

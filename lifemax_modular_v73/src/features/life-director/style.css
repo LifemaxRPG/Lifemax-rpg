@@ -681,3 +681,22 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 
 /* SVG groups alone do not prevent Android from claiming a handle gesture. */
 .ld-draggable>svg{touch-action:none}
+
+/* Keep long active-session titles comfortably inside the circular dial core. */
+.ld-root .ld-dial .ld-core{width:38%;min-width:0}
+.ld-root .ld-dial .ld-core-in{width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:center}
+.ld-root .ld-dial .ld-core-in .ld-core-t,
+.ld-root .ld-dial .ld-core-in.ld-has-btn .ld-core-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;white-space:normal;overflow:hidden;overflow-wrap:anywhere;word-break:normal;text-overflow:clip;box-sizing:border-box;width:100%;max-width:100%;min-width:0;font-size:clamp(10px,2.65vw,13px);line-height:1.12;text-align:center;margin:1px auto 0}
+
+/* Active timer titles must stay within the clear centre of the dial, even on
+   narrow Android WebViews and with long workout/session names. */
+.ld-root .ld-dial .ld-core{width:34%;max-width:34%;min-width:0;box-sizing:border-box}
+.ld-root .ld-dial .ld-core-in{width:100%;min-width:0;max-width:100%}
+.ld-root .ld-dial .ld-core-in .ld-core-t,
+.ld-root .ld-dial .ld-core-in.ld-has-btn .ld-core-t{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
+  line-clamp:4;white-space:normal;overflow:hidden;overflow-wrap:anywhere;
+  word-break:normal;max-width:100%;width:100%;min-width:0;
+  font-size:clamp(10px,2.4vw,12px);line-height:1.14;
+  text-align:center;margin:1px auto 0;
+}
