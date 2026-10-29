@@ -128,4 +128,55 @@ class OverviewParityTest {
         }
     }
 
+    @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var main: MainActivity
+            scenario.onActivity { main = it }
+            waitUntil("native tab bridges ready") {
+                evaluate(main, "typeof openNativeCharacter==='function' && typeof setNativeNutritionEnabled==='function'") == "true"
+            }
+            evaluate(main, "window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.setProperty('display','none','important')});document.body.classList.remove('noscroll');save();renderAll();navigate('character');true")
+            evaluate(main, "openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
+            waitUntil("Character with shared chrome") {
+                var ready = false
+                instrumentation.runOnMainSync {
+                    val root = main.window.decorView
+                    ready = root.findViewWithTag<View>("native-character-screen") != null &&
+                        root.findViewWithTag<View>("native-shared-chrome") != null
+                }
+                ready && evaluate(main, "window.__sharedCharacterOpened===true") == "true"
+            }
+            evaluate(main, "setNativeNutritionEnabled(true);navigate('meals');true")
+            waitUntil("Food with shared chrome") {
+                var ready = false
+                instrumentation.runOnMainSync {
+                    val root = main.window.decorView
+                    ready = root.findViewWithTag<View>("native-character-screen") == null &&
+                        root.findViewWithTag<View>("native-shared-chrome") != null
+                }
+                ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
+            }
+            waitUntil("Food overlay attached") {
+                var count = 0
+                instrumentation.runOnMainSync {
+                    fun visit(view: View) {
+                        if (view is androidx.compose.ui.platform.ComposeView) count++
+                        if (view is ViewGroup) for (i in 0 until view.childCount) visit(view.getChildAt(i))
+                    }
+                    visit(main.window.decorView)
+                }
+                count > 0
+            }
+            evaluate(main, "navigate('dashboard');true")
+            waitUntil("native Food chrome removed") {
+                var gone = false
+                instrumentation.runOnMainSync {
+                    gone = main.window.decorView.findViewWithTag<View>("native-shared-chrome") == null
+                }
+                gone
+            }
+            assertEquals("Default native tabs stay adjacent", "true", evaluate(main, "(()=>{let ids=[...document.querySelectorAll('.sidebar [data-view]')].map(e=>e.dataset.view);let i=ids.indexOf('dashboard');return i>=0&&ids[i+1]==='character'&&ids[i+2]==='meals'})()"))
+        }
+    }
+
 }
