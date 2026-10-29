@@ -69,6 +69,6 @@ assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAG
 if '.CashActivity' not in xml:
     xml = xml.replace('</application>', '<activity android:name=".CashActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:windowSoftInputMode="adjustResize" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
 if '.OverviewActivity' not in xml:
-    xml = xml.replace('</application>', '<activity android:name=".OverviewActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
+    xml = xml.replace('</application>', '<activity android:name=".OverviewActivity" android:exported="false" android:hardwareAccelerated="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
 open(path, "w", encoding="utf-8").write(xml)
 

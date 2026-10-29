@@ -5,6 +5,9 @@ rewrite of its state or CSS layout engine. `OverviewActivity` contains native Ca
 surfaces inside Android scroll views and exposes its actions and static text to
 TalkBack. It contains no WebView and stores no gameplay data.
 
+This Activity uses Android's software Canvas path for predictable surface/shadow
+composition. The other activities retain their existing rendering settings.
+
 The existing page supplies measured card/text geometry, computed theme colors,
 gradients and action identities. Android paints those primitives. Only original
 SVG/canvas/image artwork is rasterized as assets; no screenshot of the page is

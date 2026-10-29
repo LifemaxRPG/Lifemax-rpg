@@ -294,10 +294,12 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
             val lengths=shadow.optJSONArray("lengths") ?: continue
             val dx=lengths.optDouble(0).toFloat();val dy=lengths.optDouble(1).toFloat();val blur=lengths.optDouble(2).toFloat();val spread=lengths.optDouble(3).toFloat()
             val outer=RectF(r).apply{inset(-spread,-spread)}
-            paint.color=node.argb("color");paint.alpha=(255*alpha).roundToInt().coerceIn(0,255)
+            // CSS outer shadows do not fill the interior of a transparent card.
+            canvas.save();canvas.clipOutPath(Path().apply { addRoundRect(r,radius,radius,Path.Direction.CW) })
+            paint.color=shadow.argb("color");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255)
             if(blur>0)paint.setShadowLayer(blur/2,dx,dy,shadow.argb("color"))
             else { paint.color=shadow.argb("color");outer.offset(dx,dy) }
-            canvas.drawRoundRect(outer,radius,radius,paint);paint.clearShadowLayer()
+            canvas.drawRoundRect(outer,radius,radius,paint);paint.clearShadowLayer();canvas.restore()
         }
         paint.color=node.argb("color");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255)
         canvas.drawRoundRect(r,radius,radius,paint)

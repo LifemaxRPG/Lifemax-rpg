@@ -94,7 +94,7 @@ class OverviewParityTest {
             instrumentation.runOnMainSync { content.draw(android.graphics.Canvas(software)) }
             File(instrumentation.targetContext.filesDir,"overview-software.png").outputStream().use{software.compress(Bitmap.CompressFormat.PNG,100,it)}
             export("overview-software.png")
-            val report=JSONObject().put("webWidth",original.width).put("webHeight",original.height).put("nativeWidth",rendered.width).put("nativeHeight",rendered.height)
+            val report=JSONObject().put("webWidth",original.width).put("webHeight",original.height).put("nativeWidth",rendered.width).put("nativeHeight",rendered.height).put("diagnostics",nativeDiagnostics())
             assertEquals(original.width,rendered.width)
             assertTrue(abs(original.height-rendered.height)<=4)
             var difference=0L;var samples=0
