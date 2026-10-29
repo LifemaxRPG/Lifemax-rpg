@@ -3549,9 +3549,9 @@ const LifeDirectorApp = (function () {
     let k = '', title = '', big = '', sub = '', btn = '', cls = '';
     if (fi) {
       k = '<small class="ld-core-k ld-core-go"><i class="ld-live"></i>Timer running</small>';
-      title = fi.title; big = '<span class="ld-core-big" data-fclock>' + clockText(focusMs(f)) + '</span>';
+      title = fi.title.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/&amp;/gi, '&').trim(); big = '<span class="ld-core-big" data-fclock data-act="focusOpen" role="button" tabindex="0" aria-label="Open running timer">' + clockText(focusMs(f)) + '</span>';
       sub = 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned';
-      btn = '<button class="ld-core-btn ld-core-btn-go" data-act="focusOpen">Open timer</button>';
+      btn = '';
     } else if (st.cur) {
       const c = st.cur, cc = c.inst ? 'task' : blockClass(c), done = c.inst && sesState(c.inst.lifecycleState) === 'done';
       const left = c.endEpoch - now;
@@ -3576,7 +3576,7 @@ const LifeDirectorApp = (function () {
     } else if (st.next) {
       const b = st.next, same = U.ymdKey(U.localParts(b.startEpoch, tz())) === U.ymdKey(U.localParts(now, tz()));
       nx = '<div class="ld-core-nx"' + (!b.inst && blockClass(b) === 'meal' ? mealAnchor(b) : '') + '><span>Next' + (b.startEpoch - now < 3 * 3600 ? ' in ' + relText(b.startEpoch - now) : ' · ' + (same ? '' : 'Tomorrow ') + fC(b.startEpoch)) + '</span><b>' + esc(doingName(b)) + '</b></div>';
-    } else nx = '<div class="ld-core-nx"><span>Nothing else planned today</span></div>';
+    } else nx = fi ? '' : '<div class="ld-core-nx"><span>Nothing else planned today</span></div>';
     return '<div class="ld-core-in' + cls + (btn ? ' ld-has-btn' : '') + '" data-kick="' + (st.kick ? st.kick.kind : '') + '" data-soon="' + (st.soon ? 1 : '') + '">' + k + '<b class="ld-core-t">' + esc(title) + '</b>' + big + (sub ? '<span class="ld-core-s">' + sub + '</span>' : '') + nx + btn + '</div>';
   }
   function coreHtml(day, blocks, isToday, now) {
