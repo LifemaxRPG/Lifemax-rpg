@@ -51,6 +51,7 @@
   async function ready(p){
     if(!N.ready)N.ready=(async function(){
       await p.addListener('action',onAction);
+      await p.addListener('nav-action',e=>NativeOverviewSnapshot.activate(e.id));
       await p.addListener('closed',function(e){
         if(e.session===N.session){N.open=false;N.opening=false;N.session='';N.blocked=true;}
       });
@@ -73,7 +74,7 @@
       if(!caps||caps.version!==1||!caps.authoritativeData)return;
       if(view()!=='meals'||!enabled())return;
       N.session='nutrition_'+Date.now();
-      await p.open({session:N.session,snapshot:s});
+      await p.open({session:N.session,snapshot:s,chromeScene:await NativeOverviewSnapshot.snapshot()});
       N.open=true;N.blocked=false;
     }catch(e){N.open=false;N.session='';console.warn('Native Nutrition open failed',e)}
     finally{N.opening=false}
@@ -86,7 +87,7 @@
       if(!N.open||view()!=='meals')return;
       const s=snapshot();if(!s){close();return}
       N.updating=true;
-      try{await N.plugin.update({session:N.session,snapshot:s})}
+      try{await N.plugin.update({session:N.session,snapshot:s,chromeScene:await NativeOverviewSnapshot.snapshot()})}
       catch(e){console.warn('Native Nutrition sync failed',e);close()}
       finally{N.updating=false}
     });
@@ -138,3 +139,4 @@
   }
   syncSettings();setTimeout(syncSettings,800);
 })();
+
