@@ -32,6 +32,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Check canonical native Kotlin formatting
+        run: |
+          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 60 https://repo.maven.apache.org/maven2/com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -o "$RUNNER_TEMP/ktfmt.jar"
+          printf '%s  %s\n' '76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1' "$RUNNER_TEMP/ktfmt.jar" | sha256sum --check
+          python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"
+
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www

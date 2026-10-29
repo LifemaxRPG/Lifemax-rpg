@@ -1,0 +1,32 @@
+{
+  "catalogVersion": 1,
+  "feature": "character",
+  "status": "native-read-only-preview",
+  "protocol": 1,
+  "nativePlugin": "NativeCharacter",
+  "capabilities": ["character.projection.v1"],
+  "owner": "web-core-gameplay",
+  "writes": [],
+  "readContract": {
+    "snapshotDto": "feature/character/domain/CharacterProjection.kt",
+    "decoder": "feature/character/data/WebCharacterRepository.kt",
+    "fixture": "android-wrapper/native/src/test/resources/character-projection.json",
+    "ordering": "webSessionId and increasing sequence; a new session may bind only through explicit open",
+    "maxEncodedCharacters": 2000000,
+    "requiredAttributes": [
+      "physique",
+      "endurance",
+      "intelligence",
+      "business",
+      "social",
+      "discipline",
+      "adventure",
+      "wellbeing"
+    ],
+    "invalidation": "renderCharacterPage changes, host resume, foreground return, and 15-second refresh while visible",
+    "persistence": "no native product writes, no durable revision or epoch inserted"
+  },
+  "delegatedInteractions": ["openAttr", "openLuck", "classic benchmark form"],
+  "rollout": "Classic is default; Native Character preview is opt-in",
+  "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
+}

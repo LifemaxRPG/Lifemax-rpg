@@ -55,3 +55,11 @@ Only then label Character native presentation with complete interaction parity. 
 - Consumers remaining; safe fallback combinations and import/export/older-reader limits.
 - Rollout state, current commit/build, automated/screenshot/device evidence.
 - Temporary exceptions, next ownership gate and retirement conditions.
+
+## Native Character prototype implementation
+
+The `codex/native-character` slice implements Compose presentation behind the opt-in Native Character preview setting (Classic remains default). Models and owner calculations enter through `50-native-character.js`, with a volatile session/sequence and no durable gameplay writes. Kotlin decodes into immutable projections; a feature repository interface and ViewModel own native presentation state. The platform plugin attaches ComposeView to MainActivity and owns its lifecycle references. Main/test roots are registered directly in Gradle. ktfmt 0.53 formatting is checksum-pinned and checked for the new source tree.
+
+Implemented: hero, radar current/previous comparison and selection, attribute sorting/cards, selected detail and spark bars, skills/show-all, benchmark readout and original-handler delegation. Logging, Luck and benchmark editing remain explicit web dependencies. Native ownership, safe mutating commands and complete native interaction parity are NOT implemented. Physical-device testing, restored transient UI state and complete visual/accessibility parity remain rollout gates; do not label this fully migrated Character or enable it by default.
+
+Evidence: Node projection test, JVM selection/sequence/schema tests, Android Compose-in-MainActivity/no-WebView-subtree test and unchanged core-save assertion; reference/native/scroll/light screenshots are emitted by CI for review. Synthetic projection fixture is not a claim of complete raw-save migration fixtures.

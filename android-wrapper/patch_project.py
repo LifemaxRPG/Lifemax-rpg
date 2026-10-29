@@ -85,6 +85,7 @@ if 'lifemax-authored-source-roots' not in s:
 android.sourceSets {
     main.java.srcDir '../../native/src/main/java'
     test.java.srcDir '../../native/src/test/java'
+    test.resources.srcDir '../../native/src/test/resources'
 }
 dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
