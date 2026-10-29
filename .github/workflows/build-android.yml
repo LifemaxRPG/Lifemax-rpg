@@ -41,6 +41,7 @@ jobs:
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
+          node lifemax_modular_v73/tests/native-nutrition-integration.test.js
           node lifemax_modular_v73/tests/native-overview.test.js
           node lifemax_modular_v73/tests/native-character.test.js
           node lifemax_modular_v73/tests/native-overview-preference.test.js
@@ -172,4 +173,5 @@ jobs:
           gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
             --title "LifeMax (latest build)" \
             --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"
+
 
