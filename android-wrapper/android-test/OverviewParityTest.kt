@@ -48,13 +48,14 @@ class OverviewParityTest {
             lateinit var main: MainActivity
             scenario.onActivity { main=it }
             waitUntil("web app ready"){evaluate(main,"typeof window.openNativeOverview==='function'")=="true"}
-            evaluate(main,"""window.__nativeOverviewManual=true;state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
+            evaluate(main,"""window.__nativeOverviewManual=true;state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');document.body.style.overflow='';document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
             SystemClock.sleep(1800)
             evaluate(main,"window.scrollTo(0,0);true")
             val original=shot(main.bridge.webView,"overview-web.png")
-            evaluate(main,"window.openNativeOverview();true")
+            evaluate(main,"window.openNativeOverview().then(r=>window.__nativeAttempt=r);true")
             var native: OverviewActivity?=null
-            waitUntil("native Overview"){instrumentation.runOnMainSync{native=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<OverviewActivity>().firstOrNull()};native!=null}
+            try { waitUntil("native Overview"){instrumentation.runOnMainSync{native=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<OverviewActivity>().firstOrNull()};native!=null} }
+            catch(e: AssertionError){throw AssertionError("Native handoff diagnostics: "+evaluate(main,"JSON.stringify({attempt:window.__nativeAttempt,sceneError:window.__nativeOverviewError,diagnostics:NativeOverviewSnapshot.diagnostics()})"),e)}
             waitUntil("native scene painted"){var ready=false;instrumentation.runOnMainSync{ready=native!!.window.decorView.findViewWithTag<View>("overview-rendered")?.height?.let{it>1}==true};ready}
             SystemClock.sleep(500)
             lateinit var content:View

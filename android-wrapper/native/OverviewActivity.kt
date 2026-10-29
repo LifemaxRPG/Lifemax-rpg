@@ -74,8 +74,12 @@ class OverviewActivity : ComponentActivity() {
     private fun refreshNow() { session?.let { it.emit("refresh", JSObject().apply { put("session", it.id) }) } }
     override fun onResume() { super.onResume(); handler.removeCallbacks(refresh); handler.postDelayed(refresh, 2500) }
     override fun onPause() { handler.removeCallbacks(refresh); super.onPause() }
-    private fun activate(id: String) {
+    private fun activate(id: String, stay: Boolean) {
         if (isFinishing) return
+        if (stay) {
+            session?.let { it.emit("activate", JSObject().apply { put("session", it.id); put("action", id); put("sequence", sequence) }) }
+            return
+        }
         action = id
         finish()
     }
@@ -106,7 +110,11 @@ class OverviewActivity : ComponentActivity() {
                         nav.post { nav.scrollTo((snapshot.optDouble("navScroll") * scale).roundToInt(), 0) }
                     }
                 }
-            } catch (_: Exception) { runOnUiThread { finish() } }
+            } catch (e: Exception) { runOnUiThread {
+                android.util.Log.e("NativeOverview", "Scene could not be prepared", e)
+                session?.let { it.emit("failed", JSObject().apply { put("session",it.id);put("reason",e.toString()) }) }
+                finish()
+            } }
         }
     }
     override fun onDestroy() {
@@ -156,7 +164,7 @@ private class OverviewScene(data: JSONObject) {
 
 /** One native drawing surface with native virtual buttons for TalkBack and keyboard.
  * The parent Android scroll views provide scrolling, flinging and system accessibility. */
-internal class OverviewSurface(context: android.content.Context, val activate: (String) -> Unit) : View(context) {
+internal class OverviewSurface(context: android.content.Context, val activate: (String, Boolean) -> Unit) : View(context) {
     private var layer: OverviewLayer? = null
     private var sceneWidth = 1f
     private var sceneHeight = 1f
@@ -198,7 +206,7 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
     private fun click(id: Int): Boolean {
         val target = layer?.hits?.getOrNull(id) ?: return false
         if(target.optString("id").isBlank())return false
-        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED); activate(target.optString("id")); return true
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED); activate(target.optString("id"), target.optBoolean("stay")); return true
     }
     override fun dispatchHoverEvent(event: MotionEvent): Boolean = helper.dispatchHoverEvent(event) || super.dispatchHoverEvent(event)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean = helper.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)

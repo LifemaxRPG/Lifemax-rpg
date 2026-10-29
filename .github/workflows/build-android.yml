@@ -59,6 +59,7 @@ jobs:
           cp native/*.java native/*.kt android/app/src/main/java/com/lifemax/rpg/
           python3 patch_project.py android
           mkdir -p android/app/src/androidTest/java/com/lifemax/rpg
+          rm -rf android/app/src/androidTest/java/com/getcapacitor
           cp android-test/*.kt android/app/src/androidTest/java/com/lifemax/rpg/
           cp -r res/. android/app/src/main/res/
           find android/app/src/main/res -name 'splash.png' -exec cp res/drawable/splash.png {} \;
@@ -108,13 +109,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: |
-            ./android-wrapper/android/gradlew -p android-wrapper/android connectedDebugAndroidTest
-            mkdir -p native-overview-review
-            adb exec-out run-as com.lifemax.rpg cat files/overview-web.png > native-overview-review/overview-web.png
-            adb exec-out run-as com.lifemax.rpg cat files/overview-native.png > native-overview-review/overview-native.png
-            adb exec-out run-as com.lifemax.rpg cat files/overview-parity.json > native-overview-review/overview-parity.json
-            cat native-overview-review/overview-parity.json
+          script: python3 android-wrapper/verify_overview.py
 
       - uses: actions/upload-artifact@v4
         if: always() && github.ref == 'refs/heads/codex/native-overview'

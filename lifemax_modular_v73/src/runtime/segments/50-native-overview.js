@@ -19,7 +19,7 @@
   const actionSelector='button,[onclick],[role="button"],.ov-bar,#ovHero,#petPeek,#ovHealth,#ovRewards,.ova-app';
   const rect=el=>{const r=el.getBoundingClientRect();if(nav&&el===roots[0])return{x:0,y:0,w:el.scrollWidth,h:r.height};return{x:r.x-offset.x+(nav?roots[0].scrollLeft:0),y:r.y-offset.y,w:r.width,h:r.height}};
   function box(el,opacity){const s=getComputedStyle(el),r=rect(el);if(!r.w||!r.h||s.display==='none'||s.visibility==='hidden'||el.hidden)return null;const o=opacity*num(s.opacity||1);if(!o)return null;maxY=Math.max(maxY,r.y+r.h);const bg=color(s.backgroundColor),bw=num(s.borderTopWidth),br=num(s.borderTopLeftRadius);const g=gradients(s);if(bg||bw||g.length)nodes.push({kind:'box',...r,color:bg,border:color(s.borderTopColor),borderWidth:bw,radius:br,opacity:o,gradients:g});
-   const action=el.matches(actionSelector);if(action&&!el.disabled){const id=identify(el);hits.push({...r,id,label:el.getAttribute('aria-label')||el.textContent.trim()||el.title||'Open',button:true})}
+   const action=el.matches(actionSelector);if(action&&!el.disabled){const id=identify(el);hits.push({...r,id,label:el.getAttribute('aria-label')||el.textContent.trim()||el.title||'Open',button:true,stay:el.matches('.ov-bar')})}
    return{s,r,o};
   }
   async function walk(el,opacity=1){const info=box(el,opacity);if(!info)return;const{s,r,o}=info;const clipped=/hidden|clip|auto|scroll/.test(s.overflowX+' '+s.overflowY);if(clipped)nodes.push({kind:'clip',...r});const end=()=>{if(clipped)nodes.push({kind:'unclip'})};
@@ -35,14 +35,23 @@
   }
   for(const root of roots)if(root)await walk(root);return{nodes,hits,height:maxY,width:nav?roots[0].scrollWidth:innerWidth};
  }
- async function snapshot(){if(document.fonts)await document.fonts.ready;N.buildActions=new Map();const body=await capture([document.querySelector('.topbar'),document.getElementById('view-dashboard')]);const sidebar=document.querySelector('.sidebar'),nav=sidebar?await capture([sidebar],true):null;N.actions=N.buildActions;N.buildActions=null;N.maps.set(++N.seq,N.actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{version:1,sequence:N.seq,width:innerWidth,height:Math.max(body.height+30,innerHeight),background:color(getComputedStyle(document.body).backgroundColor),light:document.documentElement.classList.contains('light-theme'),scroll:scrollY,body,nav,navScroll:sidebar?sidebar.scrollLeft:0}}
+ async function snapshot(){if(document.fonts)await document.fonts.ready;N.buildActions=new Map();const body=await capture([document.querySelector('.topbar'),document.getElementById('view-dashboard'),document.querySelector('.footer')]);const sidebar=document.querySelector('.sidebar'),nav=sidebar?await capture([sidebar],true):null;N.actions=N.buildActions;N.buildActions=null;N.maps.set(++N.seq,N.actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{version:1,sequence:N.seq,width:innerWidth,height:Math.max(body.height+30,innerHeight),background:color(getComputedStyle(document.body).backgroundColor),light:document.documentElement.classList.contains('light-theme'),scroll:scrollY,body,nav,navScroll:sidebar?sidebar.scrollLeft:0}}
  async function send(){if(!N.open||N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot();if(N.open)await N.plugin.update({session:N.session,snapshot:scene})}catch(e){console.warn('Native Overview refresh',e);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
- async function ready(p){if(!N.ready)N.ready=(async()=>{await p.addListener('refresh',e=>{if(e.session===N.session)send()});await p.addListener('closed',e=>{if(e.session!==N.session)return;N.open=false;N.opening=false;N.suspended=true;if(Number.isFinite(e.scroll))scrollTo(0,e.scroll);const target=(N.maps.get(e.sequence)||N.actions).get(e.action);if(target&&target.isConnected){target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}else if(e.action)toast('Overview changed. Please try that action again.')})})().catch(e=>{N.ready=null;throw e});return N.ready}
- async function open(force){if(window.__nativeOverviewManual&&!force)return;const p=plugin();if(!p||N.open||N.opening||blocked())return;N.opening=true;N.plugin=p;try{await ready(p);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(blocked())return;const scene=await snapshot();N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene})}catch(e){N.open=false;console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.')}finally{N.opening=false}}
+ async function ready(p){if(!N.ready)N.ready=(async()=>{await p.addListener('failed',e=>{if(e.session===N.session){window.__nativeOverviewError=e.reason;console.warn('Native Overview',e.reason)}});await p.addListener('refresh',e=>{if(e.session===N.session)send()});await p.addListener('activate',e=>{if(e.session!==N.session)return;const target=(N.maps.get(e.sequence)||N.actions).get(e.action);if(target&&target.isConnected&&target.matches('.ov-bar'))target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));send()});await p.addListener('closed',e=>{if(e.session!==N.session)return;N.open=false;N.opening=false;N.suspended=true;if(Number.isFinite(e.scroll))scrollTo(0,e.scroll);const target=(N.maps.get(e.sequence)||N.actions).get(e.action);if(target&&target.isConnected){target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}else if(e.action)toast('Overview changed. Please try that action again.')})})().catch(e=>{N.ready=null;throw e});return N.ready}
+ function diagnostics(){return{plugin:!!plugin(),view:lmaView(),onboarded:!!state.onboardingComplete,width:innerWidth,overlay:typeof lmaTopOverlay==='function'&&!!lmaTopOverlay(),bodyClasses:document.body.className,blocked:!!blocked(),open:N.open,opening:N.opening}}
+ async function open(force){
+  if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
+  const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
+  N.opening=true;N.plugin=p;
+  try{await ready(p);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(blocked())return{opened:false,diagnostics:diagnostics()};
+   const scene=await snapshot();N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});return{opened:true};
+  }catch(e){N.open=false;console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
+ }
+
  const nav=navigate;navigate=function(v){N.suspended=false;const result=nav.apply(this,arguments);if(v==='dashboard')setTimeout(open,80);return result};
  window.openNativeOverview=()=>open(true);
  // Refresh only after the shared model has rendered; native owns no gameplay state.
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
- window.NativeOverviewSnapshot={capture,snapshot,color,split};
+ window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics};
 })();
