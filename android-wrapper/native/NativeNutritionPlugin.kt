@@ -221,6 +221,12 @@ private fun NativeNutritionScreen(
     val fg = if (light) Color(0xFF0F172A) else TextPrimary
     val muted = if (light) Color(0xFF475569) else TextMuted
     val subtle = if (light) Color(0xFF64748B) else TextSubtle
+    val cardTop = if (light) Color.White else CardTop
+    val cardBottom = if (light) Color(0xFFF7F9FC) else CardBottom
+    val sunken = if (light) Color(0xFFF3F6FA) else SunkenTile
+    val selectedPanel = if (light) Color(0xFFE8EDF9) else PillSelected
+    val panelBorder = if (light) Color(0xFFD2D9E7) else BorderSubtle
+    val trackColor = if (light) Color(0xFFE4E9F2) else Color(0xFF171B26)
 
     var activePane by remember(data.optString("pane")) {
         mutableStateOf(data.optString("pane", "plan").ifBlank { "plan" })
@@ -310,11 +316,16 @@ private fun NativeNutritionScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Spacer(Modifier.height(topInsetDp.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HeaderButton(label = "Meals", width = null) {}
-                HeaderButton(label = "Recipes", width = null) {
-                    dispatch("recipes", emptyMap())
-                }
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (light) Color(0xFFF7F9FC) else CardTop)
+                    .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                FoodTopTabButton("Meals", true, light) {}
+                FoodTopTabButton("Recipes", false, light) { dispatch("recipes", emptyMap()) }
             }
             // 1. Shared Date Header (TODAY / Thursday, Oct 29 | Targets | ‹ | ›)
             Row(
@@ -334,7 +345,7 @@ private fun NativeNutritionScreen(
                     Text(
                         text = data.optString("dayLabel", data.optString("day", "Today")),
                         color = fg,
-                        fontSize = 26.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -345,13 +356,13 @@ private fun NativeNutritionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    HeaderButton(label = "Targets", width = null) {
+                    HeaderButton(label = "Targets", width = null, light = light) {
                         dispatch("goals", emptyMap())
                     }
-                    HeaderButton(label = "‹", width = 42.dp) {
+                    HeaderButton(label = "‹", width = 42.dp, light = light) {
                         dispatch("previous", emptyMap())
                     }
-                    HeaderButton(label = "›", width = 42.dp) {
+                    HeaderButton(label = "›", width = 42.dp, light = light) {
                         dispatch("next", emptyMap())
                     }
                 }
@@ -376,7 +387,7 @@ private fun NativeNutritionScreen(
                                 .weight(1f)
                                 .height(80.dp)
                                 .clip(RoundedCornerShape(18.dp))
-                                .background(if (isSelected) PillSelected else Color.Transparent)
+                                .background(if (isSelected) selectedPanel else Color.Transparent)
                                 .clickable {
                                     if (dayKey.isNotEmpty()) {
                                         dispatch("selectDay", mapOf("day" to dayKey))
@@ -388,7 +399,7 @@ private fun NativeNutritionScreen(
                         ) {
                             Text(
                                 text = dName,
-                                color = if (isSelected) Color(0xFFD6DFEE) else subtle,
+                                color = if (isSelected) fg else subtle,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
@@ -408,7 +419,7 @@ private fun NativeNutritionScreen(
                                     Spacer(modifier = Modifier.height(3.dp))
                                     Text(
                                         text = dNum.toString(),
-                                        color = Color.White,
+                                        color = fg,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Black
                                     )
@@ -422,7 +433,7 @@ private fun NativeNutritionScreen(
                                         val r = size.minDimension / 2f - 3.dp.toPx()
                                         val c = Offset(size.width / 2f, size.height / 2f)
                                         drawCircle(
-                                            color = Color(0xFF1A1F2D),
+                                            color = trackColor,
                                             radius = r,
                                             center = c,
                                             style = Stroke(width = 2.6.dp.toPx())
@@ -447,7 +458,7 @@ private fun NativeNutritionScreen(
                                     }
                                     Text(
                                         text = dNum.toString(),
-                                        color = Color(0xFFE2E8F0),
+                                        color = fg,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -463,8 +474,8 @@ private fun NativeNutritionScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFF12151F))
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(18.dp))
+                    .background(if (light) Color.White else Color(0xFF12151F))
+                    .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
                     .padding(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -479,7 +490,7 @@ private fun NativeNutritionScreen(
                             .weight(1f)
                             .height(44.dp)
                             .clip(RoundedCornerShape(13.dp))
-                            .background(if (isOn) PillSelected else Color.Transparent)
+                            .background(if (isOn) selectedPanel else Color.Transparent)
                             .clickable {
                                 activePane = id
                                 dispatch("pane", mapOf("pane" to id))
@@ -492,16 +503,16 @@ private fun NativeNutritionScreen(
                         ) {
                             Text(
                                 text = when (id) {
-                                    "plan" -> "📅"
+                                    "plan" -> "▣"
                                     "log" -> "☰"
-                                    else -> "🛍"
+                                    else -> "▤"
                                 },
                                 color = if (isOn) BlueAccent else muted,
                                 fontSize = 13.sp
                             )
                             Text(
                                 text = label,
-                                color = if (isOn) Color.White else muted,
+                                color = if (isOn) fg else muted,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -551,7 +562,7 @@ private fun NativeNutritionScreen(
                             ) {
                                 Text(
                                     text = fmtNum(planLeft),
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 26.sp,
                                     fontWeight = FontWeight.Black
                                 )
@@ -573,7 +584,7 @@ private fun NativeNutritionScreen(
                                 .fillMaxWidth()
                                 .height(6.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF171B26))
+                                .background(trackColor)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -597,7 +608,7 @@ private fun NativeNutritionScreen(
                             Row {
                                 Text(
                                     text = fmtNum(planEaten),
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Black
                                 )
@@ -617,7 +628,7 @@ private fun NativeNutritionScreen(
                                 )
                                 Text(
                                     text = "$eatenP",
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Black
                                 )
@@ -681,7 +692,7 @@ private fun NativeNutritionScreen(
                             // Giant Meal Title
                             Text(
                                 text = mealName,
-                                color = Color.White,
+                                color = fg,
                                 fontSize = 30.sp,
                                 lineHeight = 34.sp,
                                 fontWeight = FontWeight.Black
@@ -694,7 +705,7 @@ private fun NativeNutritionScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
-                                    .background(Color(0x14FFFFFF))
+                                    .background(panelBorder)
                             )
                             Row(
                                 modifier = Modifier
@@ -709,7 +720,7 @@ private fun NativeNutritionScreen(
                                 ) {
                                     Text(
                                         text = mKcal.toString(),
-                                        color = Color.White,
+                                        color = fg,
                                         fontSize = 32.sp,
                                         fontWeight = FontWeight.Black
                                     )
@@ -793,7 +804,7 @@ private fun NativeNutritionScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
-                                    .background(Color(0x14FFFFFF))
+                                    .background(panelBorder)
                             )
 
                             Spacer(modifier = Modifier.height(14.dp))
@@ -847,7 +858,7 @@ private fun NativeNutritionScreen(
                                 ) {
                                     Text(
                                         text = if (showUpNextIngredients) "Hide details" else "Ingredients",
-                                        color = Color(0xFFE2E8F0),
+                                        color = fg,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -864,7 +875,7 @@ private fun NativeNutritionScreen(
                                 ) {
                                     Text(
                                         text = "Swap",
-                                        color = Color(0xFFE2E8F0),
+                                        color = fg,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -881,7 +892,7 @@ private fun NativeNutritionScreen(
                                 ) {
                                     Text(
                                         text = "Skip",
-                                        color = Color(0xFFE2E8F0),
+                                        color = fg,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -896,7 +907,7 @@ private fun NativeNutritionScreen(
                                         .padding(top = 8.dp)
                                         .clip(RoundedCornerShape(18.dp))
                                         .background(Color(0xFF11141D))
-                                        .border(1.dp, BorderSubtle, RoundedCornerShape(18.dp))
+                                        .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
                                         .padding(14.dp),
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
@@ -908,7 +919,7 @@ private fun NativeNutritionScreen(
                                         ) {
                                             Text(
                                                 text = ig.optString("name"),
-                                                color = Color.White,
+                                                color = fg,
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.SemiBold
                                             )
@@ -934,7 +945,7 @@ private fun NativeNutritionScreen(
                                     .padding(top = 12.dp)
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(Color(0xFF11141D))
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(20.dp))
+                                    .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
                                     .padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.Top
@@ -965,8 +976,8 @@ private fun NativeNutritionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(26.dp))
-                        .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(26.dp))
+                        .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                        .border(1.dp, panelBorder, RoundedCornerShape(26.dp))
                         .padding(16.dp)
                 ) {
                     Column(
@@ -1077,7 +1088,7 @@ private fun NativeNutritionScreen(
                                                 center = Offset(headX, headY)
                                             )
                                             drawCircle(
-                                                color = Color.White,
+                                                color = fg,
                                                 radius = 5.5f * factor,
                                                 center = Offset(headX, headY)
                                             )
@@ -1090,7 +1101,7 @@ private fun NativeNutritionScreen(
                                                 center = Offset(tipX, tipY)
                                             )
                                             drawCircle(
-                                                color = Color.White,
+                                                color = fg,
                                                 radius = 7f * factor,
                                                 center = Offset(tipX, tipY)
                                             )
@@ -1108,7 +1119,7 @@ private fun NativeNutritionScreen(
                             ) {
                                 Text(
                                     text = fmtNum(abs(left)),
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 38.sp,
                                     fontWeight = FontWeight.Black
                                 )
@@ -1198,8 +1209,8 @@ private fun NativeNutritionScreen(
                                 modifier = Modifier
                                     .width(210.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(18.dp))
+                                    .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                                    .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
                                     .clickable {
                                         dispatch("quickAdd", mapOf("index" to rIdx))
                                     }
@@ -1208,7 +1219,7 @@ private fun NativeNutritionScreen(
                             ) {
                                 Text(
                                     text = rName,
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     maxLines = 1,
@@ -1232,8 +1243,8 @@ private fun NativeNutritionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(22.dp))
-                        .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(22.dp))
+                        .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                        .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1292,7 +1303,7 @@ private fun NativeNutritionScreen(
                         Column {
                             Text(
                                 text = "Water",
-                                color = Color.White,
+                                color = fg,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
@@ -1344,8 +1355,8 @@ private fun NativeNutritionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(22.dp))
-                            .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                            .border(1.dp, BorderSubtle, RoundedCornerShape(22.dp))
+                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                            .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -1361,7 +1372,7 @@ private fun NativeNutritionScreen(
                                 GlowingDot(color = slotDotColor)
                                 Text(
                                     text = slotTitle,
-                                    color = Color.White,
+                                    color = fg,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold
                                 )
@@ -1384,7 +1395,7 @@ private fun NativeNutritionScreen(
                                         .size(38.dp)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(Color(0xFF1A1F2D))
-                                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                                        .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
                                         .clickable {
                                             dispatch("add", mapOf("slot" to slotId))
                                         },
@@ -1438,7 +1449,7 @@ private fun NativeNutritionScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(14.dp))
-                                            .background(SunkenTile)
+                                            .background(sunken)
                                             .clickable {
                                                 if (entryId.isNotEmpty()) {
                                                     dispatch("entry", mapOf("id" to entryId))
@@ -1451,7 +1462,7 @@ private fun NativeNutritionScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 text = eName,
-                                                color = Color.White,
+                                                color = fg,
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
@@ -1466,7 +1477,7 @@ private fun NativeNutritionScreen(
                                         }
                                         Text(
                                             text = fmtNum(eKcal),
-                                            color = Color.White,
+                                            color = fg,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Black
                                         )
@@ -1491,8 +1502,8 @@ private fun NativeNutritionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                            .border(1.dp, BorderSubtle, RoundedCornerShape(20.dp))
+                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                            .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -1500,7 +1511,7 @@ private fun NativeNutritionScreen(
                         Column {
                             Text(
                                 text = "7-Day Smart Shopping List",
-                                color = Color.White,
+                                color = fg,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Black
                             )
@@ -1511,7 +1522,7 @@ private fun NativeNutritionScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
-                        HeaderButton(label = "Clear ticks", width = null) {
+                        HeaderButton(label = "Clear ticks", width = null, light = light) {
                             dispatch("sdClearShop", emptyMap())
                         }
                     }
@@ -1523,8 +1534,8 @@ private fun NativeNutritionScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
-                                .border(1.dp, BorderSubtle, RoundedCornerShape(20.dp))
+                                .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                                .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
                                 .padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -1542,7 +1553,7 @@ private fun NativeNutritionScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(SunkenTile)
+                                        .background(sunken)
                                         .clickable {
                                             if (itemId.isNotEmpty()) {
                                                 dispatch("sdCheck", mapOf("itemId" to itemId))
@@ -1581,7 +1592,7 @@ private fun NativeNutritionScreen(
                                         Column {
                                             Text(
                                                 text = item.optString("name"),
-                                                color = if (checked) subtle else Color.White,
+                                                color = if (checked) subtle else fg,
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -1760,9 +1771,26 @@ private fun MacroTileCard(
 }
 
 @Composable
+private fun FoodTopTabButton(label: String, selected: Boolean, light: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Box(
+        modifier = Modifier
+            .clip(shape)
+            .background(if (selected) (if (light) Color(0xFFE8EDF9) else PillSelected) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = if (selected) BlueAccent else if (light) Color(0xFF64748B) else TextMuted,
+            fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
 private fun HeaderButton(
     label: String,
     width: androidx.compose.ui.unit.Dp?,
+    light: Boolean = false,
     onClick: () -> Unit
 ) {
     val mod = if (width != null) {
@@ -1773,15 +1801,15 @@ private fun HeaderButton(
     Box(
         modifier = mod
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, Color(0x16FFFFFF), RoundedCornerShape(14.dp))
+            .background(if (light) Color.White else Color(0xFF171B26))
+            .border(1.dp, if (light) Color(0xFFD2D9E7) else Color(0x16FFFFFF), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = if (width == null) 14.dp else 0.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = if (label == "Targets") Color(0xFF9EC5FF) else Color(0xFFE2E8F0),
+            color = if (label == "Targets") BlueAccent else if (light) Color(0xFF182132) else Color(0xFFE2E8F0),
             fontSize = if (label == "Targets") 14.sp else 18.sp,
             fontWeight = FontWeight.Bold
         )
