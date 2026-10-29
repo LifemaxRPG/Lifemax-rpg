@@ -78,6 +78,7 @@
       sequence: ++sequence,
       name: state.name || "The Life Architect",
       avatar: state.avatar || "",
+      classId: state.classId || "",
       title:
         titleFor(level.level).toUpperCase() +
         (cls ? " · " + cls.name.toUpperCase() : ""),

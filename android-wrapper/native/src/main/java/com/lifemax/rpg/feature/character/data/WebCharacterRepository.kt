@@ -103,6 +103,7 @@ class WebCharacterRepository : CharacterRepository {
                 },
                 colors.keys().asSequence().associateWith { colors.getLong(it) },
                 j.getBoolean("light"),
+                j.optString("classId", ""),
             )
     }
 }

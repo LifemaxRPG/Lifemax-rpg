@@ -49,4 +49,5 @@ data class CharacterProjection(
     val tabs: List<Pair<String, String>>,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    val classId: String = "",
 )
