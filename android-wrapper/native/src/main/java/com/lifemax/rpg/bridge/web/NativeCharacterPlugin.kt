@@ -107,12 +107,10 @@ class NativeCharacterPlugin : Plugin() {
         requireNotNull(scene) { "Missing shared Overview chrome" }
         if (chrome == null)
             chrome =
-                LiveOverviewShell(
-                    activity,
-                    bridge.webView,
-                    { id -> notifyListeners("nav-action", JSObject().put("id", id)) },
-                    chromeOnly = true,
-                )
+                LiveOverviewShell(activity, bridge.webView, chromeOnly = true) { id ->
+                    notifyListeners("nav-action", JSObject().put("id", id))
+                }
+
         chrome?.show(scene)
     }
 

@@ -21,8 +21,8 @@ import org.json.JSONObject
 internal class LiveOverviewShell(
     activity: Activity,
     private val web: WebView,
-    activate: (String) -> Unit,
     private val chromeOnly: Boolean = false,
+    activate: (String) -> Unit,
 ) {
     private val parent = activity.findViewById<ViewGroup>(android.R.id.content)
     private val frame =
