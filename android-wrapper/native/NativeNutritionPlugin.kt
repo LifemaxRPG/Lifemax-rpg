@@ -48,6 +48,8 @@ class NativeNutritionPlugin : Plugin() {
     private var session = ""
     private var layer: ComposeView? = null
     private var chrome: LiveOverviewShell? = null
+    private var topInsetDp by mutableFloatStateOf(64f)
+    private var bottomInsetDp by mutableFloatStateOf(72f)
     private var snapshot by mutableStateOf<JSONObject?>(null)
 
     @PluginMethod
@@ -80,7 +82,7 @@ class NativeNutritionPlugin : Plugin() {
                 view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
                 view.setContent {
                     snapshot?.let { current ->
-                        NativeNutritionScreen(current) { command ->
+                        NativeNutritionScreen(current, topInsetDp, bottomInsetDp) { command ->
                             if (command == "close") dismiss(true)
                             else
                                 notifyListeners(
@@ -144,6 +146,10 @@ class NativeNutritionPlugin : Plugin() {
                 }
 
         chrome?.show(scene)
+        chrome?.contentInsetsDp()?.let { (top, bottom) ->
+            topInsetDp = top
+            bottomInsetDp = bottom
+        }
     }
 
     private fun dismiss(notify: Boolean) {
@@ -173,7 +179,12 @@ private val fat = Color(0xFF4FD6C0)
 private val accent = Color(0xFF849CFF)
 
 @Composable
-private fun NativeNutritionScreen(data: JSONObject, act: (String) -> Unit) {
+private fun NativeNutritionScreen(
+    data: JSONObject,
+    topInsetDp: Float,
+    bottomInsetDp: Float,
+    act: (String) -> Unit,
+) {
     BackHandler { act("close") }
     val light = data.optBoolean("light")
     val bg = if (light) Color(0xFFF6F7FA) else dark
@@ -192,10 +203,10 @@ private fun NativeNutritionScreen(data: JSONObject, act: (String) -> Unit) {
             .background(bg)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 14.dp)
-            .padding(bottom = 80.dp),
+            .padding(bottom = bottomInsetDp.dp + 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Spacer(Modifier.height(64.dp))
+        Spacer(Modifier.height(topInsetDp.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             NutButton("Meals", fg, panel, accent) {}
             NutButton("Recipes ↗", muted, panel, border) { act("recipes") }
