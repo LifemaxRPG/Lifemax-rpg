@@ -243,7 +243,7 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
         canvas.save();canvas.scale(scale,scale)
         for(node in data.nodes) {
             val kind=node.optString("kind")
-            if(kind=="clip") { canvas.save();canvas.clipRect(node.rect());continue }
+            if(kind=="clip") { canvas.save();canvas.clipPath(Path().apply { addRoundRect(node.rect(),node.f("radius"),node.f("radius"),Path.Direction.CW) });continue }
             if(kind=="unclip") { canvas.restore();continue }
             val r=node.rect();if(r.width()<=0||r.height()<=0)continue
             paint.reset();paint.isAntiAlias=true;paint.alpha=(255*node.f("opacity",1f)).roundToInt().coerceIn(0,255)
@@ -319,7 +319,14 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
             }
             paint.alpha=(255*alpha).roundToInt().coerceIn(0,255);canvas.drawRoundRect(r,radius,radius,paint);paint.shader=null
         }
+        val borders=node.optJSONArray("borders").items()
         val border=node.f("borderWidth")
-        if(border>0){paint.style=Paint.Style.STROKE;paint.strokeWidth=border;paint.color=node.argb("border");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255);val inset=RectF(r).apply { inset(border/2,border/2) };canvas.drawRoundRect(inset,radius,radius,paint)}
+        val uniform=borders.size!=4 || borders.all{it.f("width")==borders[0].f("width")&&it.argb("color")==borders[0].argb("color")}
+        if(uniform&&border>0){paint.style=Paint.Style.STROKE;paint.strokeWidth=border;paint.color=node.argb("border");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255);val inset=RectF(r).apply { inset(border/2,border/2) };canvas.drawRoundRect(inset,radius,radius,paint)}
+        else if(borders.size==4)for((index,edge) in borders.withIndex()) {
+            val width=edge.f("width");if(width<=0)continue
+            paint.style=Paint.Style.STROKE;paint.strokeWidth=width;paint.color=edge.argb("color");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255)
+            when(index){0->canvas.drawLine(r.left,r.top+width/2,r.right,r.top+width/2,paint);1->canvas.drawLine(r.right-width/2,r.top,r.right-width/2,r.bottom,paint);2->canvas.drawLine(r.left,r.bottom-width/2,r.right,r.bottom-width/2,paint);3->canvas.drawLine(r.left+width/2,r.top,r.left+width/2,r.bottom,paint)}
+        }
     }
 }

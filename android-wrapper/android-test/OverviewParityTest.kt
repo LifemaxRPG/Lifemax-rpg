@@ -61,19 +61,17 @@ class OverviewParityTest {
             lateinit var main: MainActivity
             scenario.onActivity { main=it }
             waitUntil("web app ready"){evaluate(main,"typeof window.openNativeOverview==='function'")=="true"}
-            evaluate(main,"""window.__nativeOverviewManual=true;state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');document.body.style.overflow='';document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
+            evaluate(main,"""window.__nativeOverviewManual=true;window.__overviewNavHistory=[];const originalNavigate=navigate;navigate=function(v){if(v!=='dashboard')__overviewNavHistory.push({v,stack:new Error().stack});return originalNavigate.apply(this,arguments)};state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');document.body.style.overflow='';document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
             SystemClock.sleep(1800)
             evaluate(main,"window.scrollTo(0,0);true")
-            instrumentation.runOnMainSync {
-                main.currentFocus?.clearFocus()
-                (main.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(main.bridge.webView.windowToken,0)
-            }
-            SystemClock.sleep(1000)
+            evaluate(main,"document.activeElement?.blur();lmaNavTo('dashboard',{fast:true,skip:true});window.scrollTo(0,0);true")
+            SystemClock.sleep(800)
+            assertEquals("Reference must be Overview", "\"dashboard\"", evaluate(main,"lmaView()"))
             val original=shot(main.bridge.webView,"overview-web.png")
             evaluate(main,"window.openNativeOverview().then(r=>window.__nativeAttempt=r);true")
             var native: OverviewActivity?=null
             try { waitUntil("native Overview"){instrumentation.runOnMainSync{native=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<OverviewActivity>().firstOrNull()};native!=null} }
-            catch(e: AssertionError){throw AssertionError("Native handoff diagnostics: "+evaluate(main,"JSON.stringify({attempt:window.__nativeAttempt,sceneError:window.__nativeOverviewError,diagnostics:NativeOverviewSnapshot.diagnostics()})"),e)}
+            catch(e: AssertionError){throw AssertionError("Native handoff diagnostics: "+evaluate(main,"JSON.stringify({attempt:window.__nativeAttempt,sceneError:window.__nativeOverviewError,diagnostics:NativeOverviewSnapshot.diagnostics(),navigation:window.__overviewNavHistory})"),e)}
             waitUntil("native scene painted"){var ready=false;instrumentation.runOnMainSync{ready=native!!.window.decorView.findViewWithTag<View>("overview-rendered")?.height?.let{it>1}==true};ready}
             SystemClock.sleep(500)
             lateinit var content:View

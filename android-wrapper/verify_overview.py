@@ -1,7 +1,7 @@
 """Run emulator parity checks and preserve diagnostics even when a test fails."""
 from pathlib import Path
 import base64, subprocess, sys
-status=subprocess.run(['./android-wrapper/android/gradlew','-p','android-wrapper/android',':app:connectedDebugAndroidTest','-Pandroid.testInstrumentationRunnerArguments.class=com.lifemax.rpg.OverviewParityTest']).returncode
+status=subprocess.run(['./android-wrapper/android/gradlew','-p','android-wrapper/android',':app:connectedDebugAndroidTest','--no-daemon','--max-workers=2','-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m','-Pandroid.testInstrumentationRunnerArguments.class=com.lifemax.rpg.OverviewParityTest']).returncode
 out=Path('native-overview-review');out.mkdir(exist_ok=True)
 for name in ['overview-web.png','overview-native.png','overview-parity.json']:
     result=subprocess.run(['adb','exec-out','cat','/sdcard/Download/'+name],capture_output=True)
