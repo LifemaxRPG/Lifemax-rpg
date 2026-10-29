@@ -24,7 +24,14 @@ fun CharacterRoute(
     val ui by vm.selection.collectAsState()
     data?.let {
         CharacterScreen(
-            it, ui, vm::select, vm::compare, vm::sort, vm::skills, topInsetDp, bottomInsetDp,
+            it,
+            ui,
+            vm::select,
+            vm::compare,
+            vm::sort,
+            vm::skills,
+            topInsetDp,
+            bottomInsetDp,
             onAction,
         )
     }
