@@ -51,7 +51,7 @@ fun CharacterScreen(
                 item { CharacterBenchmarksCard(p, onAction) }
             }
             HorizontalDivider(color = p.tokenColor("line"))
-            CharacterNavigation(p, onAction)
+            Spacer(Modifier.height(72.dp))
         }
     }
 }

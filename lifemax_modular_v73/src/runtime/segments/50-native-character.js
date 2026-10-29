@@ -140,6 +140,11 @@
       light: document.documentElement.classList.contains("light-theme"),
     };
   }
+  async function navScene() {
+    const sidebar = document.querySelector(".sidebar");
+    if (!sidebar || !window.NativeOverviewSnapshot) throw Error("Overview navigation unavailable");
+    return NativeOverviewSnapshot.capture([sidebar], true);
+  }
   function sync() {
     const input = document.getElementById("nativeCharacterToggle");
     if (input) {
@@ -158,7 +163,7 @@
       return;
     }
     try {
-      await plugin.update({ snapshot: projection() });
+      await plugin.update({ snapshot: projection(), navScene: await navScene() });
     } catch (e) {
       console.warn("Character refresh", e);
       await close();
@@ -197,6 +202,7 @@
           }
         });
         await plugin.addListener("refresh", send);
+        await plugin.addListener("nav-action", (e) => window.NativeOverviewSnapshot?.activate(e.id));
         await plugin.addListener("closed", () => {
           active = false;
           clearInterval(timer);
@@ -210,7 +216,7 @@
       )
         return false;
       if (blocked()) return false;
-      await plugin.open({ snapshot: projection() });
+      await plugin.open({ snapshot: projection(), navScene: await navScene() });
       active = true;
       timer = setInterval(send, 15000);
       return true;
@@ -250,3 +256,4 @@
   sync();
   setTimeout(sync, 700);
 })();
+
