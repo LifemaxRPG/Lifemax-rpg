@@ -3,6 +3,7 @@ package com.lifemax.rpg
 import android.app.Activity
 import android.graphics.Color
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
@@ -28,6 +29,15 @@ internal class LiveOverviewShell(activity:Activity,private val web:WebView,activ
         // Bound software layers to two small control strips. The WebView body
         // stays accelerated and owns native scrolling/fling and live animation.
         header.setLayerType(View.LAYER_TYPE_SOFTWARE,null);bar.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+        // Preserve original header gestures and trusted browser activation. A
+        // drag beginning over the header must still scroll the live WebView.
+        header.setOnTouchListener { _, event ->
+            val from=IntArray(2);val to=IntArray(2)
+            header.getLocationOnScreen(from);web.getLocationOnScreen(to)
+            val copy=MotionEvent.obtain(event)
+            copy.offsetLocation((from[0]-to[0]).toFloat(),(from[1]-to[1]).toFloat())
+            web.dispatchTouchEvent(copy);copy.recycle();true
+        }
         nav.addView(bar)
         frame.addView(header,FrameLayout.LayoutParams(-1,1))
         frame.addView(nav,FrameLayout.LayoutParams(-1,1,Gravity.BOTTOM))
