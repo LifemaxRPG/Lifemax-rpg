@@ -3468,12 +3468,11 @@ const LifeDirectorApp = (function () {
     const b = { title: d.t, startEpoch: +d.s, endEpoch: +d.e, mealStartEpoch: +d.ms || +d.s, kind: 'MEAL' };
     const meal = scheduledMeal(b);
     const attrs = mealAnchor(b).replace('data-act="anchor"', 'data-act="mealOpen"').replace(' role="button" tabindex="0"', '');
-    openSheet('<button type="button" class="ld-meal-preview"' + attrs + '>' +
-      '<span class="ld-mp-top"><span class="ld-mp-eyebrow"><i></i> DAILY FUEL</span><span class="ld-mp-status">' + (meal && meal.logged ? 'Logged' : meal && meal.skipped ? 'Skipped' : 'On your plan') + '</span></span>' +
-      '<span class="ld-mp-hero"><span class="ld-mp-emblem" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="36"/><circle cx="50" cy="50" r="26"/><path d="M13 29v13m6-13v13m-12-13v13q0 8 6 8v22m74-43v43m0-43q-10 8-10 22h10"/></svg></span><span class="ld-mp-slot">' + esc(d.t || 'Meal') + '</span><span class="ld-mp-time">' + esc(fTime(+d.s) + ' – ' + fTime(+d.e)) + '</span></span>' +
-      '<span class="ld-mp-name">' + esc(meal ? meal.name : 'Your next meal awaits') + '</span>' +
-      (meal ? '<span class="ld-mp-energy"><span><b>' + meal.kcal + '</b><span> kcal</span></span><span class="ld-mp-energy-label">MEAL ENERGY</span></span>' : '') +
-      '<span class="ld-mp-footer"><span><strong>View meal</strong><small>Ingredients &amp; meal details</small></span><span class="ld-mp-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6h12v12"/></svg></span></span></button>');
+    openSheet('<div class="ld-meal-preview"' + attrs + '><div class="ld-sh-head ld-c-meal"><i class="ld-rail" aria-hidden="true"></i><div><h3>' + mealPx(16) + ' ' + esc(meal ? meal.name : 'Your meal plan') + '</h3>' +
+      '<p class="ld-when">' + fDay(+d.s) + ' · ' + fTime(+d.s) + '–' + fTime(+d.e) + ' · ' + mins(Math.round((+d.e - +d.s) / 60)) + '</p></div></div>' +
+      '<div class="ld-chips"><span class="ld-chip">' + esc(d.t || 'Meal') + '</span>' +
+      (meal ? '<span class="ld-chip">' + meal.kcal + ' kcal</span><span class="ld-chip">' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : 'On your plan') + '</span>' : '') + '</div>' +
+      '<div class="ld-row ld-sh-main"><button type="button" class="ld-btn ld-primary"' + attrs + '>Open meal menu</button></div></div>');
   }
   /* what to call the thing you are doing */
   function doingName(b) {
