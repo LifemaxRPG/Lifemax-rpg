@@ -62,14 +62,19 @@ internal fun CharacterHeader(p: CharacterProjection, onAction: (String, String) 
 
 private fun navIcon(id: String) =
     when (id) {
+        "dashboard",
         "overview" -> "grid"
         "character" -> "person"
+        "pet",
         "cat" -> "paw"
         "log" -> "plus"
         "quests" -> "flag"
+        "plan",
         "workout" -> "list"
         "library" -> "book"
         "food" -> "heart"
+        "money" -> "coin"
+        "journal" -> "book"
         "director",
         "lifeDirector",
         "life-director" -> "dial"
