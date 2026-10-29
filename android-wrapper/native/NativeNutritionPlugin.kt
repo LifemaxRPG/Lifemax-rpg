@@ -76,6 +76,7 @@ class NativeNutritionPlugin : Plugin() {
                 session = id
                 snapshot = JSONObject(data.toString())
                 val view = ComposeView(activity)
+                view.tag = "native-nutrition-screen"
                 view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
                 view.setContent {
                     snapshot?.let { current ->
