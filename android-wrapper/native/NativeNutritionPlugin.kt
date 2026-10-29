@@ -106,19 +106,23 @@ class NativeNutritionPlugin : Plugin() {
     fun update(call: PluginCall) {
         val data = call.getObject("snapshot")
         activity.runOnUiThread {
-            if (
-                call.getString("session") == session &&
-                    layer != null &&
-                    data != null &&
-                    data.optInt("version") == 1 &&
-                    data.toString().length <= 250000 &&
-                    data.has("totals") &&
-                    data.has("goals")
-            ) {
-                snapshot = JSONObject(data.toString())
-                showChrome(call.getObject("chromeScene"))
+            try {
+                if (
+                    call.getString("session") == session &&
+                        layer != null &&
+                        data != null &&
+                        data.optInt("version") == 1 &&
+                        data.toString().length <= 250000 &&
+                        data.has("totals") &&
+                        data.has("goals")
+                ) {
+                    snapshot = JSONObject(data.toString())
+                    showChrome(call.getObject("chromeScene"))
+                }
+                call.resolve()
+            } catch (e: Exception) {
+                call.reject("Native Nutrition refresh failed", e)
             }
-            call.resolve()
         }
     }
 
