@@ -54,6 +54,8 @@ class OverviewActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val s = OverviewHost.session ?: run { finish(); return }
         session = s; OverviewHost.screen = WeakReference(this)
+        window.setWindowAnimations(0)
+        overridePendingTransition(0,0)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         frame = FrameLayout(this)
         scroll = ScrollView(this).apply { isFillViewport = true; isVerticalScrollBarEnabled = false; clipToPadding = false }
@@ -118,6 +120,7 @@ class OverviewActivity : ComponentActivity() {
             } }
         }
     }
+    override fun finish() { super.finish(); overridePendingTransition(0,0) }
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null); worker.shutdownNow()
         val s = session
@@ -251,9 +254,18 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
                     val weight=node.optInt("weight",400)
                     paint.typeface=if(android.os.Build.VERSION.SDK_INT>=28)Typeface.create(Typeface.create(family,Typeface.NORMAL),weight,node.optBoolean("italic")) else Typeface.create(family,if(weight>=600)Typeface.BOLD else Typeface.NORMAL)
                     paint.textSize=node.f("font",15f);paint.color=node.argb("color");paint.alpha=(Color.alpha(paint.color)*node.f("opacity",1f)).roundToInt().coerceIn(0,255)
-                    val measured=paint.measureText(text);if(measured>0)paint.textScaleX=(r.width()/measured).coerceIn(.5f,2f)
                     val fm=paint.fontMetrics;val baseline=r.top+(r.height()-(fm.descent-fm.ascent))/2-fm.ascent
-                    canvas.drawText(text,r.left,baseline,paint)
+                    val spacing=node.f("spacing")
+                    if(abs(spacing)>.3f) {
+                        val glyphs=text.codePoints().toArray().map { String(Character.toChars(it)) }
+                        val widths=glyphs.map { paint.measureText(it) };val total=widths.sum()
+                        val ratio=if(total>0)((r.width()-spacing*glyphs.size)/total).coerceIn(.5f,2f) else 1f
+                        paint.textScaleX=ratio;var x=r.left
+                        for((index,glyph) in glyphs.withIndex()){canvas.drawText(glyph,x,baseline,paint);x+=widths[index]*ratio+spacing}
+                    } else {
+                        val measured=paint.measureText(text);if(measured>0)paint.textScaleX=(r.width()/measured).coerceIn(.5f,2f)
+                        canvas.drawText(text,r.left,baseline,paint)
+                    }
                 }
                 "image","backgroundImage" -> data.images[node.optString("data")]?.let { image ->
                     imagePaint.alpha=(255*node.f("opacity",1f)).roundToInt().coerceIn(0,255)
@@ -275,6 +287,15 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
     }
     private fun drawBox(canvas: Canvas,node: JSONObject,r: RectF) {
         val alpha=node.f("opacity",1f);val radius=node.f("radius")
+        for(shadow in node.optJSONArray("shadows").items().filter{!it.optBoolean("inset")}) {
+            val lengths=shadow.optJSONArray("lengths") ?: continue
+            val dx=lengths.optDouble(0).toFloat();val dy=lengths.optDouble(1).toFloat();val blur=lengths.optDouble(2).toFloat();val spread=lengths.optDouble(3).toFloat()
+            val outer=RectF(r).apply{inset(-spread,-spread)}
+            paint.color=node.argb("color");paint.alpha=(255*alpha).roundToInt().coerceIn(0,255)
+            if(blur>0)paint.setShadowLayer(blur/2,dx,dy,shadow.argb("color"))
+            else { paint.color=shadow.argb("color");outer.offset(dx,dy) }
+            canvas.drawRoundRect(outer,radius,radius,paint);paint.clearShadowLayer()
+        }
         paint.color=node.argb("color");paint.alpha=(Color.alpha(paint.color)*alpha).roundToInt().coerceIn(0,255)
         canvas.drawRoundRect(r,radius,radius,paint)
         for(g in node.optJSONArray("gradients").items().reversed()) {
@@ -287,8 +308,9 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
                 val centered=direction.contains(" at ")
                 val cx=if(centered&&percentages.size>=2)r.left+percentages[percentages.size-2]*r.width() else r.centerX()
                 val cy=if(centered&&percentages.size>=2)r.top+percentages.last()*r.height() else r.centerY()
-                val rx=if(percentages.size>=4)percentages[0]*r.width() else r.width()*.71f
-                val ry=if(percentages.size>=4)percentages[1]*r.height() else r.height()*.71f
+                val explicit=Regex("^\\s*([\\d.]+)(px|%)\\s+([\\d.]+)(px|%)").find(direction)
+                val rx=if(explicit!=null)explicit.groupValues[1].toFloat()*(if(explicit.groupValues[2]=="%")r.width()/100 else 1f) else r.width()*.71f
+                val ry=if(explicit!=null)explicit.groupValues[3].toFloat()*(if(explicit.groupValues[4]=="%")r.height()/100 else 1f) else r.height()*.71f
                 RadialGradient(0f,0f,1f,colors,stops,Shader.TileMode.CLAMP).apply { setLocalMatrix(Matrix().apply { setScale(rx.coerceAtLeast(1f),ry.coerceAtLeast(1f));postTranslate(cx,cy) }) }
             } else {
                 val degrees=Regex("(-?[\\d.]+)deg").find(direction)?.groupValues?.get(1)?.toDouble() ?: 180.0

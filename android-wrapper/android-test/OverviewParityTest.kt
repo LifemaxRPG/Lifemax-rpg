@@ -34,12 +34,17 @@ class OverviewParityTest {
         instrumentation.runOnMainSync { activity.bridge.webView.evaluateJavascript(js){result=it;done.countDown()} }
         assertTrue(done.await(10,TimeUnit.SECONDS));return result
     }
+    private fun export(name: String) {
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("mkdir -p /sdcard/Download")).use { it.readBytes() }
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("sh -c 'run-as com.lifemax.rpg cat files/$name > /sdcard/Download/$name'")).use { it.readBytes() }
+    }
     private fun shot(view: View, name: String): Bitmap {
         val rect=Rect();instrumentation.runOnMainSync{view.getGlobalVisibleRect(rect)}
         val full=instrumentation.uiAutomation.takeScreenshot()
         val image=Bitmap.createBitmap(full,rect.left,rect.top,rect.width(),rect.height())
         val file=File(instrumentation.targetContext.filesDir,name)
         file.outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
+        export(name)
         return image
     }
     private fun webViews(view: View): Int = (if(view is WebView)1 else 0)+(if(view is ViewGroup)(0 until view.childCount).sumOf{webViews(view.getChildAt(it))}else 0)
@@ -51,6 +56,11 @@ class OverviewParityTest {
             evaluate(main,"""window.__nativeOverviewManual=true;state.onboardingComplete=true;state.tutorialDone=true;state.name='Native preview';state.petInviteHidden=false;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.display='none'});document.body.classList.remove('noscroll');document.body.style.overflow='';document.querySelectorAll('.lu-card').forEach(e=>e.parentElement.remove());save();renderAll();navigate('dashboard');true""")
             SystemClock.sleep(1800)
             evaluate(main,"window.scrollTo(0,0);true")
+            instrumentation.runOnMainSync {
+                main.currentFocus?.clearFocus()
+                (main.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(main.bridge.webView.windowToken,0)
+            }
+            SystemClock.sleep(1000)
             val original=shot(main.bridge.webView,"overview-web.png")
             evaluate(main,"window.openNativeOverview().then(r=>window.__nativeAttempt=r);true")
             var native: OverviewActivity?=null
@@ -69,6 +79,7 @@ class OverviewParityTest {
             val mean=difference.toDouble()/samples
             report.put("meanChannelDifference",mean)
             File(instrumentation.targetContext.filesDir,"overview-parity.json").writeText(report.toString(2))
+            export("overview-parity.json")
             // Geometry is measured from the actual Android WebView, not a separate desktop font layout.
             assertTrue("Native rendering differs too much: $report",mean<25.0)
             instrumentation.runOnMainSync { native!!.finish() }
