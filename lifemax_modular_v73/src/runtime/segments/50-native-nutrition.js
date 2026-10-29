@@ -148,11 +148,11 @@
       return {
         workoutHeading: String((d.w && d.w.note) || 'TODAY').toUpperCase() + ' · ' +
           ((d.w && d.w.type === 'training') ? 'TRAINING DAY' : 'REST DAY'),
-        target: Math.round(Number(d.target) || 2500),
+        target: Math.round(Number(d.target) || 0),
         eaten: Math.round(Number(d.eaten) || 0),
-        left: Math.max(0, Math.round((Number(d.target) || 2500) - (Number(d.eaten) || 0))),
+        left: Math.max(0, Math.round((Number(d.target) || 0) - (Number(d.eaten) || 0))),
         eatenP: Math.round(eatenP),
-        planP: Math.round(planP || 166),
+        planP: Math.round(planP || 0),
         nextIndex: typeof d.next === 'number' ? d.next : -1,
         coachIcon: String(co.i || '✦'),
         coachText: String(co.t || '').replace(/<[^>]+>/g, ''),
