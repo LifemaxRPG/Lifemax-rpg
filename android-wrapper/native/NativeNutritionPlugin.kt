@@ -245,13 +245,13 @@ private fun NativeNutritionScreen(
     val shopObj = data.optJSONObject("shop")
 
     val calLogged = totals.optDouble("kcal", 0.0).roundToInt()
-    val calGoal = goals.optDouble("cal", 2500.0).roundToInt().coerceAtLeast(1)
+    val calGoal = goals.optDouble("cal", 0.0).roundToInt().coerceAtLeast(0)
     val proLogged = totals.optDouble("p", 0.0).toFloat()
-    val proGoal = goals.optDouble("p", 150.0).toFloat().coerceAtLeast(1f)
+    val proGoal = goals.optDouble("p", 0.0).toFloat().coerceAtLeast(0f)
     val carbLogged = totals.optDouble("c", 0.0).toFloat()
-    val carbGoal = goals.optDouble("c", 200.0).toFloat().coerceAtLeast(1f)
+    val carbGoal = goals.optDouble("c", 0.0).toFloat().coerceAtLeast(0f)
     val fatLogged = totals.optDouble("f", 0.0).toFloat()
-    val fatGoal = goals.optDouble("f", 67.0).toFloat().coerceAtLeast(1f)
+    val fatGoal = goals.optDouble("f", 0.0).toFloat().coerceAtLeast(0f)
 
     // AAA Plasma Flight & Circumferential Ring Torch Animation State
     val flightProgress = remember { Animatable(0f) }
@@ -259,18 +259,18 @@ private fun NativeNutritionScreen(
     var prevRatios by remember {
         mutableStateOf(
             Triple(
-                (proLogged / proGoal).coerceIn(0f, 1f),
-                (carbLogged / carbGoal).coerceIn(0f, 1f),
-                (fatLogged / fatGoal).coerceIn(0f, 1f)
+                if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
+                if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
+                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
             )
         )
     }
     var targetRatios by remember {
         mutableStateOf(
             Triple(
-                (proLogged / proGoal).coerceIn(0f, 1f),
-                (carbLogged / carbGoal).coerceIn(0f, 1f),
-                (fatLogged / fatGoal).coerceIn(0f, 1f)
+                if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
+                if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
+                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
             )
         )
     }
@@ -280,9 +280,9 @@ private fun NativeNutritionScreen(
     var lastCalLogged by remember { mutableIntStateOf(calLogged) }
     LaunchedEffect(calLogged, proLogged, carbLogged, fatLogged) {
         val nextTriple = Triple(
-            (proLogged / proGoal).coerceIn(0f, 1f),
-            (carbLogged / carbGoal).coerceIn(0f, 1f),
-            (fatLogged / fatGoal).coerceIn(0f, 1f)
+            if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
+            if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
+            if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
         )
         if (calLogged > lastCalLogged) {
             activePane = "log"
@@ -733,7 +733,7 @@ private fun NativeNutritionScreen(
                                         letterSpacing = 1.3.sp
                                     )
                                 }
-                                VerticalHairline()
+                                VerticalHairline(panelBorder)
                                 // PROTEIN
                                 Column(
                                     modifier = Modifier
@@ -755,7 +755,7 @@ private fun NativeNutritionScreen(
                                         letterSpacing = 1.3.sp
                                     )
                                 }
-                                VerticalHairline()
+                                VerticalHairline(panelBorder)
                                 // CARBS
                                 Column(
                                     modifier = Modifier
@@ -777,7 +777,7 @@ private fun NativeNutritionScreen(
                                         letterSpacing = 1.3.sp
                                     )
                                 }
-                                VerticalHairline()
+                                VerticalHairline(panelBorder)
                                 // FAT
                                 Column(
                                     modifier = Modifier
@@ -863,7 +863,7 @@ private fun NativeNutritionScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                VerticalHairline()
+                                VerticalHairline(panelBorder)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -880,7 +880,7 @@ private fun NativeNutritionScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                VerticalHairline()
+                                VerticalHairline(panelBorder)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -998,7 +998,7 @@ private fun NativeNutritionScreen(
                                 val factor = size.minDimension / 320f
                                 val cx = size.width / 2f
                                 val cy = size.height / 2f
-                                val calRatio = (calLogged.toFloat() / calGoal).coerceIn(0f, 1f)
+                                val calRatio = if (calGoal > 0) (calLogged.toFloat() / calGoal).coerceIn(0f, 1f) else 0f
 
                                 // 72 Outer Calorie Ticks
                                 for (i in 0 until 72) {
@@ -1118,13 +1118,13 @@ private fun NativeNutritionScreen(
                                 }
                             ) {
                                 Text(
-                                    text = fmtNum(abs(left)),
+                                    text = fmtNum(if (calGoal > 0) abs(left) else calLogged),
                                     color = fg,
                                     fontSize = 38.sp,
                                     fontWeight = FontWeight.Black
                                 )
                                 Text(
-                                    text = if (left >= 0) "KCAL LEFT" else "KCAL OVER",
+                                    text = if (calGoal == 0) "KCAL TODAY" else if (left >= 0) "KCAL LEFT" else "KCAL OVER",
                                     color = subtle,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.ExtraBold,
@@ -1132,7 +1132,7 @@ private fun NativeNutritionScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "${fmtNum(calLogged)} of ${fmtNum(calGoal)}",
+                                    text = if (calGoal > 0) "${fmtNum(calLogged)} of ${fmtNum(calGoal)}" else "Set a daily target",
                                     color = muted,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -1147,6 +1147,7 @@ private fun NativeNutritionScreen(
                         ) {
                             MacroTileCard(
                                 label = "PROTEIN",
+                                light = light,
                                 dotColor = ProteinRose,
                                 current = proLogged.roundToInt(),
                                 goal = proGoal.roundToInt(),
@@ -1154,6 +1155,7 @@ private fun NativeNutritionScreen(
                             )
                             MacroTileCard(
                                 label = "CARBS",
+                                light = light,
                                 dotColor = CarbsAmber,
                                 current = carbLogged.roundToInt(),
                                 goal = carbGoal.roundToInt(),
@@ -1161,6 +1163,7 @@ private fun NativeNutritionScreen(
                             )
                             MacroTileCard(
                                 label = "FAT",
+                                light = light,
                                 dotColor = FatTeal,
                                 current = fatLogged.roundToInt(),
                                 goal = fatGoal.roundToInt(),
@@ -1317,10 +1320,10 @@ private fun NativeNutritionScreen(
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WaterPillButton("+250") {
+                        WaterPillButton("+250", light) {
                             dispatch("water", mapOf("ml" to 250))
                         }
-                        WaterPillButton("+500") {
+                        WaterPillButton("+500", light) {
                             dispatch("water", mapOf("ml" to 500))
                         }
                     }
@@ -1394,7 +1397,7 @@ private fun NativeNutritionScreen(
                                     modifier = Modifier
                                         .size(38.dp)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF1A1F2D))
+                                        .background(selectedPanel)
                                         .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
                                         .clickable {
                                             dispatch("add", mapOf("slot" to slotId))
@@ -1403,7 +1406,7 @@ private fun NativeNutritionScreen(
                                 ) {
                                     Text(
                                         text = "+",
-                                        color = Color(0xFFBFD4FF),
+                                        color = BlueAccent,
                                         fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1419,6 +1422,7 @@ private fun NativeNutritionScreen(
                                 DashedSlotButton(
                                     label = "Add ${slotTitle.lowercase(Locale.US)}",
                                     textColor = Color(0xFF8AB4FF),
+                                    light = light,
                                     modifier = Modifier.weight(if (canCopyYesterday) 1.25f else 1f)
                                 ) {
                                     dispatch("add", mapOf("slot" to slotId))
@@ -1428,6 +1432,7 @@ private fun NativeNutritionScreen(
                                     DashedSlotButton(
                                         label = "Copy yesterday",
                                         textColor = muted,
+                                        light = light,
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         dispatch("copySlot", mapOf("slot" to slotId))
@@ -1699,19 +1704,20 @@ private fun GlowingDot(color: Color) {
 @Composable
 private fun MacroTileCard(
     label: String,
+    light: Boolean,
     dotColor: Color,
     current: Int,
     goal: Int,
     modifier: Modifier = Modifier
 ) {
     val left = goal - current
-    val pct = (current.toFloat() / max(1, goal)).coerceIn(0f, 1f)
+    val pct = if (goal > 0) (current.toFloat() / goal).coerceIn(0f, 1f) else 0f
 
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(18.dp))
-            .background(SunkenTile)
-            .border(1.dp, BorderSubtle, RoundedCornerShape(18.dp))
+            .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
+            .border(1.dp, if (light) Color(0xFFD2D9E7) else BorderSubtle, RoundedCornerShape(18.dp))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -1722,7 +1728,7 @@ private fun MacroTileCard(
             GlowingDot(color = dotColor)
             Text(
                 text = label,
-                color = TextMuted,
+                color = if (light) Color(0xFF475569) else TextMuted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.1.sp,
@@ -1733,13 +1739,13 @@ private fun MacroTileCard(
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = "$current",
-                color = Color.White,
+                color = if (light) Color(0xFF0F172A) else Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black
             )
             Text(
-                text = " / $goal g",
-                color = TextSubtle,
+                text = if (goal > 0) " / $goal g" else " g",
+                color = if (light) Color(0xFF64748B) else TextSubtle,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -1750,7 +1756,7 @@ private fun MacroTileCard(
                 .fillMaxWidth()
                 .height(4.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF191E2B))
+                .background(if (light) Color(0xFFE4E9F2) else Color(0xFF191E2B))
         ) {
             Box(
                 modifier = Modifier
@@ -1762,8 +1768,8 @@ private fun MacroTileCard(
         }
 
         Text(
-            text = if (left >= 0) "$left g left" else "${-left} g over",
-            color = TextSubtle,
+            text = if (goal == 0) "no target" else if (left >= 0) "$left g left" else "${-left} g over",
+            color = if (light) Color(0xFF64748B) else TextSubtle,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -1817,20 +1823,20 @@ private fun HeaderButton(
 }
 
 @Composable
-private fun WaterPillButton(label: String, onClick: () -> Unit) {
+private fun WaterPillButton(label: String, light: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .height(42.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF171B26))
-            .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
+            .background(if (light) Color.White else Color(0xFF171B26))
+            .border(1.dp, if (light) Color(0xFFD2D9E7) else BorderSubtle, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 15.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = Color.White,
+            color = if (light) Color(0xFF0F172A) else Color.White,
             fontSize = 14.sp,
             fontWeight = FontWeight.ExtraBold
         )
@@ -1841,6 +1847,7 @@ private fun WaterPillButton(label: String, onClick: () -> Unit) {
 private fun DashedSlotButton(
     label: String,
     textColor: Color,
+    light: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -1848,8 +1855,8 @@ private fun DashedSlotButton(
         modifier = modifier
             .height(46.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(SunkenTile)
-            .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(14.dp))
+            .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
+            .border(1.dp, if (light) Color(0xFFD2D9E7) else Color(0x1AFFFFFF), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -1863,11 +1870,11 @@ private fun DashedSlotButton(
 }
 
 @Composable
-private fun VerticalHairline() {
+private fun VerticalHairline(color: Color) {
     Box(
         modifier = Modifier
             .fillMaxHeight()
             .width(1.dp)
-            .background(Color(0x14FFFFFF))
+            .background(color)
     )
 }
