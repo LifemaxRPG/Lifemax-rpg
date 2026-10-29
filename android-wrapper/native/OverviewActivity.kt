@@ -193,6 +193,8 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private var draws = 0
+    internal fun diagnostics() = JSONObject().put("width",width).put("height",height).put("sceneWidth",sceneWidth).put("sceneHeight",sceneHeight).put("scale",scale).put("nodes",layer?.nodes?.size ?: -1).put("draws",draws).put("attached",isAttachedToWindow).put("visible",visibility)
     private val helper = object : ExploreByTouchHelper(this) {
         override fun getVirtualViewAt(x: Float, y: Float): Int = hit(x, y)
         override fun getVisibleVirtualViews(ids: MutableList<Int>) { layer?.hits?.indices?.forEach { ids.add(it) } }
@@ -211,7 +213,7 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
     }
     init { isFocusable = true; isClickable = true; ViewCompat.setAccessibilityDelegate(this, helper) }
     fun applyScene(value: OverviewLayer, w: Float, h: Float, bg: Int, nav: Boolean = false) {
-        tag = "overview-rendered"; layer = value; sceneWidth = w; sceneHeight = h; background = bg; horizontal = nav
+        layer = value; sceneWidth = w; sceneHeight = h; background = bg; horizontal = nav
         requestLayout(); invalidate(); helper.invalidateRoot()
     }
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -284,6 +286,7 @@ internal class OverviewSurface(context: android.content.Context, val activate: (
             }
         }
         canvas.restore()
+        draws++; tag = "overview-rendered"
     }
     private fun drawBox(canvas: Canvas,node: JSONObject,r: RectF) {
         val alpha=node.f("opacity",1f);val radius=node.f("radius")

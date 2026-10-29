@@ -76,11 +76,24 @@ class OverviewParityTest {
             var native: OverviewActivity?=null
             try { waitUntil("native Overview"){instrumentation.runOnMainSync{native=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<OverviewActivity>().firstOrNull()};native!=null} }
             catch(e: AssertionError){throw AssertionError("Native handoff diagnostics: "+evaluate(main,"JSON.stringify({attempt:window.__nativeAttempt,sceneError:window.__nativeOverviewError,diagnostics:NativeOverviewSnapshot.diagnostics(),navigation:window.__overviewNavHistory})"),e)}
-            waitUntil("native scene painted"){var ready=false;instrumentation.runOnMainSync{ready=native!!.window.decorView.findViewWithTag<View>("overview-rendered")?.height?.let{it>1}==true};ready}
+            fun nativeDiagnostics():JSONObject {
+                val snapshot=OverviewHost.session!!.snapshot
+                val info=JSONObject().put("sceneWidth",snapshot.opt("width")).put("sceneHeight",snapshot.opt("height")).put("background",snapshot.opt("background")).put("bodyNodes",snapshot.getJSONObject("body").getJSONArray("nodes").length())
+                fun visit(view:View) { if(view is OverviewSurface)info.append("surfaces",view.diagnostics());if(view is ViewGroup)(0 until view.childCount).forEach{visit(view.getChildAt(it))} }
+                instrumentation.runOnMainSync { visit(native!!.findViewById(android.R.id.content)) }
+                return info
+            }
+            try { waitUntil("native scene painted"){var ready=false;instrumentation.runOnMainSync{ready=native!!.window.decorView.findViewWithTag<View>("overview-rendered")?.height?.let{it>1}==true};ready} }
+            catch(e:AssertionError) { throw AssertionError("Native paint diagnostics: "+nativeDiagnostics(),e) }
             SystemClock.sleep(500)
             lateinit var content:View
             instrumentation.runOnMainSync{content=native!!.findViewById(android.R.id.content);assertEquals("Overview must not contain a WebView",0,webViews(content))}
             val rendered=shot(content,"overview-native.png")
+            println("OVERVIEW_DIAGNOSTICS: "+nativeDiagnostics())
+            val software=Bitmap.createBitmap(content.width,content.height,Bitmap.Config.ARGB_8888)
+            instrumentation.runOnMainSync { content.draw(android.graphics.Canvas(software)) }
+            File(instrumentation.targetContext.filesDir,"overview-software.png").outputStream().use{software.compress(Bitmap.CompressFormat.PNG,100,it)}
+            export("overview-software.png")
             val report=JSONObject().put("webWidth",original.width).put("webHeight",original.height).put("nativeWidth",rendered.width).put("nativeHeight",rendered.height)
             assertEquals(original.width,rendered.width)
             assertTrue(abs(original.height-rendered.height)<=4)
