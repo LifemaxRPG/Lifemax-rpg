@@ -3057,7 +3057,24 @@ const LifeDirectorApp = (function () {
   const hourWord = h => H12 ? (h === 0 ? 'Midnight' : h === 12 ? 'Noon' : (h % 12) + (h < 12 ? ' AM' : ' PM')) : String(h).padStart(2, '0') + ':00';
   /* "9 AM", "5:30 PM": short times for writing on the rings */
   const fC = ep => fTime(ep).replace(/:00(?=\D|$)/, '').replace(/\s+/g, ' ');
-  function faceHtml() {
+  let finishSeq = 0;
+  /* Local paint IDs keep Today, Overview, setup and widget SVGs independent.
+     All finish geometry is decorative; time radii and hit areas stay unchanged. */
+  function faceHtml(paintId) {
+    const id = paintId || 'ldf' + (++finishSeq);
+    const gradient = (name, stops) => '<linearGradient id="' + id + '-' + name + '" x1="0" y1="0" x2=".35" y2="1">' + stops.map(([at, color, opacity]) => '<stop offset="' + at + '" stop-color="' + color + '" stop-opacity="' + (opacity == null ? 1 : opacity) + '"/>').join('') + '</linearGradient>';
+    const defs = '<defs>' + gradient('face', [[0, '#0b1122'], [.55, '#121826'], [1, '#1b1b22']]) +
+      gradient('bezel', [[0, '#171e2c'], [.35, '#0b0e15'], [1, '#080c14']]) +
+      gradient('edge', [[0, '#d2e2ff', .26], [.42, '#8093b0', .04], [.7, '#000000', .28], [1, '#000000', .6]]) +
+      gradient('hub', [[0, '#141c2e'], [.5, '#101625'], [1, '#0c111c']]) + '</defs>';
+    const circle = (cls, r, extra) => '<circle class="' + cls + '" cx="180" cy="180" r="' + r + '"' + (extra || '') + '/>';
+    const edge = r => circle('ld-depth-edge', r, ' stroke="url(#' + id + '-edge)"');
+    const depth = '<g class="ld-depth" aria-hidden="true" pointer-events="none">' +
+      circle('ld-depth-chapter', 149, ' stroke-width="15"') + edge(157.5) + edge(140.5) +
+      circle('ld-depth-channel', DIAL.RO, ' stroke-width="' + (DIAL.WO + 3) + '"') + edge(119.5) +
+      circle('ld-depth-divider', 115.5) +
+      circle('ld-depth-channel', DIAL.RI, ' stroke-width="' + (DIAL.WI + 3) + '"') + edge(112.5) + edge(89.5) +
+      circle('ld-depth-hub', 86.5, ' fill="url(#' + id + '-hub)"') + edge(87.5) + circle('ld-depth-lip', 82) + '</g>';
     let t = '';
     for (let k = 0; k < 96; k++) {
       const a = k * 3.75, hr = k % 4 === 0, six = k % 24 === 0;
@@ -3075,9 +3092,28 @@ const LifeDirectorApp = (function () {
     const tw = h => hourWord(h).length * 3.3 + 10;
     const sun = (() => { const cx = 180 - tw(12) - 2, cy = 347; let r = '<circle cx="' + cx.toFixed(1) + '" cy="' + cy + '" r="2.6"/>'; for (let k = 0; k < 8; k++) { const a = k * 45 * Math.PI / 180; r += '<line x1="' + (cx + Math.cos(a) * 4.3).toFixed(1) + '" y1="' + (cy + Math.sin(a) * 4.3).toFixed(1) + '" x2="' + (cx + Math.cos(a) * 6).toFixed(1) + '" y2="' + (cy + Math.sin(a) * 6).toFixed(1) + '"/>'; } return '<g class="ld-sun">' + r + '</g>'; })();
     const moon = (() => { const cx = 180 - tw(0) - 2, cy = 13; return '<path class="ld-moon" d="M' + (cx + 1.5).toFixed(1) + ' ' + (cy - 5) + 'a5 5 0 1 0 3.6 8.6a4 4 0 1 1 -3.6 -8.6z"/>'; })();
-    return '<circle class="ld-bezel" cx="180" cy="180" r="176"/><circle class="ld-face" cx="180" cy="180" r="158"/>' + t + l +
+    return defs + '<circle class="ld-bezel" cx="180" cy="180" r="176" style="fill:url(#' + id + '-bezel)"/>' +
+      '<circle class="ld-face" cx="180" cy="180" r="158" style="fill:url(#' + id + '-face)"/>' + depth + t + l +
       '<circle class="ld-trk" cx="180" cy="180" r="' + DIAL.RO + '" stroke-width="' + DIAL.WO + '"/>' +
       '<circle class="ld-trk ld-trk-in" cx="180" cy="180" r="' + DIAL.RI + '" stroke-width="' + DIAL.WI + '"/>' + moon + sun;
+  }
+  function surfaceArc(r, width, a0, a1, id, b) {
+    const timing = ' data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '"';
+    return '<g class="ld-surface" aria-hidden="true" pointer-events="none">' +
+      '<path class="ld-surface-edge"' + timing + ' d="' + arcD(r - width / 2 + .6, a0, a1) + '" stroke="url(#' + id + '-edge)"/>' +
+      '<path class="ld-surface-edge"' + timing + ' d="' + arcD(r + width / 2 - .6, a0, a1) + '" stroke="url(#' + id + '-edge)"/></g>';
+  }
+  /* The hand follows time, never a full backwards turn at midnight. Its SVG
+     attribute remains authoritative for redraws, exports and build animations. */
+  function updateDialHand(hand, angle) {
+    if (!hand) return;
+    const from = +((/rotate\(([-\d.]+)/.exec(hand.getAttribute('transform') || '') || [0, angle])[1]);
+    hand.setAttribute('transform', 'rotate(' + angle.toFixed(2) + ' 180 180)');
+    if (hand._ldMotion) { hand._ldMotion.cancel(); hand._ldMotion = null; }
+    const delta = ((angle - from + 540) % 360) - 180;
+    if (reduced() || document.hidden || !hand.animate || Math.abs(delta) > 3 || Math.abs(delta) < .001) return;
+    const rotation = a => 'translate(180px,180px) rotate(' + a + 'deg) translate(-180px,-180px)';
+    hand._ldMotion = hand.animate([{ transform: rotation(angle - delta) }, { transform: rotation(angle) }], { duration: 650, easing: 'cubic-bezier(.22,1,.36,1)' });
   }
   /* words written along an arc, turned so they never read upside down */
   let lblSeq = 0;
@@ -3105,6 +3141,7 @@ const LifeDirectorApp = (function () {
     return svg.indexOf('<svg') === 0 ? svg.replace('<svg class="px"', '<svg class="px ld-sico" x="' + (x - s / 2).toFixed(1) + '" y="' + (y - s / 2).toFixed(1) + '"') : '';
   }
   function dialHtml(day, blocks, isToday, now, plain) {
+    const paintId = 'ldf' + (++finishSeq);
     const d0 = day.startEpoch, d1 = day.endEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     let outer = '', words = '', inner = '', i = 0;
@@ -3118,11 +3155,11 @@ const LifeDirectorApp = (function () {
         [a0, a1] = gap(a0, a1, 1.4);
         const d = arcD(DIAL.RI, a0, a1);
         inner += '<g class="ld-meal ld-appt" data-act="anchor" data-k="work" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" role="button" tabindex="0" aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '"><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title>' +
-          '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ap" d="' + d + '" stroke-width="' + DIAL.WI + '"/></g>';
+          '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ap" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + surfaceArc(DIAL.RI, DIAL.WI, a0, a1, paintId, b) + '</g>';
       } else if (OUTER[k]) {
         [a0, a1] = gap(a0, a1, 0.9);
         const w = arcText(DIAL.RO, a0, a1, blockWords(b, d0, d1), 'ld-c-' + k);
-        outer += '<path class="ld-o ld-c-' + k + '" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '" data-act="anchor" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-k="' + k + '"' + (w ? ' data-lbl="1"' : '') + '><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title></path>';
+        outer += '<path class="ld-o ld-c-' + k + '" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '" data-act="anchor" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-k="' + k + '"' + (w ? ' data-lbl="1"' : '') + '><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title></path>' + surfaceArc(DIAL.RO, DIAL.WO, a0, a1, paintId, b);
         words += w;
       } else if (k === 'meal') {
         [a0, a1] = gap(a0, a1, 1.4);
@@ -3130,7 +3167,7 @@ const LifeDirectorApp = (function () {
         let ic = '';
         if (chord >= 9) { const sz = Math.min(12, Math.floor(chord - 1)), [x, y] = polar(DIAL.RI, (a0 + a1) / 2); ic = mealPx(sz, 'ld-sico').replace('<svg class="px ld-sico"', '<svg class="px ld-sico" x="' + (x - sz / 2).toFixed(1) + '" y="' + (y - sz / 2).toFixed(1) + '"'); }
         inner += '<g class="ld-meal"' + mealAnchor(b) + ' aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '">' +
-          '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ma" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + ic + '</g>';
+          '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ma" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + surfaceArc(DIAL.RI, DIAL.WI, a0, a1, paintId, b) + ic + '</g>';
       } else if (k === 'rest') {
         inner += '<path class="ld-rest" d="' + arcD(DIAL.RI, a0, a1) + '" stroke-width="5" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '"/>';
         if (b.endEpoch - b.startEpoch >= 3600) words += arcText(DIAL.RI + 9, a0, a1, ['Downtime · ' + mins(Math.round((b.endEpoch - b.startEpoch) / 60)), 'Downtime', 'Rest'], 'ld-at-in ld-c-rest');
@@ -3141,7 +3178,7 @@ const LifeDirectorApp = (function () {
         const st = sesState(b.inst.lifecycleState), fx = placeFx(b), nx = b.inst.instanceId === nextId;
         const d = arcD(DIAL.RI, a0, a1);
         inner += '<g class="ld-ses ld-s-' + st + (nx ? ' ld-next' : '') + (fx.cls ? ' ld-ses-fx' : '') + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-act="inst" data-id="' + esc(b.inst.instanceId) + '" style="--i:' + (i++) + '" role="button" tabindex="0" aria-label="' + esc((nx ? 'Next: ' : '') + b.inst.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '">' +
-          '<path class="ld-hit" d="' + d + '" stroke-width="40"/>' + (nx ? '<path class="ld-nx" d="' + d + '" stroke-width="' + (DIAL.WI + 8) + '"/>' : '') + '<path class="ld-sa" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + sesIcon(b, a0, a1, st) + '</g>';
+          '<path class="ld-hit" d="' + d + '" stroke-width="40"/>' + (nx ? '<path class="ld-nx" d="' + d + '" stroke-width="' + (DIAL.WI + 8) + '"/>' : '') + '<path class="ld-sa" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + (st === 'off' || st === 'part' ? '' : surfaceArc(DIAL.RI, DIAL.WI, a0, a1, paintId, b)) + sesIcon(b, a0, a1, st) + '</g>';
       }
     }
     let handles = '';
@@ -3165,8 +3202,7 @@ const LifeDirectorApp = (function () {
     const hand = live ? '<g class="ld-hand" transform="rotate(' + an.toFixed(2) + ' 180 180)"><line x1="180" y1="' + (180 - 84) + '" x2="180" y2="' + (180 - 156) + '"/><circle cx="180" cy="' + (180 - 156) + '" r="3.6"/></g>' : '';
     return '<div class="ld-dial' + (isToday ? '" data-today="1' : '') + '" data-d0="' + d0 + '" data-d1="' + d1 + '">' +
       '<svg viewBox="0 0 360 360" role="group" aria-label="24-hour plan for ' + esc(fDate(d0)) + '. Outer ring: your fixed time. Inner ring: planned sessions.">' +
-      '<defs><linearGradient id="ldFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1122"/><stop offset=".55" stop-color="#121826"/><stop offset="1" stop-color="#1b1b22"/></linearGradient></defs>' +
-      faceHtml() + '<g class="ld-outer">' + outer + '</g><g class="ld-words">' + words + '</g><g class="ld-inner">' + inner + '</g>' + past + (live ? '<g class="ld-cur">' + curRingHtml(nowState(now), now) + '</g>' : '') + '<path class="ld-drag-arc" d="" stroke-width="' + (DIAL.WO + 4) + '"/>' + hand + '<g class="ld-hds">' + handles + '</g></svg>' +
+      faceHtml(paintId) + '<g class="ld-outer">' + outer + '</g><g class="ld-words">' + words + '</g><g class="ld-inner">' + inner + '</g>' + past + (live ? '<g class="ld-cur">' + curRingHtml(nowState(now), now) + '</g>' : '') + '<path class="ld-drag-arc" d="" stroke-width="' + (DIAL.WO + 4) + '"/>' + hand + '<g class="ld-hds">' + handles + '</g></svg>' +
       '<div class="ld-core">' + coreHtml(day, blocks, isToday, now) + '</div></div>';
   }
   /* ── the build ──────────────────────────────────────────────────────────
@@ -3256,7 +3292,7 @@ const LifeDirectorApp = (function () {
       A(sweep, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: T, easing: 'linear' });
       A(sweep, [{ opacity: 0 }, { opacity: 1, offset: 0.06 }, { opacity: 1, offset: 0.9 }, { opacity: 0 }], { duration: T + 160, easing: 'linear' });
       /* the fixed time is drawn exactly as the arm passes it */
-      for (const p of svg.querySelectorAll('.ld-outer .ld-o')) {
+      for (const p of svg.querySelectorAll('.ld-outer .ld-o, .ld-outer .ld-surface-edge')) {
         const a0 = ang(+p.dataset.s), a1 = ang(+p.dataset.e);
         let len = 0; try { len = p.getTotalLength(); } catch (e) { len = 0; }
         if (!len) continue;
@@ -3336,6 +3372,12 @@ const LifeDirectorApp = (function () {
     css(wave, CEN);
     A(wave, [{ transform: 'scale(.45)', opacity: 0.85 }, { transform: 'scale(1.16)', opacity: 0 }], { duration: 760, delay: tC, easing: 'cubic-bezier(.1,.6,.3,1)', fill: 'none' });
     A(svg, [{ transform: 'scale(1)' }, { transform: 'scale(1.025)', offset: 0.3 }, { transform: 'scale(1)' }], { duration: 440, delay: tC, easing: 'ease-out', fill: 'none' });
+    /* A small stagger in the stationary surfaces makes the existing lock-in
+       read as assembled layers. Nothing rotates away from its time position. */
+    svg.querySelectorAll('.ld-depth-chapter, .ld-depth-hub').forEach((el, k) => {
+      css(el, CEN);
+      A(el, [{ transform: 'scale(.992)', opacity: .7 }, { transform: 'scale(1)', opacity: 1 }], { duration: 440, delay: tC + k * 65, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'none' });
+    });
     const hand = svg.querySelector('.ld-hand');
     if (full && hand) {
       const an = +((/rotate\(([-\d.]+)/.exec(hand.getAttribute('transform') || '') || [0, 0])[1]);
@@ -4182,7 +4224,7 @@ const LifeDirectorApp = (function () {
     const d0 = +dial.dataset.d0, d1 = +dial.dataset.d1;
     const sheetOpen = !root.querySelector('.ld-sheet').hidden;
     if (now >= d1) { if (!sheetOpen) { tick(); render(); } return; }
-    const hand = dial.querySelector('.ld-hand'); if (hand) hand.setAttribute('transform', 'rotate(' + angOf(now, d0, d1).toFixed(2) + ' 180 180)');
+    updateDialHand(dial.querySelector('.ld-hand'), angOf(now, d0, d1));
     /* a block started or ended: redraw so "now" and the running order move on */
     const stale = ui.boundary && now >= ui.boundary;
     if (stale && !sheetOpen) { render(); return; }

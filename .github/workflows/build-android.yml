@@ -31,6 +31,7 @@ jobs:
         run: |
           mkdir -p android-wrapper/www
           node lifemax_modular_v73/tests/director-meals.test.js
+          node lifemax_modular_v73/tests/director-finish.test.js
           python3 lifemax_modular_v73/build.py
           python3 lifemax_modular_v73/forge_features.py lifemax_modular_v73/dist/Life_Max_RPG_v73_modular_build.html android-wrapper/www/index.html
 

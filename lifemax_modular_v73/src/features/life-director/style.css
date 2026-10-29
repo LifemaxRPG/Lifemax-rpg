@@ -133,7 +133,6 @@ html body .ld-root.ld-root select.ld-sel{width:auto;min-height:36px;padding:6px 
 .ld-dial>svg,.ld-mini>svg,.ld-first-dial>svg{display:block;width:100%;height:100%;overflow:visible}
 .ld-bezel{fill:#0b0e15;stroke:rgba(255,255,255,.07);stroke-width:1}
 .ld-face{fill:#0f1420}
-.ld-dial .ld-face{fill:url(#ldFace)}
 .ld-tk{stroke:rgba(255,255,255,.1);stroke-width:1}
 .ld-tkh{stroke:rgba(255,255,255,.26);stroke-width:1.4}
 .ld-tk6{stroke:rgba(255,255,255,.5);stroke-width:2}
@@ -709,3 +708,24 @@ html body .ld-root.ld-root textarea.ld-ta{min-height:160px;font:12px/1.5 var(--l
 @media(prefers-reduced-motion:reduce){.ld-sheet-panel:has(.ld-meal-preview){transition:none}}
 
 .ld-sheet.open .ld-sheet-panel:has(.ld-meal-preview) .ld-sheet-body>.ld-meal-preview{animation:none}
+
+
+/* Chrono finish: the existing face, assembled into quiet, tactile layers.
+   Gradients live inside each SVG so the Overview and widget paint independently. */
+.ld-depth,.ld-surface{pointer-events:none}
+.ld-depth circle,.ld-surface path{pointer-events:none}
+.ld-depth-chapter{fill:none;stroke:#10192a}
+.ld-depth-channel{fill:none;stroke:#050a13;stroke-opacity:.64}
+.ld-depth-edge{fill:none;stroke-width:1}
+.ld-depth-divider{fill:none;stroke:#acbdde;stroke-opacity:.045;stroke-width:1}
+.ld-depth-lip{fill:none;stroke:#b2c9ee;stroke-opacity:.035;stroke-width:1}
+.ld-surface-edge{fill:none;stroke-width:1;stroke-linecap:butt}
+.ld-s-done .ld-surface{opacity:.45}
+.ld-bezel{stroke:#b9cbe2;stroke-opacity:.12}
+.ld-trk{stroke:rgba(255,255,255,.025)}
+.ld-trk-in{stroke:rgba(59,130,246,.065)}
+.ld-hd-ring{filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.7))}
+.ld-hd-pip{filter:drop-shadow(0 -1px 1px rgba(255,255,255,.12))}
+.ld-hand{transform-box:view-box;transform-origin:0 0}
+.ld-core-in .ld-core-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.25)}
+.ld-core-in .ld-core-btn:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.24)}
