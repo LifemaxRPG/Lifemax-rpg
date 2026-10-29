@@ -2,6 +2,9 @@ package com.lifemax.rpg.feature.character.presentation.components
 
 import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,6 +62,10 @@ internal fun CharacterAvatar(p: CharacterProjection, modifier: Modifier, initial
 
 @Composable
 internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String) -> Unit) {
+    val ringProgress = remember(p.session) { Animatable(0f) }
+    LaunchedEffect(p.pct) {
+        ringProgress.animateTo(p.pct.coerceIn(0f, 100f), tween(1600, easing = FastOutSlowInEasing))
+    }
     val panel = p.tokenColor("panel")
     val accent = p.tokenColor("accent")
     CharacterCard(padding = PaddingValues(0.dp)) {
@@ -94,7 +101,7 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                         drawArc(
                             Brush.linearGradient(listOf(Color(0xff7ab0ff), Color(0xffc58bff))),
                             -90f,
-                            360f * (p.pct / 100).coerceIn(0f, 1f),
+                            360f * (ringProgress.value / 100).coerceIn(0f, 1f),
                             false,
                             topLeft = Offset(inset, inset),
                             size = Size(size.width - inset * 2, size.height - inset * 2),
