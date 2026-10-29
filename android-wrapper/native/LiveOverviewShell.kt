@@ -111,6 +111,11 @@ internal class LiveOverviewShell(
         }
     }
 
+    fun contentInsetsDp(): Pair<Float, Float> {
+        val density = web.resources.displayMetrics.density
+        return Pair(header.layoutParams.height / density, nav.layoutParams.height / density)
+    }
+
     fun close() {
         if (!chromeOnly && web.viewTreeObserver.isAlive)
             web.viewTreeObserver.removeOnScrollChangedListener(scroll)
