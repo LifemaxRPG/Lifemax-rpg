@@ -28,7 +28,9 @@ internal class LiveOverviewShell(
     private val frame =
         FrameLayout(activity).apply {
             tag = if (chromeOnly) "native-shared-chrome" else "overview-live-shell"
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            importantForAccessibility =
+                if (chromeOnly) View.IMPORTANT_FOR_ACCESSIBILITY_YES
+                else View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         }
     private val header = OverviewSurface(activity) { id, _ -> activate(id) }
     private val bar = OverviewSurface(activity) { id, _ -> activate(id) }
