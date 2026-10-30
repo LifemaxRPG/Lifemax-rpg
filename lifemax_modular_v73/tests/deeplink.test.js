@@ -12,7 +12,7 @@ if (!file) {
   execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), file], { cwd: root, stdio: 'ignore' });
 }
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
-const BAD = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]/;
+const BAD = /[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2066-\u2069\ufeff]/;
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await (await b.newContext({ viewport: { width: 393, height: 844 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.addInitScript("if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true}));");
@@ -34,6 +34,8 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\
   /* hostile text: control, zero-width and direction-override characters go, length is capped at 120 characters */
   const h = await P('lifemax://schedule/add?title=Den%00tist%0A%0D%1B%5B31m%E2%80%AEexe.txt%E2%80%8B%C2%85%7F&description=' + encodeURIComponent('a\u2066b\u2028c\ufeffd'));
   ok('control and direction-override characters are stripped', !BAD.test(h.title) && !BAD.test(h.description) && h.title === 'Den tist [31m exe.txt' && h.description === 'a b c d', h);
+  const joined = '\u{1F469}\u200d\u{1F4BB} Code review \u0645\u06cc\u200c\u062e\u0648\u0627\u0647\u0645';
+  ok('joiners stay, so emoji and scripts that need them are unchanged', (await P('lifemax://schedule/add?title=' + encodeURIComponent(joined))).title === joined);
   const long = await P('lifemax://schedule/add?title=' + 'a'.repeat(500) + '&description=' + 'b'.repeat(500));
   ok('title and description are capped at 120 characters', long.title.length === 120 && long.description.length === 120, [long.title.length, long.description.length]);
   const emo = await P('lifemax://schedule/add?title=' + encodeURIComponent('\u{1F63A}'.repeat(200)));
@@ -50,14 +52,16 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\
   await p.evaluate(() => { petDevPair('adopt') }); await p.waitForFunction(() => petPairOn(), null, { timeout: 15000 }); await p.waitForTimeout(500);
   await p.evaluate(() => { state.pet.lastFed = Date.now() - 6 * 3600e3; state.pet2.lastFed = Date.now() - 6 * 3600e3; state.pet.fedToday = 0; state.pet2.fedToday = 0; save(); navigate('dashboard') });
   await p.evaluate(() => { window.__t = []; const o = window.toast; window.toast = m => { __t.push(m); try { o(m) } catch (e) {} } });
-  /* a link never feeds by itself: it opens the cat room and asks */
-  const saved0 = await p.evaluate(() => localStorage.getItem(STORE));
+  /* a link never feeds by itself: it opens the cat room and asks. The room saves on its own while it is open, so compare
+     what feeding changes, in memory and in the save, not the whole save. */
+  await p.evaluate(() => { window.__meals = () => { const s = JSON.parse(localStorage.getItem(STORE)); return JSON.stringify([state.pet, state.pet2, s.pet, s.pet2].map(c => [c.lastFed, c.fedToday, c.meals.length, c.bondPts])) } });
+  const meals0 = await p.evaluate(() => __meals());
   await p.evaluate(() => { LifeMaxDeepLink.handle('lifemax://cats/feed?a=1') }); await p.waitForTimeout(300);
-  const ask = await p.evaluate(() => ({ dlg: !!document.querySelector('.lmdl-ask'), txt: (document.querySelector('.lmdl-ask') || {}).textContent || '', view: lmaView(), same: localStorage.getItem(STORE), a: Date.now() - state.pet.lastFed > 3600e3, b: Date.now() - state.pet2.lastFed > 3600e3 }));
+  const ask = await p.evaluate(() => ({ dlg: !!document.querySelector('.lmdl-ask'), txt: (document.querySelector('.lmdl-ask') || {}).textContent || '', view: lmaView(), meals: __meals() }));
   ok('the feed link opens the cat room and asks, naming both cats', ask.dlg && ask.view === 'pet' && /Feed .* and .*\?/.test(ask.txt), ask);
-  ok('nothing is fed or saved before the answer', ask.same === saved0 && ask.a && ask.b);
+  ok('nothing is fed or saved before the answer', ask.meals === meals0, [meals0, ask.meals]);
   await p.evaluate(() => document.querySelector('.lmdl-ask [data-dl="no"]').click());
-  ok('"Not now" closes it and changes nothing', await p.evaluate(s0 => !document.querySelector('.lmdl-ask') && localStorage.getItem(STORE) === s0 && Date.now() - state.pet.lastFed > 3600e3, saved0));
+  ok('"Not now" closes it and changes nothing', await p.evaluate(m0 => !document.querySelector('.lmdl-ask') && __meals() === m0, meals0));
   await p.evaluate(() => { LifeMaxDeepLink.handle('lifemax://cats/feed?a=2') }); await p.waitForTimeout(200);
   ok('Back closes the question without feeding', await p.evaluate(() => { const had = !!document.querySelector('.lmdl-ask'); lmaBack(); return had && !document.querySelector('.lmdl-ask') && Date.now() - state.pet.lastFed > 3600e3 }));
   await p.evaluate(() => { LifeMaxDeepLink.handle('lifemax://cats/feed?a=3') }); await p.waitForTimeout(200);
@@ -69,6 +73,9 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\
   await p.evaluate(() => { __t = []; LifeMaxDeepLink.handle('lifemax://cats/feed?a=4') }); await p.waitForTimeout(200);
   ok('feeding again just says the cats are not hungry', await p.evaluate(() => /not hungry/.test(__t.join('|')) && !document.querySelector('.lmdl-ask')), await p.evaluate(() => __t));
   ok('open?feature=feed the cats asks too', await p.evaluate(() => { state.pet.lastFed = Date.now() - 6 * 3600e3; LifeMaxDeepLink.handle('lifemax://open?feature=feed%20the%20cats'); const o = !!document.querySelector('.lmdl-ask'); lmaBack(); return o && Date.now() - state.pet.lastFed > 3600e3 }));
+  ok('the question is not hidden under the full-screen cat room', await p.evaluate(() => { petRoomFullscreenOpen(); LifeMaxDeepLink.handle('lifemax://cats/feed?a=5'); const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2); const o = !!(top && top.closest('.lmdl-ask')); lmaBack(); return o && !document.querySelector('.lmdl-ask') && Date.now() - state.pet.lastFed > 3600e3 }));
+  /* asked in the app (Gemini), feeding needs no question: "open the feeding screen" feeds like feed_cats */
+  ok('Gemini opening the feed screen feeds at once, without the link question', await p.evaluate(() => { lmgRun({ name: 'open_screen', args: { screen: 'feed the cats' } }, () => {}, {}); return !document.querySelector('.lmdl-ask') && Date.now() - state.pet.lastFed < 5000 }));
 
   /* schedule hand-off: a new Life Director entry only, stopped at the preview, and never the general voice pipeline */
   await p.evaluate(() => { window.__u = []; const o = lmvHandle; lmvHandle = (t, x) => { __u.push(t); return o(t, x) }; window.__c = 0; const c = lmvLD.create; lmvLD.create = function () { __c++; return c.apply(this, arguments) }; window.__r = 0; const r = lmDlRun; lmDlRun = function (l) { __r++; return r(l) } });
@@ -102,21 +109,29 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069\
   await p.evaluate(() => LifeMaxVoice.cancel());
   ok('open?feature=quests navigates', await p.evaluate(() => { LifeMaxDeepLink.handle('lifemax://open?feature=quests'); return true }) && errs.length === 0, errs);
   await p.context().close();
-  /* NAV-4: the launch URL comes back on every page load (getLaunchUrl); after a reload in the same session it is not run
-     again. A fresh page without cats, because a save with two cats takes about 30 s to start in software rendering. */
+  /* NAV-4: the page asks for the launch URL on every load (App.getLaunchUrl, faked here; the URL can be changed through
+     sessionStorage test_launch). After a reload in the same session, as after an over-the-air restart, it is not run again.
+     A fresh page without cats, because a save with two cats takes about 30 s to start in software rendering. */
+  const L = 'lifemax://schedule/add?title=Launch%20link';
   const p2 = await (await b.newContext({ viewport: { width: 393, height: 844 } })).newPage(); p2.on('pageerror', e => errs.push(String(e)));
   await p2.addInitScript("if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true}));");
-  await p2.goto('file://' + file); await p2.waitForTimeout(2500);
-  const L = 'lifemax://schedule/add?title=Launch%20link';
-  const spy = () => { window.__r = 0; const r = lmDlRun; lmDlRun = function (l) { __r++; return r(l) } };
-  await p2.evaluate(spy);
-  await p2.evaluate(L => { LifeMaxDeepLink.handle(L, true) }, L);
-  ok('a launch link runs the first time', await p2.evaluate(() => __r === 1));
-  await p2.reload(); await p2.waitForTimeout(2500);
-  await p2.evaluate(spy);
-  const rel = await p2.evaluate(L => { LifeMaxDeepLink.handle(L, true); LifeMaxDeepLink.handle('lifemax://cats?fresh=1', true); return __r }, L);
-  ok('after a reload the same launch link is skipped, a new one still runs', rel === 1, rel);
-  ok('a link from another app (appUrlOpen) is never skipped by that', await p2.evaluate(L => { __r = 0; LifeMaxDeepLink.handle(L); return __r === 1 }, L));
+  await p2.addInitScript(L => {
+    window.__asked = 0;
+    window.Capacitor = { isNativePlatform: () => false, Plugins: { App: {
+      addListener: (name, fn) => { if (name === 'appUrlOpen') window.__urlOpen = fn },
+      getLaunchUrl: () => { __asked++; return Promise.resolve({ url: sessionStorage.getItem('test_launch') || L }) } } } };
+  }, L);
+  const launched = async () => { await p2.waitForFunction(() => LM_DL.ready); return p2.evaluate(() => ({ asked: __asked, ran: /Launch link/.test(JSON.stringify(LifeMaxVoice.snapshot())) })) };
+  await p2.goto('file://' + file);
+  const first = await launched();
+  ok('a launch link runs once the page is ready', first.asked === 1 && first.ran, first);
+  await p2.reload();
+  const again = await launched();
+  ok('after a reload the page asks again but does not run the same launch link', again.asked === 1 && !again.ran, again);
+  ok('a link from another app (appUrlOpen) is never skipped by that', await p2.evaluate(L => { __urlOpen({ url: L }); return /Launch link/.test(JSON.stringify(LifeMaxVoice.snapshot())) }, L));
+  await p2.evaluate(() => { LifeMaxVoice.cancel(); sessionStorage.setItem('test_launch', 'lifemax://open?feature=quests') });
+  await p2.reload();
+  ok('a new launch link after a reload still runs', await p2.waitForFunction(() => lmaView() === 'quests', null, { timeout: 8000 }).then(() => true, () => false));
   ok('no script errors', errs.length === 0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail ? 1 : 0);
 })();

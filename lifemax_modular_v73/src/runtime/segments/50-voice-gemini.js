@@ -45,8 +45,9 @@ function lmgUtterance(c){
 }
 function lmgRun(c,prev,meta){
  if(!c||!c.name)return false;
- if(c.name==='feed_cats'){lmvGo({id:'pet'});lmDlFeedNow();lmvFrame=null;try{lmvRender()}catch(e){}return true}   /* the owner asked in the app: feed, as before (a link asks first) */
- if(c.name==='open_screen'){var k=lmDlFeature((c.args&&c.args.screen)||'');if(!k)return false;lmDlRun({kind:k});try{lmvHudOpen(false)}catch(e){}return true}
+ var k=c.name==='open_screen'?lmDlFeature((c.args&&c.args.screen)||''):'';
+ if(c.name==='feed_cats'||k==='feed'){lmvGo({id:'pet'});lmDlFeedNow();lmvFrame=null;try{lmvRender()}catch(e){}return true}   /* the owner asked in the app: feed, as before (a link asks first) */
+ if(c.name==='open_screen'){if(!k)return false;lmDlRun({kind:k});try{lmvHudOpen(false)}catch(e){}return true}
  var u=lmgUtterance(c);if(!u)return false;
  var m2=Object.assign({},meta);delete m2.utteranceId;
  prev(u,m2);try{lmvRender()}catch(e){}return true;
