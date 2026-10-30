@@ -1,6 +1,6 @@
 # Contract revision 2: proposed amendments
 
-Status: proposal for review by the owner, ChatGPT and Gemini. `CONTRACT.md` is unchanged. Nothing here is binding until it is folded in.
+Status: folded into `CONTRACT.md` as Revision 2 on 2026-10-30 at the owner's direction. This file is kept as the rationale and evidence record; where the two differ, `CONTRACT.md` governs.
 Author: Claude (written against the repository at Native API 17, 2026-10-30).
 
 This document does three things. It says what in Revision 1 should stay exactly as it is. It lists gaps that cost us real bugs this week, with evidence. It then proposes numbered amendments (A22 onward, plus edits to A04, A16, A17 and A21) that close those gaps. Every claim about the repository is marked **verified** (I ran or read it) or **proposal**.

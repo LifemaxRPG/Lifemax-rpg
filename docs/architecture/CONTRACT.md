@@ -1,6 +1,8 @@
 # LifeMax native migration architecture contract
 
-Revision 1 — final planning baseline, 2026-10-29
+Revision 2 — 2026-10-30 (Revision 1, the final planning baseline of 2026-10-29, is kept; changes are listed below)
+
+Revision 2 changes: A04, A16, A17 and A21 gain enforceable detail; A22 to A30 are new (shell, hand-over, hidden screens, performance budgets, quality gates, documentation checks, simulation tier, observability, navigation bus). Each new article says whether it is **Implemented** (and where), **Required for new work**, or **Planned**. Rationale and evidence for every change are in `CONTRACT_REVISION_2_PROPOSAL.md`; the hand-over decision is ADR 0002.
 
 This contract governs new and migrated code. It is based on the reviewed build 172 snapshot, commit `bcb3daee08adf291c73bddd6ed49ff293d13b048`. It does not assert that the proposed architecture or protocol already exists. Before implementation, compare the current branch against that baseline. Existing exceptions are recorded below, not silently declared compliant.
 
@@ -26,6 +28,8 @@ Shadow verification is a non-authoritative activity, not a third writer. A Compo
 **A03.** New canonical authored Kotlin/Java lives under `android-wrapper/native/src/main/java/com/lifemax/rpg/`. Register this directly in the generated app's Gradle source sets through `patch_project.py`. Register `native/src/test/java` likewise. Keep legacy flat source copying temporarily; never compile a class through both paths. Verify paths relative to the generated app directory, inclusion exactly once, rename/removal behavior and JVM test discovery. Generated Android projects and web dist output are not authored source.
 
 **A04.** New primary native tabs use one MainActivity destination host and navigation coordinator. Separate activities are exceptions requiring a documented platform/lifecycle reason, not the default per tab. Existing CashActivity is a temporary legacy exception and does not block Character. Do not change it merely to make the directory tree look uniform.
+
+The destination host is a state machine with named states (`Idle`, `Opening(target)`, `Showing(target)`, `Closing(previous)`), not a set of independent open and close calls. The one-host rule covers the tab shell and the tab bodies together.
 
 Proposed layout:
 
@@ -114,11 +118,13 @@ Distinguish failure BEFORE commit from an exception AFTER commit. Once storage s
 
 ## 7. Lifecycle, navigation and performance
 
-**A16.** One coordinator owns primary-destination selection and Back behavior, including existing navigate/lmaNavTo entry points. A native route must not create a competing history or leave hybrid controls above the wrong content. Remove temporary views/listeners on exit and restore the original screen on safe fallback. New tab navigation must avoid unnecessary activity/window transitions.
+**A16.** One coordinator owns primary-destination selection and Back behavior, including existing navigate/lmaNavTo entry points. "One coordinator" is testable, not aspirational: the rules in A23 and A30 define it, and a navigation change without the A28 simulation test does not meet it. A native route must not create a competing history or leave hybrid controls above the wrong content. Remove temporary views/listeners on exit and restore the original screen on safe fallback. New tab navigation must avoid unnecessary activity/window transitions.
 
 Web-owned reads/commands cannot depend on requestAnimationFrame, a visible DOM tab or an animation loop. Keep the required host reachable without keeping hidden pet/gym graphics rendering continuously. Do not globally pause WebView timers needed by the authority. Any render-pause hook is proposed work, not an existing verified API. Test readiness, native-covering-web, background/resume, host recreation and process recovery; JavaScript evaluation is asynchronous and is not guaranteed to finish in a fixed number of milliseconds.
 
 **A17.** Preserve the existing visual language using verified light/dark/user-accent tokens, fonts, spacing, shapes, chart geometry and motion. Do not substitute an illustrative neon palette. Support accessibility, content descriptions, font scaling, reduced motion and insets. Do not use whole-page software snapshots as a substitute for native live UI. Small custom native charts/Canvas components remain legitimate where measured and accessible.
+
+The shipped artifact is the measured artifact: CI publishes a non-debuggable build (**Implemented**, `patch_gradle.py`), and acceptance numbers come from that build. Budgets and the measuring instrument are in A25.
 
 UI tickers redraw from authoritative values/deadlines; they do not award progress once per tick. Native simulations need explicit elapsed-time and background-execution semantics. Do not assume an always-running service is necessary.
 
@@ -138,8 +144,47 @@ A Classic UI toggle is safe only while that presentation uses the correct owner.
 
 ## 9. Verification, exceptions and completion
 
-**A21.** CI checks formatting/static rules, build/source inclusion, test discovery, concrete protocol schemas, relevant domain behavior, preferences and lifecycle integration. New mutation tests cover duplicates, evicted/stale retries, lost ACKs, payload conflicts, failed storage, post-commit errors, restore races and restart reconciliation. Existing legacy code is not declared fixed by these new tests; scope evidence honestly.
+**A21.** CI checks formatting/static rules, build/source inclusion, test discovery, concrete protocol schemas, relevant domain behavior, preferences and lifecycle integration. New mutation tests cover duplicates, evicted/stale retries, lost ACKs, payload conflicts, failed storage, post-commit errors, restore races and restart reconciliation. Existing legacy code is not declared fixed by these new tests; scope evidence honestly. Navigation, hand-over and stale-reply ordering are also covered by the simulation tier in A28.
 
 Record boundary-changing decisions in short ADRs. Each migrated feature records ownership, actual writers, compatibility/fallback limits, remaining web dependencies and acceptance evidence. Legacy Cash activity/command handling and the retired Overview activity are explicit existing exceptions; audit them before reuse and track retirement without blocking an unrelated read-only UI slice.
 
 The final app has no required DOM-rendered destinations, web-only interaction sheets, JS-owned business rules, web persistence authority, gameplay bridge or web OTA bootstrap dependency. Native integrations, backups/import/export, migration recovery, accessibility and physical-device acceptance are complete. Java is still native; language conversion, a particular database or making every plugin a singleton is not an exit criterion.
+
+## 10. Shell, hand-over, hidden screens, performance and quality (Revision 2)
+
+**A22. The shell is native state, not a captured drawing.** *Planned; the DOM capture is a recorded exception until then.*
+The web layer publishes a small semantic `ShellState` (proposal for its shape: `sequence`, `tabs[{id, label, iconRef}]`, `activeTab`, `theme` tokens, `topbar` title and actions). Native draws the bars from it. The active tab is data, so a tab change needs no DOM capture and cannot show a stale highlight. Until all native tabs read `ShellState`, `NativeOverviewSnapshot.capture()` is an existing exception with this retirement condition. While it stands: capture only after `lmaSyncActive()`, with transitions disabled, key any cache on the lit tab, and re-publish a settled scene after a screen opens (**Implemented**, `50-native-overview.js`).
+
+**A23. Make-before-break hand-over between native destinations.** *Implemented* (`NativeTabs` in `50-native-overview.js`, `ChromeHost` in `ChromeHost.kt`; ADR 0002).
+1. The destination opens first. The previous destination closes only after the new one has opened or failed. A last-resort timeout (2.5 s) is a recorded fault, not normal flow.
+2. A web destination closes the previous native one at once.
+3. Every scene or state message carries the page's monotonic sequence; a receiver ignores a message older than the one it holds.
+4. Shared UI (the bars) has an owner token; only the current owner may release it; a stale owner's release is a no-op.
+5. At most one set of bars is visible.
+6. Every close path (navigation, observers, refresh handlers, errors) goes through the same hand-over. A direct close that bypasses it is a defect.
+
+**A24. Hidden-but-alive screens.** *Required for new work; Character and Food comply except where noted in the ledger.*
+A screen may stay composed while hidden only if: it has explicit `show(data)` and `hide()`; a hidden screen receives no updates and no focus; it registers no back, key or lifecycle handler that is active while hidden (the visible flag is passed in); it runs no continuous animation or timer while hidden; it is brought to the front when shown; and its memory cost is recorded in its catalog entry (not yet measured for either screen).
+
+**A25. Performance budgets and how they are measured.** *Budgets proposed, to be confirmed.*
+Starting budgets, to be confirmed on the owner's phone and not asserted until then: a warm tab switch reaches a drawn frame in at most 100 ms at the 95th percentile; a cold first open in at most 300 ms. Measurement is taken on the Android side from the touch event to the second drawn frame, on a physical device, in the shipped build (**Implemented**: `TabTiming`, shown by Settings, Appearance, "Show tab timing"). Emulator figures are trend evidence only and are never an acceptance result; the emulator step runs after publishing and cannot block a release.
+
+**A26. Code-quality gates for everything, with a ratchet for the legacy.** *Required for new work; legacy ratchets Planned.*
+- Kotlin: ktfmt covers `native/src` today. A legacy flat file may not be edited without being moved into the canonical tree, split by feature and formatted in the same change, unless it is listed in `legacy-exceptions.txt` with a reason.
+- JavaScript: authored segments get Prettier and ESLint configuration; new or edited segments must pass; no new line over 160 characters; `legacy-js-exceptions.txt` lists existing offenders and may only shrink.
+- Ratchet: CI fails if the count of over-long lines or the length of a listed legacy file grows.
+- A file over 600 lines is split by feature before it grows further. `NativeNutritionPlugin.kt` (1,903 lines at Revision 2) is the first case: screen composables, snapshot decoding and the Capacitor plugin are three files.
+- The name of a type says what it owns; no Utils, Helpers or Manager files (A09).
+
+**A27. Documentation is verified, not remembered.** *Planned.*
+Every registered native plugin has a bridge-catalog entry, and a CI test fails when one lacks it (at Revision 2 only Character has one). The ledger in `MIGRATION.md` is updated in the same change that alters a screen's presentation or authority. Each boundary-changing decision gets an ADR in the same change.
+
+**A28. Simulation tier.** *Implemented for tab hand-over* (`lifemax_modular_v73/tests/native-handover.test.js`).
+Hand-over, stale-reply ordering and rapid switching are tested without Android by running the real web layer against fake native plugins with random delays. Required for any change to navigation or hand-over. The test must be shown to fail on the logic it replaces. Playwright is not part of the CI node tests today; wiring it in is part of A27's follow-up.
+
+**A29. Observability.** *Partly implemented (`TabTiming`); the trace is Planned.*
+A bounded in-memory trace of tab events with timestamps (tap, open call received, shown, closed, timeouts, rejected stale scenes), readable from Settings in developer mode and attachable to bug reports. Transition bugs are diagnosed from the trace, not from screenshots alone.
+
+**A30. One navigation bus.** *Planned.*
+The web layer gets a single `LifeMaxNav` with `before(view)` and `after(view)` listeners in place of every segment reassigning `navigate`. At Revision 2, 18 runtime segments wrap `navigate()` and ordering is load order. Native tab modules register listeners; the hand-over of A23 then lives in one place.
+
