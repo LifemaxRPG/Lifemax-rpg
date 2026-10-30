@@ -55,15 +55,15 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.failure = r.ok === false && /Could not save/.test(r.message);
     out.saveReturns = (save() === true);
     // an unreadable save is copied aside under its own key before a blank profile is written over it
-    const copies = () => Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).sort().map(k => localStorage.getItem(k));
-    Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).forEach(k => localStorage.removeItem(k));
+    const unreadable = () => Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).sort(), copies = () => unreadable().map(k => localStorage.getItem(k));
+    unreadable().forEach(k => localStorage.removeItem(k));
     localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
     load(); out.stashed = copies()[0] === '{"name":"Real hero","activities":[';
     out.blankStarted = state.name !== 'Real hero';
-    await new Promise(r => setTimeout(r, 5));
+    await new Promise(r => setTimeout(r, 5)); // the next copy's key is a later time
     localStorage.setItem(STORE, '{"still":"broken'); load();
     out.firstCopyKept = JSON.stringify(copies()) === JSON.stringify(['{"name":"Real hero","activities":[', '{"still":"broken']);
-    Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).forEach(k => localStorage.removeItem(k));
+    unreadable().forEach(k => localStorage.removeItem(k));
     return out;
   });
   ok('the same operation id pays out once; a different one is a new entry; no id behaves as before', safety.once && safety.differentOpAdds && safety.noOpIdUnchanged, safety);
