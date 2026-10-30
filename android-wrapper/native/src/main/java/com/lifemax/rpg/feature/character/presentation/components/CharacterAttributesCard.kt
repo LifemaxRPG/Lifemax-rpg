@@ -18,6 +18,11 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
+import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.barFade
+import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.character.domain.*
 import com.lifemax.rpg.feature.character.presentation.CharacterSelection
 import kotlin.math.*
@@ -29,7 +34,7 @@ internal fun CharacterAttributesCard(
     onSort: (String) -> Unit,
     onAction: (String, String) -> Unit,
 ) {
-    CharacterCard {
+    SurfaceCard {
         Text("Eight core attributes", fontSize = 17.sp, fontWeight = FontWeight.Bold)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             items(
@@ -60,10 +65,10 @@ internal fun CharacterAttributesCard(
                     Column(
                         Modifier.weight(1f)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(p.tokenColor("panel2"))
+                            .background(tokenColor(p.tokens, "panel2"))
                             .border(
                                 1.dp,
-                                p.tokenColor("line").copy(alpha = .5f),
+                                MaterialTheme.colorScheme.outline.copy(alpha = .5f),
                                 RoundedCornerShape(14.dp),
                             )
                             .drawBehind {
@@ -79,7 +84,7 @@ internal fun CharacterAttributesCard(
                             Modifier.fillMaxWidth().padding(bottom = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            CharacterPixelIcon(
+                            PixelIcon(
                                 attributeIcon(a.id),
                                 Color(a.color.toInt()),
                                 Modifier.size(20.dp),
@@ -98,7 +103,11 @@ internal fun CharacterAttributesCard(
                             fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 1.dp),
                         )
-                        CharacterProgress(a.pct, Color(a.color.toInt()))
+                        ProgressBar(
+                            a.pct / 100,
+                            barFade(Color(a.color.toInt())),
+                            Modifier.padding(top = 8.dp),
+                        )
                         Row(
                             Modifier.fillMaxWidth().padding(top = 7.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,19 +115,20 @@ internal fun CharacterAttributesCard(
                             Text(
                                 "${a.into.toLong()} / ${a.needed.toLong()}",
                                 fontSize = 10.sp,
-                                color = p.tokenColor("muted"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
                                 if (a.week > 0) "+${a.week.toLong()} wk" else "—",
                                 fontSize = 10.sp,
                                 color =
-                                    if (a.week > 0) p.tokenColor("good") else p.tokenColor("muted"),
+                                    if (a.week > 0) tokenColor(p.tokens, "good")
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Text(
                             a.status,
                             fontSize = 10.sp,
-                            color = p.tokenColor("muted"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 7.dp),
                         )
                     }
@@ -128,8 +138,21 @@ internal fun CharacterAttributesCard(
         Text(
             "★ marks your class focus. Customize how you earn XP in Settings.",
             fontSize = 11.sp,
-            color = p.tokenColor("muted"),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 12.dp),
         )
     }
 }
+
+/** The web's pixel icon for each attribute; the page projects only its colour. */
+internal fun attributeIcon(id: String) =
+    when (id) {
+        "physique" -> "dumbbell"
+        "endurance" -> "heart"
+        "intelligence" -> "book"
+        "business" -> "briefcase"
+        "social" -> "chat"
+        "discipline" -> "target"
+        "adventure" -> "mountain"
+        else -> "moon"
+    }

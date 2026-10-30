@@ -42,6 +42,9 @@ private val pixelMasks =
         "meal" to intArrayOf(0xA6, 0xA6, 0xE6, 0x46, 0x44, 0x44, 0x44, 0x44),
     )
 
+/** Every name [PixelIcon] draws. */
+val pixelIconNames: Set<String> = pixelMasks.keys
+
 /** A web design-system pixel icon by name; an unknown name draws the star. */
 @Composable
 fun PixelIcon(name: String, color: Color, modifier: Modifier = Modifier) {

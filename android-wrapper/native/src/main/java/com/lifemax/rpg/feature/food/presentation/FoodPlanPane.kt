@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -18,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -81,23 +81,13 @@ internal fun ColumnScope.FoodPlanPane(c: FoodContext) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Progress Track
-                val pct = (planEaten.toFloat() / max(1, planTarget)).coerceIn(0f, 1f)
-                Box(
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .height(6.dp)
-                            .clip(CircleShape)
-                            .background(trackColor)
-                ) {
-                    Box(
-                        modifier =
-                            Modifier.fillMaxHeight()
-                                .fillMaxWidth(pct)
-                                .clip(CircleShape)
-                                .background(Brush.horizontalGradient(listOf(BlueAccent, FatTeal)))
-                    )
-                }
+                ProgressBar(
+                    planEaten.toFloat() / max(1, planTarget),
+                    Brush.horizontalGradient(listOf(BlueAccent, FatTeal)),
+                    height = 6.dp,
+                    track = trackColor,
+                    outline = Color.Transparent,
+                )
 
                 Spacer(modifier = Modifier.height(10.dp))
 

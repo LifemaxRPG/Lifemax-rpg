@@ -55,9 +55,9 @@ fun CharacterScreen(
             ?: p.attributes.firstOrNull { it.focus }
             ?: p.attributes.first()
     LifeMaxTheme(p.tokens, p.light) {
-        Column(Modifier.fillMaxSize().background(p.tokenColor("bg"))) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Spacer(Modifier.height(topInsetDp.dp))
-            HorizontalDivider(color = p.tokenColor("line"))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             LazyColumn(
                 Modifier.weight(1f),
                 contentPadding = PaddingValues(12.dp),
@@ -69,7 +69,7 @@ fun CharacterScreen(
                 item { CharacterSkillsCard(p, ui, onSkills) }
                 item { CharacterBenchmarksCard(p, onAction) }
             }
-            HorizontalDivider(color = p.tokenColor("line"))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             Spacer(Modifier.height(bottomInsetDp.dp))
         }
     }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -13,9 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
 
 @Composable
 internal fun GlowingDot(color: Color) {
@@ -37,8 +38,6 @@ internal fun MacroTileCard(
     modifier: Modifier = Modifier,
 ) {
     val left = goal - current
-    val pct = if (goal > 0) (current.toFloat() / goal).coerceIn(0f, 1f) else 0f
-
     Column(
         modifier =
             modifier
@@ -82,21 +81,13 @@ internal fun MacroTileCard(
             )
         }
 
-        Box(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(if (light) Color(0xFFE4E9F2) else Color(0xFF191E2B))
-        ) {
-            Box(
-                modifier =
-                    Modifier.fillMaxHeight()
-                        .fillMaxWidth(pct)
-                        .clip(CircleShape)
-                        .background(dotColor)
-            )
-        }
+        ProgressBar(
+            if (goal > 0) current.toFloat() / goal else 0f,
+            SolidColor(dotColor),
+            height = 4.dp,
+            track = if (light) Color(0xFFE4E9F2) else Color(0xFF191E2B),
+            outline = Color.Transparent,
+        )
 
         Text(
             text =

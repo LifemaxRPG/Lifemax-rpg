@@ -2,7 +2,6 @@ package com.lifemax.rpg.core.designsystem.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,7 +66,10 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** A selectable pill. [tint] colours it when selected; [leading] is drawn before the label. */
+/**
+ * A selectable pill. [tint] colours it when selected; [leading] is drawn before the label. A
+ * [centered] pill is sized by its row, so it keeps its side padding small for large text.
+ */
 @Composable
 fun ChoicePill(
     label: String,
@@ -82,7 +83,6 @@ fun ChoicePill(
     val shape = RoundedCornerShape(50)
     Row(
         modifier
-            .heightIn(min = 40.dp)
             .clip(shape)
             .background(
                 if (selected) tint.copy(alpha = .18f) else MaterialTheme.colorScheme.background
@@ -93,8 +93,8 @@ fun ChoicePill(
                 shape,
             )
             .semantics { this.selected = selected }
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .tapTarget(Role.RadioButton, onClick = onClick)
+            .padding(horizontal = if (centered) 4.dp else 14.dp, vertical = 8.dp),
         horizontalArrangement =
             if (centered) Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
             else Arrangement.spacedBy(8.dp),
@@ -136,16 +136,14 @@ fun SegmentedChoice(
             val on = value == selected
             Column(
                 Modifier.weight(1f)
-                    .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(9.dp))
                     .background(
                         if (on) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
                     )
                     .semantics { this.selected = on }
-                    .clickable(role = Role.RadioButton) { onSelect(value) }
+                    .tapTarget(Role.RadioButton) { onSelect(value) }
                     .padding(vertical = 7.dp, horizontal = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
             ) {
                 Text(
                     label,
@@ -191,7 +189,7 @@ fun RoundButton(
                 RoundedCornerShape(50),
             )
             .semantics { this.contentDescription = contentDescription }
-            .clickable(role = Role.Button, onClick = onClick),
+            .tapTarget(Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
