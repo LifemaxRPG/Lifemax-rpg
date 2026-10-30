@@ -12,6 +12,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
+- Data safety (ADR 0004): verified folder backups, a verified snapshot before an import, a reset or an update, `SAVE_SCHEMA` with `migrateSave()` and read-only for a newer save, and golden saves restored and compared in `backup-restore.test.js`. Also the load() half of the save epoch item (Native write path): an unreadable save is kept, never stored over; the epoch itself comes with the first native write.
 
 ## CI and tests
 
@@ -26,7 +27,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — Build is slow and not reproducible: no caches, floating versions, no check that plugins are catalogued  
   Switch to `npm ci`, add `cache: npm` with cache-dependency-path android-wrapper/package-lock.json, add `gradle/actions/setup-gradle@v4` before the build (it caches the Gradle user home), and pin ubuntu-24.04. Add a 15-line python… *(ci-and-tests CI-6, not verified)*
 - **low** — A reload of the `file://` test page sometimes comes back without what the page stored: sessionStorage is empty, and localStorage can lack the last writes  
-  Seen several times in 40 reloads in backup-restore.test.js, which now reads the save back in place instead of reloading; likely the cause of the tabs.test.js flake in SKIP_IN_CI.txt. Serve the page over `http://127.0.0.1` in tests that reload. *(backup work)*
+  Seen several times in 40 reloads; backup-restore.test.js serves its page over `http://127.0.0.1` for that reason. Likely the cause of the tabs.test.js flake in SKIP_IN_CI.txt: serve that page over http too. *(backup work)*
 
 ## Design system and accessibility
 
@@ -140,16 +141,13 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — The preview and the award are different functions, the golden test can't see the difference, and the owner function does no input validation  
   1) In activityPreview, add `const ea=ecoAward(d.type in rules?d.type:'custom',total,dur,{manual:true,peek:true})` and return `award:ea.xp,blockedReason:ea.msg`. Show award in updatePreview and the native projection, falling back… *(log-write-path, verified)*
 - **medium** — The save has no epoch, and the only whole-save replacement paths include one that can silently overwrite it with a blank state  
-  In the load() catch block, use a unique key per failure, `STORE+'_unreadable_'+Date.now()` (as the reviewer proposed), instead of the single write-once key. Only overwrite STORE when the copy was written successfully. Add a small… *(log-write-path, verified)*  
-  The load() half is done (ADR 0004): each unreadable save is kept under its own key, nothing is stored over it when no copy fits, and a save this build cannot migrate is shown read-only. Open: the epoch (a random id in the save, rotated by import, reset, delete-all and the load() fallback), which comes with the first native write.
+  In the load() catch block, use a unique key per failure, `STORE+'_unreadable_'+Date.now()` (as the reviewer proposed), instead of the single write-once key. Only overwrite STORE when the copy was written successfully. Add a small… *(log-write-path, verified)*
 
 ## Data safety
 
-All three are done; ADR 0004 (Implementation) has the details.
-
-- **done** — There is no backup the owner can rely on before a risky change: the folder backup is opt-in and off by default, never runs before an update, restore or reset,…  
-  A verified folder backup now comes before an import, a reset and an update; when it fails the owner decides, and an update found at launch waits. Backups count only once read back and checked. Settings warns while they are off, failing, stale or without a folder, and asks once for a folder; they start when the owner picks one. *(data-safety, verified)*
-- **done** — The core save has no schema version; migrations are scattered boolean flags that run at load and commit before a build is proven healthy, so APK/OTA rollbacks…  
-  `SAVE_SCHEMA` and `migrateSave()` (the flag migrations run there); a save or backup from a newer build is shown read-only and never written or imported. *(data-safety, verified)*
-- **done** — Golden tests cover only an empty profile, and the Playwright suites that guard the save-writing path (log-activity, ota, handover-sim) are not run by CI; there…  
-  Four golden saves (new, established, legacy, with extras) are backed up, restored on another phone and compared in `backup-restore.test.js`; the Playwright suites run in CI (C1). *(data-safety, verified)*
+- **medium** — There is no backup the owner can rely on before a risky change: the folder backup is opt-in and off by default, never runs before an update, restore or reset,…  
+  Take a pre-change snapshot, and block the action if it fails. Add 'async function lmaPreflightBackup(){ if(!lmaNative()) return true; try { await lmaRunBackup(true); return lmaLoad().backup.status==="ok" } catch(e){ return false… *(data-safety, verified)*
+- **medium** — The core save has no schema version; migrations are scattered boolean flags that run at load and commit before a build is proven healthy, so APK/OTA rollbacks…  
+  Smallest useful step, with no new architecture. (1) Add `schema:1` to freshState and a constant SAVE_SCHEMA=1. (2) In load(), after parsing, if (state.schema||1) > SAVE_SCHEMA, do not call the migrations and do not write back;… *(data-safety, verified)*
+- **medium** — Golden tests cover only an empty profile, and the Playwright suites that guard the save-writing path (log-activity, ota, handover-sim) are not run by CI; there…  
+  Add one CI step before the node tests in build-android.yml: `npm i --no-save playwright@<pinned> && npx playwright install --with-deps chromium`. Then run `NODE_PATH=$PWD/node_modules node… *(data-safety, verified)*
