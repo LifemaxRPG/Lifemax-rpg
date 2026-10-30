@@ -18,17 +18,20 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Checks the GitHub release for a newer build and hands the downloaded APK to Android's installer. */
+/**
+ * Checks the GitHub release for a newer build and hands the downloaded APK to Android's installer. Downloads come only
+ * from GitHub and have a size cap (DownloadRules).
+ */
 @CapacitorPlugin(name = "Updater")
 public class UpdaterPlugin extends Plugin {
     private static final String VERSION_URL =
             "https://github.com/LifemaxRPG/Lifemax-rpg/releases/download/latest/version.json";
+    /** One APK download at a time (backlog SEC-5): a second tap must not rewrite the file the installer is given. */
+    private static final AtomicBoolean INSTALLING = new AtomicBoolean(false);
 
     private long installedBuild() {
         try {
@@ -39,50 +42,14 @@ public class UpdaterPlugin extends Plugin {
         }
     }
 
-    /* Follows redirects by hand so each hop is a fresh, plain request: GitHub sends release downloads to a signed storage address that rejects extra headers (it answers "bad request"). */
-    private HttpURLConnection open(String url) throws Exception {
-        for (int hop = 0; hop < 6; hop++) {
-            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-            c.setConnectTimeout(15000);
-            c.setReadTimeout(30000);
-            c.setInstanceFollowRedirects(false);
-            c.setUseCaches(false);
-            if (hop == 0) {
-                c.setRequestProperty("Cache-Control", "no-cache, no-store, max-age=0");
-                c.setRequestProperty("Pragma", "no-cache");
-            }
-            c.setRequestProperty("User-Agent", "LifeMax-Updater");
-            int code = c.getResponseCode();
-            if (code >= 300 && code < 400) {
-                String loc = c.getHeaderField("Location");
-                c.disconnect();
-                if (loc == null || loc.isEmpty()) throw new Exception("redirect without a address");
-                url = new URL(new URL(url), loc).toString();
-                continue;
-            }
-            return c;
-        }
-        throw new Exception("too many redirects");
-    }
-
-    // The release tag is reused. A unique URL prevents Android and GitHub's
-    // redirect caches from answering a manual check with an older manifest.
-    static String freshUrl(String url) {
-        return url + (url.contains("?") ? "&" : "?") + "lma_check=" + UUID.randomUUID();
-    }
-
     @PluginMethod
     public void check(final PluginCall call) {
         new Thread(() -> {
             try {
-                HttpURLConnection c = open(freshUrl(VERSION_URL));
+                HttpURLConnection c = DownloadRules.open(DownloadRules.freshUrl(VERSION_URL));
                 if (c.getResponseCode() != 200) { call.reject("Server answered " + c.getResponseCode()); return; }
                 ByteArrayOutputStream bo = new ByteArrayOutputStream();
-                try (InputStream in = c.getInputStream()) {
-                    byte[] buf = new byte[4096];
-                    int n;
-                    while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
-                }
+                DownloadRules.copy(c, bo, DownloadRules.MANIFEST_MAX_BYTES, null);
                 JSONObject j = new JSONObject(bo.toString("UTF-8"));
                 if (j.optLong("build", 0) <= 0 || !j.optString("apk", "").startsWith("https://"))
                     throw new Exception("The server did not provide a valid release version. Try again shortly.");
@@ -114,6 +81,7 @@ public class UpdaterPlugin extends Plugin {
     public void install(final PluginCall call) {
         final String url = call.getString("url");
         if (url == null || !url.startsWith("https://")) { call.reject("bad url"); return; }
+        if (!DownloadRules.isStart(url)) { call.reject("Updates are only downloaded from https://github.com"); return; }
         if (android.os.Build.VERSION.SDK_INT >= 26 && !getContext().getPackageManager().canRequestPackageInstalls()) {
             // Send the user to the one switch Android requires, then they tap Update again.
             Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
@@ -125,41 +93,47 @@ public class UpdaterPlugin extends Plugin {
             call.resolve(ret);
             return;
         }
-        new Thread(() -> {
-            try {
-                File dir = new File(getContext().getCacheDir(), "update");
-                if (!dir.exists()) dir.mkdirs();
-                File apk = new File(dir, "LifeMax-RPG.apk");
-                HttpURLConnection c = open(freshUrl(url));
-                if (c.getResponseCode() != 200) { call.reject("Download answered " + c.getResponseCode()); return; }
-                long total = c.getContentLengthLong(), got = 0;
-                int lastPct = -1;
-                try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(apk)) {
-                    byte[] buf = new byte[65536];
-                    int n;
-                    while ((n = in.read(buf)) > 0) {
-                        out.write(buf, 0, n);
-                        got += n;
-                        int pct = total > 0 ? (int) (got * 100 / total) : -1;
-                        if (pct != lastPct) {
-                            lastPct = pct;
-                            JSObject p = new JSObject();
-                            p.put("pct", pct);
-                            notifyListeners("progress", p);
-                        }
-                    }
+        if (!INSTALLING.compareAndSet(false, true)) { call.reject("An update is already downloading"); return; }
+        try {
+            new Thread(() -> {
+                try {
+                    download(call, url);
+                } finally {
+                    INSTALLING.set(false);
                 }
-                Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", apk);
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setDataAndType(uri, "application/vnd.android.package-archive");
-                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                getContext().startActivity(i);
-                JSObject ret = new JSObject();
-                ret.put("started", true);
-                call.resolve(ret);
-            } catch (Throwable e) {
-                call.reject("Update failed: " + e);
+            }).start();
+        } catch (Throwable t) {
+            INSTALLING.set(false);
+            call.reject("Update failed: " + t);
+        }
+    }
+
+    /* The APK goes to cache/update/, the one cache folder res/xml/file_paths.xml shares with Android's installer. */
+    private void download(PluginCall call, String url) {
+        File apk = new File(new File(getContext().getCacheDir(), "update"), "LifeMax-RPG.apk");
+        try {
+            File dir = apk.getParentFile();
+            if (!dir.exists()) dir.mkdirs();
+            HttpURLConnection c = DownloadRules.open(DownloadRules.freshUrl(url));
+            if (c.getResponseCode() != 200) { call.reject("Download answered " + c.getResponseCode()); return; }
+            try (OutputStream out = new FileOutputStream(apk)) {
+                DownloadRules.copy(c, out, DownloadRules.APK_MAX_BYTES, pct -> {
+                    JSObject p = new JSObject();
+                    p.put("pct", pct);
+                    notifyListeners("progress", p);
+                });
             }
-        }).start();
+            Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", apk);
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            JSObject ret = new JSObject();
+            ret.put("started", true);
+            call.resolve(ret);
+        } catch (Throwable e) {
+            apk.delete();
+            call.reject("Update failed: " + e);
+        }
     }
 }
