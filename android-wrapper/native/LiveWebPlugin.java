@@ -7,6 +7,7 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.lifemax.rpg.app.update.DownloadRules;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +43,7 @@ public class LiveWebPlugin extends Plugin {
         final String url = call.getString("url", "");
         final String sha = String.valueOf(call.getString("sha256", "")).toLowerCase();
         final long build = call.getData().optLong("build", 0L);   /* getLong() answers 0 for a small whole number, which made every web update "bad request" */
-        if (url == null || !url.startsWith("https://") || sha.length() != 64 || build <= 0) { call.reject("bad request"); return; }
+        if (!url.startsWith("https://") || sha.length() != 64 || build <= 0) { call.reject("bad request"); return; }
         if (!DownloadRules.isStart(url)) { call.reject("web updates are only downloaded from https://github.com"); return; }
         final SharedPreferences p = LiveWeb.prefs(getContext());
         if (build <= p.getLong("bad", 0)) { call.reject("that build was rejected earlier"); return; }

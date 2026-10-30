@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.lifemax.rpg.app.launch.LaunchRules;
 import com.lifemax.rpg.bridge.web.HealthSyncPlugin;
 import com.lifemax.rpg.bridge.web.NativeCashPlugin;
 import com.lifemax.rpg.bridge.web.NativeNutritionPlugin;
@@ -31,7 +32,6 @@ public class MainActivity extends BridgeActivity {
      */
     @Override
     protected void onNewIntent(Intent intent) {
-        if (intent != null && LaunchRules.isReplay(false, launchedFromHistory(intent))) intent = consumed(intent);
         super.onNewIntent(intent);
         take(intent);
     }
@@ -42,10 +42,10 @@ public class MainActivity extends BridgeActivity {
         try {
             String target = LaunchRules.openTarget(intent.getStringExtra(EXTRA_OPEN));
             if (target != null) launchTarget = target;
-            setIntent(consumed(intent));
         } catch (RuntimeException e) {
             /* an extra another app packed so it cannot be read: ignore it, never fail to start the home screen */
         }
+        setIntent(consumed(intent));
     }
 
     /** The same intent without what it asked for: no lifemax:// link and no screen to open. */
@@ -87,11 +87,10 @@ public class MainActivity extends BridgeActivity {
         // intent that first started the activity. Drop its link and screen before the bridge reads them (the bridge keeps
         // getIntent().getData() as the launch URL), so a widget tap or a lifemax:// link does not run twice.
         Intent launch = getIntent();
-        if (launch != null && LaunchRules.isReplay(savedInstanceState != null, launchedFromHistory(launch))) setIntent(consumed(launch));
+        if (launch != null && (savedInstanceState != null || launchedFromHistory(launch))) setIntent(consumed(launch));
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
         LiveWeb.apply(getBridge(), this);
-        take(getIntent());              /* already done by onNewIntent from Capacitor's load(); harmless when repeated */
 
         // Draw edge to edge, then keep the page clear of the status bar, camera cut-out,
         // gesture bar and keyboard by padding the content area by the system insets.

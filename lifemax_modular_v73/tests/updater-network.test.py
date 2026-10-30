@@ -1,13 +1,13 @@
-"""Run with Python + Java 21; exercises the over-the-air download rules offline (android-wrapper/native/DownloadRules.java,
+"""Run with Python + Java 21; exercises the over-the-air download rules offline (DownloadRules.java in native/src/.../app/update,
 used by UpdaterPlugin for version.json and the APK and by LiveWebPlugin for the web bundle): fresh check URLs, cache bypass,
 clean signed redirects, GitHub-only hosts on every hop (backlog SEC-1) and the size caps (SEC-5)."""
 from pathlib import Path
 import re, subprocess, tempfile
 root = Path(__file__).resolve().parents[2]
 native = root / 'android-wrapper/native'
-rules = (native / 'DownloadRules.java').read_text()
+rules = (native / 'src/main/java/com/lifemax/rpg/app/update/DownloadRules.java').read_text()
 harness = r'''
-package com.lifemax.rpg;
+package com.lifemax.rpg.app.update;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -123,12 +123,12 @@ public class DownloadRulesCheck {
 }
 '''
 with tempfile.TemporaryDirectory() as d:
-    pkg = Path(d) / 'src/com/lifemax/rpg'; pkg.mkdir(parents=True)
+    pkg = Path(d) / 'src/com/lifemax/rpg/app/update'; pkg.mkdir(parents=True)
     (pkg / 'DownloadRules.java').write_text(rules)
     (pkg / 'DownloadRulesCheck.java').write_text(harness)
     out = Path(d) / 'out'
     subprocess.run(['javac', '-d', str(out), str(pkg / 'DownloadRules.java'), str(pkg / 'DownloadRulesCheck.java')], check=True, timeout=120)
-    subprocess.run(['java', '-cp', str(out), 'com.lifemax.rpg.DownloadRulesCheck'], check=True, timeout=60)
+    subprocess.run(['java', '-cp', str(out), 'com.lifemax.rpg.app.update.DownloadRulesCheck'], check=True, timeout=60)
 
 # the code that downloads goes through the rules, and the published URLs satisfy them
 updater = (native / 'UpdaterPlugin.java').read_text()

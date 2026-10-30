@@ -12,6 +12,7 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.lifemax.rpg.app.update.DownloadRules;
 
 import org.json.JSONObject;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class UpdaterPlugin extends Plugin {
     private static final String VERSION_URL =
             "https://github.com/LifemaxRPG/Lifemax-rpg/releases/download/latest/version.json";
-    /** One APK download at a time (backlog SEC-5): a second tap must not rewrite the file the installer is given. */
+    /** One APK download at a time (backlog SEC-5): two would write the same file. */
     private static final AtomicBoolean INSTALLING = new AtomicBoolean(false);
 
     private long installedBuild() {
