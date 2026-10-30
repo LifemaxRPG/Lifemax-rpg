@@ -1,6 +1,7 @@
 /* The save and its backups as a tested contract (ADR 0004). Golden saves in fixtures/saves (new, established, legacy, with extras;
-   synthetic, made from the page's own functions) load at SAVE_SCHEMA; a save from a newer build is shown but never written; and a
-   backup counts only once the file read back from the folder checks out.
+   synthetic, made once from the page's own functions and never regenerated) load at SAVE_SCHEMA; a save from a newer build is
+   shown but never written; a backup counts only once the file read back from the folder checks out; a snapshot comes before every
+   risky change; and each golden save, backed up and restored on another phone, comes back the same.
    Run: NODE_PATH=$(npm root -g) node tests/backup-restore.test.js */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const { execFileSync } = require('child_process');
@@ -166,6 +167,42 @@ const FOLDER = `(() => {
     ok('a web update is backed up before it is downloaded; at launch a failed backup leaves it waiting in Settings, asked the owner decides', r.webWaits && r.webDeclined && r.webOrder, r);
     ok('restarting into a web update and installing a new APK are backed up first too', r.restartDeclined && r.restartOrder && r.apkDeclined && r.apkOrder, r);
     errs.push(...ph.errs); await ph.close();
+  }
+
+  /* ---- backup, restore on another phone, compare ---- */
+  const canon = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
+  const differ = (a, b) => [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(k => canon(a[k]) !== canon(b[k]));
+  for (const name of ['new', 'established', 'legacy', 'extras']) {
+    const f = fixture(name), ids = JSON.stringify(f.state.activities.map(a => a.id));
+    const a = await phone(b, { save: JSON.stringify(f.state), extras: f.extras || {} });
+    await a.p.evaluate(FOLDER);
+    const made = await a.p.evaluate(async f => {
+      window.toast = () => { }; window.confirm = () => true;
+      const ran = await lmaRunBackup(false), file = __folder.files.file1, imp = await applyBackup(f);
+      return { ran, file, imported: imp.ok && state.schema === SAVE_SCHEMA && JSON.stringify(state.activities.map(a => a.id)), folder: JSON.parse(localStorage.getItem(LMA_PREF_KEY)).backup.uri };
+    }, f);
+    ok('the ' + name + ' golden file imports at the current format with every activity in order, and this phone keeps its backup folder', made.imported === ids && made.folder === 'content://tree/backups', { imported: made.imported, folder: made.folder });
+    const c = await phone(b);
+    await c.p.evaluate(FOLDER);
+    const res = await c.p.evaluate(async file => {
+      window.toast = () => { }; window.confirm = () => true;
+      const r = await applyBackup(JSON.parse(file));
+      return { ok: r.ok, stored: JSON.parse(localStorage.getItem(STORE)), rules, extras: lmaBackupExtras() };
+    }, made.file);
+    const was = JSON.parse(made.file), stateDiff = differ(was.state, res.stored);
+    ok('the ' + name + ' save, backed up and restored on another phone, comes back the same: save, rules and extras', made.ran && res.ok && !stateDiff.length && canon(was.rules) === canon(res.rules) && canon(was.extras) === canon(res.extras), { stateDiff, rules: canon(was.rules) === canon(res.rules), extras: differ(was.extras, res.extras) });
+    const back = await c.p.evaluate(async () => {
+      // the next start reads the save and this phone's preferences back from storage
+      lmaPrefs = null; load();
+      const out = { schema: state.schema, ids: JSON.stringify(state.activities.map(a => a.id)), folder: lmaLoad().backup.uri, shortcuts: lmaLoad().apps.length };
+      // none of the restored app shortcuts is installed on this phone, so Android has no icon for them
+      let icons = 0; const real = lmaPlugin; lmaPlugin = n => n === 'AppLauncher' ? { getIcons: async () => { icons++; return { icons: {} } } } : real(n);
+      ovAppsRender(); await new Promise(r => setTimeout(r, 300));
+      return { ...out, icons };
+    });
+    ok('the restored ' + name + ' save is read back at the current format, and that phone keeps its own backup folder', back.schema === 1 && back.ids === ids && back.folder === 'content://tree/backups', back);
+    if (back.shortcuts) ok('restored app shortcuts that are not installed here are asked for once, not forever', back.icons === 1, back);
+    errs.push(...a.errs, ...c.errs); await a.close(); await c.close();
   }
 
   ok('no script errors', errs.length === 0, errs);

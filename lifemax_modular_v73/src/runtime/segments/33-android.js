@@ -164,9 +164,10 @@ async function lmaRenderSettings(){
  host.innerHTML=h;
 }
 /* ---------- saving files and backups ---------- */
-const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
-function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k==='lifemax_android_prefs_v1'){try{const j=JSON.parse(v);if(j&&j.backup){j.backup={...j.backup,uri:'',folder:'',on:false,last:0,status:''}}v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
-function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
+/* The keys a backup carries besides the save. This phone's own backup settings (its folder) are neither exported nor restored. */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1',LMA_PREF_KEY,'lifeMaxTheme'];
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k===LMA_PREF_KEY){try{const j=JSON.parse(v);delete j.backup;v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]!=='string')continue;let v=x[k];if(k===LMA_PREF_KEY){try{v=JSON.stringify({...JSON.parse(v),backup:lmaLoad().backup})}catch(e){}}try{localStorage.setItem(k,v);n++}catch(e){}}lmaPrefs=null;return n>0}
 /* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
 async function lmaDownload(text,filename,mime,label){
  const FS=lmaPlugin('FileSaver');

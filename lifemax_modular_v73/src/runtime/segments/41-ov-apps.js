@@ -16,8 +16,10 @@ function ovAppsRender(){
   if(b.classList.contains('ova-add'))AppsShortcuts.openPicker();
   else{const a=lmaLoad().apps[+b.dataset.i];if(a)AppsShortcuts.launch(a.pkg)}
  };
+ /* An app that is not installed (a backup restored on another phone) never gets an icon: draw again only when one arrived, or
+    this would ask Android for it forever. */
  const need=apps.filter(function(a){return !a.icon}).map(function(a){return a.pkg});
- if(need.length&&AS&&!ovAppsFetching){ovAppsFetching=true;AS.loadIcons(need).then(function(m){let ch=false;lmaLoad().apps.forEach(function(a){if(!a.icon&&m[a.pkg]){a.icon=m[a.pkg];ch=true}});if(ch)lmaSave()}).catch(function(){}).then(function(){ovAppsFetching=false;ovAppsRender()})}
+ if(need.length&&AS&&!ovAppsFetching){ovAppsFetching=true;AS.loadIcons(need).then(function(m){let ch=false;lmaLoad().apps.forEach(function(a){if(!a.icon&&m[a.pkg]){a.icon=m[a.pkg];ch=true}});if(ch){lmaSave();ovAppsRender()}}).catch(function(){}).then(function(){ovAppsFetching=false})}
 }
 (function ovAppsBoot(){
  const i=OV_TILES.findIndex(function(t){return t.id==='hero'})+1;
