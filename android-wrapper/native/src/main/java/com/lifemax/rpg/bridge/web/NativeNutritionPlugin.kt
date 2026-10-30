@@ -81,15 +81,10 @@ class NativeNutritionPlugin : Plugin() {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         view.setContent {
             snapshot?.let { current ->
-                NativeNutritionScreen(current, topInsetDp, bottomInsetDp, shown) { command, payload
-                    ->
-                    if (command == "close") {
-                        dismiss(true)
-                    } else {
-                        val evt = JSObject().put("session", session).put("command", command)
-                        payload.forEach { (k, v) -> evt.put(k, v) }
-                        notifyListeners("action", evt)
-                    }
+                NativeNutritionScreen(current, topInsetDp, bottomInsetDp) { command, payload ->
+                    val evt = JSObject().put("session", session).put("command", command)
+                    payload.forEach { (k, v) -> evt.put(k, v) }
+                    notifyListeners("action", evt)
                 }
             }
         }

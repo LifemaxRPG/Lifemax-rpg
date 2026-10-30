@@ -1,6 +1,5 @@
 package com.lifemax.rpg.feature.food.presentation
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -22,13 +21,11 @@ internal fun NativeNutritionScreen(
     data: JSONObject,
     topInsetDp: Float,
     bottomInsetDp: Float,
-    active: Boolean,
     dispatch: (command: String, payload: Map<String, Any>) -> Unit,
 ) {
-    // a hidden screen stays composed, so it must not take the Back button from the tab that is
-    // showing
-    BackHandler(enabled = active) { dispatch("close", emptyMap()) }
-
+    // No Back handler here: system Back goes to the page's own Back (lmaBack via MainActivity),
+    // which steps to the previous tab
+    // and closes this screen through the hand-over, exactly as for every other tab.
     val c = rememberFoodContext(data, topInsetDp, bottomInsetDp, dispatch)
     FoodRingTorch(c)
 

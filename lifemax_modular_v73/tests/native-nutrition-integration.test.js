@@ -24,6 +24,11 @@ assert.ok(Number(api.match(/VALUE = (\d+)/)?.[1]) >= 11,'Native Nutrition requir
 assert.match(native,/@CapacitorPlugin\(name = "NativeNutrition"\)/);
 assert.match(native,/data\.has\("totals"\)/);
 assert.doesNotMatch(native,/DeterministicNutritionFixtures|MockNutritionRepository/,'Never publish fixture data as live Food');
+// System Back must reach the page's own Back (lmaBack), which steps to the previous tab and closes Food through the hand-over.
+// A Back handler inside Food used to dismiss it and leave the classic web Meals page showing.
+const foodScreen=fs.readFileSync(path.join(root,'../android-wrapper/native/src/main/java/com/lifemax/rpg/feature/food/presentation/FoodScreen.kt'),'utf8');
+assert.doesNotMatch(foodScreen,/BackHandler\s*\(/,'Food must not take the Back button; MainActivity sends it to lmaBack');
+assert.doesNotMatch(native,/command == "close"/,'The plugin must not dismiss Food on its own');
 assert.match(original,/function fv2Goals/,'Original Food engine must remain intact');
 
 const vm=require('node:vm');
