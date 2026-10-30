@@ -36,11 +36,12 @@ import androidx.compose.ui.unit.sp
 fun tokenColor(tokens: Map<String, Long>, key: String): Color =
     Color((tokens[key] ?: 0xffeef1f6).toInt())
 
-/** The standard panel: theme surface, a hairline border, 14 dp corners. */
+/** The standard panel: theme surface, a hairline [border], 14 dp corners. */
 @Composable
 fun SurfaceCard(
     modifier: Modifier = Modifier,
     padding: PaddingValues = PaddingValues(16.dp),
+    border: Color = MaterialTheme.colorScheme.outline.copy(alpha = .3f),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -48,11 +49,7 @@ fun SurfaceCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = .3f),
-                RoundedCornerShape(14.dp),
-            )
+            .border(1.dp, border, RoundedCornerShape(14.dp))
             .padding(padding),
         content = content,
     )

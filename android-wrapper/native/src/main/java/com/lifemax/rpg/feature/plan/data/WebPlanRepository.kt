@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.plan.data
 
 import com.lifemax.rpg.feature.plan.domain.DayStatus
+import com.lifemax.rpg.feature.plan.domain.PagePoint
 import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanItem
 import com.lifemax.rpg.feature.plan.domain.PlanKeyTag
@@ -41,6 +42,7 @@ class WebPlanRepository : PlanRepository {
         val sessions = j.getJSONObject("sessions")
         val selected = j.getJSONObject("selected")
         val rules = j.getJSONObject("rules")
+        val target = j.getJSONObject("celebrationTarget")
         val colors = j.getJSONObject("tokens")
         val projection =
             PlanProjection(
@@ -61,7 +63,8 @@ class WebPlanRepository : PlanRepository {
                 rules.getJSONArray("items").objects().map(::rule),
                 rules.getJSONArray("progression").objects().map(::rule),
                 j.getBoolean("reducedMotion"),
-                colors.keys().asSequence().associateWith { colors.getLong(it) },
+                PagePoint(target.getDouble("x").toFloat(), target.getDouble("y").toFloat()),
+                TOKENS.associateWith { colors.getLong(it) },
                 j.getBoolean("light"),
             )
         require(projection.sessionsDone in 0..projection.sessionsTotal)
@@ -77,13 +80,16 @@ class WebPlanRepository : PlanRepository {
                 (0 until a.length()).map { if (a.isNull(it)) null else day(a.getJSONObject(it)) }
             }
         require(days.size == 7) { "A week has seven days" }
+        val total = w.getInt("total")
+        val done = w.getInt("done")
+        require(done in 0..total) { "A week's sessions done are out of range" }
         return PlanWeek(
             w.getString("number"),
             w.getString("label"),
             w.getString("range"),
             w.getString("meta"),
-            w.getInt("done"),
-            w.getInt("total"),
+            done,
+            total,
             w.getBoolean("complete"),
             w.getBoolean("current"),
             days,
@@ -142,3 +148,25 @@ class WebPlanRepository : PlanRepository {
 }
 
 internal fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
+
+/** The page's palette (NativeTabKit's TOKENS): the screen draws with every one of them. */
+private val TOKENS =
+    listOf(
+        "bg",
+        "bg-elev",
+        "panel",
+        "panel2",
+        "panel3",
+        "text",
+        "text-dim",
+        "muted",
+        "muted2",
+        "accent",
+        "accent-dim",
+        "accent-strong",
+        "line",
+        "line-soft",
+        "good",
+        "gold",
+        "bad",
+    )

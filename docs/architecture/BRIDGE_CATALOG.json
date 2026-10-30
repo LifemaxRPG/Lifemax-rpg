@@ -80,7 +80,7 @@
     "plan.projection.v1"
    ],
    "commands": {
-    "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save is taken back and reported; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
+    "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
    },
    "writes": [
     "planToggle via toggle (web-owned rules and save)"

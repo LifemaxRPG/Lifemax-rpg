@@ -55,6 +55,7 @@ All of these are in `renderPlan` (06-runtime) unless noted. The projection field
 | Session log and "Last time:" or "Previous:" | `c.log`; `lastLog` | `items[].log` (`text`, `previous`) |
 | Guided workout launcher | `gwrLauncher` (22-runtime), for the selected day | `days[].guided`; `session` takes its place on every day when a session is saved |
 | General rules | `scholarRulesHtml`, `legacyAthleteRulesHtml`, `athleteRulesHtml` (14-runtime) | `rules.items[]` and `rules.progression[]` (`lead`, `text`) |
+| Where the XP orbs fly | `fxTarget` (07-runtime): the centre of `#brandLogo` in the top bar | `celebrationTarget` (`x`, `y`, page pixels from the top of the page, where the shared bar draws the bar) |
 
 Derived values: XP per completed day, set by `planDay`:
 
@@ -109,9 +110,11 @@ The screen draws every state that has a plan:
 The `toggle` command calls `planToggle`:
 - It has set semantics: the set ends as asked, and a repeat answers `changed: false` without saving.
 - It refuses unknown sets, malformed dates and future days.
-- A failed save is reported and taken back in memory.
+- A failed save answers `ok: false` with the page's own "Could not save to this browser (storage full?)". The change stays in memory, as after the page's own checkbox, together with what the save set off (badges, a daily-hand quest completed by `dhAutoVerify`), and the next save stores it all. The projection sent with the reply shows the boxes as the page holds them. Nothing is taken back: undoing only the tick would leave the quest and the badges of a day that is not done.
 - The day's XP is paid once (`actId`).
-- `celebrateXP` is held: the reply carries `celebrations` for the screen to draw, and the page plays `xpCue` (sound and buzz) 120 ms later.
+- `celebrateXP` is held: the reply carries `celebrations` for the screen to draw, and the page plays `xpCue` (sound and buzz) 120 ms later. A failed save carries neither.
+- The kit drops the refresh that the command's own renders asked for, because the projection sent with the reply already carries them: one projection per tick, not two.
+- A box waits for its answer for at most 5 seconds. If the answer is lost on the way (A14: the outcome is unknown), the next projection after that decides what the box shows, and the box takes taps again.
 
 Delegated (the screen closes, the page's handler runs, `revisit()` follows):
 - the guided workout (`gwrResume` or `gwrStart`);
@@ -128,14 +131,18 @@ A `MutationObserver` on the body class and children, and on `#planBody`, plus `f
 
 ## The native screen (`NativePlanPlugin`, `feature/plan`)
 
-It draws the projection with the page's sizes, colours and spacing (measured with `getComputedStyle` at phone width) and shows the toggle's message as a toast above the bottom bar and its celebration as `celebrateXP` draws it. Where it differs from the page:
+It draws the projection with the page's sizes, colours and spacing (measured with `getComputedStyle` at phone width) and shows the toggle's message as a toast above the bottom bar and its celebration as `celebrateXP` draws it. The page's CSS effects come from `core/designsystem/Css.kt` (`boxShadow`, `cssLinearGradient`, `mix`). Where it differs from the page:
 - The day card and the General rules are separate cards below the calendar. On the page they sit inside the calendar card (see the quirks below).
 - The week and day strips keep their scroll position. The page re-renders them, so they jump back to the start after every tap.
-- The faint drop shadow of the page's cards (`.card`) and the inset 1 px highlights of the cards and tiles are not drawn. The calendar card, the sessions count, the active week, the selected day and the glows have their shadows.
+- The inset 1 px highlights of the cards and tiles are not drawn. The drop shadows are.
 - The fields are not editable on the screen: a tap hands the field to the page (delegated, above). The session-log field has no resize handle.
 - The "Workout plan XP" feature tip the page shows once is not drawn.
 - A tick that pays more than one award (the day's XP and the daily-hand quest's) shows one "+N XP" label with the sum, where the page draws a label per award over each other.
+- The orbs fly to the logo and burst there as on the page, but the logo does not pulse: the bar is the page's captured drawing. The page's orbs leave a trail of small sparks and its particles add their light (`lighter`); the screen draws three fading echoes behind each orb and blends normally.
+- A tick that levels up: the page opens its level-up overlay 950 ms later, and the screen steps aside for it in the middle of its own burst and toast. The page's own toast, under the overlay, carries the same message.
+- After a tap on a field, the page focuses it from a Capacitor listener, which is not a tap inside the WebView. Whether Android raises the keyboard for that is still to be checked on the phone; if it does not, the field needs a second tap. Back that only hides the keyboard leaves the field focused, so the screen comes back once the field loses the focus.
 - Pixel icons are drawn cell by cell (`PixelIcon`, shared), so at some sizes a faint seam can show between cells, which the page's icons do not have.
+- Each set box answers taps over 48 dp around it, as Compose widens small targets, and a tap between two boxes goes to the nearer one. The page's boxes take taps on their 20 px only.
 
 ## Known web quirks
 

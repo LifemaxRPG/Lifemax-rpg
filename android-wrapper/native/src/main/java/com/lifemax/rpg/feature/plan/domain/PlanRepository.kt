@@ -22,7 +22,9 @@ data class Celebration(val xp: Int, val gains: List<XpGain>)
 
 /**
  * The page's answer to a toggle. [changed] is false when the set was already as asked and nothing
- * was saved; when [ok] is false nothing changed and [message] says why.
+ * was saved. When [ok] is false nothing was saved and [message] says why; the projection sent with
+ * the answer shows the boxes as the page holds them (a tick whose save failed stays in the page's
+ * memory, as after its own checkbox, until a later save stores it).
  */
 data class PlanReply(
     val requestId: String,

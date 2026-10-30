@@ -16,18 +16,19 @@ import kotlinx.coroutines.flow.update
 /**
  * The screen's own selection, and the boxes it has asked the page to tick or clear. A tapped box
  * shows its new state at once, marked pending, until the page answers. The answer comes with the
- * page's fresh projection, so dropping the mark then shows what the page saved, or the box as it
- * was when nothing was saved. The page's selected day is adopted whenever the page changes it.
+ * page's fresh projection, so dropping the mark then shows the box as the page holds it. The page's
+ * selected day is adopted whenever the page changes it.
  */
 class PlanViewModel(
     repository: PlanRepository,
     private val commands: PlanCommands,
     private val newRequestId: () -> String = { UUID.randomUUID().toString() },
+    private val nowMs: () -> Long = { System.nanoTime() / 1_000_000 },
 ) : ViewModel() {
     val projection = repository.state
     private val mutable = MutableStateFlow(PlanUiState())
     val ui = mutable.asStateFlow()
-    private val requests = mutableMapOf<String, SetRef>()
+    private val requests = mutableMapOf<String, Request>()
     private var adopted: Pair<String, Long>? = null
     private var feedbacks = 0L
 
@@ -46,6 +47,19 @@ class PlanViewModel(
     fun onOpen() {
         requests.clear()
         mutable.update { it.copy(pending = emptyMap()) }
+    }
+
+    /**
+     * The page sent a projection. An answer lost on the way (A14: its outcome is unknown) would
+     * leave its box waiting for good; the projection says what the page holds, so a box asked for
+     * [ANSWER_WAIT_MS] or longer ago shows that again and takes taps.
+     */
+    fun onUpdate() {
+        val asked = nowMs() - ANSWER_WAIT_MS
+        val lost = requests.filterValues { it.sentAt <= asked }
+        if (lost.isEmpty()) return
+        requests -= lost.keys
+        mutable.update { ui -> ui.copy(pending = ui.pending - lost.values.map { it.set }.toSet()) }
     }
 
     fun selectDay(date: String) {
@@ -73,16 +87,16 @@ class PlanViewModel(
         val day = projection.value?.day(set.date) ?: return
         if (day.locked || set in mutable.value.pending) return
         val id = newRequestId()
-        requests[id] = set
+        requests[id] = Request(set, nowMs())
         mutable.update { it.copy(pending = it.pending + (set to checked)) }
         commands.toggle(id, set, checked)
     }
 
     fun onReply(reply: PlanReply) {
-        val set = requests.remove(reply.requestId)
+        val set = requests.remove(reply.requestId)?.set
         val message =
             when {
-                !reply.ok -> reply.message.ifBlank { "Could not save. Nothing was changed." }
+                !reply.ok -> reply.message.ifBlank { "Could not save." }
                 reply.changed -> reply.message
                 else -> ""
             }
@@ -99,6 +113,13 @@ class PlanViewModel(
     /** The screen has shown [id]'s message and celebration. */
     fun feedbackShown(id: Long) {
         mutable.update { if (it.feedback?.id == id) it.copy(feedback = null) else it }
+    }
+
+    private class Request(val set: SetRef, val sentAt: Long)
+
+    private companion object {
+        /** How long a box waits for its answer (the page takes well under a second). */
+        const val ANSWER_WAIT_MS = 5_000L
     }
 }
 

@@ -24,18 +24,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.feature.plan.domain.DayStatus
 import com.lifemax.rpg.feature.plan.domain.PlanDay
@@ -51,20 +55,32 @@ internal fun PlanWeekTile(week: PlanWeek, active: Boolean, onClick: () -> Unit) 
         Modifier.width(101.dp)
             .heightIn(min = 126.dp)
             .then(
-                if (active) Modifier.boxShadow(c.accent.copy(alpha = 0.15f), 18.dp, 16.dp, 6.dp)
+                if (active) Modifier.boxShadow(c.accent.copy(alpha = 0.15f), 18.dp, shape, 6.dp)
                 else Modifier
             )
-            // the page's progress line along the bottom edge, drawn over the tile's corners
-            .drawWithContent {
-                drawContent()
+            // the page's progress line, just inside the bottom border and over the tile's
+            // corners; only its right end is rounded
+            .drawWithCache {
                 val inset = 1.dp.toPx()
                 val thick = 3.dp.toPx()
-                drawRoundRect(
-                    if (active) c.accent else c.good,
-                    Offset(inset, size.height - inset - thick),
-                    Size((size.width - 2 * inset) * done, thick),
-                    CornerRadius(thick / 2),
-                )
+                val end = CornerRadius(thick / 2)
+                val line =
+                    Path().apply {
+                        addRoundRect(
+                            RoundRect(
+                                Rect(
+                                    Offset(inset, size.height - inset - thick),
+                                    Size((size.width - 2 * inset) * done, thick),
+                                ),
+                                topRight = end,
+                                bottomRight = end,
+                            )
+                        )
+                    }
+                onDrawWithContent {
+                    drawContent()
+                    drawPath(line, if (active) c.accent else c.good, if (active) 1f else 0.8f)
+                }
             }
             .clip(shape)
             .background(if (active) c.weekActive else c.weekIdle)
@@ -78,7 +94,7 @@ internal fun PlanWeekTile(week: PlanWeek, active: Boolean, onClick: () -> Unit) 
                 shape,
             )
             .selectable(active, role = Role.Tab, onClick = onClick)
-            .semantics {
+            .clearAndSetSemantics {
                 contentDescription =
                     listOfNotNull(
                             "Week ${week.number.trimStart('0')}",
@@ -142,7 +158,7 @@ private fun WeekMark(complete: Boolean, active: Boolean) {
     Box(
         Modifier.size(19.dp)
             .then(
-                if (active) Modifier.boxShadow(c.accent.copy(alpha = 0.38f), 15.dp, 9.5.dp)
+                if (active) Modifier.boxShadow(c.accent.copy(alpha = 0.38f), 15.dp, CircleShape)
                 else Modifier
             )
             .background(if (active) c.accent else c.bgElev, CircleShape)
@@ -189,7 +205,7 @@ internal fun PlanDayTile(day: PlanDay, selected: Boolean, onClick: () -> Unit) {
             .heightIn(min = 140.dp)
             .alpha(if (day.rest) 0.68f else 1f)
             .then(
-                if (selected) Modifier.boxShadow(c.accent.copy(alpha = 0.13f), 20.dp, 17.dp, 8.dp)
+                if (selected) Modifier.boxShadow(c.accent.copy(alpha = 0.13f), 20.dp, shape, 8.dp)
                 else Modifier
             )
             .clip(shape)
@@ -206,7 +222,7 @@ internal fun PlanDayTile(day: PlanDay, selected: Boolean, onClick: () -> Unit) {
                 shape,
             )
             .selectable(selected, role = Role.Tab, onClick = onClick)
-            .semantics {
+            .clearAndSetSemantics {
                 contentDescription = day.description
                 stateDescription = day.statusWords()
             }

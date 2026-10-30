@@ -168,6 +168,12 @@
     };
   }
 
+  /** where celebrateXP's orbs fly: the centre of the top bar's logo, from the top of the page, as the shared bar draws it */
+  function celebrationTarget() {
+    const r = document.getElementById("brandLogo")?.getBoundingClientRect();
+    return r && r.width ? { x: r.x + r.width / 2, y: r.y + scrollY + r.height / 2 } : { x: innerWidth / 2, y: 44 };
+  }
+
   function projection() {
     const p = state.plan,
       t = getToday(),
@@ -188,6 +194,7 @@
       key: key(p),
       rules: rules(p),
       reducedMotion: fxReduced(),
+      celebrationTarget: celebrationTarget(),
     };
   }
 
@@ -198,7 +205,9 @@
   }
   const commands = {
     /** tick or clear one set, like the page's checkbox. The set ends as asked, so repeating the command changes nothing; a day
-        completed by it pays its XP once (planToggle keeps the session's activity id), and a failed save is taken back. */
+        completed by it pays its XP once (planToggle keeps the session's activity id). A failed save leaves the change in memory,
+        as the page's own checkbox does, with what the save set off (badges, a daily-hand quest), and the next save stores it all:
+        the reply says nothing was saved, and the projection sent with it shows the boxes as the page holds them. */
     toggle(c) {
       const d = validDay(c.date),
         it = d && d.items.find((x) => x.k === c.key),
@@ -210,10 +219,7 @@
       if (!!((pcheck(c.date).s || {})[c.key] || [])[i] === checked) return { ok: true, changed: false };
       // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
       const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
-      if (!result.saved) {
-        holdCelebrations(() => planToggle(c.date, c.key, i, !checked));
-        return { ok: false, message: "Could not save to this browser (storage full?). Nothing was changed." };
-      }
+      if (!result.saved) return { ok: false, message: "Could not save to this browser (storage full?)" };
       if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
       return {
         ok: true,

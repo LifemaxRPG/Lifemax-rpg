@@ -79,6 +79,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.matchesPageDetail = { web, s: { program: s.program, status: s.status, summary: s.summary, week0: week0.label + ' / ' + week0.range, title: today.title, tag: today.tag } };
     out.shape = today.kind === 'strength' && today.status === 'today' && today.today && !today.locked && dayIn(s, '2026-10-29').locked && today.items.every(i => i.sets.length >= 1 && i.sets.every(x => x === false))
       && s.weeks[0].current && !s.weeks[1].current && s.session === null && s.key[0].label === 'A / C / E · Strength';
+    const logo = document.getElementById('brandLogo').getBoundingClientRect();
+    out.target = s.celebrationTarget.x === logo.x + logo.width / 2 && s.celebrationTarget.y === logo.y + scrollY + logo.height / 2 && logo.width > 0;
 
     // toggle: the page's own planToggle, with set semantics
     const mon = planDay('2026-10-26'), sets = mon.items.flatMap(it => Array.from({ length: it.n }, (_, i) => [it.k, i])), xp0 = totalXP(), acts0 = state.activities.length;
@@ -88,7 +90,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     const saved = localStorage.getItem(STORE), again = await command({ date: '2026-10-26', key: sets[0][0], set: sets[0][1], checked: true });
     out.repeatTick = again.reply.ok === true && again.reply.changed === false && localStorage.getItem(STORE) === saved;
     const cues = []; const realCue = SFX.xp; SFX.xp = d => cues.push(d);
-    for (const [k, i] of sets.slice(1, -1)) await command({ date: '2026-10-26', key: k, set: i, checked: true });
+    const updates = count('update'); await command({ date: '2026-10-26', key: sets[1][0], set: sets[1][1], checked: true }); await wait(200);
+    out.oneUpdate = count('update') === updates + 1; // the reply's projection, and no second one from the page's render
+    for (const [k, i] of sets.slice(2, -1)) await command({ date: '2026-10-26', key: k, set: i, checked: true });
     const done = await command({ date: '2026-10-26', key: sets[sets.length - 1][0], set: sets[sets.length - 1][1], checked: true });
     const award = state.activities.filter(a => a.id === 'plan_2026-10-26');
     out.complete = done.reply.ok && done.reply.changed && /complete · \+40 XP/.test(done.reply.message) && award.length === 1 && award[0].xp === 40 && totalXP() === xp0 + 40
@@ -104,9 +108,14 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.locked = locked.reply.ok === false && /Locked/.test(locked.reply.message) && !(pcheck('2026-10-29').s || {})[planDay('2026-10-29').items[0].k];
     const bogus = await command({ date: '2026-10-26', key: 'nope', set: 0, checked: true }), junk = await command({ date: '<b>', key: 'E0', set: 0, checked: true });
     out.refused = bogus.reply.ok === false && junk.reply.ok === false;
-    const realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
-    let failed; try { failed = await command({ date: '2026-10-26', key: sets[0][0], set: sets[0][1], checked: true }) } finally { Storage.prototype.setItem = realSet }
-    out.failedSave = failed.reply.ok === false && /Could not save/.test(failed.reply.message) && pcheck('2026-10-26').s[sets[0][0]][sets[0][1]] === false && dayIn(failed.snapshot, '2026-10-26').items[0].sets[0] === false;
+    const realSet = Storage.prototype.setItem, full = async (payload) => {
+      Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
+      try { return await command(payload) } finally { Storage.prototype.setItem = realSet }
+    };
+    const failed = await full({ date: '2026-10-26', key: sets[0][0], set: sets[0][1], checked: true });
+    out.failedSave = failed.reply.ok === false && failed.reply.message === 'Could not save to this browser (storage full?)' && !failed.reply.celebrations
+      && pcheck('2026-10-26').s[sets[0][0]][sets[0][1]] === true && dayIn(failed.snapshot, '2026-10-26').items[0].sets[0] === true
+      && !JSON.parse(localStorage.getItem(STORE)).plan.checks['2026-10-26'].s[sets[0][0]][sets[0][1]];
     SFX.xp = realCue;
     out.commandsKeepScreen = showing() && count('close') === 0;
 
@@ -155,6 +164,19 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     startPlan(); await wait(400);
     out.startedBack = !!state.plan && count('open') === opens + 1 && showing();
 
+    // a save that fails as today's last set completes the day: the page keeps the whole change, as after its own checkbox (the
+    // day's XP, the daily-hand quest the save completed, the badges), and the next save stores it all
+    dhEnsure(); const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'plan'), getToday(), 0, 9); state.quests.push(card);
+    const todaySets = planDay('2026-10-28').items.flatMap(it => Array.from({ length: it.n }, (_, i) => [it.k, i])), [lastKey, lastSet] = todaySets.pop();
+    for (const [k, i] of todaySets) await command({ date: '2026-10-28', key: k, set: i, checked: true });
+    const xpBefore = totalXP(), lost = await full({ date: '2026-10-28', key: lastKey, set: lastSet, checked: true });
+    const dayAct = state.activities.find(a => a.id === 'plan_2026-10-28'), questAct = state.activities.find(a => a.id === state.questDone[questKey(card)]);
+    out.failedSaveKept = lost.reply.ok === false && lost.reply.message === 'Could not save to this browser (storage full?)' && dayDone('2026-10-28')
+      && dayIn(lost.snapshot, '2026-10-28').status === 'done' && !!dayAct && !!questAct && totalXP() === xpBefore + dayAct.xp + questAct.xp;
+    const badges = JSON.stringify(state.badges); save(); const stored = JSON.parse(localStorage.getItem(STORE));
+    out.failedSaveStoredLater = !!dayAct && !!questAct && stored.plan.checks['2026-10-28'].actId === dayAct.id && stored.activities.some(a => a.id === dayAct.id)
+      && stored.questDone[questKey(card)] === questAct.id && JSON.stringify(stored.badges) === badges;
+
     showLevelUp = realLevelUp;
     return out;
   });
@@ -162,7 +184,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('opening sends a projection of all eight weeks with today selected', r.opened, r);
   for (const [k, v] of Object.entries(r.matchesPage || {})) ok('the projection words it as the page does: ' + k, v, r.matchesPageDetail);
   ok('days carry their kind, status, lock and sets; the current week, no guided session, the program key', r.shape, r);
+  ok('the celebration flies where the page\'s does: the top bar\'s logo', r.target, r);
   ok('toggle ticks a set through planToggle, saves it and answers with the fresh projection', r.tick, r);
+  ok('a tick sends the screen one projection, the one with the reply', r.oneUpdate, r);
   ok('the same toggle again changes nothing and saves nothing', r.repeatTick, r);
   ok('completing a day pays its XP once, with the page\'s message and the celebration in the reply', r.complete, r);
   ok('the celebration is not drawn under the screen; the page plays its sound and buzz after the reply', r.celebrationHeld && r.cuePlayed, r);
@@ -170,7 +194,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('clearing a set of a completed day reopens it and takes the XP back', r.reopen, r);
   ok('a future day is locked', r.locked, r);
   ok('a set that is not in the plan, or a malformed date, is refused', r.refused, r);
-  ok('a failed save is reported and taken back', r.failedSave, r);
+  ok('a failed save is reported as not saved; the page keeps the tick in memory, as after its own checkbox', r.failedSave, r);
   ok('commands never close the screen', r.commandsKeepScreen, r);
   ok('a day selected on the page is followed (revision rises); a plain refresh keeps the screen\'s own', r.followsPage && r.keepsOwn, r);
   ok('guided workout: the screen closes and the page\'s runner opens for that day', r.guided, r);
@@ -182,6 +206,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('leave plan cancelled: the screen comes back', r.leaveKept, r);
   ok('leave plan confirmed: the offers stay on the page, also on a later visit', r.left && r.offersStayWeb, r);
   ok('starting a plan from an offer brings the screen back', r.startedBack, r);
+  ok('a failed save that completes the day keeps the day, its XP and the daily-hand quest together', r.failedSaveKept, r);
+  ok('the next save stores the day, the quest and the badges', r.failedSaveStoredLater, r);
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();

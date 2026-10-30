@@ -32,9 +32,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
-import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanItem
 import com.lifemax.rpg.feature.plan.domain.PlanPageAction
@@ -68,7 +67,7 @@ internal fun PlanDayCard(
     onPage: (PlanPageAction) -> Unit,
 ) {
     val c = LocalPlanColors.current
-    SurfaceCard(padding = PaddingValues(15.dp)) {
+    PlanCard {
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -151,19 +150,15 @@ private fun PlanItemRow(
                 color = c.text,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                lineHeight = 17.sp,
+                lineHeight = 21.sp,
             )
             if (item.optional) PlanTag("optional", Modifier.alignByBaseline(), FontWeight.Bold)
         }
         Text(item.detail, color = c.muted, fontSize = 12.sp, lineHeight = 18.sp)
-        // each box sits where the page puts it, 4 dp in and 9 dp under the text; its 48 dp touch
-        // target reaches into the space around the row, which keeps the page's height
         FlowRow(
-            Modifier.layout { measurable, constraints ->
-                val boxes = measurable.measure(constraints)
-                val trim = 10.dp.roundToPx()
-                layout(boxes.width, boxes.height - trim) { boxes.place(-trim, -trim / 2) }
-            }
+            Modifier.padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item.sets.forEachIndexed { i, saved ->
                 val set = SetRef(day.date, item.key, i)
@@ -179,14 +174,14 @@ private fun PlanItemRow(
             }
         }
         item.value?.let { value ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Field(
                     value.text,
                     value.placeholder,
                     "${value.placeholder}, ${item.title}",
                     enabled = !day.locked,
                     Modifier.width(170.dp),
-                    PaddingValues(horizontal = 10.dp, vertical = 7.dp),
+                    PaddingValues(horizontal = 11.dp, vertical = 8.dp),
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
                 ) {
@@ -209,13 +204,17 @@ private fun PlanItemRow(
             fontWeight = FontWeight(550),
             lineHeight = 16.5.sp,
         )
+        // the page's text area sits on a line of text, which leaves 5 dp under it
         Field(
             item.log.text,
             "e.g. 3×10 @ 120lb, felt strong",
             "Session log, ${item.title}",
             enabled = !day.locked,
-            Modifier.fillMaxWidth().heightIn(min = 53.dp).alpha(if (day.locked) 0.55f else 1f),
-            PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+            Modifier.padding(bottom = 5.dp)
+                .fillMaxWidth()
+                .heightIn(min = 53.dp)
+                .alpha(if (day.locked) 0.55f else 1f),
+            PaddingValues(horizontal = 11.dp, vertical = 9.dp),
             fontSize = 12.5.sp,
             lineHeight = 17.5.sp,
         ) {
@@ -233,8 +232,10 @@ private fun PlanItemRow(
 }
 
 /**
- * A set's box: the page's 20 dp check box in a 48 dp touch target. A box waiting for the page's
- * answer shows the state asked for, faded.
+ * A set's box: the page's 20 dp check box with its margins (4 dp left, 1 top, 3 right, 3 bottom),
+ * so the boxes are 35 dp apart as on the page. Compose widens a small target's touch area to 48 dp,
+ * and a tap between two boxes goes to the nearer one. A box waiting for the page's answer shows the
+ * state asked for, faded.
  */
 @Composable
 private fun SetBox(
@@ -248,7 +249,8 @@ private fun SetBox(
     val anchor = remember { Anchor() }
     val shape = RoundedCornerShape(6.dp)
     Box(
-        Modifier.size(48.dp)
+        Modifier.padding(start = 4.dp, top = 1.dp, end = 3.dp, bottom = 3.dp)
+            .size(20.dp)
             .onPlaced { anchor.coordinates = it }
             .toggleable(
                 checked,
@@ -259,33 +261,31 @@ private fun SetBox(
             ) {
                 onChange(it, anchor.center)
             }
-            .semantics {
+            .clearAndSetSemantics {
                 contentDescription = label
                 if (pending) stateDescription = if (checked) "Ticking" else "Clearing"
-            },
+            }
+            .alpha(if (pending) 0.6f else 1f)
+            .clip(shape)
+            .background(if (checked) c.tickedFill else c.field)
+            .border(1.5.dp, if (checked) c.tickedBorder else c.boxBorder, shape),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            Modifier.size(20.dp)
-                .alpha(if (pending) 0.6f else 1f)
-                .clip(shape)
-                .background(if (checked) c.tickedFill else c.field)
-                .border(1.5.dp, if (checked) c.tickedBorder else c.boxBorder, shape),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (checked)
-                Text(
-                    "✓",
-                    color = CheckInk,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight(800),
-                    lineHeight = 12.sp,
-                )
-        }
+        if (checked)
+            Text(
+                "✓",
+                color = CheckInk,
+                fontSize = 12.sp,
+                fontWeight = FontWeight(800),
+                lineHeight = 12.sp,
+            )
     }
 }
 
-/** A value or session-log field. The page edits it: tapping hands the field over to the page. */
+/**
+ * A value or session-log field. The page edits it: tapping hands the field over to the page. The
+ * [padding] includes the page field's 1 dp border.
+ */
 @Composable
 private fun Field(
     text: String,

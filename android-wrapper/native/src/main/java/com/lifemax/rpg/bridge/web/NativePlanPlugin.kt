@@ -29,7 +29,7 @@ class NativePlanPlugin : ComposeTabPlugin() {
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
-        if (explicitOpen) viewModel.onOpen()
+        if (explicitOpen) viewModel.onOpen() else viewModel.onUpdate()
     }
 
     override fun onReply(reply: JSONObject) {

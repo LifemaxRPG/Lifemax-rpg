@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 
 /** The ACTIVE PLAN card: the program, Leave plan, and the sessions done so far. */
@@ -37,7 +35,7 @@ import com.lifemax.rpg.feature.plan.domain.PlanProjection
 @Composable
 internal fun PlanProgramCard(p: PlanProjection, onLeave: () -> Unit) {
     val c = LocalPlanColors.current
-    SurfaceCard(padding = PaddingValues(15.dp)) {
+    PlanCard {
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

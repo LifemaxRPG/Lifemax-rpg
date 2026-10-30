@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +21,8 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -32,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 import com.lifemax.rpg.feature.plan.domain.PlanRule
 
 /** The program's General rules, folded like the page's details element; [initiallyOpen] or not. */
@@ -44,13 +44,23 @@ internal fun PlanRulesCard(
 ) {
     val c = LocalPlanColors.current
     var open by rememberSaveable { mutableStateOf(initiallyOpen) }
-    SurfaceCard(padding = PaddingValues(15.dp)) {
+    PlanCard {
         Row(
             Modifier.fillMaxWidth()
                 .clickable(role = Role.Button) { open = !open }
                 .semantics {
                     heading()
                     stateDescription = if (open) "Expanded" else "Collapsed"
+                    if (open)
+                        collapse {
+                            open = false
+                            true
+                        }
+                    else
+                        expand {
+                            open = true
+                            true
+                        }
                 },
             horizontalArrangement = Arrangement.spacedBy(7.dp),
             verticalAlignment = Alignment.CenterVertically,

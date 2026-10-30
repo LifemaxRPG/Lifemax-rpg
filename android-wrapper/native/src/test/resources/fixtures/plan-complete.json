@@ -1324,12 +1324,12 @@
         true
        ],
        "value": {
-        "text": "",
+        "text": "65 lb",
         "placeholder": "Weight used",
         "last": ""
        },
        "log": {
-        "text": "",
+        "text": "Slow on the way down",
         "previous": ""
        }
       },
@@ -1484,7 +1484,7 @@
        "value": null,
        "log": {
         "text": "",
-        "previous": ""
+        "previous": "Last time: Slow on the way down"
        }
       },
       {
@@ -1616,11 +1616,11 @@
        "value": {
         "text": "",
         "placeholder": "Weight used",
-        "last": ""
+        "last": "last: 65 lb"
        },
        "log": {
         "text": "",
-        "previous": ""
+        "previous": "Last time: Slow on the way down"
        }
       },
       {
@@ -1790,11 +1790,11 @@
        "value": {
         "text": "",
         "placeholder": "Minutes done",
-        "last": ""
+        "last": "last: 65 lb"
        },
        "log": {
         "text": "",
-        "previous": ""
+        "previous": "Last time: Slow on the way down"
        }
       },
       {
@@ -1959,11 +1959,11 @@
        "value": {
         "text": "",
         "placeholder": "Weight used",
-        "last": ""
+        "last": "last: 65 lb"
        },
        "log": {
         "text": "",
-        "previous": ""
+        "previous": "Last time: Slow on the way down"
        }
       },
       {
@@ -2250,11 +2250,11 @@
        "value": {
         "text": "70 lb",
         "placeholder": "Weight used",
-        "last": ""
+        "last": "last: 65 lb"
        },
        "log": {
         "text": "Felt strong, added 5 lb",
-        "previous": ""
+        "previous": "Previous: Slow on the way down"
        }
       },
       {
@@ -6955,6 +6955,10 @@
   ]
  },
  "reducedMotion": false,
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

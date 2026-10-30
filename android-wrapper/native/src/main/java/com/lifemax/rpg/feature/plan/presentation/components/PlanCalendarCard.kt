@@ -29,8 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -40,12 +46,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanKeyTag
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.PlanWeek
+import kotlin.math.ceil
 import kotlin.math.hypot
+import kotlin.math.max
 
 /**
  * The calendar card: the program's hero and sessions count, the eight weeks, the selected week's
@@ -64,7 +73,7 @@ internal fun PlanCalendarCard(
     val week = p.weeks[selectedWeek]
     Column(
         Modifier.fillMaxWidth()
-            .boxShadow(CardShadow, 65.dp, 25.dp, 24.dp)
+            .boxShadow(CalendarShadow, 65.dp, shape, 24.dp)
             .clip(shape)
             .background(c.panel)
             .border(1.dp, c.calendarBorder, shape)
@@ -73,6 +82,7 @@ internal fun PlanCalendarCard(
         HorizontalDivider(color = c.lineSoft)
         Journey()
         LazyRow(
+            Modifier.fadeOutRight(),
             contentPadding = PaddingValues(start = 16.dp, top = 5.dp, end = 16.dp, bottom = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -85,6 +95,7 @@ internal fun PlanCalendarCard(
         // a new week's days start from its Monday, as the page draws them
         key(week.number) {
             LazyRow(
+                Modifier.fadeOutRight(),
                 contentPadding =
                     PaddingValues(start = 16.dp, top = 5.dp, end = 16.dp, bottom = 22.dp),
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
@@ -158,13 +169,15 @@ private fun Hero(p: PlanProjection) {
     }
 }
 
-/** The round "done/total SESSIONS" badge, lit from its upper left like the page's. */
+/**
+ * The round "done/total SESSIONS" badge, lit from its upper left like the page's. It is 72 dp
+ * across, and grows with large text so the count stays inside the circle.
+ */
 @Composable
 private fun SessionsCount(done: Int, total: Int) {
     val c = LocalPlanColors.current
     Column(
-        Modifier.size(72.dp)
-            .boxShadow(CountShadow, 22.dp, 36.dp, 8.dp)
+        Modifier.boxShadow(CountShadow, 22.dp, CircleShape, 8.dp)
             .drawWithCache {
                 val light = Offset(size.width * 0.35f, size.height * 0.25f)
                 val glow =
@@ -182,11 +195,17 @@ private fun SessionsCount(done: Int, total: Int) {
                     drawCircle(c.countBorder, size.minDimension / 2 - 0.5.dp.toPx(), style = edge)
                 }
             }
-            .semantics(mergeDescendants = true) {
-                contentDescription = "$done of $total sessions done"
+            .clearAndSetSemantics { contentDescription = "$done of $total sessions done" }
+            .layout { measurable, constraints ->
+                val count = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+                val fit = hypot(count.width.toFloat(), count.height.toFloat())
+                val side = max(72.dp.roundToPx(), ceil(fit).toInt())
+                layout(side, side) {
+                    count.place((side - count.width) / 2, (side - count.height) / 2)
+                }
             },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             buildAnnotatedString {
@@ -288,7 +307,7 @@ private fun DailyMissions(week: PlanWeek) {
         ) {
             Box(
                 Modifier.size(6.dp)
-                    .boxShadow(c.accent, 9.dp, 3.dp)
+                    .boxShadow(c.accent, 9.dp, CircleShape)
                     .background(c.accent, CircleShape)
             )
             Text(
@@ -302,6 +321,16 @@ private fun DailyMissions(week: PlanWeek) {
         }
     }
 }
+
+/** The page's mask over the week and day strips: the last 3% of the width fades out. */
+private fun Modifier.fadeOutRight(): Modifier =
+    graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen).drawWithCache {
+        val mask = Brush.horizontalGradient(0.97f to Color.Black, 1f to Color.Transparent)
+        onDrawWithContent {
+            drawContent()
+            drawRect(mask, blendMode = BlendMode.DstIn)
+        }
+    }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

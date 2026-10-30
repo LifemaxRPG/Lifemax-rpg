@@ -48,6 +48,7 @@ const target = path.resolve(root, '../android-wrapper/native/src/test/resources'
     res.midweek = NativePlanTabProjection.snapshot();
     begin('athlete', 'athlete_foundation8', '2026-10-12', '2026-10-12');
     ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-19', '2026-10-21', '2026-10-23', '2026-10-26', '2026-10-28'].forEach(d => tick(d));
+    planVal('2026-10-21', 'E1', '65 lb'); planLog('2026-10-21', 'E1', 'Slow on the way down');
     planVal('2026-10-28', 'E1', '70 lb'); planLog('2026-10-28', 'E1', 'Felt strong, added 5 lb');
     res.complete = NativePlanTabProjection.snapshot();
     begin('scholar', 'scholar_light8', '2026-10-26', '2026-10-27');

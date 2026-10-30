@@ -6,6 +6,7 @@ import com.lifemax.rpg.feature.plan.data.toPlanReply
 import com.lifemax.rpg.feature.plan.data.toToggleJson
 import com.lifemax.rpg.feature.plan.domain.Celebration
 import com.lifemax.rpg.feature.plan.domain.DayStatus
+import com.lifemax.rpg.feature.plan.domain.PagePoint
 import com.lifemax.rpg.feature.plan.domain.PlanCommands
 import com.lifemax.rpg.feature.plan.domain.PlanPageAction
 import com.lifemax.rpg.feature.plan.domain.PlanReply
@@ -28,11 +29,14 @@ class PlanTest {
     private val today = "2026-10-28"
     private val lastSet = SetRef(today, "E0", 2)
 
+    /** Day [index] (Monday first) of week [week] of a projection. */
+    private fun JSONObject.day(week: Int, index: Int): JSONObject =
+        getJSONArray("weeks").getJSONObject(week).getJSONArray("days").getJSONObject(index)
+
     /** The fixture as the page would send it after ticking [set]. */
     private fun ticked(set: SetRef, sequence: Long): JSONObject {
         val json = fixture().put("sequence", sequence)
-        val day = json.getJSONArray("weeks").getJSONObject(0).getJSONArray("days").getJSONObject(2)
-        val items = day.getJSONArray("items")
+        val items = json.day(0, 2).getJSONArray("items")
         (0 until items.length())
             .map(items::getJSONObject)
             .first { it.getString("key") == set.item }
@@ -49,11 +53,13 @@ class PlanTest {
         }
     }
 
-    private fun setUp(): Triple<WebPlanRepository, PlanViewModel, Recorder> {
+    private fun setUp(
+        nowMs: () -> Long = { 0L }
+    ): Triple<WebPlanRepository, PlanViewModel, Recorder> {
         val repo = WebPlanRepository().apply { accept(fixture(), true) }
         val commands = Recorder()
         var n = 0
-        val vm = PlanViewModel(repo, commands) { "r-${++n}" }
+        val vm = PlanViewModel(repo, commands, { "r-${++n}" }, nowMs)
         vm.adopt(repo.state.value!!)
         return Triple(repo, vm, commands)
     }
@@ -84,6 +90,7 @@ class PlanTest {
         assertTrue(p.day("2026-10-31")!!.locked)
         assertEquals(4, p.key.size)
         assertTrue(p.progression.isNotEmpty())
+        assertEquals(PagePoint(32f, 32.5f), p.celebrationTarget)
     }
 
     @Test
@@ -128,6 +135,21 @@ class PlanTest {
                         .put("status", "glorious")
                 },
                 fixture().also { it.remove("rules") },
+                fixture().put("protocol", 2),
+                fixture().also {
+                    it.getJSONArray("weeks").getJSONObject(0).getJSONArray("days").remove(6)
+                },
+                fixture().also { it.day(1, 0).put("date", "2026-10-26") },
+                fixture().also {
+                    val items = it.day(0, 2).getJSONArray("items")
+                    items.getJSONObject(1).put("key", items.getJSONObject(0).getString("key"))
+                },
+                fixture().also {
+                    it.day(0, 2).getJSONArray("items").getJSONObject(0).put("sets", JSONArray())
+                },
+                fixture().also { it.getJSONArray("weeks").getJSONObject(0).put("done", 7) },
+                fixture().also { it.getJSONObject("tokens").remove("panel3") },
+                fixture().also { it.remove("celebrationTarget") },
             )
         broken.forEachIndexed { i, json ->
             assertThrows(Exception::class.java) { repo.accept(json.put("sequence", 2L + i)) }
@@ -143,6 +165,7 @@ class PlanTest {
         assertEquals(2, json.getInt("set"))
         assertTrue(json.getBoolean("checked"))
         assertEquals("value" to "$today/E1", PlanPageAction.EditValue(today, "E1").toEvent())
+        assertEquals("sessionLog" to "$today/E1", PlanPageAction.EditLog(today, "E1").toEvent())
         assertEquals("guided" to today, PlanPageAction.Guided(today).toEvent())
         assertEquals("leave" to "", PlanPageAction.Leave.toEvent())
 
@@ -243,20 +266,48 @@ class PlanTest {
     fun aRefusedTickFallsBackToWhatThePageHolds() {
         val (repo, vm, _) = setUp()
         vm.toggle(lastSet, true)
-        vm.onReply(
-            reply(
-                "r-1",
-                ok = false,
-                message = "Could not save to this browser (storage full?). Nothing was changed.",
-            )
-        )
+        vm.onReply(reply("r-1", ok = false, message = "Locked until the day arrives."))
         assertTrue(vm.ui.value.pending.isEmpty())
         val day = vm.ui.value.day(repo.state.value!!)
         assertEquals(false, day.items.first { it.key == "E0" }.sets[2])
+        assertEquals("Locked until the day arrives.", vm.ui.value.feedback!!.message)
+    }
+
+    @Test
+    fun aFailedSaveShowsTheTickThePageKeptAndSaysNothingWasSaved() {
+        val (repo, vm, _) = setUp()
+        vm.toggle(lastSet, true)
+        repo.accept(ticked(lastSet, 2))
+        vm.onReply(
+            reply("r-1", ok = false, message = "Could not save to this browser (storage full?)")
+        )
+        assertTrue(vm.ui.value.pending.isEmpty())
+        val day = vm.ui.value.day(repo.state.value!!)
+        assertEquals(true, day.items.first { it.key == "E0" }.sets[2])
         assertEquals(
-            "Could not save to this browser (storage full?). Nothing was changed.",
+            "Could not save to this browser (storage full?)",
             vm.ui.value.feedback!!.message,
         )
+    }
+
+    @Test
+    fun aBoxWhoseAnswerWasLostShowsWhatThePageHoldsOnALaterUpdate() {
+        var now = 0L
+        val (repo, vm, commands) = setUp { now }
+        vm.toggle(lastSet, true)
+        now = 1_000
+        repo.accept(fixture().put("sequence", 2))
+        vm.onUpdate()
+        assertEquals(mapOf(lastSet to true), vm.ui.value.pending)
+        now = 6_000
+        repo.accept(fixture().put("sequence", 3))
+        vm.onUpdate()
+        assertTrue(vm.ui.value.pending.isEmpty())
+        vm.toggle(lastSet, true)
+        assertEquals(listOf("r-1", "r-2"), commands.sent.map { it.first })
+        // the lost answer, arriving after all, does not settle the new tap
+        vm.onReply(reply("r-1"))
+        assertEquals(mapOf(lastSet to true), vm.ui.value.pending)
     }
 
     @Test

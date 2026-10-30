@@ -85,67 +85,74 @@ fun PlanScreen(
     list: LazyListState = rememberLazyListState(),
     rulesOpen: Boolean = false,
 ) {
-    val colors = remember(p.tokens, p.light) { PlanColors(p.tokens, p.light) }
     val day = ui.day(p)
     // where the last box was tapped: the page's celebration starts there too
     var lastTap by remember { mutableStateOf(Offset.Unspecified) }
-    LifeMaxTheme(p.tokens, p.light) {
+    PlanTheme(p.tokens, p.light) {
+        Box(Modifier.fillMaxSize().background(LocalPlanColors.current.bg)) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                state = list,
+                contentPadding =
+                    PaddingValues(
+                        start = 12.dp,
+                        end = 12.dp,
+                        top = topInsetDp.dp + 16.dp,
+                        bottom = bottomInsetDp.dp + 24.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item("head") { PlanHead() }
+                item("launcher") {
+                    PlanLauncherCard(
+                        p.guidedSession ?: day.guided,
+                        resume = p.guidedSession != null,
+                    ) {
+                        actions.page(PlanPageAction.Guided(day.date))
+                    }
+                }
+                item("program") { PlanProgramCard(p) { actions.page(PlanPageAction.Leave) } }
+                item("calendar") { PlanCalendarCard(p, day, actions.selectWeek, actions.selectDay) }
+                item("day") {
+                    PlanDayCard(
+                        day,
+                        ui.pending,
+                        onToggle = { set, checked, at ->
+                            lastTap = at
+                            actions.toggle(set, checked)
+                        },
+                        onPage = actions.page,
+                    )
+                }
+                item("rules") { PlanRulesCard(p.rules, p.progression, rulesOpen) }
+            }
+            ui.feedback?.let {
+                PlanFeedbackLayer(
+                    it,
+                    lastTap,
+                    p.celebrationTarget,
+                    bottomInsetDp,
+                    p.reducedMotion,
+                    actions.feedbackShown,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The page's palette and type for the plan view: its theme tokens, its colours, CSS line spacing.
+ */
+@Composable
+internal fun PlanTheme(tokens: Map<String, Long>, light: Boolean, content: @Composable () -> Unit) {
+    val colors = remember(tokens, light) { PlanColors(tokens, light) }
+    LifeMaxTheme(tokens, light) {
         CompositionLocalProvider(
             LocalPlanColors provides colors,
             LocalTextStyle provides
                 LocalTextStyle.current.copy(letterSpacing = 0.sp, lineHeightStyle = CssLines),
-        ) {
-            Box(Modifier.fillMaxSize().background(colors.bg)) {
-                LazyColumn(
-                    Modifier.fillMaxSize(),
-                    state = list,
-                    contentPadding =
-                        PaddingValues(
-                            start = 12.dp,
-                            end = 12.dp,
-                            top = topInsetDp.dp + 16.dp,
-                            bottom = bottomInsetDp.dp + 24.dp,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    item("head") { PlanHead() }
-                    item("launcher") {
-                        PlanLauncherCard(
-                            p.guidedSession ?: day.guided,
-                            resume = p.guidedSession != null,
-                        ) {
-                            actions.page(PlanPageAction.Guided(day.date))
-                        }
-                    }
-                    item("program") { PlanProgramCard(p) { actions.page(PlanPageAction.Leave) } }
-                    item("calendar") {
-                        PlanCalendarCard(p, day, actions.selectWeek, actions.selectDay)
-                    }
-                    item("day") {
-                        PlanDayCard(
-                            day,
-                            ui.pending,
-                            onToggle = { set, checked, at ->
-                                lastTap = at
-                                actions.toggle(set, checked)
-                            },
-                            onPage = actions.page,
-                        )
-                    }
-                    item("rules") { PlanRulesCard(p.rules, p.progression, rulesOpen) }
-                }
-                ui.feedback?.let {
-                    PlanFeedbackLayer(
-                        it,
-                        lastTap,
-                        topInsetDp,
-                        bottomInsetDp,
-                        p.reducedMotion,
-                        actions.feedbackShown,
-                    )
-                }
-            }
-        }
+            content = content,
+        )
     }
 }
 

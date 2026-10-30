@@ -9,7 +9,9 @@
 
   const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }); // read on the CPU, no GPU round trip
 
-  /** a CSS colour as ARGB, which is what the native theme takes (translucent only where the colour is, as accent-dim) */
+  /** a CSS colour as ARGB, which is what the native theme takes (translucent only where the colour is, as accent-dim). The canvas
+      stores colours premultiplied, so a translucent one comes back with its red, green and blue a few steps off (#7c9cff22 reads
+      0x22809eff), which no one can see once it is drawn at that alpha. */
   function color(v) {
     probe.clearRect(0, 0, 1, 1);
     probe.fillStyle = "#000"; // what a colour the canvas cannot parse reads as
@@ -104,6 +106,7 @@
         }
         reply = Object.assign({ command: e && e.command, requestId: (e && e.requestId) || "" }, reply);
         if (active) {
+          clearTimeout(queued); // a refresh the command's renders asked for: the projection sent with the reply carries them
           try {
             await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
           } catch (err) {

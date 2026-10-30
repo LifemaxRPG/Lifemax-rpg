@@ -6955,6 +6955,10 @@
   ]
  },
  "reducedMotion": false,
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

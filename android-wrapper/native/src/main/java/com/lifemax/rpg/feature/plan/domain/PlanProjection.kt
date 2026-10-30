@@ -75,6 +75,9 @@ data class PlanKeyTag(val icon: String, val label: String)
 /** A line of the General rules, with its bold lead (empty when it has none). */
 data class PlanRule(val lead: String, val text: String)
 
+/** A point of the page in CSS pixels from its top left, which are dp on the phone. */
+data class PagePoint(val x: Float, val y: Float)
+
 data class PlanProjection(
     val session: String,
     val sequence: Long,
@@ -93,6 +96,8 @@ data class PlanProjection(
     val rules: List<PlanRule>,
     val progression: List<PlanRule>,
     val reducedMotion: Boolean,
+    /** Where the page's XP orbs fly: the top bar's logo, which the shared bar draws there too. */
+    val celebrationTarget: PagePoint,
     val tokens: Map<String, Long>,
     val light: Boolean,
 ) {
