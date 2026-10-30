@@ -1,0 +1,12 @@
+// Local sandbox only: read Maven Central through Google's mirror, which is not rate limited here.
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+def swap = { repos ->
+    repos.all { r ->
+        if (r instanceof MavenArtifactRepository && r.url.toString().startsWith('https://repo.maven.apache.org/maven2')) {
+            r.url = mirror
+        }
+    }
+}
+beforeSettings { s -> swap(s.pluginManagement.repositories) }
+settingsEvaluated { s -> swap(s.pluginManagement.repositories); swap(s.dependencyResolutionManagement.repositories) }
+allprojects { swap(buildscript.repositories); swap(repositories) }
