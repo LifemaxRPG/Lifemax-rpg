@@ -54,7 +54,7 @@ android-wrapper/
 docs/architecture/
   CONTRACT.md
   MIGRATION.md
-  BRIDGE_CATALOG.json              add concrete schemas after source inventory
+  BRIDGE_CATALOG.json              one entry per native destination (plugin, web module, writes, delegated actions)
   decisions/
 ```
 

@@ -1,32 +1,129 @@
 {
-  "catalogVersion": 1,
-  "feature": "character",
-  "status": "native-read-only-preview",
-  "protocol": 1,
-  "nativePlugin": "NativeCharacter",
-  "capabilities": ["character.projection.v1"],
-  "owner": "web-core-gameplay",
-  "writes": [],
-  "readContract": {
+ "catalogVersion": 2,
+ "note": "One entry per native destination. 'writes' lists native commands that change gameplay data; hybrid entries delegate to the web handlers named in 'delegatedInteractions' (CONTRACT A14-A15 gap, see MIGRATION.md).",
+ "features": [
+  {
+   "feature": "character",
+   "status": "native-read-only-preview",
+   "protocol": 1,
+   "nativePlugin": "NativeCharacter",
+   "capabilities": [
+    "character.projection.v1"
+   ],
+   "owner": "web-core-gameplay",
+   "writes": [],
+   "readContract": {
     "snapshotDto": "feature/character/domain/CharacterProjection.kt",
     "decoder": "feature/character/data/WebCharacterRepository.kt",
     "fixture": "android-wrapper/native/src/test/resources/character-projection.json",
     "ordering": "webSessionId and increasing sequence; a new session may bind only through explicit open",
     "maxEncodedCharacters": 2000000,
     "requiredAttributes": [
-      "physique",
-      "endurance",
-      "intelligence",
-      "business",
-      "social",
-      "discipline",
-      "adventure",
-      "wellbeing"
+     "physique",
+     "endurance",
+     "intelligence",
+     "business",
+     "social",
+     "discipline",
+     "adventure",
+     "wellbeing"
     ],
     "invalidation": "renderCharacterPage changes, host resume, foreground return, and 15-second refresh while visible",
     "persistence": "no native product writes, no durable revision or epoch inserted"
+   },
+   "delegatedInteractions": [
+    "openAttr",
+    "openLuck",
+    "classic benchmark form"
+   ],
+   "rollout": "Classic is default; Native Character preview is opt-in",
+   "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
   },
-  "delegatedInteractions": ["openAttr", "openLuck", "classic benchmark form"],
-  "rollout": "Classic is default; Native Character preview is opt-in",
-  "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
+  {
+   "feature": "food",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeNutrition",
+   "owner": "web-food-engine",
+   "pluginSource": "bridge/web/NativeNutritionPlugin.kt",
+   "screenSource": "feature/food/presentation/FoodScreen.kt",
+   "webModule": "50-native-nutrition.js",
+   "methods": [
+    "capabilities",
+    "open",
+    "update",
+    "close"
+   ],
+   "events": [
+    "action",
+    "nav-action",
+    "closed"
+   ],
+   "writes": [
+    "fv2Log",
+    "fv2AddWater",
+    "fv2CopySlot",
+    "sdLogMeal",
+    "setMealsDay"
+   ],
+   "delegatedInteractions": [
+    "fv2Open",
+    "sdOpenSwap"
+   ],
+   "mutationsGate": "delegates to existing web handlers; no native receipts yet (A14-A15 gap)",
+   "rollout": "opt-in under Settings, Appearance",
+   "canonicalLayout": false
+  },
+  {
+   "feature": "overview",
+   "status": "native-shell-over-live-web",
+   "nativePlugin": "NativeOverview",
+   "owner": "web-overview",
+   "pluginSource": "bridge/web/NativeOverviewPlugin.kt",
+   "shellSource": "app/shell/LiveOverviewShell.kt",
+   "webModule": "50-native-overview.js",
+   "methods": [
+    "capabilities",
+    "open",
+    "update",
+    "close",
+    "timing",
+    "setTimingToast"
+   ],
+   "events": [
+    "activate",
+    "closed"
+   ],
+   "writes": [],
+   "delegatedInteractions": [
+    "every tab and room action stays in the live page"
+   ],
+   "rollout": "default; Classic available in Settings",
+   "canonicalLayout": true
+  },
+  {
+   "feature": "cash",
+   "status": "native-activity",
+   "nativePlugin": "NativeCash",
+   "owner": "web-cash",
+   "pluginSource": "bridge/web/NativeCashPlugin.kt",
+   "screenSource": "feature/cash/CashActivity.kt",
+   "webModule": "50-native-cash.js",
+   "writes": [
+    "deposit",
+    "withdraw",
+    "transactions via shared money commands"
+   ],
+   "mutationsGate": "acknowledged after shared web state saves; session-local dedupe only (not restart-safe, A14-A15 gap)",
+   "documentedException": "separate activity (A04)",
+   "canonicalLayout": false
+  },
+  {
+   "feature": "shell",
+   "status": "native",
+   "source": "app/shell/ChromeHost.kt",
+   "owner": "native",
+   "purpose": "shared top/bottom bars and make-before-break hand-over between native tabs (A23, ADR 0002)",
+   "writes": []
+  }
+ ]
 }
