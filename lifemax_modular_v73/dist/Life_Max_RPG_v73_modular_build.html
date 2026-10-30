@@ -3784,7 +3784,7 @@ html.reduce-motion .fs-icon::after,html.reduce-motion .fuel-pixel-art .steam{ani
 .hs-list small{display:block;color:var(--muted);font-size:12px}.hs-list span{font-weight:650;white-space:nowrap}
 .hs-spark{width:100%;height:40px;margin:6px 0}
 
-.updpop{position:fixed;inset:0;z-index:5000;background:rgba(4,6,12,.62);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px}
+.updpop,.lmdl-ask{position:fixed;inset:0;z-index:5000;background:rgba(4,6,12,.62);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px}
 .updpop-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:360px;width:100%;box-shadow:0 12px 40px #0009}
 .updpop-card h3{margin:0 0 8px}.updpop-card p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.45}
 .updpop-btns{display:flex;gap:10px;justify-content:flex-end}
@@ -4022,8 +4022,8 @@ html.light-theme .jx-bignum{background:linear-gradient(180deg,var(--text),var(--
 .jl-card h3{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.03em}.jl-card p{margin:0 0 18px;font-size:13.5px;line-height:1.5;color:var(--muted)}
 .jl-err{min-height:18px;margin-top:10px;font-size:12.5px;color:var(--bad)}
 
-/* v133 · over-the-air update pill */
-.lmaweb-pill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + 14px);z-index:60;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:99px;background:rgba(22,25,34,.96);border:1px solid #ffffff22;box-shadow:0 12px 30px -10px #000a;font-size:13.5px;font-weight:600;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+/* v133 · the small pill above the bottom bar (update ready, no backup yet) */
+.lmaweb-pill{position:fixed;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);box-sizing:border-box;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);z-index:60;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:99px;background:rgba(22,25,34,.96);border:1px solid #ffffff22;box-shadow:0 12px 30px -10px #000a;font-size:13.5px;font-weight:600;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .lmaweb-pill button{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;color:#fff;background:var(--accent)}
 .lmaweb-pill button[data-w=x]{background:#ffffff14;padding:7px 10px;color:var(--muted)}
 .lmv-help{max-height:42vh;overflow:auto;margin:6px 0;padding-right:2px}.lmv-hcat{margin:10px 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.lmv-help .lmv-chips{flex-wrap:wrap}
@@ -4552,7 +4552,7 @@ html.light-theme .sd-more footer .pri{color:#fff}
             <div class="field full"><label>Secondary attribute (optional)</label><select id="secondaryAttr"><option value="">No secondary attribute</option></select></div>
             <div class="field full"><label>Notes / evidence (optional)</label><textarea id="activityNotes" placeholder="What did you accomplish? Any result worth remembering?"></textarea></div>
           </div><div class="note" style="margin:15px 0">XP is a game-design reward, not a scientific measure of your worth. You can edit activity rules and XP values at any time.</div><button class="btn" style="width:100%" type="submit">✦ Award XP & save activity</button></form></div>
-          <div class="grid" style="align-content:start;gap:14px"><div class="card"><h3>XP preview</h3><div style="display:flex;align-items:baseline;gap:8px"><span class="statvalue" id="previewXP">25</span><span class="muted">estimated total XP</span></div><p class="muted" style="font-size:12px">30 min = base XP. Duration scales up to 3× at 90+ min. Quality multiplies on top. Repeating the same activity type 3+ times today reduces the award.</p><div id="previewSplit" class="split-preview"></div><div class="xpbar" style="margin-top:16px"><div class="xpfill" id="previewBar" style="width:45%"></div></div></div><div class="card"><h3>Quick logging tips</h3><div class="minirow"><span>Log real work</span><small>If you did not do it, do not log it</small></div><div class="minirow"><span>Keep it fast</span><small>Seconds, not essays</small></div><div class="minirow"><span>Recovery is training</span><small>Only when you actually recover</small></div><div class="minirow"><span>Watch decay</span><small>Idle attributes lose XP</small></div></div></div>
+          <div class="grid" style="align-content:start;gap:14px"><div class="card"><h3>XP preview</h3><div style="display:flex;align-items:baseline;gap:8px"><span class="statvalue" id="previewXP">25</span><span class="muted">XP awarded on save</span></div><div id="previewWhy" class="muted" style="font-size:12px" aria-live="polite"></div><p class="muted" style="font-size:12px"><span id="durationRules"></span> Quality multiplies on top. Repeating the same activity type 3+ times today reduces the award.</p><div id="previewSplit" class="split-preview"></div><div class="xpbar" style="margin-top:16px"><div class="xpfill" id="previewBar" style="width:45%"></div></div></div><div class="card"><h3>Quick logging tips</h3><div class="minirow"><span>Log real work</span><small>If you did not do it, do not log it</small></div><div class="minirow"><span>Keep it fast</span><small>Seconds, not essays</small></div><div class="minirow"><span>Recovery is training</span><small>Only when you actually recover</small></div><div class="minirow"><span>Watch decay</span><small>Idle attributes lose XP</small></div></div></div>
         </div>
       </section>
       <section id="view-quests" class="view quest-os">
@@ -4725,6 +4725,8 @@ html.light-theme .sd-more footer .pri{color:#fff}
           <div class="settingsline" id="nativeOverviewSetting"><div style="flex:1"><strong>Native Overview</strong><div id="nativeOverviewHint" class="muted" style="font-size:12px">Use the Android Overview screen. Turn off to return to the classic Overview.</div></div><input id="nativeOverviewToggle" type="checkbox" class="check" onchange="setNativeOverviewEnabled(this.checked)" aria-label="Native Overview"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Character preview</strong><div class="muted" style="font-size:12px">Native cards and charts. Logging and edits use their existing screens. Turn off for Classic Character.</div></div><input id="nativeCharacterToggle" type="checkbox" class="check" onchange="setNativeCharacterEnabled(this.checked)" aria-label="Native Character preview"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Log activity (beta)</strong><div class="muted" style="font-size:12px">The native Log screen. Saving uses the same rules and save as the classic form. Turn off for the classic form.</div></div><input id="nativeLogToggle" type="checkbox" class="check" onchange="setNativeLogEnabled(this.checked)" aria-label="Native Log activity (beta)"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Native Workout plan (beta)</strong><div class="muted" style="font-size:12px">The native Workout plan screen. Ticking a set uses the same rules and save as the classic plan; the guided workout and editing open the classic page. Turn off for the classic plan.</div></div><input id="nativePlanToggle" type="checkbox" class="check" onchange="setNativePlanEnabled(this.checked)" aria-label="Native Workout plan (beta)"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Native Life Director (beta)</strong><div class="muted" style="font-size:12px">The native Today screen: the dial, the day strip and the running order. Sessions, sheets and the other sections open in the classic Life Director. Turn off for the classic screen.</div></div><input id="nativeDirectorToggle" type="checkbox" class="check" onchange="setNativeDirectorEnabled(this.checked)" aria-label="Native Life Director (beta)"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="tabsCard">
           <h3>Bottom bar</h3>
@@ -4973,33 +4975,37 @@ const ecoDayKey=n=>new Date(n*864e5).toISOString().slice(0,10);
 function ecoActsOn(day){return state.activities.filter(a=>activityDate(a)===day)}
 /* the duration curve: 30 min = 1x, 60 min = 2x, 120 min+ = 3x; under 5 minutes earns nothing */
 function ecoDur(dur){dur=Number(dur)||0;return dur<ECO.minMin?0:dur<=60?dur/30:Math.min(3,2+(dur-60)/60)}
+/* the same curve in words, for the web form and the native Log */
+const ECO_DURATION_RULES='30 min = base XP, up to 3× at 120 min. Under '+ECO.minMin+' min earns nothing.';
 /* a day's XP counted toward the cap (epic quests are exempt) */
-function ecoDayXP(day){return ecoActsOn(day).reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
+function ecoDayXP(day,acts=ecoActsOn(day)){return acts.reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
 function ecoRestedPeek(x){const pool=Number(state.restedXP)||0;return pool>0&&x>0?x+Math.min(pool,Math.round(x*ECO.restedBonus)):x}
 function ecoRestedTake(x){
  const pool=Number(state.restedXP)||0;if(pool<=0||x<=0)return x;
  const b=Math.min(pool,Math.round(x*ECO.restedBonus));state.restedXP=pool-b;return x+b;
 }
-/* soft cap halves what lands above 180, hard cap stops at 240 */
-function ecoCap(x,day){
- if(x<=0)return 0;
- const t=ecoDayXP(day);if(t>=ECO.hardCap)return 0;
+/* soft cap halves what lands above 180, hard cap stops at 240; t is the day's XP so far */
+function ecoCap(x,day,t=ecoDayXP(day)){
+ if(x<=0||t>=ECO.hardCap)return 0;
  let out=x;
  if(t+x>ECO.softCap){const over=t+x-Math.max(ECO.softCap,t);out=x-over+Math.round(over*.5)}
  return Math.max(0,Math.min(out,ECO.hardCap-t));
 }
-/* everything that earns XP comes through here: returns {xp, msg} */
+/* everything that earns XP comes through here: returns {xp, msg}. msg says why xp is not simply total: the refusal when
+   xp is 0, otherwise each rule that changed it, joined by ' · ' (empty when none did) */
 function ecoAward(type,total,dur,o){
  o=o||{};const day=o.day||getToday();
  if(!(total>0))return {xp:0,msg:'Add at least '+ECO.minMin+' minutes to earn XP'};
- const same=ecoActsOn(day).filter(a=>a.type===type).length;
+ const acts=ecoActsOn(day),same=acts.filter(a=>a.type===type).length;
  const factor=same<ECO.maxPerType-1?1:same===ECO.maxPerType-1?.5:0;
  if(!factor)return {xp:0,msg:'Daily XP limit reached for this activity type'};
- if(o.manual){const mins=ecoActsOn(day).filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
+ if(o.manual){const mins=acts.filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
+ const why=factor<1?['Last of this type today: half XP']:[];
  let x=Math.max(1,Math.round(total*factor));
- if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar'))x=Math.round(x*1.1);
- x=o.peek?ecoRestedPeek(x):ecoRestedTake(x);x=ecoCap(x,day);
- return x>0?{xp:x,msg:''}:{xp:0,msg:'Daily XP cap reached'};
+ if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar')){const s=Math.round(x*1.1);if(s>x)why.push(ECO_PERKS.scholar[0]+' +'+(s-x));x=s}
+ const r=o.peek?ecoRestedPeek(x):ecoRestedTake(x);if(r>x)why.push('Rested +'+(r-x));
+ const t=ecoDayXP(day,acts);x=ecoCap(r,day,t);if(x>0&&x<r)why.push(t+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
+ return x>0?{xp:x,msg:why.join(' · ')}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
 function ecoQuestXP(q){
@@ -5136,11 +5142,42 @@ function seedReadingList(){
  state.mediaItems.push(...additions);
  state.mediaSeededV1=true;
 }
-function freshState(){return {name:'The Life Architect',build:'The Life Architect',classId:null,activities:[],attrXP:Object.fromEntries(ATTRS.map(a=>[a.id,0])),skillXP:{},quests:JSON.parse(JSON.stringify(defaultQuests)),questDone:{},benchmarks:[],mediaItems:[],customRules:{},tutorialDone:false,tipsSeen:{},created:new Date().toISOString()}}
+/* The save's format version. load() brings an older save up to it with migrateSave(). A save from a newer build (an APK or
+   web update that was rolled back) is never migrated or written: this build shows it read-only until that build is back. */
+const SAVE_SCHEMA=1;
+/* Why the core save must not be written right now, in words for the owner ('' when it may be). writeSave() refuses while it is
+   set and says so once; only a whole-save replacement (import, reset, delete all) clears it. */
+let saveReadOnly='',saveReadOnlyTold=false;
+function freshState(){return {schema:SAVE_SCHEMA,name:'The Life Architect',build:'The Life Architect',classId:null,activities:[],attrXP:Object.fromEntries(ATTRS.map(a=>[a.id,0])),skillXP:{},quests:JSON.parse(JSON.stringify(defaultQuests)),questDone:{},benchmarks:[],mediaItems:[],customRules:{},tutorialDone:false,tipsSeen:{},created:new Date().toISOString()}}
 function setLightMode(enabled){document.documentElement.classList.toggle('light-theme',!!enabled);try{localStorage.setItem('lifeMaxTheme',enabled?'light':'dark')}catch(e){}const toggle=document.getElementById('lightModeToggle');if(toggle)toggle.checked=!!enabled;toast(enabled?'Light mode enabled':'Dark mode enabled')}
 function initTheme(){let theme='dark';try{theme=localStorage.getItem('lifeMaxTheme')||'dark'}catch(e){}document.documentElement.classList.toggle('light-theme',theme==='light');const toggle=document.getElementById('lightModeToggle');if(toggle)toggle.checked=theme==='light'}
-function load(){try{const raw=localStorage.getItem(STORE);if(raw){state={...freshState(),...JSON.parse(raw)};state.attrXP={...freshState().attrXP,...(state.attrXP||{})};if(Array.isArray(state.activities)&&state.activities.length){try{rebuildAttrXP();rebuildSkillXP()}catch(e){}}rules={...structuredClone(DEFAULT_RULES),...(state.customRules||{})};try{ecoMigrate()}catch(e){console.warn('[economy migration]',e)}seedReadingList();applyClassContent();localStorage.setItem(STORE,JSON.stringify(state));return}}catch(e){console.warn('[load] save unreadable, keeping a copy',e);try{const raw=localStorage.getItem(STORE);if(raw&&!localStorage.getItem(STORE+'_unreadable')){localStorage.setItem(STORE+'_unreadable',raw);setTimeout(()=>{try{toast('Your save could not be read. A copy was kept on this device.')}catch(_){}},2500)}}catch(_){}}state=freshState();rules=structuredClone(DEFAULT_RULES);seedReadingList();try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
-function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();checkLevelUps();let saved=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){saved=false;console.warn("Save failed",e);toast("Could not save to this browser (storage full?)")}renderAll();return saved}
+/* Whatever goes wrong, the stored save is never lost here: a save this build cannot handle is shown read-only, and an unreadable
+   one is copied under its own key before a starter profile is stored (if no copy fits, nothing is stored). */
+function load(){
+ let raw=null,saved=null;
+ try{raw=localStorage.getItem(STORE);saved=raw&&JSON.parse(raw)}catch(e){console.warn('[load] save unreadable',e)}
+ if(saved&&typeof saved==='object'){
+  state={...freshState(),...saved,schema:Number(saved.schema)||0};state.attrXP={...freshState().attrXP,...(state.attrXP||{})};
+  if(Array.isArray(state.activities)&&state.activities.length){try{rebuildAttrXP();rebuildSkillXP()}catch(e){}}
+  rules={...structuredClone(DEFAULT_RULES),...(state.customRules||{})};
+  const kept=' To keep it safe, this version shows it but saves nothing, so changes you make now are not kept. Install the latest update (Settings, App updates) to carry on.';
+  if(state.schema>SAVE_SCHEMA){saveReadOnly='Your progress was last saved by a newer version of LifeMax.'+kept;return}
+  try{migrateSave()}catch(e){console.warn('[load] migration failed',e);saveReadOnly='This version could not bring your save up to date.'+kept;return}
+  writeSave();return;
+ }
+ if(raw){try{localStorage.setItem(STORE+'_unreadable_'+Date.now(),raw);setTimeout(()=>toast('Your save could not be read. A copy was kept on this device.'),2500)}catch(e){saveReadOnly='Your save could not be read, and there is no room to keep a copy of it, so nothing is saved for now. Export backup (Settings, Data management) keeps it as a file; after that, Delete all local data makes room and you can import a backup.'}}
+ state=freshState();rules=structuredClone(DEFAULT_RULES);seedReadingList();writeSave();
+}
+/* Brings the save up to SAVE_SCHEMA. A future format change goes here as `if(state.schema<2){...}` and stays additive until the
+   build has reported healthy. The steps from before the schema number are idempotent flags and run on every load: the economy
+   rework (xpSchemaV2), the reading list (mediaSeededV1) and the class quests (classContent). */
+function migrateSave(){ecoMigrate();seedReadingList();applyClassContent();state.schema=SAVE_SCHEMA}
+/* The one writer of the core save; answers whether it was stored. */
+function writeSave(){
+ if(saveReadOnly){if(!saveReadOnlyTold){saveReadOnlyTold=true;const why=saveReadOnly;setTimeout(()=>alert(why),2500)}return false}
+ try{localStorage.setItem(STORE,JSON.stringify(state));return true}catch(e){console.warn('[save] not stored',e);return false}
+}
+function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();checkLevelUps();const saved=writeSave();if(!saved&&!saveReadOnly)toast("Could not save to this browser (storage full?)");renderAll();return saved}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
@@ -5241,7 +5278,7 @@ function saveDayReflection(d,val){
   const t=val.trim();
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
   state.customRules=rules;
-  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  writeSave();
   try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
@@ -5314,11 +5351,12 @@ function populateAttrSelects(){const p=document.getElementById('primaryAttr'),s=
 function activityPresetChanged(){const id=document.getElementById('activityType').value,r=rules[id]||rules.custom;document.getElementById('customNameWrap').style.display=id==='custom'?'block':'none';document.getElementById('skillName').value=r.skill;document.getElementById('primaryAttr').value=r.primary;document.getElementById('secondaryAttr').value=r.secondary||'';updatePreview()}
 /* The XP form as data: the page form and the native Log screen both build one of these and hand it to the same owner functions below. */
 function activityDraftFromForm(){const v=id=>document.getElementById(id).value;return {type:v('activityType'),customName:v('customName'),duration:v('duration'),quality:v('quality'),skill:v('skillName'),primary:v('primaryAttr'),secondary:v('secondaryAttr'),notes:v('activityNotes')}}
-function activityPreview(d){const r=rules[d.type]||rules.custom;const dur=Math.max(0,Number(d.duration)||0);const quality=Number(d.quality)||1;/* 30 min = 1× base; scales linearly to 3× at 90+ min; short sessions floor at 0.4× */const durFactor=ecoDur(dur);const q=dur<20?Math.min(1,quality):quality;let base=r.base*durFactor;let total=Math.max(0,Math.round(base*q));return {total,primary:d.primary||r.primary,secondary:d.secondary||'',skill:(d.skill||r.skill).trim()||r.skill,durFactor}}
-function calcPreview(){return activityPreview(activityDraftFromForm())}
-function updatePreview(){const x=calcPreview();document.getElementById('previewXP').textContent=x.total;document.getElementById('previewBar').style.width=Math.min(100,x.total/120*100)+'%';const p=ATTRS.find(a=>a.id===x.primary);const s=ATTRS.find(a=>a.id===x.secondary);let chunks=[];if(x.secondary&&x.secondary!==x.primary){const pXP=Math.round(x.total*.7),sXP=x.total-pXP;chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Primary'} <strong>+${pXP}</strong></span>`,`<span class="preview-chip">${s?px(s.icon):''} ${s?.short||'Secondary'} <strong>+${sXP}</strong></span>`)}else chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Attribute'} <strong>+${x.total}</strong></span>`);if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
+function activityPreview(d){const r=rules[d.type]||rules.custom;const dur=Math.max(0,Number(d.duration)||0);const quality=Number(d.quality)||1;/* ecoDur: 30 min = 1× base, 3× from 120 min, nothing under 5; under 20 min quality can only lower XP */const durFactor=ecoDur(dur);const q=dur<20?Math.min(1,quality):quality;let base=r.base*durFactor;let total=Math.max(0,Math.round(base*q));return {total,primary:d.primary||r.primary,secondary:d.secondary||'',skill:(d.skill||r.skill).trim()||r.skill,durFactor}}
+/* What recording a draft pays, by the rules recordActivity pays with: {xp, split, msg}, where msg says why xp is not the preview's total (ecoAward's reasons, then the stars of an ascended attribute). With peek nothing changes, so the preview shows exactly what Save would pay. */
+function activityAward(d,peek){const x=activityPreview(d);if(!x.total)return {xp:0,split:[],msg:'Log at least '+ECO.minMin+' minutes to earn XP'};const ec=ecoAward(d.type,x.total,Number(d.duration)||0,{manual:true,peek});if(ec.xp<=0)return {xp:0,split:[],msg:ec.msg};const p=x.primary,s=x.secondary!==p?x.secondary:'',pXP=s?Math.round(ec.xp*.7):ec.xp,why=ec.msg?[ec.msg]:[];const split=[{attr:p,xp:pXP},...(s?[{attr:s,xp:ec.xp-pXP}]:[])].map(z=>{const xp=ecoStarXP(z.attr,z.xp);if(xp>z.xp)why.push((ATTRS.find(a=>a.id===z.attr)||{short:z.attr}).short+' '+'★'.repeat(ecoStars(z.attr))+' +'+(xp-z.xp));return {attr:z.attr,xp}});return {xp:split.reduce((n,z)=>n+z.xp,0),split,msg:why.join(' · ')}}
+function updatePreview(){const d=activityDraftFromForm(),x=activityPreview(d),a=activityAward(d,true),why=document.getElementById('previewWhy');document.getElementById('previewXP').textContent=a.xp;document.getElementById('durationRules').textContent=ECO_DURATION_RULES;why.textContent=a.msg;why.style.color=a.xp>x.total?'var(--good)':'';document.getElementById('previewBar').style.width=Math.min(100,a.xp/120*100)+'%';const chunks=a.split.map(z=>{const at=ATTRS.find(t=>t.id===z.attr);return `<span class="preview-chip">${at?px(at.icon):''} ${at?.short||'Attribute'} <strong>+${z.xp}</strong></span>`});if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
 /* Award and save one logged activity. Returns {ok, xp, message}; it never touches the page. The form handler and the native Log screen both call it. */
-function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d);if(!x.total)return {ok:false,message:'Log at least 5 minutes to earn XP'};const duration=Number(d.duration)||0;const ec=ecoAward(id,x.total,duration,{manual:true});if(ec.xp<=0)return {ok:false,message:ec.msg};const xp=ec.xp;const p=x.primary,s=x.secondary;let pXP=xp, sXP=0;if(s&&s!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(s&&s!==p)sXP=ecoStarXP(s,sXP);const xpTot=pXP+sXP;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration,quality:Number(d.quality),skill:x.skill,primary:p,secondary:s,xp:xpTot,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:[{attr:p,xp:pXP},...(s&&s!==p?[{attr:s,xp:sXP}]:[])]};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:'Could not save to this browser (storage full?)'}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
+function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d),award=activityAward(d);if(!award.xp)return {ok:false,message:award.msg};const xp=award.xp;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration:Number(d.duration)||0,quality:Number(d.quality),skill:x.skill,primary:x.primary,secondary:x.secondary,xp,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:award.split};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:saveReadOnly?'Not saved: this version is read-only for your save':'Could not save to this browser (storage full?)'}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
 function submitActivity(e){e.preventDefault();const res=recordActivity(activityDraftFromForm());if(!res.ok){toast(res.message);return}document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(res.message);navigate('dashboard')}
 function toggleQuest(id,checked){const q=state.quests.find(q=>q.id===id);if(!q)return;const A=q.attribute||'discipline';if(checked&&questLocked(q)){toast('Locked until you reach level '+stageLvl(q.stage));renderQuests();return}const key=questKey(q);if(checked&&!state.questDone[key]){const qid='quest_'+Date.now();state.questDone[key]=qid;const xp=ecoQuestXP(q);if(!xp&&(Number(q.xp)||0)>0)toast(q.cadence==='epic'?'One epic quest reward per day':'Quest XP limit reached for '+(q.cadence==='weekly'?'this week':'today'));const noteEl=document.getElementById('qnote-'+id);const qnote=(noteEl&&noteEl.value.trim())||'';state.attrXP[A]=(state.attrXP[A]||0)+xp;state.skillXP['Quest Completion']=(state.skillXP['Quest Completion']||0)+xp;state.activities.push({id:qid,cad:q.cadence,epic:q.cadence==='epic',skill:'Quest Completion',type:'quest',name:'Quest: '+q.name,icon:'flag',duration:0,xp,primary:A,date:new Date().toISOString(),notes:qnote||'Quest completed',xpSplit:[{attr:A,xp}]});if(xp>0)toast(`Quest complete · +${xp} XP`)}else if(!checked&&state.questDone[key]){const aid=state.questDone[key],xp=Math.max(0,Number(q.xp)||0);delete state.questDone[key];state.attrXP[A]=Math.max(0,(state.attrXP[A]||0)-xp);state.skillXP['Quest Completion']=Math.max(0,(state.skillXP['Quest Completion']||0)-xp);state.activities=state.activities.filter(a=>a.id!==aid);toast('Quest undone · XP removed')}save()}
 function showCustomQuest(){document.getElementById('customQuestCard').style.display='block';document.getElementById('newQuestName').focus()}
@@ -5338,7 +5376,7 @@ function toggleDevMode(on){
   state.devMode=!!on;
   const tools=document.getElementById('devModeTools');
   if(tools)tools.style.display=on?'block':'none';
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   toast(on?'Developer mode on · open an attribute sheet':'Developer mode off');
 }
 function renderDevMode(){
@@ -5386,15 +5424,31 @@ function addBenchmark(){const name=document.getElementById('benchName').value.tr
 function deleteBenchmark(i){state.benchmarks.splice(i,1);save();toast('Benchmark removed')}
 function saveRules(){Object.keys(rules).forEach(id=>{const el=document.getElementById('rule-'+id);if(el)rules[id].base=Math.min(200,Math.max(1,Number(el.value)||1))});save();toast('XP rules saved')}
 function resetRules(){rules=structuredClone(DEFAULT_RULES);save();toast('Default XP rules restored')}
-function backupJson(){return JSON.stringify({app:'Life Max RPG Prototype',version:1,exportedAt:new Date().toISOString(),state,rules,extras:lmaBackupExtras()},null,2)}
-function exportData(){lmaDownload(backupJson(),'life-max-backup-'+getToday()+'.json','application/json','Backup')}
+/* What a backup file holds. While the save is read-only that is the save as stored, not what is on screen; a stored save that cannot
+   be read makes no backup, and exportData keeps its text as it is instead. */
+function backupData(){let s=state;if(saveReadOnly){try{s=JSON.parse(localStorage.getItem(STORE))}catch(e){throw Error('the save on this phone could not be read')}}return {app:'Life Max RPG Prototype',version:1,exportedAt:new Date().toISOString(),state:s,rules,extras:lmaBackupExtras()}}
+function backupJson(){return JSON.stringify(backupData(),null,2)}
+function exportData(){let text,name='life-max-backup-';try{text=backupJson()}catch(e){text=localStorage.getItem(STORE);name='life-max-unreadable-'}lmaDownload(text,name+getToday()+'.json','application/json','Backup')}
+/* The save inside a parsed backup file (or a bare save), or null when it is not one. */
+function backupSave(data){const s=data&&typeof data==='object'?(data.state||data):null;return s&&Array.isArray(s.activities)&&s.attrXP&&typeof s.attrXP==='object'?s:null}
+/* The facts a backup must keep, compared between the file as written and as read back (ADR 0004). */
+function backupFacts(data,size){const s=backupSave(data)||{};return {schema:s.schema,exportedAt:data&&data.exportedAt,activities:(s.activities||[]).length,rules:Object.keys(data&&data.rules||{}).length,extras:Object.keys(data&&data.extras||{}).length,size}}
+/* Why a backup read back cannot be trusted ('is cut short …', 'has activities 3 instead of 4'), or '' when it can: it must be a backup
+   the import accepts, with the schema, counts and size of the file that was written. */
+function backupProblem(text,want){let data=null;try{data=JSON.parse(text)}catch(e){}if(!backupSave(data))return typeof text==='string'&&text.length<want.size?'is cut short ('+text.length+' of '+want.size+' characters)':'is not a readable backup';const got=backupFacts(data,text.length),k=Object.keys(want).find(k=>got[k]!==want[k]);return k?'has '+k+' '+got[k]+' instead of '+want[k]:''}
 /* Before anything replaces the whole save, the current one is kept under STORE+'_safety' with the reason and time. If that copy cannot be written, nothing is replaced. */
 function keepSafetyCopy(reason){try{const raw=localStorage.getItem(STORE)||JSON.stringify(state);localStorage.setItem(STORE+'_safety',JSON.stringify({reason,at:new Date().toISOString(),save:raw}));return true}catch(e){console.warn('[safety copy]',e);return false}}
-/* Apply a parsed backup file. Returns {ok, message}. Asks before replacing a save that has activities, and keeps a safety copy first. */
-function applyBackup(data,fromOnboarding){const imported=data&&typeof data==='object'?(data.state||data):null;if(!imported||!Array.isArray(imported.activities)||!imported.attrXP||typeof imported.attrXP!=='object')return {ok:false,message:'Could not import this file. Please choose a Life Max JSON backup.'};const cur=(state.activities||[]).length;if(cur>0&&!confirm('Replace your current data ('+cur+' activities) with this backup ('+imported.activities.length+' activities)? Your current data is kept as a safety copy on this device.'))return {ok:false,message:'Import cancelled',cancelled:true};if(!keepSafetyCopy('import'))return {ok:false,message:'Could not keep a safety copy of your current data, so nothing was imported.'};state={...freshState(),...imported};if(fromOnboarding===true)state.onboardingComplete=true;prevSnap=null;rules={...structuredClone(DEFAULT_RULES),...(data.rules||state.customRules||{})};if(!save())return {ok:false,message:'Could not save the imported data (storage full?). Your previous data is in the safety copy.'};const more=lmaRestoreExtras(data.extras);return {ok:true,message:'Backup imported',reload:!!more||fromOnboarding===true}}
-function importData(e,fromOnboarding){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{let data=null;try{data=JSON.parse(reader.result)}catch(err){}const r=applyBackup(data,fromOnboarding);if(r.ok){toast(r.message);if(r.reload)setTimeout(()=>location.reload(),500)}else if(!r.cancelled)alert(r.message);e.target.value=''};reader.readAsText(file)}
-function resetDemo(){if(!confirm('Reset to a clean starter profile? This replaces the current local data. Export a backup first if needed.'))return;if(!keepSafetyCopy('reset')){alert('Could not keep a safety copy of your current data, so nothing was reset.');return}state=freshState();rules=structuredClone(DEFAULT_RULES);save();toast('Starter profile restored')}
-function deleteAll(){if(!confirm('Delete all Life Max data saved in this browser? This cannot be undone. Export a backup first if needed.'))return;localStorage.removeItem(STORE);localStorage.removeItem(STORE+'_safety');localStorage.removeItem(STORE+'_unreadable');state=freshState();rules=structuredClone(DEFAULT_RULES);save();toast('Local data cleared')}
+/* Imports and resets run one at a time (CONTRACT A20). Each waits for a folder backup first; another one asked for during that wait is
+   refused, and what follows the wait runs without a break. */
+let saveReplacing=false;
+async function backupBeforeReplacing(what){saveReplacing=true;try{return await lmaBackupFirst(what)}finally{saveReplacing=false}}
+/* Apply a parsed backup file. Resolves {ok, message}. Refuses a backup made by a newer build, asks before replacing a save that has
+   activities, takes a verified folder backup and keeps a safety copy first, and brings an older backup up to SAVE_SCHEMA the way
+   load() does. All or nothing: when the new save cannot be stored, the stored one is loaded back. */
+async function applyBackup(data,fromOnboarding){const imported=backupSave(data);if(!imported)return {ok:false,message:'Could not import this file. Please choose a Life Max JSON backup.'};const schema=Number(imported.schema)||0;if(schema>SAVE_SCHEMA)return {ok:false,message:'This backup was made by a newer version of LifeMax. Install the latest update, then import it again.'};if(saveReplacing)return {ok:false,message:'An import or reset is already under way.'};const cur=(state.activities||[]).length;if(cur>0&&!confirm('Replace your current data ('+cur+' activities) with this backup ('+imported.activities.length+' activities)? Your current data is kept as a safety copy on this device.'))return {ok:false,message:'Import cancelled',cancelled:true};if(!await backupBeforeReplacing('import'))return {ok:false,message:'Import cancelled',cancelled:true};if(!keepSafetyCopy('import'))return {ok:false,message:'Could not keep a safety copy of your current data, so nothing was imported.'};state={...freshState(),...imported,schema};if(fromOnboarding===true)state.onboardingComplete=true;prevSnap=null;rules={...structuredClone(DEFAULT_RULES),...(data.rules||state.customRules||{})};try{migrateSave()}catch(e){console.warn('[import] migration failed',e);load();return {ok:false,message:'This backup could not be brought up to date, so nothing was imported.'}}saveReadOnly='';if(!save()){load();renderAll();return {ok:false,message:'Could not save the imported data (storage full?), so nothing was imported.'}}const more=lmaRestoreExtras(data.extras);return {ok:true,message:'Backup imported',reload:!!more||fromOnboarding===true}}
+function importData(e,fromOnboarding){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{let data=null;try{data=JSON.parse(reader.result)}catch(err){}const r=await applyBackup(data,fromOnboarding);if(r.ok){toast(r.message);if(r.reload)setTimeout(()=>location.reload(),500)}else if(!r.cancelled)alert(r.message);e.target.value=''};reader.readAsText(file)}
+async function resetDemo(){if(saveReplacing){toast('An import or reset is already under way');return}if(!confirm('Reset to a clean starter profile? This replaces the current local data. Export a backup first if needed.'))return;if(!await backupBeforeReplacing('reset'))return;if(!keepSafetyCopy('reset')){alert('Could not keep a safety copy of your current data, so nothing was reset.');return}state=freshState();rules=structuredClone(DEFAULT_RULES);saveReadOnly='';if(!save()){load();renderAll();alert('Could not save the starter profile (storage full?), so nothing was reset.');return}toast('Starter profile restored')}
+function deleteAll(){if(!confirm('Delete all Life Max data saved in this browser? This cannot be undone. Export a backup first if needed.'))return;Object.keys(localStorage).filter(k=>k===STORE||k.startsWith(STORE+'_')).forEach(k=>localStorage.removeItem(k));state=freshState();rules=structuredClone(DEFAULT_RULES);saveReadOnly='';save();toast('Local data cleared')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 ['activityType','duration','quality','skillName','primaryAttr','secondaryAttr'].forEach(id=>document.addEventListener('input',e=>{if(e.target.id===id)updatePreview()}));
 
@@ -5460,7 +5514,7 @@ function renderDecay(){const d=getDecay(),today=dayNum(getToday());
  const on=document.getElementById('decayOn');if(on&&document.activeElement!==document.getElementById('decayGrace')){on.checked=d.on;document.getElementById('decayGrace').value=d.grace;document.getElementById('decayRate').value=d.rate}}
 function saveDecay(){const c=(v,lo,hi,df)=>Math.min(hi,Math.max(lo,Number(v)||df));state.decay={on:document.getElementById('decayOn').checked,grace:c(document.getElementById('decayGrace').value,1,14,4),rate:c(document.getElementById('decayRate').value,1,10,3)};save();toast('Decay settings saved')}
 function ago(ms){const m=Math.floor(ms/6e4);if(m<1)return 'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<48)return h+'h '+(m%60)+'m ago';return Math.floor(h/24)+'d '+(h%24)+'h ago'}
-function markVisit(){try{const now=Date.now(),last=state.lastVisit||0;if(!last||now-last>30*6e4)state.prevVisit=last||null;state.lastVisit=now;state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+function markVisit(){try{const now=Date.now(),last=state.lastVisit||0;if(!last||now-last>30*6e4)state.prevVisit=last||null;state.lastVisit=now;state.customRules=rules;writeSave()}catch(e){}}
 function renderTime(){const v=document.getElementById('visitTag'),a=document.getElementById('actTag');if(!v||!a)return;const now=Date.now();
  v.innerHTML=px('smile')+' '+(state.prevVisit?'Last check-in '+ago(now-state.prevVisit):'First check-in');
  const acts=state.activities.filter(x=>x.type!=='quest');if(!acts.length){a.innerHTML=px('clock')+' No activity logged yet';return}
@@ -5696,7 +5750,7 @@ function planToggle(date,key,i,checked){const p=state.plan,c=p.checks[date]=p.ch
   const act={id:'plan_'+date,type:'plan',kind:d.kind,planDate:date,name:'Plan: '+d.label,icon:d.icon,duration:0,skill:'Training',primary:d.primary,secondary:sc,xp,date:when,notes:'',xpSplit:split};
   state.activities=state.activities.filter(a=>a.id!==act.id);state.activities.push(act);split.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP.Training=(state.skillXP.Training||0)+xp;c.actId=act.id;msg=d.short+' complete · +'+xp+' XP'}
  else if(!done&&c.actId){removeAct(c.actId);delete c.actId;msg='Session reopened · XP removed'}
- save();if(msg)toast(msg)}
+ const saved=save();if(msg&&saved)toast(msg);return {saved,message:msg}}
 function planVal(date,key,val){const c=state.plan.checks[date]=state.plan.checks[date]||{s:{},v:{},log:{}};c.v=c.v||{};c.v[key]=val.trim();save()}
 function planLog(date,key,val){const c=state.plan.checks[date]=state.plan.checks[date]||{s:{},v:{},log:{}};c.log=c.log||{};const t=val.trim();if(t)c.log[key]=t;else delete c.log[key];save()}
 function lastVal(key,date){const ds=Object.keys(state.plan.checks).filter(k=>k<date&&((state.plan.checks[k].v||{})[key])).sort();return ds.length?state.plan.checks[ds[ds.length-1]].v[key]:''}
@@ -5816,14 +5870,21 @@ const SFX=(()=>{let ac;function A(){if(!ac){const C=window.AudioContext||window.
 function fxTarget(){let el=shAttr&&document.querySelector('#sheetPanel .xpbar');if(!el||!el.getBoundingClientRect().width)el=document.getElementById('brandLogo');const r=el?el.getBoundingClientRect():null;if(!r||!r.width||r.bottom<0)return {x:innerWidth/2,y:44,el:null};return {x:r.left+r.width/2,y:Math.min(innerHeight-30,Math.max(30,r.top+r.height/2)),el}}
 function pulse(el){if(!el)return;el.classList.remove('fx-pulse');void el.offsetWidth;el.classList.add('fx-pulse');setTimeout(()=>el.classList.remove('fx-pulse'),700)}
 /* A native screen saving an activity holds the celebration (it would play under the native screen, on the same frames as the switch
-   to the next tab) and plays it afterwards: holdCelebrations(run) returns {result, held: [[delta, gains], ...]}. */
+   to the next tab) and plays it afterwards: holdCelebrations(run) returns {result, held: [[delta, gains], ...]}. A screen that draws
+   the celebration itself plays only xpCue(delta), the sound and the buzz. */
 let fxHold=null;
 function holdCelebrations(run){const prev=fxHold;fxHold=[];try{return {result:run(),held:fxHold}}finally{fxHold=prev}}
+/* afterCelebrations(fn) runs fn once no XP celebration or level-up is playing or queued, so a native screen can wait before it
+   covers the page again. A level-up starts while its XP is still flying (950 ms in, of 1550), so the two hand over. */
+let fxUntil=0;const fxCalm=[];
+function afterCelebrations(fn){fxCalm.push(fn);fxSettle()}
+function fxSettle(){if(!luBusy&&Date.now()>=fxUntil)fxCalm.splice(0).forEach(f=>f())}
 function celebrateXP(delta,gains){if(fxHold){fxHold.push([delta,gains]);return}const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
  FX.ring(o.x,o.y,col,80,.55,5);FX.burst(o.x,o.y,col,red?8:30,280,420);
  gains.forEach(g=>{const c=ATTR_COL[g.id]||col,n=Math.min(red?4:16,3+Math.round(g.xp/3));for(let i=0;i<n;i++)FX.orb(o.x,o.y,tg.x,tg.y,c,i*38,()=>{const t=fxTarget();FX.burst(t.x,t.y,c,3,130,80);if(i===n-1)pulse(t.el)})});
- const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);setTimeout(()=>t.remove(),1550);
- SFX.xp(delta);haptic(delta>=25?[18,30,18]:12)}
+ const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);fxUntil=Math.max(fxUntil,Date.now()+1550);setTimeout(()=>{t.remove();fxSettle()},1550);
+ xpCue(delta)}
+function xpCue(delta){SFX.xp(delta);haptic(delta>=25?[18,30,18]:12)}
 let luBusy=false;const luQ=[];
 function showLevelUp(ev){if(luBusy){luQ.push(ev);return}luBusy=true;const red=fxReduced(),epic=ev.charLevel!=null,m=ev.attrs[0];
  const col=epic?'#ffd36a':ATTR_COL[m.id],acc=m?ATTR_COL[m.id]:'#6c8cff',from=epic?ev.from:m.from,to=epic?ev.charLevel:m.level;
@@ -5838,7 +5899,7 @@ function showLevelUp(ev){if(luBusy){luQ.push(ev);return}luBusy=true;const red=fx
  FX.burst(cx,cy,col,red?20:epic?120:64,560,320);setTimeout(()=>FX.burst(cx,cy,acc,red?10:40,380,260),250);
  if(!red){const cols=[col,'#ffffff',acc,'#ffd36a'];if(epic)for(let t=0;t<1100;t+=55)setTimeout(()=>{FX.confetti(innerWidth*.04,innerHeight,5,-82,-58,1350,cols);FX.confetti(innerWidth*.96,innerHeight,5,-122,-98,1350,cols)},700+t);else setTimeout(()=>FX.confetti(cx,cy,34,-170,-10,620,cols),380)}
  const iv=setInterval(()=>{FX.star(cx+(Math.random()-.5)*Math.min(innerWidth*.8,420),cy+(Math.random()-.5)*300,Math.random()<.5?col:'#fff',8+Math.random()*12,.7+Math.random()*.6)},red?260:110);
- let closed=false;function close(){if(closed)return;closed=true;clearInterval(iv);ov.classList.remove('in');ov.classList.add('out');setTimeout(()=>{ov.remove();luBusy=false;const n=luQ.shift();if(n)showLevelUp(n)},380)}
+ let closed=false;function close(){if(closed)return;closed=true;clearInterval(iv);ov.classList.remove('in');ov.classList.add('out');setTimeout(()=>{ov.remove();luBusy=false;const n=luQ.shift();if(n)showLevelUp(n);else fxSettle()},380)}
  ov.addEventListener('click',()=>{if(Date.now()-born>700)close()});setTimeout(close,epic?7000:4600)}
 function renderFxSettings(){const o=fxOpt(),g=id=>document.getElementById(id);if(!g('fxSound'))return;g('fxSound').checked=o.sound;g('fxHaptics').checked=o.haptics;g('fxReduce').checked=o.reduce}
 function saveFx(){const g=id=>document.getElementById(id).checked;state.fx={sound:g('fxSound'),haptics:g('fxHaptics'),reduce:g('fxReduce')};save()}
@@ -6135,7 +6196,7 @@ function persistAudioPosition(force){
   item.audio.position=el.currentTime||0;
   if(el.duration)item.audio.duration=el.duration;
   const write=()=>{
-    try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+    state.customRules=rules;writeSave();
   };
   if(force){clearTimeout(audioCtx.saveTimer);write();return}
   clearTimeout(audioCtx.saveTimer);
@@ -7168,7 +7229,7 @@ function finishTutorial(){
   ensureTipsState();
   state.tutorialDone=true;
   // Persist without full save side-effects spam
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   const el=document.getElementById('tutorial');
   if(el){el.classList.remove('show');el.setAttribute('aria-hidden','true')}
   document.body.classList.remove('noscroll');
@@ -7225,7 +7286,7 @@ const FEATURE_TIPS={
 function dismissFeatureTip(key){
   ensureTipsState();
   state.tipsSeen[key]=true;
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   document.querySelectorAll('[data-feature-tip="'+key+'"]').forEach(n=>n.remove());
 }
 
@@ -7233,7 +7294,7 @@ function resetTips(){
   ensureTipsState();
   state.tipsSeen={};
   state.tutorialDone=false;
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   document.querySelectorAll('[data-feature-tip]').forEach(n=>n.remove());
   toast('Tips reset · tutorial will show next');
   setTimeout(startTutorial,300);
@@ -7261,7 +7322,7 @@ function maybeShowFeatureTip(view){
 
 function initOnboarding(){if(shouldShowOnboarding()){onboardingPreviewMode=false;populateOnboardingFromState();const modal=document.getElementById('onboarding');modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}}
 
-initTheme();load();usdaCount().then(n=>{if(n)usdaStatus('USDA database ready · '+n.toLocaleString()+' foods stored on this device')}).catch(()=>{});wireAudioElement();markVisit();const _dc=applyDecay();if(_dc){state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}prevSnap=snapshot();checkBadges(true);renderAll();activityPresetChanged();initOnboarding();if(!shouldShowOnboarding()&&shouldShowTutorial())setTimeout(startTutorial,500);else if(!shouldShowOnboarding())setTimeout(()=>maybeShowFeatureTip(document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard'),400);if(_dc)setTimeout(()=>toast('Decay applied · see Decay watch'),600);
+initTheme();load();usdaCount().then(n=>{if(n)usdaStatus('USDA database ready · '+n.toLocaleString()+' foods stored on this device')}).catch(()=>{});wireAudioElement();markVisit();const _dc=applyDecay();if(_dc){state.customRules=rules;writeSave()}prevSnap=snapshot();checkBadges(true);renderAll();activityPresetChanged();initOnboarding();if(!shouldShowOnboarding()&&shouldShowTutorial())setTimeout(startTutorial,500);else if(!shouldShowOnboarding())setTimeout(()=>maybeShowFeatureTip(document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard'),400);if(_dc)setTimeout(()=>toast('Decay applied · see Decay watch'),600);
 
 function dcHash(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
 const DC_KEY='lifeMaxDevChat',DC_WHO={You:'#7c9cff',Claude:'#d97757',ChatGPT:'#10a37f',Grok:'#8a94a6'},DC_CANON={you:'You',me:'You',owner:'You',claude:'Claude',chatgpt:'ChatGPT',gpt:'ChatGPT',grok:'Grok'};
@@ -10857,7 +10918,7 @@ function petBrainPersist(force){
   if(!br.dirty&&!force)return;if(!force&&now-br.savedAt<PET_BRAIN.PERSIST_MS)return;
   br.dirty=false;br.savedAt=now;
   /* save() would also re-render the whole app; the brain only needs the current state written */
-  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  writeSave();
 }
 /* ---------- System A: affect (valence x arousal) ---------- */
 function petBrainBase(p,b,rt){
@@ -12831,7 +12892,7 @@ function ovLayout(){
   const hidden=(Array.isArray(L.hidden)?L.hidden:[]).filter(function(id){return known.indexOf(id)>=0});
   return {order:order,hidden:hidden};
 }
-function ovLayoutSave(L){state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){console.warn('Save failed',e)}}
+function ovLayoutSave(L){state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};writeSave()}
 function ovLayoutApply(){
   const box=document.getElementById('ovTiles');if(!box)return;
   const L=ovLayout();
@@ -13649,7 +13710,7 @@ const LMA_CHANNEL='lifemax_reminders';
 const LMA_DEFAULTS={
  notif:{on:true,sessions:true,lead:15,workout:true,workoutTime:'17:00',nudge:true,checkin:false,checkinTime:'20:30',quiet:true,quietFrom:'22:00',quietTo:'07:00'},
  apps:[],
- backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,status:'',err:'',lastName:''}
+ backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,verified:0,status:'',err:'',lastName:'',asked:0}
 };
 const LMA_IN='width:auto;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit';
 let lmaPrefs=null,lmaPlugins={},lmaSyncTimer=0,lmaLastSig='',lmaSyncBusy=false;
@@ -13808,9 +13869,11 @@ async function lmaRenderSettings(){
  host.innerHTML=h;
 }
 /* ---------- saving files and backups ---------- */
-const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
-function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k==='lifemax_android_prefs_v1'){try{const j=JSON.parse(v);if(j&&j.backup){j.backup={...j.backup,uri:'',folder:'',on:false,last:0,status:''}}v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
-function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
+/* The keys a backup carries besides the save: what the owner made, and the preferences. This phone's own backup settings (its folder)
+   are neither exported nor restored, and preferences that cannot be read are not restored. */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1',LMA_PREF_KEY,'lifeMaxTheme','lifemax_voice_alias_v1','lifemax_voice_macros_v1','lifeMaxDevChat'];
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k===LMA_PREF_KEY){try{const j=JSON.parse(v);delete j.backup;v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]!=='string')continue;let v=x[k];if(k===LMA_PREF_KEY){try{v=JSON.stringify({...JSON.parse(v),backup:lmaLoad().backup})}catch(e){continue}}try{localStorage.setItem(k,v);n++}catch(e){}}lmaPrefs=null;return n>0}
 /* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
 async function lmaDownload(text,filename,mime,label){
  const FS=lmaPlugin('FileSaver');
@@ -13888,6 +13951,7 @@ function lmaTopOverlay(){
  if(q('#onboarding.show,#tutorial.show'))return {close(){}}; /* swallow Back during first-run screens */
  const full=q('#petRoomFullscreen.is-open');if(full)return {close(){petRoomFullscreenClose()}};
  const up=q('.updpop');if(up)return {close(){up.remove()}};
+ const dl=q('.lmdl-ask');if(dl)return {close(){dl.remove()}};
  const hs=q('.hsheet');if(hs)return {close(){hs.remove()}};
  const as=all('.apps-sheet').pop();
  if(as)return {close(){const b=as.querySelector('[data-k="__close"],[data-act="close"]');b?b.click():as.remove()}};
@@ -14029,7 +14093,8 @@ document.addEventListener('touchcancel',()=>{const was=lmaSw&&lmaSw.drag;lmaSw=n
 setTimeout(()=>{const c=document.getElementById('lmaSwipeToggle');if(c)c.checked=lmaSwipeEnabled();const d=document.getElementById('lmaSwipeAnimToggle');if(d)d.checked=lmaLoad().swipeAnim!==false;const g=document.getElementById('lmaScrubSpeed');if(g)g.value=LMA_SCRUB_GAINS[lmaLoad().scrubSpeed]?lmaLoad().scrubSpeed:'fast'},500);
 /* v91 · Android upkeep: in-app updates and automatic backups to a folder you choose.
    Everything here needs the Android shell; in a browser the Settings cards just say so. */
-let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakBusy=false,lmaUpdBound=false;
+let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakRun=null,lmaUpdBound=false;
+const LMA_UPD_BUSY=['checking','backup','downloading','webdl'];
 const lmaSetHtml=(id,h)=>{const el=document.getElementById(id);if(el)el.innerHTML=h};
 const lmaAgo=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 /* ---------- updates ---------- */
@@ -14054,7 +14119,7 @@ function lmaUpdPlan(r,st){
 }
 async function lmaCheckUpdate(silent){
  const U=lmaPlugin('Updater');if(!U)return;
- if(['checking','downloading','webdl'].indexOf(lmaUpd.state)>=0)return;
+ if(LMA_UPD_BUSY.indexOf(lmaUpd.state)>=0)return;
  lmaUpd.state='checking';lmaUpd.err='';lmaRenderUpdates();
  try{
   const r=await U.check();lmaUpd.info=r;
@@ -14062,15 +14127,18 @@ async function lmaCheckUpdate(silent){
   lmaUpd.live=st;lmaUpd.plan=lmaUpdPlan(r,st);
   lmaUpd.state=lmaUpd.plan==='apk'?'available':lmaUpd.plan==='web'?'web':'latest';
   lmaLoad().updChecked=Date.now();lmaSave();lmaUpd.autoErr='';lmaUpdTries=0;
-  if(lmaUpd.plan==='web'&&(silent||lmaLoad().webAuto!==false)){await lmaWebUpdate();return}
+  if(lmaUpd.plan==='web'&&(silent||lmaLoad().webAuto!==false)){await lmaWebUpdate(!silent);return}
   if(lmaUpd.state==='available')lmaUpdPopOpen();
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent){lmaUpd.state='idle';lmaUpd.autoErr=lmaUpd.err;if(lmaUpdTries<3)setTimeout(()=>lmaCheckUpdate(true),[15000,45000,120000][lmaUpdTries++])}}
  lmaRenderUpdates();
 }
-/* a web-only update: download it quietly, check it, and keep it ready (it starts on the next launch, or now if you tap Restart) */
-async function lmaWebUpdate(){
- const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i)return;
+/* a web-only update: back up first, then download it quietly, check it, and keep it ready (it starts on the next launch, or now if
+   you tap Restart). Unasked (at launch), a failed backup leaves the update waiting in Settings instead. */
+async function lmaWebUpdate(ask){
+ const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||['backup','webdl'].includes(lmaUpd.state))return;   /* one at a time, its backup included; native refuses a second download too */
  if(lmaUpd.live&&lmaUpd.live.staged===i.webBuild){lmaUpd.state='webready';lmaRenderUpdates();lmaWebPill();return}
+ lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update',ask)){lmaUpd.state='web';lmaUpd.err='It was not downloaded, because the backup before it failed.';lmaRenderUpdates();return}
  lmaUpd.state='webdl';lmaUpd.pct=0;lmaRenderUpdates();
  try{
   if(!lmaUpdBound){lmaUpdBound=true}
@@ -14082,18 +14150,24 @@ async function lmaWebUpdate(){
 }
 async function lmaWebRestart(){
  const L=lmaPlugin('LiveWeb');if(!L)return;
+ const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
 }
-/* a small pill: the update is downloaded, restart whenever you like */
-function lmaWebPill(){
- if(document.querySelector('.lmaweb-pill')||lmaUpd.pillGone)return;
+/* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
+function lmaPill(text,label,go,dismiss){
+ if(document.querySelector('.lmaweb-pill'))return false;
  const o=document.createElement('div');o.className='lmaweb-pill';o.setAttribute('role','status');
- o.innerHTML='<span>Update ready</span><button type="button" data-w="go">Restart</button><button type="button" data-w="x" aria-label="Dismiss">✕</button>';
- o.addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;if(b.dataset.w==='go')lmaWebRestart();else{lmaUpd.pillGone=true;o.remove()}});
- document.body.appendChild(o);setTimeout(()=>{if(o.parentNode)o.remove()},20000);
+ o.innerHTML='<span>'+text+'</span><button type="button" data-w="go">'+label+'</button><button type="button" data-w="x" aria-label="Dismiss">✕</button>';
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;o.remove();if(b.dataset.w==='go')go();else if(dismiss)dismiss()});
+ document.body.appendChild(o);setTimeout(()=>o.remove(),20000);return true;
 }
+/* the update is downloaded: restart whenever you like */
+function lmaWebPill(){if(!lmaUpd.pillGone)lmaPill('Update ready','Restart',lmaWebRestart,()=>{lmaUpd.pillGone=true})}
 async function lmaInstallUpdate(){
- const U=lmaPlugin('Updater');if(!U||!lmaUpd.info)return;
+ const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||['backup','downloading'].includes(lmaUpd.state))return;
+ const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
  lmaUpd.state='downloading';lmaUpd.pct=0;lmaRenderUpdates();
  try{
@@ -14118,7 +14192,8 @@ function lmaUpdPopRender(){
  const o=document.querySelector('.updpop');if(!o)return;
  const u=lmaUpd,i=u.info||{};
  let body,btns;
- if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
+ if(u.state==='backup'){body='Backing up your progress before the update…';btns=''}
+ else if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
  else if(u.state==='opened'){body='Android’s installer is open. Tap Update there to finish.';btns='<button class="btn" data-up="close">OK</button>'}
  else if(u.state==='permission'){body='Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.';btns='<button class="btn" data-up="go">Update</button><button class="btn secondary" data-up="later">Later</button>'}
  else if(u.state==='error'){body='Could not update: '+esc(u.err);btns='<button class="btn" data-up="go">Try again</button><button class="btn secondary" data-up="later">Later</button>'}
@@ -14133,63 +14208,106 @@ function lmaRenderUpdates(){
  const live=u.live&&u.live.activeBuild?' · app updated over the air to build '+u.live.activeBuild:'';
  const native=i&&(Number(u.live&&u.live.nativeApi)||Number(i.nativeApi)),required=i&&Math.max(Number(i.latestNativeApi)||0,Number(i.webMinApi)||0);
  let h='<div class="settingsline"><div style="flex:1"><strong>'+(i?'Installed build '+cur:'Installed build')+live+'</strong><div class="muted" style="font-size:12px">';
- h+=u.state==='checking'?'Checking…':u.state==='latest'?'No newer compatible update was reported by the server.':u.state==='web'?'A web update is available.':u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
+ h+=u.state==='checking'?'Checking…':u.state==='latest'?'No newer compatible update was reported by the server.':u.state==='backup'?'Backing up your progress before the update…':u.state==='web'?'A web update is available.'+(u.err?' '+esc(u.err):''):u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
  h+='</div>'+(i?'<div class="muted" style="font-size:12px">Latest release: '+esc(i.latest)+(native?' · Android API '+native+(required?' / requires '+required:''):'')+'</div>':'')+'</div>';
  if(u.state==='available'||u.state==='permission')h+='<button class="btn" onclick="lmaInstallUpdate()">Update</button>';
  else if(u.state==='webready')h+='<button class="btn" onclick="lmaWebRestart()">Restart</button>';
- else if(u.state==='web')h+='<button class="btn" onclick="lmaWebUpdate()">Download</button>';
- else if(u.state!=='checking'&&u.state!=='downloading'&&u.state!=='webdl')h+='<button class="btn secondary" onclick="lmaCheckUpdate(false)">Check now</button>';
+ else if(u.state==='web')h+='<button class="btn" onclick="lmaWebUpdate(true)">Download</button>';
+ else if(LMA_UPD_BUSY.indexOf(u.state)<0)h+='<button class="btn secondary" onclick="lmaCheckUpdate(false)">Check now</button>';
  h+='</div>';
  if(i&&i.stable===false&&u.state==='available')h+='<div class="note" style="margin-top:8px">This build was signed with a temporary key, so Android will likely refuse to install it over your current app. See ANDROID.md.</div>';
  lmaSetHtml('lmaUpdBody',h);
 }
 /* ---------- automatic backup ---------- */
-function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&Date.now()-b.last>=b.days*86400e3-60e3)}
+/* A backup counts only once its file has been read back and checked (ADR 0004). Scheduled backups rotate as life-max-auto-*.json,
+   and the snapshots taken before an update, an import or a reset each rotate on their own (life-max-before-update-*.json …), so
+   frequent updates push neither the daily history nor the copy taken before a reset out of the folder. verified: when the newest
+   verified backup was made; last: the newest verified scheduled one, which sets when the next is due. */
+const LMA_DAY=86400e3,LMA_SNAPSHOTS=5;
+function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&(!b.verified||Date.now()-b.last>=b.days*LMA_DAY-60e3))}
 async function lmaPickBackupFolder(){
  const B=lmaPlugin('BackupFolder');if(!B)return;
  try{
   const r=await B.pickFolder();if(!r||!r.picked)return;
   const b=lmaLoad().backup;b.uri=r.uri;b.folder=r.name;b.on=true;b.status='';b.err='';lmaSave();lmaRenderBackup();
-  lmaRunBackup(true);
+  // a backup still writing to the old folder (leaving the app for the picker can start one) finishes first; the new one starts with none verified
+  (lmaBakRun||Promise.resolve()).then(()=>{b.verified=b.last=0;b.lastName='';lmaRunBackup(true)});
  }catch(e){toast('Could not use that folder')}
 }
-async function lmaRunBackup(manual){
- const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup;
- if(!B||!b.uri){if(manual)toast('Choose a folder first');return}
- if(lmaBakBusy)return;lmaBakBusy=true;
- try{
-  const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  const r=await B.writeBackup({uri:b.uri,name:'life-max-auto-'+stamp+'.json',text:backupJson(),prefix:'life-max-auto-',keep:b.keep});
-  b.last=Date.now();b.status='ok';b.err='';b.lastName=r&&r.name||'';if(manual)toast('Backup saved');
- }catch(e){const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,120);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
- lmaBakBusy=false;lmaSave();lmaRenderBackup();
+/* Back up now; resolves true once the file is read back and verified. before: what a snapshot is taken ahead of ('update', 'import',
+   'reset'), or nothing for a scheduled backup. A run already under way is shared, not repeated. */
+function lmaRunBackup(manual,before){
+ if(!lmaBakRun){lmaBakRun=lmaBackupChecked(manual,before).finally(()=>{lmaBakRun=null;lmaRenderBackup()});lmaRenderBackup()}
+ return lmaBakRun;
 }
-function lmaSetBackup(k,v){const b=lmaLoad().backup;b[k]=v;lmaSave();lmaRenderBackup();if(k==='on'&&v&&b.uri&&!b.last)lmaRunBackup(true)}
+/* Write, read back, check; only then prune the older files, in the folder the run started with. A file that fails its check or cannot
+   be read back is deleted, so it never pushes a good one out. */
+async function lmaBackupChecked(manual,before){
+ const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup,uri=b.uri;
+ if(!B||!uri){if(manual)toast('Choose a folder first');return false}
+ const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix=before?'life-max-before-'+before+'-':'life-max-auto-';
+ let w=null;
+ try{
+  const data=backupData(),text=JSON.stringify(data,null,2),want=backupFacts(data,text.length);
+  w=await B.createBackup({uri,name:prefix+stamp+'.json',text});
+  const why=backupProblem((await B.readBackup({file:w.file})).text,want);
+  if(why)throw Error('the file read back '+why);
+  await B.pruneBackups({uri,prefix,keep:before?LMA_SNAPSHOTS:b.keep}).catch(()=>{});
+  b.verified=Date.now();if(!before)b.last=b.verified;b.status='ok';b.err='';b.lastName=w.name||'';if(manual)toast('Backup saved and verified');
+ }catch(e){if(w)await B.deleteBackup({file:w.file}).catch(()=>{});const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,160);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
+ lmaSave();
+ return b.status==='ok';
+}
+/* Before an update, import or reset: with a folder chosen, take a verified snapshot and wait for it. If that fails the owner decides
+   whether to go on without one; unasked, it does not go on. Resolves true to go on. */
+async function lmaBackupFirst(what,ask=true){
+ if(!lmaNative()||!lmaLoad().backup.uri)return true;
+ if(await lmaRunBackup(false,what))return true;
+ const b=lmaLoad().backup,why=b.status==='lost'?'Android no longer lets LifeMax write to the backup folder':b.err;
+ return ask&&confirm('LifeMax could not make a verified backup before this '+what+': '+why+'.\n\nGo on without a fresh backup?');
+}
+function lmaSetBackup(k,v){const b=lmaLoad().backup;b[k]=v;lmaSave();lmaRenderBackup();if(k==='on'&&v&&b.uri&&!b.verified)lmaRunBackup(true)}
+/* What Settings warns about, or '' when backups are in order. */
+function lmaBackupWarning(){
+ const b=lmaLoad().backup;
+ if(!b.uri)return 'No backup folder is chosen, so your progress exists only on this phone.';
+ if(b.status==='lost')return 'Android no longer lets LifeMax write to that folder. Choose it again.';
+ if(b.status==='error')return 'The last backup failed: '+esc(b.err);
+ if(!b.on)return 'Automatic backup is off, so new progress is not copied anywhere.';
+ if(Date.now()-b.verified>2*b.days*LMA_DAY)return b.verified?'The last verified backup was made '+lmaAgo(b.verified)+'.':'No backup has been verified yet. Tap Back up now.';
+ return '';
+}
 function lmaRenderBackup(){
  if(!document.getElementById('lmaBakBody'))return;
  if(!lmaNative()){lmaSetHtml('lmaBakBody','<div class="note">Automatic backups are available in the Android app.</div>');return}
- const b=lmaLoad().backup,off=!b.uri;
+ const b=lmaLoad().backup,off=!b.uri,warn=lmaBackupWarning();
  const row=(l,hint,ctl)=>'<div class="settingsline"><div style="flex:1"><strong>'+l+'</strong>'+(hint?'<div class="muted" style="font-size:12px">'+hint+'</div>':'')+'</div>'+ctl+'</div>';
  const sel=(k,opts,dis)=>'<select '+(dis?'disabled ':'')+'onchange="lmaSetBackup(\''+k+'\',+this.value)" style="'+LMA_IN+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(b[k]===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
- let h='';
- if(b.status==='lost')h+='<div class="note" style="margin-bottom:10px">Android no longer lets LifeMax write to that folder. Choose it again.</div>';
- else if(b.status==='error')h+='<div class="note" style="margin-bottom:10px">The last backup failed: '+esc(b.err)+'</div>';
- h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
+ let h=warn?'<div class="note" style="margin-bottom:10px;border-color:var(--warn);color:var(--text)">'+warn+'</div>':'';
+ h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
  h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
- h+=row('Keep the newest','Older automatic backups are deleted.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
- h+='<div class="settingsline"><div style="flex:1"><strong>Last backup</strong><div class="muted" style="font-size:12px">'+(b.last?lmaAgo(b.last)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakBusy?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakBusy?'Saving…':'Back up now')+'</button></div>';
+ h+=row('Keep the newest','Older automatic backups are deleted. Copies taken before an update, an import or a reset are kept apart, the '+LMA_SNAPSHOTS+' newest of each.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
+ h+='<div class="settingsline"><div style="flex:1"><strong>Last verified backup</strong><div class="muted" style="font-size:12px">'+(b.verified?lmaAgo(b.verified)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakRun?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakRun?'Saving…':'Back up now')+'</button></div>';
  lmaSetHtml('lmaBakBody',h);
 }
+/* Once, gently: with no folder chosen, a pill on a page the owner can see points to Settings. */
+function lmaBackupAsk(){
+ const b=lmaLoad().backup,v=lmaView();
+ if(!lmaNative()||b.uri||b.asked||v==='settings'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;
+ if(lmaPill('Your progress has no backup yet','Settings',lmaOpenBackupSettings)){b.asked=Date.now();lmaSave()}
+}
+function lmaOpenBackupSettings(){setPickCat('phone');lmaNavTo('settings',{fast:true});document.getElementById('lmaBakCard')?.scrollIntoView({block:'start'})}
 /* ---------- wiring ---------- */
 (function lmaUpkeepBoot(){
- const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings'){lmaRenderUpdates();lmaRenderBackup()}return r};
+ const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings'){lmaRenderUpdates();lmaRenderBackup()}lmaBackupAsk();return r};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&lmaNative()&&lmaBackupDue())lmaRunBackup(false)});
  setInterval(()=>{if(lmaNative()&&lmaBackupDue())lmaRunBackup(false)},6*3600e3);
  setTimeout(()=>{
   lmaRenderUpdates();lmaRenderBackup();
   if(!lmaNative())return;
   if(lmaBackupDue())lmaRunBackup(false);
+  lmaBackupAsk();
   lmaCheckUpdate(true);
  },4000);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lmaNative()&&Date.now()-(lmaLoad().updChecked||0)>30*60e3)lmaCheckUpdate(true)});
@@ -15034,8 +15152,10 @@ function ovAppsRender(){
   if(b.classList.contains('ova-add'))AppsShortcuts.openPicker();
   else{const a=lmaLoad().apps[+b.dataset.i];if(a)AppsShortcuts.launch(a.pkg)}
  };
+ /* An app that is not installed (a backup restored on another phone) never gets an icon: draw again only when one arrived, or
+    this would ask Android for it forever. */
  const need=apps.filter(function(a){return !a.icon}).map(function(a){return a.pkg});
- if(need.length&&AS&&!ovAppsFetching){ovAppsFetching=true;AS.loadIcons(need).then(function(m){let ch=false;lmaLoad().apps.forEach(function(a){if(!a.icon&&m[a.pkg]){a.icon=m[a.pkg];ch=true}});if(ch)lmaSave()}).catch(function(){}).then(function(){ovAppsFetching=false;ovAppsRender()})}
+ if(need.length&&AS&&!ovAppsFetching){ovAppsFetching=true;AS.loadIcons(need).then(function(m){let ch=false;lmaLoad().apps.forEach(function(a){if(!a.icon&&m[a.pkg]){a.icon=m[a.pkg];ch=true}});if(ch){lmaSave();ovAppsRender()}}).catch(function(){}).then(function(){ovAppsFetching=false})}
 }
 (function ovAppsBoot(){
  const i=OV_TILES.findIndex(function(t){return t.id==='hero'})+1;
@@ -15695,6 +15815,7 @@ function lmvAdvance(f,ctx){
  const recent=lmvJLoad().some(function(e){return e.status==='COMMITTED'&&e.semanticFingerprint===fp&&e.operationId!==f.operationId&&Date.now()-e.updatedAtEpochMs<LMV.dupWindowMs});
  if(!f.dupOk&&(recent||lmvLD.sameSlot(res.title,res.slot))){f.dup=true;notices.push({kind:'duplicate',text:'This looks the same as something already scheduled at that time.'})}
  if(f.confidence<LMV.lowConf)notices.push({kind:'confidence',text:'I was not sure I heard that right. Please check it.'});
+ if(f.external)notices.push({kind:'info',text:'This came from a link or a shortcut. Nothing is saved until you confirm.'});
  f.notices=notices;
  f.state='PREVIEWED';
  /* straight through only when the user turned the preview off and nothing needs a look */
@@ -15794,6 +15915,20 @@ function lmvHandle(text,meta){
  lmvAdvance(f,ctx);
  lmvRender();
  return lmvSnapshot();
+}
+/* A schedule request from a lifemax:// link (Assistant, a shortcut or any other app; backlog SEC-3). It only ever becomes a
+   new Life Director entry, never another command, never reaches the online fallback, and it always stops at the preview
+   (f.external adds a notice, so lmvAdvance never saves it straight through): nothing is saved until the owner confirms. */
+function lmvFromLink(text){
+ if(!lmvEnabled())return lmvSnapshot();
+ const ctx=lmvCtx(),clean=String(text==null?'':text).slice(0,500),old=lmvFrame;
+ if(old&&(old.state==='AWAITING_CLARIFICATION'||old.state==='PREVIEWED'))old.state='CANCELLED';
+ try{if(typeof g4Reset==='function')g4Reset()}catch(e){}
+ const f=lmvFrame=lmvNewFrame();f.external=true;f.transcript=clean;f.confidence=1;
+ const raw=lmvExtract(clean,ctx,null),patch={};
+ Object.keys(raw).forEach(function(k){if(raw[k]!==null&&raw[k]!==undefined)patch[k]=raw[k]});
+ if(raw.hour==null)delete patch.minute;if(raw.endHour==null)delete patch.endMinute;
+ lmvMerge(f,patch);lmvAdvance(f,ctx);lmvRender();return lmvSnapshot();
 }
 /* chips and buttons */
 function lmvAnswer(patch){
@@ -16014,6 +16149,7 @@ function lmvSettingsRender(){
 window.LifeMaxVoice=Object.freeze({
  simulateUtterance:function(text,opts){opts=opts||{};if(opts.now||opts.tz){lmvOverride={now:opts.now,tz:opts.tz,workOn:opts.workOn}}else lmvOverride=lmvOverride&&lmvOverride.sticky?lmvOverride:null;return lmvHandle(text,{utteranceId:opts.utteranceId,confidence:opts.confidence})},
  setClock:function(o){lmvOverride=o?{now:o.now,tz:o.tz,workOn:o.workOn,sticky:true}:null},
+ fromLink:lmvFromLink,
  answer:lmvAnswer,confirm:lmvConfirm,cancel:lmvCancel,undo:lmvUndo,reset:lmvReset,snapshot:lmvSnapshot,
  registry:function(){return LMV_CAPS.map(function(c){return {intentId:c.intentId,domain:c.domain,title:c.title,status:c.evaluateStatus()}})},
  _t:{scope:function(t){return lmvScope(t,lmvCtx())},phon:function(t){return lmvPhon(t)},classify:function(t){return lmvClassify(lmvPhon(t))},applyFlag:lmvApplyFlag,buildUI:lmvBuildUI,normalize:lmvNormalize,extract:lmvExtract,finalize:lmvFinalize,localToEpoch:lmvLocalToEpoch,journal:lmvJLoad,journalPut:lmvJPut,execute:function(op){return lmvFrame&&lmvFrame.operationId===op?lmvExecute(lmvFrame):null},fingerprint:lmvFingerprint,recover:lmvRecover,frame:function(){return lmvFrame},ctx:lmvCtx}
@@ -19087,7 +19223,7 @@ function dhIsUp(q){const d=state.dailyDraw;return !!(isQuestDone(q)||(d&&d.up&&d
 /* a revealed card can be turned over to its back by tapping a corner, and turned back by tapping the back */
 function dhTurn(slot){
  const d=dhEnsure();if(!d||!d.up||!d.up[slot])return;d.turned=d.turned||[false,false,false];d.turned[slot]=!d.turned[slot];
- try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ writeSave();
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.toggle('is-turned',!!d.turned[slot]);dhSig='';
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('tap')}catch(e){}
  try{QSFX.play('card-slide',{vol:.7})}catch(e){}
@@ -19095,7 +19231,7 @@ function dhTurn(slot){
 }
 function dhReveal(slot){
  const d=dhEnsure();if(!d)return;d.up=d.up||[false,false,false];if(d.up[slot]){if(d.turned&&d.turned[slot])dhTurn(slot);return}d.up[slot]=true;
- try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ writeSave();
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.add('is-up');
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('double')}catch(e){}
  try{QSFX.play('card-slide',{vol:.8})}catch(e){}
@@ -19174,13 +19310,13 @@ async function dhMaybeDeal(replay){
   }
   return;
  }
- if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+ if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');writeSave();return}
  const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
  if(replay!==true&&gmode==='cine'&&typeof dhGate==='function'){
   if(dhGating)return;dhGating=true;el.classList.add('fd-pre');let gr='go';
   try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
   if(gr==='leave'){el.classList.remove('fd-pre');return}
-  if(gr==='skip'){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+  if(gr==='skip'){d.dealt=true;el.classList.remove('fd-pre');writeSave();return}
  }
  dhDealing=true;
  try{
@@ -19226,7 +19362,7 @@ async function dhMaybeDeal(replay){
  finally{
   dhDealing=false;el.classList.remove('fd-pre');cards.forEach(function(c){c.style.opacity=''});
   const st=document.getElementById('dailyStage');if(st){st.hidden=true}
-  if(dhAbort){dhAbort=false}else{d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+  if(dhAbort){dhAbort=false}else{d.dealt=true;writeSave()}
   if(dhWantReplay){dhWantReplay=false;setTimeout(function(){dhMaybeDeal(true)},60)}
  }
 }
@@ -20380,7 +20516,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
  /* the reading ends (or was skipped): the scene stays as the Quest Board */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();
  await new Promise(function(r){setTimeout(r,30)});skipped=false;tw.length=0;
- d.dealt=true;d.up=[true,true,true];try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ d.dealt=true;d.up=[true,true,true];writeSave();
  sc.dataset.await='';cap.innerHTML='';title.innerHTML='';var skb=sc.querySelector('.fs-skip');if(skb)skb.style.display='none';var gt=sc.querySelector('.fs-gate');if(gt)gt.remove();
  el.classList.remove('fd-pre');cards.forEach(function(c){c.classList.add('is-up')});
  if(!restOnly){var e0=eyeB.slice(),t0b=tgtB.slice();await anim(800,function(t){eyeB=lerp3(e0,REST_EYE,t);tgtB=lerp3(t0b,REST_TGT,t)},eIO)}
@@ -21125,10 +21261,14 @@ function sdOpenDirectorMeal(ref){
 window.LifeMaxMeals=Object.freeze({resolveScheduled:sdDirectorMeal,openScheduled:sdOpenDirectorMeal});
 /* v193: deep links from Google Assistant / Gemini / launcher shortcuts.
    lifemax://schedule/add?title=..&description=..   -> hand the title to the voice engine (it asks for the time)
-   lifemax://cats/feed                              -> feed every living cat
+   lifemax://cats/feed                              -> open the cat room and ask before feeding every hungry cat
    lifemax://open?feature=..                        -> open schedule / cats / quests
-   Links that arrive before the app is ready wait in a queue. */
-var LM_DL={q:[],ready:false,seen:{}};
+   Links that arrive before the app is ready wait in a queue.
+   Hardening (backlog SEC-3): any app or web page can send these links, so a link never changes the save by itself.
+   Titles and descriptions are cut to 120 characters, with control and direction-override characters removed; a schedule
+   request stops at the voice preview (LifeMaxVoice.fromLink); "feed" opens the cat room and asks first. A link Android
+   hands back after a reload of the page in the same session (an over-the-air restart) does not run again. */
+var LM_DL={q:[],ready:false,seen:{},maxText:120,maxUrl:4096,maxQueue:5,ranKey:'lifemax_dl_ran'};
 function lmDlFeature(f){
  f=String(f||'').toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
  if(/\b(feed|feeding|food)\b/.test(f)&&/\bcats?\b|\bkittens?\b|feeding|^feed$/.test(f))return 'feed';
@@ -21137,58 +21277,105 @@ function lmDlFeature(f){
  if(/\bcats?\b|\bpets?\b|\bkittens?\b/.test(f))return 'cats';
  return '';
 }
+/* text from a link: no control or invisible formatting characters (direction overrides among them), except the zero-width
+   joiner and non-joiner that emoji and some scripts need; single spaces; at most max characters */
+function lmDlText(s,max){
+ s=String(s==null?'':s).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b\u200e\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/g,' ').replace(/\s+/g,' ').trim();
+ var cp=Array.from(s);
+ return cp.length>max?cp.slice(0,max).join('').trim():s;
+}
 function lmDlParse(url){
- var m=/^lifemax:\/\/([^\/?#]*)([^?#]*)(?:\?([^#]*))?/i.exec(String(url||'').trim());
+ url=String(url||'').trim();
+ if(url.length>LM_DL.maxUrl)return null;
+ var m=/^lifemax:\/\/([^\/?#]*)([^?#]*)(?:\?([^#]*))?/i.exec(url);
  if(!m)return null;
  var q={};(m[3]||'').split('&').forEach(function(kv){if(!kv)return;var i=kv.indexOf('='),k=i<0?kv:kv.slice(0,i),v=i<0?'':kv.slice(i+1);
   try{q[decodeURIComponent(k)]=decodeURIComponent(v.replace(/\+/g,' '))}catch(e){q[k]=v}});
- var host=m[1].toLowerCase(),path=m[2].replace(/^\/|\/$/g,'').toLowerCase();
- if(host==='schedule')return {kind:'schedule',title:(q.title||q.name||'').trim(),description:(q.description||'').trim()};
+ var host=m[1].toLowerCase(),path=m[2].replace(/^\/|\/$/g,'').toLowerCase(),T=LM_DL.maxText;
+ if(host==='schedule')return {kind:'schedule',title:lmDlText(q.title||q.name,T),description:lmDlText(q.description,T)};
  if(host==='cats'||host==='cat')return {kind:path==='feed'?'feed':'cats'};
- if(host==='open'){var f=lmDlFeature(q.feature);return f?{kind:f}:{kind:'none',raw:q.feature||''}}
+ if(host==='open'){var ft=lmDlText(q.feature,T),f=lmDlFeature(ft);return f?{kind:f}:{kind:'none',raw:ft}}
  return null;
 }
+function lmDlAnd(names){return names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names.join('')}
+function lmDlNotHungry(names){return lmDlAnd(names)+(names.length>1?' are':' is')+' not hungry yet.'}
+/* why nobody can be fed, from a plan or a feeding result */
+function lmDlNobody(r){return r.none?'You do not have a cat to feed yet.':r.vac?'Vacation mode is on. Turn it off to feed your cats.':lmDlNotHungry(r.full)}
+/* the living cats, as petPairP / petAs indexes */
+function lmDlCats(){return [0,1].filter(function(i){var p=petPairP(i);return !!(p&&p.alive)})}
+/* who feeding would reach, without feeding anyone */
+function lmDlFeedPlan(){
+ var cats=lmDlCats(),now=Date.now(),hungry=[],full=[],vac=false;
+ cats.forEach(function(i){
+  var p=petPairP(i);
+  if(p.vacation&&p.vacation.on)vac=true;else if(petCanFeed(p,now))hungry.push(p.name);else full.push(p.name);
+ });
+ return {none:!cats.length,hungry:hungry,full:full,vac:vac};
+}
 function lmDlFeedAll(){
- var out=[],n=(state.pet2&&state.pet2.alive)?2:((state.pet&&state.pet.alive)?1:0);
- if(!n)return {fed:[],full:[],none:true};
- var fed=[],full=[],vac=false;
- for(var i=0;i<n;i++){
+ var cats=lmDlCats(),fed=[],full=[],vac=false;
+ cats.forEach(function(i){
   var p=petPairP(i),r=petAs(i,petFeed,[],true);
   if(r.ok)fed.push(p.name);else if(r.why==='vacation')vac=true;else full.push(p.name);
- }
+ });
  if(fed.length){try{save()}catch(e){}}
- return {fed:fed,full:full,vac:vac};
+ return {none:!cats.length,fed:fed,full:full,vac:vac};
 }
 function lmDlSay(t){try{toast(t)}catch(e){}}
+function lmDlFeedNow(){
+ var r=lmDlFeedAll();
+ lmDlSay(r.fed.length?'Fed '+lmDlAnd(r.fed)+'.'+(r.full.length?' '+lmDlNotHungry(r.full):''):lmDlNobody(r));
+ try{if(typeof petRenderStatus==='function')petRenderStatus()}catch(e){}
+ return r;
+}
+/* "feed the cats" from a link: open the cat room and ask; only the Feed button feeds */
+function lmDlAskFeed(){
+ lmvGo({id:'pet'});petRoomFullscreenClose();   /* the question would sit under the full-screen room */
+ var plan=lmDlFeedPlan(),old=document.querySelector('.lmdl-ask');if(old)old.remove();
+ if(!plan.hungry.length){lmDlSay(lmDlNobody(plan));return}
+ var o=document.createElement('div');o.className='lmdl-ask';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label','Feed your cats?');
+ o.innerHTML='<div class="updpop-card"><h3>Feed '+esc(lmDlAnd(plan.hungry))+'?</h3><p>A shortcut or a link asked LifeMax to feed your cats.'+
+  (plan.full.length?' '+esc(lmDlNotHungry(plan.full)):'')+'</p>'+
+  '<div class="updpop-btns"><button type="button" class="btn" data-dl="feed">Feed</button><button type="button" class="btn secondary" data-dl="no">Not now</button></div></div>';
+ o.addEventListener('click',function(e){
+  var b=e.target.closest('[data-dl]');
+  if(!b){if(e.target===o)o.remove();return}
+  o.remove();if(b.dataset.dl==='feed')lmDlFeedNow();
+ });
+ document.body.appendChild(o);
+ try{o.querySelector('[data-dl="feed"]').focus()}catch(e){}
+}
+/* the links already acted on in this session of the page (sessionStorage survives a reload, not a new process) */
+function lmDlRan(){try{var a=JSON.parse(sessionStorage.getItem(LM_DL.ranKey)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
+function lmDlMarkRan(url){if(!url)return;try{var a=lmDlRan().filter(function(u){return u!==url});a.push(url);sessionStorage.setItem(LM_DL.ranKey,JSON.stringify(a.slice(-8)))}catch(e){}}
 function lmDlRun(link){
  if(!link)return false;
+ lmDlMarkRan(link.url);
  try{
-  if(link.kind==='feed'){
-   var r=lmDlFeedAll();
-   if(r.none)lmDlSay('You do not have a cat to feed yet.');
-   else if(r.vac)lmDlSay('Vacation mode is on. Turn it off to feed your cats.');
-   else if(r.fed.length)lmDlSay('Fed '+r.fed.join(' and ')+(r.full.length?'. '+r.full.join(' and ')+' is full.':''));
-   else lmDlSay(r.full.join(' and ')+(r.full.length>1?' are':' is')+' not hungry yet.');
-   lmvGo({id:'pet'});try{if(typeof petRenderStatus==='function')petRenderStatus()}catch(e){}
-   return true;
-  }
+  if(link.kind==='feed'){lmDlAskFeed();return true}
   if(link.kind==='cats'){lmvGo({id:'pet'});return true}
   if(link.kind==='quests'){lmvGo({id:'quests'});return true}
   if(link.kind==='schedule'){
    if(!link.title){lmvGo({id:'dashboard'});return true}
    try{lmvBuildUI();lmvHudOpen(true)}catch(e){}
-   LifeMaxVoice.simulateUtterance('Put '+link.title+' on my schedule'+(link.description?' ('+link.description+')':''));
+   LifeMaxVoice.fromLink('Put '+link.title+' on my schedule'+(link.description?' ('+link.description+')':''));
    return true;
   }
  }catch(e){console.warn('[deeplink]',e)}
  return false;
 }
-function lmHandleDeepLink(url){
+/* launch: the URL the activity was started with (getLaunchUrl). The page asks for it on every load, so after an
+   over-the-air restart it would come back; one already acted on in this session is skipped. */
+function lmHandleDeepLink(url,launch){
  if(!url)return false;
  var link=lmDlParse(url);if(!link)return false;
+ url=String(url).trim();link.url=url;
+ if(launch&&lmDlRan().indexOf(url)>=0)return true;
  /* the same link can be delivered twice (launch url + appUrlOpen): ignore a repeat within 3 s */
- var now=Date.now();if(LM_DL.seen[url]&&now-LM_DL.seen[url]<3000)return true;LM_DL.seen[url]=now;
- if(!LM_DL.ready){LM_DL.q.push(link);return true}
+ var now=Date.now();
+ Object.keys(LM_DL.seen).forEach(function(k){if(now-LM_DL.seen[k]>=3000)delete LM_DL.seen[k]});
+ if(LM_DL.seen[url])return true;LM_DL.seen[url]=now;
+ if(!LM_DL.ready){if(LM_DL.q.length<LM_DL.maxQueue)LM_DL.q.push(link);return true}
  return lmDlRun(link);
 }
 function lmDlFlush(){LM_DL.ready=true;var q=LM_DL.q.splice(0);q.forEach(lmDlRun)}
@@ -21196,7 +21383,7 @@ function lmDlFlush(){LM_DL.ready=true;var q=LM_DL.q.splice(0);q.forEach(lmDlRun)
  var A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
  if(A){
   try{A.addListener('appUrlOpen',function(e){lmHandleDeepLink(e&&e.url)})}catch(e){}
-  try{A.getLaunchUrl().then(function(r){if(r&&r.url)lmHandleDeepLink(r.url)}).catch(function(){})}catch(e){}
+  try{A.getLaunchUrl().then(function(r){if(r&&r.url)lmHandleDeepLink(r.url,true)}).catch(function(){})}catch(e){}
  }
  /* wait for the pets and the voice engine to finish loading before acting on a queued link */
  setTimeout(lmDlFlush,1800);
@@ -21249,8 +21436,9 @@ function lmgUtterance(c){
 }
 function lmgRun(c,prev,meta){
  if(!c||!c.name)return false;
- if(c.name==='feed_cats'){lmDlRun({kind:'feed'});lmvFrame=null;try{lmvRender()}catch(e){}return true}
- if(c.name==='open_screen'){var k=lmDlFeature((c.args&&c.args.screen)||'');if(!k)return false;lmDlRun({kind:k});try{lmvHudOpen(false)}catch(e){}return true}
+ var k=c.name==='open_screen'?lmDlFeature((c.args&&c.args.screen)||''):'';
+ if(c.name==='feed_cats'||k==='feed'){lmvGo({id:'pet'});lmDlFeedNow();lmvFrame=null;try{lmvRender()}catch(e){}return true}   /* the owner asked in the app: feed, as before (a link asks first) */
+ if(c.name==='open_screen'){if(!k)return false;lmDlRun({kind:k});try{lmvHudOpen(false)}catch(e){}return true}
  var u=lmgUtterance(c);if(!u)return false;
  var m2=Object.assign({},meta);delete m2.utteranceId;
  prev(u,m2);try{lmvRender()}catch(e){}return true;
@@ -21419,6 +21607,7 @@ function lmcRender(){
   const before=JSON.stringify(state);let response;
   try{
    const message=command(a),saved=localStorage.getItem(STORE);
+   if(saveReadOnly)throw Error('Not saved: this version is read-only for your save');
    if(!saved||JSON.stringify(JSON.parse(saved).money)!==JSON.stringify(state.money))throw Error('Could not save. Free some storage and try again.');
    response={requestId:a.requestId,message,ok:true};
   }catch(e){state=JSON.parse(before);try{rebuildAttrXP();rebuildSkillXP();renderAll()}catch(_){}response={requestId:a.requestId,message:e.message||'Could not save',ok:false}}
@@ -21457,14 +21646,15 @@ function lmcRender(){
    The page body, pets and timers are never captured or copied. */
 (function(){
  /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
-    shows through and two sets of bars never fight. Going to a web tab closes it at once. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
+    shows through and two sets of bars never fight. Going to a web tab closes it at once, and so does a tab that hands its own view back
+    to the page (a sheet over it): nothing there takes over. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
  if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0,healTimer=0;const tabs=new Map();
   window.NativeTabs={
    cover(view,fn){covers.set(view,fn)},
    covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
    cancel(id){pending.delete(id)},
    leave(id,toView,closeFn){
-    if(!this.covered(toView)){pending.delete(id);closeFn();return}
+    if(toView===id||!this.covered(toView)){pending.delete(id);closeFn();return}
     pending.set(id,closeFn);ct(timer);timer=st(()=>this.flush(),2500)
    },
    flush(exceptId){
@@ -21637,16 +21827,19 @@ function lmcRender(){
 (function () {
   const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, has() { return false; }, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
-  const TOKENS = ["bg", "panel", "panel2", "text", "muted", "accent", "line", "good"];
+  const TOKENS = ["bg", "bg-elev", "panel", "panel2", "panel3", "text", "text-dim", "muted", "muted2", "accent", "accent-dim", "accent-strong", "line", "line-soft", "good", "gold", "bad"];
 
-  /** a CSS colour as opaque ARGB, which is what the native theme takes */
+  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }); // read on the CPU, no GPU round trip
+
+  /** a CSS colour as ARGB, which is what the native theme takes (translucent only where the colour is, as accent-dim). The canvas
+      stores colours premultiplied, so a translucent one comes back with its red, green and blue a few steps off (#7c9cff22 reads
+      0x22809eff), which no one can see once it is drawn at that alpha. */
   function color(v) {
-    const c = document.createElement("canvas");
-    c.width = c.height = 1;
-    const x = c.getContext("2d");
-    x.fillStyle = v;
-    x.fillRect(0, 0, 1, 1);
-    const a = x.getImageData(0, 0, 1, 1).data;
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = "#000"; // what a colour the canvas cannot parse reads as
+    probe.fillStyle = v;
+    probe.fillRect(0, 0, 1, 1);
+    const a = probe.getImageData(0, 0, 1, 1).data;
     return ((a[3] << 24) | (a[0] << 16) | (a[1] << 8) | a[2]) >>> 0;
   }
   /** the page's current palette, so the native screen matches whatever theme and accent is on */
@@ -21664,15 +21857,18 @@ function lmcRender(){
    * render (name of the page's render function to follow while open), globals {open, enable, projection}.
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
-   * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
+   * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
+   * entered is true for the first open after the page went to the tab's view, false when the screen comes back by revisit().
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
-   * draw); the screen closes at its next refresh and does not open. When the page changes in a way that may unblock it,
-   * the tab calls revisit() on the returned object, which opens the screen again if it is wanted.
+   * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
+   * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
+   * tells which of the two applies.
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
     let sequence = 0, active = false, opening = false, handshake = null, plugin = null, ready = false, timer = 0, queued = 0;
     let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
+    let entered = true; // the page went to this view and no open has projected since
 
     function available() {
       try {
@@ -21708,7 +21904,8 @@ function lmcRender(){
     async function send() {
       if (!active) return;
       if (blocked()) {
-        NativeTabs.leave(cfg.id, lmaView(), () => close());
+        // on its own view the page itself has to show (a sheet, an overlay): no native tab takes over, so close now
+        NativeTabs.leave(cfg.id, lmaView() === cfg.id ? "" : lmaView(), () => close());
         return;
       }
       try {
@@ -21733,6 +21930,7 @@ function lmcRender(){
         }
         reply = Object.assign({ command: e && e.command, requestId: (e && e.requestId) || "" }, reply);
         if (active) {
+          clearTimeout(queued); // a refresh the command's renders asked for: the projection sent with the reply carries them
           try {
             await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
           } catch (err) {
@@ -21780,7 +21978,8 @@ function lmcRender(){
         const handshakeAt = now();
         if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
         if (blocked()) return false;
-        if (cfg.beforeOpen) cfg.beforeOpen();
+        if (cfg.beforeOpen) cfg.beforeOpen(entered);
+        entered = false;
         const data = snapshot();
         const projectionAt = now();
         const scene = await navScene();
@@ -21825,6 +22024,7 @@ function lmcRender(){
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
+        entered = true;
         NativeTabs.cancel(cfg.id);
         queueMicrotask(() => open(false));
       }
@@ -21852,7 +22052,7 @@ function lmcRender(){
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot, runCommand, revisit };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
@@ -22646,17 +22846,11 @@ function lmcRender(){
       notes: String(x.notes || "").slice(0, 2000),
     };
   }
-  /** what the award would be, worded the way the web form's preview words it */
+  /** what Save would pay for this draft, from the function the save pays with (a peek that changes nothing), and why it is not the raw total */
   function previewOf(d) {
     const x = activityPreview(d);
-    const split =
-      x.secondary && x.secondary !== x.primary
-        ? [
-            { attr: x.primary, xp: Math.round(x.total * 0.7) },
-            { attr: x.secondary, xp: x.total - Math.round(x.total * 0.7) },
-          ]
-        : [{ attr: x.primary, xp: x.total }];
-    return { total: x.total, skill: x.skill, durFactor: x.durFactor, split, enough: x.total > 0 };
+    const a = activityAward(d, true);
+    return { total: x.total, award: a.xp, reason: a.msg, skill: x.skill, durFactor: x.durFactor, split: a.split };
   }
   function projection() {
     const d = draft || (draft = draftFor("reading"));
@@ -22667,7 +22861,9 @@ function lmcRender(){
       }),
       attributes: ATTRS.map((a) => ({ id: a.id, name: a.name, short: a.short, icon: a.icon, color: NativeTabKit.color(ATTR_COL[a.id]) })),
       qualities: QUALITIES,
+      minMinutes: ECO.minMin,
       maxMinutes: MAX_MINUTES,
+      durationRules: ECO_DURATION_RULES,
       draft: d,
       draftRevision: revision,
       preview: previewOf(d),
@@ -22737,6 +22933,358 @@ function lmcRender(){
       revision++;
     },
   };
+})();
+/* Life Director projection v1 (Today). Life Director (src/features/life-director) stays the owner of the plan, its rules and
+   its save: the native screen draws LifeDirector.native's frame and Today, covers the page only while Life Director shows
+   Today with nothing over it, picks the day of the strip itself and hands every other tap to the page's own handler.
+   The tab lifecycle is NativeTabKit's. */
+(function () {
+  const director = () => window.LifeDirector && window.LifeDirector.native; // the feature's script runs after the runtime
+  let day = 0; // the day of the strip on screen; today whenever the user comes to Life Director
+  let celebrating = false; // XP earned by a tap is being celebrated on the page, which the screen must not cover
+
+  function projection() {
+    const ld = director();
+    return Object.assign(ld.frame(), { today: ld.today(day) });
+  }
+  const commands = {
+    /** show another day of the strip; nothing is saved and the screen stays */
+    day(p) {
+      const i = Number(p.index),
+        today = Number.isInteger(i) ? director().today(i) : null;
+      if (!today || today.dayIndex !== i) return { ok: false, message: "That day is not on the plan." };
+      day = i;
+      return { ok: true };
+    },
+  };
+
+  /** a session done from the screen earns XP: its celebration plays on the page, from the middle, and the screen waits for it */
+  function celebrate(held) {
+    celebrating = true;
+    lastTap = { x: innerWidth / 2, y: innerHeight / 2 };
+    held.forEach(([delta, gains]) => celebrateXP(delta, gains));
+    afterCelebrations(() => {
+      celebrating = false;
+      tab.revisit();
+    });
+  }
+
+  const tab = NativeTabKit.create({
+    id: "life-director",
+    plugin: "NativeLifeDirector",
+    capability: "director.today.v1",
+    setting: "nativeDirector",
+    toggle: "nativeDirectorToggle",
+    projection,
+    /** the page runs the tap as its element would; when that leaves nothing over Today, the screen comes straight back */
+    onAction(e) {
+      const { held } = holdCelebrations(() => director().act(e.action, e.id));
+      if (held.length) celebrate(held);
+      tab.revisit();
+    },
+    commands,
+    beforeOpen(entered) {
+      if (entered) day = 0;
+    },
+    blocked: () => celebrating || !director() || director().showing() !== "today",
+    globals: { open: "openNativeDirector", enable: "setNativeDirectorEnabled", projection: "NativeDirectorTabProjection" },
+  });
+
+  /* follow Life Director: refresh the screen when what the page shows changes, and come back once Today is clear again */
+  document.addEventListener("DOMContentLoaded", () => {
+    const ld = director();
+    if (ld)
+      ld.onChange(() => {
+        tab.schedule();
+        tab.revisit();
+      });
+  });
+
+  window.NativeDirectorProjection = { snapshot: projection, commands };
+})();
+/* Workout plan projection v1. The page stays the owner of the plan, its XP and the save: the native screen draws this projection
+   of every week and day, selects days and weeks itself, and ticks boxes through the page's own planToggle. Everything else (the
+   guided workout, editing a value or a session log, leaving the plan) closes the screen and runs the page's own handler; the
+   sign-up offers shown without a plan stay on the page. The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/PLAN_INVENTORY.md. */
+(function () {
+  const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+  const KINDS = { strength: "STRENGTH", rest: "REST", recovery: "RECOVERY", cardio: "CARDIO" };
+  const PROGRAMS = {
+    scholar_light8: "Scholar · 8-Week Light Program",
+    entrepreneur_light8: "Entrepreneur · 8-Week Light Program",
+    explorer_outdoor8: "Explorer · 8-Week Outdoor Program",
+    athlete_beginner8: "Athlete · 8-Week Beginner Program",
+    athlete_foundation8: "Athlete · 8-Week Athletic Foundation Program",
+  };
+  const EDITING = "#planBody .pv, #planBody .plog"; // the page's own value and session-log fields
+  const FIELDS = { value: ".pv", sessionLog: ".plog" };
+  const CUE_AFTER_MS = 120; // the sound and buzz of a celebration, once the reply carrying it has reached the screen
+  // the page's date wording (toLocaleDateString), with the formatters made once: there are some 130 dates in a projection
+  const DATES = {
+    day: new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }),
+    long: new Intl.DateTimeFormat(undefined, { month: "long", day: "numeric" }),
+    short: new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }),
+  };
+  const scratch = document.createElement("template");
+  let selectedDate = "",
+    selectedRevision = 0;
+
+  /** some programs write their text as escaped HTML; the screen takes plain text */
+  function plain(html) {
+    const s = String(html ?? "");
+    if (!/[&<]/.test(s)) return s;
+    scratch.innerHTML = s;
+    return scratch.content.textContent;
+  }
+  function dateText(k, format) {
+    return DATES[format].format(parseD(k));
+  }
+  /** the plan's day for a date the screen sent, or null */
+  function validDay(date) {
+    return state.plan && /^\d{4}-\d{2}-\d{2}$/.test(date) ? planDay(date) : null;
+  }
+
+  /** the guided workout launcher, worded as gwrLauncher words it */
+  function launcher(title, detail, button, enabled) {
+    return { title, detail, button, enabled };
+  }
+  function launcherFor(k, d, t) {
+    if (d.kind === "rest") return launcher("Guided workout", "Rest day. Pick a training day below to start a session.", "Start", false);
+    if (k > t) return launcher("Guided workout", "Pick today or an earlier training day below.", "Start", false);
+    const sets = d.items.reduce((n, it) => n + it.n, 0);
+    return launcher(
+      "Guided workout",
+      plain(d.label) + " · " + d.items.length + " exercises · " + sets + " sets",
+      dayDone(k) ? "Review" : "Start",
+      true,
+    );
+  }
+  /** a saved guided session takes the launcher's place on every day until it is finished */
+  function session() {
+    const g = gwrCurrent();
+    if (!g) return null;
+    const d = planDay(g.date),
+      s = gwrStats(g);
+    return launcher(
+      "Workout in progress",
+      plain(d ? d.label : "Session") + " · " + s.doneReq.length + " of " + s.needed.length + " sets done",
+      "Resume",
+      true,
+    );
+  }
+
+  function itemOf(it, k, c) {
+    const ticked = (c.s || {})[it.k] || [],
+      log = (c.log || {})[it.k] || "",
+      previous = lastLog(it.k, k),
+      last = it.wt || it.min ? lastVal(it.k, k) : "";
+    return {
+      key: it.k,
+      title: plain(it.l),
+      detail: plain(it.d),
+      optional: !!it.opt,
+      sets: Array.from({ length: it.n }, (_, i) => !!ticked[i]),
+      value:
+        it.wt || it.min
+          ? { text: (c.v || {})[it.k] || "", placeholder: it.wt ? "Weight used" : "Minutes done", last: last ? "last: " + last : "" }
+          : null,
+      log: { text: log, previous: previous ? (log ? "Previous: " : "Last time: ") + previous : "" },
+    };
+  }
+  /** a day as its tile and its card show it; null where the plan has no day (before it starts) */
+  function dayOf(k, i, t) {
+    const d = planDay(k);
+    if (!d) return null;
+    const c = pcheck(k),
+      label = plain(d.label);
+    return {
+      date: k,
+      weekday: WEEKDAYS[i],
+      dayOfMonth: String(parseD(k).getDate()),
+      kind: d.kind,
+      kindLabel: KINDS[d.kind] || "ATHLETIC",
+      glyph: d.kind === "strength" ? d.code || d.label.replace(/[^A-Z]/g, "").slice(-1) || "S" : "",
+      icon: d.icon,
+      status: dayCls(k) || "upcoming",
+      today: k === t,
+      title: dateText(k, "day") + " · " + label,
+      description: label + ", " + dateText(k, "long"),
+      tag: "Week " + d.week + " · " + (d.kind === "rest" ? "rest" : dayPct(k) + "% done"),
+      note: plain(d.note),
+      locked: k > t,
+      items: d.items.map((it) => itemOf(it, k, c)),
+      guided: launcherFor(k, d, t),
+    };
+  }
+  function weekOf(p, w, t, current) {
+    const start = addDays(p.start, w * 7),
+      days = WEEKDAYS.map((_, i) => dayOf(addDays(start, i), i, t)),
+      training = days.filter((d) => d && d.kind !== "rest"),
+      done = training.filter((d) => d.status === "done").length,
+      number = String(w + 1).padStart(2, "0");
+    return {
+      number,
+      label: "WEEK " + number,
+      range: dateText(start, "short") + " — " + dateText(addDays(start, 6), "short"),
+      meta: done + " of " + training.length + " sessions",
+      done,
+      total: training.length,
+      complete: training.length > 0 && done === training.length,
+      current,
+      days,
+    };
+  }
+  /** the page's selected day (renderPlan's default when it has none); the revision rises whenever the page changes it, so the
+      screen follows a day chosen on the page (Life Director, voice, a delegated action) and otherwise keeps its own */
+  function selected(p, t) {
+    const date = planSel && planDay(planSel) ? planSel : planDay(t) ? t : planDay(p.from) ? p.from : p.start;
+    if (date !== selectedDate) {
+      selectedDate = date;
+      selectedRevision++;
+    }
+    return { date, revision: selectedRevision };
+  }
+  function key(p) {
+    const light = !!CLASS_PLAN_KEY[p.id],
+      foundation = p.id === "athlete_foundation8";
+    return [
+      { icon: "", label: light ? "A / C · Strength" : foundation ? "A / C / E · Strength" : "A / B / C · Strength" },
+      { icon: "heart", label: "Cardio" },
+      { icon: "moon", label: "Recovery" },
+      ...(light || foundation ? [] : [{ icon: "bolt", label: "Athletic" }]),
+      { icon: "bed", label: "Rest" },
+    ];
+  }
+  /** the General rules the page writes for this program, as lines with their bold lead */
+  function rules(p) {
+    scratch.innerHTML = CLASS_PLAN_KEY[p.id]
+      ? scholarRulesHtml()
+      : p.id === "athlete_beginner8"
+        ? legacyAthleteRulesHtml()
+        : athleteRulesHtml();
+    const line = (el) => {
+      const lead = el.querySelector("strong")?.textContent || "";
+      return { lead, text: el.textContent.slice(lead.length).trim() };
+    };
+    return {
+      items: [...scratch.content.querySelectorAll("li")].map(line),
+      progression: [...scratch.content.querySelectorAll("div p")].map(line),
+    };
+  }
+
+  /** where celebrateXP's orbs fly: the centre of the top bar's logo, from the top of the page, as the shared bar draws it */
+  function celebrationTarget() {
+    const r = document.getElementById("brandLogo")?.getBoundingClientRect();
+    return r && r.width ? { x: r.x + r.width / 2, y: r.y + scrollY + r.height / 2 } : { x: innerWidth / 2, y: 44 };
+  }
+
+  function projection() {
+    const p = state.plan,
+      t = getToday(),
+      over = t > addDays(p.start, 55),
+      week = Math.min(8, Math.max(1, Math.floor((dayNum(t) - dayNum(p.start)) / 7) + 1)),
+      weeks = Array.from({ length: 8 }, (_, w) => weekOf(p, w, t, !over && w === week - 1)),
+      due = weeks.flatMap((w) => w.days).filter((d) => d && d.kind !== "rest" && d.date <= t),
+      done = due.filter((d) => d.status === "done").length,
+      total = weeks.reduce((n, w) => n + w.total, 0);
+    return {
+      program: PROGRAMS[p.id] || PROGRAMS.athlete_foundation8,
+      status: t < p.from ? "Starts " + parseD(p.from).toLocaleDateString() : over ? "Program complete" : "Week " + week + " of 8",
+      summary: done + " of " + total + " sessions done · " + (due.length ? Math.round((done / due.length) * 100) : 0) + "% on track",
+      sessions: { done, total },
+      weeks,
+      selected: selected(p, t),
+      session: session(),
+      key: key(p),
+      rules: rules(p),
+      reducedMotion: fxReduced(),
+      celebrationTarget: celebrationTarget(),
+    };
+  }
+
+  /** what an attribute gain looks like on the screen: the page's colour and short name for it */
+  function gainOf(g) {
+    const a = ATTRS.find((x) => x.id === g.id);
+    return { attribute: g.id, short: a ? a.short : g.id, xp: g.xp, color: NativeTabKit.color(ATTR_COL[g.id] || "#6c8cff") };
+  }
+  const commands = {
+    /** tick or clear one set, like the page's checkbox. The set ends as asked, so repeating the command changes nothing; a day
+        completed by it pays its XP once (planToggle keeps the session's activity id). A failed save leaves the change in memory,
+        as the page's own checkbox does, with what the save set off (badges, a daily-hand quest), and the next save stores it all:
+        the reply says nothing was saved, and the projection sent with it shows the boxes as the page holds them. */
+    toggle(c) {
+      const d = validDay(c.date),
+        it = d && d.items.find((x) => x.k === c.key),
+        i = Number(c.set),
+        checked = c.checked === true;
+      if (!it || !Number.isInteger(i) || i < 0 || i >= it.n)
+        return { ok: false, message: "That set is not in your plan. Nothing was changed." };
+      if (c.date > getToday()) return { ok: false, message: "Locked until the day arrives." };
+      if (!!((pcheck(c.date).s || {})[c.key] || [])[i] === checked) return { ok: true, changed: false };
+      // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
+      const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
+      if (!result.saved) return { ok: false, message: "Could not save to this browser (storage full?)" };
+      if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
+      return {
+        ok: true,
+        changed: true,
+        message: result.message,
+        celebrations: held.map(([xp, gains]) => ({ xp, gains: gains.map(gainOf) })),
+      };
+    },
+  };
+
+  /** show a day's value or session-log field on the page, focused; the screen stays away while the field has the focus */
+  function edit(date, k, field) {
+    const d = validDay(date),
+      index = d && date <= getToday() ? d.items.findIndex((it) => it.k === k) : -1;
+    if (index < 0) return;
+    selectDay(date);
+    const input = document.querySelectorAll("#planBody .pit")[index]?.querySelector(field);
+    if (!input) return;
+    input.scrollIntoView({ block: "center" });
+    input.focus({ preventScroll: true });
+  }
+  /** a native action, after the screen has closed: run the page's own handler, then come back unless the page now shows
+      something the screen does not draw (the guided workout, a focused field, the offers after leaving the plan) */
+  function onAction(e) {
+    const [date, k] = String(e.id || "").split("/");
+    if (e.action === "guided") {
+      if (gwrCurrent()) gwrResume();
+      else if (validDay(date)) gwrStart(date);
+    } else if (FIELDS[e.action]) edit(date, k, FIELDS[e.action]);
+    else if (e.action === "leave") leavePlan();
+    tab.revisit();
+  }
+
+  const tab = NativeTabKit.create({
+    id: "plan",
+    plugin: "NativePlan",
+    capability: "plan.projection.v1",
+    setting: "nativePlan",
+    toggle: "nativePlanToggle",
+    projection,
+    onAction,
+    commands,
+    render: "renderPlan",
+    blocked: () => !state.plan || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov"),
+    globals: { open: "openNativePlan", enable: "setNativePlanEnabled", projection: "NativePlanTabProjection" },
+  });
+
+  /** The page covers its view now and then (the guided workout, a level-up, a sheet, a field being edited) and brings the plan
+      back (the runner closed, a plan started from an offer): step aside for it, and come back after. */
+  function follow() {
+    if (tab.blocked()) tab.send();
+    else tab.revisit();
+  }
+  function leaveField(e) {
+    if (e.target.matches?.(EDITING)) setTimeout(follow); // once the page's own change handler has run and the focus has moved
+  }
+  const watch = new MutationObserver(follow);
+  watch.observe(document.body, { attributes: true, attributeFilter: ["class"], childList: true });
+  watch.observe(document.getElementById("planBody"), { childList: true });
+  document.addEventListener("focusout", leaveField, true);
+  document.addEventListener("change", leaveField, true);
 })();
 /* Android device backup: whether Android may copy LifeMax (journal and health entries included) into the owner's Google
    backup and to a new phone. Off by default. The choice lives on the Android side (DeviceBackupChoice), because Android's
