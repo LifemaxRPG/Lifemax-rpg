@@ -157,7 +157,7 @@ The web layer publishes a small semantic `ShellState` (proposal for its shape: `
 
 **A23. Make-before-break hand-over between native destinations.** *Implemented* (`NativeTabs` in `50-native-overview.js`, `ChromeHost` in `app/shell/ChromeHost.kt`; ADR 0002).
 1. The destination opens first. The previous destination closes only after the new one has opened or failed. A last-resort timeout (2.5 s) is a recorded fault, not normal flow.
-2. A web destination closes the previous native one at once.
+2. A web destination closes the previous native one at once. So does a tab that gives its own view back to the page (a sheet opens over it), through the same `NativeTabs.leave`: nothing there takes over.
 3. Every scene or state message carries the page's monotonic sequence; a receiver ignores a message older than the one it holds.
 4. Shared UI (the bars) has an owner token; only the current owner may release it; a stale owner's release is a no-op.
 5. At most one set of bars is visible.

@@ -1,0 +1,69 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 1,
+ "header": {
+  "dot": "off",
+  "line": "Not set up yet"
+ },
+ "clock": {
+  "time": "6:30 AM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "setup",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "today": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

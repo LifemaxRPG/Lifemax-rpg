@@ -35,7 +35,8 @@
    * render (name of the page's render function to follow while open), globals {open, enable, projection}.
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
-   * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
+   * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
+   * entered is true for the first open after the page went to the tab's view, false when the screen comes back by revisit().
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
@@ -45,6 +46,7 @@
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
     let sequence = 0, active = false, opening = false, handshake = null, plugin = null, ready = false, timer = 0, queued = 0;
     let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
+    let entered = true; // the page went to this view and no open has projected since
 
     function available() {
       try {
@@ -154,7 +156,8 @@
         const handshakeAt = now();
         if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
         if (blocked()) return false;
-        if (cfg.beforeOpen) cfg.beforeOpen();
+        if (cfg.beforeOpen) cfg.beforeOpen(entered);
+        entered = false;
         const data = snapshot();
         const projectionAt = now();
         const scene = await navScene();
@@ -199,6 +202,7 @@
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
+        entered = true;
         NativeTabs.cancel(cfg.id);
         queueMicrotask(() => open(false));
       }

@@ -96,6 +96,17 @@ dependencies {
     p.write_text(s, encoding='utf-8')
 
 
+# Compose: the projections' read-only types count as stable (native/compose-stability.conf).
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'compose-stability.conf' not in s:
+    s += """
+composeCompiler {
+    stabilityConfigurationFile.set(file('../../native/compose-stability.conf'))
+}
+"""
+    p.write_text(s, encoding='utf-8')
+
 # Compose screenshots on the JVM (no phone, no emulator). Reference images live in the authored tree:
 # native/src/test/snapshots, linked in as the module's src/test/snapshots.
 p = root / 'build.gradle'
