@@ -6,6 +6,7 @@
   let sequence = 0,
     active = false,
     opening = false,
+    handshake = null,
     plugin = null,
     ready = false,
     timer = 0,
@@ -210,7 +211,7 @@
         });
         ready = true;
       }
-      const h = await plugin.handshake();
+      const h = handshake || (handshake = await plugin.handshake());
       const handshakeAt = now();
       if (
         h.protocol !== 1 ||

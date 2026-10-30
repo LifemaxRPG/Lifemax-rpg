@@ -358,7 +358,7 @@
     N.plugin = p;
     try {
       await ready(p);
-      const caps = await p.capabilities();
+      const caps = N.caps || (N.caps = await p.capabilities());
       const capabilitiesAt = performance.now();
       if (!caps || caps.version !== 1 || !caps.authoritativeData) return;
       if (view() !== 'meals' || !enabled()) return;

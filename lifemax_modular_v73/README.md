@@ -784,3 +784,8 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Links use the meal slot and scheduled date, resolved at tap time, so swaps, dietary preferences, portion changes and logging stay current. The schedule's timezone is used; meal blocks clipped at midnight retain their original date. No food entries are created by viewing a meal.
 - Food opens on Plan with the selected meal's ingredients expanded and focused. Unknown meal names fall back to that day's plan with an explanation. Standalone Life Director remains usable without the Smart Diet bridge.
 - Web-only change; native API stays at 8. Check: `node tests/director-meals.test.js` (17 checks using real meal data and Life Director handlers).
+
+## Native tab switching: no View Transition under native screens
+- Tapping the native bottom bar used to click the hidden web nav button, which `42-scrubnav.js` turns into `lmaNavTo(view)` with a full-screen View Transition slide. The page change was held until the old page was captured (80-160 ms at 4x CPU slowdown), then the main thread janked for 150-650 ms, exactly while the native screen was opening. Only Food used the instant path.
+- `NativeOverviewSnapshot.activate` now calls `lmaNavTo(view,{fast:true})` whenever the old or new tab is Overview, Character or Food, and sets `html.native-cover` while a covered native body is on screen so the hidden web page does not run its 0.4 s `viewIn` fade-in.
+- Capability handshakes (Character, Food, Overview) are cached instead of repeated on every switch.

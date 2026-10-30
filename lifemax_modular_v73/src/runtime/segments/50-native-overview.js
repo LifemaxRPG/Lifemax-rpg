@@ -98,12 +98,12 @@
   if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
   const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
   N.opening=true;N.plugin=p;
-  try{const capabilities=await p.capabilities().catch(()=>null);if(!capabilities?.liveWeb)return{opened:false,reason:'live-shell-update-required'};await ready(p);if(!force){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))])}if(blocked())return{opened:false,diagnostics:diagnostics()};
+  try{const capabilities=N.caps||(N.caps=await p.capabilities().catch(()=>null));if(!capabilities?.liveWeb)return{opened:false,reason:'live-shell-update-required'};await ready(p);if(!force){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))])}if(blocked())return{opened:false,diagnostics:diagnostics()};
    const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
  }
 
- const nav=navigate;navigate=function(v){N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
@@ -114,6 +114,17 @@
  new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
- window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{const prior=N.navActions.get(id),target=prior?.isConnected?prior:N.actions.get(id);if(target?.isConnected){if(target.dataset.view==='food'&&window.NativeNutritionBeta?.enabled())lmaNavTo('food',{fast:true});else target.click()}}};
+ window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{
+   const prior=N.navActions.get(id),target=prior?.isConnected?prior:N.actions.get(id);
+   if(!target?.isConnected)return;
+   const to=target.dataset.view,from=typeof lmaView==='function'?lmaView():'';
+   /* Tab changes between the native screens run the page change straight away: no View Transition slide, and no fade-in of a page that is covered anyway. */
+   const nativeTab=v=>v==='dashboard'||v==='character'||v==='meals'||v==='food';
+   if(to&&typeof lmaNavTo==='function'&&(nativeTab(to)||nativeTab(from))){
+    const covered=(to==='character'&&lmaLoad().nativeCharacter===true)||((to==='meals'||to==='food')&&!!window.NativeNutritionBeta?.enabled());
+    document.documentElement?.classList?.toggle('native-cover',covered);
+    lmaNavTo(to,{fast:true});
+   }else target.click();
+  }};
 })();
 
