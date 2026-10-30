@@ -346,7 +346,9 @@
     if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) return;
     const p = plugin();
     if (!p) return;
+    const openedAt = performance.now();
     const s = snapshot();
+    const projectionAt = performance.now();
     if (!s) {
       console.warn('NativeNutrition: authoritative snapshot unavailable');
       return;
@@ -357,16 +359,17 @@
     try {
       await ready(p);
       const caps = await p.capabilities();
+      const capabilitiesAt = performance.now();
       if (!caps || caps.version !== 1 || !caps.authoritativeData) return;
       if (view() !== 'meals' || !enabled()) return;
       const id = 'nutrition_' + Date.now();
       N.session = id;
       if (!window.NativeOverviewSnapshot) throw new Error('Shared Overview chrome unavailable');
-      await p.open({
-        session: id,
-        snapshot: s,
-        chromeScene: await NativeOverviewSnapshot.snapshot()
-      });
+      const chromeScene = await NativeOverviewSnapshot.snapshot();
+      const chromeAt = performance.now();
+      await p.open({ session: id, snapshot: s, chromeScene });
+      const nativeAt = performance.now();
+      window.__nativeTabPerf = {feature:'food',projectionMs:projectionAt-openedAt,capabilitiesMs:capabilitiesAt-projectionAt,chromeMs:chromeAt-capabilitiesAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt,chromeCache:NativeOverviewSnapshot.diagnostics()};
       if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
         await p.close({ session: id });
         return;
