@@ -223,6 +223,9 @@ jobs:
       - name: JavaScript lint ratchet
         run: python3 lifemax_modular_v73/tools/lint_js.py
 
+      - name: Every native plugin registered and catalogued
+        run: python3 tools/check_bridge_catalog.py
+
       - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt)
         run: lifemax_modular_v73/tools/run_tests.sh
 

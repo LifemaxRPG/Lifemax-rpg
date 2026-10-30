@@ -11,6 +11,9 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - CI-3: publishing replaces the files of the `latest` release in place, version.json last, and keeps the build it replaces as the `previous` release.
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
+- C4: A33 in CONTRACT.md is the definition of done for a native tab (beta until then; web code deleted only after a release as default).
+- C5: ADRs 0005 (presentation first, shared scaffold), 0006 (hand-over registry and safety net), 0007 (screenshot proof, local build), 0008 (save protection), 0009 (release safety).
+- A27's check: `tools/check_bridge_catalog.py` (in CI) fails when a native destination plugin is unregistered or uncatalogued, or an entry names no plugin.
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
 
 ## CI and tests
