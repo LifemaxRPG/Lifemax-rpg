@@ -1,10 +1,11 @@
 /* Produces the projections the native screens are tested and screenshotted with, by running the web app's own projections:
-   Food's NativeNutritionBeta.snapshot() on a fixed day with a fixed diary, the Workout plan's NativePlanTabProjection.snapshot()
-   after ticking sets with the page's own planToggle, planVal and planLog, and Life Director's tab snapshot on the lived-in day of
-   tests/fixtures/director-day.js. Regenerate only when a projection changes:
+   Food's NativeNutritionBeta.snapshot() on a fixed day with a fixed diary, Log's NativeLogProjection.snapshot() for a few drafts
+   on that day, the Workout plan's NativePlanTabProjection.snapshot() after ticking sets with the page's own planToggle, planVal
+   and planLog, and Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js. Regenerate only when a
+   projection changes:
      NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js
-   Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, fixtures/plan-{midweek,complete,scholar}.json,
-   fixtures/director-*.json */
+   Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -41,6 +42,29 @@ async function food(b) {
     if (!data) throw new Error('no snapshot for ' + pane);
     write('food-' + pane + '.json', data);
   }
+}
+
+/* Log on the same day: the default draft, a strength workout, that workout under the daily cap, and refused as a fourth of its type */
+async function log(b) {
+  const p = await page(b);
+  await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') });
+  await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
+  await p.goto('file://' + out); await p.waitForTimeout(2500);
+  const logs = await p.evaluate(() => {
+    const L = NativeLogProjection;
+    const at = (sequence) => Object.assign({ protocol: 1, webSessionId: 'log-fixture', sequence, tokens: NativeTabKit.tokens(), light: false }, JSON.parse(JSON.stringify(L.snapshot())));
+    const res = { default: at(1) };
+    L.setDraft(Object.assign(L.draftFor('strength'), { duration: '45', quality: '1.1', notes: 'Push day: bench 5x5' }));
+    res.strength = at(2);
+    // the same workout on a day that already earned 225 XP: only what is left under the daily cap is paid
+    state.activities.push({ id: 'f-cap', type: 'business', name: 'Focused business work', icon: 'briefcase', duration: 180, quality: 1, skill: 'Entrepreneurship', primary: 'business', secondary: '', xp: 225, date: new Date().toISOString(), notes: '', xpSplit: [{ attr: 'business', xp: 225 }] });
+    res.capped = at(3);
+    // and after three workouts today: a fourth of the same type pays nothing, and the page says why
+    for (const n of [1, 2, 3]) state.activities.push({ id: 'f-lift' + n, type: 'strength', name: 'Strength workout', icon: 'dumbbell', duration: 20, quality: 1, skill: 'Lifting', primary: 'physique', secondary: '', xp: 0, date: new Date().toISOString(), notes: '', xpSplit: [] });
+    res.refused = at(4);
+    return res;
+  });
+  for (const [name, data] of Object.entries(logs)) write('log-' + name + '.json', data);
 }
 
 /* Workout plan, today Wednesday 2026-10-28: the athlete foundation program mid-week and in week 3 with today done, and the
@@ -146,6 +170,7 @@ async function director(b) {
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   await food(b);
+  await log(b);
   await plan(b);
   await director(b);
   await b.close(); fs.unlinkSync(out);

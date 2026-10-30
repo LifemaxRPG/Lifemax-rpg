@@ -144,7 +144,6 @@
     "renderAll",
     "populateAttrSelects",
     "activityPresetChanged",
-    "calcPreview",
     "updatePreview",
     "submitActivity",
     "toggleQuest",

@@ -16,9 +16,12 @@ import com.lifemax.rpg.core.designsystem.components.RoundButton
 import com.lifemax.rpg.core.designsystem.components.SectionLabel
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 
-/** Minutes, with a five-minute stepper and the common lengths one tap away. */
+/**
+ * Minutes, with a five-minute stepper and the common lengths one tap away, and the page's own words
+ * for how duration scales XP.
+ */
 @Composable
-internal fun LogDurationCard(minutes: Int, onChange: (Int) -> Unit) {
+internal fun LogDurationCard(minutes: Int, rules: String, onChange: (Int) -> Unit) {
     SurfaceCard {
         SectionLabel("Duration")
         Row(
@@ -58,6 +61,12 @@ internal fun LogDurationCard(minutes: Int, onChange: (Int) -> Unit) {
                 )
             }
         }
+        Text(
+            rules,
+            Modifier.padding(top = 12.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 12.sp,
+        )
     }
 }
 

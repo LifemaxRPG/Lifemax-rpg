@@ -27,48 +27,54 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const r = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)), L = window.Capacitor.Plugins.NativeLog;
     const last = (k) => [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === k);
+    const opens = () => window.__calls.filter(c => c[0] === 'log' && c[1] === 'open').length;
+    const openLog = async () => { const n = opens(); navigate('log'); for (let t = 0; t < 100 && opens() === n; t++) await wait(50) };
     const out = {};
     // the one-off thumbnail walk (9 s after launch on Android) visits every tab; the other tab tests switch it off too
     lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { }
     const S = lmaLoad(); S.nativeLog = true; S.nativeOverview = false; lmaSave();
     // a prefill in the web form (as Life Director or a link would do) carries over when the native screen opens
     document.getElementById('activityType').value = 'running'; activityPresetChanged(); document.getElementById('duration').value = 45;
-    navigate('log'); await wait(400);
+    // the first open captures the Overview top and bottom bars for the screen (navScene, a cache miss), which can take over a second on a busy machine
+    await openLog();
     const opened = last('open');
     out.opened = !!opened && opened[2].snapshot.protocol === 1 && opened[2].snapshot.presets.length >= 9 && opened[2].snapshot.attributes.length === 8;
-    out.prefill = opened && opened[2].snapshot.draft.type === 'running' && opened[2].snapshot.draft.duration === '45' && opened[2].snapshot.draft.primary === 'endurance';
-    out.previewMatchesPage = opened && opened[2].snapshot.preview.total === activityPreview(opened[2].snapshot.draft).total;
+    if (!opened) return out;
+    out.prefill = opened[2].snapshot.draft.type === 'running' && opened[2].snapshot.draft.duration === '45' && opened[2].snapshot.draft.primary === 'endurance';
+    const shown = opened[2].snapshot, award = activityAward(shown.draft, true);
+    out.previewMatchesPage = shown.preview.total === activityPreview(shown.draft).total && shown.preview.award === award.xp && shown.preview.reason === award.msg && JSON.stringify(shown.preview.split) === JSON.stringify(award.split);
+    out.limits = shown.minMinutes === ECO.minMin && shown.maxMinutes === 1440 && /up to 3× at 120 min/.test(shown.durationRules) && document.getElementById('durationRules').textContent === shown.durationRules;
     // preview: the page answers with the new award, and the draft revision does not change (so typing is never replaced)
     const rev0 = opened[2].snapshot.draftRevision, d60 = Object.assign({}, opened[2].snapshot.draft, { duration: '60' });
-    await L.__emit('command', { command: 'preview', payload: { draft: d60 }, requestId: 'r1' }); await wait(200);
+    await Promise.all(L.__emit('command', { command: 'preview', payload: { draft: d60 }, requestId: 'r1' }));
     const reply = (id) => [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === id);
     const up = reply('r1');
-    out.preview = !!up && up[2].reply.ok === true && up[2].snapshot.preview.total === activityPreview(d60).total && up[2].snapshot.draftRevision === rev0;
+    out.preview = !!up && up[2].reply.ok === true && up[2].snapshot.preview.award === activityAward(d60, true).xp && up[2].snapshot.draftRevision === rev0;
     out.noCloseOnCommand = !window.__calls.some(c => c[0] === 'log' && c[1] === 'close');
     // the XP celebration is held back until Overview is showing, not played under the native screen during the save
     // the level-up overlay arrives about a second after a save and would cover the screens this test reopens; it is not under test here
     const realLevelUp = showLevelUp; showLevelUp = function () { };
     const fx = []; const realFx = SFX.xp; SFX.xp = function () { fx.push(lmaView()) };
     // submit: saved by the page's own function, toast, a fresh draft, and on to Overview
-    const n0 = state.activities.length; let toasted = ''; const realToast = window.toast; window.toast = m => { toasted = String(m) };
-    await L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r2' }); await wait(300);
+    const n0 = state.activities.length, toasts = [], realToast = window.toast; window.toast = m => toasts.push(String(m));
+    await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r2' }));
     const sub = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r2');
     out.saved = state.activities.length === n0 + 1 && state.activities[state.activities.length - 1].opId === 'op-1' && JSON.parse(localStorage.getItem(STORE)).activities.some(a => a.opId === 'op-1');
     out.reply = !!sub && sub[2].reply.ok === true && /Activity saved/.test(sub[2].reply.message) && sub[2].snapshot.draftRevision > rev0;
-    out.toastAndNavigate = /Activity saved/.test(toasted) && lmaView() === 'dashboard';
+    out.toastAndNavigate = toasts.some(m => /Activity saved/.test(m)) && lmaView() === 'dashboard';
     out.fxHeld = fx.length === 0; await wait(600); out.fxAfter = fx.length === 1 && fx[0] === 'dashboard';
     // the same operation again (a double tap that got through) records nothing new
-    navigate('log'); await wait(400);
-    await L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r3' }); await wait(300);
+    await openLog();
+    await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r3' }));
     out.oncePerOperation = state.activities.length === n0 + 1;
     // a failed save comes back as a failure, nothing is added, and the screen stays
-    navigate('log'); await wait(400);
+    await openLog();
     const realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
-    try { await L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-2' }, requestId: 'r4' }); await wait(300) } finally { Storage.prototype.setItem = realSet }
+    try { await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-2' }, requestId: 'r4' })) } finally { Storage.prototype.setItem = realSet }
     const bad = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r4');
     out.failure = !!bad && bad[2].reply.ok === false && /Could not save/.test(bad[2].reply.message) && state.activities.length === n0 + 1 && lmaView() === 'log';
     // an unknown command is refused without closing anything
-    await L.__emit('command', { command: 'nope', payload: {}, requestId: 'r5' }); await wait(200);
+    await Promise.all(L.__emit('command', { command: 'nope', payload: {}, requestId: 'r5' }));
     const unk = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r5');
     out.unknown = !!unk && unk[2].reply.ok === false;
     // the page cleans a hostile draft: unknown preset, absurd duration, made-up attribute, oversized notes
@@ -79,7 +85,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   });
   ok('opening sends a full projection (presets, eight attributes)', r.opened, r);
   ok('a prefill in the web form carries over to the native draft', r.prefill, r);
-  ok('the preview in the projection is the page\'s own activityPreview', r.previewMatchesPage, r);
+  ok('the projection previews the raw total and the award Save would pay, from the page\'s own functions', r.previewMatchesPage, r);
+  ok('the projection carries the duration limits and the rules the web form shows, so the screen hard-codes none', r.limits, r);
   ok('a preview command answers with the new award and does not replace the draft being typed', r.preview && r.noCloseOnCommand, r);
   ok('submit saves through recordActivity with the operation id, persists it, toasts and goes to Overview', r.saved && r.reply && r.toastAndNavigate, r);
   ok('the XP celebration waits until Overview is showing instead of playing during the save', r.fxHeld && r.fxAfter, r);

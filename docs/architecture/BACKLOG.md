@@ -25,6 +25,8 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - SEC-6: the FileProvider shares only `cache/update/` (UpdaterPlugin's APK for the installer) and the app's external `Pictures/` (Capacitor's camera capture for an `<input capture>`, unused today), replacing the template's storage-root and whole-cache entries. FileSaverPlugin and BackupFolderPlugin use the storage access framework and share nothing. CONTRACT.md records that native code logs nothing. Checked in the built APK; the first in-app APK update made *from* this build is the device check.
 - NAV-4, partly: a launch intent handed back after process death, a re-creation or a reopen from Recents (saved state or FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) is stripped before the bridge reads its launch URL; every delivered intent, including onNewIntent, is marked consumed; the page does not re-run its launch URL after a reload in the same session (an over-the-air restart; `tests/deeplink.test.js` drives it through a faked App plugin). The Android side has no automated test (it needs an instrumented or Robolectric check); still to see on the phone: a widget tap or link, then a reopen from Recents and a return after the process was killed, each opening nothing again. Not done: the 9 s wait before a widget tap opens Life Director on a cold start.
 - Data safety (ADR 0004): verified folder backups, a verified snapshot before an import, a reset or an update, `SAVE_SCHEMA` with `migrateSave()` and read-only for a newer save, and golden saves restored and compared in `backup-restore.test.js`. Also the load() half of the save epoch item (Native write path): an unreadable save is kept, never stored over; the epoch itself comes with the first native write.
+- LOG-4, the preview half of the write-path item and edit 1 of the outcome-surface item: the web form and the native Log preview the XP Save would pay, from the function Save pays with (`activityAward(draft, true)`, a peek that changes nothing), with the page's reason when it is not the raw total (repeat, perk, rested XP, daily cap, stars) or the refusal Save would give. A save reports the XP it stored, star bonus included. Proven on every golden case and a scenario matrix, down to the skill's XP (tests/log-activity.test.js).
+- LOG-5, in part: the web card and the projection word the duration rules from one string next to ecoDur (`ECO_DURATION_RULES`, 'up to 3× at 120 min'); the projection carries `minMinutes`, and the native duration stays within the page's limits.
 
 ## CI and tests
 
@@ -125,14 +127,14 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 ## Log tab
 
-- **medium** — The XP preview and the actual award disagree, and the native projection hides the reasons  
-  Add `award` to previewOf: call ecoAward(..., {manual:true, peek:true}) plus ecoStarXP, and return {awardXp, reason}. Keep `total` as the raw value. Keep the 70/30 split computed from awardXp, as recordActivity does. Add a golden… *(log-tab-readiness LOG-4, not verified)*
 - **medium** — Hidden rules and web-only behaviours the native Log must carry or drop on purpose  
-  Record this list as the Log parity checklist in docs/architecture. Fix the copy to 'up to 3x at 120 min'. Expose `minMinutes: ECO.minMin` and `durationRules` in the projection so the native screen does not hard-code them. In the… *(log-tab-readiness LOG-5, not verified)*
+  Record this list as the Log parity checklist in docs/architecture (the copy, `minMinutes` and `durationRules` are done). In the… *(log-tab-readiness LOG-5, not verified)*
 - **low** — Removing the Log DOM makes navigate('log') throw and abort navigation  
   In 04-runtime.js navigate, change `if(view==='log')updatePreview()` to `if(view==='log'&&document.getElementById('previewXP'))updatePreview()`. Do this only when the native Log actually stops rendering the form, since the throw… *(log-tab-readiness LOG-1, verified)*
 - **low** — Projection gaps: what the native Log needs that the page does not yet expose  
   Add the fields to snapshot(): `skills` (the top 10 of state.skillXP), `recent` (the last 5 activities), `limits` {sameTypeToday per type, manualMinutesLeft}. Extend the submit result with {xpSplit, duplicate}. Add the matching… *(log-tab-readiness LOG-6, not verified)*
+- **low** — Life Director keeps its own copy of the activity XP formula  
+  H.xpFor (features/life-director/logic.js) repeats activityPreview and activityAward, and its comment still names the removed calcPreview(). For the Life Director track: have it call activityAward, which would need the activity's day and no manual-time limit, or at least point the comment at recordActivity()/activityAward(). *(log XP preview review, verified)*
 
 ## Remaining tabs
 
@@ -158,9 +160,9 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — A native Submit can be tapped when the page cannot hear it: events are dropped silently, page starts wipe listeners, and nothing native is persisted  
   Do not build durable-op or DataStore machinery now. Do the smallest part that closes the stale-screen hole: in ComposeTabPlugin.load(), add a bridge WebViewListener whose onPageStarted calls hide() on the UI thread, and also have… *(log-write-path, verified)*
 - **medium** — The outcome surface is wrong for a native screen: web toasts, celebrations and the level-up overlay are hidden or overwritten, and derived effects never reach…  
-  Two small edits now, the rest deferred to the native Log submit work. 1. Return the stored value. In recordActivity change the success return to {ok:true,xp:xpTot,message:`Activity saved · +${xpTot} XP`}. Return the same value… *(log-write-path, verified)*
-- **medium** — The preview and the award are different functions, the golden test can't see the difference, and the owner function does no input validation  
-  1) In activityPreview, add `const ea=ecoAward(d.type in rules?d.type:'custom',total,dur,{manual:true,peek:true})` and return `award:ea.xp,blockedReason:ea.msg`. Show award in updatePreview and the native projection, falling back… *(log-write-path, verified)*
+  Two small edits now, the rest deferred to the native Log submit work. Edit 1, return the stored value, is done (see Done). Edit 2… *(log-write-path, verified)*
+- **medium** — The owner function does no input validation (the preview half of this item is done)  
+  At the top of recordActivity, reject with {ok:false,message,code:'invalid_field'} if `!rules[d.type]`, if `d.primary` is non-empty and not in ATTRS, or if `!Number.isFinite(Number(d.quality))`; cap notes, skill and customName… *(log-write-path, verified)*
 - **medium** — The save has no epoch, and the only whole-save replacement paths include one that can silently overwrite it with a blank state  
   In the load() catch block, use a unique key per failure, `STORE+'_unreadable_'+Date.now()` (as the reviewer proposed), instead of the single write-once key. Only overwrite STORE when the copy was written successfully. Add a small… *(log-write-path, verified)*
 

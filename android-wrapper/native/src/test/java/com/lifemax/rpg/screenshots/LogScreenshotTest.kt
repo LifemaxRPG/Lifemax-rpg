@@ -38,4 +38,8 @@ class LogScreenshotTest {
     @Test fun logStrengthDark() = snap("log-strength", false)
 
     @Test fun logStrengthLight() = snap("log-strength", true)
+
+    @Test fun logCappedDark() = snap("log-capped", false)
+
+    @Test fun logRefusedDark() = snap("log-refused", false)
 }

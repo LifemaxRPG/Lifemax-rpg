@@ -35,13 +35,18 @@ data class LogDraft(
 
 data class XpShare(val attribute: String, val xp: Int)
 
-/** What the page says the award would be for a draft. */
+/**
+ * What Save would pay for a draft, as the page's own award computes it: [award] after today's
+ * limits and bonuses, split between the attributes; [reason] says why it is not the raw [total], or
+ * why nothing would be paid.
+ */
 data class LogPreview(
     val total: Int,
+    val award: Int,
+    val reason: String,
     val skill: String,
     val durationFactor: Double,
     val split: List<XpShare>,
-    val enough: Boolean,
 )
 
 data class LogProjection(
@@ -50,7 +55,9 @@ data class LogProjection(
     val presets: List<LogPreset>,
     val attributes: List<LogAttribute>,
     val qualities: List<LogQuality>,
+    val minMinutes: Int,
     val maxMinutes: Int,
+    val durationRules: String,
     val draft: LogDraft,
     val draftRevision: Long,
     val preview: LogPreview,

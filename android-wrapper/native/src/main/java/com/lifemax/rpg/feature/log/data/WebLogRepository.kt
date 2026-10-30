@@ -60,6 +60,9 @@ class WebLogRepository : LogRepository {
         require(presets.isNotEmpty() && presets.any { it.id == "custom" }) { "Missing presets" }
         require(attributes.size == 8) { "Expected the eight attributes" }
         require(qualities.isNotEmpty()) { "Missing effort levels" }
+        val minMinutes = j.getInt("minMinutes")
+        val maxMinutes = j.getInt("maxMinutes")
+        require(minMinutes in 0..maxMinutes) { "Duration limits out of order" }
 
         val d = j.getJSONObject("draft")
         val draft =
@@ -78,14 +81,16 @@ class WebLogRepository : LogRepository {
         val preview =
             LogPreview(
                 p.getInt("total"),
+                p.getInt("award"),
+                p.getString("reason"),
                 p.getString("skill"),
                 p.getDouble("durFactor"),
                 p.getJSONArray("split").objects().map {
                     XpShare(it.getString("attr"), it.getInt("xp"))
                 },
-                p.getBoolean("enough"),
             )
         require(preview.total >= 0 && preview.durationFactor.isFinite())
+        require(preview.award > 0 || preview.reason.isNotBlank()) { "A refusal without a reason" }
         val colors = j.getJSONObject("tokens")
         mutable.value =
             LogProjection(
@@ -94,7 +99,9 @@ class WebLogRepository : LogRepository {
                 presets,
                 attributes,
                 qualities,
-                j.getInt("maxMinutes"),
+                minMinutes,
+                maxMinutes,
+                j.getString("durationRules"),
                 draft,
                 j.getLong("draftRevision"),
                 preview,

@@ -60,7 +60,7 @@
    "readContract": {
     "snapshotDto": "feature/log/domain/LogProjection.kt",
     "decoder": "feature/log/data/WebLogRepository.kt",
-    "fixtures": "native/src/test/resources/log-default.json, log-strength.json",
+    "fixtures": "native/src/test/resources/log-default.json, log-strength.json, log-capped.json, log-refused.json (lifemax_modular_v73/tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; draftRevision changes only when the page replaces the draft (save, prefill)"
    },
    "mutationsGate": "operation id per draft (idempotent submit); no durable receipt across process death yet (A14/A15 gap)",
