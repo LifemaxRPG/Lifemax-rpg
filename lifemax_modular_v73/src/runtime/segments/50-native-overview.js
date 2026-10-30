@@ -1,6 +1,22 @@
 /* Live hybrid Overview: Android header/navigation over the original resumed WebView.
    The page body, pets and timers are never captured or copied. */
 (function(){
+ /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
+    shows through and two sets of bars never fight. Going to a web tab closes it at once. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
+ if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0;
+  window.NativeTabs={
+   cover(view,fn){covers.set(view,fn)},
+   covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
+   cancel(id){pending.delete(id)},
+   leave(id,toView,closeFn){
+    if(!this.covered(toView)){pending.delete(id);closeFn();return}
+    pending.set(id,closeFn);ct(timer);timer=st(()=>this.flush(),2500)
+   },
+   flush(exceptId){
+    for(const [id,fn] of [...pending]){if(id===exceptId)continue;pending.delete(id);try{fn()}catch(e){console.warn('NativeTabs close',e)}}
+    if(!pending.size)ct(timer)
+   }
+  }}
  const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false,cacheHits:0,cacheMisses:0,lastCaptureMs:0};
  const ids=new WeakMap(),assets=new Map(),chromeCache=new Map();let nextId=0,snapshotQueue=Promise.resolve();
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
@@ -40,7 +56,7 @@
  }
  window.setNativeOverviewEnabled=setEnabled;
  window.syncNativeOverviewSetting=syncSetting;
- function blocked(){return !enabled()||!state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
+ function blocked(ignoreView){return !enabled()||!state.onboardingComplete||(!ignoreView&&lmaView()!=='dashboard')||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
  function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);if(el.closest('.sidebar'))N.navActions.set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
@@ -94,25 +110,28 @@
   return task;
  }
  function signature(scene){return JSON.stringify({width:scene.width,height:scene.height,background:scene.background,light:scene.light,header:scene.header,nav:scene.nav})}
- async function send(){if(!N.open)return;if(blocked()){await N.plugin.close({session:N.session});return}if(N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot(),paint=signature(scene);if(N.open&&paint!==N.lastPaint){await N.plugin.update({session:N.session,snapshot:scene});N.lastPaint=paint}}catch(e){console.warn('Native Overview refresh',e);mask(false);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
+ async function send(){if(!N.open)return;if(blocked()){closeOverview();return}if(N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot(),paint=signature(scene);if(N.open&&paint!==N.lastPaint){await N.plugin.update({session:N.session,snapshot:scene});N.lastPaint=paint}}catch(e){console.warn('Native Overview refresh',e);mask(false);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
  async function ready(p){if(!N.ready)N.ready=(async()=>{await p.addListener('failed',e=>{if(e.session===N.session){window.__nativeOverviewError=e.reason;console.warn('Native Overview',e.reason)}});await p.addListener('refresh',e=>{if(e.session===N.session)send()});await p.addListener('activate',e=>{if(e.session!==N.session)return;const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected)target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));send()});await p.addListener('closed',e=>{if(e.session!==N.session)return;N.open=false;N.opening=false;N.suspended=true;mask(false);if(Number.isFinite(e.scroll))scrollTo(0,e.scroll);const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected){target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}else if(e.action)toast('Overview changed. Please try that action again.');if(lmaView()==='dashboard'&&enabled())setTimeout(()=>{if(!N.open&&!N.opening&&!blocked())open(true)},0)})})().catch(e=>{N.ready=null;throw e});return N.ready}
  function diagnostics(){return{plugin:!!plugin(),view:lmaView(),onboarded:!!state.onboardingComplete,width:innerWidth,overlay:typeof lmaTopOverlay==='function'&&!!lmaTopOverlay(),bodyClasses:document.body.className,blocked:!!blocked(),open:N.open,opening:N.opening,cacheHits:N.cacheHits,cacheMisses:N.cacheMisses,lastCaptureMs:N.lastCaptureMs}}
+ /* closing goes through the hand-over: if you are moving to another native tab, this one stays until that one is up */
+ function closeOverview(){NativeTabs.leave('overview',typeof lmaView==='function'?lmaView():'',()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}})}
  async function open(force){
   if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
-  const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
+  const p=plugin();if(!p||N.open||N.opening||blocked()){if(!N.opening)NativeTabs.flush('overview');return{opened:N.open,diagnostics:diagnostics()}}
   N.opening=true;N.plugin=p;
   try{const capabilities=N.caps||(N.caps=await p.capabilities().catch(()=>null));if(!capabilities?.liveWeb)return{opened:false,reason:'live-shell-update-required'};await ready(p);if(!force){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))])}if(blocked())return{opened:false,diagnostics:diagnostics()};
-   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
-  }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
+   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});NativeTabs.flush('overview');N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
+  }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false;NativeTabs.flush('overview')}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from==='character'||from==='meals'))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
  /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
  const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
  function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
   if(p&&p.timing&&h)p.timing().then(r=>{if(r&&r.last)h.textContent='Last: '+r.last}).catch(()=>{})}
  window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
  setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
+ NativeTabs.cover('dashboard',()=>!!plugin()&&!blocked(true));
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
@@ -120,7 +139,7 @@
  if(typeof lmaThumbWarm==='function'){const warm=lmaThumbWarm;lmaThumbWarm=function(){if(N.open||N.opening)return Promise.resolve();return warm.apply(this,arguments)}}
  // Refresh only after the shared model has rendered; native owns no gameplay state.
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
- new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+ new MutationObserver(()=>{if(N.open&&blocked())closeOverview()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
  window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{

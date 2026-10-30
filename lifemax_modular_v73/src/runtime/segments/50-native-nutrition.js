@@ -1,5 +1,6 @@
 /* Native Nutrition 1:1 Compose integration: real web state is authoritative; no fixture data or duplicate saves. */
 (function () {
+  const NativeTabs = (typeof window !== 'undefined' && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
   const N = {
     plugin: null,
     open: false,
@@ -342,15 +343,25 @@
   }
 
   async function open() {
-    if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') return;
-    if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) return;
+    if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
+      if (!N.opening) NativeTabs.flush('meals');
+      return;
+    }
+    if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) {
+      NativeTabs.flush('meals');
+      return;
+    }
     const p = plugin();
-    if (!p) return;
+    if (!p) {
+      NativeTabs.flush('meals');
+      return;
+    }
     const openedAt = performance.now();
     const s = snapshot();
     const projectionAt = performance.now();
     if (!s) {
       console.warn('NativeNutrition: authoritative snapshot unavailable');
+      NativeTabs.flush('meals');
       return;
     }
     const generation = ++N.generation;
@@ -376,6 +387,7 @@
       }
       N.open = true;
       N.blocked = false;
+      NativeTabs.flush('meals');
       setTimeout(scheduleSync, 160); /* settled bar, in case a scene from the previous tab got there late */
     } catch (e) {
       N.open = false;
@@ -383,6 +395,7 @@
       console.warn('Native Nutrition open failed', e);
     } finally {
       if (N.generation === generation) N.opening = false;
+      NativeTabs.flush('meals');
     }
   }
 
@@ -572,14 +585,17 @@
   const nav = navigate;
   navigate = function (destination) {
     const result = nav.apply(this, arguments);
-    if (destination !== 'meals' && (N.open || N.opening)) close();
+    if (destination !== 'meals' && (N.open || N.opening)) NativeTabs.leave('meals', destination, () => close());
     if (destination === 'meals') {
+      NativeTabs.cancel('meals');
       N.blocked = false;
       queueMicrotask(open);
     }
     if (destination === 'settings') syncSettings();
     return result;
   };
+
+  NativeTabs.cover('meals', () => !!plugin() && enabled());
 
   if (typeof renderMeals === 'function') {
     const original = renderMeals;

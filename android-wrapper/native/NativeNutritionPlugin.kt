@@ -99,6 +99,7 @@ class NativeNutritionPlugin : Plugin() {
                 // the screen stays composed while another tab is showing, so coming back is instant
                 val view = layer ?: createLayer()
                 view.visibility = View.VISIBLE
+                view.bringToFront()
                 shown = true
                 showChrome(call.getObject("chromeScene"))
                 TabTiming.attached(view, "food")

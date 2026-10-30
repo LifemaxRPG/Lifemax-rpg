@@ -800,3 +800,9 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Symptom: after a tab change the page was Character but the bottom bar still lit Food (and the reverse). The bar's scene is captured from the page and sent to the native side; with the 80 ms delay gone and the scene cached, an old or half-faded highlight could be reused, and replies could arrive out of order.
 - Page side: `snapshot()` calls `lmaSyncActive()` first, keys its cache on the lit tab, reads styles with transitions off (`html.lma-capture`), and Character and Food re-publish a settled bar 160 ms after they open.
 - Native side: `ChromeHost.show(owner, …)` ignores any scene whose page sequence number is older than the one showing (within 3 s), and only the current owner can release the shared bars.
+
+## Native tab hand-over (Native API 17)
+- Going between Overview, Character and Food used to close the tab you left first and open the next one afterwards. In between, the web page underneath showed through, and the shared bars lingered while Overview drew its own, so two different headers (one with the mic button, one without) overlapped.
+- `NativeTabs` (in `50-native-overview.js`) now hands over: the tab you go to opens first, and the tab you leave closes only when that open finishes (or fails). A web destination closes it at once. All close paths (navigation, the Overview MutationObserver, Overview and Character refresh) go through it. A 2.5 s timeout is the last resort.
+- Native: only one set of bars is ever visible (`ChromeHost.show` hides the Overview shell's bars; Overview's open closes the shared bars), a screen being shown is brought to the front, and the shared bars go within 60 ms when you leave for a web tab.
+- `tests/native-handover.test.js` (Playwright, fake native plugins with random delays): no gap between native screens, always the right tab, rapid switching ends right. It fails on the previous logic.

@@ -1,5 +1,6 @@
 /* Character projection v1. Read-only domain boundary; edits stay in original web handlers. */
 (function () {
+  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
   const session =
     "character-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -160,7 +161,7 @@
   async function send() {
     if (!active) return;
     if (blocked()) {
-      await close();
+      NativeTabs.leave("character", lmaView(), () => close());
       return;
     }
     try {
@@ -184,8 +185,10 @@
       opening ||
       blocked() ||
       (!force && lmaLoad().nativeCharacter !== true)
-    )
+    ) {
+      if (!opening) NativeTabs.flush("character");
       return false;
+    }
     opening = true;
     const openedAt = now();
     try {
@@ -232,6 +235,7 @@
       }
       active = true;
       timer = setInterval(send, 15000);
+      NativeTabs.flush("character");
       setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
       return true;
     } catch (e) {
@@ -240,13 +244,19 @@
       return false;
     } finally {
       opening = false;
+      NativeTabs.flush("character");
     }
   }
+  NativeTabs.cover("character", () => !!available() && lmaLoad().nativeCharacter === true);
   const nav = navigate;
   navigate = function (v) {
-    if (v !== "character" && (active || opening)) close();
+    if (v !== "character" && (active || opening))
+      NativeTabs.leave("character", v, () => close());
     const r = nav.apply(this, arguments);
-    if (v === "character") queueMicrotask(() => open(false));
+    if (v === "character") {
+      NativeTabs.cancel("character");
+      queueMicrotask(() => open(false));
+    }
     if (v === "settings") sync();
     return r;
   };

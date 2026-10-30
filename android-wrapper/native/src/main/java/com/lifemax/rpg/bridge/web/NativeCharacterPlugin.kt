@@ -73,6 +73,7 @@ class NativeCharacterPlugin : Plugin() {
                         .addView(view, FrameLayout.LayoutParams(-1, -1))
                 }
                 view?.visibility = View.VISIBLE
+                view?.bringToFront()
                 showNav(call.getObject("navScene"))
                 view?.let { TabTiming.attached(it, "character") }
                 call.resolve()

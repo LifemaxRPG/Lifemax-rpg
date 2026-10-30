@@ -4,8 +4,18 @@ import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.View
 import android.webkit.WebView
 import org.json.JSONObject
+
+/** The Overview's own bars (its shell). Only one set of bars may be visible, so the shared bars hide these. */
+internal object OverviewBars {
+    var shell: LiveOverviewShell? = null
+
+    fun hide() {
+        shell?.root?.visibility = View.INVISIBLE
+    }
+}
 
 /**
  * One shared top and bottom bar for the native tab screens. Switching between Character and Food used to
@@ -50,6 +60,7 @@ internal object ChromeHost {
                 ?: LiveOverviewShell(activity, web, chromeOnly = true) { id -> listener?.invoke(id) }
                     .also { shell = it }
         current.show(scene)
+        OverviewBars.hide()
         lastSequence = sequence
         lastShownAt = now
         // a screen added after the bars must not cover them
@@ -59,11 +70,20 @@ internal object ChromeHost {
         return current
     }
 
-    /** A native screen went away. The bars stay unless nothing else picks them up soon. */
+    /**
+     * A native screen went away. When it is moving to another native tab, that tab opened first and now owns
+     * the bars, so this does nothing. When it is moving to a web tab, the bars go almost at once.
+     */
     fun leave(by: Any) {
         if (owner !== by) return
         handler.removeCallbacks(release)
-        handler.postDelayed(release, 450)
+        handler.postDelayed(release, 60)
+    }
+
+    /** The Overview shell is taking over: no shared bars may stay on screen. */
+    fun closeAll() {
+        handler.removeCallbacks(release)
+        release.run()
     }
 
     fun closeNow(by: Any) {

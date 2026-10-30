@@ -29,9 +29,11 @@ class NativeOverviewPlugin : Plugin() {
             TabTiming.opened()
             try {
                 shell?.close();session=id
+                ChromeHost.closeAll()
                 shell=LiveOverviewShell(activity,bridge.webView) { action ->
                     notifyListeners("activate",JSObject().put("session",session).put("action",action).put("sequence",shell?.sequence ?: 0))
                 }.also { it.show(scene!!) }
+                OverviewBars.shell=shell
                 shell?.let { TabTiming.attached(it.root,"overview") }
                 call.resolve()
             } catch(e:Exception){shell?.close();shell=null;call.reject("Could not attach Overview controls",e)}
@@ -47,9 +49,9 @@ class NativeOverviewPlugin : Plugin() {
     }
     @PluginMethod fun close(call: PluginCall) {
         activity.runOnUiThread {
-            if(call.getString("session")==session){shell?.close();shell=null;notifyListeners("closed",JSObject().put("session",session))}
+            if(call.getString("session")==session){shell?.close();shell=null;OverviewBars.shell=null;notifyListeners("closed",JSObject().put("session",session))}
             call.resolve()
         }
     }
-    override fun handleOnDestroy(){activity.runOnUiThread{shell?.close();shell=null};super.handleOnDestroy()}
+    override fun handleOnDestroy(){activity.runOnUiThread{shell?.close();shell=null;OverviewBars.shell=null};super.handleOnDestroy()}
 }
