@@ -33,13 +33,14 @@ const WANT = { dashboard: 'overview', character: 'character', meals: 'food' };
   `);
   await p.goto('file://' + out);
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
+  if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
   await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; lmaSave(); navigate('dashboard') });
   const settle = async (ms) => { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 400 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(20) };
   await settle(4000);
   const failures = []; let hops = 0;
-  const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(12345);
+  const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(Number(process.env.SEED_BASE) || 12345);
   for (let seed = 1; seed <= SEEDS; seed++) {
-    await p.evaluate(s => { window.__seed = s; window.__log = [] }, seed);
+    await p.evaluate(s => { window.__seed = s; window.__log = [] }, seed + (Number(process.env.SEED_BASE) || 0));
     const tabs = Object.keys(WANT), n = 3 + Math.floor(rng() * 9), seq = [];
     for (let i = 0; i < n; i++) seq.push({ to: tabs[Math.floor(rng() * 3)], gap: Math.floor(rng() * 4) * 25 });
     for (const step of seq) { await p.evaluate(v => { window.__log.push(window.__t() + ' >> go ' + v); lmaNavTo(v, { fast: true }) }, step.to); if (step.gap) await settle(step.gap); hops++ }

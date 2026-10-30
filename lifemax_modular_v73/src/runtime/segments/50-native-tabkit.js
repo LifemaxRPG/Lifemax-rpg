@@ -3,7 +3,7 @@
    refresh on render, resume and a timer, the settings toggle and the public entry points. The native half is ComposeTabPlugin.
    Contract: docs/architecture/CONTRACT.md (A03, A07, A23) and docs/architecture/NATIVE_TAB_GUIDE.md. */
 (function () {
-  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
+  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
   const TOKENS = ["bg", "panel", "panel2", "text", "muted", "accent", "line", "good"];
 
@@ -148,6 +148,7 @@
     }
 
     NativeTabs.cover(cfg.id, enabled);
+    NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close });
     const nav = navigate;
     navigate = function (v) {
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());

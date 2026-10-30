@@ -1,5 +1,5 @@
 {
  "no-cond-assign": 3,
- "no-func-assign": 90,
+ "no-func-assign": 91,
  "no-redeclare": 19
 }

@@ -3,7 +3,7 @@
 (function(){
  /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
     shows through and two sets of bars never fight. Going to a web tab closes it at once. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
- if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0;
+ if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0,healTimer=0;const tabs=new Map();
   window.NativeTabs={
    cover(view,fn){covers.set(view,fn)},
    covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
@@ -15,8 +15,24 @@
    flush(exceptId){
     for(const [id,fn] of [...pending]){if(id===exceptId)continue;pending.delete(id);try{fn()}catch(e){console.warn('NativeTabs close',e)}}
     if(!pending.size)ct(timer)
+   },
+   /* Safety net behind the hand-over. A tab registers how to ask it whether it is open or opening, and how to open and close it.
+      A moment after the last tab change, once nothing is in flight, the tab for the current view must be showing and no other native
+      tab may be; if not, this repairs it (a rapid run of taps can leave a screen cancelled, or a stale one behind). */
+   register(view,tab){tabs.set(view,tab)},
+   heal(tries=0){
+    ct(healTimer);
+    healTimer=st(()=>{
+     if([...tabs.values()].some(t=>t.isOpening())){if(tries<20)this.heal(tries+1);return}
+     const view=typeof lmaView==='function'?lmaView():'',want=tabs.get(view);
+     const stray=[...tabs].filter(([v,t])=>t!==want&&t.isOpen()).map(([,t])=>t);
+     const closeStray=()=>{for(const t of stray){try{t.close()}catch(e){console.warn('NativeTabs heal',e)}}};
+     if(want&&this.covered(view)&&!want.isOpen()){Promise.resolve(want.open()).catch(()=>{}).then(()=>{closeStray();if(tries<2)this.heal(tries+1)})}
+     else if(stray.length){closeStray();if(tries<2)this.heal(tries+1)}
+    },600)
    }
-  }}
+  };
+  const nav0=navigate;navigate=function(){const r=nav0.apply(this,arguments);window.NativeTabs.heal();return r}}
  const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false,cacheHits:0,cacheMisses:0,lastCaptureMs:0};
  const ids=new WeakMap(),assets=new Map(),chromeCache=new Map();let nextId=0,snapshotQueue=Promise.resolve();
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
@@ -132,6 +148,7 @@
  window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
  setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
  NativeTabs.cover('dashboard',()=>!!plugin()&&!blocked(true));
+ NativeTabs.register('dashboard',{isOpen:()=>N.open,isOpening:()=>N.opening,open:()=>open(false),close:()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}}});
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can

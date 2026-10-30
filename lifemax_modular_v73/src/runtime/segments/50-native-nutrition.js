@@ -1,6 +1,6 @@
 /* Native Nutrition 1:1 Compose integration: real web state is authoritative; no fixture data or duplicate saves. */
 (function () {
-  const NativeTabs = (typeof window !== 'undefined' && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
+  const NativeTabs = (typeof window !== 'undefined' && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, heal() {} };
   const N = {
     plugin: null,
     open: false,
@@ -599,6 +599,15 @@
   };
 
   NativeTabs.cover('meals', () => !!plugin() && enabled());
+  NativeTabs.register('meals', {
+    isOpen: () => N.open,
+    isOpening: () => N.opening,
+    open: () => {
+      N.blocked = false; // asked for because Meals is the current view
+      return open();
+    },
+    close,
+  });
 
   if (typeof renderMeals === 'function') {
     const original = renderMeals;
