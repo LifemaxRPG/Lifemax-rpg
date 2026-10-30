@@ -68,6 +68,41 @@
    "canonicalLayout": true
   },
   {
+   "feature": "life-director",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeLifeDirector",
+   "owner": "web-life-director",
+   "pluginSource": "bridge/web/NativeLifeDirectorPlugin.kt (extends ComposeTabPlugin), in progress",
+   "webModule": "50-native-director.js (NativeTabKit) on LifeDirector.native in src/features/life-director/logic.js",
+   "capabilities": [
+    "director.today.v1"
+   ],
+   "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running",
+   "commands": {
+    "day": "{index}: shows that day of the strip; read-only, refused when the day is not on the strip; the screen stays"
+   },
+   "writes": [],
+   "delegatedInteractions": [
+    "inst: the session sheet",
+    "meal: the meal preview",
+    "focusStart, focusOpen, focusFinish: the timer",
+    "doneQuick: finishInstance (XP through LifeMax)",
+    "tab: Week, Goals, Quests, My time, Settings",
+    "tour: the guide",
+    "disrupt: Something came up",
+    "replan",
+    "regroup, dismissBanner: the banner"
+   ],
+   "readContract": {
+    "fixtures": "native/src/test/resources/fixtures/director-today.json, director-tomorrow.json (tools/gen_native_fixtures.js)",
+    "ordering": "webSessionId and increasing sequence",
+    "invalidation": "LifeDirector.native.onChange (a render, a sheet or the guide opening or closing, a message), host resume, foreground return, 15-second refresh while visible"
+   },
+   "mutationsGate": "no native writes; Done and the timer run the page's own handlers after the screen closes",
+   "rollout": "opt-in under Settings, Appearance: Native Life Director (beta), off by default",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",

@@ -1,0 +1,946 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 2,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "today",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "today": {
+  "now": 1793200201,
+  "dayIndex": 1,
+  "isToday": false,
+  "strip": [
+   {
+    "label": "Today",
+    "date": 28,
+    "dots": [
+     "done",
+     "plan",
+     "off",
+     "plan"
+    ]
+   },
+   {
+    "label": "Thu",
+    "date": 29,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   },
+   {
+    "label": "Fri",
+    "date": 30,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   },
+   {
+    "label": "Sat",
+    "date": 31,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   },
+   {
+    "label": "Sun",
+    "date": 1,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   },
+   {
+    "label": "Mon",
+    "date": 2,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   },
+   {
+    "label": "Tue",
+    "date": 3,
+    "dots": [
+     "plan",
+     "plan",
+     "plan",
+     "plan",
+     "plan"
+    ]
+   }
+  ],
+  "dial": {
+   "startEpoch": 1793232000,
+   "endEpoch": 1793318400,
+   "radii": {
+    "C": 180,
+    "RO": 130,
+    "WO": 18,
+    "RI": 101,
+    "WI": 20,
+    "T0": 146,
+    "T1": 152,
+    "RL": 164
+   },
+   "hourWords": [
+    {
+     "h": 0,
+     "word": "Midnight"
+    },
+    {
+     "h": 3,
+     "word": "3 AM"
+    },
+    {
+     "h": 6,
+     "word": "6 AM"
+    },
+    {
+     "h": 9,
+     "word": "9 AM"
+    },
+    {
+     "h": 12,
+     "word": "Noon"
+    },
+    {
+     "h": 15,
+     "word": "3 PM"
+    },
+    {
+     "h": 18,
+     "word": "6 PM"
+    },
+    {
+     "h": 21,
+     "word": "9 PM"
+    }
+   ],
+   "arcs": [
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "sleep",
+     "a0": 0.45,
+     "a1": 104.55,
+     "s": 1793232000,
+     "e": 1793257200,
+     "title": "Sleep",
+     "label": "Sleep, 12:00 AM to 7:00 AM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Sleep · 12:00 AM–7:00 AM"
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "maint",
+     "a0": 105.45,
+     "a1": 112.05,
+     "s": 1793257200,
+     "e": 1793259000,
+     "title": "Morning routine",
+     "label": "Morning routine, 7:00 AM to 7:30 AM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Morning routine · 7:00 AM–7:30 AM. Routines are set in My time."
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 113.2,
+     "a1": 115.55,
+     "s": 1793259000,
+     "e": 1793259900,
+     "title": "Vocab Review",
+     "label": "Vocab Review, 7:30 AM to 7:45 AM",
+     "state": "plan",
+     "next": false,
+     "icon": "chat",
+     "act": "inst",
+     "id": "i_1o9khh740bh2dpbco8cef4",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "meal",
+     "kind": "meal",
+     "a0": 120.7,
+     "a1": 126.8,
+     "s": 1793260800,
+     "e": 1793262600,
+     "title": "Breakfast",
+     "label": "Breakfast, 8:00 AM to 8:30 AM",
+     "state": "",
+     "next": false,
+     "icon": "meal",
+     "act": "meal",
+     "id": "1793260800",
+     "tip": ""
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "commute",
+     "a0": 127.95,
+     "a1": 134.55,
+     "s": 1793262600,
+     "e": 1793264400,
+     "title": "Commute",
+     "label": "Commute, 8:30 AM to 9:00 AM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Commute · 8:30 AM–9:00 AM"
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "work",
+     "a0": 135.45,
+     "a1": 254.55,
+     "s": 1793264400,
+     "e": 1793293200,
+     "title": "Work",
+     "label": "Work, 9:00 AM to 5:00 PM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Work · 9:00 AM–5:00 PM"
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "commute",
+     "a0": 255.45,
+     "a1": 262.05,
+     "s": 1793293200,
+     "e": 1793295000,
+     "title": "Commute home",
+     "label": "Commute home, 5:00 PM to 5:30 PM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Commute home · 5:00 PM–5:30 PM"
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "commute",
+     "a0": 262.95,
+     "a1": 269.55,
+     "s": 1793295000,
+     "e": 1793296800,
+     "title": "Decompress",
+     "label": "Decompress, 5:30 PM to 6:00 PM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Decompress · 5:30 PM–6:00 PM"
+    },
+    {
+     "ring": "inner",
+     "style": "meal",
+     "kind": "meal",
+     "a0": 270.7,
+     "a1": 276.8,
+     "s": 1793296800,
+     "e": 1793298600,
+     "title": "Dinner",
+     "label": "Dinner, 6:00 PM to 6:30 PM",
+     "state": "",
+     "next": false,
+     "icon": "meal",
+     "act": "meal",
+     "id": "1793296800",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 278.2,
+     "a1": 284.3,
+     "s": 1793298600,
+     "e": 1793300400,
+     "title": "No-scroll hour",
+     "label": "No-scroll hour, 6:30 PM to 7:00 PM",
+     "state": "plan",
+     "next": false,
+     "icon": "target",
+     "act": "inst",
+     "id": "i_0wb5swrlzrj27kg8bwmoem",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 285.7,
+     "a1": 288.05,
+     "s": 1793300400,
+     "e": 1793301300,
+     "title": "Full care day",
+     "label": "Full care day, 7:00 PM to 7:15 PM",
+     "state": "plan",
+     "next": false,
+     "icon": "moon",
+     "act": "inst",
+     "id": "i_1lz02s349672bwizytndnj",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 289.45,
+     "a1": 299.3,
+     "s": 1793301300,
+     "e": 1793304000,
+     "title": "Resistance Training",
+     "label": "Resistance Training, 7:15 PM to 8:00 PM",
+     "state": "plan",
+     "next": false,
+     "icon": "dumbbell",
+     "act": "inst",
+     "id": "i_2cuzyauj2gi0moacaj7kbj",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 300.7,
+     "a1": 306.8,
+     "s": 1793304000,
+     "e": 1793305800,
+     "title": "Endurance Progression Block",
+     "label": "Endurance Progression Block, 8:00 PM to 8:30 PM",
+     "state": "plan",
+     "next": false,
+     "icon": "dumbbell",
+     "act": "inst",
+     "id": "i_0rl079g32rg0c1doe3uf51",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "session",
+     "kind": "task",
+     "a0": 308.2,
+     "a1": 314.3,
+     "s": 1793305800,
+     "e": 1793307600,
+     "title": "Focused Reading",
+     "label": "Focused Reading, 8:30 PM to 9:00 PM",
+     "state": "plan",
+     "next": false,
+     "icon": "book",
+     "act": "inst",
+     "id": "i_1jr799bplfl1m4xzlb1qu2",
+     "tip": ""
+    },
+    {
+     "ring": "inner",
+     "style": "thin",
+     "kind": "rest",
+     "a0": 315,
+     "a1": 337.5,
+     "s": 1793307600,
+     "e": 1793313000,
+     "title": "Protected downtime",
+     "label": "Protected downtime, 9:00 PM to 10:30 PM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": ""
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "maint",
+     "a0": 337.95,
+     "a1": 344.55,
+     "s": 1793313000,
+     "e": 1793314800,
+     "title": "Wind-down",
+     "label": "Wind-down, 10:30 PM to 11:00 PM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Wind-down · 10:30 PM–11:00 PM. Routines are set in My time."
+    },
+    {
+     "ring": "outer",
+     "style": "band",
+     "kind": "sleep",
+     "a0": 345.45,
+     "a1": 359.55,
+     "s": 1793314800,
+     "e": 1793318400,
+     "title": "Sleep",
+     "label": "Sleep, 11:00 PM to 12:00 AM",
+     "state": "",
+     "next": false,
+     "icon": "",
+     "act": "",
+     "id": "",
+     "tip": "Sleep · 11:00 PM–12:00 AM"
+    }
+   ],
+   "words": [
+    {
+     "r": 130,
+     "a0": 0.45,
+     "a1": 104.55,
+     "kind": "sleep",
+     "inner": false,
+     "text": "Sleep · until 7 AM",
+     "flip": false
+    },
+    {
+     "r": 130,
+     "a0": 135.45,
+     "a1": 254.55,
+     "kind": "work",
+     "inner": false,
+     "text": "Work · 9 AM–5 PM",
+     "flip": true
+    },
+    {
+     "r": 110,
+     "a0": 315,
+     "a1": 337.5,
+     "kind": "rest",
+     "inner": true,
+     "text": "Rest",
+     "flip": false
+    }
+   ],
+   "hand": null,
+   "ring": null
+  },
+  "core": {
+   "kick": "Thursday",
+   "kickKind": "",
+   "warn": false,
+   "title": "Oct 29",
+   "date": true,
+   "big": null,
+   "timer": null,
+   "sub": "6 sessions · 2h 45m",
+   "next": {
+    "label": "First · 7:30 AM",
+    "title": "Vocab Review",
+    "live": false,
+    "act": "",
+    "id": ""
+   },
+   "button": null
+  },
+  "mix": [
+   {
+    "kind": "sleep",
+    "label": "Sleep",
+    "minutes": 480,
+    "text": "8h"
+   },
+   {
+    "kind": "work",
+    "label": "Work & travel",
+    "minutes": 570,
+    "text": "9h 30m"
+   },
+   {
+    "kind": "maint",
+    "label": "Routines",
+    "minutes": 60,
+    "text": "1h"
+   },
+   {
+    "kind": "meal",
+    "label": "Meals",
+    "minutes": 60,
+    "text": "1h"
+   },
+   {
+    "kind": "task",
+    "label": "Sessions",
+    "minutes": 165,
+    "text": "2h 45m"
+   },
+   {
+    "kind": "rest",
+    "label": "Downtime",
+    "minutes": 90,
+    "text": "1h 30m"
+   },
+   {
+    "kind": "free",
+    "label": "Free",
+    "minutes": 15,
+    "text": "15m"
+   }
+  ],
+  "upNext": null,
+  "reminders": [],
+  "sessions": 6,
+  "rows": {
+   "ahead": [
+    {
+     "s": 1793232000,
+     "e": 1793257200,
+     "time": "12:00 AM",
+     "length": "7h",
+     "kind": "sleep",
+     "title": "Sleep",
+     "icon": "moon",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793257200,
+     "e": 1793259000,
+     "time": "7:00 AM",
+     "length": "30m",
+     "kind": "maint",
+     "title": "Morning routine",
+     "icon": "smile",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793259000,
+     "e": 1793259900,
+     "time": "7:30 AM",
+     "length": "15m",
+     "kind": "task",
+     "title": "Vocab Review",
+     "icon": "chat",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "goal",
+       "text": "Learn Spanish"
+      },
+      {
+       "kind": "xp",
+       "text": "+12 XP · Intelligence"
+      }
+     ],
+     "act": "inst",
+     "id": "i_1o9khh740bh2dpbco8cef4"
+    },
+    {
+     "s": 1793259900,
+     "e": 1793260800,
+     "time": "7:45 AM",
+     "length": "15m",
+     "kind": "free",
+     "title": "Free time",
+     "icon": "star",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793260800,
+     "e": 1793262600,
+     "time": "8:00 AM",
+     "length": "30m",
+     "kind": "meal",
+     "title": "Breakfast",
+     "icon": "meal",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "Cottage Cheese & Fruit Bowl · 573 kcal · View meal ›",
+     "chips": [],
+     "act": "meal",
+     "id": "1793260800"
+    },
+    {
+     "s": 1793262600,
+     "e": 1793264400,
+     "time": "8:30 AM",
+     "length": "30m",
+     "kind": "commute",
+     "title": "Commute",
+     "icon": "clock",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793264400,
+     "e": 1793293200,
+     "time": "9:00 AM",
+     "length": "8h",
+     "kind": "work",
+     "title": "Work",
+     "icon": "briefcase",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793293200,
+     "e": 1793295000,
+     "time": "5:00 PM",
+     "length": "30m",
+     "kind": "commute",
+     "title": "Commute home",
+     "icon": "clock",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793295000,
+     "e": 1793296800,
+     "time": "5:30 PM",
+     "length": "30m",
+     "kind": "commute",
+     "title": "Decompress",
+     "icon": "clock",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793296800,
+     "e": 1793298600,
+     "time": "6:00 PM",
+     "length": "30m",
+     "kind": "meal",
+     "title": "Dinner",
+     "icon": "meal",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "Tofu Veggie Rice Bowl · 658 kcal · View meal ›",
+     "chips": [],
+     "act": "meal",
+     "id": "1793296800"
+    },
+    {
+     "s": 1793298600,
+     "e": 1793300400,
+     "time": "6:30 PM",
+     "length": "30m",
+     "kind": "task",
+     "title": "No-scroll hour",
+     "icon": "target",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "quest",
+       "text": "No-scroll hour"
+      },
+      {
+       "kind": "xp",
+       "text": "+20 XP · Adventure"
+      }
+     ],
+     "act": "inst",
+     "id": "i_0wb5swrlzrj27kg8bwmoem"
+    },
+    {
+     "s": 1793300400,
+     "e": 1793301300,
+     "time": "7:00 PM",
+     "length": "15m",
+     "kind": "task",
+     "title": "Full care day",
+     "icon": "moon",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "quest",
+       "text": "Full care day"
+      },
+      {
+       "kind": "xp",
+       "text": "+8 XP · Wellbeing"
+      }
+     ],
+     "act": "inst",
+     "id": "i_1lz02s349672bwizytndnj"
+    },
+    {
+     "s": 1793301300,
+     "e": 1793304000,
+     "time": "7:15 PM",
+     "length": "45m",
+     "kind": "task",
+     "title": "Resistance Training",
+     "icon": "dumbbell",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "quest",
+       "text": "Three Strength Sessions, Posture reset"
+      },
+      {
+       "kind": "goal",
+       "text": "Build muscle"
+      },
+      {
+       "kind": "xp",
+       "text": "+42 XP · Physique"
+      }
+     ],
+     "act": "inst",
+     "id": "i_2cuzyauj2gi0moacaj7kbj"
+    },
+    {
+     "s": 1793304000,
+     "e": 1793305800,
+     "time": "8:00 PM",
+     "length": "30m",
+     "kind": "task",
+     "title": "Endurance Progression Block",
+     "icon": "dumbbell",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "quest",
+       "text": "Endurance Progression Block"
+      },
+      {
+       "kind": "xp",
+       "text": "+26 XP · Endurance"
+      }
+     ],
+     "act": "inst",
+     "id": "i_0rl079g32rg0c1doe3uf51"
+    },
+    {
+     "s": 1793305800,
+     "e": 1793307600,
+     "time": "8:30 PM",
+     "length": "30m",
+     "kind": "task",
+     "title": "Focused Reading",
+     "icon": "book",
+     "state": "plan",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [
+      {
+       "kind": "goal",
+       "text": "Read more"
+      },
+      {
+       "kind": "xp",
+       "text": "+24 XP · Intelligence"
+      }
+     ],
+     "act": "inst",
+     "id": "i_1jr799bplfl1m4xzlb1qu2"
+    },
+    {
+     "s": 1793307600,
+     "e": 1793313000,
+     "time": "9:00 PM",
+     "length": "1h 30m",
+     "kind": "rest",
+     "title": "Protected downtime",
+     "icon": "heart",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "Kept clear. Nothing gets booked here.",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793313000,
+     "e": 1793314800,
+     "time": "10:30 PM",
+     "length": "30m",
+     "kind": "maint",
+     "title": "Wind-down",
+     "icon": "smile",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    },
+    {
+     "s": 1793314800,
+     "e": 1793318400,
+     "time": "11:00 PM",
+     "length": "1h",
+     "kind": "sleep",
+     "title": "Sleep",
+     "icon": "moon",
+     "state": "",
+     "stateLabel": "",
+     "now": false,
+     "past": false,
+     "sub": "",
+     "chips": [],
+     "act": "",
+     "id": ""
+    }
+   ],
+   "earlier": null
+  }
+ },
+ "tokens": {
+  "bg": 4278980114,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "text": 4293849590,
+  "muted": 4287337379,
+  "accent": 4286356735,
+  "line": 4281086784,
+  "good": 4282242700
+ },
+ "light": false
+}
