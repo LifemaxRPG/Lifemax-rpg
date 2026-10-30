@@ -102,7 +102,7 @@
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
  }
 
- const nav=navigate;navigate=function(v){N.suspended=false;const from=lmaView(),result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
