@@ -40,6 +40,32 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('recording from a plain draft saves exactly what the form saves (fields, XP split, attribute and skill XP, message)', r.draft.length === 0, r.draft.slice(0, 5));
   const e = await p.evaluate(() => { state = freshState(); const x = recordActivity({ type: 'reading', duration: '2', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' }); return { ok: x.ok, n: state.activities.length, msg: x.message } });
   ok('a too-short session is refused with the same message and saves nothing', e.ok === false && e.n === 0 && /5 minutes/.test(e.msg), e);
+  /* data safety: what a native Submit relies on */
+  const safety = await p.evaluate(() => {
+    const out = {}; const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
+    // a replayed or double-tapped submit with the same operation id pays out once
+    state = freshState(); const a = recordActivity({ ...d, opId: 'op-1' }), xp1 = JSON.stringify(state.attrXP), n1 = state.activities.length;
+    const b = recordActivity({ ...d, opId: 'op-1' });
+    out.once = a.ok && b.ok && b.duplicate === true && state.activities.length === n1 && JSON.stringify(state.attrXP) === xp1 && b.xp === a.xp;
+    out.differentOpAdds = (recordActivity({ ...d, opId: 'op-2' }), state.activities.length === n1 + 1);
+    out.noOpIdUnchanged = (state = freshState(), recordActivity(d), recordActivity(d), state.activities.length === 2 && !('opId' in state.activities[0]));
+    // a write that fails is reported as a failure, not "saved"
+    const real = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('quota') };
+    let r; try { state = freshState(); r = recordActivity(d) } finally { Storage.prototype.setItem = real }
+    out.failure = r.ok === false && /Could not save/.test(r.message);
+    out.saveReturns = (save() === true);
+    // an unreadable save is copied aside before a blank profile is written over it
+    localStorage.removeItem(STORE + '_unreadable'); localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
+    load(); out.stashed = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
+    out.blankStarted = state.name !== 'Real hero';
+    localStorage.setItem(STORE, '{"still":"broken'); load();
+    out.firstCopyKept = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
+    localStorage.removeItem(STORE + '_unreadable');
+    return out;
+  });
+  ok('the same operation id pays out once; a different one is a new entry; no id behaves as before', safety.once && safety.differentOpAdds && safety.noOpIdUnchanged, safety);
+  ok('a failed write is reported as a failure, and save() says whether it worked', safety.failure && safety.saveReturns, safety);
+  ok('an unreadable save is copied aside before a blank profile is written, and the first copy is never replaced', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();
