@@ -26,6 +26,12 @@ class OverviewParityTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     /** Native tab screens stay attached (hidden) while another tab shows, so "present" means attached AND visible. */
     private fun View.visibleTag(tag: String): View? = findViewWithTag<View>(tag)?.takeIf { it.isShown }
+    /** tap to second drawn frame, measured on the Android side by TabTiming (no polling noise) */
+    private fun nativeTiming(main: MainActivity): String {
+        evaluate(main, "window.__tt='';Capacitor.Plugins.NativeOverview.timing().then(function(r){window.__tt=r.last});true")
+        SystemClock.sleep(300)
+        return evaluate(main, "window.__tt")
+    }
     private fun waitUntil(label: String, action: () -> Boolean) {
         val end=SystemClock.uptimeMillis()+60000
         while(SystemClock.uptimeMillis()<end){ if(action())return;SystemClock.sleep(250) }
@@ -208,6 +214,7 @@ class OverviewParityTest {
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
             val nativeSwitchMs = mutableListOf<Long>()
             val nativePhases = mutableListOf<String>()
+            val nativeTimings = mutableListOf<String>()
             repeat(3) {
                 val characterStart = SystemClock.uptimeMillis()
                 val tapBounds = clickSharedTab("Character")
@@ -218,6 +225,7 @@ class OverviewParityTest {
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - characterStart)
                 nativePhases.add(evaluate(main, "JSON.stringify(window.__nativeTabPerf)"))
+                nativeTimings.add(nativeTiming(main))
                 val foodStart = SystemClock.uptimeMillis()
                 clickSharedTab("Food")
                 waitUntil("Food opens from native Character bar") {
@@ -227,6 +235,7 @@ class OverviewParityTest {
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - foodStart)
                 nativePhases.add(evaluate(main, "JSON.stringify(window.__nativeTabPerf)"))
+                nativeTimings.add(nativeTiming(main))
             }
             val overviewStart = SystemClock.uptimeMillis()
             clickSharedTab("Overview")
@@ -236,7 +245,8 @@ class OverviewParityTest {
                 attached && evaluate(main, "lmaView()") == "\"dashboard\""
             }
             nativeSwitchMs.add(SystemClock.uptimeMillis() - overviewStart)
-            val perf = JSONObject().put("switchesMs", org.json.JSONArray(nativeSwitchMs)).put("phases", org.json.JSONArray(nativePhases))
+            nativeTimings.add(nativeTiming(main))
+            val perf = JSONObject().put("switchesMs", org.json.JSONArray(nativeSwitchMs)).put("phases", org.json.JSONArray(nativePhases)).put("androidTiming", org.json.JSONArray(nativeTimings))
             File(instrumentation.targetContext.filesDir, "nav-perf.json").writeText(perf.toString())
             export("nav-perf.json")
             waitUntil("native Food chrome removed") {
