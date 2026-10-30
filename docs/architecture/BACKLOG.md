@@ -25,6 +25,8 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
   Fail (not skip) when version.json is unreachable on BRANCH_OK refs unless a `[skip-guard]` marker is in the commit message; add package.json and package-lock.json to the diffed paths. *(ci-and-tests CI-5, not verified)*
 - **medium** — Build is slow and not reproducible: no caches, floating versions, no check that plugins are catalogued  
   Switch to `npm ci`, add `cache: npm` with cache-dependency-path android-wrapper/package-lock.json, add `gradle/actions/setup-gradle@v4` before the build (it caches the Gradle user home), and pin ubuntu-24.04. Add a 15-line python… *(ci-and-tests CI-6, not verified)*
+- **low** — A reload of the `file://` test page sometimes comes back without what the page stored: sessionStorage is empty, and localStorage can lack the last writes  
+  Seen several times in 40 reloads in backup-restore.test.js, which now reads the save back in place instead of reloading; likely the cause of the tabs.test.js flake in SKIP_IN_CI.txt. Serve the page over `http://127.0.0.1` in tests that reload. *(backup work)*
 
 ## Design system and accessibility
 
@@ -138,13 +140,16 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — The preview and the award are different functions, the golden test can't see the difference, and the owner function does no input validation  
   1) In activityPreview, add `const ea=ecoAward(d.type in rules?d.type:'custom',total,dur,{manual:true,peek:true})` and return `award:ea.xp,blockedReason:ea.msg`. Show award in updatePreview and the native projection, falling back… *(log-write-path, verified)*
 - **medium** — The save has no epoch, and the only whole-save replacement paths include one that can silently overwrite it with a blank state  
-  In the load() catch block, use a unique key per failure, `STORE+'_unreadable_'+Date.now()` (as the reviewer proposed), instead of the single write-once key. Only overwrite STORE when the copy was written successfully. Add a small… *(log-write-path, verified)*
+  In the load() catch block, use a unique key per failure, `STORE+'_unreadable_'+Date.now()` (as the reviewer proposed), instead of the single write-once key. Only overwrite STORE when the copy was written successfully. Add a small… *(log-write-path, verified)*  
+  The load() half is done (ADR 0004): each unreadable save is kept under its own key, nothing is stored over it when no copy fits, and a save this build cannot migrate is shown read-only. Open: the epoch (a random id in the save, rotated by import, reset, delete-all and the load() fallback), which comes with the first native write.
 
 ## Data safety
 
-- **medium** — There is no backup the owner can rely on before a risky change: the folder backup is opt-in and off by default, never runs before an update, restore or reset,…  
-  Take a pre-change snapshot, and block the action if it fails. Add 'async function lmaPreflightBackup(){ if(!lmaNative()) return true; try { await lmaRunBackup(true); return lmaLoad().backup.status==="ok" } catch(e){ return false… *(data-safety, verified)*
-- **medium** — The core save has no schema version; migrations are scattered boolean flags that run at load and commit before a build is proven healthy, so APK/OTA rollbacks…  
-  Smallest useful step, with no new architecture. (1) Add `schema:1` to freshState and a constant SAVE_SCHEMA=1. (2) In load(), after parsing, if (state.schema||1) > SAVE_SCHEMA, do not call the migrations and do not write back;… *(data-safety, verified)*
-- **medium** — Golden tests cover only an empty profile, and the Playwright suites that guard the save-writing path (log-activity, ota, handover-sim) are not run by CI; there…  
-  Add one CI step before the node tests in build-android.yml: `npm i --no-save playwright@<pinned> && npx playwright install --with-deps chromium`. Then run `NODE_PATH=$PWD/node_modules node… *(data-safety, verified)*
+All three are done; ADR 0004 (Implementation) has the details.
+
+- **done** — There is no backup the owner can rely on before a risky change: the folder backup is opt-in and off by default, never runs before an update, restore or reset,…  
+  A verified folder backup now comes before an import, a reset and an update; when it fails the owner decides, and an update found at launch waits. Backups count only once read back and checked. Settings warns while they are off, failing, stale or without a folder, and asks once for a folder; they start when the owner picks one. *(data-safety, verified)*
+- **done** — The core save has no schema version; migrations are scattered boolean flags that run at load and commit before a build is proven healthy, so APK/OTA rollbacks…  
+  `SAVE_SCHEMA` and `migrateSave()` (the flag migrations run there); a save or backup from a newer build is shown read-only and never written or imported. *(data-safety, verified)*
+- **done** — Golden tests cover only an empty profile, and the Playwright suites that guard the save-writing path (log-activity, ota, handover-sim) are not run by CI; there…  
+  Four golden saves (new, established, legacy, with extras) are backed up, restored on another phone and compared in `backup-restore.test.js`; the Playwright suites run in CI (C1). *(data-safety, verified)*

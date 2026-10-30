@@ -140,6 +140,8 @@ Performance acceptance uses repeatable device scenarios and release/profileable 
 
 Imports/restores/resets are serialized with commands. Once mutation epochs exist, a replacement save gets a new epoch and does not reactivate old receipts. Old pending commands/results cannot mutate or replace the restored save. Unknown epochs require authoritative renegotiation, not blindly accepting whichever event arrives last. Define minimum-reader/export compatibility before introducing incompatible native data; preserve unsupported originals instead of overwriting them with defaults.
 
+In place (ADR 0004): the core save carries `schema` (`SAVE_SCHEMA`); `migrateSave()` brings an older save up to it, and a save or backup from a newer schema is shown read-only, never migrated, written or imported. `writeSave()` is its only writer, and an import or reset either stores its new save or leaves the old one in place. A backup counts only once it is read back and verified, a verified snapshot comes before an import, a reset or an update, and golden saves are restored and compared in `tests/backup-restore.test.js`. Any native reader or writer of the save follows the same schema rule.
+
 A Classic UI toggle is safe only while that presentation uses the correct owner. It is not a database downgrade. After cutover, legacy writers must remain blocked even if a deep link or old preference opens a web screen. Backup export must read the active owner and have a defined recovery/import policy.
 
 ## 9. Verification, exceptions and completion
