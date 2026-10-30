@@ -5125,7 +5125,7 @@ const LifeDirectorApp = (function () {
       return { schedMin: sched, doneMin: done, sessions: n, doneSessions: doneN };
     }
   };
-  return { mount, glance, widgetSnapshot, nativeToday, voice: voiceApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  return { mount, glance, widgetSnapshot, voice: voiceApi, nativeToday, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */

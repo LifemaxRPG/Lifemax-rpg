@@ -20,6 +20,7 @@
       A moment after the last tab change, once nothing is in flight, the tab for the current view must be showing and no other native
       tab may be; if not, this repairs it (a rapid run of taps can leave a screen cancelled, or a stale one behind). */
    register(view,tab){tabs.set(view,tab)},
+   has(view){return tabs.has(view)},
    heal(tries=0){
     ct(healTimer);
     healTimer=st(()=>{
@@ -140,7 +141,9 @@
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false;NativeTabs.flush('overview')}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from==='character'||from==='meals'))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
+ /* A view with a registered native tab ('food' is the tab key for meals or recipes). */
+ const nativeView=v=>NativeTabs.has(typeof lmaResolve==='function'?lmaResolve(v):v);
+ const nav=navigate;navigate=function(v){if(!nativeView(v))document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from!=='dashboard'&&nativeView(from)))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
  /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
  const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
  function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
@@ -164,9 +167,8 @@
    if(!target?.isConnected)return;
    const to=target.dataset.view,from=typeof lmaView==='function'?lmaView():'';
    /* Tab changes between the native screens run the page change straight away: no View Transition slide, and no fade-in of a page that is covered anyway. */
-   const nativeTab=v=>v==='dashboard'||v==='character'||v==='meals'||v==='food';
-   if(to&&typeof lmaNavTo==='function'&&(nativeTab(to)||nativeTab(from))){
-    const covered=(to==='character'&&lmaLoad().nativeCharacter===true)||((to==='meals'||to==='food')&&!!window.NativeNutritionBeta?.enabled());
+   if(to&&typeof lmaNavTo==='function'&&(nativeView(to)||nativeView(from))){
+    const covered=to!=='dashboard'&&NativeTabs.covered(typeof lmaResolve==='function'?lmaResolve(to):to);
     document.documentElement?.classList?.toggle('native-cover',covered);
     lmaNavTo(to,{fast:true});
    }else target.click();

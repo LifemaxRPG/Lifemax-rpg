@@ -21474,6 +21474,7 @@ function lmcRender(){
       A moment after the last tab change, once nothing is in flight, the tab for the current view must be showing and no other native
       tab may be; if not, this repairs it (a rapid run of taps can leave a screen cancelled, or a stale one behind). */
    register(view,tab){tabs.set(view,tab)},
+   has(view){return tabs.has(view)},
    heal(tries=0){
     ct(healTimer);
     healTimer=st(()=>{
@@ -21594,7 +21595,9 @@ function lmcRender(){
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false;NativeTabs.flush('overview')}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from==='character'||from==='meals'))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
+ /* A view with a registered native tab ('food' is the tab key for meals or recipes). */
+ const nativeView=v=>NativeTabs.has(typeof lmaResolve==='function'?lmaResolve(v):v);
+ const nav=navigate;navigate=function(v){if(!nativeView(v))document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from!=='dashboard'&&nativeView(from)))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
  /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
  const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
  function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
@@ -21618,9 +21621,8 @@ function lmcRender(){
    if(!target?.isConnected)return;
    const to=target.dataset.view,from=typeof lmaView==='function'?lmaView():'';
    /* Tab changes between the native screens run the page change straight away: no View Transition slide, and no fade-in of a page that is covered anyway. */
-   const nativeTab=v=>v==='dashboard'||v==='character'||v==='meals'||v==='food';
-   if(to&&typeof lmaNavTo==='function'&&(nativeTab(to)||nativeTab(from))){
-    const covered=(to==='character'&&lmaLoad().nativeCharacter===true)||((to==='meals'||to==='food')&&!!window.NativeNutritionBeta?.enabled());
+   if(to&&typeof lmaNavTo==='function'&&(nativeView(to)||nativeView(from))){
+    const covered=to!=='dashboard'&&NativeTabs.covered(typeof lmaResolve==='function'?lmaResolve(to):to);
     document.documentElement?.classList?.toggle('native-cover',covered);
     lmaNavTo(to,{fast:true});
    }else target.click();
@@ -21632,7 +21634,7 @@ function lmcRender(){
    refresh on render, resume and a timer, the settings toggle and the public entry points. The native half is ComposeTabPlugin.
    Contract: docs/architecture/CONTRACT.md (A03, A07, A23) and docs/architecture/NATIVE_TAB_GUIDE.md. */
 (function () {
-  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, heal() {} };
+  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, has() { return false; }, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
   const TOKENS = ["bg", "panel", "panel2", "text", "muted", "accent", "line", "good"];
 
@@ -21662,6 +21664,9 @@ function lmcRender(){
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
+   * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
+   * draw); the screen closes at its next refresh and does not open. When the page changes in a way that may unblock it,
+   * the tab calls revisit() on the returned object, which opens the screen again if it is wanted.
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -21679,7 +21684,7 @@ function lmcRender(){
       return !!available() && lmaLoad()[cfg.setting] === true;
     }
     function blocked() {
-      return lmaView() !== cfg.id || !state.onboardingComplete || !!lmaTopOverlay() || document.body.classList.contains("noscroll");
+      return lmaView() !== cfg.id || !state.onboardingComplete || !!lmaTopOverlay() || document.body.classList.contains("noscroll") || !!(cfg.blocked && cfg.blocked());
     }
     function snapshot() {
       return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), { tokens: tokens(), light: light() });
@@ -21807,6 +21812,11 @@ function lmcRender(){
       }
     }
 
+    /** the page may let the screen cover it again (a sheet closed, the drawn sub-page came back): open if it is wanted */
+    function revisit() {
+      if (!active && !opening && enabled() && !blocked()) open(false);
+    }
+
     NativeTabs.cover(cfg.id, enabled);
     NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close });
     const nav = navigate;
@@ -21841,7 +21851,7 @@ function lmcRender(){
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot, runCommand };
+    return { open, close, send, schedule, sync, enabled, snapshot, runCommand, revisit };
   }
 
   window.NativeTabKit = { create, color, tokens, light };

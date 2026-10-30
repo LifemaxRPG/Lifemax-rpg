@@ -3,7 +3,7 @@
    refresh on render, resume and a timer, the settings toggle and the public entry points. The native half is ComposeTabPlugin.
    Contract: docs/architecture/CONTRACT.md (A03, A07, A23) and docs/architecture/NATIVE_TAB_GUIDE.md. */
 (function () {
-  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, heal() {} };
+  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, has() { return false; }, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
   const TOKENS = ["bg", "panel", "panel2", "text", "muted", "accent", "line", "good"];
 
@@ -33,6 +33,9 @@
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
+   * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
+   * draw); the screen closes at its next refresh and does not open. When the page changes in a way that may unblock it,
+   * the tab calls revisit() on the returned object, which opens the screen again if it is wanted.
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -50,7 +53,7 @@
       return !!available() && lmaLoad()[cfg.setting] === true;
     }
     function blocked() {
-      return lmaView() !== cfg.id || !state.onboardingComplete || !!lmaTopOverlay() || document.body.classList.contains("noscroll");
+      return lmaView() !== cfg.id || !state.onboardingComplete || !!lmaTopOverlay() || document.body.classList.contains("noscroll") || !!(cfg.blocked && cfg.blocked());
     }
     function snapshot() {
       return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), { tokens: tokens(), light: light() });
@@ -178,6 +181,11 @@
       }
     }
 
+    /** the page may let the screen cover it again (a sheet closed, the drawn sub-page came back): open if it is wanted */
+    function revisit() {
+      if (!active && !opening && enabled() && !blocked()) open(false);
+    }
+
     NativeTabs.cover(cfg.id, enabled);
     NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close });
     const nav = navigate;
@@ -212,7 +220,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot, runCommand };
+    return { open, close, send, schedule, sync, enabled, snapshot, runCommand, revisit };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
