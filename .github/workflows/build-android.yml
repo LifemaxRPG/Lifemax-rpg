@@ -263,6 +263,9 @@ jobs:
             "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
           cat version.json
           NOTES="Build ${{ github.run_number }} from commit $GITHUB_SHA"
+          # what this run's token can see, so a refused publish explains itself
+          gh api "repos/$GITHUB_REPOSITORY" --jq '"token sees \(.full_name), permissions \(.permissions)"' || true
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/latest" --jq '"token sees release \(.id) with \(.assets | length) files"' || true
           if gh release download latest --repo "$GITHUB_REPOSITORY" --dir prev --pattern LifeMax-RPG.apk --pattern version.json; then
             # the build being replaced stays downloadable as "previous", in case the new one misbehaves on the phone
             PREV_SHA=$(python3 -c "import json;print(json.load(open('prev/version.json')).get('sha',''))")
@@ -277,6 +280,8 @@ jobs:
             gh release upload latest version.json --clobber --repo "$GITHUB_REPOSITORY"
             gh release edit latest --notes "$NOTES" --repo "$GITHUB_REPOSITORY"
           else
+            # no readable latest release: the original path (replace the whole release)
+            gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
             gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
               --title "LifeMax (latest build)" --notes "$NOTES" --target "$GITHUB_SHA"
           fi
