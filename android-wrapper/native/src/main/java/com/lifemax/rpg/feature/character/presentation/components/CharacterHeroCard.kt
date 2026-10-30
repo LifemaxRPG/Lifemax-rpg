@@ -28,6 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
+import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.character.domain.*
 
 @Composable
@@ -42,7 +45,7 @@ internal fun CharacterAvatar(p: CharacterProjection, modifier: Modifier, initial
                 }
                 .getOrNull()
         }
-    Box(modifier.background(p.tokenColor("panel2")), contentAlignment = Alignment.Center) {
+    Box(modifier.background(tokenColor(p.tokens, "panel2")), contentAlignment = Alignment.Center) {
         if (avatar != null)
             Image(
                 avatar,
@@ -54,7 +57,7 @@ internal fun CharacterAvatar(p: CharacterProjection, modifier: Modifier, initial
             Text(
                 p.name.take(1).uppercase(),
                 fontSize = initialsSize.sp,
-                color = p.tokenColor("muted"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
             )
     }
@@ -66,9 +69,10 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
     LaunchedEffect(p.pct) {
         ringProgress.animateTo(p.pct.coerceIn(0f, 100f), tween(1600, easing = FastOutSlowInEasing))
     }
-    val panel = p.tokenColor("panel")
-    val accent = p.tokenColor("accent")
-    CharacterCard(padding = PaddingValues(0.dp)) {
+    val panel = MaterialTheme.colorScheme.surface
+    val accent = MaterialTheme.colorScheme.primary
+    val line = MaterialTheme.colorScheme.outline
+    SurfaceCard(padding = PaddingValues(0.dp)) {
         Box {
             Column(
                 Modifier.fillMaxWidth()
@@ -93,11 +97,7 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                 Box(Modifier.size(152.dp), contentAlignment = Alignment.Center) {
                     Canvas(Modifier.fillMaxSize()) {
                         val inset = size.width * .05f
-                        drawCircle(
-                            p.tokenColor("line"),
-                            radius = size.width * .45f,
-                            style = Stroke(5.7.dp.toPx()),
-                        )
+                        drawCircle(line, radius = size.width * .45f, style = Stroke(5.7.dp.toPx()))
                         drawArc(
                             Brush.linearGradient(listOf(Color(0xff7ab0ff), Color(0xffc58bff))),
                             -90f,
@@ -150,19 +150,19 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                             p.xp,
                             Modifier.weight(1f),
                             fontSize = 11.5.sp,
-                            color = p.tokenColor("text").copy(alpha = .8f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .8f),
                         )
                         Text(
                             p.nextLevel,
                             fontSize = 11.5.sp,
-                            color = p.tokenColor("text").copy(alpha = .8f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .8f),
                         )
                     }
-                    CharacterProgress(p.pct, accent)
+                    ProgressBar(p.pct / 100, accent, Modifier.padding(top = 8.dp))
                     Text(
                         p.nextTitle,
                         fontSize = 11.5.sp,
-                        color = p.tokenColor("muted"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(top = 7.dp),
                     )
@@ -182,12 +182,8 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                         Column(
                             Modifier.weight(1f)
                                 .clip(RoundedCornerShape(13.dp))
-                                .background(p.tokenColor("panel2").copy(alpha = .86f))
-                                .border(
-                                    1.dp,
-                                    p.tokenColor("line").copy(alpha = .5f),
-                                    RoundedCornerShape(13.dp),
-                                )
+                                .background(tokenColor(p.tokens, "panel2").copy(alpha = .86f))
+                                .border(1.dp, line.copy(alpha = .5f), RoundedCornerShape(13.dp))
                                 .clickable(enabled = label == "LUCK") { onAction("luck", "") }
                                 .padding(horizontal = 4.dp, vertical = 10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -197,7 +193,7 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                                 fontSize = 8.5.sp,
                                 letterSpacing = 1.19.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = p.tokenColor("muted"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                             )
                             Text(
@@ -207,16 +203,18 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 color =
-                                    if (label == "THIS WEEK" && p.week != "+0") p.tokenColor("good")
-                                    else if (label == "LUCK") p.tokenColor("muted")
-                                    else p.tokenColor("text"),
+                                    if (label == "THIS WEEK" && p.week != "+0")
+                                        tokenColor(p.tokens, "good")
+                                    else if (label == "LUCK")
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    else MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     }
                 }
                 HorizontalDivider(
                     Modifier.padding(top = 14.dp, bottom = 13.dp),
-                    color = p.tokenColor("line").copy(alpha = .5f),
+                    color = line.copy(alpha = .5f),
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -226,15 +224,15 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                         "WEIGHT",
                         fontSize = 9.sp,
                         letterSpacing = 1.sp,
-                        color = p.tokenColor("muted"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(p.weight, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Box(Modifier.width(1.dp).height(16.dp).background(p.tokenColor("line")))
+                    Box(Modifier.width(1.dp).height(16.dp).background(line))
                     Text(
                         "BMI",
                         fontSize = 9.sp,
                         letterSpacing = 1.sp,
-                        color = p.tokenColor("muted"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(p.bmi, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }

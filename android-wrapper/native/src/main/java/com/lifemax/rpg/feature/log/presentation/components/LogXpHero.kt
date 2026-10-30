@@ -4,19 +4,14 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.SectionLabel
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 import com.lifemax.rpg.feature.log.domain.LogPreview
@@ -48,7 +44,7 @@ internal fun LogXpHero(p: LogProjection, preview: LogPreview) {
     val lead = p.attribute(preview.split.firstOrNull()?.attribute ?: "")
     val leadColor = lead?.let { Color(it.color.toInt()) } ?: MaterialTheme.colorScheme.primary
     val total by animateIntAsState(preview.total, tween(420), label = "xp")
-    val fill by
+    val fraction by
         animateFloatAsState(
             (preview.total / BAR_FULL_XP).coerceIn(0f, 1f),
             tween(420),
@@ -74,23 +70,13 @@ internal fun LogXpHero(p: LogProjection, preview: LogPreview) {
                 fontWeight = FontWeight.Bold,
             )
         }
-        Box(
-            Modifier.padding(top = 12.dp)
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.background)
-                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .45f), CircleShape)
-        ) {
-            Box(
-                Modifier.fillMaxWidth(fill)
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(
-                        Brush.horizontalGradient(listOf(leadColor.copy(alpha = .55f), leadColor))
-                    )
-            )
-        }
+        ProgressBar(
+            fraction,
+            Brush.horizontalGradient(listOf(leadColor.copy(alpha = .55f), leadColor)),
+            Modifier.padding(top = 12.dp),
+            height = 10.dp,
+            outline = MaterialTheme.colorScheme.outline.copy(alpha = .45f),
+        )
         Spacer(Modifier.height(14.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

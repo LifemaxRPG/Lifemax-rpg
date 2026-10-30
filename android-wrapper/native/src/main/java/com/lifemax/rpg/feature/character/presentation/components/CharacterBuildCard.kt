@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
+import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.character.domain.*
 import com.lifemax.rpg.feature.character.presentation.CharacterSelection
 import kotlin.math.*
@@ -27,7 +31,7 @@ internal fun CharacterBuildCard(
     onCompare: (Boolean) -> Unit,
     onAction: (String, String) -> Unit,
 ) {
-    CharacterCard {
+    SurfaceCard {
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -36,8 +40,12 @@ internal fun CharacterBuildCard(
             Text("Build shape", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             Row(
                 Modifier.clip(RoundedCornerShape(50))
-                    .background(p.tokenColor("bg"))
-                    .border(1.dp, p.tokenColor("line").copy(alpha = .5f), RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.background)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = .5f),
+                        RoundedCornerShape(50),
+                    )
                     .padding(3.dp)
             ) {
                 for ((compare, label) in listOf(false to "Now", true to "vs last week")) {
@@ -45,7 +53,7 @@ internal fun CharacterBuildCard(
                         label,
                         Modifier.clip(RoundedCornerShape(50))
                             .background(
-                                if (ui.compare == compare) p.tokenColor("panel2")
+                                if (ui.compare == compare) tokenColor(p.tokens, "panel2")
                                 else Color.Transparent
                             )
                             .clickable { onCompare(compare) }
@@ -53,8 +61,8 @@ internal fun CharacterBuildCard(
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color =
-                            if (ui.compare == compare) p.tokenColor("text")
-                            else p.tokenColor("muted"),
+                            if (ui.compare == compare) MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -66,7 +74,7 @@ internal fun CharacterBuildCard(
                 .background(Color(0xffc58bff).copy(alpha = .14f))
                 .border(1.dp, Color(0xffc58bff).copy(alpha = .38f), RoundedCornerShape(50))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
-            color = p.tokenColor("text"),
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -75,13 +83,13 @@ internal fun CharacterBuildCard(
             Text(
                 "Dashed outline: last week",
                 Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                color = p.tokenColor("muted"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.5.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         HorizontalDivider(
             Modifier.padding(top = 10.dp, bottom = 15.dp),
-            color = p.tokenColor("line").copy(alpha = .5f),
+            color = MaterialTheme.colorScheme.outline.copy(alpha = .5f),
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -98,7 +106,7 @@ internal fun CharacterBuildCard(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                CharacterPixelIcon(
+                PixelIcon(
                     attributeIcon(selected.id),
                     Color(selected.color.toInt()),
                     Modifier.size(22.dp),
@@ -108,7 +116,7 @@ internal fun CharacterBuildCard(
                 Text(selected.name, fontWeight = FontWeight.ExtraBold, fontSize = 15.5.sp)
                 Text(
                     "${selected.into.toLong()} / ${selected.needed.toLong()} XP to next · ${selected.total.toLong()} total",
-                    color = p.tokenColor("muted"),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
                 )
             }
@@ -119,7 +127,7 @@ internal fun CharacterBuildCard(
                 color = Color(selected.color.toInt()),
             )
         }
-        CharacterProgress(selected.pct, Color(selected.color.toInt()))
+        ProgressBar(selected.pct / 100, Color(selected.color.toInt()), Modifier.padding(top = 8.dp))
         Row(
             Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -133,10 +141,10 @@ internal fun CharacterBuildCard(
                 Column(
                     Modifier.weight(1f)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(p.tokenColor("panel2"))
+                        .background(tokenColor(p.tokens, "panel2"))
                         .border(
                             1.dp,
-                            p.tokenColor("line").copy(alpha = .5f),
+                            MaterialTheme.colorScheme.outline.copy(alpha = .5f),
                             RoundedCornerShape(12.dp),
                         )
                         .padding(horizontal = 10.dp, vertical = 9.dp)
@@ -146,7 +154,7 @@ internal fun CharacterBuildCard(
                         fontSize = 8.5.sp,
                         letterSpacing = 1.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = p.tokenColor("muted"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         value,
@@ -154,13 +162,14 @@ internal fun CharacterBuildCard(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color =
-                            if (label == "THIS WEEK" && selected.week > 0) p.tokenColor("good")
-                            else p.tokenColor("text"),
+                            if (label == "THIS WEEK" && selected.week > 0)
+                                tokenColor(p.tokens, "good")
+                            else MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
         }
-        Text(selected.status, color = p.tokenColor("muted"), fontSize = 12.sp)
+        Text(selected.status, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Row(
             Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
