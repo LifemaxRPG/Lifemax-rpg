@@ -128,7 +128,7 @@ class OverviewParityTest {
         }
     }
 
-    private fun clickSharedTab(label: String) {
+    private fun clickSharedTab(label: String): String {
         fun find(node: android.view.accessibility.AccessibilityNodeInfo?): android.view.accessibility.AccessibilityNodeInfo? {
             if (node == null) return null
             if (node.isClickable && node.contentDescription?.toString()?.trim() == label) return node
@@ -153,6 +153,7 @@ class OverviewParityTest {
         instrumentation.uiAutomation.injectInputEvent(release, true)
         press.recycle()
         release.recycle()
+        return bounds.toString()
     }
 
     @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
@@ -163,7 +164,7 @@ class OverviewParityTest {
                 evaluate(main, "typeof openNativeCharacter==='function' && typeof setNativeNutritionEnabled==='function'") == "true"
             }
             evaluate(main, "window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.setProperty('display','none','important')});document.body.classList.remove('noscroll');save();renderAll();navigate('character');true")
-            evaluate(main, "openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
+            evaluate(main, "setNativeCharacterEnabled(true);openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
             waitUntil("Character with shared chrome") {
                 var ready = false
                 instrumentation.runOnMainSync {
@@ -205,10 +206,10 @@ class OverviewParityTest {
             }
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
             repeat(3) {
-                clickSharedTab("Character")
+                val tapBounds = clickSharedTab("Character")
                 SystemClock.sleep(1000)
-                println("NAV_TRACE " + evaluate(main, "JSON.stringify({view:lmaView(),trace:window.__nativeNavTrace})"))
-                waitUntil("Character opens from native Food bar") {
+                val trace = evaluate(main, "JSON.stringify({view:lmaView(),trace:window.__nativeNavTrace,body:document.body.className,toggle:lmaLoad().nativeCharacter})")
+                waitUntil("Character opens from native Food bar; bounds=$tapBounds state=$trace") {
                     var attached = false
                     instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
                     attached && evaluate(main, "lmaView()") == "\"character\""
