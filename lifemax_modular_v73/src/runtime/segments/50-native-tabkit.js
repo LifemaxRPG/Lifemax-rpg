@@ -31,8 +31,10 @@
 
   /**
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
-   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page),
-   * render (name of the page's render function to follow while open), globals {open, enable, projection}.
+   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page,
+   * after the screen has closed), render (name of the page's render function to follow while open), globals {open, enable,
+   * projection}. An action naming a view ({view}) instead goes there without closing first: the hand-over closes the screen once
+   * the next one shows, or at once for a page the web draws, so moving to another native tab never flashes the page.
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
@@ -139,9 +141,11 @@
       try {
         if (!ready) {
           await plugin.addListener("action", async (e) => {
-            await close();
-            if (e.view) lmaNavTo(e.view);
-            else await cfg.onAction(e);
+            if (e.view) lmaNavTo(e.view, { fast: true }); // no web transition under a native screen
+            else {
+              await close();
+              await cfg.onAction(e);
+            }
           });
           await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);

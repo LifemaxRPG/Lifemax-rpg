@@ -1,11 +1,11 @@
 /* Produces the projections the native screens are tested and screenshotted with, by running the web app's own projections:
    Food's NativeNutritionBeta.snapshot() on a fixed day with a fixed diary, Log's NativeLogProjection.snapshot() for a few drafts
    on that day, the Workout plan's NativePlanTabProjection.snapshot() after ticking sets with the page's own planToggle, planVal
-   and planLog, and Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js. Regenerate only when a
-   projection changes:
+   and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, and what the Recipes tab
+   opens its screen with. Regenerate only when a projection changes:
      NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
-   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json */
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -167,11 +167,60 @@ async function director(b) {
   await shoot(await live(false), 'unplanned');
 }
 
+/* Recipes as the page opens the screen with them: a Scholar (cookbook and class recipes), an Entrepreneur (two Snack recipes, which
+   only "All recipes" shows), a Disciple (no class recipes) and the Scholar's diet card asking for a recipe, which the screen takes
+   over. recipes-filters.json holds, for each, the ids the page's own filter (recipeHits) shows for sample searches and categories,
+   so the native filter can be tested for exact parity. A fake NativeRecipes plugin keeps what the page opens it with. */
+async function recipes(b) {
+  const p = await page(b);
+  await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') });
+  await p.addInitScript(`
+    localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'scholar'}));
+    window.__opened=[];const ls={};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>n==='NativeRecipes',getPlatform:()=>'android',registerPlugin:()=>({}),convertFileSrc:u=>u,
+      Plugins:{NativeRecipes:{addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},handshake:async()=>({protocol:1,capabilities:['recipes.projection.v1']}),
+        open:async a=>{window.__opened.push(a.snapshot)},update:async()=>{},close:async()=>{(ls.closed||[]).forEach(f=>f({}))}}}};`);
+  await p.goto('file://' + out); await p.waitForTimeout(2500);
+  const { opened, filters } = await p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const open = async (go) => {
+      const n = window.__opened.length;
+      go();
+      for (let t = 0; t < 8000 && window.__opened.length === n; t += 50) await wait(50);
+      if (window.__opened.length === n) throw Error('the screen did not open');
+      navigate('dashboard');
+      return window.__opened[n];
+    };
+    const CASES = [['', 'all'], ['chicken', 'all'], ['  CHICKEN ', 'all'], ['egg', 'all'], ['chicken rice', 'all'], ['oz chicken', 'all'], ['breakfast 12 eggs', 'all'], ['breakfast', 'all'],
+      ['lunch & dinner', 'all'], ['snack', 'all'], ['preheat', 'all'], ['½', 'all'], ['zzz', 'all'], ['', 'Breakfast'], ['', 'Pre-workout'],
+      ['', 'Post-workout'], ['', 'Lunch & dinner'], ['oats', 'Breakfast'], ['chicken', 'Breakfast']];
+    const cases = (extra) => [...CASES, ...extra].map(([query, category]) => ({ query, category, ids: recipeHits(query, category).map((r) => r.id) }));
+    lmaThumbWarm = async () => { };
+    const S = lmaLoad(); S.nativeRecipes = true; S.nativeOverview = false; lmaSave();
+    const opened = {}, filters = {};
+    for (const cls of ['scholar', 'entrepreneur', 'disciple']) {
+      state.classId = cls;
+      opened[cls] = await open(() => navigate('recipes'));
+      filters[cls] = cases([]);
+    }
+    state.classId = 'scholar';
+    fv2S().pane = 'log'; // the diet card is on Meals' Log pane
+    navigate('meals');
+    const recipe = document.querySelector('#dietPlanWrap .diet-menu-item button[onclick^="dietOpenRecipe"]');
+    opened.prefill = await open(() => recipe.click());
+    filters.prefill = cases([[opened.prefill.filter.query, opened.prefill.filter.category]]);
+    return { opened, filters };
+  });
+  for (const [name, data] of Object.entries(opened)) write('fixtures/recipes-' + name + '.json', Object.assign(data, { webSessionId: 'recipes-fixture', sequence: 1 }));
+  write('fixtures/recipes-filters.json', filters);
+}
+
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   await food(b);
   await log(b);
   await plan(b);
   await director(b);
+  await recipes(b);
   await b.close(); fs.unlinkSync(out);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -1,0 +1,685 @@
+{
+ "scholar": [
+  {
+   "query": "",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_almond_banana",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_sheet_pan_chicken"
+   ]
+  },
+  {
+   "query": "  CHICKEN ",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_sheet_pan_chicken"
+   ]
+  },
+  {
+   "query": "egg",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_stuffed_peppers",
+    "rcp_scrambled_greens"
+   ]
+  },
+  {
+   "query": "chicken rice",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "oz chicken",
+   "category": "all",
+   "ids": [
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "breakfast",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "lunch & dinner",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "snack",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "preheat",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "½",
+   "category": "all",
+   "ids": [
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad"
+   ]
+  },
+  {
+   "query": "zzz",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Pre-workout",
+   "ids": [
+    "rcp_almond_banana"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Post-workout",
+   "ids": [
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Lunch & dinner",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "oats",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "Breakfast",
+   "ids": []
+  }
+ ],
+ "entrepreneur": [
+  {
+   "query": "",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_almond_banana",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_ent_oats",
+    "rcp_ent_wrap",
+    "rcp_ent_chicken_salad",
+    "rcp_ent_stew",
+    "rcp_ent_sheetpan",
+    "rcp_ent_tuna",
+    "rcp_ent_snack",
+    "rcp_ent_yogurt"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_ent_chicken_salad"
+   ]
+  },
+  {
+   "query": "  CHICKEN ",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_ent_chicken_salad"
+   ]
+  },
+  {
+   "query": "egg",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_stuffed_peppers",
+    "rcp_ent_wrap",
+    "rcp_ent_sheetpan"
+   ]
+  },
+  {
+   "query": "chicken rice",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "oz chicken",
+   "category": "all",
+   "ids": [
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "breakfast",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_ent_oats",
+    "rcp_ent_wrap"
+   ]
+  },
+  {
+   "query": "lunch & dinner",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_ent_chicken_salad",
+    "rcp_ent_stew",
+    "rcp_ent_sheetpan",
+    "rcp_ent_tuna"
+   ]
+  },
+  {
+   "query": "snack",
+   "category": "all",
+   "ids": [
+    "rcp_ent_snack",
+    "rcp_ent_yogurt"
+   ]
+  },
+  {
+   "query": "preheat",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "½",
+   "category": "all",
+   "ids": [
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad"
+   ]
+  },
+  {
+   "query": "zzz",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_ent_oats",
+    "rcp_ent_wrap"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Pre-workout",
+   "ids": [
+    "rcp_almond_banana"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Post-workout",
+   "ids": [
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Lunch & dinner",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_ent_chicken_salad",
+    "rcp_ent_stew",
+    "rcp_ent_sheetpan",
+    "rcp_ent_tuna"
+   ]
+  },
+  {
+   "query": "oats",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_yogurt_oats",
+    "rcp_ent_oats"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "Breakfast",
+   "ids": []
+  }
+ ],
+ "disciple": [
+  {
+   "query": "",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_almond_banana",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "  CHICKEN ",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "egg",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_stuffed_peppers"
+   ]
+  },
+  {
+   "query": "chicken rice",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "oz chicken",
+   "category": "all",
+   "ids": [
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "breakfast",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats"
+   ]
+  },
+  {
+   "query": "lunch & dinner",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers"
+   ]
+  },
+  {
+   "query": "snack",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "preheat",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "½",
+   "category": "all",
+   "ids": [
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad"
+   ]
+  },
+  {
+   "query": "zzz",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Pre-workout",
+   "ids": [
+    "rcp_almond_banana"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Post-workout",
+   "ids": [
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Lunch & dinner",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers"
+   ]
+  },
+  {
+   "query": "oats",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_yogurt_oats"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "Breakfast",
+   "ids": []
+  }
+ ],
+ "prefill": [
+  {
+   "query": "",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_almond_banana",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_sheet_pan_chicken"
+   ]
+  },
+  {
+   "query": "  CHICKEN ",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_sheet_pan_chicken"
+   ]
+  },
+  {
+   "query": "egg",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_stuffed_peppers",
+    "rcp_scrambled_greens"
+   ]
+  },
+  {
+   "query": "chicken rice",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "oz chicken",
+   "category": "all",
+   "ids": [
+    "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "breakfast",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "lunch & dinner",
+   "category": "all",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "snack",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "preheat",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "½",
+   "category": "all",
+   "ids": [
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie",
+    "rcp_chicken_salad"
+   ]
+  },
+  {
+   "query": "zzz",
+   "category": "all",
+   "ids": []
+  },
+  {
+   "query": "",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_egg_muffins",
+    "rcp_breakfast_burrito",
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_scrambled_greens",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Pre-workout",
+   "ids": [
+    "rcp_almond_banana"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Post-workout",
+   "ids": [
+    "rcp_energy_bites",
+    "rcp_granola_bars",
+    "rcp_recovery_smoothie"
+   ]
+  },
+  {
+   "query": "",
+   "category": "Lunch & dinner",
+   "ids": [
+    "rcp_chicken_salad",
+    "rcp_pesto_chicken",
+    "rcp_stuffed_peppers",
+    "rcp_chickpea_tuna",
+    "rcp_sheet_pan_chicken",
+    "rcp_lentil_dahl",
+    "rcp_black_bean_bowl",
+    "rcp_turkey_skillet",
+    "rcp_pasta_fagioli"
+   ]
+  },
+  {
+   "query": "oats",
+   "category": "Breakfast",
+   "ids": [
+    "rcp_yogurt_oats",
+    "rcp_blueberry_oats",
+    "rcp_banana_oatmeal"
+   ]
+  },
+  {
+   "query": "chicken",
+   "category": "Breakfast",
+   "ids": []
+  },
+  {
+   "query": "Overnight Blueberry Chia Oats",
+   "category": "all",
+   "ids": [
+    "rcp_blueberry_oats"
+   ]
+  }
+ ]
+}

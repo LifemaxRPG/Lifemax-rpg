@@ -142,6 +142,36 @@
    "canonicalLayout": true
   },
   {
+   "feature": "recipes",
+   "status": "web-half-ready",
+   "owner": "web-food-engine",
+   "pluginSource": "bridge/web/NativeRecipesPlugin.kt (NativeRecipes, extends ComposeTabPlugin; to be written, and named here as nativePlugin when it is registered)",
+   "screenSource": "feature/recipes/presentation (to be written)",
+   "webModule": "50-native-recipes.js (NativeTabKit)",
+   "inventory": "docs/architecture/RECIPES_INVENTORY.md",
+   "capabilities": [
+    "recipes.projection.v1"
+   ],
+   "commands": {},
+   "actions": {
+    "log": "{action:'log', id}: the screen closes and the page runs addRecipeToMeal(id), Food's add-food sheet in its portion view over classic Meals; for an id the page does not know, the page stays on Recipes and the screen comes back",
+    "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
+    "link": "nothing is sent: the screen opens the projected https link itself (Android ACTION_VIEW)"
+   },
+   "writes": [],
+   "delegatedInteractions": [
+    "addRecipeToMeal / fv2Open (the add-food sheet, portion view)"
+   ],
+   "readContract": {
+    "fixtures": "native/src/test/resources/fixtures/recipes-scholar.json, recipes-entrepreneur.json, recipes-disciple.json, recipes-prefill.json, and recipes-filters.json with the ids the page's recipeHits shows for sample searches (tools/gen_native_fixtures.js)",
+    "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page hands over a prefill",
+    "invalidation": "renderRecipes (every save, a class change), host resume, foreground return, 15-second refresh while visible"
+   },
+   "mutationsGate": "no native writes; the only write path is the delegated add-food sheet (Food slice)",
+   "rollout": "opt-in under Settings, Appearance: Native Recipes (beta)",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",
