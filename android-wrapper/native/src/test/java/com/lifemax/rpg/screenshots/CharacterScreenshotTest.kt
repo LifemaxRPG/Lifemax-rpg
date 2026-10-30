@@ -18,7 +18,8 @@ class CharacterScreenshotTest {
             .apply {
                 accept(
                     JSONObject(javaClass.getResource("/character-projection.json")!!.readText())
-                        .put("light", light),
+                        .put("light", light)
+                        .put("tokens", ScreenshotPalette.tokens(light)),
                     true,
                 )
             }
