@@ -41,6 +41,7 @@ jobs:
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
+          python3 lifemax_modular_v73/tools/lint_js.py
           node lifemax_modular_v73/tests/native-nutrition-integration.test.js
           node lifemax_modular_v73/tests/native-overview.test.js
           node lifemax_modular_v73/tests/native-character.test.js

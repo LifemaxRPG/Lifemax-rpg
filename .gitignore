@@ -14,3 +14,4 @@ lifemax_modular_v73/tools/qa/audit/*__*.png
 # placeholder third-party trainer model: local only, never commit
 lifemax_modular_v73/art/trainer/
 android-wrapper/package-lock.json
+lifemax_modular_v73/tools/.lint-*/
