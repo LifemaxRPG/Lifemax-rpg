@@ -1,7 +1,7 @@
 /* Live hybrid Overview: Android header/navigation over the original resumed WebView.
    The page body, pets and timers are never captured or copied. */
 (function(){
- const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false};
+ const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false,cacheHits:0,cacheMisses:0,lastCaptureMs:0};
  const ids=new WeakMap(),assets=new Map(),chromeCache=new Map();let nextId=0,snapshotQueue=Promise.resolve();
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
  let colorProbe;
@@ -71,10 +71,11 @@
  function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0}}
  function snapshot(){
   const key=chromeKey(),cached=chromeCache.get(key);
-  if(cached&&[...cached.actions.values()].every(el=>el.isConnected))return Promise.resolve(publishChrome(cached.scene,cached.actions));
+  if(cached&&[...cached.actions.values()].every(el=>el.isConnected)){N.cacheHits++;return Promise.resolve(publishChrome(cached.scene,cached.actions))}
   const task=snapshotQueue.then(async()=>{
    const currentKey=chromeKey(),hit=chromeCache.get(currentKey);
-   if(hit&&[...hit.actions.values()].every(el=>el.isConnected))return publishChrome(hit.scene,hit.actions);
+   if(hit&&[...hit.actions.values()].every(el=>el.isConnected)){N.cacheHits++;return publishChrome(hit.scene,hit.actions)}
+   const captureAt=performance.now();N.cacheMisses++;
    if(document.fonts)await document.fonts.ready;
    N.buildActions=new Map();
    try{
@@ -82,7 +83,7 @@
     const sidebar=document.querySelector('.sidebar'),nav=await capture([sidebar],true);
     const actions=N.buildActions;
     const scene={version:2,width:viewportWidth(),header,nav,background:color(getComputedStyle(document.body).backgroundColor)};
-    chromeCache.set(currentKey,{scene,actions});while(chromeCache.size>6)chromeCache.delete(chromeCache.keys().next().value);
+    N.lastCaptureMs=performance.now()-captureAt;chromeCache.set(currentKey,{scene,actions});while(chromeCache.size>6)chromeCache.delete(chromeCache.keys().next().value);
     return publishChrome(scene,actions);
    }finally{N.buildActions=null}
   });
@@ -92,7 +93,7 @@
  function signature(scene){return JSON.stringify({width:scene.width,height:scene.height,background:scene.background,light:scene.light,header:scene.header,nav:scene.nav})}
  async function send(){if(!N.open)return;if(blocked()){await N.plugin.close({session:N.session});return}if(N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot(),paint=signature(scene);if(N.open&&paint!==N.lastPaint){await N.plugin.update({session:N.session,snapshot:scene});N.lastPaint=paint}}catch(e){console.warn('Native Overview refresh',e);mask(false);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
  async function ready(p){if(!N.ready)N.ready=(async()=>{await p.addListener('failed',e=>{if(e.session===N.session){window.__nativeOverviewError=e.reason;console.warn('Native Overview',e.reason)}});await p.addListener('refresh',e=>{if(e.session===N.session)send()});await p.addListener('activate',e=>{if(e.session!==N.session)return;const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected)target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));send()});await p.addListener('closed',e=>{if(e.session!==N.session)return;N.open=false;N.opening=false;N.suspended=true;mask(false);if(Number.isFinite(e.scroll))scrollTo(0,e.scroll);const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected){target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}else if(e.action)toast('Overview changed. Please try that action again.');if(lmaView()==='dashboard'&&enabled())setTimeout(()=>{if(!N.open&&!N.opening&&!blocked())open(true)},0)})})().catch(e=>{N.ready=null;throw e});return N.ready}
- function diagnostics(){return{plugin:!!plugin(),view:lmaView(),onboarded:!!state.onboardingComplete,width:innerWidth,overlay:typeof lmaTopOverlay==='function'&&!!lmaTopOverlay(),bodyClasses:document.body.className,blocked:!!blocked(),open:N.open,opening:N.opening}}
+ function diagnostics(){return{plugin:!!plugin(),view:lmaView(),onboarded:!!state.onboardingComplete,width:innerWidth,overlay:typeof lmaTopOverlay==='function'&&!!lmaTopOverlay(),bodyClasses:document.body.className,blocked:!!blocked(),open:N.open,opening:N.opening,cacheHits:N.cacheHits,cacheMisses:N.cacheMisses,lastCaptureMs:N.lastCaptureMs}}
  async function open(force){
   if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
   const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
