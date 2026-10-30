@@ -29,7 +29,8 @@ function ecoCap(x,day){
  if(t+x>ECO.softCap){const over=t+x-Math.max(ECO.softCap,t);out=x-over+Math.round(over*.5)}
  return Math.max(0,Math.min(out,ECO.hardCap-t));
 }
-/* everything that earns XP comes through here: returns {xp, msg} */
+/* everything that earns XP comes through here: returns {xp, msg}. msg says why xp is not simply total: the refusal when
+   xp is 0, otherwise each rule that changed it, joined by ' · ' (empty when none did) */
 function ecoAward(type,total,dur,o){
  o=o||{};const day=o.day||getToday();
  if(!(total>0))return {xp:0,msg:'Add at least '+ECO.minMin+' minutes to earn XP'};
@@ -37,10 +38,12 @@ function ecoAward(type,total,dur,o){
  const factor=same<ECO.maxPerType-1?1:same===ECO.maxPerType-1?.5:0;
  if(!factor)return {xp:0,msg:'Daily XP limit reached for this activity type'};
  if(o.manual){const mins=ecoActsOn(day).filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
+ const why=factor<1?['Last of this type today: half XP']:[];
  let x=Math.max(1,Math.round(total*factor));
- if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar'))x=Math.round(x*1.1);
- x=o.peek?ecoRestedPeek(x):ecoRestedTake(x);x=ecoCap(x,day);
- return x>0?{xp:x,msg:''}:{xp:0,msg:'Daily XP cap reached'};
+ if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar')){const s=Math.round(x*1.1);if(s>x)why.push(ECO_PERKS.scholar[0]+' +'+(s-x));x=s}
+ const r=o.peek?ecoRestedPeek(x):ecoRestedTake(x);if(r>x)why.push('Rested +'+(r-x));
+ x=ecoCap(r,day);if(x>0&&x<r)why.push(ecoDayXP(day)+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
+ return x>0?{xp:x,msg:why.join(' · ')}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
 function ecoQuestXP(q){

@@ -35,32 +35,36 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.SectionLabel
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.log.domain.LogPreview
 import com.lifemax.rpg.feature.log.domain.LogProjection
 
 /**
- * The award this draft would earn, as the page computes it: the total, a bar, and where the XP
- * goes.
+ * What Save would pay for this draft, as the page computes it: the award, the page's reason when it
+ * is not the raw total (green for a bonus), a bar, and where the XP goes.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LogXpHero(p: LogProjection, preview: LogPreview) {
     val lead = p.attribute(preview.split.firstOrNull()?.attribute ?: "")
     val leadColor = lead?.let { Color(it.color.toInt()) } ?: MaterialTheme.colorScheme.primary
-    val total by animateIntAsState(preview.total, tween(420), label = "xp")
+    val award by animateIntAsState(preview.award, tween(420), label = "xp")
     val fill by
         animateFloatAsState(
-            (preview.total / BAR_FULL_XP).coerceIn(0f, 1f),
+            (preview.award / BAR_FULL_XP).coerceIn(0f, 1f),
             tween(420),
             label = "bar",
         )
     SurfaceCard(
-        Modifier.semantics { contentDescription = "This activity earns ${preview.total} XP" }
+        Modifier.semantics {
+            contentDescription =
+                "This activity earns ${preview.award} XP. ${preview.reason}".trimEnd()
+        }
     ) {
         SectionLabel("XP preview")
         Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Bottom) {
             Text(
-                "+$total",
+                "+$award",
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 52.sp,
                 fontWeight = FontWeight.Black,
@@ -74,6 +78,16 @@ internal fun LogXpHero(p: LogProjection, preview: LogPreview) {
                 fontWeight = FontWeight.Bold,
             )
         }
+        if (preview.reason.isNotEmpty())
+            Text(
+                preview.reason,
+                Modifier.padding(top = 6.dp),
+                color =
+                    if (preview.award > preview.total) tokenColor(p.tokens, "good")
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
         Box(
             Modifier.padding(top = 12.dp)
                 .fillMaxWidth()
@@ -137,13 +151,6 @@ internal fun LogXpHero(p: LogProjection, preview: LogPreview) {
                 )
             }
         }
-        if (!preview.enough)
-            Text(
-                "Log at least 5 minutes to earn XP",
-                Modifier.padding(top = 12.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-            )
     }
 }
 

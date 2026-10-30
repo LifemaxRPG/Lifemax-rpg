@@ -33,17 +33,20 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     const S = lmaLoad(); S.nativeLog = true; S.nativeOverview = false; lmaSave();
     // a prefill in the web form (as Life Director or a link would do) carries over when the native screen opens
     document.getElementById('activityType').value = 'running'; activityPresetChanged(); document.getElementById('duration').value = 45;
-    navigate('log'); await wait(400);
+    // the first open waits for the plugin handshake, which can take well over the usual 400 ms on a busy machine
+    navigate('log'); for (let t = 0; t < 100 && !last('open'); t++) await wait(50);
     const opened = last('open');
     out.opened = !!opened && opened[2].snapshot.protocol === 1 && opened[2].snapshot.presets.length >= 9 && opened[2].snapshot.attributes.length === 8;
     out.prefill = opened && opened[2].snapshot.draft.type === 'running' && opened[2].snapshot.draft.duration === '45' && opened[2].snapshot.draft.primary === 'endurance';
-    out.previewMatchesPage = opened && opened[2].snapshot.preview.total === activityPreview(opened[2].snapshot.draft).total;
+    const shown = opened[2].snapshot, award = activityAward(shown.draft, true);
+    out.previewMatchesPage = shown.preview.total === activityPreview(shown.draft).total && shown.preview.award === award.xp && shown.preview.reason === award.msg && JSON.stringify(shown.preview.split) === JSON.stringify(award.split);
+    out.limits = shown.minMinutes === ECO.minMin && shown.maxMinutes === 1440 && /up to 3× at 120 min/.test(shown.durationRules);
     // preview: the page answers with the new award, and the draft revision does not change (so typing is never replaced)
     const rev0 = opened[2].snapshot.draftRevision, d60 = Object.assign({}, opened[2].snapshot.draft, { duration: '60' });
     await L.__emit('command', { command: 'preview', payload: { draft: d60 }, requestId: 'r1' }); await wait(200);
     const reply = (id) => [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === id);
     const up = reply('r1');
-    out.preview = !!up && up[2].reply.ok === true && up[2].snapshot.preview.total === activityPreview(d60).total && up[2].snapshot.draftRevision === rev0;
+    out.preview = !!up && up[2].reply.ok === true && up[2].snapshot.preview.award === activityAward(d60, true).xp && up[2].snapshot.draftRevision === rev0;
     out.noCloseOnCommand = !window.__calls.some(c => c[0] === 'log' && c[1] === 'close');
     // the XP celebration is held back until Overview is showing, not played under the native screen during the save
     // the level-up overlay arrives about a second after a save and would cover the screens this test reopens; it is not under test here
@@ -79,7 +82,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   });
   ok('opening sends a full projection (presets, eight attributes)', r.opened, r);
   ok('a prefill in the web form carries over to the native draft', r.prefill, r);
-  ok('the preview in the projection is the page\'s own activityPreview', r.previewMatchesPage, r);
+  ok('the projection previews the raw total and the award Save would pay, from the page\'s own functions', r.previewMatchesPage, r);
+  ok('the projection carries the duration limits and rules, so the screen hard-codes none', r.limits, r);
   ok('a preview command answers with the new award and does not replace the draft being typed', r.preview && r.noCloseOnCommand, r);
   ok('submit saves through recordActivity with the operation id, persists it, toasts and goes to Overview', r.saved && r.reply && r.toastAndNavigate, r);
   ok('the XP celebration waits until Overview is showing instead of playing during the save', r.fxHeld && r.fxAfter, r);

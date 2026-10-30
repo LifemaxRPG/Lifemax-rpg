@@ -60,9 +60,10 @@ class LogViewModel(
         }
     }
 
+    /** Kept within the page's limits: under its minimum nothing would be paid. */
     fun setDuration(minutes: Int) {
-        val max = projection.value?.maxMinutes ?: MAX_MINUTES
-        edit { it.copy(duration = minutes.coerceIn(0, max)) }
+        val p = projection.value ?: return
+        edit { it.copy(duration = minutes.coerceIn(p.minMinutes, p.maxMinutes)) }
     }
 
     fun setQuality(value: String) = edit { it.copy(quality = value) }
@@ -92,10 +93,6 @@ class LogViewModel(
         mutableDraft.value = next
         operationId = null
         commands.preview(next)
-    }
-
-    private companion object {
-        const val MAX_MINUTES = 1440
     }
 }
 

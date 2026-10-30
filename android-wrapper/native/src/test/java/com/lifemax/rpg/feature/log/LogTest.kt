@@ -44,8 +44,45 @@ class LogTest {
         assertEquals("strength", p.draft.type)
         assertEquals(45, p.draft.duration)
         assertEquals(46, p.preview.total)
+        assertEquals(46, p.preview.award)
+        assertEquals("", p.preview.reason)
         assertEquals(listOf(32, 14), p.preview.split.map { it.xp })
         assertEquals(8, p.attributes.size)
+        assertEquals(5 to 1440, p.minMinutes to p.maxMinutes)
+        assertEquals(
+            "30 min = base XP, up to 3× at 120 min. Under 5 min earns nothing.",
+            p.durationRules,
+        )
+    }
+
+    @Test
+    fun aReducedOrRefusedAwardComesWithThePagesReason() {
+        val capped = WebLogRepository().apply { accept(fixture("log-capped"), true) }
+        val reduced = capped.state.value!!.preview
+        assertEquals(46 to 15, reduced.total to reduced.award)
+        assertEquals("Reaches the daily XP cap", reduced.reason)
+        assertEquals(reduced.award, reduced.split.sumOf { it.xp })
+        val refused = WebLogRepository().apply { accept(fixture("log-refused"), true) }
+        val nothing = refused.state.value!!.preview
+        assertEquals(46 to 0, nothing.total to nothing.award)
+        assertEquals("Daily XP limit reached for this activity type", nothing.reason)
+        assertEquals(0, nothing.split.size)
+    }
+
+    @Test
+    fun aRefusalWithoutAReasonAndLimitsOutOfOrderAreRejected() {
+        val repo = WebLogRepository()
+        repo.accept(fixture(), true)
+        val silent = fixture().put("sequence", 2)
+        silent.getJSONObject("preview").put("award", 0).put("reason", "")
+        val inverted = fixture().put("sequence", 3).put("minMinutes", 2000)
+        for (bad in listOf(silent, inverted)) {
+            try {
+                repo.accept(bad)
+                fail("accepted $bad")
+            } catch (_: IllegalArgumentException) {}
+        }
+        assertEquals(1L, repo.state.value!!.sequence)
     }
 
     @Test
@@ -82,10 +119,10 @@ class LogTest {
     }
 
     @Test
-    fun durationStaysWithinTheFormLimits() {
+    fun durationStaysWithinThePagesLimits() {
         val (_, vm, _) = setUp()
         vm.setDuration(-20)
-        assertEquals(0, vm.draft.value!!.duration)
+        assertEquals(5, vm.draft.value!!.duration)
         vm.setDuration(5000)
         assertEquals(1440, vm.draft.value!!.duration)
     }

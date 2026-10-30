@@ -46,17 +46,11 @@
       notes: String(x.notes || "").slice(0, 2000),
     };
   }
-  /** what the award would be, worded the way the web form's preview words it */
+  /** what Save would pay for this draft, from the function the save pays with (a peek that changes nothing), and why it is not the raw total */
   function previewOf(d) {
     const x = activityPreview(d);
-    const split =
-      x.secondary && x.secondary !== x.primary
-        ? [
-            { attr: x.primary, xp: Math.round(x.total * 0.7) },
-            { attr: x.secondary, xp: x.total - Math.round(x.total * 0.7) },
-          ]
-        : [{ attr: x.primary, xp: x.total }];
-    return { total: x.total, skill: x.skill, durFactor: x.durFactor, split, enough: x.total > 0 };
+    const a = activityAward(d, true);
+    return { total: x.total, award: a.xp, reason: a.msg, skill: x.skill, durFactor: x.durFactor, split: a.split };
   }
   function projection() {
     const d = draft || (draft = draftFor("reading"));
@@ -67,7 +61,9 @@
       }),
       attributes: ATTRS.map((a) => ({ id: a.id, name: a.name, short: a.short, icon: a.icon, color: NativeTabKit.color(ATTR_COL[a.id]) })),
       qualities: QUALITIES,
+      minMinutes: ECO.minMin,
       maxMinutes: MAX_MINUTES,
+      durationRules: "30 min = base XP, up to 3× at 120 min. Under " + ECO.minMin + " min earns nothing.",
       draft: d,
       draftRevision: revision,
       preview: previewOf(d),

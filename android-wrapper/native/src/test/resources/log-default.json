@@ -176,7 +176,9 @@
    "hint": "1.2×"
   }
  ],
+ "minMinutes": 5,
  "maxMinutes": 1440,
+ "durationRules": "30 min = base XP, up to 3× at 120 min. Under 5 min earns nothing.",
  "draft": {
   "type": "reading",
   "customName": "",
@@ -190,6 +192,8 @@
  "draftRevision": 1,
  "preview": {
   "total": 24,
+  "award": 24,
+  "reason": "",
   "skill": "Knowledge",
   "durFactor": 1,
   "split": [
@@ -201,7 +205,6 @@
     "attr": "discipline",
     "xp": 7
    }
-  ],
-  "enough": true
+  ]
  }
 }

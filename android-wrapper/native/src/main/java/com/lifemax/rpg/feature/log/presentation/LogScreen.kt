@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
@@ -113,7 +114,7 @@ fun LogScreen(
                 }
                 LogXpHero(p, p.preview)
                 LogPresetGrid(p, draft.type, actions.choose)
-                LogDurationCard(draft.duration, actions.duration)
+                LogDurationCard(draft.duration, p.durationRules, actions.duration)
                 LogEffortCard(p.qualities, draft.quality, actions.quality)
                 LogAttributeCard(
                     p,
@@ -134,7 +135,7 @@ fun LogScreen(
                 status.error?.let { ErrorNote(it) }
                 SaveButton(
                     p,
-                    enabled = p.preview.enough && !status.saving,
+                    enabled = p.preview.award > 0 && !status.saving,
                     saving = status.saving,
                     onClick = actions.submit,
                 )
@@ -179,12 +180,14 @@ private fun SaveButton(p: LogProjection, enabled: Boolean, saving: Boolean, onCl
         Text(
             when {
                 saving -> "Saving…"
-                enabled -> "✦  Award ${p.preview.total} XP"
-                else -> "Log at least 5 minutes"
+                enabled -> "✦  Award ${p.preview.award} XP"
+                else -> p.preview.reason
             },
+            Modifier.padding(horizontal = 16.dp),
             color = if (lit) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
         )
     }
 }
