@@ -38,6 +38,9 @@ private val pixelMasks =
         "dial" to intArrayOf(0x3C, 0x4E, 0x8F, 0x8F, 0x81, 0x81, 0x42, 0x3C),
     )
 
+/** Every name [PixelIcon] draws. */
+val pixelIconNames: Set<String> = pixelMasks.keys
+
 /** A web design-system pixel icon by name; an unknown name draws the star. */
 @Composable
 fun PixelIcon(name: String, color: Color, modifier: Modifier = Modifier) {
