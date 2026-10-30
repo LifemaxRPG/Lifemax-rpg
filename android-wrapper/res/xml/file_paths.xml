@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Folders the FileProvider (authority com.lifemax.rpg.fileprovider, declared by the Capacitor template) may share.
+     This replaces the template's file_paths.xml, which shared the whole external storage root and the whole cache
+     folder (backlog SEC-6). Every caller of FileProvider.getUriForFile with this authority:
+       - UpdaterPlugin.install: cache/update/LifeMax-RPG.apk, handed to Android's package installer.
+       - Capacitor's BridgeWebChromeClient: a photo taken for an <input type="file" capture> goes to the app's own
+         external Pictures folder. No page input asks for capture today; this keeps it working if one does.
+     FileSaverPlugin and BackupFolderPlugin write through the storage access framework and share nothing here.
+     Add a folder only together with the code that shares a file from it. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="update" path="update/" />
+    <external-files-path name="capture" path="Pictures/" />
+</paths>

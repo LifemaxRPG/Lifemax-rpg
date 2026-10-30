@@ -40,7 +40,7 @@ async function lmaCheckUpdate(silent){
 }
 /* a web-only update: download it quietly, check it, and keep it ready (it starts on the next launch, or now if you tap Restart) */
 async function lmaWebUpdate(){
- const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i)return;
+ const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||lmaUpd.state==='webdl')return;   /* one download at a time; native refuses a second too */
  if(lmaUpd.live&&lmaUpd.live.staged===i.webBuild){lmaUpd.state='webready';lmaRenderUpdates();lmaWebPill();return}
  lmaUpd.state='webdl';lmaUpd.pct=0;lmaRenderUpdates();
  try{
@@ -64,7 +64,7 @@ function lmaWebPill(){
  document.body.appendChild(o);setTimeout(()=>{if(o.parentNode)o.remove()},20000);
 }
 async function lmaInstallUpdate(){
- const U=lmaPlugin('Updater');if(!U||!lmaUpd.info)return;
+ const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||lmaUpd.state==='downloading')return;
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
  lmaUpd.state='downloading';lmaUpd.pct=0;lmaRenderUpdates();
  try{
