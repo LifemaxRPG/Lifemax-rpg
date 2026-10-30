@@ -70,7 +70,11 @@ const SFX=(()=>{let ac;function A(){if(!ac){const C=window.AudioContext||window.
   level(epic){if(!fxOpt().sound)return;(epic?[523,659,784,1047,1319,1568]:[523,659,784,1047]).forEach((f,i)=>{tone(f,i*.09,.4,'square',.045);tone(f*2,i*.09+.02,.5,'triangle',.03)});if(epic){[262,330,392].forEach(f=>tone(f,.55,1.5,'triangle',.07));for(let i=0;i<9;i++)tone(2000+Math.random()*2200,.6+i*.07,.22,'sine',.02)}}}})();
 function fxTarget(){let el=shAttr&&document.querySelector('#sheetPanel .xpbar');if(!el||!el.getBoundingClientRect().width)el=document.getElementById('brandLogo');const r=el?el.getBoundingClientRect():null;if(!r||!r.width||r.bottom<0)return {x:innerWidth/2,y:44,el:null};return {x:r.left+r.width/2,y:Math.min(innerHeight-30,Math.max(30,r.top+r.height/2)),el}}
 function pulse(el){if(!el)return;el.classList.remove('fx-pulse');void el.offsetWidth;el.classList.add('fx-pulse');setTimeout(()=>el.classList.remove('fx-pulse'),700)}
-function celebrateXP(delta,gains){const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
+/* A native screen saving an activity holds the celebration (it would play under the native screen, on the same frames as the switch
+   to the next tab) and plays it afterwards: holdCelebrations(run) returns {result, held: [[delta, gains], ...]}. */
+let fxHold=null;
+function holdCelebrations(run){const prev=fxHold;fxHold=[];try{return {result:run(),held:fxHold}}finally{fxHold=prev}}
+function celebrateXP(delta,gains){if(fxHold){fxHold.push([delta,gains]);return}const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
  FX.ring(o.x,o.y,col,80,.55,5);FX.burst(o.x,o.y,col,red?8:30,280,420);
  gains.forEach(g=>{const c=ATTR_COL[g.id]||col,n=Math.min(red?4:16,3+Math.round(g.xp/3));for(let i=0;i<n;i++)FX.orb(o.x,o.y,tg.x,tg.y,c,i*38,()=>{const t=fxTarget();FX.burst(t.x,t.y,c,3,130,80);if(i===n-1)pulse(t.el)})});
  const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);setTimeout(()=>t.remove(),1550);

@@ -8,6 +8,7 @@
     { value: "1.2", label: "High quality", hint: "1.2×" },
   ];
   const MAX_MINUTES = 1440;
+  const CELEBRATE_AFTER_MS = 450; // after the hand-over to Overview has drawn
   let draft = null;
   let revision = 1; // raised whenever the page replaces the draft (after a save, or a prefill), so the native screen adopts it
 
@@ -93,7 +94,14 @@
       const d = clean(p.draft);
       const opId = String(p.operationId || "").slice(0, 80);
       if (!opId) return { ok: false, message: "Could not save: missing operation id" };
-      const res = recordActivity(Object.assign({}, d, { opId }));
+      // The XP celebration normally plays inside the save; here it would play under the native screen and on the same frames as the
+      // switch to Overview, so it is held back and played once Overview is showing, from where the save button was.
+      const { result: res, held } = holdCelebrations(() => recordActivity(Object.assign({}, d, { opId })));
+      if (res.ok && held.length)
+        setTimeout(() => {
+          lastTap = { x: innerWidth / 2, y: innerHeight - 120 };
+          held.forEach((h) => celebrateXP(h[0], h[1]));
+        }, CELEBRATE_AFTER_MS);
       if (!res.ok) {
         draft = d;
         return { ok: false, message: res.message };

@@ -99,7 +99,7 @@
   for(const root of roots)if(root)await walk(root);return{nodes,hits,height:maxY,width:nav?roots[0].scrollWidth:viewportWidth()};
  }
  function mask(on){for(const el of [document.querySelector('.topbar'),document.querySelector('.sidebar')])if(el){if(on){if(!el.dataset.nativeOverviewMasked){el.dataset.nativeOverviewOpacity=el.style.opacity;el.dataset.nativeOverviewMasked='1';el.style.opacity='0'}}else if(el.dataset.nativeOverviewMasked){el.style.opacity=el.dataset.nativeOverviewOpacity||'';delete el.dataset.nativeOverviewMasked;delete el.dataset.nativeOverviewOpacity}}}
- function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
+ function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
  function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0}}
  function snapshot(){
   try{lmaSyncActive()}catch(e){}
