@@ -1,6 +1,7 @@
 /* v91 · Android upkeep: in-app updates and automatic backups to a folder you choose.
    Everything here needs the Android shell; in a browser the Settings cards just say so. */
 let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakRun=null,lmaUpdBound=false;
+const LMA_UPD_BUSY=['checking','backup','downloading','webdl'];
 const lmaSetHtml=(id,h)=>{const el=document.getElementById(id);if(el)el.innerHTML=h};
 const lmaAgo=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 /* ---------- updates ---------- */
@@ -25,7 +26,7 @@ function lmaUpdPlan(r,st){
 }
 async function lmaCheckUpdate(silent){
  const U=lmaPlugin('Updater');if(!U)return;
- if(['checking','downloading','webdl'].indexOf(lmaUpd.state)>=0)return;
+ if(LMA_UPD_BUSY.indexOf(lmaUpd.state)>=0)return;
  lmaUpd.state='checking';lmaUpd.err='';lmaRenderUpdates();
  try{
   const r=await U.check();lmaUpd.info=r;
@@ -33,15 +34,18 @@ async function lmaCheckUpdate(silent){
   lmaUpd.live=st;lmaUpd.plan=lmaUpdPlan(r,st);
   lmaUpd.state=lmaUpd.plan==='apk'?'available':lmaUpd.plan==='web'?'web':'latest';
   lmaLoad().updChecked=Date.now();lmaSave();lmaUpd.autoErr='';lmaUpdTries=0;
-  if(lmaUpd.plan==='web'&&(silent||lmaLoad().webAuto!==false)){await lmaWebUpdate();return}
+  if(lmaUpd.plan==='web'&&(silent||lmaLoad().webAuto!==false)){await lmaWebUpdate(!silent);return}
   if(lmaUpd.state==='available')lmaUpdPopOpen();
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);if(silent){lmaUpd.state='idle';lmaUpd.autoErr=lmaUpd.err;if(lmaUpdTries<3)setTimeout(()=>lmaCheckUpdate(true),[15000,45000,120000][lmaUpdTries++])}}
  lmaRenderUpdates();
 }
-/* a web-only update: download it quietly, check it, and keep it ready (it starts on the next launch, or now if you tap Restart) */
-async function lmaWebUpdate(){
+/* a web-only update: back up first, then download it quietly, check it, and keep it ready (it starts on the next launch, or now if
+   you tap Restart). Unasked (at launch), a failed backup leaves the update waiting in Settings instead. */
+async function lmaWebUpdate(ask){
  const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i)return;
  if(lmaUpd.live&&lmaUpd.live.staged===i.webBuild){lmaUpd.state='webready';lmaRenderUpdates();lmaWebPill();return}
+ lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update',ask)){lmaUpd.state='web';lmaUpd.err='It was not downloaded, because the backup before it failed.';lmaRenderUpdates();return}
  lmaUpd.state='webdl';lmaUpd.pct=0;lmaRenderUpdates();
  try{
   if(!lmaUpdBound){lmaUpdBound=true}
@@ -52,7 +56,7 @@ async function lmaWebUpdate(){
  lmaRenderUpdates();
 }
 async function lmaWebRestart(){
- const L=lmaPlugin('LiveWeb');if(!L)return;
+ const L=lmaPlugin('LiveWeb');if(!L||!await lmaBackupFirst('update'))return;
  try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
 }
 /* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
@@ -67,6 +71,8 @@ function lmaPill(text,label,go,dismiss){
 function lmaWebPill(){if(!lmaUpd.pillGone)lmaPill('Update ready','Restart',lmaWebRestart,()=>{lmaUpd.pillGone=true})}
 async function lmaInstallUpdate(){
  const U=lmaPlugin('Updater');if(!U||!lmaUpd.info)return;
+ const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
  lmaUpd.state='downloading';lmaUpd.pct=0;lmaRenderUpdates();
  try{
@@ -91,7 +97,8 @@ function lmaUpdPopRender(){
  const o=document.querySelector('.updpop');if(!o)return;
  const u=lmaUpd,i=u.info||{};
  let body,btns;
- if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
+ if(u.state==='backup'){body='Backing up your progress before the update…';btns=''}
+ else if(u.state==='downloading'){body='Downloading… '+(u.pct>=0?u.pct+'%':'');btns='<div class="updpop-bar"><i style="width:'+Math.max(4,u.pct)+'%"></i></div>'}
  else if(u.state==='opened'){body='Android’s installer is open. Tap Update there to finish.';btns='<button class="btn" data-up="close">OK</button>'}
  else if(u.state==='permission'){body='Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.';btns='<button class="btn" data-up="go">Update</button><button class="btn secondary" data-up="later">Later</button>'}
  else if(u.state==='error'){body='Could not update: '+esc(u.err);btns='<button class="btn" data-up="go">Try again</button><button class="btn secondary" data-up="later">Later</button>'}
@@ -106,20 +113,22 @@ function lmaRenderUpdates(){
  const live=u.live&&u.live.activeBuild?' · app updated over the air to build '+u.live.activeBuild:'';
  const native=i&&(Number(u.live&&u.live.nativeApi)||Number(i.nativeApi)),required=i&&Math.max(Number(i.latestNativeApi)||0,Number(i.webMinApi)||0);
  let h='<div class="settingsline"><div style="flex:1"><strong>'+(i?'Installed build '+cur:'Installed build')+live+'</strong><div class="muted" style="font-size:12px">';
- h+=u.state==='checking'?'Checking…':u.state==='latest'?'No newer compatible update was reported by the server.':u.state==='web'?'A web update is available.':u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
+ h+=u.state==='checking'?'Checking…':u.state==='latest'?'No newer compatible update was reported by the server.':u.state==='backup'?'Backing up your progress before the update…':u.state==='web'?'A web update is available.'+(u.err?' '+esc(u.err):''):u.state==='webdl'?'Downloading the update… '+(u.pct>=0?u.pct+'%':''):u.state==='webready'?'Update downloaded. It starts next time you open the app, or tap Restart.':u.state==='available'?'Build '+i.latest+' is ready to install.':u.state==='downloading'?'Downloading… '+(u.pct>=0?u.pct+'%':''):u.state==='permission'?'Allow “Install unknown apps” for LifeMax on the screen that just opened, come back, and tap Update again.':u.state==='opened'?'Android’s installer is open. Tap Update there.':u.state==='error'?'Could not check: '+esc(u.err):'Last checked '+lmaAgo(lmaLoad().updChecked)+'.'+(u.autoErr?' The check at launch failed: '+esc(u.autoErr):'');
  h+='</div>'+(i?'<div class="muted" style="font-size:12px">Latest release: '+esc(i.latest)+(native?' · Android API '+native+(required?' / requires '+required:''):'')+'</div>':'')+'</div>';
  if(u.state==='available'||u.state==='permission')h+='<button class="btn" onclick="lmaInstallUpdate()">Update</button>';
  else if(u.state==='webready')h+='<button class="btn" onclick="lmaWebRestart()">Restart</button>';
- else if(u.state==='web')h+='<button class="btn" onclick="lmaWebUpdate()">Download</button>';
- else if(u.state!=='checking'&&u.state!=='downloading'&&u.state!=='webdl')h+='<button class="btn secondary" onclick="lmaCheckUpdate(false)">Check now</button>';
+ else if(u.state==='web')h+='<button class="btn" onclick="lmaWebUpdate(true)">Download</button>';
+ else if(LMA_UPD_BUSY.indexOf(u.state)<0)h+='<button class="btn secondary" onclick="lmaCheckUpdate(false)">Check now</button>';
  h+='</div>';
  if(i&&i.stable===false&&u.state==='available')h+='<div class="note" style="margin-top:8px">This build was signed with a temporary key, so Android will likely refuse to install it over your current app. See ANDROID.md.</div>';
  lmaSetHtml('lmaUpdBody',h);
 }
 /* ---------- automatic backup ---------- */
-/* A backup counts only once its file has been read back and checked (ADR 0004). verified: when the newest verified backup was made;
-   last: the newest verified scheduled one, which sets when the next is due. */
-const LMA_DAY=86400e3;
+/* A backup counts only once its file has been read back and checked (ADR 0004). Scheduled backups rotate as life-max-auto-*.json;
+   the snapshot taken before an update, import or reset rotates on its own as life-max-before-*.json, so frequent updates never
+   push the daily history out of the folder. verified: when the newest verified backup was made; last: the newest verified
+   scheduled one, which sets when the next is due. */
+const LMA_DAY=86400e3,LMA_SNAPSHOTS=5;
 function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&(!b.verified||Date.now()-b.last>=b.days*LMA_DAY-60e3))}
 async function lmaPickBackupFolder(){
  const B=lmaPlugin('BackupFolder');if(!B)return;
@@ -129,26 +138,35 @@ async function lmaPickBackupFolder(){
   lmaRunBackup(true);
  }catch(e){toast('Could not use that folder')}
 }
-/* Back up now; resolves true once the file is read back and verified. A run already under way is shared, not repeated. */
-function lmaRunBackup(manual){
- if(!lmaBakRun){lmaBakRun=lmaBackupChecked(manual).finally(()=>{lmaBakRun=null;lmaRenderBackup()});lmaRenderBackup()}
+/* Back up now; resolves true once the file is read back and verified. before: what a snapshot is taken ahead of ('update', 'import',
+   'reset'), or nothing for a scheduled backup. A run already under way is shared, not repeated. */
+function lmaRunBackup(manual,before){
+ if(!lmaBakRun){lmaBakRun=lmaBackupChecked(manual,before).finally(()=>{lmaBakRun=null;lmaRenderBackup()});lmaRenderBackup()}
  return lmaBakRun;
 }
 /* Write, read back, check; only then prune the older files. A file that fails its check is deleted, so it never pushes a good one out. */
-async function lmaBackupChecked(manual){
+async function lmaBackupChecked(manual,before){
  const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup;
  if(!B||!b.uri){if(manual)toast('Choose a folder first');return false}
- const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix='life-max-auto-';
+ const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix=before?'life-max-before-':'life-max-auto-';
  try{
   const data=backupData(),text=JSON.stringify(data,null,2),want=backupFacts(data,text.length);
-  const w=await B.createBackup({uri:b.uri,name:prefix+stamp+'.json',text});
+  const w=await B.createBackup({uri:b.uri,name:prefix+(before?before+'-':'')+stamp+'.json',text});
   const why=backupProblem((await B.readBackup({file:w.file})).text,want);
   if(why){await B.deleteBackup({file:w.file}).catch(()=>{});throw Error('the file read back '+why)}
-  await B.pruneBackups({uri:b.uri,prefix,keep:b.keep}).catch(()=>{});
-  b.last=b.verified=Date.now();b.status='ok';b.err='';b.lastName=w.name||'';if(manual)toast('Backup saved and verified');
+  await B.pruneBackups({uri:b.uri,prefix,keep:before?LMA_SNAPSHOTS:b.keep}).catch(()=>{});
+  b.verified=Date.now();if(!before)b.last=b.verified;b.status='ok';b.err='';b.lastName=w.name||'';if(manual)toast('Backup saved and verified');
  }catch(e){const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,160);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
  lmaSave();
  return b.status==='ok';
+}
+/* Before an update, import or reset: with a folder chosen, take a verified snapshot and wait for it. If that fails the owner decides
+   whether to go on without one; unasked, it does not go on. Resolves true to go on. */
+async function lmaBackupFirst(what,ask=true){
+ if(!lmaNative()||!lmaLoad().backup.uri)return true;
+ if(await lmaRunBackup(false,what))return true;
+ const b=lmaLoad().backup,why=b.status==='lost'?'Android no longer lets LifeMax write to the backup folder':b.err;
+ return ask&&confirm('LifeMax could not make a verified backup before this '+what+': '+why+'.\n\nGo on without a fresh backup?');
 }
 function lmaSetBackup(k,v){const b=lmaLoad().backup;b[k]=v;lmaSave();lmaRenderBackup();if(k==='on'&&v&&b.uri&&!b.verified)lmaRunBackup(true)}
 /* What Settings warns about, or '' when backups are in order. */
@@ -171,7 +189,7 @@ function lmaRenderBackup(){
  h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
  h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
- h+=row('Keep the newest','Older automatic backups are deleted.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
+ h+=row('Keep the newest','Older automatic backups are deleted. The '+LMA_SNAPSHOTS+' newest copies taken before an update, import or reset are kept apart.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
  h+='<div class="settingsline"><div style="flex:1"><strong>Last verified backup</strong><div class="muted" style="font-size:12px">'+(b.verified?lmaAgo(b.verified)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakRun?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakRun?'Saving…':'Back up now')+'</button></div>';
  lmaSetHtml('lmaBakBody',h);
 }
