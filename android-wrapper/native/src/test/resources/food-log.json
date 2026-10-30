@@ -1,0 +1,770 @@
+{
+ "version": 1,
+ "day": "2026-10-28",
+ "today": "2026-10-28",
+ "eyebrow": "TODAY",
+ "dayLabel": "Wednesday, Oct 28",
+ "pane": "log",
+ "currentSlot": "lunch",
+ "totals": {
+  "kcal": 1029,
+  "p": 76,
+  "c": 93,
+  "f": 38,
+  "fib": 0,
+  "sug": 0,
+  "na": 0
+ },
+ "goals": {
+  "cal": 0,
+  "p": 0,
+  "c": 0,
+  "f": 0,
+  "water": 2000
+ },
+ "waterMl": 850,
+ "light": false,
+ "week": [
+  {
+   "day": "2026-10-26",
+   "w": "M",
+   "dNum": 26,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-27",
+   "w": "T",
+   "dNum": 27,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-28",
+   "w": "W",
+   "dNum": 28,
+   "kcal": 1029,
+   "frac": 0.5,
+   "status": "under",
+   "selected": true,
+   "today": true
+  },
+  {
+   "day": "2026-10-29",
+   "w": "T",
+   "dNum": 29,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-30",
+   "w": "F",
+   "dNum": 30,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-31",
+   "w": "S",
+   "dNum": 31,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-11-01",
+   "w": "S",
+   "dNum": 1,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  }
+ ],
+ "recents": [
+  {
+   "index": 0,
+   "id": "name:Greek yogurt with berries",
+   "name": "Greek yogurt with berries",
+   "grams": 250,
+   "kcal": 210,
+   "p": 22,
+   "c": 24,
+   "f": 3
+  },
+  {
+   "index": 1,
+   "id": "name:Black coffee",
+   "name": "Black coffee",
+   "grams": 240,
+   "kcal": 5,
+   "p": 0,
+   "c": 1,
+   "f": 0
+  },
+  {
+   "index": 2,
+   "id": "name:Chicken burrito bowl",
+   "name": "Chicken burrito bowl",
+   "grams": 420,
+   "kcal": 640,
+   "p": 48,
+   "c": 62,
+   "f": 20
+  },
+  {
+   "index": 3,
+   "id": "name:Almonds",
+   "name": "Almonds",
+   "grams": 30,
+   "kcal": 174,
+   "p": 6,
+   "c": 6,
+   "f": 15
+  }
+ ],
+ "copyYesterday": {
+  "breakfast": false,
+  "lunch": false,
+  "dinner": false,
+  "snacks": false
+ },
+ "entries": [
+  {
+   "id": "f1",
+   "slot": "breakfast",
+   "name": "Greek yogurt with berries",
+   "grams": 250,
+   "kcal": 210,
+   "p": 22,
+   "c": 24,
+   "f": 3
+  },
+  {
+   "id": "f2",
+   "slot": "breakfast",
+   "name": "Black coffee",
+   "grams": 240,
+   "kcal": 5,
+   "p": 0,
+   "c": 1,
+   "f": 0
+  },
+  {
+   "id": "f3",
+   "slot": "lunch",
+   "name": "Chicken burrito bowl",
+   "grams": 420,
+   "kcal": 640,
+   "p": 48,
+   "c": 62,
+   "f": 20
+  },
+  {
+   "id": "f4",
+   "slot": "snack",
+   "name": "Almonds",
+   "grams": 30,
+   "kcal": 174,
+   "p": 6,
+   "c": 6,
+   "f": 15
+  }
+ ],
+ "plan": {
+  "workoutHeading": "REST A · REST DAY",
+  "target": 2250,
+  "eaten": 1029,
+  "left": 1221,
+  "eatenP": 76,
+  "planP": 216,
+  "nextIndex": 0,
+  "coachIcon": "↺",
+  "coachText": "You ate 1,029 kcal outside the plan, so I trimmed the meals still to come by about 67% to keep your 2,250 kcal.",
+  "diet": "standard",
+  "level": "auto",
+  "veg": false,
+  "df": false,
+  "items": [
+   {
+    "index": 0,
+    "id": "std_b03",
+    "name": "Peanut Butter Protein Oats",
+    "slot": "breakfast",
+    "slotName": "Breakfast",
+    "slotWhen": "Morning",
+    "slotColor": "#f2b84a",
+    "activeMin": 5,
+    "tagsLabel": "No cooking",
+    "kcal": 385,
+    "p": 30,
+    "c": 51,
+    "f": 8,
+    "fib": 7,
+    "topIngs": "Banana · Rolled oats · Whey protein · Peanut butter",
+    "ings": [
+     {
+      "name": "Rolled oats",
+      "grams": 48
+     },
+     {
+      "name": "Whey protein",
+      "grams": 26
+     },
+     {
+      "name": "Peanut butter",
+      "grams": 9
+     },
+     {
+      "name": "Banana",
+      "grams": 60
+     }
+    ],
+    "steps": [
+     "Cook the oats with water in the microwave for 2 to 3 minutes.",
+     "Stir in the protein powder and peanut butter while warm.",
+     "Top with sliced banana."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 1,
+    "id": "std_l03",
+    "name": "Leftover Chicken Spinach Pasta",
+    "slot": "lunch",
+    "slotName": "Lunch",
+    "slotWhen": "Midday",
+    "slotColor": "#5fd08a",
+    "activeMin": 2,
+    "tagsLabel": "Leftover",
+    "kcal": 407,
+    "p": 38,
+    "c": 44,
+    "f": 10,
+    "fib": 7,
+    "topIngs": "Chicken breast · Spinach · Whole wheat pasta · Olive oil",
+    "ings": [
+     {
+      "name": "Chicken breast",
+      "grams": 119
+     },
+     {
+      "name": "Whole wheat pasta",
+      "grams": 54
+     },
+     {
+      "name": "Olive oil",
+      "grams": 6
+     },
+     {
+      "name": "Spinach",
+      "grams": 100
+     }
+    ],
+    "steps": [
+     "Reheat the leftover chicken pasta in the microwave until warm."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 2,
+    "id": "std_s01",
+    "name": "Avocado Egg Toast & Yogurt",
+    "slot": "snack",
+    "slotName": "Snack",
+    "slotWhen": "Afternoon",
+    "slotColor": "#ef7a85",
+    "activeMin": 5,
+    "tagsLabel": "No cooking",
+    "kcal": 226,
+    "p": 19,
+    "c": 18,
+    "f": 9,
+    "fib": 3,
+    "topIngs": "Greek yogurt · Eggs · Whole wheat bread · Avocado",
+    "ings": [
+     {
+      "name": "Whole wheat bread",
+      "grams": 30
+     },
+     {
+      "name": "Eggs",
+      "grams": 50
+     },
+     {
+      "name": "Avocado",
+      "grams": 18
+     },
+     {
+      "name": "Greek yogurt",
+      "grams": 85
+     }
+    ],
+    "steps": [
+     "Fry the egg to your liking.",
+     "Mash the avocado on the toasted bread, and top with the egg.",
+     "Eat the Greek yogurt on the side."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 3,
+    "id": "std_s04",
+    "name": "Cottage Cheese & Almonds",
+    "slot": "snack",
+    "slotName": "Snack",
+    "slotWhen": "Afternoon",
+    "slotColor": "#ef7a85",
+    "activeMin": 2,
+    "tagsLabel": "No cooking",
+    "kcal": 203,
+    "p": 16,
+    "c": 19,
+    "f": 7,
+    "fib": 3,
+    "topIngs": "Cottage cheese · Apple · Almonds",
+    "ings": [
+     {
+      "name": "Cottage cheese",
+      "grams": 128
+     },
+     {
+      "name": "Almonds",
+      "grams": 9
+     },
+     {
+      "name": "Apple",
+      "grams": 90
+     }
+    ],
+    "steps": [
+     "Top the cottage cheese with the crushed almonds.",
+     "Eat the apple on the side."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 4,
+    "id": "std_d03",
+    "name": "Turkey & Sweet Potato Hash",
+    "slot": "dinner",
+    "slotName": "Dinner",
+    "slotWhen": "Evening",
+    "slotColor": "#6aa4f0",
+    "activeMin": 15,
+    "tagsLabel": "No cooking",
+    "kcal": 512,
+    "p": 37,
+    "c": 56,
+    "f": 16,
+    "fib": 13,
+    "topIngs": "Sweet potato · Ground turkey · Spinach · Black beans",
+    "ings": [
+     {
+      "name": "Ground turkey",
+      "grams": 128
+     },
+     {
+      "name": "Sweet potato",
+      "grams": 180
+     },
+     {
+      "name": "Spinach",
+      "grams": 100
+     },
+     {
+      "name": "Black beans",
+      "grams": 100
+     },
+     {
+      "name": "Olive oil",
+      "grams": 6
+     }
+    ],
+    "steps": [
+     "Microwave the sweet potato for 4 minutes to soften, then dice it.",
+     "Brown the turkey in a skillet with the oil until cooked through (165°F).",
+     "Add the diced sweet potato, drained black beans, and spinach to the skillet and cook until heated through."
+    ],
+    "logged": false,
+    "skipped": false
+   }
+  ]
+ },
+ "shop": {
+  "weekStart": "2026-10-26",
+  "nextWeek": false,
+  "items": [
+   {
+    "id": "ing_oats_rolled_dry",
+    "name": "Rolled oats",
+    "aisle": "bakery_grains",
+    "aisleName": "Bread, grains & pasta",
+    "grams": 278,
+    "packs": 1,
+    "unit": "18 oz tub",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_milk_2",
+    "name": "2% milk",
+    "aisle": "dairy_eggs",
+    "aisleName": "Dairy & eggs",
+    "grams": 1327,
+    "packs": 1,
+    "unit": "gallon",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_greek_yogurt_nonfat",
+    "name": "Greek yogurt",
+    "aisle": "dairy_eggs",
+    "aisleName": "Dairy & eggs",
+    "grams": 470,
+    "packs": 1,
+    "unit": "32 oz tub",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_banana_raw",
+    "name": "Banana",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 983,
+    "packs": 2,
+    "unit": "bunch",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_almonds_raw",
+    "name": "Almonds",
+    "aisle": "snacks",
+    "aisleName": "Nuts & snacks",
+    "grams": 140,
+    "packs": 1,
+    "unit": "16 oz bag",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_chicken_breast_raw",
+    "name": "Chicken breast",
+    "aisle": "meat_seafood",
+    "aisleName": "Meat & seafood",
+    "grams": 664,
+    "packs": 2,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_rice_white_cooked",
+    "name": "White rice",
+    "aisle": "bakery_grains",
+    "aisleName": "Bread, grains & pasta",
+    "grams": 1256,
+    "packs": 1,
+    "unit": "lb (dry)",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_broccoli_raw",
+    "name": "Broccoli",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 1050,
+    "packs": 2,
+    "unit": "bunch",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_olive_oil",
+    "name": "Olive oil",
+    "aisle": "pantry",
+    "aisleName": "Pantry",
+    "grams": 119,
+    "packs": 1,
+    "unit": "16 oz btl",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_apple_raw",
+    "name": "Apple",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 1176,
+    "packs": 3,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_peanut_butter",
+    "name": "Peanut butter",
+    "aisle": "pantry",
+    "aisleName": "Pantry",
+    "grams": 74,
+    "packs": 1,
+    "unit": "16 oz jar",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_whey_protein",
+    "name": "Whey protein",
+    "aisle": "pantry",
+    "aisleName": "Pantry",
+    "grams": 161,
+    "packs": 1,
+    "unit": "2 lb tub",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_beef_ground_90_raw",
+    "name": "Ground beef",
+    "aisle": "meat_seafood",
+    "aisleName": "Meat & seafood",
+    "grams": 280,
+    "packs": 1,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_pasta_whole_wheat_dry",
+    "name": "Whole wheat pasta",
+    "aisle": "bakery_grains",
+    "aisleName": "Bread, grains & pasta",
+    "grams": 352,
+    "packs": 1,
+    "unit": "16 oz box",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_sauce_marinara",
+    "name": "Marinara sauce",
+    "aisle": "canned_jarred",
+    "aisleName": "Cans & jars",
+    "grams": 240,
+    "packs": 1,
+    "unit": "24 oz jar",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_spinach_raw",
+    "name": "Spinach",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 900,
+    "packs": 7,
+    "unit": "5 oz bag",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_eggs_whole_raw",
+    "name": "Eggs",
+    "aisle": "dairy_eggs",
+    "aisleName": "Dairy & eggs",
+    "grams": 500,
+    "packs": 1,
+    "unit": "dozen",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_bread_whole_wheat",
+    "name": "Whole wheat bread",
+    "aisle": "bakery_grains",
+    "aisleName": "Bread, grains & pasta",
+    "grams": 370,
+    "packs": 1,
+    "unit": "loaf",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_avocado_raw",
+    "name": "Avocado",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 152,
+    "packs": 1,
+    "unit": "each",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_cottage_cheese_lowfat",
+    "name": "Cottage cheese",
+    "aisle": "dairy_eggs",
+    "aisleName": "Dairy & eggs",
+    "grams": 519,
+    "packs": 2,
+    "unit": "16 oz tub",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_turkey_ground_raw",
+    "name": "Ground turkey",
+    "aisle": "meat_seafood",
+    "aisleName": "Meat & seafood",
+    "grams": 289,
+    "packs": 1,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_potato_sweet_raw",
+    "name": "Sweet potato",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 1142,
+    "packs": 3,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_beans_black_canned",
+    "name": "Black beans",
+    "aisle": "canned_jarred",
+    "aisleName": "Cans & jars",
+    "grams": 409,
+    "packs": 2,
+    "unit": "15 oz can",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_tofu_firm",
+    "name": "Firm tofu",
+    "aisle": "produce",
+    "aisleName": "Produce",
+    "grams": 567,
+    "packs": 2,
+    "unit": "14 oz block",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_tuna_canned_water",
+    "name": "Canned tuna",
+    "aisle": "canned_jarred",
+    "aisleName": "Cans & jars",
+    "grams": 72,
+    "packs": 1,
+    "unit": "5 oz can",
+    "meals": 1,
+    "perish": false,
+    "home": true,
+    "checked": false
+   },
+   {
+    "id": "ing_pork_tenderloin_raw",
+    "name": "Pork tenderloin",
+    "aisle": "meat_seafood",
+    "aisleName": "Meat & seafood",
+    "grams": 300,
+    "packs": 1,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   },
+   {
+    "id": "ing_shrimp_raw",
+    "name": "Shrimp",
+    "aisle": "meat_seafood",
+    "aisleName": "Meat & seafood",
+    "grams": 194,
+    "packs": 1,
+    "unit": "lb",
+    "meals": 1,
+    "perish": false,
+    "home": false,
+    "checked": false
+   }
+  ]
+ }
+}

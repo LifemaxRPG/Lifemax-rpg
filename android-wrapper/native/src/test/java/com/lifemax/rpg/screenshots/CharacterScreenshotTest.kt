@@ -11,7 +11,8 @@ import org.junit.Test
 
 /** Character as the phone draws it, from the same fixture the projection tests use. */
 class CharacterScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5)
+    @get:Rule
+    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 3200))
 
     private fun projection(light: Boolean) =
         WebCharacterRepository()
