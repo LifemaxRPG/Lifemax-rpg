@@ -1,51 +1,11 @@
-/* Character projection v1. Read-only domain boundary; edits stay in original web handlers. */
+/* Character projection v1. Read-only domain boundary; edits stay in original web handlers. The tab lifecycle is NativeTabKit's. */
 (function () {
-  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
-  const session =
-    "character-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
-  const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
-  let sequence = 0,
-    active = false,
-    opening = false,
-    handshake = null,
-    plugin = null,
-    ready = false,
-    timer = 0,
-    queued = 0;
-  function available() {
-    try {
-      return Capacitor.isNativePlatform() &&
-        Capacitor.isPluginAvailable("NativeCharacter")
-        ? Capacitor.Plugins.NativeCharacter
-        : null;
-    } catch (_) {
-      return null;
-    }
-  }
-  function blocked() {
-    return (
-      lmaView() !== "character" ||
-      !state.onboardingComplete ||
-      !!lmaTopOverlay() ||
-      document.body.classList.contains("noscroll")
-    );
-  }
-  function color(v) {
-    const c = document.createElement("canvas");
-    c.width = c.height = 1;
-    const x = c.getContext("2d");
-    x.fillStyle = v;
-    x.fillRect(0, 0, 1, 1);
-    const a = x.getImageData(0, 0, 1, 1).data;
-    return ((a[3] << 24) | (a[0] << 16) | (a[1] << 8) | a[2]) >>> 0;
-  }
   function projection() {
     const D = chCompute(),
       focus = chFocus(),
       level = characterLevel(),
       cls = state.classId ? classById(state.classId) : null,
-      next = TITLES.find((x) => x[0] > level.level),
-      root = getComputedStyle(document.documentElement);
+      next = TITLES.find((x) => x[0] > level.level);
     const attrs = ATTRS.map((a) => {
       const l = attrLevel(a.id),
         d = chDecay(a);
@@ -53,7 +13,7 @@
         id: a.id,
         name: a.name,
         short: a.short,
-        color: color(ATTR_COL[a.id]),
+        color: NativeTabKit.color(ATTR_COL[a.id]),
         level: l.level,
         into: l.into,
         needed: l.needed,
@@ -76,9 +36,6 @@
       .sort((a, b) => b[1] - a[1])
       .map(([name, xp]) => ({ name, xp, ...levelData(xp) }));
     return {
-      protocol: 1,
-      webSessionId: session,
-      sequence: ++sequence,
       name: state.name || "The Life Architect",
       avatar: state.avatar || "",
       classId: state.classId || "",
@@ -128,156 +85,25 @@
         id: b.dataset.view,
         label: b.textContent.trim(),
       })),
-      tokens: Object.fromEntries(
-        [
-          "bg",
-          "panel",
-          "panel2",
-          "text",
-          "muted",
-          "accent",
-          "line",
-          "good",
-        ].map((k) => [k, color(root.getPropertyValue("--" + k).trim())]),
-      ),
-      light: document.documentElement.classList.contains("light-theme"),
     };
   }
-  async function navScene() {
-    if (!window.NativeOverviewSnapshot) throw Error("Overview chrome unavailable");
-    return NativeOverviewSnapshot.snapshot();
-  }
-  function sync() {
-    const input = document.getElementById("nativeCharacterToggle");
-    if (input) {
-      input.disabled = !available();
-      input.checked = !!available() && lmaLoad().nativeCharacter === true;
+  async function onAction(e) {
+    if (e.action === "attribute" && ATTRS.some((a) => a.id === e.id)) openAttr(e.id);
+    else if (e.action === "luck") openLuck();
+    else if (e.action === "benchmarks") {
+      document.getElementById("benchName").scrollIntoView({ block: "center" });
+      document.getElementById("benchName").focus();
     }
   }
-  function schedule() {
-    clearTimeout(queued);
-    queued = setTimeout(send, 100);
-  }
-  async function send() {
-    if (!active) return;
-    if (blocked()) {
-      NativeTabs.leave("character", lmaView(), () => close());
-      return;
-    }
-    try {
-      await plugin.update({ snapshot: projection(), navScene: await navScene() });
-    } catch (e) {
-      console.warn("Character refresh", e);
-      await close();
-    }
-  }
-  async function close() {
-    clearInterval(timer);
-    clearTimeout(queued);
-    active = false;
-    if (plugin) await plugin.close();
-  }
-  async function open(force) {
-    plugin = available();
-    if (
-      !plugin ||
-      active ||
-      opening ||
-      blocked() ||
-      (!force && lmaLoad().nativeCharacter !== true)
-    ) {
-      if (!opening) NativeTabs.flush("character");
-      return false;
-    }
-    opening = true;
-    const openedAt = now();
-    try {
-      if (!ready) {
-        await plugin.addListener("action", async (e) => {
-          await close();
-          if (e.view) lmaNavTo(e.view);
-          else if (e.action === "attribute" && ATTRS.some((a) => a.id === e.id))
-            openAttr(e.id);
-          else if (e.action === "luck") openLuck();
-          else if (e.action === "benchmarks") {
-            document
-              .getElementById("benchName")
-              .scrollIntoView({ block: "center" });
-            document.getElementById("benchName").focus();
-          }
-        });
-        await plugin.addListener("refresh", send);
-        await plugin.addListener("nav-action", (e) => window.NativeOverviewSnapshot?.activate(e.id));
-        await plugin.addListener("closed", () => {
-          active = false;
-          clearInterval(timer);
-        });
-        ready = true;
-      }
-      const h = handshake || (handshake = await plugin.handshake());
-      const handshakeAt = now();
-      if (
-        h.protocol !== 1 ||
-        !h.capabilities.includes("character.projection.v1")
-      )
-        return false;
-      if (blocked()) return false;
-      const data = projection();
-      const projectionAt = now();
-      const scene = await navScene();
-      const chromeAt = now();
-      await plugin.open({ snapshot: data, navScene: scene });
-      const nativeAt = now();
-      window.__nativeTabPerf = {feature:"character",handshakeMs:handshakeAt-openedAt,projectionMs:projectionAt-handshakeAt,chromeMs:chromeAt-projectionAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt};
-      if (blocked()) {
-        await close();
-        return false;
-      }
-      active = true;
-      timer = setInterval(send, 15000);
-      NativeTabs.flush("character");
-      setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
-      return true;
-    } catch (e) {
-      console.warn("Native Character unavailable", e);
-      await close();
-      return false;
-    } finally {
-      opening = false;
-      NativeTabs.flush("character");
-    }
-  }
-  NativeTabs.cover("character", () => !!available() && lmaLoad().nativeCharacter === true);
-  const nav = navigate;
-  navigate = function (v) {
-    if (v !== "character" && (active || opening))
-      NativeTabs.leave("character", v, () => close());
-    const r = nav.apply(this, arguments);
-    if (v === "character") {
-      NativeTabs.cancel("character");
-      queueMicrotask(() => open(false));
-    }
-    if (v === "settings") sync();
-    return r;
-  };
-  const render = renderCharacterPage;
-  renderCharacterPage = function () {
-    const r = render.apply(this, arguments);
-    if (active) schedule();
-    return r;
-  };
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && active) send();
+  NativeTabKit.create({
+    id: "character",
+    plugin: "NativeCharacter",
+    capability: "character.projection.v1",
+    setting: "nativeCharacter",
+    toggle: "nativeCharacterToggle",
+    projection,
+    onAction,
+    render: "renderCharacterPage",
+    globals: { open: "openNativeCharacter", enable: "setNativeCharacterEnabled", projection: "NativeCharacterProjection" },
   });
-  window.openNativeCharacter = () => open(true);
-  window.setNativeCharacterEnabled = async (on) => {
-    lmaLoad().nativeCharacter = !!on;
-    lmaSave();
-    sync();
-    if (!on) await close();
-  };
-  window.NativeCharacterProjection = { snapshot: projection };
-  sync();
-  setTimeout(sync, 700);
 })();
-

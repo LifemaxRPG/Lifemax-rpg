@@ -78,13 +78,11 @@ const c = {
 };
 c.window = c;
 vm.createContext(c);
-vm.runInContext(
-  fs.readFileSync(
-    path.join(__dirname, "../src/runtime/segments/50-native-character.js"),
-    "utf8",
-  ),
-  c,
-);
+for (const segment of ["50-native-tabkit.js", "50-native-character.js"])
+  vm.runInContext(
+    fs.readFileSync(path.join(__dirname, "../src/runtime/segments", segment), "utf8"),
+    c,
+  );
 const before = JSON.stringify(c.state),
   a = c.NativeCharacterProjection.snapshot(),
   b = c.NativeCharacterProjection.snapshot();
