@@ -23,9 +23,10 @@ python forge_features.py dist/Life_Max_RPG_v73_modular_build.html dist/Life_Max_
 - `src/views/`: 12 individual screen HTML files (e.g. `meals.html`, `quests.html`).
 - `src/styles/`: 8 CSS sections, concatenated in their **original cascade order**. Some sections include CSS for multiple features because they are preserved rather than rearranged.
 - `src/data/`: three embedded pet data blocks.
-- `src/runtime/segments/`: **33 ordered JavaScript fragments** (v87 adds `32-pet-dna.js`, cat genetics; see below) (24 original, `29-pet-pair.js` for the second cat, plus `24-pet-depth.js` for the room depth stage, `25-pet-likes.js` for favorite places, toys and exploring, `26-pet-brain.js` for the cat's inner life, `27-pet-play.js` for the extra play games, and `28-pet-box.js` for the kitchen box) extracted at complete top-level statement boundaries. The builder combines them **inside a single `<script>` tag** to preserve global scope, initialization order, and existing inline event handlers.
-- `src/runtime/symbol-index.json`: searchable map from named top-level JS functions/variables to their source file(s).
+- `src/runtime/segments/`: **ordered JavaScript fragments**, listed in `module-map.json`. The 24 original ones were cut from v73 by size, so most begin part-way through a statement; later ones each hold a feature. The builder combines them **inside a single `<script>` tag** to preserve global scope, initialization order, and existing inline event handlers.
+- `src/runtime/symbol-index.json`: searchable map from named top-level JS functions/variables (and `window.*` exports) to their source file(s).
 - `src/runtime/module-map.json`: segment metadata, sizes, tags and exported symbol names.
+- Both maps are generated: after adding, removing or reordering a segment, or changing its top-level names, run `python3 tools/gen_module_map.py`. It keeps the tags; a new segment starts with the words of its file name, which you can edit in `module-map.json`. `python3 check_source.py` (run in CI) fails while either map is stale.
 - `build.py`: zero-dependency deterministic HTML assembler.
 - `source.sha256`: original v73 fingerprint.
 - `dist/`: generated HTML; do not edit this directly.
