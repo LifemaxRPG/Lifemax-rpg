@@ -94,3 +94,23 @@ dependencies {
 }
 """
     p.write_text(s, encoding='utf-8')
+
+
+# Compose screenshots on the JVM (no phone, no emulator). Reference images live in the authored tree:
+# native/src/test/snapshots, linked in as the module's src/test/snapshots.
+p = root / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'paparazzi-gradle-plugin' not in s:
+    s = s.replace("classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'", "classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'\n        classpath 'app.cash.paparazzi:paparazzi-gradle-plugin:1.3.5'", 1)
+    p.write_text(s, encoding='utf-8')
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if "apply plugin: 'app.cash.paparazzi'" not in s:
+    s = s.replace("apply plugin: 'kotlin-android'", "apply plugin: 'kotlin-android'\napply plugin: 'app.cash.paparazzi'", 1)
+    p.write_text(s, encoding='utf-8')
+snapshots = root / 'app' / 'src' / 'test' / 'snapshots'
+snapshots.parent.mkdir(parents=True, exist_ok=True)
+authored = (root / '..' / 'native' / 'src' / 'test' / 'snapshots').resolve()
+authored.mkdir(parents=True, exist_ok=True)
+if not snapshots.exists():
+    snapshots.symlink_to(authored, target_is_directory=True)
