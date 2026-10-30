@@ -1,15 +1,17 @@
 /* The save and its backups as a tested contract (ADR 0004). Golden saves in fixtures/saves (new, established, legacy, with extras;
    synthetic, made once from the page's own functions and never regenerated) load at SAVE_SCHEMA; a save from a newer build is
    shown but never written; a backup counts only once the file read back from the folder checks out; a snapshot comes before every
-   risky change; and each golden save, backed up and restored on another phone, comes back the same.
+   risky change; and each golden save, backed up and restored on another phone, comes back the same and stays so once the app starts.
    Run: NODE_PATH=$(npm root -g) node tests/backup-restore.test.js */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync } = require('child_process'); const http = require('http');
 const root = path.resolve(__dirname, '..'), out = path.join(require('os').tmpdir(), 'lm_backup_' + process.pid + '.html');
 execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 const STORE = 'lifemax_rpg_prototype_v1', fixture = n => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', n + '.json'), 'utf8'));
-let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 600) : '')) } };
+/* Served over http, not file://: a file:// reload can come back without the last writes to localStorage (BACKLOG). */
+const server = http.createServer((q, s) => { if (q.url !== '/') { s.writeHead(404); s.end(); return } s.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); fs.createReadStream(out).pipe(s) });
+let url = '', pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 600) : '')) } };
 /* A phone: a fresh browser profile holding a save and extra keys before the app starts (block: a key that does not fit). */
 async function phone(b, { save = JSON.stringify({ onboardingComplete: true, name: 'N', tutorialDone: true }), extras = {}, block = '' } = {}) {
   const c = await b.newContext({ viewport: { width: 412, height: 860 } }), p = await c.newPage(), dialogs = [], errs = [];
@@ -19,22 +21,24 @@ async function phone(b, { save = JSON.stringify({ onboardingComplete: true, name
     localStorage.setItem(STORE, save); for (const k in extras) localStorage.setItem(k, extras[k]);
     if (block) { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (String(k).includes(block)) throw new Error('QuotaExceededError'); return set.call(this, k, v) } }
   }, [STORE, save, extras, block]);
-  await p.goto('file://' + out, { timeout: 120000 }); await p.waitForTimeout(4500);
+  await p.goto(url, { timeout: 120000 }); await p.waitForTimeout(4500);
   return { p, dialogs, errs, close: () => c.close() };
 }
-/* An Android backup folder in memory, installed once the app has started: the files, the plugin calls in order, and a way to spoil
-   what is read back. */
+/* An Android backup folder in memory, installed once the app has started: the files, the plugin calls in order and the folders they
+   went to, a way to spoil what is read back, a promise that holds a file while it is written, and another folder to pick. */
 const FOLDER = `(() => {
-  const F = window.__folder = { files: {}, calls: [], n: 0, spoil: null }, real = lmaPlugin;
+  const F = window.__folder = { files: {}, calls: [], uris: [], n: 0, spoil: null, hold: null }, real = lmaPlugin;
   lmaNative = () => true;
   lmaPlugin = n => n !== 'BackupFolder' ? real(n) : {
-    createBackup: async o => { F.calls.push('create ' + o.name); const file = 'file' + ++F.n; F.files[file] = o.text; return { file, name: o.name } },
+    pickFolder: async () => ({ picked: true, uri: 'content://tree/other', name: 'Other' }),
+    createBackup: async o => { F.calls.push('create ' + o.name); F.uris.push(o.uri); await F.hold; const file = 'file' + ++F.n; F.files[file] = o.text; return { file, name: o.name } },
     readBackup: async o => { F.calls.push('read'); return { text: F.spoil ? F.spoil(F.files[o.file]) : F.files[o.file] } },
-    pruneBackups: async o => { F.calls.push('prune ' + o.prefix + ' ' + o.keep); return { pruned: 0 } },
+    pruneBackups: async o => { F.calls.push('prune ' + o.prefix + ' ' + o.keep); F.uris.push(o.uri); return { pruned: 0 } },
     deleteBackup: async o => { F.calls.push('delete'); delete F.files[o.file]; return { deleted: true } } };
   Object.assign(lmaLoad().backup, { on: true, uri: 'content://tree/backups', folder: 'Backups' }); lmaSave();
 })()`;
 (async () => {
+  await new Promise(r => server.listen(0, '127.0.0.1', r)); url = 'http://127.0.0.1:' + server.address().port + '/';
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }), errs = [];
 
   /* ---- the save format version ---- */
@@ -74,9 +78,17 @@ const FOLDER = `(() => {
   }
 
   {
-    const ph = await phone(b, { save: '{"name":"Real hero","activities":[', block: '_unreadable' });
-    const r = await ph.p.evaluate(() => ({ kept: localStorage.getItem(STORE) === '{"name":"Real hero","activities":[', fresh: state.name !== 'Real hero', refused: save() === false }));
+    const raw = '{"name":"Real hero","activities":[', ph = await phone(b, { save: raw, block: '_unreadable' });
+    await ph.p.evaluate(FOLDER);
+    const r = await ph.p.evaluate(async raw => {
+      const out = { kept: localStorage.getItem(STORE) === raw, fresh: state.name !== 'Real hero', refused: save() === false }; window.toast = () => { };
+      out.backup = await lmaRunBackup(false) === false && lmaLoad().backup.err === 'the save on this phone could not be read' && !__folder.calls.length;
+      let file = null; lmaDownload = (text, name) => { file = { text, name } }; exportData();
+      out.exported = file && file.text === raw && /^life-max-unreadable-\d{4}-\d\d-\d\d\.json$/.test(file.name);
+      return out;
+    }, raw);
     ok('an unreadable save that cannot be copied aside is left as it is, and nothing is saved over it', r.kept && r.fresh && r.refused && ph.dialogs.length === 1 && /could not be read/.test(ph.dialogs[0]), { r, d: ph.dialogs });
+    ok('no backup is made of it, which Settings says in plain words, and Export backup keeps its text as a file, as the owner is told', r.backup && r.exported && /Export backup/.test(ph.dialogs[0]), { r, d: ph.dialogs });
     errs.push(...ph.errs); await ph.close();
   }
 
@@ -107,10 +119,13 @@ const FOLDER = `(() => {
       const F = __folder, out = {}; window.toast = () => { };
       const data = backupData(), text = JSON.stringify(data, null, 2), want = backupFacts(data, text.length), fewer = JSON.parse(text);
       fewer.state.activities.pop();
-      out.problems = { good: backupProblem(text, want), cut: backupProblem(text.slice(0, -300), want), empty: backupProblem('', want), fewer: backupProblem(JSON.stringify(fewer, null, 2), want), other: backupProblem(JSON.stringify({ ...data, exportedAt: '2020-01-01T00:00:00.000Z' }, null, 2), want) };
+      const as = d => backupProblem(JSON.stringify(d, null, 2), want);
+      out.problems = { good: backupProblem(text, want), cut: backupProblem(text.slice(0, -300), want), empty: backupProblem('', want), fewer: as(fewer), other: as({ ...data, exportedAt: '2020-01-01T00:00:00.000Z' }), schema: as({ ...data, state: { ...data.state, schema: 0 } }), rules: as({ ...data, rules: {} }), extras: as({ ...data, extras: {} }) };
       out.ran = await lmaRunBackup(true); out.calls = F.calls.splice(0);
       const good = { ...lmaLoad().backup };
       out.good = good.status === 'ok' && good.verified > 0 && good.last === good.verified && JSON.parse(Object.values(F.files)[0]).state.activities.length === state.activities.length;
+      F.spoil = () => { throw new Error('Could not open the file') };
+      out.ranUnread = await lmaRunBackup(true); out.unreadCalls = F.calls.splice(0);
       F.spoil = t => t.slice(0, t.length >> 1);
       out.ranSpoilt = await lmaRunBackup(true); out.spoiltCalls = F.calls.splice(0); F.spoil = null;
       const bad = lmaLoad().backup;
@@ -124,14 +139,23 @@ const FOLDER = `(() => {
       out.asked = !!pill && /no backup/.test(pill.textContent) && lmaLoad().backup.asked > 0;
       pill.querySelector('[data-w=go]').click(); out.toSettings = lmaView() === 'settings' && setCat === 'phone';
       navigate('dashboard'); out.once = !document.querySelector('.lmaweb-pill');
+      // another folder picked while a backup to the old one is being written: that one finishes there, then the new one gets its own
+      Object.assign(B, { uri: 'content://tree/backups', status: 'ok' }); F.calls.length = F.uris.length = 0;
+      let release; F.hold = new Promise(r => { release = r });
+      const old = lmaRunBackup(false); await lmaPickBackupFolder(); F.hold = null; release(); await old; await lmaBakRun;
+      out.moved = F.uris.join(' ') === 'content://tree/backups content://tree/backups content://tree/other content://tree/other' && B.uri === 'content://tree/other' && B.status === 'ok' && B.verified > 0;
+      // a backup whose preferences cannot be read
+      lmaRestoreExtras({ [LMA_PREF_KEY]: '{"apps":[' }); out.prefsKept = lmaLoad().backup.uri === 'content://tree/other';
       return out;
     });
     const pr = r.problems;
-    ok('the check passes the file as written and catches a cut-short, empty, mismatched or different file', pr.good === '' && /cut short/.test(pr.cut) && /cut short/.test(pr.empty) && /activities 419 instead of 420/.test(pr.fewer) && /exportedAt/.test(pr.other), pr);
+    ok('the check passes the file as written and catches a cut-short, empty, mismatched or different file', pr.good === '' && /cut short/.test(pr.cut) && /cut short/.test(pr.empty) && /activities 419 instead of 420/.test(pr.fewer) && /exportedAt/.test(pr.other) && pr.schema === 'has schema 0 instead of 1' && /^has rules 0 instead of [1-9]/.test(pr.rules) && /^has extras 0 instead of [1-9]/.test(pr.extras), pr);
     ok('a backup is written, read back and checked, and only then are older files pruned', r.ran === true && r.good && /^create life-max-auto-\d{4}-\d\d-\d\d-\d{4}\.json$/.test(r.calls[0]) && r.calls[1] === 'read' && r.calls[2] === 'prune life-max-auto- 7' && r.calls.length === 3, r);
-    ok('a file that reads back wrong does not count: it is deleted, nothing is pruned, the last verified time stays', r.ranSpoilt === false && r.spoilt && JSON.stringify(r.spoiltCalls.slice(1)) === '["read","delete"]', r);
+    ok('a file that reads back wrong, or cannot be read back, does not count: it is deleted, nothing is pruned, the last verified time stays', r.ranSpoilt === false && r.spoilt && JSON.stringify(r.spoiltCalls.slice(1)) === '["read","delete"]' && r.ranUnread === false && JSON.stringify(r.unreadCalls.slice(1)) === '["read","delete"]', r);
     ok('Settings shows the last verified backup, and warns when backups fail, are off, stale, never verified or have no folder', /The last backup failed: the file read back is cut short/.test(r.failing) && /Last verified backupjust now/.test(r.fine) && !/failed|is off|was made|No backup/.test(r.fine) && /Automatic backup is off/.test(r.off) && /last verified backup was made 3 days ago/.test(r.stale) && /No backup has been verified yet/.test(r.never) && /No backup folder is chosen/.test(r.none), r);
     ok('with no folder the owner is asked once, gently, and the pill leads to the backup settings', r.asked && r.toSettings && r.once, r);
+    ok('a folder picked while a backup is being written gets its own backup, and the old one is pruned only in the old folder', r.moved, r);
+    ok('a restore whose preferences cannot be read leaves this phone\'s preferences as they are', r.prefsKept, r);
     ok('nothing in the backup paths shows a dialog', ph.dialogs.length === 0, ph.dialogs);
     errs.push(...ph.errs); await ph.close();
   }
@@ -141,12 +165,16 @@ const FOLDER = `(() => {
     const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });
     await ph.p.evaluate(FOLDER);
     const r = await ph.p.evaluate(async ([fresh, est]) => {
-      const F = __folder, out = {}, asks = [], cut = t => t.slice(0, t.length >> 1); let answer = true;
-      window.toast = () => { }; window.confirm = m => { asks.push(m); return /verified backup/.test(m) ? answer : true };
+      const F = __folder, out = {}, asks = [], toasts = [], cut = t => t.slice(0, t.length >> 1); let answer = true;
+      window.toast = m => toasts.push(m); window.confirm = m => { asks.push(m); return /verified backup/.test(m) ? answer : true };
       const snap = () => JSON.parse(F.files['file' + F.n]).state;
-      // import, with a folder that works: the snapshot holds the save as it was, in its own rotation, and the schedule is not moved
-      let res = await applyBackup(fresh);
-      out.importSnap = res.ok && /^create life-max-before-import-/.test(F.calls[0]) && F.calls[2] === 'prune life-max-before- 5' && snap().activities.length === 420 && state.activities.length === 0 && lmaLoad().backup.last === 0 && lmaLoad().backup.verified > 0;
+      // import, with a folder that works: the snapshot holds the save as it was, in its own rotation, and the schedule is not moved;
+      // another import or a reset asked for while it waits for that snapshot is refused
+      let release; F.hold = new Promise(r => { release = r });
+      const first = applyBackup(fresh), during = applyBackup(est), resetting = resetDemo(); F.hold = null; release();
+      let res = await first; const refused = await during; await resetting;
+      out.oneAtATime = /already under way/.test(refused.message) && toasts.includes('An import or reset is already under way') && F.calls.length === 3;
+      out.importSnap = res.ok && /^create life-max-before-import-/.test(F.calls[0]) && F.calls[2] === 'prune life-max-before-import- 5' && snap().activities.length === 420 && state.activities.length === 0 && lmaLoad().backup.last === 0 && lmaLoad().backup.verified > 0;
       // import, with a folder whose file reads back wrong: the owner is asked; no means nothing changes, yes goes on
       F.spoil = cut; answer = false; let before = localStorage.getItem(STORE), safety = localStorage.getItem(STORE + '_safety');
       res = await applyBackup(est);
@@ -157,7 +185,7 @@ const FOLDER = `(() => {
       answer = false; before = localStorage.getItem(STORE); await resetDemo();
       out.resetDeclined = localStorage.getItem(STORE) === before && state.activities.length === 420;
       F.spoil = null; F.calls.length = 0; await resetDemo();
-      out.resetSnap = /^create life-max-before-reset-/.test(F.calls[0]) && snap().activities.length === 420 && state.activities.length === 0;
+      out.resetSnap = /^create life-max-before-reset-/.test(F.calls[0]) && F.calls[2] === 'prune life-max-before-reset- 5' && snap().activities.length === 420 && state.activities.length === 0;
       // a web update: unasked (at launch) a failed backup leaves it waiting; asked, the owner decides; a working backup comes first
       let staged = 0; const real = lmaPlugin;
       lmaPlugin = n => n === 'LiveWeb' ? { status: async () => ({ staged }), fetch: async o => { F.calls.push('fetch ' + o.build); staged = o.build }, restart: async () => { F.calls.push('restart') }, addListener() { } }
@@ -169,9 +197,9 @@ const FOLDER = `(() => {
       answer = false; await lmaWebUpdate(true);
       out.webDeclined = !F.calls.some(c => /fetch/.test(c)) && asks.length === asked0 + 1;
       F.spoil = null; F.calls.length = 0; await lmaWebUpdate(false);
-      out.webOrder = /^create life-max-before-update-/.test(F.calls[0]) && F.calls[3] === 'fetch 301' && lmaUpd.state === 'webready';
-      F.spoil = cut; F.calls.length = 0; await lmaWebRestart();
-      out.restartDeclined = !F.calls.includes('restart');
+      out.webOrder = /^create life-max-before-update-/.test(F.calls[0]) && F.calls[2] === 'prune life-max-before-update- 5' && F.calls[3] === 'fetch 301' && lmaUpd.state === 'webready';
+      F.spoil = cut; F.calls.length = 0; const restarting = lmaWebRestart(), shown = lmaUpd.state; await restarting;
+      out.restartDeclined = shown === 'backup' && !F.calls.includes('restart') && lmaUpd.state === 'webready';
       F.spoil = null; F.calls.length = 0; await lmaWebRestart();
       out.restartOrder = /^create life-max-before-update-/.test(F.calls[0]) && F.calls[3] === 'restart';
       F.spoil = cut; F.calls.length = 0; lmaUpd.state = 'available'; await lmaInstallUpdate();
@@ -180,11 +208,12 @@ const FOLDER = `(() => {
       out.apkOrder = /^create life-max-before-update-/.test(F.calls[0]) && F.calls[3] === 'install';
       return out;
     }, [fixture('new'), fixture('established')]);
-    ok('an import first takes a verified snapshot of the save it replaces, kept apart from the daily backups', r.importSnap, r);
+    ok('an import first takes a verified snapshot of the save it replaces, kept apart from the daily backups and the other snapshots', r.importSnap, r);
+    ok('imports and resets run one at a time: another one asked for while an import waits for its snapshot is refused', r.oneAtATime, r);
     ok('when that snapshot fails, the owner is asked: no leaves the save and its safety copy untouched, yes goes on', r.importDeclined && r.importAccepted, r);
     ok('a reset follows the same rule', r.resetDeclined && r.resetSnap, r);
     ok('a web update is backed up before it is downloaded; at launch a failed backup leaves it waiting in Settings, asked the owner decides', r.webWaits && r.webDeclined && r.webOrder, r);
-    ok('restarting into a web update and installing a new APK are backed up first too', r.restartDeclined && r.restartOrder && r.apkDeclined && r.apkOrder, r);
+    ok('restarting into a web update and installing a new APK are backed up first too, and Settings shows the backup meanwhile', r.restartDeclined && r.restartOrder && r.apkDeclined && r.apkOrder, r);
     errs.push(...ph.errs); await ph.close();
   }
 
@@ -210,20 +239,21 @@ const FOLDER = `(() => {
     }, made.file);
     const was = JSON.parse(made.file), stateDiff = differ(was.state, res.stored);
     ok('the ' + name + ' save, backed up and restored on another phone, comes back the same: save, rules and extras', made.ran && res.ok && !stateDiff.length && canon(was.rules) === canon(res.rules) && canon(was.extras) === canon(res.extras), { stateDiff, rules: canon(was.rules) === canon(res.rules), extras: differ(was.extras, res.extras) });
+    // the app starts again on the restored save, as it does after an import
+    await c.p.reload(); await c.p.waitForTimeout(4500);
     const back = await c.p.evaluate(async () => {
-      // the next start reads the save and this phone's preferences back from storage
-      lmaPrefs = null; load();
-      const out = { schema: state.schema, ids: JSON.stringify(state.activities.map(a => a.id)), folder: lmaLoad().backup.uri, shortcuts: lmaLoad().apps.length };
+      const stored = JSON.parse(localStorage.getItem(STORE));
+      const out = { schema: stored.schema, ids: JSON.stringify(stored.activities.map(a => a.id)), rules, folder: lmaLoad().backup.uri, shortcuts: lmaLoad().apps.length };
       // none of the restored app shortcuts is installed on this phone, so Android has no icon for them
-      let icons = 0; const real = lmaPlugin; lmaPlugin = n => n === 'AppLauncher' ? { getIcons: async () => { icons++; return { icons: {} } } } : real(n);
+      let icons = 0; const real = lmaPlugin; lmaNative = () => true; lmaPlugin = n => n === 'AppLauncher' ? { getIcons: async () => { icons++; return { icons: {} } } } : real(n);
       ovAppsRender(); await new Promise(r => setTimeout(r, 300));
       return { ...out, icons };
     });
-    ok('the restored ' + name + ' save is read back at the current format, and that phone keeps its own backup folder', back.schema === 1 && back.ids === ids && back.folder === 'content://tree/backups', back);
+    ok('after a start on the restored ' + name + ' save it is still there at the current format with its rules, and that phone keeps its own backup folder', back.schema === 1 && back.ids === ids && canon(back.rules) === canon(was.rules) && back.folder === 'content://tree/backups', { ...back, rules: canon(back.rules) === canon(was.rules) });
     if (back.shortcuts) ok('restored app shortcuts that are not installed here are asked for once, not forever', back.icons === 1, back);
     errs.push(...a.errs, ...c.errs); await a.close(); await c.close();
   }
 
   ok('no script errors', errs.length === 0, errs);
-  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
+  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); server.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();

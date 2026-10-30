@@ -164,10 +164,11 @@ async function lmaRenderSettings(){
  host.innerHTML=h;
 }
 /* ---------- saving files and backups ---------- */
-/* The keys a backup carries besides the save. This phone's own backup settings (its folder) are neither exported nor restored. */
-const LMA_EXTRA_KEYS=['lifemax_director_state_v1',LMA_PREF_KEY,'lifeMaxTheme'];
+/* The keys a backup carries besides the save: what the owner made, and the preferences. This phone's own backup settings (its folder)
+   are neither exported nor restored, and preferences that cannot be read are not restored. */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1',LMA_PREF_KEY,'lifeMaxTheme','lifemax_voice_alias_v1','lifemax_voice_macros_v1','lifeMaxDevChat'];
 function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k===LMA_PREF_KEY){try{const j=JSON.parse(v);delete j.backup;v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
-function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]!=='string')continue;let v=x[k];if(k===LMA_PREF_KEY){try{v=JSON.stringify({...JSON.parse(v),backup:lmaLoad().backup})}catch(e){}}try{localStorage.setItem(k,v);n++}catch(e){}}lmaPrefs=null;return n>0}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]!=='string')continue;let v=x[k];if(k===LMA_PREF_KEY){try{v=JSON.stringify({...JSON.parse(v),backup:lmaLoad().backup})}catch(e){continue}}try{localStorage.setItem(k,v);n++}catch(e){}}lmaPrefs=null;return n>0}
 /* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
 async function lmaDownload(text,filename,mime,label){
  const FS=lmaPlugin('FileSaver');

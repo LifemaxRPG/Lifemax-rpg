@@ -43,6 +43,7 @@
   const before=JSON.stringify(state);let response;
   try{
    const message=command(a),saved=localStorage.getItem(STORE);
+   if(saveReadOnly)throw Error('Not saved: this version is read-only for your save');
    if(!saved||JSON.stringify(JSON.parse(saved).money)!==JSON.stringify(state.money))throw Error('Could not save. Free some storage and try again.');
    response={requestId:a.requestId,message,ok:true};
   }catch(e){state=JSON.parse(before);try{rebuildAttrXP();rebuildSkillXP();renderAll()}catch(_){}response={requestId:a.requestId,message:e.message||'Could not save',ok:false}}

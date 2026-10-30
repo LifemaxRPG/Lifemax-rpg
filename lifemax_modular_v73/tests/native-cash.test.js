@@ -14,7 +14,7 @@ const s={console,Date,Intl,Math,Map,Set,JSON,Number,String,Promise,
  fxOpt:()=>({haptics:true}),lmaMotionOff:()=>false,lmaView:()=>view,lmaResolve:v=>v,
  lmaTabList:()=>[{dataset:{view:'money'},textContent:'Cash'},{dataset:{view:'dashboard'},textContent:'Overview'}],
  navigate:v=>{view=v},lmaBack:()=>{view='dashboard'},lmaNavTo:v=>{view=v},
- localStorage:{getItem:k=>stored.get(k),setItem(k,v){if(failStorage)throw Error('Storage full');stored.set(k,v)}},STORE:'test',
+ localStorage:{getItem:k=>stored.get(k),setItem(k,v){if(failStorage)throw Error('Storage full');stored.set(k,v)}},STORE:'test',saveReadOnly:'',
  rebuildAttrXP(){s.state.attrXP={};for(const a of s.state.activities)for(const x of a.xpSplit||[])s.state.attrXP[x.attr]=(s.state.attrXP[x.attr]||0)+x.xp},
  rebuildSkillXP(){s.state.skillXP={};for(const a of s.state.activities)s.state.skillXP[a.skill]=(s.state.skillXP[a.skill]||0)+a.xp},
  renderAll(){},
@@ -48,6 +48,8 @@ async function flush(){for(let i=0;i<15;i++)await Promise.resolve()}
  check('account edits preserve transaction history and unknown fields',()=>{assert.equal(s.state.money.tx.length,3);assert.equal(s.state.money.customField,'preserve me');assert.equal(s.moneyBalance(),220)});
  failStorage=true;ack=await action('7','transaction',{type:'deposit',amount:25});failStorage=false;
  check('failed persistence rolls back native writes',()=>{assert.equal(ack.ok,false);assert.equal(s.moneyBalance(),220);assert.equal(s.state.money.tx.length,3)});
+ s.saveReadOnly='A newer version saved this';ack=await action('7r','transaction',{type:'deposit',amount:25});s.saveReadOnly='';
+ check('a read-only save is named as the reason, not storage',()=>{assert.equal(ack.ok,false);assert.match(ack.message,/read-only/);assert.equal(s.moneyBalance(),220)});
  const id=s.state.money.tx.find(t=>t.actId).id;await action('8','delete',{id});
  check('removing a deposit removes its linked XP',()=>{assert.equal(s.state.activities.length,0);assert.equal(s.state.attrXP.business||0,0);assert.equal(s.moneyBalance(),120)});
  const before=JSON.stringify(s.state);await handlers.action({session:'stale',requestId:'9',action:'transaction',type:'deposit',amount:5});

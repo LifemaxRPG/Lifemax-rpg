@@ -56,7 +56,9 @@ async function lmaWebUpdate(ask){
  lmaRenderUpdates();
 }
 async function lmaWebRestart(){
- const L=lmaPlugin('LiveWeb');if(!L||!await lmaBackupFirst('update'))return;
+ const L=lmaPlugin('LiveWeb');if(!L)return;
+ const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
 }
 /* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
@@ -124,10 +126,10 @@ function lmaRenderUpdates(){
  lmaSetHtml('lmaUpdBody',h);
 }
 /* ---------- automatic backup ---------- */
-/* A backup counts only once its file has been read back and checked (ADR 0004). Scheduled backups rotate as life-max-auto-*.json;
-   the snapshot taken before an update, import or reset rotates on its own as life-max-before-*.json, so frequent updates never
-   push the daily history out of the folder. verified: when the newest verified backup was made; last: the newest verified
-   scheduled one, which sets when the next is due. */
+/* A backup counts only once its file has been read back and checked (ADR 0004). Scheduled backups rotate as life-max-auto-*.json,
+   and the snapshots taken before an update, an import or a reset each rotate on their own (life-max-before-update-*.json …), so
+   frequent updates push neither the daily history nor the copy taken before a reset out of the folder. verified: when the newest
+   verified backup was made; last: the newest verified scheduled one, which sets when the next is due. */
 const LMA_DAY=86400e3,LMA_SNAPSHOTS=5;
 function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&(!b.verified||Date.now()-b.last>=b.days*LMA_DAY-60e3))}
 async function lmaPickBackupFolder(){
@@ -135,7 +137,8 @@ async function lmaPickBackupFolder(){
  try{
   const r=await B.pickFolder();if(!r||!r.picked)return;
   const b=lmaLoad().backup;b.uri=r.uri;b.folder=r.name;b.on=true;b.status='';b.err='';lmaSave();lmaRenderBackup();
-  lmaRunBackup(true);
+  // a backup still writing to the old folder (leaving the app for the picker can start one) finishes first; the new one starts with none verified
+  (lmaBakRun||Promise.resolve()).then(()=>{b.verified=b.last=0;b.lastName='';lmaRunBackup(true)});
  }catch(e){toast('Could not use that folder')}
 }
 /* Back up now; resolves true once the file is read back and verified. before: what a snapshot is taken ahead of ('update', 'import',
@@ -144,19 +147,21 @@ function lmaRunBackup(manual,before){
  if(!lmaBakRun){lmaBakRun=lmaBackupChecked(manual,before).finally(()=>{lmaBakRun=null;lmaRenderBackup()});lmaRenderBackup()}
  return lmaBakRun;
 }
-/* Write, read back, check; only then prune the older files. A file that fails its check is deleted, so it never pushes a good one out. */
+/* Write, read back, check; only then prune the older files, in the folder the run started with. A file that fails its check or cannot
+   be read back is deleted, so it never pushes a good one out. */
 async function lmaBackupChecked(manual,before){
- const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup;
- if(!B||!b.uri){if(manual)toast('Choose a folder first');return false}
- const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix=before?'life-max-before-':'life-max-auto-';
+ const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup,uri=b.uri;
+ if(!B||!uri){if(manual)toast('Choose a folder first');return false}
+ const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix=before?'life-max-before-'+before+'-':'life-max-auto-';
+ let w=null;
  try{
   const data=backupData(),text=JSON.stringify(data,null,2),want=backupFacts(data,text.length);
-  const w=await B.createBackup({uri:b.uri,name:prefix+(before?before+'-':'')+stamp+'.json',text});
+  w=await B.createBackup({uri,name:prefix+stamp+'.json',text});
   const why=backupProblem((await B.readBackup({file:w.file})).text,want);
-  if(why){await B.deleteBackup({file:w.file}).catch(()=>{});throw Error('the file read back '+why)}
-  await B.pruneBackups({uri:b.uri,prefix,keep:before?LMA_SNAPSHOTS:b.keep}).catch(()=>{});
+  if(why)throw Error('the file read back '+why);
+  await B.pruneBackups({uri,prefix,keep:before?LMA_SNAPSHOTS:b.keep}).catch(()=>{});
   b.verified=Date.now();if(!before)b.last=b.verified;b.status='ok';b.err='';b.lastName=w.name||'';if(manual)toast('Backup saved and verified');
- }catch(e){const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,160);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
+ }catch(e){if(w)await B.deleteBackup({file:w.file}).catch(()=>{});const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,160);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
  lmaSave();
  return b.status==='ok';
 }
@@ -189,7 +194,7 @@ function lmaRenderBackup(){
  h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
  h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
- h+=row('Keep the newest','Older automatic backups are deleted. The '+LMA_SNAPSHOTS+' newest copies taken before an update, import or reset are kept apart.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
+ h+=row('Keep the newest','Older automatic backups are deleted. Copies taken before an update, an import or a reset are kept apart, the '+LMA_SNAPSHOTS+' newest of each.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
  h+='<div class="settingsline"><div style="flex:1"><strong>Last verified backup</strong><div class="muted" style="font-size:12px">'+(b.verified?lmaAgo(b.verified)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakRun?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakRun?'Saving…':'Back up now')+'</button></div>';
  lmaSetHtml('lmaBakBody',h);
 }
