@@ -1,6 +1,5 @@
 /* Bottom bar editor tests. Run: NODE_PATH=$(npm root -g) node tests/tabs.test.js [built html] */
-const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/v(\d+)/)[1] - +b.match(/v(\d+)/)[1]).pop()));
+const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 412, height: 860 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
@@ -8,7 +7,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.goto('file://' + file); await p.waitForTimeout(800);
   const order = () => p.evaluate(() => [...document.querySelectorAll('.sidebar .navbtn[data-view]')].map(b => b.dataset.view));
   const shown = () => p.evaluate(() => [...document.querySelectorAll('.sidebar .navbtn[data-view]')].filter(b => b.offsetWidth > 0 || b.getClientRects().length).map(b => b.dataset.view));
-  const o0 = await order(); ok('the default bar has the expected tabs', o0.slice(0, 5).join() === 'dashboard,character,pet,log,quests', o0);
+  const o0 = await order(); ok('the default bar has the expected tabs', o0.slice(0, 6).join() === 'dashboard,character,food,pet,log,quests', o0);
   ok('the editor lists every tab', await p.evaluate(() => document.querySelectorAll('#tabsEditBody .tabrow').length >= 9));
   await p.evaluate(() => lmaTabMove('quests', -1)); const o1 = await order();
   ok('moving Quests earlier swaps it with the tab before it', o1.indexOf('quests') === o0.indexOf('quests') - 1 && o1.indexOf('log') === o0.indexOf('log') + 1, o1);

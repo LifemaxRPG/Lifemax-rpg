@@ -1,6 +1,5 @@
 /* Voice fallback log tests. Run:  NODE_PATH=$(npm root -g) node tests/voicefallback.test.js [built html] */
-const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]).pop()));
+const { chromium } = require('playwright'); const fs = require('fs'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 500) : '')) } };
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, acceptDownloads: true })).newPage(); const errs = [];

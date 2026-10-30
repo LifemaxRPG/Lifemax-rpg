@@ -13,6 +13,11 @@ if [ "${1:-}" = sim ]; then
   exit $?
 fi
 
+# Build the current page once; every test that loads the app uses it (tests/current-page.js)
+export LMA_TEST_PAGE="$(mktemp --suffix=.html)"
+trap 'rm -f "$LMA_TEST_PAGE"' EXIT
+node -e "require('$here/tests/current-page.js').build(process.env.LMA_TEST_PAGE)" || { echo "FAIL could not build the page"; exit 1; }
+
 skip=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$here/tests/SKIP_IN_CI.txt" | grep -v '^$' || true)
 failed=()
 passed=0

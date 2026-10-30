@@ -1,7 +1,7 @@
 /* LifeMax Voice phase 1 acceptance tests. Run:  NODE_PATH=$(npm root -g) node tests/voice.test.js <path to built html>
    Needs Playwright with Chromium. Times use America/New_York; the clock is injected, nothing here waits on real time. */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]).pop()));
+const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (name, cond, extra) => { if (cond) { pass++; console.log('PASS ' + name) } else { fail++; console.log('FAIL ' + name + (extra ? '  ' + JSON.stringify(extra) : '')) } };
 const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
 (async () => {

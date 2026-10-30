@@ -1,8 +1,7 @@
 /* LifeMax Voice generation 4 tests: self-corrections, two things at once, editing the card on screen, "right after that",
    briefing / what's next / goals / suggestions, comparisons, plan, library, timer, other apps, help, shortcuts.
    Run:  NODE_PATH=$(npm root -g) node tests/voice4.test.js [built html] */
-const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', fs.readdirSync(path.join(__dirname, '..', 'dist')).filter(f => /^Life_Max_RPG_v\d+\.html$/.test(f)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]).pop()));
+const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (name, cond, extra) => { if (cond) { pass++; console.log('PASS ' + name) } else { fail++; console.log('FAIL ' + name + (extra !== undefined ? '  ' + JSON.stringify(extra).slice(0, 600) : '')) } };
 const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
 (async () => {
