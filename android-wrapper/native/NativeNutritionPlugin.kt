@@ -312,7 +312,7 @@ private fun NativeNutritionScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .padding(bottom = bottomInsetDp.dp + 12.dp),
+                .padding(bottom = bottomInsetDp.dp + 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Spacer(Modifier.height(topInsetDp.dp))
@@ -667,6 +667,7 @@ private fun NativeNutritionScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(
+                                    modifier = Modifier.weight(1f),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -676,14 +677,19 @@ private fun NativeNutritionScreen(
                                         color = muted,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.4.sp
+                                        letterSpacing = 1.4.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                                 Text(
                                     text = "$activeMin min · $tagsLabel",
                                     color = muted,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.widthIn(max = 100.dp),
+                                    maxLines = 2
                                 )
                             }
 
@@ -1627,7 +1633,7 @@ private fun NativeNutritionScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = bottomInsetDp.dp + 12.dp)
         ) {
             Row(
                 modifier = Modifier
