@@ -18,32 +18,37 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
-/** Reads workouts, steps, sleep and weight from Health Connect (where Samsung Health shares them). */
+/**
+ * Reads workouts, steps, sleep and weight from Health Connect (where Samsung Health shares them).
+ */
 @CapacitorPlugin(name = "HealthSync")
 class HealthSyncPlugin : Plugin() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val all = linkedMapOf(
-        "exercise" to HealthPermission.getReadPermission(ExerciseSessionRecord::class),
-        "steps" to HealthPermission.getReadPermission(StepsRecord::class),
-        "sleep" to HealthPermission.getReadPermission(SleepSessionRecord::class),
-        "weight" to HealthPermission.getReadPermission(WeightRecord::class)
-    )
+    private val all =
+        linkedMapOf(
+            "exercise" to HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+            "steps" to HealthPermission.getReadPermission(StepsRecord::class),
+            "sleep" to HealthPermission.getReadPermission(SleepSessionRecord::class),
+            "weight" to HealthPermission.getReadPermission(WeightRecord::class),
+        )
 
-    private fun available() = HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+    private fun available() =
+        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
 
     private fun wanted(call: PluginCall): Set<String> {
         val a = call.getArray("types")
-        val names = if (a == null) all.keys.toList() else (0 until a.length()).map { a.getString(it) }
+        val names =
+            if (a == null) all.keys.toList() else (0 until a.length()).map { a.getString(it) }
         return names.mapNotNull { all[it] }.toSet()
     }
 
@@ -60,12 +65,20 @@ class HealthSyncPlugin : Plugin() {
             try {
                 val st = HealthConnectClient.getSdkStatus(context)
                 val ret = JSObject()
-                ret.put("sdk", when (st) {
-                    HealthConnectClient.SDK_AVAILABLE -> "available"
-                    HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "update"
-                    else -> "unavailable"
-                })
-                ret.put("granted", if (st == HealthConnectClient.SDK_AVAILABLE) grantedNames(HealthConnectClient.getOrCreate(context)) else JSArray())
+                ret.put(
+                    "sdk",
+                    when (st) {
+                        HealthConnectClient.SDK_AVAILABLE -> "available"
+                        HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "update"
+                        else -> "unavailable"
+                    },
+                )
+                ret.put(
+                    "granted",
+                    if (st == HealthConnectClient.SDK_AVAILABLE)
+                        grantedNames(HealthConnectClient.getOrCreate(context))
+                    else JSArray(),
+                )
                 call.resolve(ret)
             } catch (e: Throwable) {
                 call.reject("status failed: $e")
@@ -75,7 +88,10 @@ class HealthSyncPlugin : Plugin() {
 
     @PluginMethod
     fun request(call: PluginCall) {
-        if (!available()) { call.reject("Health Connect is not available on this phone"); return }
+        if (!available()) {
+            call.reject("Health Connect is not available on this phone")
+            return
+        }
         val contract = PermissionController.createRequestPermissionResultContract()
         val intent = contract.createIntent(context, wanted(call))
         startActivityForResult(call, intent, "permResult")
@@ -109,20 +125,34 @@ class HealthSyncPlugin : Plugin() {
                 val out = JSArray()
                 var token: String? = null
                 do {
-                    val r = c.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range(call), pageSize = 200, pageToken = token))
+                    val r =
+                        c.readRecords(
+                            ReadRecordsRequest(
+                                ExerciseSessionRecord::class,
+                                range(call),
+                                pageSize = 200,
+                                pageToken = token,
+                            )
+                        )
                     for (e in r.records) {
                         val o = JSObject()
                         o.put("id", e.metadata.id)
                         o.put("start", e.startTime.toEpochMilli())
                         o.put("end", e.endTime.toEpochMilli())
-                        o.put("type", ExerciseSessionRecord.EXERCISE_TYPE_INT_TO_STRING_MAP[e.exerciseType] ?: "other_workout")
+                        o.put(
+                            "type",
+                            ExerciseSessionRecord.EXERCISE_TYPE_INT_TO_STRING_MAP[e.exerciseType]
+                                ?: "other_workout",
+                        )
                         o.put("title", e.title ?: "")
                         o.put("origin", e.metadata.dataOrigin.packageName)
                         out.put(o)
                     }
                     token = r.pageToken
                 } while (!token.isNullOrEmpty())
-                val ret = JSObject(); ret.put("sessions", out); call.resolve(ret)
+                val ret = JSObject()
+                ret.put("sessions", out)
+                call.resolve(ret)
             } catch (e: Throwable) {
                 call.reject("readExercise failed: $e")
             }
@@ -136,12 +166,23 @@ class HealthSyncPlugin : Plugin() {
             try {
                 val c = HealthConnectClient.getOrCreate(context)
                 val z = ZoneId.systemDefault()
-                val from = Instant.ofEpochMilli(call.getLong("from") ?: (System.currentTimeMillis() - 3 * 86400000L))
+                val from =
+                    Instant.ofEpochMilli(
+                        call.getLong("from") ?: (System.currentTimeMillis() - 3 * 86400000L)
+                    )
                 val to = Instant.ofEpochMilli(call.getLong("to") ?: System.currentTimeMillis())
-                val res = c.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(
-                    metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(LocalDateTime.ofInstant(from, z).toLocalDate().atStartOfDay(), LocalDateTime.ofInstant(to, z)),
-                    timeRangeSlicer = Period.ofDays(1)))
+                val res =
+                    c.aggregateGroupByPeriod(
+                        AggregateGroupByPeriodRequest(
+                            metrics = setOf(StepsRecord.COUNT_TOTAL),
+                            timeRangeFilter =
+                                TimeRangeFilter.between(
+                                    LocalDateTime.ofInstant(from, z).toLocalDate().atStartOfDay(),
+                                    LocalDateTime.ofInstant(to, z),
+                                ),
+                            timeRangeSlicer = Period.ofDays(1),
+                        )
+                    )
                 val out = JSArray()
                 for (d in res) {
                     val o = JSObject()
@@ -149,7 +190,9 @@ class HealthSyncPlugin : Plugin() {
                     o.put("count", d.result[StepsRecord.COUNT_TOTAL] ?: 0L)
                     out.put(o)
                 }
-                val ret = JSObject(); ret.put("days", out); call.resolve(ret)
+                val ret = JSObject()
+                ret.put("days", out)
+                call.resolve(ret)
             } catch (e: Throwable) {
                 call.reject("readSteps failed: $e")
             }
@@ -162,7 +205,10 @@ class HealthSyncPlugin : Plugin() {
             try {
                 val c = HealthConnectClient.getOrCreate(context)
                 val out = JSArray()
-                val r = c.readRecords(ReadRecordsRequest(SleepSessionRecord::class, range(call), pageSize = 100))
+                val r =
+                    c.readRecords(
+                        ReadRecordsRequest(SleepSessionRecord::class, range(call), pageSize = 100)
+                    )
                 for (s in r.records) {
                     val o = JSObject()
                     o.put("id", s.metadata.id)
@@ -171,7 +217,9 @@ class HealthSyncPlugin : Plugin() {
                     o.put("origin", s.metadata.dataOrigin.packageName)
                     out.put(o)
                 }
-                val ret = JSObject(); ret.put("sessions", out); call.resolve(ret)
+                val ret = JSObject()
+                ret.put("sessions", out)
+                call.resolve(ret)
             } catch (e: Throwable) {
                 call.reject("readSleep failed: $e")
             }
@@ -183,7 +231,15 @@ class HealthSyncPlugin : Plugin() {
         scope.launch {
             try {
                 val c = HealthConnectClient.getOrCreate(context)
-                val r = c.readRecords(ReadRecordsRequest(WeightRecord::class, range(call), ascendingOrder = false, pageSize = 1))
+                val r =
+                    c.readRecords(
+                        ReadRecordsRequest(
+                            WeightRecord::class,
+                            range(call),
+                            ascendingOrder = false,
+                            pageSize = 1,
+                        )
+                    )
                 val ret = JSObject()
                 val w = r.records.firstOrNull()
                 if (w != null) {

@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -23,7 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -44,28 +42,26 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
-import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
- * Native Jetpack Compose Nutrition preview (`Plan`, `Log`, and `Shopping`) with
- * Card-Anchored AAA Plasma Ribbon & Circumferential Ring-Torch animation.
+ * Native Jetpack Compose Nutrition preview (`Plan`, `Log`, and `Shopping`) with Card-Anchored AAA
+ * Plasma Ribbon & Circumferential Ring-Torch animation.
  *
- * All displayed calories, logged foods, Smart Diet meals, shopping items, goals, and water
- * come from the authoritative live WebView (`50-native-nutrition.js`).
- * All persistent mutations route back through canonical handlers (`fv2Log`, `fv2AddWater`,
- * `fv2CopySlot`, `sdLogMeal`, `setMealsDay`, `fv2Open`, `sdOpenSwap`).
+ * All displayed calories, logged foods, Smart Diet meals, shopping items, goals, and water come
+ * from the authoritative live WebView (`50-native-nutrition.js`). All persistent mutations route
+ * back through canonical handlers (`fv2Log`, `fv2AddWater`, `fv2CopySlot`, `sdLogMeal`,
+ * `setMealsDay`, `fv2Open`, `sdOpenSwap`).
  */
 @CapacitorPlugin(name = "NativeNutrition")
 class NativeNutritionPlugin : Plugin() {
@@ -85,8 +81,13 @@ class NativeNutritionPlugin : Plugin() {
     fun open(call: PluginCall) {
         val id = call.getString("session")
         val data = call.getObject("snapshot")
-        if (id.isNullOrBlank() || data == null || data.optInt("version") != 1 ||
-            data.toString().length > 250000 || !data.has("totals") || !data.has("goals")
+        if (
+            id.isNullOrBlank() ||
+                data == null ||
+                data.optInt("version") != 1 ||
+                data.toString().length > 250000 ||
+                !data.has("totals") ||
+                !data.has("goals")
         ) {
             call.reject("Invalid native Nutrition snapshot")
             return
@@ -117,7 +118,8 @@ class NativeNutritionPlugin : Plugin() {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         view.setContent {
             snapshot?.let { current ->
-                NativeNutritionScreen(current, topInsetDp, bottomInsetDp, shown) { command, payload ->
+                NativeNutritionScreen(current, topInsetDp, bottomInsetDp, shown) { command, payload
+                    ->
                     if (command == "close") {
                         dismiss(true)
                     } else {
@@ -129,7 +131,8 @@ class NativeNutritionPlugin : Plugin() {
             }
         }
         layer = view
-        activity.findViewById<ViewGroup>(android.R.id.content)
+        activity
+            .findViewById<ViewGroup>(android.R.id.content)
             .addView(view, FrameLayout.LayoutParams(-1, -1))
         return view
     }
@@ -139,9 +142,14 @@ class NativeNutritionPlugin : Plugin() {
         val data = call.getObject("snapshot")
         activity.runOnUiThread {
             try {
-                if (call.getString("session") == session && layer != null &&
-                    data != null && data.optInt("version") == 1 && data.toString().length <= 250000 &&
-                    data.has("totals") && data.has("goals")
+                if (
+                    call.getString("session") == session &&
+                        layer != null &&
+                        data != null &&
+                        data.optInt("version") == 1 &&
+                        data.toString().length <= 250000 &&
+                        data.has("totals") &&
+                        data.has("goals")
                 ) {
                     snapshot = JSONObject(data.toString())
                     showChrome(call.getObject("chromeScene"))
@@ -170,9 +178,10 @@ class NativeNutritionPlugin : Plugin() {
 
     private fun showChrome(scene: JSONObject?) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
-        val chrome = ChromeHost.show(this, activity, bridge.webView, scene) { id ->
-            notifyListeners("nav-action", JSObject().put("id", id))
-        }
+        val chrome =
+            ChromeHost.show(this, activity, bridge.webView, scene) { id ->
+                notifyListeners("nav-action", JSObject().put("id", id))
+            }
         val (top, bottom) = chrome.contentInsetsDp()
         topInsetDp = top
         bottomInsetDp = bottom
@@ -192,9 +201,7 @@ class NativeNutritionPlugin : Plugin() {
         val id = session
         session = ""
         snapshot = null
-        layer?.let { view ->
-            (view.parent as? ViewGroup)?.removeView(view)
-        }
+        layer?.let { view -> (view.parent as? ViewGroup)?.removeView(view) }
         layer = null
         if (notify && id.isNotEmpty()) {
             notifyListeners("closed", JSObject().put("session", id))
@@ -228,9 +235,10 @@ private fun NativeNutritionScreen(
     topInsetDp: Float,
     bottomInsetDp: Float,
     active: Boolean,
-    dispatch: (command: String, payload: Map<String, Any>) -> Unit
+    dispatch: (command: String, payload: Map<String, Any>) -> Unit,
 ) {
-    // a hidden screen stays composed, so it must not take the Back button from the tab that is showing
+    // a hidden screen stays composed, so it must not take the Back button from the tab that is
+    // showing
     BackHandler(enabled = active) { dispatch("close", emptyMap()) }
 
     val light = data.optBoolean("light")
@@ -245,9 +253,10 @@ private fun NativeNutritionScreen(
     val panelBorder = if (light) Color(0xFFD2D9E7) else BorderSubtle
     val trackColor = if (light) Color(0xFFE4E9F2) else Color(0xFF171B26)
 
-    var activePane by remember(data.optString("pane")) {
-        mutableStateOf(data.optString("pane", "plan").ifBlank { "plan" })
-    }
+    var activePane by
+        remember(data.optString("pane")) {
+            mutableStateOf(data.optString("pane", "plan").ifBlank { "plan" })
+        }
     var showUpNextIngredients by remember { mutableStateOf(false) }
     var showNutritionDetails by remember { mutableStateOf(false) }
     var selectedRingMacro by remember { mutableStateOf<String?>(null) }
@@ -278,7 +287,7 @@ private fun NativeNutritionScreen(
             Triple(
                 if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
                 if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
-                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
+                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f,
             )
         )
     }
@@ -287,7 +296,7 @@ private fun NativeNutritionScreen(
             Triple(
                 if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
                 if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
-                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
+                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f,
             )
         )
     }
@@ -296,11 +305,12 @@ private fun NativeNutritionScreen(
     // Trigger AAA Plasma Flight whenever logged calories increase
     var lastCalLogged by remember { mutableIntStateOf(calLogged) }
     LaunchedEffect(calLogged, proLogged, carbLogged, fatLogged) {
-        val nextTriple = Triple(
-            if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
-            if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
-            if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f
-        )
+        val nextTriple =
+            Triple(
+                if (proGoal > 0f) (proLogged / proGoal).coerceIn(0f, 1f) else 0f,
+                if (carbGoal > 0f) (carbLogged / carbGoal).coerceIn(0f, 1f) else 0f,
+                if (fatGoal > 0f) (fatLogged / fatGoal).coerceIn(0f, 1f) else 0f,
+            )
         if (calLogged > lastCalLogged) {
             activePane = "log"
             targetRatios = nextTriple
@@ -308,7 +318,7 @@ private fun NativeNutritionScreen(
             flightProgress.snapTo(0f)
             flightProgress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 1620, easing = LinearEasing)
+                animationSpec = tween(durationMillis = 1620, easing = LinearEasing),
             )
             flightActive = false
             prevRatios = nextTriple
@@ -319,27 +329,23 @@ private fun NativeNutritionScreen(
         lastCalLogged = calLogged
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(bg)
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(bg)) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .padding(bottom = bottomInsetDp.dp + 96.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier =
+                Modifier.fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(bottom = bottomInsetDp.dp + 96.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Spacer(Modifier.height(topInsetDp.dp))
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (light) Color(0xFFF7F9FC) else CardTop)
-                    .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
-                    .padding(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                modifier =
+                    Modifier.clip(RoundedCornerShape(12.dp))
+                        .background(if (light) Color(0xFFF7F9FC) else CardTop)
+                        .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
+                        .padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 FoodTopTabButton("Meals", true, light) {}
                 FoodTopTabButton("Recipes", false, light) { dispatch("recipes", emptyMap()) }
@@ -348,7 +354,7 @@ private fun NativeNutritionScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -356,7 +362,7 @@ private fun NativeNutritionScreen(
                         color = subtle,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.8.sp
+                        letterSpacing = 1.8.sp,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -365,13 +371,13 @@ private fun NativeNutritionScreen(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     HeaderButton(label = "Targets", width = null, light = light) {
                         dispatch("goals", emptyMap())
@@ -389,7 +395,7 @@ private fun NativeNutritionScreen(
             if (week.length() > 0) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     for (i in 0 until week.length()) {
                         val wd = week.optJSONObject(i) ?: continue
@@ -400,51 +406,53 @@ private fun NativeNutritionScreen(
                         val frac = wd.optDouble("frac", 0.0).toFloat().coerceIn(0f, 1f)
 
                         Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(80.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(if (isSelected) selectedPanel else Color.Transparent)
-                                .clickable {
-                                    if (dayKey.isNotEmpty()) {
-                                        dispatch("selectDay", mapOf("day" to dayKey))
+                            modifier =
+                                Modifier.weight(1f)
+                                    .height(80.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(
+                                        if (isSelected) selectedPanel else Color.Transparent
+                                    )
+                                    .clickable {
+                                        if (dayKey.isNotEmpty()) {
+                                            dispatch("selectDay", mapOf("day" to dayKey))
+                                        }
                                     }
-                                }
-                                .padding(vertical = 8.dp),
+                                    .padding(vertical = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = dName,
                                 color = if (isSelected) fg else subtle,
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.ExtraBold,
                             )
 
                             if (isSelected) {
                                 Column(
                                     modifier = Modifier.size(38.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                    verticalArrangement = Arrangement.Center,
                                 ) {
                                     Box(
-                                        modifier = Modifier
-                                            .size(5.dp)
-                                            .clip(CircleShape)
-                                            .background(BlueAccent)
+                                        modifier =
+                                            Modifier.size(5.dp)
+                                                .clip(CircleShape)
+                                                .background(BlueAccent)
                                     )
                                     Spacer(modifier = Modifier.height(3.dp))
                                     Text(
                                         text = dNum.toString(),
                                         color = fg,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.Black,
                                     )
                                 }
                             } else {
                                 Box(
                                     modifier = Modifier.size(38.dp),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Canvas(modifier = Modifier.fillMaxSize()) {
                                         val r = size.minDimension / 2f - 3.dp.toPx()
@@ -453,7 +461,7 @@ private fun NativeNutritionScreen(
                                             color = trackColor,
                                             radius = r,
                                             center = c,
-                                            style = Stroke(width = 2.6.dp.toPx())
+                                            style = Stroke(width = 2.6.dp.toPx()),
                                         )
                                         if (frac > 0.01f) {
                                             drawArc(
@@ -463,21 +471,25 @@ private fun NativeNutritionScreen(
                                                 useCenter = false,
                                                 topLeft = Offset(c.x - r, c.y - r),
                                                 size = Size(r * 2f, r * 2f),
-                                                style = Stroke(width = 2.6.dp.toPx(), cap = StrokeCap.Round)
+                                                style =
+                                                    Stroke(
+                                                        width = 2.6.dp.toPx(),
+                                                        cap = StrokeCap.Round,
+                                                    ),
                                             )
                                         }
                                         // 12 o'clock top blue dot matching original screenshot
                                         drawCircle(
                                             color = BlueAccent,
                                             radius = 2.1.dp.toPx(),
-                                            center = Offset(c.x, c.y - r)
+                                            center = Offset(c.x, c.y - r),
                                         )
                                     }
                                     Text(
                                         text = dNum.toString(),
                                         color = fg,
                                         fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -488,50 +500,48 @@ private fun NativeNutritionScreen(
 
             // 3. 3-Way Segmented Switcher (Plan | Log | Shopping)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(if (light) Color.White else Color(0xFF12151F))
-                    .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
-                    .padding(6.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(if (light) Color.White else Color(0xFF12151F))
+                        .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
+                        .padding(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                listOf(
-                    "plan" to "Plan",
-                    "log" to "Log",
-                    "shop" to "Shopping"
-                ).forEach { (id, label) ->
+                listOf("plan" to "Plan", "log" to "Log", "shop" to "Shopping").forEach { (id, label)
+                    ->
                     val isOn = activePane == id
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(13.dp))
-                            .background(if (isOn) selectedPanel else Color.Transparent)
-                            .clickable {
-                                activePane = id
-                                dispatch("pane", mapOf("pane" to id))
-                            },
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier.weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(13.dp))
+                                .background(if (isOn) selectedPanel else Color.Transparent)
+                                .clickable {
+                                    activePane = id
+                                    dispatch("pane", mapOf("pane" to id))
+                                },
+                        contentAlignment = Alignment.Center,
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(7.dp)
+                            horizontalArrangement = Arrangement.spacedBy(7.dp),
                         ) {
                             Text(
-                                text = when (id) {
-                                    "plan" -> "▣"
-                                    "log" -> "☰"
-                                    else -> "▤"
-                                },
+                                text =
+                                    when (id) {
+                                        "plan" -> "▣"
+                                        "log" -> "☰"
+                                        else -> "▤"
+                                    },
                                 color = if (isOn) BlueAccent else muted,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
                             )
                             Text(
                                 text = label,
                                 color = if (isOn) fg else muted,
                                 fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
@@ -540,54 +550,55 @@ private fun NativeNutritionScreen(
 
             // 4A. PLAN PANE (1:1 reproduction of Screenshot_20261029_064132_LifeMax.jpg)
             if (activePane == "plan") {
-                val workoutHeading = planObj?.optString("workoutHeading", "TRAINING C · TRAINING DAY")
-                    ?: "TRAINING C · TRAINING DAY"
+                val workoutHeading =
+                    planObj?.optString("workoutHeading", "TRAINING C · TRAINING DAY")
+                        ?: "TRAINING C · TRAINING DAY"
                 val planTarget = planObj?.optInt("target", calGoal) ?: calGoal
                 val planEaten = planObj?.optInt("eaten", calLogged) ?: calLogged
                 val planLeft = max(0, planTarget - planEaten)
-                val eatenP = planObj?.optInt("eatenP", proLogged.roundToInt()) ?: proLogged.roundToInt()
+                val eatenP =
+                    planObj?.optInt("eatenP", proLogged.roundToInt()) ?: proLogged.roundToInt()
                 val planP = planObj?.optInt("planP", proGoal.roundToInt()) ?: proGoal.roundToInt()
                 val planItems = planObj?.optJSONArray("items") ?: JSONArray()
                 val nextIdx = planObj?.optInt("nextIndex", 0) ?: 0
-                val nextMeal = if (nextIdx >= 0 && nextIdx < planItems.length()) {
-                    planItems.optJSONObject(nextIdx)
-                } else null
+                val nextMeal =
+                    if (nextIdx >= 0 && nextIdx < planItems.length()) {
+                        planItems.optJSONObject(nextIdx)
+                    } else null
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     // Training & Calorie Progress Header
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
+                            verticalAlignment = Alignment.Bottom,
                         ) {
                             Text(
                                 text = workoutHeading,
                                 color = subtle,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.6.sp
+                                letterSpacing = 1.6.sp,
                             )
                             Row(
                                 verticalAlignment = Alignment.Bottom,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                horizontalArrangement = Arrangement.spacedBy(5.dp),
                             ) {
                                 Text(
                                     text = fmtNum(planLeft),
                                     color = fg,
                                     fontSize = 26.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
                                 )
                                 Text(
                                     text = "kcal to go",
                                     color = subtle,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -597,22 +608,20 @@ private fun NativeNutritionScreen(
                         // Progress Track
                         val pct = (planEaten.toFloat() / max(1, planTarget)).coerceIn(0f, 1f)
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(CircleShape)
-                                .background(trackColor)
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(CircleShape)
+                                    .background(trackColor)
                         ) {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(pct)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            listOf(BlueAccent, FatTeal)
+                                modifier =
+                                    Modifier.fillMaxHeight()
+                                        .fillMaxWidth(pct)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.horizontalGradient(listOf(BlueAccent, FatTeal))
                                         )
-                                    )
                             )
                         }
 
@@ -620,20 +629,20 @@ private fun NativeNutritionScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row {
                                 Text(
                                     text = fmtNum(planEaten),
                                     color = fg,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
                                 )
                                 Text(
                                     text = " of ${fmtNum(planTarget)} kcal",
                                     color = subtle,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
                                 )
                             }
                             Row {
@@ -641,19 +650,19 @@ private fun NativeNutritionScreen(
                                     text = "Protein ",
                                     color = subtle,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
                                 )
                                 Text(
                                     text = "$eatenP",
                                     color = fg,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
                                 )
                                 Text(
                                     text = " / $planP g",
                                     color = subtle,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
                                 )
                             }
                         }
@@ -661,8 +670,10 @@ private fun NativeNutritionScreen(
 
                     // UP NEXT Hero Meal Block
                     if (nextMeal != null) {
-                        val slotName = nextMeal.optString("slotName", "Breakfast").uppercase(Locale.US)
-                        val slotWhen = nextMeal.optString("slotWhen", "Morning").uppercase(Locale.US)
+                        val slotName =
+                            nextMeal.optString("slotName", "Breakfast").uppercase(Locale.US)
+                        val slotWhen =
+                            nextMeal.optString("slotWhen", "Morning").uppercase(Locale.US)
                         val activeMin = nextMeal.optInt("activeMin", 3)
                         val tagsLabel = nextMeal.optString("tagsLabel", "No cooking")
                         val mealName = nextMeal.optString("name", "Cottage Cheese & Fruit Bowl")
@@ -670,10 +681,11 @@ private fun NativeNutritionScreen(
                         val mP = nextMeal.optInt("p", 39)
                         val mC = nextMeal.optInt("c", 69)
                         val mF = nextMeal.optInt("f", 16)
-                        val topIngs = nextMeal.optString(
-                            "topIngs",
-                            "Cottage cheese · Apple · Rolled oats · Almonds"
-                        )
+                        val topIngs =
+                            nextMeal.optString(
+                                "topIngs",
+                                "Cottage cheese · Apple · Rolled oats · Almonds",
+                            )
                         val mealIndex = nextMeal.optInt("index", 0)
 
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -681,12 +693,12 @@ private fun NativeNutritionScreen(
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Row(
                                     modifier = Modifier.weight(1f),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     GlowingDot(color = BreakfastAmber)
                                     Text(
@@ -696,7 +708,7 @@ private fun NativeNutritionScreen(
                                         fontWeight = FontWeight.ExtraBold,
                                         letterSpacing = 1.4.sp,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                                 Text(
@@ -706,7 +718,7 @@ private fun NativeNutritionScreen(
                                     fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.End,
                                     modifier = Modifier.widthIn(max = 100.dp),
-                                    maxLines = 2
+                                    maxLines = 2,
                                 )
                             }
 
@@ -718,34 +730,28 @@ private fun NativeNutritionScreen(
                                 color = fg,
                                 fontSize = 30.sp,
                                 lineHeight = 34.sp,
-                                fontWeight = FontWeight.Black
+                                fontWeight = FontWeight.Black,
                             )
 
                             Spacer(modifier = Modifier.height(18.dp))
 
                             // 4-Column Hairline Macro Table
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .background(panelBorder)
+                                modifier =
+                                    Modifier.fillMaxWidth().height(1.dp).background(panelBorder)
                             )
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min)
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                                 // KCAL
                                 Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 14.dp, horizontal = 4.dp)
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .padding(vertical = 14.dp, horizontal = 4.dp)
                                 ) {
                                     Text(
                                         text = mKcal.toString(),
                                         color = fg,
                                         fontSize = 32.sp,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.Black,
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
@@ -753,21 +759,21 @@ private fun NativeNutritionScreen(
                                         color = subtle,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.3.sp
+                                        letterSpacing = 1.3.sp,
                                     )
                                 }
                                 VerticalHairline(panelBorder)
                                 // PROTEIN
                                 Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 14.dp, horizontal = 12.dp)
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .padding(vertical = 14.dp, horizontal = 12.dp)
                                 ) {
                                     Text(
                                         text = "${mP}g",
                                         color = ProteinRose,
                                         fontSize = 24.sp,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.Black,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -775,21 +781,21 @@ private fun NativeNutritionScreen(
                                         color = subtle,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.3.sp
+                                        letterSpacing = 1.3.sp,
                                     )
                                 }
                                 VerticalHairline(panelBorder)
                                 // CARBS
                                 Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 14.dp, horizontal = 12.dp)
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .padding(vertical = 14.dp, horizontal = 12.dp)
                                 ) {
                                     Text(
                                         text = "${mC}g",
                                         color = CarbsAmber,
                                         fontSize = 24.sp,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.Black,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -797,21 +803,21 @@ private fun NativeNutritionScreen(
                                         color = subtle,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.3.sp
+                                        letterSpacing = 1.3.sp,
                                     )
                                 }
                                 VerticalHairline(panelBorder)
                                 // FAT
                                 Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 14.dp, horizontal = 12.dp)
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .padding(vertical = 14.dp, horizontal = 12.dp)
                                 ) {
                                     Text(
                                         text = "${mF}g",
                                         color = FatTeal,
                                         fontSize = 24.sp,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.Black,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -819,15 +825,13 @@ private fun NativeNutritionScreen(
                                         color = subtle,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.3.sp
+                                        letterSpacing = 1.3.sp,
                                     )
                                 }
                             }
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .background(panelBorder)
+                                modifier =
+                                    Modifier.fillMaxWidth().height(1.dp).background(panelBorder)
                             )
 
                             Spacer(modifier = Modifier.height(14.dp))
@@ -837,28 +841,28 @@ private fun NativeNutritionScreen(
                                 text = topIngs,
                                 color = Color(0xFF94A3B8),
                                 fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
                             )
 
                             Spacer(modifier = Modifier.height(18.dp))
 
                             // Full-width White Pill CTA: Log this meal
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Color(0xFFF1F5F9))
-                                    .clickable {
-                                        dispatch("sdLog", mapOf("index" to mealIndex))
-                                    },
-                                contentAlignment = Alignment.Center
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .height(56.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(Color(0xFFF1F5F9))
+                                        .clickable {
+                                            dispatch("sdLog", mapOf("index" to mealIndex))
+                                        },
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text = "Log this meal",
                                     color = BgObsidian,
                                     fontSize = 17.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
                                 )
                             }
 
@@ -866,58 +870,62 @@ private fun NativeNutritionScreen(
 
                             // 3-Column Secondary Action Row: Ingredients | Swap | Skip
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min)
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .height(IntrinsicSize.Min)
+                                        .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable { showUpNextIngredients = !showUpNextIngredients }
-                                        .padding(vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .clickable {
+                                                showUpNextIngredients = !showUpNextIngredients
+                                            }
+                                            .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
-                                        text = if (showUpNextIngredients) "Hide details" else "Ingredients",
+                                        text =
+                                            if (showUpNextIngredients) "Hide details"
+                                            else "Ingredients",
                                         color = fg,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                                 VerticalHairline(panelBorder)
                                 Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable {
-                                            dispatch("sdSwap", mapOf("index" to mealIndex))
-                                        }
-                                        .padding(vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .clickable {
+                                                dispatch("sdSwap", mapOf("index" to mealIndex))
+                                            }
+                                            .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = "Swap",
                                         color = fg,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                                 VerticalHairline(panelBorder)
                                 Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable {
-                                            dispatch("sdSkip", mapOf("index" to mealIndex))
-                                        }
-                                        .padding(vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier.weight(1f)
+                                            .clickable {
+                                                dispatch("sdSkip", mapOf("index" to mealIndex))
+                                            }
+                                            .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = "Skip",
                                         color = fg,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -925,32 +933,32 @@ private fun NativeNutritionScreen(
                             if (showUpNextIngredients) {
                                 val ingsArr = nextMeal.optJSONArray("ings") ?: JSONArray()
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp)
-                                        .clip(RoundedCornerShape(18.dp))
-                                        .background(Color(0xFF11141D))
-                                        .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
-                                        .padding(14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    modifier =
+                                        Modifier.fillMaxWidth()
+                                            .padding(top = 8.dp)
+                                            .clip(RoundedCornerShape(18.dp))
+                                            .background(Color(0xFF11141D))
+                                            .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
+                                            .padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
                                     for (k in 0 until ingsArr.length()) {
                                         val ig = ingsArr.optJSONObject(k) ?: continue
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                            horizontalArrangement = Arrangement.SpaceBetween,
                                         ) {
                                             Text(
                                                 text = ig.optString("name"),
                                                 color = fg,
                                                 fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
                                             )
                                             Text(
                                                 text = "${ig.optInt("grams")} g",
                                                 color = muted,
                                                 fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
                                             )
                                         }
                                     }
@@ -958,31 +966,28 @@ private fun NativeNutritionScreen(
                             }
 
                             // Coaching Tip Card
-                            val coachText = planObj?.optString(
-                                "coachText",
-                                "Start with $mealName. Carbs up front fuel today's session."
-                            ) ?: "Start with $mealName. Carbs up front fuel today's session."
+                            val coachText =
+                                planObj?.optString(
+                                    "coachText",
+                                    "Start with $mealName. Carbs up front fuel today's session.",
+                                ) ?: "Start with $mealName. Carbs up front fuel today's session."
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp)
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color(0xFF11141D))
-                                    .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
-                                    .padding(16.dp),
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .padding(top = 12.dp)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color(0xFF11141D))
+                                        .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
+                                        .padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.Top
+                                verticalAlignment = Alignment.Top,
                             ) {
-                                Text(
-                                    text = "✦",
-                                    color = subtle,
-                                    fontSize = 16.sp
-                                )
+                                Text(text = "✦", color = subtle, fontSize = 16.sp)
                                 Text(
                                     text = coachText,
                                     color = muted,
                                     fontSize = 14.sp,
-                                    lineHeight = 20.sp
+                                    lineHeight = 20.sp,
                                 )
                             }
                         }
@@ -990,38 +995,40 @@ private fun NativeNutritionScreen(
                 }
             }
 
-            // 4B. LOG PANE (1:1 reproduction of Screenshot_20261029_062450_LifeMax.jpg + AAA Ring Torch)
+            // 4B. LOG PANE (1:1 reproduction of Screenshot_20261029_062450_LifeMax.jpg + AAA Ring
+            // Torch)
             if (activePane == "log") {
                 val left = calGoal - calLogged
 
                 // Hero Dial Card with Card-Anchored AAA Plasma Ribbon & Ring Torch Canvas
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                        .border(1.dp, panelBorder, RoundedCornerShape(26.dp))
-                        .padding(16.dp)
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                            .border(1.dp, panelBorder, RoundedCornerShape(26.dp))
+                            .padding(16.dp)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         // 320x320 Concentric 3-Ring Dial
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 310.dp)
-                                .aspectRatio(1f),
-                            contentAlignment = Alignment.Center
+                            modifier =
+                                Modifier.fillMaxWidth().widthIn(max = 310.dp).aspectRatio(1f),
+                            contentAlignment = Alignment.Center,
                         ) {
                             val pAnim = flightProgress.value
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 val factor = size.minDimension / 320f
                                 val cx = size.width / 2f
                                 val cy = size.height / 2f
-                                val calRatio = if (calGoal > 0) (calLogged.toFloat() / calGoal).coerceIn(0f, 1f) else 0f
+                                val calRatio =
+                                    if (calGoal > 0)
+                                        (calLogged.toFloat() / calGoal).coerceIn(0f, 1f)
+                                    else 0f
 
                                 // 72 Outer Calorie Ticks
                                 for (i in 0 until 72) {
@@ -1032,25 +1039,36 @@ private fun NativeNutritionScreen(
                                     val tickLit = (i.toFloat() / 72f) < calRatio
                                     drawLine(
                                         color = if (tickLit) BlueAccent else Color(0xFF232838),
-                                        start = Offset(
-                                            cx + cos(a).toFloat() * r0,
-                                            cy + sin(a).toFloat() * r0
-                                        ),
-                                        end = Offset(
-                                            cx + cos(a).toFloat() * r1,
-                                            cy + sin(a).toFloat() * r1
-                                        ),
+                                        start =
+                                            Offset(
+                                                cx + cos(a).toFloat() * r0,
+                                                cy + sin(a).toFloat() * r0,
+                                            ),
+                                        end =
+                                            Offset(
+                                                cx + cos(a).toFloat() * r1,
+                                                cy + sin(a).toFloat() * r1,
+                                            ),
                                         strokeWidth = (if (isMajor) 2.2f else 1.4f) * factor,
-                                        cap = StrokeCap.Round
+                                        cap = StrokeCap.Round,
                                     )
                                 }
 
                                 // 3 Concentric Macro Rings (r=126 Protein, r=101 Carbs, r=76 Fat)
-                                val ringConfigs = listOf(
-                                    Triple(126f, prevRatios.first to targetRatios.first, ProteinRose),
-                                    Triple(101f, prevRatios.second to targetRatios.second, CarbsAmber),
-                                    Triple(76f, prevRatios.third to targetRatios.third, FatTeal)
-                                )
+                                val ringConfigs =
+                                    listOf(
+                                        Triple(
+                                            126f,
+                                            prevRatios.first to targetRatios.first,
+                                            ProteinRose,
+                                        ),
+                                        Triple(
+                                            101f,
+                                            prevRatios.second to targetRatios.second,
+                                            CarbsAmber,
+                                        ),
+                                        Triple(76f, prevRatios.third to targetRatios.third, FatTeal),
+                                    )
                                 val strokeW = 16f * factor
 
                                 ringConfigs.forEachIndexed { idx, (radBase, ratioPair, ringColor) ->
@@ -1066,18 +1084,23 @@ private fun NativeNutritionScreen(
                                         useCenter = false,
                                         topLeft = topLeft,
                                         size = arcSize,
-                                        style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                                        style = Stroke(width = strokeW, cap = StrokeCap.Round),
                                     )
 
                                     // Animated sweep during AAA torch weld
                                     val (prevR, nextR) = ratioPair
-                                    val torchLocal = if (flightActive) {
-                                        ((pAnim - (0.36f + idx * 0.04f)) / 0.42f).coerceIn(0f, 1f)
-                                    } else 1f
+                                    val torchLocal =
+                                        if (flightActive) {
+                                            ((pAnim - (0.36f + idx * 0.04f)) / 0.42f).coerceIn(
+                                                0f,
+                                                1f,
+                                            )
+                                        } else 1f
                                     val easedTorch = 1f - (1f - torchLocal).pow(3f)
-                                    val curRatio = if (flightActive) {
-                                        prevR + (nextR - prevR) * easedTorch
-                                    } else nextR
+                                    val curRatio =
+                                        if (flightActive) {
+                                            prevR + (nextR - prevR) * easedTorch
+                                        } else nextR
 
                                     if (curRatio > 0.002f) {
                                         drawArc(
@@ -1087,13 +1110,14 @@ private fun NativeNutritionScreen(
                                             useCenter = false,
                                             topLeft = topLeft,
                                             size = arcSize,
-                                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                                            style = Stroke(width = strokeW, cap = StrokeCap.Round),
                                         )
                                     }
 
                                     // AAA Plasma Ribbon & Circumferential Torch Head
                                     if (flightActive) {
-                                        val ribbonPhase = ((pAnim - idx * 0.04f) / 0.36f).coerceIn(0f, 1f)
+                                        val ribbonPhase =
+                                            ((pAnim - idx * 0.04f) / 0.36f).coerceIn(0f, 1f)
                                         val tipAngleRad = (-PI / 2.0) + (curRatio * 2.0 * PI)
                                         val tipX = cx + cos(tipAngleRad).toFloat() * r
                                         val tipY = cy + sin(tipAngleRad).toFloat() * r
@@ -1108,12 +1132,12 @@ private fun NativeNutritionScreen(
                                             drawCircle(
                                                 color = ringColor.copy(alpha = 0.42f),
                                                 radius = 18f * factor,
-                                                center = Offset(headX, headY)
+                                                center = Offset(headX, headY),
                                             )
                                             drawCircle(
                                                 color = fg,
                                                 radius = 5.5f * factor,
-                                                center = Offset(headX, headY)
+                                                center = Offset(headX, headY),
                                             )
                                         }
 
@@ -1121,12 +1145,12 @@ private fun NativeNutritionScreen(
                                             drawCircle(
                                                 color = ringColor.copy(alpha = 0.55f),
                                                 radius = 22f * factor,
-                                                center = Offset(tipX, tipY)
+                                                center = Offset(tipX, tipY),
                                             )
                                             drawCircle(
                                                 color = fg,
                                                 radius = 7f * factor,
-                                                center = Offset(tipX, tipY)
+                                                center = Offset(tipX, tipY),
                                             )
                                         }
                                     }
@@ -1136,29 +1160,32 @@ private fun NativeNutritionScreen(
                             // Center Readout
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable {
-                                    dispatch("goals", emptyMap())
-                                }
+                                modifier = Modifier.clickable { dispatch("goals", emptyMap()) },
                             ) {
                                 Text(
                                     text = fmtNum(if (calGoal > 0) abs(left) else calLogged),
                                     color = fg,
                                     fontSize = 38.sp,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
                                 )
                                 Text(
-                                    text = if (calGoal == 0) "KCAL TODAY" else if (left >= 0) "KCAL LEFT" else "KCAL OVER",
+                                    text =
+                                        if (calGoal == 0) "KCAL TODAY"
+                                        else if (left >= 0) "KCAL LEFT" else "KCAL OVER",
                                     color = subtle,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.4.sp
+                                    letterSpacing = 1.4.sp,
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = if (calGoal > 0) "${fmtNum(calLogged)} of ${fmtNum(calGoal)}" else "Set a daily target",
+                                    text =
+                                        if (calGoal > 0)
+                                            "${fmtNum(calLogged)} of ${fmtNum(calGoal)}"
+                                        else "Set a daily target",
                                     color = muted,
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -1166,7 +1193,7 @@ private fun NativeNutritionScreen(
                         // 3 Macro Progress Tiles (PROTEIN | CARBS | FAT) with Glowing Neon Dots
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             MacroTileCard(
                                 label = "PROTEIN",
@@ -1174,7 +1201,7 @@ private fun NativeNutritionScreen(
                                 dotColor = ProteinRose,
                                 current = proLogged.roundToInt(),
                                 goal = proGoal.roundToInt(),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             )
                             MacroTileCard(
                                 label = "CARBS",
@@ -1182,7 +1209,7 @@ private fun NativeNutritionScreen(
                                 dotColor = CarbsAmber,
                                 current = carbLogged.roundToInt(),
                                 goal = carbGoal.roundToInt(),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             )
                             MacroTileCard(
                                 label = "FAT",
@@ -1190,7 +1217,7 @@ private fun NativeNutritionScreen(
                                 dotColor = FatTeal,
                                 current = fatLogged.roundToInt(),
                                 goal = fatGoal.roundToInt(),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             )
                         }
                     }
@@ -1202,28 +1229,26 @@ private fun NativeNutritionScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = 4.dp),
                     ) {
                         Text(
                             text = "QUICK ADD",
                             color = subtle,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.5.sp
+                            letterSpacing = 1.5.sp,
                         )
                         Text(
                             text = "one tap, $slotLabel",
                             color = subtle,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         for (i in 0 until recents.length()) {
                             val rc = recents.optJSONObject(i) ?: continue
@@ -1232,16 +1257,16 @@ private fun NativeNutritionScreen(
                             val rIdx = rc.optInt("index", i)
 
                             Column(
-                                modifier = Modifier
-                                    .width(210.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                                    .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
-                                    .clickable {
-                                        dispatch("quickAdd", mapOf("index" to rIdx))
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                modifier =
+                                    Modifier.width(210.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(
+                                            Brush.verticalGradient(listOf(cardTop, cardBottom))
+                                        )
+                                        .border(1.dp, panelBorder, RoundedCornerShape(18.dp))
+                                        .clickable { dispatch("quickAdd", mapOf("index" to rIdx)) }
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 Text(
                                     text = rName,
@@ -1249,13 +1274,13 @@ private fun NativeNutritionScreen(
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = "$rKcal kcal",
                                     color = muted,
                                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                         }
@@ -1266,62 +1291,76 @@ private fun NativeNutritionScreen(
                 val waterMl = data.optInt("waterMl", 0)
                 val waterGoal = goals.optInt("water", 2000).coerceAtLeast(1)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                        .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                            .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         // Outlined water droplet badge (#132238)
                         Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF132238)),
-                            contentAlignment = Alignment.Center
+                            modifier =
+                                Modifier.size(44.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color(0xFF132238)),
+                            contentAlignment = Alignment.Center,
                         ) {
                             Canvas(modifier = Modifier.size(22.dp)) {
                                 val w = size.width
                                 val h = size.height
-                                val p = Path().apply {
-                                    moveTo(w * 0.5f, h * 0.12f)
-                                    cubicTo(
-                                        w * 0.78f, h * 0.42f,
-                                        w * 0.82f, h * 0.62f,
-                                        w * 0.82f, h * 0.68f
-                                    )
-                                    cubicTo(
-                                        w * 0.82f, h * 0.86f,
-                                        w * 0.68f, h * 0.94f,
-                                        w * 0.5f, h * 0.94f
-                                    )
-                                    cubicTo(
-                                        w * 0.32f, h * 0.94f,
-                                        w * 0.18f, h * 0.86f,
-                                        w * 0.18f, h * 0.68f
-                                    )
-                                    cubicTo(
-                                        w * 0.18f, h * 0.62f,
-                                        w * 0.22f, h * 0.42f,
-                                        w * 0.5f, h * 0.12f
-                                    )
-                                    close()
-                                }
+                                val p =
+                                    Path().apply {
+                                        moveTo(w * 0.5f, h * 0.12f)
+                                        cubicTo(
+                                            w * 0.78f,
+                                            h * 0.42f,
+                                            w * 0.82f,
+                                            h * 0.62f,
+                                            w * 0.82f,
+                                            h * 0.68f,
+                                        )
+                                        cubicTo(
+                                            w * 0.82f,
+                                            h * 0.86f,
+                                            w * 0.68f,
+                                            h * 0.94f,
+                                            w * 0.5f,
+                                            h * 0.94f,
+                                        )
+                                        cubicTo(
+                                            w * 0.32f,
+                                            h * 0.94f,
+                                            w * 0.18f,
+                                            h * 0.86f,
+                                            w * 0.18f,
+                                            h * 0.68f,
+                                        )
+                                        cubicTo(
+                                            w * 0.18f,
+                                            h * 0.62f,
+                                            w * 0.22f,
+                                            h * 0.42f,
+                                            w * 0.5f,
+                                            h * 0.12f,
+                                        )
+                                        close()
+                                    }
                                 drawPath(
                                     path = p,
                                     color = Color(0xFF4DA6FF),
-                                    style = Stroke(
-                                        width = 2.1.dp.toPx(),
-                                        cap = StrokeCap.Round,
-                                        join = StrokeJoin.Round
-                                    )
+                                    style =
+                                        Stroke(
+                                            width = 2.1.dp.toPx(),
+                                            cap = StrokeCap.Round,
+                                            join = StrokeJoin.Round,
+                                        ),
                                 )
                             }
                         }
@@ -1331,24 +1370,20 @@ private fun NativeNutritionScreen(
                                 text = "Water",
                                 color = fg,
                                 fontSize = 17.sp,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.ExtraBold,
                             )
                             Text(
                                 text = "${fmtNum(waterMl)} / ${fmtNum(waterGoal)} ml",
                                 color = muted,
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
                             )
                         }
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WaterPillButton("+250", light) {
-                            dispatch("water", mapOf("ml" to 250))
-                        }
-                        WaterPillButton("+500", light) {
-                            dispatch("water", mapOf("ml" to 500))
-                        }
+                        WaterPillButton("+250", light) { dispatch("water", mapOf("ml" to 250)) }
+                        WaterPillButton("+500", light) { dispatch("water", mapOf("ml" to 500)) }
                     }
                 }
 
@@ -1359,79 +1394,79 @@ private fun NativeNutritionScreen(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 1.6.sp,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
                 )
 
                 // 4 Meal Slot Cards (Breakfast, Lunch, Dinner, Snacks)
-                val slotDefs = listOf(
-                    Triple("breakfast", "Breakfast", BreakfastAmber),
-                    Triple("lunch", "Lunch", LunchGreen),
-                    Triple("dinner", "Dinner", DinnerIndigo),
-                    Triple("snacks", "Snacks", SnacksCoral)
-                )
+                val slotDefs =
+                    listOf(
+                        Triple("breakfast", "Breakfast", BreakfastAmber),
+                        Triple("lunch", "Lunch", LunchGreen),
+                        Triple("dinner", "Dinner", DinnerIndigo),
+                        Triple("snacks", "Snacks", SnacksCoral),
+                    )
 
                 slotDefs.forEach { (slotId, slotTitle, slotDotColor) ->
-                    val slotEntries = (0 until entries.length())
-                        .mapNotNull { entries.optJSONObject(it) }
-                        .filter { it.optString("slot").equals(slotId, ignoreCase = true) }
+                    val slotEntries =
+                        (0 until entries.length())
+                            .mapNotNull { entries.optJSONObject(it) }
+                            .filter { it.optString("slot").equals(slotId, ignoreCase = true) }
                     val slotKcal = slotEntries.sumOf { it.optDouble("kcal", 0.0) }.roundToInt()
                     val canCopyYesterday = copyYesterday.optBoolean(slotId, false)
 
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                            .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(22.dp))
+                                .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                                .border(1.dp, panelBorder, RoundedCornerShape(22.dp))
+                                .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 GlowingDot(color = slotDotColor)
                                 Text(
                                     text = slotTitle,
                                     color = fg,
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.ExtraBold
+                                    fontWeight = FontWeight.ExtraBold,
                                 )
                             }
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 if (slotEntries.isNotEmpty()) {
                                     Text(
                                         text = "${fmtNum(slotKcal)} kcal",
                                         color = muted,
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                                 Box(
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(selectedPanel)
-                                        .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            dispatch("add", mapOf("slot" to slotId))
-                                        },
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier.size(38.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(selectedPanel)
+                                            .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
+                                            .clickable { dispatch("add", mapOf("slot" to slotId)) },
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = "+",
                                         color = BlueAccent,
                                         fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -1440,13 +1475,13 @@ private fun NativeNutritionScreen(
                         if (slotEntries.isEmpty()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 DashedSlotButton(
                                     label = "Add ${slotTitle.lowercase(Locale.US)}",
                                     textColor = Color(0xFF8AB4FF),
                                     light = light,
-                                    modifier = Modifier.weight(if (canCopyYesterday) 1.25f else 1f)
+                                    modifier = Modifier.weight(if (canCopyYesterday) 1.25f else 1f),
                                 ) {
                                     dispatch("add", mapOf("slot" to slotId))
                                 }
@@ -1456,7 +1491,7 @@ private fun NativeNutritionScreen(
                                         label = "Copy yesterday",
                                         textColor = muted,
                                         light = light,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
                                     ) {
                                         dispatch("copySlot", mapOf("slot" to slotId))
                                     }
@@ -1474,18 +1509,18 @@ private fun NativeNutritionScreen(
                                     val eF = entry.optDouble("f", 0.0).roundToInt()
 
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .background(sunken)
-                                            .clickable {
-                                                if (entryId.isNotEmpty()) {
-                                                    dispatch("entry", mapOf("id" to entryId))
+                                        modifier =
+                                            Modifier.fillMaxWidth()
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .background(sunken)
+                                                .clickable {
+                                                    if (entryId.isNotEmpty()) {
+                                                        dispatch("entry", mapOf("id" to entryId))
+                                                    }
                                                 }
-                                            }
-                                            .padding(horizontal = 14.dp, vertical = 11.dp),
+                                                .padding(horizontal = 14.dp, vertical = 11.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
@@ -1494,20 +1529,20 @@ private fun NativeNutritionScreen(
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                                overflow = TextOverflow.Ellipsis,
                                             )
                                             Text(
                                                 text = "$eGrams g · P $eP · C $eC · F $eF",
                                                 color = subtle,
                                                 fontSize = 12.sp,
-                                                fontWeight = FontWeight.Medium
+                                                fontWeight = FontWeight.Medium,
                                             )
                                         }
                                         Text(
                                             text = fmtNum(eKcal),
                                             color = fg,
                                             fontSize = 15.sp,
-                                            fontWeight = FontWeight.Black
+                                            fontWeight = FontWeight.Black,
                                         )
                                     }
                                 }
@@ -1520,34 +1555,35 @@ private fun NativeNutritionScreen(
             // 4C. SHOPPING PANE
             if (activePane == "shop") {
                 val shopItems = shopObj?.optJSONArray("items") ?: JSONArray()
-                val activeItems = (0 until shopItems.length())
-                    .mapNotNull { shopItems.optJSONObject(it) }
-                    .filter { !it.optBoolean("home") }
+                val activeItems =
+                    (0 until shopItems.length())
+                        .mapNotNull { shopItems.optJSONObject(it) }
+                        .filter { !it.optBoolean("home") }
                 val checkedCount = activeItems.count { it.optBoolean("checked") }
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                            .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
-                            .padding(16.dp),
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                                .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
+                                .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column {
                             Text(
                                 text = "7-Day Smart Shopping List",
                                 color = fg,
                                 fontSize = 17.sp,
-                                fontWeight = FontWeight.Black
+                                fontWeight = FontWeight.Black,
                             )
                             Text(
                                 text = "$checkedCount of ${activeItems.size} items in basket",
                                 color = muted,
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
                             )
                         }
                         HeaderButton(label = "Clear ticks", width = null, light = light) {
@@ -1557,63 +1593,68 @@ private fun NativeNutritionScreen(
 
                     val aisles = activeItems.map { it.optString("aisleName", "Pantry") }.distinct()
                     aisles.forEach { aisleName ->
-                        val rows = activeItems.filter { it.optString("aisleName", "Pantry") == aisleName }
+                        val rows =
+                            activeItems.filter { it.optString("aisleName", "Pantry") == aisleName }
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
-                                .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Brush.verticalGradient(listOf(cardTop, cardBottom)))
+                                    .border(1.dp, panelBorder, RoundedCornerShape(20.dp))
+                                    .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
                                 text = aisleName.uppercase(Locale.US),
                                 color = BlueAccent,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.4.sp
+                                letterSpacing = 1.4.sp,
                             )
                             rows.forEach { item ->
                                 val itemId = item.optString("id")
                                 val checked = item.optBoolean("checked")
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(sunken)
-                                        .clickable {
-                                            if (itemId.isNotEmpty()) {
-                                                dispatch("sdCheck", mapOf("itemId" to itemId))
+                                    modifier =
+                                        Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(sunken)
+                                            .clickable {
+                                                if (itemId.isNotEmpty()) {
+                                                    dispatch("sdCheck", mapOf("itemId" to itemId))
+                                                }
                                             }
-                                        }
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                            .padding(horizontal = 12.dp, vertical = 10.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
                                     ) {
                                         Box(
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(if (checked) LunchGreen else Color.Transparent)
-                                                .border(
-                                                    1.dp,
-                                                    if (checked) LunchGreen else Color(0xFF334155),
-                                                    RoundedCornerShape(6.dp)
-                                                ),
-                                            contentAlignment = Alignment.Center
+                                            modifier =
+                                                Modifier.size(20.dp)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(
+                                                        if (checked) LunchGreen
+                                                        else Color.Transparent
+                                                    )
+                                                    .border(
+                                                        1.dp,
+                                                        if (checked) LunchGreen
+                                                        else Color(0xFF334155),
+                                                        RoundedCornerShape(6.dp),
+                                                    ),
+                                            contentAlignment = Alignment.Center,
                                         ) {
                                             if (checked) {
                                                 Text(
                                                     text = "✓",
                                                     color = BgObsidian,
                                                     fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Black
+                                                    fontWeight = FontWeight.Black,
                                                 )
                                             }
                                         }
@@ -1622,20 +1663,22 @@ private fun NativeNutritionScreen(
                                                 text = item.optString("name"),
                                                 color = if (checked) subtle else fg,
                                                 fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
                                             )
                                             Text(
-                                                text = "${item.optInt("grams")}g needed · ${item.optInt("meals")} meals",
+                                                text =
+                                                    "${item.optInt("grams")}g needed · ${item.optInt("meals")} meals",
                                                 color = subtle,
-                                                fontSize = 11.sp
+                                                fontSize = 11.sp,
                                             )
                                         }
                                     }
                                     Text(
-                                        text = "${item.optInt("packs")} × ${item.optString("unit")}",
+                                        text =
+                                            "${item.optInt("packs")} × ${item.optString("unit")}",
                                         color = if (checked) subtle else BlueAccent,
                                         fontSize = 12.sp,
-                                        fontWeight = FontWeight.ExtraBold
+                                        fontWeight = FontWeight.ExtraBold,
                                     )
                                 }
                             }
@@ -1647,57 +1690,49 @@ private fun NativeNutritionScreen(
 
         // Floating Bottom "Search foods, or log a meal" Bar matching original screenshots
         Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, bottom = bottomInsetDp.dp + 12.dp)
+            modifier =
+                Modifier.align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = bottomInsetDp.dp + 12.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(Color(0xF5121621))
-                    .border(1.dp, Color(0x18FFFFFF), RoundedCornerShape(22.dp))
-                    .clickable {
-                        dispatch("add", emptyMap())
-                    }
-                    .padding(start = 16.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0xF5121621))
+                        .border(1.dp, Color(0x18FFFFFF), RoundedCornerShape(22.dp))
+                        .clickable { dispatch("add", emptyMap()) }
+                        .padding(start = 16.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = "🔍",
-                        color = muted,
-                        fontSize = 16.sp
-                    )
+                    Text(text = "🔍", color = muted, fontSize = 16.sp)
                     Text(
                         text = "Search foods, or log a meal",
                         color = muted,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
 
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(15.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Color(0xFF93ADFF), Color(0xFF9F85FF))
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier.size(44.dp)
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(
+                                Brush.linearGradient(listOf(Color(0xFF93ADFF), Color(0xFF9F85FF)))
+                            ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "+",
                         color = BgObsidian,
                         fontSize = 22.sp,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
                     )
                 }
             }
@@ -1707,19 +1742,10 @@ private fun NativeNutritionScreen(
 
 @Composable
 private fun GlowingDot(color: Color) {
-    Box(
-        modifier = Modifier.size(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.size(16.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                color = color.copy(alpha = 0.35f),
-                radius = size.minDimension / 2f
-            )
-            drawCircle(
-                color = color,
-                radius = 4.5.dp.toPx()
-            )
+            drawCircle(color = color.copy(alpha = 0.35f), radius = size.minDimension / 2f)
+            drawCircle(color = color, radius = 4.5.dp.toPx())
         }
     }
 }
@@ -1731,22 +1757,27 @@ private fun MacroTileCard(
     dotColor: Color,
     current: Int,
     goal: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val left = goal - current
     val pct = if (goal > 0) (current.toFloat() / goal).coerceIn(0f, 1f) else 0f
 
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
-            .border(1.dp, if (light) Color(0xFFD2D9E7) else BorderSubtle, RoundedCornerShape(18.dp))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(18.dp))
+                .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
+                .border(
+                    1.dp,
+                    if (light) Color(0xFFD2D9E7) else BorderSubtle,
+                    RoundedCornerShape(18.dp),
+                )
+                .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             GlowingDot(color = dotColor)
             Text(
@@ -1755,7 +1786,7 @@ private fun MacroTileCard(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.1.sp,
-                maxLines = 1
+                maxLines = 1,
             )
         }
 
@@ -1764,54 +1795,68 @@ private fun MacroTileCard(
                 text = "$current",
                 color = if (light) Color(0xFF0F172A) else Color.White,
                 fontSize = 22.sp,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
             )
             Text(
                 text = if (goal > 0) " / $goal g" else " g",
                 color = if (light) Color(0xFF64748B) else TextSubtle,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .clip(CircleShape)
-                .background(if (light) Color(0xFFE4E9F2) else Color(0xFF191E2B))
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(if (light) Color(0xFFE4E9F2) else Color(0xFF191E2B))
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(pct)
-                    .clip(CircleShape)
-                    .background(dotColor)
+                modifier =
+                    Modifier.fillMaxHeight()
+                        .fillMaxWidth(pct)
+                        .clip(CircleShape)
+                        .background(dotColor)
             )
         }
 
         Text(
-            text = if (goal == 0) "no target" else if (left >= 0) "$left g left" else "${-left} g over",
+            text =
+                if (goal == 0) "no target"
+                else if (left >= 0) "$left g left" else "${-left} g over",
             color = if (light) Color(0xFF64748B) else TextSubtle,
             fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
 
 @Composable
-private fun FoodTopTabButton(label: String, selected: Boolean, light: Boolean, onClick: () -> Unit) {
+private fun FoodTopTabButton(
+    label: String,
+    selected: Boolean,
+    light: Boolean,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(10.dp)
     Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) (if (light) Color(0xFFE8EDF9) else PillSelected) else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.clip(shape)
+                .background(
+                    if (selected) (if (light) Color(0xFFE8EDF9) else PillSelected)
+                    else Color.Transparent
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = if (selected) BlueAccent else if (light) Color(0xFF64748B) else TextMuted,
-            fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            label,
+            color = if (selected) BlueAccent else if (light) Color(0xFF64748B) else TextMuted,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -1820,27 +1865,34 @@ private fun HeaderButton(
     label: String,
     width: androidx.compose.ui.unit.Dp?,
     light: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val mod = if (width != null) {
-        Modifier.size(width, 42.dp)
-    } else {
-        Modifier.height(42.dp).padding(horizontal = 2.dp)
-    }
+    val mod =
+        if (width != null) {
+            Modifier.size(width, 42.dp)
+        } else {
+            Modifier.height(42.dp).padding(horizontal = 2.dp)
+        }
     Box(
-        modifier = mod
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (light) Color.White else Color(0xFF171B26))
-            .border(1.dp, if (light) Color(0xFFD2D9E7) else Color(0x16FFFFFF), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = if (width == null) 14.dp else 0.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            mod.clip(RoundedCornerShape(14.dp))
+                .background(if (light) Color.White else Color(0xFF171B26))
+                .border(
+                    1.dp,
+                    if (light) Color(0xFFD2D9E7) else Color(0x16FFFFFF),
+                    RoundedCornerShape(14.dp),
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = if (width == null) 14.dp else 0.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (label == "Targets") BlueAccent else if (light) Color(0xFF182132) else Color(0xFFE2E8F0),
+            color =
+                if (label == "Targets") BlueAccent
+                else if (light) Color(0xFF182132) else Color(0xFFE2E8F0),
             fontSize = if (label == "Targets") 14.sp else 18.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -1848,20 +1900,24 @@ private fun HeaderButton(
 @Composable
 private fun WaterPillButton(label: String, light: Boolean, onClick: () -> Unit) {
     Box(
-        modifier = Modifier
-            .height(42.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (light) Color.White else Color(0xFF171B26))
-            .border(1.dp, if (light) Color(0xFFD2D9E7) else BorderSubtle, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.height(42.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(if (light) Color.White else Color(0xFF171B26))
+                .border(
+                    1.dp,
+                    if (light) Color(0xFFD2D9E7) else BorderSubtle,
+                    RoundedCornerShape(14.dp),
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 15.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
             color = if (light) Color(0xFF0F172A) else Color.White,
             fontSize = 14.sp,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.ExtraBold,
         )
     }
 }
@@ -1872,32 +1928,27 @@ private fun DashedSlotButton(
     textColor: Color,
     light: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .height(46.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
-            .border(1.dp, if (light) Color(0xFFD2D9E7) else Color(0x1AFFFFFF), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .height(46.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(if (light) Color(0xFFF3F6FA) else SunkenTile)
+                .border(
+                    1.dp,
+                    if (light) Color(0xFFD2D9E7) else Color(0x1AFFFFFF),
+                    RoundedCornerShape(14.dp),
+                )
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = label, color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun VerticalHairline(color: Color) {
-    Box(
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(1.dp)
-            .background(color)
-    )
+    Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(color))
 }

@@ -8,7 +8,10 @@ import android.view.View
 import android.webkit.WebView
 import org.json.JSONObject
 
-/** The Overview's own bars (its shell). Only one set of bars may be visible, so the shared bars hide these. */
+/**
+ * The Overview's own bars (its shell). Only one set of bars may be visible, so the shared bars hide
+ * these.
+ */
 internal object OverviewBars {
     var shell: LiveOverviewShell? = null
 
@@ -18,13 +21,14 @@ internal object OverviewBars {
 }
 
 /**
- * One shared top and bottom bar for the native tab screens. Switching between Character and Food used to
- * tear the bars down and build them again (new views, new software layers, a fresh draw). Now the same bars
- * stay on screen and only get the new scene; they are dropped shortly after the last native screen leaves.
+ * One shared top and bottom bar for the native tab screens. Switching between Character and Food
+ * used to tear the bars down and build them again (new views, new software layers, a fresh draw).
+ * Now the same bars stay on screen and only get the new scene; they are dropped shortly after the
+ * last native screen leaves.
  *
- * Replies from the page can arrive out of order when you switch quickly, so every scene carries the page's
- * running sequence number and a scene older than the one already showing is ignored. Only the screen that
- * currently owns the bars may release them.
+ * Replies from the page can arrive out of order when you switch quickly, so every scene carries the
+ * page's running sequence number and a scene older than the one already showing is ignored. Only
+ * the screen that currently owns the bars may release them.
  */
 internal object ChromeHost {
     private var shell: LiveOverviewShell? = null
@@ -51,13 +55,16 @@ internal object ChromeHost {
         val existing = shell
         val sequence = scene.optInt("sequence")
         val now = SystemClock.uptimeMillis()
-        // an older scene that arrives late must not overwrite a newer one (the highlighted tab would go back)
+        // an older scene that arrives late must not overwrite a newer one (the highlighted tab
+        // would go back)
         if (existing != null && sequence < lastSequence && now - lastShownAt < 3000) return existing
         this.owner = owner
         listener = onAction
         val current =
             existing
-                ?: LiveOverviewShell(activity, web, chromeOnly = true) { id -> listener?.invoke(id) }
+                ?: LiveOverviewShell(activity, web, chromeOnly = true) { id ->
+                        listener?.invoke(id)
+                    }
                     .also { shell = it }
         current.show(scene)
         OverviewBars.hide()
@@ -71,8 +78,9 @@ internal object ChromeHost {
     }
 
     /**
-     * A native screen went away. When it is moving to another native tab, that tab opened first and now owns
-     * the bars, so this does nothing. When it is moving to a web tab, the bars go almost at once.
+     * A native screen went away. When it is moving to another native tab, that tab opened first and
+     * now owns the bars, so this does nothing. When it is moving to a web tab, the bars go almost
+     * at once.
      */
     fun leave(by: Any) {
         if (owner !== by) return

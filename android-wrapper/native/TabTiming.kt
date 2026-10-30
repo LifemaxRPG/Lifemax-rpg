@@ -6,16 +6,18 @@ import android.view.ViewTreeObserver
 import android.widget.Toast
 
 /**
- * Real tap-to-screen timing for the native tabs, measured on the phone: the moment a bar button is touched, the moment
- * the screen's open call arrives from the page, and the second frame drawn after the new screen is attached
- * (the first frame is when it is composed). Optional toasts show the numbers (Settings, Appearance).
+ * Real tap-to-screen timing for the native tabs, measured on the phone: the moment a bar button is
+ * touched, the moment the screen's open call arrives from the page, and the second frame drawn
+ * after the new screen is attached (the first frame is when it is composed). Optional toasts show
+ * the numbers (Settings, Appearance).
  */
 internal object TabTiming {
     @Volatile private var tapAt = 0L
     @Volatile private var openAt = 0L
     @Volatile private var tapId = ""
     @Volatile var toasts = false
-    @Volatile var lastSummary = ""
+    @Volatile
+    var lastSummary = ""
         private set
 
     fun tap(id: String) {
@@ -46,14 +48,19 @@ internal object TabTiming {
                         view.postInvalidateOnAnimation()
                         return true
                     }
-                    if (view.viewTreeObserver.isAlive) view.viewTreeObserver.removeOnPreDrawListener(this)
+                    if (view.viewTreeObserver.isAlive)
+                        view.viewTreeObserver.removeOnPreDrawListener(this)
                     val now = SystemClock.uptimeMillis()
                     val toOpen = if (tOpen > 0) tOpen - t0 else -1
                     lastSummary =
                         "$tapId → $label  tap→open ${toOpen}  attach ${tAttach - (if (tOpen > 0) tOpen else t0)}" +
                             "  drawn ${now - tAttach}  total ${now - t0} ms"
                     if (toasts)
-                        Toast.makeText(view.context, "$label ${now - t0} ms (open ${toOpen})", Toast.LENGTH_SHORT)
+                        Toast.makeText(
+                                view.context,
+                                "$label ${now - t0} ms (open ${toOpen})",
+                                Toast.LENGTH_SHORT,
+                            )
                             .show()
                     return true
                 }
