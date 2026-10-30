@@ -139,9 +139,11 @@
     add: () => showMediaForm(),
     tip: () => dismissFeatureTip("media"),
   };
+  // a native action carries only its name and an id, so ticking and unticking are two actions
   const ITEM_ACTIONS = {
     edit: (x) => showMediaForm(x),
-    finished: (x, e) => toggleMediaFinished(x.id, e.checked === true),
+    finished: (x) => toggleMediaFinished(x.id, true),
+    unfinished: (x) => toggleMediaFinished(x.id, false),
     remove: (x) => deleteMediaItem(x.id),
     play: (x) => playMediaAudio(x.id),
     attach: (x) => showFileButton(x.id),

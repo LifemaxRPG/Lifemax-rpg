@@ -135,9 +135,9 @@ const ITEMS = [
 
     // finished and back: the page's checkbox handler, then the screen again
     closes = count('close'); opens = count('open');
-    await act({ action: 'finished', id: 'm_pod', checked: true });
+    await act({ action: 'finished', id: 'm_pod' });
     out.finished = count('close') === closes + 1 && mediaById('m_pod').status === 'finished' && await back() && latest().items.find(x => x.id === 'm_pod').finished && latest().stats[1].value === '2';
-    await act({ action: 'finished', id: 'm_pod', checked: false });
+    await act({ action: 'unfinished', id: 'm_pod' });
     out.unfinished = mediaById('m_pod').status === 'progress' && await back() && latest().items.find(x => x.id === 'm_pod').statusLabel === 'In progress';
 
     // remove asks on the page

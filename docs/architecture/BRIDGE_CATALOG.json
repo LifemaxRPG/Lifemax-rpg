@@ -158,7 +158,7 @@
    "writes": [],
    "delegatedInteractions": [
     "showMediaForm() and showMediaForm(item): add and edit, saved by saveMediaItem through mediaUpsert",
-    "toggleMediaFinished(id, checked)",
+    "toggleMediaFinished(id, true) for finished, toggleMediaFinished(id, false) for unfinished",
     "deleteMediaItem(id) with its confirm",
     "pickAudioForMedia through the row's own file button, shown and focused on the page (no programmatic picker)",
     "removeMediaAudio(id) with its confirm",

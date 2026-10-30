@@ -142,7 +142,7 @@ Phase 0, web only, came first: a reflection or review answer being typed survive
 | Remaining web dependency | How the screen reaches it |
 |---|---|
 | Add and edit (the media form) | closes; `showMediaForm()` or `showMediaForm(item)`; back when the form closes, saved or cancelled |
-| Finished checkbox | closes; `toggleMediaFinished(id, checked)`; back at once |
+| Finished checkbox | closes; `toggleMediaFinished(id, true)` for `finished`, `(id, false)` for `unfinished`; back at once |
 | Remove (confirm) | closes; `deleteMediaItem(id)` with its confirm; back at once |
 | Attach or replace an audio file | closes; the row's own file button is shown and focused (a page filter hiding the row is cleared quietly), since a file picker opens only from a tap on the page; back when the button is left, or when the player playing the chosen file closes |
 | Remove audio (confirm) | closes; `removeMediaAudio(id)`; back at once |
