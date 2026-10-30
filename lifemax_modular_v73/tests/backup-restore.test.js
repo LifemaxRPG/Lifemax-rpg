@@ -80,6 +80,25 @@ const FOLDER = `(() => {
     errs.push(...ph.errs); await ph.close();
   }
 
+  {
+    const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });
+    const r = await ph.p.evaluate(async fresh => {
+      const out = {}, said = [], set = Storage.prototype.setItem, stored = localStorage.getItem(STORE);
+      window.toast = () => { }; window.confirm = () => true; window.alert = m => said.push(m);
+      Storage.prototype.setItem = function (k, v) { if (k === STORE) throw new Error('QuotaExceededError'); return set.call(this, k, v) };
+      const imp = await applyBackup(fresh);
+      out.import = !imp.ok && /nothing was imported/.test(imp.message) && state.activities.length === 420;
+      await resetDemo();
+      out.reset = /nothing was reset/.test(said[0]) && state.activities.length === 420;
+      Storage.prototype.setItem = set;
+      out.untouched = localStorage.getItem(STORE) === stored;
+      out.laterSaveKeepsIt = save() && JSON.parse(localStorage.getItem(STORE)).activities.length === 420;
+      return out;
+    }, fixture('new'));
+    ok('an import or reset whose new save cannot be stored is not half done: the stored save stays, and is what the app shows and saves next', r.import && r.reset && r.untouched && r.laterSaveKeepsIt, r);
+    errs.push(...ph.errs); await ph.close();
+  }
+
   /* ---- verified backups ---- */
   {
     const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });

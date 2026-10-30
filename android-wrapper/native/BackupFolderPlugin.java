@@ -17,6 +17,7 @@ import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -82,8 +83,12 @@ public class BackupFolderPlugin extends Plugin {
             Uri created = DocumentsContract.createDocument(cr, rootDoc(Uri.parse(uriStr)), "application/json", name);
             if (created == null) { call.reject("The folder refused the new file"); return; }
             try (OutputStream os = cr.openOutputStream(created, "wt")) {
-                if (os == null) { call.reject("Could not open the new file"); return; }
+                if (os == null) throw new IOException("Could not open the new file");
                 os.write(text.getBytes(StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                // a file cut short must not stay behind, where it would push a good one out of the rotation
+                try { DocumentsContract.deleteDocument(cr, created); } catch (Exception ignored) { }
+                throw e;
             }
             JSObject ret = new JSObject();
             ret.put("file", created.toString());
