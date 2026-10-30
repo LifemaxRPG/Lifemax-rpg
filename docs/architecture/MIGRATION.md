@@ -77,7 +77,7 @@ Evidence: Node projection test, JVM selection/sequence/schema tests, Android Com
 
 Statements here are from reading the repository and the Settings wiring; device acceptance is not recorded.
 
-## Source layout as of Native API 18
+## Source layout as of Native API 20
 
 Every native Kotlin file now lives in the canonical tree (`android-wrapper/native/src/main/java/com/lifemax/rpg`) and is formatted with ktfmt; CI checks all of them. Java plugins stay in `android-wrapper/native/` until a feature needs them converted.
 
@@ -85,10 +85,27 @@ Every native Kotlin file now lives in the canonical tree (`android-wrapper/nativ
 |---|---|
 | `app/shell` | `ChromeHost`, `OverviewBars`, `TabTiming`, `LiveOverviewShell`: the shared bars and the tab hand-over |
 | `app/CharacterContainer.kt` | composition root for Character |
-| `bridge/web` | one Capacitor plugin per native destination: Character, Food (`NativeNutrition`), Overview, Cash, plus `HealthSync` |
+| `bridge/web` | `ComposeTabPlugin` (the shared base of a native tab) and one Capacitor plugin per native destination: Character (a subclass), Food (`NativeNutrition`), Overview, Cash, plus `HealthSync` |
 | `core/designsystem` | theme tokens from the page |
 | `feature/character` | domain, data, presentation (the reference layout) |
-| `feature/food/presentation` | palette, components and the still-monolithic screen, awaiting the canonical split |
+| `feature/food/presentation` | `FoodContext` and one file per pane (Plan, Log, Shopping), the header, week strip, switcher and search bar; rendered by screenshot tests, still reading raw JSON |
 | `feature/cash` | `CashActivity` and its session (a documented activity exception, A04) |
 
 Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it since the live Overview shell), its manifest entry and its test assertion.
+
+## Prep completed before the native rewrite (Native API 20)
+
+| Item | State |
+|---|---|
+| ktfmt over every native Kotlin file, enforced in CI | done |
+| Every native Kotlin file in the canonical tree, retired Canvas Overview removed | done |
+| Bridge catalog entry for every destination | done (CI test that enforces it still to come) |
+| JavaScript ESLint ratchet in CI | done (`tools/lint_js.py`) |
+| Local Android build and unit tests (`tools/build_android_local.sh`) | done |
+| Screenshot tests with reference images, in CI | done (Character dark/light; Food Log, Plan, Shopping, Plan light) |
+| `NativeTabKit` (web) and `ComposeTabPlugin` (native) | done; Character uses them, Food and Cash still have their own |
+| Food screen split into a context and panes | done, screenshots identical |
+| Tab hand-over simulation on virtual time, races fixed, safety net | done (A23 items 7 and 8, A28) |
+| Log activity logic callable without the form, 163 golden cases | done |
+| Food and Cash onto the shared scaffold | to do as each is converted |
+| Automatic backups before any data or logic port | to do (owner decision) |
