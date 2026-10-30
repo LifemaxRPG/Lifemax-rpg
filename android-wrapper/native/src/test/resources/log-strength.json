@@ -1,0 +1,207 @@
+{
+ "protocol": 1,
+ "webSessionId": "log-fixture",
+ "sequence": 2,
+ "tokens": {
+  "bg": 4278980114,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "text": 4293849590,
+  "muted": 4287337379,
+  "accent": 4286356735,
+  "line": 4281086784,
+  "good": 4282242700
+ },
+ "light": false,
+ "presets": [
+  {
+   "id": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "base": 24,
+   "skill": "Knowledge",
+   "primary": "intelligence",
+   "secondary": "discipline"
+  },
+  {
+   "id": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "base": 25,
+   "skill": "Entrepreneurship",
+   "primary": "business",
+   "secondary": "discipline"
+  },
+  {
+   "id": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "base": 28,
+   "skill": "Lifting",
+   "primary": "physique",
+   "secondary": "discipline"
+  },
+  {
+   "id": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "base": 26,
+   "skill": "Running",
+   "primary": "endurance",
+   "secondary": "wellbeing"
+  },
+  {
+   "id": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "base": 24,
+   "skill": "Spanish",
+   "primary": "intelligence",
+   "secondary": "social"
+  },
+  {
+   "id": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "base": 16,
+   "skill": "Recovery Routine",
+   "primary": "wellbeing",
+   "secondary": "endurance"
+  },
+  {
+   "id": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "base": 24,
+   "skill": "Practical Skills",
+   "primary": "adventure",
+   "secondary": "intelligence"
+  },
+  {
+   "id": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "base": 20,
+   "skill": "Execution",
+   "primary": "discipline",
+   "secondary": "business"
+  },
+  {
+   "id": "custom",
+   "name": "Custom activity",
+   "icon": "star",
+   "base": 20,
+   "skill": "Custom Skill",
+   "primary": "adventure",
+   "secondary": ""
+  }
+ ],
+ "attributes": [
+  {
+   "id": "physique",
+   "name": "Strength & Physique",
+   "short": "Physique",
+   "icon": "dumbbell",
+   "color": 4294929239
+  },
+  {
+   "id": "endurance",
+   "name": "Endurance & Vitality",
+   "short": "Endurance",
+   "icon": "heart",
+   "color": 4294921613
+  },
+  {
+   "id": "intelligence",
+   "name": "Intelligence & Knowledge",
+   "short": "Intelligence",
+   "icon": "book",
+   "color": 4284189951
+  },
+  {
+   "id": "business",
+   "name": "Wealth & Business",
+   "short": "Business",
+   "icon": "briefcase",
+   "color": 4294296898
+  },
+  {
+   "id": "social",
+   "name": "Social & Communication",
+   "short": "Social",
+   "icon": "chat",
+   "color": 4294942531
+  },
+  {
+   "id": "discipline",
+   "name": "Discipline & Execution",
+   "short": "Discipline",
+   "icon": "target",
+   "color": 4289170426
+  },
+  {
+   "id": "adventure",
+   "name": "Adventure & Practical Skills",
+   "short": "Adventure",
+   "icon": "mountain",
+   "color": 4282244228
+  },
+  {
+   "id": "wellbeing",
+   "name": "Wellbeing & Recovery",
+   "short": "Wellbeing",
+   "icon": "moon",
+   "color": 4283289825
+  }
+ ],
+ "qualities": [
+  {
+   "value": "0.8",
+   "label": "Light",
+   "hint": "0.8×"
+  },
+  {
+   "value": "1",
+   "label": "Normal",
+   "hint": "1.0×"
+  },
+  {
+   "value": "1.1",
+   "label": "Challenging",
+   "hint": "1.1×"
+  },
+  {
+   "value": "1.2",
+   "label": "High quality",
+   "hint": "1.2×"
+  }
+ ],
+ "maxMinutes": 1440,
+ "draft": {
+  "type": "strength",
+  "customName": "",
+  "duration": "45",
+  "quality": "1.1",
+  "skill": "Lifting",
+  "primary": "physique",
+  "secondary": "discipline",
+  "notes": "Push day: bench 5x5"
+ },
+ "draftRevision": 2,
+ "preview": {
+  "total": 46,
+  "skill": "Lifting",
+  "durFactor": 1.5,
+  "split": [
+   {
+    "attr": "physique",
+    "xp": 32
+   },
+   {
+    "attr": "discipline",
+    "xp": 14
+   }
+  ],
+  "enough": true
+ }
+}
