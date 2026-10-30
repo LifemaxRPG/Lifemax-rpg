@@ -293,6 +293,11 @@ function backupJson(){return JSON.stringify(backupData(),null,2)}
 function exportData(){lmaDownload(backupJson(),'life-max-backup-'+getToday()+'.json','application/json','Backup')}
 /* The save inside a parsed backup file (or a bare save), or null when it is not one. */
 function backupSave(data){const s=data&&typeof data==='object'?(data.state||data):null;return s&&Array.isArray(s.activities)&&s.attrXP&&typeof s.attrXP==='object'?s:null}
+/* The facts a backup must keep, compared between the file as written and as read back (ADR 0004). */
+function backupFacts(data,size){const s=backupSave(data)||{};return {schema:s.schema,exportedAt:data&&data.exportedAt,activities:(s.activities||[]).length,rules:Object.keys(data&&data.rules||{}).length,extras:Object.keys(data&&data.extras||{}).length,size}}
+/* Why a backup read back cannot be trusted ('is cut short …', 'has activities 3 instead of 4'), or '' when it can: it must be a backup
+   the import accepts, with the schema, counts and size of the file that was written. */
+function backupProblem(text,want){let data=null;try{data=JSON.parse(text)}catch(e){}if(!backupSave(data))return typeof text==='string'&&text.length<want.size?'is cut short ('+text.length+' of '+want.size+' characters)':'is not a readable backup';const got=backupFacts(data,text.length),k=Object.keys(want).find(k=>got[k]!==want[k]);return k?'has '+k+' '+got[k]+' instead of '+want[k]:''}
 /* Before anything replaces the whole save, the current one is kept under STORE+'_safety' with the reason and time. If that copy cannot be written, nothing is replaced. */
 function keepSafetyCopy(reason){try{const raw=localStorage.getItem(STORE)||JSON.stringify(state);localStorage.setItem(STORE+'_safety',JSON.stringify({reason,at:new Date().toISOString(),save:raw}));return true}catch(e){console.warn('[safety copy]',e);return false}}
 /* Apply a parsed backup file. Returns {ok, message}. Refuses a backup made by a newer build, asks before replacing a save that has

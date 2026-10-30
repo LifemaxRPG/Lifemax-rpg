@@ -1,5 +1,6 @@
-/* The save as a tested contract (ADR 0004). Golden saves in fixtures/saves (new, established, legacy, with extras; synthetic, made
-   from the page's own functions) load at SAVE_SCHEMA, and a save from a newer build is shown but never written.
+/* The save and its backups as a tested contract (ADR 0004). Golden saves in fixtures/saves (new, established, legacy, with extras;
+   synthetic, made from the page's own functions) load at SAVE_SCHEMA; a save from a newer build is shown but never written; and a
+   backup counts only once the file read back from the folder checks out.
    Run: NODE_PATH=$(npm root -g) node tests/backup-restore.test.js */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const { execFileSync } = require('child_process');
@@ -20,6 +21,18 @@ async function phone(b, { save = JSON.stringify({ onboardingComplete: true, name
   await p.goto('file://' + out); await p.waitForTimeout(4500);
   return { p, dialogs, errs, close: () => c.close() };
 }
+/* An Android backup folder in memory, installed once the app has started: the files, the plugin calls in order, and a way to spoil
+   what is read back. */
+const FOLDER = `(() => {
+  const F = window.__folder = { files: {}, calls: [], n: 0, spoil: null }, real = lmaPlugin;
+  lmaNative = () => true;
+  lmaPlugin = n => n !== 'BackupFolder' ? real(n) : {
+    createBackup: async o => { F.calls.push('create ' + o.name); const file = 'file' + ++F.n; F.files[file] = o.text; return { file, name: o.name } },
+    readBackup: async o => { F.calls.push('read'); return { text: F.spoil ? F.spoil(F.files[o.file]) : F.files[o.file] } },
+    pruneBackups: async o => { F.calls.push('prune ' + o.prefix + ' ' + o.keep); return { pruned: 0 } },
+    deleteBackup: async o => { F.calls.push('delete'); delete F.files[o.file]; return { deleted: true } } };
+  Object.assign(lmaLoad().backup, { on: true, uri: 'content://tree/backups', folder: 'Backups' }); lmaSave();
+})()`;
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }), errs = [];
 
@@ -63,6 +76,43 @@ async function phone(b, { save = JSON.stringify({ onboardingComplete: true, name
     const ph = await phone(b, { save: '{"name":"Real hero","activities":[', block: '_unreadable' });
     const r = await ph.p.evaluate(() => ({ kept: localStorage.getItem(STORE) === '{"name":"Real hero","activities":[', fresh: state.name !== 'Real hero', refused: save() === false }));
     ok('an unreadable save that cannot be copied aside is left as it is, and nothing is saved over it', r.kept && r.fresh && r.refused && ph.dialogs.length === 1 && /could not be read/.test(ph.dialogs[0]), { r, d: ph.dialogs });
+    errs.push(...ph.errs); await ph.close();
+  }
+
+  /* ---- verified backups ---- */
+  {
+    const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });
+    await ph.p.evaluate(FOLDER);
+    const r = await ph.p.evaluate(async () => {
+      const F = __folder, out = {}; window.toast = () => { };
+      const data = backupData(), text = JSON.stringify(data, null, 2), want = backupFacts(data, text.length), fewer = JSON.parse(text);
+      fewer.state.activities.pop();
+      out.problems = { good: backupProblem(text, want), cut: backupProblem(text.slice(0, -300), want), empty: backupProblem('', want), fewer: backupProblem(JSON.stringify(fewer, null, 2), want), other: backupProblem(JSON.stringify({ ...data, exportedAt: '2020-01-01T00:00:00.000Z' }, null, 2), want) };
+      out.ran = await lmaRunBackup(true); out.calls = F.calls.splice(0);
+      const good = { ...lmaLoad().backup };
+      out.good = good.status === 'ok' && good.verified > 0 && good.last === good.verified && JSON.parse(Object.values(F.files)[0]).state.activities.length === state.activities.length;
+      F.spoil = t => t.slice(0, t.length >> 1);
+      out.ranSpoilt = await lmaRunBackup(true); out.spoiltCalls = F.calls.splice(0); F.spoil = null;
+      const bad = lmaLoad().backup;
+      out.spoilt = bad.status === 'error' && /cut short/.test(bad.err) && bad.verified === good.verified && Object.keys(F.files).length === 1;
+      navigate('settings'); const text2 = () => { lmaRenderBackup(); return document.getElementById('lmaBakBody').textContent }, B = lmaLoad().backup;
+      out.failing = text2(); B.status = 'ok'; B.err = '';
+      out.fine = text2(); B.on = false; out.off = text2(); B.on = true;
+      B.verified = Date.now() - 3 * 86400e3; out.stale = text2(); B.verified = 0; out.never = text2(); B.uri = ''; out.none = text2();
+      // asked once, gently, on a page the owner can see
+      B.asked = 0; lmaSave(); navigate('dashboard'); const pill = document.querySelector('.lmaweb-pill');
+      out.asked = !!pill && /no backup/.test(pill.textContent) && lmaLoad().backup.asked > 0;
+      pill.querySelector('[data-w=go]').click(); out.toSettings = lmaView() === 'settings' && setCat === 'phone';
+      navigate('dashboard'); out.once = !document.querySelector('.lmaweb-pill');
+      return out;
+    });
+    const pr = r.problems;
+    ok('the check passes the file as written and catches a cut-short, empty, mismatched or different file', pr.good === '' && /cut short/.test(pr.cut) && /cut short/.test(pr.empty) && /activities 419 instead of 420/.test(pr.fewer) && /exportedAt/.test(pr.other), pr);
+    ok('a backup is written, read back and checked, and only then are older files pruned', r.ran === true && r.good && /^create life-max-auto-\d{4}-\d\d-\d\d-\d{4}\.json$/.test(r.calls[0]) && r.calls[1] === 'read' && r.calls[2] === 'prune life-max-auto- 7' && r.calls.length === 3, r);
+    ok('a file that reads back wrong does not count: it is deleted, nothing is pruned, the last verified time stays', r.ranSpoilt === false && r.spoilt && JSON.stringify(r.spoiltCalls.slice(1)) === '["read","delete"]', r);
+    ok('Settings shows the last verified backup, and warns when backups fail, are off, stale, never verified or have no folder', /The last backup failed: the file read back is cut short/.test(r.failing) && /Last verified backupjust now/.test(r.fine) && !/failed|is off|was made|No backup/.test(r.fine) && /Automatic backup is off/.test(r.off) && /last verified backup was made 3 days ago/.test(r.stale) && /No backup has been verified yet/.test(r.never) && /No backup folder is chosen/.test(r.none), r);
+    ok('with no folder the owner is asked once, gently, and the pill leads to the backup settings', r.asked && r.toSettings && r.once, r);
+    ok('nothing in the backup paths shows a dialog', ph.dialogs.length === 0, ph.dialogs);
     errs.push(...ph.errs); await ph.close();
   }
 

@@ -1,6 +1,6 @@
 /* v91 · Android upkeep: in-app updates and automatic backups to a folder you choose.
    Everything here needs the Android shell; in a browser the Settings cards just say so. */
-let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakBusy=false,lmaUpdBound=false;
+let lmaUpdTries=0,lmaUpd={state:'idle',info:null,pct:0,err:'',autoErr:''},lmaBakRun=null,lmaUpdBound=false;
 const lmaSetHtml=(id,h)=>{const el=document.getElementById(id);if(el)el.innerHTML=h};
 const lmaAgo=t=>{if(!t)return 'never';const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
 /* ---------- updates ---------- */
@@ -55,14 +55,16 @@ async function lmaWebRestart(){
  const L=lmaPlugin('LiveWeb');if(!L)return;
  try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
 }
-/* a small pill: the update is downloaded, restart whenever you like */
-function lmaWebPill(){
- if(document.querySelector('.lmaweb-pill')||lmaUpd.pillGone)return;
+/* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
+function lmaPill(text,label,go,dismiss){
+ if(document.querySelector('.lmaweb-pill'))return false;
  const o=document.createElement('div');o.className='lmaweb-pill';o.setAttribute('role','status');
- o.innerHTML='<span>Update ready</span><button type="button" data-w="go">Restart</button><button type="button" data-w="x" aria-label="Dismiss">✕</button>';
- o.addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;if(b.dataset.w==='go')lmaWebRestart();else{lmaUpd.pillGone=true;o.remove()}});
- document.body.appendChild(o);setTimeout(()=>{if(o.parentNode)o.remove()},20000);
+ o.innerHTML='<span>'+text+'</span><button type="button" data-w="go">'+label+'</button><button type="button" data-w="x" aria-label="Dismiss">✕</button>';
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;o.remove();if(b.dataset.w==='go')go();else if(dismiss)dismiss()});
+ document.body.appendChild(o);setTimeout(()=>o.remove(),20000);return true;
 }
+/* the update is downloaded: restart whenever you like */
+function lmaWebPill(){if(!lmaUpd.pillGone)lmaPill('Update ready','Restart',lmaWebRestart,()=>{lmaUpd.pillGone=true})}
 async function lmaInstallUpdate(){
  const U=lmaPlugin('Updater');if(!U||!lmaUpd.info)return;
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
@@ -115,7 +117,10 @@ function lmaRenderUpdates(){
  lmaSetHtml('lmaUpdBody',h);
 }
 /* ---------- automatic backup ---------- */
-function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&Date.now()-b.last>=b.days*86400e3-60e3)}
+/* A backup counts only once its file has been read back and checked (ADR 0004). verified: when the newest verified backup was made;
+   last: the newest verified scheduled one, which sets when the next is due. */
+const LMA_DAY=86400e3;
+function lmaBackupDue(){const b=lmaLoad().backup;return !!(b.on&&b.uri&&(!b.verified||Date.now()-b.last>=b.days*LMA_DAY-60e3))}
 async function lmaPickBackupFolder(){
  const B=lmaPlugin('BackupFolder');if(!B)return;
  try{
@@ -124,43 +129,69 @@ async function lmaPickBackupFolder(){
   lmaRunBackup(true);
  }catch(e){toast('Could not use that folder')}
 }
-async function lmaRunBackup(manual){
- const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup;
- if(!B||!b.uri){if(manual)toast('Choose a folder first');return}
- if(lmaBakBusy)return;lmaBakBusy=true;
- try{
-  const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
-  const r=await B.writeBackup({uri:b.uri,name:'life-max-auto-'+stamp+'.json',text:backupJson(),prefix:'life-max-auto-',keep:b.keep});
-  b.last=Date.now();b.status='ok';b.err='';b.lastName=r&&r.name||'';if(manual)toast('Backup saved');
- }catch(e){const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,120);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
- lmaBakBusy=false;lmaSave();lmaRenderBackup();
+/* Back up now; resolves true once the file is read back and verified. A run already under way is shared, not repeated. */
+function lmaRunBackup(manual){
+ if(!lmaBakRun){lmaBakRun=lmaBackupChecked(manual).finally(()=>{lmaBakRun=null;lmaRenderBackup()});lmaRenderBackup()}
+ return lmaBakRun;
 }
-function lmaSetBackup(k,v){const b=lmaLoad().backup;b[k]=v;lmaSave();lmaRenderBackup();if(k==='on'&&v&&b.uri&&!b.last)lmaRunBackup(true)}
+/* Write, read back, check; only then prune the older files. A file that fails its check is deleted, so it never pushes a good one out. */
+async function lmaBackupChecked(manual){
+ const B=lmaPlugin('BackupFolder'),b=lmaLoad().backup;
+ if(!B||!b.uri){if(manual)toast('Choose a folder first');return false}
+ const d=new Date(),stamp=d.toLocaleDateString('en-CA')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'),prefix='life-max-auto-';
+ try{
+  const data=backupData(),text=JSON.stringify(data,null,2),want=backupFacts(data,text.length);
+  const w=await B.createBackup({uri:b.uri,name:prefix+stamp+'.json',text});
+  const why=backupProblem((await B.readBackup({file:w.file})).text,want);
+  if(why){await B.deleteBackup({file:w.file}).catch(()=>{});throw Error('the file read back '+why)}
+  await B.pruneBackups({uri:b.uri,prefix,keep:b.keep}).catch(()=>{});
+  b.last=b.verified=Date.now();b.status='ok';b.err='';b.lastName=w.name||'';if(manual)toast('Backup saved and verified');
+ }catch(e){const m=String((e&&e.message)||e);b.status=m.indexOf('ACCESS_LOST')>=0?'lost':'error';b.err=m.slice(0,160);if(manual)toast(b.status==='lost'?'Choose the folder again':'Backup failed')}
+ lmaSave();
+ return b.status==='ok';
+}
+function lmaSetBackup(k,v){const b=lmaLoad().backup;b[k]=v;lmaSave();lmaRenderBackup();if(k==='on'&&v&&b.uri&&!b.verified)lmaRunBackup(true)}
+/* What Settings warns about, or '' when backups are in order. */
+function lmaBackupWarning(){
+ const b=lmaLoad().backup;
+ if(!b.uri)return 'No backup folder is chosen, so your progress exists only on this phone.';
+ if(b.status==='lost')return 'Android no longer lets LifeMax write to that folder. Choose it again.';
+ if(b.status==='error')return 'The last backup failed: '+esc(b.err);
+ if(!b.on)return 'Automatic backup is off, so new progress is not copied anywhere.';
+ if(Date.now()-b.verified>2*b.days*LMA_DAY)return b.verified?'The last verified backup was made '+lmaAgo(b.verified)+'.':'No backup has been verified yet. Tap Back up now.';
+ return '';
+}
 function lmaRenderBackup(){
  if(!document.getElementById('lmaBakBody'))return;
  if(!lmaNative()){lmaSetHtml('lmaBakBody','<div class="note">Automatic backups are available in the Android app.</div>');return}
- const b=lmaLoad().backup,off=!b.uri;
+ const b=lmaLoad().backup,off=!b.uri,warn=lmaBackupWarning();
  const row=(l,hint,ctl)=>'<div class="settingsline"><div style="flex:1"><strong>'+l+'</strong>'+(hint?'<div class="muted" style="font-size:12px">'+hint+'</div>':'')+'</div>'+ctl+'</div>';
  const sel=(k,opts,dis)=>'<select '+(dis?'disabled ':'')+'onchange="lmaSetBackup(\''+k+'\',+this.value)" style="'+LMA_IN+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(b[k]===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
- let h='';
- if(b.status==='lost')h+='<div class="note" style="margin-bottom:10px">Android no longer lets LifeMax write to that folder. Choose it again.</div>';
- else if(b.status==='error')h+='<div class="note" style="margin-bottom:10px">The last backup failed: '+esc(b.err)+'</div>';
- h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
+ let h=warn?'<div class="note" style="margin-bottom:10px">'+warn+'</div>':'';
+ h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
  h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
  h+=row('Keep the newest','Older automatic backups are deleted.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
- h+='<div class="settingsline"><div style="flex:1"><strong>Last backup</strong><div class="muted" style="font-size:12px">'+(b.last?lmaAgo(b.last)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakBusy?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakBusy?'Saving…':'Back up now')+'</button></div>';
+ h+='<div class="settingsline"><div style="flex:1"><strong>Last verified backup</strong><div class="muted" style="font-size:12px">'+(b.verified?lmaAgo(b.verified)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakRun?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakRun?'Saving…':'Back up now')+'</button></div>';
  lmaSetHtml('lmaBakBody',h);
 }
+/* Once, gently: with no folder chosen, a pill on a page the owner can see points to Settings. */
+function lmaBackupAsk(){
+ const b=lmaLoad().backup,v=lmaView();
+ if(!lmaNative()||b.uri||b.asked||v==='settings'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;
+ if(lmaPill('Your progress has no backup yet','Settings',lmaOpenBackupSettings)){b.asked=Date.now();lmaSave()}
+}
+function lmaOpenBackupSettings(){setPickCat('phone');lmaNavTo('settings',{fast:true});document.getElementById('lmaBakCard')?.scrollIntoView({block:'start'})}
 /* ---------- wiring ---------- */
 (function lmaUpkeepBoot(){
- const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings'){lmaRenderUpdates();lmaRenderBackup()}return r};
+ const _nav=navigate;navigate=function(v){const r=_nav.apply(this,arguments);if(v==='settings'){lmaRenderUpdates();lmaRenderBackup()}lmaBackupAsk();return r};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&lmaNative()&&lmaBackupDue())lmaRunBackup(false)});
  setInterval(()=>{if(lmaNative()&&lmaBackupDue())lmaRunBackup(false)},6*3600e3);
  setTimeout(()=>{
   lmaRenderUpdates();lmaRenderBackup();
   if(!lmaNative())return;
   if(lmaBackupDue())lmaRunBackup(false);
+  lmaBackupAsk();
   lmaCheckUpdate(true);
  },4000);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&lmaNative()&&Date.now()-(lmaLoad().updChecked||0)>30*60e3)lmaCheckUpdate(true)});

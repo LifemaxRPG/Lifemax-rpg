@@ -5,7 +5,7 @@ const LMA_CHANNEL='lifemax_reminders';
 const LMA_DEFAULTS={
  notif:{on:true,sessions:true,lead:15,workout:true,workoutTime:'17:00',nudge:true,checkin:false,checkinTime:'20:30',quiet:true,quietFrom:'22:00',quietTo:'07:00'},
  apps:[],
- backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,status:'',err:'',lastName:''}
+ backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,verified:0,status:'',err:'',lastName:'',asked:0}
 };
 const LMA_IN='width:auto;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit';
 let lmaPrefs=null,lmaPlugins={},lmaSyncTimer=0,lmaLastSig='',lmaSyncBusy=false;
