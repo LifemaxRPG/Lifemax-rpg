@@ -41,7 +41,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const e = await p.evaluate(() => { state = freshState(); const x = recordActivity({ type: 'reading', duration: '2', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' }); return { ok: x.ok, n: state.activities.length, msg: x.message } });
   ok('a too-short session is refused with the same message and saves nothing', e.ok === false && e.n === 0 && /5 minutes/.test(e.msg), e);
   /* data safety: what a native Submit relies on */
-  const safety = await p.evaluate(() => {
+  const safety = await p.evaluate(async () => {
     const out = {}; const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
     // a replayed or double-tapped submit with the same operation id pays out once
     state = freshState(); const a = recordActivity({ ...d, opId: 'op-1' }), xp1 = JSON.stringify(state.attrXP), n1 = state.activities.length;
@@ -54,20 +54,23 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     let r; try { state = freshState(); r = recordActivity(d) } finally { Storage.prototype.setItem = real }
     out.failure = r.ok === false && /Could not save/.test(r.message);
     out.saveReturns = (save() === true);
-    // an unreadable save is copied aside before a blank profile is written over it
-    localStorage.removeItem(STORE + '_unreadable'); localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
-    load(); out.stashed = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
+    // an unreadable save is copied aside under its own key before a blank profile is written over it
+    const unreadable = () => Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).sort(), copies = () => unreadable().map(k => localStorage.getItem(k));
+    unreadable().forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
+    load(); out.stashed = copies()[0] === '{"name":"Real hero","activities":[';
     out.blankStarted = state.name !== 'Real hero';
+    await new Promise(r => setTimeout(r, 5)); // the next copy's key is a later time
     localStorage.setItem(STORE, '{"still":"broken'); load();
-    out.firstCopyKept = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
-    localStorage.removeItem(STORE + '_unreadable');
+    out.firstCopyKept = JSON.stringify(copies()) === JSON.stringify(['{"name":"Real hero","activities":[', '{"still":"broken']);
+    unreadable().forEach(k => localStorage.removeItem(k));
     return out;
   });
   ok('the same operation id pays out once; a different one is a new entry; no id behaves as before', safety.once && safety.differentOpAdds && safety.noOpIdUnchanged, safety);
   ok('a failed write is reported as a failure, and save() says whether it worked', safety.failure && safety.saveReturns, safety);
-  ok('an unreadable save is copied aside before a blank profile is written, and the first copy is never replaced', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
+  ok('an unreadable save is copied aside before a blank profile is written, and a later one gets its own copy', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
   /* a failed save is taken back out, so a retry really retries; and the whole-save replacements keep a safety copy */
-  const more = await p.evaluate(() => {
+  const more = await p.evaluate(async () => {
     const out = {}, d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
     const real = Storage.prototype.setItem; const realConfirm = window.confirm;
     state = freshState(); save(); const xp0 = JSON.stringify(state.attrXP);
@@ -79,19 +82,19 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     // import: refused file, cancelled import, confirmed import with a safety copy
     const backup = { app: 'Life Max RPG Prototype', version: 1, state: { ...freshState(), name: 'From file', activities: [{ id: 'x', type: 'reading', name: 'Read', duration: 30, quality: 1, skill: 'Knowledge', primary: 'intelligence', secondary: '', xp: 10, date: new Date().toISOString(), notes: '' }] } };
     const before = localStorage.getItem(STORE); localStorage.removeItem(STORE + '_safety');
-    out.badRejected = applyBackup({ state: { activities: {}, attrXP: {} } }).ok === false && localStorage.getItem(STORE) === before;
+    out.badRejected = (await applyBackup({ state: { activities: {}, attrXP: {} } })).ok === false && localStorage.getItem(STORE) === before;
     window.confirm = () => false;
-    const c = applyBackup(backup);
+    const c = await applyBackup(backup);
     out.cancelKeeps = c.ok === false && c.cancelled === true && localStorage.getItem(STORE) === before && !localStorage.getItem(STORE + '_safety');
     window.confirm = () => true;
-    const ok = applyBackup(backup);
+    const ok = await applyBackup(backup);
     const safety = JSON.parse(localStorage.getItem(STORE + '_safety') || 'null');
     out.importKeepsCopy = ok.ok === true && state.name === 'From file' && safety && safety.reason === 'import' && safety.save === before;
     // an empty profile is replaced without asking
     state = freshState(); save(); let asked = false; window.confirm = () => { asked = true; return true };
-    out.emptyNoAsk = applyBackup(backup).ok === true && asked === false;
+    out.emptyNoAsk = (await applyBackup(backup)).ok === true && asked === false;
     // reset keeps a copy; delete removes the copies as it promises
-    window.confirm = () => true; const beforeReset = localStorage.getItem(STORE); resetDemo();
+    window.confirm = () => true; const beforeReset = localStorage.getItem(STORE); await resetDemo();
     out.resetKeepsCopy = JSON.parse(localStorage.getItem(STORE + '_safety')).save === beforeReset;
     localStorage.setItem(STORE + '_unreadable', 'x'); deleteAll();
     out.deleteClears = !localStorage.getItem(STORE + '_safety') && !localStorage.getItem(STORE + '_unreadable');

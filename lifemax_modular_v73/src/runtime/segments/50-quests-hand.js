@@ -164,7 +164,7 @@ function dhIsUp(q){const d=state.dailyDraw;return !!(isQuestDone(q)||(d&&d.up&&d
 /* a revealed card can be turned over to its back by tapping a corner, and turned back by tapping the back */
 function dhTurn(slot){
  const d=dhEnsure();if(!d||!d.up||!d.up[slot])return;d.turned=d.turned||[false,false,false];d.turned[slot]=!d.turned[slot];
- try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ writeSave();
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.toggle('is-turned',!!d.turned[slot]);dhSig='';
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('tap')}catch(e){}
  try{QSFX.play('card-slide',{vol:.7})}catch(e){}
@@ -172,7 +172,7 @@ function dhTurn(slot){
 }
 function dhReveal(slot){
  const d=dhEnsure();if(!d)return;d.up=d.up||[false,false,false];if(d.up[slot]){if(d.turned&&d.turned[slot])dhTurn(slot);return}d.up[slot]=true;
- try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ writeSave();
  const el=document.querySelector('#dailyHand .dh-card[data-slot="'+slot+'"]');if(el)el.classList.add('is-up');
  try{if(window.LifeMaxHaptics)LifeMaxHaptics.play('double')}catch(e){}
  try{QSFX.play('card-slide',{vol:.8})}catch(e){}
@@ -251,13 +251,13 @@ async function dhMaybeDeal(replay){
   }
   return;
  }
- if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+ if(fxReduced()||!cards[0].animate){d.dealt=true;el.classList.remove('fd-pre');writeSave();return}
  const gmode=typeof dhDealMode==='function'?dhDealMode():'quick';
  if(replay!==true&&gmode==='cine'&&typeof dhGate==='function'){
   if(dhGating)return;dhGating=true;el.classList.add('fd-pre');let gr='go';
   try{gr=await dhGate()}catch(e){gr='go'}finally{dhGating=false}
   if(gr==='leave'){el.classList.remove('fd-pre');return}
-  if(gr==='skip'){d.dealt=true;el.classList.remove('fd-pre');try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}return}
+  if(gr==='skip'){d.dealt=true;el.classList.remove('fd-pre');writeSave();return}
  }
  dhDealing=true;
  try{
@@ -303,7 +303,7 @@ async function dhMaybeDeal(replay){
  finally{
   dhDealing=false;el.classList.remove('fd-pre');cards.forEach(function(c){c.style.opacity=''});
   const st=document.getElementById('dailyStage');if(st){st.hidden=true}
-  if(dhAbort){dhAbort=false}else{d.dealt=true;try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+  if(dhAbort){dhAbort=false}else{d.dealt=true;writeSave()}
   if(dhWantReplay){dhWantReplay=false;setTimeout(function(){dhMaybeDeal(true)},60)}
  }
 }

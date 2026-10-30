@@ -131,7 +131,7 @@ function persistAudioPosition(force){
   item.audio.position=el.currentTime||0;
   if(el.duration)item.audio.duration=el.duration;
   const write=()=>{
-    try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+    state.customRules=rules;writeSave();
   };
   if(force){clearTimeout(audioCtx.saveTimer);write();return}
   clearTimeout(audioCtx.saveTimer);

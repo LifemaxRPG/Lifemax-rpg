@@ -8,7 +8,7 @@ The pre-rewrite review found ways the owner's single save could be lost or silen
 
 ## Decision
 
-1. `load()` keeps the first unreadable save under `lifemax_rpg_prototype_v1_unreadable` before anything is written, and tells the owner.
+1. `load()` keeps each unreadable save under `lifemax_rpg_prototype_v1_unreadable_<time>` before anything is written, and tells the owner. With no room for that copy nothing is written: the save stays read-only until the owner exports it and deletes or imports (ADR 0004).
 2. `save()` returns whether the write worked; `recordActivity` takes back an activity whose save failed, so it is neither shown nor counted, and reports the failure.
 3. `recordActivity` takes an operation id, so a repeated submit pays once; native Log uses one id per draft.
 4. Whole-save replacements (import, onboarding import, reset) go through `applyBackup`: it refuses a file that is not a backup, asks before replacing a save with activities, and keeps the current save under `lifemax_rpg_prototype_v1_safety` first, cancelling if it cannot. Delete-all clears the safety and unreadable copies too, as its warning promises.

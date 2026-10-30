@@ -1,7 +1,7 @@
 /* Run with Node: exercises the real update planner and Settings/install flow. */
 const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const source=fs.readFileSync(path.join(__dirname,'../src/runtime/segments/35-android-upkeep.js'),'utf8');
-const body={innerHTML:''},prefs={},calls=[];let release,live,permission=false;
+const body={innerHTML:''},prefs={backup:{uri:''}},calls=[];let release,live,permission=false;
 const U={check:async()=>release,addListener(){},install:async o=>{calls.push(['apk',o.url]);return {needsPermission:permission}}};
 const L={status:async()=>live,fetch:async o=>{calls.push(['web',o.build]);live={...live,staged:o.build}},addListener(){}};
 const s={console,Date,Math,Number,String,Promise,setTimeout(){},clearTimeout(){},setInterval(){},

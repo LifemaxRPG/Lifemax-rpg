@@ -1,6 +1,6 @@
 # 0004: Automatic, verified backups before any logic or data moves to native
 
-Status: accepted by the owner ("I'm down with an automatic backup system").
+Status: accepted by the owner ("I'm down with an automatic backup system"). Implemented on 30 October 2026; on the phone it takes effect once the owner chooses a backup folder.
 
 ## Context
 
@@ -20,3 +20,19 @@ Before any rule, data model or persistence moves out of web code:
 
 - Native tabs that write through web handlers (Log, Food, Cash) keep using the existing save; the backup work does not block presentation-only tabs, but it blocks the first change of logic or data ownership.
 - The owner is asked once to confirm the backup folder in Settings.
+
+## Implementation
+
+Built from the data-safety findings (BACKLOG.md, Data safety and the load() half of the save/epoch item). `lifemax_modular_v73/tests/backup-restore.test.js` checks each point.
+
+1. **Format version.** The core save carries `schema` (`SAVE_SCHEMA` in 04-runtime.js). `load()` brings an older save up to it through `migrateSave()`, the one place for future migrations; the flag migrations from before the number (`xpSchemaV2`, `mediaSeededV1`, the class quests) run there and stay idempotent. `writeSave()` is the only writer of the core save. A save from a newer schema (an APK or web update rolled back) is shown read-only: nothing is migrated or written, and the owner is told once. An unreadable save is kept under its own key; when no copy fits, nothing is written over it, and Export backup saves its text as a file. A backup carries the schema; an import refuses a newer one and migrates an older one the way `load()` does. An import or reset whose new save cannot be stored loads the stored one back.
+2. **Verified backups.** A backup counts only after its file is read back (`BackupFolder.readBackup`) and checked by `backupProblem`: it parses as a backup the import accepts, and its schema, export time, activity, rule and extra-key counts and size match what was written. Only then are older files pruned, in the folder the backup was written to; a file that fails its check, cannot be read back or is cut short while it is written is deleted. Settings shows the last verified backup and warns when there is no folder, or backups are off, failing, never verified or older than twice the interval. With no folder, the owner is asked once by a small pill that opens the backup settings.
+3. **Snapshot before risky changes.** Before an import, a reset, downloading or restarting into a web update and installing an APK, `lmaBackupFirst` takes a verified backup when a folder is chosen and waits for it. These snapshots rotate apart from the scheduled ones and from each other (`life-max-before-update-*`, `-import-*` and `-reset-*`, the newest 5 of each), so frequent updates never push out the copy taken before an import or a reset. If a snapshot fails, the owner decides whether to go on; at launch, where nobody asked, the web update is not downloaded and Settings says why. Imports and resets run one at a time: another one asked for while the first waits for its snapshot is refused. A downloaded web update that starts by itself at the next launch was backed up when it was downloaded, so progress logged in between is only in the scheduled backups. The in-app safety copy is still kept.
+4. **Restore as a tested contract.** Synthetic golden saves in `tests/fixtures/saves` (new, established, legacy, with extras; made once and never regenerated) are backed up on one phone, restored on another and compared: the save, the rules and the extra keys come back equal.
+
+A backup holds the core save, the rules, Life Director, the voice aliases and macros, the dev chat, the Android preferences without the phone's own backup settings (a restore keeps those) and the theme. Not in it: the other preferences of this phone (display, voice, Gemini and its key), caches, the calendar import's record of what it imported, the voice assistant's logs, ratings and undo history, and the audiobook files in IndexedDB, which the owner has as files.
+
+Still open:
+
+- Decision 1 holds on the phone only once the owner picks a folder (Settings, Phone & sync, Automatic backup). Until then Settings warns, and the first change of logic or data ownership waits for it.
+- The save epoch for native writes (BACKLOG.md, Native write path) comes with the first native write, not before (CONTRACT A14, A20).

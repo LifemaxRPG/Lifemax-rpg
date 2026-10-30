@@ -97,7 +97,7 @@ function petBrainPersist(force){
   if(!br.dirty&&!force)return;if(!force&&now-br.savedAt<PET_BRAIN.PERSIST_MS)return;
   br.dirty=false;br.savedAt=now;
   /* save() would also re-render the whole app; the brain only needs the current state written */
-  try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  writeSave();
 }
 /* ---------- System A: affect (valence x arousal) ---------- */
 function petBrainBase(p,b,rt){

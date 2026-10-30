@@ -290,7 +290,7 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
  /* the reading ends (or was skipped): the scene stays as the Quest Board */
  skipped=true;tw.forEach(function(a){a.ms=0});if(awaitFlip)awaitFlip.finish();
  await new Promise(function(r){setTimeout(r,30)});skipped=false;tw.length=0;
- d.dealt=true;d.up=[true,true,true];try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+ d.dealt=true;d.up=[true,true,true];writeSave();
  sc.dataset.await='';cap.innerHTML='';title.innerHTML='';var skb=sc.querySelector('.fs-skip');if(skb)skb.style.display='none';var gt=sc.querySelector('.fs-gate');if(gt)gt.remove();
  el.classList.remove('fd-pre');cards.forEach(function(c){c.classList.add('is-up')});
  if(!restOnly){var e0=eyeB.slice(),t0b=tgtB.slice();await anim(800,function(t){eyeB=lerp3(e0,REST_EYE,t);tgtB=lerp3(t0b,REST_TGT,t)},eIO)}

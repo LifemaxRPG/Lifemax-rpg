@@ -5,7 +5,7 @@ const LMA_CHANNEL='lifemax_reminders';
 const LMA_DEFAULTS={
  notif:{on:true,sessions:true,lead:15,workout:true,workoutTime:'17:00',nudge:true,checkin:false,checkinTime:'20:30',quiet:true,quietFrom:'22:00',quietTo:'07:00'},
  apps:[],
- backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,status:'',err:'',lastName:''}
+ backup:{on:false,uri:'',folder:'',days:1,keep:7,last:0,verified:0,status:'',err:'',lastName:'',asked:0}
 };
 const LMA_IN='width:auto;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit';
 let lmaPrefs=null,lmaPlugins={},lmaSyncTimer=0,lmaLastSig='',lmaSyncBusy=false;
@@ -164,9 +164,11 @@ async function lmaRenderSettings(){
  host.innerHTML=h;
 }
 /* ---------- saving files and backups ---------- */
-const LMA_EXTRA_KEYS=['lifemax_director_state_v1','lifemax_android_prefs_v1','lifeMaxTheme'];
-function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k==='lifemax_android_prefs_v1'){try{const j=JSON.parse(v);if(j&&j.backup){j.backup={...j.backup,uri:'',folder:'',on:false,last:0,status:''}}v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
-function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]==='string'){try{localStorage.setItem(k,x[k]);n++}catch(e){}}}return n>0}
+/* The keys a backup carries besides the save: what the owner made, and the preferences. This phone's own backup settings (its folder)
+   are neither exported nor restored, and preferences that cannot be read are not restored. */
+const LMA_EXTRA_KEYS=['lifemax_director_state_v1',LMA_PREF_KEY,'lifeMaxTheme','lifemax_voice_alias_v1','lifemax_voice_macros_v1','lifeMaxDevChat'];
+function lmaBackupExtras(){const o={};for(const k of LMA_EXTRA_KEYS){try{let v=localStorage.getItem(k);if(typeof v==='string'){if(k===LMA_PREF_KEY){try{const j=JSON.parse(v);delete j.backup;v=JSON.stringify(j)}catch(e){}}o[k]=v}}catch(e){}}return o}
+function lmaRestoreExtras(x){if(!x||typeof x!=='object')return false;let n=0;for(const k of LMA_EXTRA_KEYS){if(typeof x[k]!=='string')continue;let v=x[k];if(k===LMA_PREF_KEY){try{v=JSON.stringify({...JSON.parse(v),backup:lmaLoad().backup})}catch(e){continue}}try{localStorage.setItem(k,v);n++}catch(e){}}lmaPrefs=null;return n>0}
 /* Save text as a file: Android's "Save as" picker in the app, a normal download in a browser. */
 async function lmaDownload(text,filename,mime,label){
  const FS=lmaPlugin('FileSaver');

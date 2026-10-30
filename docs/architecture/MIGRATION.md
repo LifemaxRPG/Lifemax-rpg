@@ -109,7 +109,7 @@ Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it s
 | Tab hand-over simulation on virtual time, races fixed, safety net | done (A23 items 7 and 8, A28) |
 | Log activity logic callable without the form, 163 golden cases | done |
 | Food and Cash onto the shared scaffold | to do as each is converted |
-| Automatic backups before any data or logic port | to do (owner decision) |
+| Automatic backups before any data or logic port | done (ADR 0004); on the phone once the owner picks a backup folder |
 
 ## Log activity (Native API 23)
 

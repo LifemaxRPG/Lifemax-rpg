@@ -63,7 +63,7 @@ function renderDecay(){const d=getDecay(),today=dayNum(getToday());
  const on=document.getElementById('decayOn');if(on&&document.activeElement!==document.getElementById('decayGrace')){on.checked=d.on;document.getElementById('decayGrace').value=d.grace;document.getElementById('decayRate').value=d.rate}}
 function saveDecay(){const c=(v,lo,hi,df)=>Math.min(hi,Math.max(lo,Number(v)||df));state.decay={on:document.getElementById('decayOn').checked,grace:c(document.getElementById('decayGrace').value,1,14,4),rate:c(document.getElementById('decayRate').value,1,10,3)};save();toast('Decay settings saved')}
 function ago(ms){const m=Math.floor(ms/6e4);if(m<1)return 'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<48)return h+'h '+(m%60)+'m ago';return Math.floor(h/24)+'d '+(h%24)+'h ago'}
-function markVisit(){try{const now=Date.now(),last=state.lastVisit||0;if(!last||now-last>30*6e4)state.prevVisit=last||null;state.lastVisit=now;state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}}
+function markVisit(){try{const now=Date.now(),last=state.lastVisit||0;if(!last||now-last>30*6e4)state.prevVisit=last||null;state.lastVisit=now;state.customRules=rules;writeSave()}catch(e){}}
 function renderTime(){const v=document.getElementById('visitTag'),a=document.getElementById('actTag');if(!v||!a)return;const now=Date.now();
  v.innerHTML=px('smile')+' '+(state.prevVisit?'Last check-in '+ago(now-state.prevVisit):'First check-in');
  const acts=state.activities.filter(x=>x.type!=='quest');if(!acts.length){a.innerHTML=px('clock')+' No activity logged yet';return}

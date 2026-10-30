@@ -24,7 +24,7 @@ function ovLayout(){
   const hidden=(Array.isArray(L.hidden)?L.hidden:[]).filter(function(id){return known.indexOf(id)>=0});
   return {order:order,hidden:hidden};
 }
-function ovLayoutSave(L){state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};try{localStorage.setItem(STORE,JSON.stringify(state))}catch(e){console.warn('Save failed',e)}}
+function ovLayoutSave(L){state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};writeSave()}
 function ovLayoutApply(){
   const box=document.getElementById('ovTiles');if(!box)return;
   const L=ovLayout();
