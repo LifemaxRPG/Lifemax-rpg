@@ -70,6 +70,7 @@ const c = {
     addEventListener() {},
     createElement: () => ({
       getContext: () => ({
+        clearRect() {},
         fillRect() {},
         getImageData: () => ({ data: [124, 156, 255, 255] }),
       }),

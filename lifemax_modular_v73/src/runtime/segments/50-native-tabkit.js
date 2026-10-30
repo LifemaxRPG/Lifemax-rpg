@@ -5,16 +5,17 @@
 (function () {
   const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, has() { return false; }, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
-  const TOKENS = ["bg", "panel", "panel2", "text", "muted", "accent", "line", "good"];
+  const TOKENS = ["bg", "bg-elev", "panel", "panel2", "text", "text-dim", "muted", "muted2", "accent", "line", "line-soft", "good", "gold", "bad"];
+
+  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }); // read on the CPU, no GPU round trip
 
   /** a CSS colour as opaque ARGB, which is what the native theme takes */
   function color(v) {
-    const c = document.createElement("canvas");
-    c.width = c.height = 1;
-    const x = c.getContext("2d");
-    x.fillStyle = v;
-    x.fillRect(0, 0, 1, 1);
-    const a = x.getImageData(0, 0, 1, 1).data;
+    probe.clearRect(0, 0, 1, 1);
+    probe.fillStyle = "#000"; // what a colour the canvas cannot parse reads as
+    probe.fillStyle = v;
+    probe.fillRect(0, 0, 1, 1);
+    const a = probe.getImageData(0, 0, 1, 1).data;
     return ((a[3] << 24) | (a[0] << 16) | (a[1] << 8) | a[2]) >>> 0;
   }
   /** the page's current palette, so the native screen matches whatever theme and accent is on */
@@ -34,8 +35,9 @@
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
-   * draw); the screen closes at its next refresh and does not open. When the page changes in a way that may unblock it,
-   * the tab calls revisit() on the returned object, which opens the screen again if it is wanted.
+   * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
+   * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
+   * tells which of the two applies.
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -76,7 +78,8 @@
     async function send() {
       if (!active) return;
       if (blocked()) {
-        NativeTabs.leave(cfg.id, lmaView(), () => close());
+        // on its own view the page itself has to show (a sheet, an overlay): no native tab takes over, so close now
+        NativeTabs.leave(cfg.id, lmaView() === cfg.id ? "" : lmaView(), () => close());
         return;
       }
       try {
@@ -220,7 +223,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot, runCommand, revisit };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
