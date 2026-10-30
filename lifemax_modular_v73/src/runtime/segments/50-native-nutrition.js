@@ -155,7 +155,7 @@
         planP: Math.round(planP || 0),
         nextIndex: typeof d.next === 'number' ? d.next : -1,
         coachIcon: String(co.i || '✦'),
-        coachText: String(co.t || '').replace(/<[^>]+>/g, ''),
+        coachText: String(co.t || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&'),
         diet: String(S.diet || 'standard'),
         level: String(S.level || 'auto'),
         veg: !!S.veg,
