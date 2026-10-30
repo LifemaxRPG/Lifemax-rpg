@@ -143,7 +143,6 @@ class OverviewParityTest {
         val bounds = Rect()
         target!!.getBoundsInScreen(bounds)
         assertTrue("Shared native tab $label must be visible", bounds.width() > 0 && bounds.height() > 0)
-        println("NAV_TAP $label $bounds")
         val down = SystemClock.uptimeMillis()
         val x = bounds.centerX().toFloat()
         val y = bounds.centerY().toFloat()
@@ -208,7 +207,7 @@ class OverviewParityTest {
             repeat(3) {
                 val tapBounds = clickSharedTab("Character")
                 SystemClock.sleep(1000)
-                val trace = evaluate(main, "JSON.stringify({view:lmaView(),trace:window.__nativeNavTrace,body:document.body.className,toggle:lmaLoad().nativeCharacter})")
+                val trace = evaluate(main, "JSON.stringify({view:lmaView(),body:document.body.className,toggle:lmaLoad().nativeCharacter})")
                 waitUntil("Character opens from native Food bar; bounds=$tapBounds state=$trace") {
                     var attached = false
                     instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
