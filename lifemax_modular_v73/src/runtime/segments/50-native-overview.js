@@ -92,5 +92,6 @@
  new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
- window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics};
+ window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>N.actions.get(id)?.click()};
 })();
+

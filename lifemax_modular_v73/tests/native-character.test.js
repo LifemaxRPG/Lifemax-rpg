@@ -118,6 +118,8 @@ if (process.env.CHARACTER_FIXTURE)
   let delegatedAttribute = "";
   let delegatedView = "";
   c.document.body = { classList: { contains: () => false } };
+  c.document.querySelector = () => ({});
+  c.NativeOverviewSnapshot = { snapshot: async () => ({ width: 320, header: { nodes: [], hits: [], height: 64, width: 320 }, nav: { nodes: [], hits: [], height: 64, width: 320 } }) };
   c.openAttr = (id) => {
     delegatedAttribute = id;
   };

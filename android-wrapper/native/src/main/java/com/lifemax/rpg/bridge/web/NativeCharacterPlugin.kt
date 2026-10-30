@@ -3,12 +3,16 @@ package com.lifemax.rpg.bridge.web
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.*
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.LiveOverviewShell
 import com.lifemax.rpg.feature.character.presentation.*
 import org.json.JSONArray
 
@@ -18,6 +22,9 @@ class NativeCharacterPlugin : Plugin() {
     private val repository = container.repository
     private val store = ViewModelStore()
     private var view: ComposeView? = null
+    private var chrome: LiveOverviewShell? = null
+    private var topInsetDp by mutableFloatStateOf(64f)
+    private var bottomInsetDp by mutableFloatStateOf(72f)
 
     @PluginMethod
     fun handshake(call: PluginCall) {
@@ -49,7 +56,7 @@ class NativeCharacterPlugin : Plugin() {
                                 ViewCompositionStrategy.DisposeOnDetachedFromWindow
                             )
                             setContent {
-                                CharacterRoute(vm) { action, id ->
+                                CharacterRoute(vm, topInsetDp, bottomInsetDp) { action, id ->
                                     val event = JSObject()
                                     if (action == "navigate") event.put("view", id)
                                     else {
@@ -64,6 +71,7 @@ class NativeCharacterPlugin : Plugin() {
                         .findViewById<ViewGroup>(android.R.id.content)
                         .addView(view, FrameLayout.LayoutParams(-1, -1))
                 }
+                showNav(call.getObject("navScene"))
                 call.resolve()
             } catch (e: Exception) {
                 remove()
@@ -81,7 +89,10 @@ class NativeCharacterPlugin : Plugin() {
         }
         activity.runOnUiThread {
             try {
-                if (view != null) repository.accept(data)
+                if (view != null) {
+                    repository.accept(data)
+                    showNav(call.getObject("navScene"))
+                }
                 call.resolve()
             } catch (e: Exception) {
                 call.reject("Character projection rejected", e)
@@ -97,7 +108,24 @@ class NativeCharacterPlugin : Plugin() {
         }
     }
 
+    private fun showNav(scene: org.json.JSONObject?) {
+        requireNotNull(scene) { "Missing shared Overview chrome" }
+        if (chrome == null)
+            chrome =
+                LiveOverviewShell(activity, bridge.webView, chromeOnly = true) { id ->
+                    notifyListeners("nav-action", JSObject().put("id", id))
+                }
+
+        chrome?.show(scene)
+        chrome?.contentInsetsDp()?.let { (top, bottom) ->
+            topInsetDp = top
+            bottomInsetDp = bottom
+        }
+    }
+
     private fun remove() {
+        chrome?.close()
+        chrome = null
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
             it.disposeComposition()

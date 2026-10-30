@@ -128,4 +128,65 @@ class OverviewParityTest {
         }
     }
 
+    @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var main: MainActivity
+            scenario.onActivity { main = it }
+            waitUntil("native tab bridges ready") {
+                evaluate(main, "typeof openNativeCharacter==='function' && typeof setNativeNutritionEnabled==='function'") == "true"
+            }
+            evaluate(main, "window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.setProperty('display','none','important')});document.body.classList.remove('noscroll');save();renderAll();navigate('character');true")
+            evaluate(main, "openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
+            waitUntil("Character with shared chrome") {
+                var ready = false
+                instrumentation.runOnMainSync {
+                    val root = main.window.decorView
+                    ready = root.findViewWithTag<View>("native-character-screen") != null &&
+                        root.findViewWithTag<View>("native-shared-chrome") != null
+                }
+                ready && evaluate(main, "window.__sharedCharacterOpened===true") == "true"
+            }
+            evaluate(main, "navigate('meals');true")
+            waitUntil("Character overlay removed") {
+                var gone = false
+                instrumentation.runOnMainSync {
+                    gone = main.window.decorView.findViewWithTag<View>("native-character-screen") == null
+                }
+                gone
+            }
+            waitUntil("Web Food page active") { evaluate(main, "lmaView()") == "\"meals\"" }
+            SystemClock.sleep(500)
+            val webFood = shot(main.bridge.webView, "food-web.png")
+            evaluate(main, "setNativeNutritionEnabled(true);true")
+            waitUntil("Food with shared chrome") {
+                var ready = false
+                instrumentation.runOnMainSync {
+                    val root = main.window.decorView
+                    ready = root.findViewWithTag<View>("native-character-screen") == null &&
+                        root.findViewWithTag<View>("native-shared-chrome") != null &&
+                        root.findViewWithTag<View>("native-nutrition-screen") != null
+                }
+                ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
+            }
+            SystemClock.sleep(900)
+            val nativeFood = shot(main.bridge.webView, "food-native.png")
+            var changedPixels = 0
+            for (y in nativeFood.height / 4 until nativeFood.height * 3 / 4 step 4) {
+                for (x in 0 until nativeFood.width step 4) {
+                    if (nativeFood.getPixel(x, y) != webFood.getPixel(x, y)) changedPixels++
+                }
+            }
+            assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
+            evaluate(main, "navigate('dashboard');true")
+            waitUntil("native Food chrome removed") {
+                var gone = false
+                instrumentation.runOnMainSync {
+                    gone = main.window.decorView.findViewWithTag<View>("native-shared-chrome") == null
+                }
+                gone
+            }
+            assertEquals("Default native tabs stay adjacent", "true", evaluate(main, "(()=>{let ids=[...document.querySelectorAll('.sidebar [data-view]')].map(e=>e.dataset.view);let i=ids.indexOf('dashboard');return i>=0&&ids[i+1]==='character'&&ids[i+2]==='food'})()"))
+        }
+    }
+
 }
