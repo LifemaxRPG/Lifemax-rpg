@@ -7,6 +7,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 ## Done since the audit
 
 - NAV-6: the hand-over reads the NativeTabs registry (`has`, `covered`); a new native tab needs no edit in 50-native-overview.js.
+- Native screens on a reload (A23 item 10): whenever the WebView starts loading a page, every native screen goes at once, the shared bars with it, and Cash's activity finishes, since its session belonged to the page that is gone and a save would never be acknowledged (`app/shell/NativeScreens.kt`, a `WebViewListener` that MainActivity hands to the bridge builder: Capacitor replaces the bridge's listener list after loading the plugins, so a plugin cannot add one in `load()`). It is the net under the page's own `lmaLeaveNative`, for the reloads the page does not start (LiveWeb switching to a stored build, an error page, any other navigation). `NativeScreensTest` fails on a listener that does nothing; the hand-over simulation checks that no tab switch loads a page. The phone cannot trigger the net itself (every reload it can start closes the screens first); still to see there: a start with and without a stored web build, instant tab switches, and an over-the-air restart and an import each leaving no screen behind. A renderer crash is no reload here: Capacitor reports it unhandled, so Android ends the app.
 - CI-1: on the release branches the APK must launch and keep running on an emulator before anything is published (android-wrapper/smoke_launch.sh); the tab-switch timing check after it stays advisory.
 - CI-3: publishing replaces the files of the `latest` release in place (upload under a temporary name, then rename), version.json last, and keeps the APK it replaces as `LifeMax-RPG-previous.apk` in the same release.
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
@@ -64,8 +65,6 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 ## Navigation and shell
 
-- **low** — A native screen left open when the page reloads stays on top of the new page, which does not know it is there  
-  The in-app reloads (an over-the-air restart, an import) now close every native screen first (`lmaLeaveNative`, `NativeTabs.closeAll`). A reload the page does not start itself, such as after its renderer crashes, is not covered: in ComposeTabPlugin, NativeNutritionPlugin and NativeOverviewPlugin, a `bridge.addWebViewListener` whose `onPageStarted` closes the screen would be. *(integration review, 30 October 2026)*
 - **medium** — There is no way into Log except navigate('log'); nothing prefills it, and the native prefill hook has no caller  
   Add one entry function, e.g. openLog({type,duration,quality,skill,notes}). It validates against `rules` and the NativeLogProjection.clean limits, writes to both the DOM form and setDraft, then calls lmaNavTo('log'). Route… *(navigation-shell NAV-3, not verified)*
 - **medium** — *Replay done (see above); the 9 s cold-start wait remains.* Launch intent (deep link, widget extra) is replayed after process death or a recents restore; widget tap on a cold start waits 9 s  

@@ -8,6 +8,7 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.feature.cash.CashActivity
 import com.lifemax.rpg.feature.cash.CashFeedback
 import com.lifemax.rpg.feature.cash.CashHost
@@ -16,6 +17,10 @@ import org.json.JSONObject
 
 @CapacitorPlugin(name = "NativeCash")
 class NativeCashPlugin : Plugin() {
+    override fun load() {
+        NativeScreens.add(this, CashHost::end)
+    }
+
     @PluginMethod
     fun open(call: PluginCall) {
         val id = call.getString("session")
@@ -71,5 +76,10 @@ class NativeCashPlugin : Plugin() {
             }
             call.resolve()
         }
+    }
+
+    override fun handleOnDestroy() {
+        NativeScreens.remove(this)
+        super.handleOnDestroy()
     }
 }

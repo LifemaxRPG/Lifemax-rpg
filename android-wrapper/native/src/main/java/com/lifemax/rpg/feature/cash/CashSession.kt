@@ -34,4 +34,16 @@ internal object CashHost {
     var session: CashSession? = null
     var screen = WeakReference<CashActivity>(null)
     var closed: ((String, String) -> Unit)? = null
+
+    /**
+     * A new page started loading: the page that owns the session is gone. The new page holds no
+     * session and the old one's listeners went with it, so a save would never be acknowledged and
+     * Cash would wait for good. Cash closes, and opens afresh from the new page.
+     */
+    fun end() {
+        session = null
+        closed = null
+        screen.get()?.finish()
+        screen.clear()
+    }
 }

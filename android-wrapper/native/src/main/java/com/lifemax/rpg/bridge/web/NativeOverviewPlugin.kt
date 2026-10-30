@@ -7,6 +7,7 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.LiveOverviewShell
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.OverviewBars
 import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
@@ -15,6 +16,10 @@ import org.json.JSONObject
 class NativeOverviewPlugin : Plugin() {
     private var shell: LiveOverviewShell? = null
     private var session = ""
+
+    override fun load() {
+        NativeScreens.add(this, ::closeShell)
+    }
 
     @PluginMethod
     fun capabilities(call: PluginCall) {
@@ -57,8 +62,7 @@ class NativeOverviewPlugin : Plugin() {
                 shell?.let { TabTiming.attached(it.root, "overview") }
                 call.resolve()
             } catch (e: Exception) {
-                shell?.close()
-                shell = null
+                closeShell()
                 call.reject("Could not attach Overview controls", e)
             }
         }
@@ -93,9 +97,7 @@ class NativeOverviewPlugin : Plugin() {
     fun close(call: PluginCall) {
         activity.runOnUiThread {
             if (call.getString("session") == session) {
-                shell?.close()
-                shell = null
-                OverviewBars.shell = null
+                closeShell()
                 notifyListeners("closed", JSObject().put("session", session))
             }
             call.resolve()
@@ -103,11 +105,14 @@ class NativeOverviewPlugin : Plugin() {
     }
 
     override fun handleOnDestroy() {
-        activity.runOnUiThread {
-            shell?.close()
-            shell = null
-            OverviewBars.shell = null
-        }
+        NativeScreens.remove(this)
+        activity.runOnUiThread { closeShell() }
         super.handleOnDestroy()
+    }
+
+    private fun closeShell() {
+        shell?.close()
+        shell = null
+        OverviewBars.shell = null
     }
 }

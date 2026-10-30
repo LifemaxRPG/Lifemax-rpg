@@ -17,6 +17,7 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.lifemax.rpg.app.shell.ChromeHost
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
 
@@ -27,7 +28,8 @@ import org.json.JSONObject
  * take a projection from the page ([accept]) and what to draw ([Content]).
  *
  * Calls arrive in the order the page made them. Closing only hides the screen, which stays composed
- * so coming back is instant. Contract: A03, A07, A23, A24.
+ * so coming back is instant; a page that starts loading removes it ([NativeScreens]). Contract:
+ * A03, A07, A23, A24.
  */
 abstract class ComposeTabPlugin : Plugin() {
     /** The page view this tab shows. Also the timing label and the view's tag. */
@@ -139,11 +141,16 @@ abstract class ComposeTabPlugin : Plugin() {
         }
     }
 
+    override fun load() {
+        NativeScreens.add(this, ::remove)
+    }
+
     override fun handleOnResume() {
         if (view?.visibility == View.VISIBLE) notifyListeners("refresh", JSObject())
     }
 
     override fun handleOnDestroy() {
+        NativeScreens.remove(this)
         activity.runOnUiThread {
             remove()
             store.clear()
