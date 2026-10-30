@@ -21637,6 +21637,7 @@ function lmcRender(){
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
     let sequence = 0, active = false, opening = false, handshake = null, plugin = null, ready = false, timer = 0, queued = 0;
+    let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
 
     function available() {
       try {
@@ -21683,6 +21684,7 @@ function lmcRender(){
       }
     }
     async function close() {
+      generation++;
       clearInterval(timer);
       clearTimeout(queued);
       active = false;
@@ -21695,6 +21697,7 @@ function lmcRender(){
         return false;
       }
       opening = true;
+      const mine = generation;
       const openedAt = now();
       try {
         if (!ready) {
@@ -21722,6 +21725,12 @@ function lmcRender(){
         await plugin.open({ snapshot: data, navScene: scene });
         const nativeAt = now();
         window.__nativeTabPerf = { feature: cfg.id, handshakeMs: handshakeAt - openedAt, projectionMs: projectionAt - handshakeAt, chromeMs: chromeAt - projectionAt, nativeMs: nativeAt - chromeAt, totalMs: nativeAt - openedAt };
+        if (mine !== generation) {
+          // closed while this open was in flight: the plugin runs that close right after this open, so if the tab is still
+          // wanted it has to be opened again behind it, or the screen ends up hidden
+          opening = false;
+          return blocked() ? false : open(force);
+        }
         if (blocked()) {
           await close();
           return false;
@@ -22148,6 +22157,7 @@ function lmcRender(){
     const generation = ++N.generation;
     N.opening = true;
     N.plugin = p;
+    let again = false; // cancelled while opening and wanted again meanwhile: open once more when this attempt has cleaned up
     try {
       await ready(p);
       const caps = N.caps || (N.caps = await p.capabilities());
@@ -22164,6 +22174,7 @@ function lmcRender(){
       window.__nativeTabPerf = {feature:'food',projectionMs:projectionAt-openedAt,capabilitiesMs:capabilitiesAt-projectionAt,chromeMs:chromeAt-capabilitiesAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt,chromeCache:NativeOverviewSnapshot.diagnostics()};
       if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
         await p.close({ session: id });
+        again = true;
         return;
       }
       N.open = true;
@@ -22177,6 +22188,7 @@ function lmcRender(){
     } finally {
       if (N.generation === generation) N.opening = false;
       NativeTabs.flush('meals');
+      if (again && view() === 'meals' && enabled()) queueMicrotask(open);
     }
   }
 

@@ -34,6 +34,7 @@
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
     let sequence = 0, active = false, opening = false, handshake = null, plugin = null, ready = false, timer = 0, queued = 0;
+    let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
 
     function available() {
       try {
@@ -80,6 +81,7 @@
       }
     }
     async function close() {
+      generation++;
       clearInterval(timer);
       clearTimeout(queued);
       active = false;
@@ -92,6 +94,7 @@
         return false;
       }
       opening = true;
+      const mine = generation;
       const openedAt = now();
       try {
         if (!ready) {
@@ -119,6 +122,12 @@
         await plugin.open({ snapshot: data, navScene: scene });
         const nativeAt = now();
         window.__nativeTabPerf = { feature: cfg.id, handshakeMs: handshakeAt - openedAt, projectionMs: projectionAt - handshakeAt, chromeMs: chromeAt - projectionAt, nativeMs: nativeAt - chromeAt, totalMs: nativeAt - openedAt };
+        if (mine !== generation) {
+          // closed while this open was in flight: the plugin runs that close right after this open, so if the tab is still
+          // wanted it has to be opened again behind it, or the screen ends up hidden
+          opening = false;
+          return blocked() ? false : open(force);
+        }
         if (blocked()) {
           await close();
           return false;

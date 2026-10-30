@@ -367,6 +367,7 @@
     const generation = ++N.generation;
     N.opening = true;
     N.plugin = p;
+    let again = false; // cancelled while opening and wanted again meanwhile: open once more when this attempt has cleaned up
     try {
       await ready(p);
       const caps = N.caps || (N.caps = await p.capabilities());
@@ -383,6 +384,7 @@
       window.__nativeTabPerf = {feature:'food',projectionMs:projectionAt-openedAt,capabilitiesMs:capabilitiesAt-projectionAt,chromeMs:chromeAt-capabilitiesAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt,chromeCache:NativeOverviewSnapshot.diagnostics()};
       if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
         await p.close({ session: id });
+        again = true;
         return;
       }
       N.open = true;
@@ -396,6 +398,7 @@
     } finally {
       if (N.generation === generation) N.opening = false;
       NativeTabs.flush('meals');
+      if (again && view() === 'meals' && enabled()) queueMicrotask(open);
     }
   }
 

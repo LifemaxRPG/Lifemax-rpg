@@ -18,17 +18,18 @@ const WANT = { dashboard: 'overview', character: 'character', meals: 'food' };
   await p.addInitScript(`
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false};window.__busy=0;window.__gap=[];
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false};window.__busy=0;window.__log=[];window.__t=()=>Math.round(performance.now());
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     /* Capacitor hands a plugin's calls to the main thread in the order they were made, so each fake does its calls one after another */
-    const mk=(name,vis)=>{const ls={};let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
+    /* Overview and Food only hide on a close that names the session they currently hold (as the Kotlin plugins do); Character's close is unconditional */
+    const mk=(name,vis,sessions)=>{const ls={};let current='';let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
-      open:a=>inOrder(async()=>{await wait(window.__rnd(10,120));window.__vis[vis]=true}),
+      open:a=>inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));window.__vis[vis]=true;window.__log.push(window.__t()+' '+name+' open<')}),
       update:async()=>{},
-      close:a=>inOrder(async()=>{await wait(window.__rnd(5,40));window.__vis[vis]=false}).then(()=>emit('closed',{session:a&&a.session})),
+      close:a=>inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));if(!stale)window.__vis[vis]=false;window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session})),
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
       handshake:async()=>({protocol:1,capabilities:['character.projection.v1']})}};
-    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview'),NativeCharacter:mk('character','character'),NativeNutrition:mk('food','food')},registerPlugin:()=>({}),convertFileSrc:u=>u};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true)},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   await p.goto('file://' + out);
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
@@ -38,16 +39,17 @@ const WANT = { dashboard: 'overview', character: 'character', meals: 'food' };
   const failures = []; let hops = 0;
   const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(12345);
   for (let seed = 1; seed <= SEEDS; seed++) {
-    await p.evaluate(s => { window.__seed = s }, seed);
+    await p.evaluate(s => { window.__seed = s; window.__log = [] }, seed);
     const tabs = Object.keys(WANT), n = 3 + Math.floor(rng() * 9), seq = [];
     for (let i = 0; i < n; i++) seq.push({ to: tabs[Math.floor(rng() * 3)], gap: Math.floor(rng() * 4) * 25 });
-    for (const step of seq) { await p.evaluate(v => lmaNavTo(v, { fast: true }), step.to); if (step.gap) await settle(step.gap); hops++ }
+    for (const step of seq) { await p.evaluate(v => { window.__log.push(window.__t() + ' >> go ' + v); lmaNavTo(v, { fast: true }) }, step.to); if (step.gap) await settle(step.gap); hops++ }
     await settle(4500);
-    const r = await p.evaluate(() => ({ vis: Object.keys(window.__vis).filter(k => window.__vis[k]).join('+'), busy: window.__busy, view: lmaView() }));
+    const r = await p.evaluate(() => ({ vis: Object.keys(window.__vis).filter(k => window.__vis[k]).join('+'), busy: window.__busy, view: lmaView(), log: window.__log }));
     const last = seq[seq.length - 1].to;
-    if (r.vis !== WANT[last] || r.busy !== 0) failures.push({ seed, seq: seq.map(s => s.to + '+' + s.gap).join(' '), showing: r.vis || 'NONE', want: WANT[last], busy: r.busy, view: r.view });
+    if (r.vis !== WANT[last] || r.busy !== 0) failures.push({ seed, seq: seq.map(s => s.to + '+' + s.gap).join(' '), showing: r.vis || 'NONE', want: WANT[last], busy: r.busy, view: r.view, log: r.log });
   }
   console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops): the last tab alone is showing after each');
+  if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view));
   if (errs.length) console.log('FAIL script errors', errs.slice(0, 3));
   await b.close(); fs.unlinkSync(out); process.exit(failures.length || errs.length ? 1 : 0);
