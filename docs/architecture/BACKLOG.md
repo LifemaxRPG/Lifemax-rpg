@@ -8,7 +8,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 - NAV-6: the hand-over reads the NativeTabs registry (`has`, `covered`); a new native tab needs no edit in 50-native-overview.js.
 - CI-1: on the release branches the APK must launch and keep running on an emulator before anything is published (android-wrapper/smoke_launch.sh); the tab-switch timing check after it stays advisory.
-- CI-3: publishing replaces the files of the `latest` release in place, version.json last, and keeps the build it replaces as the `previous` release.
+- CI-3: publishing replaces the files of the `latest` release in place (upload under a temporary name, then rename), version.json last, and keeps the APK it replaces as `LifeMax-RPG-previous.apk` in the same release.
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
 - C4: A33 in CONTRACT.md is the definition of done for a native tab (beta until then; web code deleted only after a release as default).

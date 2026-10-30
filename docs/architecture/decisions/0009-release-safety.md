@@ -9,7 +9,7 @@ Every push to the release branch publishes an APK and a web bundle that the owne
 ## Decision
 
 1. A release waits for the APK build with its unit and screenshot tests, the web tests with the hand-over simulation, and a blocking launch check: the APK must install, open and keep running on an emulator (`android-wrapper/smoke_launch.sh`).
-2. The `latest` release is updated in place, `version.json` last, so an interrupted publish leaves a consistent or an older set; the build it replaces is kept as the `previous` release.
+2. The `latest` release is updated in place with plain REST calls, `version.json` last, so an interrupted publish leaves a consistent or an older set. Each file is uploaded under a temporary name before the old one is touched, so a failed upload changes nothing. The APK and `version.json` it replaces stay in the same release as `LifeMax-RPG-previous.apk` and `version-previous.json`. The Actions token may upload, rename and delete release files but not create a release or move its tag onto commits that change workflow files (runs 280 to 284 failed on exactly that), so publishing never does either.
 3. A release-branch build without the permanent signing key fails.
 4. Native changes must raise `NativeApi.VALUE`, so phones on an older APK are sent to the new APK instead of a web bundle they cannot run (guard step).
 
@@ -17,4 +17,4 @@ Every push to the release branch publishes an APK and a web bundle that the owne
 
 - A crash on launch can no longer reach the phone through CI; a page-level error that does not crash is caught by the web tests, not by the launch check.
 - The emulator boots on every release build; an emulator infrastructure failure now blocks a release until re-run.
-- The owner can always reinstall the previous APK from the releases page.
+- The owner can always reinstall the previous APK from the releases page (`LifeMax-RPG-previous.apk`).
