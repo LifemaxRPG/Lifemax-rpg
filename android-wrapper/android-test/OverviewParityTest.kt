@@ -204,24 +204,36 @@ class OverviewParityTest {
                 }
             }
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
+            val nativeSwitchMs = mutableListOf<Long>()
             repeat(3) {
+                val characterStart = SystemClock.uptimeMillis()
                 val tapBounds = clickSharedTab("Character")
-                SystemClock.sleep(1000)
-                val trace = evaluate(main, "JSON.stringify({view:lmaView(),body:document.body.className,toggle:lmaLoad().nativeCharacter})")
-                waitUntil("Character opens from native Food bar; bounds=$tapBounds state=$trace") {
+                waitUntil("Character opens from native Food bar; bounds=$tapBounds") {
                     var attached = false
                     instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
                     attached && evaluate(main, "lmaView()") == "\"character\""
                 }
+                nativeSwitchMs.add(SystemClock.uptimeMillis() - characterStart)
+                val foodStart = SystemClock.uptimeMillis()
                 clickSharedTab("Food")
                 waitUntil("Food opens from native Character bar") {
                     var attached = false
                     instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-nutrition-screen") != null }
                     attached && evaluate(main, "lmaView()") == "\"meals\""
                 }
+                nativeSwitchMs.add(SystemClock.uptimeMillis() - foodStart)
             }
+            val overviewStart = SystemClock.uptimeMillis()
             clickSharedTab("Overview")
-            waitUntil("Overview opens from native Food bar") { evaluate(main, "lmaView()") == "\"dashboard\"" }
+            waitUntil("Overview opens from native Food bar") {
+                var attached = false
+                instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("overview-live-shell") != null }
+                attached && evaluate(main, "lmaView()") == "\"dashboard\""
+            }
+            nativeSwitchMs.add(SystemClock.uptimeMillis() - overviewStart)
+            val perf = JSONObject().put("switchesMs", org.json.JSONArray(nativeSwitchMs))
+            File(instrumentation.targetContext.filesDir, "nav-perf.json").writeText(perf.toString())
+            export("nav-perf.json")
             waitUntil("native Food chrome removed") {
                 var gone = false
                 instrumentation.runOnMainSync {
