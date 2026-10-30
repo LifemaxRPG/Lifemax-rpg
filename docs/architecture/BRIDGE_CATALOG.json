@@ -143,10 +143,11 @@
   },
   {
    "feature": "recipes",
-   "status": "web-half-ready",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeRecipes",
    "owner": "web-food-engine",
-   "pluginSource": "bridge/web/NativeRecipesPlugin.kt (NativeRecipes, extends ComposeTabPlugin; to be written, and named here as nativePlugin when it is registered)",
-   "screenSource": "feature/recipes/presentation (to be written)",
+   "pluginSource": "bridge/web/NativeRecipesPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/recipes/presentation/RecipesScreen.kt",
    "webModule": "50-native-recipes.js (NativeTabKit)",
    "inventory": "docs/architecture/RECIPES_INVENTORY.md",
    "capabilities": [

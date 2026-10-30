@@ -27,6 +27,7 @@ import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.core.designsystem.components.ChoicePill
+import com.lifemax.rpg.core.designsystem.components.PaneSwitch
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.RoundButton
@@ -58,6 +59,7 @@ class GalleryScreenshotTest {
         section("pills", light) { Pills() }
         section("segments", light) { Segments() }
         section("buttons", light) { Buttons() }
+        section("switch", light) { Switches(light) }
         section("bars", light) { Bars() }
         section("icons", light) { Icons() }
     }
@@ -155,6 +157,14 @@ private fun Buttons() = SurfaceCard {
         Text("45 min", color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp)
         RoundButton("+", "Five minutes more", {})
     }
+}
+
+/** Native Food's own colours, in either theme. */
+@Composable
+private fun Switches(light: Boolean) = SurfaceCard {
+    SectionLabel("Pane switch")
+    PaneSwitch(listOf("Meals", "Recipes"), "Meals", light, {}, Modifier.padding(top = 10.dp))
+    PaneSwitch(listOf("Meals", "Recipes"), "Recipes", light, {}, Modifier.padding(top = 10.dp))
 }
 
 @Composable

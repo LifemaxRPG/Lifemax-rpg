@@ -427,6 +427,7 @@ The owner's questions stay open; phase 1 keeps today's behaviour (catalogue, cat
 | Meals pill, "＋ Log a meal" | the action `navigate` with `meals`. NativeTabKit now goes to a view named by an action without closing first (it used to close, then navigate, which flashed the page between two native screens); the hand-over closes the screen once native Food shows, or at once for classic Meals |
 | Product link | the screen opens the projected `https` URL itself (Android intent); nothing is sent to the page |
 | Native Food's switch | `recipes` is handled in `onAction` (hand-over), no longer by `fallback` |
+| Native screen | `NativeRecipesPlugin` with `feature/recipes`: the pane drawn from the projection, the page's filter rule in the view model (parity with `recipes-filters.json`), the switch shared with native Food (`PaneSwitch`); differences from the web are listed in MIGRATION.md |
 
 Differences from the sketch in 7.8: going to Meals is the `navigate` action rather than a `meals` command, so no projection is sent just before leaving; the card's words come from the page's `recipeCard` rather than raw fields; the projection carries `searchText` so the screen applies the page's rule to the page's own text; `tabs` and `classId` are not projected (the bars come from the shared chrome, and nothing on the screen shows the class).
 
