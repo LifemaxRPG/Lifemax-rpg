@@ -4,8 +4,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 
 // The exact 8 × 8 masks of the web design system (06-runtime.js), drawn natively.
 private val pixelMasks =
@@ -36,6 +38,8 @@ private val pixelMasks =
         "gear" to intArrayOf(0x18, 0x5A, 0x3C, 0xE7, 0xE7, 0x3C, 0x5A, 0x18),
         "dice" to intArrayOf(0x7E, 0xFF, 0xDB, 0xFF, 0xFF, 0xDB, 0xFF, 0x7E),
         "dial" to intArrayOf(0x3C, 0x4E, 0x8F, 0x8F, 0x81, 0x81, 0x42, 0x3C),
+        // Life Director's fork and knife (logic.js MEAL_ROWS)
+        "meal" to intArrayOf(0xA6, 0xA6, 0xE6, 0x46, 0x44, 0x44, 0x44, 0x44),
     )
 
 /** A web design-system pixel icon by name; an unknown name draws the star. */
@@ -47,6 +51,29 @@ fun PixelIcon(name: String, color: Color, modifier: Modifier = Modifier) {
         mask.forEachIndexed { y, row ->
             for (x in 0..7) if (row and (128 shr x) != 0)
                 drawRect(color, Offset(x * unit, y * unit), Size(unit, unit))
+        }
+    }
+}
+
+/**
+ * The icon as one path of [size] at [topLeft], each run of lit cells a rectangle, for drawing it
+ * many times on a canvas.
+ */
+fun pixelIconPath(name: String, size: Float, topLeft: Offset): Path {
+    val mask = pixelMasks[name] ?: pixelMasks.getValue("star")
+    val unit = size / 8f
+    return Path().apply {
+        mask.forEachIndexed { y, row ->
+            var x = 0
+            while (x < 8) {
+                val start = x
+                while (x < 8 && row and (128 shr x) != 0) x++
+                if (x == start) x++
+                else
+                    addRect(
+                        Rect(start * unit, y * unit, x * unit, (y + 1) * unit).translate(topLeft)
+                    )
+            }
         }
     }
 }

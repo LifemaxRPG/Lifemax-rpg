@@ -6,6 +6,7 @@ import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -73,6 +74,10 @@ abstract class ComposeTabPlugin : Plugin() {
     /** Survives the view being rebuilt; cleared with the plugin. */
     protected val store = ViewModelStore()
 
+    /** Whether the screen is showing. A hidden screen runs nothing continuous (A24). */
+    protected var visible by mutableStateOf(false)
+        private set
+
     private var view: ComposeView? = null
     private var topInsetDp by mutableFloatStateOf(64f)
     private var bottomInsetDp by mutableFloatStateOf(72f)
@@ -94,6 +99,7 @@ abstract class ComposeTabPlugin : Plugin() {
                 val screen = view ?: createView()
                 screen.visibility = View.VISIBLE
                 screen.bringToFront()
+                visible = true
                 showChrome(call.getObject("navScene"))
                 TabTiming.attached(screen, tabId)
                 call.resolve()
@@ -190,11 +196,13 @@ abstract class ComposeTabPlugin : Plugin() {
     /** Leaving the tab only hides the screen; it stays composed so the next visit is instant. */
     private fun hide() {
         view?.visibility = View.GONE
+        visible = false
         ChromeHost.leave(this)
         notifyListeners("closed", JSObject())
     }
 
     private fun remove() {
+        visible = false
         ChromeHost.closeNow(this)
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)

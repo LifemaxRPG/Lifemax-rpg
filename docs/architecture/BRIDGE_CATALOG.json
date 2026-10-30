@@ -72,7 +72,8 @@
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeLifeDirector",
    "owner": "web-life-director",
-   "pluginSource": "bridge/web/NativeLifeDirectorPlugin.kt (extends ComposeTabPlugin), in progress",
+   "pluginSource": "bridge/web/NativeLifeDirectorPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/lifedirector/presentation/LifeDirectorScreen.kt; the dial in feature/lifedirector/presentation/dial",
    "webModule": "50-native-director.js (NativeTabKit) on LifeDirector.native in src/features/life-director/logic.js",
    "capabilities": [
     "director.today.v1"
@@ -94,6 +95,8 @@
     "regroup, dismissBanner: the banner"
    ],
    "readContract": {
+    "snapshotDto": "feature/lifedirector/domain/LifeDirectorProjection.kt",
+    "decoder": "feature/lifedirector/data/WebLifeDirectorRepository.kt (LifeDirectorJson.kt)",
     "fixtures": "native/src/test/resources/fixtures/director-today.json, director-tomorrow.json (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence",
     "invalidation": "LifeDirector.native.onChange (a render, a sheet or the guide opening or closing, a message), host resume, foreground return, 15-second refresh while visible"
