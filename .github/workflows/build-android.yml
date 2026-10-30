@@ -262,26 +262,44 @@ jobs:
             "${{ github.run_number }}" "$GITHUB_SHA" "${{ needs.apk.outputs.stable == '1' }}" "$NATIVE_API" "$BASE" \
             "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
           cat version.json
+          R="$GITHUB_REPOSITORY"
           NOTES="Build ${{ github.run_number }} from commit $GITHUB_SHA"
-          # what this run's token can see, so a refused publish explains itself
-          gh api "repos/$GITHUB_REPOSITORY" --jq '"token sees \(.full_name), permissions \(.permissions)"' || true
-          gh api "repos/$GITHUB_REPOSITORY/releases/tags/latest" --jq '"token sees release \(.id) with \(.assets | length) files"' || true
-          if gh release download latest --repo "$GITHUB_REPOSITORY" --dir prev --pattern LifeMax-RPG.apk --pattern version.json; then
-            # the build being replaced stays downloadable as "previous", in case the new one misbehaves on the phone
-            PREV_SHA=$(python3 -c "import json;print(json.load(open('prev/version.json')).get('sha',''))")
-            gh release delete previous --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
-            gh release create previous prev/LifeMax-RPG.apk prev/version.json --repo "$GITHUB_REPOSITORY" --latest=false \
-              --title "LifeMax (previous build)" --notes "The build before latest (commit $PREV_SHA). Install it if the latest build misbehaves." \
-              ${PREV_SHA:+--target "$PREV_SHA"}
+          # Plain REST calls throughout: in runs 280-283 the token read the release this way, while gh's release commands
+          # reported it missing and refused to create one.
+          asset() { # release id, name: that file's asset id, if any
+            gh api "repos/$R/releases/$1/assets" --jq ".[] | select(.name == \"$2\") | .id"
+          }
+          upload() { # release id, file, name: replace that file of the release. The new file goes up under a temporary
+                     # name first, so a failed upload changes nothing; the old one is then deleted and the new one renamed.
+            local old new
+            old=$(asset "$1" "$3.new"); if [ -n "$old" ]; then gh api -X DELETE "repos/$R/releases/assets/$old" --silent; fi
+            new=$(curl -sS --fail-with-body -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/octet-stream" \
+              --data-binary @"$2" "https://uploads.github.com/repos/$R/releases/$1/assets?name=$3.new" | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+            old=$(asset "$1" "$3"); if [ -n "$old" ]; then gh api -X DELETE "repos/$R/releases/assets/$old" --silent; fi
+            gh api -X PATCH "repos/$R/releases/assets/$new" -f name="$3" --jq '"uploaded " + .name'
+          }
+          keep_previous() { # the build being replaced stays downloadable as "previous", in case the new one misbehaves
+            curl -fsSL "$BASE/LifeMax-RPG.apk" -o prev.apk && curl -fsSL "$BASE/version.json" -o prev.json || return 1
+            local sha old id
+            sha=$(python3 -c "import json;print(json.load(open('prev.json')).get('sha',''))")
+            old=$(gh api "repos/$R/releases/tags/previous" --jq .id 2>/dev/null || true)
+            if [ -n "$old" ]; then gh api -X DELETE "repos/$R/releases/$old" --silent; fi
+            gh api -X DELETE "repos/$R/git/refs/tags/previous" --silent 2>/dev/null || true
+            id=$(gh api -X POST "repos/$R/releases" -f tag_name=previous -f target_commitish="${sha:-$GITHUB_SHA}" -f make_latest=false \
+              -f name="LifeMax (previous build)" -f body="The build before latest (commit $sha). Install it if the latest build misbehaves." --jq .id) || return 1
+            upload "$id" prev.apk LifeMax-RPG.apk && upload "$id" prev.json version.json
+          }
+          ID=$(gh api "repos/$R/releases/tags/latest" --jq .id 2>/dev/null || true)
+          if [ -n "$ID" ]; then
+            keep_previous || echo "::warning::The previous build could not be kept as a separate release; publishing the new one anyway."
             # replace the files in place, never deleting the release; version.json goes last, so a phone checking part-way
-            # through still sees a matching set (an older version.json with a newer app.html fails its hash check and is retried)
-            git push --force origin "$GITHUB_SHA:refs/tags/latest"
-            gh release upload latest LifeMax-RPG.apk app.html --clobber --repo "$GITHUB_REPOSITORY"
-            gh release upload latest version.json --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit latest --notes "$NOTES" --repo "$GITHUB_REPOSITORY"
+            # through sees an older or a matching set (an older version.json with a newer app.html fails its hash check and is retried)
+            upload "$ID" LifeMax-RPG.apk LifeMax-RPG.apk
+            upload "$ID" app.html app.html
+            upload "$ID" version.json version.json
+            gh api -X PATCH "repos/$R/releases/$ID" -f body="$NOTES" --silent
           else
-            # no readable latest release: the original path (replace the whole release)
-            gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
-            gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
+            # first publish: no latest release yet
+            gh release create latest LifeMax-RPG.apk app.html version.json --repo "$R" \
               --title "LifeMax (latest build)" --notes "$NOTES" --target "$GITHUB_SHA"
           fi
