@@ -92,6 +92,6 @@
  new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
- window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{const target=N.navActions.get(id)||N.actions.get(id);window.__nativeNavTrace={id,label:target?.textContent?.trim(),connected:!!target?.isConnected,view:lmaView()};if(target?.isConnected)target.click()}};
+ window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{const target=N.navActions.get(id)||N.actions.get(id);if(target?.isConnected)target.click()}};
 })();
 
