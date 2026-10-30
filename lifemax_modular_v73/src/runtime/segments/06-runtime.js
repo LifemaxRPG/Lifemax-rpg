@@ -50,7 +50,7 @@ function planToggle(date,key,i,checked){const p=state.plan,c=p.checks[date]=p.ch
   const act={id:'plan_'+date,type:'plan',kind:d.kind,planDate:date,name:'Plan: '+d.label,icon:d.icon,duration:0,skill:'Training',primary:d.primary,secondary:sc,xp,date:when,notes:'',xpSplit:split};
   state.activities=state.activities.filter(a=>a.id!==act.id);state.activities.push(act);split.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP.Training=(state.skillXP.Training||0)+xp;c.actId=act.id;msg=d.short+' complete · +'+xp+' XP'}
  else if(!done&&c.actId){removeAct(c.actId);delete c.actId;msg='Session reopened · XP removed'}
- save();if(msg)toast(msg)}
+ const saved=save();if(msg&&saved)toast(msg);return {saved,message:msg}}
 function planVal(date,key,val){const c=state.plan.checks[date]=state.plan.checks[date]||{s:{},v:{},log:{}};c.v=c.v||{};c.v[key]=val.trim();save()}
 function planLog(date,key,val){const c=state.plan.checks[date]=state.plan.checks[date]||{s:{},v:{},log:{}};c.log=c.log||{};const t=val.trim();if(t)c.log[key]=t;else delete c.log[key];save()}
 function lastVal(key,date){const ds=Object.keys(state.plan.checks).filter(k=>k<date&&((state.plan.checks[k].v||{})[key])).sort();return ds.length?state.plan.checks[ds[ds.length-1]].v[key]:''}

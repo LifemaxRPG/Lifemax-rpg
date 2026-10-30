@@ -68,6 +68,42 @@
    "canonicalLayout": true
   },
   {
+   "feature": "plan",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativePlan",
+   "owner": "web-core-gameplay",
+   "pluginSource": "bridge/web/NativePlanPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/plan/presentation/PlanScreen.kt",
+   "webModule": "50-native-plan.js (NativeTabKit)",
+   "inventory": "docs/architecture/PLAN_INVENTORY.md",
+   "capabilities": [
+    "plan.projection.v1"
+   ],
+   "commands": {
+    "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
+   },
+   "writes": [
+    "planToggle via toggle (web-owned rules and save)"
+   ],
+   "delegatedInteractions": [
+    "gwrStart / gwrResume (guided workout)",
+    "planVal (value field on the page)",
+    "planLog (session log field on the page)",
+    "leavePlan",
+    "startPlan and the class offers (no plan: the page is not covered)"
+   ],
+   "readContract": {
+    "snapshotDto": "feature/plan/domain/PlanProjection.kt",
+    "decoder": "feature/plan/data/WebPlanRepository.kt",
+    "fixtures": "native/src/test/resources/fixtures/plan-midweek.json, plan-complete.json, plan-scholar.json (tools/gen_native_fixtures.js)",
+    "ordering": "webSessionId and increasing sequence; selected.revision rises only when the page changes its selected day",
+    "invalidation": "renderPlan, host resume, foreground return, 15-second refresh while visible; the page covering its view (body class and children, #planBody, plan fields) closes the screen and brings it back"
+   },
+   "mutationsGate": "set semantics make a repeated toggle harmless; no durable receipt across process death (A14/A15 gap)",
+   "rollout": "opt-in under Settings, Appearance: Native Workout plan (beta)",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",

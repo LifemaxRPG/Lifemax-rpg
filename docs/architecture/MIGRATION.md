@@ -102,7 +102,7 @@ Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it s
 | Bridge catalog entry for every destination | done (CI test that enforces it still to come) |
 | JavaScript ESLint ratchet in CI | done (`tools/lint_js.py`) |
 | Local Android build and unit tests (`tools/build_android_local.sh`) | done |
-| Screenshot tests with reference images, in CI | done (Character dark/light; Food Log, Plan, Shopping, Plan light) |
+| Screenshot tests with reference images, in CI | done (Character dark/light; Food Log, Plan, Shopping, Plan light; Workout plan) |
 | `NativeTabKit` (web) and `ComposeTabPlugin` (native) | done; Character uses them, Food and Cash still have their own |
 | Food screen split into a context and panes | done, screenshots identical |
 | Tab hand-over simulation on virtual time, races fixed, safety net | done (A23 items 7 and 8, A28) |
@@ -113,3 +113,17 @@ Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it s
 ## Log activity (Native API 23)
 
 Native presentation, web authority. `NativeLogPlugin` (ComposeTabPlugin) with `feature/log` (domain, data, presentation) and shared `core/designsystem/components`. The page projects presets, attributes, effort levels, the draft and its own XP preview (`50-native-log.js`); the screen sends `preview` and `submit` commands through the new command channel of NativeTabKit/ComposeTabPlugin, which never closes the screen. Opt-in beta in Settings. A prefill in the web form (Life Director, links) is taken over when the screen opens. Remaining before it can become the default: physical-device check by the owner, and the backlog items tagged Log.
+
+## Workout plan (next Native API)
+
+Native presentation, web authority. `NativePlanPlugin` (ComposeTabPlugin) with `feature/plan` (domain, data, presentation) draws the page's projection: the guided-workout launcher, the active plan, the calendar of weeks and days, the selected day's exercises and the General rules, and the page's toggle message and XP celebration. A ticked box shows the state asked for, faded, until the page answers; the answer comes with the page's fresh projection, so a refused or failed save shows the box as the page holds it, and a box whose answer is lost takes the projection's state again after 5 seconds. `50-native-plan.js` (NativeTabKit, `plan.projection.v1`, Settings "Native Workout plan (beta)", off by default) projects every week, day and item of the active plan, already worded as the page words it, with the page's selected day (`selected.revision`), the guided-workout launcher, the program key and the General rules. Day and week selection are the screen's own. Ticking a set is the `toggle` command, which runs the page's own `planToggle` with set semantics; the celebration comes back in the reply for the screen to draw, with the orbs flying to the top bar's logo as on the page, and the page plays its sound and buzz. A failed save is reported as not saved and, as after the page's own checkbox, stays in memory with everything the save set off until the next save stores it. Inventory: `PLAN_INVENTORY.md`; fixtures from the web app: `native/src/test/resources/fixtures/plan-*.json`.
+
+| Remaining web dependency | How the screen reaches it |
+|---|---|
+| Guided workout runner (classic and 3D gym) | closes; `gwrResume` or `gwrStart(day)`; back when the runner closes |
+| Value and session-log fields | closes; the page selects the day and focuses the field; back when the field loses focus |
+| Leave plan (confirm) | closes; `leavePlan`; back if the plan is kept |
+| Sign-up offers (no plan) | not covered; back when a plan is started |
+| Level-up overlay, sheets, badge toasts | the screen steps aside for an overlay and comes back; badge toasts are not visible under the screen |
+
+Screenshots: `PlanScreenshotTest` (each fixture dark and two light; the exercises of today with a box waiting for the page, of a done day and of a day to come; the toast in both themes). Not yet done: the owner's check on the phone, including whether the keyboard rises for a field handed to the page.
