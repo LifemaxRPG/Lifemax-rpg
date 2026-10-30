@@ -571,7 +571,7 @@
     if (destination !== 'meals' && (N.open || N.opening)) close();
     if (destination === 'meals') {
       N.blocked = false;
-      setTimeout(open, 80);
+      queueMicrotask(open);
     }
     if (destination === 'settings') syncSettings();
     return result;
