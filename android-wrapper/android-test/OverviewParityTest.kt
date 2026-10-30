@@ -205,6 +205,7 @@ class OverviewParityTest {
             }
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
             val nativeSwitchMs = mutableListOf<Long>()
+            val nativePhases = mutableListOf<String>()
             repeat(3) {
                 val characterStart = SystemClock.uptimeMillis()
                 val tapBounds = clickSharedTab("Character")
@@ -214,6 +215,7 @@ class OverviewParityTest {
                     attached && evaluate(main, "lmaView()") == "\"character\""
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - characterStart)
+                nativePhases.add(evaluate(main, "JSON.stringify(window.__nativeTabPerf)"))
                 val foodStart = SystemClock.uptimeMillis()
                 clickSharedTab("Food")
                 waitUntil("Food opens from native Character bar") {
@@ -222,6 +224,7 @@ class OverviewParityTest {
                     attached && evaluate(main, "lmaView()") == "\"meals\""
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - foodStart)
+                nativePhases.add(evaluate(main, "JSON.stringify(window.__nativeTabPerf)"))
             }
             val overviewStart = SystemClock.uptimeMillis()
             clickSharedTab("Overview")
@@ -231,7 +234,7 @@ class OverviewParityTest {
                 attached && evaluate(main, "lmaView()") == "\"dashboard\""
             }
             nativeSwitchMs.add(SystemClock.uptimeMillis() - overviewStart)
-            val perf = JSONObject().put("switchesMs", org.json.JSONArray(nativeSwitchMs))
+            val perf = JSONObject().put("switchesMs", org.json.JSONArray(nativeSwitchMs)).put("phases", org.json.JSONArray(nativePhases))
             File(instrumentation.targetContext.filesDir, "nav-perf.json").writeText(perf.toString())
             export("nav-perf.json")
             waitUntil("native Food chrome removed") {
