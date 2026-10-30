@@ -235,7 +235,7 @@
   navigate = function (v) {
     if (v !== "character" && (active || opening)) close();
     const r = nav.apply(this, arguments);
-    if (v === "character") setTimeout(() => open(false), 80);
+    if (v === "character") queueMicrotask(() => open(false));
     if (v === "settings") sync();
     return r;
   };
