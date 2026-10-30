@@ -1,7 +1,7 @@
 /* Live hybrid Overview: Android header/navigation over the original resumed WebView.
    The page body, pets and timers are never captured or copied. */
 (function(){
- const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false};
+ const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false};
  const ids=new WeakMap(),assets=new Map();let nextId=0;
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
  let colorProbe;
@@ -41,7 +41,7 @@
  window.setNativeOverviewEnabled=setEnabled;
  window.syncNativeOverviewSetting=syncSetting;
  function blocked(){return !enabled()||!state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
- function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);return id}
+ function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);if(el.closest('.sidebar'))N.navActions.set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
  async function raster(src,w,h){const key=src+'|'+w+'|'+h;if(assets.has(key))return assets.get(key);const task=new Promise((ok,no)=>{const im=new Image();im.onload=()=>{try{const cv=document.createElement('canvas');const d=Math.min(devicePixelRatio||1,3);cv.width=Math.max(1,Math.ceil(w*d));cv.height=Math.max(1,Math.ceil(h*d));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);ok(cv.toDataURL('image/png'))}catch(e){no(e)}};im.onerror=no;im.src=src});assets.set(key,task);if(assets.size>160)assets.delete(assets.keys().next().value);return task}
@@ -92,6 +92,6 @@
  new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
- window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>N.actions.get(id)?.click()};
+ window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{const target=N.navActions.get(id)||N.actions.get(id);if(target?.isConnected)target.click()}};
 })();
 
