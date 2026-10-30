@@ -45,9 +45,10 @@ import com.lifemax.rpg.feature.log.presentation.components.LogXpHero
 fun LogRoute(vm: LogViewModel, topInsetDp: Float, bottomInsetDp: Float) {
     val projection by vm.projection.collectAsState()
     val draft by vm.draft.collectAsState()
+    val status by vm.status.collectAsState()
     val p = projection ?: return
     LaunchedEffect(p.session, p.draftRevision) { vm.adopt(p) }
-    LogScreen(p, draft ?: p.draft, LogActions(vm), topInsetDp, bottomInsetDp)
+    LogScreen(p, draft ?: p.draft, LogActions(vm), topInsetDp, bottomInsetDp, status)
 }
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
@@ -84,6 +85,7 @@ fun LogScreen(
     actions: LogActions,
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
+    status: LogStatus = LogStatus(),
 ) {
     LifeMaxTheme(p.tokens, p.light) {
         Box(Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).imePadding()) {
@@ -123,35 +125,49 @@ fun LogScreen(
                 LogDetailsCard(draft, actions.customName, actions.skill, actions.notes)
                 Spacer(Modifier.height(4.dp))
             }
-            SaveButton(
-                p,
-                enabled = p.preview.enough,
-                onClick = actions.submit,
-                modifier =
-                    Modifier.align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = bottomInsetDp.dp + 12.dp),
-            )
+            Column(
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = bottomInsetDp.dp + 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                status.error?.let { ErrorNote(it) }
+                SaveButton(
+                    p,
+                    enabled = p.preview.enough && !status.saving,
+                    saving = status.saving,
+                    onClick = actions.submit,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun SaveButton(
-    p: LogProjection,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier,
-) {
+private fun ErrorNote(message: String) {
+    Text(
+        message,
+        Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        color = Color(0xFFFF8A80),
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+    )
+}
+
+@Composable
+private fun SaveButton(p: LogProjection, enabled: Boolean, saving: Boolean, onClick: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
     val shape = RoundedCornerShape(16.dp)
+    val lit = enabled || saving
     Box(
-        modifier
-            .fillMaxWidth()
+        Modifier.fillMaxWidth()
             .heightIn(min = 56.dp)
             .clip(shape)
             .background(
-                if (enabled) Brush.horizontalGradient(listOf(accent.copy(alpha = .85f), accent))
+                if (lit) Brush.horizontalGradient(listOf(accent.copy(alpha = .85f), accent))
                 else
                     Brush.horizontalGradient(
                         listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface)
@@ -161,8 +177,12 @@ private fun SaveButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            if (enabled) "✦  Award ${p.preview.total} XP" else "Log at least 5 minutes",
-            color = if (enabled) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+            when {
+                saving -> "Saving…"
+                enabled -> "✦  Award ${p.preview.total} XP"
+                else -> "Log at least 5 minutes"
+            },
+            color = if (lit) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
         )

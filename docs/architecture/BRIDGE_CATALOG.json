@@ -40,6 +40,34 @@
    "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
   },
   {
+   "feature": "log",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeLog",
+   "owner": "web-core-gameplay",
+   "pluginSource": "bridge/web/NativeLogPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/log/presentation/LogScreen.kt",
+   "webModule": "50-native-log.js (NativeTabKit)",
+   "capabilities": [
+    "log.projection.v1"
+   ],
+   "commands": {
+    "preview": "keeps the draft on the page so the next projection previews it; never replaces what is being typed (draftRevision unchanged)",
+    "submit": "recordActivity(draft + opId): one operation id pays out once; a failed save is taken back out and reported; on success the page toasts and goes to Overview"
+   },
+   "writes": [
+    "recordActivity via submit (web-owned rules and save)"
+   ],
+   "readContract": {
+    "snapshotDto": "feature/log/domain/LogProjection.kt",
+    "decoder": "feature/log/data/WebLogRepository.kt",
+    "fixtures": "native/src/test/resources/log-default.json, log-strength.json",
+    "ordering": "webSessionId and increasing sequence; draftRevision changes only when the page replaces the draft (save, prefill)"
+   },
+   "mutationsGate": "operation id per draft (idempotent submit); no durable receipt across process death yet (A14/A15 gap)",
+   "rollout": "opt-in under Settings, Appearance: Native Log activity (beta)",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",

@@ -23,6 +23,8 @@ class LogViewModel(
     val projection = repository.state
     private val mutableDraft = MutableStateFlow<LogDraft?>(null)
     val draft = mutableDraft.asStateFlow()
+    private val mutableStatus = MutableStateFlow(LogStatus())
+    val status = mutableStatus.asStateFlow()
     private var adopted: Pair<String, Long>? = null
     private var operationId: String? = null
 
@@ -33,6 +35,17 @@ class LogViewModel(
         adopted = key
         operationId = null
         mutableDraft.value = p.draft
+        mutableStatus.value = LogStatus()
+    }
+
+    /** The page's answer to a command. Only a save changes what the screen shows. */
+    fun onReply(command: String, ok: Boolean, message: String) {
+        if (command != "submit") return
+        mutableStatus.value =
+            LogStatus(
+                saving = false,
+                error = if (ok) null else message.ifBlank { "Could not save" },
+            )
     }
 
     fun choose(type: String) {
@@ -66,7 +79,9 @@ class LogViewModel(
 
     fun submit() {
         val current = mutableDraft.value ?: return
+        if (mutableStatus.value.saving) return
         val id = operationId ?: newOperationId().also { operationId = it }
+        mutableStatus.value = LogStatus(saving = true)
         commands.submit(current, id)
     }
 
@@ -83,3 +98,6 @@ class LogViewModel(
         const val MAX_MINUTES = 1440
     }
 }
+
+/** Whether a save is on its way to the page, and the page's message if the last one failed. */
+data class LogStatus(val saving: Boolean = false, val error: String? = null)

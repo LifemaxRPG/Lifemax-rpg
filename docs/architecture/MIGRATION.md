@@ -109,3 +109,7 @@ Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it s
 | Log activity logic callable without the form, 163 golden cases | done |
 | Food and Cash onto the shared scaffold | to do as each is converted |
 | Automatic backups before any data or logic port | to do (owner decision) |
+
+## Log activity (Native API 23)
+
+Native presentation, web authority. `NativeLogPlugin` (ComposeTabPlugin) with `feature/log` (domain, data, presentation) and shared `core/designsystem/components`. The page projects presets, attributes, effort levels, the draft and its own XP preview (`50-native-log.js`); the screen sends `preview` and `submit` commands through the new command channel of NativeTabKit/ComposeTabPlugin, which never closes the screen. Opt-in beta in Settings. A prefill in the web form (Life Director, links) is taken over when the screen opens. Remaining before it can become the default: physical-device check by the owner, and the backlog items tagged Log.

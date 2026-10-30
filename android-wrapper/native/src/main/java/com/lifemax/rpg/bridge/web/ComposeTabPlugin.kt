@@ -52,6 +52,24 @@ abstract class ComposeTabPlugin : Plugin() {
         emit: (action: String, id: String) -> Unit,
     )
 
+    /**
+     * The page's answer to a [sendCommand], delivered with the update that carries the fresh
+     * projection.
+     */
+    protected open fun onReply(reply: JSONObject) {}
+
+    /**
+     * Ask the page to run a command (a preview, a save) without closing the screen. The page
+     * answers with an update whose reply names the same [requestId]. Commands run on the page one
+     * at a time, in the order sent.
+     */
+    protected fun sendCommand(command: String, payload: JSONObject, requestId: String) {
+        notifyListeners(
+            "command",
+            JSObject().put("command", command).put("payload", payload).put("requestId", requestId),
+        )
+    }
+
     /** Survives the view being rebuilt; cleared with the plugin. */
     protected val store = ViewModelStore()
 
@@ -94,6 +112,7 @@ abstract class ComposeTabPlugin : Plugin() {
                 if (view != null) {
                     accept(data, false)
                     showChrome(call.getObject("navScene"))
+                    call.getObject("reply")?.let { onReply(it) }
                 }
                 call.resolve()
             } catch (e: Exception) {

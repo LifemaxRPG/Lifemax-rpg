@@ -73,11 +73,57 @@
     };
   }
 
+  /** take over whatever the web form holds (a prefill from Life Director, a link or the form itself), as a fresh draft */
+  function fromForm() {
+    try {
+      draft = clean(activityDraftFromForm());
+    } catch (_) {
+      draft = draftFor("reading");
+    }
+    revision++;
+  }
+  const commands = {
+    /** the screen changed the draft: keep it (without replacing what is being typed) so the next projection previews it */
+    preview(p) {
+      draft = clean(p.draft);
+      return { ok: true };
+    },
+    /** save through the same owner function as the web form; one operation id pays out once */
+    submit(p) {
+      const d = clean(p.draft);
+      const opId = String(p.operationId || "").slice(0, 80);
+      if (!opId) return { ok: false, message: "Could not save: missing operation id" };
+      const res = recordActivity(Object.assign({}, d, { opId }));
+      if (!res.ok) {
+        draft = d;
+        return { ok: false, message: res.message };
+      }
+      draft = draftFor(d.type);
+      revision++;
+      toast(res.message);
+      return { ok: true, message: res.message, xp: res.xp, navigate: "dashboard" };
+    },
+  };
+
+  NativeTabKit.create({
+    id: "log",
+    plugin: "NativeLog",
+    capability: "log.projection.v1",
+    setting: "nativeLog",
+    toggle: "nativeLogToggle",
+    projection,
+    onAction() {},
+    commands,
+    beforeOpen: fromForm,
+    globals: { open: "openNativeLog", enable: "setNativeLogEnabled", projection: "NativeLogTabProjection" },
+  });
+
   window.NativeLogProjection = {
     snapshot: projection,
     previewOf,
     clean,
     draftFor,
+    commands,
     setDraft(d) {
       draft = clean(d);
       revision++;

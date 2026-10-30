@@ -30,6 +30,9 @@
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
    * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page),
    * render (name of the page's render function to follow while open), globals {open, enable, projection}.
+   * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
+   * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
+   * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -80,6 +83,32 @@
         await close();
       }
     }
+    /** A command from the screen: run it on the page, then send the fresh projection with the reply. Never closes the screen. */
+    let commands = Promise.resolve();
+    function runCommand(e) {
+      // one at a time and in order, so a save never overtakes the preview before it
+      commands = commands.then(async () => {
+        const handler = cfg.commands && cfg.commands[e && e.command];
+        let reply;
+        try {
+          reply = handler ? (await handler((e && e.payload) || {})) || {} : { ok: false, message: "Unknown command" };
+        } catch (err) {
+          console.warn(cfg.id + " command " + (e && e.command), err);
+          reply = { ok: false, message: "Something went wrong. Nothing was changed." };
+        }
+        reply = Object.assign({ command: e && e.command, requestId: (e && e.requestId) || "" }, reply);
+        if (active) {
+          try {
+            await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
+          } catch (err) {
+            console.warn(cfg.id + " reply", err);
+          }
+        }
+        if (reply.navigate) lmaNavTo(reply.navigate, { fast: true }); // no web transition under a native screen
+        return reply;
+      });
+      return commands;
+    }
     async function close() {
       generation++;
       clearInterval(timer);
@@ -103,6 +132,7 @@
             if (e.view) lmaNavTo(e.view);
             else await cfg.onAction(e);
           });
+          await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);
           await plugin.addListener("nav-action", (e) => window.NativeOverviewSnapshot?.activate(e.id));
           await plugin.addListener("closed", () => {
@@ -115,6 +145,7 @@
         const handshakeAt = now();
         if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
         if (blocked()) return false;
+        if (cfg.beforeOpen) cfg.beforeOpen();
         const data = snapshot();
         const projectionAt = now();
         const scene = await navScene();
@@ -181,7 +212,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot };
+    return { open, close, send, schedule, sync, enabled, snapshot, runCommand };
   }
 
   window.NativeTabKit = { create, color, tokens, light };

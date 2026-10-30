@@ -4724,6 +4724,7 @@ html.light-theme .sd-more footer .pri{color:#fff}
           <div class="settingsline" id="tabTimingSetting"><div style="flex:1"><strong>Show tab timing (testing)</strong><div id="tabTimingHint" class="muted" style="font-size:12px">After each tab change on the native bar, shows how many milliseconds it took from the tap to the new screen being drawn.</div></div><input id="tabTimingToggle" type="checkbox" class="check" onchange="setTabTimingToast(this.checked)" aria-label="Show tab timing"></div>
           <div class="settingsline" id="nativeOverviewSetting"><div style="flex:1"><strong>Native Overview</strong><div id="nativeOverviewHint" class="muted" style="font-size:12px">Use the Android Overview screen. Turn off to return to the classic Overview.</div></div><input id="nativeOverviewToggle" type="checkbox" class="check" onchange="setNativeOverviewEnabled(this.checked)" aria-label="Native Overview"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Character preview</strong><div class="muted" style="font-size:12px">Native cards and charts. Logging and edits use their existing screens. Turn off for Classic Character.</div></div><input id="nativeCharacterToggle" type="checkbox" class="check" onchange="setNativeCharacterEnabled(this.checked)" aria-label="Native Character preview"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Native Log activity (beta)</strong><div class="muted" style="font-size:12px">The native Log screen. Saving uses the same rules and save as the classic form. Turn off for the classic form.</div></div><input id="nativeLogToggle" type="checkbox" class="check" onchange="setNativeLogEnabled(this.checked)" aria-label="Native Log activity (beta)"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="tabsCard">
           <h3>Bottom bar</h3>
@@ -21654,6 +21655,9 @@ function lmcRender(){
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
    * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page),
    * render (name of the page's render function to follow while open), globals {open, enable, projection}.
+   * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
+   * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
+   * beforeOpen() runs just before the first projection of an open (for example to take over a draft the page prepared).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -21704,6 +21708,32 @@ function lmcRender(){
         await close();
       }
     }
+    /** A command from the screen: run it on the page, then send the fresh projection with the reply. Never closes the screen. */
+    let commands = Promise.resolve();
+    function runCommand(e) {
+      // one at a time and in order, so a save never overtakes the preview before it
+      commands = commands.then(async () => {
+        const handler = cfg.commands && cfg.commands[e && e.command];
+        let reply;
+        try {
+          reply = handler ? (await handler((e && e.payload) || {})) || {} : { ok: false, message: "Unknown command" };
+        } catch (err) {
+          console.warn(cfg.id + " command " + (e && e.command), err);
+          reply = { ok: false, message: "Something went wrong. Nothing was changed." };
+        }
+        reply = Object.assign({ command: e && e.command, requestId: (e && e.requestId) || "" }, reply);
+        if (active) {
+          try {
+            await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
+          } catch (err) {
+            console.warn(cfg.id + " reply", err);
+          }
+        }
+        if (reply.navigate) lmaNavTo(reply.navigate, { fast: true }); // no web transition under a native screen
+        return reply;
+      });
+      return commands;
+    }
     async function close() {
       generation++;
       clearInterval(timer);
@@ -21727,6 +21757,7 @@ function lmcRender(){
             if (e.view) lmaNavTo(e.view);
             else await cfg.onAction(e);
           });
+          await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);
           await plugin.addListener("nav-action", (e) => window.NativeOverviewSnapshot?.activate(e.id));
           await plugin.addListener("closed", () => {
@@ -21739,6 +21770,7 @@ function lmcRender(){
         const handshakeAt = now();
         if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
         if (blocked()) return false;
+        if (cfg.beforeOpen) cfg.beforeOpen();
         const data = snapshot();
         const projectionAt = now();
         const scene = await navScene();
@@ -21805,7 +21837,7 @@ function lmcRender(){
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, snapshot };
+    return { open, close, send, schedule, sync, enabled, snapshot, runCommand };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
@@ -22550,6 +22582,138 @@ function lmcRender(){
     render: "renderCharacterPage",
     globals: { open: "openNativeCharacter", enable: "setNativeCharacterEnabled", projection: "NativeCharacterProjection" },
   });
+})();
+/* Log activity projection v1. The page stays the owner of the XP rules and the save: the native screen shows this projection,
+   asks the page for a preview whenever the draft changes, and submits through recordActivity. The tab lifecycle is NativeTabKit's. */
+(function () {
+  const QUALITIES = [
+    { value: "0.8", label: "Light", hint: "0.8×" },
+    { value: "1", label: "Normal", hint: "1.0×" },
+    { value: "1.1", label: "Challenging", hint: "1.1×" },
+    { value: "1.2", label: "High quality", hint: "1.2×" },
+  ];
+  const MAX_MINUTES = 1440;
+  let draft = null;
+  let revision = 1; // raised whenever the page replaces the draft (after a save, or a prefill), so the native screen adopts it
+
+  function preset(id) {
+    return rules[id] || rules.custom;
+  }
+  /** a fresh draft for a preset, with the preset's own skill and attributes, like choosing it in the web form */
+  function draftFor(type, from) {
+    const r = preset(type);
+    return {
+      type: rules[type] ? type : "custom",
+      customName: from ? String(from.customName || "") : "",
+      duration: from ? String(from.duration) : "30",
+      quality: from ? String(from.quality) : "1",
+      skill: r.skill,
+      primary: r.primary,
+      secondary: r.secondary || "",
+      notes: from ? String(from.notes || "") : "",
+    };
+  }
+  /** the draft as the page will read it: known preset, duration clamped to the form's limits, attributes that exist */
+  function clean(d) {
+    const ids = ATTRS.map((a) => a.id);
+    const base = draftFor(d && d.type in rules ? d.type : "reading");
+    const x = Object.assign(base, d || {});
+    const minutes = Math.max(0, Math.min(MAX_MINUTES, Math.round(Number(x.duration) || 0)));
+    return {
+      type: x.type in rules ? x.type : "custom",
+      customName: String(x.customName || "").slice(0, 80),
+      duration: String(minutes),
+      quality: QUALITIES.some((q) => q.value === String(x.quality)) ? String(x.quality) : "1",
+      skill: String(x.skill || "").slice(0, 60),
+      primary: ids.includes(x.primary) ? x.primary : preset(x.type).primary,
+      secondary: x.secondary === "" || ids.includes(x.secondary) ? x.secondary : "",
+      notes: String(x.notes || "").slice(0, 2000),
+    };
+  }
+  /** what the award would be, worded the way the web form's preview words it */
+  function previewOf(d) {
+    const x = activityPreview(d);
+    const split =
+      x.secondary && x.secondary !== x.primary
+        ? [
+            { attr: x.primary, xp: Math.round(x.total * 0.7) },
+            { attr: x.secondary, xp: x.total - Math.round(x.total * 0.7) },
+          ]
+        : [{ attr: x.primary, xp: x.total }];
+    return { total: x.total, skill: x.skill, durFactor: x.durFactor, split, enough: x.total > 0 };
+  }
+  function projection() {
+    const d = draft || (draft = draftFor("reading"));
+    return {
+      presets: Object.keys(rules).map((id) => {
+        const r = rules[id];
+        return { id, name: r.name, icon: r.icon, base: r.base, skill: r.skill, primary: r.primary, secondary: r.secondary || "" };
+      }),
+      attributes: ATTRS.map((a) => ({ id: a.id, name: a.name, short: a.short, icon: a.icon, color: NativeTabKit.color(ATTR_COL[a.id]) })),
+      qualities: QUALITIES,
+      maxMinutes: MAX_MINUTES,
+      draft: d,
+      draftRevision: revision,
+      preview: previewOf(d),
+    };
+  }
+
+  /** take over whatever the web form holds (a prefill from Life Director, a link or the form itself), as a fresh draft */
+  function fromForm() {
+    try {
+      draft = clean(activityDraftFromForm());
+    } catch (_) {
+      draft = draftFor("reading");
+    }
+    revision++;
+  }
+  const commands = {
+    /** the screen changed the draft: keep it (without replacing what is being typed) so the next projection previews it */
+    preview(p) {
+      draft = clean(p.draft);
+      return { ok: true };
+    },
+    /** save through the same owner function as the web form; one operation id pays out once */
+    submit(p) {
+      const d = clean(p.draft);
+      const opId = String(p.operationId || "").slice(0, 80);
+      if (!opId) return { ok: false, message: "Could not save: missing operation id" };
+      const res = recordActivity(Object.assign({}, d, { opId }));
+      if (!res.ok) {
+        draft = d;
+        return { ok: false, message: res.message };
+      }
+      draft = draftFor(d.type);
+      revision++;
+      toast(res.message);
+      return { ok: true, message: res.message, xp: res.xp, navigate: "dashboard" };
+    },
+  };
+
+  NativeTabKit.create({
+    id: "log",
+    plugin: "NativeLog",
+    capability: "log.projection.v1",
+    setting: "nativeLog",
+    toggle: "nativeLogToggle",
+    projection,
+    onAction() {},
+    commands,
+    beforeOpen: fromForm,
+    globals: { open: "openNativeLog", enable: "setNativeLogEnabled", projection: "NativeLogTabProjection" },
+  });
+
+  window.NativeLogProjection = {
+    snapshot: projection,
+    previewOf,
+    clean,
+    draftFor,
+    commands,
+    setDraft(d) {
+      draft = clean(d);
+      revision++;
+    },
+  };
 })();
 /* Last segment: reaching this line means every segment before it ran. A web build that was downloaded over the air counts
    as on trial until it reports here; if it never does (a broken build), Android drops it and goes back to the bundled one.

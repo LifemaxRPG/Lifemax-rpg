@@ -15,14 +15,17 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     window.__log=[];window.__vis={overview:false,character:false,food:false};window.__busy=0;
     const rnd=(a,b)=>a+Math.random()*(b-a);const wait=ms=>new Promise(r=>setTimeout(r,ms));
     const L=(n,m)=>window.__log.push([Math.round(performance.now()),n,m,Object.keys(window.__vis).filter(k=>window.__vis[k]).join('+')||'NONE']);
-    const mk=(name,vis)=>{const ls={};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
+    /* As on the device: a plugin runs its calls in the order they were made, and Overview and Food ignore a close naming a session
+       they no longer hold (Character's close is unconditional). */
+    const mk=(name,vis,sessions)=>{const ls={};let chain=Promise.resolve(),current='';const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});
+      const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};return {
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
-      open:async a=>{window.__busy++;try{L(name,'open>');await wait(rnd(10,120));window.__vis[vis]=true;L(name,'open<')}finally{window.__busy--}},
+      open:a=>inOrder(async()=>{current=a&&a.session;L(name,'open>');await wait(rnd(10,120));window.__vis[vis]=true;L(name,'open<')}),
       update:async()=>{},
-      close:async a=>{window.__busy++;try{L(name,'close>');await wait(rnd(5,40));window.__vis[vis]=false;L(name,'close<')}finally{window.__busy--}emit('closed',{session:a&&a.session})},
+      close:a=>inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);L(name,'close>');await wait(rnd(5,40));if(!stale)window.__vis[vis]=false;L(name,'close<')}).then(()=>emit('closed',{session:a&&a.session})),
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
       handshake:async()=>({protocol:1,capabilities:['character.projection.v1']})}};
-    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview'),NativeCharacter:mk('character','character'),NativeNutrition:mk('food','food')},registerPlugin:()=>({}),convertFileSrc:u=>u};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true)},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   await p.goto('file://' + out); await p.waitForTimeout(9000);
   const r = await p.evaluate(async () => {

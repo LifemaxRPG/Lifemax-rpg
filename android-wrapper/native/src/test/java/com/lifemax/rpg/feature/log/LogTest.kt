@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.log
 import com.lifemax.rpg.feature.log.data.WebLogRepository
 import com.lifemax.rpg.feature.log.domain.LogCommands
 import com.lifemax.rpg.feature.log.domain.LogDraft
+import com.lifemax.rpg.feature.log.presentation.LogStatus
 import com.lifemax.rpg.feature.log.presentation.LogViewModel
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -90,14 +91,41 @@ class LogTest {
     }
 
     @Test
-    fun pressingSaveTwiceSendsOneOperation() {
+    fun aSecondPressWhileSavingSendsNothing() {
         val (_, vm, commands) = setUp()
         vm.submit()
         vm.submit()
+        assertEquals(1, commands.submits.size)
+        assertEquals(true, vm.status.value.saving)
+    }
+
+    @Test
+    fun aRetryAfterAFailureReusesTheOperationAndAnEditStartsANewOne() {
+        val (_, vm, commands) = setUp()
+        vm.submit()
+        vm.onReply("submit", false, "Could not save to this browser (storage full?)")
+        assertEquals(false, vm.status.value.saving)
+        assertEquals("Could not save to this browser (storage full?)", vm.status.value.error)
+        vm.submit()
         assertEquals(listOf("op-1", "op-1"), commands.submits.map { it.second })
+        vm.onReply("submit", false, "still full")
         vm.setNotes("changed my mind")
         vm.submit()
         assertEquals("op-2", commands.submits.last().second)
+    }
+
+    @Test
+    fun aSuccessfulSaveClearsTheStatusAndPreviewRepliesChangeNothing() {
+        val (repo, vm, _) = setUp()
+        vm.submit()
+        vm.onReply("preview", true, "")
+        assertEquals(true, vm.status.value.saving)
+        vm.onReply("submit", true, "Activity saved")
+        assertEquals(false, vm.status.value.saving)
+        assertNull(vm.status.value.error)
+        repo.accept(fixture().put("sequence", 2).put("draftRevision", 2))
+        vm.adopt(repo.state.value!!)
+        assertEquals(LogStatus(), vm.status.value)
     }
 
     @Test
