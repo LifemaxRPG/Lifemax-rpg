@@ -69,7 +69,10 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** A selectable pill. [tint] colours it when selected; [leading] is drawn before the label. */
+/**
+ * A selectable pill. [tint] colours it when selected; [leading] is drawn before the label. A
+ * [centered] pill is sized by its row, so it keeps its side padding small for large text.
+ */
 @Composable
 fun ChoicePill(
     label: String,
@@ -94,7 +97,7 @@ fun ChoicePill(
             )
             .semantics { this.selected = selected }
             .tapTarget(Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = if (centered) 4.dp else 14.dp, vertical = 8.dp),
         horizontalArrangement =
             if (centered) Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
             else Arrangement.spacedBy(8.dp),
