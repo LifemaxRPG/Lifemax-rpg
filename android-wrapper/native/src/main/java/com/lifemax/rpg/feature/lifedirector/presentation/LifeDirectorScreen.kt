@@ -13,8 +13,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
+import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayMix
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayStrip
@@ -69,7 +71,7 @@ fun LifeDirectorRoute(
     val projection by vm.projection.collectAsState()
     val ui by vm.ui.collectAsState()
     val p = projection ?: return
-    LaunchedEffect(p.notice?.id) { p.notice?.let(vm::notice) }
+    LaunchedEffect(p.session, p.notice?.id) { p.notice?.let { vm.notice(p.session, it) } }
     ui.toast?.let { toast ->
         LaunchedEffect(toast.serial) {
             delay(TOAST_MS)
@@ -94,8 +96,18 @@ class DirectorActions(
 
     /** An arc runs its tap on the page; fixed time only says what it is. */
     fun arc(arc: DialArc) {
-        val handOver = arc.tap
-        if (handOver != null) tap(handOver) else if (arc.tip.isNotEmpty()) tip(arc.tip)
+        when {
+            arc.tap != null -> tap(arc.tap)
+            arc.tip.isNotEmpty() -> tip(arc.tip)
+        }
+    }
+
+    /** An up-next button runs its tap on the page or shows another day of the strip. */
+    fun upNext(action: UpNextAction) {
+        when {
+            action.tap != null -> tap(action.tap)
+            action.day != null -> day(action.day)
+        }
     }
 }
 
@@ -113,7 +125,7 @@ fun LifeDirectorScreen(
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
 ) {
-    LifeMaxTheme(p.tokens, p.light) {
+    DirectorTheme(p) {
         Box(Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg"))) {
             val today = p.today
             LazyColumn(
@@ -155,6 +167,16 @@ fun LifeDirectorScreen(
     }
 }
 
+/**
+ * LifeMax's theme from the page, with Life Director's light ink as the content colour: the panel is
+ * dark in both themes, and a pressed button's ripple takes that colour.
+ */
+@Composable
+private fun DirectorTheme(p: LifeDirectorProjection, content: @Composable () -> Unit) =
+    LifeMaxTheme(p.tokens, p.light) {
+        CompositionLocalProvider(LocalContentColor provides DirectorPalette.ink, content = content)
+    }
+
 @Composable
 private fun TodayTop(
     today: DirectorToday,
@@ -183,9 +205,7 @@ private fun LazyListScope.todayBelow(
     animate: Boolean,
 ) {
     today.upNext?.let { up ->
-        item("up-next") {
-            Panel(Slice.MIDDLE) { UpNextCard(up, animate, actions.tap, actions.day) }
-        }
+        item("up-next") { Panel(Slice.MIDDLE) { UpNextCard(up, animate, actions::upNext) } }
     }
     if (today.reminders.isNotEmpty())
         item("reminders") { Panel(Slice.MIDDLE) { RemindersCard(today.reminders) } }
@@ -231,7 +251,7 @@ private fun Panel(
 ) {
     Box(
         Modifier.fillMaxWidth()
-            .cardSlice(slice, 24.dp, PANEL_FILL, PANEL_EDGE, washes)
+            .cardSlice(slice, 24.dp, PANEL_FILL, DirectorPalette.panelEdge, washes)
             .padding(horizontal = 14.dp)
             .padding(bottom = if (slice == Slice.BOTTOM || slice == Slice.WHOLE) 28.dp else 0.dp)
     ) {
@@ -240,7 +260,6 @@ private fun Panel(
 }
 
 private val PANEL_FILL = SolidColor(DirectorPalette.bg0)
-private val PANEL_EDGE = Color.White.copy(alpha = .04f)
 
 /**
  * The panel's two soft lights (.ld-root's background): blue from the top right, violet from the

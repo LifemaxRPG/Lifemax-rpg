@@ -1,0 +1,60 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 1,
+ "header": {
+  "dot": "off",
+  "line": "Not set up yet"
+ },
+ "clock": {
+  "time": "6:30 AM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "setup",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "today": null,
+ "tokens": {
+  "bg": 4278980114,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "text": 4293849590,
+  "muted": 4287337379,
+  "accent": 4286356735,
+  "line": 4281086784,
+  "good": 4282242700
+ },
+ "light": false
+}

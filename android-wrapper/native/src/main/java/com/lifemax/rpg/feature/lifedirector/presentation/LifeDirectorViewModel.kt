@@ -21,12 +21,14 @@ class LifeDirectorViewModel(
     private val mutableUi = MutableStateFlow(DirectorUi())
     val ui = mutableUi.asStateFlow()
     private var handedOver = false
-    private var shownNotice: Long? = null
+    private var dayRequest: String? = null
+    private var shownNotice: Pair<String, Long>? = null
     private var toasts = 0
 
-    /** The screen opened (again): the page shows today and takes taps. */
+    /** The screen opened (again): the page shows its day and takes taps. */
     fun opened() {
         handedOver = false
+        dayRequest = null
         mutableUi.update { it.copy(pendingDay = null) }
     }
 
@@ -35,12 +37,16 @@ class LifeDirectorViewModel(
         if (index !in today.strip.indices || index == (ui.value.pendingDay ?: today.dayIndex))
             return
         mutableUi.update { it.copy(pendingDay = index) }
-        commands.showDay(index)
+        dayRequest = commands.showDay(index)
     }
 
-    /** The page's answer to a command; it arrives with the projection it produced. */
-    fun onReply(command: String, ok: Boolean, message: String) {
-        if (command != "day") return
+    /**
+     * The page's answer to a command; it arrives with the projection it produced. Only the answer
+     * to the latest day asked for settles the strip: an earlier one would move it back.
+     */
+    fun onReply(requestId: String, command: String, ok: Boolean, message: String) {
+        if (command != "day" || requestId != dayRequest) return
+        dayRequest = null
         mutableUi.update { it.copy(pendingDay = null) }
         if (!ok) show(message.ifBlank { "That day is not on the plan." })
     }
@@ -52,9 +58,11 @@ class LifeDirectorViewModel(
         return true
     }
 
-    fun notice(notice: DirectorNotice) {
-        if (notice.id == shownNotice) return
-        shownNotice = notice.id
+    /** The page's latest message, shown once. Its ids count from 1 again in a reloaded page. */
+    fun notice(session: String, notice: DirectorNotice) {
+        val key = session to notice.id
+        if (key == shownNotice) return
+        shownNotice = key
         show(notice.text)
     }
 

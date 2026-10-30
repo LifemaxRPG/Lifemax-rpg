@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,7 +34,7 @@ fun DayMix(shares: List<MixShare>) {
             Modifier.fillMaxWidth()
                 .height(8.dp)
                 .clip(RoundedCornerShape(50))
-                .background(Color.White.copy(alpha = .04f)),
+                .background(P.mixTrack),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             for (share in shares) {
@@ -45,7 +45,9 @@ fun DayMix(shares: List<MixShare>) {
                 Box(Modifier.weight(share.minutes.toFloat()).fillMaxHeight().background(color))
             }
         }
-        Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        // .ld-mix-l's row gap: 7, and 6 on a screen up to 440 dp wide
+        val gap = if (LocalConfiguration.current.screenWidthDp > 440) 7.dp else 6.dp
+        Column(Modifier.padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
             for (pair in shares.chunked(2)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                     pair.forEach { Share(it, Modifier.weight(1f)) }

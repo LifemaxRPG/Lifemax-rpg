@@ -20,11 +20,8 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         LifeDirectorContainer(
             object : LifeDirectorCommands {
                 override fun showDay(index: Int) =
-                    sendCommand(
-                        "day",
-                        JSONObject().put("index", index),
-                        "director-${++nextRequest}",
-                    )
+                    "director-${++nextRequest}"
+                        .also { sendCommand("day", JSONObject().put("index", index), it) }
             }
         )
     private val viewModel: LifeDirectorViewModel
@@ -40,6 +37,7 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
 
     override fun onReply(reply: JSONObject) =
         viewModel.onReply(
+            reply.optString("requestId"),
             reply.optString("command"),
             reply.optBoolean("ok"),
             reply.optString("message"),

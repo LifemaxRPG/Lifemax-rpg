@@ -53,7 +53,9 @@ private typealias Step = DrawScope.() -> Unit
 
 /** Draws its steps in order, in dial units. */
 internal open class DialLayer(private val steps: List<Step>) {
-    fun draw(scope: DrawScope) = steps.forEach { it(scope) }
+    fun draw(scope: DrawScope) {
+        for (i in steps.indices) steps[i](scope)
+    }
 }
 
 /** Bezel, face, depth rings, ticks, hour words, sun and moon, ring tracks. */
@@ -371,7 +373,8 @@ private class GlyphRun(
 
     fun draw(scope: DrawScope, color: Color) =
         with(scope) {
-            word.glyphs.forEachIndexed { i, glyph ->
+            for (i in angles.indices) {
+                val glyph = word.glyphs[i]
                 rotate(angles[i], CENTRE_POINT) {
                     if (flip) rotate(180f, onRing) { drawText(glyph, color, topLefts[i]) }
                     else drawText(glyph, color, topLefts[i])

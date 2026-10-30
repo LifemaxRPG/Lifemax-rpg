@@ -4,7 +4,8 @@
    The tab lifecycle is NativeTabKit's. */
 (function () {
   const director = () => window.LifeDirector && window.LifeDirector.native; // the feature's script runs after the runtime
-  let day = 0; // the day of the strip on screen; today whenever the screen opens
+  let day = 0; // the day of the strip on screen; today whenever the user comes to Life Director
+  let celebrating = false; // XP earned by a tap is being celebrated on the page, which the screen must not cover
 
   function projection() {
     const ld = director();
@@ -21,6 +22,17 @@
     },
   };
 
+  /** a session done from the screen earns XP: its celebration plays on the page, from the middle, and the screen waits for it */
+  function celebrate(held) {
+    celebrating = true;
+    lastTap = { x: innerWidth / 2, y: innerHeight / 2 };
+    held.forEach(([delta, gains]) => celebrateXP(delta, gains));
+    afterCelebrations(() => {
+      celebrating = false;
+      tab.revisit();
+    });
+  }
+
   const tab = NativeTabKit.create({
     id: "life-director",
     plugin: "NativeLifeDirector",
@@ -30,14 +42,15 @@
     projection,
     /** the page runs the tap as its element would; when that leaves nothing over Today, the screen comes straight back */
     onAction(e) {
-      director().act(e.action, e.id);
+      const { held } = holdCelebrations(() => director().act(e.action, e.id));
+      if (held.length) celebrate(held);
       tab.revisit();
     },
     commands,
-    beforeOpen() {
-      day = 0;
+    beforeOpen(entered) {
+      if (entered) day = 0;
     },
-    blocked: () => !director() || director().showing() !== "today",
+    blocked: () => celebrating || !director() || director().showing() !== "today",
     globals: { open: "openNativeDirector", enable: "setNativeDirectorEnabled", projection: "NativeDirectorTabProjection" },
   });
 

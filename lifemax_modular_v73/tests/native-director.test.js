@@ -31,8 +31,8 @@ async function start(b, planned) {
   await directorDay.seed(p, { planned });
   await p.addInitScript(FAKES);
   await p.goto('file://' + out);
-  // the one-off walk through every tab and the level-up overlay are not under test here
-  await p.evaluate(() => { lmaThumbWarm = async () => { }; showLevelUp = function () { }; const S = lmaLoad(); S.nativeDirector = true; S.nativeOverview = false; lmaSave() });
+  // the one-off walk through every tab is not under test here, and a level-up only where asked for (__levelUp)
+  await p.evaluate(() => { lmaThumbWarm = async () => { }; window.__levelUp = showLevelUp; showLevelUp = function () { }; const S = lmaLoad(); S.nativeDirector = true; S.nativeOverview = false; lmaSave() });
   if (planned) await directorDay.play(p);
   return p;
 }
@@ -116,7 +116,12 @@ const mark = p => p.evaluate(() => window.__calls.length);
   let r = await click('.ld-ses.ld-s-plan');
   ok('a sheet opened on the page closes the screen at once, without waiting for a hand-over', same(r.calls, ['close']) && r.shows === 'sheet', r.calls);
   r = await click('.ld-sheet-bg');
-  ok('closing the sheet brings the screen back, on today again', same(r.calls, ['open']) && r.today.dayIndex === 0, r.calls);
+  ok('closing the sheet brings the screen back, on the day it showed', same(r.calls, ['open']) && r.today.dayIndex === 1, r.calls);
+  n = await mark(p);
+  await p.evaluate(() => lmaNavTo('dashboard')); await settle(p, 500);
+  await p.evaluate(() => lmaNavTo('life-director')); await settle(p, 1500);
+  r = await state(n);
+  ok('coming back to Life Director shows today again', same(r.calls, ['close', 'open']) && r.today.dayIndex === 0, r.calls);
 
   r = await tap('inst', m.next);
   ok('a session (arc, row or Details) closes the screen and opens the page\'s session sheet', same(r.calls, ['close']) && r.shows === 'sheet' && r.sheet.includes(m.nextTitle) && r.sheet.includes('Start timer'), r);
@@ -136,10 +141,21 @@ const mark = p => p.evaluate(() => window.__calls.length);
   r = await click('[data-act=focusCancel]');
   ok('stopping the timer on the page brings the screen back without it', same(r.calls, ['open']) && r.today.core.timer === null && r.today.upNext.kind === 'next', r.calls);
 
-  r = await tap('doneQuick', m.next);
-  const logged = await p.evaluate(t => state.activities.some(a => a.name === t && a.ldEventId), m.nextTitle);
-  ok('Done completes the session through the page (XP logged) and the screen comes straight back with it done', same(r.calls, ['close', 'open']) && logged && r.today.dial.arcs.find(a => a.id === m.next).state === 'done', { calls: r.calls, logged });
+  n = await mark(p);
+  await emit('action', { action: 'doneQuick', id: m.next }); await settle(p, 500);
+  const xp = () => p.evaluate(t => ({ logged: state.activities.some(a => a.name === t && a.ldEventId), flying: !!document.querySelector('.fx-xp') }), m.nextTitle);
+  const during = await xp(), held = await state(n);
+  ok('Done completes the session through the page (XP logged), and its XP celebration plays on the page with the screen away', same(held.calls, ['close']) && during.logged && during.flying, { calls: held.calls, during });
+  await settle(p, 1500);
+  r = await state(n);
+  ok('the screen comes back once the celebration has played, with the session done', same(r.calls, ['close', 'open']) && !(await xp()).flying && r.today.dial.arcs.find(a => a.id === m.next).state === 'done', r.calls);
   ok('the page\'s message about it comes back with the screen', !!r.frame.notice && r.frame.notice.text.startsWith(m.nextTitle + ' done'), r.frame);
+  await p.evaluate(() => { window.__calm = 0; __levelUp({ charLevel: null, from: 1, attrs: [{ id: 'physique', short: 'Physique', from: 1, level: 2 }] }); afterCelebrations(() => __calm++) });
+  await settle(p, 2000);
+  const levelUp = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
+  await settle(p, 3500);
+  const after = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
+  ok('a level-up keeps the screen waiting until it has closed', levelUp.calm === 0 && levelUp.shown && after.calm === 1 && !after.shown, { levelUp, after });
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);
@@ -167,6 +183,9 @@ const mark = p => p.evaluate(() => window.__calls.length);
 
   r = await tap('nope');
   ok('a tap Today does not have changes nothing and the screen comes straight back', same(r.calls, ['close', 'open']), r.calls);
+  r = await tap('inst', 'i_replanned_away');
+  const meal = await tap('meal', '1');
+  ok('a session or meal that left the plan since the screen drew it says so, and the screen comes straight back', [r, meal].every(x => same(x.calls, ['close', 'open']) && (x.frame.notice || {}).text === 'That is no longer on the plan.'), [r.frame, meal.frame]);
 
   n = await mark(p);
   await p.evaluate(() => lmaNavTo('dashboard')); await settle(p, 500);

@@ -2,14 +2,15 @@
    The page body, pets and timers are never captured or copied. */
 (function(){
  /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
-    shows through and two sets of bars never fight. Going to a web tab closes it at once. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
+    shows through and two sets of bars never fight. Going to a web tab closes it at once, and so does a tab that hands its own view back
+    to the page (a sheet over it): nothing there takes over. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
  if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0,healTimer=0;const tabs=new Map();
   window.NativeTabs={
    cover(view,fn){covers.set(view,fn)},
    covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
    cancel(id){pending.delete(id)},
    leave(id,toView,closeFn){
-    if(!this.covered(toView)){pending.delete(id);closeFn();return}
+    if(toView===id||!this.covered(toView)){pending.delete(id);closeFn();return}
     pending.set(id,closeFn);ct(timer);timer=st(()=>this.flush(),2500)
    },
    flush(exceptId){

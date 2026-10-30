@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +55,7 @@ private fun DayChip(day: StripDay, on: Boolean, modifier: Modifier, onClick: () 
     val shape = RoundedCornerShape(13.dp)
     Column(
         modifier
-            .height(66.dp)
+            .heightIn(min = 66.dp)
             .then(
                 if (on)
                     Modifier.softShadow(P.free.copy(alpha = .14f), 18.dp, 13.dp)
@@ -65,7 +66,7 @@ private fun DayChip(day: StripDay, on: Boolean, modifier: Modifier, onClick: () 
             .clip(shape)
             .semantics {
                 selected = on
-                contentDescription = "${day.label} ${day.date}"
+                contentDescription = day.description()
             }
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(top = 7.dp, bottom = 6.dp),
@@ -99,3 +100,19 @@ private fun DayChip(day: StripDay, on: Boolean, modifier: Modifier, onClick: () 
         }
     }
 }
+
+/** "Today 28, 1 done, 2 planned, 1 skipped": the chip's words and what its dots say. */
+private fun StripDay.description() =
+    (listOf("$label $date") +
+            dots.groupingBy { it.spoken() }.eachCount().map { (state, n) -> "$n $state" })
+        .joinToString(", ")
+
+/** A session's state as TalkBack says it. */
+internal fun SessionState.spoken(): String =
+    when (this) {
+        SessionState.DONE -> "done"
+        SessionState.PART -> "part done"
+        SessionState.OFF -> "skipped"
+        SessionState.PLAN,
+        SessionState.NONE -> "planned"
+    }

@@ -74,10 +74,15 @@ function pulse(el){if(!el)return;el.classList.remove('fx-pulse');void el.offsetW
    to the next tab) and plays it afterwards: holdCelebrations(run) returns {result, held: [[delta, gains], ...]}. */
 let fxHold=null;
 function holdCelebrations(run){const prev=fxHold;fxHold=[];try{return {result:run(),held:fxHold}}finally{fxHold=prev}}
+/* afterCelebrations(fn) runs fn once no XP celebration or level-up is playing or queued, so a native screen can wait before it
+   covers the page again. A level-up starts while its XP is still flying (950 ms in, of 1550), so the two hand over. */
+let fxUntil=0;const fxCalm=[];
+function afterCelebrations(fn){fxCalm.push(fn);fxSettle()}
+function fxSettle(){if(!luBusy&&Date.now()>=fxUntil)fxCalm.splice(0).forEach(f=>f())}
 function celebrateXP(delta,gains){if(fxHold){fxHold.push([delta,gains]);return}const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
  FX.ring(o.x,o.y,col,80,.55,5);FX.burst(o.x,o.y,col,red?8:30,280,420);
  gains.forEach(g=>{const c=ATTR_COL[g.id]||col,n=Math.min(red?4:16,3+Math.round(g.xp/3));for(let i=0;i<n;i++)FX.orb(o.x,o.y,tg.x,tg.y,c,i*38,()=>{const t=fxTarget();FX.burst(t.x,t.y,c,3,130,80);if(i===n-1)pulse(t.el)})});
- const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);setTimeout(()=>t.remove(),1550);
+ const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);fxUntil=Math.max(fxUntil,Date.now()+1550);setTimeout(()=>{t.remove();fxSettle()},1550);
  SFX.xp(delta);haptic(delta>=25?[18,30,18]:12)}
 let luBusy=false;const luQ=[];
 function showLevelUp(ev){if(luBusy){luQ.push(ev);return}luBusy=true;const red=fxReduced(),epic=ev.charLevel!=null,m=ev.attrs[0];
@@ -93,7 +98,7 @@ function showLevelUp(ev){if(luBusy){luQ.push(ev);return}luBusy=true;const red=fx
  FX.burst(cx,cy,col,red?20:epic?120:64,560,320);setTimeout(()=>FX.burst(cx,cy,acc,red?10:40,380,260),250);
  if(!red){const cols=[col,'#ffffff',acc,'#ffd36a'];if(epic)for(let t=0;t<1100;t+=55)setTimeout(()=>{FX.confetti(innerWidth*.04,innerHeight,5,-82,-58,1350,cols);FX.confetti(innerWidth*.96,innerHeight,5,-122,-98,1350,cols)},700+t);else setTimeout(()=>FX.confetti(cx,cy,34,-170,-10,620,cols),380)}
  const iv=setInterval(()=>{FX.star(cx+(Math.random()-.5)*Math.min(innerWidth*.8,420),cy+(Math.random()-.5)*300,Math.random()<.5?col:'#fff',8+Math.random()*12,.7+Math.random()*.6)},red?260:110);
- let closed=false;function close(){if(closed)return;closed=true;clearInterval(iv);ov.classList.remove('in');ov.classList.add('out');setTimeout(()=>{ov.remove();luBusy=false;const n=luQ.shift();if(n)showLevelUp(n)},380)}
+ let closed=false;function close(){if(closed)return;closed=true;clearInterval(iv);ov.classList.remove('in');ov.classList.add('out');setTimeout(()=>{ov.remove();luBusy=false;const n=luQ.shift();if(n)showLevelUp(n);else fxSettle()},380)}
  ov.addEventListener('click',()=>{if(Date.now()-born>700)close()});setTimeout(close,epic?7000:4600)}
 function renderFxSettings(){const o=fxOpt(),g=id=>document.getElementById(id);if(!g('fxSound'))return;g('fxSound').checked=o.sound;g('fxHaptics').checked=o.haptics;g('fxReduce').checked=o.reduce}
 function saveFx(){const g=id=>document.getElementById(id).checked;state.fx={sound:g('fxSound'),haptics:g('fxHaptics'),reduce:g('fxReduce')};save()}

@@ -29,24 +29,29 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.util.lerp
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
 import com.lifemax.rpg.feature.lifedirector.domain.DialRadii
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
+import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberPulse
+import com.lifemax.rpg.feature.lifedirector.presentation.components.spoken
 import kotlin.math.abs
 
 /**
  * The 24-hour dial (the web's dialHtml): its 360-unit square scaled to the width, at most 370 dp,
- * midnight at the top. The drawing is prepared whenever its data changes (DialArt), so the 15 s
- * refresh, which only moves the time, redraws prepared shapes. The next session's halo pulses and
- * the hand turns in layers of their own. A tap finds its arc by ring and angle; every arc is also a
- * node TalkBack can read and press. [animate] is false while the screen is hidden.
+ * midnight at the top. The drawing is prepared whenever its data changes (DialArt) and drawn in
+ * layers: the face and plan, what moves with the time, the next session's pulsing halo and the
+ * turning hand. So the 15 s refresh, which only moves the time, redraws the small time layer, and
+ * nothing around the dial redraws the face. A tap finds its arc by ring and angle; every arc is
+ * also a node TalkBack can read and press. [animate] is false while the screen is hidden.
  */
 @Composable
 fun ChronoDial(
@@ -76,16 +81,22 @@ fun ChronoDial(
                 }
             }
         ) {
-            Canvas(Modifier.fillMaxSize().semantics { contentDescription = DIAL_DESCRIPTION }) {
+            Canvas(
+                Modifier.fillMaxSize().graphicsLayer().semantics {
+                    contentDescription = DIAL_DESCRIPTION
+                }
+            ) {
                 inUnits {
                     face.draw(this)
                     plan.draw(this)
-                    now.draw(this)
                 }
             }
+            Canvas(Modifier.fillMaxSize().graphicsLayer()) { inUnits { now.draw(this) } }
             if (halo != null) {
-                val pulse = rememberPulse(animate, 2400, .41f)
-                Canvas(Modifier.fillMaxSize().graphicsLayer { alpha = pulse.value }) {
+                val pulse = rememberPulse(animate, 2400)
+                Canvas(
+                    Modifier.fillMaxSize().graphicsLayer { alpha = lerp(1f, .41f, pulse.value) }
+                ) {
                     inUnits { halo.draw(this) }
                 }
             }
@@ -117,8 +128,8 @@ private fun Hand(angle: Float, animate: Boolean) {
 }
 
 /**
- * One 48 dp node per arc, at its middle, carrying its label for TalkBack; pressing one does what
- * tapping the arc does. Touches pass through them to the dial.
+ * One 48 dp node per arc, at its middle, carrying its label and a session's state for TalkBack;
+ * pressing one does what tapping the arc does. Touches pass through them to the dial.
  */
 @Composable
 private fun ArcTargets(arcs: List<DialArc>, radii: DialRadii, onArc: (DialArc) -> Unit) {
@@ -128,6 +139,8 @@ private fun ArcTargets(arcs: List<DialArc>, radii: DialRadii, onArc: (DialArc) -
                 Box(
                     Modifier.semantics {
                         contentDescription = arc.label
+                        if (arc.state != SessionState.NONE && arc.state != SessionState.PLAN)
+                            stateDescription = arc.state.spoken()
                         if (arc.tappable) {
                             role = Role.Button
                             onClick {

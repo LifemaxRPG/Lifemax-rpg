@@ -11,6 +11,7 @@ object DirectorPalette {
     val bg0 = Color(0xFF090B10)
     val line = Color.White.copy(alpha = .07f)
     val line2 = Color.White.copy(alpha = .13f)
+    val panelEdge = Color.White.copy(alpha = .04f)
     val ink = Color(0xFFEFF4FF)
     val ink2 = Color(0xFFB6C2D9)
     val ink3 = Color(0xFF8592AA)
@@ -67,7 +68,20 @@ object DirectorPalette {
     val goBottom = Color(0xFF0EA877)
     val goInk = Color(0xFF04150F)
     val toast = Color(0xFF1B2232)
+    val toastShadow = Color.Black.copy(alpha = .45f)
     val statusOk = Color(0xFF38E6B4)
+
+    // White washes over the panel: cards, fills and rules
+    val cardTop = Color.White.copy(alpha = .035f)
+    val cardBottom = Color.White.copy(alpha = .015f)
+    val restCard = Color.White.copy(alpha = .03f)
+    val faintFill = Color.White.copy(alpha = .02f)
+    val buttonFill = Color.White.copy(alpha = .045f)
+    val centreButton = Color.White.copy(alpha = .05f)
+    val chipFill = Color.White.copy(alpha = .06f)
+    val pillFill = Color.White.copy(alpha = .07f)
+    val mixTrack = Color.White.copy(alpha = .04f)
+    val rule = Color.White.copy(alpha = .14f)
 
     // The dial
     val bezel = listOf(0f to Color(0xFF171E2C), .35f to Color(0xFF0B0E15), 1f to Color(0xFF080C14))

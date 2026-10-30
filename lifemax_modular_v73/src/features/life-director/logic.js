@@ -5033,18 +5033,22 @@ const LifeDirectorApp = (function () {
   }
   /* A tap handed back by a native screen, run as its web element runs it: the element's act and the one id it needs
      (named here by the data-* attribute it fills). 'meal' opens the meal whose first minute (epoch seconds) is the id,
-     as its arc and row do. Returns false for an act Today does not have. */
+     as its arc and row do. Returns false for an act Today does not have, and, saying so, for a session or meal that has
+     left the plan since the screen drew it. */
   const ACT_ID = new Map([['inst', 'id'], ['focusStart', 'id'], ['doneQuick', 'id'], ['tab', 'tab'], ['regroup', 'v'],
     ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', '']]);
   function nativeAct(act, id) {
     if (!root || !root.isConnected) return false;
+    const gone = () => { say('That is no longer on the plan.'); return false; };
     let data;
     if (act === 'meal') {
       const m = ST.schedule && (ST.schedule.segments || []).find(g => g.kind === 'MEAL' && String(g.startEpoch) === String(id));
-      if (!m) return false;
+      if (!m) return gone();
       data = { act: 'anchor', k: 'meal', t: m.title, s: m.startEpoch, e: m.endEpoch, ms: m.startEpoch };
-    } else if (ACT_ID.has(act)) data = ACT_ID.get(act) ? { act, [ACT_ID.get(act)]: id } : { act };
-    else return false;
+    } else if (ACT_ID.has(act)) {
+      if (ACT_ID.get(act) === 'id' && !findInst(id)) return gone();
+      data = ACT_ID.get(act) ? { act, [ACT_ID.get(act)]: id } : { act };
+    } else return false;
     perform({ dataset: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v == null ? '' : String(v)])) }); // strings, as a dataset holds them
     return true;
   }

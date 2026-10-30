@@ -78,7 +78,7 @@
    "capabilities": [
     "director.today.v1"
    ],
-   "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running",
+   "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while the XP celebration of one of its taps plays on the page",
    "commands": {
     "day": "{index}: shows that day of the strip; read-only, refused when the day is not on the strip; the screen stays"
    },
@@ -97,11 +97,11 @@
    "readContract": {
     "snapshotDto": "feature/lifedirector/domain/LifeDirectorProjection.kt",
     "decoder": "feature/lifedirector/data/WebLifeDirectorRepository.kt (LifeDirectorJson.kt)",
-    "fixtures": "native/src/test/resources/fixtures/director-today.json, director-tomorrow.json (tools/gen_native_fixtures.js)",
+    "fixtures": "native/src/test/resources/fixtures/director-{today,tomorrow,banner,timer,soon,late,evening,unplanned}.json (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence",
     "invalidation": "LifeDirector.native.onChange (a render, a sheet or the guide opening or closing, a message), host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "no native writes; Done and the timer run the page's own handlers after the screen closes",
+   "mutationsGate": "no native writes; Done and the timer run the page's own handlers after the screen closes, and the screen comes back once their XP celebration has played; a tap on a session or meal that has left the plan is told so",
    "rollout": "opt-in under Settings, Appearance: Native Life Director (beta), off by default",
    "canonicalLayout": true
   },

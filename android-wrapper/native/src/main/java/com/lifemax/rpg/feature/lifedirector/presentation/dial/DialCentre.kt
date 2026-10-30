@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.util.lerp
 import com.lifemax.rpg.feature.lifedirector.domain.CentreNext
 import com.lifemax.rpg.feature.lifedirector.domain.Countdown
 import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
@@ -39,9 +39,8 @@ import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.GlowDot
-import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
+import com.lifemax.rpg.feature.lifedirector.presentation.components.TimerClock
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberPulse
-import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberTickingClock
 
 /**
  * The middle of the dial (the web's coreToday and coreHtml): what is happening now, the time left,
@@ -80,8 +79,7 @@ private fun NowCentre(centre: DialCentre, u: DialUnits, animate: Boolean, onTap:
         val kickColor =
             warm ?: if (centre.kickLive) P.good else centre.kickKind?.let(P::kick) ?: P.ink3
         when {
-            centre.kickLive ->
-                GlowDot(u.dp(6f), kickColor, 0.dp, rememberPulse(animate, 1400, .45f))
+            centre.kickLive -> GlowDot(u.dp(6f), kickColor, 0.dp, rememberPulse(animate, 1400))
             centre.kickKind != null -> GlowDot(u.dp(5f), kickColor, u.dp(8f))
         }
         Text(
@@ -109,17 +107,18 @@ private fun NowCentre(centre: DialCentre, u: DialUnits, animate: Boolean, onTap:
     )
     centre.countdown?.let { Countdown(it, u.sp(21f), warm, Modifier.padding(top = u.dp(6f))) }
     centre.timer?.let { timer ->
-        val now by rememberTickingClock(animate && timer.paused == null)
-        Text(
-            clockText(timer.elapsedMs(now)),
-            Modifier.padding(top = u.dp(6f)).tappable(timer.tap, onTap),
-            style = DirectorText,
-            color = Color.White,
-            fontSize = u.sp(21f),
-            fontWeight = FontWeight.Bold,
-            letterSpacing = (-.04).em,
-            lineHeight = 1.08.em,
-        )
+        TimerClock(timer, animate) { clock ->
+            Text(
+                clock,
+                Modifier.padding(top = u.dp(6f)).tappable(timer.tap, onTap),
+                style = DirectorText,
+                color = Color.White,
+                fontSize = u.sp(21f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-.04).em,
+                lineHeight = 1.08.em,
+            )
+        }
     }
     if (centre.sub.isNotEmpty())
         Text(
@@ -145,9 +144,7 @@ private fun NowCentre(centre: DialCentre, u: DialUnits, animate: Boolean, onTap:
                             Brush.verticalGradient(listOf(P.goTop, P.goBottom)),
                             shape,
                         )
-                    else
-                        Modifier.background(Color.White.copy(alpha = .05f), shape)
-                            .border(u.dp(1f), P.line2, shape)
+                    else Modifier.background(P.centreButton, shape).border(u.dp(1f), P.line2, shape)
                 )
                 .clickable(role = Role.Button) { onTap(button.tap) }
                 .padding(horizontal = u.dp(13f), vertical = u.dp(4f)),
@@ -217,11 +214,7 @@ private fun NextLine(
     animate: Boolean,
     onTap: (Tap) -> Unit,
 ) {
-    Box(
-        Modifier.padding(top = u.dp(type.above))
-            .size(u.dp(26f), u.dp(1f))
-            .background(Color.White.copy(alpha = .14f))
-    )
+    Box(Modifier.padding(top = u.dp(type.above)).size(u.dp(26f), u.dp(1f)).background(P.rule))
     Column(
         Modifier.fillMaxWidth(.94f).padding(top = u.dp(type.below)).tappable(next.tap, onTap),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -230,7 +223,7 @@ private fun NextLine(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(u.dp(5f)),
         ) {
-            if (next.live) GlowDot(u.dp(6f), P.warn, 0.dp, rememberPulse(animate, 1400, .45f))
+            if (next.live) GlowDot(u.dp(6f), P.warn, 0.dp, rememberPulse(animate, 1400))
             Text(
                 next.label.uppercase(),
                 style = DirectorText,
@@ -243,10 +236,12 @@ private fun NextLine(
             )
         }
         if (next.title.isNotEmpty()) {
-            val fade = rememberPulse(animate && next.live, 2200, .6f)
+            val fade = rememberPulse(animate && next.live, 2200)
             Text(
                 next.title,
-                Modifier.padding(top = u.dp(2f)).graphicsLayer { alpha = fade.value },
+                Modifier.padding(top = u.dp(2f)).graphicsLayer {
+                    alpha = lerp(1f, .6f, fade.value)
+                },
                 style = DirectorText,
                 color = if (next.live) P.warnBright else P.ink2,
                 fontSize = u.sp(type.title),

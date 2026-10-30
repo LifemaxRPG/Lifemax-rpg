@@ -98,8 +98,7 @@ fun EarlierFold(summary: String, open: Boolean, onToggle: () -> Unit) {
 }
 
 /** The card the earlier blocks sit in (.ld-earlier), cut to this item's [slice] of it. */
-fun Modifier.earlierCard(slice: Slice) =
-    cardSlice(slice, 14.dp, SolidColor(Color.White.copy(alpha = .02f)), P.line)
+fun Modifier.earlierCard(slice: Slice) = cardSlice(slice, 14.dp, SolidColor(P.faintFill), P.line)
 
 /**
  * One block of the running order (the web's roHtml): its time and length, a rail in its colour, its
@@ -139,9 +138,12 @@ fun OrderRowView(row: OrderRow, onTap: (Tap) -> Unit, modifier: Modifier = Modif
                 end = if (session) 10.dp else 0.dp,
             )
             .rail(rail, glowing),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(COLUMN_GAP),
     ) {
-        Column(Modifier.width(62.dp).padding(top = 6.dp), horizontalAlignment = Alignment.End) {
+        Column(
+            Modifier.width(TIME_COLUMN).padding(top = 6.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
             Text(
                 row.time,
                 style = DirectorText,
@@ -153,7 +155,7 @@ fun OrderRowView(row: OrderRow, onTap: (Tap) -> Unit, modifier: Modifier = Modif
             )
             Text(row.length, style = DirectorText, color = P.ink3, fontSize = 11.2.sp)
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(RAIL))
         Column(Modifier.weight(1f).padding(vertical = 5.dp)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -203,7 +205,7 @@ private fun StatePill(row: OrderRow) {
             SessionState.DONE -> P.mint to P.task.copy(alpha = .16f)
             SessionState.PART -> P.amber to P.work.copy(alpha = .14f)
             SessionState.OFF -> P.rose to P.block.copy(alpha = .12f)
-            else -> P.ink3 to Color.White.copy(alpha = .07f)
+            else -> P.ink3 to P.pillFill
         }
     Pill(row.stateLabel, color, fill)
 }
@@ -230,8 +232,7 @@ private fun OrderRow.description() =
 
 private fun Modifier.sessionCard(state: SessionState, shape: RoundedCornerShape) =
     when (state) {
-        SessionState.DONE ->
-            background(Color.White.copy(alpha = .02f), shape).border(1.dp, P.line, shape)
+        SessionState.DONE -> background(P.faintFill, shape).border(1.dp, P.line, shape)
         SessionState.OFF ->
             background(P.block.copy(alpha = .04f), shape)
                 .border(1.dp, P.block.copy(alpha = .16f), shape)
@@ -245,13 +246,18 @@ private fun Modifier.sessionCard(state: SessionState, shape: RoundedCornerShape)
                 .border(1.dp, P.task.copy(alpha = .16f), shape)
     }
 
+/** A row's columns: the time, then the rail in the space kept for it, then the block. */
+private val TIME_COLUMN = 62.dp
+private val COLUMN_GAP = 12.dp
+private val RAIL = 4.dp
+
 /**
- * The 4 dp rail in the block's colour after the time column, as tall as the row; a live session's
- * glows.
+ * The rail in the block's colour, in its space after the time column and as tall as the row; a live
+ * session's glows.
  */
 private fun Modifier.rail(color: Color, glowing: Boolean) = drawWithCache {
-    val left = 74.dp.toPx()
-    val width = 4.dp.toPx()
+    val left = (TIME_COLUMN + COLUMN_GAP).toPx()
+    val width = RAIL.toPx()
     val corner = CornerRadius(width)
     val glow = if (glowing) glowPaint(P.task.copy(alpha = .5f), 10.dp.toPx()) else null
     val railSize = Size(width, size.height.coerceAtLeast(22.dp.toPx()))

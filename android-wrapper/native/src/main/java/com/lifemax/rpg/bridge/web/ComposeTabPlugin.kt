@@ -55,7 +55,8 @@ abstract class ComposeTabPlugin : Plugin() {
 
     /**
      * The page's answer to a [sendCommand], delivered with the update that carries the fresh
-     * projection.
+     * projection, and delivered even when that projection is rejected: the answer still says what
+     * the page did.
      */
     protected open fun onReply(reply: JSONObject) {}
 
@@ -116,9 +117,12 @@ abstract class ComposeTabPlugin : Plugin() {
         activity.runOnUiThread {
             try {
                 if (view != null) {
-                    accept(data, false)
-                    showChrome(call.getObject("navScene"))
-                    call.getObject("reply")?.let { onReply(it) }
+                    try {
+                        accept(data, false)
+                        showChrome(call.getObject("navScene"))
+                    } finally {
+                        call.getObject("reply")?.let { onReply(it) }
+                    }
                 }
                 call.resolve()
             } catch (e: Exception) {

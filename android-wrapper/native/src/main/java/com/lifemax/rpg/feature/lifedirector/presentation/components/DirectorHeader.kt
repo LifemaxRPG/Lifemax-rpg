@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -142,8 +143,8 @@ private fun StatusLight(dot: StatusDot) {
 }
 
 /**
- * Life Director's sections; every one but Today opens on the page. 38 dp pills in a 48 dp tall row
- * that scrolls to the panel's edges, on a band of the panel's own black.
+ * Life Director's sections; every one but the current one opens on the page. 38 dp pills in a 48 dp
+ * tall row that scrolls to the panel's edges, on a band of the panel's own black.
  */
 @Composable
 fun SectionTabs(tabs: List<DirectorTab>, current: String, onTap: (Tap) -> Unit) {
@@ -158,13 +159,16 @@ fun SectionTabs(tabs: List<DirectorTab>, current: String, onTap: (Tap) -> Unit) 
             val on = tab.id == current
             val shape = RoundedCornerShape(12.dp)
             Box(
-                Modifier.height(48.dp)
-                    .semantics { selected = on }
-                    .clickable(role = Role.Tab) { if (!on) onTap(Tap("tab", tab.id)) },
+                Modifier.heightIn(min = 48.dp)
+                    .semantics {
+                        selected = on
+                        role = Role.Tab
+                    }
+                    .then(if (on) Modifier else Modifier.clickable { onTap(Tap("tab", tab.id)) }),
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
-                    Modifier.height(38.dp)
+                    Modifier.heightIn(min = 38.dp)
                         .then(
                             if (on)
                                 Modifier.background(P.free.copy(alpha = .13f), shape)
@@ -243,7 +247,7 @@ fun DirectorToastView(text: String, modifier: Modifier = Modifier) {
         text,
         modifier
             .semantics { liveRegion = LiveRegionMode.Polite }
-            .softShadow(Color.Black.copy(alpha = .45f), 34.dp, 13.dp, dy = 12.dp)
+            .softShadow(P.toastShadow, 34.dp, 13.dp, dy = 12.dp)
             .background(P.toast, shape)
             .border(1.dp, P.line2, shape)
             .padding(horizontal = 16.dp, vertical = 11.dp),

@@ -8,6 +8,6 @@ interface LifeDirectorRepository {
 
 /** What the screen asks of the page without closing. The page answers with a new projection. */
 interface LifeDirectorCommands {
-    /** Show another day of the strip; read-only. */
-    fun showDay(index: Int)
+    /** Show another day of the strip; read-only. Returns the id the page's answer will carry. */
+    fun showDay(index: Int): String
 }

@@ -7,7 +7,9 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorNotice
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
+import com.lifemax.rpg.feature.lifedirector.presentation.DirectorActions
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorViewModel
+import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialGeometry
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -38,8 +40,9 @@ class LifeDirectorTest {
     private class Recorder : LifeDirectorCommands {
         val days = mutableListOf<Int>()
 
-        override fun showDay(index: Int) {
+        override fun showDay(index: Int): String {
             days += index
+            return "day-${days.size}"
         }
     }
 
@@ -146,6 +149,43 @@ class LifeDirectorTest {
         assertEquals(0, repo.state.value!!.today!!.dayIndex)
     }
 
+    @Test
+    fun aNewPageWithoutAPlanShowsNoDayOfTheOldOne() {
+        val repo = repository()
+        repo.accept(fixture("unplanned").put("webSessionId", "a reloaded page"), true)
+        assertEquals("setup", repo.state.value!!.tab)
+        assertNull(repo.state.value!!.today)
+    }
+
+    @Test
+    fun rowsOfTheSameBlockGetKeysOfTheirOwn() {
+        val j = fixture()
+        val ahead = j.getJSONObject("today").getJSONObject("rows").getJSONArray("ahead")
+        ahead.put(JSONObject(ahead.getJSONObject(0).toString())).put(ahead.getJSONObject(0))
+        val keys =
+            WebLifeDirectorRepository()
+                .apply { accept(j, true) }
+                .state
+                .value!!
+                .today!!
+                .ahead
+                .map { it.key }
+        assertEquals(keys.size, keys.toSet().size)
+        assertEquals(listOf(keys[0] + "#2", keys[0] + "#3"), keys.takeLast(2))
+    }
+
+    @Test
+    fun aTimerCountsWhatHasRunAndStopsWhilePaused() {
+        val timer = repository("timer").state.value!!.today!!.centre.timer!!
+        assertEquals(754_000L, timer.elapsedMs(timer.startedAt + 754_000L))
+        assertEquals(0L, timer.elapsedMs(timer.startedAt - 5_000L))
+        val paused = timer.copy(pausedMs = 60_000L, paused = timer.startedAt + 600_000L)
+        assertEquals(540_000L, paused.elapsedMs(timer.startedAt + 900_000L))
+        assertEquals("12:34", clockText(754_000L))
+        assertEquals("1:02:09", clockText(3_729_000L))
+        assertEquals("0:05", clockText(5_999L))
+    }
+
     // The view model
 
     @Test
@@ -156,7 +196,7 @@ class LifeDirectorTest {
         assertEquals(listOf(1), commands.days)
         assertEquals(1, vm.ui.value.pendingDay)
         repo.accept(fixture("tomorrow").put("sequence", 2))
-        vm.onReply("day", true, "")
+        vm.onReply("day-1", "day", true, "")
         assertNull(vm.ui.value.pendingDay)
         assertNull(vm.ui.value.toast)
         vm.showDay(1)
@@ -165,14 +205,36 @@ class LifeDirectorTest {
     }
 
     @Test
+    fun onlyTheAnswerToTheLatestDaySettlesTheStrip() {
+        val (_, vm, commands) = viewModel()
+        vm.showDay(1)
+        vm.showDay(2)
+        vm.onReply("day-1", "day", true, "")
+        assertEquals(2, vm.ui.value.pendingDay)
+        vm.onReply("day-2", "day", true, "")
+        assertNull(vm.ui.value.pendingDay)
+        assertEquals(listOf(1, 2), commands.days)
+    }
+
+    @Test
     fun aRefusedDaySaysWhy() {
         val (_, vm, _) = viewModel()
         vm.showDay(3)
-        vm.onReply("preview", false, "not mine")
+        vm.onReply("day-1", "preview", false, "not mine")
         assertEquals(3, vm.ui.value.pendingDay)
-        vm.onReply("day", false, "That day is not on the plan.")
+        vm.onReply("day-1", "day", false, "That day is not on the plan.")
         assertNull(vm.ui.value.pendingDay)
         assertEquals("That day is not on the plan.", vm.ui.value.toast!!.text)
+    }
+
+    @Test
+    fun openingAgainForgetsADayStillAskedFor() {
+        val (_, vm, _) = viewModel()
+        vm.showDay(3)
+        vm.opened()
+        assertNull(vm.ui.value.pendingDay)
+        vm.onReply("day-1", "day", false, "late")
+        assertNull(vm.ui.value.toast)
     }
 
     @Test
@@ -187,9 +249,9 @@ class LifeDirectorTest {
     @Test
     fun aNoticeShowsOnceAndATipEachTime() {
         val (_, vm, _) = viewModel()
-        vm.notice(DirectorNotice(4, "Marked done"))
+        vm.notice("page", DirectorNotice(4, "Marked done"))
         val first = vm.ui.value.toast!!
-        vm.notice(DirectorNotice(4, "Marked done"))
+        vm.notice("page", DirectorNotice(4, "Marked done"))
         assertEquals(first, vm.ui.value.toast)
         vm.tip("Work · 9:00 AM–5:00 PM")
         vm.tip("Work · 9:00 AM–5:00 PM")
@@ -199,6 +261,35 @@ class LifeDirectorTest {
         assertEquals(tip, vm.ui.value.toast)
         vm.dismiss(tip.serial)
         assertNull(vm.ui.value.toast)
+    }
+
+    @Test
+    fun aReloadedPageCountsItsNoticesAfresh() {
+        val (_, vm, _) = viewModel()
+        vm.notice("page", DirectorNotice(1, "Plan updated"))
+        val first = vm.ui.value.toast!!
+        vm.notice("reloaded page", DirectorNotice(1, "Skipped"))
+        assertEquals(first.serial + 1, vm.ui.value.toast!!.serial)
+        assertEquals("Skipped", vm.ui.value.toast!!.text)
+    }
+
+    @Test
+    fun aTipLeavesTheTapForThePageAndSeeTomorrowAsksForTheDay() {
+        val repo = repository("evening")
+        val commands = Recorder()
+        val vm = LifeDirectorViewModel(repo, commands).apply { opened() }
+        val emitted = mutableListOf<Tap>()
+        val actions = DirectorActions(vm) { act, id -> emitted += Tap(act, id) }
+        val today = repo.state.value!!.today!!
+        val work = today.dial.arcs.first { it.tap == null && it.tip.isNotEmpty() }
+        actions.arc(work)
+        assertEquals(work.tip, vm.ui.value.toast!!.text)
+        actions.upNext(today.upNext!!.actions.single())
+        assertEquals(listOf(1), commands.days)
+        val session = today.dial.arcs.first { it.tap != null }
+        actions.arc(session)
+        actions.arc(session)
+        assertEquals(listOf(session.tap), emitted)
     }
 
     // The dial's geometry
@@ -255,9 +346,10 @@ class LifeDirectorTest {
         assertEquals("Resistance Training", at(80f, 296f))
         // the skipped session is 4 units long and still has its own target
         assertEquals("Full care day", at(101f, 305.6f))
-        // downtime is not a button: a tap on it finds a session up to 24 units along the ring
+        // a short arc is a target 48 units long, no more: downtime beyond that is not a button
         assertEquals("Focused Reading", at(101f, 320f))
-        assertNull(at(101f, 330f))
+        assertNull(at(101f, 326f))
+        assertNull(at(101f, 100f))
         assertNull(at(40f, 200f))
         assertNull(at(170f, 200f))
     }
