@@ -143,6 +143,7 @@ class OverviewParityTest {
         val bounds = Rect()
         target!!.getBoundsInScreen(bounds)
         assertTrue("Shared native tab $label must be visible", bounds.width() > 0 && bounds.height() > 0)
+        println("NAV_TAP $label $bounds")
         val down = SystemClock.uptimeMillis()
         val x = bounds.centerX().toFloat()
         val y = bounds.centerY().toFloat()
@@ -205,6 +206,8 @@ class OverviewParityTest {
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
             repeat(3) {
                 clickSharedTab("Character")
+                SystemClock.sleep(1000)
+                println("NAV_TRACE " + evaluate(main, "JSON.stringify({view:lmaView(),trace:window.__nativeNavTrace})"))
                 waitUntil("Character opens from native Food bar") {
                     var attached = false
                     instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
