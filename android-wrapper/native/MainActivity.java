@@ -22,13 +22,46 @@ import com.lifemax.rpg.bridge.web.NativeOverviewPlugin;
 
 public class MainActivity extends BridgeActivity {
     static final String EXTRA_OPEN = "lma_open";
-    /** Set by the home-screen widget; the web app reads and clears it. */
+    /** Set by the home-screen widget (only a screen LaunchRules knows); the web app reads and clears it. */
     static volatile String launchTarget = null;
 
+    /*
+     * A new intent while the app runs (a widget tap, a lifemax:// link). Capacitor also calls this from onCreate with the
+     * launch intent, once the bridge exists (BridgeActivity.load); super hands a link to the App plugin (appUrlOpen).
+     */
     @Override
     protected void onNewIntent(Intent intent) {
+        if (intent != null && LaunchRules.isReplay(false, launchedFromHistory(intent))) intent = consumed(intent);
         super.onNewIntent(intent);
-        if (intent != null && intent.getStringExtra(EXTRA_OPEN) != null) launchTarget = intent.getStringExtra(EXTRA_OPEN);
+        take(intent);
+    }
+
+    /* Note the screen the intent asks for, then mark the intent delivered so nothing can act on it a second time. */
+    private void take(Intent intent) {
+        if (intent == null) return;
+        try {
+            String target = LaunchRules.openTarget(intent.getStringExtra(EXTRA_OPEN));
+            if (target != null) launchTarget = target;
+            setIntent(consumed(intent));
+        } catch (RuntimeException e) {
+            /* an extra another app packed so it cannot be read: ignore it, never fail to start the home screen */
+        }
+    }
+
+    /** The same intent without what it asked for: no lifemax:// link and no screen to open. */
+    static Intent consumed(Intent intent) {
+        Intent out = new Intent(intent);
+        out.setData(null);
+        try {
+            out.removeExtra(EXTRA_OPEN);
+        } catch (RuntimeException e) {
+            out.replaceExtras((Bundle) null);
+        }
+        return out;
+    }
+
+    private static boolean launchedFromHistory(Intent intent) {
+        return (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0;
     }
 
     @Override
@@ -50,10 +83,15 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(com.lifemax.rpg.bridge.web.NativeCharacterPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLogPlugin.class);
         registerPlugin(NativeNutritionPlugin.class);
+        // Backlog NAV-4: after process death, a configuration change or a reopen from Recents, Android hands back the
+        // intent that first started the activity. Drop its link and screen before the bridge reads them (the bridge keeps
+        // getIntent().getData() as the launch URL), so a widget tap or a lifemax:// link does not run twice.
+        Intent launch = getIntent();
+        if (launch != null && LaunchRules.isReplay(savedInstanceState != null, launchedFromHistory(launch))) setIntent(consumed(launch));
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
         LiveWeb.apply(getBridge(), this);
-        if (getIntent() != null && getIntent().getStringExtra(EXTRA_OPEN) != null) launchTarget = getIntent().getStringExtra(EXTRA_OPEN);
+        take(getIntent());              /* already done by onNewIntent from Capacitor's load(); harmless when repeated */
 
         // Draw edge to edge, then keep the page clear of the status bar, camera cut-out,
         // gesture bar and keyboard by padding the content area by the system insets.

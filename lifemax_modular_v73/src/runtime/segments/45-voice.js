@@ -272,6 +272,7 @@ function lmvAdvance(f,ctx){
  const recent=lmvJLoad().some(function(e){return e.status==='COMMITTED'&&e.semanticFingerprint===fp&&e.operationId!==f.operationId&&Date.now()-e.updatedAtEpochMs<LMV.dupWindowMs});
  if(!f.dupOk&&(recent||lmvLD.sameSlot(res.title,res.slot))){f.dup=true;notices.push({kind:'duplicate',text:'This looks the same as something already scheduled at that time.'})}
  if(f.confidence<LMV.lowConf)notices.push({kind:'confidence',text:'I was not sure I heard that right. Please check it.'});
+ if(f.external)notices.push({kind:'info',text:'This came from a link or a shortcut. Nothing is saved until you confirm.'});
  f.notices=notices;
  f.state='PREVIEWED';
  /* straight through only when the user turned the preview off and nothing needs a look */
@@ -371,6 +372,20 @@ function lmvHandle(text,meta){
  lmvAdvance(f,ctx);
  lmvRender();
  return lmvSnapshot();
+}
+/* A schedule request from a lifemax:// link (Assistant, a shortcut or any other app; backlog SEC-3). It only ever becomes a
+   new Life Director entry, never another command, never reaches the online fallback, and it always stops at the preview
+   (f.external adds a notice, so lmvAdvance never saves it straight through): nothing is saved until the owner confirms. */
+function lmvFromLink(text){
+ if(!lmvEnabled())return lmvSnapshot();
+ const ctx=lmvCtx(),clean=String(text==null?'':text).slice(0,500),old=lmvFrame;
+ if(old&&(old.state==='AWAITING_CLARIFICATION'||old.state==='PREVIEWED'))old.state='CANCELLED';
+ try{if(typeof g4Reset==='function')g4Reset()}catch(e){}
+ const f=lmvFrame=lmvNewFrame();f.external=true;f.transcript=clean;f.confidence=1;
+ const raw=lmvExtract(clean,ctx,null),patch={};
+ Object.keys(raw).forEach(function(k){if(raw[k]!==null&&raw[k]!==undefined)patch[k]=raw[k]});
+ if(raw.hour==null)delete patch.minute;if(raw.endHour==null)delete patch.endMinute;
+ lmvMerge(f,patch);lmvAdvance(f,ctx);lmvRender();return lmvSnapshot();
 }
 /* chips and buttons */
 function lmvAnswer(patch){
@@ -591,6 +606,7 @@ function lmvSettingsRender(){
 window.LifeMaxVoice=Object.freeze({
  simulateUtterance:function(text,opts){opts=opts||{};if(opts.now||opts.tz){lmvOverride={now:opts.now,tz:opts.tz,workOn:opts.workOn}}else lmvOverride=lmvOverride&&lmvOverride.sticky?lmvOverride:null;return lmvHandle(text,{utteranceId:opts.utteranceId,confidence:opts.confidence})},
  setClock:function(o){lmvOverride=o?{now:o.now,tz:o.tz,workOn:o.workOn,sticky:true}:null},
+ fromLink:lmvFromLink,
  answer:lmvAnswer,confirm:lmvConfirm,cancel:lmvCancel,undo:lmvUndo,reset:lmvReset,snapshot:lmvSnapshot,
  registry:function(){return LMV_CAPS.map(function(c){return {intentId:c.intentId,domain:c.domain,title:c.title,status:c.evaluateStatus()}})},
  _t:{scope:function(t){return lmvScope(t,lmvCtx())},phon:function(t){return lmvPhon(t)},classify:function(t){return lmvClassify(lmvPhon(t))},applyFlag:lmvApplyFlag,buildUI:lmvBuildUI,normalize:lmvNormalize,extract:lmvExtract,finalize:lmvFinalize,localToEpoch:lmvLocalToEpoch,journal:lmvJLoad,journalPut:lmvJPut,execute:function(op){return lmvFrame&&lmvFrame.operationId===op?lmvExecute(lmvFrame):null},fingerprint:lmvFingerprint,recover:lmvRecover,frame:function(){return lmvFrame},ctx:lmvCtx}
