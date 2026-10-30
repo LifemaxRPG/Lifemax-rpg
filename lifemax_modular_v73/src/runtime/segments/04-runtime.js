@@ -102,9 +102,13 @@ function renderHistory(){
     const label=journalDayLabel(d);
     return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(label)}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
+  // text being typed in the entry stays as it is: the entry is drawn again once its box loses the focus
+  if(histDrawn===histSel&&entryEl.contains(document.activeElement)&&document.activeElement.matches('textarea')){histStale=true;return}
+  histDrawn=histSel;histStale=false;
   entryEl.innerHTML=/^[WM]:/.test(histSel)&&window.LifeMaxCoach?jcReviewHtml(histSel):renderJournalDay(histSel);
 }
-let histSel=null;
+let histSel=null,histDrawn=null,histStale=false;
+document.getElementById('journalEntry')?.addEventListener('focusout',e=>{if(histStale&&e.target.matches('textarea'))setTimeout(renderHistory)});
 function journalDays(){
   const set=new Set();
   (state.activities||[]).forEach(a=>{if(a&&a.date)set.add(activityDate(a))});
@@ -142,7 +146,7 @@ function saveDayReflection(d,val){
   const t=val.trim();
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
   state.customRules=rules;
-  writeSave();
+  if(!writeSave()){toast(saveReadOnly?'Not saved: this version is read-only for your save':'Could not save to this browser (storage full?)');return}
   try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
