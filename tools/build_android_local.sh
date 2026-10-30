@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build and test the Android app the way CI does, on this machine.
-#   tools/build_android_local.sh            # compile + unit tests (assembleDebug testDebugUnitTest)
+#   tools/build_android_local.sh            # compile, unit tests and screenshot comparison
 #   tools/build_android_local.sh compile    # Kotlin compile only (fastest feedback)
 #   tools/build_android_local.sh record     # re-record the screenshot reference images (native/src/test/snapshots)
 #   tools/build_android_local.sh verify     # render the screens and compare them with the reference images
@@ -40,5 +40,5 @@ case "$mode" in
   compile) ./gradlew :app:compileDebugKotlin --console=plain ;;
   record) ./gradlew :app:recordPaparazziDebug --console=plain ;;
   verify) ./gradlew :app:verifyPaparazziDebug --console=plain ;;
-  *) ./gradlew assembleDebug testDebugUnitTest --console=plain ;;
+  *) ./gradlew assembleDebug verifyPaparazziDebug --console=plain ;;
 esac

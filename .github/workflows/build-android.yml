@@ -107,7 +107,17 @@ jobs:
 
       - name: Build debug APK
         working-directory: android-wrapper/android
-        run: ./gradlew assembleDebug testDebugUnitTest
+        run: ./gradlew assembleDebug verifyPaparazziDebug
+
+      - name: Keep the screenshot report when a native screen changed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Native-screenshots
+          path: |
+            android-wrapper/android/app/build/reports/paparazzi/
+            android-wrapper/android/app/build/paparazzi/failures/
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         with:
