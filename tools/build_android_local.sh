@@ -2,6 +2,8 @@
 # Build and test the Android app the way CI does, on this machine.
 #   tools/build_android_local.sh            # compile + unit tests (assembleDebug testDebugUnitTest)
 #   tools/build_android_local.sh compile    # Kotlin compile only (fastest feedback)
+#   tools/build_android_local.sh record     # re-record the screenshot reference images (native/src/test/snapshots)
+#   tools/build_android_local.sh verify     # render the screens and compare them with the reference images
 # Needs ANDROID_HOME (SDK with platform 34 and build-tools 34.0.0), Java 21, node and python3.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -34,4 +36,9 @@ fi
 npx cap sync android >/dev/null
 echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 cd android
-if [ "$mode" = compile ]; then ./gradlew :app:compileDebugKotlin --console=plain; else ./gradlew assembleDebug testDebugUnitTest --console=plain; fi
+case "$mode" in
+  compile) ./gradlew :app:compileDebugKotlin --console=plain ;;
+  record) ./gradlew :app:recordPaparazziDebug --console=plain ;;
+  verify) ./gradlew :app:verifyPaparazziDebug --console=plain ;;
+  *) ./gradlew assembleDebug testDebugUnitTest --console=plain ;;
+esac
