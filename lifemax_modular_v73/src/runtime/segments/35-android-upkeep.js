@@ -42,7 +42,7 @@ async function lmaCheckUpdate(silent){
 /* a web-only update: back up first, then download it quietly, check it, and keep it ready (it starts on the next launch, or now if
    you tap Restart). Unasked (at launch), a failed backup leaves the update waiting in Settings instead. */
 async function lmaWebUpdate(ask){
- const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||['backup','webdl'].includes(lmaUpd.state))return;   /* one at a time, its backup included; native refuses a second download too */
+ const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||LMA_UPD_BUSY.includes(lmaUpd.state))return;   /* one at a time, its backup included; native refuses a second download too */
  if(lmaUpd.live&&lmaUpd.live.staged===i.webBuild){lmaUpd.state='webready';lmaRenderUpdates();lmaWebPill();return}
  lmaUpd.state='backup';lmaRenderUpdates();
  if(!await lmaBackupFirst('update',ask)){lmaUpd.state='web';lmaUpd.err='It was not downloaded, because the backup before it failed.';lmaRenderUpdates();return}
@@ -55,11 +55,15 @@ async function lmaWebUpdate(ask){
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}
  lmaRenderUpdates();
 }
+/* the page is about to reload: leave a native tab for Settings (which none covers, so nothing reopens) and close every native screen */
+async function lmaLeaveNative(){if(!window.NativeTabs)return;if(NativeTabs.covered(lmaView()))lmaNavTo('settings',{fast:true});await NativeTabs.closeAll()}
 async function lmaWebRestart(){
- const L=lmaPlugin('LiveWeb');if(!L)return;
- const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
- if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
- try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
+ const L=lmaPlugin('LiveWeb');if(!L||LMA_UPD_BUSY.includes(lmaUpd.state))return;
+ lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state='webready';lmaRenderUpdates();return}
+ await lmaLeaveNative();   /* the backup took seconds, in which a native tab may have opened */
+ try{await L.restart();lmaUpd.state='webready'}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}   /* still here: the switch has not happened yet */
+ lmaRenderUpdates();
 }
 /* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
 function lmaPill(text,label,go,dismiss){
@@ -72,7 +76,7 @@ function lmaPill(text,label,go,dismiss){
 /* the update is downloaded: restart whenever you like */
 function lmaWebPill(){if(!lmaUpd.pillGone)lmaPill('Update ready','Restart',lmaWebRestart,()=>{lmaUpd.pillGone=true})}
 async function lmaInstallUpdate(){
- const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||['backup','downloading'].includes(lmaUpd.state))return;
+ const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||LMA_UPD_BUSY.includes(lmaUpd.state))return;
  const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
  if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
@@ -201,7 +205,7 @@ function lmaRenderBackup(){
 /* Once, gently: with no folder chosen, a pill on a page the owner can see points to Settings. */
 function lmaBackupAsk(){
  const b=lmaLoad().backup,v=lmaView();
- if(!lmaNative()||b.uri||b.asked||v==='settings'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;
+ if(!lmaNative()||b.uri||b.asked||v==='settings'||v==='money'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;   /* Cash always opens natively on Android */
  if(lmaPill('Your progress has no backup yet','Settings',lmaOpenBackupSettings)){b.asked=Date.now();lmaSave()}
 }
 function lmaOpenBackupSettings(){setPickCat('phone');lmaNavTo('settings',{fast:true});document.getElementById('lmaBakCard')?.scrollIntoView({block:'start'})}

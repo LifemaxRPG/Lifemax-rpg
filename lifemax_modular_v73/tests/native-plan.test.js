@@ -116,6 +116,10 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.failedSave = failed.reply.ok === false && failed.reply.message === 'Could not save to this browser (storage full?)' && !failed.reply.celebrations
       && pcheck('2026-10-26').s[sets[0][0]][sets[0][1]] === true && dayIn(failed.snapshot, '2026-10-26').items[0].sets[0] === true
       && !JSON.parse(localStorage.getItem(STORE)).plan.checks['2026-10-26'].s[sets[0][0]][sets[0][1]];
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    const readOnly = await command({ date: '2026-10-26', key: sets[1][0], set: sets[1][1], checked: false });
+    saveReadOnly = ''; saveReadOnlyTold = false;
+    out.readOnlySave = readOnly.reply.ok === false && readOnly.reply.message === 'Not saved: this version is read-only for your save' && !readOnly.reply.celebrations;
     SFX.xp = realCue;
     out.commandsKeepScreen = showing() && count('close') === 0;
 
@@ -195,6 +199,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('a future day is locked', r.locked, r);
   ok('a set that is not in the plan, or a malformed date, is refused', r.refused, r);
   ok('a failed save is reported as not saved; the page keeps the tick in memory, as after its own checkbox', r.failedSave, r);
+  ok('a read-only save is named as the reason, not storage', r.readOnlySave, r);
   ok('commands never close the screen', r.commandsKeepScreen, r);
   ok('a day selected on the page is followed (revision rises); a plain refresh keeps the screen\'s own', r.followsPage && r.keepsOwn, r);
   ok('guided workout: the screen closes and the page\'s runner opens for that day', r.guided, r);

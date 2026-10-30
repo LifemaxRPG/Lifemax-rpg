@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanKeyTag
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
@@ -152,20 +152,15 @@ private fun Hero(p: PlanProjection) {
             }
             SessionsCount(p.sessionsDone, p.sessionsTotal)
         }
-        Box(
-            Modifier.padding(top = 18.dp)
-                .fillMaxWidth()
-                .height(3.dp)
-                .clip(CircleShape)
-                .background(c.line)
-        ) {
-            Box(
-                Modifier.fillMaxWidth(p.sessionsDone.toFloat() / p.sessionsTotal.coerceAtLeast(1))
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(c.cycle)
-            )
-        }
+        // the count above already says how far along the cycle is, so TalkBack skips the bar
+        ProgressBar(
+            p.sessionsDone.toFloat() / p.sessionsTotal.coerceAtLeast(1),
+            c.cycle,
+            Modifier.padding(top = 18.dp).clearAndSetSemantics {},
+            height = 3.dp,
+            track = c.line,
+            outline = Color.Transparent,
+        )
     }
 }
 

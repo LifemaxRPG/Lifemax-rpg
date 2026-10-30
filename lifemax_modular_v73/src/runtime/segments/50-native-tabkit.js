@@ -202,7 +202,7 @@
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
-        entered = true;
+        if (!active) entered = true; // choosing the tab again while its screen shows is not a new arrival
         NativeTabs.cancel(cfg.id);
         queueMicrotask(() => open(false));
       }

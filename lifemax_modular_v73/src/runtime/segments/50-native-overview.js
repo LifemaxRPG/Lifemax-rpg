@@ -21,6 +21,9 @@
       A moment after the last tab change, once nothing is in flight, the tab for the current view must be showing and no other native
       tab may be; if not, this repairs it (a rapid run of taps can leave a screen cancelled, or a stale one behind). */
    register(view,tab){tabs.set(view,tab)},
+   /* Closes every native screen and waits for each: the page is about to reload under them (an over-the-air restart, an import),
+      and a screen left open would stay on top of the new page, which does not know it is there. */
+   closeAll(){this.flush();return Promise.allSettled([...tabs.values()].map(t=>t.close()))},
    has(view){return tabs.has(view)},
    heal(tries=0){
     ct(healTimer);

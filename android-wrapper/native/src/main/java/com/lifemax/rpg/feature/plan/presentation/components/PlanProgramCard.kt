@@ -4,30 +4,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 
 /** The ACTIVE PLAN card: the program, Leave plan, and the sessions done so far. */
@@ -75,20 +70,15 @@ internal fun PlanProgramCard(p: PlanProjection, onLeave: () -> Unit) {
             )
         }
         val done = p.sessionsDone.toFloat() / p.sessionsTotal.coerceAtLeast(1)
-        Box(
-            Modifier.padding(top = 14.dp, bottom = 6.dp)
-                .fillMaxWidth()
-                .height(7.dp)
-                .clip(CircleShape)
-                .background(c.track)
-                .border(1.dp, c.lineSoft, CircleShape)
-                .padding(1.dp)
-                .semantics { progressBarRangeInfo = ProgressBarRangeInfo(done, 0f..1f) }
-        ) {
-            Box(
-                Modifier.fillMaxWidth(done).fillMaxHeight().clip(CircleShape).background(c.progress)
-            )
-        }
+        ProgressBar(
+            done,
+            c.progress,
+            Modifier.padding(top = 14.dp, bottom = 6.dp),
+            height = 7.dp,
+            track = c.track,
+            outline = c.lineSoft,
+            inset = 1.dp,
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(p.status, color = c.muted2, fontSize = 11.sp, lineHeight = 16.5.sp)
             Text(

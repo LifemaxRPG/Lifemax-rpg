@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -19,7 +20,8 @@ import androidx.compose.ui.unit.dp
 
 /**
  * A pill-shaped bar filled with [fill] to [fraction] (clamped to 0..1), over a [track] with a
- * hairline [outline]; pass `Color.Transparent` for none. TalkBack reads it as a progress value.
+ * hairline [outline]; pass `Color.Transparent` for none. [inset] keeps the fill that far inside the
+ * outline. TalkBack reads it as a progress value.
  */
 @Composable
 fun ProgressBar(
@@ -29,6 +31,7 @@ fun ProgressBar(
     height: Dp = 8.dp,
     track: Color = MaterialTheme.colorScheme.background,
     outline: Color = MaterialTheme.colorScheme.outline.copy(alpha = .5f),
+    inset: Dp = 0.dp,
 ) {
     val filled = fraction.coerceIn(0f, 1f)
     Box(
@@ -39,6 +42,7 @@ fun ProgressBar(
             .clip(CircleShape)
             .background(track)
             .border(1.dp, outline, CircleShape)
+            .padding(inset)
     ) {
         Box(Modifier.fillMaxWidth(filled).fillMaxHeight().clip(CircleShape).background(fill))
     }

@@ -2520,7 +2520,12 @@ const LifeMaxHost = (function () {
       if (b > 0) { act.xp += b; act.ldBonus = b; act.xpSplit = act.xpSplit.concat([{ attr: 'discipline', xp: b }]); }
     }
     state.activities.push(act);
-    try { save(); } catch (e) { state.activities = state.activities.filter(a => a !== act); return { awarded: false, reason: 'HOST_SAVE_FAILED', error: String(e) }; }
+    let saved = false;
+    try { saved = save(); } catch (e) { saved = false; }
+    if (!saved) { /* taken back, as recordActivity does: an activity the save refused is neither shown nor counted */
+      state.activities = state.activities.filter(a => a !== act); rebuildAttrXP(); rebuildSkillXP(); renderAll();
+      return { awarded: false, reason: typeof saveReadOnly !== 'undefined' && saveReadOnly ? 'HOST_READ_ONLY' : 'HOST_SAVE_FAILED' };
+    }
     return { awarded: true, activityId: act.id, xp: x.xp };
   };
   /* Stream 3: quest completion bounty through the host's own guarded toggle. */
@@ -2829,6 +2834,8 @@ const LifeDirectorApp = (function () {
       const a = Host.awardActivity(r.event, { title: inst.title });
       if (a.awarded) { xpNote = '+' + a.xp + ' XP'; hostActivityId = a.activityId; }
       else if (a.reason === 'HOST_NOT_CONNECTED') xpNote = 'recorded (XP needs LifeMax)';
+      else if (a.reason === 'HOST_READ_ONLY') xpNote = 'XP not saved: this version is read-only for your save';
+      else if (a.reason === 'HOST_SAVE_FAILED') xpNote = 'XP not saved (storage full?)';
     }
     ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => i.instanceId !== inst.instanceId);
     ST.schedule.historyInstances = (ST.schedule.historyInstances || []).concat(Object.assign({}, inst, { lifecycleState: r.lifecycleState, completionEventId: r.eventId, hostActivityId,

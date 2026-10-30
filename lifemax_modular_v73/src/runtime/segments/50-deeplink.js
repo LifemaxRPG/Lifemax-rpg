@@ -96,6 +96,8 @@ function lmDlRun(link){
   if(link.kind==='quests'){lmvGo({id:'quests'});return true}
   if(link.kind==='schedule'){
    if(!link.title){lmvGo({id:'dashboard'});return true}
+   /* the preview is drawn on the page: leave a full-screen native tab for the Overview, which leaves the page showing */
+   var cv=lmaView();if(window.NativeTabs&&cv!=='dashboard'&&NativeTabs.covered(cv))lmaNavTo('dashboard',{fast:true});
    try{lmvBuildUI();lmvHudOpen(true)}catch(e){}
    LifeMaxVoice.fromLink('Put '+link.title+' on my schedule'+(link.description?' ('+link.description+')':''));
    return true;

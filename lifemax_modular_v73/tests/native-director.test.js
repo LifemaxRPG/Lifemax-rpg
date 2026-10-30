@@ -156,6 +156,15 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await settle(p, 3500);
   const after = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
   ok('a level-up keeps the screen waiting until it has closed', levelUp.calm === 0 && levelUp.shown && after.calm === 1 && !after.shown, { levelUp, after });
+  const refused = await p.evaluate((day) => {
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    const before = state.activities.length; let r = null;
+    for (const s of LifeDirector.voice.sessions(day)) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) break }
+    const out = { ok: !!(r && r.ok), logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '' };
+    saveReadOnly = ''; saveReadOnlyTold = false;
+    return out;
+  }, directorDay.DAY);
+  ok('a Done the save refuses (read-only) is taken back and says so, with no XP and no celebration', refused.ok && !refused.logged && !refused.flying && /XP not saved: this version is read-only/.test(refused.notice), refused);
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);
