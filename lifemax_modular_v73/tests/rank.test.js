@@ -11,11 +11,12 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.evaluate(() => { petDevPair('adopt') }); await p.waitForFunction(() => petPairOn(), null, { timeout: 15000 }); await p.waitForTimeout(800);
   await p.evaluate(() => { state.pet2.born = Date.now() - 40 * 864e5; const d = petPairData(); d.met = Date.now(); d.rk = null; petRankData() });
   ok('each cat starts with a confidence from its DNA', await p.evaluate(() => { const r = petRankData(); return r.cf.every(v => v >= 0.15 && v <= 0.85) }));
-  const odds = await p.evaluate(() => { const r = petRankData(); r.cf = [0.8, 0.3]; const a = petRankProb(0), b = petRankProb(1); r.cf = [0.5, 0.5]; const o = petRankPs; petRankPs = () => 0.5; const c = petRankProb(0); petRankPs = o; return { a, b, c } });
+  // the second cat's DNA is random, so it is held level while the effect of confidence alone is measured
+  const odds = await p.evaluate(() => { const r = petRankData(), o = petRankPs; petRankPs = () => 0.5; r.cf = [0.8, 0.3]; const a = petRankProb(0), b = petRankProb(1); r.cf = [0.5, 0.5]; const c = petRankProb(0); petRankPs = o; return { a, b, c } });
   ok('a much more confident cat is the strong favourite', odds.a > 0.75, odds);
   ok('the weaker cat still has a real, low chance', odds.b > 0.02 && odds.b < 0.4, odds);
   ok('cats with equal stats are close to a coin flip (the starter has a small edge)', Math.abs(odds.c - 0.5) < 0.12, odds);
-  const sim = await p.evaluate(() => { const r = petRankData(); let w = [0, 0], ups = 0, gain = [], lose = []; for (let i = 0; i < 600; i++) { r.cf = [0.8, 0.3]; r.hist = []; r.n = 0; r.settled = false; r.lead = -1; const before = r.cf.slice(), res = petRankContest(0); w[res.w]++; const d = r.cf[res.w] - before[res.w]; (res.upset ? gain : lose).push(d) } const av = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0; return { w, upGain: av(gain), normGain: av(lose), nUp: gain.length } });
+  const sim = await p.evaluate(() => { const r = petRankData(), o = petRankPs; petRankPs = () => 0.5; let w = [0, 0], ups = 0, gain = [], lose = []; for (let i = 0; i < 600; i++) { r.cf = [0.8, 0.3]; r.hist = []; r.n = 0; r.settled = false; r.lead = -1; const before = r.cf.slice(), res = petRankContest(0); w[res.w]++; const d = r.cf[res.w] - before[res.w]; (res.upset ? gain : lose).push(d) } petRankPs = o; const av = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0; return { w, upGain: av(gain), normGain: av(lose), nUp: gain.length } });
   ok('the underdog wins some contests (a low but real share)', sim.w[1] > 6 && sim.w[1] < 300, sim);
   ok('an upset lifts confidence more than an expected win', sim.upGain > sim.normGain + 0.02, sim);
   const flip = await p.evaluate(() => { const r = petRankData(); r.cf = [0.5, 0.5]; r.n = 0; r.hist = []; r.lead = -1; r.settled = false; for (let i = 0; i < 12; i++) { const res = petRankContest(1) } return { cf: r.cf, lead: r.lead, w: r.w } });
