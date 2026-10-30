@@ -185,7 +185,7 @@ function lmaRenderBackup(){
  const b=lmaLoad().backup,off=!b.uri,warn=lmaBackupWarning();
  const row=(l,hint,ctl)=>'<div class="settingsline"><div style="flex:1"><strong>'+l+'</strong>'+(hint?'<div class="muted" style="font-size:12px">'+hint+'</div>':'')+'</div>'+ctl+'</div>';
  const sel=(k,opts,dis)=>'<select '+(dis?'disabled ':'')+'onchange="lmaSetBackup(\''+k+'\',+this.value)" style="'+LMA_IN+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(b[k]===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
- let h=warn?'<div class="note" style="margin-bottom:10px">'+warn+'</div>':'';
+ let h=warn?'<div class="note" style="margin-bottom:10px;border-color:var(--warn);color:var(--text)">'+warn+'</div>':'';
  h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
  h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
