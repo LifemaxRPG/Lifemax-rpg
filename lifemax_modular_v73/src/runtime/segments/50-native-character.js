@@ -216,6 +216,10 @@
         return false;
       if (blocked()) return false;
       await plugin.open({ snapshot: projection(), navScene: await navScene() });
+      if (blocked()) {
+        await close();
+        return false;
+      }
       active = true;
       timer = setInterval(send, 15000);
       return true;
@@ -229,7 +233,7 @@
   }
   const nav = navigate;
   navigate = function (v) {
-    if (v !== "character" && active) close();
+    if (v !== "character" && (active || opening)) close();
     const r = nav.apply(this, arguments);
     if (v === "character") setTimeout(() => open(false), 80);
     if (v === "settings") sync();

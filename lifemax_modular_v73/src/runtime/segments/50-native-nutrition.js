@@ -8,7 +8,8 @@
     ready: null,
     queued: false,
     blocked: false,
-    updating: false
+    updating: false,
+    generation: 0
   };
 
   function plugin() {
@@ -324,6 +325,7 @@
   }
 
   async function close() {
+    N.generation++;
     const id = N.session;
     const p = N.plugin;
     N.open = false;
@@ -349,6 +351,7 @@
       console.warn('NativeNutrition: authoritative snapshot unavailable');
       return;
     }
+    const generation = ++N.generation;
     N.opening = true;
     N.plugin = p;
     try {
@@ -356,13 +359,18 @@
       const caps = await p.capabilities();
       if (!caps || caps.version !== 1 || !caps.authoritativeData) return;
       if (view() !== 'meals' || !enabled()) return;
-      N.session = 'nutrition_' + Date.now();
+      const id = 'nutrition_' + Date.now();
+      N.session = id;
       if (!window.NativeOverviewSnapshot) throw new Error('Shared Overview chrome unavailable');
       await p.open({
-        session: N.session,
+        session: id,
         snapshot: s,
         chromeScene: await NativeOverviewSnapshot.snapshot()
       });
+      if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
+        await p.close({ session: id });
+        return;
+      }
       N.open = true;
       N.blocked = false;
     } catch (e) {
@@ -370,7 +378,7 @@
       N.session = '';
       console.warn('Native Nutrition open failed', e);
     } finally {
-      N.opening = false;
+      if (N.generation === generation) N.opening = false;
     }
   }
 
@@ -560,7 +568,7 @@
   const nav = navigate;
   navigate = function (destination) {
     const result = nav.apply(this, arguments);
-    if (destination !== 'meals' && N.open) close();
+    if (destination !== 'meals' && (N.open || N.opening)) close();
     if (destination === 'meals') {
       N.blocked = false;
       setTimeout(open, 80);

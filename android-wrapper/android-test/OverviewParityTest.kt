@@ -128,6 +128,33 @@ class OverviewParityTest {
         }
     }
 
+    private fun clickSharedTab(label: String): String {
+        fun find(node: android.view.accessibility.AccessibilityNodeInfo?): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (node.isClickable && node.contentDescription?.toString()?.trim() == label) return node
+            for (i in 0 until node.childCount) {
+                val child = find(node.getChild(i))
+                if (child != null) return child
+            }
+            return null
+        }
+        val target = find(instrumentation.uiAutomation.rootInActiveWindow)
+        assertNotNull("Shared native tab $label must be accessible", target)
+        val bounds = Rect()
+        target!!.getBoundsInScreen(bounds)
+        assertTrue("Shared native tab $label must be visible", bounds.width() > 0 && bounds.height() > 0)
+        val down = SystemClock.uptimeMillis()
+        val x = bounds.centerX().toFloat()
+        val y = bounds.centerY().toFloat()
+        val press = android.view.MotionEvent.obtain(down, down, android.view.MotionEvent.ACTION_DOWN, x, y, 0)
+        val release = android.view.MotionEvent.obtain(down, down + 80, android.view.MotionEvent.ACTION_UP, x, y, 0)
+        instrumentation.uiAutomation.injectInputEvent(press, true)
+        instrumentation.uiAutomation.injectInputEvent(release, true)
+        press.recycle()
+        release.recycle()
+        return bounds.toString()
+    }
+
     @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var main: MainActivity
@@ -136,7 +163,7 @@ class OverviewParityTest {
                 evaluate(main, "typeof openNativeCharacter==='function' && typeof setNativeNutritionEnabled==='function'") == "true"
             }
             evaluate(main, "window.__nativeOverviewManual=true;lmaThumbWarm=async()=>{};state.onboardingComplete=true;state.tutorialDone=true;document.querySelectorAll('#onboarding,#tutorial').forEach(e=>{e.classList.remove('show');e.style.setProperty('display','none','important')});document.body.classList.remove('noscroll');save();renderAll();navigate('character');true")
-            evaluate(main, "openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
+            evaluate(main, "setNativeCharacterEnabled(true);openNativeCharacter().then(r=>window.__sharedCharacterOpened=r);true")
             waitUntil("Character with shared chrome") {
                 var ready = false
                 instrumentation.runOnMainSync {
@@ -177,7 +204,24 @@ class OverviewParityTest {
                 }
             }
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
-            evaluate(main, "navigate('dashboard');true")
+            repeat(3) {
+                val tapBounds = clickSharedTab("Character")
+                SystemClock.sleep(1000)
+                val trace = evaluate(main, "JSON.stringify({view:lmaView(),body:document.body.className,toggle:lmaLoad().nativeCharacter})")
+                waitUntil("Character opens from native Food bar; bounds=$tapBounds state=$trace") {
+                    var attached = false
+                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
+                    attached && evaluate(main, "lmaView()") == "\"character\""
+                }
+                clickSharedTab("Food")
+                waitUntil("Food opens from native Character bar") {
+                    var attached = false
+                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-nutrition-screen") != null }
+                    attached && evaluate(main, "lmaView()") == "\"meals\""
+                }
+            }
+            clickSharedTab("Overview")
+            waitUntil("Overview opens from native Food bar") { evaluate(main, "lmaView()") == "\"dashboard\"" }
             waitUntil("native Food chrome removed") {
                 var gone = false
                 instrumentation.runOnMainSync {
