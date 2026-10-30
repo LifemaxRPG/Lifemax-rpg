@@ -1,19 +1,34 @@
 iaAudioProgressMarkup(x){
  if(!x||!x.audio)return '';
- const dur=Math.max(0,Number(x.audio.duration)||0),pos=Math.max(0,Number(x.audio.position)||0);
- const pct=x.status==='finished'?100:(dur?Math.max(0,Math.min(100,pos/dur*100)):0);
- return `<div class="media-audio-progress" data-audio-progress="${esc(x.id)}"><div class="media-audio-progress-head"><span data-audio-progress-label>${x.status==='finished'?'Finished':dur?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts'}</span><strong data-audio-progress-time>${dur?fmtAudioTime(pos)+' / '+fmtAudioTime(dur):'—'}</strong></div><div class="media-audio-progress-track"><div class="media-audio-progress-fill" data-audio-progress-fill style="width:${pct}%"></div></div></div>`;
+ const p=mediaAudioProgress(x.status,x.audio.position,x.audio.duration);
+ return `<div class="media-audio-progress" data-audio-progress="${esc(x.id)}"><div class="media-audio-progress-head"><span data-audio-progress-label>${p.label}</span><strong data-audio-progress-time>${p.time}</strong></div><div class="media-audio-progress-track"><div class="media-audio-progress-fill" data-audio-progress-fill style="width:${p.pct}%"></div></div></div>`;
+}
+/* how far into its audio an item is, in the words and bar width of its row */
+function mediaAudioProgress(status,position,duration){
+ const pos=Math.max(0,Number(position)||0),dur=Math.max(0,Number(duration)||0);
+ const pct=status==='finished'?100:dur?Math.max(0,Math.min(100,pos/dur*100)):0;
+ return {pct,label:status==='finished'?'Finished':dur?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts',time:dur?fmtAudioTime(pos)+' / '+fmtAudioTime(dur):'—'};
 }
 function updateMediaAudioProgress(id,pos,dur){
  const item=mediaById(id);if(item&&item.audio){item.audio.position=Math.max(0,Number(pos)||0);if(dur)item.audio.duration=Number(dur)||item.audio.duration||0}
+ const p=mediaAudioProgress(item?.status,pos,Number(dur)||item?.audio?.duration);
  document.querySelectorAll('[data-audio-progress]').forEach(el=>{
   if(el.dataset.audioProgress!==id)return;
-  const total=Math.max(0,Number(dur)||Number(item&&item.audio&&item.audio.duration)||0),current=Math.max(0,Number(pos)||0),pct=total?Math.max(0,Math.min(100,current/total*100)):0;
   const label=el.querySelector('[data-audio-progress-label]'),time=el.querySelector('[data-audio-progress-time]'),fill=el.querySelector('[data-audio-progress-fill]');
-  if(label)label.textContent=item?.status==='finished'?'Finished':total?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts';
-  if(time)time.textContent=total?fmtAudioTime(current)+' / '+fmtAudioTime(total):'—';
-  if(fill)fill.style.width=(item?.status==='finished'?100:pct)+'%';
+  if(label)label.textContent=p.label;
+  if(time)time.textContent=p.time;
+  if(fill)fill.style.width=p.pct+'%';
  });
+}
+/* the Media pane's filter as the page holds it: the search box and the two selects */
+function mediaFilterOnPage(){
+ const v=id=>document.getElementById(id)?.value;
+ return {search:v('mediaSearch')||'',status:v('mediaFilter')||'all',type:v('mediaTypeFilter')||'all'};
+}
+/* the items a filter shows, in the list's order: status and type as stored, the search a piece of the title, creator, notes or type */
+function mediaMatching(items,f){
+ const search=String(f.search||'').trim().toLowerCase();
+ return items.filter(x=>(f.status==='all'||x.status===f.status)&&(f.type==='all'||x.type===f.type)&&[x.title,x.creator,x.notes,x.type].some(v=>(v||'').toLowerCase().includes(search)));
 }
 function renderMedia(){
  const items=Array.isArray(state.mediaItems)?state.mediaItems:[];
@@ -23,15 +38,12 @@ function renderMedia(){
  document.getElementById('mediaProgress').textContent=progress;
  const pct=items.length?Math.round(finished/items.length*100):0;
  document.getElementById('mediaPct').textContent=pct+'%';document.getElementById('mediaBar').style.width=pct+'%';
- const search=(document.getElementById('mediaSearch')?.value||'').trim().toLowerCase();
- const status=document.getElementById('mediaFilter')?.value||'all',type=document.getElementById('mediaTypeFilter')?.value||'all';
- const filtered=items.filter(x=>(status==='all'||x.status===status)&&(type==='all'||x.type===type)&&[x.title,x.creator,x.notes,x.type].some(v=>(v||'').toLowerCase().includes(search)));
- const statusLabel={unread:'Want to read / watch',progress:'In progress',finished:'Finished'};
- document.getElementById('mediaList').innerHTML=filtered.length?filtered.map(x=>`<div class="media-item">
+ const filtered=mediaMatching(items,mediaFilterOnPage());
+ document.getElementById('mediaList').innerHTML=filtered.length?filtered.map(x=>`<div class="media-item" data-media-id="${esc(x.id)}">
    <input class="media-check" type="checkbox" aria-label="Mark ${esc(x.title)} finished" ${x.status==='finished'?'checked':''} onchange="toggleMediaFinished('${x.id}',this.checked)">
    <div class="media-main"><div class="media-title">${esc(x.title)}</div><div class="media-sub">${esc(x.type||'Other')}${x.creator?' · '+esc(x.creator):''}</div>
    ${mediaAudioProgressMarkup(x)}
-   <div><span class="media-pill ${x.status==='finished'?'finished':''}">${esc(statusLabel[x.status]||'Want to read / watch')}</span>${x.link?`<span class="media-pill"><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Open link ↗</a></span>`:''}</div>
+   <div><span class="media-pill ${x.status==='finished'?'finished':''}">${esc(MEDIA_STATUS[x.status]||MEDIA_STATUS.unread)}</span>${x.link?`<span class="media-pill"><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Open link ↗</a></span>`:''}</div>
    ${x.notes?`<div class="media-notes">${esc(x.notes)}</div>`:''}
    ${mediaAudioButtons(x)}</div>
    <div class="media-actions"><button class="btn small secondary" onclick="showMediaForm(state.mediaItems.find(m=>m.id==='${x.id}'))">Edit</button><button class="btn small secondary" onclick="deleteMediaItem('${x.id}')">Remove</button></div>
