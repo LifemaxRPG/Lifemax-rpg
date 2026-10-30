@@ -63,3 +63,16 @@ The `codex/native-character` slice implements Compose presentation behind the op
 Implemented: hero, radar current/previous comparison and selection, attribute sorting/cards, selected detail and spark bars, skills/show-all, benchmark readout and original-handler delegation. Logging, Luck and benchmark editing remain explicit web dependencies. Native ownership, safe mutating commands and complete native interaction parity are NOT implemented. Physical-device testing, restored transient UI state and complete visual/accessibility parity remain rollout gates; do not label this fully migrated Character or enable it by default.
 
 Evidence: Node projection test, JVM selection/sequence/schema tests, Android Compose-in-MainActivity/no-WebView-subtree test and unchanged core-save assertion; reference/native/scroll/light screenshots are emitted by CI for review. Synthetic projection fixture is not a claim of complete raw-save migration fixtures.
+
+
+## Ledger as of Native API 17 (2026-10-30)
+
+| Area | Presentation | Authority | Rollout | Remaining web dependency |
+|---|---|---|---|---|
+| Overview | Hybrid shell (native bars) over the live WebView | Web-owned | Native is the default; Classic is a setting | The whole body |
+| Character | Compose screen, hidden-but-alive | Web-owned | Opt-in preview | Logging, Luck, benchmark editing |
+| Food (Nutrition) | Compose screen (Plan, Log, Shopping), hidden-but-alive | Web-owned | Opt-in beta | Add-food sheets and swap sheet delegate to web |
+| Cash | Native activity (Compose) | Web-owned commands | Existing | Commands and state |
+| Tab shell (bars) | Native drawing of a DOM capture | Web page state | Shared by the three native tabs | DOM capture (see CONTRACT_REVISION_2_PROPOSAL.md, A22) |
+
+Statements here are from reading the repository and the Settings wiring; device acceptance is not recorded.
