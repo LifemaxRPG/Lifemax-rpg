@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.pixelIconPath
+import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
 import com.lifemax.rpg.feature.lifedirector.domain.CurrentRing
@@ -33,7 +34,6 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
 import com.lifemax.rpg.feature.lifedirector.domain.HourWord
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
-import com.lifemax.rpg.feature.lifedirector.presentation.components.glowPaint
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialGeometry.CENTRE
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialGeometry.point
 import java.text.BreakIterator

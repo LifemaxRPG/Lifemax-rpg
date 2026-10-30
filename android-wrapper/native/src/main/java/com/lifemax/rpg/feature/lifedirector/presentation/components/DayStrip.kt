@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.StripDay
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
@@ -58,7 +59,7 @@ private fun DayChip(day: StripDay, on: Boolean, modifier: Modifier, onClick: () 
             .heightIn(min = 66.dp)
             .then(
                 if (on)
-                    Modifier.softShadow(P.free.copy(alpha = .14f), 18.dp, 13.dp)
+                    Modifier.boxShadow(P.free.copy(alpha = .14f), 18.dp, shape)
                         .background(P.free.copy(alpha = .14f), shape)
                         .border(1.dp, P.free.copy(alpha = .42f), shape)
                 else Modifier

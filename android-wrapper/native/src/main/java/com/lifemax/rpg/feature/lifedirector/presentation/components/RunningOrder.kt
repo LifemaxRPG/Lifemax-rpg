@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
 import com.lifemax.rpg.feature.lifedirector.domain.OrderRow
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState

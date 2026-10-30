@@ -1,6 +1,7 @@
 package com.lifemax.rpg.core.designsystem
 
 import android.graphics.BlurMaskFilter
+import android.os.Build
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -28,20 +29,34 @@ import kotlin.math.sin
 
 /**
  * CSS box-shadow 0 [dy] [blur] [color] under a box of [shape]. The shadow is also drawn under the
- * box, which hides it as long as the box is opaque.
+ * box, which hides it as long as the box is opaque. None before Android 9, which cannot blur it:
+ * unblurred, it would be a slab under the box.
  */
 fun Modifier.boxShadow(color: Color, blur: Dp, shape: Shape, dy: Dp = 0.dp): Modifier =
-    drawWithCache {
-        val paint =
-            Paint().also {
-                it.color = color
-                it.asFrameworkPaint().maskFilter =
-                    BlurMaskFilter(cssBlurRadius(blur.toPx()), BlurMaskFilter.Blur.NORMAL)
+    if (!CAN_BLUR) this
+    else
+        drawWithCache {
+            val paint = glowPaint(color, blur.toPx())
+            val outline = shape.createOutline(size, layoutDirection, this)
+            val y = dy.toPx()
+            onDrawBehind {
+                translate(top = y) { drawIntoCanvas { it.drawOutline(outline, paint) } }
             }
-        val outline = shape.createOutline(size, layoutDirection, this)
-        val y = dy.toPx()
-        onDrawBehind { translate(top = y) { drawIntoCanvas { it.drawOutline(outline, paint) } } }
+        }
+
+/**
+ * A paint that blurs what it draws as a CSS shadow or glow of [blurPx] does. Before Android 9 the
+ * blur is ignored, which is harmless only where the shape lies under what it lights.
+ */
+fun glowPaint(color: Color, blurPx: Float): Paint =
+    Paint().also {
+        it.color = color
+        it.asFrameworkPaint().maskFilter =
+            BlurMaskFilter(cssBlurRadius(blurPx), BlurMaskFilter.Blur.NORMAL)
     }
+
+/** Whether the hardware renderer draws a blur mask (Android 9 and later). */
+private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
 /**
  * The Android blur radius (a mask filter's or a text shadow's) that blurs as a CSS blur of [blurPx]

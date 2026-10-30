@@ -33,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
+import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.lifedirector.domain.Chip
 import com.lifemax.rpg.feature.lifedirector.domain.ChipKind
 
@@ -71,12 +73,7 @@ fun DirectorButton(
     val surface =
         when (look) {
             ButtonLook.PRIMARY ->
-                Modifier.softShadow(
-                        DirectorPalette.task.copy(alpha = .22f),
-                        18.dp,
-                        12.dp,
-                        dy = 6.dp,
-                    )
+                Modifier.boxShadow(DirectorPalette.task.copy(alpha = .22f), 18.dp, shape, dy = 6.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(DirectorPalette.goTop, DirectorPalette.goBottom)

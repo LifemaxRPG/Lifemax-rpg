@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorBanner
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorClock
@@ -247,7 +248,7 @@ fun DirectorToastView(text: String, modifier: Modifier = Modifier) {
         text,
         modifier
             .semantics { liveRegion = LiveRegionMode.Polite }
-            .softShadow(P.toastShadow, 34.dp, 13.dp, dy = 12.dp)
+            .boxShadow(P.toastShadow, 34.dp, shape, dy = 12.dp)
             .background(P.toast, shape)
             .border(1.dp, P.line2, shape)
             .padding(horizontal = 16.dp, vertical = 11.dp),
