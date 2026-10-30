@@ -29,8 +29,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const drag = async (dx, steps) => { await q.mouse.move(206, 430); await q.mouse.down(); for (let i = 1; i <= steps; i++) { await q.mouse.move(206 + dx * i / steps, 430, { steps: 1 }); await q.waitForTimeout(16) } await q.mouse.up() };
   let turned = 0, nudged = false, stayedBack = false, midAngle = null;
   while (await q.evaluate(() => !!document.getElementById('fateScene'))) {
-    if (await q.evaluate(() => document.getElementById('fateScene').dataset.await === 'flip')) {
-      if (!nudged) { nudged = true; await drag(26, 5); await q.waitForTimeout(900); stayedBack = await q.evaluate(() => document.getElementById('fateScene').dataset.await === 'flip' && !document.querySelector('#fateScene .cine-card .dh-card.is-up')); 
+    if (await q.evaluate(() => document.getElementById('fateScene')?.dataset.await === 'flip')) {
+      if (!nudged) { nudged = true; await drag(26, 5); await q.waitForTimeout(900); stayedBack = await q.evaluate(() => document.getElementById('fateScene')?.dataset.await === 'flip' && !document.querySelector('#fateScene .cine-card .dh-card.is-up')); 
         await q.mouse.move(206, 430); await q.mouse.down(); for (let i = 1; i <= 6; i++) { await q.mouse.move(206 + 40 * i, 430); await q.waitForTimeout(16) } midAngle = await q.evaluate(() => [...document.querySelectorAll('#fateScene .cine-card .fd-inner')].map(e => e.style.transform).find(t => /rotateY/.test(t))); await q.mouse.up(); await q.waitForTimeout(900) }
       else { await drag(230, 8); await q.waitForTimeout(900) }
       turned++;
