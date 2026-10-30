@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.character.domain.*
 import com.lifemax.rpg.feature.character.presentation.CharacterSelection
@@ -104,7 +105,7 @@ internal fun CharacterAttributesCard(
                         )
                         ProgressBar(
                             a.pct / 100,
-                            Color(a.color.toInt()),
+                            barFade(Color(a.color.toInt())),
                             Modifier.padding(top = 8.dp),
                         )
                         Row(

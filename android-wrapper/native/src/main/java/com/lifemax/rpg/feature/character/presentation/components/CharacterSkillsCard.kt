@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.feature.character.domain.*
 import com.lifemax.rpg.feature.character.presentation.CharacterSelection
 import kotlin.math.*
@@ -42,7 +43,7 @@ internal fun CharacterSkillsCard(
             )
             ProgressBar(
                 s.pct / 100,
-                MaterialTheme.colorScheme.primary,
+                barFade(MaterialTheme.colorScheme.primary),
                 Modifier.padding(top = 8.dp),
             )
             Text(

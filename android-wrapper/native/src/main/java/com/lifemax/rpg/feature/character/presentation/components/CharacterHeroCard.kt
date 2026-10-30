@@ -34,7 +34,7 @@ import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.feature.character.domain.*
 
 @Composable
-internal fun CharacterAvatar(p: CharacterProjection, modifier: Modifier, initialsSize: Int = 38) {
+private fun CharacterAvatar(p: CharacterProjection, modifier: Modifier) {
     val avatar =
         remember(p.avatar) {
             runCatching {
@@ -56,7 +56,7 @@ internal fun CharacterAvatar(p: CharacterProjection, modifier: Modifier, initial
         else
             Text(
                 p.name.take(1).uppercase(),
-                fontSize = initialsSize.sp,
+                fontSize = 38.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
             )
@@ -158,7 +158,11 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = .8f),
                         )
                     }
-                    ProgressBar(p.pct / 100, accent, Modifier.padding(top = 8.dp))
+                    ProgressBar(
+                        p.pct / 100,
+                        Brush.horizontalGradient(listOf(accent, tokenColor(p.tokens, "good"))),
+                        Modifier.padding(top = 8.dp),
+                    )
                     Text(
                         p.nextTitle,
                         fontSize = 11.5.sp,

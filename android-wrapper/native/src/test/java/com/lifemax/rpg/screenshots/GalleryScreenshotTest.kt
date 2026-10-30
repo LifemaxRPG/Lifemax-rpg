@@ -33,6 +33,7 @@ import com.lifemax.rpg.core.designsystem.components.RoundButton
 import com.lifemax.rpg.core.designsystem.components.SectionLabel
 import com.lifemax.rpg.core.designsystem.components.SegmentedChoice
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.core.designsystem.components.pixelIconNames
 import org.junit.Rule
 import org.junit.Test
@@ -160,7 +161,7 @@ private fun Buttons() = SurfaceCard {
 private fun Bars() = SurfaceCard {
     SectionLabel("Progress bar")
     listOf(0f, .04f, .5f, 1f).forEach {
-        ProgressBar(it, MaterialTheme.colorScheme.primary, Modifier.padding(top = 10.dp))
+        ProgressBar(it, barFade(MaterialTheme.colorScheme.primary), Modifier.padding(top = 10.dp))
     }
     ProgressBar(
         .62f,
