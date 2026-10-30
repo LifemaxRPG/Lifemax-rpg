@@ -79,7 +79,6 @@ class OverviewParityTest {
             instrumentation.runOnMainSync {
                 assertTrue("Original WebView stays accelerated",main.bridge.webView.isHardwareAccelerated)
                 assertTrue("MainActivity stays resumed",ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).contains(main))
-                assertFalse("No transition to Canvas activity",ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).any{it is OverviewActivity})
             }
             val frames=evaluate(main,"__liveFrames").toInt();val ticks=evaluate(main,"__liveTicks").toInt()
             SystemClock.sleep(800)

@@ -1,4 +1,4 @@
-package com.lifemax.rpg
+package com.lifemax.rpg.app.shell
 
 import android.app.Activity
 import android.os.Handler

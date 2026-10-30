@@ -17,5 +17,5 @@ with tempfile.TemporaryDirectory() as d:
  subprocess.run(['python3','android-wrapper/patch_manifest.py',str(p)],check=True,capture_output=True)
  import xml.etree.ElementTree as ET
  xml=ET.fromstring(p.read_text());ns='{http://schemas.android.com/apk/res/android}'
- activities=xml.findall('./application/activity');cash=[a for a in activities if a.get(ns+'name')=='.CashActivity'];assert len(cash)==1;assert cash[0].get(ns+'exported')=='false'
+ activities=xml.findall('./application/activity');cash=[a for a in activities if a.get(ns+'name')=='com.lifemax.rpg.feature.cash.CashActivity'];assert len(cash)==1;assert cash[0].get(ns+'exported')=='false'
  print('PASS: native Cash activity declared, private, and manifest parses')

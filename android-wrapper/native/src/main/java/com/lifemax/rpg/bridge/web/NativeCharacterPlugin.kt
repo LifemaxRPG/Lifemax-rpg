@@ -12,8 +12,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.*
 import com.getcapacitor.annotation.CapacitorPlugin
-import com.lifemax.rpg.ChromeHost
-import com.lifemax.rpg.TabTiming
+import com.lifemax.rpg.app.shell.ChromeHost
+import com.lifemax.rpg.app.shell.TabTiming
 import com.lifemax.rpg.feature.character.presentation.*
 import org.json.JSONArray
 

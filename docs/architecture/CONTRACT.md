@@ -155,7 +155,7 @@ The final app has no required DOM-rendered destinations, web-only interaction sh
 **A22. The shell is native state, not a captured drawing.** *Planned; the DOM capture is a recorded exception until then.*
 The web layer publishes a small semantic `ShellState` (proposal for its shape: `sequence`, `tabs[{id, label, iconRef}]`, `activeTab`, `theme` tokens, `topbar` title and actions). Native draws the bars from it. The active tab is data, so a tab change needs no DOM capture and cannot show a stale highlight. Until all native tabs read `ShellState`, `NativeOverviewSnapshot.capture()` is an existing exception with this retirement condition. While it stands: capture only after `lmaSyncActive()`, with transitions disabled, key any cache on the lit tab, and re-publish a settled scene after a screen opens (**Implemented**, `50-native-overview.js`).
 
-**A23. Make-before-break hand-over between native destinations.** *Implemented* (`NativeTabs` in `50-native-overview.js`, `ChromeHost` in `ChromeHost.kt`; ADR 0002).
+**A23. Make-before-break hand-over between native destinations.** *Implemented* (`NativeTabs` in `50-native-overview.js`, `ChromeHost` in `app/shell/ChromeHost.kt`; ADR 0002).
 1. The destination opens first. The previous destination closes only after the new one has opened or failed. A last-resort timeout (2.5 s) is a recorded fault, not normal flow.
 2. A web destination closes the previous native one at once.
 3. Every scene or state message carries the page's monotonic sequence; a receiver ignores a message older than the one it holds.
@@ -173,7 +173,7 @@ Starting budgets, to be confirmed on the owner's phone and not asserted until th
 - Kotlin: ktfmt covers `native/src` today. A legacy flat file may not be edited without being moved into the canonical tree, split by feature and formatted in the same change, unless it is listed in `legacy-exceptions.txt` with a reason.
 - JavaScript: authored segments get Prettier and ESLint configuration; new or edited segments must pass; no new line over 160 characters; `legacy-js-exceptions.txt` lists existing offenders and may only shrink.
 - Ratchet: CI fails if the count of over-long lines or the length of a listed legacy file grows.
-- A file over 600 lines is split by feature before it grows further. `NativeNutritionPlugin.kt` (1,903 lines at Revision 2) is the first case: screen composables, snapshot decoding and the Capacitor plugin are three files.
+- A file over 600 lines is split by feature before it grows further. `NativeNutritionPlugin.kt` (1,903 lines at Revision 2) was the first case: it is now the plugin (`bridge/web`), the palette, the leaf components and the screen (`feature/food/presentation`). The screen is still one 1,555-line composable reading raw JSON; it is split into a model, repository, view model and cards when Food is converted to the canonical form.
 - The name of a type says what it owns; no Utils, Helpers or Manager files (A09).
 
 **A27. Documentation is verified, not remembered.** *Planned.*

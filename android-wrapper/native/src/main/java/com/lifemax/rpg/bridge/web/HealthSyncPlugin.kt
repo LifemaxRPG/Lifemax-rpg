@@ -1,4 +1,4 @@
-package com.lifemax.rpg
+package com.lifemax.rpg.bridge.web
 
 import androidx.activity.result.ActivityResult
 import androidx.health.connect.client.HealthConnectClient

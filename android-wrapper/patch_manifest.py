@@ -66,9 +66,7 @@ if "android.app.shortcuts" not in xml:
     xml = xml[:m.end()] + extra + xml[m.end():]
 assert 'android:scheme="lifemax"' in xml and "android.app.shortcuts" in xml
 assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "READ_CALENDAR" in xml and "RecognitionService" in xml, "manifest patch failed"
-if '.CashActivity' not in xml:
-    xml = xml.replace('</application>', '<activity android:name=".CashActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:windowSoftInputMode="adjustResize" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
-if '.OverviewActivity' not in xml:
-    xml = xml.replace('</application>', '<activity android:name=".OverviewActivity" android:exported="false" android:hardwareAccelerated="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
+if 'feature.cash.CashActivity' not in xml:
+    xml = xml.replace('</application>', '<activity android:name="com.lifemax.rpg.feature.cash.CashActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:windowSoftInputMode="adjustResize" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
 open(path, "w", encoding="utf-8").write(xml)
 

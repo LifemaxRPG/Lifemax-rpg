@@ -1,4 +1,4 @@
-package com.lifemax.rpg
+package com.lifemax.rpg.feature.cash
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog

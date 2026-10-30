@@ -8,7 +8,7 @@ const original=fs.readFileSync(path.join(root,'src/runtime/segments/50-food.js')
 const template=fs.readFileSync(path.join(root,'src/index.template.html'),'utf8');
 const settings=fs.readFileSync(path.join(root,'src/views/settings.html'),'utf8');
 const api=fs.readFileSync(path.join(root,'../android-wrapper/native/NativeApi.java'),'utf8');
-const native=fs.readFileSync(path.join(root,'../android-wrapper/native/NativeNutritionPlugin.kt'),'utf8');
+const native=fs.readFileSync(path.join(root,'../android-wrapper/native/src/main/java/com/lifemax/rpg/bridge/web/NativeNutritionPlugin.kt'),'utf8');
 new Function(bridge);
 assert.match(bridge,/nativeNutrition===true/,'Native beta must be OFF by default');
 assert.match(bridge,/isNativePlatform/,'Do not open native UI on web');

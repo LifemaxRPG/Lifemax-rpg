@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory() as d:
  before=manifest.read_text();subprocess.run(cmd,check=True,capture_output=True);assert before==manifest.read_text()
  ns='{http://schemas.android.com/apk/res/android}'
  activities=ET.fromstring(before).findall('./application/activity')
- activity=[a for a in activities if a.get(ns+'name')=='.OverviewActivity'];assert len(activity)==1;assert activity[0].get(ns+'exported')=='false'
+ assert not [a for a in activities if 'OverviewActivity' in a.get(ns+'name','')],'the retired Canvas Overview activity must not be declared'
  assert 'NativeOverviewPlugin.class' in (root/'android-wrapper/native/MainActivity.java').read_text()
  assert '50-native-overview.js@@' in (root/'lifemax_modular_v73/src/index.template.html').read_text()
- print('PASS native Overview dependencies, instrumentation runner, repeatable patches, private activity, registration and source include')
+ print('PASS native Overview dependencies, instrumentation runner, repeatable patches, no retired Canvas activity, registration and source include')

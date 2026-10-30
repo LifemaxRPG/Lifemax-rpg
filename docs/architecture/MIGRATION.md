@@ -76,3 +76,19 @@ Evidence: Node projection test, JVM selection/sequence/schema tests, Android Com
 | Tab shell (bars) | Native drawing of a DOM capture | Web page state | Shared by the three native tabs | DOM capture (see CONTRACT_REVISION_2_PROPOSAL.md, A22) |
 
 Statements here are from reading the repository and the Settings wiring; device acceptance is not recorded.
+
+## Source layout as of Native API 18
+
+Every native Kotlin file now lives in the canonical tree (`android-wrapper/native/src/main/java/com/lifemax/rpg`) and is formatted with ktfmt; CI checks all of them. Java plugins stay in `android-wrapper/native/` until a feature needs them converted.
+
+| Path | Holds |
+|---|---|
+| `app/shell` | `ChromeHost`, `OverviewBars`, `TabTiming`, `LiveOverviewShell`: the shared bars and the tab hand-over |
+| `app/CharacterContainer.kt` | composition root for Character |
+| `bridge/web` | one Capacitor plugin per native destination: Character, Food (`NativeNutrition`), Overview, Cash, plus `HealthSync` |
+| `core/designsystem` | theme tokens from the page |
+| `feature/character` | domain, data, presentation (the reference layout) |
+| `feature/food/presentation` | palette, components and the still-monolithic screen, awaiting the canonical split |
+| `feature/cash` | `CashActivity` and its session (a documented activity exception, A04) |
+
+Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it since the live Overview shell), its manifest entry and its test assertion.

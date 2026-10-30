@@ -15,6 +15,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.lifemax.rpg.bridge.web.HealthSyncPlugin;
+import com.lifemax.rpg.bridge.web.NativeCashPlugin;
+import com.lifemax.rpg.bridge.web.NativeNutritionPlugin;
+import com.lifemax.rpg.bridge.web.NativeOverviewPlugin;
 
 public class MainActivity extends BridgeActivity {
     static final String EXTRA_OPEN = "lma_open";

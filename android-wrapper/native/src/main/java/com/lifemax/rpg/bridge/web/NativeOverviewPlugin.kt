@@ -1,24 +1,15 @@
-package com.lifemax.rpg
+package com.lifemax.rpg.bridge.web
 
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
-import java.lang.ref.WeakReference
+import com.lifemax.rpg.app.shell.ChromeHost
+import com.lifemax.rpg.app.shell.LiveOverviewShell
+import com.lifemax.rpg.app.shell.OverviewBars
+import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
-
-// Retained types for the retired Canvas activity; new opens never launch it.
-internal class OverviewSession(
-    val id: String,
-    var snapshot: JSONObject,
-    val emit: (String, JSObject) -> Unit,
-)
-
-internal object OverviewHost {
-    var session: OverviewSession? = null
-    var screen = WeakReference<OverviewActivity>(null)
-}
 
 @CapacitorPlugin(name = "NativeOverview")
 class NativeOverviewPlugin : Plugin() {

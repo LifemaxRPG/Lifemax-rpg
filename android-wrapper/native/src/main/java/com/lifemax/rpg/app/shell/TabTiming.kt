@@ -1,4 +1,4 @@
-package com.lifemax.rpg
+package com.lifemax.rpg.app.shell
 
 import android.os.SystemClock
 import android.view.View

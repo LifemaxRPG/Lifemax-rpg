@@ -71,7 +71,7 @@ jobs:
           npm install
           npx cap add android
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
-          cp native/*.java native/*.kt android/app/src/main/java/com/lifemax/rpg/
+          cp native/*.java android/app/src/main/java/com/lifemax/rpg/
           python3 patch_project.py android
           mkdir -p android/app/src/androidTest/java/com/lifemax/rpg
           rm -rf android/app/src/androidTest/java/com/getcapacitor
