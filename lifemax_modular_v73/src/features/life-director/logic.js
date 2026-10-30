@@ -2555,7 +2555,7 @@ const LifeDirectorApp = (function () {
   const E = LifeDirectorEngine, Host = LifeMaxHost, U = E.util;
   const FEATURE_ID = 'life-director';
   let root = null, store = null, ST = null, loadReport = null, busy = false, timer = null;
-  const ui = { tab: 'today', dayIdx: 0, banner: null, animate: false, sheet: null, prevPlan: null,
+  const ui = { tab: 'today', dayIdx: 0, banner: null, notice: null, animate: false, sheet: null, prevPlan: null,
     fx: { prevTab: null, prevDay: null, nextId: null, justDone: null, glide: {}, daysScroll: null, take: null }, lab: { scenario: 'office', seed: 1, days: 7, result: null, dayIdx: 0, extra: null, all: null } };
   const nowEpoch = () => Math.floor(Date.now() / 1000);
   const deviceTz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } };
@@ -2572,7 +2572,8 @@ const LifeDirectorApp = (function () {
   const mins = m => m >= 60 ? Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '') : m + 'm';
   const hm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   const parseHm = v => { const m = /^(\d{1,2}):(\d{2})$/.exec(v || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
-  function say(msg) { if (!Host.toast(msg)) { const t = root && root.querySelector('.ld-toast'); if (t) { const again = t.classList.contains('show'); t.textContent = msg; t.classList.add('show'); if (again) play(t, 'ld-bump'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); } } }
+  /* the last message is also kept, so a native screen over the page can show it */
+  function say(msg) { ui.notice = { id: (ui.notice ? ui.notice.id : 0) + 1, text: msg, at: Date.now() }; changed(); if (!Host.toast(msg)) { const t = root && root.querySelector('.ld-toast'); if (t) { const again = t.classList.contains('show'); t.textContent = msg; t.classList.add('show'); if (again) play(t, 'ld-bump'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); } } }
 
   /* ── motion helpers (presentation only; every one degrades to an instant change) ── */
   const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
@@ -2948,22 +2949,29 @@ const LifeDirectorApp = (function () {
   /* ── rendering ── */
   const TABS = [['today', 'Today'], ['week', 'Week'], ['goals', 'Goals'], ['quests', 'Quests'], ['setup', 'My time'], ['settings', 'Settings']];
   const TAB_ICON = { today: 'clock', week: 'grid', goals: 'target', quests: 'flag', setup: 'moon', settings: 'gear', lab: 'dice' };
+  const tabList = () => TABS.concat(ST.ui && ST.ui.lab ? [['lab', 'Lab']] : []);
   function goTab(k) { ui.tab = k; ST.ui.tab = k; persist(); render(); }
+  /* the dot and the line under the title: how the plan stands */
+  function planStatus(now) {
+    const s = ST.schedule;
+    if (!ST.setupComplete || !s) return { dot: 'off', line: ST.setupComplete ? 'No plan yet' : 'Not set up yet' };
+    const n = s.scheduledInstances.filter(i => i.lifecycleState === 'PLANNED' && i.endEpoch > now).length, valid = s.status === 'VALID_SCHEDULE';
+    return { dot: valid ? 'ok' : 'warn', line: n + ' session' + (n === 1 ? '' : 's') + ' ahead' + (valid ? '' : ' · see notes in Week') };
+  }
+  /* the banner's buttons: the three ways to regroup, or a re-plan after a failure */
+  function bannerActions(b) {
+    if (b.regroup) return [{ label: 'Pause 48h', act: 'regroup', id: 'pause' }, { label: 'Light mode this week', act: 'regroup', id: 'light' }, { label: 'Carry on', act: 'regroup', id: 'go', ghost: true }];
+    return b.kind === 'bad' && ST.setupComplete ? [{ label: 'Re-plan from now', act: 'replan', small: true }] : [];
+  }
   function headerHtml() {
-    const s = ST.schedule, now = nowEpoch();
-    let dot = 'off', line = 'Not set up yet';
-    if (ST.setupComplete && s) {
-      const n = s.scheduledInstances.filter(i => i.lifecycleState === 'PLANNED' && i.endEpoch > now).length;
-      dot = s.status === 'VALID_SCHEDULE' ? 'ok' : 'warn';
-      line = n + ' session' + (n === 1 ? '' : 's') + ' ahead' + (s.status === 'VALID_SCHEDULE' ? '' : ' · see notes in Week');
-    } else if (ST.setupComplete) line = 'No plan yet';
-    return '<div class="ld-top"><div class="ld-id"><span class="ld-dot" data-s="' + dot + '" aria-hidden="true"></span><div><h2>Life Director</h2><small>' + esc(line) + '</small></div></div>' +
+    const now = nowEpoch(), p = planStatus(now);
+    return '<div class="ld-top"><div class="ld-id"><span class="ld-dot" data-s="' + p.dot + '" aria-hidden="true"></span><div><h2>Life Director</h2><small>' + esc(p.line) + '</small></div></div>' +
       '<div class="ld-top-r"><button class="ld-help" data-act="tour" aria-label="Show the guide for this screen">?</button><div class="ld-clock" aria-label="Current time"><b data-clock>' + esc(fTime(now)) + '</b><small>' + esc(fDay(now)) + '</small></div></div></div>';
   }
   function render() {
     if (!root) return;
     if (ui.bfRun) ui.bfRun.stop();
-    const tabs = TABS.concat(ST.ui && ST.ui.lab ? [['lab', 'Lab']] : []);
+    const tabs = tabList();
     const mainEl = root.querySelector('.ld-main'), strip = mainEl.querySelector('.ld-strip');
     ui.fx.daysScroll = strip ? strip.scrollLeft : null;
     mainEl.classList.remove('ld-v-in', 'ld-d-in');
@@ -2976,16 +2984,19 @@ const LifeDirectorApp = (function () {
     }
     nav.querySelectorAll('.ld-tab').forEach(b => { const on = b.dataset.tab === ui.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
     let banner = '';
-    if (ui.banner) banner = '<div class="ld-banner ld-b-' + ui.banner.kind + '"><p>' + esc(ui.banner.text) + '</p>' + (ui.banner.regroup ?
-      '<div class="ld-row"><button class="ld-btn" data-act="regroup" data-v="pause">Pause 48h</button><button class="ld-btn" data-act="regroup" data-v="light">Light mode this week</button><button class="ld-btn ld-ghost" data-act="regroup" data-v="go">Carry on</button></div>' :
-      (ui.banner.kind === 'bad' && ST.setupComplete ? '<div class="ld-row"><button class="ld-btn ld-small" data-act="replan">Re-plan from now</button></div>' : '') +
-      '<button class="ld-x" data-act="dismissBanner" aria-label="Dismiss">×</button>') + '</div>';
+    if (ui.banner) {
+      const acts = bannerActions(ui.banner);
+      banner = '<div class="ld-banner ld-b-' + ui.banner.kind + '"><p>' + esc(ui.banner.text) + '</p>' +
+        (acts.length ? '<div class="ld-row">' + acts.map(a => '<button class="ld-btn' + (a.ghost ? ' ld-ghost' : '') + (a.small ? ' ld-small' : '') + '" data-act="' + a.act + '"' + (a.id ? ' data-v="' + a.id + '"' : '') + '>' + a.label + '</button>').join('') + '</div>' : '') +
+        (ui.banner.regroup ? '' : '<button class="ld-x" data-act="dismissBanner" aria-label="Dismiss">×</button>') + '</div>';
+    }
     if (!Host.connected() && ST.setupComplete && !ST.ui.hostNoticeDismissed) banner += '<div class="ld-banner ld-b-warn"><p>LifeMax was not detected on this page, so quests and XP are not connected. Your plan still works; completions are kept in Life Director until you open it inside LifeMax.</p><button class="ld-x" data-act="dismissHost" aria-label="Dismiss">×</button></div>';
     const body = { today: renderToday, week: renderWeek, goals: renderGoals, quests: renderQuests, setup: renderSetup, settings: renderSettings, lab: renderLab }[ui.tab] || renderToday;
     mainEl.innerHTML = banner + body();
     ui.boundary = ui.tab === 'today' && ui.dayIdx === 0 ? nextBoundary() : null;
     afterRender(tabs);
     ui.animate = false; ui.prevPlan = null; ui.fx.justDone = null;
+    changed();
   }
   function afterRender(tabs) {
     const fx = ui.fx, main = root.querySelector('.ld-main');
@@ -3152,17 +3163,29 @@ const LifeDirectorApp = (function () {
   /* words written along an arc, turned so they never read upside down */
   let lblSeq = 0;
   function arcRev(r, a0, a1) { const [x0, y0] = polar(r, a1), [x1, y1] = polar(r, a0); return 'M' + x0.toFixed(2) + ' ' + y0.toFixed(2) + 'A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 0 ' + x1.toFixed(2) + ' ' + y1.toFixed(2); }
-  function arcText(r, a0, a1, options, cls) {
+  /* the first of the options (longest first) that fits along the arc, and whether it is turned to read upright */
+  function arcWords(r, a0, a1, options) {
     const len = (a1 - a0) * Math.PI / 180 * r - 10;
-    const txt = options.find(o => o && o.length * 6.3 + 6 <= len);
-    if (!txt) return '';
-    const mid = ((a0 + a1) / 2) % 360, flip = mid > 95 && mid < 265, id = 'ldtp' + (++lblSeq);
-    return '<path id="' + id + '" d="' + (flip ? arcRev(r, a0, a1) : arcD(r, a0, a1)) + '" fill="none"/><text class="ld-at ' + cls + '"><textPath href="#' + id + '" startOffset="50%">' + esc(txt) + '</textPath></text>';
+    const text = options.find(o => o && o.length * 6.3 + 6 <= len);
+    if (!text) return null;
+    const mid = ((a0 + a1) / 2) % 360;
+    return { text, flip: mid > 95 && mid < 265 };
+  }
+  function arcText(r, a0, a1, options, cls) {
+    const w = arcWords(r, a0, a1, options);
+    if (!w) return '';
+    const id = 'ldtp' + (++lblSeq);
+    return '<path id="' + id + '" d="' + (w.flip ? arcRev(r, a0, a1) : arcD(r, a0, a1)) + '" fill="none"/><text class="ld-at ' + cls + '"><textPath href="#' + id + '" startOffset="50%">' + esc(w.text) + '</textPath></text>';
   }
   function blockWords(b, d0, d1) {
     const name = b.code === 'SLEEP' || /sleep/i.test(b.title) ? 'Sleep' : b.title;
     const span = b.startEpoch <= d0 && b.endEpoch < d1 ? 'until ' + fC(b.endEpoch) : b.endEpoch >= d1 && b.startEpoch > d0 ? 'from ' + fC(b.startEpoch) : fC(b.startEpoch) + '–' + fC(b.endEpoch);
     return [name + ' · ' + span, name, span];
+  }
+  /* what a tap on fixed time says (k: its colour class); the hint about dragging only where the dial has handles */
+  function anchorTip(k, title, s, e, handles) {
+    const hint = k === 'sleep' || k === 'work' ? (handles ? '. Drag its handle to change it.' : '') : k === 'maint' ? '. Routines are set in My time.' : '';
+    return title + ' · ' + fTime(s) + '–' + fTime(e) + hint;
   }
   /* a session's icon, sitting on its arc */
   function sesIcon(b, a0, a1, st) {
@@ -4152,11 +4175,13 @@ const LifeDirectorApp = (function () {
     if (key === 'week') return !!root.querySelector('.ld-week');
     return false;
   }
+  /* this screen's guide has not been seen yet, so it starts on its own */
+  const tourDue = key => !!TOURS[key] && !(ST.ui.tours || {})[key] && tourCanRun(key);
   /* first visit to a screen: offer its guide once */
   function tourAuto() {
     if (ui.tour || ui.drag) return;
-    const key = ui.tab, seen = ST.ui.tours || {};
-    if (!TOURS[key] || seen[key] || !tourCanRun(key)) return;
+    const key = ui.tab;
+    if (!tourDue(key)) return;
     if (!root.querySelector('.ld-sheet').hidden) return;
     clearTimeout(ui.tourT);
     ui.tourT = setTimeout(() => { if (ui.tab === key && !ui.tour && root.querySelector('.ld-sheet').hidden) tourStart(key); }, 500);
@@ -4175,6 +4200,7 @@ const LifeDirectorApp = (function () {
     ui.tour = { key, steps, i: 0 };
     ov.hidden = false; void ov.offsetWidth; ov.classList.add('on');
     tourShow();
+    changed();
   }
   function tourShow() {
     const T = ui.tour; if (!T) return;
@@ -4235,6 +4261,7 @@ const LifeDirectorApp = (function () {
     if (ov) { ov.classList.remove('on'); setTimeout(() => { if (!ui.tour) ov.hidden = true; }, reduced() ? 0 : 220); }
     if (T.key === 'today' || T.key === 'setup') { try { root.scrollIntoView({ block: 'start' }); } catch (e) { /* ignore */ } }
     if (!finished) say('Guide closed. Tap ? at the top to see it again.');
+    changed();
   }
   function tourMove(d) {
     const T = ui.tour; if (!T) return;
@@ -4330,6 +4357,7 @@ const LifeDirectorApp = (function () {
       sh.hidden = false; void sh.offsetWidth; sh.classList.add('open');
     }
     const f = sh.querySelector('.ld-sheet-body button, .ld-sheet-body input, .ld-sheet-body select, .ld-x'); if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
+    changed();
   }
   function closeSheet() {
     const sh = root.querySelector('.ld-sheet');
@@ -4338,6 +4366,7 @@ const LifeDirectorApp = (function () {
     sh.classList.remove('open'); panel.style.transform = ''; panel.style.transition = ''; bg.style.opacity = ''; bg.style.transition = '';
     const fin = () => { if (tok === sheetTok) sh.hidden = true; };
     if (reduced()) fin(); else setTimeout(fin, 280);
+    changed();
   }
   /* drag the handle down to dismiss */
   function grabber(sh) {
@@ -4379,10 +4408,14 @@ const LifeDirectorApp = (function () {
     /* the finger lifting off a dial handle must not count as a tap on whatever is under it */
     if (ui.dragEnd && Date.now() - ui.dragEnd < 400 && !b.closest('.ld-sheet')) return;
     if (b.tagName === 'SELECT' || (b.tagName === 'INPUT' && b.type !== 'checkbox')) return;
-    const act = b.dataset.act, id = b.dataset.id, v = b.dataset.v;
-    if ((act === 'dismissBanner' || act === 'dismissHost') && !e.ldLeft) {
+    if ((b.dataset.act === 'dismissBanner' || b.dataset.act === 'dismissHost') && !e.ldLeft) {
       if (leave(b.closest('.ld-banner'), () => onClick({ target: b, ldLeft: true }))) return;
     }
+    perform(b);
+  }
+  /* what the element b with data-act does; b may also be an object that carries only a dataset (see nativeAct) */
+  function perform(b) {
+    const act = b.dataset.act, id = b.dataset.id, v = b.dataset.v;
     if (act === 'doneQuick' || act === 'done') { ui.fx.justDone = id; if (ST.ui.focus && ST.ui.focus.id === id) ST.ui.focus = null; }
     const val = sel => { const el = root.querySelector(sel); return el ? el.value : ''; };
     const now = nowEpoch();
@@ -4390,12 +4423,10 @@ const LifeDirectorApp = (function () {
       case 'tab': ui.tab = b.dataset.tab; ST.ui.tab = ui.tab; persist(); render(); break;
       case 'day': ui.dayIdx = +b.dataset.i; render(); break;
       case 'earlier': ui.earlierOpen = !b.parentElement.open; break;
-      case 'anchor': {
-        const k = b.dataset.k, when = fTime(+b.dataset.s) + '–' + fTime(+b.dataset.e);
-        if (k === 'meal') { mealPreview(b.dataset); break; }
-        say(b.dataset.t + ' · ' + when + (k === 'sleep' || k === 'work' ? '. Drag its handle to change it.' : k === 'maint' || k === 'meal' ? '. ' + (k === 'meal' ? 'Meals' : 'Routines') + ' are set in My time.' : ''));
+      case 'anchor':
+        if (b.dataset.k === 'meal') mealPreview(b.dataset);
+        else say(anchorTip(b.dataset.k, b.dataset.t, +b.dataset.s, +b.dataset.e, true));
         break;
-      }
       case 'mealOpen': closeSheet(); openScheduledMeal(b.dataset); break;
       case 'dialApply': {
         const P = ui.pendingDial, r = P && ST.availability.rules.find(x => x.id === P.ruleId);
@@ -4763,7 +4794,7 @@ const LifeDirectorApp = (function () {
       main.addEventListener('touchend', e => {
         if (!sw) return; const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y, dt = Date.now() - sw.at; sw = null;
         if (dt > 700 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-        const list = TABS.concat(ST.ui && ST.ui.lab ? [['lab', 'Lab']] : []).map(x => x[0]), i = list.indexOf(ui.tab), j = i + (dx < 0 ? 1 : -1);
+        const list = tabList().map(x => x[0]), i = list.indexOf(ui.tab), j = i + (dx < 0 ? 1 : -1);
         if (i >= 0 && j >= 0 && j < list.length && ST.setupComplete) goTab(list[j]);
       }, { passive: true });
       if (ST.setupComplete && ST.schedule) ui.animate = 'intro';
@@ -4808,148 +4839,6 @@ const LifeDirectorApp = (function () {
      into the SVG so it stands alone, and it is rasterised to a PNG. The widget adds the live
      hand, the shaded past and the centre text itself, so it stays right between app opens. */
   const SNAP_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'display', 'visibility', 'font-family', 'font-size', 'font-weight', 'letter-spacing', 'text-anchor', 'dominant-baseline', 'paint-order'];
-  /* ── Native Today (phase 1 of the native Life Director) ─────────────────────
-     The same decisions and words as dialHtml, coreToday, mixHtml, stripHtml and roHtml, returned as data so the
-     native screen can draw them. Nothing is scheduled or saved here. Angles are degrees clockwise from midnight at
-     the top, after the same gaps the web dial uses; radii are those of DIAL in a 360-unit square. */
-  function nativeToday(dayIdx) {
-    const head = (() => {
-      const sc = ST && ST.schedule, now = nowEpoch();
-      if (ST && ST.setupComplete && sc) {
-        const n = sc.scheduledInstances.filter(i => i.lifecycleState === 'PLANNED' && i.endEpoch > now).length;
-        return { dot: sc.status === 'VALID_SCHEDULE' ? 'ok' : 'warn', line: n + ' session' + (n === 1 ? '' : 's') + ' ahead' + (sc.status === 'VALID_SCHEDULE' ? '' : ' · see notes in Week') };
-      }
-      return { dot: 'off', line: ST && ST.setupComplete ? 'No plan yet' : 'Not set up yet' };
-    })();
-    const now = nowEpoch();
-    const base = { version: 1, header: head, clock: { time: fTime(now), day: fDay(now) }, dial: { radii: DIAL, hourWords: [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) })) } };
-    if (!ST || !ST.setupComplete || !ST.schedule) return Object.assign(base, { setup: false });
-    const s = ST.schedule, days = horizonDays(s, tz());
-    const idx = Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
-    const day = days[idx], blocks = dayBlocks(s, day, tz()), isToday = idx === 0;
-    const d0 = day.startEpoch, d1 = day.endEpoch;
-    const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
-    const voiceIds = new Set(((ST && ST.fixedCommitments) || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
-    const arcs = [], words = [];
-    for (const b of blocks) {
-      const k = blockClass(b);
-      let a0 = angOf(b.startEpoch, d0, d1), a1 = angOf(b.endEpoch, d0, d1);
-      if (a1 - a0 < 0.3) continue;
-      const when = { s: b.startEpoch, e: b.endEpoch, title: b.title || '', label: (b.title || '') + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch) };
-      if (!b.inst && b.refId && voiceIds.has(String(b.refId)) && b.kind === 'APPOINTMENT') {
-        [a0, a1] = gap(a0, a1, 1.4);
-        arcs.push(Object.assign({ ring: 'inner', style: 'appt', kind: 'work', a0, a1, act: 'anchor' }, when));
-      } else if (OUTER[k]) {
-        [a0, a1] = gap(a0, a1, 0.9);
-        arcs.push(Object.assign({ ring: 'outer', style: 'band', kind: k, a0, a1, words: blockWords(b, d0, d1), act: 'anchor' }, when));
-      } else if (k === 'meal') {
-        [a0, a1] = gap(a0, a1, 1.4);
-        arcs.push(Object.assign({ ring: 'inner', style: 'meal', kind: 'meal', a0, a1, icon: 'meal', act: 'anchor', mealStart: b.mealStartEpoch || b.startEpoch }, when));
-      } else if (k === 'rest') {
-        arcs.push(Object.assign({ ring: 'inner', style: 'thin', kind: 'rest', a0, a1 }, when));
-        if (b.endEpoch - b.startEpoch >= 3600) words.push({ r: DIAL.RI + 9, a0, a1, kind: 'rest', inner: true, options: ['Downtime · ' + mins(Math.round((b.endEpoch - b.startEpoch) / 60)), 'Downtime', 'Rest'] });
-      } else if (k === 'free' && b.endEpoch - b.startEpoch >= 5400 && !(isToday && b.endEpoch <= now)) {
-        words.push({ r: DIAL.RI, a0, a1, kind: 'free', inner: true, options: ['Free · ' + mins(Math.round((b.endEpoch - b.startEpoch) / 60)), 'Free'] });
-      } else if (k === 'task') {
-        [a0, a1] = gap(a0, a1, 1.4);
-        arcs.push(Object.assign({ ring: 'inner', style: 'session', kind: 'task', a0, a1, state: sesState(b.inst.lifecycleState), next: b.inst.instanceId === nextId, icon: tagIcon(b.inst.tag), id: b.inst.instanceId, act: 'inst', label: (b.inst.instanceId === nextId ? 'Next: ' : '') + b.inst.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch) }, when));
-      }
-    }
-    const live = isToday && now >= d0 && now < d1, hand = live ? angOf(now, d0, d1) : null;
-    const st = isToday ? nowState(now) : null;
-    let ring = null;
-    if (live && st && st.cur) {
-      const span = Math.max(60, st.cur.endEpoch - st.cur.startEpoch);
-      ring = { r: 84, frac: Math.min(1, Math.max(0, (now - st.cur.startEpoch) / span)), kind: st.cur.inst ? 'task' : blockClass(st.cur), warn: !!st.kick };
-    }
-    return Object.assign(base, {
-      setup: true,
-      dayIndex: idx,
-      isToday,
-      strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, tz()).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
-      dial: Object.assign(base.dial, { startEpoch: d0, endEpoch: d1, arcs, words, hand, ring }),
-      core: nativeCore(day, blocks, isToday, now, st),
-      mix: nativeMix(blocks),
-      upNext: isToday ? nativeUpNext(day, days, now) : null,
-      reminders: isToday && (s.passiveReminders || []).length ? s.passiveReminders.map(r => r.title) : [],
-      rows: nativeRows(blocks, isToday, now),
-      sessions: blocks.filter(b => b.inst).length,
-    });
-  }
-  function nativeCore(day, blocks, isToday, now, st) {
-    if (!isToday) {
-      const tasks = blocks.filter(b => b.inst), taskMin = tasks.reduce((n, b) => n + Math.round((b.endEpoch - b.startEpoch) / 60), 0), first = tasks.find(b => b.inst.lifecycleState === 'PLANNED');
-      return { kick: fmt({ weekday: 'long' }).format(new Date(day.startEpoch * 1000)), title: fmt({ month: 'short', day: 'numeric' }).format(new Date(day.startEpoch * 1000)), big: null,
-        sub: tasks.length ? tasks.length + ' session' + (tasks.length === 1 ? '' : 's') + ' · ' + mins(taskMin) : 'No sessions planned', next: first ? { label: 'First · ' + fC(first.startEpoch), title: first.inst.title } : null, button: null };
-    }
-    const f = ST.ui.focus, fi = f && findInst(f.id);
-    const out = { kick: 'Now', kickKind: '', warn: false, title: 'Free time', big: null, sub: '', next: null, button: null, timer: null };
-    const left = sec => { const m = Math.max(0, Math.round(sec / 60)); return m < 1 ? { less: true, h: 0, m: 1 } : { h: Math.floor(m / 60), m: m % 60 }; };
-    if (fi) {
-      Object.assign(out, { kick: 'Timer running', kickKind: 'go', title: fi.title.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/&amp;/gi, '&').trim(), timer: { startedAt: f.start, pausedMs: f.pausedMs || 0, paused: f.paused || null }, sub: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned' });
-    } else if (st && st.cur) {
-      const c = st.cur, cc = c.inst ? 'task' : blockClass(c), done = c.inst && sesState(c.inst.lifecycleState) === 'done';
-      out.kick = done ? '✓ Done' : 'Now'; out.kickKind = cc;
-      if (st.kick && st.kick.kind === 'late') { out.kick = 'Late by ' + relText(st.kick.sec); out.warn = true; } else if (st.kick && st.kick.kind === 'ending') { out.kick = 'Wrapping up'; out.warn = true; }
-      out.title = done ? c.inst.title : doingName(c);
-      out.big = left(c.endEpoch - now);
-      out.endsAt = c.endEpoch;
-      out.sub = (done ? 'free until ' : 'left · until ') + fC(c.endEpoch);
-      if (st.isSes) out.button = { label: 'Start', act: 'focusStart', id: c.inst.instanceId, go: true };
-      else if (c.inst) out.button = { label: 'Details', act: 'inst', id: c.inst.instanceId };
-      else if (cc === 'meal' && window.LifeMaxMeals) out.button = { label: 'View meal', act: 'anchor', kind: 'meal', s: c.startEpoch, e: c.endEpoch, mealStart: c.mealStartEpoch || c.startEpoch, title: c.title };
-    }
-    if (st && st.soon && !(st.cur && st.cur.inst && st.soon.b === st.cur)) {
-      const b = st.soon.b;
-      out.next = { label: st.soon.sec < 90 ? 'Starting now' : 'Starting in ' + relText(st.soon.sec), title: b.inst.title, live: true, act: 'inst', id: b.inst.instanceId };
-      if (!fi && !st.isSes) out.button = { label: 'Start early', act: 'focusStart', id: b.inst.instanceId, go: true };
-    } else if (st && st.next) {
-      const b = st.next, same = U.ymdKey(U.localParts(b.startEpoch, tz())) === U.ymdKey(U.localParts(now, tz()));
-      out.next = { label: 'Next' + (b.startEpoch - now < 3 * 3600 ? ' in ' + relText(b.startEpoch - now) : ' · ' + (same ? '' : 'Tomorrow ') + fC(b.startEpoch)), title: doingName(b) };
-    } else if (!fi) out.next = { label: 'Nothing else planned today', title: '' };
-    return out;
-  }
-  function nativeMix(blocks) {
-    const sum = { sleep: 0, work: 0, maint: 0, meal: 0, task: 0, rest: 0, free: 0 };
-    for (const b of blocks) { const k = blockClass(b), m = (b.endEpoch - b.startEpoch) / 60; const key = k === 'commute' || k === 'block' ? 'work' : k; if (sum[key] != null) sum[key] += m; }
-    return [['sleep', 'Sleep'], ['work', 'Work & travel'], ['maint', 'Routines'], ['meal', 'Meals'], ['task', 'Sessions'], ['rest', 'Downtime'], ['free', 'Free']]
-      .map(([k, l]) => ({ kind: k, label: l, minutes: Math.round(sum[k]), text: sum[k] ? mins(Math.round(sum[k] / 15) * 15) : '—' }));
-  }
-  function nativeUpNext(day, days, now) {
-    const next = nextUp(now), f = ST.ui.focus, fi = f && findInst(f.id);
-    if (fi) return { kind: 'go', cue: 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: { startedAt: f.start, pausedMs: f.pausedMs || 0, paused: f.paused || null }, chips: [], actions: [{ label: 'Open timer', act: 'focusOpen', primary: true }, { label: 'Finish and log', act: 'focusFinish' }] };
-    if (!next) return null;
-    if (!doable(next, now)) {
-      const di = days.findIndex(d => next.startEpoch >= d.startEpoch && next.startEpoch < d.endEpoch);
-      return { kind: 'rest', cue: 'That’s everything for today', title: 'Next: ' + next.title, when: fDay(next.startEpoch) + ', ' + fTime(next.startEpoch) + '–' + fTime(next.endEpoch), chips: [], actions: di > 0 ? [{ label: 'See ' + (di === 1 ? 'tomorrow' : DOW[days[di].dow]), act: 'gotoDay', day: di }] : [] };
-    }
-    const on = next.startEpoch <= now, quests = next.linkedQuestRequirementIds.map(l => l.questTitle), x = xpOf(next);
-    return { kind: on ? 'go' : 'next', cue: on ? 'On now · ' + relText(next.endEpoch - now) + ' left' : 'Up next · in ' + relText(next.startEpoch - now), title: next.title,
-      when: (next.startEpoch >= day.endEpoch ? fDay(next.startEpoch) + ', ' : '') + fTime(next.startEpoch) + '–' + fTime(next.endEpoch) + ' · ' + mins(next.durationSlots * 15),
-      chips: (quests.length ? [{ kind: 'quest', text: quests.join(', ') }] : []).concat(x ? [{ kind: 'xp', text: '+' + x.xp + ' XP · ' + attrName(x.rule.primary) }] : []),
-      actions: [{ label: 'Start', act: 'focusStart', id: next.instanceId, primary: true }, { label: 'Done', act: 'doneQuick', id: next.instanceId }, { label: 'Details', act: 'inst', id: next.instanceId, ghost: true }] };
-  }
-  function nativeRows(blocks, isToday, now) {
-    const row = b => {
-      const k = blockClass(b), m = Math.round((b.endEpoch - b.startEpoch) / 60), st = b.inst ? b.inst.lifecycleState : '';
-      if (k === 'free' && m < 15) return null;
-      const meal = k === 'meal' ? scheduledMeal(b) : null, chips = [];
-      if (b.inst) {
-        if (b.inst.linkedQuestRequirementIds.length) chips.push({ kind: 'quest', text: b.inst.linkedQuestRequirementIds.map(l => l.questTitle).join(', ') });
-        if (b.inst.goalTitle) chips.push({ kind: 'goal', text: b.inst.goalTitle });
-        if (st === 'PLANNED') { const x = xpOf(b.inst); if (x) chips.push({ kind: 'xp', text: '+' + x.xp + ' XP · ' + attrName(x.rule.primary) }); }
-        if (b.inst.isUserLocked) chips.push({ kind: 'pinned', text: 'Pinned' });
-      }
-      return { s: b.startEpoch, e: b.endEpoch, time: fTime(b.startEpoch, tz()), length: mins(m), kind: k, title: b.title || '', icon: b.inst ? tagIcon(b.inst.tag) : (k === 'meal' ? 'meal' : KIND_ICON[k] || 'star'),
-        state: b.inst ? sesState(st) : '', stateLabel: st && STATE_LABEL[st] ? STATE_LABEL[st] : '', now: isToday && b.startEpoch <= now && b.endEpoch > now, past: isToday && b.endEpoch <= now,
-        sub: meal ? meal.name + ' · ' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : meal.kcal + ' kcal') + ' · View meal ›' : !b.inst && k === 'rest' ? 'Kept clear. Nothing gets booked here.' : '',
-        chips, act: b.inst ? 'inst' : k === 'meal' ? 'anchor' : '', id: b.inst ? b.inst.instanceId : '', mealStart: k === 'meal' ? (b.mealStartEpoch || b.startEpoch) : undefined };
-    };
-    const past = isToday ? blocks.filter(b => b.endEpoch <= now) : [];
-    const ahead = past.length >= 2 ? blocks.filter(b => b.endEpoch > now) : blocks;
-    const pt = past.filter(b => b.inst), pd = pt.filter(b => /COMPLETED/.test(b.inst.lifecycleState)).length;
-    return { ahead: ahead.map(row).filter(Boolean), earlier: past.length >= 2 ? { summary: pt.length ? pd + ' of ' + pt.length + ' sessions done' : past.length + ' blocks', rows: past.map(row).filter(Boolean) } : null };
-  }
   async function widgetSnapshot(size) {
     if (!ST || !ST.setupComplete || !ST.schedule) return null;
     const s = ST.schedule, day = horizonDays(s, tz())[0];
@@ -4980,6 +4869,198 @@ const LifeDirectorApp = (function () {
       return { png: cv.toDataURL('image/png').split(',')[1], json: JSON.stringify({ d0: day.startEpoch, d1: day.endEpoch, at: now, sessions }) };
     } finally { host.remove(); }
   }
+  /* ── Native Life Director (phase 1: Today) ──────────────────────────────────
+     A native screen draws the frame (header, section tabs, banner, last message) and Today from here, and covers the
+     page only while showing() is 'today'. The same decisions and words as headerHtml, render, dialHtml, coreToday,
+     mixHtml, stripHtml, renderToday and roHtml, returned as data; nothing is scheduled or saved here. Angles are degrees
+     clockwise from midnight at the top, after the same gaps the web dial uses; radii are those of DIAL in a 360-unit
+     square. A tap the page must answer carries its web element's act and the one id that act needs (see nativeAct);
+     a tap on fixed time only shows its tip. Epochs are seconds; the timer's are milliseconds, as ST.ui.focus keeps them. */
+  const NOTICE_MS = 4000; // how long the last message stays in the projection
+  function nativeFrame() {
+    if (!ST) boot();
+    const now = nowEpoch(), n = ui.notice;
+    return {
+      header: planStatus(now),
+      clock: { time: fTime(now), day: fDay(now) },
+      tab: ui.tab,
+      tabs: tabList().map(([id, label]) => ({ id, label, icon: TAB_ICON[id] })),
+      banner: ui.banner ? { kind: ui.banner.kind, text: ui.banner.text, actions: bannerActions(ui.banner), dismiss: !ui.banner.regroup } : null,
+      notice: n && Date.now() - n.at < NOTICE_MS ? { id: n.id, text: n.text } : null,
+    };
+  }
+  function nativeToday(dayIdx) {
+    if (!ST) boot();
+    if (!ST.setupComplete || !ST.schedule) return null;
+    const s = ST.schedule, z = tz(), days = horizonDays(s, z), now = nowEpoch();
+    const idx = Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
+    const day = days[idx], blocks = dayBlocks(s, day, z), isToday = idx === 0, d0 = day.startEpoch, d1 = day.endEpoch;
+    const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
+    const voiceIds = new Set((ST.fixedCommitments || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
+    const arcs = [], words = [];
+    const word = (r, a0, a1, options, kind, inner) => { const w = arcWords(r, a0, a1, options); if (w) words.push(Object.assign({ r, a0, a1, kind, inner }, w)); };
+    for (const b of blocks) {
+      const k = blockClass(b), m = Math.round((b.endEpoch - b.startEpoch) / 60);
+      let a0 = angOf(b.startEpoch, d0, d1), a1 = angOf(b.endEpoch, d0, d1);
+      if (a1 - a0 < 0.3) continue;
+      const arc = (ring, style, kind, more) => arcs.push(Object.assign({ ring, style, kind, a0, a1, s: b.startEpoch, e: b.endEpoch, title: b.title || '',
+        label: (b.title || '') + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch), state: '', next: false, icon: '', act: '', id: '', tip: '' }, more));
+      if (!b.inst && b.refId && voiceIds.has(String(b.refId)) && b.kind === 'APPOINTMENT') {
+        [a0, a1] = gap(a0, a1, 1.4);
+        arc('inner', 'appt', 'work', { tip: anchorTip('work', b.title, b.startEpoch, b.endEpoch, false) });
+      } else if (OUTER[k]) {
+        [a0, a1] = gap(a0, a1, 0.9);
+        arc('outer', 'band', k, { tip: anchorTip(k, b.title, b.startEpoch, b.endEpoch, false) });
+        word(DIAL.RO, a0, a1, blockWords(b, d0, d1), k, false);
+      } else if (k === 'meal') {
+        [a0, a1] = gap(a0, a1, 1.4);
+        arc('inner', 'meal', 'meal', { icon: 'meal', act: 'meal', id: String(b.mealStartEpoch || b.startEpoch) });
+      } else if (k === 'rest') {
+        arc('inner', 'thin', 'rest');
+        if (m >= 60) word(DIAL.RI + 9, a0, a1, ['Downtime · ' + mins(m), 'Downtime', 'Rest'], 'rest', true);
+      } else if (k === 'free' && m >= 90 && !(isToday && b.endEpoch <= now)) {
+        word(DIAL.RI, a0, a1, ['Free · ' + mins(m), 'Free'], 'free', true);
+      } else if (k === 'task') {
+        [a0, a1] = gap(a0, a1, 1.4);
+        const next = b.inst.instanceId === nextId;
+        arc('inner', 'session', 'task', { state: sesState(b.inst.lifecycleState), next, icon: tagIcon(b.inst.tag), act: 'inst', id: b.inst.instanceId,
+          label: (next ? 'Next: ' : '') + b.inst.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch) });
+      }
+    }
+    const live = isToday && now >= d0 && now < d1, st = isToday ? nowState(now) : null;
+    const ring = live && st.cur ? { r: 84, frac: Math.min(1, Math.max(0, (now - st.cur.startEpoch) / Math.max(60, st.cur.endEpoch - st.cur.startEpoch))), kind: st.cur.inst ? 'task' : blockClass(st.cur), warn: !!st.kick } : null;
+    return {
+      now,
+      dayIndex: idx,
+      isToday,
+      strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
+      dial: { startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) })), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
+      core: nativeCore(day, blocks, isToday, now, st),
+      mix: nativeMix(blocks),
+      upNext: isToday ? nativeUpNext(day, days, now) : null,
+      reminders: isToday ? (s.passiveReminders || []).map(r => r.title) : [],
+      sessions: blocks.filter(b => b.inst).length,
+      rows: nativeRows(blocks, isToday, now),
+    };
+  }
+  const mealTap = b => ({ act: 'meal', id: String(b.mealStartEpoch || b.startEpoch) });
+  const focusTimer = f => ({ startedAt: f.start, pausedMs: f.pausedMs || 0, paused: f.paused || null });
+  function nativeCore(day, blocks, isToday, now, st) {
+    if (!isToday) {
+      const tasks = blocks.filter(b => b.inst), taskMin = tasks.reduce((n, b) => n + Math.round((b.endEpoch - b.startEpoch) / 60), 0), first = tasks.find(b => b.inst.lifecycleState === 'PLANNED');
+      return { kick: fmt({ weekday: 'long' }).format(new Date(day.startEpoch * 1000)), kickKind: '', warn: false, title: fmt({ month: 'short', day: 'numeric' }).format(new Date(day.startEpoch * 1000)), date: true, big: null, timer: null,
+        sub: tasks.length ? tasks.length + ' session' + (tasks.length === 1 ? '' : 's') + ' · ' + mins(taskMin) : 'No sessions planned', next: first ? { label: 'First · ' + fC(first.startEpoch), title: first.inst.title, live: false, act: '', id: '' } : null, button: null };
+    }
+    const f = ST.ui.focus, fi = f && findInst(f.id);
+    const out = { kick: 'Now', kickKind: '', warn: false, title: 'Free time', date: false, big: null, timer: null, sub: '', next: null, button: null };
+    if (fi) {
+      Object.assign(out, { kick: 'Timer running', kickKind: 'go', title: fi.title.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/&amp;/gi, '&').trim(),
+        timer: Object.assign(focusTimer(f), { act: 'focusOpen' }), sub: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned' });
+    } else if (st.cur) {
+      const c = st.cur, cc = c.inst ? 'task' : blockClass(c), done = c.inst && sesState(c.inst.lifecycleState) === 'done', m = Math.max(0, Math.round((c.endEpoch - now) / 60));
+      out.kick = done ? '✓ Done' : 'Now'; out.kickKind = cc;
+      if (st.kick && st.kick.kind === 'late') { out.kick = 'Late by ' + relText(st.kick.sec); out.warn = true; } else if (st.kick && st.kick.kind === 'ending') { out.kick = 'Wrapping up'; out.warn = true; }
+      out.title = done ? c.inst.title : doingName(c);
+      out.big = m < 1 ? { h: 0, m: 1, less: true } : { h: Math.floor(m / 60), m: m % 60, less: false };
+      out.sub = (done ? 'free until ' : 'left · until ') + fC(c.endEpoch);
+      if (st.isSes) out.button = { label: 'Start', act: 'focusStart', id: c.inst.instanceId, go: true };
+      else if (c.inst) out.button = { label: 'Details', act: 'inst', id: c.inst.instanceId, go: false };
+      else if (cc === 'meal' && window.LifeMaxMeals) out.button = Object.assign({ label: 'View meal', go: false }, mealTap(c));
+    }
+    if (st.soon && !(st.cur && st.cur.inst && st.soon.b === st.cur)) {
+      const b = st.soon.b;
+      out.next = { label: st.soon.sec < 90 ? 'Starting now' : 'Starting in ' + relText(st.soon.sec), title: b.inst.title, live: true, act: 'inst', id: b.inst.instanceId };
+      if (!fi && !st.isSes) out.button = { label: 'Start early', act: 'focusStart', id: b.inst.instanceId, go: true };
+    } else if (st.next) {
+      const b = st.next, same = U.ymdKey(U.localParts(b.startEpoch, tz())) === U.ymdKey(U.localParts(now, tz()));
+      out.next = Object.assign({ label: 'Next' + (b.startEpoch - now < 3 * 3600 ? ' in ' + relText(b.startEpoch - now) : ' · ' + (same ? '' : 'Tomorrow ') + fC(b.startEpoch)), title: doingName(b), live: false, act: '', id: '' },
+        !b.inst && blockClass(b) === 'meal' ? mealTap(b) : null);
+    } else if (!fi) out.next = { label: 'Nothing else planned today', title: '', live: false, act: '', id: '' };
+    return out;
+  }
+  function nativeMix(blocks) {
+    const sum = { sleep: 0, work: 0, maint: 0, meal: 0, task: 0, rest: 0, free: 0 };
+    for (const b of blocks) { const k = blockClass(b), m = (b.endEpoch - b.startEpoch) / 60; const key = k === 'commute' || k === 'block' ? 'work' : k; if (sum[key] != null) sum[key] += m; }
+    return [['sleep', 'Sleep'], ['work', 'Work & travel'], ['maint', 'Routines'], ['meal', 'Meals'], ['task', 'Sessions'], ['rest', 'Downtime'], ['free', 'Free']]
+      .map(([k, l]) => ({ kind: k, label: l, minutes: Math.round(sum[k]), text: sum[k] ? mins(Math.round(sum[k] / 15) * 15) : '—' }));
+  }
+  function nativeUpNext(day, days, now) {
+    const next = nextUp(now), f = ST.ui.focus, fi = f && findInst(f.id);
+    if (fi) return { kind: 'go', cue: 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: focusTimer(f), chips: [],
+      actions: [{ label: 'Open timer', act: 'focusOpen', primary: true }, { label: 'Finish and log', act: 'focusFinish' }] };
+    if (!next) return null;
+    if (!doable(next, now)) {
+      const di = days.findIndex(d => next.startEpoch >= d.startEpoch && next.startEpoch < d.endEpoch);
+      return { kind: 'rest', cue: 'That’s everything for today', title: 'Next: ' + next.title, when: fDay(next.startEpoch) + ', ' + fTime(next.startEpoch) + '–' + fTime(next.endEpoch), timer: null, chips: [],
+        actions: di > 0 ? [{ label: 'See ' + (di === 1 ? 'tomorrow' : DOW[days[di].dow]), day: di }] : [] };
+    }
+    const on = next.startEpoch <= now, quests = next.linkedQuestRequirementIds.map(l => l.questTitle), x = xpOf(next);
+    return { kind: on ? 'go' : 'next', cue: on ? 'On now · ' + relText(next.endEpoch - now) + ' left' : 'Up next · in ' + relText(next.startEpoch - now), title: next.title,
+      when: (next.startEpoch >= day.endEpoch ? fDay(next.startEpoch) + ', ' : '') + fTime(next.startEpoch) + '–' + fTime(next.endEpoch) + ' · ' + mins(next.durationSlots * 15), timer: null,
+      chips: (quests.length ? [{ kind: 'quest', text: quests.join(', ') }] : []).concat(x ? [{ kind: 'xp', text: '+' + x.xp + ' XP · ' + attrName(x.rule.primary) }] : []),
+      actions: [{ label: 'Start', act: 'focusStart', id: next.instanceId, primary: true }, { label: 'Done', act: 'doneQuick', id: next.instanceId }, { label: 'Details', act: 'inst', id: next.instanceId, ghost: true }] };
+  }
+  function nativeRows(blocks, isToday, now) {
+    const row = b => {
+      const k = blockClass(b), m = Math.round((b.endEpoch - b.startEpoch) / 60), st = b.inst ? b.inst.lifecycleState : '';
+      if (k === 'free' && m < 15) return null;
+      const meal = k === 'meal' ? scheduledMeal(b) : null, chips = [];
+      if (b.inst) {
+        if (b.inst.linkedQuestRequirementIds.length) chips.push({ kind: 'quest', text: b.inst.linkedQuestRequirementIds.map(l => l.questTitle).join(', ') });
+        if (b.inst.goalTitle) chips.push({ kind: 'goal', text: b.inst.goalTitle });
+        if (st === 'PLANNED') { const x = xpOf(b.inst); if (x) chips.push({ kind: 'xp', text: '+' + x.xp + ' XP · ' + attrName(x.rule.primary) }); }
+        if (b.inst.isUserLocked) chips.push({ kind: 'pinned', text: 'Pinned' });
+      }
+      const tap = b.inst ? { act: 'inst', id: b.inst.instanceId } : k === 'meal' ? mealTap(b) : { act: '', id: '' };
+      return Object.assign({ s: b.startEpoch, e: b.endEpoch, time: fTime(b.startEpoch, tz()), length: mins(m), kind: k, title: b.title || '', icon: b.inst ? tagIcon(b.inst.tag) : (k === 'meal' ? 'meal' : KIND_ICON[k] || 'star'),
+        state: b.inst ? sesState(st) : '', stateLabel: st && STATE_LABEL[st] ? STATE_LABEL[st] : '', now: isToday && b.startEpoch <= now && b.endEpoch > now, past: isToday && b.endEpoch <= now,
+        sub: meal ? meal.name + ' · ' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : meal.kcal + ' kcal') + ' · View meal ›' : !b.inst && k === 'rest' ? 'Kept clear. Nothing gets booked here.' : '', chips }, tap);
+    };
+    const past = isToday ? blocks.filter(b => b.endEpoch <= now) : [];
+    const ahead = past.length >= 2 ? blocks.filter(b => b.endEpoch > now) : blocks;
+    const pt = past.filter(b => b.inst), pd = pt.filter(b => /COMPLETED/.test(b.inst.lifecycleState)).length;
+    return { ahead: ahead.map(row).filter(Boolean), earlier: past.length >= 2 ? { summary: pt.length ? pd + ' of ' + pt.length + ' sessions done' : past.length + ' blocks', rows: past.map(row).filter(Boolean) } : null };
+  }
+  /* What the page shows: 'sheet' or 'guide' over everything, 'first-run' while Today has no plan to show, else the
+     section on screen (a tab key); null while Life Director is not on the page. A native screen covers the page only
+     while this names what it draws. */
+  function showing() {
+    if (!root || !root.isConnected) return null;
+    if (root.querySelector('.ld-sheet.open')) return 'sheet';
+    if (ui.tour || tourDue(ui.tab)) return 'guide';
+    if (ui.tab === 'today' && !(ST.setupComplete && ST.schedule)) return 'first-run';
+    return ui.tab;
+  }
+  /* A tap handed back by a native screen, run as its web element runs it: the element's act and the one id it needs
+     (named here by the data-* attribute it fills). 'meal' opens the meal whose first minute (epoch seconds) is the id,
+     as its arc and row do. Returns false for an act Today does not have. */
+  const ACT_ID = new Map([['inst', 'id'], ['focusStart', 'id'], ['doneQuick', 'id'], ['tab', 'tab'], ['regroup', 'v'],
+    ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', '']]);
+  function nativeAct(act, id) {
+    if (!root || !root.isConnected) return false;
+    let data;
+    if (act === 'meal') {
+      const m = ST.schedule && (ST.schedule.segments || []).find(g => g.kind === 'MEAL' && String(g.startEpoch) === String(id));
+      if (!m) return false;
+      data = { act: 'anchor', k: 'meal', t: m.title, s: m.startEpoch, e: m.endEpoch, ms: m.startEpoch };
+    } else if (ACT_ID.has(act)) data = ACT_ID.get(act) ? { act, [ACT_ID.get(act)]: id } : { act };
+    else return false;
+    perform({ dataset: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v == null ? '' : String(v)])) }); // strings, as a dataset holds them
+    return true;
+  }
+  /* Listeners hear, once per burst and just after it, that what Life Director shows may have changed: a render, a
+     sheet or the guide opening or closing, a message. */
+  const watchers = new Set();
+  let changeQueued = false;
+  function changed() {
+    if (changeQueued || !watchers.size) return;
+    changeQueued = true;
+    queueMicrotask(() => {
+      changeQueued = false;
+      watchers.forEach(fn => { try { fn(); } catch (e) { console.warn('[Life Director] change listener', e); } });
+    });
+  }
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: nativeToday, showing, act: nativeAct, onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own
      NEW_COMMITMENT repair (so the rest of the day is re-planned around it), find it again by id, remove it by id
@@ -5125,7 +5206,7 @@ const LifeDirectorApp = (function () {
       return { schedMin: sched, doneMin: done, sessions: n, doneSessions: doneN };
     }
   };
-  return { mount, glance, widgetSnapshot, voice: voiceApi, nativeToday, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
+  return { mount, glance, widgetSnapshot, voice: voiceApi, native: nativeApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID };
 })();
 
 /* Public API for LifeMax or other features */
@@ -5134,9 +5215,9 @@ window.LifeDirector = Object.freeze({
   getSchedule: () => LifeDirectorApp.getSchedule(), regenerate: r => LifeDirectorApp.regenerate(r),
   glance: (el, opts) => LifeDirectorApp.glance(el, opts),
   widgetSnapshot: size => LifeDirectorApp.widgetSnapshot(size),
-  nativeToday: day => LifeDirectorApp.nativeToday(day),
   workRules: () => LifeDirectorApp.workRules(), shifts: (a, b) => LifeDirectorApp.shifts(a, b),
   voice: LifeDirectorApp.voice,
+  native: LifeDirectorApp.native,
   coach: LifeDirectorApp.coach
 });
 /* the Overview was drawn before this feature loaded: put today's dial on it now */

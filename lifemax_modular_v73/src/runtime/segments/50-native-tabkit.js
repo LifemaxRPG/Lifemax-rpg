@@ -76,7 +76,9 @@
     async function send() {
       if (!active) return;
       if (blocked()) {
-        NativeTabs.leave(cfg.id, lmaView(), () => close());
+        // still on this view, the page shows something the screen does not draw: nothing can take over, so close now
+        if (lmaView() === cfg.id) await close();
+        else NativeTabs.leave(cfg.id, lmaView(), () => close());
         return;
       }
       try {
