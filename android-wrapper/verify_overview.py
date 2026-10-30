@@ -3,7 +3,7 @@ from pathlib import Path
 import base64, subprocess, sys
 status=subprocess.run(['./android-wrapper/android/gradlew','-p','android-wrapper/android',':app:connectedDebugAndroidTest','--no-daemon','--max-workers=2','-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m','-Pandroid.testInstrumentationRunnerArguments.class=com.lifemax.rpg.OverviewParityTest']).returncode
 out=Path('native-overview-review');out.mkdir(exist_ok=True)
-for name in ['overview-web.png','overview-native.png','overview-software.png','overview-parity.json','character-web.png','character-native.png','character-radar.png','character-attributes.png','character-bottom.png','character-light.png','food-web.png','food-native.png']:
+for name in ['overview-web.png','overview-native.png','overview-software.png','overview-parity.json','nav-perf.json','character-web.png','character-native.png','character-radar.png','character-attributes.png','character-bottom.png','character-light.png','food-web.png','food-native.png']:
     result=subprocess.run(['adb','exec-out','cat','/sdcard/Download/'+name],capture_output=True)
     if result.returncode==0 and result.stdout and (not name.endswith('.png') or result.stdout.startswith(b'\x89PNG')):
         (out/name).write_bytes(result.stdout)
