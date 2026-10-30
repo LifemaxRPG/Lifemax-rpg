@@ -2,15 +2,10 @@
    synthetic, made once from the page's own functions and never regenerated) load at SAVE_SCHEMA; a save from a newer build is
    shown but never written; a backup counts only once the file read back from the folder checks out; a snapshot comes before every
    risky change; and each golden save, backed up and restored on another phone, comes back the same and stays so once the app starts.
-   Run: NODE_PATH=$(npm root -g) node tests/backup-restore.test.js */
+   Run: NODE_PATH=$(npm root -g) node tests/backup-restore.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const { execFileSync } = require('child_process'); const http = require('http');
-const root = path.resolve(__dirname, '..'), out = path.join(require('os').tmpdir(), 'lm_backup_' + process.pid + '.html');
-execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
-execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
+const currentPage = require('./current-page'), file = currentPage(process.argv[2]), root = path.resolve(__dirname, '..');
 const STORE = 'lifemax_rpg_prototype_v1', fixture = n => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', n + '.json'), 'utf8'));
-/* Served over http, not file://: a file:// reload can come back without the last writes to localStorage (BACKLOG). */
-const server = http.createServer((q, s) => { if (q.url !== '/') { s.writeHead(404); s.end(); return } s.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); fs.createReadStream(out).pipe(s) });
 let url = '', pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 600) : '')) } };
 /* A phone: a fresh browser profile holding a save and extra keys before the app starts (block: a key that does not fit). */
 async function phone(b, { save = JSON.stringify({ onboardingComplete: true, name: 'N', tutorialDone: true }), extras = {}, block = '' } = {}) {
@@ -38,7 +33,7 @@ const FOLDER = `(() => {
   Object.assign(lmaLoad().backup, { on: true, uri: 'content://tree/backups', folder: 'Backups' }); lmaSave();
 })()`;
 (async () => {
-  await new Promise(r => server.listen(0, '127.0.0.1', r)); url = 'http://127.0.0.1:' + server.address().port + '/';
+  const site = await currentPage.serve(file); url = site.url;
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }), errs = [];
 
   /* ---- the save format version ---- */
@@ -255,5 +250,5 @@ const FOLDER = `(() => {
   }
 
   ok('no script errors', errs.length === 0, errs);
-  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); server.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
+  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();
