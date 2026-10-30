@@ -40,8 +40,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     // preview: the page answers with the new award, and the draft revision does not change (so typing is never replaced)
     const rev0 = opened[2].snapshot.draftRevision, d60 = Object.assign({}, opened[2].snapshot.draft, { duration: '60' });
     await L.__emit('command', { command: 'preview', payload: { draft: d60 }, requestId: 'r1' }); await wait(200);
-    const up = last('update');
-    out.preview = up && up[2].reply.ok === true && up[2].reply.requestId === 'r1' && up[2].snapshot.preview.total === activityPreview(d60).total && up[2].snapshot.draftRevision === rev0;
+    const reply = (id) => [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === id);
+    const up = reply('r1');
+    out.preview = !!up && up[2].reply.ok === true && up[2].snapshot.preview.total === activityPreview(d60).total && up[2].snapshot.draftRevision === rev0;
     out.noCloseOnCommand = !window.__calls.some(c => c[0] === 'log' && c[1] === 'close');
     // submit: saved by the page's own function, toast, a fresh draft, and on to Overview
     const n0 = state.activities.length; let toasted = ''; const realToast = window.toast; window.toast = m => { toasted = String(m) };
