@@ -1,0 +1,6975 @@
+{
+ "protocol": 1,
+ "webSessionId": "plan-fixture",
+ "sequence": 1,
+ "program": "Athlete · 8-Week Athletic Foundation Program",
+ "status": "Week 3 of 8",
+ "summary": "11 of 48 sessions done · 73% on track",
+ "sessions": {
+  "done": 11,
+  "total": 48
+ },
+ "weeks": [
+  {
+   "number": "01",
+   "label": "WEEK 01",
+   "range": "Oct 12 — Oct 18",
+   "meta": "6 of 6 sessions",
+   "done": 6,
+   "total": 6,
+   "complete": true,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-10-12",
+     "weekday": "MON",
+     "dayOfMonth": "12",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Mon, Oct 12 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), October 12",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 45 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength A (Squat & Press) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-13",
+     "weekday": "TUE",
+     "dayOfMonth": "13",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "done",
+     "today": false,
+     "title": "Tue, Oct 13 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, October 13",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 30 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Aerobic Base Conditioning · 5 exercises · 5 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-14",
+     "weekday": "WED",
+     "dayOfMonth": "14",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Wed, Oct 14 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), October 14",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 45 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength B (Hinge & Pull) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-15",
+     "weekday": "THU",
+     "dayOfMonth": "15",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "done",
+     "today": false,
+     "title": "Thu, Oct 15 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, October 15",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 25 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Active Mobility & Structural Recovery · 6 exercises · 9 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-16",
+     "weekday": "FRI",
+     "dayOfMonth": "16",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Fri, Oct 16 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), October 16",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 45 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength C (Work Capacity & Stability) · 9 exercises · 18 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-17",
+     "weekday": "SAT",
+     "dayOfMonth": "17",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "done",
+     "today": false,
+     "title": "Sat, Oct 17 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, October 17",
+     "tag": "Week 1 · 100% done",
+     "note": "Week 1 · About 35 minutes. Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        true,
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Athletic Endurance & Work Capacity · 6 exercises · 9 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-18",
+     "weekday": "SUN",
+     "dayOfMonth": "18",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Oct 18 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, October 18",
+     "tag": "Week 1 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": false,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "02",
+   "label": "WEEK 02",
+   "range": "Oct 19 — Oct 25",
+   "meta": "3 of 6 sessions",
+   "done": 3,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-10-19",
+     "weekday": "MON",
+     "dayOfMonth": "19",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Mon, Oct 19 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), October 19",
+     "tag": "Week 2 · 100% done",
+     "note": "Week 2 · About 45 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength A (Squat & Press) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-20",
+     "weekday": "TUE",
+     "dayOfMonth": "20",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "missed",
+     "today": false,
+     "title": "Tue, Oct 20 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, October 20",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2 · About 30 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Aerobic Base Conditioning · 5 exercises · 5 sets",
+      "button": "Start",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-21",
+     "weekday": "WED",
+     "dayOfMonth": "21",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Wed, Oct 21 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), October 21",
+     "tag": "Week 2 · 100% done",
+     "note": "Week 2 · About 45 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength B (Hinge & Pull) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-22",
+     "weekday": "THU",
+     "dayOfMonth": "22",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "missed",
+     "today": false,
+     "title": "Thu, Oct 22 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, October 22",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2 · About 25 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Active Mobility & Structural Recovery · 6 exercises · 9 sets",
+      "button": "Start",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-23",
+     "weekday": "FRI",
+     "dayOfMonth": "23",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Fri, Oct 23 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), October 23",
+     "tag": "Week 2 · 100% done",
+     "note": "Week 2 · About 45 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength C (Work Capacity & Stability) · 9 exercises · 18 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-24",
+     "weekday": "SAT",
+     "dayOfMonth": "24",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "missed",
+     "today": false,
+     "title": "Sat, Oct 24 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, October 24",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2 · About 35 minutes. Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        false,
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Athletic Endurance & Work Capacity · 6 exercises · 9 sets",
+      "button": "Start",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-25",
+     "weekday": "SUN",
+     "dayOfMonth": "25",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Oct 25 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, October 25",
+     "tag": "Week 2 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": false,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "03",
+   "label": "WEEK 03",
+   "range": "Oct 26 — Nov 1",
+   "meta": "2 of 6 sessions",
+   "done": 2,
+   "total": 6,
+   "complete": false,
+   "current": true,
+   "days": [
+    {
+     "date": "2026-10-26",
+     "weekday": "MON",
+     "dayOfMonth": "26",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": false,
+     "title": "Mon, Oct 26 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), October 26",
+     "tag": "Week 3 · 100% done",
+     "note": "Week 3 · About 45 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength A (Squat & Press) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-27",
+     "weekday": "TUE",
+     "dayOfMonth": "27",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "missed",
+     "today": false,
+     "title": "Tue, Oct 27 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, October 27",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3 · About 30 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Aerobic Base Conditioning · 5 exercises · 5 sets",
+      "button": "Start",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-28",
+     "weekday": "WED",
+     "dayOfMonth": "28",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "done",
+     "today": true,
+     "title": "Wed, Oct 28 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), October 28",
+     "tag": "Week 3 · 100% done",
+     "note": "Week 3 · About 45 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "70 lb",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "Felt strong, added 5 lb",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        true,
+        true,
+        true
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        true,
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Foundation Strength B (Hinge & Pull) · 10 exercises · 19 sets",
+      "button": "Review",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-29",
+     "weekday": "THU",
+     "dayOfMonth": "29",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Oct 29 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, October 29",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3 · About 25 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-10-30",
+     "weekday": "FRI",
+     "dayOfMonth": "30",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Oct 30 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), October 30",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3 · About 45 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-10-31",
+     "weekday": "SAT",
+     "dayOfMonth": "31",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Oct 31 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, October 31",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3 · About 35 minutes. When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        false,
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-01",
+     "weekday": "SUN",
+     "dayOfMonth": "1",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 1 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, November 1",
+     "tag": "Week 3 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "04",
+   "label": "WEEK 04",
+   "range": "Nov 2 — Nov 8",
+   "meta": "0 of 6 sessions",
+   "done": 0,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-02",
+     "weekday": "MON",
+     "dayOfMonth": "2",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 2 · Deload Restoration Session",
+     "description": "Deload Restoration Session, November 2",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 25 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-03",
+     "weekday": "TUE",
+     "dayOfMonth": "3",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 3 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, November 3",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 30 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-04",
+     "weekday": "WED",
+     "dayOfMonth": "4",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Wed, Nov 4 · Deload Restoration Session",
+     "description": "Deload Restoration Session, November 4",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 25 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-05",
+     "weekday": "THU",
+     "dayOfMonth": "5",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 5 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, November 5",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 25 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-06",
+     "weekday": "FRI",
+     "dayOfMonth": "6",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 6 · Deload Restoration Session",
+     "description": "Deload Restoration Session, November 6",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 25 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-07",
+     "weekday": "SAT",
+     "dayOfMonth": "7",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 7 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, November 7",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4 · About 30 minutes. Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-08",
+     "weekday": "SUN",
+     "dayOfMonth": "8",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 8 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, November 8",
+     "tag": "Week 4 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "05",
+   "label": "WEEK 05",
+   "range": "Nov 9 — Nov 15",
+   "meta": "0 of 6 sessions",
+   "done": 0,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-09",
+     "weekday": "MON",
+     "dayOfMonth": "9",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 9 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), November 9",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 45 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-10",
+     "weekday": "TUE",
+     "dayOfMonth": "10",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 10 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, November 10",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 30 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-11",
+     "weekday": "WED",
+     "dayOfMonth": "11",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Wed, Nov 11 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), November 11",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 45 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-12",
+     "weekday": "THU",
+     "dayOfMonth": "12",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 12 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, November 12",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 25 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-13",
+     "weekday": "FRI",
+     "dayOfMonth": "13",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 13 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), November 13",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 45 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-14",
+     "weekday": "SAT",
+     "dayOfMonth": "14",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 14 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, November 14",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5 · About 35 minutes. Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        false,
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-15",
+     "weekday": "SUN",
+     "dayOfMonth": "15",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 15 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, November 15",
+     "tag": "Week 5 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "06",
+   "label": "WEEK 06",
+   "range": "Nov 16 — Nov 22",
+   "meta": "0 of 6 sessions",
+   "done": 0,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-16",
+     "weekday": "MON",
+     "dayOfMonth": "16",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 16 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), November 16",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 45 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-17",
+     "weekday": "TUE",
+     "dayOfMonth": "17",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 17 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, November 17",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 30 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-18",
+     "weekday": "WED",
+     "dayOfMonth": "18",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Wed, Nov 18 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), November 18",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 45 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-19",
+     "weekday": "THU",
+     "dayOfMonth": "19",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 19 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, November 19",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 25 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-20",
+     "weekday": "FRI",
+     "dayOfMonth": "20",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 20 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), November 20",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 45 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-21",
+     "weekday": "SAT",
+     "dayOfMonth": "21",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 21 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, November 21",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6 · About 35 minutes. Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        false,
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-22",
+     "weekday": "SUN",
+     "dayOfMonth": "22",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 22 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, November 22",
+     "tag": "Week 6 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "07",
+   "label": "WEEK 07",
+   "range": "Nov 23 — Nov 29",
+   "meta": "0 of 6 sessions",
+   "done": 0,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-23",
+     "weekday": "MON",
+     "dayOfMonth": "23",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 23 · Foundation Strength A (Squat & Press)",
+     "description": "Foundation Strength A (Squat & Press), November 23",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 45 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of light cycling or treadmill walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 dynamic arm swings",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set on the leg press before working weight",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Leg Press or Goblet Squat",
+       "detail": "3 sets × 8-12 reps — Lower smoothly under control for 2 seconds and press firmly through mid-foot.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Machine or Dumbbell Chest Press",
+       "detail": "3 sets × 8-12 reps — Retract your shoulder blades against the bench and press without locking elbows harshly.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Lat Pulldown or Assisted Pull-Up",
+       "detail": "3 sets × 8-12 reps — Draw your elbows downward toward your ribs and pause for one second at the chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Seated or Lying Leg Curl",
+       "detail": "3 sets × 10-15 reps — Keep your hips planted firmly on the pad throughout the full contraction.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank Hold",
+       "detail": "2 sets × 30-45 seconds — Brace your core and squeeze your glutes; terminate the set before your lower back sags.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hip flexor stretch for 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-24",
+     "weekday": "TUE",
+     "dayOfMonth": "24",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 24 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, November 24",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 30 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-25",
+     "weekday": "WED",
+     "dayOfMonth": "25",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Wed, Nov 25 · Foundation Strength B (Hinge & Pull)",
+     "description": "Foundation Strength B (Hinge & Pull), November 25",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 45 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of rowing machine or brisk incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight hip hinges and 10 shoulder dislocations with a towel or band",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm2",
+       "title": "Warm-up",
+       "detail": "1 light warm-up set of Romanian deadlifts",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Dumbbell Romanian Deadlift",
+       "detail": "3 sets × 8-12 reps — Hinge hips backward with a flat spine until you feel a moderate hamstring stretch.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Seated Cable Row or Supported Dumbbell Row",
+       "detail": "3 sets × 8-12 reps — Pull handles toward your lower abdomen and pause while keeping your torso quiet.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Machine Overhead Shoulder Press",
+       "detail": "3 sets × 8-12 reps — Press vertically without hyperextending your lumbar spine; brace your midsection.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell Reverse Lunge or Step-Up",
+       "detail": "3 sets × 8-10 reps per leg — Step backward under control, gently touch back knee to the floor, and push through front heel.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Alternation",
+       "detail": "2 sets × 10 reps per side — Press your lower back into the mat as opposite arm and leg extend outward.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Kneeling hip flexor stretch for 40 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Cat-cow spinal mobility for 8 repetitions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-26",
+     "weekday": "THU",
+     "dayOfMonth": "26",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 26 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, November 26",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 25 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-27",
+     "weekday": "FRI",
+     "dayOfMonth": "27",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "E",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 27 · Foundation Strength C (Work Capacity & Stability)",
+     "description": "Foundation Strength C (Work Capacity & Stability), November 27",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 45 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of brisk walking or light elliptical",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 bodyweight squats and 10 torso rotations",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Incline Machine or Dumbbell Bench Press",
+       "detail": "3 sets × 8-12 reps — Set incline around 30 degrees and press smoothly without flaring elbows wide.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Leg Extension Machine",
+       "detail": "3 sets × 10-12 reps — Pause for a split second at the top of the contraction and lower under strict control.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Cable Face Pull or Reverse Pec Deck",
+       "detail": "3 sets × 12-15 reps — Pull rope toward bridge of nose, rotating hands upward to target rear deltoids and rotators.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing or Seated Calf Raise",
+       "detail": "3 sets × 12-15 reps — Hold the deep stretch for one full second before driving up onto your toes.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Pallof Cable or Band Core Press",
+       "detail": "2 sets × 10-12 reps per side — Resist rotational pull from the cable; extend arms straight forward from chest.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Lying figure-four glute stretch for 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds with deep breaths",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-28",
+     "weekday": "SAT",
+     "dayOfMonth": "28",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 28 · Athletic Endurance & Work Capacity",
+     "description": "Athletic Endurance & Work Capacity, November 28",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7 · About 35 minutes. Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of easy jogging or incline walking",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 dynamic leg swings front-to-back and side-to-side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Endurance Cardiovascular Conditioning",
+       "detail": "1 set × 25-30 minutes — Sustained aerobic conditioning on your chosen apparatus. Keep heart rate stable and pace steady.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Optional Conditioning Finisher (Weeks 5-7)",
+       "detail": "4 sets × 1 min challenging / 2 min easy recovery — Only perform if energy and recovery are high; otherwise substitute with steady walking.",
+       "optional": true,
+       "sets": [
+        false,
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": "last: 70 lb"
+       },
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "3 minutes of slow walking recovery",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing quad and hamstring mobility stretches, 30 seconds each",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-29",
+     "weekday": "SUN",
+     "dayOfMonth": "29",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 29 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, November 29",
+     "tag": "Week 7 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "08",
+   "label": "WEEK 08",
+   "range": "Nov 30 — Dec 6",
+   "meta": "0 of 6 sessions",
+   "done": 0,
+   "total": 6,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-30",
+     "weekday": "MON",
+     "dayOfMonth": "30",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 30 · Deload Restoration Session",
+     "description": "Deload Restoration Session, November 30",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 25 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-01",
+     "weekday": "TUE",
+     "dayOfMonth": "1",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Dec 1 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, December 1",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 30 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-02",
+     "weekday": "WED",
+     "dayOfMonth": "2",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Wed, Dec 2 · Deload Restoration Session",
+     "description": "Deload Restoration Session, December 2",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 25 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-03",
+     "weekday": "THU",
+     "dayOfMonth": "3",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Dec 3 · Active Mobility & Structural Recovery",
+     "description": "Active Mobility & Structural Recovery, December 3",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 25 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of diaphragmatic breathing and gentle neck rolls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Easy Regenerative Walking or Light Cycling",
+       "detail": "1 set × 10 minutes — Extremely light effort purely to circulate blood and ease lingering muscular tension.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch Sequence",
+       "detail": "2 sets × 5 reps per side — Lunge forward, place hand on ground, and twist your torso toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Hamstring and Adductor Mobility Flow",
+       "detail": "2 sets × 40 seconds per side — Hold gentle, non-painful stretches while breathing slowly through your nose.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Extension over Foam Roller or Chair Back",
+       "detail": "2 sets × 8 gentle reps — Support the back of your head and gently extend over the mid-back area.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 3 minutes to aid lower-body lymphatic drainage",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-04",
+     "weekday": "FRI",
+     "dayOfMonth": "4",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Dec 4 · Deload Restoration Session",
+     "description": "Deload Restoration Session, December 4",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 25 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "5 minutes of slow pacing and arm circles",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Bodyweight Box Sit-to-Stand",
+       "detail": "2 sets × 8 reps — Very light movement practice focusing solely on smooth joint balance and rhythm.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Light Band or Doorframe Row",
+       "detail": "2 sets × 10 reps — Easy posture engagement without muscular fatigue.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": "Last time: Felt strong, added 5 lb"
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Full-Body Mobility Flow",
+       "detail": "2 sets × 5 minutes — Flow through cat-cow, kneeling hip flexor stretches, and gentle torso twists.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "Deep diaphragmatic breathing lying flat on back for 3 minutes",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-05",
+     "weekday": "SAT",
+     "dayOfMonth": "5",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Dec 5 · Aerobic Base Conditioning",
+     "description": "Aerobic Base Conditioning, December 5",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8 · About 30 minutes. Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm0",
+       "title": "Warm-up",
+       "detail": "3 minutes of easy walking or slow cycling",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "warm1",
+       "title": "Warm-up",
+       "detail": "10 gentle ankle rolls and calf dynamic stretches",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E0",
+       "title": "Steady-State Aerobic Cardio (Treadmill, Bike, or Elliptical)",
+       "detail": "1 set × 25-30 minutes — Maintain an even, conversational pace where you can comfortably speak in full sentences without gasping.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool0",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow pacing deceleration",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool1",
+       "title": "Cool-down",
+       "detail": "Standing calf stretch on an incline or step, 30 seconds per leg",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-06",
+     "weekday": "SUN",
+     "dayOfMonth": "6",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Dec 6 · Rest & Tissue Repair",
+     "description": "Rest & Tissue Repair, December 6",
+     "tag": "Week 8 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  }
+ ],
+ "selected": {
+  "date": "2026-10-28",
+  "revision": 1
+ },
+ "session": null,
+ "key": [
+  {
+   "icon": "",
+   "label": "A / C / E · Strength"
+  },
+  {
+   "icon": "heart",
+   "label": "Cardio"
+  },
+  {
+   "icon": "moon",
+   "label": "Recovery"
+  },
+  {
+   "icon": "bed",
+   "label": "Rest"
+  }
+ ],
+ "rules": {
+  "items": [
+   {
+    "lead": "",
+    "text": "Check with a doctor before starting if you have a health condition."
+   },
+   {
+    "lead": "",
+    "text": "Never compromise posture or lift to absolute failure; finish every working set with at least 1 to 2 clean repetitions in reserve."
+   },
+   {
+    "lead": "",
+    "text": "Halt any exercise immediately if you experience sharp, stabbing, or radiating joint pain."
+   },
+   {
+    "lead": "Minimum day:",
+    "text": "The 10-Minute Athletic Anchor: 2 minutes of arm circles and leg swings, 2 sets of 10 bodyweight squats, 2 sets of 8 incline push-ups, and a 4-minute brisk walk."
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Leg Press or Goblet Squat → Bodyweight Bulgarian split squat or backpack squat loaded with household books"
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Machine or Dumbbell Chest Press → Standard floor push-ups or elevated hand push-ups on a sturdy chair"
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Lat Pulldown or Assisted Pull-Up → Doorframe towel rows or bedsheet suspension rows"
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Dumbbell Romanian Deadlift → Single-leg bodyweight Romanian deadlift reaching toward front foot"
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Seated Cable Row or Supported Dumbbell Row → Bent-over two-arm row using two full water jugs"
+   },
+   {
+    "lead": "No-gym swap:",
+    "text": "Steady-State Aerobic Cardio → Brisk neighborhood outdoor walking, stair pacing, or bodyweight step-touches"
+   }
+  ],
+  "progression": [
+   {
+    "lead": "Week 1:",
+    "text": "Calibrate your starting weights. Stop every set with 3 to 4 reps in reserve; prioritize flawless posture over load."
+   },
+   {
+    "lead": "Week 2:",
+    "text": "Add 1 to 2 clean repetitions to your exercises or add 5 minutes to Tuesday's aerobic conditioning."
+   },
+   {
+    "lead": "Week 3:",
+    "text": "When you hit the top of a rep range across all sets with pristine technique, apply the smallest available weight increment."
+   },
+   {
+    "lead": "Week 4:",
+    "text": "Scheduled deload: execute lighter restoration circuits (Session G) to let tendons, ligaments, and the nervous system fully recover."
+   },
+   {
+    "lead": "Week 5:",
+    "text": "Resume standard training sessions with refreshed energy; maintain strict 60 to 90 second rest intervals."
+   },
+   {
+    "lead": "Week 6:",
+    "text": "Push toward the upper boundary of your rep ranges while ensuring zero technical breakdown on final repetitions."
+   },
+   {
+    "lead": "Week 7:",
+    "text": "Peak training density: solidify your performance across all three strength days and complete the optional intervals if recovery allows."
+   },
+   {
+    "lead": "Week 8:",
+    "text": "Final consolidation deload: transition back to restorative movements (Session G) and celebrate completing the 8-week athletic foundation block."
+   }
+  ]
+ },
+ "reducedMotion": false,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

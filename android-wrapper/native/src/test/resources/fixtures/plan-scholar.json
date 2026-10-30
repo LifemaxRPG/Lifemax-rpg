@@ -1,0 +1,4151 @@
+{
+ "protocol": 1,
+ "webSessionId": "plan-fixture",
+ "sequence": 1,
+ "program": "Scholar · 8-Week Light Program",
+ "status": "Week 1 of 8",
+ "summary": "0 of 37 sessions done · 0% on track",
+ "sessions": {
+  "done": 0,
+  "total": 37
+ },
+ "weeks": [
+  {
+   "number": "01",
+   "label": "WEEK 01",
+   "range": "Oct 26 — Nov 1",
+   "meta": "0 of 4 sessions",
+   "done": 0,
+   "total": 4,
+   "complete": false,
+   "current": true,
+   "days": [
+    null,
+    {
+     "date": "2026-10-27",
+     "weekday": "TUE",
+     "dayOfMonth": "27",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "missed",
+     "today": false,
+     "title": "Tue, Oct 27 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, October 27",
+     "tag": "Week 1 · 33% done",
+     "note": "Week 1: Learn the movements, establish your training times, and focus entirely on smooth technique with no strain. About 30 minutes.",
+     "locked": false,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        true
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Aerobic Focus Reset · 3 exercises · 3 sets",
+      "button": "Start",
+      "enabled": true
+     }
+    },
+    {
+     "date": "2026-10-28",
+     "weekday": "WED",
+     "dayOfMonth": "28",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": true,
+     "title": "Wed, Oct 28 · Rest & Recovery",
+     "description": "Rest & Recovery, October 28",
+     "tag": "Week 1 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": false,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-10-29",
+     "weekday": "THU",
+     "dayOfMonth": "29",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Oct 29 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, October 29",
+     "tag": "Week 1 · 0% done",
+     "note": "Week 1: Learn the movements, establish your training times, and focus entirely on smooth technique with no strain. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-10-30",
+     "weekday": "FRI",
+     "dayOfMonth": "30",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Oct 30 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, October 30",
+     "tag": "Week 1 · 0% done",
+     "note": "Week 1: Learn the movements, establish your training times, and focus entirely on smooth technique with no strain. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-10-31",
+     "weekday": "SAT",
+     "dayOfMonth": "31",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Oct 31 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, October 31",
+     "tag": "Week 1 · 0% done",
+     "note": "Week 1: Learn the movements, establish your training times, and focus entirely on smooth technique with no strain. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-01",
+     "weekday": "SUN",
+     "dayOfMonth": "1",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 1 · Rest & Recovery",
+     "description": "Rest & Recovery, November 1",
+     "tag": "Week 1 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "02",
+   "label": "WEEK 02",
+   "range": "Nov 2 — Nov 8",
+   "meta": "0 of 5 sessions",
+   "done": 0,
+   "total": 5,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-02",
+     "weekday": "MON",
+     "dayOfMonth": "2",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 2 · Postural Strength & Alignment",
+     "description": "Postural Strength & Alignment, November 2",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2: Add 2 reps to bodyweight movements where comfortable, or extend your daily walk by 5 minutes. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "2 minutes of easy arm circles and torso twists · 10 bodyweight squats at a controlled pace",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Goblet Squat or Chair Sit-to-Stand",
+       "detail": "3 sets × 8-10 reps — Keep your chest upright and drive through your heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Band Romanian Deadlift",
+       "detail": "3 sets × 10 reps — Hinge at the hips with a flat back to stretch and load the hamstrings.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell or Band Supported Row",
+       "detail": "3 sets × 10-12 reps — Squeeze your shoulder blades together to counteract desk slouching.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Hold",
+       "detail": "2 sets × 8 reps per side — Keep your lower back pressed firmly into the floor.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds · Gentle standing chest opener stretch for 30 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-03",
+     "weekday": "TUE",
+     "dayOfMonth": "3",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 3 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 3",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2: Add 2 reps to bodyweight movements where comfortable, or extend your daily walk by 5 minutes. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-04",
+     "weekday": "WED",
+     "dayOfMonth": "4",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Nov 4 · Rest & Recovery",
+     "description": "Rest & Recovery, November 4",
+     "tag": "Week 2 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-05",
+     "weekday": "THU",
+     "dayOfMonth": "5",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 5 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, November 5",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2: Add 2 reps to bodyweight movements where comfortable, or extend your daily walk by 5 minutes. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-06",
+     "weekday": "FRI",
+     "dayOfMonth": "6",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 6 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, November 6",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2: Add 2 reps to bodyweight movements where comfortable, or extend your daily walk by 5 minutes. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-07",
+     "weekday": "SAT",
+     "dayOfMonth": "7",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 7 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 7",
+     "tag": "Week 2 · 0% done",
+     "note": "Week 2: Add 2 reps to bodyweight movements where comfortable, or extend your daily walk by 5 minutes. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-08",
+     "weekday": "SUN",
+     "dayOfMonth": "8",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 8 · Rest & Recovery",
+     "description": "Rest & Recovery, November 8",
+     "tag": "Week 2 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "03",
+   "label": "WEEK 03",
+   "range": "Nov 9 — Nov 15",
+   "meta": "0 of 5 sessions",
+   "done": 0,
+   "total": 5,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-09",
+     "weekday": "MON",
+     "dayOfMonth": "9",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 9 · Postural Strength & Alignment",
+     "description": "Postural Strength & Alignment, November 9",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3: Increase resistance slightly on rows and squats if the final reps feel very easy; maintain strict posture. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "2 minutes of easy arm circles and torso twists · 10 bodyweight squats at a controlled pace",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Goblet Squat or Chair Sit-to-Stand",
+       "detail": "3 sets × 8-10 reps — Keep your chest upright and drive through your heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Band Romanian Deadlift",
+       "detail": "3 sets × 10 reps — Hinge at the hips with a flat back to stretch and load the hamstrings.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell or Band Supported Row",
+       "detail": "3 sets × 10-12 reps — Squeeze your shoulder blades together to counteract desk slouching.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Hold",
+       "detail": "2 sets × 8 reps per side — Keep your lower back pressed firmly into the floor.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds · Gentle standing chest opener stretch for 30 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-10",
+     "weekday": "TUE",
+     "dayOfMonth": "10",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 10 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 10",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3: Increase resistance slightly on rows and squats if the final reps feel very easy; maintain strict posture. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-11",
+     "weekday": "WED",
+     "dayOfMonth": "11",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Nov 11 · Rest & Recovery",
+     "description": "Rest & Recovery, November 11",
+     "tag": "Week 3 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-12",
+     "weekday": "THU",
+     "dayOfMonth": "12",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 12 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, November 12",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3: Increase resistance slightly on rows and squats if the final reps feel very easy; maintain strict posture. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-13",
+     "weekday": "FRI",
+     "dayOfMonth": "13",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 13 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, November 13",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3: Increase resistance slightly on rows and squats if the final reps feel very easy; maintain strict posture. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-14",
+     "weekday": "SAT",
+     "dayOfMonth": "14",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 14 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 14",
+     "tag": "Week 3 · 0% done",
+     "note": "Week 3: Increase resistance slightly on rows and squats if the final reps feel very easy; maintain strict posture. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-15",
+     "weekday": "SUN",
+     "dayOfMonth": "15",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 15 · Rest & Recovery",
+     "description": "Rest & Recovery, November 15",
+     "tag": "Week 3 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "04",
+   "label": "WEEK 04",
+   "range": "Nov 16 — Nov 22",
+   "meta": "0 of 4 sessions",
+   "done": 0,
+   "total": 4,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-16",
+     "weekday": "MON",
+     "dayOfMonth": "16",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 16 · Active Study Break Circuit",
+     "description": "Active Study Break Circuit, November 16",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4: Scheduled deload: complete lighter recovery circuits (Session E) and mobility to absorb fatigue. About 15 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 shoulder shrugs · 10 bodyweight calf raises",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Continuous Easy Pacing or Step Touch",
+       "detail": "5 minutes — Walk around your living space to clear mental fatigue.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Wall Slides for Shoulder Posture",
+       "detail": "2 sets × 10 reps — Keep elbows and wrists against the wall as you slide arms overhead.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing Hamstring Sweep",
+       "detail": "2 sets × 8 reps per leg — Heel down, toes up, gently sweep the ground with your hands.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Standing forward fold with soft knees for 45 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-17",
+     "weekday": "TUE",
+     "dayOfMonth": "17",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 17 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 17",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4: Scheduled deload: complete lighter recovery circuits (Session E) and mobility to absorb fatigue. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-18",
+     "weekday": "WED",
+     "dayOfMonth": "18",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Nov 18 · Rest & Recovery",
+     "description": "Rest & Recovery, November 18",
+     "tag": "Week 4 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-19",
+     "weekday": "THU",
+     "dayOfMonth": "19",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 19 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, November 19",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4: Scheduled deload: complete lighter recovery circuits (Session E) and mobility to absorb fatigue. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-20",
+     "weekday": "FRI",
+     "dayOfMonth": "20",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Fri, Nov 20 · Rest & Recovery",
+     "description": "Rest & Recovery, November 20",
+     "tag": "Week 4 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-21",
+     "weekday": "SAT",
+     "dayOfMonth": "21",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 21 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 21",
+     "tag": "Week 4 · 0% done",
+     "note": "Week 4: Scheduled deload: complete lighter recovery circuits (Session E) and mobility to absorb fatigue. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-22",
+     "weekday": "SUN",
+     "dayOfMonth": "22",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 22 · Rest & Recovery",
+     "description": "Rest & Recovery, November 22",
+     "tag": "Week 4 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "05",
+   "label": "WEEK 05",
+   "range": "Nov 23 — Nov 29",
+   "meta": "0 of 5 sessions",
+   "done": 0,
+   "total": 5,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-23",
+     "weekday": "MON",
+     "dayOfMonth": "23",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 23 · Postural Strength & Alignment",
+     "description": "Postural Strength & Alignment, November 23",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5: Resume standard sessions; increase walking pace slightly or hold your core positions 5 seconds longer. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "2 minutes of easy arm circles and torso twists · 10 bodyweight squats at a controlled pace",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Goblet Squat or Chair Sit-to-Stand",
+       "detail": "3 sets × 8-10 reps — Keep your chest upright and drive through your heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Band Romanian Deadlift",
+       "detail": "3 sets × 10 reps — Hinge at the hips with a flat back to stretch and load the hamstrings.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell or Band Supported Row",
+       "detail": "3 sets × 10-12 reps — Squeeze your shoulder blades together to counteract desk slouching.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Hold",
+       "detail": "2 sets × 8 reps per side — Keep your lower back pressed firmly into the floor.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds · Gentle standing chest opener stretch for 30 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-24",
+     "weekday": "TUE",
+     "dayOfMonth": "24",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Nov 24 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 24",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5: Resume standard sessions; increase walking pace slightly or hold your core positions 5 seconds longer. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-25",
+     "weekday": "WED",
+     "dayOfMonth": "25",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Nov 25 · Rest & Recovery",
+     "description": "Rest & Recovery, November 25",
+     "tag": "Week 5 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-26",
+     "weekday": "THU",
+     "dayOfMonth": "26",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Nov 26 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, November 26",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5: Resume standard sessions; increase walking pace slightly or hold your core positions 5 seconds longer. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-27",
+     "weekday": "FRI",
+     "dayOfMonth": "27",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Nov 27 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, November 27",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5: Resume standard sessions; increase walking pace slightly or hold your core positions 5 seconds longer. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-28",
+     "weekday": "SAT",
+     "dayOfMonth": "28",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Nov 28 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, November 28",
+     "tag": "Week 5 · 0% done",
+     "note": "Week 5: Resume standard sessions; increase walking pace slightly or hold your core positions 5 seconds longer. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-11-29",
+     "weekday": "SUN",
+     "dayOfMonth": "29",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Nov 29 · Rest & Recovery",
+     "description": "Rest & Recovery, November 29",
+     "tag": "Week 5 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "06",
+   "label": "WEEK 06",
+   "range": "Nov 30 — Dec 6",
+   "meta": "0 of 5 sessions",
+   "done": 0,
+   "total": 5,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-11-30",
+     "weekday": "MON",
+     "dayOfMonth": "30",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Nov 30 · Postural Strength & Alignment",
+     "description": "Postural Strength & Alignment, November 30",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6: Aim for the upper end of all prescribed rep ranges while preserving effortless breathing rhythm. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "2 minutes of easy arm circles and torso twists · 10 bodyweight squats at a controlled pace",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Goblet Squat or Chair Sit-to-Stand",
+       "detail": "3 sets × 8-10 reps — Keep your chest upright and drive through your heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Band Romanian Deadlift",
+       "detail": "3 sets × 10 reps — Hinge at the hips with a flat back to stretch and load the hamstrings.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell or Band Supported Row",
+       "detail": "3 sets × 10-12 reps — Squeeze your shoulder blades together to counteract desk slouching.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Hold",
+       "detail": "2 sets × 8 reps per side — Keep your lower back pressed firmly into the floor.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds · Gentle standing chest opener stretch for 30 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-01",
+     "weekday": "TUE",
+     "dayOfMonth": "1",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Dec 1 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 1",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6: Aim for the upper end of all prescribed rep ranges while preserving effortless breathing rhythm. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-02",
+     "weekday": "WED",
+     "dayOfMonth": "2",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Dec 2 · Rest & Recovery",
+     "description": "Rest & Recovery, December 2",
+     "tag": "Week 6 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-03",
+     "weekday": "THU",
+     "dayOfMonth": "3",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Dec 3 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, December 3",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6: Aim for the upper end of all prescribed rep ranges while preserving effortless breathing rhythm. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-04",
+     "weekday": "FRI",
+     "dayOfMonth": "4",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Dec 4 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, December 4",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6: Aim for the upper end of all prescribed rep ranges while preserving effortless breathing rhythm. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-05",
+     "weekday": "SAT",
+     "dayOfMonth": "5",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Dec 5 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 5",
+     "tag": "Week 6 · 0% done",
+     "note": "Week 6: Aim for the upper end of all prescribed rep ranges while preserving effortless breathing rhythm. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-06",
+     "weekday": "SUN",
+     "dayOfMonth": "6",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Dec 6 · Rest & Recovery",
+     "description": "Rest & Recovery, December 6",
+     "tag": "Week 6 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "07",
+   "label": "WEEK 07",
+   "range": "Dec 7 — Dec 13",
+   "meta": "0 of 5 sessions",
+   "done": 0,
+   "total": 5,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-12-07",
+     "weekday": "MON",
+     "dayOfMonth": "7",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "A",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Dec 7 · Postural Strength & Alignment",
+     "description": "Postural Strength & Alignment, December 7",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7: Solidify consistency across all scheduled sessions; keep rest intervals strictly adhered to. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "2 minutes of easy arm circles and torso twists · 10 bodyweight squats at a controlled pace",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Goblet Squat or Chair Sit-to-Stand",
+       "detail": "3 sets × 8-10 reps — Keep your chest upright and drive through your heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Dumbbell or Band Romanian Deadlift",
+       "detail": "3 sets × 10 reps — Hinge at the hips with a flat back to stretch and load the hamstrings.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Dumbbell or Band Supported Row",
+       "detail": "3 sets × 10-12 reps — Squeeze your shoulder blades together to counteract desk slouching.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Dead Bug Core Hold",
+       "detail": "2 sets × 8 reps per side — Keep your lower back pressed firmly into the floor.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Child's pose for 60 seconds · Gentle standing chest opener stretch for 30 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-08",
+     "weekday": "TUE",
+     "dayOfMonth": "8",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Dec 8 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 8",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7: Solidify consistency across all scheduled sessions; keep rest intervals strictly adhered to. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-09",
+     "weekday": "WED",
+     "dayOfMonth": "9",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Dec 9 · Rest & Recovery",
+     "description": "Rest & Recovery, December 9",
+     "tag": "Week 7 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-10",
+     "weekday": "THU",
+     "dayOfMonth": "10",
+     "kind": "strength",
+     "kindLabel": "STRENGTH",
+     "glyph": "C",
+     "icon": "dumbbell",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Dec 10 · Upper Body & Posture Restoration",
+     "description": "Upper Body & Posture Restoration, December 10",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7: Solidify consistency across all scheduled sessions; keep rest intervals strictly adhered to. About 25 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 neck rolls each direction · 10 cat-cow spinal flexions",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Incline Push-Up (Bench, Desk, or Wall)",
+       "detail": "3 sets × 8-12 reps — Maintain a rigid plank line from head to heels.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Standing Overhead Dumbbell Press",
+       "detail": "3 sets × 8-10 reps — Press smoothly overhead without arching your lower back.",
+       "optional": false,
+       "sets": [
+        false,
+        false,
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Weight used",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Floor Prone Cobras",
+       "detail": "2 sets × 10-12 reps — Lift your chest slightly and rotate thumbs upward to engage the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Forearm Plank",
+       "detail": "2 sets × 20-30 seconds — Brace your midsection firmly; rest before your hips sag.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Doorway chest stretch, 30 seconds per side · Neck side bend stretch, 20 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-11",
+     "weekday": "FRI",
+     "dayOfMonth": "11",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Fri, Dec 11 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, December 11",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7: Solidify consistency across all scheduled sessions; keep rest intervals strictly adhered to. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-12",
+     "weekday": "SAT",
+     "dayOfMonth": "12",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Dec 12 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 12",
+     "tag": "Week 7 · 0% done",
+     "note": "Week 7: Solidify consistency across all scheduled sessions; keep rest intervals strictly adhered to. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-13",
+     "weekday": "SUN",
+     "dayOfMonth": "13",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Dec 13 · Rest & Recovery",
+     "description": "Rest & Recovery, December 13",
+     "tag": "Week 7 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  },
+  {
+   "number": "08",
+   "label": "WEEK 08",
+   "range": "Dec 14 — Dec 20",
+   "meta": "0 of 4 sessions",
+   "done": 0,
+   "total": 4,
+   "complete": false,
+   "current": false,
+   "days": [
+    {
+     "date": "2026-12-14",
+     "weekday": "MON",
+     "dayOfMonth": "14",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Mon, Dec 14 · Active Study Break Circuit",
+     "description": "Active Study Break Circuit, December 14",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8: Final consolidation deload: prioritize restful sleep, mobility, and recovery walks to celebrate completing the block. About 15 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "10 shoulder shrugs · 10 bodyweight calf raises",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Continuous Easy Pacing or Step Touch",
+       "detail": "5 minutes — Walk around your living space to clear mental fatigue.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Wall Slides for Shoulder Posture",
+       "detail": "2 sets × 10 reps — Keep elbows and wrists against the wall as you slide arms overhead.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Standing Hamstring Sweep",
+       "detail": "2 sets × 8 reps per leg — Heel down, toes up, gently sweep the ground with your hands.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Standing forward fold with soft knees for 45 seconds",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-15",
+     "weekday": "TUE",
+     "dayOfMonth": "15",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Tue, Dec 15 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 15",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8: Final consolidation deload: prioritize restful sleep, mobility, and recovery walks to celebrate completing the block. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-16",
+     "weekday": "WED",
+     "dayOfMonth": "16",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Wed, Dec 16 · Rest & Recovery",
+     "description": "Rest & Recovery, December 16",
+     "tag": "Week 8 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-17",
+     "weekday": "THU",
+     "dayOfMonth": "17",
+     "kind": "recovery",
+     "kindLabel": "RECOVERY",
+     "glyph": "",
+     "icon": "moon",
+     "status": "upcoming",
+     "today": false,
+     "title": "Thu, Dec 17 · Full-Body Mobility & Decompression",
+     "description": "Full-Body Mobility & Decompression, December 17",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8: Final consolidation deload: prioritize restful sleep, mobility, and recovery walks to celebrate completing the block. About 20 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "Deep diaphragmatic breathing, 5 breaths lying on back · Gentle pelvic tilts, 10 reps",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "World's Greatest Stretch",
+       "detail": "2 sets × 5 reps per side — Lunge forward, plant the hand, and rotate the chest upward toward the ceiling.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E2",
+       "title": "Kneeling Hip Flexor Stretch",
+       "detail": "2 sets × 40 seconds per side — Tuck your tailbone slightly under to stretch the front of the hip.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E3",
+       "title": "Thoracic Spine Foam Roll or Chair Extensions",
+       "detail": "2 sets × 8 gentle extensions — Support your neck and gently arch over the mid-back.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E4",
+       "title": "Glute Bridge Hold",
+       "detail": "2 sets × 20-30 seconds — Squeeze the glutes at the top to awaken muscles inhibited by sitting.",
+       "optional": false,
+       "sets": [
+        false,
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "Legs-up-the-wall pose for 2 minutes to promote lower-body circulation",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-18",
+     "weekday": "FRI",
+     "dayOfMonth": "18",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Fri, Dec 18 · Rest & Recovery",
+     "description": "Rest & Recovery, December 18",
+     "tag": "Week 8 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-19",
+     "weekday": "SAT",
+     "dayOfMonth": "19",
+     "kind": "cardio",
+     "kindLabel": "CARDIO",
+     "glyph": "",
+     "icon": "heart",
+     "status": "upcoming",
+     "today": false,
+     "title": "Sat, Dec 19 · Aerobic Focus Reset",
+     "description": "Aerobic Focus Reset, December 19",
+     "tag": "Week 8 · 0% done",
+     "note": "Week 8: Final consolidation deload: prioritize restful sleep, mobility, and recovery walks to celebrate completing the block. About 30 minutes.",
+     "locked": true,
+     "items": [
+      {
+       "key": "warm",
+       "title": "Warm-up",
+       "detail": "3 minutes of slow pacing to elevate body temperature · 10 standing knee-to-chest pulls",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "E1",
+       "title": "Brisk Outdoor or Treadmill Walk",
+       "detail": "25 minutes — Maintain a comfortable, conversational pace where you can easily speak full sentences.",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": {
+        "text": "",
+        "placeholder": "Minutes done",
+        "last": ""
+       },
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      },
+      {
+       "key": "cool",
+       "title": "Cool-down",
+       "detail": "2 minutes of slow walking deceleration · Calf stretch on a step, 30 seconds per side",
+       "optional": false,
+       "sets": [
+        false
+       ],
+       "value": null,
+       "log": {
+        "text": "",
+        "previous": ""
+       }
+      }
+     ],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Pick today or an earlier training day below.",
+      "button": "Start",
+      "enabled": false
+     }
+    },
+    {
+     "date": "2026-12-20",
+     "weekday": "SUN",
+     "dayOfMonth": "20",
+     "kind": "rest",
+     "kindLabel": "REST",
+     "glyph": "",
+     "icon": "bed",
+     "status": "rest",
+     "today": false,
+     "title": "Sun, Dec 20 · Rest & Recovery",
+     "description": "Rest & Recovery, December 20",
+     "tag": "Week 8 · rest",
+     "note": "Full rest day. Prescribed rest is part of the program and it does not cost XP.",
+     "locked": true,
+     "items": [],
+     "guided": {
+      "title": "Guided workout",
+      "detail": "Rest day. Pick a training day below to start a session.",
+      "button": "Start",
+      "enabled": false
+     }
+    }
+   ]
+  }
+ ],
+ "selected": {
+  "date": "2026-10-28",
+  "revision": 1
+ },
+ "session": {
+  "title": "Workout in progress",
+  "detail": "Aerobic Focus Reset · 1 of 3 sets done",
+  "button": "Resume",
+  "enabled": true
+ },
+ "key": [
+  {
+   "icon": "",
+   "label": "A / C · Strength"
+  },
+  {
+   "icon": "heart",
+   "label": "Cardio"
+  },
+  {
+   "icon": "moon",
+   "label": "Recovery"
+  },
+  {
+   "icon": "bed",
+   "label": "Rest"
+  }
+ ],
+ "rules": {
+  "items": [
+   {
+    "lead": "",
+    "text": "Check with a doctor before starting if you have a health condition."
+   },
+   {
+    "lead": "",
+    "text": "Never hold your breath during core holds or lifting; exhale during effort and inhale during reset."
+   },
+   {
+    "lead": "",
+    "text": "Stop any movement immediately if you feel sharp, pinching, or radiating joint pain."
+   },
+   {
+    "lead": "Bad day?",
+    "text": "The 10-Minute Desk Emergency: 2 minutes of cat-cow and spinal twists, 3 sets of 10 chair sit-to-stands, 10 doorway chest openers, and a 4-minute brisk walk down the hall or around the block."
+   },
+   {
+    "lead": "No equipment:",
+    "text": "Goblet Squat or Chair Sit-to-Stand → Bodyweight sit-to-stand from a kitchen chair or backpack filled with books"
+   },
+   {
+    "lead": "No equipment:",
+    "text": "Dumbbell or Band Romanian Deadlift → Single-leg bodyweight reach or two full water jugs held in hands"
+   },
+   {
+    "lead": "No equipment:",
+    "text": "Dumbbell or Band Supported Row → Towel doorframe rows or lifting a loaded tote bag toward your hip"
+   },
+   {
+    "lead": "No equipment:",
+    "text": "Standing Overhead Dumbbell Press → Pressing two full 1-liter water bottles or band overhead press"
+   },
+   {
+    "lead": "No equipment:",
+    "text": "Brisk Outdoor or Treadmill Walk → Marching in place or living room pacing while reviewing flashcards"
+   }
+  ],
+  "progression": []
+ },
+ "reducedMotion": false,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

@@ -113,3 +113,17 @@ Removed in this step: the retired Canvas `OverviewActivity` (nothing opened it s
 ## Log activity (Native API 23)
 
 Native presentation, web authority. `NativeLogPlugin` (ComposeTabPlugin) with `feature/log` (domain, data, presentation) and shared `core/designsystem/components`. The page projects presets, attributes, effort levels, the draft and its own XP preview (`50-native-log.js`); the screen sends `preview` and `submit` commands through the new command channel of NativeTabKit/ComposeTabPlugin, which never closes the screen. Opt-in beta in Settings. A prefill in the web form (Life Director, links) is taken over when the screen opens. Remaining before it can become the default: physical-device check by the owner, and the backlog items tagged Log.
+
+## Workout plan (web half, Native API 23)
+
+Native presentation to come, web authority. `50-native-plan.js` (NativeTabKit, `plan.projection.v1`, Settings "Native Workout plan (beta)", off by default) projects every week, day and item of the active plan, already worded as the page words it, with the page's selected day (`selected.revision`), the guided-workout launcher, the program key and the General rules. Day and week selection are the screen's own. Ticking a set is the `toggle` command, which runs the page's own `planToggle` with set semantics; the celebration comes back in the reply for the screen to draw, and the page plays its sound and buzz. Inventory: `PLAN_INVENTORY.md`; fixtures from the web app: `native/src/test/resources/fixtures/plan-*.json`.
+
+| Remaining web dependency | How the screen reaches it |
+|---|---|
+| Guided workout runner (classic and 3D gym) | closes; `gwrResume` or `gwrStart(day)`; back when the runner closes |
+| Value and session-log fields | closes; the page selects the day and focuses the field; back when the field loses focus |
+| Leave plan (confirm) | closes; `leavePlan`; back if the plan is kept |
+| Sign-up offers (no plan) | not covered; back when a plan is started |
+| Level-up overlay, sheets, badge toasts | the screen steps aside for an overlay and comes back; badge toasts are not visible under the screen |
+
+Not yet done: the native screen (`NativePlanPlugin`, `feature/plan`), its screenshot tests, and the owner's check on the phone.
