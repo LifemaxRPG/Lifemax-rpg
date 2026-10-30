@@ -5,11 +5,11 @@
 (function () {
   const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {}, register() {}, has() { return false; }, heal() {} };
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
-  const TOKENS = ["bg", "bg-elev", "panel", "panel2", "text", "text-dim", "muted", "muted2", "accent", "line", "line-soft", "good", "gold", "bad"];
+  const TOKENS = ["bg", "bg-elev", "panel", "panel2", "panel3", "text", "text-dim", "muted", "muted2", "accent", "accent-dim", "accent-strong", "line", "line-soft", "good", "gold", "bad"];
 
   const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true }); // read on the CPU, no GPU round trip
 
-  /** a CSS colour as opaque ARGB, which is what the native theme takes */
+  /** a CSS colour as ARGB, which is what the native theme takes (translucent only where the colour is, as accent-dim) */
   function color(v) {
     probe.clearRect(0, 0, 1, 1);
     probe.fillStyle = "#000"; // what a colour the canvas cannot parse reads as
