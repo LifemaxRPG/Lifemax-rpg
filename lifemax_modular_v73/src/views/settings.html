@@ -81,9 +81,9 @@
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaBakCard">
           <h3>Automatic backup</h3>
-          <p class="muted" style="font-size:12px;margin-top:-5px">Your data lives only on this phone. Pick a folder, such as Drive or Downloads, and a backup file is written there automatically.</p>
+          <p class="muted" style="font-size:12px;margin-top:-5px">Your data is kept on this phone. Pick a folder, such as Drive or Downloads, and a backup file is written there automatically.</p>
           <div id="lmaBakBody"></div>
-          <div class="settingsline"><div style="flex:1"><strong>Android device backup</strong><div class="muted" style="font-size:12px">Let Android copy LifeMax, including journal and health entries, into your Google backup and to a new phone. Off keeps it on this phone; the backup folder above still works. A copy Android already made stays in your Google account until it expires or you delete it there.</div></div><input id="deviceBackupToggle" type="checkbox" class="check" onchange="setDeviceBackupAllowed(this.checked)" aria-label="Android device backup" disabled></div>
+          <div class="settingsline"><div style="flex:1"><strong>Android device backup</strong><div class="muted" style="font-size:12px">Let Android copy all of LifeMax, journal and health entries included, to your Google backup (needs a screen lock) and a new phone. When off, Android's copy of LifeMax is emptied at its next backup. The backup folder works either way.</div><div id="deviceBackupNote" class="muted" style="font-size:12px"></div></div><input id="deviceBackupToggle" type="checkbox" class="check" onchange="setDeviceBackupAllowed(this.checked)" aria-label="Android device backup" disabled></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaNotifCard">
           <h3>Notifications</h3>

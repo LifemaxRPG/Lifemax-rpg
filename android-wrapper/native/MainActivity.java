@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.lifemax.rpg.bridge.web.DeviceBackupPlugin;
 import com.lifemax.rpg.bridge.web.HealthSyncPlugin;
 import com.lifemax.rpg.bridge.web.NativeCashPlugin;
 import com.lifemax.rpg.bridge.web.NativeNutritionPlugin;
@@ -37,6 +38,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(FileSaverPlugin.class);
         registerPlugin(UpdaterPlugin.class);
         registerPlugin(BackupFolderPlugin.class);
+        registerPlugin(DeviceBackupPlugin.class);
         registerPlugin(HealthSyncPlugin.class);
         registerPlugin(WidgetBridgePlugin.class);
         registerPlugin(NavHapticsPlugin.class);
@@ -49,7 +51,6 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativeOverviewPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeCharacterPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLogPlugin.class);
-        registerPlugin(com.lifemax.rpg.bridge.web.DeviceBackupPlugin.class);
         registerPlugin(NativeNutritionPlugin.class);
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);

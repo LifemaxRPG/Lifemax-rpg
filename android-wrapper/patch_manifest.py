@@ -72,7 +72,7 @@ if 'feature.cash.CashActivity' not in xml:
 # nothing unless Settings allows it, and the rules keep the over-the-air web bundle out of every copy.
 backup = (
     'android:allowBackup="true" android:fullBackupOnly="true"'
-    ' android:backupAgent="com.lifemax.rpg.core.platform.DeviceBackupAgent"'
+    ' android:backupAgent="com.lifemax.rpg.app.backup.DeviceBackupAgent"'
     ' android:fullBackupContent="@xml/backup_rules" android:dataExtractionRules="@xml/data_extraction_rules"'
 )
 xml = re.sub(r'\s+android:(allowBackup|fullBackupOnly|backupAgent|fullBackupContent|dataExtractionRules)="[^"]*"', "", xml)

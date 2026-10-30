@@ -75,6 +75,13 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 ## Security and privacy
 
+- **low** — Device backup: a fresh install restores whatever Android's copy holds without saying so; a copy made before the switch shipped is stale, and choosing the backup folder again then writes that stale save as the newest backup file  
+  Override onRestoreFinished in DeviceBackupAgent to record the restore; show a one-time note ("LifeMax was restored from an Android backup; import a newer backup file if you have one") and hold the first automatic folder backup until the owner acknowledges it. *(device-backup review, verified against AOSP)*
+- **low** — Device backup copies the saved Gemini API key when the switch is on  
+  Move the key out of WebView storage into an excluded native store, or name it in the switch text. *(device-backup review)*
+- **low** — patch_manifest.py exits early on an already-patched manifest, so a local android/ folder keeps an older manifest; check_source.py's module map lacks the native and device-backup segments (not run in CI)  
+  Delete android/ after a change to patch_*.py (say so in tools/LOCAL_BUILD.md) or apply the idempotent blocks before the early exit; regenerate src/runtime/module-map.json or drop the count assertion. *(device-backup review)*
+
 - **medium** — Journal lock is a DOM overlay inside #view-history only; native tab screens have no lock awareness  
   Add a rule to CONTRACT.md and NativeTabKit.open: a tab whose view is 'history', or whose projection can contain journal text, may open only when !jlOn() || LifeMaxJournalLock.unlocked(). Otherwise it stays on the web view with… *(security-privacy SEC-2, not verified)*
 - **medium** — lifemax:// deep links from any app or web page mutate state and feed unsanitised text into the voice engine  

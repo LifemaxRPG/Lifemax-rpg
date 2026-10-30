@@ -176,7 +176,7 @@ jobs:
 
       - name: Launch check, then the optional tab-switch timing
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
-        timeout-minutes: 10
+        timeout-minutes: 14
         uses: reactivecircus/android-emulator-runner@v2
         with:
           emulator-boot-timeout: 180
@@ -187,7 +187,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: bash android-wrapper/smoke_launch.sh && { python3 android-wrapper/verify_overview.py || echo "::warning::The optional tab-switch timing check failed; see the Native-Overview-review artifact."; }
+          script: bash android-wrapper/smoke_launch.sh && { timeout 420 python3 android-wrapper/verify_overview.py || echo "::warning::The optional tab-switch timing check failed or ran out of time; see the Native-Overview-review artifact."; }
 
       - uses: actions/upload-artifact@v4
         if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth')
