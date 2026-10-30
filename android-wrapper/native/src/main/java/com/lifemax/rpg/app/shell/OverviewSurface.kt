@@ -1,6 +1,7 @@
 package com.lifemax.rpg.app.shell
 
 import android.graphics.*
+import android.os.Bundle
 import android.util.Base64
 import android.util.LruCache
 import android.view.*
