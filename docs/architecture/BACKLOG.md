@@ -16,6 +16,9 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - A27's check: `tools/check_bridge_catalog.py` (in CI) fails when a native destination plugin is unregistered or uncatalogued, or an entry names no plugin.
 - SEC-4: Android device backup is off by default with a Settings switch (ADR 0010); the web bundle is never in a device backup.
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
+- Workout plan, native (Native API 25, beta): ticks go to the page's own toggle as a kit command; the screen draws the XP celebration itself and the page plays only its sound and buzz (`xpCue`), which settles L1 below for this tab.
+- Life Director Today, phase 1 of 4 (Native API 25, beta): view-only; every write is the page's own handler, and the screen covers the page again only once its celebrations have played (`afterCelebrations`), which settles L1 for this tab. Phase 2 (the dial's drag handles, the build animation) is next.
+- Shared CSS drawing (`core/designsystem/Css.kt`): box-shadow, linear-gradient, blur paint and color-mix, used by both new tabs; no box shadow before Android 9, which cannot blur it.
 
 ## CI and tests
 
