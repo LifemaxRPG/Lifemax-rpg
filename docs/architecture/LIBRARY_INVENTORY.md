@@ -2,6 +2,8 @@
 
 Baseline: branch `track/docs` at `d56403c0410c73686ce8c5675d16cbe627e2ebd1` (2026-10-30, Native API 23). Read-only audit; no code was changed.
 
+Since then the Library work (branch `track/library`) made the phase 0 fixes and the web half of phase 1. Section 9 lists what it changed and which findings and questions it answers; sections 1 to 8 are the audit as it was, with a pointer where something no longer holds. Line references are the baseline's and have drifted; function names are current.
+
 Reference conventions. Paths are relative to `lifemax_modular_v73/src/`. Runtime segments are cited by file name alone (they all live in `runtime/segments/`, for example `04-runtime.js:54`). Segments are byte-cut, so a statement can start in one file and end in the next: `function revokeAudioUrl` starts at `07-runtime.js:260` ("function r") and continues at `08-runtime.js:1`; `function mediaAudioProgressMarkup` starts at `10-runtime.js:296` ("function med") and continues at `11-runtime.js:1`. Android paths are relative to `android-wrapper/`. "Verified" means read in the source at this baseline. Anything not verified is marked **(unverified)**; behaviour that follows from the code but was not run is marked **(from code reading)**.
 
 ---
@@ -35,7 +37,7 @@ There is no `#view-library`. The nav key `library` is a group: `LMA_GROUPS={libr
 | Overview "History ›" link (Recent activity card) | `18-runtime.js:49` | `navigate('history')` (raw navigate, no slide, still runs all wrappers) |
 | Legacy dashboard "View history" button | `views/dashboard.html:36` | `navigate('history')`; this card belongs to the pre-redesign dashboard grid and is probably not visible with the current Overview **(unverified)** |
 | Back history | `34-navigation.js:69-74,77-91` | previous view |
-| Voice navigation "open library / media / books / journal / history" | `46-voice-nlu.js:37` (all five words map to id `media`), `46-voice-nlu.js:58-68`, `lmvGo` `46-voice-nlu.js:121-127` | `lmaNavTo('media')`. **Saying "open my journal" opens Media, not the Journal** (verified) |
+| Voice navigation "open library / media / books / journal / history" | `46-voice-nlu.js:37` (all five words map to id `media`), `46-voice-nlu.js:58-68`, `lmvGo` `46-voice-nlu.js:121-127` | `lmaNavTo('media')`. **Saying "open my journal" opens Media, not the Journal** (verified). Fixed in phase 0: "journal" and "history" open the Journal (section 9) |
 | Voice reply chips "Open Journal" | `46-voice-nlu.js:295` (activity history answer), `50-voice-gen4.js:407` and `50-voice-gen5.js:723` (evening wrap-up) | `lmvOpenChip('history','Journal')` -> `lmaNavTo('history')` |
 | Voice "search my library for X" | classifier `50-voice-gen4.js:203-204`, dispatch `:281`, handler `g4Library` `:386-393`, capability list `:570` | `lmvGo({id:'media'})`, then 60 ms later writes X into `#mediaSearch` and calls `renderMedia()` |
 | Voice "what is on this screen" while on either pane | `50-voice-gen5.js:167` (`g5Screen` maps both to `library`), `:225` | read-only summary of media counts (also when the Journal is showing) |
@@ -381,6 +383,7 @@ Confirmed at this baseline:
 5. A hidden native screen stays composed with its last data (`ComposeTabPlugin.kt:191-196`, A24).
 6. `FLAG_SECURE` is window-wide (`BiometricLockPlugin.java:85`), so it also covers a native screen in MainActivity, but only while the page's view is `history` and the lock is on (`48-journal-lock.js:32`).
 7. Thumbnails: `PageThumb` draws the WebView only (`android-wrapper/native/PageThumbPlugin.java`), and a locked Journal is never captured (`42-scrubnav.js:31`); turning the lock on deletes the old `library`/`history` thumbnails (`48-journal-lock.js:67`).
+8. Added in phase 0: `LifeMaxJournalLock.blocksNative()` (lock on and not unlocked) and `onChange(fn)`, the seam a native screen showing journal text follows (section 9). Items 1 and 4 to 6 still stand for that screen.
 
 ### 5.5 Timers, observers and global listeners touching this tab
 
@@ -393,7 +396,7 @@ Confirmed at this baseline:
 | `<audio>` events `08-runtime.js:143-168` | live progress, position writes, finish |
 | NativeTabKit 15 s refresh `50-native-tabkit.js:170` | would re-project a Library screen |
 
-**Data-loss risk (from code reading; not reproduced on device).** The reflection textarea saves only on `change` (`47-journal-coach.js:261`). Any `save()` before the owner leaves the field (health sync, decay, a payment, a coach award from another action) or a successful unlock (`48-journal-lock.js:38`) replaces `#journalEntry` (`04-runtime.js:74`) with the stored text, so what was being typed is lost. Leaving the app does not necessarily blur the field. The same applies to review answers.
+**Data-loss risk (from code reading; not reproduced on device). Fixed in phase 0, see section 9.** The reflection textarea saves only on `change` (`47-journal-coach.js:261`). Any `save()` before the owner leaves the field (health sync, decay, a payment, a coach award from another action) or a successful unlock (`48-journal-lock.js:38`) replaces `#journalEntry` (`04-runtime.js:74`) with the stored text, so what was being typed is lost. Leaving the app does not necessarily blur the field. The same applies to review answers.
 
 ---
 
@@ -452,7 +455,7 @@ Before any Journal projection, split pure data builders from the HTML builders (
 
 ### 7.4 Proposed phasing
 
-**Phase 0, web only (small, testable, no native).**
+**Phase 0, web only (small, testable, no native).** Done; section 9 says how.
 1. Keep the focused textarea's text across `renderHistory` (fixes the data-loss risk), and report a failed reflection write instead of ignoring it (`04-runtime.js:114`).
 2. A lock predicate for native screens, for example `LifeMaxJournalLock.blocksNative()` = `jlOn() && !jlUnlocked`, plus a hook the kit can follow on unlock and relock.
 3. `mediaUpsert(fields)` as a DOM-free owner function split from `saveMediaItem` (the same split Log made with `activityDraftFromForm`/`recordActivity`).
@@ -461,51 +464,31 @@ Before any Journal projection, split pure data builders from the HTML builders (
 
 **Phase 1, native Media, presentation only.** Journal stays web: the native switch's "Journal" emits `navigate` `history`, a web destination, so the native screen closes at once and the web lock does its job unchanged.
 
-```js
-// 50-native-library.js (sketch)
-const media = NativeTabKit.create({
-  id: "media",
-  plugin: "NativeMedia",
-  capability: "library.media.projection.v1",
-  setting: "nativeLibrary",
-  toggle: "nativeLibraryToggle",
-  projection: mediaProjection,
-  onAction: mediaAction,          // runs after the kit has closed the screen
-  render: "renderMedia",
-  blocked: () =>
-    getComputedStyle(document.getElementById("mediaFormCard")).display !== "none" ||
-    document.getElementById("audioPlayer").classList.contains("show"), // until a native mini-player exists
-  globals: { open: "openNativeMedia", enable: "setNativeMediaEnabled", projection: "NativeMediaProjection" },
-});
-// revisit when the page lets the screen cover it again
-for (const name of ["hideMediaForm", "closeAudioPlayer"]) {
-  const f = window[name];
-  window[name] = function () { const r = f.apply(this, arguments); media.revisit(); return r; };
-}
-```
-
-Projection fields (phase 1):
+The web half is built (`50-native-library.js`, section 9); the sketch that stood here wrapped `hideMediaForm` and `closeAudioPlayer` by reassigning them, which the lint ratchet forbids, so the screen follows the page through observers and flags instead. What the screen gets, every string worded as the page words it:
 
 ```
 {
-  pane: "media",
-  panes: [{id:"media", label:"Media"}, {id:"history", label:"Journal"}],
-  stats: {total, finished, progress, pct},
-  types: ["Book","Audiobook","Article","Course","Podcast","Video","Documentary","Other"],
-  statuses: [{id:"unread", label:"Want to read / watch"}, {id:"progress", label:"In progress"}, {id:"finished", label:"Finished"}],
-  items: [{id, title, type, creator, status, statusLabel, notes,
-           link,                      // only when /^https?:\/\//i; otherwise ""
-           audio: null | {name, sizeText, position, duration, pct, label, timeText, resumeText}}],
-  webFilter: {search, status, type},  // read from the DOM so a voice search shows on the native screen
-  player: {loaded, mediaId, playing, title},
-  tip: null | {title, body},          // when tutorialDone && !tipsSeen.media
-  tabs: lmaTabList().map(...)         // as Character does
+  protocol: 1, webSessionId, sequence, tokens, light,          // from NativeTabKit
+  panes:  [{id:"media", label:"Media", current:true}, {id:"history", label:"Journal", current:false}],
+  header: {eyebrow, title, blurb, add},
+  tip:    null | {icon, title, body, dismiss},                 // FEATURE_TIPS.media while tutorialDone && !tipsSeen.media
+  stats:  [{label, value, foot, bar}] x 4                      // value is text ("17%"); bar is null, or the Completion percent
+  search: {label, placeholder},
+  statusFilter: {label:"Show", options:[{id, label}]},         // the page's own select: all, unread, progress, finished
+  typeFilter:   {label:"Media type", options:[{id, label}]},   // all and the 8 types
+  filter: {search, status, type, revision},                    // the page's filter; revision rises when the page sets it
+  items:  [{id, title, type, creator, subtitle, status, statusLabel, finished, notes, link,
+            audio: null | {file, meta, progress:{pct, label, time}}}],
+  empty:   {icon, title, body, add},
+  noMatch: {icon, title, body},
+  buttons: {edit, remove, play, replace, removeAudio, attach, link},
+  player:  {mediaId, visible, playing}                         // idle whenever the screen covers the pane
 }
 ```
 
-Actions (delegated: the kit closes the screen, then `onAction` runs the page's handler): `add` -> `showMediaForm()`; `edit {id}` -> `showMediaForm(mediaById(id))`; `finished {id, checked}` -> `toggleMediaFinished`; `remove {id}` -> `deleteMediaItem` (its `confirm()`); `play {id}` -> `playMediaAudio`; `attach {id}` and `replace {id}` -> scroll the web row into view so the owner taps its button (no programmatic picker); `removeAudio {id}` -> `removeMediaAudio`; `link {id}` -> open the web anchor; `tip` -> `dismissFeatureTip('media')`; `navigate` `history` -> web Journal. Record all of these in `BRIDGE_CATALOG.json` as `delegatedInteractions` with `writes: []`.
+`type` and `status` are as stored, so the screen's filter compares exactly what the page's does (an item without a type shows "Other" but no type filter matches it); `link` is "" unless http or https. Actions, all delegated (the kit closes the screen, then the page's handler runs, then `revisit()`): `add`, `edit {id}`, `finished {id, checked}`, `remove {id}`, `play {id}`, `attach {id}` and `replace {id}` (the row's own file button shown and focused), `removeAudio {id}`, `link {id}`, `tip`, and `{view:"history"}` for the switch's Journal. Recorded in `BRIDGE_CATALOG.json` as `delegatedInteractions` with `writes: []`.
 
-**Phase 2, Media commands (no close; the web handler stays the only writer).** `setStatus {id, status}` (idempotent set; `setMediaStatus` already exists, unused), `upsert {id?, fields, opId}` through `mediaUpsert`, `delete {id}` after a native confirm dialog. A native mini-player drawn from `player`, with commands `toggle`, `skip`, `seek`, `rate`, `close` mapped to the existing audio functions (the audio stays in the WebView). Then drop the `#audioPlayer` block.
+**Phase 2, Media commands (no close; the web handler stays the only writer).** `setStatus {id, status}` (idempotent set; `setMediaStatus` already exists, unused), `upsert {id?, fields, opId}` through `mediaUpsert`, `delete {id}` after a native confirm dialog. A native mini-player drawn from `player`, with commands `toggle`, `skip`, `seek`, `rate`, `close` mapped to the existing audio functions (the audio stays in the WebView). Then drop the `#audioPlayer` block. `mediaUpsert` takes no operation id yet: an add repeated after a lost answer would add the item twice, so the `upsert` command brings one, as `recordActivity` has.
 
 **Phase 3, native Journal, read-only, behind the lock.** Only after the kit rule of SEC-2:
 - `cfg.blocked()` adds `LifeMaxJournalLock.blocksNative()`; unlock success calls `revisit()`; on `visibilitychange` to hidden with the lock on, send a redacted snapshot (`{locked:true}`, no text) and close through the hand-over; the native screen clears Journal content on `ON_STOP` when its last projection said `lockOn`, and when hidden (A24).
@@ -524,11 +507,38 @@ Actions (delegated: the kit closes the screen, then `onAction` runs the page's h
 1. Which pane first? The proposal is native Media first (low risk), with the Journal staying web until the lock work for native screens is done.
 2. What should the Journal lock protect? Today it hides the Journal page only. Activity names and XP also appear in the Overview and in voice answers, activity notes appear in the character report export (`05-runtime.js:86`), and the Backup button and Settings export write every reflection in plain text. Should the lock also cover exports?
 3. When a backup with the lock on is restored to a phone without a fingerprint or screen lock, or opened in a browser, the Journal cannot be opened or unlocked there. Should the lock setting stay out of backups, or should there be a recovery path?
-4. "Open my journal" by voice opens Media today. Should it open the Journal?
+4. "Open my journal" by voice opens Media today. Should it open the Journal? *Done in phase 0 as the task asked: "journal" and "history" open the Journal; say if you want it back.*
 5. Is the audiobook player used? Do you expect it to keep playing with the screen off and to show lock-screen controls? (Phase 1 keeps the Media pane on the web page whenever a book is loaded, so the controls never disappear under a native screen. Today the native Character, Food and Log screens do cover the player.)
 6. Audiobook files are not in any backup and would be lost on a new phone or reinstall. Should they be backed up (they can be very large), or is a warning enough? Old files are also not removed by Reset or Delete all.
 7. Today's reflection can only be written after something is logged (or a plan note is written) that day. Is that intended, or should today always be on the list?
-8. Have you ever lost a reflection while typing (for example after switching apps, or after unlocking)? The code allows it; the Phase 0 fix keeps what you typed.
+8. Have you ever lost a reflection while typing (for example after switching apps, or after unlocking)? The code allowed it; the phase 0 fix keeps what you typed (a save from elsewhere no longer redraws the box you are in, and the lock lets go of the box, saving it, before it covers the Journal).
 9. The day page's "XP today" includes reflection and review rewards; the tiles, hero and coach exclude them. Which should it be? The label also says "today" on past days.
 10. Unticking "Finished" moves an item to "In progress", never back to "Want to read / watch". Keep that?
 11. The lock re-locks one minute after leaving the Journal and immediately when leaving the app. Keep both for the native screen?
+12. On the native Media screen, ticking an item finished closes the screen for a moment while the page saves it, then the screen comes back (a delegation until phase 2 makes it a command). Is that flash acceptable for the beta?
+13. The page still draws a stored link whatever its scheme (only its form checks for http or https); the native screen shows only http and https links. Should the page drop the others too?
+14. The native screen keeps its own search and filters while you add, edit or play from the page, and takes the page's filter only when the page sets one (a voice search). Is that what you expect, or should it start empty each time you open the Library?
+15. Attaching an audio file from the native screen shows the row's own button on the page for you to tap, because Android opens a file picker only from a tap in the page. Fine for now, or should attaching wait for a native picker (it needs the audio files moved out of the page's storage, a separate decision)?
+
+---
+
+## 9. What the Library work changed (phase 0 and the web half of phase 1)
+
+Web only; nothing native draws the Library yet. Tests named here run in CI with the other web tests.
+
+**Journal (phase 0).**
+- `renderHistory` does not redraw the entry while its reflection or review box has the focus; it marks the entry stale and draws it once the box loses the focus. A save from elsewhere (health sync, decay, a payday, a coach reward) no longer replaces what is being typed. The day list and hero are still redrawn.
+- Found while fixing it: hiding the Journal under the lock cover moves the focus to the page without a change event, so text typed before the app went to the background was still lost on the next unlock. `jlApply` now blurs a focused field inside the Journal before it covers it, which fires the field's own change and saves it.
+- `saveDayReflection` reports a write that failed ("Could not save to this browser (storage full?)", or "Not saved: this version is read-only for your save") and then stops: no XP for a reflection that was not stored. The text stays in memory and in the box, so the next successful save stores it.
+- `LifeMaxJournalLock.blocksNative()` is `jlOn() && !jlUnlocked`; `onChange(fn)` calls `fn(blocked)` each time that answer changes (unlock, relock after the grace minute, the app going to the background, the lock turned on or off). Every change of the lock state ends in `jlApply`, which notifies. Nothing uses it yet: it is the seam for a native Journal (5.4).
+- Tests: `coach.test.js` (typing kept across a save and saved on leaving, for a day and a review; a failed and a read-only write reported with no XP; these checks fail on the old code), `lock.test.js` (the predicate and the notifications through relock, failed and good unlock, background and lock off; typing saved before the cover).
+
+**Media (phase 0).**
+- `mediaUpsert(fields)` adds an item, or changes the one with `fields.id`, by the form's rules (a title, an http or https link, and now the form's lengths: title 160, creator 120, link 500, notes 1000), saves, and returns `{ok, id, message}`; it never touches the page. A failed save is taken back out and reported. `saveMediaItem` reads the form and calls it; when the save fails the form now stays open with what was typed (it used to close and say "Added to your library"). Type and status are stored as given, as before: the form only offers valid ones, and an old item's odd type comes back from the form as "".
+- One source for what both the page and the projection show: `MEDIA_STATUS` (the status labels), `mediaStats(items)`, `mediaFilterOnPage()` and `mediaMatching(items, filter)` (the filter, unchanged), `mediaAudioProgress(status, position, duration)` (the progress label, time and bar, now also used by the live update during playback) and `mediaAudioMeta(audio)` (the file line). Rows carry `data-media-id`.
+- `audioCtx.loading` holds the id whose file `playMediaAudio` is reading. Between closing the old player and showing the new one the page used to look as if no player were there; the native tab reads this flag so it does not cover the pane in that gap.
+- Tests: `media.test.js` (32 checks; before, only the voice search touched Media).
+
+**Voice (phase 0).** "journal" and "history" have their own entry in the section table, before Library's, and open the Journal; library, media and books open Media. A voice library search now sets the search box through an `input` event (the box's own handler redraws the list), so a native screen can tell that the page set its filter. Tests: `voice4.test.js`.
+
+**Native Library, web half (phase 1).** `50-native-library.js` on `NativeTabKit.create` (view `media`, plugin `NativeMedia`, capability `library.media.projection.v1`, setting `nativeLibrary`, toggle `nativeLibraryToggle`, Settings "Native Library (beta)", off by default). The projection and actions are in 7.4. Covering: not while the form is open, the player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the screen follows these through MutationObservers (the form's style, the player's class, the body's children), a focusout and `audioCtx.loading`, and comes back through `revisit()`. The page's filter carries a revision raised by every `input` on the search box or the two selects. Fixtures from the page: `fixtures/media-{full,search,empty,tip}.json` and `fixtures/media-filter-parity.json`. Tests: `native-library.test.js` (32 checks) and the hand-over simulation. Not checked on the phone: that a link opened from a native tap reaches the browser (a script-made anchor click with `target=_blank`), and how the file picker behaves after the screen hands the button over.

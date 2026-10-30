@@ -142,6 +142,41 @@
    "canonicalLayout": true
   },
   {
+   "feature": "library",
+   "status": "web-half-ready",
+   "plannedPlugin": "NativeMedia",
+   "owner": "web-core-gameplay",
+   "pluginSource": "bridge/web/NativeMediaPlugin.kt (extends ComposeTabPlugin; to be written; plannedPlugin becomes nativePlugin when it is registered in MainActivity)",
+   "screenSource": "feature/library/presentation (to be written)",
+   "webModule": "50-native-library.js (NativeTabKit, view media)",
+   "inventory": "docs/architecture/LIBRARY_INVENTORY.md",
+   "capabilities": [
+    "library.media.projection.v1"
+   ],
+   "covers": "the Media pane only, and not while the add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
+   "commands": {},
+   "writes": [],
+   "delegatedInteractions": [
+    "showMediaForm() and showMediaForm(item): add and edit, saved by saveMediaItem through mediaUpsert",
+    "toggleMediaFinished(id, checked)",
+    "deleteMediaItem(id) with its confirm",
+    "pickAudioForMedia through the row's own file button, shown and focused on the page (no programmatic picker)",
+    "removeMediaAudio(id) with its confirm",
+    "playMediaAudio(id) and the whole audio player",
+    "the row's link: an anchor like the row's, http and https only",
+    "dismissFeatureTip('media')",
+    "the Journal: lmaNavTo('history'), a web destination behind its lock"
+   ],
+   "readContract": {
+    "fixtures": "native/src/test/resources/fixtures/media-full.json, media-search.json, media-empty.json, media-tip.json, and media-filter-parity.json (the rows the page shows for sample filters of media-full) (lifemax_modular_v73/tools/gen_native_fixtures.js)",
+    "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page sets its filter (typed on the page, a voice search)",
+    "invalidation": "renderMedia, host resume, foreground return, 15-second refresh while visible; the form, the audio player, a handed file button and a level-up close the screen and bring it back (MutationObservers, focusout, audioCtx.loading)"
+   },
+   "mutationsGate": "no native writes: every change is the page's own handler, run after the screen has closed",
+   "rollout": "opt-in under Settings, Appearance: Native Library (beta)",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",
