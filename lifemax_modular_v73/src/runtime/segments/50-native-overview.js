@@ -67,9 +67,10 @@
   for(const root of roots)if(root)await walk(root);return{nodes,hits,height:maxY,width:nav?roots[0].scrollWidth:viewportWidth()};
  }
  function mask(on){for(const el of [document.querySelector('.topbar'),document.querySelector('.sidebar')])if(el){if(on){if(!el.dataset.nativeOverviewMasked){el.dataset.nativeOverviewOpacity=el.style.opacity;el.dataset.nativeOverviewMasked='1';el.style.opacity='0'}}else if(el.dataset.nativeOverviewMasked){el.style.opacity=el.dataset.nativeOverviewOpacity||'';delete el.dataset.nativeOverviewMasked;delete el.dataset.nativeOverviewOpacity}}}
- function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),viewportWidth(),root.className,document.body.className,top?.textContent||'',getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
+ function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
  function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0}}
  function snapshot(){
+  try{lmaSyncActive()}catch(e){}
   const key=chromeKey(),cached=chromeCache.get(key);
   if(cached&&[...cached.actions.values()].every(el=>el.isConnected)){N.cacheHits++;return Promise.resolve(publishChrome(cached.scene,cached.actions))}
   const task=snapshotQueue.then(async()=>{
@@ -78,6 +79,8 @@
    const captureAt=performance.now();N.cacheMisses++;
    if(document.fonts)await document.fonts.ready;
    N.buildActions=new Map();
+   /* read final colours, not the middle of the 0.25 s highlight fade */
+   const rootEl=document.documentElement;rootEl?.classList?.add('lma-capture');void document.body?.offsetWidth;
    try{
     const header=await capture([document.querySelector('.topbar')]);
     const sidebar=document.querySelector('.sidebar'),nav=await capture([sidebar],true);
@@ -85,7 +88,7 @@
     const scene={version:2,width:viewportWidth(),header,nav,background:color(getComputedStyle(document.body).backgroundColor)};
     N.lastCaptureMs=performance.now()-captureAt;chromeCache.set(currentKey,{scene,actions});while(chromeCache.size>6)chromeCache.delete(chromeCache.keys().next().value);
     return publishChrome(scene,actions);
-   }finally{N.buildActions=null}
+   }finally{N.buildActions=null;document.documentElement?.classList?.remove('lma-capture')}
   });
   snapshotQueue=task.catch(()=>{});
   return task;

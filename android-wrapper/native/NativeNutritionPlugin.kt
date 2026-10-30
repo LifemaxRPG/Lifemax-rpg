@@ -169,7 +169,7 @@ class NativeNutritionPlugin : Plugin() {
 
     private fun showChrome(scene: JSONObject?) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
-        val chrome = ChromeHost.show(activity, bridge.webView, scene) { id ->
+        val chrome = ChromeHost.show(this, activity, bridge.webView, scene) { id ->
             notifyListeners("nav-action", JSObject().put("id", id))
         }
         val (top, bottom) = chrome.contentInsetsDp()
@@ -182,12 +182,12 @@ class NativeNutritionPlugin : Plugin() {
         session = ""
         shown = false
         layer?.visibility = View.GONE
-        ChromeHost.leave()
+        ChromeHost.leave(this)
     }
 
     private fun dismiss(notify: Boolean) {
         shown = false
-        ChromeHost.closeNow()
+        ChromeHost.closeNow(this)
         val id = session
         session = ""
         snapshot = null

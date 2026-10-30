@@ -795,3 +795,8 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - The APK is no longer debuggable (`patch_gradle.py`): Compose runs far slower in a debuggable build.
 - `TabTiming` measures tap to second drawn frame on the phone. Settings > Appearance > "Show tab timing (testing)" shows it as a toast and prints the last result under the switch.
 - CI: an extra emulator timing step runs after the release is published on this branch and cannot fail the build (`Native-Overview-review` artifact has `nav-perf.json`).
+
+## Native bar always matches the page (Native API 16)
+- Symptom: after a tab change the page was Character but the bottom bar still lit Food (and the reverse). The bar's scene is captured from the page and sent to the native side; with the 80 ms delay gone and the scene cached, an old or half-faded highlight could be reused, and replies could arrive out of order.
+- Page side: `snapshot()` calls `lmaSyncActive()` first, keys its cache on the lit tab, reads styles with transitions off (`html.lma-capture`), and Character and Food re-publish a settled bar 160 ms after they open.
+- Native side: `ChromeHost.show(owner, …)` ignores any scene whose page sequence number is older than the one showing (within 3 s), and only the current owner can release the shared bars.

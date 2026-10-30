@@ -816,6 +816,7 @@ body.noscroll{overflow:hidden}
 @keyframes viewIn{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
 .view.active>*{animation:viewIn .4s var(--ease-out) backwards}
 html.native-cover .view.active>*{animation:none!important}
+html.lma-capture .sidebar,html.lma-capture .sidebar *,html.lma-capture .topbar,html.lma-capture .topbar *{transition:none!important;animation:none!important}
 .view.active>*:nth-child(2){animation-delay:0.030s}
 .view.active>*:nth-child(3){animation-delay:0.060s}
 .view.active>*:nth-child(4){animation-delay:0.090s}

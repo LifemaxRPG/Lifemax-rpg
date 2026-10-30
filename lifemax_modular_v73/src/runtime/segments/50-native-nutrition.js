@@ -376,6 +376,7 @@
       }
       N.open = true;
       N.blocked = false;
+      setTimeout(scheduleSync, 160); /* settled bar, in case a scene from the previous tab got there late */
     } catch (e) {
       N.open = false;
       N.session = '';

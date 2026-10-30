@@ -232,6 +232,7 @@
       }
       active = true;
       timer = setInterval(send, 15000);
+      setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
       return true;
     } catch (e) {
       console.warn("Native Character unavailable", e);

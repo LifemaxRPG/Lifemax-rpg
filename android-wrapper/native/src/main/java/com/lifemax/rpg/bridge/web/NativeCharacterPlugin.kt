@@ -114,7 +114,7 @@ class NativeCharacterPlugin : Plugin() {
     private fun showNav(scene: org.json.JSONObject?) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
         val chrome =
-            ChromeHost.show(activity, bridge.webView, scene) { id ->
+            ChromeHost.show(this, activity, bridge.webView, scene) { id ->
                 notifyListeners("nav-action", JSObject().put("id", id))
             }
         val (top, bottom) = chrome.contentInsetsDp()
@@ -125,12 +125,12 @@ class NativeCharacterPlugin : Plugin() {
     /** Leaving the tab only hides the screen; it stays composed so the next visit is instant. */
     private fun hide() {
         view?.visibility = View.GONE
-        ChromeHost.leave()
+        ChromeHost.leave(this)
         notifyListeners("closed", JSObject())
     }
 
     private fun remove() {
-        ChromeHost.closeNow()
+        ChromeHost.closeNow(this)
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
             it.disposeComposition()
