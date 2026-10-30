@@ -16,8 +16,8 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      BRANCH_OK: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' }}
+    outputs:
+      stable: ${{ steps.key.outputs.stable }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,15 +41,6 @@ jobs:
       - name: Copy newest single-file build into the web folder
         run: |
           mkdir -p android-wrapper/www
-          python3 lifemax_modular_v73/tools/lint_js.py
-          node lifemax_modular_v73/tests/native-nutrition-integration.test.js
-          node lifemax_modular_v73/tests/native-overview.test.js
-          node lifemax_modular_v73/tests/native-character.test.js
-          node lifemax_modular_v73/tests/native-overview-preference.test.js
-          node lifemax_modular_v73/tests/updater-plan.test.js
-          node lifemax_modular_v73/tests/director-meals.test.js
-          node lifemax_modular_v73/tests/director-finish.test.js
-          node lifemax_modular_v73/tests/director-sleep.test.js
           python3 lifemax_modular_v73/build.py
           python3 lifemax_modular_v73/forge_features.py lifemax_modular_v73/dist/Life_Max_RPG_v73_modular_build.html android-wrapper/www/index.html
 
@@ -164,31 +155,8 @@ jobs:
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" || true
 
-      - name: Publish to a GitHub Release (easy phone download)
-        if: env.BRANCH_OK == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cp android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk LifeMax-RPG.apk
-          # the web app on its own, so a phone can take web-only changes without installing an APK
-          NATIVE_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
-          cp android-wrapper/www/index.html app.html
-          WEB_SHA=$(sha256sum app.html | cut -d' ' -f1)
-          WEB_SIZE=$(stat -c %s app.html)
-          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/latest"
-          printf '{"build": %s, "sha": "%s", "stable": %s, "nativeApi": %s, "apk": "%s/LifeMax-RPG.apk", "web": {"build": %s, "url": "%s/app.html", "sha256": "%s", "size": %s, "minNativeApi": %s}}\n' \
-            "${{ github.run_number }}" "$GITHUB_SHA" "${{ steps.key.outputs.stable == '1' }}" "$NATIVE_API" "$BASE" \
-            "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
-          cat version.json
-          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
-          gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
-            --title "LifeMax (latest build)" \
-            --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"
-
-
-
-      # Native tab-switch timing in an emulator. It runs after the release is published and never fails the build, so it
-      # cannot hold back an update; read the result in the Native-Overview-review artifact (nav-perf.json).
+      # Native tab-switch timing in an emulator. It never fails the build, so it cannot hold back an update; read the result in
+      # the Native-Overview-review artifact (nav-perf.json).
       - name: Release build daemon before the optional emulator check
         if: github.ref == 'refs/heads/claude/github-android-app-d3wlth'
         continue-on-error: true
@@ -227,3 +195,68 @@ jobs:
             native-overview-review/
             android-wrapper/android/app/build/reports/androidTests/
             android-wrapper/android/app/build/outputs/androidTest-results/
+
+  # Every web test and the hand-over simulation, on their own runner in parallel with the APK build.
+  web-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium
+
+      - name: Install Playwright
+        run: |
+          npm install -g playwright@1.63.0
+          npx playwright@1.63.0 install --with-deps chromium
+
+      - name: JavaScript lint ratchet
+        run: python3 lifemax_modular_v73/tools/lint_js.py
+
+      - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt)
+        run: lifemax_modular_v73/tools/run_tests.sh
+
+      - name: Tab hand-over simulation
+        run: SEEDS=40 lifemax_modular_v73/tools/run_tests.sh sim
+
+  # Only a build whose APK compiled, passed its unit and screenshot tests and whose web tests passed reaches the phone.
+  publish:
+    needs: [apk, web-tests]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: LifeMax-RPG-apk
+          path: apk
+
+      - name: Publish to a GitHub Release (easy phone download)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp apk/app-debug.apk LifeMax-RPG.apk
+          # the web app on its own, so a phone can take web-only changes without installing an APK
+          NATIVE_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
+          python3 lifemax_modular_v73/build.py >/dev/null
+          python3 lifemax_modular_v73/forge_features.py lifemax_modular_v73/dist/Life_Max_RPG_v73_modular_build.html app.html
+          WEB_SHA=$(sha256sum app.html | cut -d' ' -f1)
+          WEB_SIZE=$(stat -c %s app.html)
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/latest"
+          printf '{"build": %s, "sha": "%s", "stable": %s, "nativeApi": %s, "apk": "%s/LifeMax-RPG.apk", "web": {"build": %s, "url": "%s/app.html", "sha256": "%s", "size": %s, "minNativeApi": %s}}\n' \
+            "${{ github.run_number }}" "$GITHUB_SHA" "${{ needs.apk.outputs.stable == '1' }}" "$NATIVE_API" "$BASE" \
+            "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
+          cat version.json
+          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
+            --title "LifeMax (latest build)" \
+            --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"

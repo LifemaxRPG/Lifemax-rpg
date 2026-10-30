@@ -66,6 +66,42 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('the same operation id pays out once; a different one is a new entry; no id behaves as before', safety.once && safety.differentOpAdds && safety.noOpIdUnchanged, safety);
   ok('a failed write is reported as a failure, and save() says whether it worked', safety.failure && safety.saveReturns, safety);
   ok('an unreadable save is copied aside before a blank profile is written, and the first copy is never replaced', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
+  /* a failed save is taken back out, so a retry really retries; and the whole-save replacements keep a safety copy */
+  const more = await p.evaluate(() => {
+    const out = {}, d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
+    const real = Storage.prototype.setItem; const realConfirm = window.confirm;
+    state = freshState(); save(); const xp0 = JSON.stringify(state.attrXP);
+    Storage.prototype.setItem = function () { throw new Error('quota') };
+    let r1, r2; try { r1 = recordActivity({ ...d, opId: 'op-r' }); r2 = recordActivity({ ...d, opId: 'op-r' }) } finally { Storage.prototype.setItem = real }
+    out.failedTwice = r1.ok === false && r2.ok === false && !r2.duplicate && state.activities.length === 0 && JSON.stringify(state.attrXP) === xp0;
+    const r3 = recordActivity({ ...d, opId: 'op-r' });
+    out.retrySaved = r3.ok === true && !r3.duplicate && state.activities.length === 1 && localStorage.getItem(STORE).includes('op-r');
+    // import: refused file, cancelled import, confirmed import with a safety copy
+    const backup = { app: 'Life Max RPG Prototype', version: 1, state: { ...freshState(), name: 'From file', activities: [{ id: 'x', type: 'reading', name: 'Read', duration: 30, quality: 1, skill: 'Knowledge', primary: 'intelligence', secondary: '', xp: 10, date: new Date().toISOString(), notes: '' }] } };
+    const before = localStorage.getItem(STORE); localStorage.removeItem(STORE + '_safety');
+    out.badRejected = applyBackup({ state: { activities: {}, attrXP: {} } }).ok === false && localStorage.getItem(STORE) === before;
+    window.confirm = () => false;
+    const c = applyBackup(backup);
+    out.cancelKeeps = c.ok === false && c.cancelled === true && localStorage.getItem(STORE) === before && !localStorage.getItem(STORE + '_safety');
+    window.confirm = () => true;
+    const ok = applyBackup(backup);
+    const safety = JSON.parse(localStorage.getItem(STORE + '_safety') || 'null');
+    out.importKeepsCopy = ok.ok === true && state.name === 'From file' && safety && safety.reason === 'import' && safety.save === before;
+    // an empty profile is replaced without asking
+    state = freshState(); save(); let asked = false; window.confirm = () => { asked = true; return true };
+    out.emptyNoAsk = applyBackup(backup).ok === true && asked === false;
+    // reset keeps a copy; delete removes the copies as it promises
+    window.confirm = () => true; const beforeReset = localStorage.getItem(STORE); resetDemo();
+    out.resetKeepsCopy = JSON.parse(localStorage.getItem(STORE + '_safety')).save === beforeReset;
+    localStorage.setItem(STORE + '_unreadable', 'x'); deleteAll();
+    out.deleteClears = !localStorage.getItem(STORE + '_safety') && !localStorage.getItem(STORE + '_unreadable');
+    window.confirm = realConfirm;
+    return out;
+  });
+  ok('a save that fails is taken back out: the retry with the same operation id saves instead of claiming a duplicate', more.failedTwice && more.retrySaved, more);
+  ok('an invalid backup is refused and a cancelled import changes nothing', more.badRejected && more.cancelKeeps, more);
+  ok('a confirmed import and a reset keep the previous save as a safety copy; an empty profile is replaced without asking', more.importKeepsCopy && more.emptyNoAsk && more.resetKeepsCopy, more);
+  ok('delete all removes the safety and unreadable copies too, as its warning promises', more.deleteClears, more);
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();
