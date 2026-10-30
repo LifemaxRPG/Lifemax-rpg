@@ -7,7 +7,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 412, height: 860 } }); const errs = [];
   const open = async (save) => {
     const p = await ctx.newPage(); p.on('pageerror', e => errs.push(String(e)));
-    await p.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.clear(); if (s) localStorage.setItem('lifemax_rpg_prototype_v1', s); sessionStorage.setItem('seeded', '1') } }, save);
+    await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('lifemax_rpg_prototype_v1', s) }, save);
     await p.goto('file://' + file); await p.waitForTimeout(1500);
     return p;
   };
@@ -17,8 +17,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   let p = await open(profile({}));
   const first = await p.evaluate(() => ({ n: state.mediaItems.length, flag: state.mediaSeededV1, ids: state.mediaItems.map(x => x.id), stored: JSON.parse(localStorage.getItem(STORE)).mediaItems.length }));
   ok('a new save gets the 15 default books once, flagged and stored', first.n === 15 && first.flag === true && first.stored === 15 && first.ids[0] === 'reading_atomic_habits', first);
-  await p.evaluate(() => { window.confirm = () => true; deleteMediaItem('reading_sapiens') });
-  await p.reload(); await p.waitForTimeout(1500);
+  const stored = await p.evaluate(() => { window.confirm = () => true; deleteMediaItem('reading_sapiens'); return localStorage.getItem(STORE) });
+  await p.close(); p = await open(stored); // a restart with that save (a reload of a file:// page can lose storage)
   ok('a removed default book stays removed after a restart', await p.evaluate(() => state.mediaItems.length === 14 && !state.mediaItems.some(x => x.id === 'reading_sapiens')));
   await p.close();
   p = await open(profile({ mediaItems: [{ id: 'mine', title: '  atomic HABITS ', type: 'Audiobook', creator: '', status: 'progress', link: '', notes: '' }] }));
