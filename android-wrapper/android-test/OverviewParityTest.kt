@@ -140,7 +140,18 @@ class OverviewParityTest {
         }
         val target = find(instrumentation.uiAutomation.rootInActiveWindow)
         assertNotNull("Shared native tab $label must be accessible", target)
-        assertTrue("Shared native tab $label must accept activation", target!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+        val bounds = Rect()
+        target!!.getBoundsInScreen(bounds)
+        assertTrue("Shared native tab $label must be visible", bounds.width() > 0 && bounds.height() > 0)
+        val down = SystemClock.uptimeMillis()
+        val x = bounds.centerX().toFloat()
+        val y = bounds.centerY().toFloat()
+        val press = android.view.MotionEvent.obtain(down, down, android.view.MotionEvent.ACTION_DOWN, x, y, 0)
+        val release = android.view.MotionEvent.obtain(down, down + 80, android.view.MotionEvent.ACTION_UP, x, y, 0)
+        instrumentation.uiAutomation.injectInputEvent(press, true)
+        instrumentation.uiAutomation.injectInputEvent(release, true)
+        press.recycle()
+        release.recycle()
     }
 
     @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
