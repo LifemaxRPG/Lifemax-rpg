@@ -69,11 +69,11 @@
   },
   {
    "feature": "plan",
-   "status": "web-half-ready",
+   "status": "native-opt-in-beta",
    "nativePlugin": "NativePlan",
    "owner": "web-core-gameplay",
-   "pluginSource": "bridge/web/NativePlanPlugin.kt (extends ComposeTabPlugin; to be written)",
-   "screenSource": "feature/plan/presentation (to be written)",
+   "pluginSource": "bridge/web/NativePlanPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/plan/presentation/PlanScreen.kt",
    "webModule": "50-native-plan.js (NativeTabKit)",
    "inventory": "docs/architecture/PLAN_INVENTORY.md",
    "capabilities": [
@@ -93,6 +93,8 @@
     "startPlan and the class offers (no plan: the page is not covered)"
    ],
    "readContract": {
+    "snapshotDto": "feature/plan/domain/PlanProjection.kt",
+    "decoder": "feature/plan/data/WebPlanRepository.kt",
     "fixtures": "native/src/test/resources/fixtures/plan-midweek.json, plan-complete.json, plan-scholar.json (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; selected.revision rises only when the page changes its selected day",
     "invalidation": "renderPlan, host resume, foreground return, 15-second refresh while visible; the page covering its view (body class and children, #planBody, plan fields) closes the screen and brings it back"

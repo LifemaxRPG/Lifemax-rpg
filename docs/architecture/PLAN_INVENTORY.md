@@ -69,7 +69,7 @@ The XP is split 70/30 between the primary and secondary attribute. It is 0 when 
 
 | Action | Handler | Writes | Side effects | Phase 1 |
 |---|---|---|---|---|
-| Select week | `selectWeek(w)` | `planSel` (page global, not saved) | `renderPlan` | native, local. Native selects the week's Monday, or its first plan day when the plan starts mid-week. The web falls back to today there, a quirk. |
+| Select week | `selectWeek(w)` | `planSel` (page global, not saved) | `renderPlan` | native, local. Native selects the week's Monday as the page does. When the plan starts mid-week, it keeps a selected day of that week, as the page does, or else takes the week's first plan day, where the page falls back to today (a quirk). |
 | Select day | `selectDay(date)` | `planSel` | `renderPlan` | native, local. The page's own selection is followed when it changes (`selected.revision`). |
 | Tick or clear a set | `planToggle(date,key,i,checked)` | `plan.checks[date].s[key][i]`. When every required set is done and there is no `actId`, it adds activity `plan_<date>` (type `plan`, skill Training, `xpSplit`), adds attribute and Training XP, and sets `actId`. When the day is no longer done, `removeAct` takes the XP back and deletes `actId`. | `save()`: XP rebuilt, `checkBadges` (badge toast after 600 ms), `checkLevelUps` (`celebrateXP`, then the level-up overlay after 950 ms), storage write, `renderAll`. The save wrappers run `lmaSoon` (Android sync), the Food sync and `dhAutoVerify`, which can complete the daily-hand quest "Follow today's plan" (`toggleQuest`: quest XP and activity). Toast "X complete · +N XP" or "Session reopened · XP removed". It now returns `{saved, message}` and toasts success only after a save that worked. | kit command `toggle` |
 | Value | `planVal(date,key,v)` | `checks[date].v[key]` (trimmed) | `save()` | delegated: the page's field |
@@ -126,9 +126,21 @@ The screen steps aside (`blocked()`) when any of these is true:
 
 A `MutationObserver` on the body class and children, and on `#planBody`, plus `focusout` and `change` on the plan fields, closes the screen when the page covers it and brings it back after. This covers the runner closing, a level-up ending, a field losing focus, and a plan started from an offer.
 
+## The native screen (`NativePlanPlugin`, `feature/plan`)
+
+It draws the projection with the page's sizes, colours and spacing (measured with `getComputedStyle` at phone width) and shows the toggle's message as a toast above the bottom bar and its celebration as `celebrateXP` draws it. Where it differs from the page:
+- The day card and the General rules are separate cards below the calendar. On the page they sit inside the calendar card (see the quirks below).
+- The week and day strips keep their scroll position. The page re-renders them, so they jump back to the start after every tap.
+- The faint drop shadow of the page's cards (`.card`) and the inset 1 px highlights of the cards and tiles are not drawn. The calendar card, the sessions count, the active week, the selected day and the glows have their shadows.
+- The fields are not editable on the screen: a tap hands the field to the page (delegated, above). The session-log field has no resize handle.
+- The "Workout plan XP" feature tip the page shows once is not drawn.
+- A tick that pays more than one award (the day's XP and the daily-hand quest's) shows one "+N XP" label with the sum, where the page draws a label per award over each other.
+- Pixel icons are drawn cell by cell (`PixelIcon`, shared), so at some sizes a faint seam can show between cells, which the page's icons do not have.
+
 ## Known web quirks
 
 - `gwrLauncher` escapes labels that the foundation and class programs have already escaped, so the page shows `&amp;`. The projection carries the plain label.
 - Legacy strength tiles show "S": the glyph is the label's last capital. This is reproduced.
 - "last:" and "Last time:" match by item key across sessions (E0 of another session). This is reproduced.
 - Badge toasts and other page toasts are not visible under the native screen. The toggle reply carries the toggle's own message.
+- `renderPlan` leaves the calendar's `.plan-calendar` element unclosed, so the day card and the General rules card are drawn inside the calendar card's border. The native screen draws them as separate cards, as the markup means them.
