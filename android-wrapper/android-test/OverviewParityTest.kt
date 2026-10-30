@@ -128,6 +128,21 @@ class OverviewParityTest {
         }
     }
 
+    private fun clickSharedTab(label: String) {
+        fun find(node: android.view.accessibility.AccessibilityNodeInfo?): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (node.isClickable && node.contentDescription?.toString()?.trim() == label) return node
+            for (i in 0 until node.childCount) {
+                val child = find(node.getChild(i))
+                if (child != null) return child
+            }
+            return null
+        }
+        val target = find(instrumentation.uiAutomation.rootInActiveWindow)
+        assertNotNull("Shared native tab $label must be accessible", target)
+        assertTrue("Shared native tab $label must accept activation", target!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+    }
+
     @Test fun nativeTabsReuseOneSharedChromeAndReleaseItOnNavigation() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var main: MainActivity
@@ -177,6 +192,20 @@ class OverviewParityTest {
                 }
             }
             assertTrue("Food Compose body must render over the WebView", changedPixels > 3000)
+            repeat(3) {
+                clickSharedTab("Character")
+                waitUntil("Character opens from native Food bar") {
+                    var attached = false
+                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
+                    attached && evaluate(main, "lmaView()") == "\"character\""
+                }
+                clickSharedTab("Food")
+                waitUntil("Food opens from native Character bar") {
+                    var attached = false
+                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-nutrition-screen") != null }
+                    attached && evaluate(main, "lmaView()") == "\"meals\""
+                }
+            }
             evaluate(main, "navigate('dashboard');true")
             waitUntil("native Food chrome removed") {
                 var gone = false
