@@ -1,0 +1,484 @@
+{
+ "protocol": 1,
+ "webSessionId": "media-fixture",
+ "sequence": 1,
+ "panes": [
+  {
+   "id": "media",
+   "label": "Media",
+   "current": true
+  },
+  {
+   "id": "history",
+   "label": "Journal",
+   "current": false
+  }
+ ],
+ "header": {
+  "eyebrow": "YOUR PERSONAL LIBRARY",
+  "title": "Media library",
+  "blurb": "Reading list, courses, and audiobooks. Attach .m4b/.m4a files to play in-app — stored on this device.",
+  "add": "＋ Add media"
+ },
+ "tip": null,
+ "stats": [
+  {
+   "label": "Total saved",
+   "value": "23",
+   "foot": "Items in your library",
+   "bar": null
+  },
+  {
+   "label": "Finished",
+   "value": "4",
+   "foot": "Completed items",
+   "bar": null
+  },
+  {
+   "label": "In progress",
+   "value": "5",
+   "foot": "Currently working through",
+   "bar": null
+  },
+  {
+   "label": "Completion",
+   "value": "17%",
+   "foot": "",
+   "bar": 17
+  }
+ ],
+ "search": {
+  "label": "Search library",
+  "placeholder": "Search titles, creators, notes…"
+ },
+ "statusFilter": {
+  "label": "Show",
+  "options": [
+   {
+    "id": "all",
+    "label": "Everything"
+   },
+   {
+    "id": "unread",
+    "label": "Want to read / watch"
+   },
+   {
+    "id": "progress",
+    "label": "In progress"
+   },
+   {
+    "id": "finished",
+    "label": "Finished"
+   }
+  ]
+ },
+ "typeFilter": {
+  "label": "Media type",
+  "options": [
+   {
+    "id": "all",
+    "label": "All types"
+   },
+   {
+    "id": "Book",
+    "label": "Book"
+   },
+   {
+    "id": "Audiobook",
+    "label": "Audiobook"
+   },
+   {
+    "id": "Article",
+    "label": "Article"
+   },
+   {
+    "id": "Course",
+    "label": "Course"
+   },
+   {
+    "id": "Podcast",
+    "label": "Podcast"
+   },
+   {
+    "id": "Video",
+    "label": "Video"
+   },
+   {
+    "id": "Documentary",
+    "label": "Documentary"
+   },
+   {
+    "id": "Other",
+    "label": "Other"
+   }
+  ]
+ },
+ "filter": {
+  "search": "wealth",
+  "status": "all",
+  "type": "all",
+  "revision": 2
+ },
+ "items": [
+  {
+   "id": "media_1793188800000_5v9ix",
+   "title": "Project Hail Mary",
+   "type": "Audiobook",
+   "creator": "Andy Weir",
+   "subtitle": "Audiobook · Andy Weir",
+   "status": "progress",
+   "statusLabel": "In progress",
+   "finished": false,
+   "notes": "Chapter 12, the Astrophage tests",
+   "link": "",
+   "audio": {
+    "file": "project-hail-mary.m4b",
+    "meta": "project-hail-mary.m4b · 9.6 MB · resume 4:10:00 / 16:10:00",
+    "progress": {
+     "pct": 25.773195876288657,
+     "label": "26% listened",
+     "time": "4:10:00 / 16:10:00"
+    }
+   }
+  },
+  {
+   "id": "media_1793188800000_z7c38",
+   "title": "The Bitter Lesson",
+   "type": "Article",
+   "creator": "Rich Sutton",
+   "subtitle": "Article · Rich Sutton",
+   "status": "finished",
+   "statusLabel": "Finished",
+   "finished": true,
+   "notes": "",
+   "link": "https://example.com/bitter-lesson",
+   "audio": null
+  },
+  {
+   "id": "media_1793188800000_4qyvx",
+   "title": "Learning How to Learn",
+   "type": "Course",
+   "creator": "Barbara Oakley",
+   "subtitle": "Course · Barbara Oakley",
+   "status": "progress",
+   "statusLabel": "In progress",
+   "finished": false,
+   "notes": "Week 2 of 4: chunking and recall",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "media_1793188800000_y5r02",
+   "title": "Huberman Lab: Sleep",
+   "type": "Podcast",
+   "creator": "Andrew Huberman",
+   "subtitle": "Podcast · Andrew Huberman",
+   "status": "progress",
+   "statusLabel": "In progress",
+   "finished": false,
+   "notes": "",
+   "link": "http://example.org/sleep",
+   "audio": null
+  },
+  {
+   "id": "media_1793188800000_od578",
+   "title": "Voice memos",
+   "type": "Audiobook",
+   "creator": "",
+   "subtitle": "Audiobook",
+   "status": "progress",
+   "statusLabel": "In progress",
+   "finished": false,
+   "notes": "",
+   "link": "",
+   "audio": {
+    "file": "memos.m4a",
+    "meta": "memos.m4a · 1.0 MB",
+    "progress": {
+     "pct": 0,
+     "label": "Progress available after playback starts",
+     "time": "—"
+    }
+   }
+  },
+  {
+   "id": "media_1793188800000_5zgw7",
+   "title": "Planet Earth II",
+   "type": "Documentary",
+   "creator": "BBC",
+   "subtitle": "Documentary · BBC",
+   "status": "finished",
+   "statusLabel": "Finished",
+   "finished": true,
+   "notes": "Watch \"Cities\" again",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "media_1793188800000_pcw9q",
+   "title": "Essence of Linear Algebra",
+   "type": "Video",
+   "creator": "3Blue1Brown",
+   "subtitle": "Video · 3Blue1Brown",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "",
+   "link": "https://example.com/linear-algebra",
+   "audio": null
+  },
+  {
+   "id": "media_1793188800000_xox2y",
+   "title": "Old import",
+   "type": "",
+   "creator": "Unknown",
+   "subtitle": "Other · Unknown",
+   "status": "",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Imported from an older backup",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_atomic_habits",
+   "title": "Atomic Habits",
+   "type": "Book",
+   "creator": "James Clear",
+   "subtitle": "Book · James Clear",
+   "status": "finished",
+   "statusLabel": "Finished",
+   "finished": true,
+   "notes": "Month 1: Foundation | Attribute: Willpower",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_cant_hurt_me",
+   "title": "Can't Hurt Me",
+   "type": "Book",
+   "creator": "David Goggins",
+   "subtitle": "Book · David Goggins",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 1: Foundation | Attribute: Willpower",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_outlive",
+   "title": "Outlive",
+   "type": "Book",
+   "creator": "Peter Attia",
+   "subtitle": "Book · Peter Attia",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 1: Foundation | Attribute: Health",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_meditations",
+   "title": "Meditations",
+   "type": "Book",
+   "creator": "Marcus Aurelius — Gregory Hays translation",
+   "subtitle": "Book · Marcus Aurelius — Gregory Hays translation",
+   "status": "progress",
+   "statusLabel": "In progress",
+   "finished": false,
+   "notes": "Month 1: Foundation | Attribute: Wisdom",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_deep_work",
+   "title": "Deep Work",
+   "type": "Book",
+   "creator": "Cal Newport",
+   "subtitle": "Book · Cal Newport",
+   "status": "finished",
+   "statusLabel": "Finished",
+   "finished": true,
+   "notes": "Month 1: Foundation | Attribute: Intellect",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_how_to_win_friends",
+   "title": "How to Win Friends and Influence People",
+   "type": "Book",
+   "creator": "Dale Carnegie",
+   "subtitle": "Book · Dale Carnegie",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 2: People and Mind | Attribute: Charisma",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_never_split_difference",
+   "title": "Never Split the Difference",
+   "type": "Book",
+   "creator": "Chris Voss",
+   "subtitle": "Book · Chris Voss",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 2: People and Mind | Attribute: Charisma",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_crucial_conversations",
+   "title": "Crucial Conversations",
+   "type": "Book",
+   "creator": "Patterson et al.",
+   "subtitle": "Book · Patterson et al.",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 2: People and Mind | Attribute: Social",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_thinking_fast_slow",
+   "title": "Thinking, Fast and Slow",
+   "type": "Book",
+   "creator": "Daniel Kahneman",
+   "subtitle": "Book · Daniel Kahneman",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 2: People and Mind | Attribute: Intellect",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_sapiens",
+   "title": "Sapiens",
+   "type": "Book",
+   "creator": "Yuval Noah Harari",
+   "subtitle": "Book · Yuval Noah Harari",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 2: People and Mind | Attribute: Intellect",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_psychology_money",
+   "title": "The Psychology of Money",
+   "type": "Book",
+   "creator": "Morgan Housel",
+   "subtitle": "Book · Morgan Housel",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 3: Building | Attribute: Wealth",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_simple_path_wealth",
+   "title": "The Simple Path to Wealth",
+   "type": "Book",
+   "creator": "JL Collins",
+   "subtitle": "Book · JL Collins",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 3: Building | Attribute: Wealth",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_mastery",
+   "title": "Mastery",
+   "type": "Book",
+   "creator": "Robert Greene",
+   "subtitle": "Book · Robert Greene",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 3: Building | Attribute: Career",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_war_of_art",
+   "title": "The War of Art",
+   "type": "Book",
+   "creator": "Steven Pressfield",
+   "subtitle": "Book · Steven Pressfield",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 3: Building | Attribute: Creativity",
+   "link": "",
+   "audio": null
+  },
+  {
+   "id": "reading_almanack_naval",
+   "title": "The Almanack of Naval Ravikant",
+   "type": "Book",
+   "creator": "Eric Jorgenson",
+   "subtitle": "Book · Eric Jorgenson",
+   "status": "unread",
+   "statusLabel": "Want to read / watch",
+   "finished": false,
+   "notes": "Month 3: Building | Attributes: Wealth and Wisdom",
+   "link": "",
+   "audio": null
+  }
+ ],
+ "empty": {
+  "icon": "▤",
+  "title": "Your library is ready",
+  "body": "Add books, articles, courses, podcasts, or videos to start your list.",
+  "add": "＋ Add your first item"
+ },
+ "noMatch": {
+  "icon": "▤",
+  "title": "No matching items",
+  "body": "Try changing your search or filters."
+ },
+ "buttons": {
+  "edit": "Edit",
+  "remove": "Remove",
+  "play": "▶ Play",
+  "replace": "Replace file",
+  "removeAudio": "Remove audio",
+  "attach": "🎧 Attach .m4b / audio",
+  "link": "Open link ↗"
+ },
+ "player": {
+  "mediaId": "",
+  "visible": false,
+  "playing": false
+ },
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

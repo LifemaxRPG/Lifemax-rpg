@@ -30,14 +30,17 @@ function mediaMatching(items,f){
  const search=String(f.search||'').trim().toLowerCase();
  return items.filter(x=>(f.status==='all'||x.status===f.status)&&(f.type==='all'||x.type===f.type)&&[x.title,x.creator,x.notes,x.type].some(v=>(v||'').toLowerCase().includes(search)));
 }
+/* the four numbers over the list: every item, finished, in progress, and the share finished in whole percent */
+function mediaStats(items){
+ const finished=items.filter(x=>x.status==='finished').length;
+ return {total:items.length,finished,progress:items.filter(x=>x.status==='progress').length,pct:items.length?Math.round(finished/items.length*100):0};
+}
 function renderMedia(){
- const items=Array.isArray(state.mediaItems)?state.mediaItems:[];
- const finished=items.filter(x=>x.status==='finished').length,progress=items.filter(x=>x.status==='progress').length;
- document.getElementById('mediaTotal').textContent=items.length;
- document.getElementById('mediaFinished').textContent=finished;
- document.getElementById('mediaProgress').textContent=progress;
- const pct=items.length?Math.round(finished/items.length*100):0;
- document.getElementById('mediaPct').textContent=pct+'%';document.getElementById('mediaBar').style.width=pct+'%';
+ const items=Array.isArray(state.mediaItems)?state.mediaItems:[],n=mediaStats(items);
+ document.getElementById('mediaTotal').textContent=n.total;
+ document.getElementById('mediaFinished').textContent=n.finished;
+ document.getElementById('mediaProgress').textContent=n.progress;
+ document.getElementById('mediaPct').textContent=n.pct+'%';document.getElementById('mediaBar').style.width=n.pct+'%';
  const filtered=mediaMatching(items,mediaFilterOnPage());
  document.getElementById('mediaList').innerHTML=filtered.length?filtered.map(x=>`<div class="media-item" data-media-id="${esc(x.id)}">
    <input class="media-check" type="checkbox" aria-label="Mark ${esc(x.title)} finished" ${x.status==='finished'?'checked':''} onchange="toggleMediaFinished('${x.id}',this.checked)">

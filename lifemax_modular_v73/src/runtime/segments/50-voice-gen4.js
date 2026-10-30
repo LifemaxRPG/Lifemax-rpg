@@ -388,7 +388,7 @@ function g4Library(f,cls){
  const items=Array.isArray(state.mediaItems)?state.mediaItems:[],ql=q.toLowerCase();
  const hits=items.filter(function(x){return [x.title,x.creator,x.notes,x.type].some(function(v){return (v||'').toLowerCase().indexOf(ql)>=0})});
  lmvGo({id:'media'});
- setTimeout(function(){try{const el=document.getElementById('mediaSearch');if(el){el.value=q;renderMedia()}}catch(e){}},60);
+ setTimeout(function(){try{const el=document.getElementById('mediaSearch');if(el){el.value=q;el.dispatchEvent(new Event('input',{bubbles:true}))}}catch(e){}},60);
  return lmvLines(f,'Library',hits.length?hits.length+' match'+(hits.length===1?'':'es')+' for “'+q+'”':'Nothing in your library for “'+q+'”',hits.slice(0,5).map(function(x){return x.title+(x.creator?' · '+x.creator:'')}),[lmvOpenChip('media','Library')]);
 }
 

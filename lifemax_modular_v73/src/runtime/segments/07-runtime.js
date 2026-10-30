@@ -175,7 +175,7 @@ function deleteMediaItem(id){
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
 const AUDIO_DB='lifemax_audio_v1', AUDIO_STORE='files';
-let audioCtx={mediaId:null, objectUrl:null, seeking:false, saveTimer:null};
+let audioCtx={mediaId:null, loading:null, objectUrl:null, seeking:false, saveTimer:null}; // loading: the id whose file is being read
 function audioDbOpen(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(AUDIO_DB,1);

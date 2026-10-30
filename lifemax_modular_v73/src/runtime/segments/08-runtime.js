@@ -47,7 +47,8 @@ async function playMediaAudio(id, fromStart){
       return;
     }
     closeAudioPlayer(true);
-    const rec=await audioDbGet(id);
+    audioCtx.loading=id;
+    const rec=await audioDbGet(id).finally(()=>{audioCtx.loading=null});
     if(!rec||!rec.blob){
       toast('Audio file missing — attach it again');
       delete item.audio;save();
