@@ -17,3 +17,7 @@ The rewrite proceeds tab by tab, presentation first, with logic staying in web c
 - The WebView stays alive underneath for the whole rewrite; the memory budget of A24/A25 must be measured with it present.
 - The web bundle, update path and the DOM-captured shell (A22) stay in service until those two tabs are native; A22 is therefore not a prerequisite for the first tabs.
 - Revisit when Life Director is done.
+
+## Owner direction for the Cat tab (30 October 2026)
+
+When the Cat tab is rewritten, the owner wants a 2.5D pet room (layered depth, not the current WebGL scene). The spike at that point should therefore compare Compose drawing (layered sprites with parallax, depth sorting and lighting) against a SurfaceView renderer, using the existing pet assets, DNA and rig data from the page as the source.
