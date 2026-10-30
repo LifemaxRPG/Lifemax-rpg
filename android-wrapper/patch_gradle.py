@@ -27,10 +27,17 @@ if sign and "signingConfigs.lifemax" not in g:
         "    buildTypes {\n"
         "        debug {\n"
         "            signingConfig signingConfigs.lifemax\n"
+        "            debuggable false\n"
         "        }"
     )
     g, n3 = re.subn(r"buildTypes\s*\{", lambda m: block, g, count=1)
     assert n3 == 1, "could not find buildTypes"
+
+# A debuggable build runs Jetpack Compose several times slower (no ART optimisation of the Compose runtime, extra
+# debug checks), which is felt on every native screen. The shipped APK is signed with the permanent key either way.
+if "debuggable false" not in g:
+    g, n4 = re.subn(r"buildTypes\s*\{", "buildTypes {\n        debug {\n            debuggable false\n        }", g, count=1)
+    assert n4 == 1, "could not find buildTypes for debuggable"
 
 open(path, "w", encoding="utf-8").write(g)
 print("patched", path, "build", build, "signed" if sign else "debug key")

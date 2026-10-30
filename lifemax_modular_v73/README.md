@@ -789,3 +789,9 @@ The Plan pane now follows the day as it happens. Meals you log keep what you log
 - Tapping the native bottom bar used to click the hidden web nav button, which `42-scrubnav.js` turns into `lmaNavTo(view)` with a full-screen View Transition slide. The page change was held until the old page was captured (80-160 ms at 4x CPU slowdown), then the main thread janked for 150-650 ms, exactly while the native screen was opening. Only Food used the instant path.
 - `NativeOverviewSnapshot.activate` now calls `lmaNavTo(view,{fast:true})` whenever the old or new tab is Overview, Character or Food, and sets `html.native-cover` while a covered native body is on screen so the hidden web page does not run its 0.4 s `viewIn` fade-in.
 - Capability handshakes (Character, Food, Overview) are cached instead of repeated on every switch.
+
+## Native tab switching: keep the native screens and bars alive (Native API 15)
+- Character and Food used to be removed and rebuilt (new ComposeView, new software-layer bars, cold composition) on every tab change. Now one shared `ChromeHost` keeps the same top and bottom bars on screen (dropped 450 ms after the last native screen leaves) and each screen is hidden (`GONE`) instead of removed, then shown again with fresh data. A hidden Food screen disables its Back handler.
+- The APK is no longer debuggable (`patch_gradle.py`): Compose runs far slower in a debuggable build.
+- `TabTiming` measures tap to second drawn frame on the phone. Settings > Appearance > "Show tab timing (testing)" shows it as a toast and prints the last result under the switch.
+- CI: an extra emulator timing step runs after the release is published on this branch and cannot fail the build (`Native-Overview-review` artifact has `nav-perf.json`).

@@ -26,15 +26,20 @@ class NativeOverviewPlugin : Plugin() {
         val scene=call.getObject("snapshot");val id=call.getString("session")
         if(id.isNullOrBlank()||!valid(scene)){call.reject("Invalid live Overview shell");return}
         activity.runOnUiThread {
+            TabTiming.opened()
             try {
                 shell?.close();session=id
                 shell=LiveOverviewShell(activity,bridge.webView) { action ->
                     notifyListeners("activate",JSObject().put("session",session).put("action",action).put("sequence",shell?.sequence ?: 0))
                 }.also { it.show(scene!!) }
+                shell?.let { TabTiming.attached(it.root,"overview") }
                 call.resolve()
             } catch(e:Exception){shell?.close();shell=null;call.reject("Could not attach Overview controls",e)}
         }
     }
+    /** the last tab switch as measured on this phone, and a switch for showing it as a toast */
+    @PluginMethod fun timing(call: PluginCall) { call.resolve(JSObject().put("last",TabTiming.lastSummary).put("toasts",TabTiming.toasts)) }
+    @PluginMethod fun setTimingToast(call: PluginCall) { TabTiming.toasts=call.getBoolean("on",false)==true;call.resolve() }
     @PluginMethod fun update(call: PluginCall) {
         val scene=call.getObject("snapshot")
         if(!valid(scene)){call.reject("Invalid live Overview shell");return}

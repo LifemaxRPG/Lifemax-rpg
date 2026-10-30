@@ -103,7 +103,13 @@
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
+ const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
+ function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
+  if(p&&p.timing&&h)p.timing().then(r=>{if(r&&r.last)h.textContent='Last: '+r.last}).catch(()=>{})}
+ window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
+ setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can

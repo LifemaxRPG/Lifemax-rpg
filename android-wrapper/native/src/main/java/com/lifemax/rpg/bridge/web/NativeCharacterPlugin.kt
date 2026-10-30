@@ -12,7 +12,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.*
 import com.getcapacitor.annotation.CapacitorPlugin
-import com.lifemax.rpg.LiveOverviewShell
+import com.lifemax.rpg.ChromeHost
+import com.lifemax.rpg.TabTiming
 import com.lifemax.rpg.feature.character.presentation.*
 import org.json.JSONArray
 
@@ -22,7 +23,6 @@ class NativeCharacterPlugin : Plugin() {
     private val repository = container.repository
     private val store = ViewModelStore()
     private var view: ComposeView? = null
-    private var chrome: LiveOverviewShell? = null
     private var topInsetDp by mutableFloatStateOf(64f)
     private var bottomInsetDp by mutableFloatStateOf(72f)
 
@@ -43,6 +43,7 @@ class NativeCharacterPlugin : Plugin() {
             return
         }
         activity.runOnUiThread {
+            TabTiming.opened()
             try {
                 repository.accept(data, true)
                 if (view == null) {
@@ -71,7 +72,9 @@ class NativeCharacterPlugin : Plugin() {
                         .findViewById<ViewGroup>(android.R.id.content)
                         .addView(view, FrameLayout.LayoutParams(-1, -1))
                 }
+                view?.visibility = View.VISIBLE
                 showNav(call.getObject("navScene"))
+                view?.let { TabTiming.attached(it, "character") }
                 call.resolve()
             } catch (e: Exception) {
                 remove()
@@ -103,29 +106,31 @@ class NativeCharacterPlugin : Plugin() {
     @PluginMethod
     fun close(call: PluginCall) {
         activity.runOnUiThread {
-            remove()
+            hide()
             call.resolve()
         }
     }
 
     private fun showNav(scene: org.json.JSONObject?) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
-        if (chrome == null)
-            chrome =
-                LiveOverviewShell(activity, bridge.webView, chromeOnly = true) { id ->
-                    notifyListeners("nav-action", JSObject().put("id", id))
-                }
+        val chrome =
+            ChromeHost.show(activity, bridge.webView, scene) { id ->
+                notifyListeners("nav-action", JSObject().put("id", id))
+            }
+        val (top, bottom) = chrome.contentInsetsDp()
+        topInsetDp = top
+        bottomInsetDp = bottom
+    }
 
-        chrome?.show(scene)
-        chrome?.contentInsetsDp()?.let { (top, bottom) ->
-            topInsetDp = top
-            bottomInsetDp = bottom
-        }
+    /** Leaving the tab only hides the screen; it stays composed so the next visit is instant. */
+    private fun hide() {
+        view?.visibility = View.GONE
+        ChromeHost.leave()
+        notifyListeners("closed", JSObject())
     }
 
     private fun remove() {
-        chrome?.close()
-        chrome = null
+        ChromeHost.closeNow()
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
             it.disposeComposition()
@@ -135,7 +140,7 @@ class NativeCharacterPlugin : Plugin() {
     }
 
     override fun handleOnResume() {
-        if (view != null) notifyListeners("refresh", JSObject())
+        if (view?.visibility == View.VISIBLE) notifyListeners("refresh", JSObject())
     }
 
     override fun handleOnDestroy() {

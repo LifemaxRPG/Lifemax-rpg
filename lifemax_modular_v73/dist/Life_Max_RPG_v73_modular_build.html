@@ -4720,6 +4720,7 @@ html.light-theme .sd-more footer .pri{color:#fff}
           <h3>Appearance</h3>
           <div class="settingsline"><div style="flex:1"><strong>Light mode</strong><div class="muted" style="font-size:12px">Switch between the dark and light appearance. This only changes how the app looks.</div></div><input id="lightModeToggle" type="checkbox" class="check" onchange="setLightMode(this.checked)" aria-label="Enable light mode"></div>
           <div class="settingsline" id="nativeNutritionSetting"><div style="flex:1"><strong>Native Nutrition (Beta)</strong><div id="nativeNutritionHint" class="muted" style="font-size:12px">Opt-in Android Nutrition beta. Classic Food stays the default.</div></div><input id="nativeNutritionToggle" type="checkbox" class="check" onchange="setNativeNutritionEnabled(this.checked)" aria-label="Enable Native Nutrition beta"></div>
+          <div class="settingsline" id="tabTimingSetting"><div style="flex:1"><strong>Show tab timing (testing)</strong><div id="tabTimingHint" class="muted" style="font-size:12px">After each tab change on the native bar, shows how many milliseconds it took from the tap to the new screen being drawn.</div></div><input id="tabTimingToggle" type="checkbox" class="check" onchange="setTabTimingToast(this.checked)" aria-label="Show tab timing"></div>
           <div class="settingsline" id="nativeOverviewSetting"><div style="flex:1"><strong>Native Overview</strong><div id="nativeOverviewHint" class="muted" style="font-size:12px">Use the Android Overview screen. Turn off to return to the classic Overview.</div></div><input id="nativeOverviewToggle" type="checkbox" class="check" onchange="setNativeOverviewEnabled(this.checked)" aria-label="Native Overview"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Character preview</strong><div class="muted" style="font-size:12px">Native cards and charts. Logging and edits use their existing screens. Turn off for Classic Character.</div></div><input id="nativeCharacterToggle" type="checkbox" class="check" onchange="setNativeCharacterEnabled(this.checked)" aria-label="Native Character preview"></div>
         </div>
@@ -21541,7 +21542,13 @@ function lmcRender(){
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings')syncSetting();if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
+ const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
+ function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
+  if(p&&p.timing&&h)p.timing().then(r=>{if(r&&r.last)h.textContent='Last: '+r.last}).catch(()=>{})}
+ window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
+ setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can

@@ -1,5 +1,6 @@
 package com.lifemax.rpg
 
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
@@ -70,8 +71,8 @@ import kotlin.math.sin
 class NativeNutritionPlugin : Plugin() {
     private var session = ""
     private var layer: ComposeView? = null
-    private var chrome: LiveOverviewShell? = null
     private var snapshot by mutableStateOf<JSONObject?>(null)
+    private var shown by mutableStateOf(false)
     private var topInsetDp by mutableFloatStateOf(64f)
     private var bottomInsetDp by mutableFloatStateOf(72f)
 
@@ -91,36 +92,45 @@ class NativeNutritionPlugin : Plugin() {
             return
         }
         activity.runOnUiThread {
+            TabTiming.opened()
             try {
-                dismiss(false)
                 session = id
                 snapshot = JSONObject(data.toString())
-                val view = ComposeView(activity)
-                view.tag = "native-nutrition-screen"
-                view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-                view.setContent {
-                    snapshot?.let { current ->
-                        NativeNutritionScreen(current, topInsetDp, bottomInsetDp) { command, payload ->
-                            if (command == "close") {
-                                dismiss(true)
-                            } else {
-                                val evt = JSObject().put("session", session).put("command", command)
-                                payload.forEach { (k, v) -> evt.put(k, v) }
-                                notifyListeners("action", evt)
-                            }
-                        }
-                    }
-                }
-                layer = view
-                activity.findViewById<ViewGroup>(android.R.id.content)
-                    .addView(view, FrameLayout.LayoutParams(-1, -1))
+                // the screen stays composed while another tab is showing, so coming back is instant
+                val view = layer ?: createLayer()
+                view.visibility = View.VISIBLE
+                shown = true
                 showChrome(call.getObject("chromeScene"))
+                TabTiming.attached(view, "food")
                 call.resolve()
             } catch (e: Exception) {
                 dismiss(false)
                 call.reject("Native Nutrition unavailable", e)
             }
         }
+    }
+
+    private fun createLayer(): ComposeView {
+        val view = ComposeView(activity)
+        view.tag = "native-nutrition-screen"
+        view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+        view.setContent {
+            snapshot?.let { current ->
+                NativeNutritionScreen(current, topInsetDp, bottomInsetDp, shown) { command, payload ->
+                    if (command == "close") {
+                        dismiss(true)
+                    } else {
+                        val evt = JSObject().put("session", session).put("command", command)
+                        payload.forEach { (k, v) -> evt.put(k, v) }
+                        notifyListeners("action", evt)
+                    }
+                }
+            }
+        }
+        layer = view
+        activity.findViewById<ViewGroup>(android.R.id.content)
+            .addView(view, FrameLayout.LayoutParams(-1, -1))
+        return view
     }
 
     @PluginMethod
@@ -146,7 +156,7 @@ class NativeNutritionPlugin : Plugin() {
     fun close(call: PluginCall) {
         activity.runOnUiThread {
             if (call.getString("session") == session) {
-                dismiss(false)
+                hide()
             }
             call.resolve()
         }
@@ -159,21 +169,25 @@ class NativeNutritionPlugin : Plugin() {
 
     private fun showChrome(scene: JSONObject?) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
-        if (chrome == null) {
-            chrome = LiveOverviewShell(activity, bridge.webView, chromeOnly = true) { id ->
-                notifyListeners("nav-action", JSObject().put("id", id))
-            }
+        val chrome = ChromeHost.show(activity, bridge.webView, scene) { id ->
+            notifyListeners("nav-action", JSObject().put("id", id))
         }
-        chrome?.show(scene)
-        chrome?.contentInsetsDp()?.let { (top, bottom) ->
-            topInsetDp = top
-            bottomInsetDp = bottom
-        }
+        val (top, bottom) = chrome.contentInsetsDp()
+        topInsetDp = top
+        bottomInsetDp = bottom
+    }
+
+    /** Leaving the tab only hides the screen. Updates are ignored until it is opened again. */
+    private fun hide() {
+        session = ""
+        shown = false
+        layer?.visibility = View.GONE
+        ChromeHost.leave()
     }
 
     private fun dismiss(notify: Boolean) {
-        chrome?.close()
-        chrome = null
+        shown = false
+        ChromeHost.closeNow()
         val id = session
         session = ""
         snapshot = null
@@ -212,9 +226,11 @@ private fun NativeNutritionScreen(
     data: JSONObject,
     topInsetDp: Float,
     bottomInsetDp: Float,
+    active: Boolean,
     dispatch: (command: String, payload: Map<String, Any>) -> Unit
 ) {
-    BackHandler { dispatch("close", emptyMap()) }
+    // a hidden screen stays composed, so it must not take the Back button from the tab that is showing
+    BackHandler(enabled = active) { dispatch("close", emptyMap()) }
 
     val light = data.optBoolean("light")
     val bg = if (light) Color(0xFFEEF3FA) else BgObsidian

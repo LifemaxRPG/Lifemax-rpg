@@ -24,6 +24,8 @@ import kotlin.math.abs
 @RunWith(AndroidJUnit4::class)
 class OverviewParityTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
+    /** Native tab screens stay attached (hidden) while another tab shows, so "present" means attached AND visible. */
+    private fun View.visibleTag(tag: String): View? = findViewWithTag<View>(tag)?.takeIf { it.isShown }
     private fun waitUntil(label: String, action: () -> Boolean) {
         val end=SystemClock.uptimeMillis()+60000
         while(SystemClock.uptimeMillis()<end){ if(action())return;SystemClock.sleep(250) }
@@ -100,10 +102,10 @@ class OverviewParityTest {
             val saved=evaluate(main,"localStorage.getItem(STORE)")
             shot(main.bridge.webView,"character-web.png")
             evaluate(main,"openNativeCharacter().then(r=>window.__characterOpened=r);true")
-            waitUntil("Compose Character attached"){var ready=false;instrumentation.runOnMainSync{ready=main.window.decorView.findViewWithTag<View>("native-character-screen")!=null};ready}
+            waitUntil("Compose Character attached"){var ready=false;instrumentation.runOnMainSync{ready=main.window.decorView.visibleTag("native-character-screen")!=null};ready}
             waitUntil("Character open response"){evaluate(main,"window.__characterOpened===true")=="true"}
             SystemClock.sleep(800)
-            instrumentation.runOnMainSync{val content=main.window.decorView.findViewWithTag<View>("native-character-screen");assertEquals(0,webViews(content));assertTrue(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).contains(main))}
+            instrumentation.runOnMainSync{val content=main.window.decorView.visibleTag("native-character-screen");assertEquals(0,webViews(content));assertTrue(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).contains(main))}
             val nativeImage=shot(main.bridge.webView,"character-native.png")
             var brightText=0
             for(y in (nativeImage.height*.35).toInt() until (nativeImage.height*.52).toInt() step 2)for(x in 0 until nativeImage.width step 2){val pixel=nativeImage.getPixel(x,y);if(android.graphics.Color.red(pixel)>200&&android.graphics.Color.green(pixel)>200&&android.graphics.Color.blue(pixel)>200)brightText++}
@@ -124,7 +126,7 @@ class OverviewParityTest {
 
             assertEquals("Read projection never changes save",saved,evaluate(main,"localStorage.getItem(STORE)"))
             evaluate(main,"setNativeCharacterEnabled(false);true")
-            waitUntil("Classic Character restored"){var gone=false;instrumentation.runOnMainSync{gone=main.window.decorView.findViewWithTag<View>("native-character-screen")==null};gone}
+            waitUntil("Classic Character restored"){var gone=false;instrumentation.runOnMainSync{gone=main.window.decorView.visibleTag("native-character-screen")==null};gone}
         }
     }
 
@@ -168,7 +170,7 @@ class OverviewParityTest {
                 var ready = false
                 instrumentation.runOnMainSync {
                     val root = main.window.decorView
-                    ready = root.findViewWithTag<View>("native-character-screen") != null &&
+                    ready = root.visibleTag("native-character-screen") != null &&
                         root.findViewWithTag<View>("native-shared-chrome") != null
                 }
                 ready && evaluate(main, "window.__sharedCharacterOpened===true") == "true"
@@ -177,7 +179,7 @@ class OverviewParityTest {
             waitUntil("Character overlay removed") {
                 var gone = false
                 instrumentation.runOnMainSync {
-                    gone = main.window.decorView.findViewWithTag<View>("native-character-screen") == null
+                    gone = main.window.decorView.visibleTag("native-character-screen") == null
                 }
                 gone
             }
@@ -189,9 +191,9 @@ class OverviewParityTest {
                 var ready = false
                 instrumentation.runOnMainSync {
                     val root = main.window.decorView
-                    ready = root.findViewWithTag<View>("native-character-screen") == null &&
+                    ready = root.visibleTag("native-character-screen") == null &&
                         root.findViewWithTag<View>("native-shared-chrome") != null &&
-                        root.findViewWithTag<View>("native-nutrition-screen") != null
+                        root.visibleTag("native-nutrition-screen") != null
                 }
                 ready && evaluate(main, "window.NativeNutritionBeta?.snapshot()!=null") == "true"
             }
@@ -211,7 +213,7 @@ class OverviewParityTest {
                 val tapBounds = clickSharedTab("Character")
                 waitUntil("Character opens from native Food bar; bounds=$tapBounds") {
                     var attached = false
-                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-character-screen") != null }
+                    instrumentation.runOnMainSync { attached = main.window.decorView.visibleTag("native-character-screen") != null }
                     attached && evaluate(main, "lmaView()") == "\"character\""
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - characterStart)
@@ -220,7 +222,7 @@ class OverviewParityTest {
                 clickSharedTab("Food")
                 waitUntil("Food opens from native Character bar") {
                     var attached = false
-                    instrumentation.runOnMainSync { attached = main.window.decorView.findViewWithTag<View>("native-nutrition-screen") != null }
+                    instrumentation.runOnMainSync { attached = main.window.decorView.visibleTag("native-nutrition-screen") != null }
                     attached && evaluate(main, "lmaView()") == "\"meals\""
                 }
                 nativeSwitchMs.add(SystemClock.uptimeMillis() - foodStart)
