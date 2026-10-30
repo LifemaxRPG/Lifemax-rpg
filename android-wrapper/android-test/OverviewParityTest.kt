@@ -206,7 +206,8 @@ class OverviewParityTest {
                     attached && evaluate(main, "lmaView()") == "\"meals\""
                 }
             }
-            evaluate(main, "navigate('dashboard');true")
+            clickSharedTab("Overview")
+            waitUntil("Overview opens from native Food bar") { evaluate(main, "lmaView()") == "\"dashboard\"" }
             waitUntil("native Food chrome removed") {
                 var gone = false
                 instrumentation.runOnMainSync {
