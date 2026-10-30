@@ -9,6 +9,8 @@ In-app route:   mic/typed text -> Kotlin plugin -> Gemini (function call: add_sc
                        JS: LifeMaxVoice.simulateUtterance(<canonical sentence>) -> preview -> confirm -> Life Director -> 24h dial
 ```
 
+Since the link hardening (backlog SEC-3), a `lifemax://schedule/add` link no longer goes through `simulateUtterance`: it calls `LifeMaxVoice.fromLink`, which only creates a schedule entry (never another command or the online fallback) and always stops at the preview. Title and description are capped at 120 characters.
+
 ## Read this first (things that change the plan)
 
 1. **`actions.xml` is deprecated.** Google has ended support for App Actions declared in `actions.xml`; the supported mechanism is **`shortcuts.xml` with `<capability>` elements**. This guide uses `shortcuts.xml`. (The `actions.xml` shape you asked for is shown in the migration box in section 1.6 so you can recognise old samples.)
