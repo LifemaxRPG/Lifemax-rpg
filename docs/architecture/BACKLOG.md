@@ -12,6 +12,10 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
+- DS-2: Character's own pixel icon table, card, tokenColor extension and progress bar are gone in favour of the core ones; one core `ProgressBar` draws every bar (Character, the Log XP preview, Food's plan and macro bars). Food and Log screenshots are pixel-identical; on Character a bar's fill now ends rounded like the web's `.ch-bar` (29 px on the hero bar), and the references verify unchanged. Still open: the icons-parity check against the web masks.
+- DS-3, the shared part: `Modifier.tapTarget(role, label, onClick)` in core (48 dp minimum, role, click label) is what ChoicePill, SegmentedChoice and RoundButton click through; ChoicePill grew from 40 to 48 dp. Still open: Food and the Log screen's own clickables (preset tiles, save button).
+- DS-6: `GalleryScreenshotTest` draws every core component in dark, light and dark at font scale 2.0. It shows that at 2.0 the equal-width duration pills ellipsize their numbers and the four-way SegmentedChoice its labels; not changed yet.
+- DS-1: not done. Food receives no theme tokens and none of its surface or text colours equals a token, so putting it on LifeMaxTheme would change how Food looks; it belongs with the Food conversion.
 
 ## CI and tests
 
