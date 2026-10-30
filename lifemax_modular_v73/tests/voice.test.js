@@ -1,12 +1,14 @@
 /* LifeMax Voice phase 1 acceptance tests. Run:  NODE_PATH=$(npm root -g) node tests/voice.test.js <path to built html>
-   Needs Playwright with Chromium. Times use America/New_York; the clock is injected, nothing here waits on real time. */
+   Needs Playwright with Chromium. Times use America/New_York. The voice clock is injected and the page runs on Playwright's clock
+   from the same Monday afternoon, so nothing here depends on the real time. */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (name, cond, extra) => { if (cond) { pass++; console.log('PASS ' + name) } else { fail++; console.log('FAIL ' + name + (extra ? '  ' + JSON.stringify(extra) : '')) } };
 const NY = 'America/New_York', MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
 (async () => {
-  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = [];
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, timezoneId: NY })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
+  await p.clock.install({ time: MON });
   await p.goto('file://' + file); await p.waitForTimeout(800);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } localStorage.removeItem('lifemax_voice_op_journal_v1') });
   // Life Director with a sleep rule so there is something to conflict with
