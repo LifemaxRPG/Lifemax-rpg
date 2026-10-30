@@ -1,0 +1,9181 @@
+[
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Knowledge",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 4,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Knowledge",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 3
+    },
+    {
+     "attr": "endurance",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 1,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 3,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 15,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Knowledge",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Knowledge",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 15,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 11
+    },
+    {
+     "attr": "business",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 11,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 4,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 15,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 15,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 15
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 15,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Knowledge",
+   "primary": "business",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 16,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 19,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Knowledge",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +19 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 19,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 13
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 13,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 6
+  },
+  "skillXP": {
+   "Knowledge": 19
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Knowledge",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Knowledge",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 14
+    },
+    {
+     "attr": "endurance",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 6,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 14,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 24
+  },
+  "skillXP": {
+   "Focus": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Knowledge",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 24,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 29,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Knowledge",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +29 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 29,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 20
+    },
+    {
+     "attr": "discipline",
+     "xp": 9
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 20,
+   "business": 0,
+   "social": 0,
+   "discipline": 9,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 29
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 48,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Focus",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 48,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 34
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 14
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 34,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 14
+  },
+  "skillXP": {
+   "Focus": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 58,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +58 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 58,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 58
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 58,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 58
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +72 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Knowledge",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 72,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 72
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 72
+  },
+  "skillXP": {
+   "Knowledge": 72
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 86,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Knowledge",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +86 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "reading",
+   "name": "Focused reading / study",
+   "icon": "book",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Knowledge",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 86,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 60
+    },
+    {
+     "attr": "business",
+     "xp": 26
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 60,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 26,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Knowledge": 86
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Knowledge",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Knowledge",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Knowledge",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 86,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Focus",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 4,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Entrepreneurship",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 4,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 3
+    },
+    {
+     "attr": "business",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 3,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 1,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 4,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "business",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 16,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 16,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 16,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 11
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 11,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 5
+  },
+  "skillXP": {
+   "Entrepreneurship": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 17,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +17 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Entrepreneurship",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 17,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 12
+    },
+    {
+     "attr": "endurance",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 5,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 12,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 17
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 20
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 20
+  },
+  "skillXP": {
+   "Entrepreneurship": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 21,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +21 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Entrepreneurship",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 21,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 21
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 21,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 21
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 25,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Entrepreneurship",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +25 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 25,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 18
+    },
+    {
+     "attr": "discipline",
+     "xp": 7
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 18,
+   "business": 0,
+   "social": 0,
+   "discipline": 7,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 25
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 25,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Entrepreneurship",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +25 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Entrepreneurship",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 25,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 18
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 7
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 18,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 7
+  },
+  "skillXP": {
+   "Entrepreneurship": 25
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 30,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +30 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 30,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 30
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 30,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 30
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 50,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +50 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Entrepreneurship",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 50,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 50
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 50
+  },
+  "skillXP": {
+   "Entrepreneurship": 50
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 60,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Entrepreneurship",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +60 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 60,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 42
+    },
+    {
+     "attr": "business",
+     "xp": 18
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 42,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 18,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 60
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 75,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +75 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 75,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 53
+    },
+    {
+     "attr": "discipline",
+     "xp": 22
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 53,
+   "business": 0,
+   "social": 0,
+   "discipline": 22,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 75
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 90,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +90 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "business",
+   "name": "Focused business work",
+   "icon": "briefcase",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Entrepreneurship",
+   "primary": "business",
+   "secondary": "",
+   "xp": 90,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 90
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 90,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Entrepreneurship": 90
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Entrepreneurship",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 75,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Entrepreneurship",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "business",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Entrepreneurship",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 90,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Entrepreneurship",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 0,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Lifting",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 5,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +5 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "business",
+   "secondary": "",
+   "xp": 5,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 5,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 5
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 5,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Focus",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +5 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 5,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 4
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 4,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 1
+  },
+  "skillXP": {
+   "Focus": 5
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 18,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Lifting",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +18 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 18,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 13
+    },
+    {
+     "attr": "endurance",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 5,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 13,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 18
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 18,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +18 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Lifting",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 18,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 18
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 18
+  },
+  "skillXP": {
+   "Lifting": 18
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 19,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +19 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 19,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 19
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 19,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 19
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 22,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Lifting",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +22 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Lifting",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 22,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 15
+    },
+    {
+     "attr": "discipline",
+     "xp": 7
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 15,
+   "business": 0,
+   "social": 0,
+   "discipline": 7,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 22
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 23,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Lifting",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +23 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 23,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 16
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 7
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 16,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 7
+  },
+  "skillXP": {
+   "Lifting": 23
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 28,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +28 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Lifting",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 28,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 28
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 28,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 28
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 28,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +28 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 28,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 28
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 28
+  },
+  "skillXP": {
+   "Lifting": 28
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 34,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Lifting",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +34 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Lifting",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 34,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 24
+    },
+    {
+     "attr": "business",
+     "xp": 10
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 24,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 10,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 34
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 56,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Lifting",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +56 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 56,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 39
+    },
+    {
+     "attr": "discipline",
+     "xp": 17
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 39,
+   "business": 0,
+   "social": 0,
+   "discipline": 17,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 56
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 68,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +68 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "business",
+   "secondary": "",
+   "xp": 68,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 68
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 68,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 68
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Lifting",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 84,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +84 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Lifting",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 84,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 84
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 84,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 84
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 101,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Lifting",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +101 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "strength",
+   "name": "Strength workout",
+   "icon": "dumbbell",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Lifting",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 101,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 71
+    },
+    {
+     "attr": "endurance",
+     "xp": 30
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 30,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 71,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Lifting": 101
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 84,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "strength",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Lifting",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 101,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Lifting",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 0,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Running",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Running",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 3
+    },
+    {
+     "attr": "endurance",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 1,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 3,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Running",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 4
+  },
+  "skillXP": {
+   "Running": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 16,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Focus",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 11
+    },
+    {
+     "attr": "discipline",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 11,
+   "business": 0,
+   "social": 0,
+   "discipline": 5,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 17,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Running",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +17 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 17,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 12
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 12,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 5
+  },
+  "skillXP": {
+   "Running": 17
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 21,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +21 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Running",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 21,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 21
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 21,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 21
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 22,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +22 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 22,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 22
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 22
+  },
+  "skillXP": {
+   "Focus": 22
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 26,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Running",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +26 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Running",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 26,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 18
+    },
+    {
+     "attr": "business",
+     "xp": 8
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 18,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 8,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 26
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 26,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Running",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +26 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 26,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 18
+    },
+    {
+     "attr": "discipline",
+     "xp": 8
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 18,
+   "business": 0,
+   "social": 0,
+   "discipline": 8,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 26
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 31,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +31 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Running",
+   "primary": "business",
+   "secondary": "",
+   "xp": 31,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 31
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 31,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 31
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 52,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +52 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 52,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 52
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 52,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 52
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 63,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Running",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +63 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Running",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 63,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 44
+    },
+    {
+     "attr": "endurance",
+     "xp": 19
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 19,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 44,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 63
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 78,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Running",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +78 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Running",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 78,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 55
+    },
+    {
+     "attr": "business",
+     "xp": 23
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 55,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 23,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Running": 78
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 94,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +94 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "running",
+   "name": "Run / cardio",
+   "icon": "heart",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 94,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 94
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 94,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 94
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Running",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 78,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Running",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "running",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Running",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 94,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Running",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Focus",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 4,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Spanish",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 3
+    },
+    {
+     "attr": "discipline",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 3,
+   "business": 0,
+   "social": 0,
+   "discipline": 1,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 15,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Spanish",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 15,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 11
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 11,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 4
+  },
+  "skillXP": {
+   "Spanish": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 15,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 15,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 15
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 15,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 16
+  },
+  "skillXP": {
+   "Spanish": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 19,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Focus",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +19 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 19,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 13
+    },
+    {
+     "attr": "business",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 13,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 6,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 19
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Spanish",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 14
+    },
+    {
+     "attr": "discipline",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 14,
+   "business": 0,
+   "social": 0,
+   "discipline": 6,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "business",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 24,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 24,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 29,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Spanish",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +29 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 29,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 20
+    },
+    {
+     "attr": "endurance",
+     "xp": 9
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 9,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 20,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 29
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 48,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Spanish",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 48,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 34
+    },
+    {
+     "attr": "business",
+     "xp": 14
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 34,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 14,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 58,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +58 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 58,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 58
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 58,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 58
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Spanish",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +72 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Spanish",
+   "primary": "business",
+   "secondary": "",
+   "xp": 72,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 72
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 72,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Spanish": 72
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Spanish",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 86,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Spanish",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +86 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "language",
+   "name": "Language practice",
+   "icon": "chat",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Spanish",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 86,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 60
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 26
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 60,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 26
+  },
+  "skillXP": {
+   "Spanish": 86
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Spanish",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Spanish",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "language",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 86,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Recovery Routine",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 3,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Focus",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 3,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 2
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 2,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 1
+  },
+  "skillXP": {
+   "Focus": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 3,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 3,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 3
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 3,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 10,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +10 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Recovery Routine",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 10,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 10
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 10
+  },
+  "skillXP": {
+   "Recovery Routine": 10
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 10,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Recovery Routine",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +10 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 10,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 7
+    },
+    {
+     "attr": "business",
+     "xp": 3
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 7,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 3,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 10
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 11,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Recovery Routine",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +11 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Recovery Routine",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 11,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 8
+    },
+    {
+     "attr": "discipline",
+     "xp": 3
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 8,
+   "business": 0,
+   "social": 0,
+   "discipline": 3,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 11
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "business",
+   "secondary": "",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 13
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 13,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Recovery Routine",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 13
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 13,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Focus",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 11
+    },
+    {
+     "attr": "endurance",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 5,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 11,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 16,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Recovery Routine",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Recovery Routine",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 16,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 11
+    },
+    {
+     "attr": "business",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 11,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 5,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 19,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +19 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 19,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 19
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 19,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 19
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 32,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +32 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "business",
+   "secondary": "",
+   "xp": 32,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 32
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 32,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 32
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 39,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Recovery Routine",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +39 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 39,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 27
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 12
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 27,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 12
+  },
+  "skillXP": {
+   "Recovery Routine": 39
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 48,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Recovery Routine",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Recovery Routine",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 48,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 34
+    },
+    {
+     "attr": "endurance",
+     "xp": 14
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 14,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 34,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Recovery Routine": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 58,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +58 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "recovery",
+   "name": "Sleep / recovery routine",
+   "icon": "moon",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Recovery Routine",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 58,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 58
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 58
+  },
+  "skillXP": {
+   "Recovery Routine": 58
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Recovery Routine",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 48,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Recovery Routine",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "recovery",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Recovery Routine",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 58,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Recovery Routine",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 0,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Practical Skills",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 4,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Practical Skills",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 4,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 4
+  },
+  "skillXP": {
+   "Practical Skills": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 4,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Practical Skills",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +4 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 4,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 3
+    },
+    {
+     "attr": "business",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 3,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 1,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 4
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 15,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Focus",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 15,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 11
+    },
+    {
+     "attr": "discipline",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 11,
+   "business": 0,
+   "social": 0,
+   "discipline": 4,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 15,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +15 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "business",
+   "secondary": "",
+   "xp": 15,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 15
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 15,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 15
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Practical Skills",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 16,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 19,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Practical Skills",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +19 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 19,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 13
+    },
+    {
+     "attr": "endurance",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 6,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 13,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 19
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 20,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Practical Skills",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Practical Skills",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 20,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 14
+    },
+    {
+     "attr": "business",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 14,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 6,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 24,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Practical Skills",
+   "primary": "business",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 24,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 29,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Focus",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +29 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 29,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 20
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 9
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 20,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 9
+  },
+  "skillXP": {
+   "Focus": 29
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 48,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Practical Skills",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Practical Skills",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 48,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 34
+    },
+    {
+     "attr": "endurance",
+     "xp": 14
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 14,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 34,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 58,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +58 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 58,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 58
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 58
+  },
+  "skillXP": {
+   "Practical Skills": 58
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +72 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 72,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 72
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 72,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 72
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 86,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Practical Skills",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +86 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "practical",
+   "name": "Practical skill practice",
+   "icon": "mountain",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Practical Skills",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 86,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 60
+    },
+    {
+     "attr": "discipline",
+     "xp": 26
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 60,
+   "business": 0,
+   "social": 0,
+   "discipline": 26,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Practical Skills": 86
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Practical Skills",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 72,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Practical Skills",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "practical",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Practical Skills",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 86,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Practical Skills",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 0,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Execution",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 3,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Execution",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 3,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 2
+    },
+    {
+     "attr": "discipline",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 2,
+   "business": 0,
+   "social": 0,
+   "discipline": 1,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 3,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "business",
+   "secondary": "",
+   "xp": 3,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 3
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 3,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 13
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 13,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Execution",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Execution",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 9
+    },
+    {
+     "attr": "endurance",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 4,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 9,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "20",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 13,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Focus",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 13,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 9
+    },
+    {
+     "attr": "business",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 9,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 4,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 16,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Execution",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 16,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 16
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 16,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "25",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 17,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +17 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "business",
+   "secondary": "",
+   "xp": 17,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 17
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 17,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 17
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 20,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Execution",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Execution",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 20,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 14
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 14,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 6
+  },
+  "skillXP": {
+   "Execution": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Execution",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 14
+    },
+    {
+     "attr": "endurance",
+     "xp": 6
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 6,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 14,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Execution",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 24
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 24
+  },
+  "skillXP": {
+   "Execution": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 40,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +40 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 40,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 40
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 40,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 40
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 48,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Focus",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 48,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 34
+    },
+    {
+     "attr": "discipline",
+     "xp": 14
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 34,
+   "business": 0,
+   "social": 0,
+   "discipline": 14,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Execution",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 60,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Execution",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +60 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Execution",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 60,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 42
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 18
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 42,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 18
+  },
+  "skillXP": {
+   "Execution": 60
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Execution",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +72 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "task",
+   "name": "Difficult planned task",
+   "icon": "target",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Execution",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 72,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 72
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 72,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Execution": 72
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "600",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 60,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "task",
+   "customName": "",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Execution",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 72,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Execution",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": " did well "
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "0",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Custom Skill",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "0",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "0",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "5",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 3,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 5,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 3,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 3
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 3,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "5",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 3,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Custom Skill",
+   "durFactor": 0.16666666666666666
+  },
+  "toast": [
+   "Activity saved · +3 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 5,
+   "quality": 1.2,
+   "skill": "Custom Skill",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 3,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 2
+    },
+    {
+     "attr": "endurance",
+     "xp": 1
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 1,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 2,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 3
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "19",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 13,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Custom Skill",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 19,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 13,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 9
+    },
+    {
+     "attr": "business",
+     "xp": 4
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 9,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 4,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "19",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Focus",
+   "durFactor": 0.6333333333333333
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 19,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 13
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 13,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "20",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 13,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +13 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 20,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "business",
+   "secondary": "",
+   "xp": 13,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "business",
+     "xp": 13
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 13,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 13
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "20",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 16,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Custom Skill",
+   "durFactor": 0.6666666666666666
+  },
+  "toast": [
+   "Activity saved · +16 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 20,
+   "quality": 1.2,
+   "skill": "Custom Skill",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 16,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 11
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 11,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 5
+  },
+  "skillXP": {
+   "Custom Skill": 16
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "25",
+   "quality": "1",
+   "skill": " Focus ",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "notes": ""
+  },
+  "prev": {
+   "total": 17,
+   "primary": "adventure",
+   "secondary": "endurance",
+   "skill": "Focus",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +17 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 25,
+   "quality": 1,
+   "skill": "Focus",
+   "primary": "adventure",
+   "secondary": "endurance",
+   "xp": 17,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "adventure",
+     "xp": 12
+    },
+    {
+     "attr": "endurance",
+     "xp": 5
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 5,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 12,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 17
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "25",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 0.8333333333333334
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 25,
+   "quality": 1.2,
+   "skill": "Custom Skill",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 20
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 20
+  },
+  "skillXP": {
+   "Custom Skill": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "30",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "endurance",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 20,
+   "primary": "endurance",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +20 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 30,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "endurance",
+   "secondary": "",
+   "xp": 20,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "endurance",
+     "xp": 20
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 20,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 20
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "30",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 24,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Custom Skill",
+   "durFactor": 1
+  },
+  "toast": [
+   "Activity saved · +24 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 30,
+   "quality": 1.2,
+   "skill": "Custom Skill",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "xp": 24,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "intelligence",
+     "xp": 17
+    },
+    {
+     "attr": "discipline",
+     "xp": 7
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 17,
+   "business": 0,
+   "social": 0,
+   "discipline": 7,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 24
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "61",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 40,
+   "primary": "social",
+   "secondary": "wellbeing",
+   "skill": "Custom Skill",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +40 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 61,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "social",
+   "secondary": "wellbeing",
+   "xp": 40,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "social",
+     "xp": 28
+    },
+    {
+     "attr": "wellbeing",
+     "xp": 12
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 28,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 12
+  },
+  "skillXP": {
+   "Custom Skill": 40
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "61",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "discipline",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 48,
+   "primary": "discipline",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 2.0166666666666666
+  },
+  "toast": [
+   "Activity saved · +48 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 61,
+   "quality": 1.2,
+   "skill": "Custom Skill",
+   "primary": "discipline",
+   "secondary": "",
+   "xp": 48,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "discipline",
+     "xp": 48
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 48,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Custom Skill": 48
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "120",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "wellbeing",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 60,
+   "primary": "wellbeing",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +60 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 120,
+   "quality": 1,
+   "skill": "Custom Skill",
+   "primary": "wellbeing",
+   "secondary": "",
+   "xp": 60,
+   "notes": "",
+   "xpSplit": [
+    {
+     "attr": "wellbeing",
+     "xp": 60
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 60
+  },
+  "skillXP": {
+   "Custom Skill": 60
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "120",
+   "quality": "1.2",
+   "skill": " Focus ",
+   "primary": "physique",
+   "secondary": "business",
+   "notes": " did well "
+  },
+  "prev": {
+   "total": 72,
+   "primary": "physique",
+   "secondary": "business",
+   "skill": "Focus",
+   "durFactor": 3
+  },
+  "toast": [
+   "Activity saved · +72 XP"
+  ],
+  "saved": true,
+  "act": {
+   "type": "custom",
+   "name": "My thing",
+   "icon": "star",
+   "duration": 120,
+   "quality": 1.2,
+   "skill": "Focus",
+   "primary": "physique",
+   "secondary": "business",
+   "xp": 72,
+   "notes": "did well",
+   "xpSplit": [
+    {
+     "attr": "physique",
+     "xp": 50
+    },
+    {
+     "attr": "business",
+     "xp": 22
+    }
+   ]
+  },
+  "attrXP": {
+   "physique": 50,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 22,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {
+   "Focus": 72
+  },
+  "after": {
+   "dur": "30",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "600",
+   "quality": "1",
+   "skill": "Custom Skill",
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "notes": ""
+  },
+  "prev": {
+   "total": 60,
+   "primary": "intelligence",
+   "secondary": "discipline",
+   "skill": "Custom Skill",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "custom",
+   "customName": "  My thing ",
+   "duration": "600",
+   "quality": "1.2",
+   "skill": "Custom Skill",
+   "primary": "business",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 72,
+   "primary": "business",
+   "secondary": "",
+   "skill": "Custom Skill",
+   "durFactor": 3
+  },
+  "toast": [
+   "Daily active-time limit (6 hours) reached"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "600",
+   "q": "1.2",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "reading",
+   "customName": "",
+   "duration": "",
+   "quality": "1",
+   "skill": "",
+   "primary": "",
+   "secondary": "",
+   "notes": ""
+  },
+  "prev": {
+   "total": 0,
+   "primary": "intelligence",
+   "secondary": "",
+   "skill": "Knowledge",
+   "durFactor": 0
+  },
+  "toast": [
+   "Log at least 5 minutes to earn XP"
+  ],
+  "saved": false,
+  "act": null,
+  "attrXP": {
+   "physique": 0,
+   "endurance": 0,
+   "intelligence": 0,
+   "business": 0,
+   "social": 0,
+   "discipline": 0,
+   "adventure": 0,
+   "wellbeing": 0
+  },
+  "skillXP": {},
+  "after": {
+   "dur": "",
+   "q": "1",
+   "notes": ""
+  }
+ },
+ {
+  "c": {
+   "type": "nonsense",
+   "customName": "",
+   "duration": "abc",
+   "quality": "x",
+   "skill": "S",
+   "primary": "physique",
+   "secondary": "physique",
+   "notes": ""
+  },
+  "skipped": "preset not selectable"
+ }
+]

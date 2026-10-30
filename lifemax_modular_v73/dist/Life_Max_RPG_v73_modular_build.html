@@ -5310,9 +5310,14 @@ function renderRules(){document.getElementById('xpRules').innerHTML=Object.entri
 function renderAll(){renderStats();renderExtras();renderAttrs();renderActivities();renderSkills();renderBenchmarks();renderQuests();renderHistory();renderRules();renderMedia();renderMeals();if(document.getElementById('characterName'))document.getElementById('characterName').value=state.name;if(document.getElementById('characterBuild'))document.getElementById('characterBuild').value=state.build;if(document.getElementById('characterWeight'))document.getElementById('characterWeight').value=state.weight||'';if(document.getElementById('characterHeightFt'))document.getElementById('characterHeightFt').value=state.heightFt||'';if(document.getElementById('characterHeightIn'))document.getElementById('characterHeightIn').value=state.heightIn||'';renderCharacterIntro();populateAttrSelects();renderRecipes()}
 function populateAttrSelects(){const p=document.getElementById('primaryAttr'),s=document.getElementById('secondaryAttr');if(!p)return;const opts=ATTRS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');let pv=p.value,sv=s.value;p.innerHTML=opts;s.innerHTML='<option value="">No secondary attribute</option>'+opts;p.value=pv||'intelligence';s.value=sv||''}
 function activityPresetChanged(){const id=document.getElementById('activityType').value,r=rules[id]||rules.custom;document.getElementById('customNameWrap').style.display=id==='custom'?'block':'none';document.getElementById('skillName').value=r.skill;document.getElementById('primaryAttr').value=r.primary;document.getElementById('secondaryAttr').value=r.secondary||'';updatePreview()}
-function calcPreview(){const id=document.getElementById('activityType').value,r=rules[id]||rules.custom;const dur=Math.max(0,Number(document.getElementById('duration').value)||0);const quality=Number(document.getElementById('quality').value)||1;/* 30 min = 1× base; scales linearly to 3× at 90+ min; short sessions floor at 0.4× */const durFactor=ecoDur(dur);const q=dur<20?Math.min(1,quality):quality;let base=r.base*durFactor;let total=Math.max(0,Math.round(base*q));return {total,primary:document.getElementById('primaryAttr').value||r.primary,secondary:document.getElementById('secondaryAttr').value,skill:(document.getElementById('skillName').value||r.skill).trim()||r.skill,durFactor}}
+/* The XP form as data: the page form and the native Log screen both build one of these and hand it to the same owner functions below. */
+function activityDraftFromForm(){const v=id=>document.getElementById(id).value;return {type:v('activityType'),customName:v('customName'),duration:v('duration'),quality:v('quality'),skill:v('skillName'),primary:v('primaryAttr'),secondary:v('secondaryAttr'),notes:v('activityNotes')}}
+function activityPreview(d){const r=rules[d.type]||rules.custom;const dur=Math.max(0,Number(d.duration)||0);const quality=Number(d.quality)||1;/* 30 min = 1× base; scales linearly to 3× at 90+ min; short sessions floor at 0.4× */const durFactor=ecoDur(dur);const q=dur<20?Math.min(1,quality):quality;let base=r.base*durFactor;let total=Math.max(0,Math.round(base*q));return {total,primary:d.primary||r.primary,secondary:d.secondary||'',skill:(d.skill||r.skill).trim()||r.skill,durFactor}}
+function calcPreview(){return activityPreview(activityDraftFromForm())}
 function updatePreview(){const x=calcPreview();document.getElementById('previewXP').textContent=x.total;document.getElementById('previewBar').style.width=Math.min(100,x.total/120*100)+'%';const p=ATTRS.find(a=>a.id===x.primary);const s=ATTRS.find(a=>a.id===x.secondary);let chunks=[];if(x.secondary&&x.secondary!==x.primary){const pXP=Math.round(x.total*.7),sXP=x.total-pXP;chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Primary'} <strong>+${pXP}</strong></span>`,`<span class="preview-chip">${s?px(s.icon):''} ${s?.short||'Secondary'} <strong>+${sXP}</strong></span>`)}else chunks.push(`<span class="preview-chip">${p?px(p.icon):''} ${p?.short||'Attribute'} <strong>+${x.total}</strong></span>`);if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
-function submitActivity(e){e.preventDefault();const id=document.getElementById('activityType').value,r=rules[id]||rules.custom,x=calcPreview();if(!x.total){toast('Log at least 5 minutes to earn XP');return}const ec=ecoAward(id,x.total,Number(document.getElementById('duration').value)||0,{manual:true});if(ec.xp<=0){toast(ec.msg);return}const xp=ec.xp;const p=x.primary,s=x.secondary;let pXP=xp, sXP=0;if(s&&s!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(s&&s!==p)sXP=ecoStarXP(s,sXP);const xpTot=pXP+sXP;const name=id==='custom'?(document.getElementById('customName').value.trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),type:id,name,icon:r.icon,duration:Number(document.getElementById('duration').value)||0,quality:Number(document.getElementById('quality').value),skill:x.skill,primary:p,secondary:s,xp:xpTot,date:new Date().toISOString(),notes:document.getElementById('activityNotes').value.trim(),xpSplit:[{attr:p,xp:pXP},...(s&&s!==p?[{attr:s,xp:sXP}]:[])]};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;save();document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(`Activity saved · +${xp} XP`);navigate('dashboard')}
+/* Award and save one logged activity. Returns {ok, xp, message}; it never touches the page. The form handler and the native Log screen both call it. */
+function recordActivity(d){const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d);if(!x.total)return {ok:false,message:'Log at least 5 minutes to earn XP'};const duration=Number(d.duration)||0;const ec=ecoAward(id,x.total,duration,{manual:true});if(ec.xp<=0)return {ok:false,message:ec.msg};const xp=ec.xp;const p=x.primary,s=x.secondary;let pXP=xp, sXP=0;if(s&&s!==p){pXP=Math.round(xp*.7);sXP=xp-pXP}pXP=ecoStarXP(p,pXP);if(s&&s!==p)sXP=ecoStarXP(s,sXP);const xpTot=pXP+sXP;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),type:id,name,icon:r.icon,duration,quality:Number(d.quality),skill:x.skill,primary:p,secondary:s,xp:xpTot,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:[{attr:p,xp:pXP},...(s&&s!==p?[{attr:s,xp:sXP}]:[])]};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;save();return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
+function submitActivity(e){e.preventDefault();const res=recordActivity(activityDraftFromForm());if(!res.ok){toast(res.message);return}document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(res.message);navigate('dashboard')}
 function toggleQuest(id,checked){const q=state.quests.find(q=>q.id===id);if(!q)return;const A=q.attribute||'discipline';if(checked&&questLocked(q)){toast('Locked until you reach level '+stageLvl(q.stage));renderQuests();return}const key=questKey(q);if(checked&&!state.questDone[key]){const qid='quest_'+Date.now();state.questDone[key]=qid;const xp=ecoQuestXP(q);if(!xp&&(Number(q.xp)||0)>0)toast(q.cadence==='epic'?'One epic quest reward per day':'Quest XP limit reached for '+(q.cadence==='weekly'?'this week':'today'));const noteEl=document.getElementById('qnote-'+id);const qnote=(noteEl&&noteEl.value.trim())||'';state.attrXP[A]=(state.attrXP[A]||0)+xp;state.skillXP['Quest Completion']=(state.skillXP['Quest Completion']||0)+xp;state.activities.push({id:qid,cad:q.cadence,epic:q.cadence==='epic',skill:'Quest Completion',type:'quest',name:'Quest: '+q.name,icon:'flag',duration:0,xp,primary:A,date:new Date().toISOString(),notes:qnote||'Quest completed',xpSplit:[{attr:A,xp}]});if(xp>0)toast(`Quest complete · +${xp} XP`)}else if(!checked&&state.questDone[key]){const aid=state.questDone[key],xp=Math.max(0,Number(q.xp)||0);delete state.questDone[key];state.attrXP[A]=Math.max(0,(state.attrXP[A]||0)-xp);state.skillXP['Quest Completion']=Math.max(0,(state.skillXP['Quest Completion']||0)-xp);state.activities=state.activities.filter(a=>a.id!==aid);toast('Quest undone · XP removed')}save()}
 function showCustomQuest(){document.getElementById('customQuestCard').style.display='block';document.getElementById('newQuestName').focus()}
 function hideCustomQuest(){document.getElementById('customQuestCard').style.display='none'}
@@ -21441,6 +21446,22 @@ function lmcRender(){
 /* Live hybrid Overview: Android header/navigation over the original resumed WebView.
    The page body, pets and timers are never captured or copied. */
 (function(){
+ /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
+    shows through and two sets of bars never fight. Going to a web tab closes it at once. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
+ if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0;
+  window.NativeTabs={
+   cover(view,fn){covers.set(view,fn)},
+   covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
+   cancel(id){pending.delete(id)},
+   leave(id,toView,closeFn){
+    if(!this.covered(toView)){pending.delete(id);closeFn();return}
+    pending.set(id,closeFn);ct(timer);timer=st(()=>this.flush(),2500)
+   },
+   flush(exceptId){
+    for(const [id,fn] of [...pending]){if(id===exceptId)continue;pending.delete(id);try{fn()}catch(e){console.warn('NativeTabs close',e)}}
+    if(!pending.size)ct(timer)
+   }
+  }}
  const N={open:false,opening:false,session:'',plugin:null,ready:null,actions:new Map(),navActions:new Map(),maps:new Map(),buildActions:null,seq:0,painting:false,lastPaint:'',queued:false,suspended:false,cacheHits:0,cacheMisses:0,lastCaptureMs:0};
  const ids=new WeakMap(),assets=new Map(),chromeCache=new Map();let nextId=0,snapshotQueue=Promise.resolve();
  const cssCanvas=document.createElement('canvas'),colorCtx=cssCanvas.getContext('2d',{willReadFrequently:true});cssCanvas.width=cssCanvas.height=1;
@@ -21480,7 +21501,7 @@ function lmcRender(){
  }
  window.setNativeOverviewEnabled=setEnabled;
  window.syncNativeOverviewSetting=syncSetting;
- function blocked(){return !enabled()||!state.onboardingComplete||lmaView()!=='dashboard'||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
+ function blocked(ignoreView){return !enabled()||!state.onboardingComplete||(!ignoreView&&lmaView()!=='dashboard')||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,.ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
  function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);if(el.closest('.sidebar'))N.navActions.set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
@@ -21534,25 +21555,28 @@ function lmcRender(){
   return task;
  }
  function signature(scene){return JSON.stringify({width:scene.width,height:scene.height,background:scene.background,light:scene.light,header:scene.header,nav:scene.nav})}
- async function send(){if(!N.open)return;if(blocked()){await N.plugin.close({session:N.session});return}if(N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot(),paint=signature(scene);if(N.open&&paint!==N.lastPaint){await N.plugin.update({session:N.session,snapshot:scene});N.lastPaint=paint}}catch(e){console.warn('Native Overview refresh',e);mask(false);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
+ async function send(){if(!N.open)return;if(blocked()){closeOverview();return}if(N.painting){N.queued=true;return}N.painting=true;try{const scene=await snapshot(),paint=signature(scene);if(N.open&&paint!==N.lastPaint){await N.plugin.update({session:N.session,snapshot:scene});N.lastPaint=paint}}catch(e){console.warn('Native Overview refresh',e);mask(false);await N.plugin.close({session:N.session});N.open=false}finally{N.painting=false;if(N.queued){N.queued=false;setTimeout(send,80)}}}
  async function ready(p){if(!N.ready)N.ready=(async()=>{await p.addListener('failed',e=>{if(e.session===N.session){window.__nativeOverviewError=e.reason;console.warn('Native Overview',e.reason)}});await p.addListener('refresh',e=>{if(e.session===N.session)send()});await p.addListener('activate',e=>{if(e.session!==N.session)return;const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected)target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));send()});await p.addListener('closed',e=>{if(e.session!==N.session)return;N.open=false;N.opening=false;N.suspended=true;mask(false);if(Number.isFinite(e.scroll))scrollTo(0,e.scroll);const target=(N.maps.get(e.sequence)||N.actions).get(e.action)||N.navActions.get(e.action);if(target&&target.isConnected){target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))}else if(e.action)toast('Overview changed. Please try that action again.');if(lmaView()==='dashboard'&&enabled())setTimeout(()=>{if(!N.open&&!N.opening&&!blocked())open(true)},0)})})().catch(e=>{N.ready=null;throw e});return N.ready}
  function diagnostics(){return{plugin:!!plugin(),view:lmaView(),onboarded:!!state.onboardingComplete,width:innerWidth,overlay:typeof lmaTopOverlay==='function'&&!!lmaTopOverlay(),bodyClasses:document.body.className,blocked:!!blocked(),open:N.open,opening:N.opening,cacheHits:N.cacheHits,cacheMisses:N.cacheMisses,lastCaptureMs:N.lastCaptureMs}}
+ /* closing goes through the hand-over: if you are moving to another native tab, this one stays until that one is up */
+ function closeOverview(){NativeTabs.leave('overview',typeof lmaView==='function'?lmaView():'',()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}})}
  async function open(force){
   if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
-  const p=plugin();if(!p||N.open||N.opening||blocked())return{opened:N.open,diagnostics:diagnostics()};
+  const p=plugin();if(!p||N.open||N.opening||blocked()){if(!N.opening)NativeTabs.flush('overview');return{opened:N.open,diagnostics:diagnostics()}}
   N.opening=true;N.plugin=p;
   try{const capabilities=N.caps||(N.caps=await p.capabilities().catch(()=>null));if(!capabilities?.liveWeb)return{opened:false,reason:'live-shell-update-required'};await ready(p);if(!force){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))])}if(blocked())return{opened:false,diagnostics:diagnostics()};
-   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
-  }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false}
+   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});NativeTabs.flush('overview');N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
+  }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false;NativeTabs.flush('overview')}
  }
 
- const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard')queueMicrotask(()=>open(from==='character'||from==='meals'));if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open){mask(false);N.plugin.close({session:N.session})}return result};
+ const nav=navigate;navigate=function(v){if(v!=='character'&&v!=='meals'&&v!=='food')document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from==='character'||from==='meals'))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
  /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
  const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
  function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
   if(p&&p.timing&&h)p.timing().then(r=>{if(r&&r.last)h.textContent='Last: '+r.last}).catch(()=>{})}
  window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
  setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
+ NativeTabs.cover('dashboard',()=>!!plugin()&&!blocked(true));
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
@@ -21560,7 +21584,7 @@ function lmcRender(){
  if(typeof lmaThumbWarm==='function'){const warm=lmaThumbWarm;lmaThumbWarm=function(){if(N.open||N.opening)return Promise.resolve();return warm.apply(this,arguments)}}
  // Refresh only after the shared model has rendered; native owns no gameplay state.
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
- new MutationObserver(()=>{if(N.open&&blocked()){mask(false);N.plugin.close({session:N.session})}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+ new MutationObserver(()=>{if(N.open&&blocked())closeOverview()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
  syncSetting();setTimeout(syncSetting,700);
  window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{
@@ -21579,6 +21603,7 @@ function lmcRender(){
 
 /* Native Nutrition 1:1 Compose integration: real web state is authoritative; no fixture data or duplicate saves. */
 (function () {
+  const NativeTabs = (typeof window !== 'undefined' && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
   const N = {
     plugin: null,
     open: false,
@@ -21921,15 +21946,25 @@ function lmcRender(){
   }
 
   async function open() {
-    if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') return;
-    if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) return;
+    if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
+      if (!N.opening) NativeTabs.flush('meals');
+      return;
+    }
+    if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) {
+      NativeTabs.flush('meals');
+      return;
+    }
     const p = plugin();
-    if (!p) return;
+    if (!p) {
+      NativeTabs.flush('meals');
+      return;
+    }
     const openedAt = performance.now();
     const s = snapshot();
     const projectionAt = performance.now();
     if (!s) {
       console.warn('NativeNutrition: authoritative snapshot unavailable');
+      NativeTabs.flush('meals');
       return;
     }
     const generation = ++N.generation;
@@ -21955,6 +21990,7 @@ function lmcRender(){
       }
       N.open = true;
       N.blocked = false;
+      NativeTabs.flush('meals');
       setTimeout(scheduleSync, 160); /* settled bar, in case a scene from the previous tab got there late */
     } catch (e) {
       N.open = false;
@@ -21962,6 +21998,7 @@ function lmcRender(){
       console.warn('Native Nutrition open failed', e);
     } finally {
       if (N.generation === generation) N.opening = false;
+      NativeTabs.flush('meals');
     }
   }
 
@@ -22151,14 +22188,17 @@ function lmcRender(){
   const nav = navigate;
   navigate = function (destination) {
     const result = nav.apply(this, arguments);
-    if (destination !== 'meals' && (N.open || N.opening)) close();
+    if (destination !== 'meals' && (N.open || N.opening)) NativeTabs.leave('meals', destination, () => close());
     if (destination === 'meals') {
+      NativeTabs.cancel('meals');
       N.blocked = false;
       queueMicrotask(open);
     }
     if (destination === 'settings') syncSettings();
     return result;
   };
+
+  NativeTabs.cover('meals', () => !!plugin() && enabled());
 
   if (typeof renderMeals === 'function') {
     const original = renderMeals;
@@ -22183,6 +22223,7 @@ function lmcRender(){
 })();
 /* Character projection v1. Read-only domain boundary; edits stay in original web handlers. */
 (function () {
+  const NativeTabs = (typeof window !== "undefined" && window.NativeTabs) || { cover() {}, cancel() {}, leave(id, to, fn) { fn(); }, flush() {} };
   const session =
     "character-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
   const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -22343,7 +22384,7 @@ function lmcRender(){
   async function send() {
     if (!active) return;
     if (blocked()) {
-      await close();
+      NativeTabs.leave("character", lmaView(), () => close());
       return;
     }
     try {
@@ -22367,8 +22408,10 @@ function lmcRender(){
       opening ||
       blocked() ||
       (!force && lmaLoad().nativeCharacter !== true)
-    )
+    ) {
+      if (!opening) NativeTabs.flush("character");
       return false;
+    }
     opening = true;
     const openedAt = now();
     try {
@@ -22415,6 +22458,7 @@ function lmcRender(){
       }
       active = true;
       timer = setInterval(send, 15000);
+      NativeTabs.flush("character");
       setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
       return true;
     } catch (e) {
@@ -22423,13 +22467,19 @@ function lmcRender(){
       return false;
     } finally {
       opening = false;
+      NativeTabs.flush("character");
     }
   }
+  NativeTabs.cover("character", () => !!available() && lmaLoad().nativeCharacter === true);
   const nav = navigate;
   navigate = function (v) {
-    if (v !== "character" && (active || opening)) close();
+    if (v !== "character" && (active || opening))
+      NativeTabs.leave("character", v, () => close());
     const r = nav.apply(this, arguments);
-    if (v === "character") queueMicrotask(() => open(false));
+    if (v === "character") {
+      NativeTabs.cancel("character");
+      queueMicrotask(() => open(false));
+    }
     if (v === "settings") sync();
     return r;
   };
