@@ -49,6 +49,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativeOverviewPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeCharacterPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLogPlugin.class);
+        registerPlugin(com.lifemax.rpg.bridge.web.DeviceBackupPlugin.class);
         registerPlugin(NativeNutritionPlugin.class);
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);

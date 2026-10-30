@@ -4800,6 +4800,7 @@ html.light-theme .sd-more footer .pri{color:#fff}
           <h3>Automatic backup</h3>
           <p class="muted" style="font-size:12px;margin-top:-5px">Your data lives only on this phone. Pick a folder, such as Drive or Downloads, and a backup file is written there automatically.</p>
           <div id="lmaBakBody"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Android device backup</strong><div class="muted" style="font-size:12px">Let Android copy LifeMax, including journal and health entries, into your Google backup and to a new phone. Off keeps it on this phone; the backup folder above still works. A copy Android already made stays in your Google account until it expires or you delete it there.</div></div><input id="deviceBackupToggle" type="checkbox" class="check" onchange="setDeviceBackupAllowed(this.checked)" aria-label="Android device backup" disabled></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmaNotifCard">
           <h3>Notifications</h3>
@@ -22736,6 +22737,41 @@ function lmcRender(){
       revision++;
     },
   };
+})();
+/* Android device backup: whether Android may copy LifeMax's data (journal and health entries included) into the owner's
+   Google backup and to a new phone. Off by default. The choice lives on the Android side (DeviceBackupChoice), because
+   Android's backup agent reads it there; this only shows it and changes it from Settings. */
+(function () {
+  function plugin() {
+    return typeof lmaPlugin === "function" && lmaNative() ? lmaPlugin("DeviceBackup") : null;
+  }
+  async function sync() {
+    const input = document.getElementById("deviceBackupToggle");
+    if (!input) return;
+    const p = plugin();
+    let allowed = null; // null: unknown, so the switch cannot be used
+    if (p) {
+      try {
+        allowed = (await p.get()).allowed === true;
+      } catch (e) {
+        allowed = null;
+      }
+    }
+    input.checked = allowed === true;
+    input.disabled = allowed === null;
+  }
+  window.setDeviceBackupAllowed = async (on) => {
+    const p = plugin();
+    if (!p) return;
+    try {
+      const r = await p.set({ allowed: !!on });
+      toast(r.allowed ? "Android may now include LifeMax in your device backup" : "LifeMax is no longer included in new device backups");
+    } catch (e) {
+      toast("Could not change Android device backup");
+    }
+    await sync();
+  };
+  setTimeout(sync, 700);
 })();
 /* Last segment: reaching this line means every segment before it ran. A web build that was downloaded over the air counts
    as on trial until it reports here; if it never does (a broken build), Android drops it and goes back to the bundled one.

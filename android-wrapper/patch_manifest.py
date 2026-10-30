@@ -68,5 +68,15 @@ assert 'android:scheme="lifemax"' in xml and "android.app.shortcuts" in xml
 assert "category.HOME" in xml and "<queries>" in xml and "REQUEST_INSTALL_PACKAGES" in xml and "health.READ_STEPS" in xml and "SHOW_PERMISSIONS_RATIONALE" in xml and "RECORD_AUDIO" in xml and "READ_CALENDAR" in xml and "RecognitionService" in xml, "manifest patch failed"
 if 'feature.cash.CashActivity' not in xml:
     xml = xml.replace('</application>', '<activity android:name="com.lifemax.rpg.feature.cash.CashActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" android:windowSoftInputMode="adjustResize" android:theme="@android:style/Theme.Material.NoActionBar" />\n    </application>')
+# Device backup is the owner's choice, off by default: Android may back the app up, but DeviceBackupAgent hands it
+# nothing unless Settings allows it, and the rules keep the over-the-air web bundle out of every copy.
+backup = (
+    'android:allowBackup="true" android:fullBackupOnly="true"'
+    ' android:backupAgent="com.lifemax.rpg.core.platform.DeviceBackupAgent"'
+    ' android:fullBackupContent="@xml/backup_rules" android:dataExtractionRules="@xml/data_extraction_rules"'
+)
+xml = re.sub(r'\s+android:(allowBackup|fullBackupOnly|backupAgent|fullBackupContent|dataExtractionRules)="[^"]*"', "", xml)
+xml = re.sub(r"<application\b", "<application " + backup, xml, count=1)
+assert xml.count("DeviceBackupAgent") == 1 and xml.count("allowBackup") == 1
 open(path, "w", encoding="utf-8").write(xml)
 

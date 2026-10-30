@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older: what Auto Backup copies when the owner allows device backup (DeviceBackupAgent).
+     Everything except the over-the-air web bundle and its state, which belong to the APK installed on this phone. -->
+<full-backup-content>
+    <exclude domain="file" path="live/" />
+    <exclude domain="sharedpref" path="lifemax_live.xml" />
+</full-backup-content>
