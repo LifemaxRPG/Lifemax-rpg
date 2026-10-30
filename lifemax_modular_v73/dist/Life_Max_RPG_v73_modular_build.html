@@ -5177,7 +5177,7 @@ function writeSave(){
  if(saveReadOnly){if(!saveReadOnlyTold){saveReadOnlyTold=true;const why=saveReadOnly;setTimeout(()=>alert(why),2500)}return false}
  try{localStorage.setItem(STORE,JSON.stringify(state));return true}catch(e){console.warn('[save] not stored',e);return false}
 }
-function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();checkLevelUps();const saved=writeSave();if(!saved&&!saveReadOnly)toast("Could not save to this browser (storage full?)");renderAll();return saved}
+function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();const saved=writeSave();if(saved)checkLevelUps();if(!saved&&!saveReadOnly)toast("Could not save to this browser (storage full?)");renderAll();return saved}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
@@ -5446,7 +5446,7 @@ async function backupBeforeReplacing(what){saveReplacing=true;try{return await l
    activities, takes a verified folder backup and keeps a safety copy first, and brings an older backup up to SAVE_SCHEMA the way
    load() does. All or nothing: when the new save cannot be stored, the stored one is loaded back. */
 async function applyBackup(data,fromOnboarding){const imported=backupSave(data);if(!imported)return {ok:false,message:'Could not import this file. Please choose a Life Max JSON backup.'};const schema=Number(imported.schema)||0;if(schema>SAVE_SCHEMA)return {ok:false,message:'This backup was made by a newer version of LifeMax. Install the latest update, then import it again.'};if(saveReplacing)return {ok:false,message:'An import or reset is already under way.'};const cur=(state.activities||[]).length;if(cur>0&&!confirm('Replace your current data ('+cur+' activities) with this backup ('+imported.activities.length+' activities)? Your current data is kept as a safety copy on this device.'))return {ok:false,message:'Import cancelled',cancelled:true};if(!await backupBeforeReplacing('import'))return {ok:false,message:'Import cancelled',cancelled:true};if(!keepSafetyCopy('import'))return {ok:false,message:'Could not keep a safety copy of your current data, so nothing was imported.'};state={...freshState(),...imported,schema};if(fromOnboarding===true)state.onboardingComplete=true;prevSnap=null;rules={...structuredClone(DEFAULT_RULES),...(data.rules||state.customRules||{})};try{migrateSave()}catch(e){console.warn('[import] migration failed',e);load();return {ok:false,message:'This backup could not be brought up to date, so nothing was imported.'}}saveReadOnly='';if(!save()){load();renderAll();return {ok:false,message:'Could not save the imported data (storage full?), so nothing was imported.'}}const more=lmaRestoreExtras(data.extras);return {ok:true,message:'Backup imported',reload:!!more||fromOnboarding===true}}
-function importData(e,fromOnboarding){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{let data=null;try{data=JSON.parse(reader.result)}catch(err){}const r=await applyBackup(data,fromOnboarding);if(r.ok){toast(r.message);if(r.reload)setTimeout(()=>location.reload(),500)}else if(!r.cancelled)alert(r.message);e.target.value=''};reader.readAsText(file)}
+function importData(e,fromOnboarding){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{let data=null;try{data=JSON.parse(reader.result)}catch(err){}const r=await applyBackup(data,fromOnboarding);if(r.ok){toast(r.message);if(r.reload){if(typeof lmaLeaveNative==='function')await lmaLeaveNative();setTimeout(()=>location.reload(),500)}}else if(!r.cancelled)alert(r.message);e.target.value=''};reader.readAsText(file)}
 async function resetDemo(){if(saveReplacing){toast('An import or reset is already under way');return}if(!confirm('Reset to a clean starter profile? This replaces the current local data. Export a backup first if needed.'))return;if(!await backupBeforeReplacing('reset'))return;if(!keepSafetyCopy('reset')){alert('Could not keep a safety copy of your current data, so nothing was reset.');return}state=freshState();rules=structuredClone(DEFAULT_RULES);saveReadOnly='';if(!save()){load();renderAll();alert('Could not save the starter profile (storage full?), so nothing was reset.');return}toast('Starter profile restored')}
 function deleteAll(){if(!confirm('Delete all Life Max data saved in this browser? This cannot be undone. Export a backup first if needed.'))return;Object.keys(localStorage).filter(k=>k===STORE||k.startsWith(STORE+'_')).forEach(k=>localStorage.removeItem(k));state=freshState();rules=structuredClone(DEFAULT_RULES);saveReadOnly='';save();toast('Local data cleared')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -14135,7 +14135,7 @@ async function lmaCheckUpdate(silent){
 /* a web-only update: back up first, then download it quietly, check it, and keep it ready (it starts on the next launch, or now if
    you tap Restart). Unasked (at launch), a failed backup leaves the update waiting in Settings instead. */
 async function lmaWebUpdate(ask){
- const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||['backup','webdl'].includes(lmaUpd.state))return;   /* one at a time, its backup included; native refuses a second download too */
+ const L=lmaPlugin('LiveWeb'),i=lmaUpd.info;if(!L||!i||LMA_UPD_BUSY.includes(lmaUpd.state))return;   /* one at a time, its backup included; native refuses a second download too */
  if(lmaUpd.live&&lmaUpd.live.staged===i.webBuild){lmaUpd.state='webready';lmaRenderUpdates();lmaWebPill();return}
  lmaUpd.state='backup';lmaRenderUpdates();
  if(!await lmaBackupFirst('update',ask)){lmaUpd.state='web';lmaUpd.err='It was not downloaded, because the backup before it failed.';lmaRenderUpdates();return}
@@ -14148,11 +14148,15 @@ async function lmaWebUpdate(ask){
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}
  lmaRenderUpdates();
 }
+/* the page is about to reload: leave a native tab for Settings (which none covers, so nothing reopens) and close every native screen */
+async function lmaLeaveNative(){if(!window.NativeTabs)return;if(NativeTabs.covered(lmaView()))lmaNavTo('settings',{fast:true});await NativeTabs.closeAll()}
 async function lmaWebRestart(){
- const L=lmaPlugin('LiveWeb');if(!L)return;
- const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
- if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
- try{await L.restart()}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140);lmaRenderUpdates()}
+ const L=lmaPlugin('LiveWeb');if(!L||LMA_UPD_BUSY.includes(lmaUpd.state))return;
+ lmaUpd.state='backup';lmaRenderUpdates();
+ if(!await lmaBackupFirst('update')){lmaUpd.state='webready';lmaRenderUpdates();return}
+ await lmaLeaveNative();   /* the backup took seconds, in which a native tab may have opened */
+ try{await L.restart();lmaUpd.state='webready'}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}   /* still here: the switch has not happened yet */
+ lmaRenderUpdates();
 }
 /* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
 function lmaPill(text,label,go,dismiss){
@@ -14165,7 +14169,7 @@ function lmaPill(text,label,go,dismiss){
 /* the update is downloaded: restart whenever you like */
 function lmaWebPill(){if(!lmaUpd.pillGone)lmaPill('Update ready','Restart',lmaWebRestart,()=>{lmaUpd.pillGone=true})}
 async function lmaInstallUpdate(){
- const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||['backup','downloading'].includes(lmaUpd.state))return;
+ const U=lmaPlugin('Updater');if(!U||!lmaUpd.info||LMA_UPD_BUSY.includes(lmaUpd.state))return;
  const was=lmaUpd.state;lmaUpd.state='backup';lmaRenderUpdates();
  if(!await lmaBackupFirst('update')){lmaUpd.state=was;lmaRenderUpdates();return}
  if(!lmaUpdBound){lmaUpdBound=true;try{U.addListener('progress',e=>{lmaUpd.pct=e&&e.pct>=0?e.pct:-1;lmaRenderUpdates()})}catch(e){}}
@@ -14294,7 +14298,7 @@ function lmaRenderBackup(){
 /* Once, gently: with no folder chosen, a pill on a page the owner can see points to Settings. */
 function lmaBackupAsk(){
  const b=lmaLoad().backup,v=lmaView();
- if(!lmaNative()||b.uri||b.asked||v==='settings'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;
+ if(!lmaNative()||b.uri||b.asked||v==='settings'||v==='money'||document.querySelector('#onboarding.show,#tutorial.show')||(window.NativeTabs&&NativeTabs.covered(v)))return;   /* Cash always opens natively on Android */
  if(lmaPill('Your progress has no backup yet','Settings',lmaOpenBackupSettings)){b.asked=Date.now();lmaSave()}
 }
 function lmaOpenBackupSettings(){setPickCat('phone');lmaNavTo('settings',{fast:true});document.getElementById('lmaBakCard')?.scrollIntoView({block:'start'})}
@@ -21357,6 +21361,8 @@ function lmDlRun(link){
   if(link.kind==='quests'){lmvGo({id:'quests'});return true}
   if(link.kind==='schedule'){
    if(!link.title){lmvGo({id:'dashboard'});return true}
+   /* the preview is drawn on the page: leave a full-screen native tab for the Overview, which leaves the page showing */
+   var cv=lmaView();if(window.NativeTabs&&cv!=='dashboard'&&NativeTabs.covered(cv))lmaNavTo('dashboard',{fast:true});
    try{lmvBuildUI();lmvHudOpen(true)}catch(e){}
    LifeMaxVoice.fromLink('Put '+link.title+' on my schedule'+(link.description?' ('+link.description+')':''));
    return true;
@@ -21665,6 +21671,9 @@ function lmcRender(){
       A moment after the last tab change, once nothing is in flight, the tab for the current view must be showing and no other native
       tab may be; if not, this repairs it (a rapid run of taps can leave a screen cancelled, or a stale one behind). */
    register(view,tab){tabs.set(view,tab)},
+   /* Closes every native screen and waits for each: the page is about to reload under them (an over-the-air restart, an import),
+      and a screen left open would stay on top of the new page, which does not know it is there. */
+   closeAll(){this.flush();return Promise.allSettled([...tabs.values()].map(t=>t.close()))},
    has(view){return tabs.has(view)},
    heal(tries=0){
     ct(healTimer);
@@ -22024,7 +22033,7 @@ function lmcRender(){
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
-        entered = true;
+        if (!active) entered = true; // choosing the tab again while its screen shows is not a new arrival
         NativeTabs.cancel(cfg.id);
         queueMicrotask(() => open(false));
       }
@@ -23210,8 +23219,9 @@ function lmcRender(){
   const commands = {
     /** tick or clear one set, like the page's checkbox. The set ends as asked, so repeating the command changes nothing; a day
         completed by it pays its XP once (planToggle keeps the session's activity id). A failed save leaves the change in memory,
-        as the page's own checkbox does, with what the save set off (badges, a daily-hand quest), and the next save stores it all:
-        the reply says nothing was saved, and the projection sent with it shows the boxes as the page holds them. */
+        as the page's own checkbox does, with what the save set off (badges, a daily-hand quest), for the next save that succeeds
+        (none while the save is read-only): the reply says nothing was saved and why, and the projection sent with it shows the
+        boxes as the page holds them. */
     toggle(c) {
       const d = validDay(c.date),
         it = d && d.items.find((x) => x.k === c.key),
@@ -23223,7 +23233,8 @@ function lmcRender(){
       if (!!((pcheck(c.date).s || {})[c.key] || [])[i] === checked) return { ok: true, changed: false };
       // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
       const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
-      if (!result.saved) return { ok: false, message: "Could not save to this browser (storage full?)" };
+      if (!result.saved)
+        return { ok: false, message: saveReadOnly ? "Not saved: this version is read-only for your save" : "Could not save to this browser (storage full?)" };
       if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
       return {
         ok: true,
