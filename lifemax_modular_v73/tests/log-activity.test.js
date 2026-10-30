@@ -41,7 +41,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const e = await p.evaluate(() => { state = freshState(); const x = recordActivity({ type: 'reading', duration: '2', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' }); return { ok: x.ok, n: state.activities.length, msg: x.message } });
   ok('a too-short session is refused with the same message and saves nothing', e.ok === false && e.n === 0 && /5 minutes/.test(e.msg), e);
   /* data safety: what a native Submit relies on */
-  const safety = await p.evaluate(() => {
+  const safety = await p.evaluate(async () => {
     const out = {}; const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
     // a replayed or double-tapped submit with the same operation id pays out once
     state = freshState(); const a = recordActivity({ ...d, opId: 'op-1' }), xp1 = JSON.stringify(state.attrXP), n1 = state.activities.length;
@@ -54,18 +54,21 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     let r; try { state = freshState(); r = recordActivity(d) } finally { Storage.prototype.setItem = real }
     out.failure = r.ok === false && /Could not save/.test(r.message);
     out.saveReturns = (save() === true);
-    // an unreadable save is copied aside before a blank profile is written over it
-    localStorage.removeItem(STORE + '_unreadable'); localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
-    load(); out.stashed = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
+    // an unreadable save is copied aside under its own key before a blank profile is written over it
+    const copies = () => Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).sort().map(k => localStorage.getItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(STORE, '{"name":"Real hero","activities":[');
+    load(); out.stashed = copies()[0] === '{"name":"Real hero","activities":[';
     out.blankStarted = state.name !== 'Real hero';
+    await new Promise(r => setTimeout(r, 5));
     localStorage.setItem(STORE, '{"still":"broken'); load();
-    out.firstCopyKept = localStorage.getItem(STORE + '_unreadable') === '{"name":"Real hero","activities":[';
-    localStorage.removeItem(STORE + '_unreadable');
+    out.firstCopyKept = JSON.stringify(copies()) === JSON.stringify(['{"name":"Real hero","activities":[', '{"still":"broken']);
+    Object.keys(localStorage).filter(k => k.startsWith(STORE + '_unreadable')).forEach(k => localStorage.removeItem(k));
     return out;
   });
   ok('the same operation id pays out once; a different one is a new entry; no id behaves as before', safety.once && safety.differentOpAdds && safety.noOpIdUnchanged, safety);
   ok('a failed write is reported as a failure, and save() says whether it worked', safety.failure && safety.saveReturns, safety);
-  ok('an unreadable save is copied aside before a blank profile is written, and the first copy is never replaced', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
+  ok('an unreadable save is copied aside before a blank profile is written, and a later one gets its own copy', safety.stashed && safety.blankStarted && safety.firstCopyKept, safety);
   /* a failed save is taken back out, so a retry really retries; and the whole-save replacements keep a safety copy */
   const more = await p.evaluate(() => {
     const out = {}, d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };

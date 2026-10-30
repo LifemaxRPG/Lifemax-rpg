@@ -1,0 +1,671 @@
+{
+  "app": "Life Max RPG Prototype",
+  "version": 1,
+  "exportedAt": "2026-10-30T09:00:00.000Z",
+  "state": {
+    "schema": 1,
+    "name": "Synthetic Hero",
+    "build": "The Life Architect",
+    "classId": "athlete",
+    "activities": [],
+    "attrXP": {
+      "physique": 0,
+      "endurance": 0,
+      "intelligence": 0,
+      "business": 0,
+      "social": 0,
+      "discipline": 0,
+      "adventure": 0,
+      "wellbeing": 0
+    },
+    "skillXP": {},
+    "quests": [
+      {
+        "name": "Hydration Target Met",
+        "desc": "Log adequate water intake across the day to support athletic performance and muscle recovery.",
+        "cadence": "daily",
+        "xp": 10,
+        "kind": "hydration",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_03"
+      },
+      {
+        "name": "Three Strength Sessions",
+        "desc": "Complete three planned resistance-training workouts across the week.",
+        "cadence": "weekly",
+        "xp": 40,
+        "kind": "strength",
+        "attribute": "physique",
+        "stage": 1,
+        "id": "cc_athlete_07"
+      },
+      {
+        "name": "Endurance Progression Block",
+        "desc": "Log two dedicated cardiovascular conditioning sessions of 25 minutes or more this week.",
+        "cadence": "weekly",
+        "xp": 35,
+        "kind": "endurance",
+        "attribute": "endurance",
+        "stage": 1,
+        "id": "cc_athlete_08"
+      },
+      {
+        "name": "Active Recovery Execution",
+        "desc": "Complete one full restorative mobility or light walking session on your designated recovery day.",
+        "cadence": "weekly",
+        "xp": 25,
+        "kind": "recovery",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_09"
+      },
+      {
+        "name": "Weekly Training Log Audit",
+        "desc": "Review all completed exercises, repetitions, and weights used to plan the upcoming week.",
+        "cadence": "weekly",
+        "xp": 25,
+        "kind": "audit",
+        "attribute": "discipline",
+        "stage": 1,
+        "id": "cc_athlete_10"
+      },
+      {
+        "name": "Full Program Adherence",
+        "desc": "Complete every scheduled training session and prescribed rest day without skipping.",
+        "cadence": "weekly",
+        "xp": 45,
+        "kind": "consistency",
+        "attribute": "discipline",
+        "stage": 1,
+        "id": "cc_athlete_11"
+      },
+      {
+        "name": "First Training Block Complete",
+        "desc": "Complete two full consecutive weeks of structured strength and cardio sessions.",
+        "cadence": "epic",
+        "xp": 70,
+        "kind": "milestone",
+        "attribute": "physique",
+        "stage": 1,
+        "id": "cc_athlete_12"
+      },
+      {
+        "name": "Foundational Form Audit",
+        "desc": "Record and review your lifting form across squat, hinge, push, and pull patterns for technical precision.",
+        "cadence": "epic",
+        "xp": 75,
+        "kind": "milestone",
+        "attribute": "discipline",
+        "stage": 1,
+        "id": "cc_athlete_13"
+      },
+      {
+        "name": "Four-Week Iron Consistency",
+        "desc": "Complete 4 consecutive weeks of regular resistance training without missing a planned session.",
+        "cadence": "epic",
+        "xp": 85,
+        "kind": "milestone",
+        "attribute": "physique",
+        "stage": 2,
+        "id": "cc_athlete_14"
+      },
+      {
+        "name": "Aerobic Engine Builder",
+        "desc": "Log a cumulative total of 10 hours of dedicated aerobic conditioning.",
+        "cadence": "epic",
+        "xp": 90,
+        "kind": "milestone",
+        "attribute": "endurance",
+        "stage": 2,
+        "id": "cc_athlete_15"
+      },
+      {
+        "name": "Mid-Program Deload Mastery",
+        "desc": "Execute a planned recovery deload week with reduced training volume and strict sleep adherence.",
+        "cadence": "epic",
+        "xp": 100,
+        "kind": "milestone",
+        "attribute": "wellbeing",
+        "stage": 3,
+        "id": "cc_athlete_16"
+      },
+      {
+        "name": "50 Sessions Logged",
+        "desc": "Accumulate 50 fully documented workout and conditioning sessions in your training log.",
+        "cadence": "epic",
+        "xp": 110,
+        "kind": "milestone",
+        "attribute": "physique",
+        "stage": 3,
+        "id": "cc_athlete_17"
+      },
+      {
+        "name": "Two-Month Complete Cycle",
+        "desc": "Finish an entire 8-week structured athletic training program from start to finish.",
+        "cadence": "epic",
+        "xp": 125,
+        "kind": "milestone",
+        "attribute": "physique",
+        "stage": 4,
+        "id": "cc_athlete_18"
+      },
+      {
+        "name": "Endurance Milestone Block",
+        "desc": "Complete 20 separate aerobic conditioning sessions of 30 minutes or more across training cycles.",
+        "cadence": "epic",
+        "xp": 130,
+        "kind": "milestone",
+        "attribute": "endurance",
+        "stage": 4,
+        "id": "cc_athlete_19"
+      },
+      {
+        "name": "The 100-Workout Century",
+        "desc": "Log 100 verified training sessions across your athletic journey.",
+        "cadence": "epic",
+        "xp": 150,
+        "kind": "milestone",
+        "attribute": "physique",
+        "stage": 5,
+        "id": "cc_athlete_20"
+      },
+      {
+        "name": "Master Athletic Foundation",
+        "desc": "Maintain documented weekly training adherence and structured recovery for 16 consecutive weeks.",
+        "cadence": "epic",
+        "xp": 150,
+        "kind": "milestone",
+        "attribute": "wellbeing",
+        "stage": 5,
+        "id": "cc_athlete_21"
+      },
+      {
+        "name": "Pre-Workout Glycogen Top-Off",
+        "desc": "Consume a complex carbohydrate-rich meal or snack 60 to 90 minutes before your workout.",
+        "cadence": "daily",
+        "xp": 15,
+        "kind": "nutrition",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_nutrition_01"
+      },
+      {
+        "name": "Post-Training Protein Window",
+        "desc": "Consume at least 30g of high-quality protein within 90 minutes of finishing resistance training.",
+        "cadence": "daily",
+        "xp": 15,
+        "kind": "nutrition",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_nutrition_02"
+      },
+      {
+        "name": "Hydration Balance Check",
+        "desc": "Ensure your baseline water intake meets your target range before starting evening relaxation.",
+        "cadence": "daily",
+        "xp": 10,
+        "kind": "nutrition",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_nutrition_03"
+      },
+      {
+        "name": "Even Protein Distribution",
+        "desc": "Distribute protein intake across at least three distinct meals containing 25g+ each.",
+        "cadence": "daily",
+        "xp": 15,
+        "kind": "nutrition",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_nutrition_04"
+      },
+      {
+        "name": "Sunday Athletic Fuel Prep",
+        "desc": "Batch-cook at least two complex carb sources and two lean protein portions for the upcoming training week.",
+        "cadence": "weekly",
+        "xp": 35,
+        "kind": "nutrition",
+        "attribute": "wellbeing",
+        "stage": 1,
+        "id": "cc_athlete_nutrition_05"
+      },
+      {
+        "id": "dh_2026-10-30_0_0",
+        "hand": true,
+        "slot": 0,
+        "tpl": "t5",
+        "name": "Bodyweight circuit",
+        "desc": "Three rounds: push-ups, squats, plank.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "physique",
+        "verify": "self",
+        "tier": 2
+      },
+      {
+        "id": "dh_2026-10-30_1_0",
+        "hand": true,
+        "slot": 1,
+        "tpl": "t52",
+        "name": "Eat something green",
+        "desc": "Add vegetables to a meal.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "wellbeing",
+        "verify": "self",
+        "tier": 2
+      },
+      {
+        "id": "dh_2026-10-30_2_0",
+        "hand": true,
+        "slot": 2,
+        "tpl": "t26",
+        "name": "Plan the week's needle-mover",
+        "desc": "Pick the single task that matters most this week.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "business",
+        "verify": "self",
+        "tier": 2
+      }
+    ],
+    "questDone": {},
+    "benchmarks": [],
+    "mediaItems": [
+      {
+        "id": "reading_atomic_habits",
+        "title": "Atomic Habits",
+        "type": "Book",
+        "creator": "James Clear",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 1: Foundation | Attribute: Willpower"
+      },
+      {
+        "id": "reading_cant_hurt_me",
+        "title": "Can't Hurt Me",
+        "type": "Book",
+        "creator": "David Goggins",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 1: Foundation | Attribute: Willpower"
+      },
+      {
+        "id": "reading_outlive",
+        "title": "Outlive",
+        "type": "Book",
+        "creator": "Peter Attia",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 1: Foundation | Attribute: Health"
+      },
+      {
+        "id": "reading_meditations",
+        "title": "Meditations",
+        "type": "Book",
+        "creator": "Marcus Aurelius — Gregory Hays translation",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 1: Foundation | Attribute: Wisdom"
+      },
+      {
+        "id": "reading_deep_work",
+        "title": "Deep Work",
+        "type": "Book",
+        "creator": "Cal Newport",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 1: Foundation | Attribute: Intellect"
+      },
+      {
+        "id": "reading_how_to_win_friends",
+        "title": "How to Win Friends and Influence People",
+        "type": "Book",
+        "creator": "Dale Carnegie",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 2: People and Mind | Attribute: Charisma"
+      },
+      {
+        "id": "reading_never_split_difference",
+        "title": "Never Split the Difference",
+        "type": "Book",
+        "creator": "Chris Voss",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 2: People and Mind | Attribute: Charisma"
+      },
+      {
+        "id": "reading_crucial_conversations",
+        "title": "Crucial Conversations",
+        "type": "Book",
+        "creator": "Patterson et al.",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 2: People and Mind | Attribute: Social"
+      },
+      {
+        "id": "reading_thinking_fast_slow",
+        "title": "Thinking, Fast and Slow",
+        "type": "Book",
+        "creator": "Daniel Kahneman",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 2: People and Mind | Attribute: Intellect"
+      },
+      {
+        "id": "reading_sapiens",
+        "title": "Sapiens",
+        "type": "Book",
+        "creator": "Yuval Noah Harari",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 2: People and Mind | Attribute: Intellect"
+      },
+      {
+        "id": "reading_psychology_money",
+        "title": "The Psychology of Money",
+        "type": "Book",
+        "creator": "Morgan Housel",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 3: Building | Attribute: Wealth"
+      },
+      {
+        "id": "reading_simple_path_wealth",
+        "title": "The Simple Path to Wealth",
+        "type": "Book",
+        "creator": "JL Collins",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 3: Building | Attribute: Wealth"
+      },
+      {
+        "id": "reading_mastery",
+        "title": "Mastery",
+        "type": "Book",
+        "creator": "Robert Greene",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 3: Building | Attribute: Career"
+      },
+      {
+        "id": "reading_war_of_art",
+        "title": "The War of Art",
+        "type": "Book",
+        "creator": "Steven Pressfield",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 3: Building | Attribute: Creativity"
+      },
+      {
+        "id": "reading_almanack_naval",
+        "title": "The Almanack of Naval Ravikant",
+        "type": "Book",
+        "creator": "Eric Jorgenson",
+        "status": "unread",
+        "link": "",
+        "notes": "Month 3: Building | Attributes: Wealth and Wisdom"
+      }
+    ],
+    "customRules": {
+      "reading": {
+        "name": "Focused reading / study",
+        "icon": "book",
+        "base": 24,
+        "skill": "Knowledge",
+        "primary": "intelligence",
+        "secondary": "discipline",
+        "desc": "Practice focused learning"
+      },
+      "business": {
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "base": 25,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "discipline",
+        "desc": "Build something valuable"
+      },
+      "strength": {
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "base": 28,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "discipline",
+        "desc": "Strength and resistance training"
+      },
+      "running": {
+        "name": "Run / cardio",
+        "icon": "heart",
+        "base": 26,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "wellbeing",
+        "desc": "Cardio or running session"
+      },
+      "language": {
+        "name": "Language practice",
+        "icon": "chat",
+        "base": 24,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "social",
+        "desc": "Build a language skill"
+      },
+      "recovery": {
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "base": 16,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "endurance",
+        "desc": "Complete a planned recovery routine"
+      },
+      "practical": {
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "base": 24,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "intelligence",
+        "desc": "Practice a useful hands-on skill"
+      },
+      "task": {
+        "name": "Difficult planned task",
+        "icon": "target",
+        "base": 20,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "business",
+        "desc": "Follow through on a meaningful task"
+      },
+      "custom": {
+        "name": "Custom activity",
+        "icon": "star",
+        "base": 20,
+        "skill": "Custom Skill",
+        "primary": "adventure",
+        "secondary": "",
+        "desc": "Your own activity"
+      }
+    },
+    "tutorialDone": true,
+    "tipsSeen": {},
+    "created": "2026-10-30T12:09:44.937Z",
+    "onboardingComplete": true,
+    "legacyCharXPBonus": 0,
+    "decayApplied": {
+      "physique": 20756,
+      "endurance": 20756,
+      "intelligence": 20756,
+      "business": 20756,
+      "social": 20756,
+      "discipline": 20756,
+      "adventure": 20756,
+      "wellbeing": 20756
+    },
+    "money": {
+      "account": "",
+      "start": 0,
+      "goal": 0,
+      "tx": [],
+      "peakBalance": 0,
+      "pay": {
+        "on": false,
+        "freq": "biweekly",
+        "next": "",
+        "lag": 0,
+        "tax": 0,
+        "from": "2026-10-30"
+      },
+      "jobs": {},
+      "pending": [],
+      "seen": {}
+    },
+    "sparks": 0,
+    "xpSchemaV2": true,
+    "mediaSeededV1": true,
+    "classContent": "athlete",
+    "prevVisit": null,
+    "lastVisit": 1793362184952,
+    "shieldTick": 20755,
+    "decayLog": [],
+    "badges": {},
+    "dayReflections": {},
+    "foodLog": [],
+    "customFoods": [],
+    "mealsMeta": {
+      "calGoal": 0,
+      "sd": {
+        "diet": "standard",
+        "level": "auto",
+        "veg": false,
+        "df": false,
+        "over": {},
+        "shop": {}
+      }
+    },
+    "journalCoach": {
+      "days": {},
+      "reviews": {},
+      "cooldown": {},
+      "pats": {},
+      "welcome": {}
+    },
+    "dhMig": 1,
+    "dailyDraw": {
+      "date": "2026-10-30",
+      "nonce": 0,
+      "rerollsUsed": 0,
+      "cards": [
+        {
+          "tpl": "t5",
+          "id": "dh_2026-10-30_0_0",
+          "n": 0
+        },
+        {
+          "tpl": "t52",
+          "id": "dh_2026-10-30_1_0",
+          "n": 0
+        },
+        {
+          "tpl": "t26",
+          "id": "dh_2026-10-30_2_0",
+          "n": 0
+        }
+      ]
+    }
+  },
+  "rules": {
+    "reading": {
+      "name": "Focused reading / study",
+      "icon": "book",
+      "base": 24,
+      "skill": "Knowledge",
+      "primary": "intelligence",
+      "secondary": "discipline",
+      "desc": "Practice focused learning"
+    },
+    "business": {
+      "name": "Focused business work",
+      "icon": "briefcase",
+      "base": 25,
+      "skill": "Entrepreneurship",
+      "primary": "business",
+      "secondary": "discipline",
+      "desc": "Build something valuable"
+    },
+    "strength": {
+      "name": "Strength workout",
+      "icon": "dumbbell",
+      "base": 28,
+      "skill": "Lifting",
+      "primary": "physique",
+      "secondary": "discipline",
+      "desc": "Strength and resistance training"
+    },
+    "running": {
+      "name": "Run / cardio",
+      "icon": "heart",
+      "base": 26,
+      "skill": "Running",
+      "primary": "endurance",
+      "secondary": "wellbeing",
+      "desc": "Cardio or running session"
+    },
+    "language": {
+      "name": "Language practice",
+      "icon": "chat",
+      "base": 24,
+      "skill": "Spanish",
+      "primary": "intelligence",
+      "secondary": "social",
+      "desc": "Build a language skill"
+    },
+    "recovery": {
+      "name": "Sleep / recovery routine",
+      "icon": "moon",
+      "base": 16,
+      "skill": "Recovery Routine",
+      "primary": "wellbeing",
+      "secondary": "endurance",
+      "desc": "Complete a planned recovery routine"
+    },
+    "practical": {
+      "name": "Practical skill practice",
+      "icon": "mountain",
+      "base": 24,
+      "skill": "Practical Skills",
+      "primary": "adventure",
+      "secondary": "intelligence",
+      "desc": "Practice a useful hands-on skill"
+    },
+    "task": {
+      "name": "Difficult planned task",
+      "icon": "target",
+      "base": 20,
+      "skill": "Execution",
+      "primary": "discipline",
+      "secondary": "business",
+      "desc": "Follow through on a meaningful task"
+    },
+    "custom": {
+      "name": "Custom activity",
+      "icon": "star",
+      "base": 20,
+      "skill": "Custom Skill",
+      "primary": "adventure",
+      "secondary": "",
+      "desc": "Your own activity"
+    }
+  },
+  "extras": {
+    "lifemax_director_state_v1": "{\"schemaVersion\":1,\"playerId\":\"lm_0oakph9v9602\",\"createdEpoch\":1793362185,\"updatedEpoch\":1793362185,\"setupComplete\":false,\"availability\":{\"timezone\":\"UTC\",\"sleepRequirementMinutes\":480,\"rules\":[],\"blackouts\":[]},\"fixedCommitments\":[],\"goals\":[],\"prefs\":{},\"schedule\":null,\"ledger\":{\"schemaVersion\":1,\"playerId\":\"lm_0oakph9v9602\",\"events\":{},\"order\":[],\"bounties\":{},\"penalties\":{},\"restTokens\":1,\"completionsSinceToken\":0,\"consecutiveMisses\":0,\"consequencesByBwc\":{},\"regroupActive\":false,\"streaks\":{}},\"changeLog\":[],\"energyCheckin\":null,\"questOverlay\":{},\"labQuests\":[],\"bridge\":{\"enabled\":false,\"source\":null,\"mapping\":null},\"lastGeneratedWeekKey\":null,\"ui\":{\"tab\":\"today\"},\"hostSync\":{\"cursor\":null,\"seen\":{}},\"fixes\":{\"earlyDone\":1}}"
+  }
+}

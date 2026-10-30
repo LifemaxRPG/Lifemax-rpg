@@ -19,7 +19,7 @@ function finishTutorial(){
   ensureTipsState();
   state.tutorialDone=true;
   // Persist without full save side-effects spam
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   const el=document.getElementById('tutorial');
   if(el){el.classList.remove('show');el.setAttribute('aria-hidden','true')}
   document.body.classList.remove('noscroll');
@@ -76,7 +76,7 @@ const FEATURE_TIPS={
 function dismissFeatureTip(key){
   ensureTipsState();
   state.tipsSeen[key]=true;
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   document.querySelectorAll('[data-feature-tip="'+key+'"]').forEach(n=>n.remove());
 }
 
@@ -84,7 +84,7 @@ function resetTips(){
   ensureTipsState();
   state.tipsSeen={};
   state.tutorialDone=false;
-  try{state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}catch(e){}
+  state.customRules=rules;writeSave();
   document.querySelectorAll('[data-feature-tip]').forEach(n=>n.remove());
   toast('Tips reset · tutorial will show next');
   setTimeout(startTutorial,300);
@@ -112,7 +112,7 @@ function maybeShowFeatureTip(view){
 
 function initOnboarding(){if(shouldShowOnboarding()){onboardingPreviewMode=false;populateOnboardingFromState();const modal=document.getElementById('onboarding');modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}}
 
-initTheme();load();usdaCount().then(n=>{if(n)usdaStatus('USDA database ready · '+n.toLocaleString()+' foods stored on this device')}).catch(()=>{});wireAudioElement();markVisit();const _dc=applyDecay();if(_dc){state.customRules=rules;localStorage.setItem(STORE,JSON.stringify(state))}prevSnap=snapshot();checkBadges(true);renderAll();activityPresetChanged();initOnboarding();if(!shouldShowOnboarding()&&shouldShowTutorial())setTimeout(startTutorial,500);else if(!shouldShowOnboarding())setTimeout(()=>maybeShowFeatureTip(document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard'),400);if(_dc)setTimeout(()=>toast('Decay applied · see Decay watch'),600);
+initTheme();load();usdaCount().then(n=>{if(n)usdaStatus('USDA database ready · '+n.toLocaleString()+' foods stored on this device')}).catch(()=>{});wireAudioElement();markVisit();const _dc=applyDecay();if(_dc){state.customRules=rules;writeSave()}prevSnap=snapshot();checkBadges(true);renderAll();activityPresetChanged();initOnboarding();if(!shouldShowOnboarding()&&shouldShowTutorial())setTimeout(startTutorial,500);else if(!shouldShowOnboarding())setTimeout(()=>maybeShowFeatureTip(document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard'),400);if(_dc)setTimeout(()=>toast('Decay applied · see Decay watch'),600);
 
 function dcHash(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
 const DC_KEY='lifeMaxDevChat',DC_WHO={You:'#7c9cff',Claude:'#d97757',ChatGPT:'#10a37f',Grok:'#8a94a6'},DC_CANON={you:'You',me:'You',owner:'You',claude:'Claude',chatgpt:'ChatGPT',gpt:'ChatGPT',grok:'Grok'};

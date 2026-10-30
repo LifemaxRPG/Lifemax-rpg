@@ -1,0 +1,1456 @@
+{
+  "app": "Life Max RPG Prototype",
+  "version": 1,
+  "exportedAt": "2024-09-15T08:00:00.000Z",
+  "rules": {
+    "reading": {
+      "name": "Focused reading / study",
+      "icon": "book",
+      "base": 24,
+      "skill": "Knowledge",
+      "primary": "intelligence",
+      "secondary": "discipline",
+      "desc": "Practice focused learning"
+    },
+    "business": {
+      "name": "Focused business work",
+      "icon": "briefcase",
+      "base": 25,
+      "skill": "Entrepreneurship",
+      "primary": "business",
+      "secondary": "discipline",
+      "desc": "Build something valuable"
+    },
+    "strength": {
+      "name": "Strength workout",
+      "icon": "dumbbell",
+      "base": 28,
+      "skill": "Lifting",
+      "primary": "physique",
+      "secondary": "discipline",
+      "desc": "Strength and resistance training"
+    },
+    "running": {
+      "name": "Run / cardio",
+      "icon": "heart",
+      "base": 26,
+      "skill": "Running",
+      "primary": "endurance",
+      "secondary": "wellbeing",
+      "desc": "Cardio or running session"
+    },
+    "language": {
+      "name": "Language practice",
+      "icon": "chat",
+      "base": 24,
+      "skill": "Spanish",
+      "primary": "intelligence",
+      "secondary": "social",
+      "desc": "Build a language skill"
+    },
+    "recovery": {
+      "name": "Sleep / recovery routine",
+      "icon": "moon",
+      "base": 16,
+      "skill": "Recovery Routine",
+      "primary": "wellbeing",
+      "secondary": "endurance",
+      "desc": "Complete a planned recovery routine"
+    },
+    "practical": {
+      "name": "Practical skill practice",
+      "icon": "mountain",
+      "base": 24,
+      "skill": "Practical Skills",
+      "primary": "adventure",
+      "secondary": "intelligence",
+      "desc": "Practice a useful hands-on skill"
+    },
+    "task": {
+      "name": "Difficult planned task",
+      "icon": "target",
+      "base": 20,
+      "skill": "Execution",
+      "primary": "discipline",
+      "secondary": "business",
+      "desc": "Follow through on a meaningful task"
+    },
+    "custom": {
+      "name": "Custom activity",
+      "icon": "star",
+      "base": 20,
+      "skill": "Custom Skill",
+      "primary": "adventure",
+      "secondary": "",
+      "desc": "Your own activity"
+    }
+  },
+  "state": {
+    "name": "Synthetic Elder",
+    "build": "The Life Architect",
+    "classId": null,
+    "attrXP": {
+      "physique": 323,
+      "intelligence": 352,
+      "discipline": 190,
+      "adventure": 409,
+      "business": 309,
+      "wellbeing": 189,
+      "endurance": 140,
+      "social": 48
+    },
+    "skillXP": {},
+    "quests": [
+      {
+        "id": "dh_2026-10-30_0_0",
+        "hand": true,
+        "slot": 0,
+        "tpl": "t5",
+        "name": "Bodyweight circuit",
+        "desc": "Three rounds: push-ups, squats, plank.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "physique",
+        "verify": "self",
+        "tier": 2
+      },
+      {
+        "id": "dh_2026-10-30_1_0",
+        "hand": true,
+        "slot": 1,
+        "tpl": "t52",
+        "name": "Eat something green",
+        "desc": "Add vegetables to a meal.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "wellbeing",
+        "verify": "self",
+        "tier": 2
+      },
+      {
+        "id": "dh_2026-10-30_2_0",
+        "hand": true,
+        "slot": 2,
+        "tpl": "t26",
+        "name": "Plan the week's needle-mover",
+        "desc": "Pick the single task that matters most this week.",
+        "cadence": "daily",
+        "xp": 20,
+        "kind": "hand",
+        "attribute": "business",
+        "verify": "self",
+        "tier": 2
+      }
+    ],
+    "questDone": {},
+    "benchmarks": [
+      {
+        "name": "Plank",
+        "value": "2 min",
+        "date": "2024-08-01T09:00:00.000Z"
+      }
+    ],
+    "mediaItems": [],
+    "customRules": {},
+    "tutorialDone": true,
+    "tipsSeen": {},
+    "created": "2024-06-01T08:00:00.000Z",
+    "onboardingComplete": true,
+    "activities": [
+      {
+        "id": "old-0",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 53,
+        "quality": 0.8,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 40,
+        "date": "2024-06-02T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 40
+          }
+        ]
+      },
+      {
+        "id": "old-1",
+        "type": "reading",
+        "name": "Focused reading / study",
+        "icon": "book",
+        "duration": 89,
+        "quality": 1,
+        "skill": "Knowledge",
+        "primary": "intelligence",
+        "secondary": "discipline",
+        "xp": 60,
+        "date": "2024-06-03T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 42
+          },
+          {
+            "attr": "discipline",
+            "xp": 18
+          }
+        ]
+      },
+      {
+        "id": "old-2",
+        "type": "reading",
+        "name": "Focused reading / study",
+        "icon": "book",
+        "duration": 15,
+        "quality": 0.8,
+        "skill": "Knowledge",
+        "primary": "intelligence",
+        "secondary": "",
+        "xp": 10,
+        "date": "2024-06-04T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-3",
+        "type": "custom",
+        "name": "Synthetic task 3",
+        "icon": "star",
+        "duration": 59,
+        "quality": 1.2,
+        "skill": "Custom Skill",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 47,
+        "date": "2024-06-05T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 47
+          }
+        ]
+      },
+      {
+        "id": "old-4",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 12,
+        "quality": 0.8,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 8,
+        "date": "2024-06-06T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 8
+          }
+        ]
+      },
+      {
+        "id": "old-5",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 12,
+        "quality": 1.2,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "endurance",
+        "xp": 6,
+        "date": "2024-06-07T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 4
+          },
+          {
+            "attr": "endurance",
+            "xp": 2
+          }
+        ]
+      },
+      {
+        "id": "old-6",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 35,
+        "quality": 0.8,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 22,
+        "date": "2024-06-08T08:00:00.000Z",
+        "notes": "Synthetic note 6",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 22
+          }
+        ]
+      },
+      {
+        "id": "old-7",
+        "type": "running",
+        "name": "Run / cardio",
+        "icon": "heart",
+        "duration": 33,
+        "quality": 0.8,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "",
+        "xp": 23,
+        "date": "2024-06-09T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "endurance",
+            "xp": 23
+          }
+        ]
+      },
+      {
+        "id": "old-8",
+        "type": "running",
+        "name": "Run / cardio",
+        "icon": "heart",
+        "duration": 55,
+        "quality": 1,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "wellbeing",
+        "xp": 48,
+        "date": "2024-06-10T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "endurance",
+            "xp": 34
+          },
+          {
+            "attr": "wellbeing",
+            "xp": 14
+          }
+        ]
+      },
+      {
+        "id": "old-9",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 46,
+        "quality": 1,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 43,
+        "date": "2024-06-11T08:00:00.000Z",
+        "notes": "Synthetic note 9",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 43
+          }
+        ]
+      },
+      {
+        "id": "old-10",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 59,
+        "quality": 0.8,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "social",
+        "xp": 38,
+        "date": "2024-06-12T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 27
+          },
+          {
+            "attr": "social",
+            "xp": 11
+          }
+        ]
+      },
+      {
+        "id": "old-11",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 28,
+        "quality": 1,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "",
+        "xp": 15,
+        "date": "2024-06-13T08:00:00.000Z",
+        "notes": "Synthetic note 11",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 15
+          }
+        ]
+      },
+      {
+        "id": "old-12",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 44,
+        "quality": 1.2,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 42,
+        "date": "2024-06-14T08:00:00.000Z",
+        "notes": "Synthetic note 12",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 42
+          }
+        ]
+      },
+      {
+        "id": "old-13",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 57,
+        "quality": 1,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 53,
+        "date": "2024-06-15T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 53
+          }
+        ]
+      },
+      {
+        "id": "old-14",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 33,
+        "quality": 1,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 26,
+        "date": "2024-06-16T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 26
+          }
+        ]
+      },
+      {
+        "id": "old-15",
+        "type": "custom",
+        "name": "Synthetic task 15",
+        "icon": "star",
+        "duration": 43,
+        "quality": 1,
+        "skill": "Custom Skill",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 29,
+        "date": "2024-06-17T08:00:00.000Z",
+        "notes": "Synthetic note 15",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 29
+          }
+        ]
+      },
+      {
+        "id": "old-16",
+        "type": "task",
+        "name": "Difficult planned task",
+        "icon": "target",
+        "duration": 67,
+        "quality": 0.8,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "business",
+        "xp": 34,
+        "date": "2024-06-18T08:00:00.000Z",
+        "notes": "Synthetic note 16",
+        "xpSplit": [
+          {
+            "attr": "discipline",
+            "xp": 24
+          },
+          {
+            "attr": "business",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-17",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 50,
+        "quality": 0.8,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 32,
+        "date": "2024-06-19T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 32
+          }
+        ]
+      },
+      {
+        "id": "old-18",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 81,
+        "quality": 1.2,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "social",
+        "xp": 68,
+        "date": "2024-06-20T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 48
+          },
+          {
+            "attr": "social",
+            "xp": 20
+          }
+        ]
+      },
+      {
+        "id": "old-19",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 29,
+        "quality": 1.2,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "discipline",
+        "xp": 29,
+        "date": "2024-06-21T08:00:00.000Z",
+        "notes": "Synthetic note 19",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 20
+          },
+          {
+            "attr": "discipline",
+            "xp": 9
+          }
+        ]
+      },
+      {
+        "id": "old-20",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 54,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "discipline",
+        "xp": 45,
+        "date": "2024-06-22T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 31
+          },
+          {
+            "attr": "discipline",
+            "xp": 14
+          }
+        ]
+      },
+      {
+        "id": "old-21",
+        "type": "task",
+        "name": "Difficult planned task",
+        "icon": "target",
+        "duration": 29,
+        "quality": 0.8,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "business",
+        "xp": 15,
+        "date": "2024-06-23T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "discipline",
+            "xp": 11
+          },
+          {
+            "attr": "business",
+            "xp": 4
+          }
+        ]
+      },
+      {
+        "id": "old-22",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 18,
+        "quality": 0.8,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "endurance",
+        "xp": 8,
+        "date": "2024-06-24T08:00:00.000Z",
+        "notes": "Synthetic note 22",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 6
+          },
+          {
+            "attr": "endurance",
+            "xp": 2
+          }
+        ]
+      },
+      {
+        "id": "old-23",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 84,
+        "quality": 1.2,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "",
+        "xp": 69,
+        "date": "2024-06-25T08:00:00.000Z",
+        "notes": "Synthetic note 23",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 69
+          }
+        ]
+      },
+      {
+        "id": "old-24",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 58,
+        "quality": 0.8,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 39,
+        "date": "2024-06-26T08:00:00.000Z",
+        "notes": "Synthetic note 24",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 39
+          }
+        ]
+      },
+      {
+        "id": "old-25",
+        "type": "running",
+        "name": "Run / cardio",
+        "icon": "heart",
+        "duration": 76,
+        "quality": 0.8,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "wellbeing",
+        "xp": 47,
+        "date": "2024-06-27T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "endurance",
+            "xp": 33
+          },
+          {
+            "attr": "wellbeing",
+            "xp": 14
+          }
+        ]
+      },
+      {
+        "id": "old-26",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 15,
+        "quality": 0.8,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 10,
+        "date": "2024-06-28T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-27",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 45,
+        "quality": 1,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "intelligence",
+        "xp": 36,
+        "date": "2024-06-29T08:00:00.000Z",
+        "notes": "Synthetic note 27",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 25
+          },
+          {
+            "attr": "intelligence",
+            "xp": 11
+          }
+        ]
+      },
+      {
+        "id": "old-28",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 62,
+        "quality": 1,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 57,
+        "date": "2024-06-30T08:00:00.000Z",
+        "notes": "Synthetic note 28",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 57
+          }
+        ]
+      },
+      {
+        "id": "old-29",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 17,
+        "quality": 0.8,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 13,
+        "date": "2024-07-01T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 13
+          }
+        ]
+      },
+      {
+        "id": "old-30",
+        "type": "custom",
+        "name": "Synthetic task 30",
+        "icon": "star",
+        "duration": 10,
+        "quality": 1,
+        "skill": "Custom Skill",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 7,
+        "date": "2024-07-02T08:00:00.000Z",
+        "notes": "Synthetic note 30",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 7
+          }
+        ]
+      },
+      {
+        "id": "old-31",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 27,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 23,
+        "date": "2024-07-03T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 23
+          }
+        ]
+      },
+      {
+        "id": "old-32",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 22,
+        "quality": 1,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "",
+        "xp": 18,
+        "date": "2024-07-04T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 18
+          }
+        ]
+      },
+      {
+        "id": "old-33",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 69,
+        "quality": 1,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "endurance",
+        "xp": 34,
+        "date": "2024-07-05T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 24
+          },
+          {
+            "attr": "endurance",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-34",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 54,
+        "quality": 0.8,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "",
+        "xp": 23,
+        "date": "2024-07-06T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 23
+          }
+        ]
+      },
+      {
+        "id": "old-35",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 51,
+        "quality": 1.2,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "",
+        "xp": 33,
+        "date": "2024-07-07T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 33
+          }
+        ]
+      },
+      {
+        "id": "old-36",
+        "type": "task",
+        "name": "Difficult planned task",
+        "icon": "target",
+        "duration": 36,
+        "quality": 0.8,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "",
+        "xp": 19,
+        "date": "2024-07-08T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "discipline",
+            "xp": 19
+          }
+        ]
+      },
+      {
+        "id": "old-37",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 53,
+        "quality": 1,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 42,
+        "date": "2024-07-09T08:00:00.000Z",
+        "notes": "Synthetic note 37",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 42
+          }
+        ]
+      },
+      {
+        "id": "old-38",
+        "type": "custom",
+        "name": "Synthetic task 38",
+        "icon": "star",
+        "duration": 86,
+        "quality": 1,
+        "skill": "Custom Skill",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 49,
+        "date": "2024-07-10T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 49
+          }
+        ]
+      },
+      {
+        "id": "old-39",
+        "type": "reading",
+        "name": "Focused reading / study",
+        "icon": "book",
+        "duration": 51,
+        "quality": 1,
+        "skill": "Knowledge",
+        "primary": "intelligence",
+        "secondary": "discipline",
+        "xp": 41,
+        "date": "2024-07-11T08:00:00.000Z",
+        "notes": "Synthetic note 39",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 29
+          },
+          {
+            "attr": "discipline",
+            "xp": 12
+          }
+        ]
+      },
+      {
+        "id": "old-40",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 84,
+        "quality": 1.2,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 69,
+        "date": "2024-07-12T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 69
+          }
+        ]
+      },
+      {
+        "id": "old-41",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 52,
+        "quality": 1,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "social",
+        "xp": 42,
+        "date": "2024-07-13T08:00:00.000Z",
+        "notes": "Synthetic note 41",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 29
+          },
+          {
+            "attr": "social",
+            "xp": 13
+          }
+        ]
+      },
+      {
+        "id": "old-42",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 52,
+        "quality": 0.8,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "",
+        "xp": 39,
+        "date": "2024-07-14T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 39
+          }
+        ]
+      },
+      {
+        "id": "old-43",
+        "type": "task",
+        "name": "Difficult planned task",
+        "icon": "target",
+        "duration": 54,
+        "quality": 0.8,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "business",
+        "xp": 29,
+        "date": "2024-07-15T08:00:00.000Z",
+        "notes": "Synthetic note 43",
+        "xpSplit": [
+          {
+            "attr": "discipline",
+            "xp": 20
+          },
+          {
+            "attr": "business",
+            "xp": 9
+          }
+        ]
+      },
+      {
+        "id": "old-44",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 11,
+        "quality": 1,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "",
+        "xp": 6,
+        "date": "2024-07-16T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 6
+          }
+        ]
+      },
+      {
+        "id": "old-45",
+        "type": "running",
+        "name": "Run / cardio",
+        "icon": "heart",
+        "duration": 13,
+        "quality": 1,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "",
+        "xp": 11,
+        "date": "2024-07-17T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "endurance",
+            "xp": 11
+          }
+        ]
+      },
+      {
+        "id": "old-46",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 33,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 28,
+        "date": "2024-07-18T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 28
+          }
+        ]
+      },
+      {
+        "id": "old-47",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 71,
+        "quality": 0.8,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "discipline",
+        "xp": 49,
+        "date": "2024-07-19T08:00:00.000Z",
+        "notes": "Synthetic note 47",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 34
+          },
+          {
+            "attr": "discipline",
+            "xp": 15
+          }
+        ]
+      },
+      {
+        "id": "old-48",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 50,
+        "quality": 0.8,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "discipline",
+        "xp": 37,
+        "date": "2024-07-20T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 26
+          },
+          {
+            "attr": "discipline",
+            "xp": 11
+          }
+        ]
+      },
+      {
+        "id": "old-49",
+        "type": "recovery",
+        "name": "Sleep / recovery routine",
+        "icon": "moon",
+        "duration": 64,
+        "quality": 1.2,
+        "skill": "Recovery Routine",
+        "primary": "wellbeing",
+        "secondary": "",
+        "xp": 40,
+        "date": "2024-07-21T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "wellbeing",
+            "xp": 40
+          }
+        ]
+      },
+      {
+        "id": "old-50",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 18,
+        "quality": 1,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "",
+        "xp": 14,
+        "date": "2024-07-22T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 14
+          }
+        ]
+      },
+      {
+        "id": "old-51",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 63,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 51,
+        "date": "2024-07-23T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 51
+          }
+        ]
+      },
+      {
+        "id": "old-52",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 23,
+        "quality": 0.8,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "social",
+        "xp": 15,
+        "date": "2024-07-24T08:00:00.000Z",
+        "notes": "Synthetic note 52",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 11
+          },
+          {
+            "attr": "social",
+            "xp": 4
+          }
+        ]
+      },
+      {
+        "id": "old-53",
+        "type": "practical",
+        "name": "Practical skill practice",
+        "icon": "mountain",
+        "duration": 20,
+        "quality": 1.2,
+        "skill": "Practical Skills",
+        "primary": "adventure",
+        "secondary": "",
+        "xp": 19,
+        "date": "2024-07-25T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "adventure",
+            "xp": 19
+          }
+        ]
+      },
+      {
+        "id": "old-54",
+        "type": "strength",
+        "name": "Strength workout",
+        "icon": "dumbbell",
+        "duration": 22,
+        "quality": 1.2,
+        "skill": "Lifting",
+        "primary": "physique",
+        "secondary": "discipline",
+        "xp": 25,
+        "date": "2024-07-26T08:00:00.000Z",
+        "notes": "Synthetic note 54",
+        "xpSplit": [
+          {
+            "attr": "physique",
+            "xp": 18
+          },
+          {
+            "attr": "discipline",
+            "xp": 7
+          }
+        ]
+      },
+      {
+        "id": "old-55",
+        "type": "language",
+        "name": "Language practice",
+        "icon": "chat",
+        "duration": 77,
+        "quality": 0.8,
+        "skill": "Spanish",
+        "primary": "intelligence",
+        "secondary": "",
+        "xp": 44,
+        "date": "2024-07-27T08:00:00.000Z",
+        "notes": "Synthetic note 55",
+        "xpSplit": [
+          {
+            "attr": "intelligence",
+            "xp": 44
+          }
+        ]
+      },
+      {
+        "id": "old-56",
+        "type": "running",
+        "name": "Run / cardio",
+        "icon": "heart",
+        "duration": 34,
+        "quality": 1.2,
+        "skill": "Running",
+        "primary": "endurance",
+        "secondary": "wellbeing",
+        "xp": 35,
+        "date": "2024-07-28T08:00:00.000Z",
+        "notes": "Synthetic note 56",
+        "xpSplit": [
+          {
+            "attr": "endurance",
+            "xp": 25
+          },
+          {
+            "attr": "wellbeing",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-57",
+        "type": "task",
+        "name": "Difficult planned task",
+        "icon": "target",
+        "duration": 62,
+        "quality": 0.8,
+        "skill": "Execution",
+        "primary": "discipline",
+        "secondary": "business",
+        "xp": 33,
+        "date": "2024-07-29T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "discipline",
+            "xp": 23
+          },
+          {
+            "attr": "business",
+            "xp": 10
+          }
+        ]
+      },
+      {
+        "id": "old-58",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 61,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "",
+        "xp": 50,
+        "date": "2024-07-30T08:00:00.000Z",
+        "notes": "",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 50
+          }
+        ]
+      },
+      {
+        "id": "old-59",
+        "type": "business",
+        "name": "Focused business work",
+        "icon": "briefcase",
+        "duration": 28,
+        "quality": 1,
+        "skill": "Entrepreneurship",
+        "primary": "business",
+        "secondary": "discipline",
+        "xp": 23,
+        "date": "2024-07-31T08:00:00.000Z",
+        "notes": "Synthetic note 59",
+        "xpSplit": [
+          {
+            "attr": "business",
+            "xp": 16
+          },
+          {
+            "attr": "discipline",
+            "xp": 7
+          }
+        ]
+      }
+    ]
+  }
+}
