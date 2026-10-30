@@ -54,6 +54,10 @@ jobs:
           if [ -n "$KEYSTORE_B64" ]; then
             printf '%s' "$KEYSTORE_B64" | base64 -d > android-wrapper/lifemax.p12
             echo "stable=1" >> "$GITHUB_OUTPUT"
+          elif [ "$GITHUB_REF" = refs/heads/main ] || [ "$GITHUB_REF" = refs/heads/claude/github-android-app-d3wlth ]; then
+            # a release signed with a throwaway key could not update the installed app, so it is never published
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing; a release branch build must be signed with the permanent key. See ANDROID.md."
+            exit 1
           else
             echo "stable=0" >> "$GITHUB_OUTPUT"
             echo "::warning::ANDROID_KEYSTORE_BASE64 secret is missing, so this build is signed with a throwaway key and cannot update an installed copy. See ANDROID.md."
@@ -157,25 +161,22 @@ jobs:
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$apksigner" verify --print-certs android-wrapper/android/app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" || true
 
-      # Native tab-switch timing in an emulator. It never fails the build, so it cannot hold back an update; read the result in
-      # the Native-Overview-review artifact (nav-perf.json).
-      - name: Release build daemon before the optional emulator check
-        if: github.ref == 'refs/heads/claude/github-android-app-d3wlth'
-        continue-on-error: true
+      # Before a release: the APK must launch on an emulator and keep running (blocking). The tab-switch timing check after it
+      # never fails the build; read its result in the Native-Overview-review artifact (nav-perf.json).
+      - name: Release build daemon before the emulator
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
         run: ./android-wrapper/android/gradlew -p android-wrapper/android --stop
 
-      - name: Enable emulator acceleration for the optional check
-        if: github.ref == 'refs/heads/claude/github-android-app-d3wlth'
-        continue-on-error: true
+      - name: Enable emulator acceleration for the launch check
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Optional emulator check of native tab switching
-        if: github.ref == 'refs/heads/claude/github-android-app-d3wlth'
-        continue-on-error: true
-        timeout-minutes: 8
+      - name: Launch check, then the optional tab-switch timing
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        timeout-minutes: 10
         uses: reactivecircus/android-emulator-runner@v2
         with:
           emulator-boot-timeout: 180
@@ -186,10 +187,10 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: python3 android-wrapper/verify_overview.py
+          script: bash android-wrapper/smoke_launch.sh && { python3 android-wrapper/verify_overview.py || echo "::warning::The optional tab-switch timing check failed; see the Native-Overview-review artifact."; }
 
       - uses: actions/upload-artifact@v4
-        if: always() && github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth')
         continue-on-error: true
         with:
           name: Native-Overview-review
@@ -258,7 +259,21 @@ jobs:
             "${{ github.run_number }}" "$GITHUB_SHA" "${{ needs.apk.outputs.stable == '1' }}" "$NATIVE_API" "$BASE" \
             "${{ github.run_number }}" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
           cat version.json
-          gh release delete latest --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
-          gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
-            --title "LifeMax (latest build)" \
-            --notes "Build ${{ github.run_number }} from commit $GITHUB_SHA" --target "$GITHUB_SHA"
+          NOTES="Build ${{ github.run_number }} from commit $GITHUB_SHA"
+          if gh release download latest --repo "$GITHUB_REPOSITORY" --dir prev --pattern LifeMax-RPG.apk --pattern version.json; then
+            # the build being replaced stays downloadable as "previous", in case the new one misbehaves on the phone
+            PREV_SHA=$(python3 -c "import json;print(json.load(open('prev/version.json')).get('sha',''))")
+            gh release delete previous --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+            gh release create previous prev/LifeMax-RPG.apk prev/version.json --repo "$GITHUB_REPOSITORY" --latest=false \
+              --title "LifeMax (previous build)" --notes "The build before latest (commit $PREV_SHA). Install it if the latest build misbehaves." \
+              ${PREV_SHA:+--target "$PREV_SHA"}
+            # replace the files in place, never deleting the release; version.json goes last, so a phone checking part-way
+            # through still sees a matching set (an older version.json with a newer app.html fails its hash check and is retried)
+            git push --force origin "$GITHUB_SHA:refs/tags/latest"
+            gh release upload latest LifeMax-RPG.apk app.html --clobber --repo "$GITHUB_REPOSITORY"
+            gh release upload latest version.json --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit latest --notes "$NOTES" --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create latest LifeMax-RPG.apk app.html version.json --repo "$GITHUB_REPOSITORY" \
+              --title "LifeMax (latest build)" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi

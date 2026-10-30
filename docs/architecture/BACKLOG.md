@@ -4,6 +4,15 @@ The audit of 30 October 2026 (ten review areas) found no critical issue. Three h
 
 Everything below is recorded, not scheduled. Items marked *verified* were checked against the source by an independent agent; the rest are the reviewer's own reading. Take an item when the tab or change it belongs to comes up; do not refactor ahead of need.
 
+## Done since the audit
+
+- NAV-6: the hand-over reads the NativeTabs registry (`has`, `covered`); a new native tab needs no edit in 50-native-overview.js.
+- CI-1: on the release branches the APK must launch and keep running on an emulator before anything is published (android-wrapper/smoke_launch.sh); the tab-switch timing check after it stays advisory.
+- CI-3: publishing replaces the files of the `latest` release in place, version.json last, and keeps the build it replaces as the `previous` release.
+- CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
+- C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
+- CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
+
 ## CI and tests
 
 - **medium** — Release is published without ever launching the APK, and the only emulator check on the release branch runs after publish and cannot fail  
