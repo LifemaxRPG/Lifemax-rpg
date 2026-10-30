@@ -2,6 +2,7 @@
 (function () {
   const session =
     "character-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+  const now = () => typeof performance !== "undefined" ? performance.now() : Date.now();
   let sequence = 0,
     active = false,
     opening = false,
@@ -185,7 +186,7 @@
     )
       return false;
     opening = true;
-    const openedAt = performance.now();
+    const openedAt = now();
     try {
       if (!ready) {
         await plugin.addListener("action", async (e) => {
@@ -210,7 +211,7 @@
         ready = true;
       }
       const h = await plugin.handshake();
-      const handshakeAt = performance.now();
+      const handshakeAt = now();
       if (
         h.protocol !== 1 ||
         !h.capabilities.includes("character.projection.v1")
@@ -218,11 +219,11 @@
         return false;
       if (blocked()) return false;
       const data = projection();
-      const projectionAt = performance.now();
+      const projectionAt = now();
       const scene = await navScene();
-      const chromeAt = performance.now();
+      const chromeAt = now();
       await plugin.open({ snapshot: data, navScene: scene });
-      const nativeAt = performance.now();
+      const nativeAt = now();
       window.__nativeTabPerf = {feature:"character",handshakeMs:handshakeAt-openedAt,projectionMs:projectionAt-handshakeAt,chromeMs:chromeAt-projectionAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt};
       if (blocked()) {
         await close();
