@@ -63,7 +63,7 @@
       qualities: QUALITIES,
       minMinutes: ECO.minMin,
       maxMinutes: MAX_MINUTES,
-      durationRules: "30 min = base XP, up to 3× at 120 min. Under " + ECO.minMin + " min earns nothing.",
+      durationRules: ECO_DURATION_RULES,
       draft: d,
       draftRevision: revision,
       preview: previewOf(d),

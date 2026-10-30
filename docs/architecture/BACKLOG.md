@@ -12,8 +12,8 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
-- LOG-4 and the preview half of the write-path item: the web form and the native Log preview the XP Save would pay, from the function Save pays with (`activityAward(draft, true)`, a peek that changes nothing), with the page's reason when it is not the raw total (repeat, perk, rested XP, daily cap, stars) or the refusal Save would give. A save reports the XP it stored, star bonus included. Proven on every golden case and a scenario matrix (tests/log-activity.test.js).
-- LOG-5, in part: the web card says 'up to 3× at 120 min'; the projection carries `minMinutes` and `durationRules`, and the native duration stays within the page's limits.
+- LOG-4, the preview half of the write-path item and edit 1 of the outcome-surface item: the web form and the native Log preview the XP Save would pay, from the function Save pays with (`activityAward(draft, true)`, a peek that changes nothing), with the page's reason when it is not the raw total (repeat, perk, rested XP, daily cap, stars) or the refusal Save would give. A save reports the XP it stored, star bonus included. Proven on every golden case and a scenario matrix, down to the skill's XP (tests/log-activity.test.js).
+- LOG-5, in part: the web card and the projection word the duration rules from one string next to ecoDur (`ECO_DURATION_RULES`, 'up to 3× at 120 min'); the projection carries `minMinutes`, and the native duration stays within the page's limits.
 
 ## CI and tests
 
@@ -109,6 +109,8 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
   In 04-runtime.js navigate, change `if(view==='log')updatePreview()` to `if(view==='log'&&document.getElementById('previewXP'))updatePreview()`. Do this only when the native Log actually stops rendering the form, since the throw… *(log-tab-readiness LOG-1, verified)*
 - **low** — Projection gaps: what the native Log needs that the page does not yet expose  
   Add the fields to snapshot(): `skills` (the top 10 of state.skillXP), `recent` (the last 5 activities), `limits` {sameTypeToday per type, manualMinutesLeft}. Extend the submit result with {xpSplit, duplicate}. Add the matching… *(log-tab-readiness LOG-6, not verified)*
+- **low** — Life Director keeps its own copy of the activity XP formula  
+  H.xpFor (features/life-director/logic.js) repeats activityPreview and activityAward, and its comment still names the removed calcPreview(). For the Life Director track: have it call activityAward, which would need the activity's day and no manual-time limit, or at least point the comment at recordActivity()/activityAward(). *(log XP preview review, verified)*
 
 ## Remaining tabs
 
@@ -134,7 +136,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — A native Submit can be tapped when the page cannot hear it: events are dropped silently, page starts wipe listeners, and nothing native is persisted  
   Do not build durable-op or DataStore machinery now. Do the smallest part that closes the stale-screen hole: in ComposeTabPlugin.load(), add a bridge WebViewListener whose onPageStarted calls hide() on the UI thread, and also have… *(log-write-path, verified)*
 - **medium** — The outcome surface is wrong for a native screen: web toasts, celebrations and the level-up overlay are hidden or overwritten, and derived effects never reach…  
-  Two small edits now, the rest deferred to the native Log submit work. 1. Return the stored value. In recordActivity change the success return to {ok:true,xp:xpTot,message:`Activity saved · +${xpTot} XP`}. Return the same value… *(log-write-path, verified)*
+  Two small edits now, the rest deferred to the native Log submit work. Edit 1, return the stored value, is done (see Done). Edit 2… *(log-write-path, verified)*
 - **medium** — The owner function does no input validation (the preview half of this item is done)  
   At the top of recordActivity, reject with {ok:false,message,code:'invalid_field'} if `!rules[d.type]`, if `d.primary` is non-empty and not in ATTRS, or if `!Number.isFinite(Number(d.quality))`; cap notes, skill and customName… *(log-write-path, verified)*
 - **medium** — The save has no epoch, and the only whole-save replacement paths include one that can silently overwrite it with a blank state  

@@ -68,10 +68,10 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
       const before = JSON.stringify(state), shown = NativeLogProjection.previewOf(c.d);
       fill(c.d); updatePreview();
       const web = { xp: Number(document.getElementById('previewXP').textContent), why: document.getElementById('previewWhy').textContent };
-      const untouched = JSON.stringify(state) === before, n = state.activities.length;
+      const untouched = JSON.stringify(state) === before, n = state.activities.length, skill0 = state.skillXP[shown.skill] || 0;
       const res = NativeLogProjection.commands.submit({ draft: c.d, operationId: 'op-' + name });
       const saved = state.activities.length > n ? state.activities[state.activities.length - 1] : null;
-      out[name] = { total: shown.total, award: shown.award, reason: shown.reason, web, untouched, ok: res.ok, xp: res.xp, message: res.message, saved: saved && saved.xp, split: saved && saved.xpSplit, shownSplit: shown.split, rested: state.restedXP };
+      out[name] = { total: shown.total, award: shown.award, reason: shown.reason, web, untouched, ok: res.ok, xp: res.xp, message: res.message, saved: saved && saved.xp, skillGain: (state.skillXP[shown.skill] || 0) - skill0, split: saved && saved.xpSplit, shownSplit: shown.split, rested: state.restedXP };
     }
     // the same type again and again on a real day: each preview is what the save then pays, until the type is used up
     state = freshState(); out.sequence = [];
@@ -81,13 +81,13 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     }
     return out;
   });
-  const paid = (n, reason) => { const t = truth[n]; return t.untouched && t.ok && t.award === t.xp && t.award === t.saved && JSON.stringify(t.split) === JSON.stringify(t.shownSplit) && t.web.xp === t.award && t.web.why === t.reason && reason.test(t.reason) && t.message ==='Activity saved · +' + t.award + ' XP' };
+  const paid = (n, reason) => { const t = truth[n]; return t.untouched && t.ok && t.award === t.xp && t.award === t.saved && t.skillGain === t.award && JSON.stringify(t.split) === JSON.stringify(t.shownSplit) && t.web.xp === t.award && t.web.why === t.reason && reason.test(t.reason) && t.message ==='Activity saved · +' + t.award + ' XP' };
   const refused = (n, message) => { const t = truth[n]; return t.untouched && !t.ok && t.award === 0 && t.reason === message && t.message === message && t.saved === null && t.web.xp === 0 && t.web.why === message };
   ok('fresh day, long session and custom type: the preview shows the raw total, and Save pays exactly that', ['fresh day', 'long session', 'custom type'].every(n => paid(n, /^$/) && truth[n].award === truth[n].total), truth);
   ok('the last log of a type today is previewed at half, with the reason, and pays half', paid('repeat today', /^Last of this type today: half XP$/) && truth['repeat today'].award < truth['repeat today'].total, truth['repeat today']);
   ok('past the daily soft cap and up to the hard cap: the reduced award and the reason are previewed, and paid', paid('past the soft cap', /^XP above 180 a day is halved$/) && paid('reaching the cap', /^Reaches the daily XP cap$/) && truth['reaching the cap'].award === 15, [truth['past the soft cap'], truth['reaching the cap']]);
   ok('rested XP: the preview shows the bonus without spending it; Save pays it and spends it', paid('rested', /^Rested \+12$/) && truth.rested.award === 36 && truth.rested.rested === 28, truth.rested);
-  ok('an ascended attribute\'s star bonus is previewed, paid, and is what the save reports', paid('ascended attribute', /^Physique ★★ \+4$/) && truth['ascended attribute'].award === 60, truth['ascended attribute']);
+  ok('an ascended attribute\'s star bonus is previewed, paid, reported by the save and counted in the skill\'s XP', paid('ascended attribute', /^Physique ★★ \+4$/) && truth['ascended attribute'].award === 60, truth['ascended attribute']);
   ok('a perk is previewed and paid', paid('scholar perk', /^Scholar’s Flow \+4$/) && truth['scholar perk'].award === 40, truth['scholar perk']);
   ok('a draft Save would refuse is previewed at 0 with the refusal Save gives, and nothing is saved', refused('too short', 'Log at least 5 minutes to earn XP') && refused('fourth of a type', 'Daily XP limit reached for this activity type') && refused('active time used up', 'Daily active-time limit (6 hours) reached') && refused('daily cap', 'Daily XP cap reached'), truth);
   ok('logging one type four times in a day: every preview matches what the save paid, then the refusal', JSON.stringify(truth.sequence) === JSON.stringify([[24, 24], [24, 24], [12, 12], [0, 'Daily XP limit reached for this activity type']]), truth.sequence);

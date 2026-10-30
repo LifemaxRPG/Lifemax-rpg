@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.log.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +29,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
@@ -167,12 +167,14 @@ private fun SaveButton(p: LogProjection, enabled: Boolean, saving: Boolean, onCl
         Modifier.fillMaxWidth()
             .heightIn(min = 56.dp)
             .clip(shape)
-            .background(
-                if (lit) Brush.horizontalGradient(listOf(accent.copy(alpha = .85f), accent))
-                else
-                    Brush.horizontalGradient(
-                        listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface)
+            .then(
+                if (lit)
+                    Modifier.background(
+                        Brush.horizontalGradient(listOf(accent.copy(alpha = .85f), accent))
                     )
+                else
+                    Modifier.background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = .5f), shape)
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -181,13 +183,11 @@ private fun SaveButton(p: LogProjection, enabled: Boolean, saving: Boolean, onCl
             when {
                 saving -> "Saving…"
                 enabled -> "✦  Award ${p.preview.award} XP"
-                else -> p.preview.reason
+                else -> "No XP to award"
             },
-            Modifier.padding(horizontal = 16.dp),
             color = if (lit) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
         )
     }
 }

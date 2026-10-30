@@ -14,17 +14,18 @@ const ecoDayKey=n=>new Date(n*864e5).toISOString().slice(0,10);
 function ecoActsOn(day){return state.activities.filter(a=>activityDate(a)===day)}
 /* the duration curve: 30 min = 1x, 60 min = 2x, 120 min+ = 3x; under 5 minutes earns nothing */
 function ecoDur(dur){dur=Number(dur)||0;return dur<ECO.minMin?0:dur<=60?dur/30:Math.min(3,2+(dur-60)/60)}
+/* the same curve in words, for the web form and the native Log */
+const ECO_DURATION_RULES='30 min = base XP, up to 3× at 120 min. Under '+ECO.minMin+' min earns nothing.';
 /* a day's XP counted toward the cap (epic quests are exempt) */
-function ecoDayXP(day){return ecoActsOn(day).reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
+function ecoDayXP(day,acts=ecoActsOn(day)){return acts.reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
 function ecoRestedPeek(x){const pool=Number(state.restedXP)||0;return pool>0&&x>0?x+Math.min(pool,Math.round(x*ECO.restedBonus)):x}
 function ecoRestedTake(x){
  const pool=Number(state.restedXP)||0;if(pool<=0||x<=0)return x;
  const b=Math.min(pool,Math.round(x*ECO.restedBonus));state.restedXP=pool-b;return x+b;
 }
-/* soft cap halves what lands above 180, hard cap stops at 240 */
-function ecoCap(x,day){
- if(x<=0)return 0;
- const t=ecoDayXP(day);if(t>=ECO.hardCap)return 0;
+/* soft cap halves what lands above 180, hard cap stops at 240; t is the day's XP so far */
+function ecoCap(x,day,t=ecoDayXP(day)){
+ if(x<=0||t>=ECO.hardCap)return 0;
  let out=x;
  if(t+x>ECO.softCap){const over=t+x-Math.max(ECO.softCap,t);out=x-over+Math.round(over*.5)}
  return Math.max(0,Math.min(out,ECO.hardCap-t));
@@ -34,15 +35,15 @@ function ecoCap(x,day){
 function ecoAward(type,total,dur,o){
  o=o||{};const day=o.day||getToday();
  if(!(total>0))return {xp:0,msg:'Add at least '+ECO.minMin+' minutes to earn XP'};
- const same=ecoActsOn(day).filter(a=>a.type===type).length;
+ const acts=ecoActsOn(day),same=acts.filter(a=>a.type===type).length;
  const factor=same<ECO.maxPerType-1?1:same===ECO.maxPerType-1?.5:0;
  if(!factor)return {xp:0,msg:'Daily XP limit reached for this activity type'};
- if(o.manual){const mins=ecoActsOn(day).filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
+ if(o.manual){const mins=acts.filter(a=>a.type!=='quest'&&a.src!=='health').reduce((n,a)=>n+(Number(a.duration)||0),0);if(mins+(Number(dur)||0)>ECO.maxManualMin)return {xp:0,msg:'Daily active-time limit (6 hours) reached'}}
  const why=factor<1?['Last of this type today: half XP']:[];
  let x=Math.max(1,Math.round(total*factor));
  if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar')){const s=Math.round(x*1.1);if(s>x)why.push(ECO_PERKS.scholar[0]+' +'+(s-x));x=s}
  const r=o.peek?ecoRestedPeek(x):ecoRestedTake(x);if(r>x)why.push('Rested +'+(r-x));
- x=ecoCap(r,day);if(x>0&&x<r)why.push(ecoDayXP(day)+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
+ const t=ecoDayXP(day,acts);x=ecoCap(r,day,t);if(x>0&&x<r)why.push(t+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
  return x>0?{xp:x,msg:why.join(' · ')}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
