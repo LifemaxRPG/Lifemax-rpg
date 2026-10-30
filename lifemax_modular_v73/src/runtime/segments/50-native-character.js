@@ -185,6 +185,7 @@
     )
       return false;
     opening = true;
+    const openedAt = performance.now();
     try {
       if (!ready) {
         await plugin.addListener("action", async (e) => {
@@ -209,13 +210,20 @@
         ready = true;
       }
       const h = await plugin.handshake();
+      const handshakeAt = performance.now();
       if (
         h.protocol !== 1 ||
         !h.capabilities.includes("character.projection.v1")
       )
         return false;
       if (blocked()) return false;
-      await plugin.open({ snapshot: projection(), navScene: await navScene() });
+      const data = projection();
+      const projectionAt = performance.now();
+      const scene = await navScene();
+      const chromeAt = performance.now();
+      await plugin.open({ snapshot: data, navScene: scene });
+      const nativeAt = performance.now();
+      window.__nativeTabPerf = {feature:"character",handshakeMs:handshakeAt-openedAt,projectionMs:projectionAt-handshakeAt,chromeMs:chromeAt-projectionAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt};
       if (blocked()) {
         await close();
         return false;
