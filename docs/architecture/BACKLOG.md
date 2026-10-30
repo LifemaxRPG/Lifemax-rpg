@@ -12,10 +12,9 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - CI-4: a release-branch build without the permanent signing key fails instead of publishing a throwaway-signed APK.
 - C1: every web test, including log-activity, native-handover and native-cash, and the hand-over simulation run in CI (web-tests job).
 - CI-6, partly: caching would not shorten the time to a release, because the web-tests job is the longer path; not done.
-- DS-2: Character's own pixel icon table, card, tokenColor extension and progress bar are gone in favour of the core ones; one core `ProgressBar` draws every bar (Character, the Log XP preview, Food's plan and macro bars). Food and Log screenshots are pixel-identical; on Character a bar's fill now ends rounded like the web's `.ch-bar` (29 px on the hero bar), and the references verify unchanged. Still open: the icons-parity check against the web masks.
-- DS-3, the shared part: `Modifier.tapTarget(role, label, onClick)` in core (48 dp minimum, role, click label) is what ChoicePill, SegmentedChoice and RoundButton click through; ChoicePill grew from 40 to 48 dp. Still open: Food and the Log screen's own clickables (preset tiles, save button).
+- DS-2: Character's own pixel icon table, card, tokenColor extension and progress bar are gone in favour of the core ones; one core `ProgressBar` draws every bar (Character, the Log XP preview, Food's plan and macro bars). Food and Log draw pixel for pixel as before; on Character a bar's fill now ends rounded like the web's `.ch-bar` (29 of the reference's 337,000 px, on the hero XP bar), and its references verify unchanged. Still open: the icons-parity check against the web masks.
+- DS-3, the shared part: `Modifier.tapTarget(role, label, onClick)` in core (48 dp minimum, role, click label) is what ChoicePill, SegmentedChoice and RoundButton click through; ChoicePill grew from 40 to 48 dp, the height of the other two, so the Log form is 8 dp taller per row of pills (Log references re-recorded). Still open: Food and the Log screen's own clickables (preset tiles, save button).
 - DS-6: `GalleryScreenshotTest` draws every core component in dark, light and dark at font scale 2.0. It shows that at 2.0 the equal-width duration pills ellipsize their numbers and the four-way SegmentedChoice its labels; not changed yet.
-- DS-1: not done. Food receives no theme tokens and none of its surface or text colours equals a token, so putting it on LifeMaxTheme would change how Food looks; it belongs with the Food conversion.
 
 ## CI and tests
 
@@ -32,17 +31,17 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 ## Design system and accessibility
 
-- **medium** — Food ignores LifeMaxTheme and web tokens; its light mode is hand-patched and never screenshot-tested  
+- **medium** — *Not now: Food receives no theme tokens and none of its surface or text colours equals one, so this would change how Food looks; do it with the Food conversion.* Food ignores LifeMaxTheme and web tokens; its light mode is hand-patched and never screenshot-tested  
   Before Log is finished, map FoodPalette surfaces/text to the LifeMaxTheme colour scheme (or a small extended-tokens object in core/designsystem), keep only the macro/meal semantic colours (rose/amber/teal) as named constants,… *(design-system DS-1, not verified)*
-- **medium** — Duplicated primitives: pixel icon table and card exist twice, plus a third private progress bar/dot set  
+- **medium** — *Done except the icons-parity check (see above).* Duplicated primitives: pixel icon table and card exist twice, plus a third private progress bar/dot set  
   Delete CharacterPixelIcon/CharacterCard/tokenColor extension in favour of the core ones; move CharacterProgress into core as ProgressBar; add a single icons-parity check (the web masks vs Kotlin map) to the existing fixture… *(design-system DS-2, not verified)*
-- **medium** — Accessibility is near-absent in Food and the shared tap targets are not enforced  
+- **medium** — *The shared modifier is done (see above); Food and the Log screen's own clickables remain.* Accessibility is near-absent in Food and the shared tap targets are not enforced  
   Introduce a shared `Modifier.tapTarget(label, role)` in core/designsystem that sets minimumInteractiveComponentSize + Role + onClickLabel, use it in Food and as the only way to make clickables in Log; add Paparazzi cases with… *(design-system DS-3, not verified)*
 - **medium** — No typography/spacing/radius/motion tokens; every screen uses literal sp/dp and the theme has no Typography or Shapes  
   Add a small LifeMaxType/LifeMaxShapes/LifeMaxSpacing set and a LocalReduceMotion composition local fed from the same projection; make the token fallback fail in debug/tests (check required keys list) instead of defaulting to… *(design-system DS-4, not verified)*
 - **medium** — Missing shared controls that Log needs: stepper, text field with IME, sheet/dialog, toggle, list row  
   Build text field, stepper and bottom sheet in core/designsystem only when Log first needs them, with insets/IME handled once; not before. *(design-system DS-5, not verified)*
-- **low** — No component gallery or variant matrix for screenshot tests; dark/light and font scale uncovered  
+- **low** — *Done (see above), except Log at font scale 2.0.* No component gallery or variant matrix for screenshot tests; dark/light and font scale uncovered  
   One GalleryScreenshotTest rendering SurfaceCard/ChoicePill/SegmentedChoice/RoundButton/PixelIcon set in dark, light, and fontScale 2.0; add light and 2.0 variants for Log when it lands. *(design-system DS-6, not verified)*
 
 ## Navigation and shell
