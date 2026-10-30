@@ -61,7 +61,6 @@ class WebCharacterRepository : CharacterRepository {
         )
         val s = j.getJSONArray("skills")
         val b = j.getJSONArray("benchmarks")
-        val t = j.getJSONArray("tabs")
         val colors = j.getJSONObject("tokens")
         mutable.value =
             CharacterProjection(
@@ -96,10 +95,6 @@ class WebCharacterRepository : CharacterRepository {
                 (0 until b.length()).map {
                     val x = b.getJSONObject(it)
                     BenchmarkProjection(x.getString("name"), x.getString("value"))
-                },
-                (0 until t.length()).map {
-                    val x = t.getJSONObject(it)
-                    x.getString("id") to x.getString("label")
                 },
                 colors.keys().asSequence().associateWith { colors.getLong(it) },
                 j.getBoolean("light"),

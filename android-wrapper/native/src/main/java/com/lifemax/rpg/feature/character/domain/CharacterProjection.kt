@@ -46,7 +46,6 @@ data class CharacterProjection(
     val attributes: List<AttributeProjection>,
     val skills: List<SkillProjection>,
     val benchmarks: List<BenchmarkProjection>,
-    val tabs: List<Pair<String, String>>,
     val tokens: Map<String, Long>,
     val light: Boolean,
     val classId: String = "",
