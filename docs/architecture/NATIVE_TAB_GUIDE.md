@@ -25,6 +25,16 @@ A native tab is a Compose screen laid over the page. The page (web code) stays t
 6. Prove it: `tools/build_android_local.sh` (compile, unit tests, screenshots), `python3 tools/check_native_format.py <ktfmt jar>`, `python3 lifemax_modular_v73/tools/lint_js.py`, `python3 lifemax_modular_v73/check_source.py`, and the node tests. Run `tests/native-handover-sim.test.js` (Playwright) with the new tab added to its fakes.
 7. Bump `NativeApi.VALUE`, update `MIGRATION.md`, push, and read the CI result including the emulator step.
 
+## The tab swipe
+
+A new tab gets the native tab swipe (CONTRACT A34, ADR 0011) with nothing to write: `ComposeTabPlugin` makes its screen a `TabScreenView`, registers it with `TabSwipe`, reports `shell.swipe.v1` in the handshake and answers `swipeSettle`; `NativeTabKit` listens for `swipe` and tells the page whether the screen would open (`wouldOpen`, from `cfg.blocked`). What is left to you:
+
+- **Never set the screen's visibility or `translationX`.** `TabSwipe` owns them, and the base plugin calls it on open, close and remove (`opened`, `closed`, `removed`). A plugin outside `ComposeTabPlugin` (Food) makes the same three calls and answers `swipeSettle` itself.
+- **Mark what must never start a swipe.** Anything in Compose that consumes a drag (a scroller, a LazyRow, a slider, a `pointerInput` drag) claims it before the swipe can and needs nothing. Every text field, and any region whose drags must not switch tabs though nothing in it consumes them, gets `Modifier.noTabSwipe()` (`core/designsystem/gesture`): a gesture that starts there is never a tab swipe.
+- **Opt out when the tab's own gestures are sideways** (Life Director's section swipe and dial handles): `override val swipeSource = false` in the plugin, and the view in `OWN_GESTURES` in `50-native-swipe.js`, so the page also says `on: false` there. The tab can still be swiped to.
+- **Paint the whole screen.** A screen that slides must cover the page completely (an opaque `fillMaxSize` background), or the WebView shows through beside it.
+- **Prove it.** Add the tab to the fakes of the A28 simulation (they answer `swipeSettle`), whose swipe hops then reach it, and of `tests/native-swipe.test.js`.
+
 ## Rules the shared pieces rely on
 
 - Calls to a plugin arrive in the order made; a close naming an old session must be ignored by a plugin that has sessions.
