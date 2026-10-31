@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 38474,
-   "statement_count": 82,
+   "bytes": 39053,
+   "statement_count": 83,
    "tags": [
     "training",
     "quests",
@@ -120,6 +120,7 @@
     "writeSave",
     "save",
     "unsavedMessage",
+    "takeBack",
     "xpForLevel",
     "levelData",
     "totalXP",
@@ -196,7 +197,7 @@
   },
   {
    "file": "src/runtime/segments/05-runtime.js",
-   "bytes": 30086,
+   "bytes": 30112,
    "statement_count": 38,
    "tags": [
     "training",
