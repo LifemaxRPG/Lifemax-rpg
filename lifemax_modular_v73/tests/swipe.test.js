@@ -9,11 +9,15 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.goto('file://' + file); await p.waitForTimeout(900);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } navigate('dashboard'); window.scrollTo(0, 0) });
   await p.waitForTimeout(600);
-  const touch = (type, x, y) => p.evaluate(([type, x, y]) => { const tgt = document.elementFromPoint(Math.min(Math.max(x, 1), innerWidth - 1), y) || document.body; const t = new Touch({ identifier: 1, target: tgt, clientX: x, clientY: y }); tgt.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [t], changedTouches: [t], targetTouches: type === 'touchend' ? [] : [t] })) }, [type, x, y]);
+  // at: the time the touch happens. The page reads a touch's time from Date.now while it handles it, so for that moment Date.now gives at
+  const touch = (type, x, y, at) => p.evaluate(([type, x, y, at]) => { const now = Date.now; if (at) Date.now = () => at; try { const tgt = document.elementFromPoint(Math.min(Math.max(x, 1), innerWidth - 1), y) || document.body; const t = new Touch({ identifier: 1, target: tgt, clientX: x, clientY: y }); tgt.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [t], changedTouches: [t], targetTouches: type === 'touchend' ? [] : [t] })) } finally { Date.now = now } }, [type, x, y, at]);
   const view = () => p.evaluate(() => lmaView());
-  const drag = () => p.evaluate(() => { const v = document.querySelector('.view.active'), k = v && v.firstElementChild; const m = k && new DOMMatrix(getComputedStyle(k).transform === 'none' ? undefined : getComputedStyle(k).transform); return { on: document.documentElement.classList.contains('lma-drag'), swx: v ? parseFloat(v.style.getPropertyValue('--swx') || '0') : 0, cardX: m ? m.m41 : 0, sw: document.documentElement.scrollWidth, iw: innerWidth } });
+  // read at the next frame: the page moves the cards once a frame, and on a busy machine a fixed wait did not always see a frame
+  const drag = () => p.evaluate(() => new Promise(r => requestAnimationFrame(() => { const v = document.querySelector('.view.active'), k = v && v.firstElementChild; const m = k && new DOMMatrix(getComputedStyle(k).transform === 'none' ? undefined : getComputedStyle(k).transform); r({ on: document.documentElement.classList.contains('lma-drag'), swx: v ? parseFloat(v.style.getPropertyValue('--swx') || '0') : 0, cardX: m ? m.m41 : 0, sw: document.documentElement.scrollWidth, iw: innerWidth }) })));
   const moved = () => p.evaluate(() => { const c = document.querySelector('main.content'); return { t: c.style.transform, o: c.style.opacity, w: c.style.willChange } });
-  const swipe = async (x0, x1, y, ms, steps) => { await touch('touchstart', x0, y); for (let i = 1; i <= steps; i++) { await touch('touchmove', x0 + (x1 - x0) * i / steps, y + (i % 2)); if (ms) await p.waitForTimeout(ms / steps) } };
+  // the touches of a swipe happen ms apart over its steps, whatever a round trip to the page costs: the page reads a flick's speed from
+  // their times, and on a busy machine the round trips made a 40 ms flick last over 100 ms, which the page rightly took for a slow drag
+  const swipe = async (x0, x1, y, ms, steps) => { const t0 = await p.evaluate(() => Date.now()); await touch('touchstart', x0, y, t0); for (let i = 1; i <= steps; i++) { await touch('touchmove', x0 + (x1 - x0) * i / steps, y + (i % 2), t0 + ms * i / steps); if (ms) await p.waitForTimeout(ms / steps) } };
   const settle = () => p.waitForTimeout(700);
   // during a pull: the cards follow the finger, the container does not move
   await touch('touchstart', 300, 400); await touch('touchmove', 280, 401); await touch('touchmove', 240, 402); await p.waitForTimeout(80);
@@ -24,11 +28,13 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await touch('touchmove', 150, 402); await p.waitForTimeout(60); d1 = await drag();
   ok('they keep following', d1.swx < -140 && d1.swx > -160, d1);
   ok('the page has not switched yet', (await view()) === 'dashboard');
-  await touch('touchend', 150, 402); const t0 = Date.now();
-  await p.waitForFunction(() => lmaView() !== 'dashboard', null, { timeout: 2000 }); const lat = Date.now() - t0;
-  ok('past a fifth of the screen it carries on and switches quickly', (await view()) === 'character' && lat < 400, [await view(), lat]);
+  // timed, and the new page looked at, in the page the moment it arrives: round trips to the page, or a stalled frame, on a busy
+  // machine added to the time and could outlast the cards' 0.26 s entry
+  await p.evaluate(() => { addEventListener('touchend', () => { window.__end = performance.now() }, { capture: true, once: true }); const mo = new MutationObserver(() => { if (lmaView() === 'dashboard') return; mo.disconnect(); window.__arr = { view: lmaView(), lat: Math.round(performance.now() - window.__end), dir: document.documentElement.dataset.swipeDir, slide: [...document.querySelectorAll('.view.active > *')].some(e => e.getAnimations().some(a => a.animationName === 'viewSlideNext')) } }); mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }) });
+  await touch('touchend', 150, 402); const arr = await (await p.waitForFunction(() => window.__arr, null, { timeout: 2000 })).jsonValue();
+  ok('past a fifth of the screen it carries on and switches quickly', arr.view === 'character' && arr.lat < 400, arr);
   ok('the drag state is cleared as the new page arrives', await p.evaluate(() => !document.documentElement.classList.contains('lma-drag') && !document.querySelector('.view.active').style.getPropertyValue('--swx')));
-  const dirAttr = await p.evaluate(() => document.documentElement.dataset.swipeDir); ok('the new cards enter from the side you swiped toward', dirAttr === 'next' && await p.evaluate(() => [...document.querySelectorAll('.view.active > *')].some(e => e.getAnimations().some(a => a.animationName === 'viewSlideNext'))), dirAttr);
+  ok('the new cards enter from the side you swiped toward', arr.dir === 'next' && arr.slide, arr);
   await settle();
   ok('after it settles nothing is animating and the page container was never given a transform', await p.evaluate(() => [...document.querySelectorAll('.view.active > *')].every(e => e.getAnimations().length === 0)) && !(await moved()).t);
   // short slow drag: nothing happens
@@ -64,7 +70,8 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const post = await p.evaluate(() => ({ anims: [...document.querySelectorAll('.view.active > *')].filter(e => e.getAnimations().length).length, lit: [...document.querySelectorAll('.navbtn.active')].map(b => b.dataset.view), view: lmaView() }));
   ok('after a swipe the cards do not replay their animation (no stutter)', post.anims === 0, post);
   ok('after a swipe exactly one tab is highlighted, the one you are on', post.lit.length === 1 && post.lit[0] === post.view, post);
-  await p.evaluate(() => lmaNavTo('quests')); await p.waitForTimeout(100);
+  // a normal tab change runs in a view transition, which changes the page a frame or more later: wait for it, not for a fixed 100 ms
+  await p.evaluate(() => lmaNavTo('quests')); await p.waitForFunction(() => lmaView() === 'quests', null, { timeout: 2000 });
   ok('a normal tab change goes back to the usual fade-in', await p.evaluate(() => !document.documentElement.dataset.swipeDir));
   await p.waitForTimeout(600);
   for (let i = 0; i < 6; i++) { await swipe(320, 110, 400, 50, 4); await touch('touchend', 110, 402); await p.waitForTimeout(60); await p.evaluate(() => { const b = [...document.querySelectorAll('.navbtn[data-view]')]; b[Math.floor(Math.random() * b.length)].click() }); await p.waitForTimeout(40) }
