@@ -8,7 +8,8 @@ const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
 const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
 const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
 /* slide the bottom bar so the tab you are on is in the middle. One mover only: the browser's own smooth scrollIntoView used to fight the
-   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. */
+   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. A frame's time can be a little
+   before the slide began (a busy page runs behind the frame clock), so progress starts at 0, or the ease would first move it backwards. */
 let lmaBarRaf=0;
 function lmaBarTo(btn){
  const sb=document.querySelector('.sidebar');if(!sb||!btn||sb.scrollWidth<=sb.clientWidth+2)return;
@@ -16,7 +17,7 @@ function lmaBarTo(btn){
  cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0;
  if(Math.abs(to-from)<2){return}
  if(typeof lmaMotionOff==='function'&&lmaMotionOff()){sb.scrollLeft=to;return}
- const t0=performance.now(),D=170,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
+ const t0=performance.now(),D=170,step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/D)),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
  lmaBarRaf=requestAnimationFrame(step);
 }
 /* exactly one bottom-bar tab is lit: the one for the page you are on */
@@ -130,7 +131,7 @@ function lmaPgEnd(){
 function lmaPgTween(to,ms,easing,done){
  cancelAnimationFrame(lmaPgRaf);lmaPgRaf=0;cancelAnimationFrame(lmaPgTw);
  const from=lmaPgDx,t0=performance.now();
- const step=t=>{const k=Math.min(1,(t-t0)/ms),e=easing(k);lmaPgDx=from+(to-from)*e;if(lmaPgView)lmaPgView.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px');if(k<1)lmaPgTw=requestAnimationFrame(step);else{lmaPgTw=0;done&&done()}};
+ const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/ms)),e=easing(k);lmaPgDx=from+(to-from)*e;if(lmaPgView)lmaPgView.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px');if(k<1)lmaPgTw=requestAnimationFrame(step);else{lmaPgTw=0;done&&done()}};
  lmaPgTw=requestAnimationFrame(step);
 }
 const lmaEaseOut=k=>1-Math.pow(1-k,3),lmaEaseIn=k=>k*k;
