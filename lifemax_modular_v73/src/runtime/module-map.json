@@ -17,7 +17,7 @@
   },
   {
    "file": "src/runtime/segments/43-economy.js",
-   "bytes": 6800,
+   "bytes": 6989,
    "statement_count": 19,
    "tags": [
     "economy",

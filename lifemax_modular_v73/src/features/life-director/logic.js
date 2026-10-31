@@ -2799,8 +2799,10 @@ const LifeDirectorApp = (function () {
   }
 
   /* ── completion ── */
+  const unsaved = a => a.reason === 'HOST_SAVE_FAILED' || a.reason === 'HOST_READ_ONLY';
   function questsSnapshot() { return hostQuests(nowEpoch()); }
-  function afterEvent(event, inst) {
+  /* a session whose XP could not be saved pays no quest bounty either: the save failed, so nothing it earned is kept */
+  function afterEvent(event, inst, bounty = true) {
     const qs = questsSnapshot();
     const future = ST.schedule ? ST.schedule.scheduledInstances : [];
     const rq = E.reconcileQuestProgress(event, qs, ST.goals, future, { dayKey: U.ymdKey(U.localParts(event.actualStartEpoch, tz())) });
@@ -2813,7 +2815,7 @@ const LifeDirectorApp = (function () {
       if (!ov.eventIds.includes(event.eventId)) ov.eventIds.push(event.eventId);
       const uq = rq.updatedQuests.find(x => x.id === d.questId), nq = E.normalizeQuest(uq);
       const met = nq.requirements.every(r => (!r.targetCount || r.currentCount >= r.targetCount) && (!r.targetMinutes || r.currentMinutes >= r.targetMinutes));
-      if (met && q.hostRef.questId) { const c = Host.completeQuest(q.hostRef); if (c.completed) notes.push('Quest complete: ' + c.name + ' +' + c.xp + ' XP'); }
+      if (met && q.hostRef.questId && bounty) { const c = Host.completeQuest(q.hostRef); if (c.completed) notes.push('Quest complete: ' + c.name + ' +' + c.xp + ' XP'); }
       else if (!met) notes.push(q.title + ' ' + nq.requirements[0].currentCount + '/' + nq.requirements[0].targetCount);
     }
     if (ST.schedule) {
@@ -2830,9 +2832,10 @@ const LifeDirectorApp = (function () {
       satisfiedRatio: E.normalizePreferences(ST.prefs).partialSatisfiedRatio });
     if (!r.applied) { if (!opt.silent) say(r.reason === 'DUPLICATE_EVENT_ID' ? 'Already recorded.' : 'Cannot complete this block (' + r.reason + ').'); return null; }
     ST.ledger = r.ledger;
-    let xpNote = '', hostActivityId = opt.hostActivityId || null;
+    let xpNote = '', hostActivityId = opt.hostActivityId || null, bounty = true;
     if (opt.awardXp !== false) {
       const a = Host.awardActivity(r.event, { title: inst.title });
+      bounty = !unsaved(a);
       if (a.awarded) { xpNote = '+' + a.xp + ' XP'; hostActivityId = a.activityId; }
       else if (a.reason === 'HOST_NOT_CONNECTED') xpNote = 'recorded (XP needs LifeMax)';
       else if (a.reason === 'HOST_READ_ONLY') xpNote = 'XP not saved: this version is read-only for your save';
@@ -2841,7 +2844,7 @@ const LifeDirectorApp = (function () {
     ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => i.instanceId !== inst.instanceId);
     ST.schedule.historyInstances = (ST.schedule.historyInstances || []).concat(Object.assign({}, inst, { lifecycleState: r.lifecycleState, completionEventId: r.eventId, hostActivityId,
       actualMinutes: r.event.actualDurationMinutes, resolvedAtEpoch: now }));
-    const notes = afterEvent(r.event, inst);
+    const notes = afterEvent(r.event, inst, bounty);
     if (r.residualTask) { const rr = reschedule({ type: 'RESIDUAL', task: r.residualTask, parentInstanceId: inst.instanceId }); if (rr) notes.push('Rest of it re-planned'); }
     if (r.tokenEarned) notes.push('Rest token earned');
     persist();
@@ -2900,7 +2903,7 @@ const LifeDirectorApp = (function () {
       linkedQuestRequirementIds: [], linkedGoalIds: [], durationSlots: Math.ceil(minutes / 15), lifecycleState: 'COMPLETED_ON_TIME',
       completionEventId: r.eventId, hostActivityId: a.activityId || null, actualMinutes: minutes, resolvedAtEpoch: now,
       explanation: { summary: 'Logged for today. The session planned for ' + fDay(inst.startEpoch) + ' is still on your plan.' } }, minutes, now));
-    afterEvent(r.event, null);
+    afterEvent(r.event, null, !unsaved(a));
     persist();
     say(inst.title + ' logged for today' + (a.awarded ? ' · +' + a.xp + ' XP' : '') + ' · still planned for ' + fDay(inst.startEpoch));
     return r;

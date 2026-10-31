@@ -64,6 +64,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
       'fourth of a type': { seed: [seed('reading', 10, 30), seed('reading', 11, 30), seed('reading', 12, 30)], d: draft('reading', 30) },
       'active time used up': { seed: [seed('business', 20, 340)], d: draft('reading', 30) },
       'daily cap': { seed: [seed('business', 240, 60)], d: draft('reading', 30) },
+      'daily cap, rested': { state: { restedXP: 40 }, seed: [seed('business', 240, 60)], d: draft('reading', 30) },
     };
     const out = {};
     for (const [name, c] of Object.entries(cases)) {
@@ -93,6 +94,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('an ascended attribute\'s star bonus is previewed, paid, reported by the save and counted in the skill\'s XP', paid('ascended attribute', /^Physique ★★ \+4$/) && truth['ascended attribute'].award === 60, truth['ascended attribute']);
   ok('a perk is previewed and paid', paid('scholar perk', /^Scholar’s Flow \+4$/) && truth['scholar perk'].award === 40, truth['scholar perk']);
   ok('a draft Save would refuse is previewed at 0 with the refusal Save gives, and nothing is saved', refused('too short', 'Log at least 5 minutes to earn XP') && refused('fourth of a type', 'Daily XP limit reached for this activity type') && refused('active time used up', 'Daily active-time limit (6 hours) reached') && refused('daily cap', 'Daily XP cap reached'), truth);
+  ok('an award the daily cap stops spends no rested XP', refused('daily cap, rested', 'Daily XP cap reached') && truth['daily cap, rested'].rested === 40, truth['daily cap, rested']);
   ok('logging one type four times in a day: every preview matches what the save paid, then the refusal', JSON.stringify(truth.sequence) === JSON.stringify([[24, 24], [24, 24], [12, 12], [0, 'Daily XP limit reached for this activity type']]), truth.sequence);
   /* data safety: what a native Submit relies on */
   const safety = await p.evaluate(async () => {
