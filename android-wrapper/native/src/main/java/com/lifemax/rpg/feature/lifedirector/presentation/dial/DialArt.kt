@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -85,22 +86,55 @@ internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextM
         }
     )
 
-/** The day's arcs with their glows, edges and icons, and the words written along them. */
-internal class DialPlan(dial: DirectorDial, text: TextMeasurer) :
-    DialLayer(
-        buildList<Step> {
-            val glyphs = Glyphs(text)
-            dial.arcs.filter { it.outer }.forEach { arc(it, dial.radii) }
-            for (w in dial.words) {
-                val color = wordColor(w.kind, w.inner)
-                val style = if (w.inner) innerWord else outerWord
-                glyphRun(w.radius, w.a0, w.a1, glyphs.of(w.text, style), w.flip)?.let { run ->
-                    add { run.draw(this, color) }
+/**
+ * One arc's drawing, with its glow, edges and icon, so a build can move, fade or light it alone.
+ */
+internal class ArcArt(val arc: DialArc, radii: DialRadii) :
+    DialLayer(buildList<Step> { arc(arc, radii) })
+
+/**
+ * The day's arcs and the words written along them, in three groups drawn in this order: the outer
+ * ring, the words, the inner ring. A held handle dims each group as the web's .ld-dial.drag does.
+ */
+internal class DialPlan(dial: DirectorDial, text: TextMeasurer) {
+    val outer = dial.arcs.filter { it.outer }.map { ArcArt(it, dial.radii) }
+    val words =
+        DialLayer(
+            buildList<Step> {
+                val glyphs = Glyphs(text)
+                for (w in dial.words) {
+                    val color = wordColor(w.kind, w.inner)
+                    val style = if (w.inner) innerWord else outerWord
+                    glyphRun(w.radius, w.a0, w.a1, glyphs.of(w.text, style), w.flip)?.let { run ->
+                        add { run.draw(this, color) }
+                    }
                 }
             }
-            dial.arcs.filterNot { it.outer }.forEach { arc(it, dial.radii) }
-        }
-    )
+        )
+    val inner = dial.arcs.filterNot { it.outer }.map { ArcArt(it, dial.radii) }
+
+    fun draw(
+        scope: DrawScope,
+        outerAlpha: Float = 1f,
+        wordsAlpha: Float = 1f,
+        innerAlpha: Float = 1f,
+    ) {
+        scope.faded(outerAlpha) { for (i in outer.indices) outer[i].draw(this) }
+        scope.faded(wordsAlpha) { words.draw(this) }
+        scope.faded(innerAlpha) { for (i in inner.indices) inner[i].draw(this) }
+    }
+}
+
+/** Draws [block] at [alpha] as one group, as CSS opacity does; directly when it is opaque. */
+internal inline fun DrawScope.faded(alpha: Float, block: DrawScope.() -> Unit) {
+    if (alpha >= 1f) block()
+    else if (alpha > 0f) {
+        val canvas = drawContext.canvas
+        canvas.saveLayer(Rect(Offset.Zero, size), Paint().also { it.alpha = alpha })
+        block()
+        canvas.restore()
+    }
+}
 
 /** The part of today already gone, greyed out, and how much of the current block is left. */
 internal class DialNow(radii: DialRadii, hand: Float?, ring: CurrentRing?) :
@@ -286,21 +320,45 @@ private fun MutableList<Step>.ticks(radii: DialRadii) {
     val hour = Path()
     val six = Path()
     for (k in 0 until 96) {
-        val a = k * 3.75f
-        val (path, from) =
+        val path =
             when {
-                k % 24 == 0 -> six to radii.tickIn - 4
-                k % 4 == 0 -> hour to radii.tickIn
-                else -> quarter to radii.tickIn + 3
+                k % 24 == 0 -> six
+                k % 4 == 0 -> hour
+                else -> quarter
             }
-        val (x0, y0) = point(from, a)
-        val (x1, y1) = point(radii.tickOut, a)
+        val (x0, y0) = point(tickFrom(radii, k), k * 3.75f)
+        val (x1, y1) = point(radii.tickOut, k * 3.75f)
         path.moveTo(x0, y0)
         path.lineTo(x1, y1)
     }
     stroke(quarter, HAIRLINE, P.tick)
     stroke(hour, Stroke(1.4f), P.tickHour)
     stroke(six, Stroke(2f), P.tickSix)
+}
+
+/** Where tick [k] starts: the six-hour ticks reach furthest in, the quarter hours least. */
+private fun tickFrom(radii: DialRadii, k: Int): Float =
+    when {
+        k % 24 == 0 -> radii.tickIn - 4
+        k % 4 == 0 -> radii.tickIn
+        else -> radii.tickIn + 3
+    }
+
+/** Tick [k] lit by the build's arm: drawn over the face in the flash colour at [alpha]. */
+internal fun DrawScope.flashTick(radii: DialRadii, k: Int, alpha: Float) {
+    val width =
+        when {
+            k % 24 == 0 -> 2f
+            k % 4 == 0 -> 1.4f
+            else -> 1f
+        }
+    drawLine(
+        P.flash,
+        point(tickFrom(radii, k), k * 3.75f),
+        point(radii.tickOut, k * 3.75f),
+        width,
+        alpha = alpha,
+    )
 }
 
 /**
@@ -421,12 +479,12 @@ private class Glyphs(private val measurer: TextMeasurer) {
 }
 
 private val UNITS = Density(1f, 1f)
-private val CENTRE_POINT = Offset(CENTRE, CENTRE)
+internal val CENTRE_POINT = Offset(CENTRE, CENTRE)
 private val HAIRLINE = Stroke(1f)
 
-private fun box(r: Float) = Rect(CENTRE_POINT, r)
+internal fun box(r: Float) = Rect(CENTRE_POINT, r)
 
-private fun arcPath(r: Float, a0: Float, a1: Float): Path =
+internal fun arcPath(r: Float, a0: Float, a1: Float): Path =
     Path().apply {
         if (a1 - a0 >= 359.95f) addOval(box(r)) else arcTo(box(r), a0 - 90f, a1 - a0, true)
     }

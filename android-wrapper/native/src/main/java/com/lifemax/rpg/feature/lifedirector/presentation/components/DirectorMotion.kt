@@ -50,14 +50,17 @@ fun rememberPulse(running: Boolean, periodMs: Int): State<Float> {
         )
 }
 
-private fun animationsOff(context: Context) =
+private fun animationsOff(context: Context) = animatorScale(context) == 0f
+
+/** The phone's animator duration scale (Developer options), 0 when animations are removed. */
+fun animatorScale(context: Context): Float =
     runCatching {
             Settings.Global.getFloat(
                 context.contentResolver,
                 Settings.Global.ANIMATOR_DURATION_SCALE,
             )
         }
-        .getOrDefault(1f) == 0f
+        .getOrDefault(1f)
 
 /** The wall clock in epoch milliseconds; a screenshot provides a fixed one. */
 val LocalWallClock = staticCompositionLocalOf<() -> Long> { System::currentTimeMillis }

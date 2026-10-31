@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.lifedirector.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,11 +10,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +32,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,22 +54,28 @@ import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayMix
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayStrip
+import com.lifemax.rpg.feature.lifedirector.presentation.components.DialConfirmSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorFooter
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorToastView
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorTopLine
 import com.lifemax.rpg.feature.lifedirector.presentation.components.EarlierFold
+import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalDirectorBuzz
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderHeading
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
 import com.lifemax.rpg.feature.lifedirector.presentation.components.RemindersCard
 import com.lifemax.rpg.feature.lifedirector.presentation.components.SectionTabs
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Slice
 import com.lifemax.rpg.feature.lifedirector.presentation.components.UpNextCard
+import com.lifemax.rpg.feature.lifedirector.presentation.components.VibratorBuzz
 import com.lifemax.rpg.feature.lifedirector.presentation.components.cardSlice
 import com.lifemax.rpg.feature.lifedirector.presentation.components.earlierCard
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ellipseWash
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.BuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
 import kotlinx.coroutines.delay
 
 /**
@@ -72,14 +94,29 @@ fun LifeDirectorRoute(
     val ui by vm.ui.collectAsState()
     val p = projection ?: return
     LaunchedEffect(p.session, p.notice?.id) { p.notice?.let { vm.notice(p.session, it) } }
+    LaunchedEffect(visible) { if (!visible) vm.hidden() }
     ui.toast?.let { toast ->
         LaunchedEffect(toast.serial) {
             delay(TOAST_MS)
             vm.dismiss(toast.serial)
         }
     }
+    BackHandler(enabled = visible && ui.ask?.confirm != null) { vm.keep() }
+    val context = LocalContext.current
+    val buzz = remember(context) { VibratorBuzz(context) }
     val actions = remember(vm, emit) { DirectorActions(vm, emit) }
-    LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp)
+    CompositionLocalProvider(LocalDirectorBuzz provides buzz) {
+        val run =
+            rememberBuildRun(
+                // the page sends none with reduced motion; a projection that had one is not played
+                p.today?.dial?.build?.takeUnless { p.reducedMotion },
+                p.session,
+                ready = visible && ui.hold == null && ui.ask == null,
+                ledger = vm::takeBuild,
+                touched = { vm.touched },
+            )
+        LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+    }
 }
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
@@ -88,11 +125,24 @@ class DirectorActions(
     val day: (Int) -> Unit = {},
     val tip: (String) -> Unit = {},
     val earlier: () -> Unit = {},
+    val handles: HandleActions = HandleActions(),
+    val keep: () -> Unit = {},
+    val change: () -> Unit = {},
+    val touch: () -> Unit = {},
 ) {
     constructor(
         vm: LifeDirectorViewModel,
         emit: (action: String, id: String) -> Unit,
-    ) : this({ if (vm.handOver()) emit(it.act, it.id) }, vm::showDay, vm::tip, vm::toggleEarlier)
+    ) : this(
+        tap = { if (vm.handOver()) emit(it.act, it.id) },
+        day = vm::showDay,
+        tip = vm::tip,
+        earlier = vm::toggleEarlier,
+        handles = HandleActions(vm::hold, vm::move, vm::release, vm::step),
+        keep = vm::keep,
+        change = vm::change,
+        touch = vm::touch,
+    )
 
     /** An arc runs its tap on the page; fixed time only says what it is. */
     fun arc(arc: DialArc) {
@@ -124,12 +174,19 @@ fun LifeDirectorScreen(
     animate: Boolean = true,
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
+    run: BuildRun? = null,
 ) {
+    val confirm = ui.ask?.confirm
     DirectorTheme(p) {
-        Box(Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg"))) {
+        Box(
+            Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).pointerInput(actions) {
+                observeTouches(actions.touch)
+            }
+        ) {
             val today = p.today
             LazyColumn(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxSize()
+                    .then(if (confirm != null) Modifier.clearAndSetSemantics {} else Modifier),
                 contentPadding =
                     PaddingValues(
                         start = 12.dp,
@@ -149,12 +206,14 @@ fun LifeDirectorScreen(
                                 Banner(it, actions.tap)
                                 Spacer(Modifier.height(12.dp))
                             }
-                            if (today != null) TodayTop(today, ui, actions, animate)
+                            if (today != null) TodayTop(today, ui, actions, animate, run)
                         }
                     }
                 }
                 if (today != null) todayBelow(today, ui, actions, animate)
             }
+            if (confirm != null)
+                DialConfirmSheet(confirm, bottomInsetDp.dp, actions.change, actions.keep)
             ui.toast?.let {
                 DirectorToastView(
                     it.text,
@@ -183,19 +242,70 @@ private fun TodayTop(
     ui: DirectorUi,
     actions: DirectorActions,
     animate: Boolean,
+    run: BuildRun?,
 ) {
     DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
     Spacer(Modifier.height(8.dp))
-    ChronoDial(today.dial, today.centre, animate, actions::arc, actions.tap)
+    ChronoDial(
+        today.dial,
+        today.centre,
+        animate,
+        actions::arc,
+        actions.tap,
+        hold = ui.hold,
+        asking = ui.ask != null,
+        handles = actions.handles,
+        run = run,
+    )
+    DialHint(today.hint)
+    DayMix(today.mix)
+}
+
+/** The words under the dial, with a handle's pip between them (.ld-dial-hint, .ld-hint-pip). */
+@Composable
+private fun DialHint(hint: Pair<String, String>) {
+    if (hint.first.isEmpty() && hint.second.isEmpty()) return
     Text(
-        "Tap a session for details.",
+        buildAnnotatedString {
+            append(hint.first)
+            append(" ")
+            appendInlineContent(PIP, " ")
+            append(" ")
+            append(hint.second)
+        },
         Modifier.fillMaxWidth().padding(top = 2.dp),
         style = DirectorText,
         color = DirectorPalette.ink3,
         fontSize = 12.2.sp,
         textAlign = TextAlign.Center,
+        inlineContent = HINT_PIP,
     )
-    DayMix(today.mix)
+}
+
+private const val PIP = "pip"
+
+/** The pip: a 10 dp handle ring in the work colour, a dp under the baseline, a dp either side. */
+private val HINT_PIP =
+    mapOf(
+        PIP to
+            InlineTextContent(Placeholder(12.sp, 10.sp, PlaceholderVerticalAlign.AboveBaseline)) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.offset(y = 1.dp)
+                            .size(10.dp)
+                            .background(DirectorPalette.handleFill, CircleShape)
+                            .border(2.dp, DirectorPalette.work, CircleShape)
+                    )
+                }
+            }
+    )
+
+/** Tells [touched] of every finger that comes down on the screen, taking nothing from it. */
+private suspend fun PointerInputScope.observeTouches(touched: () -> Unit) = awaitPointerEventScope {
+    while (true) {
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        if (event.changes.any { it.changedToDownIgnoreConsumed() }) touched()
+    }
 }
 
 private fun LazyListScope.todayBelow(

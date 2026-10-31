@@ -63,7 +63,7 @@ internal fun DialCentreView(
 }
 
 /** Lengths and type sizes in dial units. */
-private class DialUnits(private val unit: Dp, private val density: Density) {
+internal class DialUnits(private val unit: Dp, private val density: Density) {
     fun dp(v: Float): Dp = unit * v
 
     fun sp(v: Float): TextUnit = with(density) { (unit * v).toSp() }

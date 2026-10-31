@@ -54,6 +54,7 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 today = j.today() ?: old?.takeIf { it.session == session }?.today,
                 tokens = colors.keys().asSequence().associateWith { colors.getLong(it) },
                 light = j.getBoolean("light"),
+                reducedMotion = j.getBoolean("reducedMotion"),
             )
     }
 }
