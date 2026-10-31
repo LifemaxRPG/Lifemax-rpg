@@ -109,7 +109,7 @@ Settings handlers that are also reached from other tabs: the Journal header "Bac
 | `#tabTimingToggle`, `#tabTimingHint` | on; hint becomes "Last: …" from the plugin | `syncTiming` (`50-native-overview.js:149-150`) | `lmaLoad().tabTiming`, `NativeOverview.timing()` |
 | `#nativeOverviewToggle`, `#nativeOverviewHint` | on (default true), disabled when no plugin | `syncSetting` (`50-native-overview.js:61-66`) | `lmaLoad().nativeOverview!==false` |
 | `#nativeCharacterToggle` | on, disabled without plugin | kit `sync` (`50-native-tabkit.js:65-71`) | `lmaLoad().nativeCharacter===true` |
-| `#nativeLogToggle` | on, disabled without plugin | kit `sync` | `lmaLoad().nativeLog===true` |
+| `#nativeLogToggle` | on (default true: kit `defaultOn`), disabled without plugin | kit `sync` | `lmaLoad().nativeLog!==false` |
 
 ### 3.3 Bottom bar (`views/settings.html:12-17`, body `#tabsEditBody`)
 

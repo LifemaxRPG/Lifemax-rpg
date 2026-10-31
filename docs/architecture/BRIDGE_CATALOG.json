@@ -41,7 +41,7 @@
   },
   {
    "feature": "log",
-   "status": "native-opt-in-beta",
+   "status": "native-default",
    "nativePlugin": "NativeLog",
    "owner": "web-core-gameplay",
    "pluginSource": "bridge/web/NativeLogPlugin.kt (extends ComposeTabPlugin)",
@@ -64,7 +64,7 @@
     "ordering": "webSessionId and increasing sequence; draftRevision changes only when the page replaces the draft (save, prefill)"
    },
    "mutationsGate": "operation id per draft (idempotent submit); no durable receipt across process death yet (A14/A15 gap)",
-   "rollout": "opt-in under Settings, Appearance: Native Log activity (beta)",
+   "rollout": "default since the owner's phone check of build 292 (NativeTabKit defaultOn: on unless turned off); Classic: turn off Settings, Appearance: Native Log activity",
    "canonicalLayout": true
   },
   {
