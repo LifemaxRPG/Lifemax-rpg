@@ -153,9 +153,10 @@
    "capabilities": [
     "recipes.projection.v1"
    ],
-   "commands": {},
+   "commands": {
+    "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
+   },
    "actions": {
-    "log": "{action:'log', id}: the screen closes and the page runs addRecipeToMeal(id), Food's add-food sheet in its portion view over classic Meals; for an id the page does not know, the page stays on Recipes and the screen comes back",
     "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
     "link": "nothing is sent: the screen opens the projected https link itself (Android ACTION_VIEW)"
    },
@@ -164,6 +165,8 @@
     "addRecipeToMeal / fv2Open (the add-food sheet, portion view)"
    ],
    "readContract": {
+    "snapshotDto": "feature/recipes/domain/RecipesProjection.kt",
+    "decoder": "feature/recipes/data/WebRecipesRepository.kt",
     "fixtures": "native/src/test/resources/fixtures/recipes-scholar.json, recipes-entrepreneur.json, recipes-disciple.json, recipes-prefill.json, and recipes-filters.json with the ids the page's recipeHits shows for sample searches (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page hands over a prefill",
     "invalidation": "renderRecipes (every save, a class change), host resume, foreground return, 15-second refresh while visible"

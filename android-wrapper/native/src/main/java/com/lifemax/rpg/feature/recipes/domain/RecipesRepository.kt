@@ -8,7 +8,7 @@ interface RecipesRepository {
 
 /** What the page does for the screen. */
 sealed interface RecipesPageAction {
-    /** One serving in the page's add-food sheet over Meals, after the screen has stepped aside. */
+    /** One serving in the page's add-food sheet over Meals, which then takes over. */
     data class Log(val recipeId: String) : RecipesPageAction
 
     /** Go to Meals, which takes over from the screen. */

@@ -44,7 +44,7 @@ data class RecipeFilter(val query: String = "", val category: String = ALL_RECIP
 const val ALL_RECIPES = "all"
 
 /** What JavaScript's trim() removes: Kotlin's whitespace but U+001C to U+001F, and U+FEFF. */
-private fun isJsSpace(c: Char) = c == '﻿' || (c.isWhitespace() && c !in '\u001C'..'\u001F')
+private fun isJsSpace(c: Char) = c == '\uFEFF' || (c.isWhitespace() && c !in '\u001C'..'\u001F')
 
 data class RecipesProjection(
     val session: String,

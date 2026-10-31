@@ -1,6 +1,7 @@
 /* Native Recipes, web half: the projection a native screen draws from (checked against the page's own Recipes page for a class
-   with class recipes, one with Snack recipes and one without), when the screen covers the page, the prefill take-over, "Log
-   this recipe" handed to the page, going to Meals, and native Food's Meals/Recipes switch with native Recipes on and off.
+   with class recipes, one with Snack recipes and one without), when the screen covers the page, the prefill take-over (and an
+   open that fails), no update after a close, "Log this recipe" handed to the page, going to Meals, and native Food's
+   Meals/Recipes switch with native Recipes on and off.
    Fake NativeRecipes, NativeNutrition and NativeOverview plugins stand in for Android.
    Run: NODE_PATH=$(npm root -g) node tests/native-recipes.test.js */
 const { chromium } = require('playwright');
@@ -19,7 +20,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
       open:async a=>{window.__calls.push([name,'open',a])},
       update:async a=>{window.__calls.push([name,'update',a])},
-      close:async a=>{window.__calls.push([name,'close',a]);(ls.closed||[]).forEach(f=>f({session:a&&a.session}))},
+      close:async a=>{window.__calls.push([name,'close',a,{sheet:!!document.querySelector('#fv2Ov.show')}]);(ls.closed||[]).forEach(f=>f({session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
       handshake:async()=>({protocol:1,capabilities:caps})}};
     window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>['NativeRecipes','NativeNutrition','NativeOverview'].includes(n),getPlatform:()=>'android',
@@ -97,7 +98,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.disciple = dis.recipes.length === 10 && dis.recipes.every(x => !/\(est\.\)/.test(x.kcal)) && compare(dis).same;
     switchClassTo('scholar'); await until(() => latest().recipes.length === 19, 2000);
 
-    // commands: Recipes has none; an unknown one is refused and the screen stays
+    // a command Recipes does not have is refused and the screen stays
     await R.__emit('command', { command: 'save', payload: {}, requestId: 'c1' }); await wait(150);
     const refused = calls('recipes', 'update').map(c => c[2].reply).filter(Boolean).find(x => x.requestId === 'c1');
     out.noCommands = !!refused && refused.ok === false && refused.message === 'Unknown command' && showing('recipes');
@@ -119,23 +120,40 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     navigate('meals'); await wait(300); select.value = 'Breakfast'; navigate('recipes'); await until(() => count('recipes', 'open') > opens + 3);
     const cat = last('recipes', 'open')[2].snapshot.filter;
     out.prefillCategory = cat.query === '' && cat.category === 'Breakfast' && cat.revision === 4 && select.value === 'all';
+    // an open that fails leaves the diet card's request on the page, and the screen takes it over when it does open
+    navigate('meals'); await wait(300);
+    const openScreen = R.open;
+    R.open = async () => { throw Error('no screen') };
+    recipeButton().click(); await wait(300);
+    out.failedOpen = lmaView() === 'recipes' && !showing('recipes') && search.value === asked.n && page().map(x => x.id).includes(asked.id) && page().length < 19;
+    R.open = openScreen; await until(() => showing('recipes')); // NativeTabs.heal opens it again
+    const retried = last('recipes', 'open')[2].snapshot.filter;
+    out.failedOpenRetried = retried.query === asked.n && retried.revision > 4 && search.value === '' && page().length === 19;
 
-    // a hidden screen gets no updates
+    // a hidden screen gets no updates, not even a refresh whose capture of the bars was still running when the screen closed
     navigate('dashboard'); await wait(300);
     const updates = count('recipes', 'update'); renderRecipes(); save(); await wait(400);
     out.hiddenQuiet = !showing('recipes') && count('recipes', 'update') === updates;
+    navigate('recipes'); await until(() => showing('recipes'));
+    const capture = NativeOverviewSnapshot.snapshot;
+    NativeOverviewSnapshot.snapshot = async function () { await wait(300); return capture.apply(this, arguments) };
+    renderRecipes(); await wait(150); navigate('dashboard'); await wait(500);
+    NativeOverviewSnapshot.snapshot = capture;
+    out.noLateUpdate = !showing('recipes') && at('recipes', 'update') < at('recipes', 'close');
 
-    // "Log this recipe": the screen closes and the page opens its add-food sheet with one serving over Meals; the screen stays away
+    // "Log this recipe": the page opens its add-food sheet with one serving over Meals, and the screen closes; it stays away
     navigate('recipes'); await until(() => showing('recipes'));
     const logged = state.foodLog.length, before = count('recipes', 'open');
-    await R.__emit('action', { action: 'log', id: 'rcp_pesto_chicken' }); await wait(800);
+    const reply = () => calls('recipes', 'update').map(c => c[2].reply).filter(Boolean).pop();
+    await R.__emit('command', { command: 'log', payload: { id: 'rcp_pesto_chicken' }, requestId: 'l1' }); await wait(800);
     const sh = fv2S().sh;
     out.log = !showing('recipes') && lmaView() === 'meals' && !!document.querySelector('#fv2Ov.show') && sh.view === 'portion' && sh.pick.id === 'rcp_pesto_chicken'
       && sh.grams === 230 && sh.slot === 'lunch' && state.foodLog.length === logged && count('recipes', 'open') === before;
     fv2Close(); navigate('recipes'); await until(() => showing('recipes'));
-    const back = count('recipes', 'open');
-    await R.__emit('action', { action: 'log', id: 'nope' }); await until(() => count('recipes', 'open') > back);
-    out.logUnknown = lmaView() === 'recipes' && showing('recipes') && !document.querySelector('#fv2Ov.show') && state.foodLog.length === logged;
+    const closes = count('recipes', 'close');
+    await R.__emit('command', { command: 'log', payload: { id: 'nope' }, requestId: 'l2' }); await wait(800);
+    out.logUnknown = lmaView() === 'recipes' && showing('recipes') && count('recipes', 'close') === closes && reply().requestId === 'l2' && reply().ok === false
+      && !document.querySelector('#fv2Ov.show') && state.foodLog.length === logged;
 
     // the Meals pill and "＋ Log a meal" name the view: classic Meals at once, or native Food first and then Recipes closes
     window.__calls.length = 0;
@@ -147,6 +165,13 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     await R.__emit('action', { view: 'meals' }); await until(() => showing('food') && !showing('recipes'));
     out.mealsNative = lmaView() === 'meals' && at('food', 'open') >= 0 && at('food', 'open') < at('recipes', 'close') && count('recipes', 'close') === 1;
     out.mealsNativeDetail = window.__calls.map(c => c[0] + ' ' + c[1]);
+    // "Log this recipe" with native Food on: Food steps aside for the sheet, and the screen is asked to close only once the sheet shows
+    navigate('recipes'); await until(() => showing('recipes') && !showing('food'));
+    window.__calls.length = 0;
+    await R.__emit('command', { command: 'log', payload: { id: 'rcp_pesto_chicken' }, requestId: 'l3' }); await until(() => !showing('recipes'));
+    out.logOverFood = lmaView() === 'meals' && !showing('food') && count('recipes', 'close') === 1 && last('recipes', 'close')[3].sheet;
+    out.logOverFoodDetail = window.__calls.map(c => c[0] + ' ' + c[1]);
+    fv2Close(); lmaNavTo('meals', { fast: true }); await until(() => showing('food'));
 
     // native Food's Meals/Recipes switch hands over to native Recipes, which opens before Food closes
     const session = () => last('food', 'open')[2].session; // the screen ignores an action from a session it no longer shows
@@ -182,17 +207,21 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('the page\'s search rule applied to the projection finds exactly what the page shows', r.parity, r.parityDetail);
   ok('an Entrepreneur\'s two Snack recipes are in the list, with no Snack category; the open screen follows the class change', r.entrepreneur, r);
   ok('a Disciple sees the ten cookbook recipes, none estimated', r.disciple, r);
-  ok('Recipes has no commands: an unknown one is refused and the screen stays', r.noCommands, r);
+  ok('a command Recipes does not have is refused and the screen stays', r.noCommands, r);
   ok('leaving for classic Meals closes the screen', r.leavesForClassicMeals, r);
   ok('a prefill from the diet card is taken over on open, and the page\'s own search is emptied', r.prefill, r);
   ok('coming back without a prefill keeps the screen\'s own search (revision unchanged)', r.keepsOwn, r);
   ok('the same prefill again is taken over again', r.prefillAgain, r);
   ok('a category the page chose is taken over too', r.prefillCategory, r);
+  ok('an open that fails leaves the prefill on the page', r.failedOpen, r);
+  ok('the screen takes that prefill over when it does open, and the page\'s fields are emptied then', r.failedOpenRetried, r);
   ok('a hidden screen gets no updates', r.hiddenQuiet, r);
-  ok('Log this recipe: the screen closes, the page\'s add-food sheet opens with one serving over Meals, nothing is logged yet', r.log, r);
-  ok('Log for a recipe the page does not know: the page stays on Recipes and the screen comes back', r.logUnknown, r);
+  ok('a refresh still capturing the bars when the screen closes is not sent', r.noLateUpdate, r);
+  ok('Log this recipe: the page\'s add-food sheet opens with one serving over Meals and the screen closes, nothing is logged yet', r.log, r);
+  ok('Log for a recipe the page does not know: the page stays on Recipes, the screen stays, the reply says not ok', r.logUnknown, r);
   ok('going to Meals with native Food off: the screen closes, classic Meals', r.mealsClassic, r);
   ok('going to Meals with native Food on: Food opens before Recipes closes', r.mealsNative, r.mealsNativeDetail);
+  ok('Log this recipe with native Food on: Food steps aside for the sheet, and Recipes closes only once the sheet shows', r.logOverFood, r.logOverFoodDetail);
   ok('native Food\'s Recipes switch: native Recipes opens before Food closes', r.switchNative, r.switchNativeDetail);
   ok('Food then lands on native Recipes', r.foodTab, r);
   ok('with native Recipes off, Food\'s switch closes Food at once and shows the classic page', r.switchClassic, r);

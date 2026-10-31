@@ -1,7 +1,7 @@
 package com.lifemax.rpg.feature.recipes
 
 import com.lifemax.rpg.feature.recipes.data.WebRecipesRepository
-import com.lifemax.rpg.feature.recipes.data.toEvent
+import com.lifemax.rpg.feature.recipes.data.toJson
 import com.lifemax.rpg.feature.recipes.domain.RecipeFilter
 import com.lifemax.rpg.feature.recipes.domain.RecipesPageAction
 import com.lifemax.rpg.feature.recipes.presentation.IngredientRef
@@ -105,33 +105,54 @@ class RecipesTest {
         assertEquals(19, repo.state.value!!.recipes.size)
     }
 
-    /** Every search and category the page was asked (recipes-filters.json) shows the page's ids. */
-    @Test
-    fun filtersExactlyAsThePage() {
-        val parity =
-            JSONObject(javaClass.getResource("/fixtures/recipes-filters.json")!!.readText())
-        var cases = 0
-        for (name in parity.keys()) {
-            val (_, vm) = setUp(name)
-            val expected = parity.getJSONArray(name)
-            for (i in 0 until expected.length()) {
-                val case = expected.getJSONObject(i)
-                vm.search(case.getString("query"))
-                vm.choose(case.getString("category"))
-                val ids =
-                    case.getJSONArray("ids").let { a -> (0 until a.length()).map(a::getString) }
-                assertEquals("$name ${case}", ids, vm.ids())
-                cases++
+    /** recipes-filters.json: for each fixture, the ids the page's own filter showed per search. */
+    private val pageFilters: Map<String, List<Pair<RecipeFilter, List<String>>>> by lazy {
+        val json = JSONObject(javaClass.getResource("/fixtures/recipes-filters.json")!!.readText())
+        json.keys().asSequence().associateWith { name ->
+            val cases = json.getJSONArray(name)
+            (0 until cases.length()).map { i ->
+                val case = cases.getJSONObject(i)
+                val ids = case.getJSONArray("ids")
+                RecipeFilter(case.getString("query"), case.getString("category")) to
+                    (0 until ids.length()).map(ids::getString)
             }
         }
-        assertEquals(73, cases)
     }
 
-    /** JavaScript's trim(): no-break and em spaces go, the information separators stay. */
+    @Test
+    fun filtersExactlyAsThePage() {
+        for ((name, cases) in pageFilters) {
+            val (_, vm) = setUp(name)
+            for ((filter, ids) in cases) {
+                vm.search(filter.query)
+                vm.choose(filter.category)
+                assertEquals("$name $filter", ids, vm.ids())
+            }
+        }
+    }
+
+    /** The searches that tell the rule apart are in the fixture with the page's answers. */
+    @Test
+    fun theFixtureHoldsTheTellingSearches() {
+        val scholar = pageFilters.getValue("scholar").toMap()
+        // the category is searched with the ingredients
+        assertEquals(listOf("rcp_egg_muffins"), scholar[RecipeFilter("breakfast 12 eggs")])
+        // one phrase, not two words; the steps are not searched
+        assertEquals(emptyList<String>(), scholar[RecipeFilter("chicken rice")])
+        assertEquals(emptyList<String>(), scholar[RecipeFilter("preheat")])
+        assertEquals(
+            listOf("rcp_chicken_salad", "rcp_pesto_chicken", "rcp_sheet_pan_chicken"),
+            scholar[RecipeFilter("  CHICKEN ")],
+        )
+    }
+
+    /**
+     * JavaScript's trim(): a no-break space, an em space and a byte order mark go; U+001C stays.
+     */
     @Test
     fun trimsAsJavaScriptDoes() {
         val (_, vm) = setUp()
-        vm.search(" Chicken ﻿")
+        vm.search("\u00A0Chicken\u2003\uFEFF")
         assertEquals(3, vm.ids().size)
         vm.search("\u001Cchicken")
         assertEquals(emptyList<String>(), vm.ids())
@@ -185,11 +206,10 @@ class RecipesTest {
     }
 
     @Test
-    fun actionsReachThePageAsItReadsThem() {
+    fun logReachesThePageAsItReadsIt() {
         assertEquals(
-            "log" to "rcp_pesto_chicken",
-            RecipesPageAction.Log("rcp_pesto_chicken").toEvent(),
+            "rcp_pesto_chicken",
+            RecipesPageAction.Log("rcp_pesto_chicken").toJson().getString("id"),
         )
-        assertEquals("navigate" to "meals", RecipesPageAction.Meals.toEvent())
     }
 }

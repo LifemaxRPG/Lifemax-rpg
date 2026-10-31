@@ -66,6 +66,13 @@
    ]
   },
   {
+   "query": "breakfast 12 eggs",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins"
+   ]
+  },
+  {
    "query": "breakfast",
    "category": "all",
    "ids": [
@@ -244,6 +251,13 @@
    ]
   },
   {
+   "query": "breakfast 12 eggs",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins"
+   ]
+  },
+  {
    "query": "breakfast",
    "category": "all",
    "ids": [
@@ -406,6 +420,13 @@
    ]
   },
   {
+   "query": "breakfast 12 eggs",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins"
+   ]
+  },
+  {
    "query": "breakfast",
    "category": "all",
    "ids": [
@@ -561,6 +582,13 @@
    "category": "all",
    "ids": [
     "rcp_pesto_chicken"
+   ]
+  },
+  {
+   "query": "breakfast 12 eggs",
+   "category": "all",
+   "ids": [
+    "rcp_egg_muffins"
    ]
   },
   {
