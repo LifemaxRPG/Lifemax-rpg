@@ -371,6 +371,9 @@
  "LMA_SWIPE": [
   "src/runtime/segments/34-navigation.js"
  ],
+ "LMA_TABSWIPE": [
+  "src/runtime/segments/50-native-swipe.js"
+ ],
  "LMA_TAB_DEFAULT": [
   "src/runtime/segments/50-tabs-edit.js"
  ],
@@ -7114,6 +7117,9 @@
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
  ],
+ "window.NativeSwipe": [
+  "src/runtime/segments/50-native-swipe.js"
+ ],
  "window.NativeTabKit": [
   "src/runtime/segments/50-native-tabkit.js"
  ],
@@ -7179,6 +7185,15 @@
  ],
  "window.lmaBack": [
   "src/runtime/segments/34-navigation.js"
+ ],
+ "window.lmaResetSwipeTune": [
+  "src/runtime/segments/50-native-swipe.js"
+ ],
+ "window.lmaSetNativeSwipe": [
+  "src/runtime/segments/50-native-swipe.js"
+ ],
+ "window.lmaSetSwipeTune": [
+  "src/runtime/segments/50-native-swipe.js"
  ],
  "window.openNativeCash": [
   "src/runtime/segments/50-native-cash.js"

@@ -3244,7 +3244,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-cash.js",
-   "bytes": 5550,
+   "bytes": 5758,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3256,7 +3256,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 24576,
+   "bytes": 25423,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3276,7 +3276,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 12296,
+   "bytes": 12675,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3290,7 +3290,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 22603,
+   "bytes": 23071,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3301,6 +3301,23 @@
     "window.setNativeNutritionEnabled",
     "window.__nativeTabPerf",
     "window.NativeNutritionBeta"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-swipe.js",
+   "bytes": 12700,
+   "statement_count": 2,
+   "tags": [
+    "android",
+    "native",
+    "swipe"
+   ],
+   "symbols": [
+    "LMA_TABSWIPE",
+    "window.lmaSetNativeSwipe",
+    "window.lmaSetSwipeTune",
+    "window.lmaResetSwipeTune",
+    "window.NativeSwipe"
    ]
   },
   {
