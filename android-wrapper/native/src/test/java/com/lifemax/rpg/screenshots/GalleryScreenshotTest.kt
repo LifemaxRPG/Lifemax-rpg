@@ -33,6 +33,7 @@ import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.ChoicePill
 import com.lifemax.rpg.core.designsystem.components.PageButton
 import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageCheck
 import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.PageTag
 import com.lifemax.rpg.core.designsystem.components.PageToast
@@ -45,6 +46,7 @@ import com.lifemax.rpg.core.designsystem.components.SegmentedChoice
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
 import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.core.designsystem.components.pixelIconNames
+import com.lifemax.rpg.core.designsystem.components.toggleTarget
 import org.junit.Rule
 import org.junit.Test
 
@@ -70,6 +72,7 @@ class GalleryScreenshotTest {
         section("buttons", light) { Buttons() }
         section("switch", light) { Switches(light) }
         section("page", light) { PageClasses(light) }
+        section("checks", light) { Checks(light) }
         section("bars", light) { Bars() }
         section("icons", light) { Icons() }
         section("toasts", light) { Toasts(light) }
@@ -193,6 +196,43 @@ private fun PageClasses(light: Boolean) =
                 PageTag("optional", weight = FontWeight.Bold)
             }
             PageButton("＋ Log a meal", "Log a meal", {}, Modifier.padding(top = 10.dp))
+        }
+    }
+
+/**
+ * The page's tick box: off and on, waiting for the page's answer (faded at the state asked for),
+ * disabled, and as the box of a row that is the switch (toggleTarget, at least 48 dp tall).
+ */
+@Composable
+private fun Checks(light: Boolean) =
+    PageTheme(PageColors(ScreenshotPalette.tokenMap(light), light)) {
+        PageCard {
+            PageEyebrow("Page check")
+            Row(
+                Modifier.padding(top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PageCheck(false)
+                PageCheck(true)
+                PageCheck(true, pending = true)
+                PageCheck(false, pending = true)
+                PageCheck(false, enabled = false)
+                PageCheck(true, enabled = false)
+            }
+            Row(
+                Modifier.padding(top = 10.dp).toggleTarget(true) {},
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Swipe to switch tabs",
+                    Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                PageCheck(true)
+            }
         }
     }
 
