@@ -27,22 +27,28 @@ function fv2Unit(f){const p=(f.port||[])[0];return p?{g:p.g,l:fv2PL(p.l)}:{g:100
 function fv2KcalFor(f,g){return scaleFood(f,g).kcal}
 
 /* ------------------------------------------------------------------ logging */
+/* Stores a Food change. One that could not be stored is taken back (undo), and the snackbar says why in place of the
+   success it would have shown: false. save() itself says nothing while the save is read-only. */
+function fv2Saved(undo){if(save())return true;undo();renderMeals();fv2Snack(unsavedMessage());return false}
 function fv2Log(food,grams,slot,opts){
  mealsEnsure();grams=Math.max(1,Math.round((+grams||100)*10)/10);const s=scaleFood(food,grams),day=mealsDayKey();
  const e={id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:day,slot:slot||fv2Slot(),foodId:food.id,name:food.n,grams,...s,at:new Date().toISOString()};
- state.foodLog.push(e);fv2S().lastId=e.id;save();fv2Hap('success');renderMeals();
- fv2Snack((food.n.length>26?food.n.slice(0,25)+'…':food.n)+' · '+fv2Fmt(s.kcal)+' kcal','Undo',function(){state.foodLog=state.foodLog.filter(x=>x.id!==e.id);save();renderMeals()});
+ state.foodLog.push(e);if(!fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==e)}))return null;
+ fv2S().lastId=e.id;fv2Hap('success');renderMeals();
+ fv2Snack((food.n.length>26?food.n.slice(0,25)+'…':food.n)+' · '+fv2Fmt(s.kcal)+' kcal','Undo',function(){const was=state.foodLog;state.foodLog=was.filter(x=>x.id!==e.id);if(fv2Saved(()=>{state.foodLog=was}))renderMeals()});
  return e;
 }
 function fv2Snack(msg,act,fn){let el=document.getElementById('fv2Snack');if(!el){el=document.createElement('div');el.id='fv2Snack';el.className='fv2-snack';document.body.appendChild(el)}
  el.innerHTML='<span></span>'+(act?'<button type="button">'+esc(act)+'</button>':'');el.firstChild.textContent=msg;el.classList.add('on');
  if(act)el.querySelector('button').onclick=function(){el.classList.remove('on');fn&&fn()};clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('on')},4200)}
-function deleteMealEntry(id){mealsEnsure();state.foodLog=state.foodLog.filter(x=>x.id!==id);save();renderMeals()}
+function deleteMealEntry(id){mealsEnsure();const was=state.foodLog;state.foodLog=was.filter(x=>x.id!==id);if(fv2Saved(()=>{state.foodLog=was}))renderMeals()}
 function fv2CopySlot(slot){const from=fv2DayShift(mealsDayKey(),-1),src=state.foodLog.filter(e=>e.date===from&&e.slot===slot);if(!src.length)return;
  const ids=src.map(e=>{const n=Object.assign({},e,{id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:mealsDayKey(),at:new Date().toISOString()});state.foodLog.push(n);return n.id});
- save();fv2Hap('success');renderMeals();fv2Snack('Copied '+src.length+' item'+(src.length>1?'s':'')+' from yesterday','Undo',function(){state.foodLog=state.foodLog.filter(x=>ids.indexOf(x.id)<0);save();renderMeals()})}
-function fv2AddWater(ml){state.waterLog=state.waterLog||[];const id='water_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);state.waterLog.push({id,date:mealsDayKey(),ml,at:new Date().toISOString()});save();fv2Hap('tap');renderMeals();
- fv2Snack('+'+ml+' ml water','Undo',function(){state.waterLog=state.waterLog.filter(x=>x.id!==id);save();renderMeals()})}
+ if(!fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>ids.indexOf(x.id)<0)}))return;
+ fv2Hap('success');renderMeals();fv2Snack('Copied '+src.length+' item'+(src.length>1?'s':'')+' from yesterday','Undo',function(){const was=state.foodLog;state.foodLog=was.filter(x=>ids.indexOf(x.id)<0);if(fv2Saved(()=>{state.foodLog=was}))renderMeals()})}
+function fv2AddWater(ml){state.waterLog=state.waterLog||[];const id='water_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);state.waterLog.push({id,date:mealsDayKey(),ml,at:new Date().toISOString()});
+ if(!fv2Saved(()=>{state.waterLog=state.waterLog.filter(x=>x.id!==id)}))return;fv2Hap('tap');renderMeals();
+ fv2Snack('+'+ml+' ml water','Undo',function(){const was=state.waterLog;state.waterLog=was.filter(x=>x.id!==id);if(fv2Saved(()=>{state.waterLog=was}))renderMeals()})}
 
 /* ------------------------------------------------------------------ the page */
 function fv2RingSvg(t,g,sel,prev){
@@ -187,8 +193,8 @@ function fv2SheetClick(ev){const sh=fv2S().sh,t=ev.target;let b;
   if(a==='mult'){const u=fv2Unit(sh.pick);sh.grams=Math.max(1,Math.round(u.g*(+b.dataset.x)*10)/10);fv2Live(true);return}
   if(a==='serv'){sh.grams=+b.dataset.g;fv2Live(true);return}
   if(a==='save'){fv2SaveEdit();return}
-  if(a==='del'){const id=sh.edit.id,e=sh.edit;state.foodLog=state.foodLog.filter(x=>x.id!==id);save();fv2Close();renderMeals();fv2Snack('Removed '+e.name,'Undo',function(){state.foodLog.push(e);save();renderMeals()});return}
-  if(a==='again'){const e=sh.edit,n=Object.assign({},e,{id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:getToday(),at:new Date().toISOString()});state.foodLog.push(n);save();fv2Close();mealsDay=getToday();renderMeals();fv2Hap('success');fv2Snack('Logged again today');return}
+  if(a==='del'){const id=sh.edit.id,e=sh.edit,was=state.foodLog;state.foodLog=was.filter(x=>x.id!==id);if(!fv2Saved(()=>{state.foodLog=was}))return;fv2Close();renderMeals();fv2Snack('Removed '+e.name,'Undo',function(){state.foodLog.push(e);if(fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==e)}))renderMeals()});return}
+  if(a==='again'){const e=sh.edit,n=Object.assign({},e,{id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:getToday(),at:new Date().toISOString()});state.foodLog.push(n);if(!fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==n)}))return;fv2Close();mealsDay=getToday();renderMeals();fv2Hap('success');fv2Snack('Logged again today');return}
   if(a==='createsave'){fv2SaveCreate();return}
   if(a==='goalsave'){fv2SaveGoal();return}
   if(a==='preset'){fv2Preset(b.dataset.p);return}}
@@ -219,7 +225,7 @@ function fv2Live(rewrite){const sh=fv2S().sh,s=scaleFood(sh.pick,sh.grams||0),g=
 function fv2DoLog(){const sh=fv2S().sh;if(!sh.pick||!(sh.grams>0))return;const f=sh.pick,gr=sh.grams,sl=sh.slot;fv2Close();
  if(String(f.id).indexOf('custom_')!==0&&f.cat==='Logged'&&state.customFoods.every(x=>x.id!==f.id)){/* keep as is: per-100 numbers came from the entry */}
  fv2Log(f,gr,sl)}
-function fv2SaveEdit(){const sh=fv2S().sh,e=sh.edit;if(!e)return;const s=scaleFood(sh.pick,sh.grams);Object.assign(e,{grams:sh.grams,slot:sh.slot},s);save();fv2Close();fv2S().lastId=e.id;renderMeals();fv2Hap('success')}
+function fv2SaveEdit(){const sh=fv2S().sh,e=sh.edit;if(!e)return;const s=Object.assign({grams:sh.grams,slot:sh.slot},scaleFood(sh.pick,sh.grams)),was={};Object.keys(s).forEach(k=>{was[k]=e[k]});Object.assign(e,s);if(!fv2Saved(()=>{Object.assign(e,was)}))return;fv2Close();fv2S().lastId=e.id;renderMeals();fv2Hap('success')}
 function fv2Create(){const sh=fv2S().sh;return fv2Head('Create food',true)+'<div class="fv2-form"><label>Name<input id="fv2CN" type="text" maxlength="80" placeholder="Homemade protein shake"></label><label>Brand <small>(optional)</small><input id="fv2CB" type="text" maxlength="60"></label>'
  +'<label>Serving size<span class="u"><input id="fv2CS" type="number" inputmode="decimal" min="1" value="100"><em>grams</em></span></label>'
  +'<div class="fv2-grid"><label>Calories<input id="fv2CK" type="number" inputmode="decimal" min="0"></label><label>Protein g<input id="fv2CP" type="number" inputmode="decimal" min="0" step="0.1"></label><label>Carbs g<input id="fv2CC" type="number" inputmode="decimal" min="0" step="0.1"></label><label>Fat g<input id="fv2CF" type="number" inputmode="decimal" min="0" step="0.1"></label></div>'

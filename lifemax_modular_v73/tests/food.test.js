@@ -41,6 +41,38 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('tapping a ring puts that macro in the middle', await p.evaluate(() => { const m = document.querySelector('.fv2-mid.sel'); return !!m && /CARBS/.test(m.textContent) && /GRAMS/.test(m.textContent) && document.querySelectorAll('.fv2-ring.dim').length === 2 }));
   await p.click('.fv2-mid.sel'); await p.waitForTimeout(300);
   ok('tapping the middle goes back to calories', await p.evaluate(() => /KCAL/.test(document.querySelector('.fv2-mid').textContent) && !document.querySelector('.fv2-mid.sel')));
+  // a Food write that cannot be stored is taken back and the snackbar says why, also while the save is read-only (save() is silent then)
+  const unsaved = await p.evaluate(async () => {
+    const real = Storage.prototype.setItem, said = () => document.querySelector('#fv2Snack span').textContent, wait = ms => new Promise(r => setTimeout(r, ms));
+    const yesterday = state.foodLog.find(e => e.date === fv2DayShift(getToday(), -1)), test = { id: 'unsaved_food', n: 'Unsaved food', cat: 'Test', kcal: 100, p: 1, c: 1, f: 1, port: [] };
+    const sheet = async action => { document.querySelector('.fv2-e').click(); await wait(400); if (action === 'save') document.querySelector('[data-s2=step][data-d="1"]').click(); document.querySelector('[data-s2=' + action + ']').click(); await wait(50); const open = !!document.querySelector('#fv2Ov.show'); fv2Close(); await wait(400); return open };
+    const modes = {
+      full: [() => { Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) } }, () => { Storage.prototype.setItem = real }],
+      ro: [() => { saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true }, () => { saveReadOnly = ''; saveReadOnlyTold = false }],
+    };
+    const out = {};
+    for (const [mode, [on, off]] of Object.entries(modes)) {
+      const before = JSON.stringify([state.foodLog, state.waterLog]), stored = localStorage.getItem(STORE), r = {};
+      on();
+      try {
+        r.log = [fv2Log(test, 100, 'lunch'), said()];
+        fv2AddWater(250); r.water = said();
+        fv2CopySlot(yesterday.slot); r.copy = said();
+        r.edit = [await sheet('save'), said()];
+        r.del = [await sheet('del'), said()];
+      } finally { off() }
+      const logged = fv2Log(test, 100, 'lunch');
+      on(); try { document.querySelector('#fv2Snack button').click(); r.undo = [state.foodLog.includes(logged), said()] } finally { off() }
+      deleteMealEntry(logged.id);
+      out[mode] = Object.assign(r, { same: JSON.stringify([state.foodLog, state.waterLog]) === before, stored: localStorage.getItem(STORE) === stored });
+    }
+    return out;
+  });
+  for (const [mode, message] of [['full', 'Could not save to this browser (storage full?)'], ['ro', 'Not saved: this version is read-only for your save']]) {
+    const r = unsaved[mode];
+    ok('a ' + (mode === 'full' ? 'failed' : 'read-only') + ' save of a logged food, water, a copied meal, an edit, a removal or an Undo is taken back and the snackbar says why',
+      r.log[0] === null && [r.log[1], r.water, r.copy, r.edit[1], r.del[1], r.undo[1]].every(m => m === message) && r.edit[0] && r.del[0] && r.undo[0] && r.same && r.stored, r);
+  }
   ok('no script errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

@@ -106,6 +106,18 @@ const FOLDER = `(() => {
     errs.push(...ph.errs); await ph.close();
   }
 
+  {
+    const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });
+    const r = await ph.p.evaluate(async fresh => {
+      const set = Storage.prototype.setItem; window.confirm = () => true;
+      Storage.prototype.setItem = function (k, v) { if (k === 'lifeMaxTheme') throw new Error('QuotaExceededError'); return set.call(this, k, v) };
+      let imp; try { imp = await applyBackup({ ...fresh, extras: { lifeMaxTheme: 'light', lifemax_voice_alias_v1: '{"gym":"workout"}' } }) } finally { Storage.prototype.setItem = set }
+      return { imp, alias: localStorage.getItem('lifemax_voice_alias_v1'), theme: localStorage.getItem('lifeMaxTheme') };
+    }, fixture('new'));
+    ok('an import whose settings cannot all be stored says how many were not, and still reloads for the ones that were', r.imp.ok && r.imp.partial && r.imp.message === 'Backup imported, but 1 setting could not be stored (storage full?)' && r.imp.reload && r.alias === '{"gym":"workout"}' && r.theme !== 'light', r);
+    errs.push(...ph.errs); await ph.close();
+  }
+
   /* ---- verified backups ---- */
   {
     const ph = await phone(b, { save: JSON.stringify(fixture('established').state) });

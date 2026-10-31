@@ -1,5 +1,6 @@
 /* Media pane (Library) tests: the reading list seeded once, adding and editing through the form (mediaUpsert underneath), finishing
-   and unfinishing, removing, the search and the two filters, a save that fails for each writer, and the audio progress words.
+   and unfinishing, removing, the search and the two filters, a save that fails for each writer (attaching and replacing a file
+   included), and the audio progress words.
    Run:  NODE_PATH=$(npm root -g) node tests/media.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 700) : '')) } };
@@ -126,6 +127,28 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   });
   ok('a failed save of a tick, a removal or an audio removal is taken back and reported, and the file is kept', writers.full.every(m => m === 'Could not save to this browser (storage full?)') && writers.same && writers.stored && writers.file && writers.row, writers);
   ok('a read-only save is named as the reason for each of them', writers.ro.every(m => m === 'Not saved: this version is read-only for your save'), writers.ro);
+
+  // attaching or replacing a file (the file button behind native Attach and Replace file): a save that cannot name the new file
+  // leaves the save, the item and the file it names as they were, and says so
+  const attached = await p.evaluate(async () => {
+    const real = Storage.prototype.setItem, said = () => document.getElementById('toast').textContent;
+    const fresh = state.mediaItems.find(x => x.id !== 'a' && !x.audio), file = name => new File([new Uint8Array(2048)], name, { type: 'audio/mp4' });
+    const held = JSON.stringify(state.mediaItems), stored = localStorage.getItem(STORE);
+    const tryBoth = async () => {
+      const out = [];
+      await attachAudioFile(fresh.id, file('new.m4b')); out.push(said());
+      await attachAudioFile('a', file('new.m4b')); out.push(said());
+      return out;
+    };
+    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    let full; try { full = await tryBoth() } finally { Storage.prototype.setItem = real }
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    let ro; try { ro = await tryBoth() } finally { saveReadOnly = ''; saveReadOnlyTold = false }
+    const kept = await audioDbGet('a'), none = await audioDbGet(fresh.id), row = document.querySelector('[data-media-id="' + fresh.id + '"]');
+    return { full, ro, same: JSON.stringify(state.mediaItems) === held, stored: localStorage.getItem(STORE) === stored, kept: kept && [kept.name, kept.size], none, attach: !!row && !row.querySelector('.media-audio-meta') };
+  });
+  ok('a failed save of an attached or a replaced file is taken back and reported, and the old file is kept', attached.full.every(m => m === 'Could not save to this browser (storage full?)') && attached.same && attached.stored && JSON.stringify(attached.kept) === '["a.m4b",1]' && attached.none === null && attached.attach, attached);
+  ok('a read-only save is named as the reason for attaching and replacing, and no file is stored', attached.ro.every(m => m === 'Not saved: this version is read-only for your save'), attached.ro);
   const removed = await p.evaluate(async () => { await removeMediaAudio('a'); return { said: document.getElementById('toast').textContent, audio: mediaById('a').audio, file: await audioDbGet('a'), stored: JSON.parse(localStorage.getItem(STORE)).mediaItems.find(x => x.id === 'a').audio } });
   ok('a stored audio removal deletes the file and says so', removed.said === 'Audio removed' && removed.audio === undefined && removed.file === null && removed.stored === undefined, removed);
 
