@@ -1,7 +1,7 @@
 /* Native Library (Media pane), web half: the projection a native screen draws from (checked against the page's own Media pane),
    the filter it is seeded with, when the screen covers the page and when it steps aside (the form, the audio player, a file
-   button, a level-up), and every delegated action with the screen coming back after it. A fake NativeMedia plugin stands in
-   for Android. Run: NODE_PATH=$(npm root -g) node tests/native-library.test.js [built html] */
+   button, a level-up), every delegated action with the screen coming back after it, and the page's toast carried to the
+   screen. A fake NativeMedia plugin stands in for Android. Run: NODE_PATH=$(npm root -g) node tests/native-library.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
 const ITEMS = [
@@ -96,7 +96,8 @@ const ITEMS = [
       && it('m_new').audio.progress.label === 'Progress available after playback starts' && it('m_done').finished && it('m_done').audio === null
       && it('m_old').type === '' && it('m_old').subtitle === 'Other · Someone' && it('m_old').status === '' && it('m_old').statusLabel === 'Want to read / watch'
       && it('m_course').link === '' && it('m_pod').link === 'http://example.org/pod' && it('m_audio').link === 'https://example.com/hail-mary'
-      && JSON.stringify(s.filter) === '{"search":"","status":"all","type":"all","revision":1}' && JSON.stringify(s.player) === '{"mediaId":"","visible":false,"playing":false}';
+      && JSON.stringify(s.filter) === '{"search":"","status":"all","type":"all","revision":1}' && JSON.stringify(s.player) === '{"mediaId":"","visible":false,"playing":false}'
+      && s.notice === null;
     out.unsafeLinkOnPage = web.rows.find(x => x.id === 'm_course').link === 'javascript:alert(1)'; // the page draws it; the projection does not
 
     const kept = state.mediaItems; state.mediaItems = []; renderMedia(); await wait(250);
@@ -137,8 +138,21 @@ const ITEMS = [
     closes = count('close'); opens = count('open');
     await act({ action: 'finished', id: 'm_pod' });
     out.finished = count('close') === closes + 1 && mediaById('m_pod').status === 'finished' && await back() && latest().items.find(x => x.id === 'm_pod').finished && latest().stats[1].value === '2';
+    const done = latest().notice;
     await act({ action: 'unfinished', id: 'm_pod' });
     out.unfinished = mediaById('m_pod').status === 'progress' && await back() && latest().items.find(x => x.id === 'm_pod').statusLabel === 'In progress';
+    // the page's toast is under the screen, so it comes with the projection, numbered so that the same words twice are two
+    const undone = latest().notice;
+    await act({ action: 'finished', id: 'm_pod' }); await back(); const again = latest().notice;
+    await act({ action: 'unfinished', id: 'm_pod' }); await back();
+    out.notices = { done, undone, again };
+    out.notice = done?.text === 'Marked as finished' && undone?.text === 'Moved back to in progress' && again?.text === done.text && again.id > undone.id && undone.id > done.id;
+    // a delegated write that is not stored says so on the screen, and nothing changes
+    const realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
+    try { await act({ action: 'finished', id: 'm_pod' }); await back() } finally { Storage.prototype.setItem = realSet }
+    out.unsaved = latest().notice?.text === 'Could not save to this browser (storage full?)' && !latest().items.find(x => x.id === 'm_pod').finished && mediaById('m_pod').status === 'progress';
+    toast('Badge unlocked: Bookworm'); await wait(300);
+    out.liveNotice = showing() && latest().notice?.text === 'Badge unlocked: Bookworm';
 
     // remove asks on the page
     const realConfirm = window.confirm; window.confirm = () => false;
@@ -150,13 +164,15 @@ const ITEMS = [
       w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
       return new Blob([v.buffer], { type: 'audio/wav' }) })();
     // a file is chosen only by a tap on the page: the row's button is shown and focused, and the screen waits until it is left
+    document.getElementById('mediaFilter').value = 'finished'; renderMedia(); await wait(250); const revHidden = latest().filter.revision;
     closes = count('close'); opens = count('open');
-    document.getElementById('mediaFilter').value = 'finished'; renderMedia(); const revHidden = latest().filter.revision;
     await act({ action: 'attach', id: 'm_course' });
     const fileButton = document.activeElement;
     out.attach = count('close') === closes + 1 && fileButton.matches('[data-media-id="m_course"] .media-audio-row button') && text(fileButton) === '🎧 Attach .m4b / audio' && !showing()
       && document.getElementById('mediaFilter').value === 'all';
+    out.attachHint = document.getElementById('toast').textContent === 'Tap "🎧 Attach .m4b / audio" to choose the file' && document.getElementById('toast').classList.contains('show');
     fileButton.blur(); out.attachBack = await back() && latest().filter.revision === revHidden; // the page's filter was cleared quietly
+    out.attachHintStays = latest().notice === null; // it points at the page's button, which the screen covers
     // the owner taps the button and picks a file: the page stores it, redraws the list and plays it, and the screen stays away
     // all the while (the redraw takes the focus, then the player is loading), until the player is closed
     await act({ action: 'attach', id: 'm_course' }); opens = count('open');
@@ -179,6 +195,13 @@ const ITEMS = [
     out.play = count('close') === closes + 1 && audioCtx.mediaId === 'm_audio' && document.getElementById('audioPlayer').classList.contains('show') && !showing() && count('open') === opens;
     navigate('dashboard'); navigate('media'); await wait(500); out.playerHolds = !showing() && count('open') === opens;
     closeAudioPlayer(); out.playerBack = await back() && JSON.stringify(latest().player) === '{"mediaId":"","visible":false,"playing":false}';
+    // with a book loaded the pane is on the page; Play on a row whose file is missing closes the player, and the page says so and
+    // saves, which redraws the list: the screen comes back with the page's message
+    await act({ action: 'play', id: 'm_audio' }, 800);
+    mediaById('m_pod').audio = { name: 'lost.m4b', size: 1024, type: 'audio/mp4', position: 0, duration: 0 }; renderMedia(); await wait(300);
+    out.missingHolds = !showing() && audioCtx.mediaId === 'm_audio';
+    document.querySelector('[data-media-id="m_pod"] .media-audio-row button').click();
+    out.missing = await back() && latest().notice?.text === 'Audio file missing — attach it again' && latest().items.find(x => x.id === 'm_pod').audio === null && !audioCtx.mediaId;
 
     // the link opens as the row's anchor would; a link that is not http(s) never reaches the screen
     const opened = []; const realClick = HTMLAnchorElement.prototype.click;
@@ -225,12 +248,17 @@ const ITEMS = [
   ok('add: the screen closes for the page\'s form, stays away while it is open, and comes back when it closes', r.add && r.formHolds && r.addBack, r);
   ok('edit: the page\'s form with the item; saving brings the screen back with the change', r.edit && r.editBack, r);
   ok('finished and unfinished run the page\'s checkbox handler and come back', r.finished && r.unfinished, r);
+  ok('the page\'s toast comes with the projection, a new number for each, the same words twice included', r.notice, r.notices);
+  ok('a delegated write that is not stored shows the page\'s message and changes nothing', r.unsaved, r);
+  ok('a toast while the screen shows is sent at once', r.liveNotice, r);
   ok('remove asks on the page: cancelled keeps the item, confirmed removes it; back both times', r.removeKept && r.removed, r);
   ok('attach: the row\'s own button, shown (a hiding page filter cleared quietly) and focused; back when it is left', r.attach && r.attachBack, r);
+  ok('the page names the button to tap in a toast, which the screen does not repeat', r.attachHint && r.attachHintStays, r);
   ok('a file picked there is stored and played by the page with the screen away throughout, and the screen comes back after', r.attachPlays && r.attachPlayedBack, r);
   ok('replace works the same way', r.replace && r.replaceBack, r);
   ok('remove audio asks on the page and comes back', r.removeAudio, r);
   ok('play: the page\'s player; the pane stays on the page while it is loaded, and comes back when it closes', r.play && r.playerHolds && r.playerBack, r);
+  ok('a play started on the page whose file is missing brings the screen back with the page\'s message', r.missingHolds && r.missing, r);
   ok('link: opened as the row\'s anchor does, never a link that is not http(s)', r.link, r);
   ok('the tip is dismissed on the page and leaves the projection', r.tip, r);
   ok('an action on an item that is gone does nothing and comes back', r.gone, r);

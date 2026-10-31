@@ -4,6 +4,7 @@ import com.lifemax.rpg.feature.library.data.WebMediaRepository
 import com.lifemax.rpg.feature.library.data.toEvent
 import com.lifemax.rpg.feature.library.domain.MediaAction
 import com.lifemax.rpg.feature.library.domain.MediaFilter
+import com.lifemax.rpg.feature.library.domain.PageNotice
 import com.lifemax.rpg.feature.library.presentation.MediaActions
 import com.lifemax.rpg.feature.library.presentation.MediaViewModel
 import org.json.JSONArray
@@ -56,10 +57,13 @@ class LibraryTest {
         assertTrue(p.items.first { it.title == "The Bitter Lesson" }.finished)
         assertEquals("", p.noMatch.add)
         assertEquals("＋ Add your first item", p.empty.add)
+        assertNull(p.notice)
 
         val tip = WebMediaRepository().apply { accept(fixture("tip"), true) }.state.value!!.tip!!
         assertEquals("Personal library", tip.title)
         assertEquals("Dismiss tip", tip.dismiss)
+        val emptied = WebMediaRepository().apply { accept(fixture("empty"), true) }.state.value!!
+        assertEquals(PageNotice(15, "Removed from library"), emptied.notice)
     }
 
     @Test
@@ -97,6 +101,15 @@ class LibraryTest {
                 },
                 fixture().also { it.item(2).remove("notes") },
                 fixture().also { it.getJSONObject("tokens").remove("line-soft") },
+                // a key the page always sends is missing, or not an object: never read as absent
+                fixture().also { it.remove("tip") },
+                fixture().put("tip", "Personal library"),
+                fixture().also { it.item(0).remove("audio") },
+                fixture().also { it.item(0).put("audio", "project-hail-mary.m4b") },
+                fixture().also { it.getJSONArray("stats").getJSONObject(0).remove("bar") },
+                fixture().also { it.getJSONObject("empty").remove("add") },
+                fixture().also { it.remove("notice") },
+                fixture().put("notice", JSONObject().put("id", 3)),
             )
         broken.forEachIndexed { i, json ->
             assertThrows(Exception::class.java) { repo.accept(json.put("sequence", 2L + i)) }
@@ -168,6 +181,50 @@ class LibraryTest {
         repo.accept(fixture().put("webSessionId", "reloaded"), true)
         vm.onProjection()
         assertEquals(MediaFilter("", "all", "all"), vm.ui!!.filter)
+    }
+
+    /**
+     * The page's message shows once, and one cut short by the screen closing does not come back.
+     */
+    @Test
+    fun thePagesMessageShowsOnce() {
+        val (repo, vm) = setUp()
+        assertNull(vm.notice)
+        fun notice(id: Int, text: String) = JSONObject().put("id", id).put("text", text)
+        fun update(
+            sequence: Long,
+            notice: JSONObject?,
+            open: Boolean = false,
+            page: String? = null,
+        ) {
+            val json = fixture().put("sequence", sequence).put("notice", notice ?: JSONObject.NULL)
+            page?.let { json.put("webSessionId", it) }
+            repo.accept(json, open)
+            if (open) vm.opened()
+            vm.onProjection()
+        }
+        update(2, notice(7, "Removed from library"), open = true)
+        val removed = PageNotice(7, "Removed from library")
+        assertEquals(removed, vm.notice)
+        update(3, notice(7, "Removed from library")) // a refresh while the page still shows it
+        assertEquals(removed, vm.notice)
+        vm.noticeShown(removed)
+        assertNull(vm.notice)
+        update(4, notice(7, "Removed from library"))
+        assertNull(vm.notice)
+        // closed while showing it; back while the page still shows it
+        update(5, notice(8, "Marked as finished"))
+        update(6, notice(8, "Marked as finished"), open = true)
+        assertNull(vm.notice)
+        // the same words again are a new message, and so is the first of a reloaded page
+        update(7, notice(9, "Marked as finished"))
+        assertEquals(PageNotice(9, "Marked as finished"), vm.notice)
+        vm.noticeShown(PageNotice(8, "Marked as finished"))
+        assertEquals(9L, vm.notice!!.id)
+        update(1, notice(7, "Removed from library"), open = true, page = "reloaded")
+        assertEquals(removed, vm.notice)
+        update(2, null, page = "reloaded")
+        assertEquals(removed, vm.notice)
     }
 
     @Test

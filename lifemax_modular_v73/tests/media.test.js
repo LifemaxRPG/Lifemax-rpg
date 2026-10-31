@@ -1,5 +1,5 @@
 /* Media pane (Library) tests: the reading list seeded once, adding and editing through the form (mediaUpsert underneath), finishing
-   and unfinishing, removing, the search and the two filters, a save that fails, and the audio progress words.
+   and unfinishing, removing, the search and the two filters, a save that fails for each writer, and the audio progress words.
    Run:  NODE_PATH=$(npm root -g) node tests/media.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 700) : '')) } };
@@ -98,6 +98,36 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('a read-only save is named as the reason', !failed.ro.ok && failed.ro.message === 'Not saved: this version is read-only for your save', failed.ro);
   await p.evaluate(() => { showMediaForm(); document.getElementById('mediaTitle').value = 'Kept'; const real = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) }; try { document.querySelector('#mediaForm button[type=submit]').click() } finally { Storage.prototype.setItem = real } });
   ok('the form stays open with what was typed when its save fails', await toast() === 'Could not save to this browser (storage full?)' && await p.evaluate(() => document.getElementById('mediaFormCard').style.display === 'block' && document.getElementById('mediaTitle').value === 'Kept' && !state.mediaItems.some(x => x.title === 'Kept')));
+  await p.evaluate(() => hideMediaForm());
+
+  // finishing, removing and removing the audio: a save that fails takes the change back and says so, and keeps the audio file
+  const writers = await p.evaluate(async () => {
+    const real = Storage.prototype.setItem, said = () => document.getElementById('toast').textContent;
+    const a = mediaById('a'); a.audio = { name: 'a.m4b', size: 2048, type: 'audio/mp4', position: 30, duration: 120 }; save();
+    await audioDbPut('a', { blob: new Blob(['a']), name: 'a.m4b', type: 'audio/mp4', size: 1, updatedAt: a.updatedAt });
+    window.confirm = () => true;
+    const held = JSON.stringify(state.mediaItems), stored = localStorage.getItem(STORE);
+    const tryAll = async () => {
+      const out = [];
+      toggleMediaFinished('a', true); out.push(said());
+      deleteMediaItem('a'); out.push(said());
+      await removeMediaAudio('a'); out.push(said());
+      return out;
+    };
+    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    let full; try { full = await tryAll() } finally { Storage.prototype.setItem = real }
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    let ro; try { ro = await tryAll() } finally { saveReadOnly = ''; saveReadOnlyTold = false }
+    const row = document.querySelector('[data-media-id="a"]');
+    return {
+      full, ro, same: JSON.stringify(state.mediaItems) === held, stored: localStorage.getItem(STORE) === stored, file: !!(await audioDbGet('a')),
+      row: !!row && !row.querySelector('.media-check').checked && row.querySelector('.media-pill').textContent === 'In progress' && !!row.querySelector('.media-audio-meta'),
+    };
+  });
+  ok('a failed save of a tick, a removal or an audio removal is taken back and reported, and the file is kept', writers.full.every(m => m === 'Could not save to this browser (storage full?)') && writers.same && writers.stored && writers.file && writers.row, writers);
+  ok('a read-only save is named as the reason for each of them', writers.ro.every(m => m === 'Not saved: this version is read-only for your save'), writers.ro);
+  const removed = await p.evaluate(async () => { await removeMediaAudio('a'); return { said: document.getElementById('toast').textContent, audio: mediaById('a').audio, file: await audioDbGet('a'), stored: JSON.parse(localStorage.getItem(STORE)).mediaItems.find(x => x.id === 'a').audio } });
+  ok('a stored audio removal deletes the file and says so', removed.said === 'Audio removed' && removed.audio === undefined && removed.file === null && removed.stored === undefined, removed);
 
   // audio: the progress words and the meta line, drawn and updated live from one function
   const words = await p.evaluate(() => [mediaAudioProgress('progress', 0, 0), mediaAudioProgress('progress', 1800, 3600), mediaAudioProgress('progress', 3599, 3600), mediaAudioProgress('finished', 10, 3600), mediaAudioProgress('unread', 9999, 3600)].map(w => Object.assign(w, { pct: +w.pct.toFixed(2) })));

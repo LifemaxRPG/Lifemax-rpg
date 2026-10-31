@@ -8,12 +8,15 @@ import com.lifemax.rpg.feature.library.domain.MediaFilter
 import com.lifemax.rpg.feature.library.domain.MediaItem
 import com.lifemax.rpg.feature.library.domain.MediaProjection
 import com.lifemax.rpg.feature.library.domain.MediaRepository
+import com.lifemax.rpg.feature.library.domain.PageNotice
 
 /**
  * The Media pane's own search and filters, and the rows they leave. The page's filter is taken
  * whenever the page sets it (a new session, or a new filter revision: typed on the page, or a voice
  * search); otherwise the screen keeps its own across updates and while hidden. Every tap the page
  * answers closes the screen, so one is handed over per opening and a second, quick tap is dropped.
+ * The page's message ([notice]) is shown once; one cut short by the screen closing is not shown
+ * again.
  *
  * The state is snapshot state rather than a flow so that the search box sees each key at once.
  */
@@ -21,12 +24,18 @@ class MediaViewModel(private val repository: MediaRepository) : ViewModel() {
     var ui by mutableStateOf<MediaUi?>(null)
         private set
 
+    /** The page's message the screen is showing. */
+    var notice by mutableStateOf<PageNotice?>(null)
+        private set
+
     private var adopted: Pair<String, Long>? = null
+    private var noticed: Pair<String, Long>? = null
     private var handedOver = false
 
     /** The screen opened (again): it takes taps. */
     fun opened() {
         handedOver = false
+        notice = null
     }
 
     /** The repository has taken a projection. */
@@ -36,6 +45,18 @@ class MediaViewModel(private val repository: MediaRepository) : ViewModel() {
         val filter = ui?.filter?.takeIf { key == adopted } ?: p.filter
         adopted = key
         show(p, filter)
+        p.notice?.let {
+            val seen = p.session to it.id
+            if (seen != noticed) {
+                noticed = seen
+                notice = it
+            }
+        }
+    }
+
+    /** The screen has shown [shown] to the end. */
+    fun noticeShown(shown: PageNotice) {
+        if (notice == shown) notice = null
     }
 
     fun search(text: String) = refilter { _, f -> f.copy(search = text) }

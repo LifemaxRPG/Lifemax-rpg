@@ -13,7 +13,7 @@ import com.lifemax.rpg.core.designsystem.mix
  * (white fields and buttons, darker tags) are applied here too.
  */
 @Immutable
-internal class PlanColors(private val tokens: Map<String, Long>, val light: Boolean) {
+internal class PlanColors(val tokens: Map<String, Long>, val light: Boolean) {
     private fun token(key: String) = tokenColor(tokens, key)
 
     val bg = token("bg")
@@ -34,11 +34,9 @@ internal class PlanColors(private val tokens: Map<String, Long>, val light: Bool
     val gold = token("gold")
     val bad = token("bad")
 
-    /** Fields, check boxes, the Leave button and toasts turn white in the light theme. */
+    /** Fields, check boxes and the Leave button turn white in the light theme. */
     val field = if (light) Color.White else bg
     val secondaryButton = if (light) Color.White else panel2
-    val toast = if (light) Color.White else panel3
-    val toastShadow = if (light) ToastShadowLight else ToastShadowDark
     val boxBorder = if (light) line else BoxBorderDark
     /** A ticked box is green in the dark theme; the light theme's own rule keeps it white. */
     val tickedFill = if (light) Color.White else good
@@ -82,8 +80,6 @@ internal class PlanColors(private val tokens: Map<String, Long>, val light: Bool
         val NoteBorderLight = Color(0xFFC5D0E6)
         val HeroTint = Color(0x0D7C9CFF)
         val CycleEnd = Color(0xFFA9BAFF)
-        val ToastShadowDark = Color(0x88000000)
-        val ToastShadowLight = Color(0x281A2744)
     }
 }
 

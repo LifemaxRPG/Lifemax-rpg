@@ -2,6 +2,7 @@
    screen draws this projection, filters it itself (taking the page's filter whenever the page sets one, as a voice search does)
    and hands every tap to the page's own handler. The kit closes the screen, the handler runs, and the screen comes back once
    nothing it does not draw is over the pane: the add/edit form, the audio player, a file button handed to the owner, a level-up.
+   The page's toast, which the screen would hide, comes with the projection while it shows, for the screen to draw.
    The Journal stays on the page; the switch's Journal is a web destination, so the Journal lock works as before.
    The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/LIBRARY_INVENTORY.md. */
 (function () {
@@ -38,9 +39,11 @@
     },
   };
   const FILTERS = "#mediaSearch, #mediaFilter, #mediaTypeFilter";
-  const FILE_BUTTON = '#mediaList .media-audio-row button[onclick^="pickAudioForMedia"]'; // a row's Attach or Replace file
+  const FILE_BUTTON = "#mediaList [data-media-file]"; // a row's Attach or Replace file
   let filterRevision = 1; // rises whenever the page's filter is set (typed on the page, or by a voice search), so the screen adopts it
   let acting = false; // a tap handed back to the page is still running: what it shows may come only after an await (the player)
+  let toasts = 0; // the page's toasts so far, so the screen tells a message from a repeat of the same words
+  let hint = 0; // the toast that points the owner to a file button: it is about the page, so the screen does not show it
 
   /** a link the screen may open: http and https only (the page draws any stored link; only its form checks the scheme) */
   function webLink(link) {
@@ -82,6 +85,24 @@
       ? { icon: t.icon, title: t.title, body: t.body, dismiss: "Dismiss tip" }
       : null;
   }
+  /* Each toast() writes the toast's text: that is how the page's toasts are counted. One that comes while the screen shows is
+     sent at once. */
+  const toastEl = document.getElementById("toast");
+  const toastWatch = new MutationObserver((records) => {
+    toasts += records.length;
+    tab.schedule();
+  });
+  toastWatch.observe(toastEl, { childList: true });
+  /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
+  function latestToast() {
+    toasts += toastWatch.takeRecords().length;
+    return toasts;
+  }
+  /** the page's message while its toast shows */
+  function notice() {
+    const id = latestToast();
+    return toastEl.classList.contains("show") && id !== hint ? { id, text: toastEl.textContent } : null;
+  }
   /** the audio player at the bottom of the page; idle whenever the screen covers the pane, since a loaded player keeps it away */
   function player() {
     const el = document.getElementById("audioEl");
@@ -114,11 +135,12 @@
       noMatch: WORDS.noMatch,
       buttons: WORDS.buttons,
       player: player(),
+      notice: notice(),
     };
   }
 
-  /** the row's own file button, in view and focused for the owner to tap: a file picker opens only from a tap on the page.
-      A page filter that hides the row is cleared quietly, so the screen keeps its own filter. */
+  /** the row's own file button, in view, focused and named in a toast for the owner to tap: a file picker opens only from a tap
+      on the page. A page filter that hides the row is cleared quietly, so the screen keeps its own filter. */
   function showFileButton(id) {
     const button = () => [...document.querySelectorAll(FILE_BUTTON)].find((b) => b.closest("[data-media-id]").dataset.mediaId === id);
     if (!button()) {
@@ -127,8 +149,12 @@
       document.getElementById("mediaTypeFilter").value = "all";
       renderMedia();
     }
-    button()?.scrollIntoView({ block: "center" });
-    button()?.focus({ preventScroll: true });
+    const b = button();
+    if (!b) return;
+    b.scrollIntoView({ block: "center" });
+    b.focus({ preventScroll: true });
+    toast(`Tap "${b.textContent.trim()}" to choose the file`);
+    hint = latestToast();
   }
   /** open an item's link as its row's anchor does: a new window, no referrer */
   function openLink(link) {
@@ -188,7 +214,8 @@
   });
 
   /* The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player
-     closed, the file button left): step aside for it, and come back after. */
+     closed, the file button left, a save after a play that failed, which redraws the list): step aside for it, and come back
+     after. */
   function follow() {
     if (tab.blocked()) tab.send();
     else tab.revisit();
@@ -197,6 +224,7 @@
   watch.observe(document.getElementById("mediaFormCard"), { attributes: true, attributeFilter: ["style"] });
   watch.observe(document.getElementById("audioPlayer"), { attributes: true, attributeFilter: ["class"] });
   watch.observe(document.body, { childList: true });
+  watch.observe(document.getElementById("mediaList"), { childList: true });
   document.addEventListener(
     "focusout",
     (e) => {

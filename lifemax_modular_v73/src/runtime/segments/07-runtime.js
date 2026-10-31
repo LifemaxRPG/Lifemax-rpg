@@ -155,13 +155,15 @@ function mediaUpsert(f){
  const id=String(f.id||''),kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id);
  const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:String(f.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
  if(index>=0)state.mediaItems[index]={...kept[index],...item};else state.mediaItems.unshift(item);
- if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,message:saveReadOnly?'Not saved: this version is read-only for your save':'Could not save to this browser (storage full?)'}}
+ if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,message:unsavedMessage()}}
  return {ok:true,id:item.id,message:index>=0?'Media item updated':'Added to your library'};
 }
 function toggleMediaFinished(id,checked){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
+ const was=[item.status,item.updatedAt];
  item.status=checked?'finished':'progress';item.updatedAt=new Date().toISOString();
- save();toast(checked?'Marked as finished':'Moved back to in progress');
+ if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+ toast(checked?'Marked as finished':'Moved back to in progress');
 }
 function setMediaStatus(id,status){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
@@ -170,7 +172,9 @@ function setMediaStatus(id,status){
 function deleteMediaItem(id){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
  if(!confirm('Remove "'+item.title.replace(/"/g,'\\"')+'" from your media library?'))return;
- if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);state.mediaItems=state.mediaItems.filter(x=>x.id!==id);save();toast('Removed from library');
+ const kept=state.mediaItems;state.mediaItems=kept.filter(x=>x.id!==id);
+ if(!save()){state.mediaItems=kept;renderMedia();toast(unsavedMessage());return}
+ if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);toast('Removed from library');
 }
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
@@ -267,11 +271,12 @@ async function attachAudioFile(id, file){
 async function removeMediaAudio(id){
   const item=mediaById(id);if(!item||!item.audio)return;
   if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
-  if(audioCtx.mediaId===id)closeAudioPlayer(true);
-  await audioDbDelete(id);
+  const was=[item.audio,item.updatedAt];
   delete item.audio;
   item.updatedAt=new Date().toISOString();
-  save();
+  if(!save()){[item.audio,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+  if(audioCtx.mediaId===id)closeAudioPlayer(true);
+  await audioDbDelete(id);
   toast('Audio removed');
 }
 function r

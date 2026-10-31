@@ -220,8 +220,7 @@
       if (!!((pcheck(c.date).s || {})[c.key] || [])[i] === checked) return { ok: true, changed: false };
       // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
       const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
-      if (!result.saved)
-        return { ok: false, message: saveReadOnly ? "Not saved: this version is read-only for your save" : "Could not save to this browser (storage full?)" };
+      if (!result.saved) return { ok: false, message: unsavedMessage() };
       if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
       return {
         ok: true,

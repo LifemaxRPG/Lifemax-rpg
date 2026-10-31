@@ -176,12 +176,12 @@ function mediaAudioButtons(x){
   if(x.audio&&x.audio.name){
     return `<div class="media-audio-row">
       <button type="button" class="btn small" onclick="playMediaAudio('${x.id}')">▶ Play</button>
-      <button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
+      <button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
       <button type="button" class="btn small secondary" onclick="removeMediaAudio('${x.id}')">Remove audio</button>
     </div>
     <div class="media-audio-meta">${esc(mediaAudioMeta(x.audio))}</div>`;
   }
-  return `<div class="media-audio-row"><button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
+  return `<div class="media-audio-row"><button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
 }
 
 

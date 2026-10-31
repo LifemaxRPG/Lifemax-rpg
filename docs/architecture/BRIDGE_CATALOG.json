@@ -160,7 +160,7 @@
     "showMediaForm() and showMediaForm(item): add and edit, saved by saveMediaItem through mediaUpsert",
     "toggleMediaFinished(id, true) for finished, toggleMediaFinished(id, false) for unfinished",
     "deleteMediaItem(id) with its confirm",
-    "pickAudioForMedia through the row's own file button, shown and focused on the page (no programmatic picker)",
+    "pickAudioForMedia through the row's own file button, shown, focused and named in a toast on the page (no programmatic picker)",
     "removeMediaAudio(id) with its confirm",
     "playMediaAudio(id) and the whole audio player",
     "the row's link: an anchor like the row's, http and https only",
@@ -171,11 +171,11 @@
     "snapshotDto": "feature/library/domain/MediaProjection.kt",
     "decoder": "feature/library/data/WebMediaRepository.kt",
     "fixtures": "native/src/test/resources/fixtures/media-full.json, media-search.json, media-empty.json, media-tip.json, and media-filter-parity.json (the rows the page shows for sample filters of media-full) (lifemax_modular_v73/tools/gen_native_fixtures.js)",
-    "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page sets its filter (typed on the page, a voice search)",
-    "invalidation": "renderMedia, host resume, foreground return, 15-second refresh while visible; the form, the audio player, a handed file button and a level-up close the screen and bring it back (MutationObservers, focusout, audioCtx.loading)"
+    "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page sets its filter (typed on the page, a voice search); notice.id counts the page's toasts",
+    "invalidation": "renderMedia, a page toast, host resume, foreground return, 15-second refresh while visible; the form, the audio player, a handed file button and a level-up close the screen, and it comes back when they are gone (MutationObservers on the form, the player, the body and the list, and a focusout); blocked() also reads audioCtx.loading"
    },
    "mutationsGate": "no native writes: every change is the page's own handler, run after the screen has closed",
-   "rollout": "opt-in under Settings, Appearance: Native Library (beta)",
+   "rollout": "opt-in under Settings, Appearance: Native Library (beta), off by default",
    "canonicalLayout": true
   },
   {

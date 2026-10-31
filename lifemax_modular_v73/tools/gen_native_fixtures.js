@@ -174,7 +174,7 @@ async function director(b) {
            audiobook half listened, an article, a course, a podcast, an audiobook not played yet, a documentary, a video and an
            item imported without a type or a status
    search  the same list as a voice search leaves it ("Search my library for wealth")
-   empty   every item removed
+   empty   every item removed, with the page's last "Removed from library" still showing
    tip     the first visit: the default books and the pane's feature tip
    media-filter-parity.json holds the rows the page itself shows for sample filters of the full list, for the screen's own
    filter to match exactly. */
@@ -189,7 +189,11 @@ async function media(b) {
     await p.evaluate(() => { window.confirm = () => true; lmaNavTo('media') });
     return p;
   };
-  const shoot = async (p, name) => write('fixtures/media-' + name + '.json', await p.evaluate(() => Object.assign(NativeLibraryTabProjection.snapshot(), { webSessionId: 'media-fixture', sequence: 1 })));
+  // the page's toast comes and goes on its own timer, so a fixture carries it only when asked to, shot at once after it
+  const shoot = async (p, name, toast = false) => write('fixtures/media-' + name + '.json', await p.evaluate((toast) => {
+    if (!toast) document.getElementById('toast').classList.remove('show');
+    return Object.assign(NativeLibraryTabProjection.snapshot(), { webSessionId: 'media-fixture', sequence: 1 });
+  }, toast));
 
   let p = await visit({ media: true });
   await p.evaluate(async () => {
@@ -228,7 +232,7 @@ async function media(b) {
 
   p = await visit({ media: true });
   await p.evaluate(() => state.mediaItems.map((x) => x.id).forEach(deleteMediaItem));
-  await shoot(p, 'empty');
+  await shoot(p, 'empty', true);
 
   await shoot(await visit({}), 'tip');
 }

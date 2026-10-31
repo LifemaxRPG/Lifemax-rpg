@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -84,7 +85,7 @@ internal fun MediaFilters(
         Modifier.cardPiece(c, first = true)
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 14.dp)
     ) {
-        Field(searchLabel) { SearchBox(filter.search, placeholder, searchLabel, onSearch) }
+        SearchBox(filter.search, searchLabel, placeholder, onSearch)
         FlowRow(
             Modifier.padding(top = 10.dp).fillMaxWidth(),
             horizontalArrangement = SpaceBetweenWithGap(10.dp),
@@ -96,31 +97,38 @@ internal fun MediaFilters(
     }
 }
 
-/** The page's .field: a label over its control. */
+/** The page's .field: a label over its control, which names itself for TalkBack. */
 @Composable
 private fun Field(label: String, control: @Composable () -> Unit) {
-    val c = LocalLibraryColors.current
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            label,
-            color = c.muted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight(550),
-            lineHeight = 18.sp,
-        )
+        FieldLabel(label, Modifier.clearAndSetSemantics {})
         control()
     }
 }
 
+@Composable
+private fun FieldLabel(label: String, modifier: Modifier = Modifier) {
+    Text(
+        label,
+        modifier,
+        color = LocalLibraryColors.current.muted,
+        fontSize = 12.sp,
+        fontWeight = FontWeight(550),
+        lineHeight = 18.sp,
+    )
+}
+
 /**
- * The search box. Focused, it takes the page's accent border and its 3 dp ring; the keyboard's
- * search key puts the keyboard away, since the list follows every key.
+ * The search field: its label over its box, both part of the text field, so that TalkBack reads the
+ * label as the field's name, as a browser reads the page's label, and a tap on it focuses the box.
+ * Focused, the box takes the page's accent border and its 3 dp ring; the keyboard's search key puts
+ * the keyboard away, since the list follows every key.
  */
 @Composable
 private fun SearchBox(
     text: String,
-    placeholder: String,
     label: String,
+    placeholder: String,
     onChange: (String) -> Unit,
 ) {
     val c = LocalLibraryColors.current
@@ -130,26 +138,30 @@ private fun SearchBox(
     BasicTextField(
         text,
         onChange,
-        Modifier.fillMaxWidth()
-            .onFocusChanged { focused = it.isFocused }
-            .semantics { contentDescription = label }
-            .then(if (focused) Modifier.focusRing(c.accentDim) else Modifier),
+        Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
         textStyle = style,
         singleLine = true,
         cursorBrush = SolidColor(c.text),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
         decorationBox = { field ->
-            FieldFrame(if (focused) c.accent else c.line) {
-                Box {
-                    if (text.isEmpty())
-                        Text(
-                            placeholder,
-                            style = style.copy(color = PlaceholderGrey),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    field()
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                FieldLabel(label)
+                FieldFrame(
+                    if (focused) c.accent else c.line,
+                    Modifier.fillMaxWidth()
+                        .then(if (focused) Modifier.focusRing(c.accentDim) else Modifier),
+                ) {
+                    Box {
+                        if (text.isEmpty())
+                            Text(
+                                placeholder,
+                                style = style.copy(color = PlaceholderGrey),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        field()
+                    }
                 }
             }
         },

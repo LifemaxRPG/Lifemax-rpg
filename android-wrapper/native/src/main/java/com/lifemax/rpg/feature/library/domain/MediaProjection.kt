@@ -57,6 +57,12 @@ data class MediaItem(
 /** What the card shows in place of rows; [add] is empty when it has no button. */
 data class ListMessage(val icon: String, val title: String, val body: String, val add: String)
 
+/**
+ * The page's message while its toast shows (the toast is under the screen, so the screen draws it).
+ * [id] counts the page's toasts, so the same words twice are two messages.
+ */
+data class PageNotice(val id: Long, val text: String)
+
 /** The words of a row's buttons. */
 data class MediaButtons(
     val edit: String,
@@ -115,6 +121,7 @@ data class MediaProjection(
     val empty: ListMessage,
     val noMatch: ListMessage,
     val buttons: MediaButtons,
+    val notice: PageNotice?,
     val tokens: Map<String, Long>,
     val light: Boolean,
 )

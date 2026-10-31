@@ -14,15 +14,16 @@ import com.lifemax.rpg.feature.library.domain.MediaItem
 import com.lifemax.rpg.feature.library.domain.MediaProjection
 import com.lifemax.rpg.feature.library.domain.MediaRepository
 import com.lifemax.rpg.feature.library.domain.MediaStat
+import com.lifemax.rpg.feature.library.domain.PageNotice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Decodes the page's Media pane projection (50-native-library.js). Malformed data is rejected and
- * the last good state kept; an update older than the one held is ignored; a projection from another
- * page session is taken only on an explicit open.
+ * Decodes the page's Media pane projection (50-native-library.js). Malformed data (a key missing or
+ * of the wrong type included) is rejected and the last good state kept; an update older than the
+ * one held is ignored; a projection from another page session is taken only on an explicit open.
  */
 class WebMediaRepository : MediaRepository {
     private val mutable = MutableStateFlow<MediaProjection?>(null)
@@ -68,7 +69,7 @@ class WebMediaRepository : MediaRepository {
                     header.getString("blurb"),
                     header.getString("add"),
                 ),
-                j.optJSONObject("tip")?.let {
+                j.objectOrNull("tip") {
                     FeatureTip(
                         it.getString("icon"),
                         it.getString("title"),
@@ -84,8 +85,8 @@ class WebMediaRepository : MediaRepository {
                 filter,
                 f.getLong("revision"),
                 items,
-                message(j.getJSONObject("empty")),
-                message(j.getJSONObject("noMatch")),
+                message(j.getJSONObject("empty"), hasAdd = true),
+                message(j.getJSONObject("noMatch"), hasAdd = false),
                 MediaButtons(
                     buttons.getString("edit"),
                     buttons.getString("remove"),
@@ -95,12 +96,14 @@ class WebMediaRepository : MediaRepository {
                     buttons.getString("attach"),
                     buttons.getString("link"),
                 ),
+                j.objectOrNull("notice") { PageNotice(it.getLong("id"), it.getString("text")) },
                 TOKENS.associateWith { colors.getLong(it) },
                 j.getBoolean("light"),
             )
     }
 
     private fun stat(s: JSONObject): MediaStat {
+        require(s.has("bar")) { "A stat without its bar" }
         val bar = if (s.isNull("bar")) null else s.getInt("bar")
         require(bar == null || bar in 0..100) { "A stat's bar is out of range" }
         return MediaStat(s.getString("label"), s.getString("value"), s.getString("foot"), bar)
@@ -133,7 +136,7 @@ class WebMediaRepository : MediaRepository {
             finished,
             x.getString("notes"),
             x.getString("link"),
-            x.optJSONObject("audio")?.let(::audio),
+            x.objectOrNull("audio", ::audio),
         )
     }
 
@@ -144,16 +147,23 @@ class WebMediaRepository : MediaRepository {
         return MediaAudio(a.getString("file"), a.getString("meta"), progress)
     }
 
-    private fun message(m: JSONObject) =
+    /** What shows in place of rows; only the empty library's has an add button. */
+    private fun message(m: JSONObject, hasAdd: Boolean) =
         ListMessage(
             m.getString("icon"),
             m.getString("title"),
             m.getString("body"),
-            m.optString("add"),
+            if (hasAdd) m.getString("add") else "",
         )
 }
 
 private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
+
+/** The object at [key] decoded, or null where the page sends null; a missing key is malformed. */
+private fun <T> JSONObject.objectOrNull(key: String, decode: (JSONObject) -> T): T? {
+    require(has(key)) { "Missing $key" }
+    return if (isNull(key)) null else decode(getJSONObject(key))
+}
 
 /** The page's palette tokens (NativeTabKit's TOKENS) the screen draws with. */
 private val TOKENS =
@@ -161,6 +171,7 @@ private val TOKENS =
         "bg",
         "panel",
         "panel2",
+        "panel3",
         "text",
         "muted",
         "muted2",

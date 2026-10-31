@@ -47,8 +47,12 @@ internal fun FeatureTipCard(tip: FeatureTip, onDismiss: () -> Unit) {
             Modifier.padding(horizontal = 17.dp, vertical = 15.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // the page hides its icon from screen readers (aria-hidden)
             Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(c.accentDim),
+                Modifier.size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(c.accentDim)
+                    .clearAndSetSemantics {},
                 contentAlignment = Alignment.Center,
             ) {
                 Text(tip.icon, color = c.accentStrong, fontSize = 18.sp, lineHeight = 27.sp)

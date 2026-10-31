@@ -17,11 +17,13 @@ import org.junit.Test
 /**
  * The Library's Media pane as the phone draws it, from projections the web app produced
  * (tools/gen_native_fixtures.js), on a 411 dp wide phone like the owner's. Each image is a square
- * screenful at full resolution, so a change of a dp or a colour shows: the list scrolled to a given
- * item, and so far into it.
+ * screenful stored at the device's own resolution, so a change of a dp or a colour shows: the list
+ * scrolled to a given item, and so far into it. Paparazzi draws a single frame, so the states that
+ * come after it are not here: a select's open menu (a popup), the focused search box, and the
+ * page's toast rising in (its look is in GalleryScreenshotTest).
  */
 class MediaScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone())
+    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), useDeviceResolution = true)
 
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(
@@ -96,7 +98,12 @@ class MediaScreenshotTest {
     /** The list after "Search my library for wealth": the page's filter, taken by the screen. */
     @Test fun searchDark() = snap("search", item = FILTERS)
 
+    @Test fun searchLight() = snap("search", light = true, item = FILTERS)
+
     @Test fun noMatchDark() = snap("full", item = FILTERS, search = "nothing like this")
+
+    @Test
+    fun noMatchLight() = snap("full", light = true, item = FILTERS, search = "nothing like this")
 
     @Test fun emptyDark() = snap("empty", item = FILTERS)
 
