@@ -3578,6 +3578,9 @@
  "lmaVTok": [
   "src/runtime/segments/34-navigation.js"
  ],
+ "lmaVTrun": [
+  "src/runtime/segments/34-navigation.js"
+ ],
  "lmaVeil": [
   "src/runtime/segments/42-scrubnav.js"
  ],

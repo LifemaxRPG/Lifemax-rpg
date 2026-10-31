@@ -98,7 +98,7 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 38106,
+   "bytes": 38474,
    "statement_count": 82,
    "tags": [
     "training",
@@ -1791,7 +1791,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 13222,
+   "bytes": 13740,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -1814,6 +1814,7 @@
     "lmaTabIndex",
     "lmaVTok",
     "lmaVTcur",
+    "lmaVTrun",
     "lmaNavTo",
     "lmaGoView",
     "lmaTopOverlay",
