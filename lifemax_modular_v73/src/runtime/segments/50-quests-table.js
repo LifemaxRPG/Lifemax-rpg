@@ -300,8 +300,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
  var outcome=await new Promise(function(finishRest){
   var inspecting=-1,busy=false,seen={ids:[],done:[]},spinStop=null,pdown=null;
   var numerals=DH_NUMERALS;
-  sc.insertAdjacentHTML('beforeend','<div class="fs-rest"><div class="rest-prog"></div><div class="rest-bar"><button type="button" class="rest-btn" data-a="ledger">'+qpxText('LEDGER',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn" data-a="new">'+qpxText('NEW QUEST',{s:2,w:120,lines:1})+'</button><button type="button" class="rest-btn" data-a="again">'+qpxText('RESHUFFLE',{s:2,w:120,lines:1})+'</button></div></div><div class="fs-dock3" hidden></div><div class="fs-ledger" hidden></div><div class="fs-newq" hidden></div>');
-  var prog=sc.querySelector('.rest-prog'),dock=sc.querySelector('.fs-dock3'),ledger=sc.querySelector('.fs-ledger'),newq=sc.querySelector('.fs-newq');
+  sc.insertAdjacentHTML('beforeend','<div class="fs-rest"><div class="rest-prog"></div><div class="rest-bar"><button type="button" class="rest-btn" data-a="ledger">'+qpxText('LEDGER',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn" data-a="new">'+qpxText('NEW QUEST',{s:2,w:120,lines:1})+'</button><button type="button" class="rest-btn" data-a="again">'+qpxText('RESHUFFLE',{s:2,w:120,lines:1})+'</button></div></div><div class="fs-dock3" hidden></div><div class="fs-ledger" hidden><div class="lg-head"><div>'+qpxText('THE LEDGER',{s:3,w:260,lines:1})+'</div><button type="button" class="lg-close" onclick="dhSceneLedger(false)" aria-label="Close the ledger">&#10005;</button></div><div class="lg-body"></div></div><div class="fs-newq" hidden></div>');
+  var prog=sc.querySelector('.rest-prog'),dock=sc.querySelector('.fs-dock3'),ledger=sc.querySelector('.fs-ledger'),lgBody=ledger.querySelector('.lg-body'),lgHtml='',newq=sc.querySelector('.fs-newq');
   var slotQuest=function(i){return dhCards().find(function(z){return z.slot===i})};
   var quad=function(c){var M=t3qmat(c.q,c.p,[1,1,1]);return [[-CW/2,-CH/2,0],[CW/2,-CH/2,0],[CW/2,CH/2,0],[-CW/2,CH/2,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])})};
   var inQuad=function(P,x,y){var sgn=0;for(var i=0;i<4;i++){var a=P[i],b=P[(i+1)%4],cr=(b[0]-a[0])*(y-a[1])-(b[1]-a[1])*(x-a[0]);if(Math.abs(cr)<1e-6)continue;var sg=cr>0?1:-1;if(sgn&&sg!==sgn)return false;sgn=sg}return true};
@@ -354,20 +354,24 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    if(inspecting<0||busy)return;busy=true;var i=inspecting,c=dealt[i];if(spinStop){spinStop();spinStop=null}dock.hidden=true;
    c.lift=false;c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];c.q=c.q.slice();
    anim(480,function(t){c.amb=4.2-2.9*t});await move(c,[slots[i][0],TC,slots[i][2]],faceUp(c.yaw||0),500,{ease:eIO,arc:4});c.sh=.7;c.sheen=0;thud([slots[i][0],TY,slots[i][2]],6,.4);inspecting=-1;busy=false};
-  /* the ledger: weekly missions, epics, your own quests and badges */
+  /* the ledger: weekly missions, epics, your own quests and badges. syncCards asks for it every 450 ms, so the list is redrawn only
+     when its HTML changes, keeping where the owner has scrolled to and the row they are on; its head is drawn once, with the scene */
   var lgRow=function(q){var done=isQuestDone(q),locked=questLocked(q),xp=Math.max(0,Number(q.xp)||0);
-   return '<div class="lg-row'+(done?' done':'')+(locked?' locked':'')+'"><button class="lg-chk" type="button" '+(locked?'disabled ':'')+'onclick="dhLedgerToggle(\''+q.id+'\')" aria-label="'+(done?'Undo ':'Complete ')+esc(q.name)+'">'+(done?'&#10003;':locked?'&#128274;':'')+'</button><div class="lg-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(locked?('Unlocks at level '+stageLvl(q.stage)):(q.desc||''))+'</small></div><span class="lg-xp">+'+xp+'</span></div>'};
+   return '<div class="lg-row'+(done?' done':'')+(locked?' locked':'')+'"><button class="lg-chk" type="button" data-id="'+esc(q.id)+'" '+(locked?'disabled ':'')+'onclick="dhLedgerToggle(\''+q.id+'\')" aria-label="'+(done?'Undo ':'Complete ')+esc(q.name)+'">'+(done?'&#10003;':locked?'&#128274;':'')+'</button><div class="lg-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(locked?('Unlocks at level '+stageLvl(q.stage)):(q.desc||''))+'</small></div><span class="lg-xp">+'+xp+'</span></div>'};
   var renderLedger=function(){
    var cu=state.quests.filter(function(q){return q.cadence==='daily'&&q.kind!=='nutrition'&&!q.hand&&questToday(q)}),we=state.quests.filter(function(q){return q.cadence==='weekly'&&q.kind!=='nutrition'}),nu=state.quests.filter(function(q){return q.kind==='nutrition'&&(q.cadence!=='daily'||questToday(q))}),ep=state.quests.filter(function(q){return q.cadence==='epic'}).sort(function(a,b){return(a.stage||0)-(b.stage||0)});
    var sec=function(t,list,empty){return '<div class="lg-sec">'+qpxText(t,{s:2,w:260,lines:1})+'</div>'+(list.length?list.map(lgRow).join(''):'<div class="lg-empty">'+esc(empty)+'</div>')};
    var b=state.badges||{},earned=BADGES.filter(function(x){return b[x.id]});
-   ledger.innerHTML='<div class="lg-head"><div>'+qpxText('THE LEDGER',{s:3,w:260,lines:1})+'</div><button type="button" class="lg-close" onclick="dhSceneLedger(false)" aria-label="Close the ledger">&#10005;</button></div><div class="lg-body">'
-    +sec('WEEKLY MISSIONS',we,'None this week.')+sec('YOUR OWN QUESTS',cu,'Forge one with New Quest.')+(nu.length?sec('NUTRITION',nu,''):'')+sec('EPIC MILESTONES',ep,'Your first epic awaits.')
-    +'<div class="lg-sec">'+qpxText('BADGES '+earned.length+' / '+BADGES.length,{s:2,w:260,lines:1})+'</div><div class="lg-badges">'+(earned.length?earned.map(function(x){return '<span title="'+esc(x.desc)+'">'+esc(x.name)+'</span>'}).join(''):'<div class="lg-empty">None earned yet.</div>')+'</div></div>'};
+   var html=sec('WEEKLY MISSIONS',we,'None this week.')+sec('YOUR OWN QUESTS',cu,'Forge one with New Quest.')+(nu.length?sec('NUTRITION',nu,''):'')+sec('EPIC MILESTONES',ep,'Your first epic awaits.')
+    +'<div class="lg-sec">'+qpxText('BADGES '+earned.length+' / '+BADGES.length,{s:2,w:260,lines:1})+'</div><div class="lg-badges">'+(earned.length?earned.map(function(x){return '<span title="'+esc(x.desc)+'">'+esc(x.name)+'</span>'}).join(''):'<div class="lg-empty">None earned yet.</div>')+'</div>';
+   if(html===lgHtml)return;lgHtml=html;
+   var top=lgBody.scrollTop,a=document.activeElement,fid=a&&lgBody.contains(a)?a.dataset.id:'';
+   lgBody.innerHTML=html;lgBody.scrollTop=top;
+   if(fid){var f=[].find.call(lgBody.querySelectorAll('.lg-chk'),function(x){return x.dataset.id===fid});if(f)f.focus({preventScroll:true})}};
   var openNew=function(on){newq.hidden=!on;if(on){newq.innerHTML='<div class="nq-card"><div class="nq-t">'+qpxText('NEW QUEST',{s:3,w:260,lines:1})+'</div><input id="nqName" maxlength="60" placeholder="A goal worth pursuing" aria-label="Quest name"><div class="nq-row"><select id="nqCad" aria-label="Cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option></select><input id="nqXp" type="number" min="1" max="500" value="25" aria-label="XP"></div><div class="nq-row"><button type="button" class="rest-btn" onclick="dhSceneCreate()">'+qpxText('CREATE',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn dim" onclick="dhSceneNew(false)">'+qpxText('CANCEL',{s:2,w:90,lines:1})+'</button></div></div>'}};
   var api={
    back:release,redraw:function(slot){if(dhReroll(slot)){}},
-   ledger:function(on){if(on===undefined)on=ledger.hidden;if(on){renderLedger();ledger.hidden=false;release()}else ledger.hidden=true},
+   ledger:function(on){if(on===undefined)on=ledger.hidden;if(on){var shut=ledger.hidden;renderLedger();ledger.hidden=false;if(shut)lgBody.scrollTop=0;release()}else ledger.hidden=true},
    open:function(on){openNew(on===undefined?true:on)},
    create:function(){var n=(document.getElementById('nqName').value||'').trim();if(!n){toast('Give your quest a name');return}
     state.quests.push({id:'custom_'+Date.now(),name:n,desc:'Custom quest created by you.',cadence:document.getElementById('nqCad').value,xp:Math.min(500,Math.max(1,Number(document.getElementById('nqXp').value)||25)),kind:'custom'});openNew(false);save();toast('Quest created');api.ledger(true)},

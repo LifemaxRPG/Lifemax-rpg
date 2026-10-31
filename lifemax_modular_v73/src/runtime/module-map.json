@@ -2929,7 +2929,7 @@
   },
   {
    "file": "src/runtime/segments/50-quests-table.js",
-   "bytes": 51162,
+   "bytes": 51792,
    "statement_count": 37,
    "tags": [
     "quests"
