@@ -26,6 +26,9 @@ internal object TabTiming {
         tapId = id
     }
 
+    /** A tab swipe's release toward the tab [to]: the moment its line starts ("swipe:food"). */
+    fun swiped(to: String) = tap(SWIPE + to)
+
     /** the page's open call for a native screen reached the main thread */
     fun opened() {
         if (tapAt != 0L && openAt == 0L) openAt = SystemClock.uptimeMillis()
@@ -52,8 +55,9 @@ internal object TabTiming {
                         view.viewTreeObserver.removeOnPreDrawListener(this)
                     val now = SystemClock.uptimeMillis()
                     val toOpen = if (tOpen > 0) tOpen - t0 else -1
+                    val start = if (tapId.startsWith(SWIPE)) "release" else "tap"
                     lastSummary =
-                        "$tapId → $label  tap→open ${toOpen}  attach ${tAttach - (if (tOpen > 0) tOpen else t0)}" +
+                        "$tapId → $label  $start→open ${toOpen}  attach ${tAttach - (if (tOpen > 0) tOpen else t0)}" +
                             "  drawn ${now - tAttach}  total ${now - t0} ms"
                     if (toasts)
                         Toast.makeText(
@@ -67,4 +71,6 @@ internal object TabTiming {
             }
         )
     }
+
+    private const val SWIPE = "swipe:"
 }

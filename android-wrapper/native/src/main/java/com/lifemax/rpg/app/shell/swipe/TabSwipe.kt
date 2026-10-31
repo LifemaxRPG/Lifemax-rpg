@@ -1,0 +1,317 @@
+package com.lifemax.rpg.app.shell.swipe
+
+import android.animation.ValueAnimator
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import android.util.Log
+import android.view.Choreographer
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.core.view.OneShotPreDrawListener
+import com.lifemax.rpg.app.shell.NativeScreens
+import com.lifemax.rpg.app.shell.TabTiming
+import org.json.JSONObject
+
+/**
+ * The tab swipe on the main thread (plan §3), a sibling of ChromeHost. It drives the pure
+ * [SwipeModel] with the page's side (the plugins' open, close and remove, a page that starts
+ * loading, each drawn bar scene, the page's answer) and with the screens' gestures, and it is the
+ * only writer of the registered screens' translationX, visibility and accessibility, and of the
+ * veil. A swipe moves pixels, never ownership: only the page's open and close change which screen
+ * is open, and they always win.
+ * - The page's side is drawn at once: a plugin's open returns with its screen in place.
+ * - A gesture is stepped at its event's time and drawn in a Choreographer animation callback, which
+ *   runs after input in the same frame: the screen moves in the frame that read the finger. Frames
+ *   go on while the model [needs them][SwipeModel.needsFrame].
+ * - A screen going from GONE to parked needs a layout, so it is parked at an idle moment, not in a
+ *   frame that moves. At each idle moment at rest the Views are checked against [restScene]; a
+ *   difference (some other writer) is repaired and recorded.
+ * - The watchdog ([SwipeModel.deadline]) and a cold destination's first draw
+ *   ([SwipeModel.awaitingDraw]) come back in as inputs.
+ * - A page that starts loading ([NativeScreens]) forgets the page and takes the veil away.
+ */
+internal object TabSwipe {
+    private class Screen(val view: TabScreenView, val send: (SwipeRequest) -> Unit) {
+        /** Moving with no finger on it: a touch that starts on it is swallowed. */
+        var shielded = false
+    }
+
+    private var model = SwipeModel()
+    private val screens = LinkedHashMap<String, Screen>()
+
+    /** android.R.id.content, while a screen is registered. */
+    private var root: ViewGroup? = null
+    private var veil: SwipeVeil? = null
+    private val notes = ArrayDeque<String>()
+
+    private var framePosted = false
+    private val frame =
+        Choreographer.FrameCallback { nanos ->
+            framePosted = false
+            step(SwipeInput.Tick, nanos)
+        }
+    private var idleQueued = false
+    private val handler by lazy { Handler(Looper.getMainLooper()) }
+    private var watchdogAt: Long? = null
+    private val watchdog = Runnable {
+        watchdogAt = null
+        step(SwipeInput.Tick)
+    }
+    private var drawWatch: View? = null
+
+    init {
+        NativeScreens.add(this) { drop() }
+    }
+
+    /**
+     * The latest notes, oldest first: aborts, cuts, refusals, the watchdog and repairs. A start on
+     * A29's trace; each is also logged.
+     */
+    val trace: List<String>
+        get() = notes.toList()
+
+    /**
+     * A plugin created [pane]'s screen as a child of android.R.id.content. [source] is its
+     * `swipeSource`; [send] delivers the `swipe` event on its plugin.
+     */
+    fun register(pane: String, view: TabScreenView, source: Boolean, send: (SwipeRequest) -> Unit) {
+        root = view.parent as? ViewGroup ?: root
+        screens[pane] = Screen(view, send)
+        step(SwipeInput.Register(pane, source))
+    }
+
+    /** The page opened [pane]: in place of VISIBLE. The awaited destination keeps its slide. */
+    fun opened(pane: String) = step(SwipeInput.Opened(pane))
+
+    /** The page closed [pane]: in place of GONE. A source sliding out stays until it is off. */
+    fun closed(pane: String) = step(SwipeInput.Closed(pane))
+
+    /** [pane]'s screen is being removed and disposed. */
+    fun removed(pane: String) {
+        screens.remove(pane)
+        step(SwipeInput.Removed(pane))
+        if (screens.isEmpty()) detach()
+    }
+
+    /** The page's answer, `swipeSettle`. [reason] says why it refused. */
+    fun settle(token: String, outcome: SettleOutcome, reason: String?) {
+        if (outcome == SettleOutcome.Refused) record("refused $token: ${reason ?: "no reason"}")
+        step(SwipeInput.Settle(token, outcome))
+    }
+
+    /** A bar scene that was drawn (ChromeHost): its `swipe` field and its sequence. */
+    fun scene(swipe: JSONObject?, sequence: Int) =
+        step(SwipeInput.Scene(SwipeState.parse(swipe, sequence)))
+
+    /** The model's gates for a DOWN on [pane]. */
+    fun gate(pane: String): SwipeGate? = model.startGate(pane)
+
+    /** The feel the page asks for now. */
+    val tune: SwipeTune
+        get() = model.tune
+
+    fun shields(pane: String): Boolean = screens[pane]?.shielded == true
+
+    fun isOpen(pane: String): Boolean = pane in model.open
+
+    /** A screen's gesture input at [now] (event time, ns): drawn in this frame's animation pass. */
+    fun gesture(input: SwipeInput, now: Long) = step(input, now, drawNow = false)
+
+    /**
+     * A touch that starts on a screen or veil that moves with no finger on it. A second finger
+     * during a drag cancels the drag, wherever it lands.
+     */
+    fun stray(event: MotionEvent) {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN && model.phase is SwipePhase.Dragging)
+            gesture(SwipeInput.DragCancel, event.eventTime * NANOS_PER_MILLI)
+    }
+
+    private fun step(input: SwipeInput, now: Long = System.nanoTime(), drawNow: Boolean = true) {
+        val env = env(now)
+        val before = model.phase.gesture
+        val (next, effects) = model.on(input, env)
+        model = next
+        val source = (next.phase.gesture ?: before)?.source
+        effects.forEach { run(it, source) }
+        screens.values.forEach { if (!next.tracking(it.view.pane)) it.view.yieldGesture() }
+        if (drawNow) draw(env) else postFrame()
+        schedule(env)
+    }
+
+    private fun env(now: Long): SwipeEnv {
+        val root = root ?: return SwipeEnv(now, 0, 1f)
+        val density = root.resources.displayMetrics.density
+        return SwipeEnv(now, root.width, density, ValueAnimator.getDurationScale())
+    }
+
+    private fun run(effect: SwipeEffect, source: String?) {
+        when (effect) {
+            is SwipeEffect.Send -> {
+                TabTiming.swiped(effect.request.to)
+                screens[effect.request.from]?.send?.invoke(effect.request)
+            }
+            is SwipeEffect.Haptic ->
+                source?.let(screens::get)?.let { SwipeHaptics.play(it.view, effect) }
+            is SwipeEffect.Trace -> record(effect.note)
+        }
+    }
+
+    private fun draw(env: SwipeEnv) {
+        val scene = model.scene(env)
+        for ((pane, screen) in screens) scene.panes[pane]?.let { screen.place(it, park = false) }
+        showVeil(scene.veil)
+        if (model.phase == SwipePhase.Idle) idleLater()
+        if (model.needsFrame(env)) postFrame()
+    }
+
+    /**
+     * Puts the screen where [stage] says. From GONE to parked needs a layout, which waits for an
+     * idle moment unless [park].
+     */
+    private fun Screen.place(stage: PaneStage, park: Boolean) {
+        val visibility = stage.visibility.flag
+        view.translationX = stage.tx.toFloat()
+        if (park || view.visibility != View.GONE || visibility != View.INVISIBLE)
+            view.visibility = visibility
+        view.importantForAccessibility =
+            if (stage.a11yHidden) View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            else View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+        shielded = stage.shielded
+    }
+
+    /** What differs from [stage], apart from a park still waiting for an idle moment. */
+    private fun Screen.mismatch(stage: PaneStage): String? {
+        val visibility = stage.visibility.flag
+        val parking = view.visibility == View.GONE && visibility == View.INVISIBLE
+        val hidden =
+            view.importantForAccessibility == View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        return listOfNotNull(
+                "tx ${view.translationX} for ${stage.tx}"
+                    .takeIf { view.translationX != stage.tx.toFloat() },
+                "visibility ${view.visibility} for $visibility"
+                    .takeIf { view.visibility != visibility && !parking },
+                "accessibility".takeIf { hidden != stage.a11yHidden },
+            )
+            .joinToString()
+            .ifEmpty { null }
+    }
+
+    private fun showVeil(stage: VeilStage?) {
+        if (stage == null) {
+            veil?.visibility = View.GONE
+            return
+        }
+        val veil = veil() ?: return
+        veil.show(stage.tab, model.state?.colors)
+        veil.translationX = stage.tx.toFloat()
+        veil.visibility = View.VISIBLE
+    }
+
+    /** The veil, made on first use: index 1, above the WebView and below every screen and bar. */
+    private fun veil(): SwipeVeil? =
+        veil
+            ?: root?.let { root ->
+                SwipeVeil(root.context, ::stray).also {
+                    it.visibility = View.GONE
+                    root.addView(it, minOf(1, root.childCount), FrameLayout.LayoutParams(-1, -1))
+                    veil = it
+                }
+            }
+
+    private fun removeVeil() {
+        veil?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        veil = null
+    }
+
+    private fun postFrame() {
+        if (framePosted || root == null) return
+        framePosted = true
+        Choreographer.getInstance().postFrameCallback(frame)
+    }
+
+    private fun idleLater() {
+        if (idleQueued || root == null) return
+        idleQueued = true
+        Looper.myQueue().addIdleHandler {
+            idleQueued = false
+            atIdle()
+            false
+        }
+    }
+
+    /**
+     * An idle moment: the veil is made once the page allows a swipe, and at rest the screens are
+     * checked against the rest scene, repaired where they differ, and parked.
+     */
+    private fun atIdle() {
+        if (root == null) return
+        if (veil == null && model.state?.on == true) veil()
+        if (model.phase != SwipePhase.Idle) return
+        val rest = model.restScene(env(System.nanoTime()))
+        for ((pane, screen) in screens) {
+            val stage = rest[pane] ?: continue
+            screen.mismatch(stage)?.let { record("repair $pane: $it") }
+            screen.place(stage, park = true)
+        }
+    }
+
+    /** The watchdog, while a commit waits for the page, and a cold destination's first draw. */
+    private fun schedule(env: SwipeEnv) {
+        val deadline = model.deadline
+        if (deadline != watchdogAt) {
+            if (watchdogAt != null) handler.removeCallbacks(watchdog)
+            watchdogAt = deadline
+            if (deadline != null)
+                handler.postDelayed(
+                    watchdog,
+                    (deadline - env.now).coerceAtLeast(0) / NANOS_PER_MILLI + 1,
+                )
+        }
+        val pane = model.awaitingDraw ?: return
+        val view = screens[pane]?.view ?: return
+        if (view === drawWatch) return
+        drawWatch = view
+        OneShotPreDrawListener.add(view) {
+            if (drawWatch === view) drawWatch = null
+            step(SwipeInput.Drawn(pane))
+        }
+    }
+
+    /** No screen is left: nothing to draw on, and nothing to wait for. */
+    private fun detach() {
+        removeVeil()
+        root = null
+        if (framePosted) Choreographer.getInstance().removeFrameCallback(frame)
+        framePosted = false
+        if (watchdogAt != null) handler.removeCallbacks(watchdog)
+        watchdogAt = null
+        drawWatch = null
+    }
+
+    /** A page started loading: forget it. Its plugins remove their own screens. */
+    private fun drop() {
+        step(SwipeInput.Drop)
+        removeVeil()
+    }
+
+    private fun record(note: String) {
+        Log.i(TAG, note)
+        notes.addLast("${SystemClock.uptimeMillis()} $note")
+        while (notes.size > TRACE_SIZE) notes.removeFirst()
+    }
+
+    private val PaneVisibility.flag: Int
+        get() =
+            when (this) {
+                PaneVisibility.Shown -> View.VISIBLE
+                PaneVisibility.Parked -> View.INVISIBLE
+                PaneVisibility.Gone -> View.GONE
+            }
+
+    private const val TAG = "TabSwipe"
+    private const val TRACE_SIZE = 40
+    private const val NANOS_PER_MILLI = 1_000_000L
+}
