@@ -144,7 +144,7 @@ Rendered by `dhRenderHand` (`50-quests-hand.js:209-220`) from `dhCardHtml` (`50-
 | 3D gate (first visit, table mode) | table floating in the dark with the deck, candles, embers; "A NEW DAY. A NEW DRAW.", "YOUR CARDS ARE WAITING", "Three quests, drawn from the dark."; buttons "GET YOUR QUESTS", "NOT NOW" | `50-quests-table.js:100,223-239` |
 | 3D reading | camera dolly, typed captions "THE TABLE IS SET", "THE DECK IS SHUFFLED", "THE CARDS ARE LAID", "YOUR CARDS AWAIT", "TURN THE CARD"; deck drop, two riffles, three cards laid, each lifted and turned by finger (arcball), arcana name and tier title; SKIP button | `50-quests-table.js:240-285` |
 | 3D resting table (the board in table mode) | three face-up cards with painted faces drawn to canvas (`t3face` 640x1120, `50-quests-table.js:61-75`), progress "`n` / `t` FULFILLED" with pips and "WEEKLY `wd` / `w`", bar LEDGER / NEW QUEST / RESHUFFLE | `50-quests-table.js:299-318` |
-| Ledger panel | sections WEEKLY MISSIONS, YOUR OWN QUESTS (non-hand dailies today), NUTRITION, EPIC MILESTONES, BADGES `earned / 13` (earned names only) | `50-quests-table.js:358-366` |
+| Ledger panel | sections WEEKLY MISSIONS, YOUR OWN QUESTS (non-hand dailies today), NUTRITION, EPIC MILESTONES, BADGES `earned / 13` (earned names only) | `50-quests-table.js:359-370` |
 | Flat splash (`cine` mode) | eye, candles, embers, same texts, "GET YOUR QUESTS", "NOT NOW" | `50-quests-gate.js:9-39` |
 | Flat cinematic (`cine` mode, or table fallback) | fog shader background, deck, riffle, three cards, flip-by-drag, titles, SKIP | `50-quests-cine.js:4-159` |
 | Quick riffle (`quick` mode) | 10 backs riffled three times, then the three cards fly into place | `50-quests-hand.js:281-301` |
@@ -195,10 +195,10 @@ There is no edit or delete for custom quests anywhere in `src` (verified: the on
 | Dock Hold | `dhHoldStart` (same as flat) `50-quests-table.js:311` | claim, then the 450 ms poll retextures the card with a burst (`50-quests-table.js:319-333`) |
 | Dock Redraw | `dhSceneRedraw` -> `dhReroll` `50-quests-table.js:312,369,399` | as flat redraw |
 | Dock ✕ / tap outside | `dhSceneBack` -> `release` `50-quests-table.js:313,353-356,383,398` | card back to its slot |
-| LEDGER / ✕ | `api.ledger` `50-quests-table.js:370,378,400` | panel |
-| Ledger row button | `dhLedgerToggle` -> `qosToggle(id,!done)` `50-quests-table.js:359,374,403` | common path (can undo) |
-| NEW QUEST panel: name (max 60), cadence Daily/Weekly only, XP 1..500; CREATE / CANCEL | `50-quests-table.js:367,372-373,401-402` | pushes a custom quest exactly like `createQuest` (but no Epic option), `save()`, toast, opens the ledger |
-| RESHUFFLE | `api.again` `50-quests-table.js:375,378` | full 3D reading again (`50-quests-hand.js:250`) |
+| LEDGER / ✕ | `api.ledger` `50-quests-table.js:374,382,404` | panel |
+| Ledger row button | `dhLedgerToggle` -> `qosToggle(id,!done)` `50-quests-table.js:360,378,407` | common path (can undo) |
+| NEW QUEST panel: name (max 60), cadence Daily/Weekly only, XP 1..500; CREATE / CANCEL | `50-quests-table.js:371,376-377,405-406` | pushes a custom quest exactly like `createQuest` (but no Epic option), `save()`, toast, opens the ledger |
+| RESHUFFLE | `api.again` `50-quests-table.js:379,382` | full 3D reading again (`50-quests-hand.js:250`) |
 | Leaving the tab | interval polls `dhViewOn()` (200/250 ms) | tears the scene down |
 
 On every finished reading the scene writes `dealt=true` and `up=[true,true,true]` straight to `localStorage` (`50-quests-table.js:293`).
@@ -243,7 +243,7 @@ On every finished reading the scene writes `dealt=true` and `up=[true,true,true]
 | `toggleQuest`, `qosToggle`, `isQuestDone`, `questKey`, `questRow`, `dhMaybeDeal` | never reassigned (verified; single definitions in `runtime/symbol-index.json`) | note: `window.LifeMaxDailyHand` captured `dhMaybeDeal`, `dhReroll` and others by reference at `50-quests-hand.js:317`, so wrappers added later are bypassed through that object (tests use it) |
 | `renderQuests` is reached on every `save` via `renderAll` (`04-runtime.js:182`) | | so every save in the app runs `dhAutoVerify` and `dhRenderHand` |
 
-Exported globals: `window.LifeMaxDailyHand` (`50-quests-hand.js:317`), `QFX` (`50-quests-fx.js:7`), `QSFX` (`50-sfx.js:4`), `window.dhRest` while the resting table is up (`50-quests-table.js:377,390`), the `dhScene*` and `dhLedgerToggle` helpers used by inline `onclick` (`50-quests-table.js:398-403`).
+Exported globals: `window.LifeMaxDailyHand` (`50-quests-hand.js:317`), `QFX` (`50-quests-fx.js:7`), `QSFX` (`50-sfx.js:4`), `window.dhRest` while the resting table is up (`50-quests-table.js:381,394`), the `dhScene*` and `dhLedgerToggle` helpers used by inline `onclick` (`50-quests-table.js:402-407`).
 
 ### 5.2 Timers, loops and global listeners
 
