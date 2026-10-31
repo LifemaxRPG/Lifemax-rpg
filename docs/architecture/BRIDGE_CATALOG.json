@@ -8,7 +8,8 @@
    "protocol": 1,
    "nativePlugin": "NativeCharacter",
    "capabilities": [
-    "character.projection.v1"
+    "character.projection.v1",
+    "shell.swipe.v1"
    ],
    "owner": "web-core-gameplay",
    "writes": [],
@@ -48,7 +49,8 @@
    "screenSource": "feature/log/presentation/LogScreen.kt",
    "webModule": "50-native-log.js (NativeTabKit)",
    "capabilities": [
-    "log.projection.v1"
+    "log.projection.v1",
+    "shell.swipe.v1"
    ],
    "commands": {
     "preview": "keeps the draft on the page so the next projection previews it; never replaces what is being typed (draftRevision unchanged)",
@@ -77,7 +79,8 @@
    "webModule": "50-native-plan.js (NativeTabKit)",
    "inventory": "docs/architecture/PLAN_INVENTORY.md",
    "capabilities": [
-    "plan.projection.v1"
+    "plan.projection.v1",
+    "shell.swipe.v1"
    ],
    "commands": {
     "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
@@ -112,7 +115,8 @@
    "screenSource": "feature/lifedirector/presentation/LifeDirectorScreen.kt; the dial in feature/lifedirector/presentation/dial",
    "webModule": "50-native-director.js (NativeTabKit) on LifeDirector.native in src/features/life-director/logic.js",
    "capabilities": [
-    "director.today.v1"
+    "director.today.v1",
+    "shell.swipe.v1"
    ],
    "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while the XP celebration of one of its taps plays on the page",
    "commands": {
@@ -151,7 +155,8 @@
    "webModule": "50-native-recipes.js (NativeTabKit)",
    "inventory": "docs/architecture/RECIPES_INVENTORY.md",
    "capabilities": [
-    "recipes.projection.v1"
+    "recipes.projection.v1",
+    "shell.swipe.v1"
    ],
    "commands": {
     "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
@@ -185,7 +190,8 @@
    "webModule": "50-native-library.js (NativeTabKit, view media)",
    "inventory": "docs/architecture/LIBRARY_INVENTORY.md",
    "capabilities": [
-    "library.media.projection.v1"
+    "library.media.projection.v1",
+    "shell.swipe.v1"
    ],
    "covers": "the Media pane only, and not while the add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
    "commands": {},
@@ -224,12 +230,14 @@
     "capabilities",
     "open",
     "update",
-    "close"
+    "close",
+    "swipeSettle"
    ],
    "events": [
     "action",
     "nav-action",
-    "closed"
+    "closed",
+    "swipe"
    ],
    "writes": [
     "fv2Log",
@@ -296,6 +304,21 @@
    "source": "app/shell/ChromeHost.kt",
    "owner": "native",
    "purpose": "shared top/bottom bars and make-before-break hand-over between native tabs (A23, ADR 0002)",
+   "writes": []
+  },
+  {
+   "feature": "tab-swipe",
+   "status": "native-opt-in-beta",
+   "source": "app/shell/swipe/ (TabSwipe drives the pure SwipeModel; TabScreenView reads the gesture; SwipeVeil, SwipeHaptics)",
+   "owner": "native draws the motion, the page decides (50-native-swipe.js)",
+   "purpose": "swipe from one native tab to the next with a catch half way (phase 1: native to native, walls at web tabs, the Overview, Money and the ends of the bar); a swipe moves pixels, never ownership",
+   "scene": "every navScene (NativeTabKit) and chromeScene (Food) carries swipe {v: 1, on, motion, haptics, view, active, tabs [{key, view, label, icon, kind: native | web | stop, source?}], colors {bg, text, muted}, tune}; only a scene ChromeHost draws reaches the swipe, so it keeps the bars' sequence and stale rule",
+   "plugins": {
+    "ComposeTabPlugin (NativeCharacter, NativeLog, NativePlan, NativeLifeDirector, NativeRecipes, NativeMedia)": "handshake capability shell.swipe.v1; event swipe {token, from, to, dir, sequence, via: drag | fling}, sent once on a release that commits; method swipeSettle {token, outcome: native | refused, reason?}, answered by the page before it navigates",
+    "NativeNutrition": "capabilities() answers swipe: 1; the swipe event adds the screen session, and a swipeSettle naming another session is ignored"
+   },
+   "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
+   "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
    "writes": []
   }
  ]

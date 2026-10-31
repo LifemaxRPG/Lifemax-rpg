@@ -1,5 +1,8 @@
 package com.lifemax.rpg.app.shell
 
+import com.lifemax.rpg.app.shell.swipe.SwipeFixtures
+import com.lifemax.rpg.app.shell.swipe.SwipeGate
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import com.lifemax.rpg.bridge.web.NativeCashPlugin
 import com.lifemax.rpg.feature.cash.CashHost
 import com.lifemax.rpg.feature.cash.CashSession
@@ -47,5 +50,23 @@ class NativeScreensTest {
         assertNull("the new page may open Cash again", CashHost.session)
         assertNull(CashHost.closed)
         assertFalse(reported)
+    }
+
+    @Test
+    fun theTabSwipeForgetsThePageThatIsGone() {
+        try {
+            TabSwipe.opened("character")
+            TabSwipe.scene(SwipeFixtures.swipeJson("character"), sequence = 1)
+            assertNull("the page allows a swipe from Character", TabSwipe.gate("character"))
+            pageStarts()
+            assertFalse(TabSwipe.isOpen("character"))
+            assertEquals(
+                "no state until the new page draws a scene",
+                SwipeGate.Off,
+                TabSwipe.gate("character"),
+            )
+        } finally {
+            TabSwipe.removed("character")
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.lifemax.rpg.app.shell
 
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.graphics.Color
 import android.view.Gravity
@@ -7,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.animation.DecelerateInterpolator
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -52,6 +54,10 @@ internal class LiveOverviewShell(
         get() = frame
 
     private var first = true
+
+    /** The page's bar scroll last followed (px), and the glide toward it. */
+    private var navScroll = 0
+    private var glide: ValueAnimator? = null
 
     init {
         // Bound software layers to two small control strips. The WebView body
@@ -112,16 +118,38 @@ internal class LiveOverviewShell(
                 Gravity.BOTTOM,
             )
         header.translationY = if (chromeOnly) 0f else -web.scrollY.toFloat()
-        if (first) {
-            first = false
-            nav.post {
-                nav.scrollTo(
-                    (scene.optDouble("navScroll") * web.resources.displayMetrics.density)
-                        .roundToInt(),
-                    0,
-                )
-            }
+        follow(scene)
+    }
+
+    /**
+     * The bar follows the page's: at once on the first scene; after that, a page that sends the
+     * swipe state glides it wherever the page's bar has moved since (a tab changed, by a tap or a
+     * swipe), in 170 ms with a cubic ease-out as the page's own bar does, at once with the page's
+     * motion off. A tab change alone is not enough: the destination's scene is taken while the
+     * page's bar is still gliding, and the settled scene after it brings where the bar ends.
+     */
+    private fun follow(scene: JSONObject) {
+        val to = (scene.optDouble("navScroll") * web.resources.displayMetrics.density).roundToInt()
+        val swipe = scene.optJSONObject("swipe")
+        when {
+            first -> nav.post { nav.scrollTo(to, 0) }
+            swipe == null || to == navScroll -> return
+            swipe.optBoolean("motion", true) -> nav.post { glideTo(to) }
+            else -> nav.post { nav.scrollTo(to, 0) }
         }
+        first = false
+        navScroll = to
+    }
+
+    private fun glideTo(to: Int) {
+        glide?.cancel()
+        glide =
+            ValueAnimator.ofInt(nav.scrollX, to).apply {
+                duration = GLIDE_MS
+                interpolator = DecelerateInterpolator(1.5f)
+                addUpdateListener { nav.scrollTo(it.animatedValue as Int, 0) }
+                start()
+            }
     }
 
     fun contentInsetsDp(): Pair<Float, Float> {
@@ -130,8 +158,14 @@ internal class LiveOverviewShell(
     }
 
     fun close() {
+        glide?.cancel()
         if (!chromeOnly && web.viewTreeObserver.isAlive)
             web.viewTreeObserver.removeOnScrollChangedListener(scroll)
         parent.removeView(frame)
+    }
+
+    private companion object {
+        /** The page's bar glide (lmaBarTo): 1 − (1 − t)³ over 170 ms. */
+        const val GLIDE_MS = 170L
     }
 }
