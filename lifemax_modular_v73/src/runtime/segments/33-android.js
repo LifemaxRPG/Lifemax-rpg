@@ -151,7 +151,7 @@ async function lmaRenderSettings(){
  if(n.on&&perm==='granted'&&exact==='denied')h+='<div class="note" style="margin-bottom:10px">Without “Alarms &amp; reminders” access Android may delay reminders by several minutes. <button class="btn small secondary" onclick="lmaExactTiming()">Allow exact timing</button></div>';
  h+=row('Reminders','Master switch. Off cancels everything scheduled.',tog('on'));
  h+=row('Planned sessions','Life Director sessions, shortly before they start.',tog('sessions',off));
- h+=row('Reminder lead time','How early to nudge you.','<select onchange="lmaSet(\'lead\',+this.value)" '+(off||!n.sessions?'disabled':'')+' style="'+LMA_IN+'">'+[0,5,10,15,30,60].map(v=>'<option value="'+v+'"'+(n.lead===v?' selected':'')+'>'+(v?v+' min':'At start')+'</option>').join('')+'</select>');
+ h+=row('Reminder lead time','How early to nudge you.','<select aria-label="Reminder lead time" onchange="lmaSet(\'lead\',+this.value)" '+(off||!n.sessions?'disabled':'')+' style="'+LMA_IN+'">'+[0,5,10,15,30,60].map(v=>'<option value="'+v+'"'+(n.lead===v?' selected':'')+'>'+(v?v+' min':'At start')+'</option>').join('')+'</select>');
  h+=row('Workout days','A reminder on days your workout plan has a session, until it is checked off. Skipped when Life Director already reminds you.',tog('workout',off));
  h+=row('Workout time','',time('workoutTime').replace('<input','<input '+(off||!n.workout?'disabled':'')));
  h+=row('Evening nudge','A second reminder at 8 PM if today’s workout is still open.',tog('nudge',off||!n.workout));

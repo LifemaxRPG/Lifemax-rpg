@@ -600,7 +600,7 @@ function lmvSettingsRender(){
  el.textContent='';
  const row=lmvEl('div','settingsline');const left=lmvEl('div');left.style.flex='1';left.appendChild(lmvEl('strong','','Voice scheduling'));left.appendChild(lmvEl('div','muted','Offline only. Speak or type a request and it goes into Life Director after you confirm.')).style.fontSize='12px';
  const open=lmvEl('button','btn small','Open');open.type='button';open.addEventListener('click',lmvDiagOpen);row.appendChild(left);row.appendChild(open);el.appendChild(row);
- const r2=lmvEl('div','settingsline');const l2=lmvEl('div');l2.style.flex='1';l2.appendChild(lmvEl('strong','','Turn voice on'));const c=lmvEl('input','check');c.type='checkbox';c.checked=lmvEnabled();c.addEventListener('change',function(){try{localStorage.setItem(LMV.flag,c.checked?'true':'false')}catch(e){}lmvApplyFlag()});r2.appendChild(l2);r2.appendChild(c);el.appendChild(r2);
+ const r2=lmvEl('div','settingsline');const l2=lmvEl('div');l2.style.flex='1';l2.appendChild(lmvEl('strong','','Turn voice on'));const c=lmvEl('input','check');c.type='checkbox';c.id='lmvToggle';c.setAttribute('aria-label','Turn voice on');c.checked=lmvEnabled();c.addEventListener('change',function(){try{localStorage.setItem(LMV.flag,c.checked?'true':'false')}catch(e){}lmvApplyFlag()});r2.appendChild(l2);r2.appendChild(c);el.appendChild(r2);
 }
 /* public surface (also what the tests use) */
 window.LifeMaxVoice=Object.freeze({

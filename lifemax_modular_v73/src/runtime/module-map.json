@@ -1747,7 +1747,7 @@
   },
   {
    "file": "src/runtime/segments/33-android.js",
-   "bytes": 13893,
+   "bytes": 13925,
    "statement_count": 30,
    "tags": [
     "android",
@@ -1843,8 +1843,8 @@
   },
   {
    "file": "src/runtime/segments/35-android-upkeep.js",
-   "bytes": 19294,
-   "statement_count": 28,
+   "bytes": 19507,
+   "statement_count": 29,
    "tags": [
     "android",
     "updates",
@@ -1861,6 +1861,7 @@
     "lmaUpdPlan",
     "lmaCheckUpdate",
     "lmaWebUpdate",
+    "lmaReloading",
     "lmaLeaveNative",
     "lmaWebRestart",
     "lmaPill",
@@ -1997,7 +1998,7 @@
   },
   {
    "file": "src/runtime/segments/39-health.js",
-   "bytes": 21476,
+   "bytes": 21506,
    "statement_count": 19,
    "tags": [
     "android",
@@ -2127,7 +2128,7 @@
   },
   {
    "file": "src/runtime/segments/45-voice.js",
-   "bytes": 52913,
+   "bytes": 52975,
    "statement_count": 86,
    "tags": [
     "voice"
@@ -2628,7 +2629,7 @@
   },
   {
    "file": "src/runtime/segments/50-haptics.js",
-   "bytes": 5157,
+   "bytes": 5196,
    "statement_count": 14,
    "tags": [
     "haptics"
@@ -3005,7 +3006,7 @@
   },
   {
    "file": "src/runtime/segments/50-tabs-edit.js",
-   "bytes": 4720,
+   "bytes": 4738,
    "statement_count": 12,
    "tags": [
     "navigation"
@@ -3373,6 +3374,18 @@
     "media"
    ],
    "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-native-settings.js",
+   "bytes": 27240,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "settings"
+   ],
+   "symbols": [
+    "window.setNativeSettingsEnabled"
+   ]
   },
   {
    "file": "src/runtime/segments/50-device-backup.js",

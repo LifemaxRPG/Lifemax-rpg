@@ -27,7 +27,7 @@ function lmaTabsApply(){
 function lmaTabsRender(){
  const el=document.getElementById('tabsEditBody');if(!el)return;
  const c=lmaTabsCfg(),bs=lmaTabsButtons();
- const row=function(v,label,ico,on,i,n,extra){return '<div class="settingsline tabrow'+(on?'':' off')+'"><span class="tabrow-ico">'+ico+'</span><div style="flex:1;min-width:0"><strong>'+esc(label)+'</strong></div>'
+ const row=function(v,label,ico,on,i,n,extra){return '<div class="settingsline tabrow'+(on?'':' off')+'" data-view="'+v+'"><span class="tabrow-ico">'+ico+'</span><div style="flex:1;min-width:0"><strong>'+esc(label)+'</strong></div>'
   +(extra?'':'<button class="tb" type="button" onclick="lmaTabMove(\''+v+'\',-1)" aria-label="Move '+esc(label)+' earlier"'+(i===0?' disabled':'')+'>&#9664;</button><button class="tb" type="button" onclick="lmaTabMove(\''+v+'\',1)" aria-label="Move '+esc(label)+' later"'+(i===n-1?' disabled':'')+'>&#9654;</button>')
   +'<input type="checkbox" class="check" '+(on?'checked ':'')+'onchange="lmaTabShow(\''+v+'\',this.checked)" aria-label="Show '+esc(label)+' in the bar"></div>'};
  const n=bs.length;let h=bs.map(function(b,i){const v=b.dataset.view,ico=(b.querySelector('.ico')||{}).innerHTML||'';return row(v,b.textContent.trim(),ico,!b.classList.contains('tab-off'),i,n,false)}).join('');
