@@ -64,6 +64,7 @@ const c = {
   lmaSave: () => saves++,
   getComputedStyle: () => ({ getPropertyValue: () => "#7c9cff" }),
   lmaTabList: () => [],
+  MutationObserver: class { observe() {} }, // the kit's watcher for overlays over the screen (not exercised here)
   document: {
     documentElement: { classList: { contains: () => false } },
     getElementById: () => null,

@@ -58,7 +58,9 @@ abstract class ComposeTabPlugin : Plugin() {
     /**
      * The page's answer to a [sendCommand], delivered with the update that carries the fresh
      * projection, and delivered even when that projection is rejected: the answer still says what
-     * the page did.
+     * the page did. It reaches only a showing screen: one that closed while the page was answering
+     * never gets it (a hidden screen takes no updates, and the page sends none to a closed one), so
+     * a tab that waits for an answer stops waiting when it opens again.
      */
     protected open fun onReply(reply: JSONObject) {}
 

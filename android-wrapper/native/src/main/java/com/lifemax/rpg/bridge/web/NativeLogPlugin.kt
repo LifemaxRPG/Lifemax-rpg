@@ -38,8 +38,10 @@ class NativeLogPlugin : ComposeTabPlugin() {
     override val tabId = "log"
     override val capabilities = listOf("log.projection.v1")
 
-    override fun accept(snapshot: JSONObject, explicitOpen: Boolean) =
+    override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
+        if (explicitOpen) viewModel.opened()
+    }
 
     override fun onReply(reply: JSONObject) =
         viewModel.onReply(

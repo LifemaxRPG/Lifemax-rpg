@@ -152,6 +152,19 @@ class LogTest {
     }
 
     @Test
+    fun aSaveWhoseAnswerNeverCameIsFreeAgainWhenTheScreenOpensAndKeepsItsOperation() {
+        val (_, vm, commands) = setUp()
+        vm.submit()
+        vm.opened() // the screen closed while the page answered, and the answer went nowhere
+        assertEquals(LogStatus(), vm.status.value)
+        vm.submit()
+        assertEquals(listOf("op-1", "op-1"), commands.submits.map { it.second })
+        vm.onReply("submit", false, "Could not save")
+        vm.opened()
+        assertEquals("Could not save", vm.status.value.error)
+    }
+
+    @Test
     fun aSuccessfulSaveClearsTheStatusAndPreviewRepliesChangeNothing() {
         val (repo, vm, _) = setUp()
         vm.submit()

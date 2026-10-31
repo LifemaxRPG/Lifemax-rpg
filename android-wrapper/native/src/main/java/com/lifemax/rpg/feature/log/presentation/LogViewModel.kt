@@ -38,6 +38,15 @@ class LogViewModel(
         mutableStatus.value = LogStatus()
     }
 
+    /**
+     * The screen opened (again). A command's answer reaches only a showing screen, so a save whose
+     * screen closed while the page was answering never hears back: Save is free again. The
+     * operation id stays, so saving the same draft again records it at most once.
+     */
+    fun opened() {
+        if (mutableStatus.value.saving) mutableStatus.value = LogStatus()
+    }
+
     /** The page's answer to a command. Only a save changes what the screen shows. */
     fun onReply(command: String, ok: Boolean, message: String) {
         if (command != "submit") return
