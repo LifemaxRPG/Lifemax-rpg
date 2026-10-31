@@ -522,9 +522,9 @@ The web half is built (`50-native-library.js`, section 9); the sketch that stood
 
 ---
 
-## 9. What the Library work changed (phase 0 and the web half of phase 1)
+## 9. What the Library work changed (phase 0 and phase 1)
 
-Web only; nothing native draws the Library yet. Tests named here run in CI with the other web tests.
+Phase 0 and the web half are web only; the native screen of phase 1 is the last paragraph. Tests named here run in CI with the other web tests.
 
 **Journal (phase 0).**
 - `renderHistory` does not redraw the entry while its reflection or review box has the focus; it marks the entry stale and draws it once the box loses the focus. A save from elsewhere (health sync, decay, a payday, a coach reward) no longer replaces what is being typed. The day list and hero are still redrawn.
@@ -542,3 +542,5 @@ Web only; nothing native draws the Library yet. Tests named here run in CI with 
 **Voice (phase 0).** "journal" and "history" have their own entry in the section table, before Library's, and open the Journal; library, media and books open Media. A voice library search now sets the search box through an `input` event (the box's own handler redraws the list), so a native screen can tell that the page set its filter. Tests: `voice4.test.js`.
 
 **Native Library, web half (phase 1).** `50-native-library.js` on `NativeTabKit.create` (view `media`, plugin `NativeMedia`, capability `library.media.projection.v1`, setting `nativeLibrary`, toggle `nativeLibraryToggle`, Settings "Native Library (beta)", off by default). The projection and actions are in 7.4. Covering: not while the form is open, the player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the screen follows these through MutationObservers (the form's style, the player's class, the body's children), a focusout and `audioCtx.loading`, and comes back through `revisit()`. The page's filter carries a revision raised by every `input` on the search box or the two selects. Fixtures from the page: `fixtures/media-{full,search,empty,tip}.json` and `fixtures/media-filter-parity.json`. Tests: `native-library.test.js` (32 checks) and the hand-over simulation. Not checked on the phone: that a link opened from a native tap reaches the browser (a script-made anchor click with `target=_blank`), and how the file picker behaves after the screen hands the button over.
+
+**Native Library, the screen (phase 1).** `NativeMediaPlugin` (ComposeTabPlugin, `feature/library`, `app/LibraryContainer.kt`) draws the projection of 7.4 faithfully to the pane at phone width and filters it with the page's own rule; every tap goes to the page as listed there. What it draws, how it is proven and how it differs from the page: `MIGRATION.md`, Library.

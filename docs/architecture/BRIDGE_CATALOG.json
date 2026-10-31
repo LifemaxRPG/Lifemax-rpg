@@ -143,11 +143,11 @@
   },
   {
    "feature": "library",
-   "status": "web-half-ready",
-   "plannedPlugin": "NativeMedia",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeMedia",
    "owner": "web-core-gameplay",
-   "pluginSource": "bridge/web/NativeMediaPlugin.kt (extends ComposeTabPlugin; to be written; plannedPlugin becomes nativePlugin when it is registered in MainActivity)",
-   "screenSource": "feature/library/presentation (to be written)",
+   "pluginSource": "bridge/web/NativeMediaPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/library/presentation/MediaScreen.kt",
    "webModule": "50-native-library.js (NativeTabKit, view media)",
    "inventory": "docs/architecture/LIBRARY_INVENTORY.md",
    "capabilities": [
@@ -168,6 +168,8 @@
     "the Journal: lmaNavTo('history'), a web destination behind its lock"
    ],
    "readContract": {
+    "snapshotDto": "feature/library/domain/MediaProjection.kt",
+    "decoder": "feature/library/data/WebMediaRepository.kt",
     "fixtures": "native/src/test/resources/fixtures/media-full.json, media-search.json, media-empty.json, media-tip.json, and media-filter-parity.json (the rows the page shows for sample filters of media-full) (lifemax_modular_v73/tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page sets its filter (typed on the page, a voice search)",
     "invalidation": "renderMedia, host resume, foreground return, 15-second refresh while visible; the form, the audio player, a handed file button and a level-up close the screen and bring it back (MutationObservers, focusout, audioCtx.loading)"

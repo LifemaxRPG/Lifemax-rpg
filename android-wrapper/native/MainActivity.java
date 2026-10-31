@@ -86,6 +86,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLogPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativePlanPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLifeDirectorPlugin.class);
+        registerPlugin(com.lifemax.rpg.bridge.web.NativeMediaPlugin.class);
         registerPlugin(NativeNutritionPlugin.class);
         // Backlog NAV-4: after process death, a configuration change or a reopen from Recents, Android hands back the
         // intent that first started the activity. Drop its link and screen before the bridge reads them (the bridge keeps
