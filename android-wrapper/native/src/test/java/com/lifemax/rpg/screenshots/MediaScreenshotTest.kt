@@ -99,10 +99,13 @@ class MediaScreenshotTest {
 
     @Test fun rowsLight() = snap("full", light = true, item = FIRST_ROW + 1)
 
-    /** An audiobook with a file not played yet, then a finished documentary with notes. */
+    /** An audiobook with a file not played yet, then the top of a finished documentary. */
     @Test fun moreRowsDark() = snap("full", item = FIRST_ROW + 4)
 
-    /** An item to watch with its link, then an old one the page stored without type or status. */
+    /**
+     * The documentary's notes, an item to watch with its link, then an old one the page stored
+     * without type or status.
+     */
     @Test fun legacyRowDark() = snap("full", item = FIRST_ROW + 6)
 
     /** The end of the list and of its card. */

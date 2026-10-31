@@ -2,7 +2,6 @@ package com.lifemax.rpg.feature.lifedirector.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +13,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,7 +41,7 @@ fun DayStrip(days: List<StripDay>, selected: Int, onDay: (Int) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp)) {
         val chip = (maxWidth - 30.dp) / 7
         Row(
-            Modifier.horizontalScroll(rememberScrollState()),
+            Modifier.horizontalScroll(rememberScrollState()).selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             days.forEachIndexed { i, day ->
@@ -65,11 +65,8 @@ private fun DayChip(day: StripDay, on: Boolean, modifier: Modifier, onClick: () 
                 else Modifier
             )
             .clip(shape)
-            .semantics {
-                selected = on
-                contentDescription = day.description()
-            }
-            .clickable(role = Role.Tab, onClick = onClick)
+            .semantics { contentDescription = day.description() }
+            .selectable(on, role = Role.Tab, onClick = onClick)
             .padding(top = 7.dp, bottom = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
