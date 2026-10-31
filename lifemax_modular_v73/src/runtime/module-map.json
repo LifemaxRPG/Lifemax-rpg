@@ -98,7 +98,7 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 38106,
+   "bytes": 38458,
    "statement_count": 82,
    "tags": [
     "training",
@@ -298,7 +298,7 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 29263,
+   "bytes": 29999,
    "statement_count": 74,
    "tags": [
     "training",
@@ -1747,7 +1747,7 @@
   },
   {
    "file": "src/runtime/segments/33-android.js",
-   "bytes": 13893,
+   "bytes": 14069,
    "statement_count": 30,
    "tags": [
     "android",
@@ -3026,8 +3026,8 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 40272,
-   "statement_count": 70,
+   "bytes": 41271,
+   "statement_count": 71,
    "tags": [
     "nutrition",
     "food"
@@ -3053,6 +3053,7 @@
     "fv2PL",
     "fv2Unit",
     "fv2KcalFor",
+    "fv2Saved",
     "fv2Log",
     "fv2Snack",
     "deleteMealEntry",
@@ -3243,7 +3244,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-cash.js",
-   "bytes": 5550,
+   "bytes": 5993,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3275,7 +3276,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 12296,
+   "bytes": 13591,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3289,7 +3290,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 22603,
+   "bytes": 22932,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3341,7 +3342,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-plan.js",
-   "bytes": 13185,
+   "bytes": 12996,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3364,7 +3365,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 10830,
+   "bytes": 10687,
    "statement_count": 1,
    "tags": [
     "android",
