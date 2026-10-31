@@ -96,6 +96,7 @@ class RecipesTest {
                 fixture().also { it.getJSONArray("categories").remove(0) },
                 fixture().put("categories", JSONArray()),
                 fixture().also { it.remove("tokens") },
+                fixture().also { it.getJSONObject("tokens").remove("accent") },
             )
         for (projection in broken) {
             val sequence = repo.state.value!!.sequence + 1

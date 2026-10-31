@@ -107,6 +107,17 @@ class LogTest {
     }
 
     @Test
+    fun aProjectionMissingAPaletteTokenIsRejected() {
+        val repo = WebLogRepository()
+        repo.accept(fixture(), true)
+        val missing =
+            fixture().put("sequence", 5).also { it.getJSONObject("tokens").remove("accent") }
+        if (runCatching { repo.accept(missing) }.isSuccess)
+            fail("accepted a palette without accent")
+        assertEquals(1L, repo.state.value!!.sequence)
+    }
+
+    @Test
     fun choosingAPresetTakesItsSkillAndAttributesAndAsksForAPreview() {
         val (_, vm, commands) = setUp()
         vm.choose("running")

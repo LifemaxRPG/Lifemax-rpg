@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.recipes.data
 
+import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.recipes.domain.ALL_RECIPES
 import com.lifemax.rpg.feature.recipes.domain.Recipe
 import com.lifemax.rpg.feature.recipes.domain.RecipeCategory
@@ -9,7 +11,6 @@ import com.lifemax.rpg.feature.recipes.domain.RecipesProjection
 import com.lifemax.rpg.feature.recipes.domain.RecipesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -57,7 +58,7 @@ class WebRecipesRepository : RecipesRepository {
                 filter,
                 revision,
                 recipes,
-                colors.keys().asSequence().associateWith { colors.getLong(it) },
+                colors.pageTokens(),
                 j.getBoolean("light"),
             )
     }
@@ -86,6 +87,4 @@ class WebRecipesRepository : RecipesRepository {
             r.getString("searchText"),
         )
     }
-
-    private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
 }

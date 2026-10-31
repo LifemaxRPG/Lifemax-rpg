@@ -37,7 +37,7 @@ import org.junit.Test
  * colour shows. The clock stands at the projection's own time.
  */
 class LifeDirectorScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone())
+    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), maxPercentDifference = 0.001)
 
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(

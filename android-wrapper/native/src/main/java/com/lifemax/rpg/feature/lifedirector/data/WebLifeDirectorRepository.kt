@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.lifedirector.data
 
+import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorClock
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorHeader
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorTab
@@ -52,7 +54,7 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 banner = j.banner(),
                 notice = j.notice(),
                 today = j.today() ?: old?.takeIf { it.session == session }?.today,
-                tokens = colors.keys().asSequence().associateWith { colors.getLong(it) },
+                tokens = colors.pageTokens(),
                 light = j.getBoolean("light"),
             )
     }

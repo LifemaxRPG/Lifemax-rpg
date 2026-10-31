@@ -32,7 +32,8 @@ import org.junit.Test
  * and the toast.
  */
 class PlanScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5)
+    @get:Rule
+    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5, maxPercentDifference = 0.001)
 
     private fun projection(fixture: String, light: Boolean): PlanProjection =
         WebPlanRepository()

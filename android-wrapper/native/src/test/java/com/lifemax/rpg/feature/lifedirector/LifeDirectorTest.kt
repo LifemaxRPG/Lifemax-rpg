@@ -126,6 +126,10 @@ class LifeDirectorTest {
         )
         rejects(repo, today { it.getJSONObject("dial").getJSONObject("ring").put("frac", 1.5) })
         rejects(repo, fixture().put("sequence", 2).put("protocol", 2))
+        rejects(
+            repo,
+            fixture().put("sequence", 2).also { it.getJSONObject("tokens").remove("gold") },
+        )
         assertEquals(1L, repo.state.value!!.sequence)
     }
 

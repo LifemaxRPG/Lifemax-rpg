@@ -23,7 +23,9 @@ import org.junit.Test
  * page's toast rising in (its look is in GalleryScreenshotTest).
  */
 class MediaScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), useDeviceResolution = true)
+    @get:Rule
+    val paparazzi =
+        Paparazzi(deviceConfig = phone(), useDeviceResolution = true, maxPercentDifference = 0.001)
 
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(
@@ -79,18 +81,29 @@ class MediaScreenshotTest {
 
     @Test fun statsLight() = snap("full", light = true, item = STATS)
 
-    /** The card's filters, then an audiobook with its progress, its file and its buttons. */
+    /** The card's filters, then the top of an audiobook: its progress and its notes. */
     @Test fun audiobookDark() = snap("full", item = FILTERS)
 
     @Test fun audiobookLight() = snap("full", light = true, item = FILTERS)
 
-    /** A finished item with its link, items in progress with notes and a link. */
+    /** The whole audiobook row: progress, notes, Play, Replace file and Remove audio, its file. */
+    @Test fun audiobookRowDark() = snap("full", item = FIRST_ROW)
+
+    @Test fun audiobookRowLight() = snap("full", light = true, item = FIRST_ROW)
+
+    /**
+     * Under the audiobook's file line: a finished item with its link, an item in progress with
+     * notes, and the top edge of the next.
+     */
     @Test fun rowsDark() = snap("full", item = FIRST_ROW + 1)
 
     @Test fun rowsLight() = snap("full", light = true, item = FIRST_ROW + 1)
 
-    /** An audiobook not played yet, a finished documentary, an old item without type or status. */
+    /** An audiobook with a file not played yet, then a finished documentary with notes. */
     @Test fun moreRowsDark() = snap("full", item = FIRST_ROW + 4)
+
+    /** An item to watch with its link, then an old one the page stored without type or status. */
+    @Test fun legacyRowDark() = snap("full", item = FIRST_ROW + 6)
 
     /** The end of the list and of its card. */
     @Test fun endDark() = snap("full", item = FIRST_ROW + 22)

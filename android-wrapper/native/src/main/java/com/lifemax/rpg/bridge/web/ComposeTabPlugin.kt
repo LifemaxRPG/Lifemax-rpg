@@ -105,7 +105,7 @@ abstract class ComposeTabPlugin : Plugin() {
                 screen.visibility = View.VISIBLE
                 screen.bringToFront()
                 visible = true
-                showChrome(call.getObject("navScene"))
+                showChrome(call.getObject("navScene"), opening = true)
                 TabTiming.attached(screen, tabId)
                 call.resolve()
             } catch (e: Exception) {
@@ -197,10 +197,10 @@ abstract class ComposeTabPlugin : Plugin() {
         notifyListeners("action", event)
     }
 
-    private fun showChrome(scene: JSONObject?) {
+    private fun showChrome(scene: JSONObject?, opening: Boolean = false) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
         val chrome =
-            ChromeHost.show(this, activity, bridge.webView, scene) { id ->
+            ChromeHost.show(this, activity, bridge.webView, scene, opening) { id ->
                 notifyListeners("nav-action", JSObject().put("id", id))
             }
         val (top, bottom) = chrome.contentInsetsDp()

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +34,8 @@ import com.lifemax.rpg.feature.log.domain.LogProjection
 /** The activity presets, three to a row, each in the colour of the attribute it trains. */
 @Composable
 internal fun LogPresetGrid(p: LogProjection, selected: String, onChoose: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    // one group, so TalkBack says which of the presets each tile is
+    Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionLabel("Activity")
         p.presets.chunked(COLUMNS).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

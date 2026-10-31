@@ -17,11 +17,13 @@ import org.junit.Test
 
 /**
  * Recipes from projections the web app produced (tools/gen_native_fixtures.js), on a 411 dp wide
- * phone like the owner's, each image a part of the screen near full resolution. The screen's state
- * comes from its own view model: a search typed, a recipe opened, an ingredient tapped.
+ * phone like the owner's, each image a part of the screen, stored scaled to 1000 px tall (about 0.6
+ * of the device's pixels, so a dp is about 1.6 px). The screen's state comes from its own view
+ * model: a search typed, a recipe opened, an ingredient tapped. They are compared at a thousandth
+ * of a percent, as Character's are.
  */
 class RecipesScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone())
+    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), maxPercentDifference = 0.001)
 
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(

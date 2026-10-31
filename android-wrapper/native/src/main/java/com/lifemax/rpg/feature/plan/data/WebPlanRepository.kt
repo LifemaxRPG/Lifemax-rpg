@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.plan.data
 
+import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.plan.domain.DayStatus
 import com.lifemax.rpg.feature.plan.domain.PagePoint
 import com.lifemax.rpg.feature.plan.domain.PlanDay
@@ -14,7 +16,6 @@ import com.lifemax.rpg.feature.plan.domain.PlanValue
 import com.lifemax.rpg.feature.plan.domain.PlanWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -64,7 +65,7 @@ class WebPlanRepository : PlanRepository {
                 rules.getJSONArray("progression").objects().map(::rule),
                 j.getBoolean("reducedMotion"),
                 PagePoint(target.getDouble("x").toFloat(), target.getDouble("y").toFloat()),
-                TOKENS.associateWith { colors.getLong(it) },
+                colors.pageTokens(),
                 j.getBoolean("light"),
             )
         require(projection.sessionsDone in 0..projection.sessionsTotal)
@@ -146,27 +147,3 @@ class WebPlanRepository : PlanRepository {
 
     private fun rule(r: JSONObject) = PlanRule(r.getString("lead"), r.getString("text"))
 }
-
-internal fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
-
-/** The page's palette (NativeTabKit's TOKENS): the screen draws with every one of them. */
-private val TOKENS =
-    listOf(
-        "bg",
-        "bg-elev",
-        "panel",
-        "panel2",
-        "panel3",
-        "text",
-        "text-dim",
-        "muted",
-        "muted2",
-        "accent",
-        "accent-dim",
-        "accent-strong",
-        "line",
-        "line-soft",
-        "good",
-        "gold",
-        "bad",
-    )

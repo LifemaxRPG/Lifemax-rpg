@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.log.data
 
+import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.log.domain.LogAttribute
 import com.lifemax.rpg.feature.log.domain.LogDraft
 import com.lifemax.rpg.feature.log.domain.LogPreset
@@ -10,7 +12,6 @@ import com.lifemax.rpg.feature.log.domain.LogRepository
 import com.lifemax.rpg.feature.log.domain.XpShare
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -105,10 +106,8 @@ class WebLogRepository : LogRepository {
                 draft,
                 j.getLong("draftRevision"),
                 preview,
-                colors.keys().asSequence().associateWith { colors.getLong(it) },
+                colors.pageTokens(),
                 j.getBoolean("light"),
             )
     }
-
-    private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
 }
