@@ -23,7 +23,7 @@ class NativeScreensTest {
 
     private fun addHosts() = hosts.forEach { host -> NativeScreens.add(host) { dropped += host } }
 
-    @After fun removeHosts() = (hosts + cash).forEach(NativeScreens::remove)
+    @After fun removeHosts() = (hosts + "late" + cash).forEach(NativeScreens::remove)
 
     @Test
     fun aPageThatStartsLoadingDropsEveryScreenOnce() {
@@ -41,6 +41,18 @@ class NativeScreensTest {
     }
 
     @Test
+    fun aDropThatAddsAHostLetsEveryOtherHostDropToo() {
+        // a drop may be the first touch of an object that then registers itself
+        NativeScreens.add("character") {
+            dropped += "character"
+            NativeScreens.add("late") { dropped += "late" }
+        }
+        NativeScreens.add("food") { dropped += "food" }
+        pageStarts()
+        assertEquals(listOf("character", "food"), dropped)
+    }
+
+    @Test
     fun cashEndsItsSessionWithoutReportingToThePageThatIsGone() {
         var reported = false
         CashHost.session = CashSession("cash_1", JSONObject()) {}
@@ -53,12 +65,15 @@ class NativeScreensTest {
     }
 
     @Test
-    fun theTabSwipeForgetsThePageThatIsGone() {
+    fun theTabSwipeForgetsThePageThatIsGoneBeforeTheHostsDropTheirScreens() {
+        var openAtTheDrop: Boolean? = null
+        NativeScreens.add("character") { openAtTheDrop = TabSwipe.isOpen("character") }
         try {
             TabSwipe.opened("character")
             TabSwipe.scene(SwipeFixtures.swipeJson("character"), sequence = 1)
             assertNull("the page allows a swipe from Character", TabSwipe.gate("character"))
             pageStarts()
+            assertEquals("a removal is teardown, not a swipe cut short", false, openAtTheDrop)
             assertFalse(TabSwipe.isOpen("character"))
             assertEquals(
                 "no state until the new page draws a scene",

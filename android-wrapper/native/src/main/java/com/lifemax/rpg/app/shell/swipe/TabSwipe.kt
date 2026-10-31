@@ -11,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.OneShotPreDrawListener
-import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
 
@@ -31,7 +30,7 @@ import org.json.JSONObject
  *   difference (some other writer) is repaired and recorded.
  * - The watchdog ([SwipeModel.deadline]) and a cold destination's first draw
  *   ([SwipeModel.awaitingDraw]) come back in as inputs.
- * - A page that starts loading ([NativeScreens]) forgets the page and takes the veil away.
+ * - A page that starts loading ([pageStarted]) is forgotten, and the veil goes with it.
  */
 internal object TabSwipe {
     private class Screen(val view: TabScreenView, val send: (SwipeRequest) -> Unit) {
@@ -62,10 +61,6 @@ internal object TabSwipe {
     }
     private var drawWatch: View? = null
 
-    init {
-        NativeScreens.add(this) { drop() }
-    }
-
     /**
      * The latest notes, oldest first: aborts, cuts, refusals, the watchdog and repairs. A start on
      * A29's trace; each is also logged.
@@ -94,6 +89,15 @@ internal object TabSwipe {
         screens.remove(pane)
         step(SwipeInput.Removed(pane))
         if (screens.isEmpty()) detach()
+    }
+
+    /**
+     * A page started loading (NativeScreens calls this before its hosts drop their screens): forget
+     * the page and take the veil away. The plugins then remove their own screens.
+     */
+    fun pageStarted() {
+        step(SwipeInput.Drop)
+        removeVeil()
     }
 
     /** The page's answer, `swipeSettle`. [reason] says why it refused. */
@@ -289,12 +293,6 @@ internal object TabSwipe {
         if (watchdogAt != null) handler.removeCallbacks(watchdog)
         watchdogAt = null
         drawWatch = null
-    }
-
-    /** A page started loading: forget it. Its plugins remove their own screens. */
-    private fun drop() {
-        step(SwipeInput.Drop)
-        removeVeil()
     }
 
     private fun record(note: String) {

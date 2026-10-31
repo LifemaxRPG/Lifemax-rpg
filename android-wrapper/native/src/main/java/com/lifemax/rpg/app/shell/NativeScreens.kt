@@ -2,6 +2,7 @@ package com.lifemax.rpg.app.shell
 
 import android.webkit.WebView
 import com.getcapacitor.WebViewListener
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 
 /**
  * Every native screen is drawn over the page that opened it, and only that page knows it is there.
@@ -15,7 +16,10 @@ import com.getcapacitor.WebViewListener
  *
  * Hosts register here, not with the bridge: Capacitor replaces the bridge's listener list after it
  * has loaded the plugins, so a listener added in a plugin's load() is lost. MainActivity hands this
- * one to the bridge builder instead. Main thread only. Contract: A23.
+ * one to the bridge builder instead. The tab swipe is not a host: it forgets the page first, so the
+ * removals that follow are plain teardown rather than a swipe cut short. A host's drop may add or
+ * remove hosts (a first touch of some object), so the drops run over a copy. Main thread only.
+ * Contract: A23.
  */
 internal object NativeScreens : WebViewListener() {
     private val hosts = LinkedHashMap<Any, () -> Unit>()
@@ -30,6 +34,7 @@ internal object NativeScreens : WebViewListener() {
     }
 
     override fun onPageStarted(webView: WebView?) {
-        hosts.values.forEach { it() }
+        TabSwipe.pageStarted()
+        hosts.values.toList().forEach { it() }
     }
 }

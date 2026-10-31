@@ -193,7 +193,7 @@ class NativeNutritionPlugin : Plugin() {
         val id = session
         session = ""
         snapshot = null
-        TabSwipe.removed(PANE)
+        if (layer != null) TabSwipe.removed(PANE) // a screen never made was never registered
         layer?.let { view -> (view.parent as? ViewGroup)?.removeView(view) }
         layer = null
         if (notify && id.isNotEmpty()) {

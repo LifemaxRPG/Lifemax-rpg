@@ -243,7 +243,7 @@ abstract class ComposeTabPlugin : Plugin() {
 
     private fun remove() {
         visible = false
-        TabSwipe.removed(tabId)
+        if (view != null) TabSwipe.removed(tabId) // a screen never made was never registered
         ChromeHost.closeNow(this)
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
