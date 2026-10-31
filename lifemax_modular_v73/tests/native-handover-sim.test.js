@@ -44,6 +44,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
     window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false)},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   await p.goto('file://' + out);
+  let loads = 0; p.on('load', () => loads++);   /* on Android a page load takes every native screen away (NativeScreens), so no tab switch may load one */
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
   if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
   await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; lmaSave(); navigate('dashboard') });
@@ -79,6 +80,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
   console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops): the last tab alone is showing after each');
   if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
+  console.log((loads ? 'FAIL' : 'PASS') + ' no tab switch loaded a page (' + loads + ' loads)');
   if (errs.length) console.log('FAIL script errors', errs.slice(0, 3));
-  await b.close(); fs.unlinkSync(out); process.exit(failures.length || errs.length ? 1 : 0);
+  await b.close(); fs.unlinkSync(out); process.exit(failures.length || errs.length || loads ? 1 : 0);
 })();

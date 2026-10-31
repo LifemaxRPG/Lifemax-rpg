@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.lifemax.rpg.app.launch.LaunchRules;
+import com.lifemax.rpg.app.shell.NativeScreens;
 import com.lifemax.rpg.bridge.web.DeviceBackupPlugin;
 import com.lifemax.rpg.bridge.web.HealthSyncPlugin;
 import com.lifemax.rpg.bridge.web.NativeCashPlugin;
@@ -94,6 +95,7 @@ public class MainActivity extends BridgeActivity {
         // getIntent().getData() as the launch URL), so a widget tap or a lifemax:// link does not run twice.
         Intent launch = getIntent();
         if (launch != null && (savedInstanceState != null || launchedFromHistory(launch))) setIntent(consumed(launch));
+        bridgeBuilder.addWebViewListener(NativeScreens.INSTANCE);   /* a page that starts loading finds no native screen over it */
         LiveWeb.prepare(this);          /* decide which web build to show before the page starts */
         super.onCreate(savedInstanceState);
         LiveWeb.apply(getBridge(), this);

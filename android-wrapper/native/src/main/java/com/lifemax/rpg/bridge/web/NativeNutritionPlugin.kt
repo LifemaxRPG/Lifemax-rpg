@@ -13,6 +13,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shell.ChromeHost
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
 import com.lifemax.rpg.feature.food.presentation.NativeNutritionScreen
 import org.json.JSONObject
@@ -129,7 +130,12 @@ class NativeNutritionPlugin : Plugin() {
         }
     }
 
+    override fun load() {
+        NativeScreens.add(this) { dismiss(false) }
+    }
+
     override fun handleOnDestroy() {
+        NativeScreens.remove(this)
         dismiss(false)
         super.handleOnDestroy()
     }

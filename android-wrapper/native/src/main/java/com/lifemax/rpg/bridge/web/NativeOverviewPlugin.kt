@@ -7,6 +7,7 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.LiveOverviewShell
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.OverviewBars
 import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
@@ -44,21 +45,20 @@ class NativeOverviewPlugin : Plugin() {
                 ChromeHost.closeAll()
                 shell =
                     LiveOverviewShell(activity, bridge.webView) { action ->
-                            notifyListeners(
-                                "activate",
-                                JSObject()
-                                    .put("session", session)
-                                    .put("action", action)
-                                    .put("sequence", shell?.sequence ?: 0),
-                            )
-                        }
-                        .also { it.show(scene!!) }
+                        notifyListeners(
+                            "activate",
+                            JSObject()
+                                .put("session", session)
+                                .put("action", action)
+                                .put("sequence", shell?.sequence ?: 0),
+                        )
+                    }
+                shell?.show(scene!!) // assigned first, so a show that throws is closed below
                 OverviewBars.shell = shell
                 shell?.let { TabTiming.attached(it.root, "overview") }
                 call.resolve()
             } catch (e: Exception) {
-                shell?.close()
-                shell = null
+                closeShell()
                 call.reject("Could not attach Overview controls", e)
             }
         }
@@ -93,21 +93,26 @@ class NativeOverviewPlugin : Plugin() {
     fun close(call: PluginCall) {
         activity.runOnUiThread {
             if (call.getString("session") == session) {
-                shell?.close()
-                shell = null
-                OverviewBars.shell = null
+                closeShell()
                 notifyListeners("closed", JSObject().put("session", session))
             }
             call.resolve()
         }
     }
 
+    override fun load() {
+        NativeScreens.add(this, ::closeShell)
+    }
+
     override fun handleOnDestroy() {
-        activity.runOnUiThread {
-            shell?.close()
-            shell = null
-            OverviewBars.shell = null
-        }
+        NativeScreens.remove(this)
+        activity.runOnUiThread { closeShell() }
         super.handleOnDestroy()
+    }
+
+    private fun closeShell() {
+        shell?.close()
+        shell = null
+        OverviewBars.shell = null
     }
 }

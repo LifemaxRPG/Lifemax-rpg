@@ -8,6 +8,7 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.feature.cash.CashActivity
 import com.lifemax.rpg.feature.cash.CashFeedback
 import com.lifemax.rpg.feature.cash.CashHost
@@ -71,5 +72,14 @@ class NativeCashPlugin : Plugin() {
             }
             call.resolve()
         }
+    }
+
+    override fun load() {
+        NativeScreens.add(this, CashHost::end)
+    }
+
+    override fun handleOnDestroy() {
+        NativeScreens.remove(this)
+        super.handleOnDestroy()
     }
 }
