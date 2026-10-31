@@ -10,14 +10,12 @@ import com.lifemax.rpg.core.designsystem.mix
 /**
  * The plan view's colours: the page's (PageColors), the mixes its styles make of them, and the few
  * colours the styles fix themselves (named here, in one place). The light theme's own rules for the
- * plan (white boxes, buttons and toasts, its notes) are applied here too.
+ * plan (white boxes and buttons, its notes) are applied here too.
  */
 @Immutable
 internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColors(tokens, light) {
-    /** Check boxes, the Leave button and toasts turn white in the light theme, as fields do. */
+    /** Check boxes and the Leave button turn white in the light theme, as fields do. */
     val secondaryButton = if (light) Color.White else panel2
-    val toast = if (light) Color.White else panel3
-    val toastShadow = if (light) ToastShadowLight else ToastShadowDark
     val boxBorder = if (light) line else BoxBorderDark
     /** A ticked box is green in the dark theme; the light theme's own rule keeps it white. */
     val tickedFill = if (light) Color.White else good
@@ -57,8 +55,6 @@ internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColor
         val NoteBorderLight = Color(0xFFC5D0E6)
         val HeroTint = Color(0x0D7C9CFF)
         val CycleEnd = Color(0xFFA9BAFF)
-        val ToastShadowDark = Color(0x88000000)
-        val ToastShadowLight = Color(0x281A2744)
     }
 }
 

@@ -4727,6 +4727,8 @@ html.light-theme .sd-more footer .pri{color:#fff}
           <div class="settingsline"><div style="flex:1"><strong>Native Log activity (beta)</strong><div class="muted" style="font-size:12px">The native Log screen. Saving uses the same rules and save as the classic form. Turn off for the classic form.</div></div><input id="nativeLogToggle" type="checkbox" class="check" onchange="setNativeLogEnabled(this.checked)" aria-label="Native Log activity (beta)"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Workout plan (beta)</strong><div class="muted" style="font-size:12px">The native Workout plan screen. Ticking a set uses the same rules and save as the classic plan; the guided workout and editing open the classic page. Turn off for the classic plan.</div></div><input id="nativePlanToggle" type="checkbox" class="check" onchange="setNativePlanEnabled(this.checked)" aria-label="Native Workout plan (beta)"></div>
           <div class="settingsline"><div style="flex:1"><strong>Native Life Director (beta)</strong><div class="muted" style="font-size:12px">The native Today screen: the dial, the day strip and the running order. Sessions, sheets and the other sections open in the classic Life Director. Turn off for the classic screen.</div></div><input id="nativeDirectorToggle" type="checkbox" class="check" onchange="setNativeDirectorEnabled(this.checked)" aria-label="Native Life Director (beta)"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Native Recipes (beta)</strong><div class="muted" style="font-size:12px">The native Recipes screen: search, categories and recipe cards. Logging a recipe opens the classic add-food sheet. Turn off for the classic page.</div></div><input id="nativeRecipesToggle" type="checkbox" class="check" onchange="setNativeRecipesEnabled(this.checked)" aria-label="Native Recipes (beta)"></div>
+          <div class="settingsline"><div style="flex:1"><strong>Native Library (beta)</strong><div class="muted" style="font-size:12px">The native Media screen: your list with its search and filters. Adding, editing, removing, ticking an item finished and the audiobook player use the classic page; the Journal stays classic. Turn off for the classic Library.</div></div><input id="nativeLibraryToggle" type="checkbox" class="check" onchange="setNativeLibraryEnabled(this.checked)" aria-label="Native Library (beta)"></div>
         </div>
         <div class="card" style="margin-bottom:14px" id="tabsCard">
           <h3>Bottom bar</h3>
@@ -5114,6 +5116,8 @@ RECIPES.push(...CLASS_CONTENT.entrepreneur.recipes.map(r=>({...r,cls:'entreprene
 RECIPES.push(...CLASS_CONTENT.explorer.recipes.map(r=>({...r,cls:'explorer'})));
 RECIPES.push(...CLASS_CONTENT.athlete.diet.recipes.map(r=>({...r,cls:'athlete'})));
 const RECIPE_FOODS=RECIPES.map(r=>({id:r.id,n:r.n,cat:'Recipe · '+r.cat,kcal:r.kcal*100/r.servingG,p:r.p*100/r.servingG,c:r.c*100/r.servingG,f:r.f*100/r.servingG,fib:0,sug:0,na:0,port:[{l:'1 serving',g:r.servingG}],recipe:true,cls:r.cls}));
+/* product links by recipe id and ingredient index, read by the Recipes page and the native Recipes projection */
+const RECIPE_LINKS={rcp_pesto_chicken:{0:'https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129'}};
 let mealsDay=null,mealPick=null;
 
 let state, rules, toastTimer;
@@ -5177,7 +5181,9 @@ function writeSave(){
  if(saveReadOnly){if(!saveReadOnlyTold){saveReadOnlyTold=true;const why=saveReadOnly;setTimeout(()=>alert(why),2500)}return false}
  try{localStorage.setItem(STORE,JSON.stringify(state));return true}catch(e){console.warn('[save] not stored',e);return false}
 }
-function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();const saved=writeSave();if(saved)checkLevelUps();if(!saved&&!saveReadOnly)toast("Could not save to this browser (storage full?)");renderAll();return saved}
+function save(){rebuildAttrXP();rebuildSkillXP();try{ecoMigrate();ecoSparksSync()}catch(e){console.warn('[economy migration]',e)}state.customRules=rules;checkBadges();const saved=writeSave();if(saved)checkLevelUps();if(!saved&&!saveReadOnly)toast(unsavedMessage());renderAll();return saved}
+/* What a write that was not stored says: a read-only save is named as the reason. */
+function unsavedMessage(){return saveReadOnly?'Not saved: this version is read-only for your save':'Could not save to this browser (storage full?)'}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
@@ -5238,9 +5244,13 @@ function renderHistory(){
     const label=journalDayLabel(d);
     return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(label)}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
+  // text being typed in the entry stays as it is: the entry is drawn again once its box loses the focus
+  if(histDrawn===histSel&&entryEl.contains(document.activeElement)&&document.activeElement.matches('textarea')){histStale=true;return}
+  histDrawn=histSel;histStale=false;
   entryEl.innerHTML=/^[WM]:/.test(histSel)&&window.LifeMaxCoach?jcReviewHtml(histSel):renderJournalDay(histSel);
 }
-let histSel=null;
+let histSel=null,histDrawn=null,histStale=false;
+document.getElementById('journalEntry')?.addEventListener('focusout',e=>{if(histStale&&e.target.matches('textarea'))setTimeout(renderHistory)});
 function journalDays(){
   const set=new Set();
   (state.activities||[]).forEach(a=>{if(a&&a.date)set.add(activityDate(a))});
@@ -5278,7 +5288,7 @@ function saveDayReflection(d,val){
   const t=val.trim();
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
   state.customRules=rules;
-  writeSave();
+  if(!writeSave()){toast(unsavedMessage());return}
   try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
@@ -5356,7 +5366,7 @@ function activityPreview(d){const r=rules[d.type]||rules.custom;const dur=Math.m
 function activityAward(d,peek){const x=activityPreview(d);if(!x.total)return {xp:0,split:[],msg:'Log at least '+ECO.minMin+' minutes to earn XP'};const ec=ecoAward(d.type,x.total,Number(d.duration)||0,{manual:true,peek});if(ec.xp<=0)return {xp:0,split:[],msg:ec.msg};const p=x.primary,s=x.secondary!==p?x.secondary:'',pXP=s?Math.round(ec.xp*.7):ec.xp,why=ec.msg?[ec.msg]:[];const split=[{attr:p,xp:pXP},...(s?[{attr:s,xp:ec.xp-pXP}]:[])].map(z=>{const xp=ecoStarXP(z.attr,z.xp);if(xp>z.xp)why.push((ATTRS.find(a=>a.id===z.attr)||{short:z.attr}).short+' '+'★'.repeat(ecoStars(z.attr))+' +'+(xp-z.xp));return {attr:z.attr,xp}});return {xp:split.reduce((n,z)=>n+z.xp,0),split,msg:why.join(' · ')}}
 function updatePreview(){const d=activityDraftFromForm(),x=activityPreview(d),a=activityAward(d,true),why=document.getElementById('previewWhy');document.getElementById('previewXP').textContent=a.xp;document.getElementById('durationRules').textContent=ECO_DURATION_RULES;why.textContent=a.msg;why.style.color=a.xp>x.total?'var(--good)':'';document.getElementById('previewBar').style.width=Math.min(100,a.xp/120*100)+'%';const chunks=a.split.map(z=>{const at=ATTRS.find(t=>t.id===z.attr);return `<span class="preview-chip">${at?px(at.icon):''} ${at?.short||'Attribute'} <strong>+${z.xp}</strong></span>`});if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
 /* Award and save one logged activity. Returns {ok, xp, message}; it never touches the page. The form handler and the native Log screen both call it. */
-function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d),award=activityAward(d);if(!award.xp)return {ok:false,message:award.msg};const xp=award.xp;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration:Number(d.duration)||0,quality:Number(d.quality),skill:x.skill,primary:x.primary,secondary:x.secondary,xp,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:award.split};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:saveReadOnly?'Not saved: this version is read-only for your save':'Could not save to this browser (storage full?)'}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
+function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d),award=activityAward(d);if(!award.xp)return {ok:false,message:award.msg};const xp=award.xp;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration:Number(d.duration)||0,quality:Number(d.quality),skill:x.skill,primary:x.primary,secondary:x.secondary,xp,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:award.split};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:unsavedMessage()}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
 function submitActivity(e){e.preventDefault();const res=recordActivity(activityDraftFromForm());if(!res.ok){toast(res.message);return}document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(res.message);navigate('dashboard')}
 function toggleQuest(id,checked){const q=state.quests.find(q=>q.id===id);if(!q)return;const A=q.attribute||'discipline';if(checked&&questLocked(q)){toast('Locked until you reach level '+stageLvl(q.stage));renderQuests();return}const key=questKey(q);if(checked&&!state.questDone[key]){const qid='quest_'+Date.now();state.questDone[key]=qid;const xp=ecoQuestXP(q);if(!xp&&(Number(q.xp)||0)>0)toast(q.cadence==='epic'?'One epic quest reward per day':'Quest XP limit reached for '+(q.cadence==='weekly'?'this week':'today'));const noteEl=document.getElementById('qnote-'+id);const qnote=(noteEl&&noteEl.value.trim())||'';state.attrXP[A]=(state.attrXP[A]||0)+xp;state.skillXP['Quest Completion']=(state.skillXP['Quest Completion']||0)+xp;state.activities.push({id:qid,cad:q.cadence,epic:q.cadence==='epic',skill:'Quest Completion',type:'quest',name:'Quest: '+q.name,icon:'flag',duration:0,xp,primary:A,date:new Date().toISOString(),notes:qnote||'Quest completed',xpSplit:[{attr:A,xp}]});if(xp>0)toast(`Quest complete · +${xp} XP`)}else if(!checked&&state.questDone[key]){const aid=state.questDone[key],xp=Math.max(0,Number(q.xp)||0);delete state.questDone[key];state.attrXP[A]=Math.max(0,(state.attrXP[A]||0)-xp);state.skillXP['Quest Completion']=Math.max(0,(state.skillXP['Quest Completion']||0)-xp);state.activities=state.activities.filter(a=>a.id!==aid);toast('Quest undone · XP removed')}save()}
 function showCustomQuest(){document.getElementById('customQuestCard').style.display='block';document.getElementById('newQuestName').focus()}
@@ -5923,6 +5933,8 @@ function avatarPicked(e){const f=e.target.files[0];e.target.value='';if(!f)retur
  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{try{const n=256,c=document.createElement('canvas');c.width=c.height=n;const m=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,n,n);state.avatar=c.toDataURL('image/jpeg',.85);save();toast('Profile picture updated')}catch(err){delete state.avatar;toast('Could not save that image')}};img.onerror=()=>toast('Could not read that image');img.src=r.result};r.readAsDataURL(f)}
 function removeAvatar(){if(!state.avatar){toast('No picture to remove');return}delete state.avatar;save();toast('Profile picture removed')}
 
+/* A media item's status as the page words it. */
+const MEDIA_STATUS={unread:'Want to read / watch',progress:'In progress',finished:'Finished'};
 function showMediaForm(item){
  const card=document.getElementById('mediaFormCard');card.style.display='block';
  document.getElementById('mediaFormTitle').textContent=item?'Edit media item':'Add to your library';
@@ -5937,20 +5949,30 @@ function showMediaForm(item){
 }
 function hideMediaForm(){document.getElementById('mediaFormCard').style.display='none';document.getElementById('mediaForm').reset();document.getElementById('mediaEditId').value=''}
 function saveMediaItem(e){
- e.preventDefault();const id=document.getElementById('mediaEditId').value;
- const title=document.getElementById('mediaTitle').value.trim();if(!title){toast('Add a title first');return}
- const link=document.getElementById('mediaLink').value.trim();
- if(link&&!/^https?:\/\//i.test(link)){toast('Use a valid http or https link');return}
- const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:document.getElementById('mediaType').value,creator:document.getElementById('mediaCreator').value.trim(),status:document.getElementById('mediaStatus').value,link,notes:document.getElementById('mediaNotes').value.trim(),updatedAt:new Date().toISOString()};
+ e.preventDefault();const v=id=>document.getElementById(id).value;
+ const res=mediaUpsert({id:v('mediaEditId'),title:v('mediaTitle'),type:v('mediaType'),creator:v('mediaCreator'),status:v('mediaStatus'),link:v('mediaLink'),notes:v('mediaNotes')});
+ if(!res.ok){toast(res.message);return}
+ hideMediaForm();navigate('media');toast(res.message);
+}
+/* Add a media item, or change the one whose id is f.id, by the form's rules (a title, an http or https link, the form's lengths),
+   and save. Returns {ok, id, message}; it never touches the page. A save that fails is taken back out and reported. */
+function mediaUpsert(f){
+ const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,message:'Add a title first'};
+ const link=String(f.link||'').trim().slice(0,500);
+ if(link&&!/^https?:\/\//i.test(link))return {ok:false,message:'Use a valid http or https link'};
  if(!Array.isArray(state.mediaItems))state.mediaItems=[];
- const index=state.mediaItems.findIndex(x=>x.id===id);
- if(index>=0)state.mediaItems[index]={...state.mediaItems[index],...item};else state.mediaItems.unshift(item);
- hideMediaForm();save();navigate('media');toast(index>=0?'Media item updated':'Added to your library');
+ const id=String(f.id||''),kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id);
+ const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:String(f.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
+ if(index>=0)state.mediaItems[index]={...kept[index],...item};else state.mediaItems.unshift(item);
+ if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,message:unsavedMessage()}}
+ return {ok:true,id:item.id,message:index>=0?'Media item updated':'Added to your library'};
 }
 function toggleMediaFinished(id,checked){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
+ const was=[item.status,item.updatedAt];
  item.status=checked?'finished':'progress';item.updatedAt=new Date().toISOString();
- save();toast(checked?'Marked as finished':'Moved back to in progress');
+ if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+ toast(checked?'Marked as finished':'Moved back to in progress');
 }
 function setMediaStatus(id,status){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
@@ -5959,12 +5981,14 @@ function setMediaStatus(id,status){
 function deleteMediaItem(id){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
  if(!confirm('Remove "'+item.title.replace(/"/g,'\\"')+'" from your media library?'))return;
- if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);state.mediaItems=state.mediaItems.filter(x=>x.id!==id);save();toast('Removed from library');
+ const kept=state.mediaItems;state.mediaItems=kept.filter(x=>x.id!==id);
+ if(!save()){state.mediaItems=kept;renderMedia();toast(unsavedMessage());return}
+ if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);toast('Removed from library');
 }
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
 const AUDIO_DB='lifemax_audio_v1', AUDIO_STORE='files';
-let audioCtx={mediaId:null, objectUrl:null, seeking:false, saveTimer:null};
+let audioCtx={mediaId:null, loading:null, objectUrl:null, seeking:false, saveTimer:null}; // loading: the id whose file is being read
 function audioDbOpen(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(AUDIO_DB,1);
@@ -6056,11 +6080,12 @@ async function attachAudioFile(id, file){
 async function removeMediaAudio(id){
   const item=mediaById(id);if(!item||!item.audio)return;
   if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
-  if(audioCtx.mediaId===id)closeAudioPlayer(true);
-  await audioDbDelete(id);
+  const was=[item.audio,item.updatedAt];
   delete item.audio;
   item.updatedAt=new Date().toISOString();
-  save();
+  if(!save()){[item.audio,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+  if(audioCtx.mediaId===id)closeAudioPlayer(true);
+  await audioDbDelete(id);
   toast('Audio removed');
 }
 function revokeAudioUrl(){
@@ -6112,7 +6137,8 @@ async function playMediaAudio(id, fromStart){
       return;
     }
     closeAudioPlayer(true);
-    const rec=await audioDbGet(id);
+    audioCtx.loading=id;
+    const rec=await audioDbGet(id).finally(()=>{audioCtx.loading=null});
     if(!rec||!rec.blob){
       toast('Audio file missing — attach it again');
       delete item.audio;save();
@@ -6232,48 +6258,41 @@ function wireAudioElement(){
   });
   el.addEventListener('error', ()=>toast('This browser cannot decode that audio file'));
 }
+/* the line under an attached file's buttons: name · size, and where playback resumes */
+function mediaAudioMeta(a){
+  return a.name+' · '+fmtBytes(a.size)+(a.position?' · resume '+fmtAudioTime(a.position):'')+(a.duration?' / '+fmtAudioTime(a.duration):'');
+}
 function mediaAudioButtons(x){
   if(x.audio&&x.audio.name){
-    const pos=x.audio.position?(' · resume '+fmtAudioTime(x.audio.position)):'';
-    const dur=x.audio.duration?(' / '+fmtAudioTime(x.audio.duration)):'';
     return `<div class="media-audio-row">
       <button type="button" class="btn small" onclick="playMediaAudio('${x.id}')">▶ Play</button>
-      <button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
+      <button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
       <button type="button" class="btn small secondary" onclick="removeMediaAudio('${x.id}')">Remove audio</button>
     </div>
-    <div class="media-audio-meta">${esc(x.audio.name)} · ${fmtBytes(x.audio.size)}${pos}${dur}</div>`;
+    <div class="media-audio-meta">${esc(mediaAudioMeta(x.audio))}</div>`;
   }
-  return `<div class="media-audio-row"><button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
+  return `<div class="media-audio-row"><button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
 }
 
 
+/* which recipes the page shows and how a card words them; the native Recipes projection (50-native-recipes.js) reads the same */
+function recipeHaystack(r){return [r.n,r.cat,...r.ingredients].join(' ').toLowerCase()}
+function recipeHits(q,cat){q=q.trim().toLowerCase();return RECIPES.filter(r=>(!r.cls||r.cls===state.classId)&&(cat==='all'||r.cat===cat)&&(!q||recipeHaystack(r).includes(q)))}
+function recipeCard(r){return {meta:r.yield+' · Prep '+r.prep+' · Total '+r.total,kcal:r.kcal+' kcal'+(r.cls?' (est.)':''),protein:r.p+'g',carbs:r.c+'g',fat:r.f+'g',footnote:'Nutrition per serving, as listed in the cookbook.'}}
 function renderRecipes(){
  const list=document.getElementById('recipesList');if(!list)return;
- const q=(document.getElementById('recipeSearch')?.value||'').trim().toLowerCase();
- const cat=document.getElementById('recipeCategory')?.value||'all';
- const hits=RECIPES.filter(r=>(!r.cls||r.cls===state.classId)&&(cat==='all'||r.cat===cat)&&(!q||[r.n,r.cat,...r.ingredients].join(' ').toLowerCase().includes(q)));
- list.innerHTML=hits.length?hits.map(r=>`<article class="card" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div class="eyebrow">${esc(r.cat)}</div><h3 style="margin:4px 0 6px">${esc(r.n)}</h3><div class="muted" style="font-size:12px">${esc(r.yield)} · Prep ${esc(r.prep)} · Total ${esc(r.total)}</div></div><span class="tag">${r.kcal} kcal${r.cls?' (est.)':''}</span></div><div class="grid stats" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0"><div class="card" style="padding:10px"><div class="statlabel">Protein</div><div class="statvalue" style="font-size:18px">${r.p}g</div></div><div class="card" style="padding:10px"><div class="statlabel">Carbs</div><div class="statvalue" style="font-size:18px">${r.c}g</div></div><div class="card" style="padding:10px"><div class="statlabel">Fat</div><div class="statvalue" style="font-size:18px">${r.f}g</div></div></div><details><summary style="cursor:pointer;font-weight:700;font-size:13px;padding:4px 0 10px">Ingredients & instructions</summary><strong style="font-size:12px">Ingredients</strong><ul style="padding-left:20px;margin:6px 0 12px;font-size:12.5px;color:var(--text-dim)">${r.ingredients.map((x,i)=>`<li style="margin:5px 0;list-style:none"><button type="button" class="ingredient-pick" onclick="selectRecipeIngredient('${r.id}',${i},this)" aria-pressed="false" style="font:inherit;text-align:left;color:inherit;background:var(--surface-2,rgba(127,127,127,.08));border:1px solid var(--border);border-radius:8px;padding:8px 10px;width:100%;cursor:pointer">${esc(x)} <span style="float:right;opacity:.7">${r.id==='rcp_pesto_chicken'&&i===0?'🛒':'＋'}</span></button></li>`).join('')}</ul><div id="recipeProduct-${r.id}" style="display:none;margin:0 0 12px"></div><strong style="font-size:12px">Instructions</strong><ol style="padding-left:20px;margin:6px 0 10px;font-size:12.5px;color:var(--text-dim)">${r.steps.map(x=>`<li style="margin:4px 0">${esc(x)}</li>`).join('')}</ol>${r.note?`<p class="muted" style="font-size:12px">${esc(r.note)}</p>`:''}</details><button class="btn" style="width:100%;margin-top:10px" onclick="addRecipeToMeal('${r.id}')">＋ Log this recipe</button><p class="muted" style="font-size:11px;margin:8px 0 0">Nutrition per serving, as listed in the cookbook.</p></article>`).join(''):'<div class="empty">No recipes match that search.</div>';
+ const hits=recipeHits(document.getElementById('recipeSearch')?.value||'',document.getElementById('recipeCategory')?.value||'all');
+ list.innerHTML=hits.length?hits.map(r=>{const w=recipeCard(r);return `<article class="card" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div class="eyebrow">${esc(r.cat)}</div><h3 style="margin:4px 0 6px">${esc(r.n)}</h3><div class="muted" style="font-size:12px">${esc(w.meta)}</div></div><span class="tag">${w.kcal}</span></div><div class="grid stats" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0"><div class="card" style="padding:10px"><div class="statlabel">Protein</div><div class="statvalue" style="font-size:18px">${w.protein}</div></div><div class="card" style="padding:10px"><div class="statlabel">Carbs</div><div class="statvalue" style="font-size:18px">${w.carbs}</div></div><div class="card" style="padding:10px"><div class="statlabel">Fat</div><div class="statvalue" style="font-size:18px">${w.fat}</div></div></div><details><summary style="cursor:pointer;font-weight:700;font-size:13px;padding:4px 0 10px">Ingredients & instructions</summary><strong style="font-size:12px">Ingredients</strong><ul style="padding-left:20px;margin:6px 0 12px;font-size:12.5px;color:var(--text-dim)">${r.ingredients.map((x,i)=>`<li style="margin:5px 0;list-style:none"><button type="button" class="ingredient-pick" onclick="selectRecipeIngredient('${r.id}',${i},this)" aria-pressed="false" style="font:inherit;text-align:left;color:inherit;background:var(--surface-2,rgba(127,127,127,.08));border:1px solid var(--border);border-radius:8px;padding:8px 10px;width:100%;cursor:pointer">${esc(x)} <span style="float:right;opacity:.7">${RECIPE_LINKS[r.id]?.[i]?'🛒':'＋'}</span></button></li>`).join('')}</ul><div id="recipeProduct-${r.id}" style="display:none;margin:0 0 12px"></div><strong style="font-size:12px">Instructions</strong><ol style="padding-left:20px;margin:6px 0 10px;font-size:12.5px;color:var(--text-dim)">${r.steps.map(x=>`<li style="margin:4px 0">${esc(x)}</li>`).join('')}</ol>${r.note?`<p class="muted" style="font-size:12px">${esc(r.note)}</p>`:''}</details><button class="btn" style="width:100%;margin-top:10px" onclick="addRecipeToMeal('${r.id}')">＋ Log this recipe</button><p class="muted" style="font-size:11px;margin:8px 0 0">${w.footnote}</p></article>`}).join(''):'<div class="empty">No recipes match that search.</div>';
 }
 function selectRecipeIngredient(recipeId,index,clicked){
  const recipe=RECIPES.find(r=>r.id===recipeId);if(!recipe)return;
- const productLinks={'rcp_pesto_chicken':{0:'https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129'}};
  const host=document.getElementById('recipeProduct-'+recipeId);if(!host)return;
- const url=productLinks[recipeId]?.[index];
+ const url=RECIPE_LINKS[recipeId]?.[index];
  const label=recipe.ingredients[index]||'ingredient';
  document.querySelectorAll('.ingredient-pick').forEach(b=>{b.style.outline='';b.setAttribute('aria-pressed','false')});
  if(clicked){clicked.style.outline='2px solid var(--accent)';clicked.setAttribute('aria-pressed','true')}
  host.style.display='block';
  host.innerHTML=url?`<div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;gap:10px"><div><strong style="font-size:13px">${esc(label)}</strong><div class="muted" style="font-size:11px;margin-top:3px">Walmart product link attached</div></div><a class="btn" href="${url}" target="_blank" rel="noopener noreferrer" style="white-space:nowrap;text-decoration:none">Open in Walmart ↗</a></div>`:`<div class="card" style="padding:10px;font-size:12px"><strong>${esc(label)}</strong><div class="muted" style="margin-top:3px">No Walmart product link added for this ingredient yet.</div></div>`;
-}
-function addRecipeToMeal(id){
- const f=RECIPE_FOODS.find(x=>x.id===id);if(!f)return;
- navigate('meals');fuelOpenLab();mealPick=f;
- document.getElementById('mealSearch').value=f.n;
- document.getElementById('mealGrams').value=f.port[0].g;
- document.getElementById('mealAddBtn').disabled=false;
- const row=document.getElementById('mealPortionRow'),sel=document.getElementById('mealPortion');
- row.style.display='block';sel.innerHTML=`<option value="${f.port[0].g}">1 serving (${f.port[0].g}g, cookbook nutrition)</option>`;sel.value=String(f.port[0].g);
- mealSearch();document.getElementById('mealAddBtn').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function mealsEnsure(){
   if(!state.foodLog)state.foodLog=[];
@@ -6930,38 +6949,53 @@ function renderMeals(){
 
 function mediaAudioProgressMarkup(x){
  if(!x||!x.audio)return '';
- const dur=Math.max(0,Number(x.audio.duration)||0),pos=Math.max(0,Number(x.audio.position)||0);
- const pct=x.status==='finished'?100:(dur?Math.max(0,Math.min(100,pos/dur*100)):0);
- return `<div class="media-audio-progress" data-audio-progress="${esc(x.id)}"><div class="media-audio-progress-head"><span data-audio-progress-label>${x.status==='finished'?'Finished':dur?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts'}</span><strong data-audio-progress-time>${dur?fmtAudioTime(pos)+' / '+fmtAudioTime(dur):'—'}</strong></div><div class="media-audio-progress-track"><div class="media-audio-progress-fill" data-audio-progress-fill style="width:${pct}%"></div></div></div>`;
+ const p=mediaAudioProgress(x.status,x.audio.position,x.audio.duration);
+ return `<div class="media-audio-progress" data-audio-progress="${esc(x.id)}"><div class="media-audio-progress-head"><span data-audio-progress-label>${p.label}</span><strong data-audio-progress-time>${p.time}</strong></div><div class="media-audio-progress-track"><div class="media-audio-progress-fill" data-audio-progress-fill style="width:${p.pct}%"></div></div></div>`;
+}
+/* how far into its audio an item is, in the words and bar width of its row */
+function mediaAudioProgress(status,position,duration){
+ const pos=Math.max(0,Number(position)||0),dur=Math.max(0,Number(duration)||0);
+ const pct=status==='finished'?100:dur?Math.max(0,Math.min(100,pos/dur*100)):0;
+ return {pct,label:status==='finished'?'Finished':dur?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts',time:dur?fmtAudioTime(pos)+' / '+fmtAudioTime(dur):'—'};
 }
 function updateMediaAudioProgress(id,pos,dur){
  const item=mediaById(id);if(item&&item.audio){item.audio.position=Math.max(0,Number(pos)||0);if(dur)item.audio.duration=Number(dur)||item.audio.duration||0}
+ const p=mediaAudioProgress(item?.status,pos,Number(dur)||item?.audio?.duration);
  document.querySelectorAll('[data-audio-progress]').forEach(el=>{
   if(el.dataset.audioProgress!==id)return;
-  const total=Math.max(0,Number(dur)||Number(item&&item.audio&&item.audio.duration)||0),current=Math.max(0,Number(pos)||0),pct=total?Math.max(0,Math.min(100,current/total*100)):0;
   const label=el.querySelector('[data-audio-progress-label]'),time=el.querySelector('[data-audio-progress-time]'),fill=el.querySelector('[data-audio-progress-fill]');
-  if(label)label.textContent=item?.status==='finished'?'Finished':total?(pct>=99.5?'Almost finished':Math.round(pct)+'% listened'):'Progress available after playback starts';
-  if(time)time.textContent=total?fmtAudioTime(current)+' / '+fmtAudioTime(total):'—';
-  if(fill)fill.style.width=(item?.status==='finished'?100:pct)+'%';
+  if(label)label.textContent=p.label;
+  if(time)time.textContent=p.time;
+  if(fill)fill.style.width=p.pct+'%';
  });
 }
+/* the Media pane's filter as the page holds it: the search box and the two selects */
+function mediaFilterOnPage(){
+ const v=id=>document.getElementById(id)?.value;
+ return {search:v('mediaSearch')||'',status:v('mediaFilter')||'all',type:v('mediaTypeFilter')||'all'};
+}
+/* the items a filter shows, in the list's order: status and type as stored, the search a piece of the title, creator, notes or type */
+function mediaMatching(items,f){
+ const search=String(f.search||'').trim().toLowerCase();
+ return items.filter(x=>(f.status==='all'||x.status===f.status)&&(f.type==='all'||x.type===f.type)&&[x.title,x.creator,x.notes,x.type].some(v=>(v||'').toLowerCase().includes(search)));
+}
+/* the four numbers over the list: every item, finished, in progress, and the share finished in whole percent */
+function mediaStats(items){
+ const finished=items.filter(x=>x.status==='finished').length;
+ return {total:items.length,finished,progress:items.filter(x=>x.status==='progress').length,pct:items.length?Math.round(finished/items.length*100):0};
+}
 function renderMedia(){
- const items=Array.isArray(state.mediaItems)?state.mediaItems:[];
- const finished=items.filter(x=>x.status==='finished').length,progress=items.filter(x=>x.status==='progress').length;
- document.getElementById('mediaTotal').textContent=items.length;
- document.getElementById('mediaFinished').textContent=finished;
- document.getElementById('mediaProgress').textContent=progress;
- const pct=items.length?Math.round(finished/items.length*100):0;
- document.getElementById('mediaPct').textContent=pct+'%';document.getElementById('mediaBar').style.width=pct+'%';
- const search=(document.getElementById('mediaSearch')?.value||'').trim().toLowerCase();
- const status=document.getElementById('mediaFilter')?.value||'all',type=document.getElementById('mediaTypeFilter')?.value||'all';
- const filtered=items.filter(x=>(status==='all'||x.status===status)&&(type==='all'||x.type===type)&&[x.title,x.creator,x.notes,x.type].some(v=>(v||'').toLowerCase().includes(search)));
- const statusLabel={unread:'Want to read / watch',progress:'In progress',finished:'Finished'};
- document.getElementById('mediaList').innerHTML=filtered.length?filtered.map(x=>`<div class="media-item">
+ const items=Array.isArray(state.mediaItems)?state.mediaItems:[],n=mediaStats(items);
+ document.getElementById('mediaTotal').textContent=n.total;
+ document.getElementById('mediaFinished').textContent=n.finished;
+ document.getElementById('mediaProgress').textContent=n.progress;
+ document.getElementById('mediaPct').textContent=n.pct+'%';document.getElementById('mediaBar').style.width=n.pct+'%';
+ const filtered=mediaMatching(items,mediaFilterOnPage());
+ document.getElementById('mediaList').innerHTML=filtered.length?filtered.map(x=>`<div class="media-item" data-media-id="${esc(x.id)}">
    <input class="media-check" type="checkbox" aria-label="Mark ${esc(x.title)} finished" ${x.status==='finished'?'checked':''} onchange="toggleMediaFinished('${x.id}',this.checked)">
    <div class="media-main"><div class="media-title">${esc(x.title)}</div><div class="media-sub">${esc(x.type||'Other')}${x.creator?' · '+esc(x.creator):''}</div>
    ${mediaAudioProgressMarkup(x)}
-   <div><span class="media-pill ${x.status==='finished'?'finished':''}">${esc(statusLabel[x.status]||'Want to read / watch')}</span>${x.link?`<span class="media-pill"><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Open link ↗</a></span>`:''}</div>
+   <div><span class="media-pill ${x.status==='finished'?'finished':''}">${esc(MEDIA_STATUS[x.status]||MEDIA_STATUS.unread)}</span>${x.link?`<span class="media-pill"><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Open link ↗</a></span>`:''}</div>
    ${x.notes?`<div class="media-notes">${esc(x.notes)}</div>`:''}
    ${mediaAudioButtons(x)}</div>
    <div class="media-actions"><button class="btn small secondary" onclick="showMediaForm(state.mediaItems.find(m=>m.id==='${x.id}'))">Edit</button><button class="btn small secondary" onclick="deleteMediaItem('${x.id}')">Remove</button></div>
@@ -16199,7 +16233,8 @@ const LMV_SECTIONS=[
  {re:/\b(quests?|missions?|dailies)\b/,id:'quests',label:'Quests'},
  {re:/\b(log activity|log|add activity)\b/,id:'log',label:'Log activity'},
  {re:/\b(workout plan|plan|training plan|workouts?)\b/,id:'plan',label:'Workout plan'},
- {re:/\b(library|media|books|journal|history)\b/,id:'media',label:'Library'},
+ {re:/\b(journal|history)\b/,id:'history',label:'Journal'},
+ {re:/\b(library|media|books)\b/,id:'media',label:'Library'},
  {re:/\b(recipes?|cookbook)\b/,id:'recipes',label:'Recipes'},
  {re:/\b(food|meals?|nutrition|macros|calories)\b/,id:'meals',label:'Food'},
  {re:/\b(money|budget|finance|finances|spending)\b/,id:'money',label:'Money'},
@@ -17019,10 +17054,21 @@ function jlOverlay(){
 function jlApply(){
  const s=jlSection();if(!s)return;
  const locked=jlOn()&&!jlUnlocked;
+ if(locked&&s.contains(document.activeElement))document.activeElement.blur(); // what is being typed is saved before the cover hides it
  s.classList.toggle('jlocked',locked);
  if(jlOn())jlOverlay();
  const o=document.getElementById('jlOverlay');if(o)o.style.display=locked?'':'none';
  jlSecure(jlOn()&&jlViewIsJournal());
+ jlNotify();
+}
+/* For a native screen that would show journal text: blocksNative() says the lock keeps it out now (on and not unlocked), and
+   onChange(fn) calls fn(blocked) each time that answer changes (an unlock, a relock, the lock turned on or off). Every change of
+   the lock state ends in jlApply. */
+const jlWatchers=[];let jlBlocking=jlBlocksNative();
+function jlBlocksNative(){return jlOn()&&!jlUnlocked}
+function jlNotify(){
+ const b=jlBlocksNative();if(b===jlBlocking)return;jlBlocking=b;
+ jlWatchers.forEach(function(fn){try{fn(b)}catch(e){console.warn('[lock]',e)}});
 }
 async function jlPrompt(){
  if(jlPrompting||!jlOn()||jlUnlocked)return;
@@ -17067,7 +17113,7 @@ function jlSettingsRender(){
   jlApply();
  });
 }
-window.LifeMaxJournalLock=Object.freeze({on:jlOn,apply:jlApply,relock:jlRelock,prompt:jlPrompt,unlocked:function(){return jlUnlocked},render:jlSettingsRender,status:jlStatus});
+window.LifeMaxJournalLock=Object.freeze({on:jlOn,apply:jlApply,relock:jlRelock,prompt:jlPrompt,unlocked:function(){return jlUnlocked},render:jlSettingsRender,status:jlStatus,blocksNative:jlBlocksNative,onChange:function(fn){jlWatchers.push(fn)}});
 (function jlBoot(){
  const nav=navigate;navigate=function(v){const prev=jlPrevView||(function(){try{return lmaView()}catch(e){return ''}})();const r=nav.apply(this,arguments);jlPrevView=v;try{jlOnNavigate(v,prev)}catch(e){console.warn('[lock]',e)}if(v==='settings')try{jlSettingsRender()}catch(e){}return r};
  document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible'&&jlOn()){jlUnlocked=false;jlApply()}});
@@ -17820,7 +17866,7 @@ function g4Library(f,cls){
  const items=Array.isArray(state.mediaItems)?state.mediaItems:[],ql=q.toLowerCase();
  const hits=items.filter(function(x){return [x.title,x.creator,x.notes,x.type].some(function(v){return (v||'').toLowerCase().indexOf(ql)>=0})});
  lmvGo({id:'media'});
- setTimeout(function(){try{const el=document.getElementById('mediaSearch');if(el){el.value=q;renderMedia()}}catch(e){}},60);
+ setTimeout(function(){try{const el=document.getElementById('mediaSearch');if(el){el.value=q;el.dispatchEvent(new Event('input',{bubbles:true}))}}catch(e){}},60);
  return lmvLines(f,'Library',hits.length?hits.length+' match'+(hits.length===1?'':'es')+' for “'+q+'”':'Nothing in your library for “'+q+'”',hits.slice(0,5).map(function(x){return x.title+(x.creator?' · '+x.creator:'')}),[lmvOpenChip('media','Library')]);
 }
 
@@ -21862,12 +21908,17 @@ function lmcRender(){
 
   /**
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
-   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page),
-   * render (name of the page's render function to follow while open), globals {open, enable, projection}.
+   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page,
+   * after the screen has closed; none for a tab whose screen sends only views and commands), render (name of the page's render
+   * function to follow while open), globals {open, enable, projection}. An action naming a view ({view}) instead goes there
+   * without closing first: the hand-over closes the screen once the next one shows, or at once for a page the web draws, so
+   * moving to another native tab never flashes the page.
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
    * entered is true for the first open after the page went to the tab's view, false when the screen comes back by revisit().
+   * afterOpen() runs once the screen has opened and covers the page (for example to empty page fields beforeOpen took over, so
+   * an open that fails leaves them as they were).
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
@@ -21910,6 +21961,12 @@ function lmcRender(){
       clearTimeout(queued);
       queued = setTimeout(send, 100);
     }
+    /** the fresh projection (and a command's reply) for the open screen; nothing if it closed while the bars were captured,
+        since a hidden screen takes no updates (A24) */
+    async function update(reply) {
+      const data = snapshot(), mine = generation, scene = await navScene();
+      if (active && mine === generation) await plugin.update(Object.assign({ snapshot: data, navScene: scene }, reply && { reply }));
+    }
     async function send() {
       if (!active) return;
       if (blocked()) {
@@ -21918,7 +21975,7 @@ function lmcRender(){
         return;
       }
       try {
-        await plugin.update({ snapshot: snapshot(), navScene: await navScene() });
+        await update();
       } catch (e) {
         console.warn(cfg.id + " refresh", e);
         await close();
@@ -21941,7 +21998,7 @@ function lmcRender(){
         if (active) {
           clearTimeout(queued); // a refresh the command's renders asked for: the projection sent with the reply carries them
           try {
-            await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
+            await update(reply);
           } catch (err) {
             console.warn(cfg.id + " reply", err);
           }
@@ -21970,9 +22027,11 @@ function lmcRender(){
       try {
         if (!ready) {
           await plugin.addListener("action", async (e) => {
-            await close();
-            if (e.view) lmaNavTo(e.view);
-            else await cfg.onAction(e);
+            if (e.view) lmaNavTo(e.view, { fast: true }); // no web transition under a native screen
+            else {
+              await close();
+              await cfg.onAction?.(e);
+            }
           });
           await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);
@@ -22008,6 +22067,7 @@ function lmcRender(){
         }
         active = true;
         timer = setInterval(send, 15000);
+        if (cfg.afterOpen) cfg.afterOpen();
         NativeTabs.flush(cfg.id);
         setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
         return true;
@@ -22499,10 +22559,6 @@ function lmcRender(){
 
   async function fallback(command, payload) {
     await close();
-    if (command === 'recipes') {
-      navigate('recipes');
-      return;
-    }
     if (command === 'plan' || command === 'shop' || command === 'log') {
       if (typeof fv2S === 'function') {
         fv2S().pane = command;
@@ -22524,7 +22580,11 @@ function lmcRender(){
     if (!N.open || e.session !== N.session) return;
     const command = e.command;
     try {
-      if (command === 'pane') {
+      if (command === 'recipes') {
+        // the Meals/Recipes switch: navigate's hand-over closes this screen once Recipes shows, at once if Recipes is the page
+        lmaNavTo('recipes', { fast: true });
+        return;
+      } else if (command === 'pane') {
         if (typeof fv2S === 'function' && e.pane) {
           fv2S().pane = e.pane;
           if (typeof renderMeals === 'function') renderMeals();
@@ -23233,8 +23293,7 @@ function lmcRender(){
       if (!!((pcheck(c.date).s || {})[c.key] || [])[i] === checked) return { ok: true, changed: false };
       // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
       const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
-      if (!result.saved)
-        return { ok: false, message: saveReadOnly ? "Not saved: this version is read-only for your save" : "Could not save to this browser (storage full?)" };
+      if (!result.saved) return { ok: false, message: unsavedMessage() };
       if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
       return {
         ok: true,
@@ -23296,6 +23355,313 @@ function lmcRender(){
   watch.observe(document.getElementById("planBody"), { childList: true });
   document.addEventListener("focusout", leaveField, true);
   document.addEventListener("change", leaveField, true);
+})();
+/* Recipes projection v1. The page stays the owner of the catalogue, the class rule and the wording: the native screen draws the
+   recipes the page shows for the player's class, worded as the page words them, keeps its own search, category, open recipes
+   and selected ingredient, opens an ingredient's product link itself, goes to Meals by naming the view, and hands "Log this
+   recipe" to the page's add-food sheet (the command log). The tab lifecycle is NativeTabKit's.
+   Inventory: docs/architecture/RECIPES_INVENTORY.md. */
+(function () {
+  const search = () => document.getElementById("recipeSearch");
+  const category = () => document.getElementById("recipeCategory");
+  let filter = { query: "", category: "all", revision: 1 }; // what the screen starts from; revision rises with each prefill
+
+  function recipeOf(r) {
+    return Object.assign({ id: r.id, name: r.n, category: r.cat }, recipeCard(r), {
+      ingredients: r.ingredients.map((text, i) => ({ text, link: RECIPE_LINKS[r.id]?.[i] || "" })),
+      steps: r.steps,
+      note: r.note || "",
+      searchText: recipeHaystack(r),
+    });
+  }
+  function projection() {
+    return {
+      categories: [...category().options].map((o) => ({ value: o.value, label: o.textContent })),
+      filter,
+      recipes: recipeHits("", "all").map(recipeOf),
+    };
+  }
+
+  /** A search or category the page set before the screen opened (the diet card's Recipe button writes the recipe's name) becomes
+      the screen's. Once the screen covers the page, the page's own fields go back to empty (emptyPage), so a prefill is taken
+      over once, whether the screen arrives or comes back, and stays on the page if the screen fails to open. */
+  function takeOver() {
+    const q = search(),
+      c = category();
+    if (q.value || c.value !== "all") filter = { query: q.value, category: c.value, revision: filter.revision + 1 };
+  }
+  function emptyPage() {
+    const q = search(),
+      c = category();
+    if (!q.value && c.value === "all") return;
+    q.value = "";
+    c.value = "all";
+    renderRecipes();
+  }
+
+  /** "Log this recipe": the page opens its add-food sheet over Meals while the screen still covers it, and the hand-over then
+      closes the screen, so the classic Recipes page never shows in between. For a recipe the page does not know, nothing
+      happens and the screen stays. */
+  function log({ id }) {
+    addRecipeToMeal(String(id));
+    return { ok: lmaView() === "meals" };
+  }
+
+  NativeTabKit.create({
+    id: "recipes",
+    plugin: "NativeRecipes",
+    capability: "recipes.projection.v1",
+    setting: "nativeRecipes",
+    toggle: "nativeRecipesToggle",
+    projection,
+    commands: { log },
+    render: "renderRecipes",
+    beforeOpen: takeOver,
+    afterOpen: emptyPage,
+    globals: { open: "openNativeRecipes", enable: "setNativeRecipesEnabled", projection: "NativeRecipesTabProjection" },
+  });
+})();
+/* Library projection v1, the Media pane. The page stays the owner of the media list, the audio files and the save: the native
+   screen draws this projection, filters it itself (taking the page's filter whenever the page sets one, as a voice search does)
+   and hands every tap to the page's own handler. The kit closes the screen, the handler runs, and the screen comes back once
+   nothing it does not draw is over the pane: the add/edit form, the audio player, a file button handed to the owner, a level-up.
+   The page's toast, which the screen would hide, comes with the projection while it shows, for the screen to draw.
+   The Journal stays on the page; the switch's Journal is a web destination, so the Journal lock works as before.
+   The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/LIBRARY_INVENTORY.md. */
+(function () {
+  // what the page writes in views/media.html and in its list (renderMedia, mediaAudioButtons), word for word
+  const WORDS = {
+    panes: [
+      { id: "media", label: "Media" },
+      { id: "history", label: "Journal" },
+    ],
+    header: {
+      eyebrow: "YOUR PERSONAL LIBRARY",
+      title: "Media library",
+      blurb: "Reading list, courses, and audiobooks. Attach .m4b/.m4a files to play in-app — stored on this device.",
+      add: "＋ Add media",
+    },
+    search: { label: "Search library", placeholder: "Search titles, creators, notes…" },
+    statusFilter: "Show",
+    typeFilter: "Media type",
+    empty: {
+      icon: "▤",
+      title: "Your library is ready",
+      body: "Add books, articles, courses, podcasts, or videos to start your list.",
+      add: "＋ Add your first item",
+    },
+    noMatch: { icon: "▤", title: "No matching items", body: "Try changing your search or filters." },
+    buttons: {
+      edit: "Edit",
+      remove: "Remove",
+      play: "▶ Play",
+      replace: "Replace file",
+      removeAudio: "Remove audio",
+      attach: "🎧 Attach .m4b / audio",
+      link: "Open link ↗",
+    },
+  };
+  const FILTERS = "#mediaSearch, #mediaFilter, #mediaTypeFilter";
+  const FILE_BUTTON = "#mediaList [data-media-file]"; // a row's Attach or Replace file
+  let filterRevision = 1; // rises whenever the page's filter is set (typed on the page, or by a voice search), so the screen adopts it
+  let acting = false; // a tap handed back to the page is still running: what it shows may come only after an await (the player)
+  let toasts = 0; // the page's toasts so far, so the screen tells a message from a repeat of the same words
+  let hint = 0; // the toast that points the owner to a file button: it is about the page, so the screen does not show it
+
+  /** a link the screen may open: http and https only (the page draws any stored link; only its form checks the scheme) */
+  function webLink(link) {
+    const s = String(link || "").trim();
+    return /^https?:\/\//i.test(s) ? s : "";
+  }
+  /** a select of the page's filter as options: the values its filter compares with, the labels it shows */
+  function options(id) {
+    return [...document.getElementById(id).options].map((o) => ({ id: o.value, label: o.text }));
+  }
+  function itemOf(x) {
+    const type = String(x.type || ""),
+      creator = String(x.creator || "");
+    return {
+      id: String(x.id),
+      title: String(x.title || ""),
+      type,
+      creator,
+      subtitle: (type || "Other") + (creator ? " · " + creator : ""),
+      status: String(x.status || ""),
+      statusLabel: MEDIA_STATUS[x.status] || MEDIA_STATUS.unread,
+      finished: x.status === "finished",
+      notes: String(x.notes || ""),
+      link: webLink(x.link),
+      // the row shows the progress whenever audio is recorded, and the file's buttons once it has a name (Attach otherwise)
+      audio: x.audio
+        ? {
+            file: String(x.audio.name || ""),
+            meta: x.audio.name ? mediaAudioMeta(x.audio) : "",
+            progress: mediaAudioProgress(x.status, x.audio.position, x.audio.duration),
+          }
+        : null,
+    };
+  }
+  /** the page's feature tip for this pane, while the page would show it */
+  function tip() {
+    const t = FEATURE_TIPS.media;
+    return state.tutorialDone && !(state.tipsSeen || {}).media
+      ? { icon: t.icon, title: t.title, body: t.body, dismiss: "Dismiss tip" }
+      : null;
+  }
+  /* Each toast() writes the toast's text: that is how the page's toasts are counted. One that comes while the screen shows is
+     sent at once. */
+  const toastEl = document.getElementById("toast");
+  const toastWatch = new MutationObserver((records) => {
+    toasts += records.length;
+    tab.schedule();
+  });
+  toastWatch.observe(toastEl, { childList: true });
+  /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
+  function latestToast() {
+    toasts += toastWatch.takeRecords().length;
+    return toasts;
+  }
+  /** the page's message while its toast shows */
+  function notice() {
+    const id = latestToast();
+    return toastEl.classList.contains("show") && id !== hint ? { id, text: toastEl.textContent } : null;
+  }
+  /** the audio player at the bottom of the page; idle whenever the screen covers the pane, since a loaded player keeps it away */
+  function player() {
+    const el = document.getElementById("audioEl");
+    return {
+      mediaId: audioCtx.mediaId || "",
+      visible: document.getElementById("audioPlayer").classList.contains("show"),
+      playing: !!el.src && !el.paused,
+    };
+  }
+
+  function projection() {
+    const items = Array.isArray(state.mediaItems) ? state.mediaItems : [],
+      n = mediaStats(items);
+    return {
+      panes: WORDS.panes.map((p) => ({ ...p, current: p.id === "media" })),
+      header: WORDS.header,
+      tip: tip(),
+      stats: [
+        { label: "Total saved", value: String(n.total), foot: "Items in your library", bar: null },
+        { label: "Finished", value: String(n.finished), foot: "Completed items", bar: null },
+        { label: "In progress", value: String(n.progress), foot: "Currently working through", bar: null },
+        { label: "Completion", value: n.pct + "%", foot: "", bar: n.pct },
+      ],
+      search: WORDS.search,
+      statusFilter: { label: WORDS.statusFilter, options: options("mediaFilter") },
+      typeFilter: { label: WORDS.typeFilter, options: options("mediaTypeFilter") },
+      filter: Object.assign(mediaFilterOnPage(), { revision: filterRevision }),
+      items: items.map(itemOf),
+      empty: WORDS.empty,
+      noMatch: WORDS.noMatch,
+      buttons: WORDS.buttons,
+      player: player(),
+      notice: notice(),
+    };
+  }
+
+  /** the row's own file button, in view, focused and named in a toast for the owner to tap: a file picker opens only from a tap
+      on the page. A page filter that hides the row is cleared quietly, so the screen keeps its own filter. */
+  function showFileButton(id) {
+    const button = () => [...document.querySelectorAll(FILE_BUTTON)].find((b) => b.closest("[data-media-id]").dataset.mediaId === id);
+    if (!button()) {
+      document.getElementById("mediaSearch").value = "";
+      document.getElementById("mediaFilter").value = "all";
+      document.getElementById("mediaTypeFilter").value = "all";
+      renderMedia();
+    }
+    const b = button();
+    if (!b) return;
+    b.scrollIntoView({ block: "center" });
+    b.focus({ preventScroll: true });
+    toast(`Tap "${b.textContent.trim()}" to choose the file`);
+    hint = latestToast();
+  }
+  /** open an item's link as its row's anchor does: a new window, no referrer */
+  function openLink(link) {
+    const href = webLink(link);
+    if (href) Object.assign(document.createElement("a"), { href, target: "_blank", rel: "noopener noreferrer" }).click();
+  }
+  const PANE_ACTIONS = {
+    add: () => showMediaForm(),
+    tip: () => dismissFeatureTip("media"),
+  };
+  // a native action carries only its name and an id, so ticking and unticking are two actions
+  const ITEM_ACTIONS = {
+    edit: (x) => showMediaForm(x),
+    finished: (x) => toggleMediaFinished(x.id, true),
+    unfinished: (x) => toggleMediaFinished(x.id, false),
+    remove: (x) => deleteMediaItem(x.id),
+    play: (x) => playMediaAudio(x.id),
+    attach: (x) => showFileButton(x.id),
+    replace: (x) => showFileButton(x.id),
+    removeAudio: (x) => removeMediaAudio(x.id),
+    link: (x) => openLink(x.link),
+  };
+  /** a native action, after the screen has closed: the page's own handler, then the screen again unless the page now shows
+      something over the pane. An item the page no longer has does nothing, as on the page. */
+  async function onAction(e) {
+    const item = mediaById(String(e.id || ""));
+    acting = true;
+    try {
+      if (PANE_ACTIONS[e.action]) PANE_ACTIONS[e.action]();
+      else if (item && ITEM_ACTIONS[e.action]) await ITEM_ACTIONS[e.action](item, e);
+    } finally {
+      acting = false;
+    }
+    tab.revisit();
+  }
+
+  const tab = NativeTabKit.create({
+    id: "media",
+    plugin: "NativeMedia",
+    capability: "library.media.projection.v1",
+    setting: "nativeLibrary",
+    toggle: "nativeLibraryToggle",
+    projection,
+    onAction,
+    render: "renderMedia",
+    // until a native mini-player exists, a player that is loading, loaded or showing keeps the pane on the page, so its
+    // controls never vanish under the screen
+    blocked: () =>
+      acting ||
+      document.getElementById("mediaFormCard").style.display !== "none" ||
+      !!audioCtx.loading ||
+      !!audioCtx.mediaId ||
+      document.getElementById("audioPlayer").classList.contains("show") ||
+      !!document.activeElement?.matches(FILE_BUTTON) ||
+      !!document.querySelector(".luov"),
+    globals: { open: "openNativeLibrary", enable: "setNativeLibraryEnabled", projection: "NativeLibraryTabProjection" },
+  });
+
+  /* The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player
+     closed, the file button left, a save after a play that failed, which redraws the list): step aside for it, and come back
+     after. */
+  function follow() {
+    if (tab.blocked()) tab.send();
+    else tab.revisit();
+  }
+  const watch = new MutationObserver(follow);
+  watch.observe(document.getElementById("mediaFormCard"), { attributes: true, attributeFilter: ["style"] });
+  watch.observe(document.getElementById("audioPlayer"), { attributes: true, attributeFilter: ["class"] });
+  watch.observe(document.body, { childList: true });
+  watch.observe(document.getElementById("mediaList"), { childList: true });
+  document.addEventListener(
+    "focusout",
+    (e) => {
+      if (e.target.matches?.(FILE_BUTTON)) setTimeout(follow); // once the focus has moved on
+    },
+    true,
+  );
+  document.addEventListener(
+    "input",
+    (e) => {
+      if (e.target.matches?.(FILTERS)) filterRevision++;
+    },
+    true,
+  );
 })();
 /* Android device backup: whether Android may copy LifeMax (journal and health entries included) into the owner's Google
    backup and to a new phone. Off by default. The choice lives on the Android side (DeviceBackupChoice), because Android's

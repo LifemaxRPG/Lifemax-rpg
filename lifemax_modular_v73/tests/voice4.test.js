@@ -141,6 +141,9 @@ const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
   await reset(); r = await say('Search my library for dune'); await p.waitForTimeout(300);
   ok('library: search runs and the screen opens', r.intentId === 'library.search' && /1 match/.test(r.title) && /Dune/.test(text(r)) && await p.evaluate(() => document.querySelector('.view.active').id === 'view-media' && document.getElementById('mediaSearch').value === 'dune'), text(r));
   await reset(); r = await say('Open library'); ok('library: "open library" is still navigation', r.intentId === 'navigation_system.open_section');
+  const opens = async u => { await reset(); await p.evaluate(() => navigate('dashboard')); const r = await say(u); await p.waitForTimeout(300); return { intent: r.intentId, view: await p.evaluate(() => document.querySelector('.view.active').id) } };
+  for (const u of ['Open my journal', 'Show my journal', 'Open history']) { const o = await opens(u); ok('journal: "' + u + '" opens the Journal, not Media', o.intent === 'navigation_system.open_section' && o.view === 'view-history', o) }
+  for (const u of ['Open my library', 'Open media', 'Open my books']) { const o = await opens(u); ok('library: "' + u + '" opens Media', o.intent === 'navigation_system.open_section' && o.view === 'view-media', o) }
   await reset(); r = await say('What can I say?');
   const hb = await p.evaluate(() => ({ n: document.querySelectorAll('.lmv-help .lmv-chip').length, cats: document.querySelectorAll('.lmv-hcat').length }));
   ok('help: a categorized list of examples in the card', r.intentId === 'assistant.voice_help' && hb.n >= 25 && hb.cats >= 8, hb);

@@ -124,6 +124,8 @@ function avatarPicked(e){const f=e.target.files[0];e.target.value='';if(!f)retur
  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{try{const n=256,c=document.createElement('canvas');c.width=c.height=n;const m=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,n,n);state.avatar=c.toDataURL('image/jpeg',.85);save();toast('Profile picture updated')}catch(err){delete state.avatar;toast('Could not save that image')}};img.onerror=()=>toast('Could not read that image');img.src=r.result};r.readAsDataURL(f)}
 function removeAvatar(){if(!state.avatar){toast('No picture to remove');return}delete state.avatar;save();toast('Profile picture removed')}
 
+/* A media item's status as the page words it. */
+const MEDIA_STATUS={unread:'Want to read / watch',progress:'In progress',finished:'Finished'};
 function showMediaForm(item){
  const card=document.getElementById('mediaFormCard');card.style.display='block';
  document.getElementById('mediaFormTitle').textContent=item?'Edit media item':'Add to your library';
@@ -138,20 +140,30 @@ function showMediaForm(item){
 }
 function hideMediaForm(){document.getElementById('mediaFormCard').style.display='none';document.getElementById('mediaForm').reset();document.getElementById('mediaEditId').value=''}
 function saveMediaItem(e){
- e.preventDefault();const id=document.getElementById('mediaEditId').value;
- const title=document.getElementById('mediaTitle').value.trim();if(!title){toast('Add a title first');return}
- const link=document.getElementById('mediaLink').value.trim();
- if(link&&!/^https?:\/\//i.test(link)){toast('Use a valid http or https link');return}
- const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:document.getElementById('mediaType').value,creator:document.getElementById('mediaCreator').value.trim(),status:document.getElementById('mediaStatus').value,link,notes:document.getElementById('mediaNotes').value.trim(),updatedAt:new Date().toISOString()};
+ e.preventDefault();const v=id=>document.getElementById(id).value;
+ const res=mediaUpsert({id:v('mediaEditId'),title:v('mediaTitle'),type:v('mediaType'),creator:v('mediaCreator'),status:v('mediaStatus'),link:v('mediaLink'),notes:v('mediaNotes')});
+ if(!res.ok){toast(res.message);return}
+ hideMediaForm();navigate('media');toast(res.message);
+}
+/* Add a media item, or change the one whose id is f.id, by the form's rules (a title, an http or https link, the form's lengths),
+   and save. Returns {ok, id, message}; it never touches the page. A save that fails is taken back out and reported. */
+function mediaUpsert(f){
+ const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,message:'Add a title first'};
+ const link=String(f.link||'').trim().slice(0,500);
+ if(link&&!/^https?:\/\//i.test(link))return {ok:false,message:'Use a valid http or https link'};
  if(!Array.isArray(state.mediaItems))state.mediaItems=[];
- const index=state.mediaItems.findIndex(x=>x.id===id);
- if(index>=0)state.mediaItems[index]={...state.mediaItems[index],...item};else state.mediaItems.unshift(item);
- hideMediaForm();save();navigate('media');toast(index>=0?'Media item updated':'Added to your library');
+ const id=String(f.id||''),kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id);
+ const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:String(f.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
+ if(index>=0)state.mediaItems[index]={...kept[index],...item};else state.mediaItems.unshift(item);
+ if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,message:unsavedMessage()}}
+ return {ok:true,id:item.id,message:index>=0?'Media item updated':'Added to your library'};
 }
 function toggleMediaFinished(id,checked){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
+ const was=[item.status,item.updatedAt];
  item.status=checked?'finished':'progress';item.updatedAt=new Date().toISOString();
- save();toast(checked?'Marked as finished':'Moved back to in progress');
+ if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+ toast(checked?'Marked as finished':'Moved back to in progress');
 }
 function setMediaStatus(id,status){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
@@ -160,12 +172,14 @@ function setMediaStatus(id,status){
 function deleteMediaItem(id){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
  if(!confirm('Remove "'+item.title.replace(/"/g,'\\"')+'" from your media library?'))return;
- if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);state.mediaItems=state.mediaItems.filter(x=>x.id!==id);save();toast('Removed from library');
+ const kept=state.mediaItems;state.mediaItems=kept.filter(x=>x.id!==id);
+ if(!save()){state.mediaItems=kept;renderMedia();toast(unsavedMessage());return}
+ if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);toast('Removed from library');
 }
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
 const AUDIO_DB='lifemax_audio_v1', AUDIO_STORE='files';
-let audioCtx={mediaId:null, objectUrl:null, seeking:false, saveTimer:null};
+let audioCtx={mediaId:null, loading:null, objectUrl:null, seeking:false, saveTimer:null}; // loading: the id whose file is being read
 function audioDbOpen(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(AUDIO_DB,1);
@@ -257,11 +271,12 @@ async function attachAudioFile(id, file){
 async function removeMediaAudio(id){
   const item=mediaById(id);if(!item||!item.audio)return;
   if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
-  if(audioCtx.mediaId===id)closeAudioPlayer(true);
-  await audioDbDelete(id);
+  const was=[item.audio,item.updatedAt];
   delete item.audio;
   item.updatedAt=new Date().toISOString();
-  save();
+  if(!save()){[item.audio,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+  if(audioCtx.mediaId===id)closeAudioPlayer(true);
+  await audioDbDelete(id);
   toast('Audio removed');
 }
 function r

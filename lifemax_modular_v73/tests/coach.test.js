@@ -96,6 +96,33 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   // list rendering and selection of a review
   await p.evaluate(k => { histSel = k; renderHistory() }, rl[0]); ok('a review can be opened from the list', await p.evaluate(() => !!document.querySelector('#journalEntry .jc-grid')));
   ok('the day list shows colour dots, quiet stretches and review rows', await p.evaluate(() => document.querySelectorAll('.jx-tile').length > 3 && document.querySelectorAll('.jx-rev').length > 2));
+  // text being typed is kept when something else saves meanwhile (a health sync, a payday), and is saved when the box is left
+  const typing = async (key, box, words) => {
+    await p.evaluate(k => { navigate('history'); histSel = k; renderHistory(); window.__box = document.querySelector('#journalEntry textarea') }, key);
+    await p.focus(box); await p.keyboard.type(words); await p.evaluate(() => save());
+    return p.evaluate(w => { const t = document.querySelector('#journalEntry textarea'); return t === window.__box && t.value.endsWith(w) && document.activeElement === t }, words);
+  };
+  const d1 = await dstr(1), said = 'Slept well, trained early and the whole day went smoothly.';
+  ok('a save while typing a reflection keeps the box, its text and the focus', await typing(d1, '#dayReflection', said));
+  await p.click('#journalHero'); await p.waitForTimeout(50);
+  ok('leaving the box saves the reflection and the entry is drawn again', await p.evaluate(([d, w]) => state.dayReflections[d] === w && document.querySelector('#journalEntry textarea') !== window.__box && document.getElementById('dayReflection').value === w && /claimed/.test(document.getElementById('jcCount').textContent), [d1, said]));
+  const answer = 'One adjustment: lights out by eleven on weeknights, every week.';
+  const wkey2 = rl.filter(k => k[0] === 'W')[1];
+  ok('a save while typing a review answer keeps it too', await typing(wkey2, '#journalEntry textarea', answer));
+  await p.click('#journalHero'); await p.waitForTimeout(50);
+  ok('leaving the answer saves it', await p.evaluate(([k, w]) => jcStore().reviews[k].answer === w, [wkey2, answer]));
+  // a reflection that cannot be written says so, and pays nothing for a reflection that is not stored
+  const d0x = await dstr(0), xpW = await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0));
+  const unsaved = await p.evaluate(d => {
+    const real = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    try { saveDayReflection(d, 'A whole day of good work that I want to remember later on.') } finally { Storage.prototype.setItem = real }
+    const full = document.getElementById('toast').textContent;
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    try { saveDayReflection(d, 'Another try, still a long enough reflection for the reward.') } finally { saveReadOnly = ''; saveReadOnlyTold = false }
+    return { full, readOnly: document.getElementById('toast').textContent, stored: (JSON.parse(localStorage.getItem(STORE)).dayReflections || {})[d] };
+  }, d0x);
+  ok('a failed reflection write is reported, naming a read-only save as the reason', unsaved.full === 'Could not save to this browser (storage full?)' && unsaved.readOnly === 'Not saved: this version is read-only for your save' && unsaved.stored === undefined, unsaved);
+  ok('and no XP is paid for it', (await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0))) === xpW);
   // care note
   await seed([[0, 100, 9, 'Study', 'intelligence']], true); const dd = await dstr(0);
   await p.evaluate(d => { saveDayReflection(d, 'I feel like there is no reason to live and I want to die'); histSel = d; renderHistory() }, dd);

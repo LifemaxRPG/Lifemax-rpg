@@ -1,0 +1,219 @@
+{
+ "source": "fixtures/media-full.json",
+ "note": "the rows the page shows for each filter, in order (renderMedia over the full list)",
+ "cases": [
+  {
+   "filter": {
+    "search": "",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_5v9ix",
+    "media_1793188800000_z7c38",
+    "media_1793188800000_4qyvx",
+    "media_1793188800000_y5r02",
+    "media_1793188800000_od578",
+    "media_1793188800000_5zgw7",
+    "media_1793188800000_pcw9q",
+    "media_1793188800000_xox2y",
+    "reading_atomic_habits",
+    "reading_cant_hurt_me",
+    "reading_outlive",
+    "reading_meditations",
+    "reading_deep_work",
+    "reading_how_to_win_friends",
+    "reading_never_split_difference",
+    "reading_crucial_conversations",
+    "reading_thinking_fast_slow",
+    "reading_sapiens",
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_mastery",
+    "reading_war_of_art",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "wealth",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "  DEEP ",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "reading_deep_work"
+   ]
+  },
+  {
+   "filter": {
+    "search": "weir",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_5v9ix"
+   ]
+  },
+  {
+   "filter": {
+    "search": "audiobook",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_5v9ix",
+    "media_1793188800000_od578"
+   ]
+  },
+  {
+   "filter": {
+    "search": "month 3",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": [
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_mastery",
+    "reading_war_of_art",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "unread",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_pcw9q",
+    "reading_cant_hurt_me",
+    "reading_outlive",
+    "reading_how_to_win_friends",
+    "reading_never_split_difference",
+    "reading_crucial_conversations",
+    "reading_thinking_fast_slow",
+    "reading_sapiens",
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_mastery",
+    "reading_war_of_art",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "progress",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_5v9ix",
+    "media_1793188800000_4qyvx",
+    "media_1793188800000_y5r02",
+    "media_1793188800000_od578",
+    "reading_meditations"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "finished",
+    "type": "all"
+   },
+   "ids": [
+    "media_1793188800000_z7c38",
+    "media_1793188800000_5zgw7",
+    "reading_atomic_habits",
+    "reading_deep_work"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "all",
+    "type": "Book"
+   },
+   "ids": [
+    "reading_atomic_habits",
+    "reading_cant_hurt_me",
+    "reading_outlive",
+    "reading_meditations",
+    "reading_deep_work",
+    "reading_how_to_win_friends",
+    "reading_never_split_difference",
+    "reading_crucial_conversations",
+    "reading_thinking_fast_slow",
+    "reading_sapiens",
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_mastery",
+    "reading_war_of_art",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "all",
+    "type": "Audiobook"
+   },
+   "ids": [
+    "media_1793188800000_5v9ix",
+    "media_1793188800000_od578"
+   ]
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "all",
+    "type": "Other"
+   },
+   "ids": []
+  },
+  {
+   "filter": {
+    "search": "",
+    "status": "progress",
+    "type": "Book"
+   },
+   "ids": [
+    "reading_meditations"
+   ]
+  },
+  {
+   "filter": {
+    "search": "the",
+    "status": "unread",
+    "type": "Book"
+   },
+   "ids": [
+    "reading_never_split_difference",
+    "reading_psychology_money",
+    "reading_simple_path_wealth",
+    "reading_war_of_art",
+    "reading_almanack_naval"
+   ]
+  },
+  {
+   "filter": {
+    "search": "nothing like this",
+    "status": "all",
+    "type": "all"
+   },
+   "ids": []
+  }
+ ]
+}

@@ -1,13 +1,10 @@
 package com.lifemax.rpg.core.designsystem
 
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.tokenColor
 
 /**
@@ -48,19 +45,12 @@ open class PageColors(val tokens: Map<String, Long>, val light: Boolean) {
 val LocalPageColors = staticCompositionLocalOf<PageColors> { error("No page colours") }
 
 /**
- * The page's [colors] and type: Material colours from the same tokens, CSS letter and line spacing.
+ * The page's [colors] and type: Material colours from the same tokens, and the page's text as CSS
+ * sets it ([CssText]).
  */
 @Composable
 fun PageTheme(colors: PageColors, content: @Composable () -> Unit) {
     LifeMaxTheme(colors.tokens, colors.light) {
-        CompositionLocalProvider(
-            LocalPageColors provides colors,
-            LocalTextStyle provides
-                LocalTextStyle.current.copy(letterSpacing = 0.sp, lineHeightStyle = CssLines),
-            content = content,
-        )
+        CompositionLocalProvider(LocalPageColors provides colors) { CssText(content) }
     }
 }
-
-/** Line heights spread above and below the text, as CSS does. */
-private val CssLines = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)

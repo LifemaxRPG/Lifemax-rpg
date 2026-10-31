@@ -4,21 +4,16 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
@@ -30,15 +25,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.boxShadow
+import com.lifemax.rpg.core.designsystem.components.PageToast
+import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.plan.domain.Celebration
 import com.lifemax.rpg.feature.plan.domain.PagePoint
@@ -53,7 +46,6 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -88,12 +80,7 @@ internal fun PlanFeedbackLayer(
                     val ms = (particles.duration * 1000).roundToInt()
                     clock.animateTo(particles.duration, tween(ms, easing = LinearEasing))
                 }
-            if (feedback.message.isNotEmpty())
-                launch {
-                    toast.animateTo(1f, tween(FADE_MS))
-                    delay(TOAST_MS)
-                    toast.animateTo(0f, tween(FADE_MS))
-                }
+            if (feedback.message.isNotEmpty()) launch { toast.playToast() }
         }
         onShown(feedback.id)
     }
@@ -110,39 +97,18 @@ internal fun PlanFeedbackLayer(
             }
             XpLabel(feedback.awards, particles.main, origin) { clock.value }
         }
-        if (feedback.message.isNotEmpty())
-            PlanToast(
+        if (feedback.message.isNotEmpty()) {
+            val c = LocalPlanColors.current
+            PageToast(
                 feedback.message,
+                c.tokens,
+                c.light,
                 Modifier.align(Alignment.BottomCenter)
-                    .padding(start = 12.dp, end = 12.dp, bottom = bottomInsetDp.dp + 12.dp)
-                    .graphicsLayer {
-                        alpha = toast.value
-                        translationY = (1 - toast.value) * 10.dp.toPx()
-                    },
+                    .padding(start = 12.dp, end = 12.dp, bottom = bottomInsetDp.dp + 12.dp),
+                shown = { toast.value },
             )
+        }
     }
-}
-
-/** The page's toast (.toast), with the reply's message. */
-@Composable
-internal fun PlanToast(message: String, modifier: Modifier = Modifier) {
-    val c = LocalPlanColors.current
-    val shape = RoundedCornerShape(12.dp)
-    Text(
-        message,
-        modifier
-            .fillMaxWidth()
-            .boxShadow(c.toastShadow, 40.dp, shape, 12.dp)
-            .clip(shape)
-            .background(c.toast)
-            .border(1.dp, c.line, shape)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .semantics { liveRegion = LiveRegionMode.Polite },
-        color = c.text,
-        fontSize = 13.5.sp,
-        fontWeight = FontWeight(650),
-        lineHeight = 18.sp,
-    )
 }
 
 /**
@@ -367,5 +333,3 @@ private class Particles(
 private const val DRAG = 1.6f
 private const val RING_LIFE = 0.55f
 private const val LABEL_S = 1.5f
-private const val FADE_MS = 200
-private const val TOAST_MS = 2200L

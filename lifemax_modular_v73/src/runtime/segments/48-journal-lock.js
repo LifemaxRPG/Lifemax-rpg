@@ -26,10 +26,21 @@ function jlOverlay(){
 function jlApply(){
  const s=jlSection();if(!s)return;
  const locked=jlOn()&&!jlUnlocked;
+ if(locked&&s.contains(document.activeElement))document.activeElement.blur(); // what is being typed is saved before the cover hides it
  s.classList.toggle('jlocked',locked);
  if(jlOn())jlOverlay();
  const o=document.getElementById('jlOverlay');if(o)o.style.display=locked?'':'none';
  jlSecure(jlOn()&&jlViewIsJournal());
+ jlNotify();
+}
+/* For a native screen that would show journal text: blocksNative() says the lock keeps it out now (on and not unlocked), and
+   onChange(fn) calls fn(blocked) each time that answer changes (an unlock, a relock, the lock turned on or off). Every change of
+   the lock state ends in jlApply. */
+const jlWatchers=[];let jlBlocking=jlBlocksNative();
+function jlBlocksNative(){return jlOn()&&!jlUnlocked}
+function jlNotify(){
+ const b=jlBlocksNative();if(b===jlBlocking)return;jlBlocking=b;
+ jlWatchers.forEach(function(fn){try{fn(b)}catch(e){console.warn('[lock]',e)}});
 }
 async function jlPrompt(){
  if(jlPrompting||!jlOn()||jlUnlocked)return;
@@ -74,7 +85,7 @@ function jlSettingsRender(){
   jlApply();
  });
 }
-window.LifeMaxJournalLock=Object.freeze({on:jlOn,apply:jlApply,relock:jlRelock,prompt:jlPrompt,unlocked:function(){return jlUnlocked},render:jlSettingsRender,status:jlStatus});
+window.LifeMaxJournalLock=Object.freeze({on:jlOn,apply:jlApply,relock:jlRelock,prompt:jlPrompt,unlocked:function(){return jlUnlocked},render:jlSettingsRender,status:jlStatus,blocksNative:jlBlocksNative,onChange:function(fn){jlWatchers.push(fn)}});
 (function jlBoot(){
  const nav=navigate;navigate=function(v){const prev=jlPrevView||(function(){try{return lmaView()}catch(e){return ''}})();const r=nav.apply(this,arguments);jlPrevView=v;try{jlOnNavigate(v,prev)}catch(e){console.warn('[lock]',e)}if(v==='settings')try{jlSettingsRender()}catch(e){}return r};
  document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible'&&jlOn()){jlUnlocked=false;jlApply()}});

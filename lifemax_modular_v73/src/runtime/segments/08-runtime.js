@@ -47,7 +47,8 @@ async function playMediaAudio(id, fromStart){
       return;
     }
     closeAudioPlayer(true);
-    const rec=await audioDbGet(id);
+    audioCtx.loading=id;
+    const rec=await audioDbGet(id).finally(()=>{audioCtx.loading=null});
     if(!rec||!rec.blob){
       toast('Audio file missing — attach it again');
       delete item.audio;save();
@@ -167,18 +168,20 @@ function wireAudioElement(){
   });
   el.addEventListener('error', ()=>toast('This browser cannot decode that audio file'));
 }
+/* the line under an attached file's buttons: name · size, and where playback resumes */
+function mediaAudioMeta(a){
+  return a.name+' · '+fmtBytes(a.size)+(a.position?' · resume '+fmtAudioTime(a.position):'')+(a.duration?' / '+fmtAudioTime(a.duration):'');
+}
 function mediaAudioButtons(x){
   if(x.audio&&x.audio.name){
-    const pos=x.audio.position?(' · resume '+fmtAudioTime(x.audio.position)):'';
-    const dur=x.audio.duration?(' / '+fmtAudioTime(x.audio.duration)):'';
     return `<div class="media-audio-row">
       <button type="button" class="btn small" onclick="playMediaAudio('${x.id}')">▶ Play</button>
-      <button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
+      <button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">Replace file</button>
       <button type="button" class="btn small secondary" onclick="removeMediaAudio('${x.id}')">Remove audio</button>
     </div>
-    <div class="media-audio-meta">${esc(x.audio.name)} · ${fmtBytes(x.audio.size)}${pos}${dur}</div>`;
+    <div class="media-audio-meta">${esc(mediaAudioMeta(x.audio))}</div>`;
   }
-  return `<div class="media-audio-row"><button type="button" class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
+  return `<div class="media-audio-row"><button type="button" data-media-file class="btn small secondary" onclick="pickAudioForMedia('${x.id}')">🎧 Attach .m4b / audio</button></div>`;
 }
 
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
+import com.lifemax.rpg.core.designsystem.CssText
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageTheme
@@ -34,6 +35,7 @@ import com.lifemax.rpg.core.designsystem.components.PageButton
 import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.PageTag
+import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.PaneSwitch
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
@@ -70,6 +72,7 @@ class GalleryScreenshotTest {
         section("page", light) { PageClasses(light) }
         section("bars", light) { Bars() }
         section("icons", light) { Icons() }
+        section("toasts", light) { Toasts(light) }
     }
 
     private fun section(name: String, light: Boolean, content: @Composable () -> Unit) =
@@ -237,5 +240,15 @@ private fun Icons() = SurfaceCard {
                 )
             }
         }
+    }
+}
+
+/** The page's toast in the page's palette and type, short and long, with room for its shadow. */
+@Composable
+private fun Toasts(light: Boolean) = CssText {
+    Column(Modifier.padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        val tokens = ScreenshotPalette.tokenMap(light)
+        PageToast("Marked as finished", tokens, light)
+        PageToast("Your save could not be read. A copy was kept on this device.", tokens, light)
     }
 }

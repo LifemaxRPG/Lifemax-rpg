@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
+import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.feature.plan.data.WebPlanRepository
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.SetRef
@@ -21,7 +22,6 @@ import com.lifemax.rpg.feature.plan.presentation.PlanScreen
 import com.lifemax.rpg.feature.plan.presentation.PlanTheme
 import com.lifemax.rpg.feature.plan.presentation.PlanUiState
 import com.lifemax.rpg.feature.plan.presentation.components.LocalPlanColors
-import com.lifemax.rpg.feature.plan.presentation.components.PlanToast
 import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
@@ -118,7 +118,7 @@ class PlanScreenshotTest {
                                 .padding(12.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            PlanToast(message)
+                            PageToast(message, p.tokens, p.light)
                         }
                     }
                 }

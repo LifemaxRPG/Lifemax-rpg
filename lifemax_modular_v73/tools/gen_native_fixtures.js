@@ -1,11 +1,13 @@
 /* Produces the projections the native screens are tested and screenshotted with, by running the web app's own projections:
    Food's NativeNutritionBeta.snapshot() on a fixed day with a fixed diary, Log's NativeLogProjection.snapshot() for a few drafts
    on that day, the Workout plan's NativePlanTabProjection.snapshot() after ticking sets with the page's own planToggle, planVal
-   and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, and what the Recipes tab
-   opens its screen with. Regenerate only when a projection changes:
+   and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, what the Recipes tab opens its
+   screen with, and the Library's Media pane (NativeLibraryTabProjection.snapshot()) with a list built through the page's own
+   mediaUpsert and attachAudioFile. Regenerate only when a projection changes:
      NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
-   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json */
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json,
+   fixtures/media-{full,search,empty,tip}.json and fixtures/media-filter-parity.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -215,6 +217,74 @@ async function recipes(b) {
   write('fixtures/recipes-filters.json', filters);
 }
 
+/* The Library's Media pane on the same day:
+   full    a lived-in list: the default books (two finished, one in progress) under the owner's own items, newest first: an
+           audiobook half listened, an article, a course, a podcast, an audiobook not played yet, a documentary, a video and an
+           item imported without a type or a status
+   search  the same list as a voice search leaves it ("Search my library for wealth")
+   empty   every item removed, with the page's last "Removed from library" still showing
+   tip     the first visit: the default books and the pane's feature tip
+   media-filter-parity.json holds the rows the page itself shows for sample filters of the full list, for the screen's own
+   filter to match exactly. */
+async function media(b) {
+  // the page names a new item media_<ms>_<random>: a fixed clock and a seeded Math.random give the same names on every run
+  const visit = async (tipsSeen) => {
+    const p = await page(b);
+    await p.clock.setFixedTime(new Date('2026-10-28T12:00:00Z'));
+    await p.addInitScript(`let seed=1;Math.random=()=>{let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
+      localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',tipsSeen:${JSON.stringify(tipsSeen)}}));`);
+    await p.goto('file://' + out); await p.waitForTimeout(2500);
+    await p.evaluate(() => { window.confirm = () => true; lmaNavTo('media') });
+    return p;
+  };
+  // the page's toast comes and goes on its own timer, so a fixture carries it only when asked to, shot at once after it
+  const shoot = async (p, name, toast = false) => write('fixtures/media-' + name + '.json', await p.evaluate((toast) => {
+    if (!toast) document.getElementById('toast').classList.remove('show');
+    return Object.assign(NativeLibraryTabProjection.snapshot(), { webSessionId: 'media-fixture', sequence: 1 });
+  }, toast));
+
+  let p = await visit({ media: true });
+  await p.evaluate(async () => {
+    const add = (f) => { const r = mediaUpsert(f); if (!r.ok) throw Error(r.message); return r.id };
+    const attach = async (id, name, mb) => { await attachAudioFile(id, new File([new Uint8Array(Math.round(mb * 1048576))], name, { type: 'audio/mp4' })); closeAudioPlayer() };
+    toggleMediaFinished('reading_atomic_habits', true); toggleMediaFinished('reading_deep_work', true); toggleMediaFinished('reading_meditations', false);
+    add({ title: 'Old import', creator: 'Unknown', type: '', status: '', notes: 'Imported from an older backup' });
+    add({ title: 'Essence of Linear Algebra', type: 'Video', creator: '3Blue1Brown', status: 'unread', link: 'https://example.com/linear-algebra' });
+    add({ title: 'Planet Earth II', type: 'Documentary', creator: 'BBC', status: 'finished', notes: 'Watch "Cities" again' });
+    await attach(add({ title: 'Voice memos', type: 'Audiobook', status: 'unread' }), 'memos.m4a', 1);
+    add({ title: 'Huberman Lab: Sleep', type: 'Podcast', creator: 'Andrew Huberman', status: 'progress', link: 'http://example.org/sleep' });
+    add({ title: 'Learning How to Learn', type: 'Course', creator: 'Barbara Oakley', status: 'progress', notes: 'Week 2 of 4: chunking and recall' });
+    add({ title: 'The Bitter Lesson', type: 'Article', creator: 'Rich Sutton', status: 'finished', link: 'https://example.com/bitter-lesson' });
+    const book = add({ title: 'Project Hail Mary', type: 'Audiobook', creator: 'Andy Weir', status: 'progress', notes: 'Chapter 12, the Astrophage tests' });
+    await attach(book, 'project-hail-mary.m4b', 9.6);
+    updateMediaAudioProgress(book, 15000, 58200); save();
+  });
+  await shoot(p, 'full');
+  const cases = await p.evaluate(() => {
+    const set = (f) => { document.getElementById('mediaSearch').value = f.search; document.getElementById('mediaFilter').value = f.status; document.getElementById('mediaTypeFilter').value = f.type; renderMedia() };
+    const res = [
+      ['', 'all', 'all'], ['wealth', 'all', 'all'], ['  DEEP ', 'all', 'all'], ['weir', 'all', 'all'], ['audiobook', 'all', 'all'], ['month 3', 'all', 'all'],
+      ['', 'unread', 'all'], ['', 'progress', 'all'], ['', 'finished', 'all'], ['', 'all', 'Book'], ['', 'all', 'Audiobook'], ['', 'all', 'Other'],
+      ['', 'progress', 'Book'], ['the', 'unread', 'Book'], ['nothing like this', 'all', 'all'],
+    ].map(([search, status, type]) => {
+      set({ search, status, type });
+      return { filter: { search, status, type }, ids: [...document.querySelectorAll('#mediaList .media-item')].map((r) => r.dataset.mediaId) };
+    });
+    set({ search: '', status: 'all', type: 'all' });
+    return res;
+  });
+  write('fixtures/media-filter-parity.json', { source: 'fixtures/media-full.json', note: 'the rows the page shows for each filter, in order (renderMedia over the full list)', cases });
+  await p.evaluate(() => LifeMaxVoice.simulateUtterance('Search my library for wealth'));
+  await p.waitForTimeout(400);
+  await shoot(p, 'search');
+
+  p = await visit({ media: true });
+  await p.evaluate(() => state.mediaItems.map((x) => x.id).forEach(deleteMediaItem));
+  await shoot(p, 'empty', true);
+
+  await shoot(await visit({}), 'tip');
+}
+
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   await food(b);
@@ -222,5 +292,6 @@ async function recipes(b) {
   await plan(b);
   await director(b);
   await recipes(b);
+  await media(b);
   await b.close(); fs.unlinkSync(out);
 })().catch(e => { console.error(e); process.exit(1); });
