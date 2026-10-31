@@ -1,6 +1,11 @@
 /* Hand-over simulation (CONTRACT A23, A28). Fake native plugins with seeded random delays stand in for Android, the page runs on
    virtual time (Playwright's clock) so a run is exactly repeatable, and many seeded tab-hopping sequences are replayed. A hop is the
    page going to a tab, or a tap in a native screen that goes to another one (the Meals pill in Recipes, the Recipes pill in Food).
+   A hop can also be a native tab swipe: the screen on top sends a committed swipe toward the next or previous tab of the last bar
+   scene it took, as native does on a release past the catch, and only where native would (that scene says the swipe is on, from
+   its own view, toward a native screen). That scene may be out of date, on purpose: another hop moves the tab you are on along the
+   bar. The page must answer each swipe once, before it navigates; one it takes must go to the tab next to the source on the bar
+   as it is now, while the swipe is on, and its screen must show (CONTRACT A23).
    After each sequence settles, exactly the screen of the last tab must be showing. A screen tapped while it alone showed, with
    nothing in flight, may not close before the tab the tap goes to shows (every tab here is native), and a hidden screen of the
    shared scaffold may receive no update (A24). A failing seed prints its sequence so it can be replayed.
@@ -16,7 +21,9 @@ const SEEDS = Number(process.argv[2]) || 80;
 const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media' };
 // taps in a native screen: its plugin and screen, the view it shows and the view the tap goes to
 const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 'recipes', to: 'meals' }, 'tap-recipes': { plugin: 'NativeNutrition', screen: 'food', from: 'meals', to: 'recipes' } };
-const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
+// a native tab swipe toward the next or previous tab, and the tab you are on moved one place along the bar
+const SWIPES = { 'swipe-next': 1, 'swipe-prev': -1 }, BAR = { 'bar-earlier': -1, 'bar-later': 1 };
+const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(SWIPES), ...Object.keys(BAR)]; // the Food tab lands on Meals or Recipes, whichever was visited last
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
@@ -27,39 +34,75 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
     window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__t=()=>Math.round(performance.now());
+    /* swipes: the screens in the order they last showed (the last one on top), the swipe waiting for its answer (answered: '' or
+       its outcome), the view of the last swipe the page took, and what the page answered */
+    window.__want=${JSON.stringify(WANT)};window.__z=[];window.__swipe=null;window.__accepted='';window.__tokens=0;window.__answers={native:0,refused:0};
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     /* Capacitor hands a plugin's calls to the main thread in the order they were made, so each fake does its calls one after another */
     /* Overview and Food only hide on a close that names the session they currently hold (as the Kotlin plugins do); the close of Character,
        Log, Plan, Life Director, Recipes and Library (ComposeTabPlugin) is unconditional, and an update reaching one of those while hidden is a fault */
-    const fault=m=>{window.__faults.push(m);window.__log.push(window.__t()+' !! '+m)};
-    const mk=(name,vis,sessions)=>{const ls={};let current='';let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
-      __emit:emit,__session:()=>current,
+    const fault=window.__fault=m=>{window.__faults.push(m);window.__log.push(window.__t()+' !! '+m)};
+    /* A swipe's answer (swipeSettle) is checked the moment the page makes it, as it then goes to Android ahead of anything the page
+       does next: the swipe it answers was not answered before; a swipe taken is answered before the page navigates, while the swipe
+       is on, toward the tab next to the source on the bar as it is now; and the destination's open is not asked for before it. */
+    const checkAnswer=a=>{const s=window.__swipe;if(!s||!a||a.token!==s.token)return;
+      if(s.answered){fault('the page answered '+s.token+' twice');return}
+      s.answered=a.outcome;window.__answers[a.outcome]=(window.__answers[a.outcome]||0)+1;if(a.outcome!=='native')return;
+      if(lmaView()!==s.from)fault('the page answered '+s.token+' after it had navigated');
+      if(!NativeSwipe.state().on)fault('the page took '+s.token+' while the swipe was off');
+      const bar=lmaTabList(),i=bar.findIndex(b=>b.dataset.view===lmaTabKey(s.from));
+      if(i<0||bar[i+s.dir]?.dataset.view!==s.to)fault('the page took '+s.token+' to '+s.to+', which is not next to '+s.from+' on the bar');
+      window.__accepted=lmaResolve(s.to)};
+    const mk=(name,vis,sessions)=>{const ls={};let current='';let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});
+      let scene=null;const take=a=>{const s=a&&(a.navScene||a.chromeScene);if(s)scene=s}; // the last bar scene this screen took, which its swipes go by
+      return {
+      __emit:emit,__session:()=>current,__scene:()=>scene,
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
-      open:a=>inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));window.__vis[vis]=true;window.__log.push(window.__t()+' '+name+' open<')}),
-      update:async()=>{if(!sessions)await inOrder(async()=>{if(!window.__vis[vis])fault(name+' updated while hidden')})},
+      open:a=>{const s=window.__swipe;if(s&&!s.answered&&s.toVis===vis)fault(name+' was asked to open before the page answered '+s.token);take(a);
+        return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));window.__vis[vis]=true;window.__z=window.__z.filter(k=>k!==vis).concat(vis);window.__log.push(window.__t()+' '+name+' open<')})},
+      update:async(a)=>{take(a);if(!sessions)await inOrder(async()=>{if(!window.__vis[vis])fault(name+' updated while hidden')})},
+      swipeSettle:a=>{checkAnswer(a);return inOrder(async()=>{window.__log.push(window.__t()+' '+name+' swipeSettle '+(a&&a.token)+' '+(a&&a.outcome)+(a&&a.reason?' ('+a.reason+')':''))})},
       close:a=>inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session})),
-      capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1']})}};
+      capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:1}),
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1','shell.swipe.v1']})}};
     window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false)},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   await p.goto('file://' + out);
   let loads = 0; p.on('load', () => loads++);   /* on Android a page load takes every native screen away (NativeScreens), so no tab switch may load one */
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
   if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
-  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativeLog = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; lmaSave(); navigate('dashboard') });
+  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativeLog = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSwipe = true; lmaSave(); navigate('dashboard') });
   const settle = async (ms) => { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 400 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(20) };
   await settle(4000);
   const failures = []; let hops = 0;
   const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(Number(process.env.SEED_BASE) || 12345);
   for (let seed = 1; seed <= SEEDS; seed++) {
-    await p.evaluate(s => { window.__seed = s; window.__log = []; window.__faults = []; window.__tapped = '' }, seed + (Number(process.env.SEED_BASE) || 0));
+    await p.evaluate(s => { window.__seed = s; window.__log = []; window.__faults = []; window.__tapped = ''; window.__swipe = null; window.__accepted = '' }, seed + (Number(process.env.SEED_BASE) || 0));
     const n = 3 + Math.floor(rng() * 9), seq = [];
     for (let i = 0; i < n; i++) seq.push({ to: HOPS[Math.floor(rng() * HOPS.length)], gap: Math.floor(rng() * 4) * 25 });
     let view = '';
     for (const step of seq) {
       // a tap is only possible on a screen that shows; the view after the hop is where it went (Food's screen ignores a tap it no longer owns)
-      view = await p.evaluate(([v, tap]) => {
+      view = await p.evaluate(([v, tap, dir, move]) => {
+        if (move) { const key = lmaTabKey(lmaView()); window.__log.push(window.__t() + ' >> move the ' + key + ' tab ' + (move < 0 ? 'earlier' : 'later')); lmaTabMove(key, move); return lmaView() }
+        if (dir) {
+          // the screen on top is under the finger, and swipes only where native would, by the last scene it took
+          const PLUGINS = { character: 'NativeCharacter', food: 'NativeNutrition', log: 'NativeLog', recipes: 'NativeRecipes', plan: 'NativePlan', director: 'NativeLifeDirector', media: 'NativeMedia' };
+          const owner = window.__z.filter(k => window.__vis[k]).pop(), P = PLUGINS[owner] && Capacitor.Plugins[PLUGINS[owner]], scene = P && P.__scene(), sw = scene && scene.swipe;
+          const tabs = sw ? sw.tabs : [], i = sw ? tabs.findIndex(t => t.key === sw.active) : -1, to = i < 0 ? null : tabs[i + dir];
+          if (!sw || sw.v !== 1 || !sw.on || window.__want[sw.view] !== owner || i < 0 || tabs[i].source === false || !to || to.kind !== 'native') { window.__log.push(window.__t() + ' >> no swipe ' + (dir > 0 ? 'next' : 'prev') + ' on ' + (owner || 'no screen')); return lmaView() }
+          const token = owner + '#' + (++window.__tokens);
+          window.__log.push(window.__t() + ' >> swipe ' + token + ' from ' + sw.view + ' to ' + to.key + ' (scene ' + scene.sequence + ')');
+          const settled = !window.__busy && lmaView() === sw.view && Object.keys(window.__vis).every(k => window.__vis[k] === (k === owner));
+          window.__tapped = settled ? owner : '';
+          const s = window.__swipe = { token, from: sw.view, to: to.key, dir, toVis: window.__want[lmaResolve(to.key)], answered: '' };
+          P.__emit('swipe', Object.assign({ token, from: sw.view, to: to.key, dir, sequence: scene.sequence, via: 'drag' }, owner === 'food' && { session: P.__session() }));
+          // answered at once, and a swipe taken goes to its tab at once: native waits for that tab's screen
+          if (!s.answered) window.__fault('the page did not answer ' + token);
+          else if (s.answered === 'native' && lmaView() !== window.__accepted) window.__fault('the page took ' + token + ' and stayed on ' + lmaView());
+          return lmaView();
+        }
         if (!tap) { window.__log.push(window.__t() + ' >> go ' + v); window.__tapped = ''; lmaNavTo(v, { fast: true }); return lmaView() }
         const { plugin, screen, from, to } = tap, P = Capacitor.Plugins[plugin];
         if (!window.__vis[screen]) return lmaView();
@@ -68,16 +111,22 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
         window.__tapped = settled ? screen : '';
         P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
         return lmaView();
-      }, [step.to, TAPS[step.to]]);
+      }, [step.to, TAPS[step.to], SWIPES[step.to], BAR[step.to]]);
       if (step.gap) await settle(step.gap);
       hops++;
     }
     await settle(4500);
-    const r = await p.evaluate(() => ({ vis: Object.keys(window.__vis).filter(k => window.__vis[k]).join('+'), busy: window.__busy, view: lmaView(), faults: window.__faults, log: window.__log }));
+    const r = await p.evaluate(() => {
+      const vis = Object.keys(window.__vis).filter(k => window.__vis[k]);
+      if (!vis.length) window.__fault('no screen shows once settled');
+      if (window.__accepted && window.__accepted === lmaView() && !window.__vis[window.__want[window.__accepted]]) window.__fault('the swipe taken to ' + window.__accepted + ' never showed its screen');
+      return { vis: vis.join('+'), busy: window.__busy, view: lmaView(), faults: window.__faults, log: window.__log };
+    });
     const want = WANT[view];
     if (r.vis !== want || r.busy !== 0 || r.view !== view || r.faults.length) failures.push({ seed, seq: seq.map(s => s.to + '+' + s.gap).join(' '), showing: r.vis || 'NONE', want, busy: r.busy, view: r.view, faults: r.faults, log: r.log });
   }
-  console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops): the last tab alone is showing after each');
+  const answers = await p.evaluate(() => window.__answers);
+  console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops, swipes taken ' + answers.native + ', refused ' + answers.refused + '): the last tab alone is showing after each');
   if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
   console.log((loads ? 'FAIL' : 'PASS') + ' no tab switch loaded a page (' + loads + ' loads)');
