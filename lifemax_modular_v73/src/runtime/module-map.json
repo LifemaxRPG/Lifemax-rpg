@@ -3307,7 +3307,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-swipe.js",
-   "bytes": 12700,
+   "bytes": 12936,
    "statement_count": 2,
    "tags": [
     "native",

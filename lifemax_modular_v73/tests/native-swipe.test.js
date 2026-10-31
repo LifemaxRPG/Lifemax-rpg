@@ -43,14 +43,15 @@ const fakes = ({ swipe = true, native = true } = {}) => `
   await p.waitForFunction(() => window.NativeSwipe && !document.getElementById('nativeSwipeToggle').disabled, null, { timeout: 20000 }).catch(() => { });
 
   // Settings, before anything is changed: the switch is off by default, and usable because this APK draws the swipe
-  const row = await p.evaluate(() => {
-    const input = document.getElementById('nativeSwipeToggle'), line = document.getElementById('nativeSwipeSetting');
+  const row = await p.evaluate(async () => {
+    const input = document.getElementById('nativeSwipeToggle'), line = document.getElementById('nativeSwipeSetting'), scene = await NativeOverviewSnapshot.snapshot();
     return { stored: lmaLoad().nativeSwipe, checked: input.checked, disabled: input.disabled, label: line.querySelector('strong').textContent, hint: document.getElementById('nativeSwipeHint').textContent,
-      card: line.closest('.card').id, after: !!line.previousElementSibling.querySelector('#lmaSwipeToggle'), on: NativeSwipe.state().on };
+      card: line.closest('.card').id, after: !!line.previousElementSibling.querySelector('#lmaSwipeToggle'), state: NativeSwipe.state() === undefined ? 'none' : 'some', scene: scene.swipe === undefined ? 'none' : 'some', bar: scene.nav.nodes.length > 0 };
   });
   ok('Settings, Navigation has "Native tab swipe (beta)" right after "Swipe to switch tabs"', row.card === 'lmaNavCard' && row.after && row.label === 'Native tab swipe (beta)', row);
   ok('its hint says what it does and what it needs', row.hint === 'Swipe between native tabs. The page holds back until you pull past the halfway catch. Needs Swipe to switch tabs.', row.hint);
-  ok('it is off by default (nothing stored, unchecked, and the swipe state says off)', row.stored === undefined && !row.checked && row.on === false, row);
+  ok('it is off by default (nothing stored, unchecked)', row.stored === undefined && !row.checked, row);
+  ok('switched off, the page builds no swipe state and the bar scene goes without one (native does nothing of the swipe)', row.state === 'none' && row.scene === 'none' && row.bar, row);
   ok('it is usable once a plugin reports shell.swipe.v1', !row.disabled, row);
 
   // the native tabs on, as an owner trying the beta has them, and the switch turned on by tapping it
@@ -129,7 +130,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
 
   const flags = await p.evaluate(() => {
     const on = () => NativeSwipe.state().on, L = lmaLoad(), html = document.documentElement, body = document.body, r = { base: on() };
-    L.nativeSwipe = false; r.switchOff = on(); L.nativeSwipe = true;
+    L.nativeSwipe = false; r.switchOff = NativeSwipe.state() === undefined ? 'none' : 'some'; L.nativeSwipe = true;
     L.swipe = false; r.swipeOff = on(); L.swipe = true;
     state.onboardingComplete = false; r.onboarding = on(); state.onboardingComplete = true;
     lmaThumbWarmBusy = true; r.warm = on(); lmaThumbWarmBusy = false;
@@ -143,7 +144,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
     r.after = on(); return r;
   });
   ok('the swipe is on for a native screen with the switch on', flags.base === true && flags.after === true, flags);
-  ok('off with the switch off, or with Swipe to switch tabs off', flags.switchOff === false && flags.swipeOff === false, flags);
+  ok('no swipe state with the switch off, and off with Swipe to switch tabs off', flags.switchOff === 'none' && flags.swipeOff === false, flags);
   ok('off before onboarding is done and during the thumbnail pass', flags.onboarding === false && flags.warm === false, flags);
   ok('off under a sheet, a body that must not scroll, or a lock cover', flags.overlay === false && flags.noscroll === false && flags.lock === false, flags);
   ok('motion off with reduced motion or Swipe animation off', flags.reduced === false && flags.noAnim === false, flags);

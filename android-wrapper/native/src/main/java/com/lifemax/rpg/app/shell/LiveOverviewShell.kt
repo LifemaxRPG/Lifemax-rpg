@@ -124,11 +124,12 @@ internal class LiveOverviewShell(
     }
 
     /**
-     * The bar follows the page's: at once on the first scene; after that, a page that sends the
-     * swipe state glides it wherever the page's bar has moved since (a tab changed, by a tap or a
-     * swipe), in 170 ms with a cubic ease-out as the page's own bar does, at once with the page's
-     * motion off. A tab change alone is not enough: the destination's scene is taken while the
-     * page's bar is still gliding, and the settled scene after it brings where the bar ends.
+     * The bar follows the page's: at once on the first scene; after that, while the page sends the
+     * swipe state (the tab swipe switched on), it glides wherever the page's bar has moved since (a
+     * tab changed, by a tap or a swipe), in 170 ms with a cubic ease-out as the page's own bar
+     * does, at once with the page's motion off. A tab change alone is not enough: the destination's
+     * scene is taken while the page's bar is still gliding, and the settled scene after it brings
+     * where the bar ends.
      */
     private fun follow(scene: JSONObject) {
         val to = (scene.optDouble("navScroll") * web.resources.displayMetrics.density).roundToInt()

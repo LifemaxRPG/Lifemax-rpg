@@ -49,7 +49,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys
       if(s.answered){fault('the page answered '+s.token+' twice');return}
       s.answered=a.outcome;window.__answers[a.outcome]=(window.__answers[a.outcome]||0)+1;if(a.outcome!=='native')return;
       if(lmaView()!==s.from)fault('the page answered '+s.token+' after it had navigated');
-      if(!NativeSwipe.state().on)fault('the page took '+s.token+' while the swipe was off');
+      if(!NativeSwipe.state()?.on)fault('the page took '+s.token+' while the swipe was off');
       const bar=lmaTabList(),i=bar.findIndex(b=>b.dataset.view===lmaTabKey(s.from));
       if(i<0||bar[i+s.dir]?.dataset.view!==s.to)fault('the page took '+s.token+' to '+s.to+', which is not next to '+s.from+' on the bar');
       window.__accepted=lmaResolve(s.to)};

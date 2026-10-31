@@ -1,7 +1,7 @@
 /* Native tab swipe, the page's half. On a native screen the owner can swipe to the neighbouring tab: the screen follows the finger,
    grows heavy part way, and lets go past a catch half way across (Android draws all of that). The page decides:
-   - every bar scene carries the swipe state (NativeSwipe.state(), added by publishChrome): the bar's tabs in order, which of them a
-     native screen would draw (kind()), whether a swipe may start here and how it should feel;
+   - while the switch is on, every bar scene carries the swipe state (NativeSwipe.state(), added by publishChrome): the bar's tabs in
+     order, which of them a native screen would draw (kind()), whether a swipe may start here and how it should feel;
    - a release that commits sends one 'swipe' event on the plugin of the screen it started on. request() answers it with
      swipeSettle, before anything else, then goes to the tab as a bar tap does, so the hand-over (CONTRACT A23) runs as always.
    A swipe moves pixels, never ownership: the page's open and close always win. Phase 1 swipes only from one native screen to
@@ -63,11 +63,13 @@ const LMA_TABSWIPE = Object.freeze({
     return { bg: argb("bg"), text: argb("text"), muted: argb("muted") };
   }
 
-  /** The swipe state in every bar scene (protocol v1). The tabs are the bar as it is (order, hidden tabs, the Food and Library
-      panes), so native finds a neighbour exactly where the owner sees it. A state that cannot be built costs the swipe, never the
-      bars it rides with: the scene goes without it, and native starts no swipe. */
+  /** The swipe state in every bar scene while the switch is on (protocol v1). The tabs are the bar as it is (order, hidden tabs, the
+      Food and Library panes), so native finds a neighbour exactly where the owner sees it. Switched off, there is none: the scenes go
+      without it and native does nothing of the swipe, as with a page from before it. A state that cannot be built costs the swipe,
+      never the bars it rides with: the scene goes without it, and native starts no swipe. */
   function swipeState() {
     try {
+      if (lmaLoad().nativeSwipe !== true) return undefined;
       const view = lmaView(), key = lmaTabKey(view), bar = lmaTabList();
       return {
         v: 1,
