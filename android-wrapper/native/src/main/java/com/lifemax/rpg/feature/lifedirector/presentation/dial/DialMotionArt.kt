@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
+import android.os.Build
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -40,7 +41,9 @@ import kotlin.math.sin
 
 /**
  * A handle (.ld-hd) at angle [a] on ring [ring] in its rule's [color]: a dark ring with a coloured
- * pip, or while [held] a coloured ring edged in white with a dark pip. [scale] pops it in.
+ * pip, or while [held] a coloured ring edged in white with a dark pip. [scale] pops it in. The ring
+ * casts the page's shadow below it and the pip a faint light above it (.ld-hd-ring and .ld-hd-pip's
+ * drop-shadow), from Android 9, which can blur them.
  */
 internal fun DrawScope.handle(
     ring: Float,
@@ -52,8 +55,13 @@ internal fun DrawScope.handle(
     if (scale <= 0f) return
     val at = point(ring, a)
     scale(scale, at) {
+        if (HANDLE_SHADOWS)
+            drawIntoCanvas {
+                it.drawCircle(at + Offset(0f, 1.5f), 10.5f + HANDLE_EDGE.width / 2, RING_SHADOW)
+            }
         drawCircle(if (held) color else P.handleFill, 10.5f, at)
         drawCircle(if (held) Color.White else color, 10.5f, at, style = HANDLE_EDGE)
+        if (HANDLE_SHADOWS) drawIntoCanvas { it.drawCircle(at + Offset(0f, -1f), 3.5f, PIP_LIGHT) }
         drawCircle(if (held) P.handleFill else color, 3.5f, at)
     }
 }
@@ -286,6 +294,15 @@ private fun strokeGlow(color: Color, blur: Float, width: Float) =
     }
 
 private val HANDLE_EDGE = Stroke(2.5f)
+
+/** drop-shadow(0 1.5px 1.5px rgba(0,0,0,.7)) under the ring, edge included. */
+private val RING_SHADOW = glowPaint(Color.Black.copy(alpha = .7f), 1.5f)
+
+/** drop-shadow(0 -1px 1px rgba(255,255,255,.12)) under the pip. */
+private val PIP_LIGHT = glowPaint(Color.White.copy(alpha = .12f), 1f)
+
+/** Unblurred before Android 9, the ring's shadow would be a hard dark crescent: none there. */
+private val HANDLE_SHADOWS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 private val TRAIL =
     Stroke(2f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 5f)))
 private val GHOST_DASH = PathEffect.dashPathEffect(floatArrayOf(3f, 4f))

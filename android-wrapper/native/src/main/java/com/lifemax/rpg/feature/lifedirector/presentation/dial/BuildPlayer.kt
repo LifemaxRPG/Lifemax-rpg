@@ -72,6 +72,8 @@ fun rememberBuildRun(
         var last = -1f
         while (!skipped) {
             val t = (withFrameMillis { it } - start) / scale
+            // a skip during the wait for this frame ends the build: nothing more buzzes
+            if (skipped) break
             if (buzz != null && user()) BuildBuzz.between(b, last, t)?.let { buzz.buzz(*it) }
             clock.longValue = t.toLong()
             last = t

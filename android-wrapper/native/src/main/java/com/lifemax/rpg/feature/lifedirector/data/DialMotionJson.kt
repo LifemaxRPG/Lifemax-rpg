@@ -131,7 +131,11 @@ internal fun build(d: JSONObject): DialBuild? {
 private fun words(w: JSONObject, at: Int = w.getInt("at")) =
     BuildWords(at, w.getString("kick"), w.getString("big"), w.getString("sub"))
 
-/** A command's reply in NativeTabKit's envelope, with what the dial commands add. */
+/**
+ * A command's reply in NativeTabKit's envelope, with what the dial commands add. A confirmation
+ * missing any of its words is no confirmation: the screen then lets the handle go, where a throw
+ * would leave it waiting for an answer that has already come.
+ */
 fun directorReply(r: JSONObject): DirectorReply =
     DirectorReply(
         requestId = r.optString("requestId"),
@@ -140,19 +144,19 @@ fun directorReply(r: JSONObject): DirectorReply =
         message = r.optString("message"),
         changed = r.optBoolean("changed"),
         moved = r.optBoolean("moved"),
-        confirm =
-            r.optJSONObject("confirm")?.let {
-                DialConfirm(
-                    title = it.getString("title"),
-                    from = it.getString("from"),
-                    to = it.getString("to"),
-                    problem = it.getString("problem"),
-                    body = it.getString("body"),
-                    note = it.getString("note"),
-                    apply = it.getString("apply"),
-                    keep = it.getString("keep"),
-                )
-            },
+        confirm = r.optJSONObject("confirm")?.let { runCatching { confirm(it) }.getOrNull() },
+    )
+
+private fun confirm(c: JSONObject) =
+    DialConfirm(
+        title = c.getString("title"),
+        from = c.getString("from"),
+        to = c.getString("to"),
+        problem = c.getString("problem"),
+        body = c.getString("body"),
+        note = c.getString("note"),
+        apply = c.getString("apply"),
+        keep = c.getString("keep"),
     )
 
 private fun JSONObject.angle(key: String) =

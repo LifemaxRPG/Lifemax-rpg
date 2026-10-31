@@ -385,6 +385,28 @@ class LifeDirectorDialTest {
     }
 
     @Test
+    fun aConfirmationMissingItsWordsLetsGoRatherThanWaitForever() {
+        val (repo, vm, commands) = viewModel()
+        val d = repo.state.value!!.today!!.dial
+        vm.hold(d.held("Bedtime"))
+        vm.move(d.stopAt(1350))
+        vm.release(cancelled = false)
+        val broken =
+            JSONObject(replies.getJSONObject("drop").toString()).put("requestId", "director-1")
+        broken.getJSONObject("confirm").remove("keep")
+        val r = directorReply(broken)
+        assertTrue(r.ok && r.changed)
+        assertNull(r.confirm)
+        vm.onReply(r)
+        // no sheet, the handle back, nothing more sent, and the screen takes taps again
+        assertNull(vm.ui.value.ask)
+        assertNull(vm.ui.value.hold)
+        assertFalse(vm.busy)
+        assertEquals(1, commands.sent.size)
+        assertTrue(vm.handOver())
+    }
+
+    @Test
     fun aProblemOffersOnlyOk() {
         val (repo, vm, commands) = viewModel()
         val d = repo.state.value!!.today!!.dial
