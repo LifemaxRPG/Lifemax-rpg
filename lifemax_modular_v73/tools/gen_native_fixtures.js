@@ -2,15 +2,17 @@
    Food's NativeNutritionBeta.snapshot() on a fixed day with a fixed diary, Log's NativeLogProjection.snapshot() for a few drafts
    on that day, the Workout plan's NativePlanTabProjection.snapshot() after ticking sets with the page's own planToggle, planVal
    and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, what the Recipes tab opens its
-   screen with, and the Library's Media pane (NativeLibraryTabProjection.snapshot()) with a list built through the page's own
-   mediaUpsert and attachAudioFile. Regenerate only when a projection changes:
-     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js
+   screen with, the Library's Media pane (NativeLibraryTabProjection.snapshot()) with a list built through the page's own
+   mediaUpsert and attachAudioFile, and Settings (NativeSettingsTabProjection.snapshot()) on a phone as Android shows it to the
+   page, changed through the screen's own commands. Regenerate only when a projection changes, all of them or the ones named:
+     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json,
-   fixtures/media-{full,search,empty,tip}.json and fixtures/media-filter-parity.json */
+   fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json and fixtures/settings-{default,many,light,bar}.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
+const settingsAndroid = require('../tests/fixtures/settings-android.js');
 const root = path.resolve(__dirname, '..'), out = path.join(os.tmpdir(), 'lm_fixture_' + process.pid + '.html');
 execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
@@ -285,13 +287,86 @@ async function media(b) {
   await shoot(await visit({}), 'tip');
 }
 
+/* Settings as the native screen opens on it, on a phone (tests/fixtures/settings-android.js: reminders allowed, a widget on the
+   home screen, this build the latest), on the same day:
+   default  a new player's Settings, Look & feel
+   many     most switches on, through the screen's own commands where it has them (every native tab, tab timing, reminders'
+            check-in, a quieter card deal, strong haptics) and through the page where Android asks first (health sync, calendar
+            import) or the page keeps it (a backup folder, developer mode); on Phone & sync
+   light    the light theme, Look & feel
+   bar      the bottom-bar editor after the screen moved Quests to second, hid Cat and Money and added Settings */
+async function settings(b) {
+  const visit = async (theme) => {
+    const p = await page(b);
+    await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') });
+    await p.addInitScript(settingsAndroid.script({ theme }));
+    await p.goto('file://' + out); await p.waitForTimeout(3500);
+    await p.evaluate(async () => {
+      lmaThumbWarm = async () => { };
+      const S = lmaLoad(); S.nativeOverview = false; S.nativeSettings = true; lmaSave();
+      navigate('settings');
+      for (let t = 0; t < 8000 && !window.__calls.some((c) => c[0] === 'settings' && c[1] === 'open'); t += 50) await new Promise((r) => setTimeout(r, 50));
+    });
+    return p;
+  };
+  const command = (p, list) => p.evaluate(async (list) => {
+    for (const [command, payload] of list) {
+      const [reply] = await Capacitor.Plugins.NativeSettings.__emit('command', { command, payload, requestId: command });
+      if (!reply.ok && reply.changed !== false) throw Error(command + ' ' + JSON.stringify(payload) + ': ' + reply.message);
+    }
+  }, list);
+  // the page's own time, seconds after it began
+  const after = (p, seconds) => p.waitForFunction((s) => Date.now() >= window.__bootAt + s * 1000, seconds, { polling: 100, timeout: 120000 });
+  const SHOT = Date.parse('2026-10-28T12:01:00Z'); // the moment every fixture is taken
+  const shoot = async (p, name) => {
+    // every fixture at the same moment, a minute in: every boot timer has run (the widget's first picture at 9 s, the first
+    // health sync at 14 s), none of the periodic ones has, and the renderers that wait for a plugin have drawn
+    // the tab previews: whether the boot visit's picture was taken before the page went to Settings depends on the machine, so
+    // every fixture has exactly the one of Settings, taken by the page's own capture
+    await p.evaluate(async () => {
+      Object.keys(lmaThumbs).forEach((k) => delete lmaThumbs[k]);
+      await lmaThumbSnapNow('settings');
+      lmaThumbRender();
+    });
+    await p.clock.pauseAt(new Date(SHOT));
+    await p.evaluate(() => navigate('settings')); // the cards drawn again at that moment, as on arriving, so every "… ago" is of it
+    await p.waitForTimeout(300);
+    write('fixtures/settings-' + name + '.json', await p.evaluate(() => {
+      document.getElementById('toast').classList.remove('show'); // the page's toast comes and goes on its own timer
+      return Object.assign(NativeSettingsTabProjection.snapshot(), { webSessionId: 'settings-fixture', sequence: 1 });
+    }));
+  };
+
+  await shoot(await visit(), 'default');
+
+  let p = await visit();
+  await command(p, ['nativeCharacter', 'nativeLog', 'nativePlan', 'nativeDirector', 'nativeRecipes', 'nativeLibrary', 'nativeNutrition', 'tabTiming', 'reminders.checkin'].map((id) => ['toggle', { id, on: true }]));
+  await command(p, [['choose', { id: 'cardDeal', value: 'quick' }], ['choose', { id: 'haptics.strength', value: 'strong' }], ['choose', { id: 'reminders.lead', value: '30' }]]);
+  await after(p, 16); // health sync's first run, 14 s after the page began, has found it off, so what is set here stays as set
+  await p.evaluate(async (shot) => {
+    Object.assign(lmaHealthCfg(), { on: true, granted: ['exercise', 'steps', 'sleep', 'weight'], last: shot - 42 * 60e3, src: 'Samsung Health', today: { count: 6240 } }); save();
+    Object.assign(lmaLoad().backup, { uri: 'content://tree/primary%3ADocuments%2FLifeMax', folder: 'LifeMax', on: true, verified: shot - 3 * 3600e3, last: shot - 3 * 3600e3, status: 'ok', lastName: 'life-max-auto-2026-10-28-0900.json' }); lmaSave();
+    await lmcSet('on', true);
+    const dev = document.getElementById('devModeOn'); dev.checked = true; dev.dispatchEvent(new Event('change')); // as the owner ticks it
+    lmaHealthRender(); lmaRenderBackup();
+  }, SHOT);
+  await command(p, [['choose', { id: 'backup.keep', value: '14' }], ['category', { id: 'phone' }]]);
+  await shoot(p, 'many');
+
+  p = await visit('light');
+  await shoot(p, 'light');
+
+  p = await visit();
+  await command(p, [['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }],
+    ['toggle', { id: 'tabs.pet.show', on: false }], ['toggle', { id: 'tabs.money.show', on: false }], ['toggle', { id: 'tabs.settings.show', on: true }]]);
+  await shoot(p, 'bar');
+}
+
+const JOBS = { food, log, plan, director, recipes, media, settings };
 (async () => {
+  const only = process.argv.slice(2);
+  for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  await food(b);
-  await log(b);
-  await plan(b);
-  await director(b);
-  await recipes(b);
-  await media(b);
+  for (const [name, job] of Object.entries(JOBS)) if (!only.length || only.includes(name)) await job(b);
   await b.close(); fs.unlinkSync(out);
 })().catch(e => { console.error(e); process.exit(1); });
