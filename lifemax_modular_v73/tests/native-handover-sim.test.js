@@ -1,6 +1,9 @@
 /* Hand-over simulation (CONTRACT A23, A28). Fake native plugins with seeded random delays stand in for Android, the page runs on
    virtual time (Playwright's clock) so a run is exactly repeatable, and many seeded tab-hopping sequences are replayed. A hop is the
-   page going to a tab, or a tap in a native screen that goes to another one (the Meals pill in Recipes, the Recipes pill in Food).
+   page going to a tab, or a tap in a native screen that goes to another one (the Meals pill in Recipes, the Recipes pill in Food),
+   or a command that changes the save while the screen stays (Life Director's bedtime handle let go and Change it: the page
+   re-plans, saves and re-renders under the screen, whatever hand-over is in flight). A command is sent by a screen that shows: if
+   Life Director's does not, the hop goes there and the command follows as soon as its screen shows, unless a later hop came first.
    After each sequence settles, exactly the screen of the last tab must be showing. A screen tapped while it alone showed, with
    nothing in flight, may not close before the tab the tap goes to shows (every tab here is native), and a hidden screen of the
    shared scaffold may receive no update (A24). A failing seed prints its sequence so it can be replayed.
@@ -16,7 +19,9 @@ const SEEDS = Number(process.argv[2]) || 80;
 const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media' };
 // taps in a native screen: its plugin and screen, the view it shows and the view the tap goes to
 const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 'recipes', to: 'meals' }, 'tap-recipes': { plugin: 'NativeNutrition', screen: 'food', from: 'meals', to: 'recipes' } };
-const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
+// commands sent from a native screen, which never leave its view: Life Director's bedtime moved between 10:30 and 11 PM
+const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'director', view: 'life-director' } };
+const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(COMMANDS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
@@ -26,7 +31,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
       plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__t=()=>Math.round(performance.now());
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__onShow={};window.__t=()=>Math.round(performance.now());
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     /* Capacitor hands a plugin's calls to the main thread in the order they were made, so each fake does its calls one after another */
     /* Overview and Food only hide on a close that names the session they currently hold (as the Kotlin plugins do); the close of Character,
@@ -35,8 +40,8 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
     const mk=(name,vis,sessions)=>{const ls={};let current='';let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
       __emit:emit,__session:()=>current,
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
-      open:a=>inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));window.__vis[vis]=true;window.__log.push(window.__t()+' '+name+' open<')}),
-      update:async()=>{if(!sessions)await inOrder(async()=>{if(!window.__vis[vis])fault(name+' updated while hidden')})},
+      open:a=>inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));window.__vis[vis]=true;const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);window.__log.push(window.__t()+' '+name+' open<')}),
+      update:async(a)=>{if(a&&a.reply)window.__cmds.answered++;if(!sessions)await inOrder(async()=>{if(!window.__vis[vis])fault(name+' updated while hidden')})},
       close:a=>inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session})),
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
@@ -59,7 +64,21 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
     let view = '';
     for (const step of seq) {
       // a tap is only possible on a screen that shows; the view after the hop is where it went (Food's screen ignores a tap it no longer owns)
-      view = await p.evaluate(([v, tap]) => {
+      view = await p.evaluate(([v, tap, cmd]) => {
+        window.__onShow = {}; // a command waiting for a screen that has not shown yet is dropped by any later hop
+        if (cmd) {
+          const send = () => {
+            if (!window.__vis[cmd.screen] || lmaView() !== cmd.view) return;
+            const bed = LifeDirector.native.today(0).dial.handles.find(h => h.rule === 'sleep' && h.end === 'start');
+            window.__log.push(window.__t() + ' >> command dialApply in ' + cmd.screen + (bed ? ' ' + bed.key : ' (no handle)'));
+            if (!bed) return;
+            window.__cmds.sent++;
+            Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'dialApply', payload: { key: bed.key, minute: bed.minute === 1350 ? 1380 : 1350 }, requestId: 'sim-' + window.__t() });
+          };
+          if (window.__vis[cmd.screen]) send();
+          else { window.__log.push(window.__t() + ' >> go ' + cmd.view + ', then a command once its screen shows'); window.__tapped = ''; window.__onShow[cmd.screen] = send; lmaNavTo(cmd.view, { fast: true }); }
+          return lmaView();
+        }
         if (!tap) { window.__log.push(window.__t() + ' >> go ' + v); window.__tapped = ''; lmaNavTo(v, { fast: true }); return lmaView() }
         const { plugin, screen, from, to } = tap, P = Capacitor.Plugins[plugin];
         if (!window.__vis[screen]) return lmaView();
@@ -68,7 +87,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
         window.__tapped = settled ? screen : '';
         P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
         return lmaView();
-      }, [step.to, TAPS[step.to]]);
+      }, [step.to, TAPS[step.to], COMMANDS[step.to]]);
       if (step.gap) await settle(step.gap);
       hops++;
     }
@@ -77,7 +96,8 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
     const want = WANT[view];
     if (r.vis !== want || r.busy !== 0 || r.view !== view || r.faults.length) failures.push({ seed, seq: seq.map(s => s.to + '+' + s.gap).join(' '), showing: r.vis || 'NONE', want, busy: r.busy, view: r.view, faults: r.faults, log: r.log });
   }
-  console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops): the last tab alone is showing after each');
+  const cmds = await p.evaluate(() => window.__cmds);
+  console.log((failures.length ? 'FAIL' : 'PASS') + ' ' + SEEDS + ' seeded sequences (' + hops + ' hops, ' + cmds.sent + ' Life Director commands mid-hop, ' + cmds.answered + ' answered on its screen): the last tab alone is showing after each');
   if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
   console.log((loads ? 'FAIL' : 'PASS') + ' no tab switch loaded a page (' + loads + ' loads)');
