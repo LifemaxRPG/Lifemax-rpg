@@ -7,7 +7,7 @@ package com.lifemax.rpg;
  * offered the new APK instead. Web-only changes never need a bump.
  */
 final class NativeApi {
-    static final int VALUE = 28;
+    static final int VALUE = 29;
     private NativeApi() {}
 }
 

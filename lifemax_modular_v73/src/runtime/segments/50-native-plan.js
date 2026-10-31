@@ -265,21 +265,17 @@
     commands,
     render: "renderPlan",
     blocked: () => !state.plan || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov"),
+    // The page covers its view now and then (the guided workout, a level-up, a sheet, a field being edited) and brings the plan
+    // back (the runner closed, a plan started from an offer): the screen steps aside for it and comes back after.
+    watch(observe) {
+      observe(document.getElementById("planBody"), { childList: true });
+    },
     globals: { open: "openNativePlan", enable: "setNativePlanEnabled", projection: "NativePlanTabProjection" },
   });
 
-  /** The page covers its view now and then (the guided workout, a level-up, a sheet, a field being edited) and brings the plan
-      back (the runner closed, a plan started from an offer): step aside for it, and come back after. */
-  function follow() {
-    if (tab.blocked()) tab.send();
-    else tab.revisit();
-  }
   function leaveField(e) {
-    if (e.target.matches?.(EDITING)) setTimeout(follow); // once the page's own change handler has run and the focus has moved
+    if (e.target.matches?.(EDITING)) setTimeout(tab.follow); // once the page's own change handler has run and the focus has moved
   }
-  const watch = new MutationObserver(follow);
-  watch.observe(document.body, { attributes: true, attributeFilter: ["class"], childList: true });
-  watch.observe(document.getElementById("planBody"), { childList: true });
   document.addEventListener("focusout", leaveField, true);
   document.addEventListener("change", leaveField, true);
 })();

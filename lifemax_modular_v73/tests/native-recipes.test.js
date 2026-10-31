@@ -172,6 +172,21 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.logOverFood = lmaView() === 'meals' && !showing('food') && count('recipes', 'close') === 1 && last('recipes', 'close')[3].sheet;
     out.logOverFoodDetail = window.__calls.map(c => c[0] + ' ' + c[1]);
     fv2Close(); lmaNavTo('meals', { fast: true }); await until(() => showing('food'));
+    // the Meals pill, then "Log this recipe" while native Food is still opening: the sheet the second tap asked for stays on top
+    // (Food gives way to it), and Recipes, on its way out, sends no update once the page has left its view
+    navigate('recipes'); await until(() => showing('recipes') && !showing('food'));
+    const foodOpen = F.open, recipesUpdate = R.update;
+    F.open = async a => { await wait(300); return foodOpen(a) };
+    R.update = async a => { window.__calls.push(['recipes', 'update', a, { view: lmaView() }]) };
+    window.__calls.length = 0;
+    R.__emit('action', { view: 'meals' }); await until(() => lmaView() === 'meals', 2000); await wait(60);
+    await R.__emit('command', { command: 'log', payload: { id: 'rcp_pesto_chicken' }, requestId: 'l4' });
+    await until(() => count('food', 'open') && !showing('recipes')); await wait(600);
+    F.open = foodOpen; R.update = recipesUpdate;
+    out.logDuringFoodOpen = lmaView() === 'meals' && !!document.querySelector('#fv2Ov.show') && !showing('food') && !showing('recipes')
+      && calls('recipes', 'update').every(c => c[3].view === 'recipes');
+    out.logDuringFoodOpenDetail = window.__calls.map(c => c[0] + ' ' + c[1] + (c[3] && c[3].view ? ' ' + c[3].view : ''));
+    fv2Close(); lmaNavTo('meals', { fast: true }); await until(() => showing('food'));
 
     // native Food's Meals/Recipes switch hands over to native Recipes, which opens before Food closes
     const session = () => last('food', 'open')[2].session; // the screen ignores an action from a session it no longer shows
@@ -222,6 +237,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('going to Meals with native Food off: the screen closes, classic Meals', r.mealsClassic, r);
   ok('going to Meals with native Food on: Food opens before Recipes closes', r.mealsNative, r.mealsNativeDetail);
   ok('Log this recipe with native Food on: Food steps aside for the sheet, and Recipes closes only once the sheet shows', r.logOverFood, r.logOverFoodDetail);
+  ok('"Log this recipe" while native Food is still opening after the Meals pill: the sheet stays on top, and the leaving screen sends no update', r.logDuringFoodOpen, r.logDuringFoodOpenDetail);
   ok('native Food\'s Recipes switch: native Recipes opens before Food closes', r.switchNative, r.switchNativeDetail);
   ok('Food then lands on native Recipes', r.foodTab, r);
   ok('with native Recipes off, Food\'s switch closes Food at once and shows the classic page', r.switchClassic, r);

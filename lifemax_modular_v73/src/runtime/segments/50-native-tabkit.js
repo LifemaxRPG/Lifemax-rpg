@@ -46,6 +46,12 @@
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
    * tells which of the two applies.
+   * Every tab steps aside at once when the page puts something over it that blocked() counts (a sheet or other top overlay, the
+   * launch update prompt, a noscroll body, and whatever the tab's own cfg.blocked adds, such as Library's and Workout plan's
+   * level-up): the kit watches the body's children and classes. watch(observe), for a tab whose screen comes back by
+   * itself once the page is clear again, makes the same watcher also call revisit(), and names with observe(node, options)
+   * the tab's own nodes to watch (a form shown, a list redrawn); follow() on the returned object runs the watcher by hand
+   * (once the focus has left a field).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -89,10 +95,12 @@
       queued = setTimeout(send, 100);
     }
     /** the fresh projection (and a command's reply) for the open screen; nothing if it closed while the bars were captured,
-        since a hidden screen takes no updates (A24) */
+        since a hidden screen takes no updates (A24), or if the page has left the tab's view meanwhile: a screen on its way out
+        never takes the shared bars with a newer scene from the screen that replaces it. A reply goes with it, so a reply
+        reaches only a showing screen (NATIVE_TAB_GUIDE.md). */
     async function update(reply) {
       const data = snapshot(), mine = generation, scene = await navScene();
-      if (active && mine === generation) await plugin.update(Object.assign({ snapshot: data, navScene: scene }, reply && { reply }));
+      if (active && mine === generation && lmaView() === cfg.id) await plugin.update(Object.assign({ snapshot: data, navScene: scene }, reply && { reply }));
     }
     async function send() {
       if (!active) return;
@@ -213,6 +221,14 @@
     function revisit() {
       if (!active && !opening && enabled() && !blocked()) open(false);
     }
+    /** the page covered the view (step aside now, not at the next refresh) or, for a tab with cfg.watch, gave it back */
+    function follow() {
+      if (active && blocked()) send();
+      else if (cfg.watch && !active) revisit();
+    }
+    const watcher = new MutationObserver(follow);
+    watcher.observe(document.body, { childList: true, attributes: true, attributeFilter: ["class"] });
+    if (cfg.watch) cfg.watch((node, options) => watcher.observe(node, options));
 
     NativeTabs.cover(cfg.id, enabled);
     NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close, wouldOpen: () => enabled() && coverable() });
@@ -249,7 +265,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow };
   }
 
   window.NativeTabKit = { create, color, tokens, light };

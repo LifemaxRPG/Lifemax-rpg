@@ -127,7 +127,7 @@ The screen steps aside (`blocked()`) when any of these is true:
 - a level-up overlay is up;
 - the kit's own rules apply (another view, an overlay that `lmaTopOverlay` knows, `body.noscroll`).
 
-A `MutationObserver` on the body class and children, and on `#planBody`, plus `focusout` and `change` on the plan fields, closes the screen when the page covers it and brings it back after. This covers the runner closing, a level-up ending, a field losing focus, and a plan started from an offer.
+NativeTabKit's watcher on the body class and children, and on `#planBody` (the tab's `watch`), plus `focusout` and `change` on the plan fields, closes the screen when the page covers it and brings it back after. This covers the runner closing, a level-up ending, a field losing focus, and a plan started from an offer.
 
 ## The native screen (`NativePlanPlugin`, `feature/plan`)
 

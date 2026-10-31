@@ -2,8 +2,9 @@ package com.lifemax.rpg.feature.character.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +50,7 @@ internal fun CharacterBuildCard(
                         RoundedCornerShape(50),
                     )
                     .padding(3.dp)
+                    .selectableGroup()
             ) {
                 for ((compare, label) in listOf(false to "Now", true to "vs last week")) {
                     Text(
@@ -57,7 +60,9 @@ internal fun CharacterBuildCard(
                                 if (ui.compare == compare) tokenColor(p.tokens, "panel2")
                                 else Color.Transparent
                             )
-                            .clickable { onCompare(compare) }
+                            .selectable(ui.compare == compare, role = Role.Tab) {
+                                onCompare(compare)
+                            }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,

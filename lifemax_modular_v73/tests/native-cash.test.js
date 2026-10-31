@@ -14,7 +14,7 @@ const s={console,Date,Intl,Math,Map,Set,JSON,Number,String,Promise,
  fxOpt:()=>({haptics:true}),lmaMotionOff:()=>false,lmaView:()=>view,lmaResolve:v=>v,
  lmaTabList:()=>[{dataset:{view:'money'},textContent:'Cash'},{dataset:{view:'dashboard'},textContent:'Overview'}],
  navigate:v=>{view=v},lmaBack:()=>{view='dashboard'},lmaNavTo:v=>{view=v},
- localStorage:{getItem:k=>stored.get(k),setItem(k,v){if(failStorage)throw Error('Storage full');stored.set(k,v)}},STORE:'test',saveReadOnly:'',
+ localStorage:{getItem:k=>stored.get(k),setItem(k,v){if(failStorage)throw Error('Storage full');stored.set(k,v)}},STORE:'test',saveReadOnly:'',saveReplacing:false,
  rebuildAttrXP(){s.state.attrXP={};for(const a of s.state.activities)for(const x of a.xpSplit||[])s.state.attrXP[x.attr]=(s.state.attrXP[x.attr]||0)+x.xp},
  rebuildSkillXP(){s.state.skillXP={};for(const a of s.state.activities)s.state.skillXP[a.skill]=(s.state.skillXP[a.skill]||0)+a.xp},
  renderAll(){},
@@ -50,6 +50,8 @@ async function flush(){for(let i=0;i<15;i++)await Promise.resolve()}
  check('failed persistence rolls back native writes',()=>{assert.equal(ack.ok,false);assert.equal(s.moneyBalance(),220);assert.equal(s.state.money.tx.length,3)});
  s.saveReadOnly='A newer version saved this';ack=await action('7r','transaction',{type:'deposit',amount:25});s.saveReadOnly='';
  check('a read-only save is named as the reason, not storage',()=>{assert.equal(ack.ok,false);assert.match(ack.message,/read-only/);assert.equal(s.moneyBalance(),220)});
+ s.saveReplacing=true;ack=await action('7i','transaction',{type:'deposit',amount:25});s.saveReplacing=false;
+ check('a change while an import or reset waits for its backup is refused, so none is lost or left unanswered by the reload',()=>{assert.equal(ack.ok,false);assert.equal(ack.requestId,'7i');assert.match(ack.message,/import or reset/);assert.equal(s.moneyBalance(),220);assert.equal(s.state.money.tx.length,3)});
  const id=s.state.money.tx.find(t=>t.actId).id;await action('8','delete',{id});
  check('removing a deposit removes its linked XP',()=>{assert.equal(s.state.activities.length,0);assert.equal(s.state.attrXP.business||0,0);assert.equal(s.moneyBalance(),120)});
  const before=JSON.stringify(s.state);await handlers.action({session:'stale',requestId:'9',action:'transaction',type:'deposit',amount:5});

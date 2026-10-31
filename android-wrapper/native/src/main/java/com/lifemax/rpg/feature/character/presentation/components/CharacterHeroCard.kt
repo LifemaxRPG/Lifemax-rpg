@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -66,7 +67,7 @@ private fun CharacterAvatar(p: CharacterProjection, modifier: Modifier) {
 @Composable
 internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String) -> Unit) {
     val ringProgress = remember(p.session) { Animatable(0f) }
-    LaunchedEffect(p.pct) {
+    LaunchedEffect(p.session, p.pct) {
         ringProgress.animateTo(p.pct.coerceIn(0f, 100f), tween(1600, easing = FastOutSlowInEasing))
     }
     val panel = MaterialTheme.colorScheme.surface
@@ -188,7 +189,13 @@ internal fun CharacterHeroCard(p: CharacterProjection, onAction: (String, String
                                 .clip(RoundedCornerShape(13.dp))
                                 .background(tokenColor(p.tokens, "panel2").copy(alpha = .86f))
                                 .border(1.dp, line.copy(alpha = .5f), RoundedCornerShape(13.dp))
-                                .clickable(enabled = label == "LUCK") { onAction("luck", "") }
+                                .clickable(
+                                    enabled = label == "LUCK",
+                                    onClickLabel = "Open today's luck",
+                                    role = Role.Button,
+                                ) {
+                                    onAction("luck", "")
+                                }
                                 .padding(horizontal = 4.dp, vertical = 10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {

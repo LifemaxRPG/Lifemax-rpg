@@ -346,12 +346,15 @@
     }
   }
 
+  /** what the page shows over Meals that the screen must not cover */
+  const COVERED = '.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show';
+
   async function open() {
     if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
       if (!N.opening) NativeTabs.flush('meals');
       return;
     }
-    if (document.querySelector('.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show')) {
+    if (document.querySelector(COVERED)) {
       NativeTabs.flush('meals');
       return;
     }
@@ -389,6 +392,11 @@
       if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
         await p.close({ session: id });
         again = true;
+        return;
+      }
+      if (document.querySelector(COVERED)) {
+        // a sheet came up while the screen was opening (Recipes' "Log this recipe" during a hand-over): it stays on top
+        await p.close({ session: id });
         return;
       }
       N.open = true;

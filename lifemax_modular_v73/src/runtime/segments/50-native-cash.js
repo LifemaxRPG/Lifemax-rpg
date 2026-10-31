@@ -38,6 +38,10 @@
   if(a.action==='refresh'){payTick();await send();return}
   if(!a.requestId)return;
   if(N.seen.has(a.requestId)){await send(N.seen.get(a.requestId));return}
+  // an import or reset waiting for its folder backup replaces the whole save straight after, and an import reloads the page,
+  // which ends Cash: a change made now would be lost or never answered, so it is refused (and not remembered: the same
+  // request may be sent again once the wait is over)
+  if(saveReplacing){await send({requestId:a.requestId,message:'An import or reset is under way. Try again once it is done.',ok:false});return}
   // Actions are applied synchronously before any await. Repeated delivery never
   // duplicates a deposit. A failed save rolls back the in-memory changes too.
   const before=JSON.stringify(state);let response;

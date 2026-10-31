@@ -34,7 +34,7 @@ function fuelAnimateBig(from,to){
  const el=document.getElementById('fuelCaloriesBig');if(!el)return;
  if(!fuelMotionAllowed()||Math.abs(to-from)<1){el.textContent=Math.round(to).toLocaleString();return}
  const token=fuelFxToken,start=performance.now(),dur=1000;
- function step(now){if(token!==fuelFxToken)return;const u=Math.min(1,(now-start)/dur);el.textContent=Math.round(from+(to-from)*fuelEaseOut(u)).toLocaleString();if(u<1)requestAnimationFrame(step)}
+ function step(now){if(token!==fuelFxToken)return;const u=Math.max(0,Math.min(1,(now-start)/dur));el.textContent=Math.round(from+(to-from)*fuelEaseOut(u)).toLocaleString();if(u<1)requestAnimationFrame(step)}
  requestAnimationFrame(step);
 }
 function fuelSignalPulse(slot,details){

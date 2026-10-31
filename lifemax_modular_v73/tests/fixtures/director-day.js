@@ -32,7 +32,8 @@ function state() {
 }
 
 async function seed(page, { planned = true } = {}) {
-  await page.clock.install({ time: at('06:30') });
+  // installed a minute early: the clock runs until it is paused, and pausing at a time it has already passed throws
+  await page.clock.install({ time: at('06:29') });
   await page.clock.pauseAt(at('06:30'));
   await page.addInitScript((s) => {
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({ onboardingComplete: true, name: 'N', tutorialDone: true, classId: 'athlete' }));

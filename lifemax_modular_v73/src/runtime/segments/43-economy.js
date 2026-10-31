@@ -18,6 +18,7 @@ function ecoDur(dur){dur=Number(dur)||0;return dur<ECO.minMin?0:dur<=60?dur/30:M
 const ECO_DURATION_RULES='30 min = base XP, up to 3× at 120 min. Under '+ECO.minMin+' min earns nothing.';
 /* a day's XP counted toward the cap (epic quests are exempt) */
 function ecoDayXP(day,acts=ecoActsOn(day)){return acts.reduce((n,a)=>n+(a.epic?0:(Number(a.xp)||0)),0)}
+/* rested XP adds up to restedBonus of an award; the pool is spent only by an award that pays (a capped one spends nothing) */
 function ecoRestedPeek(x){const pool=Number(state.restedXP)||0;return pool>0&&x>0?x+Math.min(pool,Math.round(x*ECO.restedBonus)):x}
 function ecoRestedTake(x){
  const pool=Number(state.restedXP)||0;if(pool<=0||x<=0)return x;
@@ -42,8 +43,8 @@ function ecoAward(type,total,dur,o){
  const why=factor<1?['Last of this type today: half XP']:[];
  let x=Math.max(1,Math.round(total*factor));
  if((type==='reading'||type==='language')&&(Number(dur)||0)>=45&&ecoPerk('scholar')){const s=Math.round(x*1.1);if(s>x)why.push(ECO_PERKS.scholar[0]+' +'+(s-x));x=s}
- const r=o.peek?ecoRestedPeek(x):ecoRestedTake(x);if(r>x)why.push('Rested +'+(r-x));
- const t=ecoDayXP(day,acts);x=ecoCap(r,day,t);if(x>0&&x<r)why.push(t+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
+ const r=ecoRestedPeek(x),t=ecoDayXP(day,acts),paid=ecoCap(r,day,t);if(r>x)why.push('Rested +'+(r-x));
+ if(paid>0&&!o.peek)ecoRestedTake(x);x=paid;if(x>0&&x<r)why.push(t+x<ECO.hardCap?'XP above '+ECO.softCap+' a day is halved':'Reaches the daily XP cap');
  return x>0?{xp:x,msg:why.join(' · ')}:{xp:0,msg:'Daily XP cap reached'};
 }
 /* quests: daily 3 a day, weekly 3 a week, epic 1 a day; XP values stay as the quest says */
@@ -56,7 +57,7 @@ function ecoQuestXP(q){
  const since=cad==='weekly'?(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toLocaleDateString('en-CA')})():day;
  const n=qs.filter(a=>a.cad===cad&&activityDate(a)>=since).length;
  if(n>=lim)return 0;
- return ecoCap(ecoRestedTake(base),day);
+ const paid=ecoCap(ecoRestedPeek(base),day);if(paid>0)ecoRestedTake(base);return paid;
 }
 /* rest days: planned rest costs nothing (no decay, streak safe) */
 function ecoRestDay(key){

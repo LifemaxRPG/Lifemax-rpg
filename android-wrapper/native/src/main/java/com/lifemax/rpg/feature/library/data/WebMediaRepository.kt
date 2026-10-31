@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.library.data
 
+import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.library.domain.AudioProgress
 import com.lifemax.rpg.feature.library.domain.FeatureTip
 import com.lifemax.rpg.feature.library.domain.FilterControl
@@ -17,7 +19,6 @@ import com.lifemax.rpg.feature.library.domain.MediaStat
 import com.lifemax.rpg.feature.library.domain.PageNotice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -97,7 +98,7 @@ class WebMediaRepository : MediaRepository {
                     buttons.getString("link"),
                 ),
                 j.objectOrNull("notice") { PageNotice(it.getLong("id"), it.getString("text")) },
-                TOKENS.associateWith { colors.getLong(it) },
+                colors.pageTokens(),
                 j.getBoolean("light"),
             )
     }
@@ -157,28 +158,8 @@ class WebMediaRepository : MediaRepository {
         )
 }
 
-private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
-
 /** The object at [key] decoded, or null where the page sends null; a missing key is malformed. */
 private fun <T> JSONObject.objectOrNull(key: String, decode: (JSONObject) -> T): T? {
     require(has(key)) { "Missing $key" }
     return if (isNull(key)) null else decode(getJSONObject(key))
 }
-
-/** The page's palette tokens (NativeTabKit's TOKENS) the screen draws with. */
-private val TOKENS =
-    listOf(
-        "bg",
-        "panel",
-        "panel2",
-        "panel3",
-        "text",
-        "muted",
-        "muted2",
-        "accent",
-        "accent-dim",
-        "accent-strong",
-        "line",
-        "line-soft",
-        "good",
-    )

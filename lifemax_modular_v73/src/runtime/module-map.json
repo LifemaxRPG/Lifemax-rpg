@@ -17,7 +17,7 @@
   },
   {
    "file": "src/runtime/segments/43-economy.js",
-   "bytes": 6800,
+   "bytes": 6989,
    "statement_count": 19,
    "tags": [
     "economy",
@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 38474,
-   "statement_count": 82,
+   "bytes": 39405,
+   "statement_count": 83,
    "tags": [
     "training",
     "quests",
@@ -120,6 +120,7 @@
     "writeSave",
     "save",
     "unsavedMessage",
+    "takeBack",
     "xpForLevel",
     "levelData",
     "totalXP",
@@ -196,7 +197,7 @@
   },
   {
    "file": "src/runtime/segments/05-runtime.js",
-   "bytes": 30086,
+   "bytes": 30112,
    "statement_count": 38,
    "tags": [
     "training",
@@ -298,7 +299,7 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 29263,
+   "bytes": 29999,
    "statement_count": 74,
    "tags": [
     "training",
@@ -486,7 +487,7 @@
   },
   {
    "file": "src/runtime/segments/10-runtime.js",
-   "bytes": 28965,
+   "bytes": 28977,
    "statement_count": 22,
    "tags": [
     "nutrition",
@@ -944,7 +945,7 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28162,
+   "bytes": 28186,
    "statement_count": 54,
    "tags": [
     "interface"
@@ -1008,7 +1009,7 @@
   },
   {
    "file": "src/runtime/segments/19-runtime.js",
-   "bytes": 28112,
+   "bytes": 28124,
    "statement_count": 46,
    "tags": [
     "luck",
@@ -1110,7 +1111,7 @@
   },
   {
    "file": "src/runtime/segments/22-runtime.js",
-   "bytes": 69852,
+   "bytes": 69864,
    "statement_count": 49,
    "tags": [
     "interface"
@@ -1747,7 +1748,7 @@
   },
   {
    "file": "src/runtime/segments/33-android.js",
-   "bytes": 13893,
+   "bytes": 14069,
    "statement_count": 30,
    "tags": [
     "android",
@@ -3027,8 +3028,8 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 40272,
-   "statement_count": 70,
+   "bytes": 41627,
+   "statement_count": 71,
    "tags": [
     "nutrition",
     "food"
@@ -3054,6 +3055,7 @@
     "fv2PL",
     "fv2Unit",
     "fv2KcalFor",
+    "fv2Saved",
     "fv2Log",
     "fv2Snack",
     "deleteMealEntry",
@@ -3244,7 +3246,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-cash.js",
-   "bytes": 5758,
+   "bytes": 6201,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3276,7 +3278,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 12675,
+   "bytes": 14098,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3290,7 +3292,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 23071,
+   "bytes": 23400,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3308,7 +3310,6 @@
    "bytes": 12700,
    "statement_count": 2,
    "tags": [
-    "android",
     "native",
     "swipe"
    ],
@@ -3359,7 +3360,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-plan.js",
-   "bytes": 13185,
+   "bytes": 12996,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3382,7 +3383,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 10830,
+   "bytes": 10687,
    "statement_count": 1,
    "tags": [
     "android",

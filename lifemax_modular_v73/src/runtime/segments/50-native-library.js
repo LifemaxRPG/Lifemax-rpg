@@ -210,25 +210,21 @@
       document.getElementById("audioPlayer").classList.contains("show") ||
       !!document.activeElement?.matches(FILE_BUTTON) ||
       !!document.querySelector(".luov"),
+    // The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player
+    // closed, the file button left, a save after a play that failed, which redraws the list): the screen steps aside for it
+    // and comes back after.
+    watch(observe) {
+      observe(document.getElementById("mediaFormCard"), { attributes: true, attributeFilter: ["style"] });
+      observe(document.getElementById("audioPlayer"), { attributes: true, attributeFilter: ["class"] });
+      observe(document.getElementById("mediaList"), { childList: true });
+    },
     globals: { open: "openNativeLibrary", enable: "setNativeLibraryEnabled", projection: "NativeLibraryTabProjection" },
   });
 
-  /* The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player
-     closed, the file button left, a save after a play that failed, which redraws the list): step aside for it, and come back
-     after. */
-  function follow() {
-    if (tab.blocked()) tab.send();
-    else tab.revisit();
-  }
-  const watch = new MutationObserver(follow);
-  watch.observe(document.getElementById("mediaFormCard"), { attributes: true, attributeFilter: ["style"] });
-  watch.observe(document.getElementById("audioPlayer"), { attributes: true, attributeFilter: ["class"] });
-  watch.observe(document.body, { childList: true });
-  watch.observe(document.getElementById("mediaList"), { childList: true });
   document.addEventListener(
     "focusout",
     (e) => {
-      if (e.target.matches?.(FILE_BUTTON)) setTimeout(follow); // once the focus has moved on
+      if (e.target.matches?.(FILE_BUTTON)) setTimeout(tab.follow); // once the focus has moved on
     },
     true,
   );

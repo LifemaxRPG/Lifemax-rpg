@@ -174,7 +174,7 @@
     "decoder": "feature/recipes/data/WebRecipesRepository.kt",
     "fixtures": "native/src/test/resources/fixtures/recipes-scholar.json, recipes-entrepreneur.json, recipes-disciple.json, recipes-prefill.json, and recipes-filters.json with the ids the page's recipeHits shows for sample searches (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page hands over a prefill",
-    "invalidation": "renderRecipes (every save, a class change), host resume, foreground return, 15-second refresh while visible"
+    "invalidation": "renderRecipes (going to Recipes, a class change, the page's fields emptied; not every save: renderAll does not call it, so an import that changes the class shows at the next 15-second refresh), host resume, foreground return, 15-second refresh while visible"
    },
    "mutationsGate": "no native writes; the only write path is the delegated add-food sheet (Food slice)",
    "rollout": "opt-in under Settings, Appearance: Native Recipes (beta)",

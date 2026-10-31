@@ -165,9 +165,12 @@ function toggleMediaFinished(id,checked){
  if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
  toast(checked?'Marked as finished':'Moved back to in progress');
 }
-function setMediaStatus(id,status){
+function setMediaStatus(id,status){ // no caller yet: the Library's phase 2 setStatus command (LIBRARY_INVENTORY.md)
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
- item.status=status;item.updatedAt=new Date().toISOString();save();toast('Status updated');
+ const was=[item.status,item.updatedAt];
+ item.status=status;item.updatedAt=new Date().toISOString();
+ if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+ toast('Status updated');
 }
 function deleteMediaItem(id){
  const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
@@ -241,8 +244,10 @@ async function attachAudioFile(id, file){
   const item=mediaById(id);if(!item)return;
   const max=512*1024*1024; // 512 MB soft limit
   if(file.size>max){toast('File too large (max ~512 MB)');return}
+  if(saveReadOnly){toast(unsavedMessage());return} // the save cannot name the file, so the file is not stored either
   toast('Saving audio to this device…');
   try{
+    const prev=await audioDbGet(id); // a replaced file comes back if the save cannot name the new one
     await audioDbPut(id,{
       blob:file,
       name:file.name,
@@ -250,6 +255,7 @@ async function attachAudioFile(id, file){
       size:file.size,
       updatedAt:new Date().toISOString()
     });
+    const was={audio:item.audio,type:item.type,status:item.status,updatedAt:item.updatedAt};
     item.audio={
       name:file.name,
       size:file.size,
@@ -260,7 +266,11 @@ async function attachAudioFile(id, file){
     if(!item.type||item.type==='Book'||item.type==='Other')item.type='Audiobook';
     if(item.status==='unread')item.status='progress';
     item.updatedAt=new Date().toISOString();
-    save();
+    if(!save()){
+      Object.assign(item,was);if(!was.audio)delete item.audio;
+      try{await (prev?audioDbPut(id,prev):audioDbDelete(id))}catch(e){console.warn(e)}
+      renderMedia();toast(unsavedMessage());return;
+    }
     toast('Audio attached · '+file.name);
     await playMediaAudio(id, true);
   }catch(err){

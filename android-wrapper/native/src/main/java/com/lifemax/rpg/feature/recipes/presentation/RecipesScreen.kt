@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,9 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +28,7 @@ import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.PageButton
-import com.lifemax.rpg.core.designsystem.components.PageEyebrow
+import com.lifemax.rpg.core.designsystem.components.PageHead
 import com.lifemax.rpg.core.designsystem.components.PaneSwitch
 import com.lifemax.rpg.feature.recipes.domain.RecipesPageAction
 import com.lifemax.rpg.feature.recipes.domain.RecipesProjection
@@ -140,31 +136,17 @@ fun RecipesScreen(
 }
 
 @Composable
-private fun RecipesHead(onLogMeal: () -> Unit) {
-    val c = LocalPageColors.current
-    Column(Modifier.padding(bottom = 18.dp)) {
-        PageEyebrow("FUEL YOUR BUILD")
-        Text(
-            "Recipes",
-            Modifier.padding(top = 6.dp).semantics { heading() },
-            color = c.text,
-            fontSize = 21.sp,
-            fontWeight = FontWeight(650),
-            letterSpacing = (-0.63).sp,
-            lineHeight = 24.15.sp,
-        )
-        Text(
-            "Recipes from the Fit to Win Athlete Cookbook. Nutrition values are shown as printed " +
-                "in the cookbook; recipe variations may change them. Class-plan recipes are " +
-                "marked (est.) and use estimated nutrition.",
-            Modifier.padding(top = 6.dp),
-            color = c.muted,
-            fontSize = 13.5.sp,
-            lineHeight = 20.25.sp,
-        )
-        PageButton("＋ Log a meal", "Log a meal", onLogMeal, Modifier.padding(top = 14.dp))
+private fun RecipesHead(onLogMeal: () -> Unit) =
+    PageHead(
+        "FUEL YOUR BUILD",
+        "Recipes",
+        "Recipes from the Fit to Win Athlete Cookbook. Nutrition values are shown as printed in " +
+            "the cookbook; recipe variations may change them. Class-plan recipes are marked " +
+            "(est.) and use estimated nutrition.",
+        Modifier.padding(bottom = 18.dp),
+    ) {
+        PageButton("＋ Log a meal", "Log a meal", onLogMeal, it)
     }
-}
 
 @Composable
 private fun EmptyResult() {

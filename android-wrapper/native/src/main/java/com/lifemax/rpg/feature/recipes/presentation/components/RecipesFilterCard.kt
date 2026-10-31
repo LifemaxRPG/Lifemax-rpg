@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.recipes.domain.RecipeCategory
@@ -115,7 +116,7 @@ private fun SearchField(query: String, onSearch: (String) -> Unit) {
                 Text(
                     "Search recipes or ingredients…",
                     Modifier.clearAndSetSemantics {},
-                    color = Placeholder,
+                    color = PageInk.Placeholder,
                     fontSize = 14.sp,
                     lineHeight = 21.sp,
                     overflow = TextOverflow.Ellipsis,

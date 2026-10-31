@@ -22,8 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.lifemax.rpg.core.designsystem.CssText
-import com.lifemax.rpg.core.designsystem.LifeMaxTheme
+import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.feature.library.domain.MediaAction
@@ -186,7 +185,7 @@ private fun NoticeToast(
     PageToast(notice.text, p.tokens, p.light, modifier, shown = { shown.value })
 }
 
-/** The page's palette and type for the Library: its theme tokens, its colours, CSS line spacing. */
+/** The page's palette and type for the Library, with the Library's own colours. */
 @Composable
 internal fun LibraryTheme(
     tokens: Map<String, Long>,
@@ -194,7 +193,7 @@ internal fun LibraryTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = remember(tokens, light) { LibraryColors(tokens, light) }
-    LifeMaxTheme(tokens, light) {
-        CompositionLocalProvider(LocalLibraryColors provides colors) { CssText(content) }
+    PageTheme(colors) {
+        CompositionLocalProvider(LocalLibraryColors provides colors, content = content)
     }
 }

@@ -72,7 +72,7 @@ class NativeNutritionPlugin : Plugin() {
                 TabSwipe.opened(PANE)
                 view.bringToFront()
                 shown = true
-                showChrome(call.getObject("chromeScene"))
+                showChrome(call.getObject("chromeScene"), opening = true)
                 TabTiming.attached(view, "food")
                 call.resolve()
             } catch (e: Exception) {
@@ -168,10 +168,10 @@ class NativeNutritionPlugin : Plugin() {
         super.handleOnDestroy()
     }
 
-    private fun showChrome(scene: JSONObject?) {
+    private fun showChrome(scene: JSONObject?, opening: Boolean = false) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
         val chrome =
-            ChromeHost.show(this, activity, bridge.webView, scene) { id ->
+            ChromeHost.show(this, activity, bridge.webView, scene, opening) { id ->
                 notifyListeners("nav-action", JSObject().put("id", id))
             }
         val (top, bottom) = chrome.contentInsetsDp()

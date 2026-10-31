@@ -2508,6 +2508,7 @@ const LifeMaxHost = (function () {
     if (existing) return { awarded: false, reason: 'ALREADY_IN_LIFEMAX', activityId: existing.id, xp: existing.xp };
     const type = H.typeForTag(event.activityTypeTag);
     const when = new Date(event.actualStartEpoch * 1000);
+    const was = JSON.stringify(state); // before the award spends any rested XP
     const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'), true);
     const act = { id: 'ld_' + event.eventId, ldEventId: event.eventId, type, name: info && info.title || event.title, icon: x.rule.icon, duration: event.actualDurationMinutes, quality: 1,
       skill: x.rule.skill, primary: x.rule.primary, secondary: x.rule.secondary || '', xp: x.xp, date: when.toISOString(),
@@ -2522,8 +2523,8 @@ const LifeMaxHost = (function () {
     state.activities.push(act);
     let saved = false;
     try { saved = save(); } catch (e) { saved = false; }
-    if (!saved) { /* taken back, as recordActivity does: an activity the save refused is neither shown nor counted */
-      state.activities = state.activities.filter(a => a !== act); rebuildAttrXP(); rebuildSkillXP(); renderAll();
+    if (!saved) { /* taken back whole by takeBack, as Log's recordActivity is: nothing the award or its save paid or spent is kept */
+      takeBack(was);
       return { awarded: false, reason: typeof saveReadOnly !== 'undefined' && saveReadOnly ? 'HOST_READ_ONLY' : 'HOST_SAVE_FAILED' };
     }
     return { awarded: true, activityId: act.id, xp: x.xp };
@@ -2798,8 +2799,13 @@ const LifeDirectorApp = (function () {
   }
 
   /* ── completion ── */
+  const unsaved = a => a.reason === 'HOST_SAVE_FAILED' || a.reason === 'HOST_READ_ONLY';
+  /* what a session's XP came to, in the words its notice uses */
+  const XP_WORDS = { HOST_NOT_CONNECTED: 'recorded (XP needs LifeMax)', HOST_READ_ONLY: 'XP not saved: this version is read-only for your save', HOST_SAVE_FAILED: 'XP not saved (storage full?)' };
+  const xpWords = a => a.awarded ? '+' + a.xp + ' XP' : XP_WORDS[a.reason] || '';
   function questsSnapshot() { return hostQuests(nowEpoch()); }
-  function afterEvent(event, inst) {
+  /* a session whose XP could not be saved pays no quest bounty either: the save failed, so nothing it earned is kept */
+  function afterEvent(event, inst, bounty = true) {
     const qs = questsSnapshot();
     const future = ST.schedule ? ST.schedule.scheduledInstances : [];
     const rq = E.reconcileQuestProgress(event, qs, ST.goals, future, { dayKey: U.ymdKey(U.localParts(event.actualStartEpoch, tz())) });
@@ -2812,7 +2818,7 @@ const LifeDirectorApp = (function () {
       if (!ov.eventIds.includes(event.eventId)) ov.eventIds.push(event.eventId);
       const uq = rq.updatedQuests.find(x => x.id === d.questId), nq = E.normalizeQuest(uq);
       const met = nq.requirements.every(r => (!r.targetCount || r.currentCount >= r.targetCount) && (!r.targetMinutes || r.currentMinutes >= r.targetMinutes));
-      if (met && q.hostRef.questId) { const c = Host.completeQuest(q.hostRef); if (c.completed) notes.push('Quest complete: ' + c.name + ' +' + c.xp + ' XP'); }
+      if (met && q.hostRef.questId && bounty) { const c = Host.completeQuest(q.hostRef); if (c.completed) notes.push('Quest complete: ' + c.name + ' +' + c.xp + ' XP'); }
       else if (!met) notes.push(q.title + ' ' + nq.requirements[0].currentCount + '/' + nq.requirements[0].targetCount);
     }
     if (ST.schedule) {
@@ -2829,18 +2835,16 @@ const LifeDirectorApp = (function () {
       satisfiedRatio: E.normalizePreferences(ST.prefs).partialSatisfiedRatio });
     if (!r.applied) { if (!opt.silent) say(r.reason === 'DUPLICATE_EVENT_ID' ? 'Already recorded.' : 'Cannot complete this block (' + r.reason + ').'); return null; }
     ST.ledger = r.ledger;
-    let xpNote = '', hostActivityId = opt.hostActivityId || null;
+    let xpNote = '', hostActivityId = opt.hostActivityId || null, bounty = true;
     if (opt.awardXp !== false) {
       const a = Host.awardActivity(r.event, { title: inst.title });
-      if (a.awarded) { xpNote = '+' + a.xp + ' XP'; hostActivityId = a.activityId; }
-      else if (a.reason === 'HOST_NOT_CONNECTED') xpNote = 'recorded (XP needs LifeMax)';
-      else if (a.reason === 'HOST_READ_ONLY') xpNote = 'XP not saved: this version is read-only for your save';
-      else if (a.reason === 'HOST_SAVE_FAILED') xpNote = 'XP not saved (storage full?)';
+      bounty = !unsaved(a); xpNote = xpWords(a);
+      if (a.awarded) hostActivityId = a.activityId;
     }
     ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => i.instanceId !== inst.instanceId);
     ST.schedule.historyInstances = (ST.schedule.historyInstances || []).concat(Object.assign({}, inst, { lifecycleState: r.lifecycleState, completionEventId: r.eventId, hostActivityId,
       actualMinutes: r.event.actualDurationMinutes, resolvedAtEpoch: now }));
-    const notes = afterEvent(r.event, inst);
+    const notes = afterEvent(r.event, inst, bounty);
     if (r.residualTask) { const rr = reschedule({ type: 'RESIDUAL', task: r.residualTask, parentInstanceId: inst.instanceId }); if (rr) notes.push('Rest of it re-planned'); }
     if (r.tokenEarned) notes.push('Rest token earned');
     persist();
@@ -2899,9 +2903,9 @@ const LifeDirectorApp = (function () {
       linkedQuestRequirementIds: [], linkedGoalIds: [], durationSlots: Math.ceil(minutes / 15), lifecycleState: 'COMPLETED_ON_TIME',
       completionEventId: r.eventId, hostActivityId: a.activityId || null, actualMinutes: minutes, resolvedAtEpoch: now,
       explanation: { summary: 'Logged for today. The session planned for ' + fDay(inst.startEpoch) + ' is still on your plan.' } }, minutes, now));
-    afterEvent(r.event, null);
+    const notes = afterEvent(r.event, null, !unsaved(a));
     persist();
-    say(inst.title + ' logged for today' + (a.awarded ? ' · +' + a.xp + ' XP' : '') + ' · still planned for ' + fDay(inst.startEpoch));
+    say([inst.title + ' logged for today', xpWords(a)].concat(notes, 'still planned for ' + fDay(inst.startEpoch)).filter(Boolean).join(' · '));
     return r;
   }
 

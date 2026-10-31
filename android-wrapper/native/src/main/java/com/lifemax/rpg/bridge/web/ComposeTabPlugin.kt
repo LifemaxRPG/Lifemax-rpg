@@ -65,7 +65,9 @@ abstract class ComposeTabPlugin : Plugin() {
     /**
      * The page's answer to a [sendCommand], delivered with the update that carries the fresh
      * projection, and delivered even when that projection is rejected: the answer still says what
-     * the page did.
+     * the page did. It reaches only a showing screen: one that closed while the page was answering
+     * never gets it (a hidden screen takes no updates, and the page sends none to a closed one), so
+     * a tab that waits for an answer stops waiting when it opens again.
      */
     protected open fun onReply(reply: JSONObject) {}
 
@@ -110,7 +112,7 @@ abstract class ComposeTabPlugin : Plugin() {
                 TabSwipe.opened(tabId)
                 screen.bringToFront()
                 visible = true
-                showChrome(call.getObject("navScene"))
+                showChrome(call.getObject("navScene"), opening = true)
                 TabTiming.attached(screen, tabId)
                 call.resolve()
             } catch (e: Exception) {
@@ -220,10 +222,10 @@ abstract class ComposeTabPlugin : Plugin() {
         notifyListeners("action", event)
     }
 
-    private fun showChrome(scene: JSONObject?) {
+    private fun showChrome(scene: JSONObject?, opening: Boolean = false) {
         requireNotNull(scene) { "Missing shared Overview chrome" }
         val chrome =
-            ChromeHost.show(this, activity, bridge.webView, scene) { id ->
+            ChromeHost.show(this, activity, bridge.webView, scene, opening) { id ->
                 notifyListeners("nav-action", JSObject().put("id", id))
             }
         val (top, bottom) = chrome.contentInsetsDp()

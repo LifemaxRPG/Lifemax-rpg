@@ -63,7 +63,7 @@ How facts were checked. "Verified" means read in the source at this baseline. Fa
 | Reduced motion | page fade-in stagger off | `styles/02-layout.css:817-827,840,844,853` |
 | Under a native cover | not applicable today (no native screen covers `recipes`); `html.native-cover` would stop the fade-in | `styles/02-layout.css:818` |
 | Bottom tab hidden by the owner | "Food" can be hidden in Settings (bar editor), leaving voice, the Meals switch and the diet card as entry points | `50-tabs-edit.js:22-24` |
-| Save failed | not applicable to the pane itself; the delegated sheet's `fv2Log` ignores `save()`'s return (memory and storage can diverge) | `50-food.js:33`, `04-runtime.js:13` |
+| Save failed | not applicable to the pane itself; the delegated sheet's `fv2Log` takes the entry back when `save()` fails (also while the save is read-only) and the snackbar shows `unsavedMessage()` in place of the success | `fv2Saved`, `fv2Log` in `50-food.js`, `04-runtime.js:13` |
 
 ---
 
@@ -164,7 +164,7 @@ Record shape (all 43): `id, n, cat, yield, prep, total, kcal, p, c, f, servingG,
 |---|---|---|
 | Header | "‹" (back; with an empty stack it closes) and title "Add food" | `fv2Head` `50-food.js:147`, `fv2Back` `:144` |
 | Food heading | recipe name; subtitle `"Recipe · <category>"` | `50-food.js:205` **(run)** |
-| Favourite star | toggles a full per-100 g copy in `state.mealsMeta.favs`, then `save()` | `fv2ToggleFav` `50-food.js:24`, click `:185` |
+| Favourite star | toggles a full per-100 g copy in `state.mealsMeta.favs`, then `save()` (a failed save puts the star back and says so) | `fv2ToggleFav` `50-food.js:24`, click `:185` |
 | Big number | kcal for the chosen grams (`scaleFood` `08-runtime.js:284-289`) | `fv2Live` `50-food.js:214-218` |
 | Grams input `#fv2G` | starts at `servingG` (for example 230 g for Quick Pesto Chicken); "−"/"+" steps of 5/10/25 g by size | `50-food.js:186,207`, input `:175` |
 | Serving chips | "1 serving · <servingG> g", "100 g" | `50-food.js:201-202,188` **(run)** |
@@ -175,7 +175,7 @@ Record shape (all 43): `id, n, cat, yield, prep, total, kcal, p, c, f, servingG,
 | "Add to <slot> · <kcal> kcal" | `fv2DoLog` -> `fv2Log(food,grams,slot)` | `50-food.js:219-221,30-36` |
 | Close | tap outside, Back, Escape | `50-food.js:136,240`, `34-navigation.js:64-65` |
 
-`fv2Log` writes: pushes `{id:'food_<ms>_<4 chars>', date: mealsDayKey(), slot, foodId:'rcp_…', name, grams, kcal, kcalEstimated, p, c, f, fib:0, sug:0, na:0, at: ISO}` to `state.foodLog` **(run)**, then `save()` (which re-runs `rebuildAttrXP`, badges, level-ups and `renderAll`, `04-runtime.js:13`), haptic `success`, `renderMeals()`, and a 4.2 s snackbar "<name> · <kcal> kcal" with "Undo" (`50-food.js:37-39`; undo removes the entry and saves). No XP, no quest, no notification. `date` is `mealsDay`, the day the Meals page was last showing (`mealsDayKey` `08-runtime.js:223`), so a recipe logged while Meals was left on another day is logged on that day **(from code reading)**. The "Nutrition goal hit" XP hook (`ecoNutritionCheck`) is not reached from this path (section 5.6).
+`fv2Log` writes: pushes `{id:'food_<ms>_<4 chars>', date: mealsDayKey(), slot, foodId:'rcp_…', name, grams, kcal, kcalEstimated, p, c, f, fib:0, sug:0, na:0, at: ISO}` to `state.foodLog` **(run)**, then `save()` (which re-runs `rebuildAttrXP`, badges, level-ups and `renderAll`, `04-runtime.js:13`), haptic `success`, `renderMeals()`, and a 4.2 s snackbar "<name> · <kcal> kcal" with "Undo" (`50-food.js:37-39`; undo removes the entry and saves). A save that fails (storage full, or a read-only save, where `save()` itself says nothing) takes the entry back instead, with no haptic, and the snackbar shows `unsavedMessage()` (`fv2Saved`); an Undo whose save fails puts the entry back the same way. No XP, no quest, no notification. `date` is `mealsDay`, the day the Meals page was last showing (`mealsDayKey` `08-runtime.js:223`), so a recipe logged while Meals was left on another day is logged on that day **(from code reading)**. The "Nutrition goal hit" XP hook (`ecoNutritionCheck`) is not reached from this path (section 5.6).
 
 ### 4.3 Writers outside the pane that change what it shows
 
@@ -229,7 +229,7 @@ Record shape (all 43): `id, n, cat, yield, prep, total, kcal, p, c, f, servingG,
 | Voice "what's on this screen" on Recipes | `g5Screen` maps `recipes` to `food` (`50-voice-gen5.js:167`) and answers with today's food totals (`50-voice-gen5.js:217-223`, `lmvHFood` `46-voice-nlu.js:395`), not with recipes |
 | Class diet card | menu items link to recipe ids (`14-runtime.js:81`) |
 | Smart Diet / Life Director meals | separate catalog (`data/smartDiet.html`, 55 KB, read by `50-smartdiet.js`); Life Director meal links go to Food, Plan (`50-smartdiet.js:236-252`, `features/life-director/logic.js:3483-3499`). Not related to `RECIPES`, although the native Plan pane also shows ingredients and steps |
-| Tests | no test covers the Recipes pane; `tests/swipe.test.js:73` only checks that Recipes lights "Food" |
+| Tests | no test covers the Recipes pane; `tests/swipe.test.js:87` only checks that Recipes lights "Food" |
 
 ### 5.5 Interplay with native Food (the important coupling)
 

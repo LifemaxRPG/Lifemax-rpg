@@ -47,7 +47,7 @@ internal fun ListMessageCard(message: ListMessage, onAdd: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         if (message.add.isNotEmpty())
-            PageButton(
+            LibraryButton(
                 message.add,
                 onAdd,
                 Modifier.padding(top = 12.dp),

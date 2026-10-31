@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.character.data
 
+import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.character.domain.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -96,7 +97,7 @@ class WebCharacterRepository : CharacterRepository {
                     val x = b.getJSONObject(it)
                     BenchmarkProjection(x.getString("name"), x.getString("value"))
                 },
-                colors.keys().asSequence().associateWith { colors.getLong(it) },
+                colors.pageTokens(),
                 j.getBoolean("light"),
                 j.optString("classId", ""),
             )

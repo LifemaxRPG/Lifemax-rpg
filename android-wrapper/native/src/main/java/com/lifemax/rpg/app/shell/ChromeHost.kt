@@ -46,20 +46,26 @@ internal object ChromeHost {
         owner = null
     }
 
+    /**
+     * Shows [scene] in the shared bars for [owner]. A screen [opening] becomes the owner even when
+     * its scene is older than the last one shown (scenes arrive out of order when you switch
+     * quickly), so the screen it replaces, leaving, does not take the bars away under it; only the
+     * stale scene itself is not drawn. A late scene from an update changes nothing.
+     */
     fun show(
         owner: Any,
         activity: Activity,
         web: WebView,
         scene: JSONObject,
+        opening: Boolean = false,
         onAction: (String) -> Unit,
     ): LiveOverviewShell {
         handler.removeCallbacks(release)
         val existing = shell
         val sequence = scene.optInt("sequence")
         val now = SystemClock.uptimeMillis()
-        // an older scene that arrives late must not overwrite a newer one (the highlighted tab
-        // would go back)
-        if (existing != null && sequence < lastSequence && now - lastShownAt < 3000) return existing
+        val stale = existing != null && sequence < lastSequence && now - lastShownAt < 3000
+        if (stale && !opening) return existing!!
         this.owner = owner
         listener = onAction
         val current =
@@ -68,11 +74,15 @@ internal object ChromeHost {
                         listener?.invoke(id)
                     }
                     .also { shell = it }
-        current.show(scene)
-        TabSwipe.scene(scene.optJSONObject("swipe"), sequence)
+        // an older scene that arrives late must not overwrite a newer one (the highlighted tab
+        // would go back), nor reach the tab swipe: only a scene the bars draw does (A34)
+        if (!stale) {
+            current.show(scene)
+            TabSwipe.scene(scene.optJSONObject("swipe"), sequence)
+            lastSequence = sequence
+            lastShownAt = now
+        }
         OverviewBars.hide()
-        lastSequence = sequence
-        lastShownAt = now
         // a screen added after the bars must not cover them
         val parent = current.root.parent as? android.view.ViewGroup
         if (parent != null && parent.indexOfChild(current.root) != parent.childCount - 1)

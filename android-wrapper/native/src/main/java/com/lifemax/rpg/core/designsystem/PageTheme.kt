@@ -35,11 +35,31 @@ open class PageColors(val tokens: Map<String, Long>, val light: Boolean) {
     val field = if (light) Color.White else bg
     val tagFill = if (light) panel2 else bgElev
     val tagText = if (light) textDim else muted
-    val onAccent = if (light) Color.White else OnAccentDark
+    val onAccent = if (light) Color.White else PageInk.OnAccent
+}
 
-    private companion object {
-        val OnAccentDark = Color(0xFF0B1020)
-    }
+/**
+ * Colours the page's styles fix rather than take from the palette, named once for every screen that
+ * follows them. A screen's own rules for when each applies (a light theme override, say) stay in
+ * its colours.
+ */
+object PageInk {
+    /** Text on the accent in the dark theme: .btn, .chip.on (01-base.css:26). */
+    val OnAccent = Color(0xFF0B1020)
+
+    /**
+     * An unticked check box's border: .check, .media-check (01-base.css:175, 02-layout.css:254).
+     */
+    val BoxBorder = Color(0xFF4A5568)
+
+    /** The tick in a ticked box (01-base.css:181, 02-layout.css:257). */
+    val CheckInk = Color(0xFF0C0E12)
+
+    /** A bar's track in the light theme (00-00-foundation.css:124, .xpbar). */
+    val TrackLight = Color(0xFFE8ECF4)
+
+    /** The browser's placeholder grey in a field (Chrome's default, as in the phone's WebView). */
+    val Placeholder = Color(0xFF757575)
 }
 
 val LocalPageColors = staticCompositionLocalOf<PageColors> { error("No page colours") }
