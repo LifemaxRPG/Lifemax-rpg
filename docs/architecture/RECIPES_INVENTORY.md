@@ -229,7 +229,7 @@ Record shape (all 43): `id, n, cat, yield, prep, total, kcal, p, c, f, servingG,
 | Voice "what's on this screen" on Recipes | `g5Screen` maps `recipes` to `food` (`50-voice-gen5.js:167`) and answers with today's food totals (`50-voice-gen5.js:217-223`, `lmvHFood` `46-voice-nlu.js:395`), not with recipes |
 | Class diet card | menu items link to recipe ids (`14-runtime.js:81`) |
 | Smart Diet / Life Director meals | separate catalog (`data/smartDiet.html`, 55 KB, read by `50-smartdiet.js`); Life Director meal links go to Food, Plan (`50-smartdiet.js:236-252`, `features/life-director/logic.js:3483-3499`). Not related to `RECIPES`, although the native Plan pane also shows ingredients and steps |
-| Tests | no test covers the Recipes pane; `tests/swipe.test.js:73` only checks that Recipes lights "Food" |
+| Tests | no test covers the Recipes pane; `tests/swipe.test.js:87` only checks that Recipes lights "Food" |
 
 ### 5.5 Interplay with native Food (the important coupling)
 

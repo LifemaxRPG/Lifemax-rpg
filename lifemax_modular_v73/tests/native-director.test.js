@@ -38,19 +38,21 @@ async function start(b, planned) {
 }
 /* the page's clock in small steps, with real time in between for the promise work of a bar capture */
 async function settle(p, ms = 500) { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 200 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(10) }
+/* go to a view, then settle: a tab change runs in a view transition, whose page change waits for a real frame, not the page's clock */
+async function go(p, v, ms) { await p.evaluate(v => lmaNavTo(v), v); await p.waitForFunction(v => lmaView() === v, v); await settle(p, ms) }
 const mark = p => p.evaluate(() => window.__calls.length);
 
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 
   const fresh = await start(b, false);
-  await fresh.evaluate(() => lmaNavTo('life-director')); await settle(fresh, 1500);
+  await go(fresh, 'life-director', 1500);
   const f = await fresh.evaluate(() => ({ tab: LifeDirector.native.frame().tab, shows: LifeDirector.native.showing(), opens: __since(0).filter(c => c[1] === 'open').length, today: LifeDirector.native.today(0) }));
   ok('before setup the page keeps its own screen: set-up and its guide show and the native screen never opens', f.tab === 'setup' && f.shows === 'guide' && f.opens === 0 && f.today === null, f);
   ok('no script errors before setup', fresh.errors.length === 0, fresh.errors);
 
   const p = await start(b, true);
-  await p.evaluate(() => lmaNavTo('life-director')); await settle(p, 1500);
+  await go(p, 'life-director', 1500);
   const m = await p.evaluate(() => {
     const open = __since(0).filter(c => c[1] === 'open'), s = open.length && open[0][2].snapshot, t = s && s.today;
     if (open.length !== 1 || !t) return { opened: open.length, shows: LifeDirector.native.showing() };
@@ -118,8 +120,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
   r = await click('.ld-sheet-bg');
   ok('closing the sheet brings the screen back, on the day it showed', same(r.calls, ['open']) && r.today.dayIndex === 1, r.calls);
   n = await mark(p);
-  await p.evaluate(() => lmaNavTo('dashboard')); await settle(p, 500);
-  await p.evaluate(() => lmaNavTo('life-director')); await settle(p, 1500);
+  await go(p, 'dashboard', 500); await go(p, 'life-director', 1500);
   r = await state(n);
   ok('coming back to Life Director shows today again', same(r.calls, ['close', 'open']) && r.today.dayIndex === 0, r.calls);
 
@@ -212,7 +213,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
   ok('a session or meal that left the plan since the screen drew it says so, and the screen comes straight back', [r, meal].every(x => same(x.calls, ['close', 'open']) && (x.frame.notice || {}).text === 'That is no longer on the plan.'), [r.frame, meal.frame]);
 
   n = await mark(p);
-  await p.evaluate(() => lmaNavTo('dashboard')); await settle(p, 500);
+  await go(p, 'dashboard', 500);
   const hidden = await mark(p);
   await p.clock.runFor(16000); await settle(p, 300);
   const away = await p.evaluate(([n, h]) => ({ closed: __since(n).some(c => c[1] === 'close'), after: __since(h).map(c => c[1]) }), [n, hidden]);
