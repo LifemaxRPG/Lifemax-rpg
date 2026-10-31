@@ -38,7 +38,8 @@ const fakes = ({ swipe = true, native = true } = {}) => `
 
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const open = async (opts) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); await p.addInitScript(fakes(opts)); await p.goto('file://' + file); return p };
+  // the page is large and the machine may be busy: give its load the time backup-restore.test.js gives it
+  const open = async (opts) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); await p.addInitScript(fakes(opts)); await p.goto('file://' + file, { timeout: 120000 }); return p };
   const p = await open();
   await p.waitForFunction(() => window.NativeSwipe && !document.getElementById('nativeSwipeToggle').disabled, null, { timeout: 20000 }).catch(() => { });
 
@@ -265,6 +266,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
   t = await p.evaluate(() => { lmaResetSwipeTune(); return { stored: lmaLoad().swipeTune, tune: NativeSwipe.state().tune, values: ['knee', 'breakAt', 'haptic'].map(k => document.getElementById('swipeTune-' + k).value) } });
   ok('Reset puts every value back and sends no tuning', t.stored === undefined && t.tune === null && same(t.values, ['0.18', '0.45', 'threshold']), t);
   ok('no script errors', p.errs.length === 0, p.errs);
+  await p.context().close(); // its timers and Overview would keep running while the next pages load
 
   /* ---------- an APK that does not draw the swipe, and a browser ---------- */
   for (const [name, opts, hint] of [['an older APK', { swipe: false }, 'Install the latest Android update to use this.'], ['a browser', { native: false }, 'Available in the Android app.']]) {
