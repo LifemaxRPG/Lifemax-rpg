@@ -183,7 +183,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 
 ## Data safety
 
-- **low** — Three Food writers still ignore save(): starring a food (`fv2ToggleFav`), creating one (`fv2SaveCreate`) and the daily targets (`fv2SaveGoal`). Give them `fv2Saved`'s take-back, as the logging, water, copy, edit, removal and Undo paths now have. *(integration review, finding 4)*
+- **low** — The Food Plan pane's writers (50-smartdiet.js) still ignore save(): `sdLogMeal` (which native Food reaches), log all, unlog, skip and unskip, the diet options and the shopping ticks keep a change the save did not store and show their success. Give them the take-back every writer in 50-food.js now has (`fv2Saved`), with a food.test.js case under a full and a read-only save. *(integration review, found beside finding 4)*
 
 
 - **medium** — There is no backup the owner can rely on before a risky change: the folder backup is opt-in and off by default, never runs before an update, restore or reset,…  

@@ -21,7 +21,8 @@ function fv2Recents(limit){mealsEnsure();const seen=new Set(),out=[];const es=st
  for(const e of es){const key=e.foodId&&e.foodId!=='voice_est'?e.foodId:'n:'+e.name;if(seen.has(key))continue;seen.add(key);const f=Object.assign({},fv2FoodOf(e));f._grams=Math.round(+e.grams)||100;f._last=e.kcal;out.push(f);if(out.length>=(limit||12))break}return out}
 function fv2Favs(){const m=state.mealsMeta=state.mealsMeta||{calGoal:0};return m.favs=m.favs||[]}
 function fv2IsFav(f){return fv2Favs().some(x=>x.id===f.id)}
-function fv2ToggleFav(f){const a=fv2Favs(),i=a.findIndex(x=>x.id===f.id);if(i>=0)a.splice(i,1);else a.unshift({id:f.id,n:f.n,cat:f.cat||'',brand:f.brand||'',kcal:f.kcal,p:f.p,c:f.c,f:f.f,fib:f.fib||0,sug:f.sug||0,na:f.na||0,port:f.port||[]});save();return i<0}
+function fv2ToggleFav(f){const a=fv2Favs(),i=a.findIndex(x=>x.id===f.id),was=a.slice();if(i>=0)a.splice(i,1);else a.unshift({id:f.id,n:f.n,cat:f.cat||'',brand:f.brand||'',kcal:f.kcal,p:f.p,c:f.c,f:f.f,fib:f.fib||0,sug:f.sug||0,na:f.na||0,port:f.port||[]});
+ return fv2Saved(()=>{a.splice(0,a.length,...was)})?i<0:i>=0} // whether the food is a favourite now
 function fv2PL(l){l=String(l||'serving').replace(/\bRACC\b/i,'serving');return l.charAt(0).toUpperCase()+l.slice(1)}
 function fv2Unit(f){const p=(f.port||[])[0];return p?{g:p.g,l:fv2PL(p.l)}:{g:100,l:'100 g'}}
 function fv2KcalFor(f,g){return scaleFood(f,g).kcal}
@@ -232,7 +233,8 @@ function fv2Create(){const sh=fv2S().sh;return fv2Head('Create food',true)+'<div
  +'<p class="fv2-hint">Enter the numbers for one serving, exactly as the label shows them.</p></div><div class="fv2-foot"><button type="button" class="pri" data-s2="createsave">Save and continue</button></div>'}
 function fv2SaveCreate(){const v=id=>{const n=document.getElementById(id);return n?n.value:''},name=v('fv2CN').trim();if(!name){fv2Snack('Give it a name');return}
  const sv=Math.max(1,+v('fv2CS')||100),k=100/sv,r=x=>Math.round((+x||0)*k*100)/100;let kc=r(v('fv2CK'));const p=r(v('fv2CP')),c=r(v('fv2CC')),fa=r(v('fv2CF'));if(!kc&&(p||c||fa))kc=Math.round(p*4+c*4+fa*9);
- const f={id:'custom_'+Date.now(),n:name,brand:v('fv2CB').trim(),cat:'Custom',kcal:kc,p,c,f:fa,fib:0,sug:0,na:0,port:sv===100?[]:[{l:'1 serving',g:sv}]};mealsEnsure();state.customFoods.unshift(f);save();
+ const f={id:'custom_'+Date.now(),n:name,brand:v('fv2CB').trim(),cat:'Custom',kcal:kc,p,c,f:fa,fib:0,sug:0,na:0,port:sv===100?[]:[{l:'1 serving',g:sv}]};mealsEnsure();state.customFoods.unshift(f);
+ if(!fv2Saved(()=>{state.customFoods=state.customFoods.filter(x=>x!==f)}))return; // the form stays filled in
  const sh=fv2S().sh;sh.pick=f;sh.grams=sv;sh.view='portion';sh.stack=['search'];fv2Paint();fv2Hap('success')}
 /* goals */
 function fv2Goal(){const m=state.mealsMeta||{},g=fv2Goals(),cal=g.cal||2000;return fv2Head('Daily targets')+'<div class="fv2-form fv2-goal"><div class="fv2-gc"><button type="button" data-s2="goalstep" data-d="-50" aria-label="Less">−</button><label><input id="fv2GC" data-goal="cal" type="number" inputmode="numeric" value="'+cal+'"><span>calories a day</span></label><button type="button" data-s2="goalstep" data-d="50" aria-label="More">+</button></div>'
@@ -241,7 +243,8 @@ function fv2Goal(){const m=state.mealsMeta||{},g=fv2Goals(),cal=g.cal||2000;retu
  +'<div class="fv2-gs" id="fv2Gs"></div><label>Water goal<span class="u"><input id="fv2GW" type="number" inputmode="numeric" value="'+g.water+'"><em>ml</em></span></label></div><div class="fv2-foot"><button type="button" class="pri" data-s2="goalsave">Save targets</button></div>'}
 function fv2GoalLive(){const n=id=>+(document.getElementById(id)||{}).value||0,k=n('fv2GP')*4+n('fv2GCb')*4+n('fv2GF')*9,c=n('fv2GC'),el=document.getElementById('fv2Gs');if(el)el.innerHTML='Your macros add up to <b>'+fv2Fmt(k)+' kcal</b>'+(c?' · '+(k>c+30?'<span class="bad">'+fv2Fmt(k-c)+' over your calorie target</span>':k<c-30?fv2Fmt(c-k)+' under':'matches your target'):'')}
 function fv2Preset(p){const c=+document.getElementById('fv2GC').value||2000,sp={bal:[.3,.4,.3],hi:[.4,.35,.25],low:[.3,.25,.45]}[p];document.getElementById('fv2GP').value=Math.round(c*sp[0]/4);document.getElementById('fv2GCb').value=Math.round(c*sp[1]/4);document.getElementById('fv2GF').value=Math.round(c*sp[2]/9);fv2GoalLive()}
-function fv2SaveGoal(){const n=id=>Math.max(0,Math.round(+(document.getElementById(id)||{}).value||0));mealsEnsure();const m=state.mealsMeta;m.calGoal=n('fv2GC');m.protGoal=n('fv2GP');m.carbGoal=n('fv2GCb');m.fatGoal=n('fv2GF');m.waterGoalMl=n('fv2GW')||2000;save();fv2Close();renderMeals();fv2Hap('success')}
+function fv2SaveGoal(){const n=id=>Math.max(0,Math.round(+(document.getElementById(id)||{}).value||0));mealsEnsure();const m=state.mealsMeta,keys=['calGoal','protGoal','carbGoal','fatGoal','waterGoalMl'],was={};keys.forEach(k=>{was[k]=m[k]});
+ m.calGoal=n('fv2GC');m.protGoal=n('fv2GP');m.carbGoal=n('fv2GCb');m.fatGoal=n('fv2GF');m.waterGoalMl=n('fv2GW')||2000;if(!fv2Saved(()=>{Object.assign(m,was)}))return;fv2Close();renderMeals();fv2Hap('success')}
 (function(){document.addEventListener('click',function(ev){const b=ev.target.closest&&ev.target.closest('#fv2Ov [data-s2="goalstep"]');if(!b)return;const i=document.getElementById('fv2GC');i.value=Math.max(0,(+i.value||0)+(+b.dataset.d));fv2GoalLive()});
  document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&fv2S().sh.open)fv2Back()})})();
 

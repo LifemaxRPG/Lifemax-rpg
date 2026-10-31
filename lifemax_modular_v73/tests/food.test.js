@@ -50,9 +50,13 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
       full: [() => { Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) } }, () => { Storage.prototype.setItem = real }],
       ro: [() => { saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true }, () => { saveReadOnly = ''; saveReadOnlyTold = false }],
     };
+    // starring, creating a food and the daily targets: each sheet stays as it was (the star unchanged, the form still open)
+    const star = async () => { fv2Open('lunch', null, test); await wait(400); const was = fv2IsFav(test); document.querySelector('[data-s2=fav]').click(); await wait(50); const kept = fv2IsFav(test) === was && document.querySelector('.fv2-star').classList.contains('on') === was; fv2Close(); await wait(400); return kept };
+    const create = async () => { fv2Open('lunch'); await wait(400); fv2Go('create'); document.getElementById('fv2CN').value = 'Unsaved shake'; document.getElementById('fv2CK').value = '120'; document.querySelector('[data-s2=createsave]').click(); await wait(50); const kept = fv2S().sh.view === 'create' && !!document.querySelector('#fv2Ov.show') && document.getElementById('fv2CN').value === 'Unsaved shake'; fv2Close(); await wait(400); return kept };
+    const goal = async () => { fv2Open(null, 'goal'); await wait(400); document.getElementById('fv2GC').value = '3100'; document.querySelector('[data-s2=goalsave]').click(); await wait(50); const kept = !!document.querySelector('#fv2Ov.show') && document.getElementById('fv2GC').value === '3100'; fv2Close(); await wait(400); return kept };
     const out = {};
     for (const [mode, [on, off]] of Object.entries(modes)) {
-      const before = JSON.stringify([state.foodLog, state.waterLog]), stored = localStorage.getItem(STORE), r = {};
+      const before = JSON.stringify([state.foodLog, state.waterLog, state.customFoods, state.mealsMeta]), stored = localStorage.getItem(STORE), r = {};
       on();
       try {
         r.log = [fv2Log(test, 100, 'lunch'), said()];
@@ -60,18 +64,21 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
         fv2CopySlot(yesterday.slot); r.copy = said();
         r.edit = [await sheet('save'), said()];
         r.del = [await sheet('del'), said()];
+        r.star = [await star(), said()];
+        r.create = [await create(), said()];
+        r.goal = [await goal(), said()];
       } finally { off() }
       const logged = fv2Log(test, 100, 'lunch');
       on(); try { document.querySelector('#fv2Snack button').click(); r.undo = [state.foodLog.includes(logged), said()] } finally { off() }
       deleteMealEntry(logged.id);
-      out[mode] = Object.assign(r, { same: JSON.stringify([state.foodLog, state.waterLog]) === before, stored: localStorage.getItem(STORE) === stored });
+      out[mode] = Object.assign(r, { same: JSON.stringify([state.foodLog, state.waterLog, state.customFoods, state.mealsMeta]) === before, stored: localStorage.getItem(STORE) === stored });
     }
     return out;
   });
   for (const [mode, message] of [['full', 'Could not save to this browser (storage full?)'], ['ro', 'Not saved: this version is read-only for your save']]) {
     const r = unsaved[mode];
-    ok('a ' + (mode === 'full' ? 'failed' : 'read-only') + ' save of a logged food, water, a copied meal, an edit, a removal or an Undo is taken back and the snackbar says why',
-      r.log[0] === null && [r.log[1], r.water, r.copy, r.edit[1], r.del[1], r.undo[1]].every(m => m === message) && r.edit[0] && r.del[0] && r.undo[0] && r.same && r.stored, r);
+    ok('a ' + (mode === 'full' ? 'failed' : 'read-only') + ' save of a logged food, water, a copied meal, an edit, a removal, a star, a created food, the targets or an Undo is taken back and the snackbar says why',
+      r.log[0] === null && [r.log[1], r.water, r.copy, r.edit[1], r.del[1], r.star[1], r.create[1], r.goal[1], r.undo[1]].every(m => m === message) && r.edit[0] && r.del[0] && r.star[0] && r.create[0] && r.goal[0] && r.undo[0] && r.same && r.stored, r);
   }
   ok('no script errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);

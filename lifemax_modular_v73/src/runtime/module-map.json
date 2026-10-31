@@ -3026,7 +3026,7 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 41271,
+   "bytes": 41615,
    "statement_count": 71,
    "tags": [
     "nutrition",

@@ -143,7 +143,7 @@ Native presentation, web authority. `50-native-recipes.js` (NativeTabKit, `recip
 
 | Remaining web dependency | How the screen reaches it |
 |---|---|
-| "Log this recipe" (`addRecipeToMeal`: Food's add-food sheet in its portion view, over classic Meals) | the command `log`: the page goes to Meals and opens the sheet while the screen still covers it, and the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page does not show in between; native Food normally does not reopen after the sheet (`NativeTabs.heal` may reopen it if the sheet closes within about 2 s; a Food matter) |
+| "Log this recipe" (`addRecipeToMeal`: Food's add-food sheet in its portion view, over classic Meals) | the command `log`: the page goes to Meals and opens the sheet while the screen still covers it, and the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page does not show in between; native Food normally does not reopen after the sheet (`NativeTabs.heal` may reopen it if the sheet closes within about 2 s; a Food matter), and a native Food still opening when the sheet comes up gives way to it. The sheet's log (`fv2Log`) and every other writer in 50-food.js take their change back and say so when the save fails, read-only included (`fv2Saved`, food.test.js) |
 | Product link | none: the screen opens the projected `https` link with an Android intent |
 | Catalogue, class rule, search rule, wording | the projection; an over-the-air web update can change them without an APK |
 
