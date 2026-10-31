@@ -122,7 +122,8 @@ internal fun ControlView(
 
 /**
  * A tick box that is its own switch, where its row holds more than the box (a bottom-bar row): the
- * box keeps its 20 dp, and Compose widens its touch area. TalkBack calls it by the page's label.
+ * box keeps its 20 dp and the page's margins, and Compose widens its touch area. TalkBack calls it
+ * by the page's label.
  */
 @Composable
 internal fun SwitchBox(
@@ -135,6 +136,7 @@ internal fun SwitchBox(
     PageCheck(
         ui.on(control),
         modifier
+            .checkMargins()
             .toggleTarget(ui.on(control), enabled = control.enabled && !pending, reserve = false) {
                 taps.toggle(control)
             }
@@ -146,6 +148,13 @@ internal fun SwitchBox(
         pending = pending,
     )
 }
+
+/**
+ * The space the page leaves round a tick box: .check's own margin-top:1px, and on the other sides
+ * the browser's checkbox margins, which .check keeps (3 dp right and below, 4 dp left).
+ */
+internal fun Modifier.checkMargins(): Modifier =
+    padding(start = 4.dp, end = 3.dp, top = 1.dp, bottom = 3.dp)
 
 /**
  * What TalkBack adds to a switch's on or off: that the page is turning it, or that a tap hands it
@@ -165,9 +174,10 @@ internal fun switchState(
 /**
  * A select. At the right of a row it is drawn with LMA_IN (panel2, a line edge, 8 dp corners, 6 by
  * 8 padding, 33 dp tall), as wide as its widest option the way a browser sizes one; under a form
- * label it is the form's full-width input. One the page lets the screen change opens its options
- * here; one the page keeps (a form's) hands the tap to the page. While the page has not answered,
- * it shows the option asked for, faded.
+ * label it is the form's full-width input. Either way its text starts 4 dp further in than the
+ * padding says, as the browser draws a select ([MenuListIndent]). One the page lets the screen
+ * change opens its options here; one the page keeps (a form's) hands the tap to the page. While the
+ * page has not answered, it shows the option asked for, faded.
  */
 @Composable
 private fun SelectBox(
@@ -205,7 +215,7 @@ private fun SelectBox(
                 stateDescription = shown
             }
             .padding(
-                start = (if (form) 12.dp else 8.dp) + 1.dp,
+                start = (if (form) 12.dp else 8.dp) + MenuListIndent + 1.dp,
                 end = (if (form) 10.dp else 6.dp) + 1.dp,
                 top = (if (form) 10.dp else 6.dp) + 1.dp,
                 bottom = (if (form) 10.dp else 6.dp) + 1.dp,
@@ -248,6 +258,12 @@ private fun SelectBox(
     }
 }
 
+/**
+ * The space Chromium adds before a select's text, inside the page's own padding (its menu list's
+ * internal start padding, which the page's selects keep: none of them sets appearance).
+ */
+private val MenuListIndent = 4.dp
+
 /** A select's drop-down arrow, as the browser draws it beside the chosen option. */
 @Composable
 private fun Chevron(color: Color, modifier: Modifier = Modifier) {
@@ -284,7 +300,9 @@ private fun InputText(
 
 /**
  * The haptic strength: a small button per option, the chosen one the accent button and the others
- * secondary, 6 dp apart and wrapping (50-haptics.js). TalkBack reads them as one group of choices.
+ * secondary, 6 dp apart and wrapping (50-haptics.js), each as tall as its line (the page's flex row
+ * stretches the borderless accent button to the secondary ones' height). TalkBack reads them as one
+ * group of choices.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -310,6 +328,7 @@ private fun ChoiceGroup(
                 small = true,
                 enabled = control.enabled,
                 onClick = { taps.choose(control, option.value) },
+                Modifier.fillMaxRowHeight(),
                 pending = pending,
                 selected = on,
             )

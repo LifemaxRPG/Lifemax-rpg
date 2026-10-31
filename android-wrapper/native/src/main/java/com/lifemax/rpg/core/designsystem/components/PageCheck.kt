@@ -23,8 +23,10 @@ import com.lifemax.rpg.core.designsystem.LocalPageColors
  * the page's background with a grey edge, filled green with a dark tick when [on]. The light theme
  * keeps a ticked box white with its usual edge, so only the tick shows that it is on
  * (00-00-foundation.css:136-141 outranks .check:checked). A box [pending] the page's answer shows
- * the state asked for, faded; one that is not [enabled] is dimmed as the page dims a disabled
- * button. The tick keeps its size whatever the font size, as the box does.
+ * the state asked for, faded; one that is not [enabled] has its fill and edge dimmed as the page
+ * dims a disabled button, while its tick stays at full strength, so a disabled ticked box still
+ * reads as ticked (in the light theme the tick is all that shows it). The tick keeps its size
+ * whatever the font size, as the box does.
  *
  * It only draws: the row it sits in, or the box itself, is the switch ([toggleTarget]), so TalkBack
  * reads the row's words with the switch's state rather than the box on its own.
@@ -39,30 +41,29 @@ fun PageCheck(
     val c = LocalPageColors.current
     val shape = RoundedCornerShape(6.dp)
     val filled = on && !c.light
+    // a box waiting for the page fades whole; a disabled one fades its fill and edge, not its tick
     Box(
         modifier
             .size(20.dp)
-            .alpha(
-                when {
-                    !enabled -> DISABLED_ALPHA
-                    pending -> PENDING_ALPHA
-                    else -> 1f
-                }
-            )
-            .clip(shape)
-            .background(if (filled) c.good else if (c.light) Color.White else c.bg)
-            .border(
-                1.5.dp,
-                when {
-                    filled -> c.good
-                    c.light -> c.line
-                    else -> BoxEdge
-                },
-                shape,
-            )
+            .alpha(if (pending && enabled) PENDING_ALPHA else 1f)
             .clearAndSetSemantics {},
         contentAlignment = Alignment.Center,
     ) {
+        Box(
+            Modifier.matchParentSize()
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
+                .clip(shape)
+                .background(if (filled) c.good else if (c.light) Color.White else c.bg)
+                .border(
+                    1.5.dp,
+                    when {
+                        filled -> c.good
+                        c.light -> c.line
+                        else -> BoxEdge
+                    },
+                    shape,
+                )
+        )
         if (on)
             with(LocalDensity.current) {
                 Text(
@@ -76,7 +77,7 @@ fun PageCheck(
     }
 }
 
-/** The page's .btn:disabled opacity, which a dimmed box follows. */
+/** The page's .btn:disabled opacity, which a dimmed box's fill and edge follow. */
 private const val DISABLED_ALPHA = .45f
 
 /** A box waiting for the page's answer, as native Workout plan fades its set boxes. */

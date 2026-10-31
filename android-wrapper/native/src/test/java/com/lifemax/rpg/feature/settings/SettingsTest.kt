@@ -148,6 +148,34 @@ class SettingsTest {
         val settings = tabs.first { it.view == "settings" }
         assertTrue(settings.visible)
         assertTrue(settings.earlier != null && settings.later != null)
+        // the page's gear, once Settings is in the bar as before
+        assertEquals("gear", settings.icon)
+        assertTrue(tabs.all { it.icon.isNotEmpty() })
+    }
+
+    /** What TalkBack calls each control: the page gives every one a name, in every fixture. */
+    @Test
+    fun everyControlHasAName() {
+        for (name in listOf("default", "many", "light", "bar")) {
+            val unnamed =
+                decode(name)
+                    .controls()
+                    .filter { control ->
+                        when (control) {
+                            is SettingsControl.Switch -> control.label
+                            is SettingsControl.Select -> control.label
+                            is SettingsControl.Field -> control.label
+                            is SettingsControl.Choice -> control.label
+                            else -> null // a button says its words, the picture its title
+                        }?.isBlank() == true
+                    }
+                    .map { it.id }
+            assertEquals(name, emptyList<String>(), unnamed)
+        }
+        assertEquals(
+            "Class to switch to",
+            decode("many").control<SettingsControl.Select>("#devClassSel").label,
+        )
     }
 
     @Test
@@ -173,9 +201,14 @@ class SettingsTest {
         val broken: List<Pair<String, JSONObject.() -> Unit>> =
             listOf(
                 "another protocol" to { put("protocol", 2) },
+                "the protocol as text" to { put("protocol", "1") },
+                "the sequence as text" to { put("sequence", "9") },
+                "the sequence with a fraction" to { put("sequence", 9.5) },
+                "the session as a number" to { put("webSessionId", 7) },
                 "no tokens" to { remove("tokens") },
                 "a token missing" to { getJSONObject("tokens").remove("accent") },
                 "a token that is not a number" to { getJSONObject("tokens").put("bg", "dark") },
+                "a token as numeric text" to { getJSONObject("tokens").put("bg", "4278190080") },
                 "light not a boolean" to { put("light", "no") },
                 "no head" to { remove("head") },
                 "no chips" to { put("categories", JSONArray()) },
@@ -262,6 +295,10 @@ class SettingsTest {
                         put("notice", JSONObject().put("id", 0).put("text", "Saved"))
                     },
                 "a notice without words" to { put("notice", JSONObject().put("id", 3)) },
+                "a notice numbered as text" to
+                    {
+                        put("notice", JSONObject().put("id", "3").put("text", "Saved"))
+                    },
             )
         for ((what, change) in broken) {
             val sequence = repo.state.value!!.sequence + 1
@@ -634,6 +671,20 @@ class SettingsTest {
         assertEquals(14f, profile[0].top.value)
         assertEquals(16f, profile[1].top.value)
         assertEquals(12f, profile[2].top.value)
+
+        // developer mode's tools: the class select and Switch, then "Preview start screen" in an
+        // element of its own, 10 dp under them (margin-top:10px), not run together
+        val dev = decode("many").cards.first { it.id == "devModeCard" }
+        val select =
+            dev.rows.indexOfFirst { row ->
+                row is SettingsRow.Controls && row.controls.any { it.id == "#devClassSel" }
+            }
+        val preview = dev.rows[select + 1] as SettingsRow.Controls
+        assertEquals(
+            "▶ Preview start screen",
+            (preview.controls.single() as SettingsControl.Button).label,
+        )
+        assertEquals(10f, rowBoxes(dev)[select + 1].top.value)
     }
 
     @Test

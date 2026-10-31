@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.settings.data
 
+import com.lifemax.rpg.core.data.PAGE_TOKENS
 import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.settings.domain.ButtonStyle
@@ -22,23 +23,23 @@ import org.json.JSONObject
 
 /**
  * Decodes the page's Settings projection (50-native-settings.js, settings.projection.v1). Malformed
- * data is rejected whole and the last good state kept: a missing or mistyped field (true or false
- * sent as text included), a palette without every token, an unknown kind of row or control, a
- * control operated in a way its kind is not, two cards or two controls with one id (the list's keys
- * and the commands' targets), a selected category or a card's category the chips do not have, a
- * profile picture that is not a data URL. What is only the page's state of the moment is drawn as
- * it comes: a select whose options a renderer has not filled yet, a field row whose input is
- * hidden. An update older than the one held is ignored; a projection from another page session is
- * taken only on an explicit open.
+ * data is rejected whole and the last good state kept: a missing or mistyped field (true or false,
+ * or a number, sent as text included), a palette without every token, an unknown kind of row or
+ * control, a control operated in a way its kind is not, two cards or two controls with one id (the
+ * list's keys and the commands' targets), a selected category or a card's category the chips do not
+ * have, a profile picture that is not a data URL. What is only the page's state of the moment is
+ * drawn as it comes: a select whose options a renderer has not filled yet, a field row whose input
+ * is hidden. An update older than the one held is ignored; a projection from another page session
+ * is taken only on an explicit open.
  */
 class WebSettingsRepository : SettingsRepository {
     private val mutable = MutableStateFlow<SettingsProjection?>(null)
     override val state = mutable.asStateFlow()
 
     fun accept(j: JSONObject, establishSession: Boolean = false) {
-        require(j.getInt("protocol") == 1) { "Unsupported settings protocol" }
-        val session = j.getString("webSessionId")
-        val sequence = j.getLong("sequence")
+        require(j.whole("protocol") == 1L) { "Unsupported settings protocol" }
+        val session = j.text("webSessionId")
+        val sequence = j.whole("sequence")
         require(session.isNotBlank() && sequence > 0)
         val old = mutable.value
         if (old != null && old.session != session && !establishSession) return
@@ -65,7 +66,11 @@ class WebSettingsRepository : SettingsRepository {
         return SettingsProjection(
             session,
             sequence,
-            j.getJSONObject("tokens").pageTokens(),
+            j.getJSONObject("tokens").let { t ->
+                // pageTokens (shared with the other tabs) takes numeric text; here only a number is
+                PAGE_TOKENS.forEach { t.whole(it) }
+                t.pageTokens()
+            },
             j.flag("light"),
             SettingsHead(head.text("eyebrow"), head.text("title"), head.text("blurb")),
             categories,
@@ -75,7 +80,7 @@ class WebSettingsRepository : SettingsRepository {
             if (j.isNull("notice")) null
             else
                 j.getJSONObject("notice").let {
-                    PageNotice(it.getLong("id"), it.text("text")).also { n ->
+                    PageNotice(it.whole("id"), it.text("text")).also { n ->
                         require(n.id > 0) { "A notice id starts at 1" }
                     }
                 },
@@ -264,6 +269,16 @@ class WebSettingsRepository : SettingsRepository {
         val value = get(name)
         require(value is Boolean) { "$name is not true or false" }
         return value
+    }
+
+    /**
+     * A whole number. org.json's getInt and getLong also take numeric text ("1") and cut a fraction
+     * off, neither of which the page sends: anything but an integer is malformed.
+     */
+    private fun JSONObject.whole(name: String): Long {
+        val value = get(name)
+        require(value is Int || value is Long) { "$name is not a whole number" }
+        return (value as Number).toLong()
     }
 
     /** A string field; a number or anything else where a string belongs is malformed. */

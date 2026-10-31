@@ -75,8 +75,9 @@ internal fun SettingsRow.Line.isAvatar(): Boolean = controls.firstOrNull() is Se
  * (the larger wins), as CSS margins do between siblings; paddings never do. The values are the
  * page's: .settingsline's 13 dp padding and the line under it (except under the card's last row),
  * the profile picture's 14 and 16 dp margins, a note's 10 dp under it (12 above when rows come
- * first), a muted paragraph's 8 dp above, the haptic strength's 10 above and 8 under, buttons on
- * their own 12 dp under what comes before them (none under more buttons), a form field's 12 dp.
+ * first), a muted paragraph's 8 dp above, the haptic strength's 10 above and 8 under (the tries
+ * under it have no margin of their own), buttons on their own 12 dp under what comes before them
+ * and 10 under more buttons (each row of buttons is an element of its own), a form field's 12 dp.
  */
 fun rowBoxes(card: SettingsCard): List<RowBox> {
     var before = card.headGap()
@@ -104,10 +105,19 @@ private fun margins(row: SettingsRow, index: Int, last: Boolean, before: Setting
         is SettingsRow.Note -> Margins(if (index == 0) 0.dp else 12.dp, if (last) 0.dp else 10.dp)
         is SettingsRow.Text -> Margins(8.dp, 0.dp)
         is SettingsRow.Controls ->
-            if (row.controls.any { it is SettingsControl.Choice }) Margins(10.dp, 8.dp)
-            else Margins(if (before is SettingsRow.Controls) 0.dp else 12.dp, 0.dp)
+            when {
+                row.isChoice() -> Margins(10.dp, 8.dp)
+                // the haptic tries: the strength's renderer gives their row no margin of its own
+                before.isChoice() -> Margins(0.dp, 0.dp)
+                // more buttons in an element of their own (developer mode's tools: margin-top:10px)
+                before is SettingsRow.Controls -> Margins(10.dp, 0.dp)
+                else -> Margins(12.dp, 0.dp)
+            }
         is SettingsRow.Field -> Margins(12.dp, 0.dp)
     }
+
+private fun SettingsRow?.isChoice(): Boolean =
+    this is SettingsRow.Controls && controls.any { it is SettingsControl.Choice }
 
 /**
  * A key for the row that stays with it while rows come, go and move: its first control's id (each
@@ -212,7 +222,7 @@ private fun LineRow(
                 {
                     PageCheck(
                         ui.on(switch),
-                        Modifier.padding(top = 1.dp),
+                        Modifier.checkMargins(),
                         enabled = switch.enabled,
                         pending = pending,
                     )

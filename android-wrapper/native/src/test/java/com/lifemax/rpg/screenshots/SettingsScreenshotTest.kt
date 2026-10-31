@@ -116,13 +116,26 @@ class SettingsScreenshotTest {
 
     @Test fun barLight() = snap("bar", light = true, card = "tabsCard")
 
+    /**
+     * The end of the bar editor: Settings in the bar with its gear and arrows, Reset to default.
+     */
+    @Test fun barEndDark() = snap("bar", card = "tabsCard", scrolledDp = 360)
+
+    @Test fun barEndLight() = snap("bar", light = true, card = "tabsCard", scrolledDp = 360)
+
     /** Navigation's and Quest effects' selects, Guided workout, the haptic strength. */
     @Test fun selectsDark() = snap("default", card = "lmaNavCard")
 
+    @Test fun selectsLight() = snap("light", light = true, card = "lmaNavCard")
+
     @Test fun hapticsDark() = snap("many", category = "look", card = "hapCard")
+
+    @Test fun hapticsLight() = snap("many", light = true, category = "look", card = "hapCard")
 
     /** Phone & sync for a new player: updates, the widget's note, switches Android asks about. */
     @Test fun phoneDark() = snap("default", category = "phone")
+
+    @Test fun phoneLight() = snap("light", light = true, category = "phone")
 
     /** The backup warning, controls the page has switched off until a folder is chosen. */
     @Test fun backupWarningDark() = snap("default", category = "phone", card = "lmaBakCard")
@@ -132,6 +145,14 @@ class SettingsScreenshotTest {
 
     /** Most switches on: health sync and its types, the backup folder chosen. */
     @Test fun healthDark() = snap("many", card = "lmaHealthCard")
+
+    @Test fun healthLight() = snap("many", light = true, card = "lmaHealthCard")
+
+    /** Health sync off: its types disabled but ticked, the tick at full strength. */
+    @Test fun healthOffDark() = snap("default", category = "phone", card = "lmaHealthCard")
+
+    @Test
+    fun healthOffLight() = snap("light", light = true, category = "phone", card = "lmaHealthCard")
 
     /** Reminders with their times, quiet hours. */
     @Test fun notificationsDark() = snap("many", card = "lmaNotifCard", scrolledDp = 300)
@@ -148,25 +169,45 @@ class SettingsScreenshotTest {
     /** The XP rules' number boxes and their buttons. */
     @Test fun rulesDark() = snap("many", category = "game", card = "xp-rules")
 
+    @Test fun rulesLight() = snap("many", light = true, category = "game", card = "xp-rules")
+
     /** Data management's danger row and the privacy note; developer mode's tools shown. */
     @Test fun dataDark() = snap("many", category = "data", card = "devModeCard")
 
+    @Test fun dataLight() = snap("many", light = true, category = "data", card = "devModeCard")
+
+    /** Developer mode's tools to their end: the class select and Switch, the start screen. */
+    @Test
+    fun devToolsDark() = snap("many", category = "data", card = "devModeCard", scrolledDp = 300)
+
+    @Test
+    fun devToolsLight() =
+        snap("many", light = true, category = "data", card = "devModeCard", scrolledDp = 300)
+
     @Test fun dataManagementDark() = snap("default", category = "data", card = "data-management")
+
+    @Test
+    fun dataManagementLight() =
+        snap("light", light = true, category = "data", card = "data-management")
 
     /** Voice & journal: disabled buttons, the journal lock that Android asks about. */
     @Test fun voiceDark() = snap("default", category = "voice")
+
+    @Test fun voiceLight() = snap("light", light = true, category = "voice")
 
     /**
      * The screen waiting for the page: light mode asked on and Native Recipes asked on (both drawn
      * faded at the state asked for), and the Phone & sync chip chosen before the page answers.
      */
-    @Test
-    fun pendingDark() =
-        snap("default") {
-            val p = projection.value!!
-            toggle(p.switch("lightMode"))
-            toggle(p.switch("nativeRecipes"))
-        }
+    @Test fun pendingDark() = snap("default", use = waiting)
+
+    @Test fun pendingLight() = snap("light", light = true, use = waiting)
+
+    private val waiting: SettingsViewModel.() -> Unit = {
+        val p = projection.value!!
+        toggle(p.switch("lightMode"))
+        toggle(p.switch("nativeRecipes"))
+    }
 
     /**
      * Phone & sync chosen on the screen before the page answers: its cards show at once. (A chip
@@ -174,4 +215,6 @@ class SettingsScreenshotTest {
      * run.)
      */
     @Test fun chipChosenDark() = snap("default") { selectCategory("phone") }
+
+    @Test fun chipChosenLight() = snap("light", light = true) { selectCategory("phone") }
 }
