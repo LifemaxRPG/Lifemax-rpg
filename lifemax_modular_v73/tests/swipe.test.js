@@ -67,6 +67,10 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.evaluate(() => lmaNavTo('quests')); await p.waitForTimeout(100);
   ok('a normal tab change goes back to the usual fade-in', await p.evaluate(() => !document.documentElement.dataset.swipeDir));
   await p.waitForTimeout(600);
+  // a tab chosen before the last slide has changed the page (a late frame): the newer choice wins, slid or fast
+  await p.evaluate(() => { lmaNavTo('character'); lmaNavTo('quests') }); await settle(); const slid = await view();
+  await p.evaluate(() => { lmaNavTo('dashboard'); lmaNavTo('character', { fast: true }) }); await settle();
+  ok('a tab chosen before the last slide has changed the page wins, with or without a slide of its own', slid === 'quests' && (await view()) === 'character', [slid, await view()]);
   for (let i = 0; i < 6; i++) { await swipe(320, 110, 400, 50, 4); await touch('touchend', 110, 402); await p.waitForTimeout(60); await p.evaluate(() => { const b = [...document.querySelectorAll('.navbtn[data-view]')]; b[Math.floor(Math.random() * b.length)].click() }); await p.waitForTimeout(40) }
   await settle(); const lit = await p.evaluate(() => ({ lit: [...document.querySelectorAll('.navbtn.active')].map(b => b.dataset.view), view: lmaView() }));
   ok('after many quick swipes and taps only the current tab is lit', lit.lit.length === 1 && lit.lit[0] === (lit.view === 'media' || lit.view === 'history' ? 'library' : lit.view === 'meals' || lit.view === 'recipes' ? 'food' : lit.view), lit);
