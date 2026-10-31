@@ -311,7 +311,9 @@ async function settings(b) {
   };
   const command = (p, list) => p.evaluate(async (list) => {
     for (const [command, payload] of list) {
-      const [reply] = await Capacitor.Plugins.NativeSettings.__emit('command', { command, payload, requestId: command });
+      // an id of its own for each request, as the screen gives them (the page answers a repeated id from its receipt)
+      const requestId = command + '-' + (window.__rid = (window.__rid || 0) + 1);
+      const [reply] = await Capacitor.Plugins.NativeSettings.__emit('command', { command, payload, requestId });
       if (!reply.ok && reply.changed !== false) throw Error(command + ' ' + JSON.stringify(payload) + ': ' + reply.message);
     }
   }, list);

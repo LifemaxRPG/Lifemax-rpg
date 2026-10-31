@@ -70,7 +70,7 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
         window.__log.push(window.__t() + ' >> tap ' + (to || 'a switch') + ' in ' + screen);
         const settled = !window.__busy && lmaView() === from && Object.keys(window.__vis).every(k => window.__vis[k] === (k === screen));
         window.__tapped = settled && to ? screen : ''; // a switch goes nowhere: no hand-over to check
-        if (commands) commands.forEach((payload, i) => P.__emit('command', { command: 'toggle', payload, requestId: 'sim' + i }));
+        if (commands) commands.forEach((payload) => P.__emit('command', { command: 'toggle', payload, requestId: 'sim' + (window.__rid = (window.__rid || 0) + 1) })); // each its own id, as the screen's
         else P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
         return lmaView();
       }, [step.to, TAPS[step.to]]);

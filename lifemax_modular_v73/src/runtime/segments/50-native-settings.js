@@ -69,7 +69,8 @@
     hint: "The page this screen is drawn from. To stay there, turn off Native Settings (beta) under Look & feel, Appearance.",
   };
 
-  let classic = false; // the owner asked for the classic page: it stays until they leave Settings
+  let classic = false; // the owner asked for the classic page: it stays until they leave Settings or turn the screen on again
+  let warmFrom = null; // while the tab previews are captured (they go through every tab): whether Settings showed before
   let revealed = false; // a card was handed to the owner: the screen stays away until their next tap there has done its work
   let picking = null; // a file input whose picker is open
   let toasts = 0; // the page's toasts so far, so the screen tells a message from a repeat of the same words
@@ -210,7 +211,8 @@
       hint = [...el.querySelectorAll(".muted")].filter((m) => !m.parentElement.closest(".muted") && shown(m)).map(words).filter(Boolean).join("\n");
     return { type: "row", title, hint, danger: !!(strong && strong.classList.contains("danger")), controls: controlsIn(el, ctx, title) };
   }
-  /** a bottom-bar row: the page's own row, with its arrows and its box */
+  /** a bottom-bar row: the page's own row, with its arrows and its box. An extra tab (Settings) draws its icon without a
+      data-px, in the bar as in the editor, so its icon is the one the page gives it (LMA_TAB_EXTRA). */
   function tabOf(el, ctx) {
     const v = el.dataset.view,
       extra = LMA_TAB_EXTRA.find((x) => x.view === v),
@@ -220,7 +222,7 @@
       type: "tab",
       view: v,
       label,
-      icon: el.querySelector("[data-px]")?.dataset.px || (extra && !earlier ? extra.icon : ""),
+      icon: el.querySelector("[data-px]")?.dataset.px || (extra ? extra.icon : ""),
       visible: !el.classList.contains("off"),
       earlier: earlier ? controlOf(earlier, ctx, label) : null,
       later: later ? controlOf(later, ctx, label) : null,
@@ -303,7 +305,7 @@
         blurb: words(head.querySelector("p")),
       },
       categories: SET_CATS.map((c) => ({ id: c.id, name: c.name })),
-      category: setCat,
+      category: SET_CATS.some((c) => c.id === setCat) ? setCat : SET_CATS[0].id, // the decoder takes only a chip
       classic: CLASSIC,
       cards: cards().map((c) => walkCard(c, bound).card),
       notice: notice(),
@@ -414,6 +416,25 @@
     },
   };
 
+  /* Each command's reply by its request id, so a request delivered twice (a retry on the way: A14) is answered again without
+     running again; a bar arrow would otherwise move its tab two places. The screen gives every tap an id of its own and never
+     sends one again, so a receipt only has to outlast a delivery: the last RECEIPTS of this page's life are kept. The same id
+     with another command or payload is refused. */
+  const RECEIPTS = 64;
+  const receipts = new Map();
+  function once(name, run) {
+    return (payload, { requestId } = {}) => {
+      if (!requestId) return run(payload);
+      const asked = JSON.stringify([name, payload]),
+        seen = receipts.get(requestId);
+      if (seen) return seen.asked === asked ? seen.reply : refuse("That request was already answered. Nothing was changed.");
+      const reply = run(payload);
+      receipts.set(requestId, { asked, reply });
+      if (receipts.size > RECEIPTS) receipts.delete(receipts.keys().next().value);
+      return reply;
+    };
+  }
+
   /* ---------- delegations: the screen closes and the page shows the card ---------- */
 
   /** the card holding a control id, the control itself, or null */
@@ -480,15 +501,19 @@
     toggle: "nativeSettingsToggle",
     projection,
     onAction,
-    commands,
+    commands: Object.fromEntries(Object.entries(commands).map(([name, run]) => [name, once(name, run)])),
     blocked,
     globals: { open: "openNativeSettings", enable: "setNativeSettingsEnabled", projection: "NativeSettingsTabProjection" },
   });
-  // turned on from the classic page, the screen comes at once (the switch's box is not a field, so nothing keeps it away)
+  // turned on from the classic page, the screen comes at once (the switch's box is not a field, so nothing keeps it away), the
+  // classic page asked for before included
   const enable = window.setNativeSettingsEnabled;
   window.setNativeSettingsEnabled = async (on) => {
     await enable(on);
-    if (on) tab.revisit();
+    if (on) {
+      classic = false;
+      tab.revisit();
+    }
   };
 
   /** the page changed: step aside if it now needs to be in front, come back if it no longer does, refresh what shows */
@@ -501,10 +526,19 @@
   }
   const later = () => setTimeout(follow, COMEBACK_MS);
   // leaving Settings ends the classic page, a hand-over to the owner and a picker left open; the view's class says so (navigate
-  // switches it), so no page function is wrapped for it
+  // switches it), so no page function is wrapped for it. The tab previews' capture goes through every tab and back without the
+  // owner leaving: it clears the flag only for its own return to Settings (lmaThumbWarm clears it in the same task)
+  const isActive = (cls) => ` ${cls || ""} `.includes(" active ");
   new MutationObserver((records) => {
+    if (lmaThumbWarmBusy) {
+      if (warmFrom === null) warmFrom = isActive(records[0].oldValue);
+      return;
+    }
+    const captured = warmFrom;
+    warmFrom = null;
+    if (captured && view().classList.contains("active")) return; // the capture is back where it began
     // a class that was without "active" at some point since the last call: the owner left, even if already back
-    if (!records.some((r) => !` ${r.oldValue || ""} `.includes(" active ")) && view().classList.contains("active")) return;
+    if (!records.some((r) => !isActive(r.oldValue)) && view().classList.contains("active")) return;
     classic = false;
     revealed = false;
     picking = null;

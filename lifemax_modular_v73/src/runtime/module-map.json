@@ -2991,7 +2991,7 @@
   },
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
-   "bytes": 2470,
+   "bytes": 2577,
    "statement_count": 6,
    "tags": [
     "settings"
@@ -3276,7 +3276,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 12296,
+   "bytes": 12424,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3377,7 +3377,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 27240,
+   "bytes": 29323,
    "statement_count": 1,
    "tags": [
     "native",

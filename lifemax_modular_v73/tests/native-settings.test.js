@@ -18,8 +18,8 @@ const HELPERS = `
   var until = async (f, ms = 5000) => { for (let t = 0; t < ms && !f(); t += 50) await wait(50); return !!f() };
   var back = () => until(showing, 3000);
   var away = async (ms = 700) => { await wait(ms); return !showing() };
-  var rid = 0;
-  var command = async (command, payload) => { const requestId = 'q' + (++rid); const [reply] = await P.__emit('command', { command, payload, requestId }); return reply };
+  // every request an id of its own for the page's life, as the screen gives them (the page answers a repeated id from its receipt)
+  var command = async (command, payload) => { const requestId = 'q' + (window.__rid = (window.__rid || 0) + 1); const [reply] = await P.__emit('command', { command, payload, requestId }); return reply };
   var act = async (e, ms = 250) => { await P.__emit('action', e); await wait(ms) };
   var card = (s, id) => s.cards.find(c => c.id === id);
   var controls = s => s.cards.flatMap(c => c.rows.flatMap(r => r.type === 'tab' ? [r.earlier, r.later, r.show].filter(Boolean) : r.controls || []));
@@ -98,6 +98,7 @@ const HELPERS = `
       permission: ctl(s, 'reminders').op === 'toggle' && ctl(s, 'calendar').op === 'reveal' && ctl(s, 'health').op === 'reveal', // reminders are on: off is a command
       delegated: ['#jlToggle', '#deviceBackupToggle', '#devModeOn', '#decayOn', '#characterBuild', idOf(s, 'lmaNotifCard', 'Workout time'), 'rewards/0', 'data-management/3', idOf(s, 'gwrCard', 'Trainer pack')].every(id => ctl(s, id) && ctl(s, id).op === 'reveal'),
     };
+    out.unnamed = controls(s).filter(k => ['switch', 'select', 'field', 'choice'].includes(k.kind) && !k.label).map(k => k.id);
     out.size = JSON.stringify(s).length;
     // the hidden cloud-voice rows: their key never reaches the screen
     localStorage.setItem('lifemax_gemini_ui', '1'); localStorage.setItem('lifemax_gemini_key_v1', 'AIza-SECRET-KEY-123'); lmvSettingsRender(); await wait(300);
@@ -120,6 +121,7 @@ const HELPERS = `
   ok('every control shows the page\'s state, options and words', r.controlsMatch && r.controlsMatch.length === 0, r.controlsDetail);
   for (const [k, v] of Object.entries(r.words || {})) ok('words the renderers write: ' + k, v, r.words);
   ok('the easy settings are commands; a switch asking Android first is a delegation to turn on; the rest are delegations', r.ops.bound && r.ops.permission && r.ops.delegated, r.ops);
+  ok('every switch, select, field and choice has a name for TalkBack', r.unnamed.length === 0, r.unnamed);
   ok('the hidden cloud-voice key never reaches the screen', r.secret, r);
   ok('a fact a renderer learns later arrives with the next projection', r.async, r);
   ok('the page\'s toast comes with the projection', r.notice, r);
@@ -183,6 +185,13 @@ const HELPERS = `
     const order = () => lmaTabsButtons().map(b => b.dataset.view);
     const before = order(), want = before.slice(); want.splice(3, 0, want.splice(2, 1)[0]);
     q = await command('press', { id: 'tabs.' + before[2] + '.later' }); out.move = q.ok && JSON.stringify(order()) === JSON.stringify(want) && JSON.stringify(prefs().tabs.order) === JSON.stringify(want);
+    // the same request twice (a retry on the way): answered twice, the tab moved once; the same id for another request is refused
+    const once = order(), oneMove = once.slice(); oneMove.splice(3, 0, oneMove.splice(2, 1)[0]);
+    const same = { command: 'press', payload: { id: 'tabs.' + once[2] + '.later' }, requestId: 'same-1' };
+    const [first] = await P.__emit('command', same), [again] = await P.__emit('command', same);
+    const [reused] = await P.__emit('command', { command: 'press', payload: { id: 'tabs.' + oneMove[0] + '.later' }, requestId: 'same-1' });
+    out.pressOnce = first.ok && first.changed && again.ok && again.changed && again.requestId === 'same-1' && JSON.stringify(order()) === JSON.stringify(oneMove)
+      && JSON.stringify(prefs().tabs.order) === JSON.stringify(oneMove) && !reused.ok && reused.requestId === 'same-1';
     q = await command('press', { id: 'tabs.' + order()[0] + '.earlier' }); out.moveFirst = !q.ok; // the first tab's earlier arrow is disabled on the page
     q = await command('toggle', { id: 'tabs.pet.show', on: false }); out.hide = q.ok && lmaTabsButtons().find(b => b.dataset.view === 'pet').classList.contains('tab-off') && prefs().tabs.hidden.includes('pet');
     const shown = () => lmaTabsButtons().filter(b => !b.classList.contains('tab-off')).map(b => b.dataset.view);
@@ -192,6 +201,8 @@ const HELPERS = `
     out.keepTwo = two.length === 2 && !q.ok && q.message === 'Keep at least two tabs in the bar' && JSON.stringify(shown()) === JSON.stringify(two)
       && card(latest(), 'tabsCard').rows.find(x => x.view === two[0]).show.on === true;
     q = await command('toggle', { id: 'tabs.settings.show', on: true }); out.extra = q.ok && !!document.querySelector('.sidebar .navbtn[data-view="settings"]') && lmaLoad().tabs.extra.includes('settings');
+    const inBar = card(latest(), 'tabsCard').rows.find(x => x.view === 'settings');
+    out.extraInBar = inBar.icon === 'gear' && inBar.visible && !!inBar.earlier && !!inBar.later && card(latest(), 'tabsCard').rows.filter(x => x.type === 'tab').every(x => x.icon);
     q = await command('press', { id: 'tabs.reset' }); out.reset = q.ok && q.message === 'Bottom bar reset' && lmaLoad().tabs === null && JSON.stringify(order()) === JSON.stringify(LMA_TAB_DEFAULT) && !document.querySelector('.sidebar .navbtn[data-view="settings"]');
     out.stillShowing = showing();
     return out;
@@ -313,6 +324,14 @@ const HELPERS = `
     await act({ action: 'classic' });
     out.classic = await away(); document.body.click(); out.classicStays = await away();
     navigate('dashboard'); navigate('settings'); out.classicBack = await back();
+    // the tab previews' capture goes through every tab and back (as lmaThumbWarm does): the owner did not leave, the classic page stays
+    await act({ action: 'classic' });
+    lmaThumbWarmBusy = true; lmaNavTo('dashboard', { fast: true, skip: true }); await wait(200); lmaNavTo('settings', { fast: true, skip: true }); lmaThumbWarmBusy = false; lmaThumbRender();
+    out.classicCapture = lmaView() === 'settings' && await away(900);
+    // the switch turned off and on again on the page: the screen comes at once
+    const toggle = document.getElementById('nativeSettingsToggle');
+    toggle.click(); await wait(300); out.classicOff = lmaLoad().nativeSettings === false && !showing();
+    toggle.click(); out.classicSwitch = await back() && lmaLoad().nativeSettings === true;
     return out;
   }, HELPERS);
   for (const [k, v] of Object.entries(d)) ok('delegation: ' + k, v, d);
@@ -357,14 +376,19 @@ const HELPERS = `
 
   /* ---------- in a browser: nothing to open, the switch is disabled ---------- */
   const p2 = await ctx.newPage(); p2.on('pageerror', e => errs.push('browser: ' + String(e)));
-  await p2.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,tipsSeen:{}}));");
+  await p2.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,tipsSeen:{}})); localStorage.setItem('lma_set_cat', 'sound');");
   await p2.goto('file://' + file); await p2.waitForTimeout(2500);
   const w = await p2.evaluate(async () => {
     navigate('settings'); await new Promise(r => setTimeout(r, 300));
     const t = document.getElementById('nativeSettingsToggle'), s = NativeSettingsTabProjection.snapshot();
     const notif = s.cards.find(c => c.id === 'lmaNotifCard');
-    return { disabled: t.disabled && !t.checked, notes: notif.rows.length === 1 && notif.rows[0].type === 'note' && /Android app/.test(notif.rows[0].text), cards: s.cards.length };
+    // a category the chips do not have (a stale or broken lma_set_cat): the page shows its first, and the projection names a chip
+    const shownCards = [...document.querySelectorAll('#view-settings .card')].filter(c => c.offsetParent).map(c => setCatOf(c)).filter(Boolean);
+    const broken = setCat === 'look' && s.category === 'look' && shownCards.length > 0 && shownCards.every(c => c === 'look');
+    setCat = 'sound'; const forced = NativeSettingsTabProjection.snapshot().category; setCat = 'look';
+    return { disabled: t.disabled && !t.checked, notes: notif.rows.length === 1 && notif.rows[0].type === 'note' && /Android app/.test(notif.rows[0].text), cards: s.cards.length, broken, forced };
   });
+  ok('a category the chips do not have: the page shows its first chip, and the projection always names a chip', w.broken && w.forced === 'look', w);
   ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 23, w);
 
   ok('no script errors', errs.length === 0, errs.slice(0, 5));

@@ -2157,7 +2157,7 @@
       {
        "kind": "select",
        "id": "#devClassSel",
-       "label": "",
+       "label": "Class to switch to",
        "value": "athlete",
        "options": [
         {

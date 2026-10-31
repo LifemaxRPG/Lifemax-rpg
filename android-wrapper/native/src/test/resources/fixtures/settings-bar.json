@@ -579,7 +579,7 @@
      "type": "tab",
      "view": "settings",
      "label": "Settings",
-     "icon": "",
+     "icon": "gear",
      "visible": true,
      "earlier": {
       "kind": "button",

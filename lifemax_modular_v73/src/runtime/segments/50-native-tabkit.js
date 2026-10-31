@@ -36,8 +36,9 @@
    * function to follow while open), globals {open, enable, projection}. An action naming a view ({view}) instead goes there
    * without closing first: the hand-over closes the screen once the next one shows, or at once for a page the web draws, so
    * moving to another native tab never flashes the page.
-   * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
-   * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
+   * Optional: commands {name: async (payload, {requestId}) => reply} run on the page WITHOUT closing the screen (a draft
+   * preview, a save); the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed
+   * afterwards. requestId is the screen's id for the request ("" when it sent none).
    * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
    * entered is true for the first open after the page went to the tab's view, false when the screen comes back by revisit().
    * afterOpen() runs once the screen has opened and covers the page (for example to empty page fields beforeOpen took over, so
@@ -112,7 +113,7 @@
         const handler = cfg.commands && cfg.commands[e && e.command];
         let reply;
         try {
-          reply = handler ? (await handler((e && e.payload) || {})) || {} : { ok: false, message: "Unknown command" };
+          reply = handler ? (await handler((e && e.payload) || {}, { requestId: (e && e.requestId) || "" })) || {} : { ok: false, message: "Unknown command" };
         } catch (err) {
           console.warn(cfg.id + " command " + (e && e.command), err);
           reply = { ok: false, message: "Something went wrong. Nothing was changed." };
