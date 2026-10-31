@@ -89,8 +89,12 @@ class RecipesScreenshotTest {
 
     @Test fun emptyDark() = snap("scholar") { search("zzz") }
 
+    @Test fun emptyLight() = snap("scholar", light = true) { search("zzz") }
+
     /** The diet card asked for a recipe: the screen took the page's search over. */
     @Test fun prefillDark() = snap("prefill", item = FILTER)
+
+    @Test fun prefillLight() = snap("prefill", light = true, item = FILTER)
 
     /** A Disciple has no class recipes: the cookbook alone, none estimated, to its last. */
     @Test fun discipleDark() = snap("disciple", item = FIRST_RECIPE + 9)
@@ -99,6 +103,16 @@ class RecipesScreenshotTest {
     fun largeText() {
         paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
         snap("scholar", item = FILTER)
+    }
+
+    /** Quick Pesto Chicken open at twice the size: the link's button under its words, the steps. */
+    @Test
+    fun largeTextExpanded() {
+        paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
+        snap("scholar", item = FIRST_RECIPE + 8, scrolledDp = 560) {
+            toggle("rcp_pesto_chicken")
+            select(IngredientRef("rcp_pesto_chicken", 0))
+        }
     }
 
     private companion object {

@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageTag
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanItem
@@ -67,7 +69,7 @@ internal fun PlanDayCard(
     onPage: (PlanPageAction) -> Unit,
 ) {
     val c = LocalPlanColors.current
-    PlanCard {
+    PageCard {
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -94,7 +96,7 @@ internal fun PlanDayCard(
                             }
                     ),
             )
-            PlanTag(day.tag, Modifier.alignByBaseline())
+            PageTag(day.tag, Modifier.alignByBaseline())
         }
         Text(
             day.note,
@@ -152,7 +154,7 @@ private fun PlanItemRow(
                 fontWeight = FontWeight.Bold,
                 lineHeight = 21.sp,
             )
-            if (item.optional) PlanTag("optional", Modifier.alignByBaseline(), FontWeight.Bold)
+            if (item.optional) PageTag("optional", Modifier.alignByBaseline(), FontWeight.Bold)
         }
         Text(item.detail, color = c.muted, fontSize = 12.sp, lineHeight = 18.sp)
         FlowRow(

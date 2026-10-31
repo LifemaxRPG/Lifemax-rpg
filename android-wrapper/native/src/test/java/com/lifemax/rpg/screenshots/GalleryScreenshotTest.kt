@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,7 +27,13 @@ import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
+import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.ChoicePill
+import com.lifemax.rpg.core.designsystem.components.PageButton
+import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
+import com.lifemax.rpg.core.designsystem.components.PageTag
 import com.lifemax.rpg.core.designsystem.components.PaneSwitch
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
@@ -60,6 +67,7 @@ class GalleryScreenshotTest {
         section("segments", light) { Segments() }
         section("buttons", light) { Buttons() }
         section("switch", light) { Switches(light) }
+        section("page", light) { PageClasses(light) }
         section("bars", light) { Bars() }
         section("icons", light) { Icons() }
     }
@@ -166,6 +174,24 @@ private fun Switches(light: Boolean) = SurfaceCard {
     PaneSwitch(listOf("Meals", "Recipes"), "Meals", light, {}, Modifier.padding(top = 10.dp))
     PaneSwitch(listOf("Meals", "Recipes"), "Recipes", light, {}, Modifier.padding(top = 10.dp))
 }
+
+/** The page's own classes, in its colours and type. */
+@Composable
+private fun PageClasses(light: Boolean) =
+    PageTheme(PageColors(ScreenshotPalette.tokenMap(light), light)) {
+        PageCard {
+            PageEyebrow("Page card")
+            Row(
+                Modifier.padding(top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PageTag("350 kcal")
+                PageTag("optional", weight = FontWeight.Bold)
+            }
+            PageButton("＋ Log a meal", "Log a meal", {}, Modifier.padding(top = 10.dp))
+        }
+    }
 
 @Composable
 private fun Bars() = SurfaceCard {

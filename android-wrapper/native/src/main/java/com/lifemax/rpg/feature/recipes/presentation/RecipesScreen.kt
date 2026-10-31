@@ -9,16 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,19 +25,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.LifeMaxTheme
+import com.lifemax.rpg.core.designsystem.LocalPageColors
+import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.PageTheme
+import com.lifemax.rpg.core.designsystem.components.PageButton
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.PaneSwitch
 import com.lifemax.rpg.feature.recipes.domain.RecipesPageAction
 import com.lifemax.rpg.feature.recipes.domain.RecipesProjection
-import com.lifemax.rpg.feature.recipes.presentation.components.LocalRecipesColors
 import com.lifemax.rpg.feature.recipes.presentation.components.RecipeCard
-import com.lifemax.rpg.feature.recipes.presentation.components.RecipesButton
-import com.lifemax.rpg.feature.recipes.presentation.components.RecipesColors
-import com.lifemax.rpg.feature.recipes.presentation.components.RecipesEyebrow
 import com.lifemax.rpg.feature.recipes.presentation.components.RecipesFilterCard
 
 @Composable
@@ -93,9 +89,9 @@ fun RecipesScreen(
     list: LazyListState = rememberLazyListState(),
     visible: Boolean = true,
 ) {
-    RecipesTheme(p.tokens, p.light) {
+    PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
         LazyColumn(
-            Modifier.fillMaxSize().background(LocalRecipesColors.current.bg).imePadding(),
+            Modifier.fillMaxSize().background(LocalPageColors.current.bg),
             state = list,
             contentPadding =
                 PaddingValues(
@@ -111,7 +107,8 @@ fun RecipesScreen(
                     "Recipes",
                     p.light,
                     { actions.page(RecipesPageAction.Meals) },
-                    Modifier.padding(bottom = 14.dp),
+                    // where native Food draws it, so it stays put when one hands over to the other
+                    Modifier.padding(start = 4.dp, top = 10.dp, bottom = 14.dp),
                 )
             }
             item("head") { RecipesHead { actions.page(RecipesPageAction.Meals) } }
@@ -142,29 +139,11 @@ fun RecipesScreen(
     }
 }
 
-/** The page's palette and type for the Recipes view: its theme tokens, CSS line spacing. */
-@Composable
-private fun RecipesTheme(
-    tokens: Map<String, Long>,
-    light: Boolean,
-    content: @Composable () -> Unit,
-) {
-    val colors = remember(tokens, light) { RecipesColors(tokens, light) }
-    LifeMaxTheme(tokens, light) {
-        CompositionLocalProvider(
-            LocalRecipesColors provides colors,
-            LocalTextStyle provides
-                LocalTextStyle.current.copy(letterSpacing = 0.sp, lineHeightStyle = CssLines),
-            content = content,
-        )
-    }
-}
-
 @Composable
 private fun RecipesHead(onLogMeal: () -> Unit) {
-    val c = LocalRecipesColors.current
+    val c = LocalPageColors.current
     Column(Modifier.padding(bottom = 18.dp)) {
-        RecipesEyebrow("FUEL YOUR BUILD")
+        PageEyebrow("FUEL YOUR BUILD")
         Text(
             "Recipes",
             Modifier.padding(top = 6.dp).semantics { heading() },
@@ -183,7 +162,7 @@ private fun RecipesHead(onLogMeal: () -> Unit) {
             fontSize = 13.5.sp,
             lineHeight = 20.25.sp,
         )
-        RecipesButton("＋ Log a meal", "Log a meal", onLogMeal, Modifier.padding(top = 14.dp))
+        PageButton("＋ Log a meal", "Log a meal", onLogMeal, Modifier.padding(top = 14.dp))
     }
 }
 
@@ -192,7 +171,7 @@ private fun EmptyResult() {
     Text(
         "No recipes match that search.",
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 36.dp),
-        color = LocalRecipesColors.current.muted,
+        color = LocalPageColors.current.muted,
         fontSize = 14.sp,
         lineHeight = 21.sp,
         textAlign = TextAlign.Center,
@@ -207,6 +186,3 @@ private fun Context.openLink(url: String) {
         // nothing on the phone opens web links: the page's own link would open nothing either
     }
 }
-
-/** Line heights spread above and below the text, as CSS does. */
-private val CssLines = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)

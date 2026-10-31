@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 
@@ -30,21 +32,14 @@ import com.lifemax.rpg.feature.plan.domain.PlanProjection
 @Composable
 internal fun PlanProgramCard(p: PlanProjection, onLeave: () -> Unit) {
     val c = LocalPlanColors.current
-    PlanCard {
+    PageCard {
         FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(Modifier.align(Alignment.CenterVertically)) {
-                Text(
-                    "ACTIVE PLAN",
-                    color = c.accent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.32.sp,
-                    lineHeight = 16.5.sp,
-                )
+                PageEyebrow("ACTIVE PLAN")
                 Text(
                     p.program,
                     Modifier.padding(top = 4.dp),

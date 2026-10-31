@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +50,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.LocalPageColors
+import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.feature.recipes.domain.RecipeCategory
 import com.lifemax.rpg.feature.recipes.domain.RecipeFilter
 
@@ -64,7 +69,7 @@ internal fun RecipesFilterCard(
     onChoose: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    RecipesCard(modifier) {
+    PageCard(modifier) {
         FieldLabel("Find a recipe")
         SearchField(filter.query, onSearch)
         FieldLabel("Category", Modifier.padding(top = 10.dp))
@@ -78,7 +83,7 @@ private fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text,
         modifier.padding(bottom = 6.dp).clearAndSetSemantics {},
-        color = LocalRecipesColors.current.muted,
+        color = LocalPageColors.current.muted,
         fontSize = 12.sp,
         fontWeight = FontWeight(550),
         lineHeight = 18.sp,
@@ -88,7 +93,7 @@ private fun FieldLabel(text: String, modifier: Modifier = Modifier) {
 /** The search box. The keyboard's search key puts the keyboard away; the list follows each key. */
 @Composable
 private fun SearchField(query: String, onSearch: (String) -> Unit) {
-    val c = LocalRecipesColors.current
+    val c = LocalPageColors.current
     val focus = LocalFocusManager.current
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -104,7 +109,7 @@ private fun SearchField(query: String, onSearch: (String) -> Unit) {
         interactionSource = interaction,
         cursorBrush = SolidColor(c.accent),
     ) { field ->
-        Box(Modifier.field(c, focused).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Box(Modifier.field(c, focused).padding(horizontal = 13.dp, vertical = 11.dp)) {
             if (query.isEmpty())
                 Text(
                     "Search recipes or ingredients…",
@@ -128,7 +133,7 @@ private fun CategoryMenu(
     visible: Boolean,
     onChoose: (String) -> Unit,
 ) {
-    val c = LocalRecipesColors.current
+    val c = LocalPageColors.current
     var open by remember(visible) { mutableStateOf(false) }
     var width by remember { mutableIntStateOf(0) }
     val label = categories.firstOrNull { it.value == selected }?.label ?: selected
@@ -143,7 +148,7 @@ private fun CategoryMenu(
                 .clickable(role = Role.DropdownList, onClickLabel = "Choose a category") {
                     open = true
                 }
-                .padding(start = 12.dp, end = 3.dp, top = 10.dp, bottom = 10.dp),
+                .padding(start = 13.dp, end = 3.dp, top = 11.dp, bottom = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(label, Modifier.weight(1f), color = c.text, fontSize = 14.sp, lineHeight = 19.sp)
@@ -152,7 +157,7 @@ private fun CategoryMenu(
         DropdownMenu(
             open,
             { open = false },
-            Modifier.width(with(LocalDensity.current) { width.toDp() }),
+            Modifier.width(with(LocalDensity.current) { width.toDp() }).selectableGroup(),
             shape = FieldShape,
             containerColor = c.panel,
             tonalElevation = 0.dp,
@@ -173,7 +178,9 @@ private fun CategoryMenu(
                         open = false
                         onChoose(category.value)
                     },
-                    modifier = if (on) Modifier.background(c.accentDim) else Modifier,
+                    modifier =
+                        Modifier.semantics { this.selected = on }
+                            .then(if (on) Modifier.background(c.accentDim) else Modifier),
                 )
             }
         }
@@ -183,7 +190,7 @@ private fun CategoryMenu(
 /** The select's arrow, as the browser draws it: near the right edge, within the padding. */
 @Composable
 private fun Chevron() {
-    val color = LocalRecipesColors.current.text
+    val color = LocalPageColors.current.text
     Box(
         Modifier.size(10.dp, 6.dp).drawWithCache {
             val width = 2.dp.toPx()
@@ -201,9 +208,10 @@ private fun Chevron() {
 
 /**
  * A field's box: white in the light theme, its border, and the accent border with a soft ring while
- * it is [active].
+ * it is [active]. Compose draws the border over the box's edge, so the padding inside it also holds
+ * the page's border.
  */
-private fun Modifier.field(c: RecipesColors, active: Boolean) =
+private fun Modifier.field(c: PageColors, active: Boolean) =
     then(if (active) Modifier.outline(c.accentDim, 3.dp, 8.dp) else Modifier)
         .clip(FieldShape)
         .background(c.field)

@@ -23,6 +23,11 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.LocalPageColors
+import com.lifemax.rpg.core.designsystem.components.PageButton
+import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
+import com.lifemax.rpg.core.designsystem.components.PageTag
 import com.lifemax.rpg.core.designsystem.components.tapTarget
 import com.lifemax.rpg.feature.recipes.domain.Recipe
 
@@ -42,11 +47,11 @@ internal fun RecipeCard(
     onLog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val c = LocalRecipesColors.current
-    RecipesCard(modifier) {
+    val c = LocalPageColors.current
+    PageCard(modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(Modifier.weight(1f)) {
-                RecipesEyebrow(recipe.category)
+                PageEyebrow(recipe.category)
                 Text(
                     recipe.name,
                     Modifier.padding(top = 4.dp, bottom = 6.dp).semantics { heading() },
@@ -58,7 +63,7 @@ internal fun RecipeCard(
                 )
                 Text(recipe.meta, color = c.muted, fontSize = 12.sp, lineHeight = 18.sp)
             }
-            RecipesTag(recipe.kcal)
+            PageTag(recipe.kcal)
         }
         Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Macro("Protein", recipe.protein, Modifier.weight(1f))
@@ -67,7 +72,7 @@ internal fun RecipeCard(
         }
         Disclosure(open, onToggle)
         if (open) RecipeDetails(recipe, selected, onSelect, onOpenLink)
-        RecipesButton(
+        PageButton(
             "＋ Log this recipe",
             "Log ${recipe.name}",
             onLog,
@@ -85,8 +90,9 @@ internal fun RecipeCard(
 
 @Composable
 private fun Macro(label: String, value: String, modifier: Modifier) {
-    val c = LocalRecipesColors.current
-    RecipesCard(modifier.semantics(mergeDescendants = true) {}, padding = 10.dp) {
+    val c = LocalPageColors.current
+    // the page's 10 dp padding and 1 dp border, which Compose draws over the edge
+    PageCard(modifier.semantics(mergeDescendants = true) {}, padding = 11.dp) {
         Text(
             label,
             color = c.muted,
@@ -112,7 +118,7 @@ private fun Macro(label: String, value: String, modifier: Modifier) {
  */
 @Composable
 private fun Disclosure(open: Boolean, onToggle: () -> Unit) {
-    val c = LocalRecipesColors.current
+    val c = LocalPageColors.current
     Row(
         Modifier.fillMaxWidth()
             .semantics {

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.feature.plan.domain.PlanRule
 
 /** The program's General rules, folded like the page's details element; [initiallyOpen] or not. */
@@ -44,7 +45,7 @@ internal fun PlanRulesCard(
 ) {
     val c = LocalPlanColors.current
     var open by rememberSaveable { mutableStateOf(initiallyOpen) }
-    PlanCard {
+    PageCard {
         Row(
             Modifier.fillMaxWidth()
                 .clickable(role = Role.Button) { open = !open }
