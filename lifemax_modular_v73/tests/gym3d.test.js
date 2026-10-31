@@ -1,10 +1,11 @@
 /* 3D gym guided workout. Run: NODE_PATH=$(npm root -g) node tests/gym3d.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = require('./current-page')(process.argv[2]);
+const currentPage = require('./current-page'), file = currentPage(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
 (async () => {
+  const site = await currentPage.serve(file); // the trainer pack check reloads the page
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const mk = async (init) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[gym/.test(m.text())) p.errs.push(m.text().slice(0, 300)) }); await p.addInitScript((init || '') + "localStorage.setItem('lma_qdeal','off');if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto('file://' + file); await p.waitForTimeout(900); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); const d = new Date(), dow = (d.getDay() + 6) % 7, m = new Date(d); m.setDate(d.getDate() - dow); const s = m.toLocaleDateString('en-CA'); state.plan = { id: 'athlete_foundation8', classId: 'athlete', start: s, from: s, checks: {} } }); return p };
+  const mk = async (init) => { const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e))); p.on('console', m => { if (/\[gym/.test(m.text())) p.errs.push(m.text().slice(0, 300)) }); await p.addInitScript((init || '') + "localStorage.setItem('lma_qdeal','off');if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));"); await p.goto(site.url); await p.waitForTimeout(900); await p.evaluate(() => { document.querySelectorAll('.lu-card').forEach(e => e.parentElement.remove()); const d = new Date(), dow = (d.getDay() + 6) % 7, m = new Date(d); m.setDate(d.getDate() - dow); const s = m.toLocaleDateString('en-CA'); state.plan = { id: 'athlete_foundation8', classId: 'athlete', start: s, from: s, checks: {} } }); return p };
   const p = await mk(); const ev = (f, a) => p.evaluate(f, a);
   const click = a => ev(a => { const e = document.querySelector('#gymScene [data-a="' + a + '"]'); e && e.click() }, a);
   ok('exercises map to movement archetypes', await ev(() => g3Archetype('Leg Press or Goblet Squat') === 'legpress' && g3Archetype('Lat Pulldown or Assisted Pull-Up') === 'pulldown' && g3Archetype('Machine or Dumbbell Chest Press') === 'chest' && g3Archetype('Seated Cable Row') === 'row' && g3Archetype('Forearm Plank Hold') === 'plank' && g3Archetype('Treadmill') === 'walk' && g3Archetype('Hamstring Mobility Flow') === 'mobility'));
@@ -75,5 +76,5 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('with the setting off the classic screen is used', await ev(() => !document.getElementById('gymScene') && document.getElementById('guidedWorkout').classList.contains('open')));
   ok('Settings has the Guided workout choice', await ev(() => { setPickCat('look'); const c = document.getElementById('gwrCard'); return !!c && !c.classList.contains('set-hide') && !!document.getElementById('gwr3dSel') }));
   ok('no page errors', p.errs.length === 0, p.errs);
-  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();

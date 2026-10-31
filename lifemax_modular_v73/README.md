@@ -26,7 +26,7 @@ python forge_features.py dist/Life_Max_RPG_v73_modular_build.html dist/Life_Max_
 - `src/runtime/segments/`: **ordered JavaScript fragments**, listed in `module-map.json`. The 24 original ones were cut from v73 by size, so most begin part-way through a statement; later ones each hold a feature. The builder combines them **inside a single `<script>` tag** to preserve global scope, initialization order, and existing inline event handlers.
 - `src/runtime/symbol-index.json`: searchable map from named top-level JS functions/variables (and `window.*` exports) to their source file(s).
 - `src/runtime/module-map.json`: segment metadata, sizes, tags and exported symbol names.
-- Both maps are generated: after adding, removing or reordering a segment, or changing its top-level names, run `python3 tools/gen_module_map.py`. It keeps the tags; a new segment starts with the words of its file name, which you can edit in `module-map.json`. `python3 check_source.py` (run in CI) fails while either map is stale.
+- Both maps are generated: after adding, removing or reordering a segment, or changing its top-level names, run `python3 tools/gen_module_map.py`. It keeps the tags; a new segment starts with the words of its file name, which you can edit in `module-map.json`. Settle a merge conflict in either map by taking either side and running it, then put back the tags the other side gave its new segments. `python3 check_source.py` (run in CI) fails while either map is stale.
 - `build.py`: zero-dependency deterministic HTML assembler.
 - `source.sha256`: original v73 fingerprint.
 - `dist/`: generated HTML; do not edit this directly.

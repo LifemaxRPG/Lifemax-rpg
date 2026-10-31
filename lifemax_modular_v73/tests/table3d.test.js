@@ -43,13 +43,15 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const wk = await p.evaluate(() => state.quests.find(q => q.cadence === 'weekly' && q.kind !== 'nutrition').id);
   await p.evaluate(id => dhLedgerToggle(id), wk); await p.waitForTimeout(400);
   ok('completing a weekly from the Ledger works and updates the row', await p.evaluate(id => isQuestDone(state.quests.find(q => q.id === id)) && !!document.querySelector('.lg-row.done'), wk));
-  // forced: the open Ledger is redrawn every 450 ms, so its close button never stays put for Playwright's stability check under load
-  await p.click('.lg-close', { force: true }); await p.waitForTimeout(300);
+  // forced: the open Ledger is redrawn every 450 ms, so its close button never stays put for Playwright's stability check under load;
+  // the Ledger hiding shows the click landed
+  const closeLedger = async () => { await p.click('.lg-close', { force: true }); await p.waitForSelector('.fs-ledger', { state: 'hidden', timeout: 2000 }) };
+  await closeLedger();
   // ---- new quest
   await p.click('.rest-btn[data-a=new]'); await p.waitForTimeout(300);
   await p.fill('#nqName', 'Read the old letters'); await p.click('.nq-card .rest-btn:not(.dim)'); await p.waitForTimeout(700);
   ok('a new quest made in the scene is saved and appears in the Ledger', await p.evaluate(() => state.quests.some(q => q.name === 'Read the old letters') && /Read the old letters/.test(document.querySelector('.fs-ledger').innerHTML) && !document.querySelector('.fs-ledger').hidden));
-  await p.click('.lg-close', { force: true }); await p.waitForTimeout(300);
+  await closeLedger();
   // ---- leaving and coming back
   await p.evaluate(() => navigate('dashboard')); await sceneGone(p);
   ok('leaving the Quest Board closes the scene', true);

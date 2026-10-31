@@ -1,12 +1,13 @@
 /* Haptic strength tests. Run:  NODE_PATH=$(npm root -g) node tests/haptics.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const file = require('./current-page')(process.argv[2]);
+const currentPage = require('./current-page'), file = currentPage(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 400) : '')) } };
 (async () => {
+  const site = await currentPage.serve(file); // it reloads the page
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
   await p.addInitScript("window.__v=[];Object.defineProperty(navigator,'vibrate',{value:function(x){window.__v.push(x);return true},configurable:true});");
-  await p.goto('file://' + file); await p.waitForTimeout(800);
+  await p.goto(site.url); await p.waitForTimeout(800);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } });
   const buzz = async (level, pat) => p.evaluate(([l, pat]) => { state.fx = Object.assign({}, fxOpt(), { haptics: true, hapticLevel: l }); window.__v = []; haptic(pat); return window.__v }, [level, pat]);
   const one = async l => (await buzz(l, 10))[0];
@@ -43,5 +44,5 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('the app asks for the Vibrate permission', /android\.permission\.VIBRATE/.test(mani));
   ok('the native plugin has pulse and pattern with an amplitude', /public void pulse/.test(pl) && /public void pattern/.test(pl) && /createWaveform/.test(pl));
   ok('no page errors', errs.length === 0, errs);
-  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+  console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();

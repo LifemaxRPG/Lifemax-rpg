@@ -7,8 +7,10 @@ const MON = Date.UTC(2026, 9, 26, 17, 14), NIGHT = Date.UTC(2026, 9, 27, 3, 30);
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, timezoneId: 'America/New_York' })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
-  /* The voice clock says 1:14 PM; the page runs on Playwright's clock from 11:30 PM that Monday, after bedtime. Life Director plans
-     from the page's now, so that afternoon holds only what each case puts there, and Tuesday holds the plan the day review names. */
+  /* The voice clock says 1:14 PM; the page runs on Playwright's clock from 11:30 PM that Monday. Life Director plans from the page's
+     now, so the afternoon holds only what each case puts there, and Tuesday holds the plan the day review names. That needs the page
+     past Monday's last planned session: it passes from 9 PM to Tuesday 9 AM; at 8 PM Life Director still plans that evening, and the
+     bulk and clear cases fail. */
   await p.clock.install({ time: NIGHT });
   await p.goto('file://' + file); await p.waitForTimeout(800);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } ['lifemax_voice_op_journal_v1', 'lifemax_voice_timer_v1', 'lifemax_voice_alias_v1', 'lifemax_voice_macros_v1', 'lifemax_voice_undo_v1'].forEach(k => localStorage.removeItem(k)) });
