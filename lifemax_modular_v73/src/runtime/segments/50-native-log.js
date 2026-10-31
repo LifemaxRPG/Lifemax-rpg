@@ -114,6 +114,7 @@
     plugin: "NativeLog",
     capability: "log.projection.v1",
     setting: "nativeLog",
+    defaultOn: true, // the owner made it the default after using it on the phone (CONTRACT A33); the classic form is a switch away
     toggle: "nativeLogToggle",
     projection,
     onAction() {},
