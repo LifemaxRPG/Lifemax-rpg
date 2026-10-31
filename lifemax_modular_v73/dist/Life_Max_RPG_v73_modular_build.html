@@ -5365,8 +5365,9 @@ function activityPreview(d){const r=rules[d.type]||rules.custom;const dur=Math.m
 /* What recording a draft pays, by the rules recordActivity pays with: {xp, split, msg}, where msg says why xp is not the preview's total (ecoAward's reasons, then the stars of an ascended attribute). With peek nothing changes, so the preview shows exactly what Save would pay. */
 function activityAward(d,peek){const x=activityPreview(d);if(!x.total)return {xp:0,split:[],msg:'Log at least '+ECO.minMin+' minutes to earn XP'};const ec=ecoAward(d.type,x.total,Number(d.duration)||0,{manual:true,peek});if(ec.xp<=0)return {xp:0,split:[],msg:ec.msg};const p=x.primary,s=x.secondary!==p?x.secondary:'',pXP=s?Math.round(ec.xp*.7):ec.xp,why=ec.msg?[ec.msg]:[];const split=[{attr:p,xp:pXP},...(s?[{attr:s,xp:ec.xp-pXP}]:[])].map(z=>{const xp=ecoStarXP(z.attr,z.xp);if(xp>z.xp)why.push((ATTRS.find(a=>a.id===z.attr)||{short:z.attr}).short+' '+'★'.repeat(ecoStars(z.attr))+' +'+(xp-z.xp));return {attr:z.attr,xp}});return {xp:split.reduce((n,z)=>n+z.xp,0),split,msg:why.join(' · ')}}
 function updatePreview(){const d=activityDraftFromForm(),x=activityPreview(d),a=activityAward(d,true),why=document.getElementById('previewWhy');document.getElementById('previewXP').textContent=a.xp;document.getElementById('durationRules').textContent=ECO_DURATION_RULES;why.textContent=a.msg;why.style.color=a.xp>x.total?'var(--good)':'';document.getElementById('previewBar').style.width=Math.min(100,a.xp/120*100)+'%';const chunks=a.split.map(z=>{const at=ATTRS.find(t=>t.id===z.attr);return `<span class="preview-chip">${at?px(at.icon):''} ${at?.short||'Attribute'} <strong>+${z.xp}</strong></span>`});if(x.durFactor)chunks.push(`<span class="preview-chip">Duration <strong>${x.durFactor.toFixed(2)}×</strong></span>`);chunks.push(`<span class="preview-chip">Skill: <strong>${esc(x.skill||'Skill')}</strong></span>`);document.getElementById('previewSplit').innerHTML=chunks.join('')}
-/* Award and save one logged activity. Returns {ok, xp, message}; it never touches the page. The form handler and the native Log screen both call it. */
-function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d),award=activityAward(d);if(!award.xp)return {ok:false,message:award.msg};const xp=award.xp;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration:Number(d.duration)||0,quality:Number(d.quality),skill:x.skill,primary:x.primary,secondary:x.secondary,xp,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:award.split};state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:unsavedMessage()}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
+/* Award and save one logged activity. Returns {ok, xp, message}; it never touches the page. The form handler and the native Log screen both call it.
+   A save that fails is taken back out, together with any Daily Hand card that save fulfilled from it (the card's quest XP with it). */
+function recordActivity(d){if(d.opId){const done=state.activities.find(a=>a.opId===d.opId);if(done)return {ok:true,xp:done.xp,message:`Activity saved · +${done.xp} XP`,duplicate:true}}const id=d.type,r=rules[id]||rules.custom,x=activityPreview(d),award=activityAward(d);if(!award.xp)return {ok:false,message:award.msg};const xp=award.xp;const name=id==='custom'?(String(d.customName||'').trim()||'Custom activity'):r.name;const activity={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...(d.opId?{opId:String(d.opId)}:{}),type:id,name,icon:r.icon,duration:Number(d.duration)||0,quality:Number(d.quality),skill:x.skill,primary:x.primary,secondary:x.secondary,xp,date:new Date().toISOString(),notes:String(d.notes||'').trim(),xpSplit:award.split};const quests=Object.keys(state.questDone||{});state.activities.push(activity);activity.xpSplit.forEach(z=>state.attrXP[z.attr]=(state.attrXP[z.attr]||0)+z.xp);state.skillXP[x.skill]=(state.skillXP[x.skill]||0)+xp;if(!save()){const i=state.activities.indexOf(activity);if(i>=0)state.activities.splice(i,1);Object.keys(state.questDone||{}).filter(k=>!quests.includes(k)).forEach(k=>{const qid=state.questDone[k];delete state.questDone[k];state.activities=state.activities.filter(a=>a.id!==qid)});rebuildAttrXP();rebuildSkillXP();renderAll();return {ok:false,message:unsavedMessage()}}return {ok:true,xp,message:`Activity saved · +${xp} XP`}}
 function submitActivity(e){e.preventDefault();const res=recordActivity(activityDraftFromForm());if(!res.ok){toast(res.message);return}document.getElementById('activityNotes').value='';document.getElementById('duration').value=30;document.getElementById('quality').value='1';toast(res.message);navigate('dashboard')}
 function toggleQuest(id,checked){const q=state.quests.find(q=>q.id===id);if(!q)return;const A=q.attribute||'discipline';if(checked&&questLocked(q)){toast('Locked until you reach level '+stageLvl(q.stage));renderQuests();return}const key=questKey(q);if(checked&&!state.questDone[key]){const qid='quest_'+Date.now();state.questDone[key]=qid;const xp=ecoQuestXP(q);if(!xp&&(Number(q.xp)||0)>0)toast(q.cadence==='epic'?'One epic quest reward per day':'Quest XP limit reached for '+(q.cadence==='weekly'?'this week':'today'));const noteEl=document.getElementById('qnote-'+id);const qnote=(noteEl&&noteEl.value.trim())||'';state.attrXP[A]=(state.attrXP[A]||0)+xp;state.skillXP['Quest Completion']=(state.skillXP['Quest Completion']||0)+xp;state.activities.push({id:qid,cad:q.cadence,epic:q.cadence==='epic',skill:'Quest Completion',type:'quest',name:'Quest: '+q.name,icon:'flag',duration:0,xp,primary:A,date:new Date().toISOString(),notes:qnote||'Quest completed',xpSplit:[{attr:A,xp}]});if(xp>0)toast(`Quest complete · +${xp} XP`)}else if(!checked&&state.questDone[key]){const aid=state.questDone[key],xp=Math.max(0,Number(q.xp)||0);delete state.questDone[key];state.attrXP[A]=Math.max(0,(state.attrXP[A]||0)-xp);state.skillXP['Quest Completion']=Math.max(0,(state.skillXP['Quest Completion']||0)-xp);state.activities=state.activities.filter(a=>a.id!==aid);toast('Quest undone · XP removed')}save()}
 function showCustomQuest(){document.getElementById('customQuestCard').style.display='block';document.getElementById('newQuestName').focus()}
@@ -13937,7 +13938,8 @@ const LMA_GROUPS={library:['media','history'],food:['meals','recipes']};
 const lmaTabKey=v=>v==='media'||v==='history'?'library':v==='meals'||v==='recipes'?'food':v;
 const lmaResolve=v=>v==='library'?((state&&state.libPane)||'media'):v==='food'?((state&&state.foodPane)||'meals'):v;
 /* slide the bottom bar so the tab you are on is in the middle. One mover only: the browser's own smooth scrollIntoView used to fight the
-   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. */
+   bar's other scroll adjustments, which made the tabs jump about while you swiped through several. A frame's time can be a little
+   before the slide began (a busy page runs behind the frame clock), so progress starts at 0, or the ease would first move it backwards. */
 let lmaBarRaf=0;
 function lmaBarTo(btn){
  const sb=document.querySelector('.sidebar');if(!sb||!btn||sb.scrollWidth<=sb.clientWidth+2)return;
@@ -13945,7 +13947,7 @@ function lmaBarTo(btn){
  cancelAnimationFrame(lmaBarRaf);lmaBarRaf=0;
  if(Math.abs(to-from)<2){return}
  if(typeof lmaMotionOff==='function'&&lmaMotionOff()){sb.scrollLeft=to;return}
- const t0=performance.now(),D=170,step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
+ const t0=performance.now(),D=170,step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/D)),e=1-Math.pow(1-k,3);sb.scrollLeft=from+(to-from)*e;lmaBarRaf=k<1?requestAnimationFrame(step):0};
  lmaBarRaf=requestAnimationFrame(step);
 }
 /* exactly one bottom-bar tab is lit: the one for the page you are on */
@@ -13956,23 +13958,23 @@ function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.datase
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
    opts.skip: do not record it in Back history. opts.fast: no animation (used while scrubbing). */
-let lmaVTcur=null;
+let lmaVTcur=null,lmaVTrun=null; // the unfinished slide and its page change
 function lmaNavTo(v,opts){
  v=lmaResolve(v);
  const el=document.getElementById('view-'+v);if(!el)return false;
- const from=lmaView(),root=document.documentElement;
+ const root=document.documentElement;let ran=false; // run() once: a newer request may make its change before the browser does
  const run=()=>{
-  const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
+  if(ran)return;ran=true;const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
   try{navigate(v);if(el.classList.contains('lmf-feature')&&window.LifeMaxFeatures)LifeMaxFeatures.open(v)}finally{lmaNavSkip=sk}
   window.scrollTo(0,0);
  };
- /* a newer request wins: let an unfinished slide jump to its end first */
- if(lmaVTcur){try{lmaVTcur.skipTransition()}catch(e){}lmaVTcur=null}
- if(!from||from===v||(opts&&opts.fast)||!lmaVTok()){run();return true}
+ /* a newer request wins: an unfinished slide's page change is made first, here (skipTransition() makes it only later, after this request, which it would undo) */
+ if(lmaVTcur){const t=lmaVTcur,r=lmaVTrun;lmaVTcur=lmaVTrun=null;try{t.skipTransition()}catch(e){}try{r()}catch(e){}}
+ const from=lmaView();if(!from||from===v||(opts&&opts.fast)||!lmaVTok()){run();return true}
  const a=lmaTabIndex(from),b=lmaTabIndex(v);
  root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
  try{
-  const t=document.startViewTransition(run);lmaVTcur=t;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
+  const t=document.startViewTransition(run);lmaVTcur=t;lmaVTrun=run;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
   const done=()=>{if(lmaVTcur===t){lmaVTcur=null;delete root.dataset.vt}};
   t.finished.then(done,done);
  }catch(e){delete root.dataset.vt;run()}
@@ -14059,7 +14061,7 @@ function lmaPgEnd(){
 function lmaPgTween(to,ms,easing,done){
  cancelAnimationFrame(lmaPgRaf);lmaPgRaf=0;cancelAnimationFrame(lmaPgTw);
  const from=lmaPgDx,t0=performance.now();
- const step=t=>{const k=Math.min(1,(t-t0)/ms),e=easing(k);lmaPgDx=from+(to-from)*e;if(lmaPgView)lmaPgView.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px');if(k<1)lmaPgTw=requestAnimationFrame(step);else{lmaPgTw=0;done&&done()}};
+ const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/ms)),e=easing(k);lmaPgDx=from+(to-from)*e;if(lmaPgView)lmaPgView.style.setProperty('--swx',lmaPgDx.toFixed(1)+'px');if(k<1)lmaPgTw=requestAnimationFrame(step);else{lmaPgTw=0;done&&done()}};
  lmaPgTw=requestAnimationFrame(step);
 }
 const lmaEaseOut=k=>1-Math.pow(1-k,3),lmaEaseIn=k=>k*k;
@@ -20576,8 +20578,8 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
  var outcome=await new Promise(function(finishRest){
   var inspecting=-1,busy=false,seen={ids:[],done:[]},spinStop=null,pdown=null;
   var numerals=DH_NUMERALS;
-  sc.insertAdjacentHTML('beforeend','<div class="fs-rest"><div class="rest-prog"></div><div class="rest-bar"><button type="button" class="rest-btn" data-a="ledger">'+qpxText('LEDGER',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn" data-a="new">'+qpxText('NEW QUEST',{s:2,w:120,lines:1})+'</button><button type="button" class="rest-btn" data-a="again">'+qpxText('RESHUFFLE',{s:2,w:120,lines:1})+'</button></div></div><div class="fs-dock3" hidden></div><div class="fs-ledger" hidden></div><div class="fs-newq" hidden></div>');
-  var prog=sc.querySelector('.rest-prog'),dock=sc.querySelector('.fs-dock3'),ledger=sc.querySelector('.fs-ledger'),newq=sc.querySelector('.fs-newq');
+  sc.insertAdjacentHTML('beforeend','<div class="fs-rest"><div class="rest-prog"></div><div class="rest-bar"><button type="button" class="rest-btn" data-a="ledger">'+qpxText('LEDGER',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn" data-a="new">'+qpxText('NEW QUEST',{s:2,w:120,lines:1})+'</button><button type="button" class="rest-btn" data-a="again">'+qpxText('RESHUFFLE',{s:2,w:120,lines:1})+'</button></div></div><div class="fs-dock3" hidden></div><div class="fs-ledger" hidden><div class="lg-head"><div>'+qpxText('THE LEDGER',{s:3,w:260,lines:1})+'</div><button type="button" class="lg-close" onclick="dhSceneLedger(false)" aria-label="Close the ledger">&#10005;</button></div><div class="lg-body"></div></div><div class="fs-newq" hidden></div>');
+  var prog=sc.querySelector('.rest-prog'),dock=sc.querySelector('.fs-dock3'),ledger=sc.querySelector('.fs-ledger'),lgBody=ledger.querySelector('.lg-body'),lgHtml='',newq=sc.querySelector('.fs-newq');
   var slotQuest=function(i){return dhCards().find(function(z){return z.slot===i})};
   var quad=function(c){var M=t3qmat(c.q,c.p,[1,1,1]);return [[-CW/2,-CH/2,0],[CW/2,-CH/2,0],[CW/2,CH/2,0],[-CW/2,CH/2,0]].map(function(a){return project([M[0]*a[0]+M[4]*a[1]+M[8]*a[2]+M[12],M[1]*a[0]+M[5]*a[1]+M[9]*a[2]+M[13],M[2]*a[0]+M[6]*a[1]+M[10]*a[2]+M[14]])})};
   var inQuad=function(P,x,y){var sgn=0;for(var i=0;i<4;i++){var a=P[i],b=P[(i+1)%4],cr=(b[0]-a[0])*(y-a[1])-(b[1]-a[1])*(x-a[0]);if(Math.abs(cr)<1e-6)continue;var sg=cr>0?1:-1;if(sgn&&sg!==sgn)return false;sgn=sg}return true};
@@ -20630,20 +20632,24 @@ async function dhTable3D(el,cards,d,replay,gated,restOnly){
    if(inspecting<0||busy)return;busy=true;var i=inspecting,c=dealt[i];if(spinStop){spinStop();spinStop=null}dock.hidden=true;
    c.lift=false;c.p=[curEye[0]+bas.f[0]*LD,curEye[1]+bas.f[1]*LD,curEye[2]+bas.f[2]*LD];c.q=c.q.slice();
    anim(480,function(t){c.amb=4.2-2.9*t});await move(c,[slots[i][0],TC,slots[i][2]],faceUp(c.yaw||0),500,{ease:eIO,arc:4});c.sh=.7;c.sheen=0;thud([slots[i][0],TY,slots[i][2]],6,.4);inspecting=-1;busy=false};
-  /* the ledger: weekly missions, epics, your own quests and badges */
+  /* the ledger: weekly missions, epics, your own quests and badges. syncCards asks for it every 450 ms, so the list is redrawn only
+     when its HTML changes, keeping where the owner has scrolled to and the row they are on; its head is drawn once, with the scene */
   var lgRow=function(q){var done=isQuestDone(q),locked=questLocked(q),xp=Math.max(0,Number(q.xp)||0);
-   return '<div class="lg-row'+(done?' done':'')+(locked?' locked':'')+'"><button class="lg-chk" type="button" '+(locked?'disabled ':'')+'onclick="dhLedgerToggle(\''+q.id+'\')" aria-label="'+(done?'Undo ':'Complete ')+esc(q.name)+'">'+(done?'&#10003;':locked?'&#128274;':'')+'</button><div class="lg-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(locked?('Unlocks at level '+stageLvl(q.stage)):(q.desc||''))+'</small></div><span class="lg-xp">+'+xp+'</span></div>'};
+   return '<div class="lg-row'+(done?' done':'')+(locked?' locked':'')+'"><button class="lg-chk" type="button" data-id="'+esc(q.id)+'" '+(locked?'disabled ':'')+'onclick="dhLedgerToggle(\''+q.id+'\')" aria-label="'+(done?'Undo ':'Complete ')+esc(q.name)+'">'+(done?'&#10003;':locked?'&#128274;':'')+'</button><div class="lg-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(locked?('Unlocks at level '+stageLvl(q.stage)):(q.desc||''))+'</small></div><span class="lg-xp">+'+xp+'</span></div>'};
   var renderLedger=function(){
    var cu=state.quests.filter(function(q){return q.cadence==='daily'&&q.kind!=='nutrition'&&!q.hand&&questToday(q)}),we=state.quests.filter(function(q){return q.cadence==='weekly'&&q.kind!=='nutrition'}),nu=state.quests.filter(function(q){return q.kind==='nutrition'&&(q.cadence!=='daily'||questToday(q))}),ep=state.quests.filter(function(q){return q.cadence==='epic'}).sort(function(a,b){return(a.stage||0)-(b.stage||0)});
    var sec=function(t,list,empty){return '<div class="lg-sec">'+qpxText(t,{s:2,w:260,lines:1})+'</div>'+(list.length?list.map(lgRow).join(''):'<div class="lg-empty">'+esc(empty)+'</div>')};
    var b=state.badges||{},earned=BADGES.filter(function(x){return b[x.id]});
-   ledger.innerHTML='<div class="lg-head"><div>'+qpxText('THE LEDGER',{s:3,w:260,lines:1})+'</div><button type="button" class="lg-close" onclick="dhSceneLedger(false)" aria-label="Close the ledger">&#10005;</button></div><div class="lg-body">'
-    +sec('WEEKLY MISSIONS',we,'None this week.')+sec('YOUR OWN QUESTS',cu,'Forge one with New Quest.')+(nu.length?sec('NUTRITION',nu,''):'')+sec('EPIC MILESTONES',ep,'Your first epic awaits.')
-    +'<div class="lg-sec">'+qpxText('BADGES '+earned.length+' / '+BADGES.length,{s:2,w:260,lines:1})+'</div><div class="lg-badges">'+(earned.length?earned.map(function(x){return '<span title="'+esc(x.desc)+'">'+esc(x.name)+'</span>'}).join(''):'<div class="lg-empty">None earned yet.</div>')+'</div></div>'};
+   var html=sec('WEEKLY MISSIONS',we,'None this week.')+sec('YOUR OWN QUESTS',cu,'Forge one with New Quest.')+(nu.length?sec('NUTRITION',nu,''):'')+sec('EPIC MILESTONES',ep,'Your first epic awaits.')
+    +'<div class="lg-sec">'+qpxText('BADGES '+earned.length+' / '+BADGES.length,{s:2,w:260,lines:1})+'</div><div class="lg-badges">'+(earned.length?earned.map(function(x){return '<span title="'+esc(x.desc)+'">'+esc(x.name)+'</span>'}).join(''):'<div class="lg-empty">None earned yet.</div>')+'</div>';
+   if(html===lgHtml)return;lgHtml=html;
+   var top=lgBody.scrollTop,a=document.activeElement,fid=a&&lgBody.contains(a)?a.dataset.id:'';
+   lgBody.innerHTML=html;lgBody.scrollTop=top;
+   if(fid){var f=[].find.call(lgBody.querySelectorAll('.lg-chk'),function(x){return x.dataset.id===fid});if(f)f.focus({preventScroll:true})}};
   var openNew=function(on){newq.hidden=!on;if(on){newq.innerHTML='<div class="nq-card"><div class="nq-t">'+qpxText('NEW QUEST',{s:3,w:260,lines:1})+'</div><input id="nqName" maxlength="60" placeholder="A goal worth pursuing" aria-label="Quest name"><div class="nq-row"><select id="nqCad" aria-label="Cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option></select><input id="nqXp" type="number" min="1" max="500" value="25" aria-label="XP"></div><div class="nq-row"><button type="button" class="rest-btn" onclick="dhSceneCreate()">'+qpxText('CREATE',{s:2,w:90,lines:1})+'</button><button type="button" class="rest-btn dim" onclick="dhSceneNew(false)">'+qpxText('CANCEL',{s:2,w:90,lines:1})+'</button></div></div>'}};
   var api={
    back:release,redraw:function(slot){if(dhReroll(slot)){}},
-   ledger:function(on){if(on===undefined)on=ledger.hidden;if(on){renderLedger();ledger.hidden=false;release()}else ledger.hidden=true},
+   ledger:function(on){if(on===undefined)on=ledger.hidden;if(on){var shut=ledger.hidden;renderLedger();ledger.hidden=false;if(shut)lgBody.scrollTop=0;release()}else ledger.hidden=true},
    open:function(on){openNew(on===undefined?true:on)},
    create:function(){var n=(document.getElementById('nqName').value||'').trim();if(!n){toast('Give your quest a name');return}
     state.quests.push({id:'custom_'+Date.now(),name:n,desc:'Custom quest created by you.',cadence:document.getElementById('nqCad').value,xp:Math.min(500,Math.max(1,Number(document.getElementById('nqXp').value)||25)),kind:'custom'});openNew(false);save();toast('Quest created');api.ledger(true)},
