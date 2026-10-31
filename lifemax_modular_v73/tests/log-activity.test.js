@@ -1,6 +1,8 @@
 /* The Log activity logic as data. The page form and the native Log screen both go through activityPreview(), activityAward() and
    recordActivity(); 164 recorded cases (fixtures/log-activity-golden.json, recorded from the code before it was split from the DOM) must
    come out the same through the form and through a plain draft object, and the preview's award must be what Save then pays.
+   The page runs on Playwright's clock from a fixed Wednesday midday: the Daily Hand is drawn from the date, and a card that one of
+   these activities fulfils pays its own quest XP on top, so on a real day the result would depend on what that day's hand holds.
    Run: NODE_PATH=$(npm root -g) node tests/log-activity.test.js */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const { execFileSync } = require('child_process');
@@ -10,7 +12,8 @@ execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, '
 const golden = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'log-activity-golden.json'), 'utf8')).filter(x => !x.skipped);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 500) : '')) } };
 (async () => {
-  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
+  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, timezoneId: 'UTC' })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
+  await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') }); // Wed 12:00; that day's hand holds no card these activities fulfil
   await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
   await p.goto('file://' + out); await p.waitForTimeout(2500);
   const r = await p.evaluate(g => {
@@ -156,6 +159,19 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('an invalid backup is refused and a cancelled import changes nothing', more.badRejected && more.cancelKeeps, more);
   ok('a confirmed import and a reset keep the previous save as a safety copy; an empty profile is replaced without asking', more.importKeepsCopy && more.emptyNoAsk && more.resetKeepsCopy, more);
   ok('delete all removes the safety and unreadable copies too, as its warning promises', more.deleteClears, more);
+  /* a Daily Hand card is fulfilled by what was stored: a save that fails fulfils nothing, and the retry that saves fulfils it */
+  const hand = await p.evaluate(() => {
+    const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
+    state = freshState(); const dd = LifeMaxDailyHand.ensure(), t = LifeMaxDailyHand.library.find(x => x.verify === 'act:reading:10');
+    dd.cards[0] = { tpl: t.id, id: 'dh_' + dd.date + '_0_9', n: 9 }; state.quests = state.quests.filter(x => !x.hand); LifeMaxDailyHand.ensure(); save();
+    const card = () => state.quests.find(x => x.id === dd.cards[0].id), xp0 = JSON.stringify(state.attrXP);
+    const real = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('quota') };
+    let r1; try { r1 = recordActivity({ ...d, opId: 'op-h' }) } finally { Storage.prototype.setItem = real }
+    const failed = { ok: r1.ok, n: state.activities.length, done: isQuestDone(card()), questDone: Object.keys(state.questDone).length, xpUnchanged: JSON.stringify(state.attrXP) === xp0 };
+    const r2 = recordActivity({ ...d, opId: 'op-h' });
+    return { failed, saved: { ok: r2.ok, types: state.activities.map(a => a.type), done: isQuestDone(card()), stored: JSON.parse(localStorage.getItem(STORE)).activities.map(a => a.type) } };
+  });
+  ok('a save that fails fulfils no Daily Hand card and leaves no quest XP; the retry that saves fulfils it', !hand.failed.ok && hand.failed.n === 0 && !hand.failed.done && hand.failed.questDone === 0 && hand.failed.xpUnchanged && hand.saved.ok && hand.saved.done && JSON.stringify(hand.saved.types) === '["reading","quest"]' && JSON.stringify(hand.saved.stored) === '["reading","quest"]', hand);
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();
