@@ -322,7 +322,10 @@ data class SwipeModel(
         )
 
     companion object {
-        /** A commit the page has not seen through after this long is undone (A23's flush). */
+        /**
+         * How long a commit waits for the page's part (A23's flush). Then the source springs back
+         * if the destination never opened; otherwise the wait ends and the open screens rest.
+         */
         const val WATCHDOG_NANOS = 2_500_000_000L
     }
 }

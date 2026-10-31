@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
+import com.lifemax.rpg.app.shell.swipe.TabScreenView
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.feature.character.data.WebCharacterRepository
 import com.lifemax.rpg.feature.character.domain.CharacterProjection
@@ -46,18 +47,27 @@ class CharacterScreenshotTest {
             .state
             .value!!
 
+    /**
+     * The screen in the View the app hosts it in (`TabScreenView`, as ComposeTabPlugin makes it).
+     * These references were drawn through a plain ComposeView, so matching them shows the host
+     * changes nothing on screen.
+     */
     private fun snap(light: Boolean) =
-        paparazzi.snapshot {
-            CharacterScreen(
-                p = projection(light),
-                ui = CharacterSelection(),
-                onSelect = {},
-                onCompare = {},
-                onSort = {},
-                onSkills = {},
-                onAction = { _, _ -> },
-            )
-        }
+        paparazzi.snapshot(
+            TabScreenView(paparazzi.context, "character").apply {
+                setContent {
+                    CharacterScreen(
+                        p = projection(light),
+                        ui = CharacterSelection(),
+                        onSelect = {},
+                        onCompare = {},
+                        onSort = {},
+                        onSkills = {},
+                        onAction = { _, _ -> },
+                    )
+                }
+            }
+        )
 
     /** The cards below the hero, which the screen image cuts off, each as tall as it draws. */
     private fun snapCards(light: Boolean) {
