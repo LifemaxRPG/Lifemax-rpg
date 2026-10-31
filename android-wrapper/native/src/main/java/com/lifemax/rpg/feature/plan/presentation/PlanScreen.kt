@@ -3,14 +3,12 @@ package com.lifemax.rpg.feature.plan.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -21,13 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.PageTheme
-import com.lifemax.rpg.core.designsystem.components.PageEyebrow
+import com.lifemax.rpg.core.designsystem.components.PageHead
 import com.lifemax.rpg.feature.plan.domain.PlanPageAction
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.SetRef
@@ -149,25 +143,10 @@ internal fun PlanTheme(tokens: Map<String, Long>, light: Boolean, content: @Comp
 }
 
 @Composable
-private fun PlanHead() {
-    val c = LocalPlanColors.current
-    Column(Modifier.padding(bottom = 4.dp)) {
-        PageEyebrow("TRAINING")
-        Text(
-            "Workout plan",
-            Modifier.padding(top = 6.dp).semantics { heading() },
-            color = c.text,
-            fontSize = 21.sp,
-            fontWeight = FontWeight(650),
-            letterSpacing = (-0.63).sp,
-            lineHeight = 24.15.sp,
-        )
-        Text(
-            "Follow a structured program. Complete every box in a day to earn XP.",
-            Modifier.padding(top = 6.dp),
-            color = c.muted,
-            fontSize = 13.5.sp,
-            lineHeight = 20.25.sp,
-        )
-    }
-}
+private fun PlanHead() =
+    PageHead(
+        "TRAINING",
+        "Workout plan",
+        "Follow a structured program. Complete every box in a day to earn XP.",
+        Modifier.padding(bottom = 4.dp),
+    )

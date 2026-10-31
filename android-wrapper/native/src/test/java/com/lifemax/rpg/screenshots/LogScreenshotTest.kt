@@ -15,7 +15,11 @@ import org.junit.Test
  */
 class LogScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 5700))
+    val paparazzi =
+        Paparazzi(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 5700),
+            maxPercentDifference = 0.001,
+        )
 
     private fun snap(fixture: String, light: Boolean) {
         val p =

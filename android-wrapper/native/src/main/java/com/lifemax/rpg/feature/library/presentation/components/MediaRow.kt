@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.feature.library.domain.AudioProgress
 import com.lifemax.rpg.feature.library.domain.MediaAction
@@ -95,13 +96,13 @@ internal fun MediaRow(
                 Modifier.width(IntrinsicSize.Max),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                PageButton(
+                LibraryButton(
                     buttons.edit,
                     { onAction(MediaAction.Edit(item.id)) },
                     Modifier.fillMaxWidth(),
                     size = ButtonSize.COMPACT,
                 )
-                PageButton(
+                LibraryButton(
                     buttons.remove,
                     { onAction(MediaAction.Remove(item.id)) },
                     Modifier.fillMaxWidth(),
@@ -135,14 +136,14 @@ private fun FinishedBox(item: MediaItem, onChange: (Boolean) -> Unit) {
             .semantics { contentDescription = "Mark ${item.title} finished" }
             .clip(shape)
             .background(if (item.finished) c.good else c.bg)
-            .border(1.5.dp, if (item.finished) c.good else BoxBorder, shape),
+            .border(1.5.dp, if (item.finished) c.good else PageInk.BoxBorder, shape),
         contentAlignment = Alignment.Center,
     ) {
         if (item.finished)
             with(LocalDensity.current) {
                 Text(
                     "✓",
-                    color = CheckInk,
+                    color = PageInk.CheckInk,
                     fontSize = 14.dp.toSp(),
                     fontWeight = FontWeight.Black,
                     lineHeight = 20.dp.toSp(),
@@ -234,26 +235,26 @@ private fun AudioButtons(item: MediaItem, buttons: MediaButtons, onAction: (Medi
     ) {
         val centred = Modifier.align(Alignment.CenterVertically)
         if (audio == null)
-            PageButton(
+            LibraryButton(
                 buttons.attach,
                 { onAction(MediaAction.Attach(item.id)) },
                 size = ButtonSize.SMALL,
             )
         else {
-            PageButton(
+            LibraryButton(
                 buttons.play,
                 { onAction(MediaAction.Play(item.id)) },
                 centred,
                 primary = true,
                 size = ButtonSize.SMALL,
             )
-            PageButton(
+            LibraryButton(
                 buttons.replace,
                 { onAction(MediaAction.Replace(item.id)) },
                 centred,
                 size = ButtonSize.SMALL,
             )
-            PageButton(
+            LibraryButton(
                 buttons.removeAudio,
                 { onAction(MediaAction.RemoveAudio(item.id)) },
                 centred,

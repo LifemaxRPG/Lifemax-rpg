@@ -1,9 +1,9 @@
 package com.lifemax.rpg.feature.character.presentation.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -123,7 +124,10 @@ internal fun NativeRadar(
             val x = (.5f + cos(angle).toFloat() * .40f)
             val y = (.5f + sin(angle).toFloat() * .40f)
             Column(
-                Modifier.offset(x = side * x - 38.dp, y = side * y - 18.dp).width(76.dp).clickable {
+                Modifier.offset(x = side * x - 38.dp, y = side * y - 18.dp).width(76.dp).selectable(
+                    a.id == selected,
+                    role = Role.Tab,
+                ) {
                     onSelect(a.id)
                 },
                 horizontalAlignment = Alignment.CenterHorizontally,

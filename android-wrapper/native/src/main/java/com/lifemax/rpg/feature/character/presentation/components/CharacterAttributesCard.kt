@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,7 +78,9 @@ internal fun CharacterAttributesCard(
                                     size = Size(3.dp.toPx(), size.height),
                                 )
                             }
-                            .clickable { onAction("attribute", a.id) }
+                            .clickable(onClickLabel = "Open ${a.name}", role = Role.Button) {
+                                onAction("attribute", a.id)
+                            }
                             .padding(12.dp)
                     ) {
                         Row(

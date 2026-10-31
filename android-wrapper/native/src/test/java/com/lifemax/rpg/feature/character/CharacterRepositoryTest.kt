@@ -41,6 +41,16 @@ class CharacterRepositoryTest {
         assertEquals(1, repo.state.value!!.sequence.toInt())
     }
 
+    @Test
+    fun aProjectionMissingAPaletteTokenIsRejected() {
+        val repo = WebCharacterRepository()
+        repo.accept(fixture(), true)
+        val missing =
+            fixture().put("sequence", 2).also { it.getJSONObject("tokens").remove("good") }
+        assertTrue(runCatching { repo.accept(missing) }.isFailure)
+        assertEquals(1, repo.state.value!!.sequence.toInt())
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun unsupportedProtocolRejected() {
         WebCharacterRepository().accept(fixture().put("protocol", 99), true)

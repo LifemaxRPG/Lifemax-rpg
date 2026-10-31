@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -28,8 +30,6 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -153,19 +153,17 @@ fun SectionTabs(tabs: List<DirectorTab>, current: String, onTap: (Tap) -> Unit) 
         Modifier.bleed(14.dp)
             .background(tabsBand)
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 14.dp)
+            .selectableGroup(), // one group, so TalkBack says which of the sections each tab is
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         tabs.forEach { tab ->
             val on = tab.id == current
             val shape = RoundedCornerShape(12.dp)
             Box(
-                Modifier.heightIn(min = 48.dp)
-                    .semantics {
-                        selected = on
-                        role = Role.Tab
-                    }
-                    .then(if (on) Modifier else Modifier.clickable { onTap(Tap("tab", tab.id)) }),
+                Modifier.heightIn(min = 48.dp).selectable(on, role = Role.Tab) {
+                    if (!on) onTap(Tap("tab", tab.id))
+                },
                 contentAlignment = Alignment.Center,
             ) {
                 Row(

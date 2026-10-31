@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.lifedirector.data
 
+import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BannerAction
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
@@ -308,8 +309,6 @@ private fun requireSpan(a0: Float, a1: Float) =
 
 private fun JSONObject.float(key: String) =
     getDouble(key).toFloat().also { require(it.isFinite()) { "$key is not a number" } }
-
-internal fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
 
 internal fun JSONArray.strings() = (0 until length()).map { getString(it) }
 

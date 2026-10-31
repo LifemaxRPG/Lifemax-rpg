@@ -13,7 +13,11 @@ import org.junit.Test
  */
 class FoodScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 3000))
+    val paparazzi =
+        Paparazzi(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 3000),
+            maxPercentDifference = 0.001,
+        )
 
     private fun snap(pane: String, light: Boolean) =
         paparazzi.snapshot {

@@ -107,6 +107,17 @@ class LogTest {
     }
 
     @Test
+    fun aProjectionMissingAPaletteTokenIsRejected() {
+        val repo = WebLogRepository()
+        repo.accept(fixture(), true)
+        val missing =
+            fixture().put("sequence", 5).also { it.getJSONObject("tokens").remove("accent") }
+        if (runCatching { repo.accept(missing) }.isSuccess)
+            fail("accepted a palette without accent")
+        assertEquals(1L, repo.state.value!!.sequence)
+    }
+
+    @Test
     fun choosingAPresetTakesItsSkillAndAttributesAndAsksForAPreview() {
         val (_, vm, commands) = setUp()
         vm.choose("running")
@@ -149,6 +160,19 @@ class LogTest {
         vm.setNotes("changed my mind")
         vm.submit()
         assertEquals("op-2", commands.submits.last().second)
+    }
+
+    @Test
+    fun aSaveWhoseAnswerNeverCameIsFreeAgainWhenTheScreenOpensAndKeepsItsOperation() {
+        val (_, vm, commands) = setUp()
+        vm.submit()
+        vm.opened() // the screen closed while the page answered, and the answer went nowhere
+        assertEquals(LogStatus(), vm.status.value)
+        vm.submit()
+        assertEquals(listOf("op-1", "op-1"), commands.submits.map { it.second })
+        vm.onReply("submit", false, "Could not save")
+        vm.opened()
+        assertEquals("Could not save", vm.status.value.error)
     }
 
     @Test

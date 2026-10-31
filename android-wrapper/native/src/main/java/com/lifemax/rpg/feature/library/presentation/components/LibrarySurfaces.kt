@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -24,6 +22,8 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
@@ -32,20 +32,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.components.SurfaceCard
-
-/** The page's .card at phone width: its soft border, its small shadow, 15 dp inside the border. */
-@Composable
-internal fun LibraryCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val c = LocalLibraryColors.current
-    SurfaceCard(modifier.then(c.smallShadow(CardShape)), PaddingValues(16.dp), c.lineSoft, content)
-}
-
-/** The corners of SurfaceCard, which the shadow follows. */
-private val CardShape = RoundedCornerShape(14.dp)
+import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.components.pageButtonShadow
+import com.lifemax.rpg.core.designsystem.components.pageShadow
 
 /**
  * One piece of a card that runs over several items of a list, as the card holding the filters and
@@ -53,14 +42,14 @@ private val CardShape = RoundedCornerShape(14.dp)
  * the pieces join into one card with one border and one shadow. The [first] piece has the card's
  * top edge and the [last] its bottom edge; only their shadows reach outside them.
  */
-internal fun Modifier.cardPiece(c: LibraryColors, first: Boolean = false, last: Boolean = false) =
+internal fun Modifier.cardPiece(c: PageColors, first: Boolean = false, last: Boolean = false) =
     drawWithContent {
             val reach = PieceReach.toPx()
             val top = if (first) -reach else 0f
             val bottom = if (last) size.height + reach else size.height
             clipRect(-reach, top, size.width + reach, bottom) { this@drawWithContent.drawContent() }
         }
-        .then(c.smallShadow(CardPieceShape(first, last)))
+        .pageShadow(CardPieceShape(first, last), c.light)
         .drawWithCache {
             val border = 1.dp.toPx()
             val fill = pieceOutline(size, first, last, inset = 0f)
@@ -108,12 +97,15 @@ internal enum class ButtonSize(
 }
 
 /**
- * The page's .btn: the accent button when [primary], otherwise .secondary, with its border (which
- * the page draws outside the padding) and, in the light theme, its shadow.
+ * The page's .btn at the page's own sizes: the accent button when [primary], otherwise .secondary,
+ * with its border (which the page draws outside the padding) and, in the light theme, its shadow.
+ * Unlike core's PageButton it keeps the page's drawn height (41, 34 or 32 dp), which Compose widens
+ * to 48 dp for touch without moving anything (backlog DS-3), and draws no top edge. TalkBack hears
+ * [text] without the symbols in front of it ("＋ Add media" is "Add media").
  */
 @Composable
-internal fun PageButton(
-    label: String,
+internal fun LibraryButton(
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     primary: Boolean = false,
@@ -124,16 +116,17 @@ internal fun PageButton(
     val border = if (primary) 0.dp else 1.dp
     Box(
         modifier
-            .then(c.buttonShadow(primary, shape))
+            .pageButtonShadow(shape, c.light, primary)
             .clip(shape)
             .background(if (primary) c.accent else c.secondaryButton)
             .then(if (primary) Modifier else Modifier.border(border, c.line, shape))
+            .semantics { contentDescription = spoken(text) }
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = size.horizontal + border, vertical = size.vertical + border),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            label,
+            text,
             color = if (primary) c.onAccent else c.text,
             fontSize = size.fontSize,
             fontWeight = size.weight,
@@ -142,3 +135,6 @@ internal fun PageButton(
         )
     }
 }
+
+/** What TalkBack says for a label the page words with a symbol in front ("▶ Play" is "Play"). */
+internal fun spoken(text: String) = text.trimStart { !it.isLetterOrDigit() }
