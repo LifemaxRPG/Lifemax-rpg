@@ -17,10 +17,6 @@ import org.json.JSONObject
 
 @CapacitorPlugin(name = "NativeCash")
 class NativeCashPlugin : Plugin() {
-    override fun load() {
-        NativeScreens.add(this, CashHost::end)
-    }
-
     @PluginMethod
     fun open(call: PluginCall) {
         val id = call.getString("session")
@@ -76,6 +72,10 @@ class NativeCashPlugin : Plugin() {
             }
             call.resolve()
         }
+    }
+
+    override fun load() {
+        NativeScreens.add(this, CashHost::end)
     }
 
     override fun handleOnDestroy() {

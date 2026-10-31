@@ -141,12 +141,12 @@ abstract class ComposeTabPlugin : Plugin() {
         }
     }
 
-    override fun load() {
-        NativeScreens.add(this, ::remove)
-    }
-
     override fun handleOnResume() {
         if (view?.visibility == View.VISIBLE) notifyListeners("refresh", JSObject())
+    }
+
+    override fun load() {
+        NativeScreens.add(this, ::remove)
     }
 
     override fun handleOnDestroy() {

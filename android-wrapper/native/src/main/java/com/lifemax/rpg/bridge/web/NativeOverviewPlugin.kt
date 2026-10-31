@@ -17,10 +17,6 @@ class NativeOverviewPlugin : Plugin() {
     private var shell: LiveOverviewShell? = null
     private var session = ""
 
-    override fun load() {
-        NativeScreens.add(this, ::closeShell)
-    }
-
     @PluginMethod
     fun capabilities(call: PluginCall) {
         call.resolve(JSObject().put("liveWeb", true))
@@ -49,15 +45,15 @@ class NativeOverviewPlugin : Plugin() {
                 ChromeHost.closeAll()
                 shell =
                     LiveOverviewShell(activity, bridge.webView) { action ->
-                            notifyListeners(
-                                "activate",
-                                JSObject()
-                                    .put("session", session)
-                                    .put("action", action)
-                                    .put("sequence", shell?.sequence ?: 0),
-                            )
-                        }
-                        .also { it.show(scene!!) }
+                        notifyListeners(
+                            "activate",
+                            JSObject()
+                                .put("session", session)
+                                .put("action", action)
+                                .put("sequence", shell?.sequence ?: 0),
+                        )
+                    }
+                shell?.show(scene!!) // assigned first, so a show that throws is closed below
                 OverviewBars.shell = shell
                 shell?.let { TabTiming.attached(it.root, "overview") }
                 call.resolve()
@@ -102,6 +98,10 @@ class NativeOverviewPlugin : Plugin() {
             }
             call.resolve()
         }
+    }
+
+    override fun load() {
+        NativeScreens.add(this, ::closeShell)
     }
 
     override fun handleOnDestroy() {
