@@ -27,23 +27,23 @@ function lmaTabIndex(v){v=lmaTabKey(v);return lmaTabList().findIndex(b=>b.datase
 const lmaVTok=()=>typeof document.startViewTransition==='function'&&!document.documentElement.classList.contains('reduce-motion')&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* go to a tab, with the page area sliding across when the browser can do it.
    opts.skip: do not record it in Back history. opts.fast: no animation (used while scrubbing). */
-let lmaVTcur=null;
+let lmaVTcur=null,lmaVTrun=null; // the unfinished slide and its page change
 function lmaNavTo(v,opts){
  v=lmaResolve(v);
  const el=document.getElementById('view-'+v);if(!el)return false;
- const from=lmaView(),root=document.documentElement;
+ const root=document.documentElement;let ran=false; // run() once: a newer request may make its change before the browser does
  const run=()=>{
-  const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
+  if(ran)return;ran=true;const sk=lmaNavSkip;lmaNavSkip=!!(opts&&opts.skip);
   try{navigate(v);if(el.classList.contains('lmf-feature')&&window.LifeMaxFeatures)LifeMaxFeatures.open(v)}finally{lmaNavSkip=sk}
   window.scrollTo(0,0);
  };
- /* a newer request wins: let an unfinished slide jump to its end first */
- if(lmaVTcur){try{lmaVTcur.skipTransition()}catch(e){}lmaVTcur=null}
- if(!from||from===v||(opts&&opts.fast)||!lmaVTok()){run();return true}
+ /* a newer request wins: an unfinished slide's page change is made first, here (skipTransition() makes it only later, after this request, which it would undo) */
+ if(lmaVTcur){const t=lmaVTcur,r=lmaVTrun;lmaVTcur=lmaVTrun=null;try{t.skipTransition()}catch(e){}try{r()}catch(e){}}
+ const from=lmaView();if(!from||from===v||(opts&&opts.fast)||!lmaVTok()){run();return true}
  const a=lmaTabIndex(from),b=lmaTabIndex(v);
  root.dataset.vt=(a>=0&&b>=0&&b<a)?'back':'fwd';
  try{
-  const t=document.startViewTransition(run);lmaVTcur=t;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
+  const t=document.startViewTransition(run);lmaVTcur=t;lmaVTrun=run;try{t.ready.catch(()=>{});t.updateCallbackDone.catch(()=>{})}catch(e){}
   const done=()=>{if(lmaVTcur===t){lmaVTcur=null;delete root.dataset.vt}};
   t.finished.then(done,done);
  }catch(e){delete root.dataset.vt;run()}
