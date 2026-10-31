@@ -1,0 +1,110 @@
+{
+ "drop": {
+  "command": "dialDrop",
+  "requestId": "director-1",
+  "ok": true,
+  "changed": true,
+  "confirm": {
+   "title": "Change your bedtime?",
+   "from": "11:00 PM",
+   "to": "10:30 PM",
+   "problem": "",
+   "body": "This changes the bedtime for your sleep (every day), not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.",
+   "note": "Only today is different? Close this and use “Something came up” instead.",
+   "apply": "Change it",
+   "keep": "Keep 11:00 PM"
+  }
+ },
+ "dropWhereItWas": {
+  "command": "dialDrop",
+  "requestId": "director-2",
+  "ok": true,
+  "changed": false
+ },
+ "dropWithProblem": {
+  "command": "dialDrop",
+  "requestId": "director-3",
+  "ok": true,
+  "changed": true,
+  "confirm": {
+   "title": "Change your bedtime?",
+   "from": "11:00 PM",
+   "to": "4:00 AM",
+   "problem": "That leaves under 5 hours of sleep. Try a different time.",
+   "body": "",
+   "note": "",
+   "apply": "",
+   "keep": "OK"
+  }
+ },
+ "dropStale": {
+  "command": "dialDrop",
+  "requestId": "director-4",
+  "ok": false,
+  "changed": false,
+  "message": "That handle is no longer on the dial. Nothing was changed."
+ },
+ "dropOffTheDial": {
+  "command": "dialDrop",
+  "requestId": "director-5",
+  "ok": false,
+  "changed": false,
+  "message": "That time is not on the dial. Nothing was changed."
+ },
+ "step": {
+  "command": "dialDrop",
+  "requestId": "director-6",
+  "ok": true,
+  "changed": true,
+  "confirm": {
+   "title": "Change when Work ends?",
+   "from": "5:00 PM",
+   "to": "5:15 PM",
+   "problem": "",
+   "body": "This changes the work ends for Work (weekdays), not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.",
+   "note": "Only today is different? Close this and use “Something came up” instead.",
+   "apply": "Change it",
+   "keep": "Keep 5:00 PM"
+  }
+ },
+ "applyWithProblem": {
+  "command": "dialApply",
+  "requestId": "director-7",
+  "ok": false,
+  "changed": false,
+  "moved": false,
+  "message": "That leaves under 5 hours of sleep. Try a different time."
+ },
+ "applyWhereItWas": {
+  "command": "dialApply",
+  "requestId": "director-8",
+  "ok": true,
+  "changed": false,
+  "moved": false,
+  "message": ""
+ },
+ "apply": {
+  "command": "dialApply",
+  "requestId": "director-9",
+  "ok": true,
+  "changed": true,
+  "moved": true,
+  "message": "Bedtime now 10:30 PM · schedule adjusted"
+ },
+ "applyAgain": {
+  "command": "dialApply",
+  "requestId": "director-10",
+  "ok": false,
+  "changed": false,
+  "moved": false,
+  "message": "That handle is no longer on the dial. Nothing was changed."
+ },
+ "applyNotSaved": {
+  "command": "dialApply",
+  "requestId": "director-11",
+  "ok": false,
+  "changed": true,
+  "moved": true,
+  "message": "Not saved: Storage is full. Export a backup and clear old Life Director history."
+ }
+}

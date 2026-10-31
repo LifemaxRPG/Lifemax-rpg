@@ -4,9 +4,10 @@
    and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, what the Recipes tab opens its
    screen with, and the Library's Media pane (NativeLibraryTabProjection.snapshot()) with a list built through the page's own
    mediaUpsert and attachAudioFile. Regenerate only when a projection changes:
-     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js
+     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media]
+   (every screen, or only those named)
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
-   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json,
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json), fixtures/recipes-*.json,
    fixtures/media-{full,search,empty,tip}.json and fixtures/media-filter-parity.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
@@ -108,12 +109,21 @@ async function plan(b) {
    soon       two minutes before that session: the dentist wrapping up, the session about to start
    late       a quarter of an hour into it, not started
    evening    late evening: that session done in part, the last one done, nothing doable before tomorrow
-   unplanned  a new player's Life Director, which has no plan yet */
+   unplanned  a new player's Life Director, which has no plan yet
+   build      mid-afternoon, just after the bedtime handle was dropped at 10:30 PM and Change it ran: the handle where it was
+              dropped and the repair's build
+   replan     just after Re-plan from now: the full build, with its sweep
+   reduced    the same Change it with reduced motion: the frame says so and carries no build
+   skip       just after the next session was skipped from its sheet: a repair whose build flashes that session (flips)
+   and director-replies.json: what the page answers each of the handles' commands (dialDrop, dialApply), in the envelope
+   NativeTabKit sends them in */
 async function director(b) {
+  let last = null; // one page at a time: each holds a whole app
   const live = async (planned) => {
-    const p = await page(b);
+    if (last) await last.context().close();
+    const p = last = await page(b);
     await directorDay.seed(p, { planned });
-    await p.goto('file://' + out);
+    await p.goto('file://' + out, { timeout: 120000 });
     if (planned) await directorDay.play(p);
     else await p.clock.runFor(3000);
     await p.evaluate(() => lmaNavTo('life-director'));
@@ -167,6 +177,45 @@ async function director(b) {
   await shoot(p, 'evening');
 
   await shoot(await live(false), 'unplanned');
+
+  /* the handles: each command answered by the page, as NativeTabKit sends the reply ({command, requestId, ...}) */
+  p = await live(true);
+  let request = 0;
+  const cmd = (p, command, payload) => p.evaluate(([c, x]) => NativeDirectorProjection.commands[c](x), [command, payload]).then((reply) => Object.assign({ command, requestId: 'director-' + ++request }, reply));
+  const key = (p, rule, end) => p.evaluate(([r, e]) => LifeDirector.native.today(0).dial.handles.find((h) => h.rule === r && h.end === e).key, [rule, end]);
+  const bed = await key(p, 'sleep', 'start');
+  const replies = {};
+  replies.drop = await cmd(p, 'dialDrop', { key: bed, minute: 1350 });
+  replies.dropWhereItWas = await cmd(p, 'dialDrop', { key: bed, minute: 1380 });
+  replies.dropWithProblem = await cmd(p, 'dialDrop', { key: bed, minute: 240 });
+  replies.dropStale = await cmd(p, 'dialDrop', { key: 'sleep|start|2026-10-28|1', minute: 1350 });
+  replies.dropOffTheDial = await cmd(p, 'dialDrop', { key: bed, minute: 1352 });
+  replies.step = await cmd(p, 'dialDrop', { key: await key(p, 'work', 'end'), step: 1 });
+  replies.applyWithProblem = await cmd(p, 'dialApply', { key: bed, minute: 240 });
+  replies.applyWhereItWas = await cmd(p, 'dialApply', { key: bed, minute: 1380 });
+  replies.apply = await cmd(p, 'dialApply', { key: bed, minute: 1350 });
+  replies.applyAgain = await cmd(p, 'dialApply', { key: bed, minute: 1350 });
+  await shoot(p, 'build');
+  await p.evaluate(() => {
+    const real = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k) { if (k === 'lifemax_director_state_v1') throw new DOMException('The quota has been exceeded.', 'QuotaExceededError'); return real.apply(this, arguments) };
+  });
+  replies.applyNotSaved = await cmd(p, 'dialApply', { key: await key(p, 'sleep', 'start'), minute: 1320 });
+  write('fixtures/director-replies.json', replies);
+
+  p = await live(true);
+  await act(p, 'replan');
+  await shoot(p, 'replan');
+
+  p = await live(true);
+  await act(p, 'inst', await upNext(p));
+  await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=skip]').click());
+  await shoot(p, 'skip');
+
+  p = await live(true);
+  await p.emulateMedia({ reducedMotion: 'reduce' });
+  await cmd(p, 'dialApply', { key: await key(p, 'sleep', 'start'), minute: 1350 });
+  await shoot(p, 'reduced');
 }
 
 /* Recipes as the page opens the screen with them: a Scholar (cookbook and class recipes), an Entrepreneur (two Snack recipes, which
@@ -287,11 +336,7 @@ async function media(b) {
 
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  await food(b);
-  await log(b);
-  await plan(b);
-  await director(b);
-  await recipes(b);
-  await media(b);
+  const only = process.argv.slice(2);
+  for (const [name, run] of Object.entries({ food, log, plan, director, recipes, media })) if (!only.length || only.includes(name)) await run(b);
   await b.close(); fs.unlinkSync(out);
 })().catch(e => { console.error(e); process.exit(1); });

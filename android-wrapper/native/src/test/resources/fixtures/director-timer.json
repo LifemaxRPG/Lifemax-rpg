@@ -45,6 +45,7 @@
  ],
  "banner": null,
  "notice": null,
+ "reducedMotion": false,
  "today": {
   "now": 1793200955,
   "dayIndex": 0,
@@ -190,7 +191,7 @@
      "icon": "",
      "act": "",
      "id": "",
-     "tip": "Sleep · 12:00 AM–7:00 AM"
+     "tip": "Sleep · 12:00 AM–7:00 AM. Drag its handle to change it."
     },
     {
      "ring": "outer",
@@ -275,7 +276,7 @@
      "icon": "",
      "act": "",
      "id": "",
-     "tip": "Work · 9:00 AM–5:00 PM"
+     "tip": "Work · 9:00 AM–5:00 PM. Drag its handle to change it."
     },
     {
      "ring": "outer",
@@ -445,7 +446,7 @@
      "icon": "",
      "act": "",
      "id": "",
-     "tip": "Sleep · 11:00 PM–12:00 AM"
+     "tip": "Sleep · 11:00 PM–12:00 AM. Drag its handle to change it."
     }
    ],
    "words": [
@@ -483,8 +484,1033 @@
     "frac": 0.7970486111111111,
     "kind": "work",
     "warn": false
-   }
+   },
+   "handles": [
+    {
+     "key": "sleep|end|2026-10-27|1793170800",
+     "rule": "sleep",
+     "end": "end",
+     "kind": "sleep",
+     "a": 105,
+     "minute": 420,
+     "fixed": 0,
+     "label": "Wake up",
+     "aria": "Wake up 7:00 AM",
+     "lengths": [
+      "1h of sleep",
+      "1h 15m of sleep",
+      "1h 30m of sleep",
+      "1h 45m of sleep",
+      "2h of sleep",
+      "2h 15m of sleep",
+      "2h 30m of sleep",
+      "2h 45m of sleep",
+      "3h of sleep",
+      "3h 15m of sleep",
+      "3h 30m of sleep",
+      "3h 45m of sleep",
+      "4h of sleep",
+      "4h 15m of sleep",
+      "4h 30m of sleep",
+      "4h 45m of sleep",
+      "5h of sleep",
+      "5h 15m of sleep",
+      "5h 30m of sleep",
+      "5h 45m of sleep",
+      "6h of sleep",
+      "6h 15m of sleep",
+      "6h 30m of sleep",
+      "6h 45m of sleep",
+      "7h of sleep",
+      "7h 15m of sleep",
+      "7h 30m of sleep",
+      "7h 45m of sleep",
+      "8h of sleep",
+      "8h 15m of sleep",
+      "8h 30m of sleep",
+      "8h 45m of sleep",
+      "9h of sleep",
+      "9h 15m of sleep",
+      "9h 30m of sleep",
+      "9h 45m of sleep",
+      "10h of sleep",
+      "10h 15m of sleep",
+      "10h 30m of sleep",
+      "10h 45m of sleep",
+      "11h of sleep",
+      "11h 15m of sleep",
+      "11h 30m of sleep",
+      "11h 45m of sleep",
+      "12h of sleep",
+      "12h 15m of sleep",
+      "12h 30m of sleep",
+      "12h 45m of sleep",
+      "13h of sleep",
+      "13h 15m of sleep",
+      "13h 30m of sleep",
+      "13h 45m of sleep",
+      "14h of sleep",
+      "14h 15m of sleep",
+      "14h 30m of sleep",
+      "14h 45m of sleep",
+      "15h of sleep",
+      "15h 15m of sleep",
+      "15h 30m of sleep",
+      "15h 45m of sleep",
+      "16h of sleep",
+      "16h 15m of sleep",
+      "16h 30m of sleep",
+      "16h 45m of sleep",
+      "17h of sleep",
+      "17h 15m of sleep",
+      "17h 30m of sleep",
+      "17h 45m of sleep",
+      "18h of sleep",
+      "18h 15m of sleep",
+      "18h 30m of sleep",
+      "18h 45m of sleep",
+      "19h of sleep",
+      "19h 15m of sleep",
+      "19h 30m of sleep",
+      "19h 45m of sleep",
+      "20h of sleep",
+      "20h 15m of sleep",
+      "20h 30m of sleep",
+      "20h 45m of sleep",
+      "21h of sleep",
+      "21h 15m of sleep",
+      "21h 30m of sleep",
+      "21h 45m of sleep",
+      "22h of sleep",
+      "22h 15m of sleep",
+      "22h 30m of sleep",
+      "22h 45m of sleep",
+      "23h of sleep",
+      "23h 15m of sleep",
+      "23h 30m of sleep",
+      "23h 45m of sleep",
+      "24h of sleep",
+      "24h 15m of sleep",
+      "24h 30m of sleep",
+      "24h 45m of sleep"
+     ]
+    },
+    {
+     "key": "sleep|start|2026-10-28|1793228400",
+     "rule": "sleep",
+     "end": "start",
+     "kind": "sleep",
+     "a": 345,
+     "minute": 1380,
+     "fixed": 360,
+     "label": "Bedtime",
+     "aria": "Bedtime 11:00 PM",
+     "lengths": [
+      "31h of sleep",
+      "30h 45m of sleep",
+      "30h 30m of sleep",
+      "30h 15m of sleep",
+      "30h of sleep",
+      "29h 45m of sleep",
+      "29h 30m of sleep",
+      "29h 15m of sleep",
+      "29h of sleep",
+      "28h 45m of sleep",
+      "28h 30m of sleep",
+      "28h 15m of sleep",
+      "28h of sleep",
+      "27h 45m of sleep",
+      "27h 30m of sleep",
+      "27h 15m of sleep",
+      "27h of sleep",
+      "26h 45m of sleep",
+      "26h 30m of sleep",
+      "26h 15m of sleep",
+      "26h of sleep",
+      "25h 45m of sleep",
+      "25h 30m of sleep",
+      "25h 15m of sleep",
+      "25h of sleep",
+      "24h 45m of sleep",
+      "24h 30m of sleep",
+      "24h 15m of sleep",
+      "24h of sleep",
+      "23h 45m of sleep",
+      "23h 30m of sleep",
+      "23h 15m of sleep",
+      "23h of sleep",
+      "22h 45m of sleep",
+      "22h 30m of sleep",
+      "22h 15m of sleep",
+      "22h of sleep",
+      "21h 45m of sleep",
+      "21h 30m of sleep",
+      "21h 15m of sleep",
+      "21h of sleep",
+      "20h 45m of sleep",
+      "20h 30m of sleep",
+      "20h 15m of sleep",
+      "20h of sleep",
+      "19h 45m of sleep",
+      "19h 30m of sleep",
+      "19h 15m of sleep",
+      "19h of sleep",
+      "18h 45m of sleep",
+      "18h 30m of sleep",
+      "18h 15m of sleep",
+      "18h of sleep",
+      "17h 45m of sleep",
+      "17h 30m of sleep",
+      "17h 15m of sleep",
+      "17h of sleep",
+      "16h 45m of sleep",
+      "16h 30m of sleep",
+      "16h 15m of sleep",
+      "16h of sleep",
+      "15h 45m of sleep",
+      "15h 30m of sleep",
+      "15h 15m of sleep",
+      "15h of sleep",
+      "14h 45m of sleep",
+      "14h 30m of sleep",
+      "14h 15m of sleep",
+      "14h of sleep",
+      "13h 45m of sleep",
+      "13h 30m of sleep",
+      "13h 15m of sleep",
+      "13h of sleep",
+      "12h 45m of sleep",
+      "12h 30m of sleep",
+      "12h 15m of sleep",
+      "12h of sleep",
+      "11h 45m of sleep",
+      "11h 30m of sleep",
+      "11h 15m of sleep",
+      "11h of sleep",
+      "10h 45m of sleep",
+      "10h 30m of sleep",
+      "10h 15m of sleep",
+      "10h of sleep",
+      "9h 45m of sleep",
+      "9h 30m of sleep",
+      "9h 15m of sleep",
+      "9h of sleep",
+      "8h 45m of sleep",
+      "8h 30m of sleep",
+      "8h 15m of sleep",
+      "8h of sleep",
+      "7h 45m of sleep",
+      "7h 30m of sleep",
+      "7h 15m of sleep"
+     ]
+    },
+    {
+     "key": "work|start|2026-10-28|1793178000",
+     "rule": "work",
+     "end": "start",
+     "kind": "work",
+     "a": 135,
+     "minute": 540,
+     "fixed": 255,
+     "label": "Work starts",
+     "aria": "Work starts 9:00 AM",
+     "lengths": [
+      "17h",
+      "16h 45m",
+      "16h 30m",
+      "16h 15m",
+      "16h",
+      "15h 45m",
+      "15h 30m",
+      "15h 15m",
+      "15h",
+      "14h 45m",
+      "14h 30m",
+      "14h 15m",
+      "14h",
+      "13h 45m",
+      "13h 30m",
+      "13h 15m",
+      "13h",
+      "12h 45m",
+      "12h 30m",
+      "12h 15m",
+      "12h",
+      "11h 45m",
+      "11h 30m",
+      "11h 15m",
+      "11h",
+      "10h 45m",
+      "10h 30m",
+      "10h 15m",
+      "10h",
+      "9h 45m",
+      "9h 30m",
+      "9h 15m",
+      "9h",
+      "8h 45m",
+      "8h 30m",
+      "8h 15m",
+      "8h",
+      "7h 45m",
+      "7h 30m",
+      "7h 15m",
+      "7h",
+      "6h 45m",
+      "6h 30m",
+      "6h 15m",
+      "6h",
+      "5h 45m",
+      "5h 30m",
+      "5h 15m",
+      "5h",
+      "4h 45m",
+      "4h 30m",
+      "4h 15m",
+      "4h",
+      "3h 45m",
+      "3h 30m",
+      "3h 15m",
+      "3h",
+      "2h 45m",
+      "2h 30m",
+      "2h 15m",
+      "2h",
+      "1h 45m",
+      "1h 30m",
+      "1h 15m",
+      "1h",
+      "45m",
+      "30m",
+      "15m",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ]
+    },
+    {
+     "key": "work|end|2026-10-28|1793206800",
+     "rule": "work",
+     "end": "end",
+     "kind": "work",
+     "a": 255,
+     "minute": 1020,
+     "fixed": 135,
+     "label": "Work ends",
+     "aria": "Work ends 5:00 PM",
+     "lengths": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "15m",
+      "30m",
+      "45m",
+      "1h",
+      "1h 15m",
+      "1h 30m",
+      "1h 45m",
+      "2h",
+      "2h 15m",
+      "2h 30m",
+      "2h 45m",
+      "3h",
+      "3h 15m",
+      "3h 30m",
+      "3h 45m",
+      "4h",
+      "4h 15m",
+      "4h 30m",
+      "4h 45m",
+      "5h",
+      "5h 15m",
+      "5h 30m",
+      "5h 45m",
+      "6h",
+      "6h 15m",
+      "6h 30m",
+      "6h 45m",
+      "7h",
+      "7h 15m",
+      "7h 30m",
+      "7h 45m",
+      "8h",
+      "8h 15m",
+      "8h 30m",
+      "8h 45m",
+      "9h",
+      "9h 15m",
+      "9h 30m",
+      "9h 45m",
+      "10h",
+      "10h 15m",
+      "10h 30m",
+      "10h 45m",
+      "11h",
+      "11h 15m",
+      "11h 30m",
+      "11h 45m",
+      "12h",
+      "12h 15m",
+      "12h 30m",
+      "12h 45m",
+      "13h",
+      "13h 15m",
+      "13h 30m",
+      "13h 45m",
+      "14h",
+      "14h 15m",
+      "14h 30m",
+      "14h 45m"
+     ]
+    }
+   ],
+   "stops": [
+    {
+     "m": 0,
+     "a": 0,
+     "from": 0,
+     "time": "12:00 AM"
+    },
+    {
+     "m": 15,
+     "a": 3.75,
+     "from": 2,
+     "time": "12:15 AM"
+    },
+    {
+     "m": 30,
+     "a": 7.5,
+     "from": 5.75,
+     "time": "12:30 AM"
+    },
+    {
+     "m": 45,
+     "a": 11.25,
+     "from": 9.5,
+     "time": "12:45 AM"
+    },
+    {
+     "m": 60,
+     "a": 15,
+     "from": 13.25,
+     "time": "1:00 AM"
+    },
+    {
+     "m": 75,
+     "a": 18.75,
+     "from": 17,
+     "time": "1:15 AM"
+    },
+    {
+     "m": 90,
+     "a": 22.5,
+     "from": 20.75,
+     "time": "1:30 AM"
+    },
+    {
+     "m": 105,
+     "a": 26.25,
+     "from": 24.499999999999996,
+     "time": "1:45 AM"
+    },
+    {
+     "m": 120,
+     "a": 30,
+     "from": 28.25,
+     "time": "2:00 AM"
+    },
+    {
+     "m": 135,
+     "a": 33.75,
+     "from": 32,
+     "time": "2:15 AM"
+    },
+    {
+     "m": 150,
+     "a": 37.5,
+     "from": 35.75,
+     "time": "2:30 AM"
+    },
+    {
+     "m": 165,
+     "a": 41.25,
+     "from": 39.5,
+     "time": "2:45 AM"
+    },
+    {
+     "m": 180,
+     "a": 45,
+     "from": 43.25,
+     "time": "3:00 AM"
+    },
+    {
+     "m": 195,
+     "a": 48.75,
+     "from": 47,
+     "time": "3:15 AM"
+    },
+    {
+     "m": 210,
+     "a": 52.5,
+     "from": 50.75,
+     "time": "3:30 AM"
+    },
+    {
+     "m": 225,
+     "a": 56.25,
+     "from": 54.49999999999999,
+     "time": "3:45 AM"
+    },
+    {
+     "m": 240,
+     "a": 60,
+     "from": 58.25,
+     "time": "4:00 AM"
+    },
+    {
+     "m": 255,
+     "a": 63.75,
+     "from": 62,
+     "time": "4:15 AM"
+    },
+    {
+     "m": 270,
+     "a": 67.5,
+     "from": 65.75,
+     "time": "4:30 AM"
+    },
+    {
+     "m": 285,
+     "a": 71.25,
+     "from": 69.5,
+     "time": "4:45 AM"
+    },
+    {
+     "m": 300,
+     "a": 75,
+     "from": 73.25,
+     "time": "5:00 AM"
+    },
+    {
+     "m": 315,
+     "a": 78.75,
+     "from": 77,
+     "time": "5:15 AM"
+    },
+    {
+     "m": 330,
+     "a": 82.5,
+     "from": 80.75,
+     "time": "5:30 AM"
+    },
+    {
+     "m": 345,
+     "a": 86.25,
+     "from": 84.5,
+     "time": "5:45 AM"
+    },
+    {
+     "m": 360,
+     "a": 90,
+     "from": 88.25,
+     "time": "6:00 AM"
+    },
+    {
+     "m": 375,
+     "a": 93.75,
+     "from": 92,
+     "time": "6:15 AM"
+    },
+    {
+     "m": 390,
+     "a": 97.5,
+     "from": 95.75,
+     "time": "6:30 AM"
+    },
+    {
+     "m": 405,
+     "a": 101.25,
+     "from": 99.5,
+     "time": "6:45 AM"
+    },
+    {
+     "m": 420,
+     "a": 105,
+     "from": 103.25,
+     "time": "7:00 AM"
+    },
+    {
+     "m": 435,
+     "a": 108.75,
+     "from": 107,
+     "time": "7:15 AM"
+    },
+    {
+     "m": 450,
+     "a": 112.5,
+     "from": 110.75,
+     "time": "7:30 AM"
+    },
+    {
+     "m": 465,
+     "a": 116.25,
+     "from": 114.5,
+     "time": "7:45 AM"
+    },
+    {
+     "m": 480,
+     "a": 120,
+     "from": 118.25,
+     "time": "8:00 AM"
+    },
+    {
+     "m": 495,
+     "a": 123.75,
+     "from": 122,
+     "time": "8:15 AM"
+    },
+    {
+     "m": 510,
+     "a": 127.5,
+     "from": 125.75,
+     "time": "8:30 AM"
+    },
+    {
+     "m": 525,
+     "a": 131.25,
+     "from": 129.5,
+     "time": "8:45 AM"
+    },
+    {
+     "m": 540,
+     "a": 135,
+     "from": 133.25,
+     "time": "9:00 AM"
+    },
+    {
+     "m": 555,
+     "a": 138.75,
+     "from": 137,
+     "time": "9:15 AM"
+    },
+    {
+     "m": 570,
+     "a": 142.5,
+     "from": 140.75,
+     "time": "9:30 AM"
+    },
+    {
+     "m": 585,
+     "a": 146.25,
+     "from": 144.5,
+     "time": "9:45 AM"
+    },
+    {
+     "m": 600,
+     "a": 150,
+     "from": 148.25,
+     "time": "10:00 AM"
+    },
+    {
+     "m": 615,
+     "a": 153.75,
+     "from": 152,
+     "time": "10:15 AM"
+    },
+    {
+     "m": 630,
+     "a": 157.5,
+     "from": 155.75,
+     "time": "10:30 AM"
+    },
+    {
+     "m": 645,
+     "a": 161.25,
+     "from": 159.5,
+     "time": "10:45 AM"
+    },
+    {
+     "m": 660,
+     "a": 165,
+     "from": 163.25,
+     "time": "11:00 AM"
+    },
+    {
+     "m": 675,
+     "a": 168.75,
+     "from": 167,
+     "time": "11:15 AM"
+    },
+    {
+     "m": 690,
+     "a": 172.5,
+     "from": 170.75,
+     "time": "11:30 AM"
+    },
+    {
+     "m": 705,
+     "a": 176.25,
+     "from": 174.5,
+     "time": "11:45 AM"
+    },
+    {
+     "m": 720,
+     "a": 180,
+     "from": 178.25,
+     "time": "12:00 PM"
+    },
+    {
+     "m": 735,
+     "a": 183.75,
+     "from": 182,
+     "time": "12:15 PM"
+    },
+    {
+     "m": 750,
+     "a": 187.5,
+     "from": 185.75000000000003,
+     "time": "12:30 PM"
+    },
+    {
+     "m": 765,
+     "a": 191.25,
+     "from": 189.5,
+     "time": "12:45 PM"
+    },
+    {
+     "m": 780,
+     "a": 195,
+     "from": 193.25,
+     "time": "1:00 PM"
+    },
+    {
+     "m": 795,
+     "a": 198.75,
+     "from": 197.00000000000003,
+     "time": "1:15 PM"
+    },
+    {
+     "m": 810,
+     "a": 202.5,
+     "from": 200.75,
+     "time": "1:30 PM"
+    },
+    {
+     "m": 825,
+     "a": 206.25,
+     "from": 204.5,
+     "time": "1:45 PM"
+    },
+    {
+     "m": 840,
+     "a": 210,
+     "from": 208.25000000000003,
+     "time": "2:00 PM"
+    },
+    {
+     "m": 855,
+     "a": 213.75,
+     "from": 212,
+     "time": "2:15 PM"
+    },
+    {
+     "m": 870,
+     "a": 217.5,
+     "from": 215.75,
+     "time": "2:30 PM"
+    },
+    {
+     "m": 885,
+     "a": 221.25,
+     "from": 219.50000000000003,
+     "time": "2:45 PM"
+    },
+    {
+     "m": 900,
+     "a": 225,
+     "from": 223.25,
+     "time": "3:00 PM"
+    },
+    {
+     "m": 915,
+     "a": 228.75,
+     "from": 227,
+     "time": "3:15 PM"
+    },
+    {
+     "m": 930,
+     "a": 232.5,
+     "from": 230.75000000000003,
+     "time": "3:30 PM"
+    },
+    {
+     "m": 945,
+     "a": 236.25,
+     "from": 234.5,
+     "time": "3:45 PM"
+    },
+    {
+     "m": 960,
+     "a": 240,
+     "from": 238.25,
+     "time": "4:00 PM"
+    },
+    {
+     "m": 975,
+     "a": 243.75,
+     "from": 242.00000000000003,
+     "time": "4:15 PM"
+    },
+    {
+     "m": 990,
+     "a": 247.5,
+     "from": 245.75,
+     "time": "4:30 PM"
+    },
+    {
+     "m": 1005,
+     "a": 251.25,
+     "from": 249.5,
+     "time": "4:45 PM"
+    },
+    {
+     "m": 1020,
+     "a": 255,
+     "from": 253.25000000000003,
+     "time": "5:00 PM"
+    },
+    {
+     "m": 1035,
+     "a": 258.75,
+     "from": 257,
+     "time": "5:15 PM"
+    },
+    {
+     "m": 1050,
+     "a": 262.5,
+     "from": 260.75,
+     "time": "5:30 PM"
+    },
+    {
+     "m": 1065,
+     "a": 266.25,
+     "from": 264.5,
+     "time": "5:45 PM"
+    },
+    {
+     "m": 1080,
+     "a": 270,
+     "from": 268.25,
+     "time": "6:00 PM"
+    },
+    {
+     "m": 1095,
+     "a": 273.75,
+     "from": 272,
+     "time": "6:15 PM"
+    },
+    {
+     "m": 1110,
+     "a": 277.5,
+     "from": 275.75,
+     "time": "6:30 PM"
+    },
+    {
+     "m": 1125,
+     "a": 281.25,
+     "from": 279.5,
+     "time": "6:45 PM"
+    },
+    {
+     "m": 1140,
+     "a": 285,
+     "from": 283.25,
+     "time": "7:00 PM"
+    },
+    {
+     "m": 1155,
+     "a": 288.75,
+     "from": 287,
+     "time": "7:15 PM"
+    },
+    {
+     "m": 1170,
+     "a": 292.5,
+     "from": 290.75,
+     "time": "7:30 PM"
+    },
+    {
+     "m": 1185,
+     "a": 296.25,
+     "from": 294.5,
+     "time": "7:45 PM"
+    },
+    {
+     "m": 1200,
+     "a": 300,
+     "from": 298.25,
+     "time": "8:00 PM"
+    },
+    {
+     "m": 1215,
+     "a": 303.75,
+     "from": 302,
+     "time": "8:15 PM"
+    },
+    {
+     "m": 1230,
+     "a": 307.5,
+     "from": 305.75,
+     "time": "8:30 PM"
+    },
+    {
+     "m": 1245,
+     "a": 311.25,
+     "from": 309.5,
+     "time": "8:45 PM"
+    },
+    {
+     "m": 1260,
+     "a": 315,
+     "from": 313.25,
+     "time": "9:00 PM"
+    },
+    {
+     "m": 1275,
+     "a": 318.75,
+     "from": 317,
+     "time": "9:15 PM"
+    },
+    {
+     "m": 1290,
+     "a": 322.5,
+     "from": 320.75,
+     "time": "9:30 PM"
+    },
+    {
+     "m": 1305,
+     "a": 326.25,
+     "from": 324.5,
+     "time": "9:45 PM"
+    },
+    {
+     "m": 1320,
+     "a": 330,
+     "from": 328.25,
+     "time": "10:00 PM"
+    },
+    {
+     "m": 1335,
+     "a": 333.75,
+     "from": 332,
+     "time": "10:15 PM"
+    },
+    {
+     "m": 1350,
+     "a": 337.5,
+     "from": 335.75,
+     "time": "10:30 PM"
+    },
+    {
+     "m": 1365,
+     "a": 341.25,
+     "from": 339.5,
+     "time": "10:45 PM"
+    },
+    {
+     "m": 1380,
+     "a": 345,
+     "from": 343.25,
+     "time": "11:00 PM"
+    },
+    {
+     "m": 1395,
+     "a": 348.75,
+     "from": 347,
+     "time": "11:15 PM"
+    },
+    {
+     "m": 1410,
+     "a": 352.5,
+     "from": 350.75,
+     "time": "11:30 PM"
+    },
+    {
+     "m": 1425,
+     "a": 356.25,
+     "from": 354.5,
+     "time": "11:45 PM"
+    }
+   ],
+   "dragWords": {
+    "tooShort": "Too short",
+    "release": "Release to apply"
+   },
+   "build": null
   },
+  "hint": [
+   "Tap a session for details. Drag a",
+   "handle to change your sleep or work hours."
+  ],
   "core": {
    "kick": "Timer running",
    "kickKind": "go",
