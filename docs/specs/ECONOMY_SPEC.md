@@ -200,9 +200,12 @@ An array of plain objects, in insertion order (order matters: it is the order of
 | `money` | `{start, tx[], peakBalance, ...}` | deposit XP | `recordMoneyTransaction`, `ecoMigrate` |
 | `actXP` | `{catalogId: base}` | catalog | `saveBase` |
 | `plan.checks` | per date `{s, v, log, actId}` | plan | `planToggle` |
-| `health` | `{on, ex, steps, sleep, wt, seen, since, ...}` | health | health |
+| `health` | `{on, ex, steps, sleep, wt, seen, since, last, msg, sdk, granted, src, today, wtTime?, wtHist?}` (plus `snap`, display only) | health | health (HEALTH-0 to HEALTH-6) |
+| `weight` | number (lb) | display | health weight (HEALTH-6) |
 | `devMode` | boolean | dev boosts | settings |
-| `dailyDraw.rerollsUsed` | number | reroll price | Daily Hand |
+| `dailyDraw` | `{date, nonce, rerollsUsed, cards: [{tpl, id, n}]}` | reroll price, Daily Hand | Daily Hand (SPARK-5) |
+| `journalCoach` | `{days: {date: {xpAwarded?}}, reviews: {key: {answer, paid?}}, welcome: {date: {gap, claimed: {pet?, fresh?, line?}}}, cooldown, pats}` | journal coach | journal coach (COACH-1) |
+| `dayReflections` | `{date: text}` | journal | catch-up note (COACH-1) |
 
 ### 2.4 Passive records
 
@@ -283,7 +286,9 @@ Constants written inline in the code (not in `ECO`):
   `need = max(0, d.needed - d.into)`; `lvl = d.level + 1`; repeat `n - 1` times: `need += need(lvl); lvl += 1`; return
   `max(1, need)`.
 - **CURVE-9** Quest stage lock (`13-runtime.js:272-273`): `stageLvl(s) = [0, 1, 3, 5, 8, 12][s] || 1`;
-  `questLocked(q) = (q.stage || 1) > 1 && characterLevel().level < stageLvl(q.stage)`.
+  `questLocked(q) = (q.stage || 1) > 1 && characterLevel().level < stageLvl(q.stage)`. So stages 2 to 5 need character levels
+  3, 5, 8 and 12; a missing stage, stage 0 or 1, and any stage of 6 or more (the table has no entry, so the level is 1) never
+  lock.
 
 ---
 
@@ -316,11 +321,14 @@ non-empty (`04-runtime.js:25`).
 
 ### 6.1 Rules
 
-- **RULES-1** `rules = {...DEFAULT_RULES, ...state.customRules}` at load (`04-runtime.js:26`): a shallow merge per type, so a
-  stored entry replaces the default entry whole. With no save, `rules = DEFAULT_RULES` (`04-runtime.js:33`). `save()` writes
-  `state.customRules = rules` (`04-runtime.js:44`). `saveRules` sets `base = min(200, max(1, num(v) || 1))`
-  (`04-runtime.js:303`); `resetRules` restores the defaults (`04-runtime.js:304`); the migration may rewrite three fields
-  (MIG-4). A rule is `{name, icon, base, skill, primary, secondary, desc}`.
+- **RULES-1** `rules = {...copy(DEFAULT_RULES), ...state.customRules}` at load (`04-runtime.js:26`, `copy` a deep copy, so the
+  defaults themselves never change): a shallow merge per type, so a stored entry replaces the default entry whole, and a stored
+  key that is not a default type becomes a type of its own. With no save, `rules = copy(DEFAULT_RULES)` (`04-runtime.js:33`).
+  `save()` writes `state.customRules = rules` (`04-runtime.js:44`). `saveRules` sets each type's
+  `base = min(200, max(1, num(v) || 1))` in place (`0` gives 1), saves and toasts `'XP rules saved'` (`04-runtime.js:303`);
+  `resetRules` restores a fresh copy of the defaults, saves and toasts `'Default XP rules restored'` (`04-runtime.js:304`); the
+  migration may rewrite three fields (MIG-4).
+  A rule is `{name, icon, base, skill, primary, secondary, desc}`.
 - **RULES-2** Defaults (`00-runtime.js:12-22`):
 
 | type | name | base | skill | primary | secondary |
@@ -457,7 +465,8 @@ Worked examples (verified in a sandbox against the page's own functions):
 ## 10. Attribute split and ascension stars
 
 - **SPLIT-1** A two-attribute award gives the primary `round(xp * 0.7)` and the secondary `xp - round(xp * 0.7)`. It applies
-  when a secondary exists and differs from the primary. Where the secondary comes from: Log, the draft (PREV-1); health,
+  when a secondary exists and differs from the primary (plan sessions check only that a secondary exists, PLAN-1; no plan day
+  has the same attribute twice). Where the secondary comes from: Log, the draft (PREV-1); health,
   voice and Life Director, the rule (or the call); nutrition wellbeing/physique; cat care wellbeing/social; money
   business/discipline; plan, the plan day. Single-attribute awards: quests (`q.attribute || 'discipline'`), steps
   (endurance), sleep (wellbeing), catalog (the sheet's attribute), journal coach (wellbeing).
@@ -493,10 +502,17 @@ Worked examples (verified in a sandbox against the page's own functions):
   skill, primary and secondary); then `type` must be a rules key, else `custom`; `customName` cut to 80 characters; `duration` becomes
   `String(min(1440, max(0, round(num0(duration)))))`; `quality` must be one of `'0.8' '1' '1.1' '1.2'`, else `'1'`; `skill`
   cut to 60; `primary` must be an ATTRS id, else the rule's; `secondary` must be `''` or an ATTRS id, else `''`; `notes` cut to
-  2000; a native Save requires an `opId` (cut to 80) (`50-native-log.js:89-93`). The web form does none of this.
+  2000. The web form does none of this.
+  The native Save (`commands.submit({draft, operationId})`, `50-native-log.js:89-109`): cleans the draft; `opId =
+  String(operationId || '')` cut to 80; an empty one returns `{ok: false, message: 'Could not save: missing operation id'}`
+  and records nothing. Otherwise `res = recordActivity({...cleaned, opId})` (LOG-2). When `res.ok` is false it returns
+  `{ok: false, message: res.message}` (no toast of its own); otherwise it toasts `res.message` and returns
+  `{ok: true, message: res.message, xp: res.xp, navigate: 'dashboard'}`, a replayed `opId` included (the `duplicate` flag is
+  not passed on).
 - **LOG-2** `recordActivity(d)` (`04-runtime.js:237`), in order:
-  1. If `d.opId` and a record with `a.opId === d.opId` exists: return
-     `{ok: true, xp: that.xp, message: 'Activity saved · +' + that.xp + ' XP', duplicate: true}`. Nothing changes.
+  1. If `d.opId` is truthy and a record with `a.opId === d.opId` exists: return
+     `{ok: true, xp: that.xp, message: 'Activity saved · +' + that.xp + ' XP', duplicate: true}`. Nothing changes. The
+     comparison is strict and records store `String(d.opId)`, so only a string `opId` (as the native Log sends) is ever matched.
   2. `was` = a JSON copy of the whole state.
   3. `r = rules[d.type] || rules.custom`; `x = activityPreview(d)`; `award = activityAward(d)` (commit: may spend rested XP).
   4. If `award.xp` is 0: return `{ok: false, message: award.msg}` (nothing was spent: AWARD-1 step 10).
@@ -548,8 +564,11 @@ Worked examples (verified in a sandbox against the page's own functions):
 
   Examples: daily quest of 50 with Compound Habit and a pool of 10: base `round(57.49999...) = 57`, peek 67, paid 67, pool 0.
   Epic of 75 with a pool of 100: 113, pool 62.
-- **QUEST-4** Quest XP values: custom quests `min(500, max(1, num(input) || 25))` (`04-runtime.js:242`); Daily Hand cards are
-  daily quests worth 0/10/20/30 by tier (`50-quests-hand.js:62,91`) and share the 3-a-day limit with every other daily.
+- **QUEST-4** Quest XP values: custom quests `min(500, max(1, num(input) || 25))` (`04-runtime.js:242`), so an empty or `0`
+  input gives 25 and a negative or fractional one below 1 gives 1. `createQuest` refuses an empty (trimmed) name with
+  `'Give your quest a name'`; otherwise it pushes `{id: 'custom_' + now, name, desc: 'Custom quest created by you.', cadence
+  (the form's), xp, kind: 'custom'}`, saves and toasts `'Quest created'`. Daily Hand cards are daily quests worth 0/10/20/30 by
+  tier (`50-quests-hand.js:62,91`) and share the 3-a-day limit with every other daily.
 - **QUEST-5** Callers of `toggleQuest`: the quest board (`qosToggle`, `14-runtime.js:2-5`), the Daily Hand's auto-verify,
   which runs inside every `save()` (17.2), voice (`50-voice-gen5.js:32,188,669`) and Life Director (11.5).
 
@@ -567,9 +586,14 @@ Worked examples (verified in a sandbox against the page's own functions):
      xpSplit: [{p, pXP}] plus [{sec, sXP}] when split, src: 'health', hc: o.hc}`.
   6. Returns `ec.xp`, the amount before stars, and adds that (not `xpT`) to the skill cache [D11].
 - **HEALTH-0** A sync runs only in the Android app (the `HealthSync` plugin), when sync is on or the owner asked, and not while
-  another sync runs; it stops early, without awards, when Health Connect is unavailable or when none of the wanted record types
-  is granted (`39-health.js:30-38`). Workouts are handled before steps (steps use the workouts just read), then sleep, then
-  weight.
+  another sync runs (`39-health.js:30-38`). It first stores the plugin's status: `H.sdk = status.sdk`,
+  `H.granted = status.granted || []`. It stops early, without awards, when Health Connect is unavailable, or when at least one
+  wanted record type is not granted and none is (`want` = the types switched on: `ex` exercise, `steps`, `sleep`, `wt` weight).
+  So a partial grant syncs the granted types only, and a sync with every type switched off runs through and reads nothing.
+  Workouts are handled before steps (steps use the workouts just read), then sleep, then weight; each only when switched on and
+  granted. If anything in it throws (the status or a read), the sync stops there: `H.msg = 'Sync failed: ' + message` (first
+  100 characters), no summary, no toast, no pruning, `H.last` unchanged; what it already awarded and marked seen stays, and the
+  `finally` save stores it.
 - **HEALTH-2** Windows (`39-health.js:40-41`): `from = max(H.since || 0, now - 3 days)`. `H.since` is set to
   `now - 2 days` when unset (also when sync is switched on, `39-health.js:112`) and is never advanced afterwards [D01].
 - **HEALTH-3** Workouts (`39-health.js:42-57`), only when `H.ex` and `exercise` is granted. Sessions read for
@@ -580,10 +604,13 @@ Worked examples (verified in a sandbox against the page's own functions):
   type names such as `walking`, `running`, `biking`; unknown types arrive as `other_workout`). If any record with
   `src !== 'health'`, the same `type`, and `|parse(a.date) - start| <= 2 h` exists: `seen[key] = end`, no award. Otherwise
   award `{type: kind, name: (title || nice(type)) + (origin ? ' · ' + appName(origin) : ''), duration: min, at: start, hc: key,
-  skill: kind === 'running' ? nice(type with _treadmill|_stationary|_machine|_open_water|_pool removed) : rule skill,
-  note: 'Imported from Health Connect'}` and set `seen[key] = end` whatever it paid. `nice(t)`: underscores to spaces, each
-  word capitalised, `High Intensity Interval Training` to `HIIT`. `appName`: Samsung Health, Google Fit, Fitbit, Garmin for
-  their packages, else the last package segment. A `walking` workout gets skill `Walking` and so counts as passive [D10].
+  skill: kind === 'running' ? nice(type with the first of _treadmill|_stationary|_machine|_open_water|_pool removed) : rule skill,
+  note: 'Imported from Health Connect'}` and set `seen[key] = end` whatever it paid; when the session has an `origin`,
+  `H.src = appName(origin)`. `nice(t)`: underscores to spaces, each word capitalised, `High Intensity Interval Training` to
+  `HIIT` (a missing type is the string `undefined`, so `Undefined`). `appName`: Samsung Health, Google Fit, Fitbit, Garmin for
+  their packages, else the last package segment. A `walking` workout gets skill `Walking` and so counts as passive [D10]. The
+  by-hand test compares the hand-logged record's time (when it was saved, usually after the workout) with the workout's start
+  [D37].
 - **HEALTH-4** Steps (`39-health.js:58-73`), only when `H.steps` and `steps` is granted. Days read for the last 30 days.
   `sinceDay = localDate(H.since || from)`. For each day: today's count is only stored (`H.today`); skip when `seen['p'+date]`,
   `count < 2000` or `date < sinceDay`. `dayEx` = workouts from the exercise read (empty when workouts are off) whose
@@ -594,15 +621,20 @@ Worked examples (verified in a sandbox against the page's own functions):
   grouping), duration: 0, at: date + 'T20:00:00' (local), skill: 'Walking', primary: 'endurance', secondary: '',
   xp: min(15, round((eff - 2000) / 1000 * 1.5)), note: 'Imported from Health Connect'}`, so 3 to 15 XP.
 - **HEALTH-5** Sleep (`39-health.js:74-93`), only when `H.sleep` and `sleep` is granted. Sessions read for the last 8 days.
-  `best[d]` = the longest session with `end <= now` among those ending on local day `d` (seen or not). For each session:
+  `best[d]` = the longest session with `end <= now` among those ending on local day `d`, whether seen, shorter than 3 hours or
+  before the window; of two equally long ones the first returned stays. For each session:
   `key = 'z' + id`, `hrs = (end - start) / 3600000`; skip when seen, `end > now`, `hrs < 3`, or `end < from`; then
-  `seen[key] = end`; skip unless it is `best` of its end day. `busy` = some workout with `start < sleepEnd - 30 min` and
-  `end > sleepStart + 30 min`, or some non-health record whose time is strictly inside `(sleepStart + 30 min, sleepEnd - 30 min)`.
+  `seen[key] = end`; skip unless it is `best` of its end day. `busy` = some workout read in this sync (none when workouts are off
+  or not granted) with `start < sleepEnd - 30 min` and `end > sleepStart + 30 min`, or some non-health record whose time is
+  strictly inside `(sleepStart + 30 min, sleepEnd - 30 min)`.
   `pts = (hrs < 5.5 or hrs > 12 or busy) ? 0 : hrs < 6.5 ? 8 : hrs < 7.5 ? 12 : hrs <= 9.5 ? 15 : 12`. When `pts > 0` award
   `{type: 'sleep', rule: {icon: 'moon', skill: 'Sleep', primary: 'wellbeing', secondary: ''}, name: 'Sleep: ' + h + 'h ' +
-  two-digit m + 'm' (h = floor(hrs), m = round((hrs - h) * 60)), duration: 0, at: end, skill: 'Sleep', primary: 'wellbeing',
-  secondary: '', xp: pts, note: 'Imported from Health Connect'}`.
-- **HEALTH-6** Weight pays nothing. At the end `seen` entries older than `now - 21 days` are deleted (`39-health.js:98`)
+  two-digit m + 'm' (h = floor(hrs), m = round((hrs - h) * 60) in doubles, section 19; m can be 60 [D36]), duration: 0, at: end,
+  skill: 'Sleep', primary: 'wellbeing', secondary: '', xp: pts, note: 'Imported from Health Connect'}`.
+- **HEALTH-6** Weight pays nothing (`39-health.js:94-96`), only when `H.wt` and `weight` is granted: the latest reading of the
+  last 60 days, `{kg, time}`; when `kg` is set, `lb = round(kg * 2.20462 * 10) / 10`, and when `time > (H.wtTime || 0)`:
+  `H.wtTime = time`, `H.wtHist` gains `{t: time, lb}` (the last 60 kept), and when `state.weight !== lb`, `state.weight = lb` and
+  the summary reports it. At the end `seen` entries older than `now - 21 days` are deleted (`39-health.js:98`)
   [D01], `H.last = now`, and `save()` runs in `finally` with no take-back (`39-health.js:104`). The summary
   (`39-health.js:100-102`): `bits` lists, when non-zero, `n workout` / `n workouts`, `n day of steps` / `n days of steps`,
   `n night of sleep` / `n nights of sleep` (a record counts once it reached `lmaHealthAward`, even when that paid 0; a
@@ -625,12 +657,33 @@ Worked examples (verified in a sandbox against the page's own functions):
   `ec.xp <= 0` return `{ok: false, msg: ec.msg || 'No XP for that one'}`. Split by the rule (`s && s !== p`), stars per part;
   push `{id: UUID, type: o.type, name: o.name, icon: r.icon, duration: o.duration, quality: 1, skill: r.skill, primary: r.primary,
   secondary: r.secondary, xp, date: ISO of o.atMs, notes: 'Logged by voice', xpSplit, src: 'voice'}`; `save()` with its result
-  ignored and exceptions swallowed [D13]; return `{ok: true, xp, id}`. `50-voice-gen5.js:68-74` wraps it: it may replace the
-  name, sets `detail` and `notes = 'Logged by voice · ' + summary`, and records an undo entry.
+  ignored and exceptions swallowed [D13]; toast `'Activity saved · +' + xp + ' XP'`; return `{ok: true, xp, id}`.
+  `50-voice-gen5.js:68-74` wraps it: it may replace the name, sets `detail` and `notes = 'Logged by voice · ' + summary`, and
+  records an undo entry.
 - **VOICE-3** Inputs decided by `lmvHLog` (`49-voice-time.js:126-149`): type = the first of `LMV_TYPES`
   (`49-voice-time.js:100-108`) whose pattern matches, else `custom`. `dur` = the extracted minutes; missing or under 5 becomes
   30; over 480 is refused. The day is the explicit scope's day or today; a range or a future day is refused. The confirmation
   shows `'About +' + ec.xp + ' XP'` from a peek, before stars [D20].
+  `lmvActType(s)` (`49-voice-time.js:109`) tests the (already normalised, lower-case) sentence against these patterns in order;
+  each is a whole-word alternation (`\b(...)\b`), and `noun` is the first match. No match gives
+  `{type: 'custom', name: 'Custom activity', noun: ''}`.
+
+| # | type | name | words |
+|---|---|---|---|
+| 1 | running | Run / cardio | run, ran, running, jog, jogged, jogging, cardio, treadmill, cycle, cycled, cycling, bike, biked, swim, swam, swimming, hike, hiked, hiking, walk, walked, walking, elliptical, rowing |
+| 2 | strength | Strength workout | weight, weights, lift, lifted, lifting, gym, strength, workout, worked out, pushup, push-up, push up (and plurals), pullup, pull-up, pull up (and plurals), squat, squats, bench, exercise, exercised, trained, training, crossfit |
+| 3 | reading | Focused reading / study | read, reading, study, studied, studying, homework, course |
+| 4 | language | Language practice | spanish, french, german, italian, japanese, language, duolingo |
+| 5 | recovery | Sleep / recovery routine | yoga, stretch, stretched, stretching, `meditat` followed by any word characters, nap, napped, sleep, recovery, mobility |
+| 6 | business | Focused business work | business, client, invoice, proposal, email, emails, deep work |
+| 7 | practical | Practical skill practice | cook, cooked, clean, cleaned, repair, fixed, garden, gardening, woodwork, practice, practiced, laundry, chore, chores |
+
+  The record's name: for `custom` always `Activity` (the noun is empty); for a noun among walk/walked/walking, yoga,
+  swim/swam/swimming, hike/hiked/hiking, cycle/cycled/cycling, bike/biked, jog/jogged/jogging the names Walk, Yoga, Swim, Hike,
+  Cycle, Bike ride, Jog; otherwise the pattern's name. The time `atMs`: today with no part of the day named, now (minus
+  `min(dur, 90)` minutes when said as earlier); otherwise the named part of the day (morning 9:00, afternoon 14:00, evening 19:00,
+  night or "last night" 21:00) or, for another day with none named, 12:00, in the device zone; a time still to come (today, or
+  more than a minute ahead on any day) becomes one minute ago.
 
 ### 11.5 Life Director
 
@@ -644,7 +697,9 @@ Worked examples (verified in a sandbox against the page's own functions):
   `ec = total > 0 ? ecoAward(type, total, dur, {day, peek: !commit}) : {xp: 0}` (not manual). Split by `R` (`s && s !== p`),
   stars per part, `xp = pXP + sXP`. Returns `{xp, rule: R, split}`.
 - **LD-3** `awardActivity(event, info)` (`logic.js:2505-2531`):
-  1. Not connected: `{awarded: false, reason: 'HOST_NOT_CONNECTED'}`.
+  1. Not connected: `{awarded: false, reason: 'HOST_NOT_CONNECTED'}`. Connected (`logic.js:2358-2370`) means
+     `state.activities` and `state.quests` are both arrays and the host functions `save`, `questKey`, `isQuestDone`,
+     `toggleQuest` and the `rules` table exist; in practice only a save whose `quests` is not an array is not connected.
   2. A record with `ldEventId === event.eventId` exists: `{awarded: false, reason: 'ALREADY_IN_LIFEMAX', activityId, xp}`.
   3. `type = typeForTag(event.activityTypeTag)`; `when = event.actualStartEpoch * 1000`; `was` = JSON copy of the state.
   4. `x = xpFor(type, event.actualDurationMinutes, 1, localDate(when), true)` (commit: may spend rested XP).
@@ -660,10 +715,12 @@ Worked examples (verified in a sandbox against the page's own functions):
   9. Return `{awarded: true, activityId, xp: x.xp}`, the amount without the bonus [D20].
 - **LD-4** Quest bounty: `completeQuest(hostRef)` (`logic.js:2533-2541`) refuses with `{completed: false}` and no reason when
   the host is not connected, `hostRef` or its `questId` is missing, or `hostRef.future` is set; then with a reason when the quest
-  is gone (`QUEST_GONE`), its `questKey` is no longer `hostRef.key` (`PERIOD_CHANGED`), or it is done (`ALREADY_DONE`); otherwise `toggleQuest(id, true)` and reports `xp: num0(q.xp)`, not what was paid
-  [D20]. After an award whose save failed (`HOST_SAVE_FAILED` or `HOST_READ_ONLY`, `logic.js:2802`), no bounty is paid for that
-  event (`logic.js:2818,2838,2906`, since commit `1550306`). Activities logged elsewhere complete matching Life Director
-  blocks without XP (`logic.js:2733`), but that path may still pay bounties.
+  is gone (`QUEST_GONE`), its `questKey` is no longer `hostRef.key` (`PERIOD_CHANGED`), or it is done (`ALREADY_DONE`); otherwise
+  `toggleQuest(id, true)` and returns `{completed: isQuestDone(q) after the toggle, xp: num0(q.xp), name: q.name}`: the quest's
+  listed XP, not what was paid [D20], and `completed: false` for a locked quest (toggleQuest refused it with its toast,
+  QUEST-2 step 3). After an award whose save failed (`HOST_SAVE_FAILED` or `HOST_READ_ONLY`, `logic.js:2802`), no bounty is
+  paid for that event (`logic.js:2818,2838,2906`, since commit `1550306`). Activities logged elsewhere complete matching Life
+  Director blocks without XP (`logic.js:2733`), but that path may still pay bounties.
 - **LD-5** Life Director previews call `xpFor` without `commit` (`logic.js:3653-3654`).
 
 ### 11.6 Fixed bonuses through the cap
@@ -671,8 +728,10 @@ Worked examples (verified in a sandbox against the page's own functions):
 #### 11.6.1 Nutrition (`ecoNutritionCheck`, `44-rewards.js:47-58`)
 
 **NUTRI-1** Triggered 50 ms after `addMealEntry` (`44-rewards.js:147`), which nothing calls any more [D02].
-1. `goal = max(0, num0(mealsMeta.calGoal))`; 0: stop. `day = today`; `nutriDone[day]`: stop.
-2. `kcal` = sum of `num0(e.kcal)` over today's food log. If `kcal < goal * 0.85` or `kcal > goal * 1.15`: stop.
+1. `goal = max(0, num0(mealsMeta.calGoal))`; 0: stop. `day = today`; `nutriDone` is created as `{}` when missing (so even a
+   check that pays nothing can add it); `nutriDone[day]`: stop.
+2. `kcal` = sum of `num0(e.kcal)` over today's food log. If `kcal < goal * 0.85` or `kcal > goal * 1.15`: stop. Both bounds
+   are binary doubles (section 19: `1500 * 1.15` is `1724.9999999999998`, so 1,725 kcal misses a goal of 1,500).
 3. `nutriDone[day] = 1`; `xp = cap(restedTake(8), dayXP(today))` [D03]; if `xp <= 0`: stop, without saving [D04].
 4. Push `{id: 'nut_' + now, type: 'nutrition', name: 'Nutrition goal hit', icon: 'heart', duration: 0, skill: 'Nutrition',
    primary: 'wellbeing', secondary: 'physique', xp, date, notes: kcal + ' kcal against a goal of ' + goal,
@@ -702,9 +761,13 @@ Worked examples (verified in a sandbox against the page's own functions):
    record with `link === 'business.transfer-money-into-savings'` today.
 4. If not `doneToday` and `net >= 50`: `xp = min(25, max(5, round(net / 10)), max(0, 50 - weekXP))`; then
    `xp = xp > 0 ? cap(restedTake(xp), dayXP(today)) : 0` [D03].
+   Every sum and difference here is a binary double in this order (section 19: on a balance of 3.01 a deposit of 125 nets
+   `124.99999999999999` and pays 12, not 13), and `peakBalance` is stored as computed (`0.01 + 50.01` is `50.019999999999996`).
 5. If `xp > 0`: push `{id: 'act_' + now, type: 'money', name: 'Deposit ' + currency(amt), icon: 'coin', duration: 0,
    skill: 'Saving', primary: 'business', secondary: 'discipline', xp, date, notes: note, xpSplit: [{business, round(xp * 0.7)},
-   {discipline, xp - that}]}` and set the transaction's `actId`.
+   {discipline, xp - that}]}` and set the transaction's `actId`. `currency(v)` is
+   `Intl.NumberFormat(undefined, {style: 'currency', currency: 'USD'})`: US dollars in the device locale (`$125.00` in en-US,
+   which the golden cases use).
 6. Push the transaction (`{id: 'tx_' + now, type, amount, note (trimmed, 60 chars), date}`); `save()` (result ignored);
    return `{ok: true, message: deposit ? 'Deposit recorded' + (xp ? ' · +' + xp + ' XP' : '') : 'Withdrawal recorded'}`.
 
@@ -723,37 +786,61 @@ complete) and the day has no `actId`:
   catalog entry already recorded on that date, else `d.xp` (from `planDay`: 40 strength, 30 cardio, 20 recovery on the default
   and athlete plans, 15 otherwise on the athlete plan; 30/25/20/15 for strength/cardio/mobility/recovery and 15 otherwise on
   class plans, `06-runtime.js:32-41`, `14-runtime.js:52`).
-- Split by `d.secondary` (SPLIT-1); `date` = the plan date at local noon when it is before today, else now.
+- Split when `d.secondary` is set (SPLIT-1, without the differs-from-primary check); `date` = the plan date at local noon when it
+  is before today, else now (so a day ticked ahead of time is dated today).
 - Record `{id: 'plan_' + date, type: 'plan', kind: d.kind, planDate: date, name: 'Plan: ' + d.label, icon: d.icon, duration: 0,
   skill: 'Training', primary: d.primary, secondary: d.secondary, xp, date, notes: '', xpSplit}` replaces any record with that id;
   `c.actId` is set; message `d.short + ' complete · +' + xp + ' XP'`.
 - Unticking so the day is no longer complete removes the record (`removeAct`) and `actId`; message
-  `'Session reopened · XP removed'`. `save()` runs either way; the toast shows only if it saved.
+  `'Session reopened · XP removed'`. `save()` runs either way; the toast shows only if it saved. Returns `{saved, message}`
+  (`message` empty when the day neither completed nor reopened).
+- Ticks (outside the economy, but in the recorded `plan`): `planToggle(date, key, i, checked)` keeps
+  `plan.checks[date] = {s: {itemKey: [bool, ...]}, v: {}, actId?}`; the item's array is padded with `false` to the item's count
+  `n` and entry `i` set to `checked`.
 
 #### 11.7.2 Attribute-sheet catalog (`actStatus`, `07-runtime.js:9-20`; `confirmAct`, `07-runtime.js:110-119`)
 
 **CATALOG-1** The attribute sheet's entries (`ACTS`, ids `attribute.slug`):
 
-- `baseXP(a) = max(1, num(actXP[a.id]) || a.xp)` (`07-runtime.js:6`); a custom base is `min(200, max(1, round(num(v) || 0)))`,
-  kept only when non-zero (`07-runtime.js:35`).
+- `baseXP(a) = max(1, num(actXP[a.id]) || a.xp)` (`07-runtime.js:6`). `saveBase(id)` stores a custom base
+  `min(200, max(1, round(num(v) || 0)))` (never 0, so always stored) and toasts `'XP updated'`; `saveBase(id, reset)` deletes it
+  and toasts `'XP reset to default'`; both save (`07-runtime.js:35`).
 - Status, from records with `actId === a.id` (`n` = those today): one-time (`o` flag) and any record: `Already recorded`;
   daily (`d`) and `n > 0`: `Done today`; weekly (`w`) and a record on or after `weekMonday`: `Done this week`; `n >= 3`:
   `Daily limit reached`; otherwise `factor = [1, 0.5, 0.25][n]`. Then, if still open: a linked plan kind
   (`LINKS`, `07-runtime.js:3`) already paid today with `xp > 0` blocks (`Already counted via your workout plan`); the savings
   entry is blocked by a `money` record today (`Already counted via the Money tab`). `xp = max(1, round(baseXP * factor))`.
-- `confirmAct`: refuses while blocked; requires `duration >= a.min` when the entry has a minimum; a milestone (`m`) needs a
-  result not recorded before (case-insensitive); ignores a repeat within 2.5 s of the last record. Records
-  `{id: 'act_' + now + '_' + 4 random chars, type: 'catalog', actId, link: a.id, name, icon: the attribute's, duration, result,
-  skill: a.skill || 'Practice', primary: attr, secondary: '', xp, date, notes, xpSplit: [{attr, xp}]}`; `save()` (result
-  ignored).
+  `actStatus(a)` returns `{blocked, factor, n, xp}` (`blocked` the text, `''` when open; `factor` stays 1 when blocked); for a
+  dev boost `{blocked: '', factor: 1, n, xp: max(1, num(a.xp) || xpToGainLevels(...))}`.
+- `confirmAct(id)`, in order: blocked toasts the blocked text (`'Unavailable'` when empty); an entry with a minimum reads the
+  duration field (`num0`, trimmed) and refuses below it with `'Needs at least ' + a.min + ' minutes'` (without a minimum the
+  duration is 0); a milestone (`m` flag) refuses an empty result with `'Name the milestone first'` and one already recorded
+  (case-insensitive) with `'That milestone is already recorded'`; a repeat within 2.5 s of the entry's last record is ignored
+  silently. Records `{id: 'act_' + now + '_' + 4 random base-36 chars, type: 'catalog', actId, link: a.id, name,
+  icon: the attribute's, duration, result (the trimmed result field, `''` when none), skill: a.skill || 'Practice',
+  primary: attr, secondary: '', xp, date, notes (the trimmed note field), xpSplit: [{attr, xp}]}`; `save()` (result ignored);
+  toast `a.name + ' · +' + xp + ' XP'`.
+- `undoCat(id)` removes the entry's last record of today (none: nothing), saves and toasts `'Undone · XP removed'`.
 
 #### 11.7.3 Journal coach (`jcAward`, `47-journal-coach.js:133-139`)
 
-**COACH-1** Records `{type: 'coach', src: 'coach', skill: 'Reflection', primary: 'wellbeing', secondary: '', duration: 0, quality: 1,
-xpSplit: [{wellbeing, xp}]}` (passive for streak and decay). Amounts and once-only keys: reflection 15 for 40+ characters on
-today or yesterday, once per day (`47-journal-coach.js:140-146`); welcome-back 10 (pet) and 25 (new chapter) once per welcome
-day; catch-up note 20 for 12+ characters (`47-journal-coach.js:234-246`); weekly review 30 for 50+ characters and monthly
-chronicle 50 for 60+, once per review (`47-journal-coach.js:350-355`). Constants in `JC` (`47-journal-coach.js:6`).
+**COACH-1** `jcAward(xp, name, note)` pushes `{id: UUID, type: 'coach', name, icon: 'book', duration: 0, quality: 1,
+skill: 'Reflection', primary: 'wellbeing', secondary: '', xp, date: now, notes: note || '', xpSplit: [{wellbeing, xp}],
+src: 'coach'}` (passive for streak and decay) and returns `xp`; it does not save (its callers do). The once-only marks live in
+`state.journalCoach` (`days`, `reviews`, `welcome`, created empty when missing). Constants in `JC` (`47-journal-coach.js:6`).
+
+| Award | Condition and mark | Name, notes | Toast |
+|---|---|---|---|
+| Reflection 15 (`jcOnReflect(d, text)`, `47-journal-coach.js:140-146`) | trimmed text 40+ characters, `d` today or yesterday, `days[d].xpAwarded` unset, then set; so today's and yesterday's reflections can each pay once | `Journal reflection`, `''` | `'+15 XP · +2 bond · Reflection saved'` (and +2 bond to the cat) |
+| Welcome back 10 (`jcClaim('pet')`) | a `welcome[today]` record with `claimed.pet` unset, then set | `Welcome back`, `'Returned after ' + gap + ' days'` | `'+10 XP · Welcome back'`; with a cat it first calls `petPetDone()`, which can complete cat care (CARE-1) |
+| New chapter 25 (`jcClaim('fresh')`) | `welcome[today]`, `claimed.fresh` unset, then set | `New chapter`, same notes | `'+25 XP · New chapter'` |
+| Catch-up 20 (`jcCatchUp()`, `47-journal-coach.js:234-246`) | the typed sentence trimmed 12+ characters (else `'Write a full sentence (12+ characters)'`), `welcome[today]` with `claimed.line` unset, then set; the sentence is appended (new line) to `dayReflections[today]`, cut to 4,000 | `Catch-up note`, `''` | `'+20 XP · Catch-up saved'` |
+| Weekly review 30, monthly chronicle 50 (`jcSaveReview(key, text)`, `47-journal-coach.js:350-355`) | `reviews[key].answer` = trimmed text cut to 2,000 on every call; pays when `paid` is unset and the text has 50+ (key `W...`) or 60+ (`M...`) characters, then `paid = true` | `Weekly review` / `Monthly chronicle`, `''` | `'+30 XP · Review saved'` / `'+50 XP · Review saved'` |
+
+Each caller saves after its award; a review also saves when it pays nothing (the answer is stored), the others return without
+saving when they pay nothing. `jcOnReflect` creates `days[d] = {}` before it checks, so a refused reflection still adds an empty
+mark (written by the next save). The claims, the catch-up and reviews redraw the journal, and that drawing may add `days` and
+`pats` entries of its own (the coach's day and pattern memory), which are outside the economy.
 
 #### 11.7.4 Dev boosts (`07-runtime.js:10,117`, `04-runtime.js:253-300`)
 
@@ -775,7 +862,7 @@ recorded as a catalog entry with no limits.
 | Nutrition | today | once/day | - | - | take-then-cap | yes | no | wellbeing/physique | no |
 | Cat care | today | once/day | - | - | take-then-cap | yes | no | wellbeing/social | no |
 | Money deposit | today | once/day, 25/day, 50/7 days | - | - | take-then-cap | yes | no | business/discipline | no |
-| Plan | plan date | once per date | - | - | no | no | no | plan secondary | no |
+| Plan | plan date (today when not before today) | once per date | - | - | no | no | no | plan secondary | no |
 | Catalog | today | own flags, 1/0.5/0.25 | - | - | no | no | no | none | no |
 | Journal coach | today | own keys | - | - | no | no | no | none | no |
 | Dev boost | today | none | - | - | no | no | no | none | no |
@@ -790,18 +877,21 @@ recorded as a catalog entry with no limits.
 - **SPARK-2** Balance: `ecoSparks() = max(0, round(num0(sparks)))` (`44-rewards.js:11`).
 - **SPARK-3** Spending: `ecoSpend(n)` (`44-rewards.js:76`): if `ecoSparks() < n`, toast `'Not enough Sparks'` and refuse; else
   `sparks = num0(sparks) - n`.
-- **SPARK-4** Shop (`ecoBuy(kind, id)`, `44-rewards.js:77-96`; prices `44-rewards.js:6-7`):
+- **SPARK-4** Shop (`ecoBuy(kind, id)`, `44-rewards.js:77-96`; prices `44-rewards.js:6-7`). It first creates `perksOwned`,
+  `themesOwned` (`[]`) and `toysBought` (`{}`) when missing, whatever the kind; a refused spend (SPARK-3) returns without saving.
   - theme (300): spend only when not owned, add to `themesOwned`; then toggle `theme` between `id` and null.
   - perk (600): spend only when not owned, add to `perksOwned`; then toggle `perk` between `id` and null (one equipped).
   - toy (`ball_b` 150, `yarn` 150, `feather` 200, `spring` 300, `wand` 450): already bought returns without saving; else spend
-    and set `toysBought[id] = 1` [D31].
+    and set `toysBought[id] = 1`, toast `'Toy unlocked for your cat'` [D31].
   - rest token (250): refused (`'One rest token a week'`) when `restBoughtAt > now - 7 days`; else spend,
     `restTokens += 1`, `restBoughtAt = now`.
   - shield refill (250): refused when `shieldBoughtAt > now - 30 days` (`'One shield refill a month'`) or
     `streakShields >= 2` (`'Shields are already full'`); else spend, `streakShields = 2`, `shieldBoughtAt = now`.
-  - Every branch that does not return early ends with `save()`.
-- **SPARK-5** Daily Hand reroll (`50-quests-hand.js:116-131`): free while `dailyDraw.rerollsUsed < 1`, else 50 Sparks through
-  `ecoSpend`; a finished card cannot be rerolled.
+  - Every branch that does not return early ends with `save()`, an unknown kind included (it buys nothing).
+- **SPARK-5** Daily Hand reroll (`dhReroll(slot)`, `50-quests-hand.js:116-131`): a finished card refuses
+  (`'Finished cards cannot be rerolled'`, false); the price is 0 while `dailyDraw.rerollsUsed < 1`, else 50 Sparks through
+  `ecoSpend` (refused: false). Then `rerollsUsed` and `nonce` go up by 1, the card is replaced by a new draw (outside the
+  economy), toast `'Rerolled for 50 Sparks'` or `'Free reroll used'`, `save()`, true.
 - **SPARK-6** The migration seeds `sparks = round(raw * 0.5)` and marks every record as credited (MIG-6).
 
 ---
@@ -821,8 +911,11 @@ recorded as a catalog entry with no limits.
 
 ## 14. Ascension (`ecoAscend(id)`, `44-rewards.js:18-26`)
 
-**ASCEND-1** Requires `attrLevel(id).level >= 20`, fewer than 3 stars and the owner's confirmation. Then
-`ascended[id] += attrXP(id)` and `attrStars[id] += 1`; `save()`. The rebuild subtracts `ascended` (DERIVE-1), so the attribute
+**ASCEND-1** An id that is not an attribute: nothing. Below level 20: toast `'Reach level 20 in ' + short + ' first'`. Three
+stars: `short + ' already has three stars'`. Then the owner confirms `'Ascend ' + name + '? Its level restarts at 1 (all ' + XP
+(locale grouping) + ' XP stays banked in your character level) and it earns +5% XP for good.'`; no: nothing. Then
+`ascended[id] += attrXP(id)` and `attrStars[id] += 1`; `save()`; toast `short + ' ascended · ' + '★' repeated by the new star
+count`. The rebuild subtracts `ascended` (DERIVE-1), so the attribute
 restarts at 0 XP (level 1) while the character level is unchanged (CURVE-5). Each star adds 5% (STAR-1).
 
 ---
@@ -830,7 +923,8 @@ restarts at 0 XP (level 1) while the character level is unchanged (CURVE-5). Eac
 ## 15. Decay, rested accrual and rest days
 
 - **DECAY-1** Settings: `getDecay() = {on: true, grace: 4, rate: 3, ...state.decay}` (`05-runtime.js:43`); `saveDecay` stores
-  `grace = min(14, max(1, num(v) || 4))`, `rate = min(10, max(1, num(v) || 3))` (`05-runtime.js:64`).
+  `{on (the switch), grace = min(14, max(1, num(v) || 4)), rate = min(10, max(1, num(v) || 3))}` (`05-runtime.js:64`), saves and
+  toasts `'Decay settings saved'`.
 - **DECAY-2** `lastTrained(id)` (`05-runtime.js:45`): the latest `activityDate` among non-passive records (2.4) whose `primary`
   or `secondary` is `id`; null when none. Any non-passive record counts, including 0-XP records, quests (their `primary`),
   nutrition, cat care, money and plan [D35].
@@ -869,8 +963,9 @@ restarts at 0 XP (level 1) while the character level is unchanged (CURVE-5). Eac
 Passive records are defined in 2.4 (PASSIVE-1).
 
 - **STREAK-1** `streak()` (`05-runtime.js:13`): the set of days = `activityDate` of non-passive records, plus `restDays`
-  keys, plus `shieldDays` keys. Walk back from today, local date by local date, up to 400 days: a day in the set adds 1 and
-  resets the miss count; a day not in the set adds 1 to the miss count, and the walk stops at the second consecutive miss.
+  keys, plus `shieldDays` keys (keys whatever their value; the page only ever stores `true`). Walk back from today, local date
+  by local date, up to 400 days: a day in the set adds 1 and resets the miss count; a day not in the set adds 1 to the miss
+  count, and the walk stops at the second consecutive miss.
   Single missed days neither count nor break the streak.
 - **SHIELD-1** `ecoActive(key)` (`44-rewards.js:28`): some non-passive record that day.
 - **SHIELD-2** `ecoShieldTick()` (`44-rewards.js:29-45`):
@@ -894,7 +989,14 @@ Passive records are defined in 2.4 (PASSIVE-1).
 - **SAVE-2** `save` is wrapped three times, in segment order (`runtime/module-map.json`): `33-android.js:184` (after the core
   save, schedules an Android sync), `50-quests-hand.js:152-153` (then, unless the Daily Hand is already verifying and when
   `state.quests` exists, runs `dhAutoVerify()`, which may call `toggleQuest` and so pay quest XP and save again),
-  `50-native-nutrition.js:621-628` (then schedules a native sync). The value returned is the core save's. The Daily Hand step
+  `50-native-nutrition.js:621-628` (then schedules a native sync). The value returned is the core save's.
+  `dhAutoVerify()` (`50-quests-hand.js:144-151`): with the Daily Hand marked busy for its duration (so the saves it causes do
+  not verify again), it makes sure today's three cards exist (`dhEnsure`, outside), then for each card quest (`hand: true`) not
+  done today whose verification is met on today's records, in order, calls `toggleQuest(id, true)` (QUEST-2, which pays
+  through QUEST-3 and saves). The verification (`dhVerifyMet`, `50-quests-hand.js:133-142`) looks at today's records other than
+  quests and coach awards: `act:T:M` is met by a record of type `T` with `num0(duration) >= M`; `any:M` by any record with
+  `num0(duration) >= M`; `water:P` by today's water log reaching `P`% of the water goal; `pet:feed|pet|play` by the cat's count
+  for today; `plan` by `dayDone(today)`; `self` and `none` never (the owner claims those by hand). The Daily Hand step
   runs even when the core save failed.
 - **SAVE-3** `writeSave()` (`04-runtime.js:40-43`): refuses (false) while the save is read-only; false when storage throws.
 - **SAVE-4** `takeBack(was)` (`04-runtime.js:53`): `state = JSON.parse(was)`, redraw, toast `unsavedMessage()`
@@ -933,10 +1035,10 @@ Runs in `migrateSave()` at load and at the top of every `save()`; does nothing o
 
 | Action | Source | Reverses | Does not reverse |
 |---|---|---|---|
-| Delete an activity | `deleteActivity`, `04-runtime.js:243` | the record; money transactions with that `actId`; the plan day's `actId`; `questDone` entries pointing at it (so the quest can be paid again) | Sparks, rested XP spent, decay, `peakBalance`, badges, `nutriDone`, `careDay.paid` |
+| Delete an activity | `deleteActivity`, `04-runtime.js:243`: asks first (no: nothing), then saves and toasts `'Activity undone'` | the record; money transactions with that `actId`; the plan day's `actId`; `questDone` entries pointing at it (so the quest can be paid again) | Sparks, rested XP spent, decay, `peakBalance`, badges, `nutriDone`, `careDay.paid` |
 | Remove an activity (plan, catalog undo, voice undo) | `removeAct`, `06-runtime.js:46`; `undoCat`, `07-runtime.js:120`; `50-voice-gen5.js:29` | the record | the same |
 | Uncheck a quest | QUEST-2 step 6 | the record and `questDone` | Sparks, rested XP |
-| Remove a money transaction | `removeMoneyTransaction`, `05-runtime.js:179-181` | the transaction and its record | `peakBalance` (a re-deposit does not pay again), Sparks |
+| Remove a money transaction | `removeMoneyTransaction(id)`, `05-runtime.js:179-181`: false for an unknown id, else saves and returns true (`deleteTx` asks first and toasts `'Transaction removed'`) | the transaction and its record | `peakBalance` (a re-deposit does not pay again), Sparks |
 | Reopen a plan day | 11.7.1 | the record and `actId` | Sparks |
 
 Attribute and skill XP follow automatically through the rebuild.
@@ -958,8 +1060,18 @@ Computed with the page's own expressions; an exact-decimal or reordered port get
 | business (base 25), 78 min, quality 1: `round(25 * ecoDur(78))`, `ecoDur(78) = 2 + 18/60` | 57 (`57.49999999999999`) | 58 |
 | business, 61 min, quality 1.2: `round(25 * ecoDur(61) * 1.2)` | 60 (`60.49999999999999`) | 61 |
 | business at quality 1.2 also differs for 63, 67, 71, 77, 79, 93, 107, 109, 113, 115, 119 min | | |
+| Deposit XP on a balance of 3.01 (peak 3.01), deposit 125: `net = 3.01 + 125 - 3.01`, then `round(net / 10)` | 12 (`net = 124.99999999999999`) | 13 |
+| the same on balances such as 3.29, 4.20, 5.04, 6.23 (a round deposit on a balance with odd cents) | | |
+| Deposit threshold: balance 0.01, peak 0.02, deposit 50.01: `net = 0.01 + 50.01 - 0.02` | no XP (`49.99999999999999 < 50`) | 5 |
+| Nutrition upper bound `goal * 1.15` for a goal of 1500 (also 1300, 1350, 1400, 1450, 1550 ... in steps of 50) | `1724.9999999999998`: 1,725 kcal misses | 1,725 qualifies |
+| Sleep name minutes `round((hrs - h) * 60)` for 6 h 8 min 30 s (and most half minutes from 6 h 8 min 30 s on) | `08` (`8.499999999999986`) | `09` |
+| the same for 3 h 0 min 30 s | `00` | `01` |
 
-`round(x * 0.5)`, `round(x * 0.1)`, `round(x * 0.2)` and `round(x * 1.1)` agree with exact decimals for x up to 300.
+`round(x * 0.5)`, `round(x * 0.1)`, `round(x * 0.2)` and `round(x * 1.1)` agree with exact decimals for x up to 300; so do the
+step points `round((eff - 2000) / 1000 * 1.5)` (exact ties only at odd thousands, which binary holds exactly). `2000 * 1.15` and
+`2000 * 0.85` happen to be exact (2300, 1700). Money amounts are binary doubles throughout
+(`amt = round(num(amount) * 100) / 100`, the balance re-rounded to cents, but `net` and the stored `peakBalance` are not), so a
+port must not switch to exact cents.
 
 ---
 
@@ -969,8 +1081,10 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
 
 - **D01** Health step days are paid again. Step days are read for 30 days and filtered only by `H.since`, which is fixed at the
   day sync was switched on (`39-health.js:41,59,63`), while their `seen` marks are deleted after 21 days (`39-health.js:98`).
-  Days 22 to 30 days old become new again and are paid a second time at full XP and a third at half (per-type limit). A
-  sandbox run of 40 daily syncs paid one day 11, 11 and 6 XP.
+  Days 22 to 30 days old become new again and are paid a second time at full XP and a third at half (per-type limit); the
+  mark set by each payment is pruned again at the end of the same sync. After the third payment every sync, until the day
+  leaves the 30-day read, still counts it (`'Added 1 day of steps.'`, toast `'Health sync: 1 day of steps'`) while paying 0.
+  A sandbox run of 40 daily syncs paid one day 11, 11 and 6 XP; the golden case `health/steps-paid-again` pays 12, 12, 6, 0.
 - **D02** The nutrition bonus is unreachable: its only trigger wraps `addMealEntry` (`44-rewards.js:147`), and nothing calls
   `addMealEntry` (the Food screen logs through `fv2Log`, `50-food.js:30-33`, and smart-diet meals push to the food log
   directly, `50-smartdiet.js:65`).
@@ -1013,7 +1127,8 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
   toast also appears when the daily XP cap was the reason.
 - **D21** Rested accrual depends on when decay is applied: it counts only losses applied while the attribute has been idle 7+
   days, and rounds per application. Opening the app daily for 12 idle days banked 24 rested XP; opening it once at the end
-  banked 28 for the same 56 XP of decay (sandbox).
+  banked 28 for the same 56 XP of decay (sandbox). In the golden cases `decay/rested-opened-daily` and `-once` the same 48 XP of
+  Physique decay banks 18 when decay runs on each of 8 days and 24 when it runs once.
 - **D22** The first save of a state without `xpSchemaV2` migrates with the just-added record already in the ledger: Sparks
   become `round(raw * 0.5)` instead of the record's XP, the record is marked credited, a `legacyCharXPBonus` is derived from it
   and `state.money` is created. A stored save is always migrated by `load()` first, so in the app this needs a state that
@@ -1036,6 +1151,12 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
 - **D34** Health steps and sleep spend rested XP, so passive data can drain the pool meant for coming back to training.
 - **D35** Quests, nutrition, cat care and deposits count as training for decay through their primary and secondary attributes
   (cat care keeps Wellbeing and Social from decaying), although the economy header says passive data no longer stops decay.
+- **D36** A night within 30 seconds below a whole hour is named with 60 minutes: 7 h 59 min 45 s is `Sleep: 7h 60m`
+  (`39-health.js:90`, `m = round((hrs - h) * 60)` with `h = floor(hrs)`). Only the name is affected; the points use `hrs`.
+- **D37** The health sync's "already logged by hand" test (`39-health.js:53`) compares the hand-logged record's time, which for
+  the Log is when it was saved, with the workout's start, within 2 hours. A workout longer than about 2 hours that is logged by
+  hand when it ends is paid twice (golden case `health/workout-long-logged-by-hand`: a 150-minute hike logged by hand as a run
+  at its end pays 78 XP twice).
 
 ---
 
@@ -1055,8 +1176,13 @@ cannot exercise a week of sleep bands; a stage-3 quest needs character level 5, 
   `tests/log-activity.test.js` does; every day key depends on both.
 - Seed `xpSchemaV2: true` unless the case is about the migration (D22), and seed `restedXP`, `perk`/`perksOwned`,
   `attrStars`, `decayTotal`, `ascended` explicitly.
-- The save wrapper runs the Daily Hand's auto-verify (17.2): a case whose activity fulfils a card on the fixed date gets quest
-  XP on top. Pick a date whose hand holds no matching card, or record the hand.
+- The save wrapper runs the Daily Hand's auto-verify (SAVE-2): a case whose activity fulfils a card on the fixed date gets quest
+  XP on top. The generator switches the Daily Hand off in every case except those marked `hand` (its cards) and `verify` (its
+  auto-verify too: `save/daily-hand-pays-inside-save` seeds today's three cards so the draw is not involved).
+- Some recorded fields hold page state that is outside the economy and that a fresh implementation may ignore or compare
+  loosely: the coach's `journalCoach.days` and `.pats` entries added when the journal is redrawn (COACH-1), `plan.checks[date].s`
+  ticks (PLAN-1, specified but outside), the money object's paycheck settings dated by the case's day, and a toast repeated when a
+  failed save redraws (the redraw saves again).
 - Life Director's host sync (LD-4) can complete quests after a Log; keep Life Director state empty in Log cases.
 - Record both the return value and the state delta (ledger tail, `attrXP`, `skillXP`, `restedXP`, `sparks`, `questDone`) and
   the messages.
@@ -1065,3 +1191,5 @@ cannot exercise a week of sleep bands; a stage-3 quest needs character level 5, 
   (D03); per-type counting across sources; the active-time limit with health and quest records present; weekly quest window
   at a week boundary (D09); decay across rest days and level boundaries; rested accrual daily versus in one go (D21); shields
   over a gap; the health step re-payment (D01).
+- The health plugin is faked per call (`env.health`): its status, the exercise, steps and sleep records, the weight reading,
+  and `fail`, the name of a read that throws (HEALTH-0's `Sync failed` path).

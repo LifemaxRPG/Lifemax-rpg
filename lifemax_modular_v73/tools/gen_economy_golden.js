@@ -21,9 +21,10 @@
              quest id (looked up in state.quests), actStatus a catalog id; skillLevel(name) is levelData(skillXP[name]) and
              levelData(total, 'charXpForLevel') uses the character curve. at moves the clock for that call. env is what the
              call sees around it: failSave 'storage' (the browser refuses the write) or 'readonly' (the save is read-only),
-             health (what the Health Connect plugin returns: status and the exercise, steps and sleep records, times in epoch
-             ms; null for no plugin), confirm false (the owner says no), prompt (what the owner types), dom (values of the
-             page's input fields, by element id), stored (the save in storage before load()).
+             health (what the Health Connect plugin returns: status, the exercise, steps and sleep records and the weight
+             reading, times in epoch ms, and fail, the name of a read that throws; null for no plugin), confirm false (the
+             owner says no), prompt (what the owner types), dom (values of the page's input fields, by element id), stored
+             (the save in storage before load()).
      output  {returns, state, deleted?, toasts?}: each call's return value (null for none; {threw} if it threw), every
              field of FIELDS (plus the case's extra fields) the calls changed, with its value after, the fields they removed,
              and the messages shown, in order.
@@ -32,7 +33,8 @@
    What is held still so a case means one thing: the clock is Playwright's, paused; crypto.randomUUID counts per case
    (00000000-0000-4000-8000-000000000001, ...); Math.random restarts its sequence at every call; toasts, confirm and prompt are
    captured. The Daily Hand is switched off (its auto-verify inside save() and its drawing of cards), because it is outside
-   the economy (spec 1.2) and pays only through toggleQuest, which has its own cases; the reroll price cases switch it on.
+   the economy (spec 1.2) and pays only through toggleQuest, which has its own cases; a case marked hand: true has its cards
+   (the reroll price cases), and one marked verify: true also has the auto-verify inside save() (SAVE-2).
    health.snap (the sync's display data) is left out. */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -56,7 +58,6 @@ const NOT_RECORDED = {
   'HEALTH-7': 'when a sync runs (timers, resume) is the app shell, not a rule with an output',
   'HEALTH-8': 'the settings text is presentation (D12 compares it with the rules)',
   'DECAY-6': 'when decay runs (boot, page shown) is the app shell; applyDecay itself has cases',
-  'SAVE-2': 'the save wrappers belong to the Daily Hand and the Android shell; the Daily Hand is switched off while recording',
   'SAVE-6': 'boot order is the app shell; load() and applyDecay() have cases',
   D02: 'about a trigger nothing calls; ecoNutritionCheck itself has cases',
   D12: 'settings text',
@@ -313,6 +314,10 @@ function log() {
   P('stars', { attrStars: { physique: 2 } }, draft('strength', 60));
   P('refused', { activities: [rec('business', 240)] }, draft('reading', 30));
   scase('log/award-without-peek-spends', 'LOGAWARD-1 REST-2', { restedXP: 40 }, C('activityAward', draft('language', 30)));
+  /* the native Log screen's Save: the draft cleaned (LOG-1), an operation id required, then recordActivity (LOG-2) */
+  const submit = (d, operationId) => C('NativeLogProjection.commands.submit', { draft: d, ...(operationId ? { operationId } : {}) });
+  scase('log/native-submit', 'LOG-1 LOG-2', {}, submit(draft('reading', 30.4)), submit(draft('reading', 30.4), 'op-n1'), submit(draft('reading', 30.4), 'op-n1'));
+  scase('log/native-submit-refused', 'LOG-1 LOG-2', { activities: [rec('business', 240)] }, submit(draft('reading', 30), 'op-n2'));
 }
 
 function quests() {
@@ -373,6 +378,11 @@ function quests() {
   Q('director-bounty-done', 'LD-4', { quests: [daily], questDone: { 'd1_2026-10-28': 's1' }, activities: [qrec('daily', 15, { id: 's1' })] }, C('LifeMaxHost.completeQuest', ref()));
   Q('director-bounty-gone', 'LD-4', { quests: [daily] }, C('LifeMaxHost.completeQuest', ref({ questId: 'zz' })));
   Q('director-bounty-future', 'LD-4', { quests: [daily] }, C('LifeMaxHost.completeQuest', ref({ future: true })));
+  Q('director-bounty-locked', 'LD-4 CURVE-9', { quests: [quest('st3', 'daily', 20, { stage: 3 })] }, C('LifeMaxHost.completeQuest', { questId: 'st3', key: 'st3_2026-10-28' }));
+  Q('director-bounty-no-reference', 'LD-4', { quests: [daily] }, C('LifeMaxHost.completeQuest', null), C('LifeMaxHost.completeQuest', { key: 'd1_2026-10-28' }));
+  Q('director-bounty-not-connected', 'LD-4', { quests: null }, C('LifeMaxHost.completeQuest', ref()));
+  Q('custom-quest-xp-floor', 'QUEST-4', {}, withEnv({ dom: { newQuestName: '', newQuestCadence: 'daily', newQuestXP: '40' } }, C('createQuest')),
+    ...[['Zero', '0'], ['Negative', '-5'], ['Fraction', '0.4']].map(([n, v], i) => withEnv({ dom: { newQuestName: n, newQuestCadence: 'daily', newQuestXP: v } }, at(hoursBefore(-0.01 * (i + 1)), C('createQuest')))));
   Q('custom-quest-xp', 'QUEST-4', {}, withEnv({ dom: { newQuestName: 'Stretch', newQuestCadence: 'daily', newQuestXP: '900' } }, C('createQuest')),
     withEnv({ dom: { newQuestName: 'Walk', newQuestCadence: 'weekly', newQuestXP: '' } }, at(hoursBefore(-0.01), C('createQuest'))));
 }
@@ -399,6 +409,12 @@ function health() {
   scase('health/sync-unavailable', 'HEALTH-0', { health: H() }, withEnv({ health: { status: { sdk: 'unavailable', granted: [] } } }, C('lmaHealthSync', false)));
   scase('health/sync-needs-update', 'HEALTH-0', { health: H() }, withEnv({ health: { status: { sdk: 'update', granted: [] } } }, C('lmaHealthSync', false)));
   scase('health/sync-nothing-granted', 'HEALTH-0', { health: H() }, withEnv({ health: { status: { sdk: 'available', granted: [] } } }, C('lmaHealthSync', false)));
+  scase('health/sync-partly-granted', 'HEALTH-0', { health: H() }, withEnv({ health: { status: { sdk: 'available', granted: ['steps'] },
+    exercise: [sess('a', 'running', hoursBefore(5), 40)], steps: [{ date: dayKey(-1), count: 9000 }] } }, C('lmaHealthSync', false)));
+  scase('health/sync-nothing-wanted', 'HEALTH-0 HEALTH-6', { health: H({ ex: false, steps: false, sleep: false }) }, withEnv({ health: { status: { sdk: 'available', granted: [] } } }, C('lmaHealthSync', true)));
+  scase('health/sync-fails-partway', 'HEALTH-0 HEALTH-6', { health: H() }, sync({ exercise: [sess('a', 'running', hoursBefore(5), 40)], steps: [{ date: dayKey(-1), count: 9000 }], fail: 'steps' }, true));
+  add('health/weight', 'HEALTH-6', { fields: ['weight'], state: { health: H({ wt: true }) }, calls: [0, 1].map(i => at(hoursBefore(-i), withEnv({ health: { status: { sdk: 'available', granted: [...granted, 'weight'] },
+    weight: { kg: 75, time: ms(hoursBefore(10)) } } }, C('lmaHealthSync', false)))) });
   scase('health/sync-sets-since', 'HEALTH-2', { health: H({ since: 0 }) }, sync({ exercise: [sess('a', 'running', hoursBefore(5), 40)] }, true));
   scase('health/workout-kinds', 'HEALTH-3', { health: H() }, sync({ exercise: [sess('y', 'yoga', hoursBefore(30), 30), sess('l', 'weightlifting', hoursBefore(10), 50),
     sess('b', 'biking_stationary', hoursBefore(8), 40), sess('h', 'high_intensity_interval_training', hoursBefore(6), 25)] }, true));
@@ -409,6 +425,8 @@ function health() {
     sess('future', 'running', hoursBefore(0.2), 30), sess('old', 'running', hoursBefore(60), 30), sess('seen', 'running', hoursBefore(20), 30), sess('fine', 'strength_training', hoursBefore(4), 4.6)] }));
   scase('health/workout-logged-by-hand', 'HEALTH-3', { health: H(), activities: [rec('running', 26, { date: hoursBefore(4), primary: 'endurance' })] },
     sync({ exercise: [sess('m', 'running', hoursBefore(5), 40), sess('n', 'running', hoursBefore(1.5), 30)] }));
+  scase('health/workout-long-logged-by-hand', 'HEALTH-3 D37', { health: H(), activities: [rec('running', 78, { date: hoursBefore(0.5), dur: 150, primary: 'endurance' })] },
+    sync({ exercise: [sess('h', 'hiking', hoursBefore(3), 150)] }));
   scase('health/workout-fourth-of-kind', 'HEALTH-3 AWARD-1', { health: H() }, sync({ exercise: [sess('r1', 'running', hoursBefore(9), 30), sess('r2', 'biking', hoursBefore(7), 30),
     sess('r3', 'rowing', hoursBefore(5), 30), sess('r4', 'hiking', hoursBefore(3), 30)] }));
   const day = n => ({ date: dayKey(n), count: 0 });
@@ -431,6 +449,10 @@ function health() {
   scase('health/sleep-longest-of-day', 'HEALTH-5', { health: H() }, sync({ sleep: [night('nap', iso(TODAY, '06:00:00'), 3.5), night('main', iso(TODAY, '07:30:00'), 8), night('tiny', iso(TODAY, '09:00:00'), 2.5)] }));
   scase('health/sleep-filters', 'HEALTH-5 HEALTH-2', { health: H({ seen: { zs: ms(iso(dayKey(-1), '07:00:00')) } }) }, sync({ sleep: [night('s', iso(dayKey(-1), '07:00:00'), 8),
     night('old', iso(dayKey(-4), '07:00:00'), 8), night('later', hoursBefore(-1), 8)] }));
+  scase('health/sleep-same-length-first-wins', 'HEALTH-5', { health: H() }, sync({ sleep: [night('a', iso(TODAY, '07:00:00'), 8), night('b', iso(TODAY, '08:00:00'), 8)] }));
+  const nightS = (id, endIso, s) => ({ id, start: ms(endIso) - s * 1000, end: ms(endIso) }); // s seconds long
+  scase('health/sleep-name-60m', 'HEALTH-5 D36', { health: H() }, sync({ sleep: [nightS('n', iso(TODAY, '07:00:00'), 7 * 3600 + 59 * 60 + 45)] }));
+  scase('health/sleep-name-rounding', 'HEALTH-5 NUM-1 NUM-2', { health: H() }, sync({ sleep: [nightS('n', iso(TODAY, '07:00:00'), 6 * 3600 + 8 * 60 + 30)] }));
   scase('health/sleep-busy-workout', 'HEALTH-5', { health: H() }, sync({ exercise: [sess('n', 'running', iso(TODAY, '03:00:00'), 40)], sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
   scase('health/sleep-busy-logged', 'HEALTH-5', { health: H(), activities: [rec('reading', 24, { date: iso(TODAY, '02:00:00') })] }, sync({ sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
   scase('health/sleep-edge-not-busy', 'HEALTH-5', { health: H(), activities: [rec('reading', 24, { date: iso(TODAY, '06:30:00') })] },
@@ -513,7 +535,8 @@ function bonuses() {
   N('lower-bound', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(1700)] });
   N('below', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(1699)] });
   N('upper-bound-2299', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2299)] });
-  N('upper-bound-2300', 'NUTRI-1 NUM-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2300)] });
+  N('upper-bound-2300', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2300)] }); // 2000 * 1.15 is exactly 2300 in binary
+  N('upper-bound-goal-1500', 'NUTRI-1 NUM-1', { mealsMeta: { calGoal: 1500 }, foodLog: [food(1725)] }); // 1500 * 1.15 is 1724.9999999999998
   N('other-day-ignored', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2000, dayKey(-1))] });
   N('already-today', 'NUTRI-1', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2000)], nutriDone: { [TODAY]: 1 } });
   N('rested-then-cap', 'NUTRI-1 REST-3 D03', { mealsMeta: { calGoal: 2000 }, foodLog: [food(2000)], restedXP: 20, activities: [rec('business', 200)] });
@@ -549,6 +572,9 @@ function bonuses() {
   M('remove-deposit', 'UNDO-1', { ...money(100, [{ id: 'tx1', type: 'deposit', amount: 100, note: '', date: iso(TODAY), actId: 's1' }], 200), activities: [rec('money', 10, { id: 's1', dur: 0 })] },
     C('removeMoneyTransaction', 'tx1'), C('moneyBalance'));
   M('remove-deposit-pay-again', 'UNDO-1', { ...money(100, [], 200) }, dep(100));
+  /* section 19: net = balance + amount - peak in binary doubles */
+  M('deposit-125-on-cents', 'MONEY-1 NUM-1 NUM-2', money(3.01, [], 3.01), dep(125)); // net 124.99999999999999: 12 XP, not 13
+  M('deposit-threshold-on-cents', 'MONEY-1 NUM-1', money(0.01, [], 0.02), dep(50.01)); // net 49.99999999999999: below 50, no XP
 }
 
 function uncapped() {
@@ -639,6 +665,7 @@ function sparks() {
   B('shield-this-month', 'SPARK-4', { sparks: 300, streakShields: 0, shieldBoughtAt: ms(T0) - 29 * 864e5 }, 'shield', 'x');
   B('shield-full', 'SPARK-4', { sparks: 300, streakShields: 2 }, 'shield', 'x');
   B('shield-too-dear', 'SPARK-4', { sparks: 249, streakShields: 1 }, 'shield', 'x');
+  B('unknown-kind', 'SPARK-4', { sparks: 100 }, 'badge', 'x');
   add('sparks/daily-hand-reroll', 'SPARK-5', { hand: true, state: { sparks: 60 }, calls: [C('dhRerollCost'), C('dhReroll', 0), C('dhRerollCost'), C('dhReroll', 1), C('dhReroll', 2)], omit: ['quests'] });
   for (const [name, st] of [['equipped', perk('iron')], ['not-owned', { perk: 'iron' }], ['not-equipped', { perksOwned: ['iron'] }], ['other', perk('exec')]])
     scase('perk/' + name, 'PERK-1', st, C('ecoPerk', 'iron'));
@@ -738,6 +765,15 @@ function saveAndMigrate() {
       rec('business', 150, { primary: 'business', skill: 'Entrepreneurship', day: dayKey(-1) }),
       rec('task', 20, { sp: false, split: [], primary: 'discipline', skill: '' }),
       rec('custom', 12, { sp: false, split: [{ attr: 'chess', xp: 5 }, { attr: 'adventure', xp: -4 }, null, { attr: 'social', xp: '7' }], primary: 'adventure', skill: 'Chess' })] } });
+  /* SAVE-2: the save wrapper lets the Daily Hand check today's cards; a Log that meets a card's verification pays that quest too */
+  const card = (slot, tpl, name, desc, attribute, tier, verify) => ({ id: 'dh_' + TODAY + '_' + slot + '_0', hand: true, slot, tpl, name, desc, cadence: 'daily',
+    xp: [0, 10, 20, 30][tier], kind: 'hand', attribute, verify, tier });
+  const hand = [card(0, 't2', 'Proper strength session', '25 minutes of resistance training.', 'physique', 2, 'act:strength:25'),
+    card(1, 't4', 'Posture reset', 'Stand tall, roll the shoulders, 20 slow squats.', 'physique', 1, 'self'),
+    card(2, 't11', 'Take the stairs', 'Use stairs every chance today.', 'endurance', 1, 'self')];
+  add('save/daily-hand-pays-inside-save', 'SAVE-2 QUEST-5 SPARK-5', { hand: true, verify: true, fields: ['dailyDraw', 'dhMig'],
+    state: { dhMig: 1, quests: hand, dailyDraw: { date: TODAY, nonce: 0, rerollsUsed: 0, cards: hand.map(q => ({ tpl: q.tpl, id: q.id, n: 0 })) } },
+    calls: [C('recordActivity', draft('strength', 20)), C('recordActivity', draft('strength', 25)), C('dhReroll', 0)] });
   scase('save/fails', 'SAVE-1 SAVE-3', { activities: [rec('reading', 24, { sp: false })] }, withEnv({ failSave: 'storage' }, C('save')));
   scase('save/read-only', 'SAVE-3', { activities: [rec('reading', 24, { sp: false })] }, withEnv({ failSave: 'readonly' }, C('save')));
   const staleAttr = { physique: 7, endurance: 7, intelligence: 7, business: 7, social: 7, discipline: 7, adventure: 7, wellbeing: 7, chess: 7 };
@@ -817,7 +853,7 @@ function pageRunner(fieldsAll) {
   window.alert = () => { };
   crypto.randomUUID = () => '00000000-0000-4000-8000-' + String(++uuid).padStart(12, '0');
   Math.random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
-  dhBusy = true; // the Daily Hand never verifies cards inside save()
+  dhBusy = true; // the Daily Hand verifies no cards inside save() unless a case says so (fresh)
   const pick = keys => { const o = {}; for (const k of keys) if (state[k] !== undefined) o[k] = clone(state[k]); if (o.health) delete o.health.snap; return o };
   const quest = id => state.quests.find(q => q.id === id);
   const ADAPT = {
@@ -827,13 +863,15 @@ function pageRunner(fieldsAll) {
     actStatus: id => actStatus(actById(id)),
   };
   const SHEET = ['confirmAct', 'undoCat', 'saveBase'];
-  const healthPlugin = h => ({
-    status: async () => h.status, readExercise: async () => ({ sessions: h.exercise || [] }), readSteps: async () => ({ days: h.steps || [] }),
-    readSleep: async () => ({ sessions: h.sleep || [] }), readWeight: async () => (h.weight || {}),
-  });
-  function fresh(hand) {
+  const healthPlugin = h => {
+    const read = (name, v) => async () => { if (h.fail === name) throw new Error('Health Connect stopped answering'); return v };
+    return { status: async () => h.status, readExercise: read('exercise', { sessions: h.exercise || [] }), readSteps: read('steps', { days: h.steps || [] }),
+      readSleep: read('sleep', { sessions: h.sleep || [] }), readWeight: read('weight', h.weight || {}) };
+  };
+  function fresh(hand, verify) {
     window.QUEST_LIBRARY = hand ? library : undefined; // without its library the Daily Hand draws no cards
     saveReadOnly = ''; saveReadOnlyTold = false; lmaHealthBusy = false; shBusy = false;
+    dhBusy = !verify; // only a verify case lets the Daily Hand check its cards inside save()
     state = Object.assign(freshState(), { xpSchemaV2: true, quests: [] });
     rules = structuredClone(DEFAULT_RULES); state.customRules = rules;
   }
@@ -868,7 +906,7 @@ function pageRunner(fieldsAll) {
   const eco = {
     base() { fresh(false); draw(); return pick(fieldsAll) },
     setup(spec) {
-      fresh(spec.hand);
+      fresh(spec.hand, spec.verify);
       const s = clone(spec.state || {});
       if (s.customRules) { rules = Object.assign(structuredClone(DEFAULT_RULES), s.customRules); delete s.customRules }
       Object.assign(state, s); state.customRules = rules;
@@ -910,7 +948,7 @@ async function record(p, c, base) {
     const r = await p.evaluate(calls => window.__eco.pure(calls), c.calls);
     return { id: c.id, rule: c.rule, input: { calls: c.calls }, output: { returns: r.returns, ...(r.toasts.length ? { toasts: r.toasts } : {}) } };
   }
-  const spec = { state: c.state, hand: !!c.hand, stale: !!c.stale, calls: c.calls, fields: FIELDS.concat(c.fields || []).filter(f => !(c.omit || []).includes(f)) };
+  const spec = { state: c.state, hand: !!c.hand, verify: !!c.verify, stale: !!c.stale, calls: c.calls, fields: FIELDS.concat(c.fields || []).filter(f => !(c.omit || []).includes(f)) };
   let r;
   if (!c.calls.some(x => x.at)) r = await p.evaluate(s => window.__eco.run(s), spec);
   else {
