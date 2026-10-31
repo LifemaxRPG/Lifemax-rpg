@@ -114,7 +114,7 @@
    "capabilities": [
     "director.today.v1"
    ],
-   "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while the XP celebration of one of its taps plays on the page",
+   "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while an XP celebration plays on the page, from a tap on the screen or in the page's own sheet (Done, Finish and log, Log it for today)",
    "commands": {
     "day": "{index}: shows that day of the strip; read-only, refused when the day is not on the strip; the screen stays"
    },
