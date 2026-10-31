@@ -1,6 +1,6 @@
 {
  "ACTS": [
-  "src/runtime/segments/07-runtime.js"
+  "src/runtime/segments/06-runtime.js"
  ],
  "ATTRS": [
   "src/runtime/segments/00-runtime.js"
@@ -34,6 +34,12 @@
  ],
  "CH_CIRC": [
   "src/runtime/segments/07-runtime.js"
+ ],
+ "CINE_FOG_F": [
+  "src/runtime/segments/50-quests-cine.js"
+ ],
+ "CINE_FOG_V": [
+  "src/runtime/segments/50-quests-cine.js"
  ],
  "CLASSES": [
   "src/runtime/segments/05-runtime.js"
@@ -71,6 +77,45 @@
  "DEFAULT_RULES": [
   "src/runtime/segments/00-runtime.js"
  ],
+ "DH_CLASS_ATTR": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "DH_FREE_REROLLS": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "DH_HOLD_MS": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "DH_NUMERALS": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "DH_REROLL_COST": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "DH_SLOT_NAMES": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "ECO": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ECO_DURATION_RULES": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ECO_OLD_RULES": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ECO_PERKS": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ECO_PRICE": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ECO_THEMES": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ECO_TOY_PRICE": [
+  "src/runtime/segments/44-rewards.js"
+ ],
  "EMOJI_MAP": [
   "src/runtime/segments/06-runtime.js"
  ],
@@ -83,6 +128,135 @@
  "FX": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "G3": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3T_FS": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3T_VS": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_C": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_COVER": [
+  "src/runtime/segments/50-gym3d-moves.js"
+ ],
+ "G3_DESC": [
+  "src/runtime/segments/50-gym3d-moves.js"
+ ],
+ "G3_FS": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_L": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.bench": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.bike": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.ellip": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.open": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.prone": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.pullup": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.step": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.wallb": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_MOVES.wallf": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_PACK": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_VS": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "G3_X": [
+  "src/runtime/segments/50-gym3d-moves.js"
+ ],
+ "G4_ALIAS": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_ALIASES": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_DAY": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_HELP": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_MARK": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_MON": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_NOTIF": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_TIMER": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_TRIG": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G4_UNIT": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "G5_BUILTIN": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_BW": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_DP": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_EST": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_MACRO": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_NEG": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_ORD": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_ORDRE": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_PACE": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_TRAIT": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_UNDO": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "G5_WML": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
  "GWR_DEMO": [
   "src/runtime/segments/22-runtime.js"
  ],
@@ -91,6 +265,12 @@
  ],
  "GWX": [
   "src/runtime/segments/22-runtime.js"
+ ],
+ "HAP_LEVELS": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "HAP_MAX": [
+  "src/runtime/segments/50-haptics.js"
  ],
  "ICONS": [
   "src/runtime/segments/06-runtime.js"
@@ -103,6 +283,30 @@
  ],
  "ICONS.shuffle": [
   "src/runtime/segments/06-runtime.js"
+ ],
+ "JC": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_ARCH": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_ATTR_COL": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_DISTRESS": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_POOLS": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_POOL_OF": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_TXT": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JL": [
+  "src/runtime/segments/48-journal-lock.js"
  ],
  "LINKS": [
   "src/runtime/segments/07-runtime.js"
@@ -121,6 +325,120 @@
  ],
  "LK_TICKS": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "LMA_CHANNEL": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "LMA_DAY": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "LMA_DEFAULTS": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "LMA_EXTRA_KEYS": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "LMA_GROUPS": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "LMA_HC_RECOVERY": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "LMA_HC_SRC": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "LMA_HC_STRENGTH": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "LMA_HEALTH_TYPES": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "LMA_IN": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "LMA_PREF_KEY": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "LMA_SCRUB": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "LMA_SCRUB_GAINS": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "LMA_SNAPSHOTS": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "LMA_SWIPE": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "LMA_TAB_DEFAULT": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "LMA_TAB_EXTRA": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "LMA_TAB_ICONS": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "LMA_THUMB_KEY": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "LMA_UPD_BUSY": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "LMCAL": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "LMG": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "LMV": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_B": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "LMV_CAPS": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_DEFAULT_MIN": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_DICT": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "LMV_FOLLOW": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "LMV_KINDS": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_MON": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_NUM": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_SECTIONS": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "LMV_STOP": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "LMV_TYPES": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "LMV_WD": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LMV_WORDN": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "LMV_WORDS": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "LM_DL": [
+  "src/runtime/segments/50-deeplink.js"
  ],
  "LUCK_EXACT": [
   "src/runtime/segments/01-runtime.js"
@@ -149,6 +467,9 @@
  "MEAL_SLOT_TINT": [
   "src/runtime/segments/10-runtime.js"
  ],
+ "MEDIA_STATUS": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "MOB": [
   "src/runtime/segments/06-runtime.js"
  ],
@@ -169,6 +490,9 @@
  ],
  "OV_TILES": [
   "src/runtime/segments/31-overview-edit.js"
+ ],
+ "PAY_FREQ": [
+  "src/runtime/segments/36-money-pay.js"
  ],
  "PET_AWAY_MS": [
   "src/runtime/segments/16-runtime.js"
@@ -196,6 +520,12 @@
  ],
  "PET_BRAIN_ERR": [
   "src/runtime/segments/26-pet-brain.js"
+ ],
+ "PET_BREED": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "PET_CATTERY_MAX": [
+  "src/runtime/segments/37-pet-morph.js"
  ],
  "PET_COATS": [
   "src/runtime/segments/15-runtime.js"
@@ -254,6 +584,9 @@
  "PET_DNA_XXY": [
   "src/runtime/segments/32-pet-dna.js"
  ],
+ "PET_EATDIR": [
+  "src/runtime/segments/15-runtime.js"
+ ],
  "PET_EATX": [
   "src/runtime/segments/15-runtime.js"
  ],
@@ -281,6 +614,9 @@
  "PET_H": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "PET_HD": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
  "PET_HMAX": [
   "src/runtime/segments/15-runtime.js"
  ],
@@ -299,6 +635,9 @@
  "PET_LEVELS": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "PET_LIKE_FAV_LEAD": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
  "PET_LIKE_FAV_MIN": [
   "src/runtime/segments/25-pet-likes.js"
  ],
@@ -311,11 +650,29 @@
  "PET_MASTER": [
   "src/runtime/segments/16-runtime.js"
  ],
+ "PET_MORPH": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "PET_MORPH_KEYS": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
  "PET_NAMES": [
   "src/runtime/segments/15-runtime.js"
  ],
  "PET_OPT_CAT": [
   "src/runtime/segments/26-pet-brain.js"
+ ],
+ "PET_OPT_CAT.boxplay": [
+  "src/runtime/segments/28-pet-box.js"
+ ],
+ "PET_OPT_CAT.chase": [
+  "src/runtime/segments/27-pet-play.js"
+ ],
+ "PET_OPT_CAT.hug": [
+  "src/runtime/segments/27-pet-play.js"
+ ],
+ "PET_OPT_CAT.swat": [
+  "src/runtime/segments/27-pet-play.js"
  ],
  "PET_OS": [
   "src/runtime/segments/24-pet-depth.js"
@@ -334,6 +691,9 @@
  ],
  "PET_PAIR_PLAYS": [
   "src/runtime/segments/29-pet-pair.js"
+ ],
+ "PET_PAIR_PLAYS.standoff": [
+  "src/runtime/segments/29-pet-rank.js"
  ],
  "PET_PAIR_SHARED": [
   "src/runtime/segments/29-pet-pair.js"
@@ -371,6 +731,27 @@
  "PET_QUIRK_INNATE": [
   "src/runtime/segments/26-pet-brain.js"
  ],
+ "PET_RANK_CFG": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "PET_RIG": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "PET_RIG_MB": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "PET_RIG_MR": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "PET_RIG_MT": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "PET_RIG_MX": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "PET_RIG_OUTLINE": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
  "PET_RT": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -392,6 +773,24 @@
  "PET_SURF": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "PET_SURF.couch": [
+  "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_SURF.counter": [
+  "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_SURF.floor.x0": [
+  "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_SURF.floor.x1": [
+  "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_SURF.ksill": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
+ "PET_SURF.lsill": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
  "PET_TAB_NAME": [
   "src/runtime/segments/32-pet-dna.js"
  ],
@@ -399,6 +798,9 @@
   "src/runtime/segments/24-pet-depth.js"
  ],
  "PET_TOYS": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
+ "PET_TOY_FAV_MIN": [
   "src/runtime/segments/25-pet-likes.js"
  ],
  "PET_TRAITS": [
@@ -431,6 +833,36 @@
  "PLAN_LINK": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "QART_B64": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "QART_PACKS": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "QART_URL": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "QFX": [
+  "src/runtime/segments/50-quests-fx.js"
+ ],
+ "QPX_ARC": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "QPX_FONT": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "QPX_SPR": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "QPX_TIER": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "QSFX": [
+  "src/runtime/segments/50-sfx.js"
+ ],
+ "QUEST_LIBRARY": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
  "RECIPES": [
   "src/runtime/segments/02-runtime.js"
  ],
@@ -443,11 +875,59 @@
  "RK": [
   "src/runtime/segments/12-runtime.js"
  ],
+ "SAVE_SCHEMA": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "SD_DAIRY": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "SD_MEAT": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "SET_CATS": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
  "SFX": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "SFX_DATA": [
+  "src/runtime/segments/50-sfx-data.js"
+ ],
  "STORE": [
   "src/runtime/segments/01-runtime.js"
+ ],
+ "T3_BFS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_BVS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_CFS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_CVS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_FLFS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_FLVS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_FS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_SHARED": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "T3_VS": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "TABLE_OBJ": [
+  "src/runtime/segments/50-quests-table-data.js"
+ ],
+ "TABLE_TEX": [
+  "src/runtime/segments/50-quests-table-data.js"
  ],
  "TITLES": [
   "src/runtime/segments/05-runtime.js"
@@ -457,6 +937,12 @@
  ],
  "USDA_DB_NAME": [
   "src/runtime/segments/08-runtime.js"
+ ],
+ "VFB": [
+  "src/runtime/segments/50-voice-fallback.js"
+ ],
+ "VoiceFallbackLogger": [
+  "src/runtime/segments/50-voice-fallback.js"
  ],
  "WA": [
   "src/runtime/segments/06-runtime.js"
@@ -469,6 +955,12 @@
  ],
  "_dc": [
   "src/runtime/segments/13-runtime.js"
+ ],
+ "_dhNav": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "_dhSave": [
+  "src/runtime/segments/50-quests-hand.js"
  ],
  "_onbCarouselIndex": [
   "src/runtime/segments/11-runtime.js"
@@ -494,10 +986,19 @@
  "actStatus": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "activityAward": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "activityDate": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "activityDraftFromForm": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "activityPresetChanged": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "activityPreview": [
   "src/runtime/segments/04-runtime.js"
  ],
  "actsForDay": [
@@ -518,11 +1019,17 @@
  "addTx": [
   "src/runtime/segments/05-runtime.js"
  ],
+ "afterCelebrations": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "ago": [
   "src/runtime/segments/05-runtime.js"
  ],
  "allFoods": [
   "src/runtime/segments/08-runtime.js"
+ ],
+ "applyBackup": [
+  "src/runtime/segments/04-runtime.js"
  ],
  "applyClassContent": [
   "src/runtime/segments/13-runtime.js"
@@ -580,6 +1087,24 @@
  ],
  "avatarPicked": [
   "src/runtime/segments/07-runtime.js"
+ ],
+ "backupBeforeReplacing": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "backupData": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "backupFacts": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "backupJson": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "backupProblem": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "backupSave": [
+  "src/runtime/segments/04-runtime.js"
  ],
  "baseXP": [
   "src/runtime/segments/07-runtime.js"
@@ -671,6 +1196,12 @@
  "chSplits": [
   "src/runtime/segments/14-runtime.js"
  ],
+ "charCumXP": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "charXpForLevel": [
+  "src/runtime/segments/43-economy.js"
+ ],
  "characterLevel": [
   "src/runtime/segments/04-runtime.js"
  ],
@@ -679,6 +1210,9 @@
  ],
  "checkLevelUps": [
   "src/runtime/segments/05-runtime.js"
+ ],
+ "cineBg": [
+  "src/runtime/segments/50-quests-cine.js"
  ],
  "classById": [
   "src/runtime/segments/06-runtime.js"
@@ -696,7 +1230,8 @@
   "src/runtime/segments/13-runtime.js"
  ],
  "closeMealSheet": [
-  "src/runtime/segments/08-runtime.js"
+  "src/runtime/segments/08-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "closeOnboardingPreview": [
   "src/runtime/segments/12-runtime.js"
@@ -778,37 +1313,9 @@
  ],
  "dcRoom": [
   "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/13-runtime.js",
-  "src/runtime/segments/14-runtime.js",
   "src/runtime/segments/14-runtime.js",
   "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
-  "src/runtime/segments/19-runtime.js",
   "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/20-runtime.js",
-  "src/runtime/segments/23-runtime.js",
   "src/runtime/segments/23-runtime.js"
  ],
  "dcRoomMsgs": [
@@ -845,7 +1352,8 @@
   "src/runtime/segments/04-runtime.js"
  ],
  "deleteMealEntry": [
-  "src/runtime/segments/08-runtime.js"
+  "src/runtime/segments/08-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "deleteMediaItem": [
   "src/runtime/segments/07-runtime.js"
@@ -861,6 +1369,177 @@
  ],
  "devSwitchClass": [
   "src/runtime/segments/14-runtime.js"
+ ],
+ "dhAbort": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhAutoVerify": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhBusy": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhCardHtml": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhCards": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhCinematic": [
+  "src/runtime/segments/50-quests-cine.js"
+ ],
+ "dhClassAttrs": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhDealMode": [
+  "src/runtime/segments/50-quests-cine.js"
+ ],
+ "dhDealTimer": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhDealing": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhDealtDate": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhDraw": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhEnsure": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhGate": [
+  "src/runtime/segments/50-quests-gate.js"
+ ],
+ "dhGateBox": [
+  "src/runtime/segments/50-quests-gate.js"
+ ],
+ "dhGating": [
+  "src/runtime/segments/50-quests-gate.js"
+ ],
+ "dhHoldEnd": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhHoldId": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhHoldStart": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhHoldT": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhIsUp": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhLedgerToggle": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhLuckScore": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhMakeQuest": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhMaybeDeal": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhPick": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhPrevDone": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhQ3dMark": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhQ3dT": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhQ3dWant": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRecentAttrXP": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRenderHand": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhReplayDeal": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhReroll": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRerollCost": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRestTimer": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhReveal": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRingSvg": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhRng": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhSceneBack": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhSceneCreate": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhSceneLedger": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhSceneNew": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhSceneRedraw": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhSchedDeal": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhSeed": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhSetDealMode": [
+  "src/runtime/segments/50-quests-cine.js"
+ ],
+ "dhSig": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhStage": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhTable3D": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "dhTick": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhTurn": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhVerifyMet": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhViewOn": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhWait": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhWantReplay": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "dhWeakestAttr": [
+  "src/runtime/segments/50-quests-hand.js"
  ],
  "dietDay": [
   "src/runtime/segments/14-runtime.js"
@@ -882,6 +1561,93 @@
  ],
  "dstr": [
   "src/runtime/segments/06-runtime.js"
+ ],
+ "ecoActive": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoActsOn": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoApplyTheme": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoAscend": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoAward": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoBuy": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoCap": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoCare": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoDayKey": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoDayXP": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoDur": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoMigrate": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoNutritionCheck": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoPassive": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoPerk": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoQuestXP": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoRestDay": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoRestUsed": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoRestedPeek": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoRestedTake": [
+  "src/runtime/segments/43-economy.js"
+ ],
+ "ecoShieldTick": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoShopOpen": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoShopRender": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoSparks": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoSparksSync": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoSpend": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoStarXP": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoStars": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ecoTakeRest": [
+  "src/runtime/segments/43-economy.js"
  ],
  "ensureTipsState": [
   "src/runtime/segments/12-runtime.js"
@@ -941,7 +1707,8 @@
   "src/runtime/segments/10-runtime.js"
  ],
  "fuelCancelMotion": [
-  "src/runtime/segments/10-runtime.js"
+  "src/runtime/segments/10-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "fuelDayTransition": [
   "src/runtime/segments/10-runtime.js"
@@ -971,7 +1738,8 @@
   "src/runtime/segments/10-runtime.js"
  ],
  "fuelOpenLab": [
-  "src/runtime/segments/10-runtime.js"
+  "src/runtime/segments/10-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "fuelRenderLog": [
   "src/runtime/segments/10-runtime.js"
@@ -988,7 +1756,190 @@
  "fuelSignalPulse": [
   "src/runtime/segments/10-runtime.js"
  ],
+ "fv2AddWater": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Back": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Close": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2CopySlot": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Create": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2DayShift": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2DoLog": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Dock": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Entry": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Favs": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Fmt": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2FoodOf": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Go": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Goal": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2GoalLive": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Goals": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Hap": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Head": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2IsFav": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2KcalFor": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2List": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Live": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Log": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2LogLabel": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Mac": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Match": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Mid": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Open": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2OpenEntry": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Ov": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2PL": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Paint": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Per100": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Portion": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Preset": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Recents": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2RingSvg": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Row": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2S": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SaveCreate": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SaveEdit": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SaveGoal": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Search": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SheetClick": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SheetInput": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Slot": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SlotPills": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Slots": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Small": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Snack": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2ToggleFav": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Tot": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Totals": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Unit": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2UsdaClear": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2UsdaRender": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Water": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2WeekStrip": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2Wire": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fxCalm": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "fxClear": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "fxHold": [
   "src/runtime/segments/07-runtime.js"
  ],
  "fxOpt": [
@@ -1000,8 +1951,584 @@
  "fxReduced": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "fxSettle": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "fxTarget": [
   "src/runtime/segments/07-runtime.js"
+ ],
+ "fxUntil": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "g3Accent": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Ang": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Arc": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Archetype": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Beep": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Cam": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Close": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Dbg": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3DbgOn": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Dec": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Dir": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Dlat": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Dp": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3FK": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Figure": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Frame": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Hk": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Hud": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3HudClick": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Idb": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Ik2": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3LabelOf": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Last": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Lerp": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Loop": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MBox": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MBoxZ": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MSeg": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MSph": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MeshBox": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MeshCyl": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MeshSphere": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MoveEval": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MoveEval2": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MoveFor": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3MoveSeq": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Num": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Open": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3PackClear": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3PackGet": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3PackLoadFile": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3PackStatus": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3PackValid": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Plain": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Pref": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Qv": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Save": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3SetDbg": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3SetPref": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Sheet": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3SheetRender": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Skin": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3StationParts": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Sync": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Tick": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3TrainerDraw": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3TrainerInit": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3TrainerPose": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Walk": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g3Want": [
+  "src/runtime/segments/50-gym3d.js"
+ ],
+ "g4Acc": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AliasAll": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AliasDel": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AliasGet": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AliasKey": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AliasPut": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Alnum": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AppDo": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AppMatches": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AppPool": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Apps": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4AppsBusy": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Brief": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Cap": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Chain": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Classify": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Compare": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Date": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4DayVal": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Edit": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Frame": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Goals": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Handle": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Help": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4IsEx": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4KnownApp": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Last": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Launch": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Launcher": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Library": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4LoadApps": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Mark": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Metric": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4More": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4NextItems": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Num": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4On": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Orig": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Out": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Plan": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Pump": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Quests": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Queue": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Recommend": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Rem": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Repair": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Reset": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Routine": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Run": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Split": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Strip": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Summ": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerArm": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerCancelNative": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerDo": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerDone": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerGet": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerH": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerSet": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4TimerStart": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g4Valid": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "g5ApplyShift": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5AutoSchedule": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Batch": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5CatDo": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5CatNamed": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Cats": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Classify": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Clear": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ClockRe": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Constraints": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Depth": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5DoUndo": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Drop": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Eps": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Fit": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5FoodFind": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Forget": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Gaps": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Goal": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Handle": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Hm": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5HookLD": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5InUndo": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ItemGrams": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Kg": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5List": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5MacroDel": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5MacroKey": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5MacroPut": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Macros": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Meal": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Mins": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Movables": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Negated": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5NumWords": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5OrdIndex": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Ordinal": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Out": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ParseMeal": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ParseWater": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ParseWorkout": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5PlanList": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Prev": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Preview": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Push": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5QuestList": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Remaining": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Roundup": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5RunCmds": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5RunCmds2": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5RunMacro": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Save": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5SchedList": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Screen": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ScreenSummary": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Shift": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5ShiftParse": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Sing": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5SplitCmds": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Stack": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Swap": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5T": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5TeachParse": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Title": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5UndoApply": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5WaterAdd": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5WaterGoal": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5WaterToday": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "g5Workout": [
+  "src/runtime/segments/50-voice-gen5.js"
  ],
  "getDecay": [
   "src/runtime/segments/05-runtime.js"
@@ -1291,8 +2818,33 @@
  "gwrVisualMarkup": [
   "src/runtime/segments/22-runtime.js"
  ],
+ "hapLevelKey": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapNative": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapNav": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapPlay": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapRender": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapScale": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapSend": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "hapSet": [
+  "src/runtime/segments/50-haptics.js"
+ ],
  "haptic": [
-  "src/runtime/segments/07-runtime.js"
+  "src/runtime/segments/07-runtime.js",
+  "src/runtime/segments/50-haptics.js"
  ],
  "hideCustomFood": [
   "src/runtime/segments/08-runtime.js"
@@ -1303,8 +2855,17 @@
  "hideMediaForm": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "histDrawn": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "histSel": [
   "src/runtime/segments/04-runtime.js"
+ ],
+ "histStale": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "holdCelebrations": [
+  "src/runtime/segments/07-runtime.js"
  ],
  "iconHtml": [
   "src/runtime/segments/06-runtime.js"
@@ -1327,6 +2888,192 @@
  "isQuestDone": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "jcAdd": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcArch": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcAttrColor": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcAward": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcBaseOn": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCache": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCare": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCareNote": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCat": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCatchUp": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcChip": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcClaim": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCoachAct": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcCounter": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDow": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcEsc": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcFill": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcGap": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcHash": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcHeroHtml": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcIndex": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcInsight": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcListHtml": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcMean": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcOnReflect": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcPassive": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcPatterns": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcPrompt": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcRange": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReflectBox": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReviewHtml": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReviewList": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcSaveReview": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcShort": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcStore": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcSwap": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcTop": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWeekId": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWeekStart": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWelcome": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jlApply": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlAuth": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlBlocking": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlBlocksNative": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlLeftAt": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlNotify": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlOn": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlOnNavigate": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlOverlay": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlPlugin": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlPrevView": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlPrompt": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlPrompting": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlRelock": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlSection": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlSecure": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlSettingsRender": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlStatus": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlUnlocked": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlViewIsJournal": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlWatchers": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
  "journalDayLabel": [
   "src/runtime/segments/04-runtime.js"
  ],
@@ -1334,6 +3081,9 @@
   "src/runtime/segments/04-runtime.js"
  ],
  "journalDays": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "keepSafetyCopy": [
   "src/runtime/segments/04-runtime.js"
  ],
  "lastLog": [
@@ -1383,6 +3133,977 @@
  ],
  "lkTrack": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "lmDlAnd": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlAskFeed": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlCats": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlFeature": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlFeedAll": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlFeedNow": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlFeedPlan": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlFlush": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlMarkRan": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlNobody": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlNotHungry": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlParse": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlRan": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlRun": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlSay": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmDlText": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmHandleDeepLink": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "lmaAgo": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaApplyBars": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaAt": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaBack": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaBackupAsk": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBackupChecked": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBackupDue": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBackupExtras": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaBackupFirst": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBackupWarning": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBakRun": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaBarRaf": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaBarTo": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaBuzz": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaCheckUpdate": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaDirectorSessions": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaDownload": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaEaseIn": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaEaseOut": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaExactTiming": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaFmtTime": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaGoView": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaHM": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaHcNice": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHcSrc": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthAsk": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthAward": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthBusy": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthCfg": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthOpen": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthRender": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthSet": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthSheetRender": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHealthSync": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "lmaHintTimer": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaId": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaInstallUpdate": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaLastErr": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaLastSig": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaLeaveNative": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaLoad": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaMotionOff": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaNative": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaNavSkip": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaNavStack": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaNavTo": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaOpenBackupSettings": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaPermission": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaPgApply": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgDx": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgEnd": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgRaf": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgSet": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgStart": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgTw": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgTween": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPgView": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaPickBackupFolder": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaPill": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaPlugin": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaPlugins": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaPrefs": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaQuiet": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaRenderBackup": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaRenderSettings": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaRenderUpdates": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaResolve": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaRestoreExtras": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaRunBackup": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaSave": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaScrub": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubGain": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubIndex": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubInit": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubItems": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubMark": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubOn": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubReveal": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaScrubSync": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaSet": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaSetBackup": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaSetHtml": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaSetScrubSpeed": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaSetSwipe": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSetSwipeAnim": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSoon": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaSw": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeBlocked": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeEnabled": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeEnd": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeGo": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeHint": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSwipeNav": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSync": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaSyncActive": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaSyncBusy": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaSyncTimer": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaTabIcon": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaTabIndex": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaTabKey": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaTabList": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaTabMove": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabShow": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsApply": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsBar": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsButtons": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsCfg": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsRender": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsReset": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsStore": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTestNotification": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaThumbBusy": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbErr": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbRender": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbSave": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbSchedule": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbSnapNow": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbTimer": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbWarm": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbWarmBusy": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaThumbs": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaTopOverlay": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaUpd": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdBound": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdLater": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdPlan": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdPopOpen": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdPopRender": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaUpdTries": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaVTcur": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaVTok": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaVeil": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaVeilSet": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
+ "lmaView": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "lmaWantedReminders": [
+  "src/runtime/segments/33-android.js"
+ ],
+ "lmaWebPill": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaWebRestart": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaWebUpdate": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
+ "lmaWidgetAt": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetBusy": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetLaunch": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetMsg": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetPin": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetPush": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmaWidgetRender": [
+  "src/runtime/segments/40-widget.js"
+ ],
+ "lmcApi": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcId": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcKeep": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcLoad": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcPlugin": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcRender": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcSave": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcSet": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmcSync": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "lmgAsk": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgClock": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgDay": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgKey": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgMiss": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgNote": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgNowLine": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgOn": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgRun": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgTools": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmgUtterance": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "lmvActFrame": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvActType": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvActsIn": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvActsOn": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvAddDays": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvAdvance": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvAfterNoLD": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "lmvAfterPaint": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvAnswer": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvApplyFlag": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvAsk": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvAuthorize": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvBoot": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvBridge": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvBridgeInit": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvBuildUI": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvBusy": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvCancel": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvCandidates": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvCapStatus": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvCard": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvClassify": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvClock": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvConfirm": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvCtx": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDatesFor": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvDayScope": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvDaypartDefault": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvDaypartWin": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvDays": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvDeliver": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDelivered": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDiagOpen": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDiagRender": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDomain": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvDurChips": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvDurText": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvEl": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvEnabled": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvEnd": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvEntityId": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvExec": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvExecute": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvExtract": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvFinalize": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvFindSlot": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvFingerprint": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvFmts": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvFollowUp": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvFrame": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvFromLink": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvGo": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvGuess": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvHCancel": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHComplete": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHFood": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHFree": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHLog": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvHMove": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHPetAct": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHPetStatus": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHQuests": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHSchedule": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHStats": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHSteps": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHWorkouts": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvHandle": [
+  "src/runtime/segments/45-voice.js",
+  "src/runtime/segments/50-voice-gen4.js",
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "lmvHash": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvHudOpen": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvJGet": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvJLoad": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvJPut": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvJSave": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvKind": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLD": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLast": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLastQ": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvLastRef": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvLead": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvLev": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvLines": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvListen": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvListening": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLocalToEpoch": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLog": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLogLine": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvLogNow": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvLogXp": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvLow": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvMark": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvMarks": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvMerge": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvMeta": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvNewFrame": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvNice": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvNiceDate": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvNiceTime": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvNormalize": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvNowMin": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvOdd": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvOffset": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvOnNative": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvOpenChip": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvOverride": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvPad": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvPartial": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvParts": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvPetDo": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvPets": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvPhon": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvPick": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvPlugin": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvPrefs": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvPump": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvQuery": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvRecover": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvRender": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvReset": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvResolve": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvRunAct": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvSame": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvScope": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvSeq": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvSetPrefs": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvSettingsRender": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvSnapshot": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvStepMap": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvStopListening": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvTelemetryDone": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvTimeAfter": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvTo24": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvToday": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvTokens": [
+  "src/runtime/segments/46-voice-nlu.js"
+ ],
+ "lmvUI": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvUndo": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvUuid": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvVoiceMsg": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvWeekStart": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvWeekday": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "lmvXpOf": [
+  "src/runtime/segments/49-voice-time.js"
+ ],
+ "lmvYmd": [
+  "src/runtime/segments/45-voice.js"
  ],
  "load": [
   "src/runtime/segments/04-runtime.js"
@@ -1600,14 +4321,35 @@
  "mediaAudioButtons": [
   "src/runtime/segments/08-runtime.js"
  ],
+ "mediaAudioMeta": [
+  "src/runtime/segments/08-runtime.js"
+ ],
+ "mediaAudioProgress": [
+  "src/runtime/segments/11-runtime.js"
+ ],
  "mediaAudioProgressMarkup": [
   "src/runtime/segments/11-runtime.js"
  ],
  "mediaById": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "mediaFilterOnPage": [
+  "src/runtime/segments/11-runtime.js"
+ ],
+ "mediaMatching": [
+  "src/runtime/segments/11-runtime.js"
+ ],
+ "mediaStats": [
+  "src/runtime/segments/11-runtime.js"
+ ],
+ "mediaUpsert": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "migratePetBrainState": [
   "src/runtime/segments/26-pet-brain.js"
+ ],
+ "migrateSave": [
+  "src/runtime/segments/04-runtime.js"
  ],
  "mobItems": [
   "src/runtime/segments/06-runtime.js"
@@ -1619,7 +4361,8 @@
   "src/runtime/segments/08-runtime.js"
  ],
  "navigate": [
-  "src/runtime/segments/04-runtime.js"
+  "src/runtime/segments/04-runtime.js",
+  "src/runtime/segments/50-quests-hand.js"
  ],
  "nextOnboardingStep": [
   "src/runtime/segments/12-runtime.js"
@@ -1703,10 +4446,17 @@
   "src/runtime/segments/19-runtime.js"
  ],
  "openMealSheet": [
-  "src/runtime/segments/08-runtime.js"
+  "src/runtime/segments/08-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "ovAgo": [
   "src/runtime/segments/17-runtime.js"
+ ],
+ "ovAppsFetching": [
+  "src/runtime/segments/41-ov-apps.js"
+ ],
+ "ovAppsRender": [
+  "src/runtime/segments/41-ov-apps.js"
  ],
  "ovAttrOf": [
   "src/runtime/segments/17-runtime.js"
@@ -1743,6 +4493,15 @@
  ],
  "ovGreeting": [
   "src/runtime/segments/17-runtime.js"
+ ],
+ "ovHealthDur": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "ovHealthRender": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "ovHealthTap": [
+  "src/runtime/segments/39-health.js"
  ],
  "ovHeroHtml": [
   "src/runtime/segments/17-runtime.js"
@@ -1786,6 +4545,9 @@
  "ovReplay": [
   "src/runtime/segments/18-runtime.js"
  ],
+ "ovRewardsRender": [
+  "src/runtime/segments/44-rewards.js"
+ ],
  "ovSum": [
   "src/runtime/segments/17-runtime.js"
  ],
@@ -1801,14 +4563,62 @@
  "parseD": [
   "src/runtime/segments/06-runtime.js"
  ],
+ "payCfg": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payClear": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payClearNow": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payDayStr": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payDays": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payISO": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payJob": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payNet": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payNextDate": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payR2": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payRemovePending": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payRender": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payRules": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payScan": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "paySet": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payTick": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
+ "payTime": [
+  "src/runtime/segments/36-money-pay.js"
+ ],
  "pcheck": [
   "src/runtime/segments/06-runtime.js"
  ],
  "persistAudioPosition": [
   "src/runtime/segments/08-runtime.js"
- ],
- "petA": [
-  "src/runtime/segments/16-runtime.js"
  ],
  "petAct": [
   "src/runtime/segments/15-runtime.js"
@@ -1847,7 +4657,8 @@
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petAssetsJson": [
-  "src/runtime/segments/15-runtime.js"
+  "src/runtime/segments/15-runtime.js",
+  "src/runtime/segments/32-pet-dna.js"
  ],
  "petAssetsJson_dna0": [
   "src/runtime/segments/32-pet-dna.js"
@@ -1857,9 +4668,6 @@
  ],
  "petAttach": [
   "src/runtime/segments/26-pet-brain.js"
- ],
- "petB": [
-  "src/runtime/segments/15-runtime.js"
  ],
  "petB64": [
   "src/runtime/segments/16-runtime.js"
@@ -2044,6 +4852,84 @@
  "petBrainVoice": [
   "src/runtime/segments/26-pet-brain.js"
  ],
+ "petBreedAdd": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedCard": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedChips": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedDraw": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedDrop": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedDropAll": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedFind": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedForecast": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedGo": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedGoal": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedGoalSelect": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedGoalVal": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedHome": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedHtml": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedKeep": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedKeepAll": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedName": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedPick": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedPreviews": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedRefresh": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedRelease": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedRename": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedRender": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedRoster": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedSetGoal": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petBreedStray": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
  "petBuildDay": [
   "src/runtime/segments/15-runtime.js"
  ],
@@ -2058,6 +4944,9 @@
  ],
  "petCatBox": [
   "src/runtime/segments/16-runtime.js"
+ ],
+ "petCattery": [
+  "src/runtime/segments/37-pet-morph.js"
  ],
  "petChasePlan": [
   "src/runtime/segments/27-pet-play.js"
@@ -2182,6 +5071,15 @@
  "petDevBrain": [
   "src/runtime/segments/26-pet-brain.js"
  ],
+ "petDevBreedEvolve": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petDevBreedFill": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petDevDepth": [
+  "src/runtime/segments/17-runtime.js"
+ ],
  "petDevDnaForce": [
   "src/runtime/segments/32-pet-dna.js"
  ],
@@ -2211,6 +5109,9 @@
  ],
  "petDevLikes": [
   "src/runtime/segments/25-pet-likes.js"
+ ],
+ "petDevMorphSet": [
+  "src/runtime/segments/37-pet-morph.js"
  ],
  "petDevPair": [
   "src/runtime/segments/29-pet-pair.js"
@@ -2443,9 +5344,6 @@
  "petFeedClick": [
   "src/runtime/segments/16-runtime.js"
  ],
- "petFit": [
-  "src/runtime/segments/17-runtime.js"
- ],
  "petFloorY": [
   "src/runtime/segments/24-pet-depth.js"
  ],
@@ -2487,6 +5385,60 @@
  ],
  "petHash": [
   "src/runtime/segments/15-runtime.js"
+ ],
+ "petHdAnimOf": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdClaim": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdCols": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdDot": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdErode": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdExpr": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdEye": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdEyeMask": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdFace": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdHeadShift": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdJson": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdMood": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdOn": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdPick": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdPose": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdRigFrame": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdSettingsRender": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "petHdSheet": [
+  "src/runtime/segments/50-pet-hd.js"
  ],
  "petHeartsHtml": [
   "src/runtime/segments/17-runtime.js"
@@ -2579,7 +5531,8 @@
   "src/runtime/segments/25-pet-likes.js"
  ],
  "petLoadImg": [
-  "src/runtime/segments/15-runtime.js"
+  "src/runtime/segments/15-runtime.js",
+  "src/runtime/segments/32-pet-dna.js"
  ],
  "petLoadImg_dna0": [
   "src/runtime/segments/32-pet-dna.js"
@@ -2628,6 +5581,27 @@
  ],
  "petMoodText": [
   "src/runtime/segments/17-runtime.js"
+ ],
+ "petMorphAttach": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphFill": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphIds": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphPanelHtml": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphScore": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphVal": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphWord": [
+  "src/runtime/segments/37-pet-morph.js"
  ],
  "petNewLitter": [
   "src/runtime/segments/32-pet-dna.js"
@@ -2719,6 +5693,9 @@
  "petPairEnsure": [
   "src/runtime/segments/29-pet-pair.js"
  ],
+ "petPairFeed": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
  "petPairFeel": [
   "src/runtime/segments/29-pet-pair.js"
  ],
@@ -2797,6 +5774,9 @@
  "petPairP": [
   "src/runtime/segments/29-pet-pair.js"
  ],
+ "petPairPointer": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
  "petPairRt": [
   "src/runtime/segments/29-pet-pair.js"
  ],
@@ -2809,8 +5789,17 @@
  "petPairSession": [
   "src/runtime/segments/29-pet-pair.js"
  ],
+ "petPairSnuggle": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
  "petPairSpawn": [
   "src/runtime/segments/29-pet-pair.js"
+ ],
+ "petPairStandoffEnd": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petPairStandoffStare": [
+  "src/runtime/segments/29-pet-rank.js"
  ],
  "petPairStart": [
   "src/runtime/segments/29-pet-pair.js"
@@ -2828,6 +5817,9 @@
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairUntangle": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
+ "petPairUser": [
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairViaFocus": [
@@ -2980,6 +5972,48 @@
  "petRand": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "petRankBase": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankBias": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankChallenger": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankClamp": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankContest": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankData": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankHtml": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankLabel": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankLead": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankPower": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankProb": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankPs": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankUpdate": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankWeight": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
  "petRebuildSprites": [
   "src/runtime/segments/26-pet-brain.js"
  ],
@@ -2991,6 +6025,39 @@
  ],
  "petRenderStatus": [
   "src/runtime/segments/17-runtime.js"
+ ],
+ "petRigCompose": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigFrame": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigFrameData": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigGrown": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigIdx": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigJson": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigNeutral": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigPick": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigPoseKey": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigQ": [
+  "src/runtime/segments/38-pet-rig.js"
+ ],
+ "petRigSrcPixels": [
+  "src/runtime/segments/38-pet-rig.js"
  ],
  "petRng": [
   "src/runtime/segments/15-runtime.js"
@@ -3233,7 +6300,8 @@
   "src/runtime/segments/07-runtime.js"
  ],
  "pickMacro": [
-  "src/runtime/segments/09-runtime.js"
+  "src/runtime/segments/09-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "planDay": [
   "src/runtime/segments/06-runtime.js"
@@ -3278,6 +6346,51 @@
  "px": [
   "src/runtime/segments/06-runtime.js"
  ],
+ "qartFace": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qartHas": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qartPackId": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartPanel": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartPanelOf": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qartPref": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartSeasonal": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartSetPack": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartSource": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qartUrl": [
+  "src/runtime/segments/50-quests-art.js"
+ ],
+ "qcardArt": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qcardBack": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qcardCorners": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qcardScene": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qfxSet": [
+  "src/runtime/segments/50-quests-fx.js"
+ ],
  "qosCelebrateTimeout": [
   "src/runtime/segments/14-runtime.js"
  ],
@@ -3286,6 +6399,30 @@
  ],
  "qosUpdateSummary": [
   "src/runtime/segments/14-runtime.js"
+ ],
+ "qpxClean": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxLine": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxRgb": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxSprite": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxText": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxWidth": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qpxWrap": [
+  "src/runtime/segments/50-quests-cards.js"
+ ],
+ "qsfxSetVol": [
+  "src/runtime/segments/50-sfx.js"
  ],
  "questKey": [
   "src/runtime/segments/04-runtime.js"
@@ -3317,6 +6454,12 @@
  "recipeHits": [
   "src/runtime/segments/08-runtime.js"
  ],
+ "recordActivity": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "recordMoneyTransaction": [
+  "src/runtime/segments/05-runtime.js"
+ ],
  "recs": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -3328,6 +6471,9 @@
  ],
  "removeMediaAudio": [
   "src/runtime/segments/07-runtime.js"
+ ],
+ "removeMoneyTransaction": [
+  "src/runtime/segments/05-runtime.js"
  ],
  "renderActivities": [
   "src/runtime/segments/04-runtime.js"
@@ -3387,7 +6533,8 @@
   "src/runtime/segments/08-runtime.js"
  ],
  "renderMeals": [
-  "src/runtime/segments/10-runtime.js"
+  "src/runtime/segments/10-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "renderMealsRing": [
   "src/runtime/segments/09-runtime.js"
@@ -3468,7 +6615,8 @@
   "src/runtime/segments/03-runtime.js"
  ],
  "save": [
-  "src/runtime/segments/04-runtime.js"
+  "src/runtime/segments/04-runtime.js",
+  "src/runtime/segments/50-quests-hand.js"
  ],
  "saveAccount": [
   "src/runtime/segments/05-runtime.js"
@@ -3497,6 +6645,15 @@
  "saveMediaItem": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "saveReadOnly": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "saveReadOnlyTold": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "saveReplacing": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "saveRules": [
   "src/runtime/segments/04-runtime.js"
  ],
@@ -3511,6 +6668,144 @@
  ],
  "scholarRulesHtml": [
   "src/runtime/segments/14-runtime.js"
+ ],
+ "sdAct": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdActivityMin": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdAisleName": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdAutoLevel": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdCloseSwap": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdCoach": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdData": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdDay": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdDirectorDay": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdDirectorMeal": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdDirectorSlot": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdFactor": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdFit": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdFuelLine": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdIngLine": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdLevels": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdLogMeal": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdLogged": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdMacroBar": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdMealCard": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdMealIngs": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdMealOk": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdMonday": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdNextCard": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdOpenDirectorMeal": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdOpenSwap": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdOv": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdPaneSwitch": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdPlanHtml": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdRing": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdS": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSettingsHtml": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdShopHtml": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdShopList": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdShopText": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotColor": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotIcon": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotLetter": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotName": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotOf": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSlotWhen": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSolve": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSwapOn": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdTotals": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdUi": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdWeekday": [
+  "src/runtime/segments/50-smartdiet.js"
  ],
  "seedReadingList": [
   "src/runtime/segments/04-runtime.js"
@@ -3533,17 +6828,30 @@
  "selectWeek": [
   "src/runtime/segments/06-runtime.js"
  ],
+ "setApplyCats": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
+ "setCat": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
+ "setCatOf": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
  "setLightMode": [
   "src/runtime/segments/04-runtime.js"
  ],
  "setMealsDay": [
-  "src/runtime/segments/08-runtime.js"
+  "src/runtime/segments/08-runtime.js",
+  "src/runtime/segments/50-food.js"
  ],
  "setMediaStatus": [
   "src/runtime/segments/07-runtime.js"
  ],
  "setOnboardingCarouselIndex": [
   "src/runtime/segments/12-runtime.js"
+ ],
+ "setPickCat": [
+  "src/runtime/segments/50-settings-tabs.js"
  ],
  "setsFor": [
   "src/runtime/segments/06-runtime.js"
@@ -3620,6 +6928,69 @@
  "switchClassTo": [
   "src/runtime/segments/14-runtime.js"
  ],
+ "t3basis": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3cardMesh": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3cross": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3cylinder": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3dot": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3face": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3img": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3load": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3m": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3mul": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3norm": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3parseObj": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3persp": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3px": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3qax": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3qfromBasis": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3qmat": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3qmul": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3slerp": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3sub": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "t3view": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
  "titleFor": [
   "src/runtime/segments/05-runtime.js"
  ],
@@ -3656,6 +7027,9 @@
  "undoCat": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "unsavedMessage": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "updateAudioPlayBtn": [
   "src/runtime/segments/08-runtime.js"
  ],
@@ -3664,6 +7038,9 @@
  ],
  "updateMediaAudioProgress": [
   "src/runtime/segments/11-runtime.js"
+ ],
+ "updateMoneyAccount": [
+  "src/runtime/segments/05-runtime.js"
  ],
  "updateOnboardingCarousel": [
   "src/runtime/segments/12-runtime.js"
@@ -3686,14 +7063,152 @@
  "weekStart": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "window.LifeMaxCalendar": [
+  "src/runtime/segments/50-calsync.js"
+ ],
+ "window.LifeMaxCoach": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "window.LifeMaxDailyHand": [
+  "src/runtime/segments/50-quests-hand.js"
+ ],
+ "window.LifeMaxDeepLink": [
+  "src/runtime/segments/50-deeplink.js"
+ ],
+ "window.LifeMaxGemini": [
+  "src/runtime/segments/50-voice-gemini.js"
+ ],
+ "window.LifeMaxHD": [
+  "src/runtime/segments/50-pet-hd.js"
+ ],
+ "window.LifeMaxHaptics": [
+  "src/runtime/segments/50-haptics.js"
+ ],
+ "window.LifeMaxJournalLock": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "window.LifeMaxMeals": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "window.LifeMaxVoice": [
+  "src/runtime/segments/45-voice.js"
+ ],
+ "window.LifeMaxVoiceG4": [
+  "src/runtime/segments/50-voice-gen4.js"
+ ],
+ "window.LifeMaxVoiceG5": [
+  "src/runtime/segments/50-voice-gen5.js"
+ ],
+ "window.NativeDirectorProjection": [
+  "src/runtime/segments/50-native-director.js"
+ ],
+ "window.NativeLogProjection": [
+  "src/runtime/segments/50-native-log.js"
+ ],
+ "window.NativeNutritionBeta": [
+  "src/runtime/segments/50-native-nutrition.js"
+ ],
+ "window.NativeOverviewSnapshot": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.NativeTabKit": [
+  "src/runtime/segments/50-native-tabkit.js"
+ ],
+ "window.NativeTabs": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.VoiceFallbackLogger": [
+  "src/runtime/segments/50-voice-fallback.js"
+ ],
+ "window.__chD": [
+  "src/runtime/segments/15-runtime.js"
+ ],
+ "window.__fv2": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "window.__lmaBooted": [
+  "src/runtime/segments/51-boot-ok.js"
+ ],
+ "window.__nativeOverviewError": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.__nativeTabPerf": [
+  "src/runtime/segments/50-native-tabkit.js",
+  "src/runtime/segments/50-native-nutrition.js"
+ ],
  "window.__ovReady": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "window.__petCoat": [
+  "src/runtime/segments/17-runtime.js",
+  "src/runtime/segments/29-pet-pair.js",
+  "src/runtime/segments/32-pet-dna.js"
+ ],
+ "window.__petDnaNext": [
+  "src/runtime/segments/32-pet-dna.js",
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "window.__petFresh": [
+  "src/runtime/segments/17-runtime.js"
+ ],
+ "window.__petLegacy": [
+  "src/runtime/segments/32-pet-dna.js"
+ ],
+ "window.__petLitter": [
+  "src/runtime/segments/32-pet-dna.js"
  ],
  "window.__petReady": [
   "src/runtime/segments/17-runtime.js"
  ],
+ "window.__petTrait": [
+  "src/runtime/segments/17-runtime.js",
+  "src/runtime/segments/29-pet-pair.js",
+  "src/runtime/segments/32-pet-dna.js"
+ ],
+ "window.__sdData": [
+  "src/runtime/segments/50-smartdiet.js"
+ ],
+ "window.closePacman": [
+  "src/runtime/segments/20-runtime.js"
+ ],
+ "window.dhRest": [
+  "src/runtime/segments/50-quests-table.js"
+ ],
+ "window.lmaBack": [
+  "src/runtime/segments/34-navigation.js"
+ ],
+ "window.openNativeCash": [
+  "src/runtime/segments/50-native-cash.js"
+ ],
+ "window.openNativeOverview": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.openPacman": [
+  "src/runtime/segments/20-runtime.js"
+ ],
+ "window.setDeviceBackupAllowed": [
+  "src/runtime/segments/50-device-backup.js"
+ ],
+ "window.setNativeNutritionEnabled": [
+  "src/runtime/segments/50-native-nutrition.js"
+ ],
+ "window.setNativeOverviewEnabled": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.setTabTimingToast": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.syncNativeOverviewSetting": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"
+ ],
+ "writeSave": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "xpCue": [
+  "src/runtime/segments/07-runtime.js"
  ],
  "xpForLevel": [
   "src/runtime/segments/04-runtime.js"

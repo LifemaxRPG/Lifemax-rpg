@@ -1,10 +1,11 @@
 /* Bottom bar editor tests. Run: NODE_PATH=$(npm root -g) node tests/tabs.test.js [built html] */
-const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
+const { chromium } = require('playwright'); const currentPage = require('./current-page'), file = currentPage(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
 (async () => {
+  const site = await currentPage.serve(file); // it reloads the page
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 412, height: 860 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.addInitScript("if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true}));localStorage.setItem('lma_qdeal','off');");
-  await p.goto('file://' + file); await p.waitForTimeout(800);
+  await p.goto(site.url); await p.waitForTimeout(800);
   const order = () => p.evaluate(() => [...document.querySelectorAll('.sidebar .navbtn[data-view]')].map(b => b.dataset.view));
   const shown = () => p.evaluate(() => [...document.querySelectorAll('.sidebar .navbtn[data-view]')].filter(b => b.offsetWidth > 0 || b.getClientRects().length).map(b => b.dataset.view));
   const o0 = await order(); ok('the default bar has the expected tabs', o0.slice(0, 6).join() === 'dashboard,character,food,pet,log,quests', o0);
@@ -34,5 +35,5 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('Reset restores the original order and shows every tab', o4.join() === o0.join() && (await shown()).length === o0.length, o4);
   ok('Bottom bar editor sits in Settings, Look & feel', await p.evaluate(() => { setPickCat('look'); const c = document.getElementById('tabsCard'); return !!c && !c.classList.contains('set-hide') }));
   ok('no page errors', errs.length === 0, errs);
-  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
+  console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();

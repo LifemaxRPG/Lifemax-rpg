@@ -1,22 +1,15 @@
 /* Deep links from Assistant / Gemini / shortcuts / any other app: parsing, hostile input (backlog SEC-3), asking before
    feeding, the scheduling hand-off that stops at the preview, queueing before ready, and no replay after a reload.
-   Builds the current source (like log-activity.test.js) unless a built page is given.
    Run: NODE_PATH=$(npm root -g) node tests/deeplink.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const { execFileSync } = require('child_process');
-const root = path.resolve(__dirname, '..');
-let file = process.argv[2] && path.resolve(process.argv[2]);
-if (!file) {
-  file = path.join(require('os').tmpdir(), 'lm_deeplink_' + process.pid + '.html');
-  execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
-  execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), file], { cwd: root, stdio: 'ignore' });
-}
+const currentPage = require('./current-page'), file = currentPage(process.argv[2]), root = path.resolve(__dirname, '..');
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 300) : '')) } };
 const BAD = /[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2066-\u2069\ufeff]/;
 (async () => {
+  const site = await currentPage.serve(file); // the launch link checks reload the page
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await (await b.newContext({ viewport: { width: 393, height: 844 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.addInitScript("if(!localStorage.getItem('lifemax_rpg_prototype_v1'))localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true}));");
-  await p.goto('file://' + file); await p.waitForTimeout(2500);
+  await p.goto(site.url); await p.waitForTimeout(2500);
   const P = u => p.evaluate(u => LifeMaxDeepLink.parse(u), u);
   ok('schedule link parses title and description', JSON.stringify(await P('lifemax://schedule/add?title=Dentist%20at%203&description=cleaning')) === JSON.stringify({ kind: 'schedule', title: 'Dentist at 3', description: 'cleaning' }));
   ok('plus signs decode as spaces', (await P('lifemax://schedule/add?title=Go+for+a+run')).title === 'Go for a run');
@@ -122,7 +115,7 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2066-\u
       getLaunchUrl: () => { __asked++; return Promise.resolve({ url: sessionStorage.getItem('test_launch') || L }) } } } };
   }, L);
   const launched = async () => { await p2.waitForFunction(() => LM_DL.ready); return p2.evaluate(() => ({ asked: __asked, ran: /Launch link/.test(JSON.stringify(LifeMaxVoice.snapshot())) })) };
-  await p2.goto('file://' + file);
+  await p2.goto(site.url);
   const first = await launched();
   ok('a launch link runs once the page is ready', first.asked === 1 && first.ran, first);
   await p2.reload();
@@ -133,5 +126,5 @@ const BAD = /[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2066-\u
   await p2.reload();
   ok('a new launch link after a reload still runs', await p2.waitForFunction(() => lmaView() === 'quests', null, { timeout: 8000 }).then(() => true, () => false));
   ok('no script errors', errs.length === 0, errs);
-  console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail ? 1 : 0);
+  console.log(`\n${pass} passed, ${fail} failed`); await b.close(); site.close(); process.exit(fail ? 1 : 0);
 })();

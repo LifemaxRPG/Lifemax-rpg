@@ -1,6 +1,2 @@
 # Tests that exist but do not run in CI yet, one per line, each with the reason. This list may only shrink (CONTRACT A26/A27).
-table3d.test.js     # renders the 3D quest table in software WebGL and times out on a runner; needs a lighter harness
-tabs.test.js        # flaky ordering check ("Swipe animation setting also survives a restart"); fails intermittently on unchanged code
-voice.test.js       # depends on the time of day ("appointment draws on the inner ring" fails at some hours on unchanged code)
-voice5.test.js      # depends on the time of day ("end of day review" macro text changes with the clock)
 native-handover-sim.test.js  # runs as its own CI step with a fixed seed base and a seed count (see tools/run_tests.sh sim)

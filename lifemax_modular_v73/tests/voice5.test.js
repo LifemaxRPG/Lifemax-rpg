@@ -3,10 +3,15 @@
    Run:  NODE_PATH=$(npm root -g) node tests/voice5.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (name, cond, extra) => { if (cond) { pass++; console.log('PASS ' + name) } else { fail++; console.log('FAIL ' + name + (extra !== undefined ? '  ' + JSON.stringify(extra).slice(0, 700) : '')) } };
-const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
+const MON = Date.UTC(2026, 9, 26, 17, 14), NIGHT = Date.UTC(2026, 9, 27, 3, 30);   // Mon 2026-10-26 13:14 and 23:30 EDT
 (async () => {
-  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); const errs = [];
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, timezoneId: 'America/New_York' })).newPage(); const errs = [];
   p.on('pageerror', e => errs.push(String(e)));
+  /* The voice clock says 1:14 PM; the page runs on Playwright's clock from 11:30 PM that Monday. Life Director plans from the page's
+     now, so the afternoon holds only what each case puts there, and Tuesday holds the plan the day review names. That needs the page
+     past Monday's last planned session: it passes from 9 PM to Tuesday 9 AM; at 8 PM Life Director still plans that evening, and the
+     bulk and clear cases fail. */
+  await p.clock.install({ time: NIGHT });
   await p.goto('file://' + file); await p.waitForTimeout(800);
   await p.evaluate(() => { const o = document.getElementById('onboarding'); if (o) { o.classList.remove('show'); o.style.display = 'none' } ['lifemax_voice_op_journal_v1', 'lifemax_voice_timer_v1', 'lifemax_voice_alias_v1', 'lifemax_voice_macros_v1', 'lifemax_voice_undo_v1'].forEach(k => localStorage.removeItem(k)) });
   await p.evaluate(() => { const { ST } = LifeDirectorApp._debug(); ST.availability.timezone = 'America/New_York'; ST.availability.rules.push({ id: 'sl', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4, 5, 6], startMin: 23 * 60, durationMin: 480, commuteMin: 0 }); ST.setupComplete = true; LifeDirector.regenerate('test') });
@@ -168,8 +173,8 @@ const MON = Date.UTC(2026, 9, 26, 17, 14);   // Mon 2026-10-26 13:14 EDT
   await wipe(); await reset(); r = await say("When I say 'Beast Mode', log a 60 minute workout and open my workout plan");
   ok('macro: taught with two steps', r.intentId === 'voice.create_macro' && (await p.evaluate(() => LifeMaxVoiceG5.macros()))['beast mode'].cmds.length === 2, await p.evaluate(() => LifeMaxVoiceG5.macros()));
   await reset(); r = await say('Beast mode'); ok('macro: the phrase starts the first step', r.state === 'PREVIEWED' && r.act && /1 h/.test(text(r)), text(r));
-  r = await confirm(); await p.waitForTimeout(400);
-  ok('macro: the second step follows, one card', r.state === 'CONFIRMED' && r.title === 'Did 2 things' && await p.evaluate(() => document.querySelector('.view.active').id === 'view-plan'), r.title);
+  r = await confirm(); const opened = await p.waitForFunction(() => document.querySelector('.view.active').id === 'view-plan', null, { timeout: 5000 }).then(() => true, () => false);
+  ok('macro: the second step follows, one card', r.state === 'CONFIRMED' && r.title === 'Did 2 things' && opened, r.title);
   await p.evaluate(() => navigate('dashboard')); await reset(); r = await say('Start my day'); ok('macro: "start my day"', r.intentId === 'voice.run_macro' && /Good morning/.test(r.title) && /XP today/.test(text(r)), text(r));
   await reset(); r = await say('End of day review'); ok('macro: "end of day review"', r.intentId === 'voice.run_macro' && /Wrapping up/.test(r.title) && /XP earned/.test(text(r)) && /Tomorrow/.test(text(r)), text(r));
   await reset(); r = await say('Wrap up my day'); ok('macro: "wrap up my day"', /Wrapping up/.test(r.title));
