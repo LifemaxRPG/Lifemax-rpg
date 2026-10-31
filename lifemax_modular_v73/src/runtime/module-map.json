@@ -486,7 +486,7 @@
   },
   {
    "file": "src/runtime/segments/10-runtime.js",
-   "bytes": 28965,
+   "bytes": 28977,
    "statement_count": 22,
    "tags": [
     "nutrition",
@@ -944,7 +944,7 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28162,
+   "bytes": 28186,
    "statement_count": 54,
    "tags": [
     "interface"
@@ -1008,7 +1008,7 @@
   },
   {
    "file": "src/runtime/segments/19-runtime.js",
-   "bytes": 28112,
+   "bytes": 28124,
    "statement_count": 46,
    "tags": [
     "luck",
@@ -1110,7 +1110,7 @@
   },
   {
    "file": "src/runtime/segments/22-runtime.js",
-   "bytes": 69852,
+   "bytes": 69864,
    "statement_count": 49,
    "tags": [
     "interface"
@@ -3027,7 +3027,7 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 40272,
+   "bytes": 40284,
    "statement_count": 70,
    "tags": [
     "nutrition",
