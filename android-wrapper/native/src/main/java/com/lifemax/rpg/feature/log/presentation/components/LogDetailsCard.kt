@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.components.SectionLabel
 import com.lifemax.rpg.core.designsystem.components.SurfaceCard
+import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.log.domain.LogDraft
 
 /** The words: a name for a custom activity, the skill practised, and notes. */
@@ -56,7 +57,7 @@ private fun Field(
         OutlinedTextField(
             value,
             onChange,
-            Modifier.fillMaxWidth().heightIn(min = if (singleLine) 52.dp else 96.dp),
+            Modifier.fillMaxWidth().heightIn(min = if (singleLine) 52.dp else 96.dp).noTabSwipe(),
             placeholder = { Text(placeholder) },
             singleLine = singleLine,
             shape = RoundedCornerShape(12.dp),

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.recipes.domain.RecipeCategory
 import com.lifemax.rpg.feature.recipes.domain.RecipeFilter
 
@@ -100,7 +101,7 @@ private fun SearchField(query: String, onSearch: (String) -> Unit) {
     BasicTextField(
         query,
         onSearch,
-        Modifier.fillMaxWidth().semantics { contentDescription = "Find a recipe" },
+        Modifier.fillMaxWidth().noTabSwipe().semantics { contentDescription = "Find a recipe" },
         textStyle =
             LocalTextStyle.current.copy(color = c.text, fontSize = 14.sp, lineHeight = 21.sp),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
