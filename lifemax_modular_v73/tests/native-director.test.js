@@ -157,15 +157,22 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await settle(p, 3500);
   const after = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
   ok('a level-up keeps the screen waiting until it has closed', levelUp.calm === 0 && levelUp.shown && after.calm === 1 && !after.shown, { levelUp, after });
+  // the session it completes is the day's Focused Reading, and a reading card is on the table, so the quest bounty the session would
+  // earn is tested too: it is not paid either
   const refused = await p.evaluate((day) => {
+    const cards = [dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'bounty')], ids = new Set(cards.map(c => c.id));
+    state.quests = state.quests.concat(cards); Object.assign(state, { sparks: 100, restedXP: 40 });
     saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
     const before = state.activities.length; let r = null;
     for (const s of LifeDirector.voice.sessions(day)) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) break }
-    const out = { ok: !!(r && r.ok), logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '' };
-    saveReadOnly = ''; saveReadOnlyTold = false;
+    const out = { ok: !!(r && r.ok), logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '',
+      fulfilled: cards.filter(isQuestDone).map(c => c.name), sparks: state.sparks, rested: state.restedXP };
+    saveReadOnly = ''; saveReadOnlyTold = false; state.quests = state.quests.filter(q => !ids.has(q.id));
     return out;
   }, directorDay.DAY);
   ok('a Done the save refuses (read-only) is taken back and says so, with no XP and no celebration', refused.ok && !refused.logged && !refused.flying && /XP not saved: this version is read-only/.test(refused.notice), refused);
+  ok('...and it pays no quest bounty: no Daily Hand card is fulfilled, Sparks and rested XP are untouched, and the notice does not say "Quest complete"',
+    refused.ok && !refused.fulfilled.length && refused.sparks === 100 && refused.rested === 40 && !/Quest complete/.test(refused.notice), refused);
   // Life Director's award, on its own: with a Daily Hand card it fulfils and Sparks and rested XP for it, a save that fails (storage
   // full or read-only) is taken back whole, as Log's is, and the page is left saying so rather than "Quest complete"
   for (const how of ['full', 'read-only']) {
@@ -181,19 +188,6 @@ const mark = p => p.evaluate(() => window.__calls.length);
     ok('a Life Director award whose save fails (' + how + ') is taken back whole: no Daily Hand card fulfilled, no Sparks paid, no rested XP spent, and the page says it was not saved',
       award.reason === (how === 'full' ? 'HOST_SAVE_FAILED' : 'HOST_READ_ONLY') && award.same && !award.card && award.sparks === 100 && award.rested === 40 && /^(Could not save|Not saved)/.test(award.shown), award);
   }
-  // ...and the whole Done flow: a session whose XP could not be saved pays no quest bounty either, so the card stays open
-  const done = await p.evaluate((day) => {
-    const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 9);
-    state.quests = state.quests.filter(q => q.id !== card.id).concat(card); Object.assign(state, { sparks: 100, restedXP: 40 });
-    const real = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
-    let r = null;
-    try { for (const s of LifeDirector.voice.sessions(day).filter(s => /read/i.test(s.title))) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) break } }
-    finally { Storage.prototype.setItem = real }
-    return { ok: !!(r && r.ok), card: isQuestDone(card), sparks: state.sparks, rested: state.restedXP, notice: (LifeDirector.native.frame().notice || {}).text || '' };
-  }, directorDay.DAY);
-  ok('a reading session whose save fails pays no quest bounty: the Daily Hand card stays open, Sparks and rested XP are untouched, and the notice says so',
-    done.ok && !done.card && done.sparks === 100 && done.rested === 40 && /XP not saved/.test(done.notice) && !/Quest complete/.test(done.notice), done);
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);
