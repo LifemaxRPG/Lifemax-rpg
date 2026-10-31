@@ -100,23 +100,24 @@ const ITEMS = [
       && s.notice === null;
     out.unsafeLinkOnPage = web.rows.find(x => x.id === 'm_course').link === 'javascript:alert(1)'; // the page draws it; the projection does not
 
-    const kept = state.mediaItems; state.mediaItems = []; renderMedia(); await wait(250);
+    // a redraw reaches the screen 100 ms later, once the bars are captured, which a busy machine can make slow: each check waits for its frame
+    const kept = state.mediaItems; state.mediaItems = []; renderMedia(); await until(() => !latest().items.length);
     const emptyWeb = text(document.querySelector('#mediaList .empty')), E = latest().empty;
     out.empty = emptyWeb === E.icon + E.title + E.body + E.add && latest().items.length === 0 && latest().stats[0].value === '0';
-    state.mediaItems = kept; document.getElementById('mediaSearch').value = 'zzz'; renderMedia(); await wait(250);
+    state.mediaItems = kept; document.getElementById('mediaSearch').value = 'zzz'; renderMedia(); await until(() => latest().filter.search === 'zzz');
     const none = text(document.querySelector('#mediaList .empty')), M = latest().noMatch;
     out.noMatch = none === M.icon + M.title + M.body;
-    document.getElementById('mediaSearch').value = ''; renderMedia(); await wait(250);
+    document.getElementById('mediaSearch').value = ''; renderMedia(); await until(() => latest().filter.search === '');
 
     // the page's filter: the screen takes it whenever the page sets it (a voice search, typing on the page), not on a plain redraw
-    const rev = latest().filter.revision;
-    renderMedia(); await wait(250); out.redrawKeepsRevision = latest().filter.revision === rev;
-    await LifeMaxVoice.simulateUtterance('Search my library for weir'); await wait(500);
+    const rev = latest().filter.revision, seq = latest().sequence;
+    renderMedia(); await until(() => latest().sequence > seq); out.redrawKeepsRevision = latest().filter.revision === rev;
+    await LifeMaxVoice.simulateUtterance('Search my library for weir'); await until(() => latest().filter.search === 'weir');
     out.voiceSearch = latest().filter.search === 'weir' && latest().filter.revision === rev + 1 && lmaView() === 'media' && showing();
     out.voiceList = JSON.stringify(mediaMatching(state.mediaItems, latest().filter).map(x => x.id)) === '["m_audio"]';
-    await LifeMaxVoice.simulateUtterance('Search my library for weir'); await wait(500);
+    await LifeMaxVoice.simulateUtterance('Search my library for weir'); await until(() => latest().filter.revision > rev + 1);
     out.voiceAgain = latest().filter.revision === rev + 2; // the same words again still reach a screen whose own search has moved on
-    const sel = document.getElementById('mediaFilter'); sel.value = 'progress'; sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); await wait(250);
+    const sel = document.getElementById('mediaFilter'); sel.value = 'progress'; sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); await until(() => latest().filter.status === 'progress');
     out.pageSelect = latest().filter.status === 'progress' && latest().filter.revision === rev + 3;
     document.getElementById('mediaSearch').value = ''; sel.value = 'all'; renderMedia(); await wait(250);
 
@@ -151,7 +152,7 @@ const ITEMS = [
     const realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
     try { await act({ action: 'finished', id: 'm_pod' }); await back() } finally { Storage.prototype.setItem = realSet }
     out.unsaved = latest().notice?.text === 'Could not save to this browser (storage full?)' && !latest().items.find(x => x.id === 'm_pod').finished && mediaById('m_pod').status === 'progress';
-    toast('Badge unlocked: Bookworm'); await wait(300);
+    toast('Badge unlocked: Bookworm'); await until(() => latest().notice?.text === 'Badge unlocked: Bookworm');
     out.liveNotice = showing() && latest().notice?.text === 'Badge unlocked: Bookworm';
 
     // remove asks on the page
@@ -225,8 +226,8 @@ const ITEMS = [
     closes = count('close'); opens = count('open');
     realLevelUp({ charLevel: null, from: 1, attrs: [{ id: 'intelligence', short: 'Intellect', from: 1, level: 2 }] }); await wait(150);
     out.levelUp = count('close') === closes + 1;
-    await wait(800); document.querySelector('.luov').click(); await wait(800);
-    out.levelUpBack = !document.querySelector('.luov') && count('open') === opens + 1 && showing();
+    await wait(800); document.querySelector('.luov').click(); // it takes a tap only after 0.7 s
+    out.levelUpBack = await back() && !document.querySelector('.luov') && count('open') === opens + 1;
 
     // leaving for a web tab closes the screen; the toggle off closes it and keeps it closed
     navigate('dashboard'); await wait(200); out.leave = !showing();
