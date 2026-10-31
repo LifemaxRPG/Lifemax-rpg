@@ -3024,7 +3024,7 @@ const LifeDirectorApp = (function () {
     if (dial) {
       attachDial(dial);
       const bf = ui.tab === 'today' && takeBuild();
-      if (bf) runBuild(dial, bf);
+      if (bf) { if (!nativeCovers()) runBuild(dial, bf); } // under a native screen the screen plays it (nativeBuild), the page nothing
       else if (ui.animate && !reduced()) play(dial, 'ld-dial-in');
     }
     const mini = main.querySelector('.ld-mini');
@@ -3189,6 +3189,8 @@ const LifeDirectorApp = (function () {
     const span = b.startEpoch <= d0 && b.endEpoch < d1 ? 'until ' + fC(b.endEpoch) : b.endEpoch >= d1 && b.startEpoch > d0 ? 'from ' + fC(b.startEpoch) : fC(b.startEpoch) + '–' + fC(b.endEpoch);
     return [name + ' · ' + span, name, span];
   }
+  /* the words under Today's dial, a handle drawn between them */
+  const DIAL_HINT = Object.freeze(['Tap a session for details. Drag a', 'handle to change your sleep or work hours.']);
   /* what a tap on fixed time says (k: its colour class); the hint about dragging only where the dial has handles */
   function anchorTip(k, title, s, e, handles) {
     const hint = k === 'sleep' || k === 'work' ? (handles ? '. Drag its handle to change it.' : '') : k === 'maint' ? '. Routines are set in My time.' : '';
@@ -3246,14 +3248,10 @@ const LifeDirectorApp = (function () {
       }
     }
     let handles = '';
-    for (const ri of plain ? [] : ruleInstances(day)) {
-      for (const end of ['start', 'end']) {
-        const ep = end === 'start' ? ri.startEpoch : ri.endEpoch;
-        if (ep < d0 || ep >= d1 || (end === 'end' && ep === d0)) continue;
-        const [x, y] = polar(DIAL.RO, angOf(ep, d0, d1)), k = ri.rule.kind === 'SLEEP' ? 'sleep' : 'work';
-        handles += '<g class="ld-hd ld-c-' + k + '" data-rule="' + esc(ri.rule.id) + '" data-end="' + end + '" data-ymd="' + U.ymdKey(ri.ymd) + '" data-s="' + ri.startEpoch + '" data-e="' + ri.endEpoch + '" data-ep="' + ep + '" role="slider" tabindex="0" aria-label="' + esc(handleLabel(ri.rule, end) + ' ' + fTime(ep)) + '">' +
-          '<circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10.5"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5"/></g>';
-      }
+    for (const h of plain ? [] : dialHandles(day)) {
+      const { ri, end, ep } = h, [x, y] = polar(DIAL.RO, angOf(ep, d0, d1));
+      handles += '<g class="ld-hd ld-c-' + h.kind + '" data-rule="' + esc(ri.rule.id) + '" data-end="' + end + '" data-ymd="' + U.ymdKey(ri.ymd) + '" data-s="' + ri.startEpoch + '" data-e="' + ri.endEpoch + '" data-ep="' + ep + '" role="slider" tabindex="0" aria-label="' + esc(handleLabel(ri.rule, end) + ' ' + fTime(ep)) + '">' +
+        '<circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10.5"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5"/></g>';
     }
     const live = isToday && !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
     /* the part of today that has already gone, greyed out */
@@ -3281,24 +3279,95 @@ const LifeDirectorApp = (function () {
      Presentation only: Web Animations on the real dial, nothing is redrawn. Tap the dial
      to skip. Reduced motion, or no Web Animations, means no build at all. */
   const BF = { SWEEP: 1250, FLY: 560, SPAN: 950, GAP_MIN: 70, GAP_MAX: 165, LOCK: 820, KEEP_MIN: 30 * 60 * 1000 };
+  let buildId = 0;
   function queueBuild(mode, prev) {
     const q = ui.bfQ;
     /* several changes before you look (or a run of missed-block repairs): one build, diffed against what you last saw */
-    if (q && Date.now() - q.at < BF.KEEP_MIN) { if (mode === 'build') q.mode = 'build'; return; }
-    ui.bfQ = { mode, prev, at: Date.now() };
+    if (q && Date.now() - q.at < BF.KEEP_MIN) { if (mode === 'build') q.mode = 'build'; }
+    else ui.bfQ = { mode, prev, at: Date.now() };
+    /* the same build for a native screen, which plays each id once (nativeBuild): ids rise with the clock, so a page that
+       reloaded never repeats one the screen has played */
+    buildId = Math.max(buildId + 1, Date.now());
+    ui.nativeBuild = { id: buildId, mode: ui.bfQ.mode, prev: ui.bfQ.prev, at: Date.now() };
   }
+  /* a change that moved nothing plays no build */
+  function dropBuild() { ui.bfQ = null; ui.nativeBuild = null; }
   function takeBuild() {
     const q = ui.bfQ; ui.bfQ = null;
     if (!q || Date.now() - q.at > BF.KEEP_MIN || reduced() || typeof Element === 'undefined' || !Element.prototype.animate) return null;
     return q;
+  }
+  /* What a build shows on a day's dial (d0..d1) and when, in milliseconds from its start: the sweep and its read-out (a full build),
+     the sessions that launch from the centre (new) or orbit from where they were (moved, from: degrees back to where they were),
+     those kept, those that left the plan and flash (flips), the dropped ones that break up (ghosts), and the read-out's words at
+     each step. q: the queued build ({mode, prev}); sessions: the dial's session arcs [{id, s, e}]; spans: its fixed time
+     [{s, e, title}]; today: the dial shows today. runBuild plays it on the page; a native screen plays the same plan (nativeBuild). */
+  function buildPlan(q, d0, d1, sessions, spans, today) {
+    const span = Math.max(1, d1 - d0), ang = ep => angOf(ep, d0, d1);
+    const full = q.mode === 'build', prev = q.prev;
+    const all = new Map((ST.schedule.scheduledInstances || []).concat(ST.schedule.historyInstances || []).map(i => [i.instanceId, i]));
+    const plannedSeen = new Set((ST.schedule.scheduledInstances || []).filter(i => i.lifecycleState === 'PLANNED').map(i => i.title + '|' + i.startEpoch));
+    const fly = [], keep = [], flips = [];
+    for (const x of sessions) {
+      const inst = all.get(x.id), planned = inst && inst.lifecycleState === 'PLANNED';
+      const it = { id: x.id, a0: ang(x.s), a1: ang(x.e), kind: 'keep', from: 0 };
+      if (!prev) it.kind = full ? 'new' : 'keep';
+      else if (planned) {
+        const was = prev.byId.get(x.id);
+        if (was === x.s || prev.seen.has(inst.title + '|' + x.s)) it.kind = 'keep';
+        else if (was != null && Math.abs((was - x.s) / span * 360) <= 330) { it.kind = 'moved'; it.from = (was - x.s) / span * 360; }
+        else it.kind = 'new';
+      } else if (prev.byId.has(x.id)) flips.push(it.id);
+      (it.kind === 'keep' ? keep : fly).push(it);
+    }
+    const dropped = prev ? prev.list.filter(p => !all.has(p.id) && !plannedSeen.has(p.title + '|' + p.s) && p.e > d0 && p.s < d1) : [];
+    fly.sort((a, b) => a.a0 - b.a0);
+    const nNew = fly.filter(f => f.kind === 'new').length, nMoved = fly.length - nNew, total = sessions.length;
+    /* timeline */
+    const T = full ? BF.SWEEP : 0;
+    const tB = full ? T + 160 : 140;
+    const gapMs = fly.length > 1 ? Math.max(BF.GAP_MIN, Math.min(BF.GAP_MAX, BF.SPAN / (fly.length - 1))) : 0;
+    const tFly = tB + (dropped.length ? 260 : 0);
+    const flyDur = it => it.kind === 'moved' ? Math.min(950, BF.FLY + Math.abs(it.from) * 2.2) : BF.FLY;
+    let tC = tFly;
+    const items = fly.map((it, k) => {
+      const t = tFly + k * gapMs, ms = flyDur(it);
+      tC = Math.max(tC, t + ms);
+      return { id: it.id, kind: it.kind, a0: it.a0, a1: it.a1, from: it.from, at: t, ms, land: t + ms * (it.kind === 'new' ? 0.68 : 0.82) };
+    });
+    tC = fly.length ? tC + 60 : tB + (dropped.length ? 420 : 80);
+    /* the words */
+    const counts = [nNew && (prev ? nNew + ' added' : ''), nMoved && nMoved + ' moved', dropped.length && dropped.length + ' dropped'].filter(Boolean).join(' · ') || 'sessions placed';
+    const anyChange = fly.length || dropped.length || flips.length;
+    let sweep = null;
+    if (full) {
+      const fixed = spans.map(x => ({ s: x.s, e: x.e, t: /sleep/i.test(x.title) ? 'Sleep' : x.title }));
+      const marks = [d0, d1].concat(fixed.flatMap(x => [x.s, x.e]));
+      for (let h = Math.ceil(d0 / 3600) * 3600; h < d1; h += 3600) marks.push(h);
+      const readout = [];
+      for (const ep of [...new Set(marks)].filter(t => t >= d0 && t <= d1).sort((a, b) => a - b)) {
+        const hit = fixed.find(x => ep >= x.s && ep < x.e), w = { a: ang(ep), hour: fC(Math.floor(ep / 3600) * 3600), what: hit ? hit.t : 'Open time' };
+        const last = readout[readout.length - 1];
+        if (!last || last.hour !== w.hour || last.what !== w.what) readout.push(w);
+      }
+      sweep = { ms: T, kick: 'Mapping your day', readout };
+    }
+    return {
+      mode: q.mode, full, sweep,
+      intro: full ? null : { kick: 'Re-planning', big: '…', sub: '' },
+      start: { at: tB, kick: !prev ? 'Placing sessions' : 'Re-planning', big: fly.length ? '0' : '–', sub: fly.length || dropped.length ? counts : 'Looking for changes' },
+      items, keep: keep.map(it => it.id), flips,
+      ghosts: dropped.map(g => ({ a0: ang(g.s), a1: ang(g.e) })).filter(g => g.a1 - g.a0 >= 0.3),
+      lock: { at: tC, kick: anyChange || !prev ? 'Locked in' : 'Nothing needed to move', big: String(total), sub: total === 1 ? 'session' : 'sessions' + (today ? ' today' : '') },
+      end: tC + BF.LOCK,
+    };
   }
   function bfBuzz(ms) { try { if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms); } catch (e) { /* ignore */ } }
   function runBuild(dial, q) {
     const svg = dial.querySelector(':scope>svg'), core = dial.querySelector('.ld-core');
     if (!svg || !core || !ST.schedule) return;
     const NS = 'http://www.w3.org/2000/svg';
-    const d0 = +dial.dataset.d0, d1 = +dial.dataset.d1, span = Math.max(1, d1 - d0), ang = ep => angOf(ep, d0, d1);
-    const full = q.mode === 'build', prev = q.prev;
+    const d0 = +dial.dataset.d0, d1 = +dial.dataset.d1, ang = ep => angOf(ep, d0, d1);
     const anims = [], timers = [], styled = new Set();
     let raf = 0, over = false;
     const A = (el, kf, o) => { if (!el) return null; try { const a = el.animate(kf, Object.assign({ fill: 'both' }, o)); anims.push(a); return a; } catch (e) { return null; } };
@@ -3313,41 +3382,17 @@ const LifeDirectorApp = (function () {
     dial.appendChild(hud);
     const [hk, hn, hs] = hud.children;
     const say3 = (k, n, s2) => { hk.textContent = k; hn.textContent = n; hs.textContent = s2; };
+    const sayW = w => say3(w.kick, w.big, w.sub);
     let sweep = null;
     dial.classList.add('ld-building');
 
-    /* what changed: sessions to launch, to orbit, to break up */
-    const all = new Map((ST.schedule.scheduledInstances || []).concat(ST.schedule.historyInstances || []).map(i => [i.instanceId, i]));
-    const plannedSeen = new Set((ST.schedule.scheduledInstances || []).filter(i => i.lifecycleState === 'PLANNED').map(i => i.title + '|' + i.startEpoch));
-    const fly = [], keep = [], flips = [];
-    for (const el of svg.querySelectorAll('.ld-inner .ld-ses')) {
-      const s = +el.dataset.s, e = +el.dataset.e, a0 = ang(s), a1 = ang(e), inst = all.get(el.dataset.id);
-      const planned = inst && inst.lifecycleState === 'PLANNED';
-      const it = { el, a0, a1, kind: 'keep', from: 0 };
-      if (!prev) it.kind = full ? 'new' : 'keep';
-      else if (planned) {
-        const was = prev.byId.get(el.dataset.id);
-        if (was === s || prev.seen.has(inst.title + '|' + s)) it.kind = 'keep';
-        else if (was != null && Math.abs((was - s) / span * 360) <= 330) { it.kind = 'moved'; it.from = (was - s) / span * 360; }
-        else it.kind = 'new';
-      } else if (prev.byId.has(el.dataset.id)) flips.push(it);
-      (it.kind === 'keep' ? keep : fly).push(it);
-    }
-    const ghosts = prev ? prev.list.filter(p => !all.has(p.id) && !plannedSeen.has(p.title + '|' + p.s) && p.e > d0 && p.s < d1) : [];
-    fly.sort((a, b) => a.a0 - b.a0);
-    const nNew = fly.filter(f => f.kind === 'new').length, nMoved = fly.length - nNew;
-    const total = svg.querySelectorAll('.ld-inner .ld-ses').length;
-
-    /* timeline */
-    const T = full ? BF.SWEEP : 0;
-    const tB = full ? T + 160 : 140;
-    const gapMs = fly.length > 1 ? Math.max(BF.GAP_MIN, Math.min(BF.GAP_MAX, BF.SPAN / (fly.length - 1))) : 0;
-    const tFly = tB + (ghosts.length ? 260 : 0);
-    const flyDur = it => it.kind === 'moved' ? Math.min(950, BF.FLY + Math.abs(it.from) * 2.2) : BF.FLY;
-    let tC = tFly;
-    fly.forEach((it, k) => { it.t = tFly + k * gapMs; tC = Math.max(tC, it.t + flyDur(it)); });
-    tC = fly.length ? tC + 60 : tB + (ghosts.length ? 420 : 80);
-    const tEnd = tC + BF.LOCK;
+    /* what changed and when (buildPlan), on this dial's sessions and fixed time */
+    const els = new Map([...svg.querySelectorAll('.ld-inner .ld-ses')].map(el => [el.dataset.id, el]));
+    const spans = [...svg.querySelectorAll('.ld-outer .ld-o')].map(p => ({ s: +p.dataset.s, e: +p.dataset.e, title: p.dataset.t }));
+    const B = buildPlan(q, d0, d1, [...els.values()].map(el => ({ id: el.dataset.id, s: +el.dataset.s, e: +el.dataset.e })), spans, ui.dayIdx === 0);
+    const full = B.full, T = B.sweep ? B.sweep.ms : 0, tB = B.start.at, tC = B.lock.at, tEnd = B.end;
+    const fly = B.items.map(it => Object.assign({ el: els.get(it.id) }, it)), keep = B.keep.map(id => ({ el: els.get(id), a0: ang(+els.get(id).dataset.s) }));
+    const flips = B.flips.map(id => ({ el: els.get(id) })), ghosts = B.ghosts;
 
     /* ── phase A: the sweep ── */
     if (full) {
@@ -3376,44 +3421,40 @@ const LifeDirectorApp = (function () {
       /* the rest of the face waits for the lock */
       for (const sel of ['.ld-words', '.ld-past', '.ld-cur', '.ld-hand']) A(svg.querySelector(sel), [{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: tC + 80, easing: 'ease-out' });
       /* live readout: the hour under the arm and what fills it */
-      const spans = [...svg.querySelectorAll('.ld-outer .ld-o')].map(p => ({ s: +p.dataset.s, e: +p.dataset.e, t: /sleep/i.test(p.dataset.t) ? 'Sleep' : p.dataset.t }));
-      const t0 = performance.now();
+      const t0 = performance.now(), R = B.sweep.readout;
       const read = () => {
         if (over) return;
-        const f = Math.min(1, (performance.now() - t0) / T), ep = d0 + f * span;
-        const hit = spans.find(x => ep >= x.s && ep < x.e);
-        say3('Mapping your day', fC(Math.floor(ep / 3600) * 3600), hit ? hit.t : 'Open time');
+        const f = Math.min(1, (performance.now() - t0) / T), a = f * 360;
+        let w = R[0];
+        for (const x of R) { if (x.a <= a) w = x; else break; }
+        say3(B.sweep.kick, w.hour, w.what);
         if (f < 1) raf = requestAnimationFrame(read);
       };
       read();
-    } else say3('Re-planning', '…', '');
+    } else sayW(B.intro);
 
     /* ── phase B: the planner fills the gaps ── */
-    const label = !prev ? 'Placing sessions' : 'Re-planning';
-    const counts = n => [nNew && (prev ? nNew + ' added' : ''), nMoved && nMoved + ' moved', ghosts.length && ghosts.length + ' dropped'].filter(Boolean).join(' · ') || (n === 1 ? 'session placed' : 'sessions placed');
-    at(tB, () => say3(label, fly.length ? '0' : '–', fly.length || ghosts.length ? counts() : 'Looking for changes'));
+    at(tB, () => sayW(B.start));
     for (const g of ghosts) {
-      const a0 = ang(g.s), a1 = ang(g.e);
-      if (a1 - a0 < 0.3) continue;
-      const p = mk('path', { class: 'ld-bf-ghost', d: arcD(DIAL.RI, a0, a1), 'stroke-width': DIAL.WI });
+      const p = mk('path', { class: 'ld-bf-ghost', d: arcD(DIAL.RI, g.a0, g.a1), 'stroke-width': DIAL.WI });
       css(p, CEN);
       A(p, [{ opacity: 0, transform: 'scale(1) rotate(0deg)' }, { opacity: 0.9, offset: 0.2, transform: 'scale(1) rotate(0deg)' }, { opacity: 0, transform: 'scale(1.2) rotate(7deg)', strokeWidth: 2 }], { duration: 640, delay: tB, easing: 'cubic-bezier(.5,0,.9,.4)' });
     }
     let landed = 0;
     fly.forEach(it => {
-      const el = it.el, mid = (it.a0 + it.a1) / 2, [px, py] = polar(DIAL.RI, mid), dur = flyDur(it);
+      const el = it.el, mid = (it.a0 + it.a1) / 2, [px, py] = polar(DIAL.RI, mid), dur = it.ms;
       css(el, CEN);
       if (it.kind === 'new') {
-        A(el, [{ transform: 'rotate(-55deg) scale(.1)', opacity: 0 }, { transform: 'rotate(5deg) scale(1.08)', opacity: 1, offset: 0.68 }, { transform: 'rotate(0deg) scale(1)', opacity: 1 }], { duration: dur, delay: it.t, easing: 'cubic-bezier(.2,.75,.25,1)' });
+        A(el, [{ transform: 'rotate(-55deg) scale(.1)', opacity: 0 }, { transform: 'rotate(5deg) scale(1.08)', opacity: 1, offset: 0.68 }, { transform: 'rotate(0deg) scale(1)', opacity: 1 }], { duration: dur, delay: it.at, easing: 'cubic-bezier(.2,.75,.25,1)' });
       } else {
         const o = it.from, sg = o > 0 ? 1 : -1;
-        A(el, [{ transform: 'rotate(' + o.toFixed(2) + 'deg)', opacity: full ? 0 : 0.55 }, { transform: 'rotate(' + o.toFixed(2) + 'deg)', opacity: 0.7, offset: 0.12 }, { transform: 'rotate(' + (-sg * 2.5) + 'deg)', opacity: 1, offset: 0.82 }, { transform: 'rotate(0deg)', opacity: 1 }], { duration: dur, delay: it.t, easing: 'cubic-bezier(.45,0,.2,1)' });
+        A(el, [{ transform: 'rotate(' + o.toFixed(2) + 'deg)', opacity: full ? 0 : 0.55 }, { transform: 'rotate(' + o.toFixed(2) + 'deg)', opacity: 0.7, offset: 0.12 }, { transform: 'rotate(' + (-sg * 2.5) + 'deg)', opacity: 1, offset: 0.82 }, { transform: 'rotate(0deg)', opacity: 1 }], { duration: dur, delay: it.at, easing: 'cubic-bezier(.45,0,.2,1)' });
         const lo = Math.min(it.a0, it.a0 + o), hi = Math.max(it.a1, it.a1 + o);
-        if (hi - lo < 359) { const tr = mk('path', { class: 'ld-bf-trail', d: arcD(DIAL.RI, Math.max(0, lo), Math.min(360, hi)) }); A(tr, [{ opacity: 0 }, { opacity: 0.75, offset: 0.25 }, { opacity: 0 }], { duration: dur + 200, delay: it.t }); }
+        if (hi - lo < 359) { const tr = mk('path', { class: 'ld-bf-trail', d: arcD(DIAL.RI, Math.max(0, lo), Math.min(360, hi)) }); A(tr, [{ opacity: 0 }, { opacity: 0.75, offset: 0.25 }, { opacity: 0 }], { duration: dur + 200, delay: it.at }); }
       }
-      A(el, [{ filter: 'brightness(2.6)' }, { filter: 'brightness(2.6)', offset: 0.6 }, { filter: 'brightness(1)' }], { duration: dur + 380, delay: it.t, easing: 'ease-out' });
+      A(el, [{ filter: 'brightness(2.6)' }, { filter: 'brightness(2.6)', offset: 0.6 }, { filter: 'brightness(1)' }], { duration: dur + 380, delay: it.at, easing: 'ease-out' });
       /* touchdown: ripple, sparks, count */
-      const land = it.t + dur * (it.kind === 'new' ? 0.68 : 0.82);
+      const land = it.land;
       const rip = mk('circle', { class: 'ld-bf-rip', cx: px.toFixed(1), cy: py.toFixed(1), r: 7, 'vector-effect': 'non-scaling-stroke' });
       css(rip, OWN);
       A(rip, [{ transform: 'scale(.3)', opacity: 0.95 }, { transform: 'scale(3.4)', opacity: 0 }], { duration: 620, delay: land, easing: 'cubic-bezier(.1,.6,.3,1)', fill: 'none' });
@@ -3427,9 +3468,8 @@ const LifeDirectorApp = (function () {
     flips.forEach(it => A(it.el, [{ filter: 'brightness(1)' }, { filter: 'brightness(2.2)', offset: 0.3 }, { filter: 'brightness(1)' }], { duration: 700, delay: tB }));
 
     /* ── phase C: lock in ── */
-    const anyChange = fly.length || ghosts.length || flips.length;
     at(tC, () => {
-      say3(anyChange || !prev ? 'Locked in' : 'Nothing needed to move', String(total), total === 1 ? 'session' : 'sessions' + (ui.dayIdx === 0 ? ' today' : ''));
+      sayW(B.lock);
       hud.classList.add('ld-bh-lock'); bfBuzz(full ? [10, 40, 18] : 12);
     });
     const wave = mk('circle', { class: 'ld-bf-wave', cx: 180, cy: 180, r: 152, 'vector-effect': 'non-scaling-stroke' });
@@ -3716,7 +3756,7 @@ const LifeDirectorApp = (function () {
       earlier = '<details class="ld-earlier"' + (ui.earlierOpen ? ' open' : '') + '><summary data-act="earlier"><b>Earlier today</b><span>' + (pt.length ? pd + ' of ' + pt.length + ' sessions done' : past.length + ' blocks') + '</span></summary>' + roHtml(past, tz(), { cls: 'ld-ro-past' }) + '</details>';
     }
     return stripHtml(days, ui.dayIdx, 'day', s) + dialHtml(day, blocks, isToday, now) +
-      '<p class="ld-dial-hint">Tap a session for details. Drag a <i class="ld-hint-pip"></i> handle to change your sleep or work hours.</p>' +
+      '<p class="ld-dial-hint">' + DIAL_HINT[0] + ' <i class="ld-hint-pip"></i> ' + DIAL_HINT[1] + '</p>' +
       mixHtml(blocks) + upnext + reminders +
       '<h4 class="ld-sec">' + (isToday ? 'Rest of today' : 'Running order') + (tasks.length ? '<small>' + tasks.length + ' session' + (tasks.length === 1 ? '' : 's') + '</small>' : '') + '</h4>' +
       earlier + roHtml(ahead, tz()) +
@@ -3989,39 +4029,92 @@ const LifeDirectorApp = (function () {
     onMove(dialAngle(svg, e));
   }
   function moveHandle(hd, a, r) { const [x, y] = polar(r, a); hd.querySelectorAll('circle').forEach(c => { c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); }); }
+  /* ── the handles' rules, one copy for the web dial and a native screen (LifeDirector.native) ──
+     Where a handle lands for the instant under the finger: the nearest quarter hour of the day on the dial, never past 23:45. */
+  function snapEp(d0, ep) {
+    const p = U.localParts(ep, tz());
+    let m = Math.round((p.h * 60 + p.mi) / 15) * 15;
+    const day = U.localParts(d0, tz());
+    if (m >= 1440) m = 1425;
+    return { m, ep: U.zonedToEpoch(day.y, day.mo, day.d, m, tz()) };
+  }
+  /* Every place a handle can land on the day d0..d1, in dial order: the minute of the day, where the handle sits (a) and the angle
+     from which the finger chooses it (from), up to the next one's. snapEp decides each; the local minute only changes on whole
+     minutes, so it is asked at every whole minute where it may change: a quarter hour's 8th minute on a day with one UTC offset,
+     every minute of a day whose clocks change. Kept per day. */
+  const stopCache = new Map();
+  function dialStops(d0, d1) {
+    const z = tz(), ck = z + '|' + d0 + '|' + d1;
+    if (stopCache.has(ck)) return stopCache.get(ck);
+    const even = d1 - d0 === 86400 && U.localParts(d0, z).h === 0 && U.localParts(d0, z).mi === 0 && U.tzOffsetSec(d0, z) === U.tzOffsetSec(d1 - 60, z);
+    const at = even ? [d0].concat(Array.from({ length: 95 }, (_, k) => d0 + (15 * (k + 1) - 7) * 60)) : Array.from({ length: Math.ceil((d1 - d0) / 60) }, (_, k) => d0 + k * 60);
+    const out = [];
+    for (const t of at) {
+      const s = snapEp(d0, t), last = out[out.length - 1];
+      if (!last || last.m !== s.m) out.push({ m: s.m, ep: s.ep, a: angOf(s.ep, d0, d1), from: (t - d0) / (d1 - d0) * 360 });
+    }
+    if (stopCache.size > 30) stopCache.clear();
+    stopCache.set(ck, out);
+    return out;
+  }
+  /* what the dial shows while a handle of rule r (its instance s0..e0) is held at cur: the new span, and its length or that it is too short */
+  function dragPreview(r, end, s0, e0, cur) {
+    const ns = end === 'start' ? cur.ep : s0, ne = end === 'end' ? cur.ep : e0, bad = ne - ns < 900;
+    return { ns, ne, bad, text: bad ? DRAG_WORDS.tooShort : mins(Math.round((ne - ns) / 60)) + (r.kind === 'SLEEP' ? ' of sleep' : '') };
+  }
+  const DRAG_WORDS = Object.freeze({ tooShort: 'Too short', release: 'Release to apply' });
+  /* the change a handle released at minute m of the day asks for (om: where it was) */
+  function dialChange(r, end, om, m) {
+    const endRel = r.startMin + r.durationMin;
+    const startMin = end === 'start' ? m : r.startMin;
+    const dur = end === 'start' ? (((endRel - m) % 1440) + 1440) % 1440 : (((m - r.startMin) % 1440) + 1440) % 1440;
+    return { ruleId: r.id, end, startMin, durationMin: dur, from: om, to: m };
+  }
+  /* the change an arrow key asks for: the handle a quarter hour later (step 1) or earlier (step -1) */
+  function dialStep(r, end, step) {
+    const q = step * 15;
+    const startMin = end === 'start' ? (r.startMin + q + 1440) % 1440 : r.startMin;
+    const dur = end === 'start' ? r.durationMin - q : r.durationMin + q;
+    const om = end === 'start' ? r.startMin : (r.startMin + r.durationMin) % 1440;
+    return { ruleId: r.id, end, startMin, durationMin: dur, from: om, to: (om + q + 1440) % 1440 };
+  }
+  /* the handles on a day's dial: one at each end of every sleep, work, class or appointment rule that starts or ends on it */
+  function dialHandles(day) {
+    const d0 = day.startEpoch, d1 = day.endEpoch, out = [];
+    for (const ri of ruleInstances(day)) {
+      for (const end of ['start', 'end']) {
+        const ep = end === 'start' ? ri.startEpoch : ri.endEpoch;
+        if (ep < d0 || ep >= d1 || (end === 'end' && ep === d0)) continue;
+        out.push({ ri, rule: ri.rule, end, ep, kind: ri.rule.kind === 'SLEEP' ? 'sleep' : 'work', key: ri.rule.id + '|' + end + '|' + U.ymdKey(ri.ymd) + '|' + ep });
+      }
+    }
+    return out;
+  }
+  const minuteOf = ep => { const p = U.localParts(ep, tz()); return p.h * 60 + p.mi; };
   /* Today's dial: drag a sleep or work handle; release asks before the rule changes */
   function attachDial(dial) {
     dial.classList.add('ld-draggable');
     const svg = dial.querySelector('svg'), d0 = +dial.dataset.d0, d1 = +dial.dataset.d1, ghost = svg.querySelector('.ld-drag-arc'), core = dial.querySelector('.ld-core');
-    const snap = a => {
-      const ep = d0 + a / 360 * (d1 - d0), p = U.localParts(ep, tz());
-      let m = Math.round((p.h * 60 + p.mi) / 15) * 15;
-      const day = U.localParts(d0, tz());
-      if (m >= 1440) m = 1425;
-      return { m, ep: U.zonedToEpoch(day.y, day.mo, day.d, m, tz()) };
-    };
+    const snap = a => snapEp(d0, d0 + a / 360 * (d1 - d0));
     svg.addEventListener('pointerdown', e => {
       const hd = e.target.closest('.ld-hd'); if (!hd) return;
       const r = (ST.availability.rules || []).find(x => x.id === hd.dataset.rule); if (!r) return;
       const end = hd.dataset.end, s0 = +hd.dataset.s, e0 = +hd.dataset.e, orig = end === 'start' ? s0 : e0;
-      const om = (() => { const p = U.localParts(orig, tz()); return p.h * 60 + p.mi; })();
+      const om = minuteOf(orig);
       let cur = { m: om, ep: orig }, lastM = om;
       const coreWas = core.innerHTML;
       ghost.setAttribute('class', 'ld-drag-arc ld-c-' + (r.kind === 'SLEEP' ? 'sleep' : 'work'));
       dragOn(svg, hd, e, a => {
         cur = snap(a);
         if (cur.m !== lastM) { lastM = cur.m; buzz(); }
-        const ns = end === 'start' ? cur.ep : s0, ne = end === 'end' ? cur.ep : e0, bad = ne - ns < 900;
-        ghost.setAttribute('d', bad ? '' : arcD(DIAL.RO, angOf(ns, d0, d1), angOf(ne, d0, d1)));
+        const v = dragPreview(r, end, s0, e0, cur);
+        ghost.setAttribute('d', v.bad ? '' : arcD(DIAL.RO, angOf(v.ns, d0, d1), angOf(v.ne, d0, d1)));
         moveHandle(hd, angOf(cur.ep, d0, d1), DIAL.RO);
-        core.innerHTML = '<small class="ld-core-k">' + esc(handleLabel(r, end)) + '</small><b class="ld-core-big">' + fHm(cur.m) + '</b><span class="ld-core-s">' + (bad ? 'Too short' : mins(Math.round((ne - ns) / 60)) + (r.kind === 'SLEEP' ? ' of sleep' : '')) + '</span><span class="ld-core-s">Release to apply</span>';
+        core.innerHTML = '<small class="ld-core-k">' + esc(handleLabel(r, end)) + '</small><b class="ld-core-big">' + fHm(cur.m) + '</b><span class="ld-core-s">' + v.text + '</span><span class="ld-core-s">' + DRAG_WORDS.release + '</span>';
       }, cancelled => {
         ghost.setAttribute('d', '');
         if (cancelled || cur.m === om) { core.innerHTML = coreWas; moveHandle(hd, angOf(orig, d0, d1), DIAL.RO); return; }
-        const endRel = r.startMin + r.durationMin;
-        const startMin = end === 'start' ? cur.m : r.startMin;
-        const dur = end === 'start' ? (((endRel - cur.m) % 1440) + 1440) % 1440 : (((cur.m - r.startMin) % 1440) + 1440) % 1440;
-        ui.pendingDial = { ruleId: r.id, end, startMin, durationMin: dur, from: om, to: cur.m };
+        ui.pendingDial = dialChange(r, end, om, cur.m);
         confirmDial();
       });
     });
@@ -4029,29 +4122,56 @@ const LifeDirectorApp = (function () {
       const hd = e.target.closest && e.target.closest('.ld-hd'); if (!hd || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
       e.preventDefault(); e.stopPropagation();
       const r = (ST.availability.rules || []).find(x => x.id === hd.dataset.rule); if (!r) return;
-      const step = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 15 : -15, end = hd.dataset.end;
-      const startMin = end === 'start' ? (r.startMin + step + 1440) % 1440 : r.startMin;
-      const dur = end === 'start' ? r.durationMin - step : r.durationMin + step;
-      const om = end === 'start' ? r.startMin : (r.startMin + r.durationMin) % 1440;
-      ui.pendingDial = { ruleId: r.id, end, startMin, durationMin: dur, from: om, to: (om + step + 1440) % 1440 };
+      ui.pendingDial = dialStep(r, hd.dataset.end, e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : -1);
       confirmDial();
     });
   }
-  function confirmDial() {
-    const P = ui.pendingDial, r = P && (ST.availability.rules || []).find(x => x.id === P.ruleId);
-    if (!r) return;
+  /* what the confirmation of a pending dial change says (P: ui.pendingDial, r: its rule): a problem and OK, or Change it and Keep */
+  function dialConfirm(P, r) {
     const isSleep = r.kind === 'SLEEP', what = handleLabel(r, P.end).toLowerCase();
     let problem = '';
     if (isSleep && P.durationMin < 300) problem = 'That leaves under 5 hours of sleep.';
     else if (isSleep && P.durationMin > 840) problem = 'That is more than 14 hours of sleep.';
-    else if (!isSleep && (P.durationMin < 15 || P.durationMin > 1380)) problem = 'That makes ' + esc(r.title) + ' ' + (P.durationMin < 15 ? 'too short' : 'almost a full day') + '.';
-    const who = isSleep ? 'your sleep (' + daysText(r) + ')' : esc(r.title) + ' (' + daysText(r) + ')';
-    openSheet('<h3>' + (isSleep ? (P.end === 'start' ? 'Change your bedtime?' : 'Change your wake-up time?') : 'Change when ' + esc(r.title) + (P.end === 'start' ? ' starts?' : ' ends?')) + '</h3>' +
-      '<p class="ld-change"><s>' + fHm(P.from) + '</s><span aria-hidden="true">→</span><b>' + fHm(P.to) + '</b></p>' +
-      (problem ? '<p class="ld-note ld-warn-t">' + problem + ' Try a different time.</p><div class="ld-row"><button class="ld-btn ld-primary" data-act="dialCancel">OK</button></div>' :
-        '<p class="ld-muted">This changes the ' + what + ' for ' + who + ', not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.</p>' +
-        '<div class="ld-row"><button class="ld-btn ld-primary" data-act="dialApply">Change it</button><button class="ld-btn ld-ghost" data-act="dialCancel">Keep ' + fHm(P.from) + '</button></div>' +
-        '<p class="ld-muted ld-small-print">Only today is different? Close this and use “Something came up” instead.</p>'));
+    else if (!isSleep && (P.durationMin < 15 || P.durationMin > 1380)) problem = 'That makes ' + r.title + ' ' + (P.durationMin < 15 ? 'too short' : 'almost a full day') + '.';
+    const who = isSleep ? 'your sleep (' + daysText(r) + ')' : r.title + ' (' + daysText(r) + ')';
+    return {
+      title: isSleep ? (P.end === 'start' ? 'Change your bedtime?' : 'Change your wake-up time?') : 'Change when ' + r.title + (P.end === 'start' ? ' starts?' : ' ends?'),
+      from: fHm(P.from), to: fHm(P.to),
+      problem: problem ? problem + ' Try a different time.' : '',
+      body: problem ? '' : 'This changes the ' + what + ' for ' + who + ', not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.',
+      note: problem ? '' : 'Only today is different? Close this and use “Something came up” instead.',
+      apply: problem ? '' : 'Change it', keep: problem ? 'OK' : 'Keep ' + fHm(P.from),
+    };
+  }
+  function confirmDial() {
+    const P = ui.pendingDial, r = P && (ST.availability.rules || []).find(x => x.id === P.ruleId);
+    if (!r) return;
+    const c = dialConfirm(P, r);
+    openSheet('<h3>' + esc(c.title) + '</h3>' +
+      '<p class="ld-change"><s>' + c.from + '</s><span aria-hidden="true">→</span><b>' + c.to + '</b></p>' +
+      (c.problem ? '<p class="ld-note ld-warn-t">' + esc(c.problem) + '</p><div class="ld-row"><button class="ld-btn ld-primary" data-act="dialCancel">' + c.keep + '</button></div>' :
+        '<p class="ld-muted">' + esc(c.body) + '</p>' +
+        '<div class="ld-row"><button class="ld-btn ld-primary" data-act="dialApply">' + c.apply + '</button><button class="ld-btn ld-ghost" data-act="dialCancel">' + c.keep + '</button></div>' +
+        '<p class="ld-muted ld-small-print">' + esc(c.note) + '</p>'));
+  }
+  /* Change it: the pending change becomes the rule, the plan is repaired around it and saved. Returns what happened: ok when the plan
+     took it and it was saved, changed when the rule changed (also when the save then failed: it stays changed in memory, as the
+     banner says), moved when sessions moved, and the page's message (or why nothing was saved). */
+  function applyDial(now) {
+    const P = ui.pendingDial, r = P && ST.availability.rules.find(x => x.id === P.ruleId);
+    ui.pendingDial = null;
+    if (!r) return { ok: false, changed: false, moved: false, message: 'There is no change to make. Nothing was changed.' };
+    const before = { startMin: r.startMin, durationMin: r.durationMin };
+    r.startMin = P.startMin; r.durationMin = P.durationMin;
+    if (!ST.setupComplete) { const saved = persist(); closeSheet(); render(); return { ok: saved, changed: true, moved: false, message: saved ? '' : ui.banner.text }; }
+    const old = ST.schedule, out = planTimeChange(buildInput(now));
+    if (!applyOutput(out, 'Time adjusted', 'repair')) { Object.assign(r, before); persist(); closeSheet(); render(); return { ok: false, changed: false, moved: false, message: ui.banner.text }; }
+    const positions = new Map((old ? old.scheduledInstances : []).map(i => [i.instanceId, i.startEpoch + ':' + i.endEpoch]));
+    const changed = out.scheduledInstances.some(i => positions.get(i.instanceId) !== i.startEpoch + ':' + i.endEpoch) || positions.size !== out.scheduledInstances.length;
+    if (!changed) dropBuild();
+    const saved = persist(), message = handleLabel(r, P.end) + ' now ' + fHm(P.to) + (changed ? ' · schedule adjusted' : ' · sessions kept in place');
+    closeSheet(); render(); say(message);
+    return { ok: saved, changed: true, moved: changed, message: saved ? message : ui.banner.text };
   }
   /* My time: the sleep dial. Handles move freely; the inputs follow; Save commits. */
   function attachMini(mini) {
@@ -4435,23 +4555,7 @@ const LifeDirectorApp = (function () {
         else say(anchorTip(b.dataset.k, b.dataset.t, +b.dataset.s, +b.dataset.e, true));
         break;
       case 'mealOpen': closeSheet(); openScheduledMeal(b.dataset); break;
-      case 'dialApply': {
-        const P = ui.pendingDial, r = P && ST.availability.rules.find(x => x.id === P.ruleId);
-        ui.pendingDial = null;
-        if (r) {
-          const before = { startMin: r.startMin, durationMin: r.durationMin };
-          r.startMin = P.startMin; r.durationMin = P.durationMin;
-          if (ST.setupComplete) {
-            const old = ST.schedule, out = planTimeChange(buildInput(now));
-            if (!applyOutput(out, 'Time adjusted', 'repair')) { Object.assign(r, before); persist(); closeSheet(); render(); break; }
-            const positions = new Map((old ? old.scheduledInstances : []).map(i => [i.instanceId, i.startEpoch + ':' + i.endEpoch]));
-            const changed = out.scheduledInstances.some(i => positions.get(i.instanceId) !== i.startEpoch + ':' + i.endEpoch) || positions.size !== out.scheduledInstances.length;
-            if (!changed) ui.bfQ = null;
-            persist(); closeSheet(); render(); say(handleLabel(r, P.end) + ' now ' + fHm(P.to) + (changed ? ' · schedule adjusted' : ' · sessions kept in place'));
-          } else { persist(); closeSheet(); render(); }
-        }
-        break;
-      }
+      case 'dialApply': applyDial(now); break;
       case 'dialCancel': ui.pendingDial = null; closeSheet(); render(); break;
       case 'editRule': { const r = ST.availability.rules.find(x => x.id === id); if (r) ruleSheet(r); break; }
       case 'routine': {
@@ -4876,13 +4980,15 @@ const LifeDirectorApp = (function () {
       return { png: cv.toDataURL('image/png').split(',')[1], json: JSON.stringify({ d0: day.startEpoch, d1: day.endEpoch, at: now, sessions }) };
     } finally { host.remove(); }
   }
-  /* ── Native Life Director (phase 1: Today) ──────────────────────────────────
+  /* ── Native Life Director (phase 1: Today; phase 2: the dial's handles and its build) ──────────
      A native screen draws the frame (header, section tabs, banner, last message) and Today from here, and covers the
      page only while showing() is 'today'. The same decisions and words as headerHtml, render, dialHtml, coreToday,
      mixHtml, stripHtml, renderToday and roHtml, returned as data; nothing is scheduled or saved here. Angles are degrees
      clockwise from midnight at the top, after the same gaps the web dial uses; radii are those of DIAL in a 360-unit
      square. A tap the page must answer carries its web element's act and the one id that act needs (see nativeAct);
-     a tap on fixed time only shows its tip. Epochs are seconds; the timer's are milliseconds, as ST.ui.focus keeps them. */
+     a tap on fixed time only shows its tip. Epochs are seconds; the timer's are milliseconds, as ST.ui.focus keeps them.
+     The handles carry every place a drag can land and what the dial shows there (nativeHandles, from the rules attachDial
+     drags by); a release is answered by the page (nativeDrop, nativeApply); the build is the plan runBuild plays (nativeBuild). */
   const NOTICE_MS = 4000; // how long the last message stays in the projection
   function nativeFrame() {
     if (!ST) boot();
@@ -4894,6 +5000,7 @@ const LifeDirectorApp = (function () {
       tabs: tabList().map(([id, label]) => ({ id, label, icon: TAB_ICON[id] })),
       banner: ui.banner ? { kind: ui.banner.kind, text: ui.banner.text, actions: bannerActions(ui.banner), dismiss: !ui.banner.regroup } : null,
       notice: n && Date.now() - n.at < NOTICE_MS ? { id: n.id, text: n.text } : null,
+      reducedMotion: reduced(),
     };
   }
   function nativeToday(dayIdx) {
@@ -4904,6 +5011,7 @@ const LifeDirectorApp = (function () {
     const day = days[idx], blocks = dayBlocks(s, day, z), isToday = idx === 0, d0 = day.startEpoch, d1 = day.endEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     const voiceIds = new Set((ST.fixedCommitments || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
+    const handles = dialHandles(day);
     const arcs = [], words = [];
     const word = (r, a0, a1, options, kind, inner) => { const w = arcWords(r, a0, a1, options); if (w) words.push(Object.assign({ r, a0, a1, kind, inner }, w)); };
     for (const b of blocks) {
@@ -4917,7 +5025,7 @@ const LifeDirectorApp = (function () {
         arc('inner', 'appt', 'work', { tip: anchorTip('work', b.title, b.startEpoch, b.endEpoch, false) });
       } else if (OUTER[k]) {
         [a0, a1] = gap(a0, a1, 0.9);
-        arc('outer', 'band', k, { tip: anchorTip(k, b.title, b.startEpoch, b.endEpoch, false) });
+        arc('outer', 'band', k, { tip: anchorTip(k, b.title, b.startEpoch, b.endEpoch, true) }); // what the page's band says when tapped
         word(DIAL.RO, a0, a1, blockWords(b, d0, d1), k, false);
       } else if (k === 'meal') {
         [a0, a1] = gap(a0, a1, 1.4);
@@ -4941,7 +5049,9 @@ const LifeDirectorApp = (function () {
       dayIndex: idx,
       isToday,
       strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
-      dial: { startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) })), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
+      dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) })), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
+        nativeHandles(handles, d0, d1), { build: nativeBuild(d0, d1, arcs, isToday) }),
+      hint: DIAL_HINT,
       core: nativeCore(day, blocks, isToday, now, st),
       mix: nativeMix(blocks),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
@@ -4949,6 +5059,35 @@ const LifeDirectorApp = (function () {
       sessions: blocks.filter(b => b.inst).length,
       rows: nativeRows(blocks, isToday, now),
     };
+  }
+  /* The dial's handles for a native screen, with everything a drag shows, decided here: stops (every place a handle can land on
+     this day: its minute m, its angle a, the angle from which the finger picks it, and its time), and for each handle its key (what
+     a drop names), where it is (a, minute), the angle of its rule's other end (fixed), the readout's label, its TalkBack label, and
+     for each stop the length the readout shows ('' when the span would be too short: then dragWords.tooShort and no arc). */
+  function nativeHandles(handles, d0, d1) {
+    if (!handles.length) return { handles: [], stops: [], dragWords: DRAG_WORDS };
+    const stops = dialStops(d0, d1);
+    return {
+      handles: handles.map(h => {
+        const { ri, rule: r, end, ep } = h, label = handleLabel(r, end);
+        return { key: h.key, rule: String(r.id), end, kind: h.kind, a: angOf(ep, d0, d1), minute: minuteOf(ep), fixed: angOf(end === 'start' ? ri.endEpoch : ri.startEpoch, d0, d1), label, aria: label + ' ' + fTime(ep),
+          lengths: stops.map(st => { const v = dragPreview(r, end, ri.startEpoch, ri.endEpoch, st); return v.bad ? '' : v.text; }) };
+      }),
+      stops: stops.map(st => ({ m: st.m, a: st.a, from: st.from, time: fHm(st.m) })),
+      dragWords: DRAG_WORDS,
+    };
+  }
+  /* The latest build or repair for a native screen to play once (by id) on this day's dial, while the page would still play it
+     (BF.KEEP_MIN); null with reduced motion, where the page plays none. Times are whole milliseconds from the build's start. */
+  function nativeBuild(d0, d1, arcs, isToday) {
+    const q = ui.nativeBuild;
+    if (!q || reduced() || Date.now() - q.at > BF.KEEP_MIN) return null;
+    const B = buildPlan(q, d0, d1, arcs.filter(a => a.style === 'session').map(a => ({ id: a.id, s: a.s, e: a.e })), arcs.filter(a => a.style === 'band').map(a => ({ s: a.s, e: a.e, title: a.title })), isToday);
+    const ms = v => Math.round(v);
+    return Object.assign({ id: q.id }, B, {
+      start: Object.assign({}, B.start, { at: ms(B.start.at) }), lock: Object.assign({}, B.lock, { at: ms(B.lock.at) }), end: ms(B.end),
+      items: B.items.map(it => Object.assign({}, it, { at: ms(it.at), ms: ms(it.ms), land: ms(it.land) })),
+    });
   }
   const mealTap = b => ({ act: 'meal', id: String(b.mealStartEpoch || b.startEpoch) });
   const focusTimer = f => ({ startedAt: f.start, pausedMs: f.pausedMs || 0, paused: f.paused || null });
@@ -5071,7 +5210,46 @@ const LifeDirectorApp = (function () {
       watchers.forEach(fn => { try { fn(); } catch (e) { console.warn('[Life Director] change listener', e); } });
     });
   }
-  const nativeApi = Object.freeze({ frame: nativeFrame, today: nativeToday, showing, act: nativeAct, onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
+  /* A handle let go on a native dial, as the page's own release (or arrow key) reads it. key names a handle of
+     today(day).dial.handles on any day of the plan, and p is {minute} (a stop's m, where the finger let go) or {step} (1 or -1:
+     a quarter hour later or earlier, as the handle's arrow keys move it). Returns {P, rule}, the change the page would hold
+     (ui.pendingDial), or {same} for a release where the handle already is, or {message} when the handle or the time is not on
+     the dial any more (the rule changed since the screen drew it: its handles have new keys). */
+  function nativeChange(key, p) {
+    if (!root || !root.isConnected || !ST.setupComplete || !ST.schedule) return { message: 'Life Director has no plan to change.' };
+    let day = null, h = null;
+    for (const d of horizonDays(ST.schedule, tz())) { h = dialHandles(d).find(x => x.key === key); if (h) { day = d; break; } }
+    if (!h) return { message: 'That handle is no longer on the dial. Nothing was changed.' };
+    const step = Number(p && p.step), m = Number(p && p.minute), om = minuteOf(h.ep);
+    if (step === 1 || step === -1) return { P: dialStep(h.rule, h.end, step), rule: h.rule };
+    if (!Number.isInteger(m) || !dialStops(day.startEpoch, day.endEpoch).some(st => st.m === m)) return { message: 'That time is not on the dial. Nothing was changed.' };
+    return m === om ? { same: true } : { P: dialChange(h.rule, h.end, om, m), rule: h.rule };
+  }
+  /* dialDrop: what the page asks when its handle is let go there (dialConfirm), and nothing else: nothing is held or saved */
+  function nativeDrop(key, p) {
+    const c = nativeChange(key, p);
+    if (c.message) return { ok: false, changed: false, message: c.message };
+    return c.same ? { ok: true, changed: false } : { ok: true, changed: true, confirm: dialConfirm(c.P, c.rule) };
+  }
+  /* dialApply: Change it on that confirmation. The same handle and place as the drop, read again, so a change is applied only
+     while the rule is still the one the screen drew: the page holds it and its own Change it runs (applyDial), which changes the
+     rule, repairs the plan around it and saves. The same request again names a handle that has moved, and is refused, so the save
+     changes once. A change with a problem has no Change it on the page, only OK, and is refused with the problem. */
+  function nativeApply(key, p) {
+    const c = nativeChange(key, p);
+    if (c.message) return { ok: false, changed: false, moved: false, message: c.message };
+    if (c.same) return { ok: true, changed: false, moved: false, message: '' };
+    const problem = dialConfirm(c.P, c.rule).problem;
+    if (problem) return { ok: false, changed: false, moved: false, message: problem };
+    ui.pendingDial = c.P;
+    return applyDial(nowEpoch());
+  }
+  /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
+     and cover() stops one already playing (the screen has just come over it) */
+  let nativeCovers = () => false;
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: nativeToday, showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+    coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
+    onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own
      NEW_COMMITMENT repair (so the rest of the day is re-planned around it), find it again by id, remove it by id

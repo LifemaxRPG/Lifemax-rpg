@@ -45,7 +45,7 @@
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
-   * tells which of the two applies.
+   * tells which of the two applies, and active() whether the screen is open over the page now.
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -244,7 +244,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, active: () => active };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
