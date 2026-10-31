@@ -157,22 +157,25 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await settle(p, 3500);
   const after = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
   ok('a level-up keeps the screen waiting until it has closed', levelUp.calm === 0 && levelUp.shown && after.calm === 1 && !after.shown, { levelUp, after });
-  // the session it completes is the day's Focused Reading, and a reading card is on the table, so the quest bounty the session would
-  // earn is tested too: it is not paid either
+  // The session it completes is the day's last planned one, Focused Reading (30 minutes, reading.focused), and the Daily Hand card "Focused
+  // reading" (read for 25 minutes) is on the table. Life Director reads that card as a 25-minute reading quest and counts the session
+  // toward it (its quest overlay gets the session's event), which meets it, so the session reaches the quest bounty: before the fix
+  // the bounty was paid after the award had been taken back (the card done, Sparks and rested XP spent, "Quest complete" said).
   const refused = await p.evaluate((day) => {
-    const cards = [dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'bounty')], ids = new Set(cards.map(c => c.id));
-    state.quests = state.quests.concat(cards); Object.assign(state, { sparks: 100, restedXP: 40 });
+    const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'bounty');
+    state.quests = state.quests.concat(card); Object.assign(state, { sparks: 100, restedXP: 40 });
     saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
-    const before = state.activities.length; let r = null;
-    for (const s of LifeDirector.voice.sessions(day)) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) break }
-    const out = { ok: !!(r && r.ok), logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '',
-      fulfilled: cards.filter(isQuestDone).map(c => c.name), sparks: state.sparks, rested: state.restedXP };
-    saveReadOnly = ''; saveReadOnlyTold = false; state.quests = state.quests.filter(q => !ids.has(q.id));
+    const before = state.activities.length; let r = null, done = null;
+    for (const s of LifeDirector.voice.sessions(day)) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) { done = s; break } }
+    const ST = LifeDirectorApp._debug().ST, h = done && ST.schedule.historyInstances.find(x => x.instanceId === done.id), ov = ST.questOverlay[questKey(card)];
+    const out = { ok: !!(r && r.ok), session: done && done.title, logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '',
+      counted: !!(h && h.completionEventId && ov && ov.eventIds.includes(h.completionEventId)), fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP };
+    saveReadOnly = ''; saveReadOnlyTold = false; state.quests = state.quests.filter(q => q.id !== card.id);
     return out;
   }, directorDay.DAY);
   ok('a Done the save refuses (read-only) is taken back and says so, with no XP and no celebration', refused.ok && !refused.logged && !refused.flying && /XP not saved: this version is read-only/.test(refused.notice), refused);
-  ok('...and it pays no quest bounty: no Daily Hand card is fulfilled, Sparks and rested XP are untouched, and the notice does not say "Quest complete"',
-    refused.ok && !refused.fulfilled.length && refused.sparks === 100 && refused.rested === 40 && !/Quest complete/.test(refused.notice), refused);
+  ok('...and it pays no quest bounty: the reading session counts toward the reading card in Life Director, but the card stays open, Sparks and rested XP are untouched, and the notice does not say "Quest complete"',
+    refused.ok && refused.session === 'Focused Reading' && refused.counted && !refused.fulfilled && refused.sparks === 100 && refused.rested === 40 && !/Quest complete/.test(refused.notice), refused);
   // Life Director's award, on its own: with a Daily Hand card it fulfils and Sparks and rested XP for it, a save that fails (storage
   // full or read-only) is taken back whole, as Log's is, and the page is left saying so rather than "Quest complete"
   for (const how of ['full', 'read-only']) {
@@ -188,6 +191,29 @@ const mark = p => p.evaluate(() => window.__calls.length);
     ok('a Life Director award whose save fails (' + how + ') is taken back whole: no Daily Hand card fulfilled, no Sparks paid, no rested XP spent, and the page says it was not saved',
       award.reason === (how === 'full' ? 'HOST_SAVE_FAILED' : 'HOST_READ_ONLY') && award.same && !award.card && award.sparks === 100 && award.rested === 40 && /^(Could not save|Not saved)/.test(award.shown), award);
   }
+  // the other way Life Director logs a session: a reading session planned for a later day, done today ("Log it for today" in its
+  // sheet), with storage full. It counts toward a reading card on the table as the Done above does, and pays no bounty either
+  const later = await p.evaluate(day => {
+    for (let i = 1; i < 7; i++) { const s = LifeDirector.voice.sessions(new Date(Date.parse(day) + i * 864e5).toISOString().slice(0, 10)).find(x => x.title === 'Focused Reading'); if (s) return s.id }
+    return null;
+  }, directorDay.DAY);
+  r = await tap('inst', later);
+  const early = await p.evaluate(() => {
+    const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'early');
+    state.quests = state.quests.concat(card); Object.assign(state, { sparks: 100, restedXP: 40 });
+    const adhoc = () => (LifeDirectorApp._debug().ST.schedule.historyInstances || []).filter(x => x.adhoc), n = adhoc().length;
+    const acts = state.activities.length, qd = JSON.stringify(state.questDone), btn = document.querySelector('#view-life-director .ld-sheet.open [data-act=logToday]'), real = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    try { if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true })) } finally { Storage.prototype.setItem = real }
+    const h = adhoc()[n], ov = LifeDirectorApp._debug().ST.questOverlay[questKey(card)];
+    const out = { button: !!btn, recorded: !!h && h.title === 'Focused Reading' && h.hostActivityId === null, counted: !!(h && ov && ov.eventIds.includes(h.completionEventId)),
+      untouched: state.activities.length === acts && JSON.stringify(state.questDone) === qd, fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP };
+    state.quests = state.quests.filter(q => q.id !== card.id);
+    return out;
+  });
+  await settle(p, 500);
+  ok('a later day\'s reading session logged for today with storage full pays no quest bounty either: it counts toward the reading card in Life Director, but no activity or card is kept, and Sparks and rested XP are untouched',
+    !!later && same(r.calls, ['close']) && early.button && early.recorded && early.counted && early.untouched && !early.fulfilled && early.sparks === 100 && early.rested === 40, { later, calls: r.calls, early });
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);
