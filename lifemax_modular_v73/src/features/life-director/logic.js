@@ -2800,6 +2800,9 @@ const LifeDirectorApp = (function () {
 
   /* ── completion ── */
   const unsaved = a => a.reason === 'HOST_SAVE_FAILED' || a.reason === 'HOST_READ_ONLY';
+  /* what a session's XP came to, in the words its notice uses */
+  const XP_WORDS = { HOST_NOT_CONNECTED: 'recorded (XP needs LifeMax)', HOST_READ_ONLY: 'XP not saved: this version is read-only for your save', HOST_SAVE_FAILED: 'XP not saved (storage full?)' };
+  const xpWords = a => a.awarded ? '+' + a.xp + ' XP' : XP_WORDS[a.reason] || '';
   function questsSnapshot() { return hostQuests(nowEpoch()); }
   /* a session whose XP could not be saved pays no quest bounty either: the save failed, so nothing it earned is kept */
   function afterEvent(event, inst, bounty = true) {
@@ -2835,11 +2838,8 @@ const LifeDirectorApp = (function () {
     let xpNote = '', hostActivityId = opt.hostActivityId || null, bounty = true;
     if (opt.awardXp !== false) {
       const a = Host.awardActivity(r.event, { title: inst.title });
-      bounty = !unsaved(a);
-      if (a.awarded) { xpNote = '+' + a.xp + ' XP'; hostActivityId = a.activityId; }
-      else if (a.reason === 'HOST_NOT_CONNECTED') xpNote = 'recorded (XP needs LifeMax)';
-      else if (a.reason === 'HOST_READ_ONLY') xpNote = 'XP not saved: this version is read-only for your save';
-      else if (a.reason === 'HOST_SAVE_FAILED') xpNote = 'XP not saved (storage full?)';
+      bounty = !unsaved(a); xpNote = xpWords(a);
+      if (a.awarded) hostActivityId = a.activityId;
     }
     ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => i.instanceId !== inst.instanceId);
     ST.schedule.historyInstances = (ST.schedule.historyInstances || []).concat(Object.assign({}, inst, { lifecycleState: r.lifecycleState, completionEventId: r.eventId, hostActivityId,
@@ -2903,9 +2903,9 @@ const LifeDirectorApp = (function () {
       linkedQuestRequirementIds: [], linkedGoalIds: [], durationSlots: Math.ceil(minutes / 15), lifecycleState: 'COMPLETED_ON_TIME',
       completionEventId: r.eventId, hostActivityId: a.activityId || null, actualMinutes: minutes, resolvedAtEpoch: now,
       explanation: { summary: 'Logged for today. The session planned for ' + fDay(inst.startEpoch) + ' is still on your plan.' } }, minutes, now));
-    afterEvent(r.event, null, !unsaved(a));
+    const notes = afterEvent(r.event, null, !unsaved(a));
     persist();
-    say(inst.title + ' logged for today' + (a.awarded ? ' · +' + a.xp + ' XP' : '') + ' · still planned for ' + fDay(inst.startEpoch));
+    say([inst.title + ' logged for today', xpWords(a)].concat(notes, 'still planned for ' + fDay(inst.startEpoch)).filter(Boolean).join(' · '));
     return r;
   }
 

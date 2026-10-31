@@ -207,13 +207,28 @@ const mark = p => p.evaluate(() => window.__calls.length);
     try { if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true })) } finally { Storage.prototype.setItem = real }
     const h = adhoc()[n], ov = LifeDirectorApp._debug().ST.questOverlay[questKey(card)];
     const out = { button: !!btn, recorded: !!h && h.title === 'Focused Reading' && h.hostActivityId === null, counted: !!(h && ov && ov.eventIds.includes(h.completionEventId)),
-      untouched: state.activities.length === acts && JSON.stringify(state.questDone) === qd, fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP };
+      untouched: state.activities.length === acts && JSON.stringify(state.questDone) === qd, fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP,
+      notice: (LifeDirector.native.frame().notice || {}).text || '' };
     state.quests = state.quests.filter(q => q.id !== card.id);
     return out;
   });
   await settle(p, 500);
   ok('a later day\'s reading session logged for today with storage full pays no quest bounty either: it counts toward the reading card in Life Director, but no activity or card is kept, and Sparks and rested XP are untouched',
     !!later && same(r.calls, ['close']) && early.button && early.recorded && early.counted && early.untouched && !early.fulfilled && early.sparks === 100 && early.rested === 40, { later, calls: r.calls, early });
+  ok('...and its notice says the XP was not saved', /logged for today · XP not saved \(storage full\?\)/.test(early.notice), early.notice);
+  // the control: the same "Log it for today" with the save working does pay the bounty. The card is marked verify 'self', so the
+  // Daily Hand's own check cannot complete it from the saved activity: only Life Director's bounty can
+  r = await tap('inst', later);
+  const paid = await p.evaluate(() => {
+    const card = Object.assign(dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'paid'), { verify: 'self' });
+    state.quests = state.quests.concat(card);
+    const btn = document.querySelector('#view-life-director .ld-sheet.open [data-act=logToday]');
+    if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const out = { button: !!btn, fulfilled: isQuestDone(card), notice: (LifeDirector.native.frame().notice || {}).text || '' };
+    return out;
+  });
+  await settle(p, 500);
+  ok('with the save working, the same "Log it for today" pays the quest bounty, and its notice says so', paid.button && paid.fulfilled && /Quest complete/.test(paid.notice), paid);
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);
