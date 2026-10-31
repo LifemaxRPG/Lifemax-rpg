@@ -101,7 +101,7 @@ function renderMeals(){
  try{renderDietPlan()}catch(e){}
  /* animate rings and the big number from the last drawn values */
  requestAnimationFrame(function(){requestAnimationFrame(function(){root.querySelectorAll('.fv2-arc').forEach(function(a){a.style.opacity=+a.dataset.to>0?1:0;a.style.strokeDasharray=a.dataset.to+' '+a.dataset.c})})});
- const big=document.getElementById('fv2Big');if(big&&(+big.dataset.from)!==(+big.dataset.to)&&!(window.fxReduced&&fxReduced())){const a=+big.dataset.from,b=+big.dataset.to,t0=performance.now();(function st(n){const k=Math.min(1,(n-t0)/650),e=1-Math.pow(1-k,3);big.textContent=fv2Fmt(a+(b-a)*e);if(k<1&&document.body.contains(big))requestAnimationFrame(st)})(t0)}
+ const big=document.getElementById('fv2Big');if(big&&(+big.dataset.from)!==(+big.dataset.to)&&!(window.fxReduced&&fxReduced())){const a=+big.dataset.from,b=+big.dataset.to,t0=performance.now();(function st(n){const k=Math.max(0,Math.min(1,(n-t0)/650)),e=1-Math.pow(1-k,3);big.textContent=fv2Fmt(a+(b-a)*e);if(k<1&&document.body.contains(big))requestAnimationFrame(st)})(t0)}
  S.prev={k:g.cal?t.kcal/g.cal:0,p:g.p?t.p/g.p:0,c:g.c?t.c/g.c:0,f:g.f?t.f/g.f:0,n:g.cal?Math.abs(left):t.kcal};
  S.lastId=null;fv2Dock();
 }

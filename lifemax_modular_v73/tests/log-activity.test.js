@@ -159,19 +159,31 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('an invalid backup is refused and a cancelled import changes nothing', more.badRejected && more.cancelKeeps, more);
   ok('a confirmed import and a reset keep the previous save as a safety copy; an empty profile is replaced without asking', more.importKeepsCopy && more.emptyNoAsk && more.resetKeepsCopy, more);
   ok('delete all removes the safety and unreadable copies too, as its warning promises', more.deleteClears, more);
-  /* a Daily Hand card is fulfilled by what was stored: a save that fails fulfils nothing, and the retry that saves fulfils it */
-  const hand = await p.evaluate(() => {
-    const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
-    state = freshState(); const dd = LifeMaxDailyHand.ensure(), t = LifeMaxDailyHand.library.find(x => x.verify === 'act:reading:10');
-    dd.cards[0] = { tpl: t.id, id: 'dh_' + dd.date + '_0_9', n: 9 }; state.quests = state.quests.filter(x => !x.hand); LifeMaxDailyHand.ensure(); save();
-    const card = () => state.quests.find(x => x.id === dd.cards[0].id), xp0 = JSON.stringify(state.attrXP);
-    const real = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('quota') };
-    let r1; try { r1 = recordActivity({ ...d, opId: 'op-h' }) } finally { Storage.prototype.setItem = real }
-    const failed = { ok: r1.ok, n: state.activities.length, done: isQuestDone(card()), questDone: Object.keys(state.questDone).length, xpUnchanged: JSON.stringify(state.attrXP) === xp0 };
-    const r2 = recordActivity({ ...d, opId: 'op-h' });
-    return { failed, saved: { ok: r2.ok, types: state.activities.map(a => a.type), done: isQuestDone(card()), stored: JSON.parse(localStorage.getItem(STORE)).activities.map(a => a.type) } };
-  });
-  ok('a save that fails fulfils no Daily Hand card and leaves no quest XP; the retry that saves fulfils it', !hand.failed.ok && hand.failed.n === 0 && !hand.failed.done && hand.failed.questDone === 0 && hand.failed.xpUnchanged && hand.saved.ok && hand.saved.done && JSON.stringify(hand.saved.types) === '["reading","quest"]' && JSON.stringify(hand.saved.stored) === '["reading","quest"]', hand);
+  /* a Daily Hand card is fulfilled by what was stored: a save that fails, because storage is full or the save is read-only, leaves the
+     state exactly as it was (no card fulfilled, no XP or Sparks paid, no rested XP spent) and the page saying so, not "Quest complete"
+     or a badge, once the moment a badge is announced has passed; the retry that saves fulfils the card */
+  for (const how of ['full', 'read-only']) {
+    await p.clock.runFor(3000); // the messages earlier checks left on the clock (the unreadable save's notice) come first
+    await p.evaluate(how => {
+      const d = { type: 'reading', duration: '30', quality: '1', skill: '', primary: '', secondary: '', customName: '', notes: '' };
+      state = freshState(); const dd = LifeMaxDailyHand.ensure(), t = LifeMaxDailyHand.library.find(x => x.verify === 'act:reading:10');
+      dd.cards[0] = { tpl: t.id, id: 'dh_' + dd.date + '_0_9', n: 9 }; state.quests = state.quests.filter(x => !x.hand); LifeMaxDailyHand.ensure(); ecoMigrate(); Object.assign(state, { sparks: 100, restedXP: 40 }); save(); // the economy's one-time move sets Sparks, so it goes first
+      const before = JSON.stringify(state), said = window.__said = []; toast = m => said.push(String(m));
+      window.__card = () => isQuestDone(state.quests.find(x => x.id === dd.cards[0].id)); window.__draft = { ...d, opId: 'op-h' };
+      const real = Storage.prototype.setItem; if (how === 'full') Storage.prototype.setItem = function () { throw new Error('quota') }; else { saveReadOnly = 'Read-only for this check'; saveReadOnlyTold = true }
+      let r1; try { r1 = recordActivity(__draft) } finally { Storage.prototype.setItem = real; saveReadOnly = ''; saveReadOnlyTold = false }
+      window.__failed = { ok: r1.ok, message: r1.message, same: JSON.stringify(state) === before, sparks: state.sparks, rested: state.restedXP, done: __card(), shown: said[said.length - 1] };
+    }, how);
+    await p.clock.runFor(1000); // a badge is announced 600 ms after the save that earned it
+    const hand = await p.evaluate(() => {
+      const failed = { ...__failed, later: __said[__said.length - 1] }, r2 = recordActivity(__draft);
+      return { failed, saved: { ok: r2.ok, types: state.activities.map(a => a.type), done: __card(), stored: JSON.parse(localStorage.getItem(STORE)).activities.map(a => a.type) } };
+    });
+    const f = hand.failed, s = hand.saved;
+    ok('a save that fails (' + how + ') leaves the state as it was: no Daily Hand card fulfilled, no XP or Sparks paid, no rested XP spent', !f.ok && f.same && f.sparks === 100 && f.rested === 40 && !f.done, hand);
+    ok('a save that fails (' + how + ') leaves the page saying it was not saved, not "Quest complete" or a badge', /^(Could not save|Not saved)/.test(f.message) && f.shown === f.message && f.later === f.message, hand);
+    ok('the retry that saves (after ' + how + ') fulfils the card', s.ok && s.done && JSON.stringify(s.types) === '["reading","quest"]' && JSON.stringify(s.stored) === '["reading","quest"]', hand);
+  }
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();

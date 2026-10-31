@@ -165,6 +165,21 @@ const mark = p => p.evaluate(() => window.__calls.length);
     return out;
   }, directorDay.DAY);
   ok('a Done the save refuses (read-only) is taken back and says so, with no XP and no celebration', refused.ok && !refused.logged && !refused.flying && /XP not saved: this version is read-only/.test(refused.notice), refused);
+  // Life Director's award, on its own: with a Daily Hand card it fulfils and Sparks and rested XP for it, a save that fails (storage
+  // full or read-only) is taken back whole, as Log's is, and the page is left saying so rather than "Quest complete"
+  for (const how of ['full', 'read-only']) {
+    const award = await p.evaluate(how => {
+      const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 9);
+      state.quests = state.quests.filter(q => q.id !== card.id).concat(card); Object.assign(state, { sparks: 100, restedXP: 40 });
+      const was = JSON.stringify(state), real = Storage.prototype.setItem;
+      if (how === 'full') Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) }; else { saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true }
+      let a; try { a = LifeMaxHost.awardActivity({ eventId: 'refused-' + how, activityTypeTag: 'reading.focused', actualStartEpoch: Date.now() / 1000 - 1800, actualDurationMinutes: 30 }, { title: 'Focused Reading' }) }
+      finally { Storage.prototype.setItem = real; saveReadOnly = ''; saveReadOnlyTold = false }
+      return { reason: a.reason, same: JSON.stringify(state) === was, card: isQuestDone(card), sparks: state.sparks, rested: state.restedXP, shown: document.getElementById('toast').textContent };
+    }, how);
+    ok('a Life Director award whose save fails (' + how + ') is taken back whole: no Daily Hand card fulfilled, no Sparks paid, no rested XP spent, and the page says it was not saved',
+      award.reason === (how === 'full' ? 'HOST_SAVE_FAILED' : 'HOST_READ_ONLY') && award.same && !award.card && award.sparks === 100 && award.rested === 40 && /^(Could not save|Not saved)/.test(award.shown), award);
+  }
 
   r = await tap('tab', 'week');
   ok('a section tab closes the screen and the page shows that section', same(r.calls, ['close']) && r.shows === 'week', r);

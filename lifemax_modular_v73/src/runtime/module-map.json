@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 38474,
-   "statement_count": 82,
+   "bytes": 39053,
+   "statement_count": 83,
    "tags": [
     "training",
     "quests",
@@ -120,6 +120,7 @@
     "writeSave",
     "save",
     "unsavedMessage",
+    "takeBack",
     "xpForLevel",
     "levelData",
     "totalXP",
@@ -196,7 +197,7 @@
   },
   {
    "file": "src/runtime/segments/05-runtime.js",
-   "bytes": 30086,
+   "bytes": 30112,
    "statement_count": 38,
    "tags": [
     "training",
@@ -486,7 +487,7 @@
   },
   {
    "file": "src/runtime/segments/10-runtime.js",
-   "bytes": 28965,
+   "bytes": 28977,
    "statement_count": 22,
    "tags": [
     "nutrition",
@@ -944,7 +945,7 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28162,
+   "bytes": 28186,
    "statement_count": 54,
    "tags": [
     "interface"
@@ -1008,7 +1009,7 @@
   },
   {
    "file": "src/runtime/segments/19-runtime.js",
-   "bytes": 28112,
+   "bytes": 28124,
    "statement_count": 46,
    "tags": [
     "luck",
@@ -1110,7 +1111,7 @@
   },
   {
    "file": "src/runtime/segments/22-runtime.js",
-   "bytes": 69852,
+   "bytes": 69864,
    "statement_count": 49,
    "tags": [
     "interface"
@@ -3027,7 +3028,7 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 40272,
+   "bytes": 40284,
    "statement_count": 70,
    "tags": [
     "nutrition",

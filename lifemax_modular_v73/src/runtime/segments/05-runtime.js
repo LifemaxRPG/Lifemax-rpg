@@ -26,7 +26,7 @@ const BADGES=[
 {id:'deep',icon:'clock',name:'Deep Work',desc:'One session of 90+ minutes',t:()=>state.activities.some(a=>a.duration>=90)},
 {id:'saver',icon:'coin',name:'Saver',desc:'Deposit $100 in total',t:()=>M().tx.filter(t=>t.type==='deposit').reduce((s,t)=>s+t.amount,0)>=100}
 ];
-function checkBadges(silent){state.badges=state.badges||{};BADGES.forEach(b=>{if(!state.badges[b.id]&&b.t()){state.badges[b.id]=new Date().toISOString();if(!silent)setTimeout(()=>toast(`Badge unlocked: ${b.name}`),600)}})}
+function checkBadges(silent){state.badges=state.badges||{};BADGES.forEach(b=>{if(!state.badges[b.id]&&b.t()){state.badges[b.id]=new Date().toISOString();if(!silent)setTimeout(()=>{if(state.badges?.[b.id])toast(`Badge unlocked: ${b.name}`)},600)}})}
 function renderExtras(){renderFxSettings();document.documentElement.classList.toggle('reduce-motion',fxReduced());renderLuckCard();renderCharacterPage();if(window.__petReady)renderPetAll();if(window.__ovReady)renderOverview();document.querySelectorAll('[data-px]').forEach(e=>{if(!e.firstChild)e.innerHTML=px(e.dataset.px,e.dataset.s||16)});renderDecay();renderAvatar();renderTime();renderMoney();renderPlan();renderDevMode();
  const lv=characterLevel().level,b=state.badges||{};
  document.getElementById('heroTitle').textContent=`LV ${lv} · ${titleFor(lv).toUpperCase()} · ${(state.build||'').toUpperCase()}`;

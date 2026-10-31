@@ -66,7 +66,7 @@ function ovReplay(){
   const view=document.getElementById('view-dashboard');if(!view)return;
   view.classList.remove('ov-in');void view.offsetWidth;view.classList.add('ov-in');
   ovPlanGlance(true);
-  const n=document.getElementById('ovToday');if(n&&!fxReduced()){const to=+n.dataset.v||0;if(to>0){const t0=performance.now();(function f(now){const u=Math.min(1,(now-t0)/900),e=1-Math.pow(1-u,3);n.textContent=Math.round(to*e);if(u<1)requestAnimationFrame(f)})(t0)}}
+  const n=document.getElementById('ovToday');if(n&&!fxReduced()){const to=+n.dataset.v||0;if(to>0){const t0=performance.now();(function f(now){const u=Math.max(0,Math.min(1,(now-t0)/900)),e=1-Math.pow(1-u,3);n.textContent=Math.round(to*e);if(u<1)requestAnimationFrame(f)})(t0)}}
   document.querySelectorAll('#ovHero .xpfill,#ovAttrs .ch-bar i').forEach(function(i){const w=i.dataset.w||i.style.width;i.style.transition='none';i.style.width='0%';void i.offsetWidth;i.style.transition='';requestAnimationFrame(function(){requestAnimationFrame(function(){i.style.width=w})})});
 }
 
@@ -189,7 +189,7 @@ function luckDustStart(){var cv=luckEl('#cbDust'),b=luckEl('#lkBoard'),dpr=Math.
 function luckWrite(el,ms,tok){return new Promise(function(res){var br=luckEl('#lkBoard').getBoundingClientRect(),r=el.getBoundingClientRect(),dur=Math.max(60,ms*LK.k);
  el.style.transition='none';el.style.clipPath='inset(0 100% 0 0)';void el.offsetWidth;el.style.transition='clip-path '+dur+'ms linear';el.style.clipPath='inset(0 0 0 0)';
  var t0=performance.now();
- function f(now){if(tok!==LK.run){res();return}var u=Math.min(1,(now-t0)/dur),x=r.left-br.left+r.width*u,y=r.top-br.top+r.height*(.62+Math.sin(u*40)*.13);if(Math.random()<.7)luckPuff(x,y+4,1,26);if(u<1)requestAnimationFrame(f);else res()}
+ function f(now){if(tok!==LK.run){res();return}var u=Math.max(0,Math.min(1,(now-t0)/dur)),x=r.left-br.left+r.width*u,y=r.top-br.top+r.height*(.62+Math.sin(u*40)*.13);if(Math.random()<.7)luckPuff(x,y+4,1,26);if(u<1)requestAnimationFrame(f);else res()}
  requestAnimationFrame(f)})}
 function luckErase(el,tok){var br=luckEl('#lkBoard').getBoundingClientRect(),r=el.getBoundingClientRect();el.style.transition='clip-path '+Math.max(40,230*LK.k)+'ms ease-in';el.style.clipPath='inset(0 0 0 100%)';for(var i=0;i<6;i++)luckPuff(r.left-br.left+r.width*(i/6),r.top-br.top+r.height*.6,2,40);return luckW(240,tok)}
 function luck

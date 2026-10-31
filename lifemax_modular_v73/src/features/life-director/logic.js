@@ -2508,6 +2508,7 @@ const LifeMaxHost = (function () {
     if (existing) return { awarded: false, reason: 'ALREADY_IN_LIFEMAX', activityId: existing.id, xp: existing.xp };
     const type = H.typeForTag(event.activityTypeTag);
     const when = new Date(event.actualStartEpoch * 1000);
+    const was = JSON.stringify(state); // before the award spends any rested XP
     const x = H.xpFor(type, event.actualDurationMinutes, 1, when.toLocaleDateString('en-CA'), true);
     const act = { id: 'ld_' + event.eventId, ldEventId: event.eventId, type, name: info && info.title || event.title, icon: x.rule.icon, duration: event.actualDurationMinutes, quality: 1,
       skill: x.rule.skill, primary: x.rule.primary, secondary: x.rule.secondary || '', xp: x.xp, date: when.toISOString(),
@@ -2522,8 +2523,8 @@ const LifeMaxHost = (function () {
     state.activities.push(act);
     let saved = false;
     try { saved = save(); } catch (e) { saved = false; }
-    if (!saved) { /* taken back, as recordActivity does: an activity the save refused is neither shown nor counted */
-      state.activities = state.activities.filter(a => a !== act); rebuildAttrXP(); rebuildSkillXP(); renderAll();
+    if (!saved) { /* taken back whole by takeBack, as Log's recordActivity is: nothing the award or its save paid or spent is kept */
+      takeBack(was);
       return { awarded: false, reason: typeof saveReadOnly !== 'undefined' && saveReadOnly ? 'HOST_READ_ONLY' : 'HOST_SAVE_FAILED' };
     }
     return { awarded: true, activityId: act.id, xp: x.xp };
