@@ -14,8 +14,10 @@ if [ "${1:-}" = sim ]; then
 fi
 
 # Build the current page once; every test that loads the app uses it (tests/current-page.js)
+# Each run keeps its tests' output in its own file, so runs from other worktrees cannot overwrite it
 export LMA_TEST_PAGE="$(mktemp --suffix=.html)"
-trap 'rm -f "$LMA_TEST_PAGE"' EXIT
+out="$(mktemp)"
+trap 'rm -f "$LMA_TEST_PAGE" "$out"' EXIT
 node -e "require('$here/tests/current-page.js').build(process.env.LMA_TEST_PAGE)" || { echo "FAIL could not build the page"; exit 1; }
 
 skip=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$here/tests/SKIP_IN_CI.txt" | grep -v '^$' || true)
@@ -25,12 +27,13 @@ for t in "$here"/tests/*.test.js "$here"/tests/*.test.py; do
   name=$(basename "$t")
   if grep -qx "$name" <<<"$skip"; then echo "SKIP $name"; continue; fi
   start=$SECONDS
-  if [[ $name == *.py ]]; then (cd "$repo" && python3 "$t") >/tmp/lm_test.out 2>&1; else node "$t" >/tmp/lm_test.out 2>&1; fi
+  if [[ $name == *.py ]]; then (cd "$repo" && python3 "$t") >"$out" 2>&1; else node "$t" >"$out" 2>&1; fi
   rc=$?
   if [ $rc -eq 0 ]; then
     passed=$((passed + 1)); echo "ok   $name ($((SECONDS - start)) s)"
   else
-    failed+=("$name"); echo "FAIL $name (exit $rc)"; tail -20 /tmp/lm_test.out | sed 's/^/     /'
+    # the failed checks first, wherever they printed, then the end of the output
+    failed+=("$name"); echo "FAIL $name (exit $rc)"; { grep '^FAIL' "$out" | head -20; tail -20 "$out"; } | sed 's/^/     /'
   fi
 done
 if [ ${#failed[@]} -eq 0 ]; then echo "$passed passed, 0 failed"; else echo "$passed passed, ${#failed[@]} failed: ${failed[*]}"; fi
