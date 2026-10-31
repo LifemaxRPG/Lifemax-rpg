@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,10 +24,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lifemax.rpg.core.designsystem.LifeMaxTheme
+import com.lifemax.rpg.core.designsystem.PageTheme
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.feature.plan.domain.PlanPageAction
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.SetRef
@@ -140,19 +139,12 @@ fun PlanScreen(
     }
 }
 
-/**
- * The page's palette and type for the plan view: its theme tokens, its colours, CSS line spacing.
- */
+/** The page's palette and type for the plan view, with the plan's own colours. */
 @Composable
 internal fun PlanTheme(tokens: Map<String, Long>, light: Boolean, content: @Composable () -> Unit) {
     val colors = remember(tokens, light) { PlanColors(tokens, light) }
-    LifeMaxTheme(tokens, light) {
-        CompositionLocalProvider(
-            LocalPlanColors provides colors,
-            LocalTextStyle provides
-                LocalTextStyle.current.copy(letterSpacing = 0.sp, lineHeightStyle = CssLines),
-            content = content,
-        )
+    PageTheme(colors) {
+        CompositionLocalProvider(LocalPlanColors provides colors, content = content)
     }
 }
 
@@ -160,14 +152,7 @@ internal fun PlanTheme(tokens: Map<String, Long>, light: Boolean, content: @Comp
 private fun PlanHead() {
     val c = LocalPlanColors.current
     Column(Modifier.padding(bottom = 4.dp)) {
-        Text(
-            "TRAINING",
-            color = c.accent,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.32.sp,
-            lineHeight = 16.5.sp,
-        )
+        PageEyebrow("TRAINING")
         Text(
             "Workout plan",
             Modifier.padding(top = 6.dp).semantics { heading() },
@@ -186,6 +171,3 @@ private fun PlanHead() {
         )
     }
 }
-
-/** Line heights spread above and below the text, as CSS does. */
-private val CssLines = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)

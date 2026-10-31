@@ -2,6 +2,8 @@
 
 Baseline: branch `track/docs` at `d56403c0410c73686ce8c5675d16cbe627e2ebd1` (2026-10-30, Native API 23). Read-only audit; no code was changed.
 
+Update: the web half of phase 1 is built on `track/recipes` (section 9). Where it changed what this audit describes, the text below says so with **(phase 1)**; line numbers elsewhere are those of the baseline.
+
 Reference conventions. Paths are relative to `lifemax_modular_v73/src/`. Runtime segments are cited by file name alone (they all live in `runtime/segments/`, for example `08-runtime.js:185`). Kotlin paths are relative to `android-wrapper/native/src/main/java/com/lifemax/rpg/`. All segments are pasted by `build.py` into ONE `<script>` (`index.template.html:132`), so for a duplicated `function` declaration the last one in load order wins for the whole page, including calls from earlier segments.
 
 How facts were checked. "Verified" means read in the source at this baseline. Facts marked **(run)** were also observed in headless Chromium (Playwright 1.63) on a page assembled from this worktree's `src` into the scratchpad, and facts marked **(sim)** additionally used fake `NativeNutrition`/`NativeOverview` Capacitor plugins (same shape as the fakes in `tests/native-handover-sim.test.js`). None of this is device evidence. Anything not verified is marked **(unverified)**.
@@ -14,7 +16,7 @@ How facts were checked. "Verified" means read in the source at this baseline. Fa
 
 **Page view.** `recipes` = `<section id="view-recipes" class="view">` (`views/recipes.html:1-5`). There is no `view-food`: the bottom-bar key `food` is a group, `LMA_GROUPS.food=['meals','recipes']` (`34-navigation.js:7`); `lmaTabKey` maps both views to `food` (`34-navigation.js:8`); `lmaResolve('food')` returns `state.foodPane||'meals'` (`34-navigation.js:9`). `state.foodPane` is written by the `navigate` wrapper at `42-scrubnav.js:204` on every visit to either view, so "Food" reopens the last pane, across restarts (section 6).
 
-**Relation to the native Food screen.** Native Food (`50-native-nutrition.js`, Kotlin `feature/food/presentation/*`, plugin `bridge/web/NativeNutritionPlugin.kt`) covers only the `meals` view: it opens only when `lmaView()==='meals'` (`50-native-nutrition.js:345-346`) and registers with `NativeTabs` under `meals` only (`50-native-nutrition.js:601-610`). Its header draws a Meals/Recipes switch (`feature/food/presentation/FoodDateHeader.kt:32-33`); "Recipes" dispatches the command `recipes`, which `onAction` does not handle, so it falls through to `fallback` (`50-native-nutrition.js:578`), which closes the native screen and calls plain `navigate('recipes')` (`50-native-nutrition.js:432-437`). Recipes is therefore always the classic web page today, including for owners who use the Native Food beta. The native Food Log pane does not draw the class diet card, so the diet card's "Recipe" buttons (an entry point into this pane, section 1 table) exist only on the classic web Meals page (verified: no diet fields in `buildPlanSnapshot`/`snapshot`, `50-native-nutrition.js:96-303`, and no diet composable in `feature/food/presentation`).
+**Relation to the native Food screen.** Native Food (`50-native-nutrition.js`, Kotlin `feature/food/presentation/*`, plugin `bridge/web/NativeNutritionPlugin.kt`) covers only the `meals` view: it opens only when `lmaView()==='meals'` (`50-native-nutrition.js:345-346`) and registers with `NativeTabs` under `meals` only (`50-native-nutrition.js:601-610`). Its header draws a Meals/Recipes switch (`feature/food/presentation/FoodDateHeader.kt:32-33`); "Recipes" dispatches the command `recipes`, which `onAction` does not handle, so it falls through to `fallback` (`50-native-nutrition.js:578`), which closes the native screen and calls plain `navigate('recipes')` (`50-native-nutrition.js:432-437`). Recipes is therefore always the classic web page today, including for owners who use the Native Food beta. **(phase 1)** `onAction` now handles `recipes` with `lmaNavTo('recipes',{fast:true})` and no close: Food's own `navigate` wrapper hands over, so native Recipes (when on) opens before Food closes, and with it off Food closes at once and the classic page shows. The native Food Log pane does not draw the class diet card, so the diet card's "Recipe" buttons (an entry point into this pane, section 1 table) exist only on the classic web Meals page (verified: no diet fields in `buildPlanSnapshot`/`snapshot`, `50-native-nutrition.js:96-303`, and no diet composable in `feature/food/presentation`).
 
 **Entry points (all verified).**
 
@@ -22,9 +24,9 @@ How facts were checked. "Verified" means read in the source at this baseline. Fa
 |---|---|---|
 | Bottom-bar "Food" (icon `heart`) when `state.foodPane==='recipes'` | `index.template.html:46` (`data-view="food"`, `onclick="lmaNavTo('food')"`); phone taps captured by `42-scrubnav.js:189-195` | `lmaNavTo('food')` -> `lmaResolve` -> `navigate('recipes')` |
 | Meals/Recipes switch on the classic Meals page | `views/meals.html:2` | `lmaNavTo('recipes')` |
-| Meals/Recipes switch on native Food | `FoodDateHeader.kt:33` -> `NativeNutritionPlugin.kt:87` (`action` event) -> `50-native-nutrition.js:455,578,432-437` | close native Food, then `navigate('recipes')` (no view transition; recorded in Back history) **(sim)** |
+| Meals/Recipes switch on native Food | `FoodDateHeader.kt:33` -> `NativeNutritionPlugin.kt:87` (`action` event) -> `50-native-nutrition.js:455,578,432-437` | close native Food, then `navigate('recipes')` (no view transition; recorded in Back history) **(sim)**. **(phase 1)** `lmaNavTo('recipes',{fast:true})` without closing; the hand-over closes Food once native Recipes shows, or at once for the classic page |
 | Class diet card "Recipe" button (classic web Meals, Log pane only) | `renderDietPlan` `14-runtime.js:81`, mounted by `50-food.js:99-101` | `dietOpenRecipe(id)` `14-runtime.js:69`: writes the recipe name into `#recipeSearch`, then `navigate('recipes')` |
-| Native tab bars (Character, Food, Log screens) | `NativeOverviewSnapshot.activate` `50-native-overview.js:165-175` | `lmaNavTo('food',{fast:true})`; with `foodPane==='recipes'` this lands on web Recipes and the native screen closes at once (web destination, A23 item 2) **(sim)** |
+| Native tab bars (Character, Food, Log screens) | `NativeOverviewSnapshot.activate` `50-native-overview.js:165-175` | `lmaNavTo('food',{fast:true})`; with `foodPane==='recipes'` this lands on web Recipes and the native screen closes at once (web destination, A23 item 2) **(sim)**. **(phase 1)** With Native Recipes on it lands on the native Recipes screen |
 | Bottom-bar scrubbing and tab swipe | `42-scrubnav.js:138-146,182`, `34-navigation.js:156,178,184` | through the `food` key and `foodPane`; swiping never moves between Meals and Recipes (one tab) |
 | Back history | `34-navigation.js:69-74`, stack kept by `34-navigation.js:77-91` | previous view; from Recipes, Back returns to the view before it |
 | Voice "open recipes", "show recipes", "cookbook" | `46-voice-nlu.js:38` (section table, checked before `food` at `:39`), `:65` (`bareNav` includes `recipes`), verbs `:23` | `lmvGo({id:'recipes'})` -> `lmaNavTo('recipes')` (`46-voice-nlu.js:121-127`) |
@@ -108,7 +110,7 @@ How facts were checked. "Verified" means read in the source at this baseline. Fa
 | URL known | card with the ingredient text, "Walmart product link attached", and a link button "Open in Walmart ↗" (`href` = `https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129`, `target=_blank`, `rel=noopener noreferrer`) |
 | No URL | card with the ingredient text and "No Walmart product link added for this ingredient yet." |
 
-The link table is a literal inside the function (`08-runtime.js:194`), not data.
+The link table is a literal inside the function (`08-runtime.js:194`), not data. **(phase 1)** It is now `RECIPE_LINKS` in `03-runtime.js`, which `selectRecipeIngredient`, the card's 🛒/＋ mark and the native projection all read; the link itself is unchanged.
 
 ### 3.5 The catalog (static; `RECIPES` built at load)
 
@@ -196,7 +198,7 @@ Record shape (all 43): `id, n, cat, yield, prep, total, kcal, p, c, f, servingG,
 |---|---|---|
 | `renderRecipes` | `08-runtime.js:185` only | never reassigned or wrapped (verified: no `renderRecipes=`) |
 | `selectRecipeIngredient` | `08-runtime.js:192` only | |
-| `addRecipeToMeal` | `08-runtime.js:203-212` (first Food tab: fills `#mealSearch`, `#mealGrams`, `#mealPortion`, which no longer exist in `views/meals.html`) and `50-food.js:132` | the `50-food.js` one, by hoisting, from the first line of the script **(run: `String(addRecipeToMeal)` is the 50-food version)**. The 08 copy would throw if it ever ran |
+| `addRecipeToMeal` | `08-runtime.js:203-212` (first Food tab: fills `#mealSearch`, `#mealGrams`, `#mealPortion`, which no longer exist in `views/meals.html`) and `50-food.js:132` | the `50-food.js` one, by hoisting, from the first line of the script **(run: `String(addRecipeToMeal)` is the 50-food version)**. The 08 copy would throw if it ever ran. **(phase 1)** The 08 copy is removed |
 | `fuelOpenLab`, `fuelCancelMotion`, `renderMeals`, `setMealsDay` (reached from this pane through `navigate` and the sheet) | `10-runtime.js:210,22,265`, `08-runtime.js:224` and again in `50-food.js:129,128,67,126` | the `50-food.js` ones |
 | `renderMeals`, `save` | wrapped by native Food to schedule a native update (`50-native-nutrition.js:612-628`) | harmless for Recipes (`scheduleSync` returns unless Food is open) |
 | `renderAll` | `04-runtime.js:182` only, not wrapped | |
@@ -238,7 +240,7 @@ Observed with fake plugins **(sim)**, Native Food beta on:
 4. After "Add to …" the sheet closes and the classic web Meals page stays; native Food does not come back until the next navigation to `meals`.
 5. An `action` event naming a stale session is ignored (`50-native-nutrition.js:456`).
 
-Consequences: the Native Food beta silently turns into Classic Food after a single visit to Recipes, until the owner taps "Meals". The hand-off from native Food is break-before-make (close, then navigate), which is correct today because the destination is web (A23 item 2), but must change once Recipes is native (7.6).
+Consequences: the Native Food beta silently turns into Classic Food after a single visit to Recipes, until the owner taps "Meals". The hand-off from native Food is break-before-make (close, then navigate), which is correct today because the destination is web (A23 item 2), but must change once Recipes is native (7.6). **(phase 1)** Both are settled: with Native Recipes on, Food lands on the native Recipes screen, and the switch hands over make-before-break (tested in `tests/native-recipes.test.js`).
 
 ### 5.6 Dead or inconsistent couplings found
 
@@ -249,9 +251,9 @@ Consequences: the Native Food beta silently turns into Classic Food after a sing
 | Class recipes say "(est.)" but the footnote says "as listed in the cookbook" | `08-runtime.js:190` |
 | Ingredient buttons reference undefined CSS variables `--surface-2` and `--border` | grep of `src`; **(run)** |
 | Selecting an ingredient in a second card leaves the first card's product panel open | `08-runtime.js:198-200` |
-| Dead first-Food-tab code reachable by name only | `08-runtime.js:203-212` |
-| The bridge catalog's Food entry does not list the `recipes` fallback among its delegated interactions | `docs/architecture/BRIDGE_CATALOG.json` (`food.delegatedInteractions` = `fv2Open`, `sdOpenSwap`) |
-| Recipes has no row in the migration ledger | `docs/architecture/MIGRATION.md`, ledger as of Native API 17 |
+| Dead first-Food-tab code reachable by name only | `08-runtime.js:203-212`; **(phase 1)** removed |
+| The bridge catalog's Food entry does not list the `recipes` fallback among its delegated interactions | `docs/architecture/BRIDGE_CATALOG.json` (`food.delegatedInteractions` = `fv2Open`, `sdOpenSwap`); **(phase 1)** there is no fallback any more: the switch is a hand-over, and Recipes has its own entry |
+| Recipes has no row in the migration ledger | `docs/architecture/MIGRATION.md`, ledger as of Native API 17; **(phase 1)** it has a row and a section |
 
 ---
 
@@ -300,7 +302,7 @@ Nothing in this pane is hard (no canvas, 3D, drag, background timers or embedded
 ### 7.5 Hazards a native screen must respect
 
 1. **Sticky pane.** With native Recipes registered under `recipes`, `nativeView('food')` becomes true whenever `foodPane==='recipes'` (`50-native-overview.js:145`), so "Food" would open native Recipes; that is consistent, but the owner may expect "Food" to mean Meals (question 1). Without native Recipes, the stickiness keeps turning Native Food into Classic (5.5).
-2. **Break-before-make paths.** Native Food's `fallback('recipes')` closes first (`50-native-nutrition.js:433`), and a `NativeTabKit` `action` closes before it navigates (`50-native-tabkit.js:133-136`). Used between two native screens, both would flash the web page. Use the kit's `commands` with `reply.navigate` (followed with `lmaNavTo(…,{fast:true})` and no close, `50-native-tabkit.js:110`) for "Meals" and "Log a meal", and change native Food's `recipes` command to `navigate('recipes')` without `close()` (its own `navigate` wrapper already hands over through `NativeTabs.leave`, `50-native-nutrition.js:591`).
+2. **Break-before-make paths.** **(phase 1: both fixed, see section 9.)** Native Food's `fallback('recipes')` closes first (`50-native-nutrition.js:433`), and a `NativeTabKit` `action` closes before it navigates (`50-native-tabkit.js:133-136`). Used between two native screens, both would flash the web page. Use the kit's `commands` with `reply.navigate` (followed with `lmaNavTo(…,{fast:true})` and no close, `50-native-tabkit.js:110`) for "Meals" and "Log a meal", and change native Food's `recipes` command to `navigate('recipes')` without `close()` (its own `navigate` wrapper already hands over through `NativeTabs.leave`, `50-native-nutrition.js:591`).
 3. **Delegated sheet returns to classic Meals.** "Log this recipe" must close native Recipes and run `addRecipeToMeal` (web sheet over web Meals); native Food will not reopen afterwards (5.5 item 4). Record it as a hybrid dependency; fixing it belongs to Food (reopen on sheet close, or a native portion sheet with an A14 command).
 4. **Projection must not write and must not depend on the DOM list.** Read `RECIPES`, `state.classId` and the two filter inputs only; never call `renderRecipes` from the projection.
 5. **Freshness.** Hooking `render: "renderRecipes"` makes every `save()` schedule an update (via `renderAll`); harmless but frequent. The class can change while the screen is hidden (onboarding, developer switch, import), so `show()` must take a fresh projection (A24).
@@ -320,7 +322,7 @@ Nothing in this pane is hard (no canvas, 3D, drag, background timers or embedded
 - **Phase 2: one-tap logging behind A14/A15** (if the owner wants it): a `logRecipe {opId, recipeId, grams, slot, day}` command whose owner runs `fv2Log` with an operation id stored in the entry, reporting outcome-unknown honestly; or wait for a native Food portion sheet and reuse it.
 - **Phase 3: domain conversion** (after every tab's visuals): the catalog becomes a versioned native asset or Room table only when catalog authority moves; until then it stays web data delivered by projection, so OTA web updates keep working (A19).
 
-### 7.8 Phase 1 sketch (proposal; nothing here is implemented)
+### 7.8 Phase 1 sketch (proposal; superseded by section 9, which says how the built web half differs)
 
 `src/runtime/segments/50-native-recipes.js`, added to `index.template.html` after `50-native-tabkit.js` and after `50-food.js`:
 
@@ -397,7 +399,7 @@ Also in phase 1: change `50-native-nutrition.js:434-436` so the `recipes` comman
 
 ## 8. Open questions for the owner
 
-1. **What should the Food tab open?** Today it reopens the last pane you used (saved in your save file), so one visit to Recipes makes Food open Recipes, and with the Native Food beta on it opens the classic Recipes page instead of the new Food screen. Keep "last pane", or always open Meals?
+1. **What should the Food tab open?** Today it reopens the last pane you used (saved in your save file), so one visit to Recipes makes Food open Recipes, and with the Native Food beta on it opens the classic Recipes page instead of the new Food screen. Keep "last pane", or always open Meals? *(Phase 1 keeps "last pane": with Native Recipes on, Food lands on the native Recipes screen, so the Native Food beta no longer turns into classic pages after a visit to Recipes.)*
 2. **Snack recipes.** Four class recipes (two Entrepreneur, two Explorer) are filed under "Snack", but the category list has no Snack, so they only appear under "All recipes" or by search. Add a Snack category?
 3. **After "Log this recipe".** It opens the add-food sheet with one serving and leaves you on the classic Meals page (not the native Food screen). Would you rather log one serving in one tap and stay on Recipes (with an Undo), keep the portion sheet, or return to Food afterwards?
 4. **Nutrition goal XP.** The "Nutrition goal hit" bonus (8 XP when a day's calories land within 15 % of your goal) is wired only to the old Food tab, so it has not been awarded since the new Food tab replaced it. Should it come back? (This changes XP, so it needs your decision.)
@@ -405,5 +407,31 @@ Also in phase 1: change `50-native-nutrition.js:434-436` so the `recipes` comman
 6. **Two recipe collections.** The Recipes page (cookbook plus class recipes) and the Smart Diet meal plan (Food, Plan, with its own ingredients and steps) are separate. Keep both, or should one feed the other?
 7. **Wording and coverage.** Class recipes are marked "(est.)" but each card ends with "as listed in the cookbook". Fix the footnote for class recipes? Disciple and Diplomat have no class recipes: intended?
 8. **Search.** Search finds one exact phrase in names, categories and ingredients ("chicken rice" finds nothing unless those words are adjacent) and ignores the steps. Keep this, or match each word separately?
-9. **Opt-in.** Should a native Recipes page follow the existing Native Nutrition (Beta) switch, so Food is either all native or all classic, or get its own switch?
-10. **Open recipes stay open.** On the web page an open recipe closes whenever the app saves in the background (for example a Health Connect sync). The native page would keep it open. Is that what you want (almost certainly yes)?
+9. **Opt-in.** Should a native Recipes page follow the existing Native Nutrition (Beta) switch, so Food is either all native or all classic, or get its own switch? *(Phase 1 has its own switch, "Native Recipes (beta)", off by default; folding it into Native Nutrition later is a one-line change.)*
+10. **Tap sizes.** The native page keeps the web page's ingredient rows (35 dp) and category field (41 dp), and native Food's switch (32 dp pills), so it looks like the page; Android widens their touch area, but they are drawn under the 48 dp that accessibility guidelines ask for. Keep the page's sizes, or grow them to 48 dp (taller ingredient lists)?
+11. **Open recipes stay open.** On the web page an open recipe closes whenever the app saves in the background (for example a Health Connect sync). The native page would keep it open. Is that what you want (almost certainly yes)?
+
+---
+
+## 9. Phase 1, web half (built on `track/recipes`)
+
+The owner's questions stay open; phase 1 keeps today's behaviour (catalogue, categories without Snack, the exact-phrase search, "last pane", the wording, the footnote on class recipes).
+
+| Piece | What it is |
+|---|---|
+| Shared page functions (`08-runtime.js`) | `recipeHaystack(r)` (the text the search looks in), `recipeHits(q, cat)` (the page's filter: class rule, category, one trimmed lowercased phrase) and `recipeCard(r)` (meta line, kcal with "(est.)", macros, footnote). `renderRecipes` renders through them; its output is byte-identical to before for every class and a set of searches (checked while building) |
+| `RECIPE_LINKS` (`03-runtime.js`) | the product-link table, read by the page and the projection |
+| `50-native-recipes.js` | NativeTabKit tab `recipes`, plugin `NativeRecipes`, capability `recipes.projection.v1`, setting `nativeRecipes`, toggle `nativeRecipesToggle` ("Native Recipes (beta)", off), render hook `renderRecipes` |
+| Projection | `categories` (the page's select), `filter {query, category, revision}`, `recipes[]` from `recipeHits('', 'all')`: id, name, category, meta, kcal, protein, carbs, fat, footnote, ingredients `{text, link}`, steps, note, searchText. One command, `log` |
+| Prefill | `beforeOpen` takes over whatever the page's search and category hold (the diet card's Recipe button writes the recipe's name) and raises `filter.revision`; once the screen covers the page, `afterOpen` empties the page's fields and re-renders the classic list, so a prefill is taken over once and stays on the page if the open fails; a plain return keeps the screen's own filter |
+| "Log this recipe" | command `log` `{id}`: the page runs `addRecipeToMeal(id)` while the screen still covers it, and the hand-over then closes the screen, so the classic Recipes page never shows in between (closing first, then running it, showed that page for a frame or more); for an id the page does not know it answers `ok: false` and the screen stays |
+| Meals pill, "＋ Log a meal" | the action `navigate` with `meals`. NativeTabKit now goes to a view named by an action without closing first (it used to close, then navigate, which flashed the page between two native screens); the hand-over closes the screen once native Food shows, or at once for classic Meals |
+| Product link | the screen opens the projected `https` URL itself (Android intent); nothing is sent to the page |
+| Native Food's switch | `recipes` is handled in `onAction` (hand-over), no longer by `fallback` |
+| Native screen | `NativeRecipesPlugin` with `feature/recipes`: the pane drawn from the projection, the page's filter rule in the view model (parity with `recipes-filters.json`), the switch shared with native Food (`PaneSwitch`); differences from the web are listed in MIGRATION.md |
+
+Differences from the sketch in 7.8: going to Meals is the `navigate` action rather than a `meals` command, so no projection is sent just before leaving; the card's words come from the page's `recipeCard` rather than raw fields; the projection carries `searchText` so the screen applies the page's rule to the page's own text; `tabs` and `classId` are not projected (the bars come from the shared chrome, and nothing on the screen shows the class).
+
+Known gaps, not phase 1 work: the screen does not step aside for a level-up or badge toast set off by a background save while it shows (backlog "Web-only feedback surfaces", shared with the other tabs); native Food normally does not come back after the add-food sheet closes (5.5 item 4, a Food matter; `NativeTabs.heal` may reopen it if the sheet closes within about 2 s); the search field over the keyboard depends on the IME inset decision (backlog NAV-5).
+
+Tests: `tests/native-recipes.test.js` (projection against the page's own cards for a Scholar, an Entrepreneur and a Disciple, filter parity, covering, prefill and an open that fails, no update after a close, the log command, Meals with native Food off and on, Food's switch with native Recipes on and off, the Food tab landing); the hand-over checks fail on the code they replace. `tests/native-handover-sim.test.js` includes Recipes and the Food tab, and taps in both screens (the Meals pill in Recipes, the Recipes pill in Food) under its seeded delays; it fails on the close-then-navigate code it replaces. Fixtures: `tools/gen_native_fixtures.js` writes `fixtures/recipes-{scholar,entrepreneur,disciple,prefill}.json` and `fixtures/recipes-filters.json`.

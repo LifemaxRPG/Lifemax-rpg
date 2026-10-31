@@ -116,7 +116,9 @@ abstract class ComposeTabPlugin : Plugin() {
         val data = readSnapshot(call) ?: return
         activity.runOnUiThread {
             try {
-                if (view != null) {
+                // a hidden screen takes no updates (A24), not even one sent before the close that
+                // overtook it: it would make the hidden tab the owner of the bars
+                if (visible) {
                     try {
                         accept(data, false)
                         showChrome(call.getObject("navScene"))

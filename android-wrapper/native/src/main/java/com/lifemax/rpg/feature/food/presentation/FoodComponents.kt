@@ -101,34 +101,6 @@ internal fun MacroTileCard(
 }
 
 @Composable
-internal fun FoodTopTabButton(
-    label: String,
-    selected: Boolean,
-    light: Boolean,
-    onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(10.dp)
-    Box(
-        modifier =
-            Modifier.clip(shape)
-                .background(
-                    if (selected) (if (light) Color(0xFFE8EDF9) else PillSelected)
-                    else Color.Transparent
-                )
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            label,
-            color = if (selected) BlueAccent else if (light) Color(0xFF64748B) else TextMuted,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
-}
-
-@Composable
 internal fun HeaderButton(
     label: String,
     width: androidx.compose.ui.unit.Dp?,

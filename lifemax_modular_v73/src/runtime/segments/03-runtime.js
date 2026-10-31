@@ -4,6 +4,8 @@ RECIPES.push(...CLASS_CONTENT.entrepreneur.recipes.map(r=>({...r,cls:'entreprene
 RECIPES.push(...CLASS_CONTENT.explorer.recipes.map(r=>({...r,cls:'explorer'})));
 RECIPES.push(...CLASS_CONTENT.athlete.diet.recipes.map(r=>({...r,cls:'athlete'})));
 const RECIPE_FOODS=RECIPES.map(r=>({id:r.id,n:r.n,cat:'Recipe · '+r.cat,kcal:r.kcal*100/r.servingG,p:r.p*100/r.servingG,c:r.c*100/r.servingG,f:r.f*100/r.servingG,fib:0,sug:0,na:0,port:[{l:'1 serving',g:r.servingG}],recipe:true,cls:r.cls}));
+/* product links by recipe id and ingredient index, read by the Recipes page and the native Recipes projection */
+const RECIPE_LINKS={rcp_pesto_chicken:{0:'https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129'}};
 let mealsDay=null,mealPick=null;
 
 let state, rules, toastTimer;

@@ -431,10 +431,6 @@
 
   async function fallback(command, payload) {
     await close();
-    if (command === 'recipes') {
-      navigate('recipes');
-      return;
-    }
     if (command === 'plan' || command === 'shop' || command === 'log') {
       if (typeof fv2S === 'function') {
         fv2S().pane = command;
@@ -456,7 +452,11 @@
     if (!N.open || e.session !== N.session) return;
     const command = e.command;
     try {
-      if (command === 'pane') {
+      if (command === 'recipes') {
+        // the Meals/Recipes switch: navigate's hand-over closes this screen once Recipes shows, at once if Recipes is the page
+        lmaNavTo('recipes', { fast: true });
+        return;
+      } else if (command === 'pane') {
         if (typeof fv2S === 'function' && e.pane) {
           fv2S().pane = e.pane;
           if (typeof renderMeals === 'function') renderMeals();

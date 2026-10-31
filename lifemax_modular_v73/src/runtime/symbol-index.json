@@ -437,6 +437,9 @@
  "RECIPE_FOODS": [
   "src/runtime/segments/03-runtime.js"
  ],
+ "RECIPE_LINKS": [
+  "src/runtime/segments/03-runtime.js"
+ ],
  "RK": [
   "src/runtime/segments/12-runtime.js"
  ],
@@ -510,7 +513,7 @@
   "src/runtime/segments/08-runtime.js"
  ],
  "addRecipeToMeal": [
-  "src/runtime/segments/08-runtime.js"
+  "src/runtime/segments/50-food.js"
  ],
  "addTx": [
   "src/runtime/segments/05-runtime.js"
@@ -3303,6 +3306,15 @@
   "src/runtime/segments/04-runtime.js"
  ],
  "recentFoods": [
+  "src/runtime/segments/08-runtime.js"
+ ],
+ "recipeCard": [
+  "src/runtime/segments/08-runtime.js"
+ ],
+ "recipeHaystack": [
+  "src/runtime/segments/08-runtime.js"
+ ],
+ "recipeHits": [
   "src/runtime/segments/08-runtime.js"
  ],
  "recs": [

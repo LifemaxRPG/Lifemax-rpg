@@ -124,6 +124,7 @@ if (process.env.CHARACTER_FIXTURE)
   };
   c.lmaNavTo = (view) => {
     delegatedView = view;
+    c.navigate(view); // the kit's own navigate, which hands the screen over
   };
   c.Capacitor = {
     isNativePlatform: () => true,

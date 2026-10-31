@@ -1,0 +1,1023 @@
+{
+ "protocol": 1,
+ "webSessionId": "recipes-fixture",
+ "sequence": 1,
+ "categories": [
+  {
+   "value": "all",
+   "label": "All recipes"
+  },
+  {
+   "value": "Breakfast",
+   "label": "Breakfast"
+  },
+  {
+   "value": "Pre-workout",
+   "label": "Pre-workout"
+  },
+  {
+   "value": "Post-workout",
+   "label": "Post-workout"
+  },
+  {
+   "value": "Lunch & dinner",
+   "label": "Lunch & dinner"
+  }
+ ],
+ "filter": {
+  "query": "Overnight Blueberry Chia Oats",
+  "category": "all",
+  "revision": 2
+ },
+ "recipes": [
+  {
+   "id": "rcp_egg_muffins",
+   "name": "Egg Muffins with Tomato, Basil and Spinach",
+   "category": "Breakfast",
+   "meta": "12 muffins · Prep 15 min · Total 35 min",
+   "kcal": "100 kcal",
+   "protein": "8g",
+   "carbs": "2g",
+   "fat": "6g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "12 eggs",
+     "link": ""
+    },
+    {
+     "text": "¼ cup onion, diced",
+     "link": ""
+    },
+    {
+     "text": "2 cloves garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp dried basil",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp salt",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp pepper",
+     "link": ""
+    },
+    {
+     "text": "2 cups spinach, chopped",
+     "link": ""
+    },
+    {
+     "text": "12 cherry tomatoes, chopped",
+     "link": ""
+    },
+    {
+     "text": "1 cup shredded mozzarella",
+     "link": ""
+    },
+    {
+     "text": "Olive oil or vegetable spray to coat pan",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 350°F and lightly oil a 12-cup muffin pan.",
+    "Whisk eggs with salt, pepper and basil.",
+    "Divide egg mixture between muffin cups, no more than halfway full.",
+    "Add onion, garlic, spinach, tomato and mozzarella evenly.",
+    "Bake uncovered for 15–20 minutes, until eggs are set."
+   ],
+   "note": "Make ahead and refrigerate or freeze; reheat before serving.",
+   "searchText": "egg muffins with tomato, basil and spinach breakfast 12 eggs ¼ cup onion, diced 2 cloves garlic, minced 1 tbsp dried basil ¼ tsp salt ¼ tsp pepper 2 cups spinach, chopped 12 cherry tomatoes, chopped 1 cup shredded mozzarella olive oil or vegetable spray to coat pan"
+  },
+  {
+   "id": "rcp_breakfast_burrito",
+   "name": "Spicy Matador Breakfast Burrito",
+   "category": "Breakfast",
+   "meta": "4 burritos · Prep 10 min · Total 25 min",
+   "kcal": "510 kcal",
+   "protein": "30g",
+   "carbs": "63g",
+   "fat": "16g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "5 eggs",
+     "link": ""
+    },
+    {
+     "text": "2 tsp chili powder",
+     "link": ""
+    },
+    {
+     "text": "¼ cup red onion, diced",
+     "link": ""
+    },
+    {
+     "text": "1 bell pepper, diced",
+     "link": ""
+    },
+    {
+     "text": "1 jalapeño, seeded and minced",
+     "link": ""
+    },
+    {
+     "text": "30 oz canned black beans, no salt added (about 2 cans)",
+     "link": ""
+    },
+    {
+     "text": "½ cup shredded cheese",
+     "link": ""
+    },
+    {
+     "text": "1 tsp olive oil",
+     "link": ""
+    },
+    {
+     "text": "4 (8-inch) whole wheat flour tortillas",
+     "link": ""
+    },
+    {
+     "text": "⅓ cup nonfat plain yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup water",
+     "link": ""
+    },
+    {
+     "text": "¼ cup fresh cilantro, chopped",
+     "link": ""
+    },
+    {
+     "text": "1 lime, quartered",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper to taste",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat oil in a skillet over medium heat. Whisk eggs and set aside.",
+    "Cook onion, bell pepper, jalapeño, beans and chili powder for 3–5 minutes until softened. Transfer to a covered bowl.",
+    "Cook eggs over medium-low heat, stirring until firm, about 3–5 minutes. Add cheese and season.",
+    "Divide eggs, beans and vegetables among tortillas. Top with cilantro, yogurt and lime. Add toppings after reheating if storing."
+   ],
+   "note": "",
+   "searchText": "spicy matador breakfast burrito breakfast 5 eggs 2 tsp chili powder ¼ cup red onion, diced 1 bell pepper, diced 1 jalapeño, seeded and minced 30 oz canned black beans, no salt added (about 2 cans) ½ cup shredded cheese 1 tsp olive oil 4 (8-inch) whole wheat flour tortillas ⅓ cup nonfat plain yogurt ¼ cup water ¼ cup fresh cilantro, chopped 1 lime, quartered salt and pepper to taste"
+  },
+  {
+   "id": "rcp_yogurt_oats",
+   "name": "Honey-Yogurt and Oats",
+   "category": "Breakfast",
+   "meta": "1 serving · Prep 5 min · Total 5 min",
+   "kcal": "430 kcal",
+   "protein": "29g",
+   "carbs": "56g",
+   "fat": "12g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup nonfat Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup rolled oats",
+     "link": ""
+    },
+    {
+     "text": "1 cup berries, fresh or frozen",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp honey",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp cinnamon",
+     "link": ""
+    },
+    {
+     "text": "½ oz walnuts (about 6–8 halves)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Mix yogurt, cinnamon and honey in a jar or bowl.",
+    "Layer oats and berries over the yogurt.",
+    "Add walnuts just before serving, or after chilling overnight."
+   ],
+   "note": "",
+   "searchText": "honey-yogurt and oats breakfast 1 cup nonfat greek yogurt ¼ cup rolled oats 1 cup berries, fresh or frozen 1 tbsp honey ¼ tsp cinnamon ½ oz walnuts (about 6–8 halves)"
+  },
+  {
+   "id": "rcp_almond_banana",
+   "name": "Almond Butter and Banana Triangles",
+   "category": "Pre-workout",
+   "meta": "1 recipe / 1 serving · Prep 5 min · Total 10 min",
+   "kcal": "580 kcal",
+   "protein": "16g",
+   "carbs": "83g",
+   "fat": "25g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "2 Tbsp almond butter (or nut butter of choice)",
+     "link": ""
+    },
+    {
+     "text": "2 medium whole-wheat tortillas",
+     "link": ""
+    },
+    {
+     "text": "1 ripe banana, sliced",
+     "link": ""
+    },
+    {
+     "text": "1 tsp honey",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Warm tortillas in a skillet over medium heat.",
+    "Spread almond butter across both tortillas. Arrange banana on one and drizzle with honey.",
+    "Place the second tortilla on top to make a sandwich.",
+    "Cook until golden, about 2 minutes per side. Cut into quarters."
+   ],
+   "note": "",
+   "searchText": "almond butter and banana triangles pre-workout 2 tbsp almond butter (or nut butter of choice) 2 medium whole-wheat tortillas 1 ripe banana, sliced 1 tsp honey"
+  },
+  {
+   "id": "rcp_energy_bites",
+   "name": "Peanut Butter Energy Bites",
+   "category": "Post-workout",
+   "meta": "12–15 bites · Prep 25 min · Total 25 min",
+   "kcal": "170 kcal",
+   "protein": "5g",
+   "carbs": "20g",
+   "fat": "9g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup oats",
+     "link": ""
+    },
+    {
+     "text": "½ cup peanut butter",
+     "link": ""
+    },
+    {
+     "text": "½ cup unsweetened shredded coconut",
+     "link": ""
+    },
+    {
+     "text": "1 ripe banana",
+     "link": ""
+    },
+    {
+     "text": "1½ Tbsp chia seeds",
+     "link": ""
+    },
+    {
+     "text": "2 Tbsp cocoa powder",
+     "link": ""
+    },
+    {
+     "text": "6 pitted dates",
+     "link": ""
+    },
+    {
+     "text": "1–2 Tbsp honey",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "If dates are dry, soak in warm water for 10 minutes, then drain.",
+    "Blend dates until smooth; add a little reserved soaking water if needed.",
+    "Blend in oats and coconut.",
+    "Mash banana in a bowl, add the mixture and stir in chia seeds, cocoa, honey and peanut butter.",
+    "Form into balls and refrigerate in an airtight container for up to 1 week."
+   ],
+   "note": "",
+   "searchText": "peanut butter energy bites post-workout 1 cup oats ½ cup peanut butter ½ cup unsweetened shredded coconut 1 ripe banana 1½ tbsp chia seeds 2 tbsp cocoa powder 6 pitted dates 1–2 tbsp honey"
+  },
+  {
+   "id": "rcp_granola_bars",
+   "name": "Pomegranate + Pistachio Granola Bars",
+   "category": "Post-workout",
+   "meta": "12 bars · Prep 15 min · Total 75 min",
+   "kcal": "270 kcal",
+   "protein": "8g",
+   "carbs": "25g",
+   "fat": "17g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "2 cups quick-cooking oats",
+     "link": ""
+    },
+    {
+     "text": "1 cup peanut butter",
+     "link": ""
+    },
+    {
+     "text": "½ cup shelled pistachios",
+     "link": ""
+    },
+    {
+     "text": "½ cup dark chocolate chips",
+     "link": ""
+    },
+    {
+     "text": "2 Tbsp honey",
+     "link": ""
+    },
+    {
+     "text": "½ cup pomegranate arils",
+     "link": ""
+    },
+    {
+     "text": "1 tsp cinnamon",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Mix oats, peanut butter, pistachios, chocolate chips, honey, pomegranate and cinnamon.",
+    "Line an 8×8-inch pan with parchment and press mixture into an even layer.",
+    "Cover and refrigerate 30–60 minutes until firm.",
+    "Slice into bars and wrap individually for refrigerator or freezer storage."
+   ],
+   "note": "Dried cranberries or cherries can replace pomegranate arils.",
+   "searchText": "pomegranate + pistachio granola bars post-workout 2 cups quick-cooking oats 1 cup peanut butter ½ cup shelled pistachios ½ cup dark chocolate chips 2 tbsp honey ½ cup pomegranate arils 1 tsp cinnamon"
+  },
+  {
+   "id": "rcp_recovery_smoothie",
+   "name": "Recovery Smoothie",
+   "category": "Post-workout",
+   "meta": "2 servings · Prep 5 min · Total 5 min",
+   "kcal": "220 kcal",
+   "protein": "26g",
+   "carbs": "22g",
+   "fat": "4g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup nonfat plain Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen blueberries",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen blackberries",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen strawberries",
+     "link": ""
+    },
+    {
+     "text": "½ cup tart cherry juice",
+     "link": ""
+    },
+    {
+     "text": "2 cups water",
+     "link": ""
+    },
+    {
+     "text": "2 cups spinach",
+     "link": ""
+    },
+    {
+     "text": "30 g protein powder",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp hulled hemp hearts",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Blend all ingredients until smooth. Add extra liquid if needed."
+   ],
+   "note": "Cookbook nutrition is listed per smoothie.",
+   "searchText": "recovery smoothie post-workout 1 cup nonfat plain greek yogurt ¼ cup frozen blueberries ¼ cup frozen blackberries ¼ cup frozen strawberries ½ cup tart cherry juice 2 cups water 2 cups spinach 30 g protein powder 1 tbsp hulled hemp hearts"
+  },
+  {
+   "id": "rcp_chicken_salad",
+   "name": "Herbed Greek Yogurt Chicken Salad",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 20 min · Total 20 min",
+   "kcal": "230 kcal",
+   "protein": "38g",
+   "carbs": "10g",
+   "fat": "5g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "8 oz cooked, shredded chicken breast",
+     "link": ""
+    },
+    {
+     "text": "1 cup nonfat plain Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "½ cucumber, shredded",
+     "link": ""
+    },
+    {
+     "text": "¼ cup chopped chives",
+     "link": ""
+    },
+    {
+     "text": "¼ cup chopped dill",
+     "link": ""
+    },
+    {
+     "text": "1 clove garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "Juice of ½ lemon",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp red wine vinegar",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper to taste",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Grate cucumber and squeeze out excess liquid with a paper towel.",
+    "Combine chicken, yogurt, cucumber, chives, dill, garlic, lemon juice and vinegar. Mix well.",
+    "Season with salt and pepper. Serve in salads, sandwiches or with crackers."
+   ],
+   "note": "",
+   "searchText": "herbed greek yogurt chicken salad lunch & dinner 8 oz cooked, shredded chicken breast 1 cup nonfat plain greek yogurt ½ cucumber, shredded ¼ cup chopped chives ¼ cup chopped dill 1 clove garlic, minced juice of ½ lemon 1 tbsp red wine vinegar salt and pepper to taste"
+  },
+  {
+   "id": "rcp_pesto_chicken",
+   "name": "Quick Pesto Chicken",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 5 min · Total 35 min",
+   "kcal": "350 kcal",
+   "protein": "44g",
+   "carbs": "10g",
+   "fat": "16g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "8 oz chicken breast",
+     "link": "https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129"
+    },
+    {
+     "text": "1 oz pesto",
+     "link": ""
+    },
+    {
+     "text": "2 large tomatoes, sliced",
+     "link": ""
+    },
+    {
+     "text": "2 oz mozzarella cheese",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 375°F and spray a baking dish with non-stick oil.",
+    "Layer chicken breast with pesto, tomato and mozzarella.",
+    "Bake 25–30 minutes, until chicken reaches 165°F internally."
+   ],
+   "note": "",
+   "searchText": "quick pesto chicken lunch & dinner 8 oz chicken breast 1 oz pesto 2 large tomatoes, sliced 2 oz mozzarella cheese"
+  },
+  {
+   "id": "rcp_stuffed_peppers",
+   "name": "Protein + Veggie Stuffed Bell Peppers",
+   "category": "Lunch & dinner",
+   "meta": "4 servings · Prep 30 min · Total 90 min",
+   "kcal": "410 kcal",
+   "protein": "19g",
+   "carbs": "45g",
+   "fat": "17g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup dry quinoa",
+     "link": ""
+    },
+    {
+     "text": "4 large bell peppers",
+     "link": ""
+    },
+    {
+     "text": "2 carrots, minced",
+     "link": ""
+    },
+    {
+     "text": "1 celery stalk, minced",
+     "link": ""
+    },
+    {
+     "text": "5 white button mushrooms, minced",
+     "link": ""
+    },
+    {
+     "text": "¼ white onion, minced",
+     "link": ""
+    },
+    {
+     "text": "2 cloves garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp olive oil",
+     "link": ""
+    },
+    {
+     "text": "8 oz firm tofu, crumbled",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp dried oregano",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper",
+     "link": ""
+    },
+    {
+     "text": "1 cup feta cheese (optional)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 375°F. Rinse quinoa and simmer in 2 cups water for 15–20 minutes; cool.",
+    "Mince vegetables and remove tops and seeds from peppers.",
+    "Cook carrots, celery, mushrooms, onion and garlic in olive oil until softened, adding water as needed.",
+    "Cook tofu in a skillet for 6–8 minutes (the cookbook notes ground turkey or chicken can be substituted).",
+    "Mix quinoa, protein and vegetables; season with oregano, salt and pepper. Stuff peppers and top with optional feta.",
+    "Place peppers in a baking dish with 1 cup water, cover with sprayed foil and bake 45–60 minutes until tender."
+   ],
+   "note": "",
+   "searchText": "protein + veggie stuffed bell peppers lunch & dinner 1 cup dry quinoa 4 large bell peppers 2 carrots, minced 1 celery stalk, minced 5 white button mushrooms, minced ¼ white onion, minced 2 cloves garlic, minced 1 tbsp olive oil 8 oz firm tofu, crumbled 1 tbsp dried oregano salt and pepper 1 cup feta cheese (optional)"
+  },
+  {
+   "id": "rcp_blueberry_oats",
+   "name": "Overnight Blueberry Chia Oats",
+   "category": "Breakfast",
+   "meta": "1 serving · Prep 5 min · Total 5 min (plus overnight chill)",
+   "kcal": "408 kcal (est.)",
+   "protein": "23g",
+   "carbs": "60g",
+   "fat": "10g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1/2 cup rolled oats (40g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 cup plain low-fat Greek yogurt (113g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 cup 1% low-fat milk (122g)",
+     "link": ""
+    },
+    {
+     "text": "1 tablespoon chia seeds (12g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 cup fresh or frozen blueberries (74g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon honey (7g)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Add oats, chia seeds, Greek yogurt, and milk into a jar or container.",
+    "Stir thoroughly until ingredients are fully combined.",
+    "Top with blueberries and drizzle with honey.",
+    "Seal container and chill in the refrigerator overnight or for at least 4 hours."
+   ],
+   "note": "",
+   "searchText": "overnight blueberry chia oats breakfast 1/2 cup rolled oats (40g) 1/2 cup plain low-fat greek yogurt (113g) 1/2 cup 1% low-fat milk (122g) 1 tablespoon chia seeds (12g) 1/2 cup fresh or frozen blueberries (74g) 1 teaspoon honey (7g)"
+  },
+  {
+   "id": "rcp_scrambled_greens",
+   "name": "Scrambled Eggs with Spinach & Toast",
+   "category": "Breakfast",
+   "meta": "1 serving · Prep 5 min · Total 10 min",
+   "kcal": "302 kcal (est.)",
+   "protein": "19g",
+   "carbs": "22g",
+   "fat": "16g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "2 large whole eggs (100g)",
+     "link": ""
+    },
+    {
+     "text": "2 tablespoons 1% low-fat milk (30g)",
+     "link": ""
+    },
+    {
+     "text": "1 cup fresh baby spinach (30g)",
+     "link": ""
+    },
+    {
+     "text": "1 slice 100% whole wheat bread (40g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon olive oil (4.5g)",
+     "link": ""
+    },
+    {
+     "text": "Pinch of salt and black pepper",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat olive oil in a non-stick skillet over medium-low heat. Add spinach and sauté 1 minute until wilted.",
+    "Whisk eggs, milk, salt, and pepper in a small bowl.",
+    "Pour eggs into the skillet with spinach, stirring gently until soft curds form.",
+    "Toast the whole wheat bread and serve immediately alongside the warm eggs."
+   ],
+   "note": "",
+   "searchText": "scrambled eggs with spinach & toast breakfast 2 large whole eggs (100g) 2 tablespoons 1% low-fat milk (30g) 1 cup fresh baby spinach (30g) 1 slice 100% whole wheat bread (40g) 1 teaspoon olive oil (4.5g) pinch of salt and black pepper"
+  },
+  {
+   "id": "rcp_banana_oatmeal",
+   "name": "Stovetop Banana Cinnamon Oatmeal",
+   "category": "Breakfast",
+   "meta": "1 serving · Prep 3 min · Total 8 min",
+   "kcal": "325 kcal (est.)",
+   "protein": "8g",
+   "carbs": "57g",
+   "fat": "10g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1/2 cup rolled oats (40g)",
+     "link": ""
+    },
+    {
+     "text": "1 cup water (240g)",
+     "link": ""
+    },
+    {
+     "text": "1 medium banana, sliced (118g)",
+     "link": ""
+    },
+    {
+     "text": "1 tablespoon crushed walnuts (10g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 teaspoon ground cinnamon (1.3g)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Bring water to a boil in a small saucepan over medium heat.",
+    "Stir in rolled oats and lower heat to a gentle simmer.",
+    "Add sliced banana and cinnamon, stirring occasionally for 4 to 5 minutes until thick.",
+    "Pour into a bowl and garnish with crushed walnuts."
+   ],
+   "note": "",
+   "searchText": "stovetop banana cinnamon oatmeal breakfast 1/2 cup rolled oats (40g) 1 cup water (240g) 1 medium banana, sliced (118g) 1 tablespoon crushed walnuts (10g) 1/2 teaspoon ground cinnamon (1.3g)"
+  },
+  {
+   "id": "rcp_chickpea_tuna",
+   "name": "Mediterranean Chickpea & Tuna Bowl",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 10 min · Total 10 min",
+   "kcal": "293 kcal (est.)",
+   "protein": "22g",
+   "carbs": "29g",
+   "fat": "10g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 can chunk light tuna in water, drained (142g)",
+     "link": ""
+    },
+    {
+     "text": "1 can chickpeas, rinsed and drained (240g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 English cucumber, diced (150g)",
+     "link": ""
+    },
+    {
+     "text": "1 cup cherry tomatoes, halved (150g)",
+     "link": ""
+    },
+    {
+     "text": "1 tablespoon extra virgin olive oil (14g)",
+     "link": ""
+    },
+    {
+     "text": "1 tablespoon fresh lemon juice (15g)",
+     "link": ""
+    },
+    {
+     "text": "1/4 teaspoon dried oregano, salt, and black pepper",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "In a mixing bowl, combine rinsed chickpeas, flaked tuna, cucumber, and cherry tomatoes.",
+    "Drizzle olive oil and fresh lemon juice over the top.",
+    "Season with oregano, salt, and black pepper.",
+    "Toss lightly to coat and divide into two equal servings."
+   ],
+   "note": "",
+   "searchText": "mediterranean chickpea & tuna bowl lunch & dinner 1 can chunk light tuna in water, drained (142g) 1 can chickpeas, rinsed and drained (240g) 1/2 english cucumber, diced (150g) 1 cup cherry tomatoes, halved (150g) 1 tablespoon extra virgin olive oil (14g) 1 tablespoon fresh lemon juice (15g) 1/4 teaspoon dried oregano, salt, and black pepper"
+  },
+  {
+   "id": "rcp_sheet_pan_chicken",
+   "name": "Sheet Pan Chicken, Sweet Potato & Broccoli",
+   "category": "Lunch & dinner",
+   "meta": "3 servings · Prep 15 min · Total 40 min",
+   "kcal": "328 kcal (est.)",
+   "protein": "38g",
+   "carbs": "24g",
+   "fat": "9g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 lb boneless skinless chicken breast, cubed (454g)",
+     "link": ""
+    },
+    {
+     "text": "2 medium sweet potatoes, cubed (260g)",
+     "link": ""
+    },
+    {
+     "text": "3 cups raw broccoli florets (273g)",
+     "link": ""
+    },
+    {
+     "text": "1.5 tablespoons olive oil (21g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon garlic powder",
+     "link": ""
+    },
+    {
+     "text": "1/2 teaspoon paprika, salt, and black pepper",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 400°F (205°C) and line a sheet pan with parchment.",
+    "Toss sweet potatoes with half the olive oil, salt, and pepper. Roast for 15 minutes.",
+    "Toss chicken and broccoli with remaining oil, garlic powder, and paprika.",
+    "Add chicken and broccoli to the sheet pan and roast for 18 to 20 minutes until cooked through.",
+    "Divide evenly into three portions."
+   ],
+   "note": "",
+   "searchText": "sheet pan chicken, sweet potato & broccoli lunch & dinner 1 lb boneless skinless chicken breast, cubed (454g) 2 medium sweet potatoes, cubed (260g) 3 cups raw broccoli florets (273g) 1.5 tablespoons olive oil (21g) 1 teaspoon garlic powder 1/2 teaspoon paprika, salt, and black pepper"
+  },
+  {
+   "id": "rcp_lentil_dahl",
+   "name": "Comforting Red Lentil Dahl with Brown Rice",
+   "category": "Lunch & dinner",
+   "meta": "4 servings · Prep 10 min · Total 30 min",
+   "kcal": "425 kcal (est.)",
+   "protein": "18g",
+   "carbs": "82g",
+   "fat": "4g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup dry red split lentils, rinsed (190g)",
+     "link": ""
+    },
+    {
+     "text": "1 medium yellow onion, diced (110g)",
+     "link": ""
+    },
+    {
+     "text": "2 cloves garlic, minced (6g)",
+     "link": ""
+    },
+    {
+     "text": "1 tablespoon fresh grated ginger (6g)",
+     "link": ""
+    },
+    {
+     "text": "1 can diced tomatoes with juice (400g)",
+     "link": ""
+    },
+    {
+     "text": "2.5 cups low-sodium broth (600g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon olive oil (4.5g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon turmeric and 1 teaspoon cumin",
+     "link": ""
+    },
+    {
+     "text": "4 cups cooked brown rice (780g)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat olive oil in a pot over medium heat. Sauté onion, garlic, and ginger for 3 minutes.",
+    "Add turmeric and cumin, stirring for 30 seconds until fragrant.",
+    "Add red lentils, diced tomatoes, and broth. Bring to a boil.",
+    "Reduce heat to low, cover, and simmer for 20 minutes until lentils soften into a thick dahl.",
+    "Divide into four bowls and serve over 1 cup warm cooked brown rice per portion."
+   ],
+   "note": "",
+   "searchText": "comforting red lentil dahl with brown rice lunch & dinner 1 cup dry red split lentils, rinsed (190g) 1 medium yellow onion, diced (110g) 2 cloves garlic, minced (6g) 1 tablespoon fresh grated ginger (6g) 1 can diced tomatoes with juice (400g) 2.5 cups low-sodium broth (600g) 1 teaspoon olive oil (4.5g) 1 teaspoon turmeric and 1 teaspoon cumin 4 cups cooked brown rice (780g)"
+  },
+  {
+   "id": "rcp_black_bean_bowl",
+   "name": "Quick Black Bean & Brown Rice Bowl",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 5 min · Total 10 min",
+   "kcal": "342 kcal (est.)",
+   "protein": "13g",
+   "carbs": "66g",
+   "fat": "5g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 can black beans, rinsed and drained (240g)",
+     "link": ""
+    },
+    {
+     "text": "1.5 cups cooked brown rice (290g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 cup canned yellow sweet corn, drained (82g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 cup jarred salsa (120g)",
+     "link": ""
+    },
+    {
+     "text": "1/4 medium Hass avocado, diced (34g)",
+     "link": ""
+    },
+    {
+     "text": "1/2 teaspoon ground cumin",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "In a saucepan or microwave bowl, warm the black beans, corn, and ground cumin together.",
+    "Divide warm cooked brown rice between two meal bowls.",
+    "Layer warmed beans and corn on top of the rice.",
+    "Top each bowl with salsa and diced avocado."
+   ],
+   "note": "",
+   "searchText": "quick black bean & brown rice bowl lunch & dinner 1 can black beans, rinsed and drained (240g) 1.5 cups cooked brown rice (290g) 1/2 cup canned yellow sweet corn, drained (82g) 1/2 cup jarred salsa (120g) 1/4 medium hass avocado, diced (34g) 1/2 teaspoon ground cumin"
+  },
+  {
+   "id": "rcp_turkey_skillet",
+   "name": "Turkey & Vegetable Skillet",
+   "category": "Lunch & dinner",
+   "meta": "3 servings · Prep 10 min · Total 20 min",
+   "kcal": "289 kcal (est.)",
+   "protein": "32g",
+   "carbs": "10g",
+   "fat": "15g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 lb 93% lean ground turkey (454g)",
+     "link": ""
+    },
+    {
+     "text": "1 medium zucchini, chopped (196g)",
+     "link": ""
+    },
+    {
+     "text": "1 medium bell pepper, chopped (119g)",
+     "link": ""
+    },
+    {
+     "text": "1 cup canned crushed tomatoes (244g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon olive oil (4.5g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon dried Italian herbs, salt, and pepper",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat olive oil in a skillet over medium-high heat.",
+    "Add ground turkey, breaking up with a spoon until browned (about 6 minutes).",
+    "Add chopped zucchini and bell pepper; cook 4 minutes until tender.",
+    "Pour in crushed tomatoes and Italian herbs; simmer for 3 minutes.",
+    "Divide evenly across three meal containers."
+   ],
+   "note": "",
+   "searchText": "turkey & vegetable skillet lunch & dinner 1 lb 93% lean ground turkey (454g) 1 medium zucchini, chopped (196g) 1 medium bell pepper, chopped (119g) 1 cup canned crushed tomatoes (244g) 1 teaspoon olive oil (4.5g) 1 teaspoon dried italian herbs, salt, and pepper"
+  },
+  {
+   "id": "rcp_pasta_fagioli",
+   "name": "One-Pot Rustic Pasta e Fagioli",
+   "category": "Lunch & dinner",
+   "meta": "4 servings · Prep 10 min · Total 25 min",
+   "kcal": "209 kcal (est.)",
+   "protein": "11g",
+   "carbs": "40g",
+   "fat": "3g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup dry small whole wheat pasta (110g)",
+     "link": ""
+    },
+    {
+     "text": "1 can cannellini beans, rinsed and drained (240g)",
+     "link": ""
+    },
+    {
+     "text": "1 can crushed tomatoes with juice (400g)",
+     "link": ""
+    },
+    {
+     "text": "3 cups low-sodium vegetable broth (720g)",
+     "link": ""
+    },
+    {
+     "text": "1 medium carrot, diced (61g)",
+     "link": ""
+    },
+    {
+     "text": "1 stalk celery, diced (40g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon olive oil (4.5g)",
+     "link": ""
+    },
+    {
+     "text": "1 teaspoon dried oregano and thyme",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat olive oil in a soup pot over medium heat. Sauté diced carrot and celery for 4 minutes.",
+    "Add tomatoes, broth, oregano, and thyme. Bring liquid to a rolling boil.",
+    "Stir in dry pasta and cook uncovered for 8 to 9 minutes until al dente.",
+    "Add drained cannellini beans, stirring for 2 minutes to warm through.",
+    "Divide into four soup bowls."
+   ],
+   "note": "",
+   "searchText": "one-pot rustic pasta e fagioli lunch & dinner 1 cup dry small whole wheat pasta (110g) 1 can cannellini beans, rinsed and drained (240g) 1 can crushed tomatoes with juice (400g) 3 cups low-sodium vegetable broth (720g) 1 medium carrot, diced (61g) 1 stalk celery, diced (40g) 1 teaspoon olive oil (4.5g) 1 teaspoon dried oregano and thyme"
+  }
+ ],
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

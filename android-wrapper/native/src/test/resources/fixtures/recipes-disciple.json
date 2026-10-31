@@ -1,0 +1,594 @@
+{
+ "protocol": 1,
+ "webSessionId": "recipes-fixture",
+ "sequence": 1,
+ "categories": [
+  {
+   "value": "all",
+   "label": "All recipes"
+  },
+  {
+   "value": "Breakfast",
+   "label": "Breakfast"
+  },
+  {
+   "value": "Pre-workout",
+   "label": "Pre-workout"
+  },
+  {
+   "value": "Post-workout",
+   "label": "Post-workout"
+  },
+  {
+   "value": "Lunch & dinner",
+   "label": "Lunch & dinner"
+  }
+ ],
+ "filter": {
+  "query": "",
+  "category": "all",
+  "revision": 1
+ },
+ "recipes": [
+  {
+   "id": "rcp_egg_muffins",
+   "name": "Egg Muffins with Tomato, Basil and Spinach",
+   "category": "Breakfast",
+   "meta": "12 muffins · Prep 15 min · Total 35 min",
+   "kcal": "100 kcal",
+   "protein": "8g",
+   "carbs": "2g",
+   "fat": "6g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "12 eggs",
+     "link": ""
+    },
+    {
+     "text": "¼ cup onion, diced",
+     "link": ""
+    },
+    {
+     "text": "2 cloves garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp dried basil",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp salt",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp pepper",
+     "link": ""
+    },
+    {
+     "text": "2 cups spinach, chopped",
+     "link": ""
+    },
+    {
+     "text": "12 cherry tomatoes, chopped",
+     "link": ""
+    },
+    {
+     "text": "1 cup shredded mozzarella",
+     "link": ""
+    },
+    {
+     "text": "Olive oil or vegetable spray to coat pan",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 350°F and lightly oil a 12-cup muffin pan.",
+    "Whisk eggs with salt, pepper and basil.",
+    "Divide egg mixture between muffin cups, no more than halfway full.",
+    "Add onion, garlic, spinach, tomato and mozzarella evenly.",
+    "Bake uncovered for 15–20 minutes, until eggs are set."
+   ],
+   "note": "Make ahead and refrigerate or freeze; reheat before serving.",
+   "searchText": "egg muffins with tomato, basil and spinach breakfast 12 eggs ¼ cup onion, diced 2 cloves garlic, minced 1 tbsp dried basil ¼ tsp salt ¼ tsp pepper 2 cups spinach, chopped 12 cherry tomatoes, chopped 1 cup shredded mozzarella olive oil or vegetable spray to coat pan"
+  },
+  {
+   "id": "rcp_breakfast_burrito",
+   "name": "Spicy Matador Breakfast Burrito",
+   "category": "Breakfast",
+   "meta": "4 burritos · Prep 10 min · Total 25 min",
+   "kcal": "510 kcal",
+   "protein": "30g",
+   "carbs": "63g",
+   "fat": "16g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "5 eggs",
+     "link": ""
+    },
+    {
+     "text": "2 tsp chili powder",
+     "link": ""
+    },
+    {
+     "text": "¼ cup red onion, diced",
+     "link": ""
+    },
+    {
+     "text": "1 bell pepper, diced",
+     "link": ""
+    },
+    {
+     "text": "1 jalapeño, seeded and minced",
+     "link": ""
+    },
+    {
+     "text": "30 oz canned black beans, no salt added (about 2 cans)",
+     "link": ""
+    },
+    {
+     "text": "½ cup shredded cheese",
+     "link": ""
+    },
+    {
+     "text": "1 tsp olive oil",
+     "link": ""
+    },
+    {
+     "text": "4 (8-inch) whole wheat flour tortillas",
+     "link": ""
+    },
+    {
+     "text": "⅓ cup nonfat plain yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup water",
+     "link": ""
+    },
+    {
+     "text": "¼ cup fresh cilantro, chopped",
+     "link": ""
+    },
+    {
+     "text": "1 lime, quartered",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper to taste",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Heat oil in a skillet over medium heat. Whisk eggs and set aside.",
+    "Cook onion, bell pepper, jalapeño, beans and chili powder for 3–5 minutes until softened. Transfer to a covered bowl.",
+    "Cook eggs over medium-low heat, stirring until firm, about 3–5 minutes. Add cheese and season.",
+    "Divide eggs, beans and vegetables among tortillas. Top with cilantro, yogurt and lime. Add toppings after reheating if storing."
+   ],
+   "note": "",
+   "searchText": "spicy matador breakfast burrito breakfast 5 eggs 2 tsp chili powder ¼ cup red onion, diced 1 bell pepper, diced 1 jalapeño, seeded and minced 30 oz canned black beans, no salt added (about 2 cans) ½ cup shredded cheese 1 tsp olive oil 4 (8-inch) whole wheat flour tortillas ⅓ cup nonfat plain yogurt ¼ cup water ¼ cup fresh cilantro, chopped 1 lime, quartered salt and pepper to taste"
+  },
+  {
+   "id": "rcp_yogurt_oats",
+   "name": "Honey-Yogurt and Oats",
+   "category": "Breakfast",
+   "meta": "1 serving · Prep 5 min · Total 5 min",
+   "kcal": "430 kcal",
+   "protein": "29g",
+   "carbs": "56g",
+   "fat": "12g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup nonfat Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup rolled oats",
+     "link": ""
+    },
+    {
+     "text": "1 cup berries, fresh or frozen",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp honey",
+     "link": ""
+    },
+    {
+     "text": "¼ tsp cinnamon",
+     "link": ""
+    },
+    {
+     "text": "½ oz walnuts (about 6–8 halves)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Mix yogurt, cinnamon and honey in a jar or bowl.",
+    "Layer oats and berries over the yogurt.",
+    "Add walnuts just before serving, or after chilling overnight."
+   ],
+   "note": "",
+   "searchText": "honey-yogurt and oats breakfast 1 cup nonfat greek yogurt ¼ cup rolled oats 1 cup berries, fresh or frozen 1 tbsp honey ¼ tsp cinnamon ½ oz walnuts (about 6–8 halves)"
+  },
+  {
+   "id": "rcp_almond_banana",
+   "name": "Almond Butter and Banana Triangles",
+   "category": "Pre-workout",
+   "meta": "1 recipe / 1 serving · Prep 5 min · Total 10 min",
+   "kcal": "580 kcal",
+   "protein": "16g",
+   "carbs": "83g",
+   "fat": "25g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "2 Tbsp almond butter (or nut butter of choice)",
+     "link": ""
+    },
+    {
+     "text": "2 medium whole-wheat tortillas",
+     "link": ""
+    },
+    {
+     "text": "1 ripe banana, sliced",
+     "link": ""
+    },
+    {
+     "text": "1 tsp honey",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Warm tortillas in a skillet over medium heat.",
+    "Spread almond butter across both tortillas. Arrange banana on one and drizzle with honey.",
+    "Place the second tortilla on top to make a sandwich.",
+    "Cook until golden, about 2 minutes per side. Cut into quarters."
+   ],
+   "note": "",
+   "searchText": "almond butter and banana triangles pre-workout 2 tbsp almond butter (or nut butter of choice) 2 medium whole-wheat tortillas 1 ripe banana, sliced 1 tsp honey"
+  },
+  {
+   "id": "rcp_energy_bites",
+   "name": "Peanut Butter Energy Bites",
+   "category": "Post-workout",
+   "meta": "12–15 bites · Prep 25 min · Total 25 min",
+   "kcal": "170 kcal",
+   "protein": "5g",
+   "carbs": "20g",
+   "fat": "9g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup oats",
+     "link": ""
+    },
+    {
+     "text": "½ cup peanut butter",
+     "link": ""
+    },
+    {
+     "text": "½ cup unsweetened shredded coconut",
+     "link": ""
+    },
+    {
+     "text": "1 ripe banana",
+     "link": ""
+    },
+    {
+     "text": "1½ Tbsp chia seeds",
+     "link": ""
+    },
+    {
+     "text": "2 Tbsp cocoa powder",
+     "link": ""
+    },
+    {
+     "text": "6 pitted dates",
+     "link": ""
+    },
+    {
+     "text": "1–2 Tbsp honey",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "If dates are dry, soak in warm water for 10 minutes, then drain.",
+    "Blend dates until smooth; add a little reserved soaking water if needed.",
+    "Blend in oats and coconut.",
+    "Mash banana in a bowl, add the mixture and stir in chia seeds, cocoa, honey and peanut butter.",
+    "Form into balls and refrigerate in an airtight container for up to 1 week."
+   ],
+   "note": "",
+   "searchText": "peanut butter energy bites post-workout 1 cup oats ½ cup peanut butter ½ cup unsweetened shredded coconut 1 ripe banana 1½ tbsp chia seeds 2 tbsp cocoa powder 6 pitted dates 1–2 tbsp honey"
+  },
+  {
+   "id": "rcp_granola_bars",
+   "name": "Pomegranate + Pistachio Granola Bars",
+   "category": "Post-workout",
+   "meta": "12 bars · Prep 15 min · Total 75 min",
+   "kcal": "270 kcal",
+   "protein": "8g",
+   "carbs": "25g",
+   "fat": "17g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "2 cups quick-cooking oats",
+     "link": ""
+    },
+    {
+     "text": "1 cup peanut butter",
+     "link": ""
+    },
+    {
+     "text": "½ cup shelled pistachios",
+     "link": ""
+    },
+    {
+     "text": "½ cup dark chocolate chips",
+     "link": ""
+    },
+    {
+     "text": "2 Tbsp honey",
+     "link": ""
+    },
+    {
+     "text": "½ cup pomegranate arils",
+     "link": ""
+    },
+    {
+     "text": "1 tsp cinnamon",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Mix oats, peanut butter, pistachios, chocolate chips, honey, pomegranate and cinnamon.",
+    "Line an 8×8-inch pan with parchment and press mixture into an even layer.",
+    "Cover and refrigerate 30–60 minutes until firm.",
+    "Slice into bars and wrap individually for refrigerator or freezer storage."
+   ],
+   "note": "Dried cranberries or cherries can replace pomegranate arils.",
+   "searchText": "pomegranate + pistachio granola bars post-workout 2 cups quick-cooking oats 1 cup peanut butter ½ cup shelled pistachios ½ cup dark chocolate chips 2 tbsp honey ½ cup pomegranate arils 1 tsp cinnamon"
+  },
+  {
+   "id": "rcp_recovery_smoothie",
+   "name": "Recovery Smoothie",
+   "category": "Post-workout",
+   "meta": "2 servings · Prep 5 min · Total 5 min",
+   "kcal": "220 kcal",
+   "protein": "26g",
+   "carbs": "22g",
+   "fat": "4g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup nonfat plain Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen blueberries",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen blackberries",
+     "link": ""
+    },
+    {
+     "text": "¼ cup frozen strawberries",
+     "link": ""
+    },
+    {
+     "text": "½ cup tart cherry juice",
+     "link": ""
+    },
+    {
+     "text": "2 cups water",
+     "link": ""
+    },
+    {
+     "text": "2 cups spinach",
+     "link": ""
+    },
+    {
+     "text": "30 g protein powder",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp hulled hemp hearts",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Blend all ingredients until smooth. Add extra liquid if needed."
+   ],
+   "note": "Cookbook nutrition is listed per smoothie.",
+   "searchText": "recovery smoothie post-workout 1 cup nonfat plain greek yogurt ¼ cup frozen blueberries ¼ cup frozen blackberries ¼ cup frozen strawberries ½ cup tart cherry juice 2 cups water 2 cups spinach 30 g protein powder 1 tbsp hulled hemp hearts"
+  },
+  {
+   "id": "rcp_chicken_salad",
+   "name": "Herbed Greek Yogurt Chicken Salad",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 20 min · Total 20 min",
+   "kcal": "230 kcal",
+   "protein": "38g",
+   "carbs": "10g",
+   "fat": "5g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "8 oz cooked, shredded chicken breast",
+     "link": ""
+    },
+    {
+     "text": "1 cup nonfat plain Greek yogurt",
+     "link": ""
+    },
+    {
+     "text": "½ cucumber, shredded",
+     "link": ""
+    },
+    {
+     "text": "¼ cup chopped chives",
+     "link": ""
+    },
+    {
+     "text": "¼ cup chopped dill",
+     "link": ""
+    },
+    {
+     "text": "1 clove garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "Juice of ½ lemon",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp red wine vinegar",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper to taste",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Grate cucumber and squeeze out excess liquid with a paper towel.",
+    "Combine chicken, yogurt, cucumber, chives, dill, garlic, lemon juice and vinegar. Mix well.",
+    "Season with salt and pepper. Serve in salads, sandwiches or with crackers."
+   ],
+   "note": "",
+   "searchText": "herbed greek yogurt chicken salad lunch & dinner 8 oz cooked, shredded chicken breast 1 cup nonfat plain greek yogurt ½ cucumber, shredded ¼ cup chopped chives ¼ cup chopped dill 1 clove garlic, minced juice of ½ lemon 1 tbsp red wine vinegar salt and pepper to taste"
+  },
+  {
+   "id": "rcp_pesto_chicken",
+   "name": "Quick Pesto Chicken",
+   "category": "Lunch & dinner",
+   "meta": "2 servings · Prep 5 min · Total 35 min",
+   "kcal": "350 kcal",
+   "protein": "44g",
+   "carbs": "10g",
+   "fat": "16g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "8 oz chicken breast",
+     "link": "https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129"
+    },
+    {
+     "text": "1 oz pesto",
+     "link": ""
+    },
+    {
+     "text": "2 large tomatoes, sliced",
+     "link": ""
+    },
+    {
+     "text": "2 oz mozzarella cheese",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 375°F and spray a baking dish with non-stick oil.",
+    "Layer chicken breast with pesto, tomato and mozzarella.",
+    "Bake 25–30 minutes, until chicken reaches 165°F internally."
+   ],
+   "note": "",
+   "searchText": "quick pesto chicken lunch & dinner 8 oz chicken breast 1 oz pesto 2 large tomatoes, sliced 2 oz mozzarella cheese"
+  },
+  {
+   "id": "rcp_stuffed_peppers",
+   "name": "Protein + Veggie Stuffed Bell Peppers",
+   "category": "Lunch & dinner",
+   "meta": "4 servings · Prep 30 min · Total 90 min",
+   "kcal": "410 kcal",
+   "protein": "19g",
+   "carbs": "45g",
+   "fat": "17g",
+   "footnote": "Nutrition per serving, as listed in the cookbook.",
+   "ingredients": [
+    {
+     "text": "1 cup dry quinoa",
+     "link": ""
+    },
+    {
+     "text": "4 large bell peppers",
+     "link": ""
+    },
+    {
+     "text": "2 carrots, minced",
+     "link": ""
+    },
+    {
+     "text": "1 celery stalk, minced",
+     "link": ""
+    },
+    {
+     "text": "5 white button mushrooms, minced",
+     "link": ""
+    },
+    {
+     "text": "¼ white onion, minced",
+     "link": ""
+    },
+    {
+     "text": "2 cloves garlic, minced",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp olive oil",
+     "link": ""
+    },
+    {
+     "text": "8 oz firm tofu, crumbled",
+     "link": ""
+    },
+    {
+     "text": "1 Tbsp dried oregano",
+     "link": ""
+    },
+    {
+     "text": "Salt and pepper",
+     "link": ""
+    },
+    {
+     "text": "1 cup feta cheese (optional)",
+     "link": ""
+    }
+   ],
+   "steps": [
+    "Preheat oven to 375°F. Rinse quinoa and simmer in 2 cups water for 15–20 minutes; cool.",
+    "Mince vegetables and remove tops and seeds from peppers.",
+    "Cook carrots, celery, mushrooms, onion and garlic in olive oil until softened, adding water as needed.",
+    "Cook tofu in a skillet for 6–8 minutes (the cookbook notes ground turkey or chicken can be substituted).",
+    "Mix quinoa, protein and vegetables; season with oregano, salt and pepper. Stuff peppers and top with optional feta.",
+    "Place peppers in a baking dish with 1 cup water, cover with sprayed foil and bake 45–60 minutes until tender."
+   ],
+   "note": "",
+   "searchText": "protein + veggie stuffed bell peppers lunch & dinner 1 cup dry quinoa 4 large bell peppers 2 carrots, minced 1 celery stalk, minced 5 white button mushrooms, minced ¼ white onion, minced 2 cloves garlic, minced 1 tbsp olive oil 8 oz firm tofu, crumbled 1 tbsp dried oregano salt and pepper 1 cup feta cheese (optional)"
+  }
+ ],
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

@@ -182,33 +182,24 @@ function mediaAudioButtons(x){
 }
 
 
+/* which recipes the page shows and how a card words them; the native Recipes projection (50-native-recipes.js) reads the same */
+function recipeHaystack(r){return [r.n,r.cat,...r.ingredients].join(' ').toLowerCase()}
+function recipeHits(q,cat){q=q.trim().toLowerCase();return RECIPES.filter(r=>(!r.cls||r.cls===state.classId)&&(cat==='all'||r.cat===cat)&&(!q||recipeHaystack(r).includes(q)))}
+function recipeCard(r){return {meta:r.yield+' · Prep '+r.prep+' · Total '+r.total,kcal:r.kcal+' kcal'+(r.cls?' (est.)':''),protein:r.p+'g',carbs:r.c+'g',fat:r.f+'g',footnote:'Nutrition per serving, as listed in the cookbook.'}}
 function renderRecipes(){
  const list=document.getElementById('recipesList');if(!list)return;
- const q=(document.getElementById('recipeSearch')?.value||'').trim().toLowerCase();
- const cat=document.getElementById('recipeCategory')?.value||'all';
- const hits=RECIPES.filter(r=>(!r.cls||r.cls===state.classId)&&(cat==='all'||r.cat===cat)&&(!q||[r.n,r.cat,...r.ingredients].join(' ').toLowerCase().includes(q)));
- list.innerHTML=hits.length?hits.map(r=>`<article class="card" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div class="eyebrow">${esc(r.cat)}</div><h3 style="margin:4px 0 6px">${esc(r.n)}</h3><div class="muted" style="font-size:12px">${esc(r.yield)} · Prep ${esc(r.prep)} · Total ${esc(r.total)}</div></div><span class="tag">${r.kcal} kcal${r.cls?' (est.)':''}</span></div><div class="grid stats" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0"><div class="card" style="padding:10px"><div class="statlabel">Protein</div><div class="statvalue" style="font-size:18px">${r.p}g</div></div><div class="card" style="padding:10px"><div class="statlabel">Carbs</div><div class="statvalue" style="font-size:18px">${r.c}g</div></div><div class="card" style="padding:10px"><div class="statlabel">Fat</div><div class="statvalue" style="font-size:18px">${r.f}g</div></div></div><details><summary style="cursor:pointer;font-weight:700;font-size:13px;padding:4px 0 10px">Ingredients & instructions</summary><strong style="font-size:12px">Ingredients</strong><ul style="padding-left:20px;margin:6px 0 12px;font-size:12.5px;color:var(--text-dim)">${r.ingredients.map((x,i)=>`<li style="margin:5px 0;list-style:none"><button type="button" class="ingredient-pick" onclick="selectRecipeIngredient('${r.id}',${i},this)" aria-pressed="false" style="font:inherit;text-align:left;color:inherit;background:var(--surface-2,rgba(127,127,127,.08));border:1px solid var(--border);border-radius:8px;padding:8px 10px;width:100%;cursor:pointer">${esc(x)} <span style="float:right;opacity:.7">${r.id==='rcp_pesto_chicken'&&i===0?'🛒':'＋'}</span></button></li>`).join('')}</ul><div id="recipeProduct-${r.id}" style="display:none;margin:0 0 12px"></div><strong style="font-size:12px">Instructions</strong><ol style="padding-left:20px;margin:6px 0 10px;font-size:12.5px;color:var(--text-dim)">${r.steps.map(x=>`<li style="margin:4px 0">${esc(x)}</li>`).join('')}</ol>${r.note?`<p class="muted" style="font-size:12px">${esc(r.note)}</p>`:''}</details><button class="btn" style="width:100%;margin-top:10px" onclick="addRecipeToMeal('${r.id}')">＋ Log this recipe</button><p class="muted" style="font-size:11px;margin:8px 0 0">Nutrition per serving, as listed in the cookbook.</p></article>`).join(''):'<div class="empty">No recipes match that search.</div>';
+ const hits=recipeHits(document.getElementById('recipeSearch')?.value||'',document.getElementById('recipeCategory')?.value||'all');
+ list.innerHTML=hits.length?hits.map(r=>{const w=recipeCard(r);return `<article class="card" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div class="eyebrow">${esc(r.cat)}</div><h3 style="margin:4px 0 6px">${esc(r.n)}</h3><div class="muted" style="font-size:12px">${esc(w.meta)}</div></div><span class="tag">${w.kcal}</span></div><div class="grid stats" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0"><div class="card" style="padding:10px"><div class="statlabel">Protein</div><div class="statvalue" style="font-size:18px">${w.protein}</div></div><div class="card" style="padding:10px"><div class="statlabel">Carbs</div><div class="statvalue" style="font-size:18px">${w.carbs}</div></div><div class="card" style="padding:10px"><div class="statlabel">Fat</div><div class="statvalue" style="font-size:18px">${w.fat}</div></div></div><details><summary style="cursor:pointer;font-weight:700;font-size:13px;padding:4px 0 10px">Ingredients & instructions</summary><strong style="font-size:12px">Ingredients</strong><ul style="padding-left:20px;margin:6px 0 12px;font-size:12.5px;color:var(--text-dim)">${r.ingredients.map((x,i)=>`<li style="margin:5px 0;list-style:none"><button type="button" class="ingredient-pick" onclick="selectRecipeIngredient('${r.id}',${i},this)" aria-pressed="false" style="font:inherit;text-align:left;color:inherit;background:var(--surface-2,rgba(127,127,127,.08));border:1px solid var(--border);border-radius:8px;padding:8px 10px;width:100%;cursor:pointer">${esc(x)} <span style="float:right;opacity:.7">${RECIPE_LINKS[r.id]?.[i]?'🛒':'＋'}</span></button></li>`).join('')}</ul><div id="recipeProduct-${r.id}" style="display:none;margin:0 0 12px"></div><strong style="font-size:12px">Instructions</strong><ol style="padding-left:20px;margin:6px 0 10px;font-size:12.5px;color:var(--text-dim)">${r.steps.map(x=>`<li style="margin:4px 0">${esc(x)}</li>`).join('')}</ol>${r.note?`<p class="muted" style="font-size:12px">${esc(r.note)}</p>`:''}</details><button class="btn" style="width:100%;margin-top:10px" onclick="addRecipeToMeal('${r.id}')">＋ Log this recipe</button><p class="muted" style="font-size:11px;margin:8px 0 0">${w.footnote}</p></article>`}).join(''):'<div class="empty">No recipes match that search.</div>';
 }
 function selectRecipeIngredient(recipeId,index,clicked){
  const recipe=RECIPES.find(r=>r.id===recipeId);if(!recipe)return;
- const productLinks={'rcp_pesto_chicken':{0:'https://www.walmart.com/ip/27935840?sid=edfc41aa-c731-47b8-9fec-6d99adbba129'}};
  const host=document.getElementById('recipeProduct-'+recipeId);if(!host)return;
- const url=productLinks[recipeId]?.[index];
+ const url=RECIPE_LINKS[recipeId]?.[index];
  const label=recipe.ingredients[index]||'ingredient';
  document.querySelectorAll('.ingredient-pick').forEach(b=>{b.style.outline='';b.setAttribute('aria-pressed','false')});
  if(clicked){clicked.style.outline='2px solid var(--accent)';clicked.setAttribute('aria-pressed','true')}
  host.style.display='block';
  host.innerHTML=url?`<div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;gap:10px"><div><strong style="font-size:13px">${esc(label)}</strong><div class="muted" style="font-size:11px;margin-top:3px">Walmart product link attached</div></div><a class="btn" href="${url}" target="_blank" rel="noopener noreferrer" style="white-space:nowrap;text-decoration:none">Open in Walmart ↗</a></div>`:`<div class="card" style="padding:10px;font-size:12px"><strong>${esc(label)}</strong><div class="muted" style="margin-top:3px">No Walmart product link added for this ingredient yet.</div></div>`;
-}
-function addRecipeToMeal(id){
- const f=RECIPE_FOODS.find(x=>x.id===id);if(!f)return;
- navigate('meals');fuelOpenLab();mealPick=f;
- document.getElementById('mealSearch').value=f.n;
- document.getElementById('mealGrams').value=f.port[0].g;
- document.getElementById('mealAddBtn').disabled=false;
- const row=document.getElementById('mealPortionRow'),sel=document.getElementById('mealPortion');
- row.style.display='block';sel.innerHTML=`<option value="${f.port[0].g}">1 serving (${f.port[0].g}g, cookbook nutrition)</option>`;sel.value=String(f.port[0].g);
- mealSearch();document.getElementById('mealAddBtn').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function mealsEnsure(){
   if(!state.foodLog)state.foodLog=[];

@@ -31,12 +31,17 @@
 
   /**
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
-   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page),
-   * render (name of the page's render function to follow while open), globals {open, enable, projection}.
+   * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page,
+   * after the screen has closed; none for a tab whose screen sends only views and commands), render (name of the page's render
+   * function to follow while open), globals {open, enable, projection}. An action naming a view ({view}) instead goes there
+   * without closing first: the hand-over closes the screen once the next one shows, or at once for a page the web draws, so
+   * moving to another native tab never flashes the page.
    * Optional: commands {name: async (payload) => reply} run on the page WITHOUT closing the screen (a draft preview, a save);
    * the reply ({ok, message, ...}) goes back with the next update, and reply.navigate, if set, is followed afterwards.
    * beforeOpen(entered) runs just before the first projection of an open (for example to take over a draft the page prepared);
    * entered is true for the first open after the page went to the tab's view, false when the screen comes back by revisit().
+   * afterOpen() runs once the screen has opened and covers the page (for example to empty page fields beforeOpen took over, so
+   * an open that fails leaves them as they were).
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
@@ -79,6 +84,12 @@
       clearTimeout(queued);
       queued = setTimeout(send, 100);
     }
+    /** the fresh projection (and a command's reply) for the open screen; nothing if it closed while the bars were captured,
+        since a hidden screen takes no updates (A24) */
+    async function update(reply) {
+      const data = snapshot(), mine = generation, scene = await navScene();
+      if (active && mine === generation) await plugin.update(Object.assign({ snapshot: data, navScene: scene }, reply && { reply }));
+    }
     async function send() {
       if (!active) return;
       if (blocked()) {
@@ -87,7 +98,7 @@
         return;
       }
       try {
-        await plugin.update({ snapshot: snapshot(), navScene: await navScene() });
+        await update();
       } catch (e) {
         console.warn(cfg.id + " refresh", e);
         await close();
@@ -110,7 +121,7 @@
         if (active) {
           clearTimeout(queued); // a refresh the command's renders asked for: the projection sent with the reply carries them
           try {
-            await plugin.update({ snapshot: snapshot(), navScene: await navScene(), reply });
+            await update(reply);
           } catch (err) {
             console.warn(cfg.id + " reply", err);
           }
@@ -139,9 +150,11 @@
       try {
         if (!ready) {
           await plugin.addListener("action", async (e) => {
-            await close();
-            if (e.view) lmaNavTo(e.view);
-            else await cfg.onAction(e);
+            if (e.view) lmaNavTo(e.view, { fast: true }); // no web transition under a native screen
+            else {
+              await close();
+              await cfg.onAction?.(e);
+            }
           });
           await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);
@@ -177,6 +190,7 @@
         }
         active = true;
         timer = setInterval(send, 15000);
+        if (cfg.afterOpen) cfg.afterOpen();
         NativeTabs.flush(cfg.id);
         setTimeout(schedule, 160); // settled bar, in case a scene from the previous tab got there late
         return true;
