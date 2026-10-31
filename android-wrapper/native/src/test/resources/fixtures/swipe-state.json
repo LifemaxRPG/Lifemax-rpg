@@ -1,0 +1,176 @@
+{
+ "character": {
+  "v": 1,
+  "on": true,
+  "motion": true,
+  "haptics": "normal",
+  "view": "character",
+  "active": "character",
+  "tabs": [
+   {
+    "key": "dashboard",
+    "view": "dashboard",
+    "label": "Overview",
+    "icon": "grid",
+    "kind": "web"
+   },
+   {
+    "key": "character",
+    "view": "character",
+    "label": "Character",
+    "icon": "person",
+    "kind": "native"
+   },
+   {
+    "key": "food",
+    "view": "meals",
+    "label": "Food",
+    "icon": "heart",
+    "kind": "native"
+   },
+   {
+    "key": "pet",
+    "view": "pet",
+    "label": "Cat",
+    "icon": "paw",
+    "kind": "web"
+   },
+   {
+    "key": "log",
+    "view": "log",
+    "label": "Log activity",
+    "icon": "plus",
+    "kind": "native"
+   },
+   {
+    "key": "quests",
+    "view": "quests",
+    "label": "Quests",
+    "icon": "flag",
+    "kind": "web"
+   },
+   {
+    "key": "plan",
+    "view": "plan",
+    "label": "Workout plan",
+    "icon": "list",
+    "kind": "native"
+   },
+   {
+    "key": "library",
+    "view": "media",
+    "label": "Library",
+    "icon": "book",
+    "kind": "native"
+   },
+   {
+    "key": "money",
+    "view": "money",
+    "label": "Money",
+    "icon": "coin",
+    "kind": "stop"
+   },
+   {
+    "key": "life-director",
+    "view": "life-director",
+    "label": "Life Director",
+    "icon": "dial",
+    "kind": "web",
+    "source": false
+   }
+  ],
+  "colors": {
+   "bg": 4278980114,
+   "text": 4293849590,
+   "muted": 4287337379
+  },
+  "tune": null
+ },
+ "meals": {
+  "v": 1,
+  "on": true,
+  "motion": true,
+  "haptics": "normal",
+  "view": "meals",
+  "active": "food",
+  "tabs": [
+   {
+    "key": "dashboard",
+    "view": "dashboard",
+    "label": "Overview",
+    "icon": "grid",
+    "kind": "web"
+   },
+   {
+    "key": "character",
+    "view": "character",
+    "label": "Character",
+    "icon": "person",
+    "kind": "native"
+   },
+   {
+    "key": "food",
+    "view": "meals",
+    "label": "Food",
+    "icon": "heart",
+    "kind": "native"
+   },
+   {
+    "key": "pet",
+    "view": "pet",
+    "label": "Cat",
+    "icon": "paw",
+    "kind": "web"
+   },
+   {
+    "key": "log",
+    "view": "log",
+    "label": "Log activity",
+    "icon": "plus",
+    "kind": "native"
+   },
+   {
+    "key": "quests",
+    "view": "quests",
+    "label": "Quests",
+    "icon": "flag",
+    "kind": "web"
+   },
+   {
+    "key": "plan",
+    "view": "plan",
+    "label": "Workout plan",
+    "icon": "list",
+    "kind": "native"
+   },
+   {
+    "key": "library",
+    "view": "media",
+    "label": "Library",
+    "icon": "book",
+    "kind": "native"
+   },
+   {
+    "key": "money",
+    "view": "money",
+    "label": "Money",
+    "icon": "coin",
+    "kind": "stop"
+   },
+   {
+    "key": "life-director",
+    "view": "life-director",
+    "label": "Life Director",
+    "icon": "dial",
+    "kind": "web",
+    "source": false
+   }
+  ],
+  "colors": {
+   "bg": 4278980114,
+   "text": 4293849590,
+   "muted": 4287337379
+  },
+  "tune": null
+ }
+}

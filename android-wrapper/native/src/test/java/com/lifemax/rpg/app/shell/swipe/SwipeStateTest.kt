@@ -49,6 +49,64 @@ class SwipeStateTest {
         assertEquals(42, s.sequence)
     }
 
+    /**
+     * The page's own field (tools/gen_native_fixtures.js): every value reads as the page means it.
+     */
+    @Test
+    fun theFieldThePageSendsIsReadAsItIs() {
+        val page = JSONObject(javaClass.getResource("/fixtures/swipe-state.json")!!.readText())
+        for (pane in listOf("character", "meals")) {
+            val json = page.getJSONObject(pane)
+            val s = SwipeState.parse(json, 3)!!
+            assertEquals(listOf(true, true), listOf(s.on, s.motion))
+            assertEquals(HapticLevel.Normal, s.haptics)
+            assertEquals(pane to json.getString("active"), s.view to s.active)
+            val tabs = json.getJSONArray("tabs")
+            assertEquals(tabs.length(), s.tabs.size)
+            s.tabs.forEachIndexed { i, tab ->
+                val t = tabs.getJSONObject(i)
+                // a kind native does not know would read as web
+                assertEquals(t.getString("kind"), tab.kind.wire)
+                assertEquals(
+                    SwipeTab(
+                        t.getString("key"),
+                        t.getString("view"),
+                        t.getString("label"),
+                        t.getString("icon"),
+                        tab.kind,
+                        t.optBoolean("source", true),
+                    ),
+                    tab,
+                )
+            }
+            val colors = json.getJSONObject("colors")
+            fun argb(key: String) = colors.getLong(key).toInt()
+            assertEquals(SwipeColors(argb("bg"), argb("text"), argb("muted")), s.colors)
+            val drawn = s.colors!!
+            for (colour in listOf(drawn.bg, drawn.text, drawn.muted)) {
+                assertEquals("opaque", 0xFF, colour ushr 24)
+            }
+            assertEquals(SwipeTune.DEFAULT, s.tune)
+        }
+
+        // and what the page's bar means to a swipe
+        val character = SwipeState.parse(page.getJSONObject("character"), 3)!!
+        fun SwipeState.tab(key: String) = tabs.single { it.key == key }
+        val cold = character.neighbours("character", setOf("character"))!!
+        assertEquals(Neighbour.Wall(character.tab("dashboard")), cold.prev)
+        assertEquals(Neighbour.Veil(character.tab("food")), cold.next)
+        assertEquals(
+            Neighbour.Pane(character.tab("food")),
+            character.neighbours("character", setOf("character", "meals"))!!.next,
+        )
+        val meals = SwipeState.parse(page.getJSONObject("meals"), 4)!!
+        val food = meals.neighbours("meals", setOf("character", "meals"))!!
+        assertEquals(Neighbour.Pane(meals.tab("character")), food.prev)
+        assertEquals(Neighbour.Wall(meals.tab("pet")), food.next)
+        assertEquals(TabKind.Stop, character.tab("money").kind)
+        assertEquals(false, character.tab("life-director").source)
+    }
+
     @Test
     fun theDefaultBar() {
         assertEquals(wall("dashboard") to pane("food"), sides("character"))

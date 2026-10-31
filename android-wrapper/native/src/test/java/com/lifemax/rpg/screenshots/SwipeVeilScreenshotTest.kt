@@ -3,9 +3,9 @@ package com.lifemax.rpg.screenshots
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.lifemax.rpg.app.shell.swipe.SwipeColors
-import com.lifemax.rpg.app.shell.swipe.SwipeTab
+import com.lifemax.rpg.app.shell.swipe.SwipeState
 import com.lifemax.rpg.app.shell.swipe.SwipeVeilContent
-import com.lifemax.rpg.app.shell.swipe.TabKind
+import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 
@@ -18,8 +18,13 @@ class SwipeVeilScreenshotTest {
     @get:Rule
     val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5, maxPercentDifference = 0.001)
 
-    private val food = SwipeTab("food", "meals", "Food", "heart", TabKind.Native)
-    private val plan = SwipeTab("plan", "plan", "Workout plan", "dumbbell", TabKind.Native)
+    /** The bar as the page sends it (tools/gen_native_fixtures.js): its labels and icon names. */
+    private val bar = run {
+        val page = JSONObject(javaClass.getResource("/fixtures/swipe-state.json")!!.readText())
+        SwipeState.parse(page.getJSONObject("character"), 1)!!.tabs
+    }
+    private val food = bar.single { it.key == "food" }
+    private val plan = bar.single { it.key == "plan" }
 
     private fun colors(light: Boolean): SwipeColors {
         val tokens = ScreenshotPalette.tokenMap(light)

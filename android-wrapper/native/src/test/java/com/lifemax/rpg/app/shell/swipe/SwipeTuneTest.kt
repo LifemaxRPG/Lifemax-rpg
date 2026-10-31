@@ -40,6 +40,19 @@ class SwipeTuneTest {
     }
 
     @Test
+    fun theDefaultsAreThePagesOwn() {
+        // the page's LMA_TABSWIPE (50-native-swipe.js), written by tools/gen_native_fixtures.js
+        val page = JSONObject(javaClass.getResource("/fixtures/swipe-tune.json")!!.readText())
+        val json = default.toJson()
+        assertEquals(json.keys().asSequence().toSet(), page.keys().asSequence().toSet())
+        for ((key, _) in SwipeTune.numbers) {
+            assertEquals(key, json.getDouble(key), page.getDouble(key), 0.0)
+        }
+        assertEquals(json.getString("haptic"), page.getString("haptic"))
+        assertEquals(default, SwipeTune.parse(page))
+    }
+
+    @Test
     fun everyKeyIsClampedToItsRange() {
         val ranges =
             mapOf(

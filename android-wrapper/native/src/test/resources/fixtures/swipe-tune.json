@@ -1,0 +1,19 @@
+{
+ "knee": 0.18,
+ "breakAt": 0.45,
+ "heavy": 0.25,
+ "hyst": 0.06,
+ "popDamping": 0.65,
+ "popStiffness": 1200,
+ "wallMax": 0.08,
+ "wallSlope": 0.35,
+ "flingDp": 1200,
+ "flingMin": 0.12,
+ "backFlingDp": 600,
+ "commitK": 1000,
+ "cancelK": 800,
+ "slopFactor": 1,
+ "lockRatio": 1.3,
+ "edgeDp": 24,
+ "haptic": "threshold"
+}
