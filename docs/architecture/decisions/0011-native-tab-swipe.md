@@ -26,3 +26,62 @@ Three designs were judged (a full-shell rebuild around a new stage, a pure deck 
 - An unhandled touch on an open native screen now stops at the screen instead of reaching the WebView behind it, even with the switch off.
 - The arbitration relies on Compose's `AndroidComposeView` calling `requestDisallowInterceptTouchEvent` when a child consumes movement (checked in Compose UI 1.7.6); every Compose upgrade re-checks it with `SwipeArbiterTest` and the phone checklist.
 - Food keeps its own copy of the plugin hooks (about 30 lines) until it moves onto ComposeTabPlugin (phase 4).
+
+## The feel, in numbers
+
+W is the width of android.R.id.content. u is the finger's travel toward the side being revealed as a fraction of W, measured from the claim point (the slop is already behind it). o is how far the screen has moved, in the same unit. Every number below is a `SwipeTune` default that the page may override and native clamps (the keys and clamps are in BRIDGE_CATALOG.json, `tab-swipe`).
+
+```
+hold(u)    = u                                   u ≤ a          (1:1)
+           = u − (1−m)(u−a)² / (2(b−a))          a < u ≤ b      (the slope falls evenly from 1 to m)
+           = hold(b) + m(u−b)                    u > b          (only on the event that latches)
+through(u) = min(u, 1)                                          (latched: 1:1 again)
+latched    = latched ? u ≥ b−h : u ≥ b
+at a flip  r += s_old − s_new, keeping its velocity; a spring takes r back to 0:
+           the pop at a latch (`popDamping` ζ 0.65, `popStiffness` k 1200), critically damped at an unlatch (k 1200)
+o          = clamp(s(u) + r, 0, 1); a screen's translationX is round(−dir·o·W), its neighbour's that + dir·W
+wall(u)    = E·(1 − e^(−κu/E))                                  (a wall or an end; the bare veil fills the gap)
+```
+
+a (`knee`) 0.18, b (`breakAt`) 0.45, m (`heavy`) 0.25, h (`hyst`) 0.06, E (`wallMax`) 0.08, κ (`wallSlope`) 0.35. On a 412 dp phone the screen follows the finger for 74 dp, then grows heavy (o = .243, .280, .310, .333, .349 at u = .25, .30, .35, .40, .45); at the catch, 185 dp of travel, it sits 42 dp behind the finger. Over the catch it pops to the finger in about 120 ms (about 7 % overshoot) with one click; pulled back under 0.39 it grows heavy again, critically damped and silent. Whole pixels mean no seam between the screens.
+
+**Release** (v is the finger's velocity toward the neighbour from a VelocityTracker in raw coordinates), in order: a wall cancels; v ≤ −`backFlingDp` (600 dp/s) cancels, even latched; latched commits (`via: drag`); v ≥ `flingDp` (1200 dp/s) after at least `flingMin` (0.12) of travel commits (`via: fling`); anything else cancels, so a casual flick springs back.
+
+**Settles** are closed-form critically damped springs (`Spring1D`) on Choreographer frame times, toward o = 1 for a commit and 0 for a cancel. v0 is the finger's velocity times the curve's slope; k = clamp((v0/|Δ|)², `commitK` 1000 or `cancelK` 800, 4000); v0 is capped at √k·|Δ|, so a settle never crosses its target (no gap past the far edge, no peek of the other side), and it snaps at 450 ms. From rest at o = 0.5 a commit is 95 % there at 150 ms and a cancel at about 168 ms. A refusal restarts the running spring toward 0 from where the screen is, as fast. Spring time is divided by `ValueAnimator.getDurationScale()` (0 lands at once); following the finger is never scaled. With the page's motion off (`swipe.motion` false) nothing follows the finger, the release rule is the same and every settle is instant.
+
+**Haptics** (`SwipeHaptics`, on the source screen's View, honouring the system's touch feedback: no FLAG_IGNORE_GLOBAL_SETTING): nothing plays at walls, at landing or on a plain cancel, so a commit gets exactly one click, at the catch or, for a fling that never latched, at the release.
+
+| `haptic` | page level | the catch | letting go of it |
+|---|---|---|---|
+| `threshold` (default) | light | CLOCK_TICK | none |
+| | normal | GESTURE_THRESHOLD_ACTIVATE (API 34+), CLOCK_TICK below | GESTURE_THRESHOLD_DEACTIVATE (34+) |
+| | strong, max | EFFECT_HEAVY_CLICK as touch feedback (29+), as normal below | as normal |
+| `tick`, `click` | any but off | CLOCK_TICK, CONTEXT_CLICK | none |
+| `off` | any | none | none |
+
+The page refusing a commit plays REJECT (API 30+) at every level but off, whatever the style.
+
+## Who gets the gesture
+
+Whoever draws the pixels under the finger at the DOWN owns the gesture; the WebView is never translated and never loses a touch mid-gesture.
+
+**Gates at the DOWN**, all of which must hold, or the screen stays passive for the whole gesture: the latest drawn scene has `swipe.v` 1 and `on`; this screen is the only open one, may be a source, and its view is `swipe.view`; no swipe is running; exactly one pointer, a finger or stylus; the keyboard is hidden; touch exploration is off; the window has focus; the DOWN is outside max(system gesture inset, `edgeDp` 24 dp) of both edges.
+
+**The lock**, with dx and dy raw and measured from the DOWN and the slop `slopFactor` (1) × scaledTouchSlop: dead if |dy| ≥ slop and |dx| < `lockRatio` (1.3) × |dy|; a candidate if |dx| ≥ slop and |dx| ≥ 1.3|dy|. The screen does not intercept on the candidate event, so a child crossing its own slop on that same event takes it and sends disallow. On the next move, if no child claimed and the ratio holds in the same direction, the screen intercepts (the children get ACTION_CANCEL), anchored at the DOWN plus the slop so it starts at 0 under the finger. A second pointer before the claim kills the swipe; after it, it cancels and the rest of the gesture is consumed.
+
+| Conflict | Rule |
+|---|---|
+| Vertical scrollers (every screen's root list) | They take the gesture at the slop and send disallow; the dead rule backs them up. |
+| Inner horizontal scrollers (Character's sort chips, the Workout plan's week and day strips, Food's recents) | They claim during the one-event wait, even at the end of their scroll, as an overflowing web row never swipes. |
+| A list still flinging | It claims on the first move. |
+| Text fields (the Library and Recipes search, the Log fields) | `Modifier.noTabSwipe()`, and no swipe while the keyboard shows. |
+| Menus, dialogs, selection handles | Their own windows, and the focus gate. |
+| Taps (switches, the week strip, the radar, the dial) | Below the slop nothing happens; a claim cancels the tap. |
+| The shared bars | Above every screen: the header consumes, the bottom bar scrolls. |
+| System Back | Starts in the edge zones are ignored; a system cancel springs back. |
+| Life Director | Never a source (`swipeSource = false`, `source: false`, and the page says `on: false` there); it can be a destination. |
+| TalkBack | Off under touch exploration; the bar stays the route. |
+| Page overlays, sheets, onboarding, the thumbnail pass | `on: false`, and the page refuses at commit. |
+| Screens moving with no finger on them | A touch that starts on them, or on the veil, is swallowed to its end. |
+| The web swipe underneath | A touch nothing on an open screen takes stops at the screen. |
+| Money (Cash, another Activity) | `kind: stop`, a wall. |

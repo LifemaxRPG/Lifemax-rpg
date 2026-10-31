@@ -19,7 +19,7 @@ sealed interface SwipeBuzz {
 }
 
 /**
- * The swipe's haptics (plan §2, haptics table), played on the source screen's View. Every one
+ * The swipe's haptics (ADR 0011, the haptics table), played on the source screen's View. Every one
  * honours the system's touch feedback setting: no FLAG_IGNORE_GLOBAL_SETTING, and the heavy click
  * vibrates as touch feedback. The model has already silenced what the page's haptics and the
  * `haptic` tune key turn off.
@@ -37,8 +37,8 @@ object SwipeHaptics {
      * What [moment] plays at the page's [level], with the `haptic` tune key's [style], on API
      * [sdk]. A refusal plays REJECT (API 30+) whatever the style. The catch (a latch, or a fling
      * commit that never latched) plays by style: `tick` and `click` that kind at every level, so
-     * the owner can compare them on the phone, `threshold` the plan's table at the page's level
-     * ([table]). Letting go of the catch plays only in the table.
+     * the owner can compare them on the phone, `threshold` the table at the page's level ([table]).
+     * Letting go of the catch plays only in the table.
      */
     fun buzz(moment: HapticMoment, level: HapticLevel, style: HapticStyle, sdk: Int): SwipeBuzz? {
         if (level == HapticLevel.Off) return null

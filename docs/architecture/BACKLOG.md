@@ -148,7 +148,7 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
 - **medium** — Missing ADRs for decisions already taken  
   Add short ADRs: 0005 hybrid logic-in-web plus shared scaffold; 0006 heal safety net and its limits; 0007 Paparazzi, fixture generation, local build and Maven mirror (including OverviewActivity removal); 0008 save protection… *(contract-docs C5, not verified)*
 - **low** — No contract section for interaction capabilities remaining tabs need; A24 cites a ledger note that does not exist  
-  Add A34 stub 'Platform interaction rules' with one-line rules for IME insets and Back dismissing the keyboard before leaving the tab, sheets and dialogs sharing the A16 Back owner, haptics only via NavHaptics, lists with stable… *(contract-docs C6, not verified)*
+  Add A35 stub 'Platform interaction rules' (A34 is now the tab swipe) with one-line rules for IME insets and Back dismissing the keyboard before leaving the tab, sheets and dialogs sharing the A16 Back owner, haptics only via NavHaptics, lists with stable… *(contract-docs C6, not verified)*
 
 ## Log tab
 

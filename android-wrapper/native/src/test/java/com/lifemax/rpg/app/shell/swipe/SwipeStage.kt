@@ -138,7 +138,7 @@ class SwipeStage(var scale: Float = 1f) {
     }
 }
 
-/** What must hold after every input, and the rest scene that must hold at Idle (plan §3). */
+/** What must hold after every input, and the rest scene that must hold at Idle (CONTRACT A34). */
 object SwipeInvariants {
     fun check(model: SwipeModel, env: SwipeEnv) {
         val scene = model.scene(env)

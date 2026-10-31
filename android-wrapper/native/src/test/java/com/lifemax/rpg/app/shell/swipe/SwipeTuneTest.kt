@@ -8,9 +8,10 @@ import org.junit.Test
 class SwipeTuneTest {
     private val default = SwipeTune.DEFAULT
 
+    /** The numbers ADR 0011 records (the feel, in numbers). */
     @Test
-    fun theDefaultsAreThePlansTable() {
-        val plan =
+    fun theDefaultsAreTheDecidedNumbers() {
+        val decided =
             mapOf(
                 "knee" to 0.18,
                 "breakAt" to 0.45,
@@ -30,9 +31,9 @@ class SwipeTuneTest {
                 "edgeDp" to 24.0,
             )
         val json = default.toJson()
-        assertEquals(plan.keys + "haptic", json.keys().asSequence().toSet())
+        assertEquals(decided.keys + "haptic", json.keys().asSequence().toSet())
         // exactly, so a fixture of the page's LMA_TABSWIPE can be compared as it is
-        for ((key, value) in plan) assertEquals(key, value, json.getDouble(key), 0.0)
+        for ((key, value) in decided) assertEquals(key, value, json.getDouble(key), 0.0)
         assertEquals("threshold", json.getString("haptic"))
         assertEquals(4000f, SwipeTune.MAX_STIFFNESS, 0f)
         assertEquals(0.45f, SwipeTune.SETTLE_CAP_SECONDS, 0f)

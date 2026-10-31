@@ -28,7 +28,7 @@ import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.pixelIconNames
 
 /**
- * What slides in where no screen can (plan §3): the page's background with the tab's icon and
+ * What slides in where no screen can (CONTRACT A34): the page's background with the tab's icon and
  * label, for a native tab not opened yet, or the bare background behind a wall's rubber band. It
  * sits at index 1 of android.R.id.content, above the WebView and below every screen and bar, so it
  * never covers the bars; GONE when unused. Decorative: not important for accessibility. A touch

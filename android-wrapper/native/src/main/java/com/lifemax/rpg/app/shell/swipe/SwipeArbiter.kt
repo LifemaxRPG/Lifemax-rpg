@@ -5,7 +5,8 @@ import kotlin.math.max
 import kotlin.math.sign
 
 /**
- * Why a DOWN may not start a swipe (plan §4, gates at DOWN). The first failing gate is reported.
+ * Why a DOWN may not start a swipe (ADR 0011, gates at the DOWN). The first failing gate is
+ * reported.
  */
 enum class SwipeGate {
     /** No accepted scene with `swipe.v == 1` and `swipe.on`. */
@@ -69,8 +70,8 @@ data class ArbiterStep(
 )
 
 /**
- * Decides, per gesture on one screen's View, whether the gesture becomes a tab swipe (plan §4), and
- * turns it into the [SwipeInput]s the model hears. Pure and immutable: the View keeps one per
+ * Decides, per gesture on one screen's View, whether the gesture becomes a tab swipe (ADR 0011),
+ * and turns it into the [SwipeInput]s the model hears. Pure and immutable: the View keeps one per
  * screen, feeds it every event from `dispatchTouchEvent` before passing the event on, and keeps the
  * [ArbiterStep.arbiter] it gets back.
  * - DOWN ([down]): the model's gates, then the platform's, must all hold; otherwise the gesture is

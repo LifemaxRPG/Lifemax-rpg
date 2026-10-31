@@ -19,7 +19,7 @@ enum class Release(val via: Via?) {
 }
 
 /**
- * The release rule (plan §2), in order:
+ * The release rule (ADR 0011, the feel), in order:
  * 1. a wall cancels;
  * 2. a back-fling (v ≤ −backFlingDp) cancels, even when latched;
  * 3. latched commits;

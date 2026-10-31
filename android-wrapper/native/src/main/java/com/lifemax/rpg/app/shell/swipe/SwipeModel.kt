@@ -4,10 +4,10 @@ package com.lifemax.rpg.app.shell.swipe
 data class SwipeStep(val model: SwipeModel, val effects: List<SwipeEffect> = emptyList())
 
 /**
- * The swipe as a pure state machine (plan §3): Idle → Armed → Dragging → Settling(commit|cancel) →
- * AwaitPage → Idle. It knows the page's truth (which screens exist and which are open, the latest
- * drawn state), the gesture in flight, and nothing about Views. Immutable; every input returns a
- * new model.
+ * The swipe as a pure state machine (CONTRACT A34): Idle → Armed → Dragging →
+ * Settling(commit|cancel) → AwaitPage → Idle. It knows the page's truth (which screens exist and
+ * which are open, the latest drawn state), the gesture in flight, and nothing about Views.
+ * Immutable; every input returns a new model.
  *
  * Rules:
  * - A swipe moves pixels, never ownership. Only the page's open and close change which screen is
@@ -82,7 +82,7 @@ data class SwipeModel(
             else -> false
         }
 
-    /** The model's gates for a DOWN on [pane] (plan §4); null when a swipe may start. */
+    /** The model's gates for a DOWN on [pane]; null when a swipe may start. */
     fun startGate(pane: String): SwipeGate? {
         val s = state
         return when {

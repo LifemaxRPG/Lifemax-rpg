@@ -4,9 +4,9 @@ import kotlin.math.exp
 import kotlin.math.min
 
 /**
- * The shape of the drag (plan §2). u is the finger's travel toward the neighbour as a fraction of
- * the width, measured from the claim point; the result is how far the screen has moved, o, in the
- * same unit.
+ * The shape of the drag (ADR 0011, the feel). u is the finger's travel toward the neighbour as a
+ * fraction of the width, measured from the claim point; the result is how far the screen has moved,
+ * o, in the same unit.
  *
  * ```
  * hold(u)    = u                                   u ≤ a          (1:1)

@@ -34,7 +34,7 @@ enum class SettleOutcome {
     }
 }
 
-/** When the swipe plays a haptic (plan §2, haptics table). */
+/** When the swipe plays a haptic (ADR 0011, the haptics table). */
 enum class HapticMoment {
     /** Forward over the catch. */
     Latch,

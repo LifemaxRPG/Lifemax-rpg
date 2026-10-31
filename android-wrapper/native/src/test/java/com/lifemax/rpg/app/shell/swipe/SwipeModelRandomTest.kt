@@ -17,7 +17,7 @@ import org.junit.Test
 
 /**
  * Random sessions against the model: every input in any order, with the invariants checked after
- * each one and the rest scene once the session winds down (plan §7, SwipeModelTest).
+ * each one and the rest scene once the session winds down (split from SwipeModelTest).
  */
 class SwipeModelRandomTest {
     @Test

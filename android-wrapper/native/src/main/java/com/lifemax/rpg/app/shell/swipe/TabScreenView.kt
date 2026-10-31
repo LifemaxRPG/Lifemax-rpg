@@ -14,8 +14,9 @@ import androidx.core.view.WindowInsetsCompat
 
 /**
  * A native tab's screen: a Compose host like ComposeView (which is final), that also decides
- * whether a gesture on it becomes a tab swipe (plan §4). [TabSwipe] moves it and owns its
- * visibility; the gesture is read here, before the screen's own content sees each event:
+ * whether a gesture on it becomes a tab swipe (ADR 0011, who gets the gesture). [TabSwipe] moves it
+ * and owns its visibility; the gesture is read here, before the screen's own content sees each
+ * event:
  * - every event feeds the screen's [SwipeArbiter] first, in raw coordinates relative to the content
  *   root, since the screen itself moves under the finger;
  * - a child that takes the gesture (a scroller consuming movement, a `noTabSwipe` region) says so
@@ -138,7 +139,7 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
 
     private fun y(event: MotionEvent) = event.rawY - originY
 
-    /** The platform's half of the gates at a DOWN (plan §4). */
+    /** The platform's half of the gates at a DOWN. */
     private fun facts(event: MotionEvent, root: View): TouchFacts {
         val insets = ViewCompat.getRootWindowInsets(this)
         val back = insets?.getInsets(WindowInsetsCompat.Type.systemGestures())

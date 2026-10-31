@@ -13,7 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** The haptics table of plan §2, at each page level, tune style and API level. */
+/** The haptics table of ADR 0011, at each page level, tune style and API level. */
 class SwipeHapticsTest {
     private fun buzz(
         moment: HapticMoment,

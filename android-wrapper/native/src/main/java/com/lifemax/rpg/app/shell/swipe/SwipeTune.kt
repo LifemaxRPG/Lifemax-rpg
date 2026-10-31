@@ -18,7 +18,7 @@ enum class HapticStyle(val wire: String) {
 }
 
 /**
- * The numbers behind the swipe's feel (plan §2). Kotlin holds the defaults; the page mirrors them
+ * The numbers behind the swipe's feel (ADR 0011). Kotlin holds the defaults; the page mirrors them
  * in `LMA_TABSWIPE` and may override any key in `swipe.tune`, which [parse] clamps, so the owner
  * can tune the feel over the air with no new APK. The shape of the curve, the gates and the clamps
  * themselves are not tunable.
@@ -95,7 +95,7 @@ data class SwipeTune(
         }
 
     companion object {
-        /** The defaults of the plan's table. The page's `LMA_TABSWIPE` must equal these. */
+        /** The defaults. The page's `LMA_TABSWIPE` must equal these (SwipeTuneTest). */
         val DEFAULT = SwipeTune()
 
         /** No settle spring is ever stiffer than this. */
@@ -104,7 +104,7 @@ data class SwipeTune(
         /** A settle snaps to its target after this much animation time. */
         const val SETTLE_CAP_SECONDS = 0.45f
 
-        /** Every numeric key the page may send, in the plan's order. */
+        /** Every numeric key the page may send, in `LMA_TABSWIPE`'s order. */
         val numbers: List<Pair<String, (SwipeTune) -> Float>> =
             listOf(
                 "knee" to SwipeTune::knee,

@@ -12,8 +12,8 @@ const { chromium } = require('playwright'); const file = require('./current-page
 const directorDay = require('./fixtures/director-day.js');
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 600) : '')) } };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-// the plan's defaults (section 2), which native's SwipeTune.kt holds too
-const PLAN_TUNE = { knee: 0.18, breakAt: 0.45, heavy: 0.25, hyst: 0.06, popDamping: 0.65, popStiffness: 1200, wallMax: 0.08, wallSlope: 0.35, flingDp: 1200, flingMin: 0.12, backFlingDp: 600, commitK: 1000, cancelK: 800, slopFactor: 1, lockRatio: 1.3, edgeDp: 24, haptic: 'threshold' };
+// the defaults ADR 0011 records, which native's SwipeTune.kt holds too (SwipeTuneTest checks the page's against it)
+const ADR_TUNE = { knee: 0.18, breakAt: 0.45, heavy: 0.25, hyst: 0.06, popDamping: 0.65, popStiffness: 1200, wallMax: 0.08, wallSlope: 0.35, flingDp: 1200, flingMin: 0.12, backFlingDp: 600, commitK: 1000, cancelK: 800, slopFactor: 1, lockRatio: 1.3, edgeDp: 24, haptic: 'threshold' };
 
 /* swipe: whether the APK draws the swipe (its kit handshake and Food's capabilities say so); native: whether there is an APK at all */
 const fakes = ({ swipe = true, native = true } = {}) => `
@@ -49,7 +49,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
       card: line.closest('.card').id, after: !!line.previousElementSibling.querySelector('#lmaSwipeToggle'), on: NativeSwipe.state().on };
   });
   ok('Settings, Navigation has "Native tab swipe (beta)" right after "Swipe to switch tabs"', row.card === 'lmaNavCard' && row.after && row.label === 'Native tab swipe (beta)', row);
-  ok('its hint is the plan\'s words', row.hint === 'Swipe between native tabs. The page holds back until you pull past the halfway catch. Needs Swipe to switch tabs.', row.hint);
+  ok('its hint says what it does and what it needs', row.hint === 'Swipe between native tabs. The page holds back until you pull past the halfway catch. Needs Swipe to switch tabs.', row.hint);
   ok('it is off by default (nothing stored, unchecked, and the swipe state says off)', row.stored === undefined && !row.checked && row.on === false, row);
   ok('it is usable once a plugin reports shell.swipe.v1', !row.disabled, row);
 
@@ -81,7 +81,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
   const state = () => p.evaluate(() => NativeSwipe.state());
 
   /* ---------- the swipe state in the bar scenes ---------- */
-  ok('the native tune defaults are exactly the plan\'s (LMA_TABSWIPE)', await p.evaluate((t) => JSON.stringify(Object.entries(LMA_TABSWIPE).sort()) === JSON.stringify(Object.entries(t).sort()) && Object.isFrozen(LMA_TABSWIPE), PLAN_TUNE));
+  ok('LMA_TABSWIPE is exactly the defaults ADR 0011 records', await p.evaluate((t) => JSON.stringify(Object.entries(LMA_TABSWIPE).sort()) === JSON.stringify(Object.entries(t).sort()) && Object.isFrozen(LMA_TABSWIPE), ADR_TUNE));
   ok('Food opens', await go('food'));
   const food = await p.evaluate(() => window.__calls.filter(c => c.p === 'NativeNutrition' && c.m === 'open').pop());
   ok('Food\'s chromeScene carries the swipe state, on Meals under the Food tab', food && food.swipe && food.swipe.v === 1 && food.swipe.view === 'meals' && food.swipe.active === 'food' && food.swipe.on === true, food);

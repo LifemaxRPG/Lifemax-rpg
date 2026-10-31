@@ -16,7 +16,7 @@ import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
 
 /**
- * The tab swipe on the main thread (plan §3), a sibling of ChromeHost. It drives the pure
+ * The tab swipe on the main thread (CONTRACT A34), a sibling of ChromeHost. It drives the pure
  * [SwipeModel] with the page's side (the plugins' open, close and remove, a page that starts
  * loading, each drawn bar scene, the page's answer) and with the screens' gestures, and it is the
  * only writer of the registered screens' translationX, visibility and accessibility, and of the
