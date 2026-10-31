@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.cssLinearGradient
 import com.lifemax.rpg.core.designsystem.mix
 
@@ -16,11 +17,11 @@ import com.lifemax.rpg.core.designsystem.mix
 internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColors(tokens, light) {
     /** Check boxes and the Leave button turn white in the light theme, as fields do. */
     val secondaryButton = if (light) Color.White else panel2
-    val boxBorder = if (light) line else BoxBorderDark
+    val boxBorder = if (light) line else PageInk.BoxBorder
     /** A ticked box is green in the dark theme; the light theme's own rule keeps it white. */
     val tickedFill = if (light) Color.White else good
     val tickedBorder = if (light) line else good
-    val track = if (light) TrackLight else bg
+    val track = if (light) PageInk.TrackLight else bg
     val keyTagBorder = if (light) line else lineSoft
     val noteFill = if (light) NoteFillLight else bgElev
     val noteBorder = if (light) NoteBorderLight else line
@@ -49,8 +50,6 @@ internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColor
         cssLinearGradient(155f, 0f to accent.mix(0.22f, panel), 1f to accent.mix(0.07f, bgElev))
 
     private companion object {
-        val BoxBorderDark = Color(0xFF4A5568)
-        val TrackLight = Color(0xFFE8ECF4)
         val NoteFillLight = Color(0xFFEEF3FC)
         val NoteBorderLight = Color(0xFFC5D0E6)
         val HeroTint = Color(0x0D7C9CFF)
@@ -61,11 +60,10 @@ internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColor
 internal val LocalPlanColors = staticCompositionLocalOf<PlanColors> { error("No plan colours") }
 
 /**
- * Colours the page's styles fix: the tick in a done box, the dot on the selected week, the shadows
- * of the calendar and its sessions count, and the XP celebration's white with the dark drop under
- * its "+N XP".
+ * Colours the page's styles fix (beyond PageInk's): the dot on the selected week, the shadows of
+ * the calendar and its sessions count, and the XP celebration's white with the dark drop under its
+ * "+N XP".
  */
-internal val CheckInk = Color(0xFF0C0E12)
 internal val SelectedWeekInk = Color.White
 internal val CalendarShadow = Color(0x30000000)
 internal val CountShadow = Color(0x18000000)

@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.core.designsystem.components.PageTag
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
@@ -276,7 +277,7 @@ private fun SetBox(
         if (checked)
             Text(
                 "✓",
-                color = CheckInk,
+                color = PageInk.CheckInk,
                 fontSize = 12.sp,
                 fontWeight = FontWeight(800),
                 lineHeight = 12.sp,

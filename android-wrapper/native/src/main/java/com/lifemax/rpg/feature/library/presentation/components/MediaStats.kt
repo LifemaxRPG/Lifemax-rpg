@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.components.PageCard
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.library.domain.MediaStat
@@ -44,7 +45,9 @@ internal fun MediaStats(stats: List<MediaStat>) {
 @Composable
 private fun StatCard(stat: MediaStat, modifier: Modifier) {
     val c = LocalLibraryColors.current
-    LibraryCard(modifier.semantics(mergeDescendants = true) {}) {
+    // the page's .card: 15 dp inside its 1 dp border, so 16 from the edge, where Compose's border
+    // lies
+    PageCard(modifier.semantics(mergeDescendants = true) {}, padding = 16.dp) {
         Text(
             stat.label,
             color = c.muted,
