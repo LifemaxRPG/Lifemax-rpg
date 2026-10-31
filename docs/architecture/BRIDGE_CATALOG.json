@@ -116,9 +116,13 @@
    ],
    "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while the XP celebration of one of its taps plays on the page",
    "commands": {
-    "day": "{index}: shows that day of the strip; read-only, refused when the day is not on the strip; the screen stays"
+    "day": "{index}: shows that day of the strip; read-only, refused when the day is not on the strip; the screen stays",
+    "dialDrop": "{key, minute} (a handle let go on a stop) or {key, step: 1 | -1} (TalkBack: a quarter hour later or earlier, as the web handle's arrow keys): the confirmation the page's sheet would show (confirm: title, from, to, problem, body, note, apply, keep; dialConfirm), or changed:false where the handle already is; refused for a handle that is no longer on the dial (its rule changed) or a minute that is not a stop; holds and saves nothing, so Keep needs no command",
+    "dialApply": "the same payload: the page's own Change it (applyDial: the rule changes, planTimeChange repairs the plan, persist saves); {ok, changed, moved, message}: ok only once saved, changed once the rule changed (also when the save then fails), moved when sessions moved, message the page's notice or, when the save fails, its 'Not saved' banner; refused, changing nothing, for a change with a problem (the page offers only OK there), a stale handle or a minute that is not a stop; changed:false where the handle already is; the reply's projection has the new plan and its build"
    },
-   "writes": [],
+   "writes": [
+    "applyDial via dialApply: the rule behind a handle, the repaired plan and the save (web-owned rules and save)"
+   ],
    "delegatedInteractions": [
     "inst: the session sheet",
     "meal: the meal preview",
@@ -133,13 +137,15 @@
    "readContract": {
     "snapshotDto": "feature/lifedirector/domain/LifeDirectorProjection.kt",
     "decoder": "feature/lifedirector/data/WebLifeDirectorRepository.kt (LifeDirectorJson.kt)",
-    "fixtures": "native/src/test/resources/fixtures/director-{today,tomorrow,banner,timer,soon,late,evening,unplanned}.json (tools/gen_native_fixtures.js)",
+    "fixtures": "native/src/test/resources/fixtures/director-{today,tomorrow,banner,timer,soon,late,evening,unplanned,build,replan,skip,reduced}.json and director-replies.json, every dialDrop and dialApply answer in NativeTabKit's reply envelope (tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence",
-    "invalidation": "LifeDirector.native.onChange (a render, a sheet or the guide opening or closing, a message), host resume, foreground return, 15-second refresh while visible"
+    "invalidation": "LifeDirector.native.onChange (a render, a sheet or the guide opening or closing, a message), host resume, foreground return, 15-second refresh while visible",
+    "dialFields": "today.dial.handles (key, rule, end, kind, a, minute, fixed, label, aria, lengths per stop), today.dial.stops (m, a, from, time), today.dial.dragWords, today.dial.build (null, or the plan runBuild plays: id, mode, full, sweep, intro, start, items, keep, flips, ghosts, lock, end), today.hint, reducedMotion; the screen looks a drag up in stops and lengths and copies no rule"
    },
-   "mutationsGate": "no native writes; Done and the timer run the page's own handlers after the screen closes, and the screen comes back once their XP celebration has played; a tap on a session or meal that has left the plan is told so",
+   "mutationsGate": "dialApply names the handle (its key carries the rule's current time) and the place: a repeat names a handle that has moved and is refused, so the save changes once; a failed save answers ok:false with the page's banner and keeps the change in memory, as the page's own Change it does; no durable receipt across process death (A14/A15 gap). Every other write is the page's own handler after the screen closes (Done, the timer), and the screen comes back once their XP celebration has played; a tap on a session or meal that has left the plan is told so",
    "rollout": "opt-in under Settings, Appearance: Native Life Director (beta), off by default",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "buildAnimation": "played by the screen from today.dial.build, each id once (ids rise with the clock, also across page reloads); the page plays none while the screen covers it (LifeDirector.native.coveredBy) and stops one already playing when the screen opens (cover, afterOpen); null with reduced motion, where the page plays none either"
   },
   {
    "feature": "recipes",
