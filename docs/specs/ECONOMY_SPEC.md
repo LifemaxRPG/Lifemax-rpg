@@ -488,7 +488,9 @@ Worked examples (verified in a sandbox against the page's own functions):
 
 - **LOG-1** The draft: `{type, customName, duration, quality, skill, primary, secondary, notes, opId?}`. The web form gives
   strings (`activityDraftFromForm`, `04-runtime.js:230`). The native Log screen normalises first (`clean`,
-  `50-native-log.js:33-48`): `type` must be a rules key, else `custom`; `customName` cut to 80 characters; `duration` becomes
+  `50-native-log.js:33-48`): fields the draft lacks are first taken from the preset draft of its type (`draftFor`, the
+  `reading` preset when the type is missing or not a rules key: name and notes `''`, duration `'30'`, quality `'1'`, the rule's
+  skill, primary and secondary); then `type` must be a rules key, else `custom`; `customName` cut to 80 characters; `duration` becomes
   `String(min(1440, max(0, round(num0(duration)))))`; `quality` must be one of `'0.8' '1' '1.1' '1.2'`, else `'1'`; `skill`
   cut to 60; `primary` must be an ATTRS id, else the rule's; `secondary` must be `''` or an ATTRS id, else `''`; `notes` cut to
   2000; a native Save requires an `opId` (cut to 80) (`50-native-log.js:89-93`). The web form does none of this.
@@ -590,7 +592,7 @@ Worked examples (verified in a sandbox against the page's own functions):
   `seen['p'+date] = parse(date + 'T23:59:00')` (local). If `eff < 4000`, no award. Else award `{type: 'steps',
   rule: {icon: 'target', skill: 'Walking', primary: 'endurance', secondary: ''}, name: 'Daily steps: ' + count (locale
   grouping), duration: 0, at: date + 'T20:00:00' (local), skill: 'Walking', primary: 'endurance', secondary: '',
-  xp: min(15, round((eff - 2000) / 1000 * 1.5))}`, so 3 to 15 XP.
+  xp: min(15, round((eff - 2000) / 1000 * 1.5)), note: 'Imported from Health Connect'}`, so 3 to 15 XP.
 - **HEALTH-5** Sleep (`39-health.js:74-93`), only when `H.sleep` and `sleep` is granted. Sessions read for the last 8 days.
   `best[d]` = the longest session with `end <= now` among those ending on local day `d` (seen or not). For each session:
   `key = 'z' + id`, `hrs = (end - start) / 3600000`; skip when seen, `end > now`, `hrs < 3`, or `end < from`; then
@@ -599,9 +601,19 @@ Worked examples (verified in a sandbox against the page's own functions):
   `pts = (hrs < 5.5 or hrs > 12 or busy) ? 0 : hrs < 6.5 ? 8 : hrs < 7.5 ? 12 : hrs <= 9.5 ? 15 : 12`. When `pts > 0` award
   `{type: 'sleep', rule: {icon: 'moon', skill: 'Sleep', primary: 'wellbeing', secondary: ''}, name: 'Sleep: ' + h + 'h ' +
   two-digit m + 'm' (h = floor(hrs), m = round((hrs - h) * 60)), duration: 0, at: end, skill: 'Sleep', primary: 'wellbeing',
-  secondary: '', xp: pts}`.
+  secondary: '', xp: pts, note: 'Imported from Health Connect'}`.
 - **HEALTH-6** Weight pays nothing. At the end `seen` entries older than `now - 21 days` are deleted (`39-health.js:98`)
-  [D01], and `save()` runs in `finally` with no take-back (`39-health.js:104`).
+  [D01], `H.last = now`, and `save()` runs in `finally` with no take-back (`39-health.js:104`). The summary
+  (`39-health.js:100-102`): `bits` lists, when non-zero, `n workout` / `n workouts`, `n day of steps` / `n days of steps`,
+  `n night of sleep` / `n nights of sleep` (a record counts once it reached `lmaHealthAward`, even when that paid 0; a
+  workout skipped as already logged by hand does not), and `weight W lb`; `xp` is the sum of what `lmaHealthAward` returned
+  (before stars, D11). `H.msg = 'Added ' + bits.join(', ') + (xp ? ' (+' + xp + ' XP)' : '') + '.'`, or `'Up to date.'`
+  when `bits` is empty. When `bits` is non-empty or the sync was asked for, toast
+  `'Health sync: ' + (bits ? bits.join(', ') + (xp ? ' · +' + xp + ' XP' : '') : 'nothing new')`. The early stops of
+  HEALTH-0 set `H.msg` to `'Health Connect needs an update from the Play Store.'` (status `update`),
+  `'Health Connect is not available on this phone.'` (any other status) or `'Allow access to start syncing.'`, and still save;
+  without the plugin a sync that was asked for toasts `'Health sync works in the Android app'`, and neither that nor a sync
+  that is switched off and was not asked for saves.
 - **HEALTH-7** Triggers (outside): every 30 minutes, on resume after 15 minutes, 14 s after start (`39-health.js:130-135`).
 - **HEALTH-8** The settings text promises different rules from these [D12].
 
@@ -646,8 +658,9 @@ Worked examples (verified in a sandbox against the page's own functions):
   7. Push the record, even when `x.xp` is 0 [D18]; `saved = save()` (an exception counts as false).
   8. Not saved: `takeBack(was)`; return `{awarded: false, reason: saveReadOnly ? 'HOST_READ_ONLY' : 'HOST_SAVE_FAILED'}`.
   9. Return `{awarded: true, activityId, xp: x.xp}`, the amount without the bonus [D20].
-- **LD-4** Quest bounty: `completeQuest(hostRef)` (`logic.js:2533-2541`) refuses when the quest is gone, its `questKey` is no
-  longer `hostRef.key`, or it is done; otherwise `toggleQuest(id, true)` and reports `xp: num0(q.xp)`, not what was paid
+- **LD-4** Quest bounty: `completeQuest(hostRef)` (`logic.js:2533-2541`) refuses with `{completed: false}` and no reason when
+  the host is not connected, `hostRef` or its `questId` is missing, or `hostRef.future` is set; then with a reason when the quest
+  is gone (`QUEST_GONE`), its `questKey` is no longer `hostRef.key` (`PERIOD_CHANGED`), or it is done (`ALREADY_DONE`); otherwise `toggleQuest(id, true)` and reports `xp: num0(q.xp)`, not what was paid
   [D20]. After an award whose save failed (`HOST_SAVE_FAILED` or `HOST_READ_ONLY`, `logic.js:2802`), no bounty is paid for that
   event (`logic.js:2818,2838,2906`, since commit `1550306`). Activities logged elsewhere complete matching Life Director
   blocks without XP (`logic.js:2733`), but that path may still pay bounties.
@@ -657,7 +670,7 @@ Worked examples (verified in a sandbox against the page's own functions):
 
 #### 11.6.1 Nutrition (`ecoNutritionCheck`, `44-rewards.js:47-58`)
 
-Triggered 50 ms after `addMealEntry` (`44-rewards.js:147`), which nothing calls any more [D02].
+**NUTRI-1** Triggered 50 ms after `addMealEntry` (`44-rewards.js:147`), which nothing calls any more [D02].
 1. `goal = max(0, num0(mealsMeta.calGoal))`; 0: stop. `day = today`; `nutriDone[day]`: stop.
 2. `kcal` = sum of `num0(e.kcal)` over today's food log. If `kcal < goal * 0.85` or `kcal > goal * 1.15`: stop.
 3. `nutriDone[day] = 1`; `xp = cap(restedTake(8), dayXP(today))` [D03]; if `xp <= 0`: stop, without saving [D04].
@@ -667,7 +680,7 @@ Triggered 50 ms after `addMealEntry` (`44-rewards.js:147`), which nothing calls 
 
 #### 11.6.2 Cat care (`ecoCare(kind)`, `44-rewards.js:60-66`)
 
-Triggered after `petFeed`, `petPlayDone` and `petPetDone` return `ok` (`44-rewards.js:144-146`; `petPetDone` and
+**CARE-1** Triggered after `petFeed`, `petPlayDone` and `petPetDone` return `ok` (`44-rewards.js:144-146`; `petPetDone` and
 `petPlayDone` return `ok` even when the interaction no longer counts).
 1. `c = state.careDay`; if missing or `c.day !== today`, `c = state.careDay = {day: today}`.
 2. `c[kind] = 1`. Unless `feed`, `play` and `pet` are all set and `paid` is not: stop (no save here).
@@ -677,6 +690,8 @@ Triggered after `petFeed`, `petPlayDone` and `petPetDone` return `ok` (`44-rewar
    {social, xp - that}]}`; `save()`; toast `'Cat care complete · +' + xp + ' XP'`.
 
 #### 11.6.3 Money deposit (`recordMoneyTransaction`, `05-runtime.js:164-176`)
+
+**MONEY-1** `recordMoneyTransaction(type, amount, note)`:
 
 1. `amt = round(num(amount) * 100) / 100`; not finite, `<= 0` or `> 1e12`: `{ok: false, 'Enter a valid amount'}`. Type
    other than deposit/withdraw: `'Choose a transaction type'`. Withdrawal above the balance: `'Not enough in the account'`.
@@ -702,7 +717,7 @@ duration) the active-time total of later capped awards [D08].
 
 #### 11.7.1 Plan sessions (`planToggle`, `06-runtime.js:47-52`)
 
-When ticking an item makes the day complete (`dayDone`: every non-optional item has its count of ticks; rest days never
+**PLAN-1** When ticking an item makes the day complete (`dayDone`: every non-optional item has its count of ticks; rest days never
 complete) and the day has no `actId`:
 - `xp = 0` if `PLAN_LINK[d.kind]` (`07-runtime.js:4`: strength, cardio and athletic, recovery map to three catalog ids) names a
   catalog entry already recorded on that date, else `d.xp` (from `planDay`: 40 strength, 30 cardio, 20 recovery on the default
@@ -716,6 +731,8 @@ complete) and the day has no `actId`:
   `'Session reopened · XP removed'`. `save()` runs either way; the toast shows only if it saved.
 
 #### 11.7.2 Attribute-sheet catalog (`actStatus`, `07-runtime.js:9-20`; `confirmAct`, `07-runtime.js:110-119`)
+
+**CATALOG-1** The attribute sheet's entries (`ACTS`, ids `attribute.slug`):
 
 - `baseXP(a) = max(1, num(actXP[a.id]) || a.xp)` (`07-runtime.js:6`); a custom base is `min(200, max(1, round(num(v) || 0)))`,
   kept only when non-zero (`07-runtime.js:35`).
@@ -732,7 +749,7 @@ complete) and the day has no `actId`:
 
 #### 11.7.3 Journal coach (`jcAward`, `47-journal-coach.js:133-139`)
 
-Records `{type: 'coach', src: 'coach', skill: 'Reflection', primary: 'wellbeing', secondary: '', duration: 0, quality: 1,
+**COACH-1** Records `{type: 'coach', src: 'coach', skill: 'Reflection', primary: 'wellbeing', secondary: '', duration: 0, quality: 1,
 xpSplit: [{wellbeing, xp}]}` (passive for streak and decay). Amounts and once-only keys: reflection 15 for 40+ characters on
 today or yesterday, once per day (`47-journal-coach.js:140-146`); welcome-back 10 (pet) and 25 (new chapter) once per welcome
 day; catch-up note 20 for 12+ characters (`47-journal-coach.js:234-246`); weekly review 30 for 50+ characters and monthly
@@ -740,7 +757,7 @@ chronicle 50 for 60+, once per review (`47-journal-coach.js:350-355`). Constants
 
 #### 11.7.4 Dev boosts (`07-runtime.js:10,117`, `04-runtime.js:253-300`)
 
-With developer mode on, an attribute sheet offers `+1` and `+2` levels: `xp = xpToGainLevels(attrXP(attr), n)` (CURVE-8),
+**DEV-1** With developer mode on, an attribute sheet offers `+1` and `+2` levels: `xp = xpToGainLevels(attrXP(attr), n)` (CURVE-8),
 recorded as a catalog entry with no limits.
 
 ### 11.8 Path matrix
@@ -791,7 +808,7 @@ recorded as a catalog entry with no limits.
 
 ## 13. Perks
 
-`ecoPerk(id) = state && state.perk === id && (state.perksOwned || []) contains id` (`44-rewards.js:8`).
+**PERK-1** `ecoPerk(id) = state && state.perk === id && (state.perksOwned || []) contains id` (`44-rewards.js:8`).
 
 | id | Name | Effect | Where |
 |---|---|---|---|
@@ -804,7 +821,7 @@ recorded as a catalog entry with no limits.
 
 ## 14. Ascension (`ecoAscend(id)`, `44-rewards.js:18-26`)
 
-Requires `attrLevel(id).level >= 20`, fewer than 3 stars and the owner's confirmation. Then
+**ASCEND-1** Requires `attrLevel(id).level >= 20`, fewer than 3 stars and the owner's confirmation. Then
 `ascended[id] += attrXP(id)` and `attrStars[id] += 1`; `save()`. The rebuild subtracts `ascended` (DERIVE-1), so the attribute
 restarts at 0 XP (level 1) while the character level is unchanged (CURVE-5). Each star adds 5% (STAR-1).
 
@@ -911,6 +928,8 @@ Runs in `migrateSave()` at load and at the top of every `save()`; does nothing o
 ---
 
 ## 18. Undo and removal
+
+**UNDO-1** What each removal reverses:
 
 | Action | Source | Reverses | Does not reverse |
 |---|---|---|---|
@@ -1021,6 +1040,16 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
 ---
 
 ## 21. Notes for recording golden cases
+
+The cases are recorded by `tools/gen_economy_golden.js` into `tests/fixtures/economy-golden.json` (its header defines the case
+format; the first case, `fresh/save`, holds the fresh save every other case's state is written against), and
+`tests/economy-golden.test.js` records them again from the current page on every test run (it is one of the `tests/*.test.js`
+that `tools/run_tests.sh` runs in CI) and fails when the page and the file disagree, or when a rule or defect ID here has no case
+and no stated reason. Pitfalls met while recording, besides
+the ones listed below: `dayNum('2026-10-28')` is 20754 (a day number written by hand is easily a year off); drawing the page
+saves once (the journal's chip, `jcChip`), which credits Sparks, marks records and migrates, so a case's state must be drawn with
+that save held back before the case begins; a health sync looks back only to `max(since, now - 3 days)` (HEALTH-2), so one sync
+cannot exercise a week of sleep bands; a stage-3 quest needs character level 5, not 3 (CURVE-9).
 
 - Drive the real built page (`build.py`, `forge_features.py`) with a fixed clock and time zone, as
   `tests/log-activity.test.js` does; every day key depends on both.
