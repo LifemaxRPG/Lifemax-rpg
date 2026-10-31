@@ -125,12 +125,22 @@ internal object TabSwipe {
     fun gesture(input: SwipeInput, now: Long) = step(input, now, drawNow = false)
 
     /**
-     * A touch that starts on a screen or veil that moves with no finger on it. A second finger
-     * during a drag cancels the drag, wherever it lands.
+     * A touch that lands off the swipe's own screen: on a screen or the veil moving with no finger
+     * on it, or on the shared bars. While a finger is on the source it is a second finger, wherever
+     * it lands: before the claim the swipe lets the gesture go, after it the drag springs back.
+     * Returns whether it cut a drag short; the caller then swallows the rest of its touch, so
+     * nothing under it (a bar's tab) acts mid-swipe.
      */
-    fun stray(event: MotionEvent) {
-        if (event.actionMasked == MotionEvent.ACTION_DOWN && model.phase is SwipePhase.Dragging)
-            gesture(SwipeInput.DragCancel, event.eventTime * NANOS_PER_MILLI)
+    fun stray(event: MotionEvent): Boolean {
+        if (event.actionMasked != MotionEvent.ACTION_DOWN) return false
+        val input =
+            when (model.phase) {
+                is SwipePhase.Armed -> SwipeInput.Disarm
+                is SwipePhase.Dragging -> SwipeInput.DragCancel
+                else -> return false
+            }
+        gesture(input, event.eventTime * NANOS_PER_MILLI)
+        return input == SwipeInput.DragCancel
     }
 
     private fun step(input: SwipeInput, now: Long = System.nanoTime(), drawNow: Boolean = true) {

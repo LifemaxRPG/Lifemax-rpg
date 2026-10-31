@@ -52,7 +52,10 @@ data class SwipeTune(
     val commitK: Float = 1000f,
     /** The least stiffness of the cancel settle. */
     val cancelK: Float = 800f,
-    /** The lock's slop, as a multiple of the platform's scaledTouchSlop. */
+    /**
+     * The lock's slop, as a multiple of the platform's scaledTouchSlop. Never below 1: a child
+     * scroller claims at the platform's slop, and it must be able to before the swipe does.
+     */
     val slopFactor: Float = 1f,
     /** The lock needs |dx| ≥ lockRatio·|dy|. */
     val lockRatio: Float = 1.3f,
@@ -77,7 +80,7 @@ data class SwipeTune(
             backFlingDp = backFlingDp.within(200f, 2000f, DEFAULT.backFlingDp),
             commitK = commitK.within(300f, MAX_STIFFNESS, DEFAULT.commitK),
             cancelK = cancelK.within(300f, MAX_STIFFNESS, DEFAULT.cancelK),
-            slopFactor = slopFactor.within(0.75f, 2f, DEFAULT.slopFactor),
+            slopFactor = slopFactor.within(1f, 2f, DEFAULT.slopFactor),
             lockRatio = lockRatio.within(1f, 3f, DEFAULT.lockRatio),
             edgeDp = edgeDp.within(16f, 48f, DEFAULT.edgeDp),
             haptic = haptic,

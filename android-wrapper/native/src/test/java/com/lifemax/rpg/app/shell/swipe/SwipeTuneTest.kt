@@ -69,7 +69,7 @@ class SwipeTuneTest {
                 "backFlingDp" to (200f to 2000f),
                 "commitK" to (300f to 4000f),
                 "cancelK" to (300f to 4000f),
-                "slopFactor" to (0.75f to 2f),
+                "slopFactor" to (1f to 2f),
                 "lockRatio" to (1f to 3f),
                 "edgeDp" to (16f to 48f),
             )

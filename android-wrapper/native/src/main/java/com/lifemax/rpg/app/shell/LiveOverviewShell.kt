@@ -2,6 +2,7 @@ package com.lifemax.rpg.app.shell
 
 import android.animation.ValueAnimator
 import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
 import android.view.MotionEvent
@@ -12,6 +13,7 @@ import android.view.animation.DecelerateInterpolator
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import kotlin.math.roundToInt
 import org.json.JSONObject
 
@@ -28,7 +30,7 @@ internal class LiveOverviewShell(
 ) {
     private val parent = activity.findViewById<ViewGroup>(android.R.id.content)
     private val frame =
-        FrameLayout(activity).apply {
+        BarsFrame(activity).apply {
             tag = if (chromeOnly) "native-shared-chrome" else "overview-live-shell"
             importantForAccessibility =
                 if (chromeOnly) View.IMPORTANT_FOR_ACCESSIBILITY_YES
@@ -167,5 +169,24 @@ internal class LiveOverviewShell(
     private companion object {
         /** The page's bar glide (lmaBarTo): 1 − (1 − t)³ over 170 ms. */
         const val GLIDE_MS = 170L
+    }
+}
+
+/**
+ * The frame that holds the bars, above every native screen. android.R.id.content splits touches, so
+ * a finger that lands here never reaches the screen under it as a second pointer: it tells the tab
+ * swipe instead ([TabSwipe.stray]). One that cuts a drag short is swallowed to its end, so no tab
+ * of the bar acts mid-swipe (CONTRACT A34).
+ */
+private class BarsFrame(context: Context) : FrameLayout(context) {
+    private var swallowing = false
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val action = event.actionMasked
+        if (action == MotionEvent.ACTION_DOWN) swallowing = TabSwipe.stray(event)
+        if (!swallowing) return super.dispatchTouchEvent(event)
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+            swallowing = false
+        return true
     }
 }

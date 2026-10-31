@@ -1,6 +1,7 @@
 package com.lifemax.rpg.app.shell.swipe
 
 import com.lifemax.rpg.app.shell.swipe.SwipeArbiter.Phase
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -146,6 +147,22 @@ class SwipeArbiterTest {
         // 48 < 2 · 25, but under the doubled slop of 48 it is not dead yet
         assertTrue(a.move(552f, 1025f).arbiter.phase is Phase.Pending)
         assertEquals(SwipeInput.Disarm, a.move(560f, 1049f).input)
+    }
+
+    @Test
+    fun aSlopFactorUnderOneStillLetsAChildScrollerClaimFirst() {
+        // the page may send any factor; a LazyRow claims at the platform's slop, so the lock never
+        // takes less, and the child still has the candidate event to itself
+        var a = down(tune = SwipeTune.parse(JSONObject().put("slopFactor", 0.75))).arbiter
+        for (dx in 1 until slop.toInt()) {
+            val step = a.move(600f - dx, 1000f)
+            assertFalse("$dx px", step.intercept)
+            assertTrue("$dx px", step.arbiter.phase is Phase.Pending)
+            a = step.arbiter
+        }
+        val candidate = a.move(600f - slop, 1000f)
+        assertFalse(candidate.intercept)
+        assertTrue(candidate.arbiter.phase is Phase.Candidate)
     }
 
     @Test
