@@ -43,10 +43,31 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const wk = await p.evaluate(() => state.quests.find(q => q.cadence === 'weekly' && q.kind !== 'nutrition').id);
   await p.evaluate(id => dhLedgerToggle(id), wk); await p.waitForTimeout(400);
   ok('completing a weekly from the Ledger works and updates the row', await p.evaluate(id => isQuestDone(state.quests.find(q => q.id === id)) && !!document.querySelector('.lg-row.done'), wk));
-  // forced: the open Ledger is redrawn every 450 ms, so its close button never stays put for Playwright's stability check under load;
-  // the Ledger hiding shows the click landed
-  const closeLedger = async () => { await p.click('.lg-close', { force: true }); await p.waitForSelector('.fs-ledger', { state: 'hidden', timeout: 2000 }) };
+  // a Ledger longer than the screen keeps its place: the scene's sync runs every 450 ms, and the list is redrawn only when what it
+  // shows changes
+  await p.evaluate(() => { for (let i = 0; i < 14; i++) state.quests.push({ id: 'lgfill_' + i, name: 'Long list ' + i, desc: 'Makes the Ledger longer than the screen.', cadence: 'daily', xp: 5, kind: 'custom' }) });
+  ok('quests added while the Ledger is open appear at the next sync', await p.waitForFunction(() => document.querySelectorAll('.lg-chk[data-id^="lgfill_"]').length === 14, null, { timeout: 4000 }).then(() => true, () => false));
+  // counts the Ledger's redraws, and marks what is on screen so a redraw shows
+  const lgNow = () => p.evaluate(() => { const b = document.querySelector('.lg-body'), r = window.__lgPick && b.querySelector('.lg-chk[data-id="' + window.__lgPick + '"]');
+    return { top: b.scrollTop, max: b.scrollHeight - b.clientHeight, redraws: window.__lgRedraws, sameRow: !!r && r === window.__lgRow, sameClose: document.querySelector('.lg-close') === window.__lgClose, focused: !!r && document.activeElement === r, done: !!r && r.closest('.lg-row').classList.contains('done') } });
+  const top0 = await p.evaluate(() => { const l = document.querySelector('.fs-ledger'), b = l.querySelector('.lg-body'); b.scrollTop = Math.round((b.scrollHeight - b.clientHeight) / 2);
+    const box = b.getBoundingClientRect(), r = [...b.querySelectorAll('.lg-chk[data-id^="lgfill_"]')].find(x => { const q = x.getBoundingClientRect(); return q.top >= box.top + 4 && q.bottom <= box.bottom - 4 });
+    window.__lgPick = r && r.dataset.id; window.__lgRow = r; window.__lgClose = l.querySelector('.lg-close'); window.__lgRedraws = 0;
+    new MutationObserver(m => { window.__lgRedraws += m.length }).observe(l, { childList: true, subtree: true }); return b.scrollTop });
+  await p.waitForTimeout(1600);
+  const still = await lgNow();
+  ok('a scrolled Ledger keeps its place across several sync ticks, nothing in it redrawn', still.max > 300 && top0 > 100 && still.top === top0 && still.redraws === 0 && still.sameRow && still.sameClose, Object.assign({ top0 }, still));
+  // ticking a row the owner can see, with a plain click, redraws the list where it was, the focus staying on that row
+  await p.click('.lg-chk[data-id="' + await p.evaluate(() => window.__lgPick) + '"]');
+  await p.waitForFunction(() => window.__lgRedraws > 0, null, { timeout: 4000 }).catch(() => {}); await p.waitForTimeout(600);
+  const ticked = await lgNow();
+  ok('completing a quest redraws the Ledger in place: the row shows it, the scroll and the focus stay', ticked.redraws > 0 && !ticked.sameRow && ticked.done && ticked.top === top0 && ticked.focused && ticked.sameClose, Object.assign({ top0 }, ticked));
+  // the close button is drawn once, with the scene, and holds still, so a plain click lands; the Ledger hiding shows that it did
+  const closeLedger = async () => { await p.click('.lg-close'); await p.waitForSelector('.fs-ledger', { state: 'hidden', timeout: 2000 }) };
   await closeLedger();
+  await p.click('.rest-btn[data-a=ledger]'); await p.waitForSelector('.fs-ledger', { state: 'visible', timeout: 2000 });
+  ok('the Ledger opens at the top again', await p.evaluate(() => document.querySelector('.lg-body').scrollTop === 0));
+  await p.evaluate(() => { for (let i = state.quests.length - 1; i >= 0; i--) if (state.quests[i].id.startsWith('lgfill_')) state.quests.splice(i, 1) }); await closeLedger();
   // ---- new quest
   await p.click('.rest-btn[data-a=new]'); await p.waitForTimeout(300);
   await p.fill('#nqName', 'Read the old letters'); await p.click('.nq-card .rest-btn:not(.dim)'); await p.waitForTimeout(700);
