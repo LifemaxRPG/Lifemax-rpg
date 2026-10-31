@@ -319,11 +319,14 @@
     "core save fields fx.haptics, fx.hapticLevel, hdCat, health.{ex,steps,sleep,wt,goal,on off} via the page's save()"
    ],
    "delegatedInteractions": [
-    "text, number and time fields and form selects (saveCharacter, saveDecay, saveRules, lmaSet times)",
+    "text, number and time fields and form selects (saveCharacter, saveDecay, saveRules, lmaSet times; the build select; the developer class select, #devClassSel)",
     "file pickers: avatar, Import JSON, trainer pack, USDA file",
+    "removing what a picker brought: removeAvatar (Profile picture, Remove), g3PackClear (Trainer pack, Remove), fv2UsdaClear (#usdaRemoveBtn, Remove: deletes the food database)",
+    "resetRules (XP rules, Reset defaults: writes the default rules, no confirmation)",
     "ecoShopOpen (rewards sheet), lmvDiagOpen, openDevChat, previewOnboarding, resetTips",
     "update buttons, lmaPickBackupFolder, lmaRunBackup, widget buttons, lmaHealthSync, lmaHealthAsk, lmcSync, lmaThumbWarm, lmaPermission, lmaExactTiming, lmaTestNotification",
-    "reminders, health sync and calendar import while off; journal lock; Android device backup; developer mode and its tools; Enable decay",
+    "reminders, health sync and calendar import while off; journal lock; Android device backup (setDeviceBackupAllowed); Enable decay",
+    "developer mode (toggleDevMode) and its tools: openDevChat, luckResetToday (Reset today's luck roll), devSwitchClass (Switch, with the class select), previewOnboarding",
     "Data management: exportData, exportReport, importData, resetDemo, deleteAll; the voice log's Export and Clear"
    ],
    "readContract": {
@@ -333,7 +336,7 @@
     "ordering": "webSessionId and increasing sequence; notice.id rises with each page toast",
     "invalidation": "any redraw inside #view-settings (the renderers, an attribute disabled/style/hidden), sheets and overlays coming and going on the body, the tutorial/onboarding/dev chat class, the page's toast, host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "no native writes: every change is the page's own handler run as a tap would run it, with the write watched and reported; set semantics (a toggle to the state already shown answers changed:false and writes nothing); no durable receipt across process death (A14/A15 gap)",
+   "mutationsGate": "no native writes: every change is the page's own handler run as a tap would run it, with the write watched and reported; set semantics (a toggle to the state already shown answers changed:false and writes nothing); a request id is answered from an in-memory receipt (the last 64 of the page's life), so a request delivered twice runs once and the same id with another command or payload is refused; the screen gives each tap a new UUID and never resends one; no durable receipt across a reload or process death (A14/A15 gap)",
    "rollout": "opt-in under Settings, Appearance: Native Settings (beta), off by default; nothing opens until an APK has the plugin",
    "canonicalLayout": true
   },
