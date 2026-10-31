@@ -1,6 +1,6 @@
 # Settings native slice inventory
 
-Baseline: branch `track/docs` at `d56403c0410c73686ce8c5675d16cbe627e2ebd1` (2026-10-30, Native API 23). Read-only audit; no code was changed.
+Baseline: branch `track/docs` at `d56403c0410c73686ce8c5675d16cbe627e2ebd1` (2026-10-30, Native API 23). Read-only audit; no code was changed. Phase 1, step 1 (the web half of native Settings) came later, on `track/settings`: section 9 lists what it built, changed and found, and sections 7.1, 7.2, 7.5 and 7.7 say where it answers them. Line numbers in sections 1 to 8 are those of the baseline; several segments have moved since.
 
 Reference conventions. Paths are relative to `lifemax_modular_v73/src/`. Runtime segments are cited by file name alone (they all live in `runtime/segments/`, for example `04-runtime.js:264`). Many segments are minified one-statement-per-line files, so one line number can cover a whole function. Native paths are relative to `android-wrapper/`. "Verified" means read in the source at this baseline. Anything not verified is marked **(unverified)**. "From code reading" means the behaviour follows from the source but nobody has seen it on a device.
 
@@ -612,11 +612,15 @@ Not measured on the owner's phone. What the code bounds: avatar is a 256×256 JP
 - Read-only status rows: installed and latest build, update state text, last backup, last health sync, widget count, calendar last check, thumbnail count, USDA count, trainer pack name, Sparks.
 - Bottom-bar editor: a list with up/down buttons and a checkbox per row; the rule "keep at least two" can be shown natively but must stay enforced by the web handler.
 
+**Done in phase 1, step 1** (section 9): all of the above, except that three switches open an Android dialog when turned on (reminders, health sync, calendar import), so they are turned on on the page (a delegation) and off by command; the health types and steps goal are commands. The rewards balance (Sparks) is not on the Settings page, so it is not in the projection; the rewards sheet is a delegation. Android device backup (added after this audit) is a delegation: its value is known only asynchronously and it is a privacy choice.
+
 ### 7.2 Medium
 
 - Text and number inputs: profile name, weight, height, decay grace and rate, nine XP rule bases, quiet hours and reminder times (time pickers). The web handlers read the DOM (`saveCharacter`, `saveDecay`, `saveRules`), so commands need payload-taking versions first, as was done for Log ("logic callable without the form").
 - Asynchronous facts. `NativeTabKit` builds the projection synchronously (`50-native-tabkit.js:58-60`), but permission state, exact-alarm state, widget status, the USDA count and the motor probe are only known asynchronously inside today's renderers. They need a small cache that the renderers fill (for example `window.SettingsFacts`), read by `projection()`.
 - Live progress: update download percentages and backup "Saving…" need a refresh trigger; the existing `MutationObserver` on `#view-settings` (`50-settings-tabs.js:31`) fires on every card re-render and could call the kit's `schedule()`.
+
+**Answered in phase 1, step 1:** no cache was needed for the asynchronous facts or the live progress. The projection reads the cards as the renderers have drawn them, so the cache is the page itself, and an observer of its own on `#view-settings` (child list, text, and the `disabled`, `style` and `hidden` attributes a renderer flips without redrawing) refreshes the screen whenever a renderer draws, a late fact included.
 - The avatar: a data URL of tens of KB in the projection is fine under the 2 MB snapshot cap, but it is re-sent on every refresh.
 - The rewards sheet: flat lists, but it is shared with Overview and spends Sparks.
 
@@ -643,6 +647,8 @@ All writers of the core save (profile, decay, XP rules, haptics, HD cat, journal
 6. **Settings toggles that write the core save run the full `save()` chain**, including quest auto-verification and reminder resync. A native command through those handlers inherits this.
 7. **Two web settings have no control** (`fx.sound`, `fx.reduce`). A native screen should not silently invent them; ask the owner (section 8).
 
+**Where phase 1, step 1 stands on these:** 1, the projection carries a `classic` row of its own (action `classic`) and the switch stays on the page's Appearance card. 2, `blocked()` covers the dev chat, the level-up, a pending file picker, the JSON import (from the pick until the page empties the file input) and a reset's backup (`saveReplacing`), the tab-preview capture, a field or select being edited, a card just handed to the owner, and a page about to reload (`lmaReloading`); a pending `confirm()` blocks the page's thread, so nothing can open during one. 3, every field is a delegation; nothing is drafted natively yet. 4, the native tabs' switches run the page's own `setNativeXEnabled` and then `NativeTabs.heal`; tested with every tab, and in the hand-over simulation. 5 and 6, no data action is a command; the core-save switches (haptics, HD cat, health types) are commands through the page's own handlers and so run the full `save()` chain, as the page's own boxes do. 7, not invented.
+
 ### 7.6 Proposed phasing
 
 | Phase | Scope | Writes |
@@ -653,7 +659,7 @@ All writers of the core save (profile, decay, XP rules, haptics, HD cat, journal
 | 3 | Commands for core-save settings through the payload handlers: profile, decay, XP rules, haptics, HD cat; with the unsaved-draft rule and pending/confirmed display (CONTRACT A11) | core save, through web handlers |
 | 4 | Data management, journal lock, health and calendar on/off, rewards: only after ADR 0004 is done and the owner agrees; until then they stay delegated | core save, whole-save replacement |
 
-### 7.7 Phase 1 sketch (proposal; nothing here is implemented)
+### 7.7 Phase 1 sketch (the proposal; section 9 says what was built instead)
 
 `50-native-settings.js` would call `NativeTabKit.create` with:
 
@@ -722,3 +728,26 @@ Tests to add with it (NATIVE_TAB_GUIDE): a node projection test with fixtures fo
 10. **Priority.** Settings has the riskiest buttons in the app. Should it be one of the last tabs to go native, with Data management staying on the classic page until verified backups exist?
 11. **Settings in the bottom bar.** Should Settings be in the bar by default, or stay behind the gear?
 12. **XP rules.** Clearing a field and saving sets that activity's base XP to 1, and "Reset defaults" asks for no confirmation. Is that acceptable?
+
+---
+
+## 9. Phase 1, step 1: the web half (track/settings)
+
+What was built (`src/runtime/segments/50-native-settings.js`, details in `MIGRATION.md`, "Settings, phase 1, step 1 of 4"):
+
+- **NativeTabKit tab** on view `settings`, plugin `NativeSettings`, capability `settings.projection.v1`, setting `nativeSettings`, Settings row "Native Settings (beta)" (Appearance, off by default). Turned on from the page, the screen opens at once.
+- **A generic projection instead of the sketch's per-card fields (7.7).** The page is read card by card: each top-level `.card` gives `{id, title, intro, category, rows}`, and each row is a `row` (a `.settingsline`: title, hint lines, controls), `note`, `text`, `controls`, `field` or `tab`. Every control carries its id and how it is operated (`toggle`, `choose`, `press` or `reveal`). Reading the page rather than recomputing it means the words are the page's own, the asynchronous facts arrive when their renderer draws (7.2), and a card the page adds or rewords needs no native change. The cost: the reader depends on the page's markup conventions (`.settingsline`, `.note`, `.field`, `.muted`, `h3`), which `native-settings.test.js` checks card by card.
+- **Commands do what a tap does.** A bound switch or select is set and its own change handler runs; a bound button is clicked. So no setter's logic is copied, and every rule stays the page's (the bar's "keep at least two" is `lmaTabShow`'s own refusal). The bound controls are the 7.1 list (42 ids, plus each bar row's arrows and box and the four haptic tries). Everything else is a delegation (`reveal`).
+- **Refused saves are reported.** The handlers swallow failed writes (`lmaSave`, `setLightMode`, the quest keys) and the core-save handlers ignore `save()`'s answer (`hapSet`, the HD cat's listener), so the command watches the handler's own write for the length of its synchronous part and reports `saved:false` with `unsavedMessage()` (core save) or the storage-full sentence.
+
+What the page needed (all small): `data-view` on the bar editor's rows (`50-tabs-edit.js`); `data-level` and `data-try` on the haptic buttons (`50-haptics.js`); an id and a name on the voice switch (`45-voice.js`); names (`aria-label`) on the reminder lead time, backup frequency and keep, and steps goal selects (`33-android.js`, `35-android-upkeep.js`, `39-health.js`), which TalkBack read without one; an id on "Reset to default" (`views/settings.html`); and `lmaReloading` in `lmaLeaveNative` (below).
+
+Found on the way:
+
+1. **`lmaLeaveNative` assumed Settings is never native.** Before a reload (an over-the-air restart, an import) it moves a native tab's owner to Settings "which none covers, so nothing reopens". With native Settings on, that navigation would open a screen while the page is closing them all. It now raises `lmaReloading`, which keeps native Settings closed, and clears it if the restart fails (`35-android-upkeep.js`).
+2. **The Delete button has no colour.** "Delete all local data" sets `background:var(--red)`, and `--red` is not defined, so the button is transparent with dark text, nearly invisible in the dark theme (measured in Chromium at this commit). The projection marks it `style: "danger"`; the page is unchanged (a question of look for the owner).
+3. **The six selects in Navigation, Quest effects and Guided workout are unstyled.** They have no class, so in the dark theme they draw as the browser's default light-grey box with the page's light text; the renderers' selects (reminders, backup, steps goal) use `LMA_IN` (panel2, line border, 8 px radius). The light theme makes both white.
+4. **In the light theme a ticked box is white.** `html.light-theme .check` (background white, line border) outranks `.check:checked`, so only the dark tick shows that it is on.
+5. **Android device backup** (a row added under Automatic backup after this audit, `50-device-backup.js`) is not in sections 3 or 4; it is projected as a delegation.
+6. The inventory's "about 120 interactive controls": the default projection (`fixtures/settings-default.json`, a phone, developer mode off) has 131: 39 switches and 11 selects or choices worked by command, 25 buttons pressed by command (the bar's arrows and reset, the haptic tries), and 56 delegations.
+
