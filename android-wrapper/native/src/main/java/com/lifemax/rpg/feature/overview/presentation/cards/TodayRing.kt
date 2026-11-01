@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,7 +26,9 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.overview.domain.HeroRing
+import com.lifemax.rpg.feature.overview.presentation.LocalOverviewArrival
 import com.lifemax.rpg.feature.overview.presentation.LocalOverviewColors
+import com.lifemax.rpg.feature.overview.presentation.OverviewArrival
 import com.lifemax.rpg.feature.overview.presentation.argb
 
 /**
@@ -37,14 +40,33 @@ import com.lifemax.rpg.feature.overview.presentation.argb
 internal fun TodayRing(ring: HeroRing, modifier: Modifier = Modifier) {
     val c = LocalOverviewColors.current
     val density = LocalDensity.current.density
+    val arrival = LocalOverviewArrival.current
     Box(modifier.size(RING_DP.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
+            val unit = size.minDimension / RING_DP
+            drawCircle(c.line.copy(alpha = 0.9f), R * unit, style = Stroke(STROKE * unit))
+        }
+        // the arcs (.ov-segs) sweep in on an arrival: from -130 degrees and scale .92, faded in,
+        // about the ring's centre; still, they are drawn as they are
+        Canvas(
+            Modifier.fillMaxSize()
+                .then(
+                    if (arrival == null) Modifier
+                    else
+                        Modifier.graphicsLayer {
+                            val p = OverviewArrival.ring(arrival.ms)
+                            rotationZ = -130f * (1f - p)
+                            scaleX = .92f + .08f * p
+                            scaleY = scaleX
+                            alpha = p
+                        }
+                )
+        ) {
             val unit = size.minDimension / RING_DP
             val radius = R * unit
             val stroke = STROKE * unit
             val box = Size(radius * 2, radius * 2)
             val topLeft = Offset(center.x - radius, center.y - radius)
-            drawCircle(c.line.copy(alpha = 0.9f), radius, style = Stroke(stroke))
             ring.arcs.forEach { arc ->
                 val start = -90f - arc.offset * 3.6f
                 val sweep = arc.length * 3.6f
@@ -89,7 +111,9 @@ internal fun TodayRing(ring: HeroRing, modifier: Modifier = Modifier) {
                 lineHeight = 13.5.sp,
             )
             Text(
-                ring.today.toString(),
+                // today's XP counts up on an arrival, as the page's ovReplay does
+                (arrival?.let { OverviewArrival.count(ring.today, it.ms) } ?: ring.today)
+                    .toString(),
                 color = if (ring.over) c.gold else c.text,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,

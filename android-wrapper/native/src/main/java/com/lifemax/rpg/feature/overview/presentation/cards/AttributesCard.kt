@@ -39,6 +39,8 @@ import com.lifemax.rpg.core.designsystem.components.tapTarget
 import com.lifemax.rpg.feature.overview.domain.AttrsCard
 import com.lifemax.rpg.feature.overview.domain.DotKind
 import com.lifemax.rpg.feature.overview.domain.Gem
+import com.lifemax.rpg.feature.overview.presentation.LocalOverviewArrival
+import com.lifemax.rpg.feature.overview.presentation.OverviewArrival
 
 /**
  * The Attributes card (ovAttrsHtml): two columns of gems, each its attribute's level, this week's
@@ -143,7 +145,9 @@ private fun GemView(g: Gem, onClick: () -> Unit, modifier: Modifier) {
             )
         }
         ProgressBar(
-            g.pct / 100f,
+            // the bar fills from empty on an arrival, as the page's ovReplay does
+            g.pct / 100f *
+                (LocalOverviewArrival.current?.let { OverviewArrival.fill(it.ms) } ?: 1f),
             barFade(color),
             Modifier.semantics { invisibleToUser() },
             height = 6.dp,

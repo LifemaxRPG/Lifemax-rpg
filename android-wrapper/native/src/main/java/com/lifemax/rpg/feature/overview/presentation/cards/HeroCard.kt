@@ -40,7 +40,9 @@ import com.lifemax.rpg.feature.overview.domain.Delta
 import com.lifemax.rpg.feature.overview.domain.HeroCard
 import com.lifemax.rpg.feature.overview.domain.HeroFoot
 import com.lifemax.rpg.feature.overview.domain.HeroStreak
+import com.lifemax.rpg.feature.overview.presentation.LocalOverviewArrival
 import com.lifemax.rpg.feature.overview.presentation.LocalOverviewColors
+import com.lifemax.rpg.feature.overview.presentation.OverviewArrival
 import com.lifemax.rpg.feature.overview.presentation.OverviewColors
 import com.lifemax.rpg.feature.overview.presentation.cssRadialGlow
 
@@ -199,7 +201,9 @@ private fun LevelBadge(level: Int) {
 @Composable
 private fun XpBar(pct: Float, modifier: Modifier) {
     val c = LocalOverviewColors.current
-    val frac = (pct / 100f).coerceIn(0f, 1f)
+    // the bar fills from empty on an arrival, as the page's ovReplay does
+    val fill = LocalOverviewArrival.current?.let { OverviewArrival.fill(it.ms) } ?: 1f
+    val frac = (pct / 100f).coerceIn(0f, 1f) * fill
     Box(
         modifier
             .fillMaxWidth()

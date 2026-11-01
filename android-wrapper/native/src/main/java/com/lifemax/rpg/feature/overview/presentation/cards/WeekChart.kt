@@ -25,6 +25,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -38,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.feature.overview.domain.WeekBar
 import com.lifemax.rpg.feature.overview.domain.WeekPace
+import com.lifemax.rpg.feature.overview.presentation.LocalOverviewArrival
+import com.lifemax.rpg.feature.overview.presentation.OverviewArrival
 import com.lifemax.rpg.feature.overview.presentation.cards.CardsBGeometry as G
 
 /**
@@ -130,7 +134,23 @@ private fun Day(
 @Composable
 private fun Stack(b: WeekBar, column: Float, modifier: Modifier) {
     val c = LocalPageColors.current
-    Column(modifier.clip(StackShape), verticalArrangement = Arrangement.Bottom) {
+    val arrival = LocalOverviewArrival.current
+    Column(
+        modifier
+            .then(
+                // the bars grow from the foot on an arrival (ovGrow); still, nothing changes
+                if (arrival == null) Modifier
+                else
+                    Modifier.graphicsLayer {
+                        val p = OverviewArrival.bars(arrival.ms)
+                        transformOrigin = TransformOrigin(.5f, 1f)
+                        scaleY = .04f + .96f * p
+                        alpha = .2f + .8f * p
+                    }
+            )
+            .clip(StackShape),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
         if (b.segs.isEmpty()) {
             Box(
                 Modifier.fillMaxWidth()

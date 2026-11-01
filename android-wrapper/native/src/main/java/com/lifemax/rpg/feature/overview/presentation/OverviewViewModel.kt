@@ -41,6 +41,9 @@ class OverviewViewModel(
 
     internal val taps = OverviewTaps(commands, { cards }, { onNavigate(it) }, ::say, newId)
 
+    /** The page's arrival the cards play, once each, only while showing (phase 3). */
+    val arrival = ArrivalController()
+
     private var showing = false
     private var weekDates: List<String>? = null
     private var noticed: Pair<String, Long>? = null
@@ -58,6 +61,7 @@ class OverviewViewModel(
     fun hidden() {
         showing = false
         notice = null
+        arrival.hidden()
     }
 
     /** The repository has taken a projection. */
@@ -65,6 +69,7 @@ class OverviewViewModel(
         val p = repository.state.value ?: return
         cards = p
         taps.projected(p)
+        arrival.projected(p.session, p.arrival, showing, p.reducedMotion)
         val dates = p.tiles.week.bars.map { it.date }
         if (dates != weekDates) {
             weekDates = dates

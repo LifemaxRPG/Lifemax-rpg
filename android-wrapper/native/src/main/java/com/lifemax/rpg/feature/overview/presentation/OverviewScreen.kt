@@ -5,12 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
@@ -20,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.core.designsystem.feedback.PageCelebrations
-import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialIntroLedger
+import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.presentation.glance.DirectorGlance
 import com.lifemax.rpg.feature.overview.data.OverviewViews
 import com.lifemax.rpg.feature.overview.domain.MoveGo
@@ -57,8 +59,22 @@ fun OverviewRoute(
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
     val cards = vm.cards ?: return
     val actions = remember(vm) { OverviewActions(vm) }
-    OverviewScreen(cards, actions, visible, topInsetDp, bottomInsetDp, vm.weekDay, vm.notice)
+    val arrival = rememberOverviewArrival(vm.arrival.playing, cards.sessions, vm.arrival::played)
+    OverviewScreen(
+        cards,
+        actions,
+        visible,
+        topInsetDp,
+        bottomInsetDp,
+        vm.weekDay,
+        vm.notice,
+        arrival = arrival,
+    )
 }
+
+/** The sessions on the glance's dial, which the arrival's length waits for. */
+private val OverviewCards.sessions: Int
+    get() = tiles.plan?.dial?.arcs?.count { it.style == ArcStyle.SESSION } ?: 0
 
 /** Everything the cards can ask for, so the screen itself holds no state. */
 class OverviewActions(
@@ -102,7 +118,9 @@ class OverviewActions(
  * order (`layout`), one item per tile keyed by its id, under the shared bars ([topInsetDp],
  * [bottomInsetDp]); the page's message as its toast, and the celebrations the page handed over
  * (fxSink) drawn over everything, each once, from the page's last tap to the logo, only while
- * [visible]. [celebrationAt] freezes the first at a moment (screenshots).
+ * [visible]. [celebrationAt] freezes the first at a moment (screenshots). [arrival] is the page's
+ * arrival being played (OverviewArrival): the rows rise in turn, the ring, bars and count move, and
+ * the glance's dial arrives off the same clock; null draws everything still.
  */
 @Composable
 fun OverviewScreen(
@@ -115,10 +133,9 @@ fun OverviewScreen(
     notice: OverviewNotice? = null,
     list: LazyListState = rememberLazyListState(),
     celebrationAt: Float = 0f,
+    arrival: OverviewArrivalRun? = null,
 ) {
     val images = remember { OverviewImages() }
-    // the glance's arrival plays once per arrival for the whole screen, not once per glance redraw
-    val introLedger = remember { DialIntroLedger() }
     OverviewTheme(cards.tokens, cards.light) {
         val c = LocalOverviewColors.current
         Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -133,12 +150,23 @@ fun OverviewScreen(
                         bottom = bottomInsetDp.dp + 16.dp,
                     ),
             ) {
-                item("head", "head") { OverviewHeadRow(cards.head, actions.edit) }
-                cards.tip?.let { tip ->
-                    item("tip", "tip") { OverviewTipCard(tip, actions.dismissTip) }
+                item("head", "head") {
+                    Rise(arrival, 0) { OverviewHeadRow(cards.head, actions.edit) }
                 }
-                items(cards.shown, key = { "tile/$it" }, contentType = { it }) { id ->
-                    Tile(id, cards, actions, visible, weekDay, images, introLedger)
+                cards.tip?.let { tip ->
+                    item("tip", "tip") {
+                        Rise(arrival, 1) { OverviewTipCard(tip, actions.dismissTip) }
+                    }
+                }
+                val first = if (cards.tip != null) 2 else 1
+                itemsIndexed(
+                    cards.shown,
+                    key = { _, id -> "tile/$id" },
+                    contentType = { _, id -> id },
+                ) { i, id ->
+                    Rise(arrival, first + i) {
+                        Tile(id, cards, actions, visible, weekDay, images, arrival)
+                    }
                 }
             }
             if (visible && notice != null)
@@ -169,7 +197,7 @@ private fun Tile(
     visible: Boolean,
     weekDay: Int,
     images: OverviewImages,
-    introLedger: DialIntroLedger,
+    arrival: OverviewArrivalRun?,
 ) {
     val t = cards.tiles
     when (id) {
@@ -181,10 +209,11 @@ private fun Tile(
                     onTap = { tap -> actions.plan(tap.act, tap.id) },
                     // the 14 dp every tile keeps under it (OverviewCard's own for the others)
                     modifier = Modifier.padding(bottom = 14.dp),
-                    // the page sends no arrival yet (phase 3): the dial's arrival never plays
                     arrival = cards.arrival,
                     reducedMotion = cards.reducedMotion,
-                    introLedger = introLedger,
+                    // the dial arrives with the cards, off the same clock (once per arrival,
+                    // only while showing, never with reduced motion: ArrivalController)
+                    intro = arrival?.dial,
                 )
             }
         OverviewTileIds.NEXT -> NextMovesCard(t.next) { actions.move(it.go) }
@@ -220,6 +249,17 @@ private fun Tile(
             t.cat?.let {
                 CatCardView(it, cards.catPortrait, onOpen = { actions.go(OverviewViews.PET) })
             }
+    }
+}
+
+/**
+ * A row of the list; while an arrival plays it rises into place in its turn ([index]). Still, it is
+ * a plain full-width box, so the list lays out as before.
+ */
+@Composable
+private fun Rise(arrival: OverviewArrivalRun?, index: Int, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalOverviewArrival provides arrival) {
+        Box(Modifier.fillMaxWidth().arrivalRise(arrival, index)) { content() }
     }
 }
 
