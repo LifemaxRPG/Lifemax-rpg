@@ -1,0 +1,46 @@
+{
+ "setup": [
+  {
+   "n": "1 of 6",
+   "title": "Life Director plans your days for you",
+   "body": "<p>Tell it when you’re busy. It fits your goals into the rest. Four steps, about a minute.</p><p class=\"ld-tour-hint\">Tap anywhere to continue</p>",
+   "next": "Next",
+   "tags": ""
+  },
+  {
+   "n": "2 of 6",
+   "title": "Drag to set your sleep",
+   "body": "<p>Move the two handles, then press <b>Save sleep</b>.</p>",
+   "next": "Next",
+   "tags": "<g class=\"ld-tl-p ld-c-sleep\"><rect x=\"94.2\" y=\"10.8\" width=\"64.9\" height=\"24\" rx=\"12\"></rect><text x=\"126.6\" y=\"23.3\">Bedtime</text></g><g class=\"ld-tl-p ld-c-sleep\"><rect x=\"291.1\" y=\"211.0\" width=\"64.9\" height=\"24\" rx=\"12\"></rect><text x=\"323.6\" y=\"223.5\">Wake up</text></g>"
+  },
+  {
+   "n": "3 of 6",
+   "title": "Add work or school",
+   "body": "<p>Anything at the same time every week. Shifts can rotate.</p>",
+   "next": "Next",
+   "tags": ""
+  },
+  {
+   "n": "4 of 6",
+   "title": "Time around your day",
+   "body": "<p>Getting ready, winding down, meals. Use − and +.</p>",
+   "next": "Next",
+   "tags": ""
+  },
+  {
+   "n": "5 of 6",
+   "title": "Pick what to work on",
+   "body": "<p>Life Director turns each goal into regular sessions. Quests are added for you.</p>",
+   "next": "Next",
+   "tags": ""
+  },
+  {
+   "n": "6 of 6",
+   "title": "Then build your week",
+   "body": "<p>Your plan appears on Today.</p>",
+   "next": "Let’s go",
+   "tags": ""
+  }
+ ]
+}

@@ -497,6 +497,7 @@
  },
  "firstRun": null,
  "guide": null,
+ "help": null,
  "sheet": {
   "kind": "rule",
   "id": null,

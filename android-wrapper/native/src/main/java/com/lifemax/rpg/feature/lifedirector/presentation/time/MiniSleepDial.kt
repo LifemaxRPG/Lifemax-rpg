@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.min
 import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.lifedirector.domain.DialRadii
+import com.lifemax.rpg.feature.lifedirector.domain.GuideTag
 import com.lifemax.rpg.feature.lifedirector.domain.HourWord
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
@@ -65,6 +66,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialGeometry
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DragGeometry
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.EARLIER
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.LATER
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.TourTags
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.arcPath
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.faded
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.handle
@@ -80,7 +82,10 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.unitPx
  * reporting each new pair to [onChange]; nothing is saved until the sheet's Save sleep. Any other
  * touch goes on to the list, so it still scrolls. Each handle is also a TalkBack slider over the
  * day's stops, moved a stop later or earlier by its adjust gestures or its two actions. [radii] and
- * [hourWords] are the main dial's, so the face is the same.
+ * [hourWords] are the main dial's, so the face is the same. [tags] are the name tags set-up's guide
+ * pins on it (Bedtime, Wake up: [miniGuideTags]), drawn as the main dial's guide draws its own;
+ * none by default. [dialModifier] goes on the dial's own square (not the row it is centred in), for
+ * what must fit the dial itself, such as set-up's guide anchor (time.sleep, a round spotlight).
  */
 @Composable
 fun MiniSleepDial(
@@ -93,6 +98,8 @@ fun MiniSleepDial(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     reducedMotion: Boolean = false,
+    tags: List<GuideTag> = emptyList(),
+    dialModifier: Modifier = Modifier,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(radii, hourWords) { DialFace(radii, hourWords, text) }
@@ -110,6 +117,7 @@ fun MiniSleepDial(
         val side = min(maxWidth, MAX_SIDE)
         Box(
             Modifier.size(side)
+                .then(dialModifier)
                 .alpha(if (enabled) 1f else DISABLED)
                 .semantics { contentDescription = dial.words.group }
                 .pointerInput(enabled, dial.step) {
@@ -185,6 +193,7 @@ fun MiniSleepDial(
                     knob(radii.outer, MiniDialMath.angle(wake), fill.takeIf { held == End.WAKE })
                 }
             }
+            TourTags(tags, still = reducedMotion)
             HandleNodes(dial, bed, wake, texts, radii, enabled) { b, w ->
                 buzz?.buzz(BUZZ_MS)
                 onChange(b, w)

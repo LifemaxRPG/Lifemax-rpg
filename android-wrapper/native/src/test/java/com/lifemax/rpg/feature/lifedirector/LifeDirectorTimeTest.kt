@@ -220,7 +220,7 @@ class LifeDirectorTimeTest {
         val done = projection(fixture("time")).time!!
         assertEquals(1, timeItemIndex(first, "time.steps"))
         assertEquals(3, timeItemIndex(first, "time.sleep"))
-        assertEquals(3, timeItemIndex(first, "time.mini"))
+        assertEquals(-1, timeItemIndex(first, "time.mini"))
         assertEquals(7, timeItemIndex(first, "time.build"))
         assertEquals(-1, timeItemIndex(done, "time.steps"))
         assertEquals(2, timeItemIndex(done, "time.sleep"))

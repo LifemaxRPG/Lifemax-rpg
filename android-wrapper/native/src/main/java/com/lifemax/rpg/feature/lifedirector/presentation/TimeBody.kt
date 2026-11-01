@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.Modifier
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorTime
 import com.lifemax.rpg.feature.lifedirector.domain.FirstRun
+import com.lifemax.rpg.feature.lifedirector.domain.GuideTag
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Slice
@@ -22,7 +23,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.sections.TimeLede
 
 /*
  * My time and the first-run card below the frame (phase 4B), one panel slice per list item, in renderSetup's order. Set-up's
- * guide points at the parts by these anchor names: time.steps, time.sleep (the card), time.mini (its dial), time.commitments,
+ * guide points at the parts by these anchor names: time.steps, time.sleep (the mini dial), time.commitments,
  * time.routines, time.goals and time.build (Build my week, or Re-plan now).
  */
 
@@ -42,8 +43,7 @@ private fun timeItems(t: DirectorTime): List<String> = buildList {
  * time has no such part; the dial's anchor is in the sleep card's item.
  */
 fun timeItemIndex(t: DirectorTime, anchor: String): Int {
-    val name = if (anchor == "time.mini") "time.sleep" else anchor
-    val i = timeItems(t).indexOf(name)
+    val i = timeItems(t).indexOf(anchor)
     return if (i < 0) -1 else i + 1
 }
 
@@ -56,6 +56,7 @@ internal fun LazyListScope.timeBody(
     body: Modifier,
     h12: Boolean,
     reducedMotion: Boolean,
+    tags: List<GuideTag>,
 ) {
     val pending = ui.pendingChange != null
     val a = actions.time
@@ -67,7 +68,7 @@ internal fun LazyListScope.timeBody(
     item("time-lede") { Panel(Slice.MIDDLE) { Box(body) { TimeLede(t.lede) } } }
     item("time-sleep") {
         Panel(Slice.MIDDLE) {
-            Box(body.anchor("time.sleep")) {
+            Box(body) {
                 SleepCard(
                     t.sleep,
                     ui.timeDrafts.sleep ?: SleepDraft.of(t.sleep),
@@ -75,7 +76,8 @@ internal fun LazyListScope.timeBody(
                     pending,
                     reducedMotion,
                     a,
-                    Modifier.anchor("time.mini"),
+                    Modifier.anchor("time.sleep"),
+                    tags,
                 )
             }
         }

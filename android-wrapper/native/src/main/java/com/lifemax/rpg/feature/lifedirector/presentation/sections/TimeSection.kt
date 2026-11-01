@@ -45,6 +45,7 @@ import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.feature.lifedirector.domain.BuildCard
 import com.lifemax.rpg.feature.lifedirector.domain.CommitmentDot
 import com.lifemax.rpg.feature.lifedirector.domain.Commitments
+import com.lifemax.rpg.feature.lifedirector.domain.GuideTag
 import com.lifemax.rpg.feature.lifedirector.domain.RoutineRow
 import com.lifemax.rpg.feature.lifedirector.domain.Routines
 import com.lifemax.rpg.feature.lifedirector.domain.SetupStep
@@ -190,7 +191,10 @@ fun SleepCard(
     pending: Boolean,
     reducedMotion: Boolean,
     a: TimeActions,
+    /** on the dial's own square: set-up's guide anchor, a round spotlight around the dial */
     dialModifier: Modifier = Modifier,
+    /** the name tags set-up's guide pins on the dial (miniGuideTags) */
+    tags: List<GuideTag> = emptyList(),
 ) = TimeCard {
     CompositionLocalProvider(
         LocalPickerFieldLook provides FormKitLook().pickers(),
@@ -206,9 +210,11 @@ fun SleepCard(
                 s.face.radii,
                 s.face.hourWords,
                 a.sleep,
-                dialModifier.padding(top = 6.dp, bottom = 4.dp),
+                Modifier.padding(top = 6.dp, bottom = 4.dp),
                 enabled = !pending,
                 reducedMotion = reducedMotion,
+                tags = tags,
+                dialModifier = dialModifier,
             )
             // a time the page wrote is shown in its words; one picked here in the page's style
             fun said(m: Int, saved: Int, text: String) = text.takeIf { m == saved }
@@ -383,7 +389,7 @@ fun RoutinesCard(r: Routines, shown: (RoutineRow) -> Int, pending: Boolean, a: T
             TimeCardTitle(r.title, "smile")
             Muted(r.text)
             r.rows.forEach { StepRow(it, shown(it), pending, a) }
-            StepRow(r.meals, shown(r.meals), pending, a, last = true)
+            StepRow(r.meals, shown(r.meals), pending, a)
             Muted(r.note, Modifier.padding(top = 6.dp))
         }
     }
@@ -393,13 +399,7 @@ fun RoutinesCard(r: Routines, shown: (RoutineRow) -> Int, pending: Boolean, a: T
  * switch).
  */
 @Composable
-private fun StepRow(
-    row: RoutineRow,
-    value: Int,
-    pending: Boolean,
-    a: TimeActions,
-    last: Boolean = false,
-) {
+private fun StepRow(row: RoutineRow, value: Int, pending: Boolean, a: TimeActions) {
     val on = row.on != false
     Row(
         Modifier.fillMaxWidth()
@@ -426,7 +426,7 @@ private fun StepRow(
             Text(row.hint, style = DirectorText, color = P.ink3, fontSize = 12.2.sp)
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val said = if (on) row.textAt(value) else row.text
@@ -451,18 +451,37 @@ private fun StepRow(
     }
 }
 
-/** A stepper's small − or + (.ld-stepper .ld-btn), named for TalkBack in the page's words. */
+/**
+ * A stepper's small − or + (.ld-stepper .ld-btn.ld-small: 36 by 34, 10 round), drawn that size
+ * inside a 48 dp touch target and named for TalkBack in the page's words ("Less", "More").
+ */
 @Composable
-private fun StepButton(sign: String, said: String, off: Boolean, onClick: () -> Unit) =
-    DirectorButton(
-        sign,
-        ButtonLook.PLAIN,
-        { if (!off) onClick() },
-        Modifier.widthIn(min = 36.dp).alpha(if (off) .45f else 1f).semantics {
-            contentDescription = said
-        },
-        small = true,
-    )
+private fun StepButton(sign: String, said: String, off: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Box(
+        Modifier.size(48.dp)
+            .clickable(enabled = !off, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = said },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(36.dp, 34.dp)
+                .alpha(if (off) .45f else 1f)
+                .background(P.buttonFill, shape)
+                .border(1.dp, P.line2, shape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                sign,
+                Modifier.clearAndSetSemantics {},
+                style = DirectorText,
+                color = P.ink,
+                fontSize = 13.1.sp,
+                fontWeight = FontWeight(650),
+            )
+        }
+    }
+}
 
 /** Goals: a chip each (or the empty words), Add a goal and, once there are some, Manage goals. */
 @OptIn(ExperimentalLayoutApi::class)

@@ -13,6 +13,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
 import com.lifemax.rpg.feature.lifedirector.domain.SheetRowButton
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
+import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideHelp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,9 @@ class LifeDirectorViewModel(
         ) { ms, run ->
             viewModelScope.launch { delay(ms).also { run() } }.let { job -> { job.cancel() } }
         }
+    /** the ? button: this section's guide, or the one the page names, played in its section (4B) */
+    val guideHelp =
+        GuideHelp(projection, ::draws, ::showSection, { ui.value.pendingSection }, { startGuide() })
     private var handedOver = false
     private var dayRequest: String? = null
     private var sectionRequest: String? = null
@@ -77,6 +81,7 @@ class LifeDirectorViewModel(
         changeRequest = null
         letGo()
         sheets.reset()
+        guideHelp.reset()
         mutableUi.update { it.copy(pendingDay = null, pendingSection = null, pendingChange = null) }
     }
 
@@ -93,6 +98,7 @@ class LifeDirectorViewModel(
         // and the operation ids of Today's writes stay
         sheets.reset()
         feedback.hidden()
+        guideHelp.reset()
         mutableUi.update { it.copy(guide = null, confirm = null, restoring = false) }
     }
 
@@ -101,6 +107,7 @@ class LifeDirectorViewModel(
         guideStillShown()
         sheets.projected()
         time.projected()
+        guideHelp.projected()
     }
 
     /** A handle is held or the page is asked about one: the rest of the screen waits. */

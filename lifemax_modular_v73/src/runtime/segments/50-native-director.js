@@ -34,10 +34,10 @@
     : tab.has(CELEBRATES) ? Object.assign({}, result, { celebrations: NativeTabKit.celebrations(held) })
     : Object.assign({}, result, { after: () => celebrate(held) });
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
-  /** the guides a screen draws, by section: Week's with Week, Today's with Today's sheets (set-up's comes in 4B). With Today's
+  /** the guides a screen draws, by section: Week's with Week, Today's with Today's sheets, set-up's with My time (4B). With Today's
       drawn by the screen, the page reports Today rather than its guide after set-up, so the screen covers Today and plays the
       first build itself (cover() stops the page's), then its guide. */
-  const GUIDES = { week: "director.week.v1", today: SHEETS };
+  const GUIDES = { week: "director.week.v1", today: SHEETS, setup: SETUP };
   const guides = (key) => tab.enabled() && !!GUIDES[key] && tab.has(GUIDES[key]);
 
   /** the frame, and the one section on the page now, only while the screen draws it (null when it has nothing to draw) */
@@ -54,6 +54,9 @@
       time: part("setup", () => ld.time()),
       firstRun: c.includes("first-run") && ld.showing() === "first-run" ? ld.firstRun() : null,
       guide: guides(t) ? ld.guide(t) : null,
+      // the guide ? plays (the plan's guide.help), apart from guide because Goals and Settings have none of their own: the screen
+      // switches to that section and plays it; null when the screen does not draw it there, and the ? is handed over
+      help: ((k) => (k && guides(k) && c.includes(k) ? k : null))(ld.help()),
       sheet: sheet && drawsSheet(sheet.kind) ? ld.sheet(sheet.kind, sheet.id) : null,
       intent: tab.has(SHEETS) ? ld.intent() : null, // a sheet the Overview's glance asked for, taken once by its id
       celebrationTarget: NativeTabKit.celebrationTarget(),

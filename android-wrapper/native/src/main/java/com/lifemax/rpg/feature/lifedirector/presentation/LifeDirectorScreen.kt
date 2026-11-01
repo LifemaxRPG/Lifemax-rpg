@@ -92,6 +92,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.guide.guideAnchor
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptSheets
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealSheet
+import com.lifemax.rpg.feature.lifedirector.presentation.time.miniGuideTags
 import kotlinx.coroutines.delay
 
 /**
@@ -149,6 +150,12 @@ fun LifeDirectorRoute(
         val buildDue = build != null && playable && vm.buildDue(p.session, build.id)
         LaunchedEffect(visible, p.tab, p.guide?.key, p.guide?.auto, run == null, buildDue) {
             if (visible && run == null && !buildDue) vm.startGuide(auto = true)
+        }
+        // a ? whose guide did not come with its section after all goes to the page
+        val helpOver by vm.guideHelp.handOverDue.collectAsState()
+        LaunchedEffect(helpOver, visible) {
+            if (helpOver && visible && vm.guideHelp.takeHandOver() && vm.handOver())
+                emit("tour", "")
         }
         WithDirectorFeedback(vm.feedback, p, visible, vm::handOver, emit) {
             LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
@@ -287,7 +294,16 @@ fun LifeDirectorScreen(
                 if (goals != null) goalsBody(goals, ui, actions, body)
                 if (settings != null) settingsBody(settings, ui, actions, body)
                 if (time != null)
-                    timeBody(time, ui, actions, anchors, body, p.clock.h12, p.reducedMotion)
+                    timeBody(
+                        time,
+                        ui,
+                        actions,
+                        anchors,
+                        body,
+                        p.clock.h12,
+                        p.reducedMotion,
+                        miniGuideTags(p, ui.guide),
+                    )
                 if (firstRun != null) firstRunBody(firstRun, actions, body)
             }
             if (confirm != null)
