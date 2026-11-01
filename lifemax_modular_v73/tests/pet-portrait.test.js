@@ -86,6 +86,13 @@ const READY = () => new Promise(done => { const until = performance.now() + 1500
   };
   await adopt('ginger', 40);
   await check('adult ginger, HD');
+  /* RECORD=1 writes the native fixture: a cat tile with this portrait and the image table carrying it (the key is FNV-1a of
+     the URL, as plan §3.3 names images; align at merge with the projection's own image keys) */
+  if (process.env.RECORD) {
+    const fx = await p.evaluate(() => { const url = petPortrait(petData()), key = 'img' + petHash(url).toString(16); return { cat: Object.assign(petPeekData(), { portrait: key }), images: { [key]: url } } });
+    const out = path.join(__dirname, '..', '..', 'android-wrapper', 'native', 'src', 'test', 'resources', 'fixtures', 'overview-cat-portrait.json');
+    fs.writeFileSync(out, JSON.stringify(fx, null, 1) + '\n'); console.log('wrote ' + out);
+  }
   /* cached: a second ask draws nothing and the room's cat is where it was */
   const cache = await p.evaluate(() => {
     const real = window.petDrawCat; let n = 0; window.petDrawCat = function () { n++; return real.apply(this, arguments) };
