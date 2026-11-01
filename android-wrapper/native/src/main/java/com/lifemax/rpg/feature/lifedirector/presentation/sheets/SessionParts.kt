@@ -181,7 +181,7 @@ internal fun WhyFold(why: SheetWhy, initiallyOpen: Boolean) {
 
 /** The details' disclosure triangle: pointing right when folded, down when open. */
 @Composable
-private fun Marker(open: Boolean) =
+internal fun Marker(open: Boolean) =
     Canvas(Modifier.size(8.dp).rotate(if (open) 90f else 0f)) {
         val path =
             Path().apply {

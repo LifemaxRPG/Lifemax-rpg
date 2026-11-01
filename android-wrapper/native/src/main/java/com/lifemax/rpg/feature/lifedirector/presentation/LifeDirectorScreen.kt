@@ -85,6 +85,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.CoachMarks
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideAnchors
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptSheets
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealSheet
 import kotlinx.coroutines.delay
@@ -275,6 +276,7 @@ fun LifeDirectorScreen(
                 )
             }
             TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
+            MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
             val guide = p.guide
             if (guideRun != null && guide != null)
                 CoachMarks(

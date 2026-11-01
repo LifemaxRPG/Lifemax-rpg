@@ -352,7 +352,7 @@ class LifeDirectorSessionTest {
     }
 
     @Test
-    fun pinAndTheTimerStartHereAndMoveAndPlanAreThePages() {
+    fun pinStartsAndMoveAndTheTimerOpenHereAndPlanIsThePages() {
         val s = screen(sheet("now"))
         val model = s.openNow()
         s.actions.session.row(model.row.single { it.command == "pin" })
@@ -367,8 +367,8 @@ class LifeDirectorSessionTest {
         s.vm.onReply(DirectorReply("today-2", "today", true))
         s.openNow()
         s.actions.session.row(model.row.single { it.sheet == "move" })
-        assertEquals(listOf(Tap("movePick", model.id)), s.emitted)
-        assertNull(s.vm.ui.value.sheet)
+        assertTrue(s.emitted.isEmpty()) // Move is the screen's own sheet now
+        assertEquals(OpenSheet("move", model.id), s.vm.ui.value.sheet)
 
         val running =
             screen(

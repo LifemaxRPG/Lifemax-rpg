@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealActions
 
@@ -34,6 +35,7 @@ class DirectorActions(
     val closeRestore: () -> Unit = {},
     val session: SessionActions = SessionActions(),
     val timerMeal: TimerMealActions = TimerMealActions(),
+    val moves: MoveDisruptActions = MoveDisruptActions(),
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -50,6 +52,11 @@ class DirectorActions(
                 t.act == "focusOpen" && vm.sheetsAvailable -> vm.timerMeal.openTimer(t.id)
                 t.act == "focusFinish" && vm.sheetsAvailable -> vm.timerMeal.finishRunning()
                 t.act == "meal" && vm.sheetsAvailable -> vm.timerMeal.openMeal(t.id)
+                // Something came up, Re-plan and the banner's answers too (phase 4A)
+                t.act == "disrupt" && vm.sheetsAvailable -> vm.moves.openDisrupt()
+                t.act == "replan" && vm.sheetsAvailable -> vm.moves.replan()
+                t.act == "regroup" && vm.sheetsAvailable -> vm.moves.regroup(t.id)
+                t.act == "dismissBanner" && vm.sheetsAvailable -> vm.moves.dismissBanner()
                 t.act == "tour" && vm.projection.value?.guide != null -> vm.startGuide()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
@@ -115,6 +122,7 @@ class DirectorActions(
                     vm.timerMeal.mealTap()?.let { if (vm.handOverFromSheet()) emit(it.act, it.id) }
                 },
             ),
+        moves = MoveDisruptActions(vm::closeSheet, vm.moves::moveTo, vm.moves::answer),
         flick = { dir ->
             val p = vm.projection.value
             val to =
