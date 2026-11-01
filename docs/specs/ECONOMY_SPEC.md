@@ -535,8 +535,9 @@ Worked examples (verified in a sandbox against the page's own functions):
 - **QUEST-2** `toggleQuest(id, checked)` (`04-runtime.js:239`):
   1. `q` = the quest with that id; none: return (no save).
   2. `A = q.attribute || 'discipline'`.
-  3. If `checked` and `questLocked(q)` (CURVE-9): toast `'Locked until you reach level ' + stageLvl(q.stage)`, return (no
-     save).
+  3. If `checked` and `questLocked(q)` (CURVE-9): toast `'Locked until you reach level ' + stageLvl(q.stage)`, then
+     `renderQuests()`, then return without saving here. `renderQuests()` runs the Daily Hand's `dhAutoVerify()`
+     (`14-runtime.js:35`), which can complete cards whose condition is met and so save (QUESTS_SPEC QST-55).
   4. `key = questKey(q)`.
   5. If `checked` and `questDone[key]` is falsy:
      1. `qid = 'quest_' + now` [D17]; `questDone[key] = qid` (set before the XP is computed).
@@ -1006,7 +1007,8 @@ Passive records are defined in 2.4 (PASSIVE-1).
 - **SAVE-5** `load()` (`04-runtime.js:20-36`): merges the stored save over `freshState()`, rebuilds attribute and skill XP when
   the ledger is non-empty, merges rules, then `migrateSave()` (`ecoMigrate`, reading list, class content) and `writeSave()`.
   A save from a newer build, or one whose migration throws, is shown read-only instead and never written. With nothing stored:
-  `freshState()` (no `xpSchemaV2`), default rules, `writeSave()` without the migration.
+  `freshState()` (no `xpSchemaV2`), default rules, `seedReadingList()` (sets `mediaItems` and `mediaSeededV1`), then
+  `writeSave()` without the migration (`04-runtime.js:33`).
 - **SAVE-6** Boot (`13-runtime.js:115`): `load()`, then `applyDecay()` (written with `writeSave()` when it changed something),
   then badges and the first render.
 
