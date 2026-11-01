@@ -93,7 +93,8 @@ function renderActivities(){const recent=state.activities.slice().sort((a,b)=>ne
 function renderBenchmarks(){document.getElementById('benchmarks').innerHTML=state.benchmarks.length?state.benchmarks.map((b,i)=>`<div class="minirow"><span><strong>${esc(b.name)}</strong><br><small>${esc(b.value)}</small></span><button class="btn small secondary" onclick="deleteBenchmark(${i})">Remove</button></div>`).join(''):'<p class="muted" style="font-size:12px">No benchmarks yet. Add a measurable result you care about.</p>'}
 /* The Journal: the hero, the day list and the selected day or review, drawn from the data builders (jcHeroData, jcListData, jcDayData,
    jcReviewData, journalDayData), which a native Journal projects as they are. Before drawing it decides the selected day's chip and
-   welcome record (jcDecide), stored without a save, so drawing never draws itself again. */
+   welcome record (jcDecide), stored without a save, so drawing never draws itself again. While the Journal is locked it decides the
+   same and draws nothing: the hero, the list and the entry are left empty. */
 function renderHistory(){
   if(!state.dayReflections)state.dayReflections={};
   histRev++;
@@ -104,7 +105,9 @@ function renderHistory(){
   const entryEl=document.getElementById('journalEntry');
   if(!daysEl||!entryEl)return;
   if(coach&&days.length)jcDecide(histSel);
-  const hero=document.getElementById('journalHero');if(hero&&coach)hero.innerHTML=jcHeroHtml();
+  const hero=document.getElementById('journalHero');
+  if(journalLocked()){if(hero)hero.innerHTML='';daysEl.innerHTML='';renderJournalEntry();return}
+  if(hero&&coach)hero.innerHTML=jcHeroHtml();
   if(!days.length){
     daysEl.innerHTML='';
     entryEl.innerHTML=`<div class="empty"><div>◷</div><strong>No journal entries yet</strong><br>Log an activity, complete a quest, or finish a plan session. Everything you enter will show up here by day.</div>`;
@@ -121,10 +124,11 @@ function journalListHtml(days){
     return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(journalDayLabel(d))}<small>${actsForDay(d).length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
 }
-/* The selected day or review, into the entry. Text being typed there stays as it is: the entry is drawn again once its box loses the
-   focus. */
+/* The selected day or review, into the entry (empty while the Journal is locked). Text being typed there stays as it is: the entry is
+   drawn again once its box loses the focus. */
 function renderJournalEntry(){
   const entryEl=document.getElementById('journalEntry');if(!entryEl)return;
+  if(journalLocked()){entryEl.innerHTML='';histDrawn=null;histStale=false;return}
   if(histDrawn===histSel&&entryEl.contains(document.activeElement)&&document.activeElement.matches('textarea')){histStale=true;return}
   histDrawn=histSel;histStale=false;
   entryEl.innerHTML=/^[WM]:/.test(histSel)&&window.LifeMaxCoach?jcReviewHtml(histSel):renderJournalDay(histSel);
@@ -132,6 +136,9 @@ function renderJournalEntry(){
 /* histRev counts changes to what the hero and the day list show: every renderHistory, and the writes that do not draw them (a
    reflection's soft redraw, a reset baseline). A native Journal memoises the hero and list on it. */
 let histSel=null,histDrawn=null,histStale=false,histRev=0;
+/* The Journal lock keeps the Journal's words out of the page while it is locked (48-journal-lock.js). The start-up drawing comes before
+   that module: a lock that is on is locked then, as every page load starts locked. */
+function journalLocked(){return window.LifeMaxJournalLock?LifeMaxJournalLock.blocksNative():!!(state.journalLock&&state.journalLock.on)}
 document.getElementById('journalEntry')?.addEventListener('focusout',e=>{if(histStale&&e.target.matches('textarea'))setTimeout(renderHistory)});
 function journalDays(){
   const set=new Set();
@@ -182,6 +189,7 @@ function saveDayReflection(d,val){
   state.customRules=rules;
   if(!writeSave()){toast(unsavedMessage());return}
   try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
+  if(journalLocked())return; // saved by the relock's blur: the Journal is left empty
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
   if(daysEl){

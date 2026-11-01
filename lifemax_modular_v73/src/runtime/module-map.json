@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 41236,
-   "statement_count": 86,
+   "bytes": 42020,
+   "statement_count": 87,
    "tags": [
     "training",
     "quests",
@@ -147,6 +147,7 @@
     "histDrawn",
     "histStale",
     "histRev",
+    "journalLocked",
     "journalDays",
     "actsForDay",
     "journalDayLabel",
@@ -2371,8 +2372,8 @@
   },
   {
    "file": "src/runtime/segments/48-journal-lock.js",
-   "bytes": 6673,
-   "statement_count": 21,
+   "bytes": 8006,
+   "statement_count": 23,
    "tags": [
     "journal",
     "lock"
@@ -2382,6 +2383,7 @@
     "jlUnlocked",
     "jlLeftAt",
     "jlPrompting",
+    "jlError",
     "jlPrevView",
     "jlOn",
     "jlPlugin",
@@ -2393,9 +2395,12 @@
     "jlOverlay",
     "jlApply",
     "jlWatchers",
+    "jlStatusWatchers",
     "jlBlocking",
     "jlBlocksNative",
+    "jlState",
     "jlNotify",
+    "jlSetStatus",
     "jlPrompt",
     "jlRelock",
     "jlOnNavigate",
