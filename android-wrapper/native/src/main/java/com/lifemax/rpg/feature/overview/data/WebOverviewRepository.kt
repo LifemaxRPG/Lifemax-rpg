@@ -50,6 +50,7 @@ class WebOverviewRepository : OverviewRepository {
             tip = j.orNull("tip") { tip(this) },
             layout = layout(j.getJSONObject("layout")),
             tileInfo = tileInfo,
+            editor = editorWords(j.getJSONObject("editor")),
             tiles = tiles,
             images = images,
             notice = j.orNull("notice") { notice(this) },

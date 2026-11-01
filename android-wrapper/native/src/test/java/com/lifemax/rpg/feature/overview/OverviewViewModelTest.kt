@@ -67,7 +67,6 @@ class OverviewViewModelTest {
                 { a: OverviewActions -> a.health() } to ("health" to emptyList()),
                 { a: OverviewActions -> a.appAdd() } to ("appAdd" to emptyList()),
                 { a: OverviewActions -> a.appsEdit() } to ("appsEdit" to emptyList()),
-                { a: OverviewActions -> a.edit() } to ("edit" to emptyList()),
                 { a: OverviewActions -> a.plan("inst", "s1") } to ("plan" to listOf("inst", "s1")),
             )
         taps.forEach { (tap, want) ->

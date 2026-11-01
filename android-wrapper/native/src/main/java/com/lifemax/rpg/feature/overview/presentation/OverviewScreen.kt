@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
+import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.core.designsystem.feedback.PageCelebrations
+import com.lifemax.rpg.core.designsystem.feedback.play
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialIntroLedger
 import com.lifemax.rpg.feature.lifedirector.presentation.glance.DirectorGlance
 import com.lifemax.rpg.feature.overview.data.OverviewViews
@@ -53,11 +55,27 @@ fun OverviewRoute(
     bottomInsetDp: Float,
     emit: (action: String, id: String) -> Unit,
 ) {
-    SideEffect { vm.onNavigate = { emit("navigate", it) } }
+    val buzz = LocalPageBuzz.current
+    SideEffect {
+        vm.onNavigate = { emit("navigate", it) }
+        vm.onBuzz = { buzz?.play(vm.cards?.haptics, *it.timings) }
+    }
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
     val cards = vm.cards ?: return
     val actions = remember(vm) { OverviewActions(vm) }
-    OverviewScreen(cards, actions, visible, topInsetDp, bottomInsetDp, vm.weekDay, vm.notice)
+    val ed = vm.editor
+    val editing =
+        OverviewEditing(ed.editing, ed.rows, ed::reorder, ed::toggle, ed::reset, ed::close)
+    OverviewScreen(
+        cards,
+        actions,
+        visible,
+        topInsetDp,
+        bottomInsetDp,
+        vm.weekDay,
+        vm.notice,
+        editing,
+    )
 }
 
 /** Everything the cards can ask for, so the screen itself holds no state. */
@@ -90,7 +108,7 @@ class OverviewActions(
         appAdd = vm.taps::appAdd,
         appsEdit = vm.taps::appsEdit,
         plan = vm.taps::plan,
-        edit = vm.taps::edit,
+        edit = vm.editor::toggleEditing,
         dismissTip = vm.taps::dismissTip,
         pickDay = vm::pickDay,
         noticeShown = vm::noticeShown,
@@ -102,7 +120,8 @@ class OverviewActions(
  * order (`layout`), one item per tile keyed by its id, under the shared bars ([topInsetDp],
  * [bottomInsetDp]); the page's message as its toast, and the celebrations the page handed over
  * (fxSink) drawn over everything, each once, from the page's last tap to the logo, only while
- * [visible]. [celebrationAt] freezes the first at a moment (screenshots).
+ * [visible]. [celebrationAt] freezes the first at a moment (screenshots). While [editing] is open
+ * its editor stands in place of the tiles, as the page's #ovEdit does.
  */
 @Composable
 fun OverviewScreen(
@@ -113,6 +132,7 @@ fun OverviewScreen(
     bottomInsetDp: Float = 72f,
     weekDay: Int = cards.tiles.week.selected,
     notice: OverviewNotice? = null,
+    editing: OverviewEditing = OverviewEditing(),
     list: LazyListState = rememberLazyListState(),
     celebrationAt: Float = 0f,
 ) {
@@ -133,14 +153,24 @@ fun OverviewScreen(
                         bottom = bottomInsetDp.dp + 16.dp,
                     ),
             ) {
-                item("head", "head") { OverviewHeadRow(cards.head, actions.edit) }
+                item("head", "head") { OverviewHeadRow(cards.head, actions.edit, editing.open) }
                 cards.tip?.let { tip ->
                     item("tip", "tip") { OverviewTipCard(tip, actions.dismissTip) }
                 }
-                items(cards.shown, key = { "tile/$it" }, contentType = { it }) { id ->
-                    Tile(id, cards, actions, visible, weekDay, images, introLedger)
-                }
+                if (editing.open)
+                    item("editor", "editor") { OverviewEditorItem(cards, editing, visible, list) }
+                else
+                    items(cards.shown, key = { "tile/$it" }, contentType = { it }) { id ->
+                        Tile(id, cards, actions, visible, weekDay, images, introLedger)
+                    }
             }
+            FollowEditor(
+                editing.open,
+                if (cards.tip != null) 2 else 1,
+                list,
+                cards.reducedMotion,
+                visible,
+            )
             if (visible && notice != null)
                 NoticeToast(
                     notice,

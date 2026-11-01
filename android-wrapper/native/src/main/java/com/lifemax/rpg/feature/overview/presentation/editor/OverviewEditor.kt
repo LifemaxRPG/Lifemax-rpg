@@ -71,23 +71,25 @@ const val EDITOR_MAX_ROWS = 11
  * [reducedMotion] nothing moves. TalkBack moves a row with its actions (up, down, to the top, to
  * the bottom) and hides or shows it. Back closes the editor while [visible].
  *
- * The order is the caller's: [onReorder] gets each new order, from a drop or a TalkBack move, and
- * the caller shows it at once (in [rows], before the next frame) and puts the page's order back if
- * the page refused it; the rows glide to whatever order [rows] has. [onReset] asks for the default,
- * [onToggle] hides or shows a tile, [onDone] closes. [buzz] plays the page's buzz for each moment.
- * [autoScroll] scrolls the list around the editor by the px it is given while a lifted row is near
- * the window's edge, and answers how far it went.
+ * The order is the caller's: [onReorder] gets each new order, from a drop or a TalkBack move, with
+ * the buzz it earns once the page has stored it (Drop or Move), and the caller shows it at once (in
+ * [rows], before the next frame) and puts the page's order back if the page refused it; the rows
+ * glide to whatever order [rows] has. [onReset] asks for the default, [onToggle] hides or shows a
+ * tile, [onDone] closes; the caller buzzes for these once stored, as the page does after its save.
+ * [buzz] plays the moments that need no save: the open, a lift, a slot crossed. [autoScroll]
+ * scrolls the list around the editor by the px it is given while a lifted row is near the window's
+ * edge, and answers how far it went.
  */
 @Composable
 fun OverviewEditor(
     rows: List<EditorRow>,
-    onReorder: (List<String>) -> Unit,
+    onReorder: (order: List<String>, then: EditorBuzz) -> Unit,
     onReset: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     onToggle: (String) -> Unit = {},
     buzz: (EditorBuzz) -> Unit = {},
-    words: EditorWords = EditorWords(),
+    words: EditorWords,
     reducedMotion: Boolean = false,
     visible: Boolean = true,
     animateOpen: Boolean = true,
@@ -116,7 +118,7 @@ fun OverviewEditor(
     BackHandler(enabled = visible) { onDone() }
 
     val window = LocalView.current
-    val drop = { state.drop { reorder(it) } }
+    val drop = { state.drop { reorder(it, EditorBuzz.Drop) } }
     fun move(delta: Float, at: LayoutCoordinates?, finger: Offset) {
         state.drag(delta)
         val y = at?.takeIf { it.isAttached }?.localToWindow(finger)?.y ?: return
@@ -172,10 +174,7 @@ fun OverviewEditor(
                         words,
                         lift = if (lifted) state.lift.value else 0f,
                         dimmed = state.dragging != null && !lifted,
-                        onToggle = {
-                            onToggle(id)
-                            buzzNow(EditorBuzz.Toggle)
-                        },
+                        onToggle = { onToggle(id) },
                         grip =
                             Modifier.noTabSwipe().pointerInput(id) {
                                 awaitEachGesture {
@@ -221,13 +220,8 @@ fun OverviewEditor(
                                 .semantics(mergeDescendants = true) {
                                     customActions =
                                         talkBackActions(row, state.order, words) {
-                                            reorder(it)
-                                            buzzNow(EditorBuzz.Move)
-                                        } +
-                                            toggleAction(row, words) {
-                                                onToggle(id)
-                                                buzzNow(EditorBuzz.Toggle)
-                                            }
+                                            reorder(it, EditorBuzz.Move)
+                                        } + toggleAction(row, words) { onToggle(id) }
                                 },
                     )
                 }
@@ -237,10 +231,7 @@ fun OverviewEditor(
             Text(
                 words.reset,
                 Modifier.clip(RoundedCornerShape(8.dp))
-                    .tapTarget(Role.Button) {
-                        onReset()
-                        buzzNow(EditorBuzz.Reset)
-                    }
+                    .tapTarget(Role.Button, onClick = onReset)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 color = c.muted,
                 fontSize = 12.5.sp,

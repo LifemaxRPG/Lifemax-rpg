@@ -70,7 +70,7 @@ Evidence: Node projection test, JVM selection/sequence/schema tests, Android Com
 | Area | Presentation | Authority | Rollout | Remaining web dependency |
 |---|---|---|---|---|
 | Overview | Hybrid shell (native bars) over the live WebView | Web-owned | Native is the default; Classic is a setting | The whole body |
-| Overview (cards) | Compose screen (head, tip, Today's plan glance, next moves, ring, rewards, apps, health, attributes, week, cat, luck, recent, the page's toast, XP celebrations handed over), hidden-but-alive, under ChromeHost's shared bars | Web-owned (every card's data function, layout, luck, tip) | Opt-in beta, off by default; the live shell takes the view when the cards give up | The cat's room, Daily Luck, the attribute sheet, the shop, the Health page, the app picker and Apps tab, the web editor (phase 1), level-ups and celebrations the page plays, and the wide Overview above 860 px (landscape); with Native tab swipe off the Overview has no tab swipe |
+| Overview (cards) | Compose screen (head, tip, Today's plan glance, next moves, ring, rewards, apps, health, attributes, week, cat, luck, recent, the page's toast, XP celebrations handed over), hidden-but-alive, under ChromeHost's shared bars | Web-owned (every card's data function, layout, luck, tip) | Opt-in beta, off by default; the live shell takes the view when the cards give up | The cat's room, Daily Luck, the attribute sheet, the shop, the Health page, the app picker and Apps tab, level-ups and celebrations the page plays, and the wide Overview above 860 px (landscape); with Native tab swipe off the Overview has no tab swipe |
 | Character | Compose screen, hidden-but-alive | Web-owned | Opt-in preview | Logging, Luck, benchmark editing |
 | Food (Nutrition) | Compose screen (Plan, Log, Shopping), hidden-but-alive | Web-owned | Opt-in beta | Add-food sheets and swap sheet delegate to web |
 | Cash | Native activity (Compose) | Web-owned commands | Existing | Commands and state |
@@ -226,7 +226,7 @@ Native presentation, web authority (plans/OVERVIEW_BODY.md, ADR 0012). `50-nativ
 |---|---|
 | The cat's room | a door: `{view: 'pet'}`; the pet loop is stopped while the cards cover the page, so `lm_pet_seen` is refreshed only in the room (ADR 0012) |
 | Daily Luck, the attribute sheet, the shop, the Health page, the app picker | a command (`luck`, `attr`, `shop`, `health`, `appAdd`) runs the page's handler while the screen still covers the page; the screen steps aside for the overlay and comes back when the page is clear (`watch`) |
-| The Overview editor | phase 1: `edit` opens the page's editor; the screen steps aside while `#ovEdit` shows (the native editor is phase 2) |
+| The Overview editor | phase 2: native (`OverviewEditor` in place of the tiles, the page's words `editor` from OV_EDIT_WORDS); each change is `layout {order, hidden}` or `layoutReset`, stored by the page's `ovLayoutSave` with its take-back; a refused answer snaps back to the page's layout with its message, and the drop, eye, Reset and move buzzes play only once stored. The page keeps `edit` for an older app |
 | Today's plan | `plan {act, id}`: `LifeDirector.native.fromGlance`, which opens Life Director's Today and its sheet |
 | Destinations (Character, History, Settings, a move's view, the Apps tab) | `{view}` actions and `appsEdit`; the A23 hand-over closes the screen after a native destination opens |
 | Level-ups, and celebrations the page plays (one that starts while the cards are not showing) | the cards step aside and come back after (`afterCelebrations`) |

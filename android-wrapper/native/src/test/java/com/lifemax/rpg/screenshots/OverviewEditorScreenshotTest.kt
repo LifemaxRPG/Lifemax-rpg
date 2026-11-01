@@ -16,6 +16,7 @@ import com.android.resources.Density
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.feature.overview.domain.EditorRow
+import com.lifemax.rpg.feature.overview.pageEditorWords
 import com.lifemax.rpg.feature.overview.presentation.editor.DragPreview
 import com.lifemax.rpg.feature.overview.presentation.editor.OverviewEditor
 import org.junit.Rule
@@ -51,9 +52,10 @@ class OverviewEditorScreenshotTest {
                 ) {
                     OverviewEditor(
                         rows(light).map { it.copy(hidden = it.id in hidden) },
-                        onReorder = {},
+                        onReorder = { _, _ -> },
                         onReset = {},
                         onDone = {},
+                        words = pageEditorWords(),
                         animateOpen = false,
                         preview = preview(),
                     )
