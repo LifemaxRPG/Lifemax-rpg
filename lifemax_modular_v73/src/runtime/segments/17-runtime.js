@@ -70,7 +70,7 @@ function petMoodText(rt,p){
   return '';
 }
 function petAgo(ms){const h=ms/PET_H;if(h<1)return Math.max(1,Math.round(h*60))+' min ago';if(h<48)return (Math.round(h*10)/10)+' h ago';return Math.round(h/24)+' days ago'}
-function petHeartsHtml(p){const L=petLevel(p);let r='';for(let i=1;i<=5;i++)r+='<span class="'+(i<=L?'on':'')+'">'+px('heart',16)+'</span>';return r}
+function petHeartsHtml(L){let r='';for(let i=1;i<=5;i++)r+='<span class="'+(i<=L?'on':'')+'">'+px('heart',16)+'</span>';return r}
 function petWantRun(){const p=petData();if(!p||!p.alive||document.hidden)return false;const v=document.getElementById('view-pet'),d=document.getElementById('view-dashboard');return !!((v&&v.classList.contains('active')&&document.getElementById('petCanvas'))||(d&&d.classList.contains('active')&&document.getElementById('petPeekCanvas')))}
 function petSync(){const want=petWantRun();if(want&&!PET_LOOP.raf){petInit().then(function(rt){PET_LOOP.last=performance.now();if(petWantRun()&&!PET_LOOP.raf){petMaybeGreet(rt);petBrainSession(rt);PET_LOOP.raf=requestAnimationFrame(petFrame)}})}else if(!want&&PET_LOOP.raf){cancelAnimationFrame(PET_LOOP.raf);PET_LOOP.raf=0;petSfxStopAll()}}
 function petFrame(now){
@@ -187,7 +187,7 @@ function petRenderStatus(force){
   petGrowStatus(p,rt);
   petSet('petBondText',L>=5?'Devoted. '+p.name+' trusts you completely.':PET_LEVELS[L]+' · '+petLevelPct(p)+'% to '+next);
   const bar=document.getElementById('petBondBar');if(bar){const w=(L>=5?100:petLevelPct(p))+'%';if(bar.style.width!==w)bar.style.width=w}
-  const hh=document.getElementById('petHearts');const key=String(L);if(hh&&hh.dataset.l!==key){hh.innerHTML=petHeartsHtml(p);hh.dataset.l=key}
+  const hh=document.getElementById('petHearts');const key=String(L);if(hh&&hh.dataset.l!==key){hh.innerHTML=petHeartsHtml(L);hh.dataset.l=key}
   const fed=p.vacation.on?'paused':petAgo(now-p.lastFed);petSet('petStatFed',p.vacation.on?'Vacation':fed.replace(' ago',''));
   petSet('petStatFedL',p.vacation.on?'clock paused':'last meal');
   petSet('petStatToday',Math.min(p.fedToday,9)+' / 2');
@@ -306,18 +306,28 @@ async function petOpen(){
   petMaybeGreet(rt);
   window.__petFresh=false;petBlitSoon();petSync();
 }
-/* ---------- Overview card ---------- */
+/* ---------- Overview card: a visitor (no cat yet), the cat in its room with its hearts, or in memory ---------- */
 function petRenderPeekText(p,mood){
   petSet('petPeekMood',mood||'');
 }
+/* the name the card shows (the second cat's segment adds its name) */
+function petPeekName(){const p=petData();return p?p.name:''}
+function petPeekData(){
+  const p=petData();
+  if(!p)return {mode:'invite',eyebrow:'A VISITOR',name:'A stray kitten keeps stopping by',text:'Open the door and see who it is.'};
+  return p.alive?{mode:'alive',eyebrow:'COMPANION',name:petPeekName(),hearts:petLevel(p)}:{mode:'gone',eyebrow:'IN MEMORY',name:p.name};
+}
+function petPeekHtml(d){
+  if(d.mode==='invite')return '<div class="pet-peek-in"><div class="pet-peek-ico">'+px('paw',22)+'</div><div style="flex:1;min-width:0"><div class="eyebrow">'+esc(d.eyebrow)+'</div><strong>'+esc(d.name)+'</strong><div class="muted" style="font-size:12.5px;margin-top:2px">'+esc(d.text)+'</div></div><span class="pet-peek-go">→</span></div>';
+  if(d.mode==='gone')return '<div class="pet-peek-in"><div class="pet-peek-ico">'+px('heart',22)+'</div><div style="flex:1"><div class="eyebrow">'+esc(d.eyebrow)+'</div><strong>'+esc(d.name)+'</strong></div><span class="pet-peek-go">→</span></div>';
+  return '<div class="pet-peek-stage"><canvas id="petPeekCanvas" aria-hidden="true"></canvas></div><div class="pet-peek-row"><div style="flex:1;min-width:0"><div class="eyebrow">'+esc(d.eyebrow)+'</div><strong>'+esc(d.name)+'</strong><div class="muted" id="petPeekMood" style="font-size:12.5px;margin-top:2px"></div></div><div class="pet-hearts small">'+petHeartsHtml(d.hearts)+'</div></div>';
+}
 function renderPetPeek(){
   const el=document.getElementById('petPeek');if(!el)return;
-  const p=petData();const mode=!p?'invite':p.alive?'alive':'gone';const stamp=mode+(p?p.name+p.coat+petLevel(p):'');
+  const p=petData(),d=petPeekData(),stamp=d.mode+(p?p.name+p.coat+petLevel(p):'');
   if(el.dataset.stamp===stamp){petSync();return}
-  el.dataset.stamp=stamp;
-  if(mode==='invite'){el.innerHTML='<div class="pet-peek-in"><div class="pet-peek-ico">'+px('paw',22)+'</div><div style="flex:1;min-width:0"><div class="eyebrow">A VISITOR</div><strong>A stray kitten keeps stopping by</strong><div class="muted" style="font-size:12.5px;margin-top:2px">Open the door and see who it is.</div></div><span class="pet-peek-go">→</span></div>'}
-  else if(mode==='gone'){el.innerHTML='<div class="pet-peek-in"><div class="pet-peek-ico">'+px('heart',22)+'</div><div style="flex:1"><div class="eyebrow">IN MEMORY</div><strong>'+esc(p.name)+'</strong></div><span class="pet-peek-go">→</span></div>'}
-  else{el.innerHTML='<div class="pet-peek-stage"><canvas id="petPeekCanvas" aria-hidden="true"></canvas></div><div class="pet-peek-row"><div style="flex:1;min-width:0"><div class="eyebrow">COMPANION</div><strong>'+esc(p.name)+'</strong><div class="muted" id="petPeekMood" style="font-size:12.5px;margin-top:2px"></div></div><div class="pet-hearts small">'+petHeartsHtml(p)+'</div></div>';petInit().then(function(){petPlaceForNow&&0;petBlitSoon();petRenderStatus(true)})}
+  el.dataset.stamp=stamp;el.innerHTML=petPeekHtml(d);
+  if(d.mode==='alive')petInit().then(function(){petBlitSoon();petRenderStatus(true)});
   petSync();
 }
 function renderPetAll(){renderPetPeek();renderPetView(false)}
@@ -336,19 +346,31 @@ function ovGreeting(){const h=new Date().getHours(),n=(state.name||'').trim();co
 function ovPace(m){const prev=ovSum(m,1,7);let active=0;for(let i=1;i<=7;i++)if(m[ovKey(i)])active++;if(active<2)return 100;return Math.max(60,Math.min(400,Math.round(prev/7/10)*10))}
 function ovAgo(a){const t=new Date(a.date),n=new Date(),mins=Math.round((n-t)/6e4);if(mins<1)return 'just now';if(mins<60)return mins+' min ago';if(activityDate(a)===getToday())return Math.round(mins/60)+' h ago';if(activityDate(a)===ovKey(1))return 'Yesterday';return t.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}
 function ovAttrOf(id){return ATTRS.find(function(a){return a.id===id})||ATTRS[0]}
+/* this week against last: ▲ or ▼ and the change in percent, or null with nothing last week to compare */
+function ovDelta(now,prev,tail){if(!(prev>0))return null;const d=Math.round((now-prev)/prev*100);return {up:d>=0,text:(d>=0?'▲ ':'▼ ')+Math.abs(d)+'%'+(tail||'')}}
 /* ---------- hero: today ring, level, streak, week ---------- */
-function ovHeroHtml(){
-  const lv=characterLevel(),title=titleFor(lv.level),cls=state.classId?classById(state.classId):null,D=chCompute(),m=ovMap(),today=m[getToday()]||0,pace=ovPace(m),R=62,gap=2.4;
+function ovHeroData(){
+  const lv=characterLevel(),cls=state.classId?classById(state.classId):null,D=chCompute(),m=ovMap(),today=m[getToday()]||0,pace=ovPace(m),gap=2.4;
+  /* today's XP as arcs, one per attribute, largest first, filling the ring up to today against the pace; lengths and offsets
+     are in pathLength-100 units */
   const parts=ATTRS.map(function(a){return {a:a,xp:D.per[a.id][6]}}).filter(function(x){return x.xp>0}).sort(function(x,y){return y.xp-x.xp});
-  let acc=0,arcs='';const fill=Math.min(1,today/pace)*100;
-  parts.forEach(function(x){const seg=Math.min(100-acc,x.xp/Math.max(today,1)*fill);if(seg<=0)return;const len=Math.max(0.5,seg-(parts.length>1?gap:0));arcs+='<circle class="ov-seg" cx="74" cy="74" r="'+R+'" pathLength="100" stroke="'+ATTR_COL[x.a.id]+'" style="--c:'+ATTR_COL[x.a.id]+'66" stroke-dasharray="'+len.toFixed(2)+' '+(100-len).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'"/>';acc+=seg});
-  const over=today>pace?Math.round((today/pace-1)*100):0;
-  const wk=ovSum(m,0,6),prev=ovSum(m,7,13),delta=prev>0?Math.round((wk-prev)/prev*100):null;
-  let dots='';for(let i=6;i>=0;i--)dots+='<i class="'+(m[ovKey(i)]?'on':'')+(i===0?' now':'')+'"></i>';
-  return '<div class="ov-hero-main"><div class="ov-ring"><svg viewBox="0 0 148 148" aria-hidden="true"><circle class="ov-ring-track" cx="74" cy="74" r="'+R+'"/><g transform="rotate(-90 74 74)"><g class="ov-segs">'+arcs+'</g></g></svg>'
-   +'<div class="ov-ring-c"><div><small>TODAY</small><b id="ovToday" data-v="'+today+'" class="'+(over?'over':'')+'">'+today+'</b><span>of '+pace+' XP'+(over?' · +'+over+'%':'')+'</span></div></div></div>'
-   +'<div class="ov-meta"><div class="ov-lvrow"><span class="ov-ava"'+(state.avatar?' style="background-image:url(&quot;'+state.avatar+'&quot;)"':'')+'>'+(state.avatar?'':esc(((state.name||'?').trim()[0]||'?').toUpperCase()))+'</span><span class="ov-lvbadge">'+lv.level+'</span><div style="min-width:0;flex:1"><div class="ov-title">'+title.toUpperCase()+(cls?'<br><span>'+cls.name.toUpperCase()+'</span>':'')+'</div></div><span class="ov-go" aria-hidden="true">›</span></div><div class="ov-xpt"><span>'+lv.into.toLocaleString()+' / '+lv.needed.toLocaleString()+' XP</span><span>LV '+(lv.level+1)+' →</span></div>'
-   +'<div class="xpbar ov-xpbar"><div class="xpfill" data-w="'+lv.pct.toFixed(1)+'%" style="width:'+lv.pct.toFixed(1)+'%"></div></div>'
-   +'<div class="ov-streak"><span class="ov-flame">'+px('flame',16)+'</span><b>'+streak()+'</b><span>day streak</span><span class="ov-dots">'+dots+'</span></div></div></div>'
-   +'<div class="ov-hero-foot"><div><small>THIS WEEK</small><b>+'+wk.toLocaleString()+' XP</b>'+(delta===null?'':'<em class="'+(delta>=0?'up':'dn')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'%</em>')+'</div><div><small>TOTAL XP</small><b>'+totalXP().toLocaleString()+'</b></div><div><small>ACHIEVEMENTS</small><b>'+Object.keys(state.badges||{}).length+' / '+BADGES.length+'</b></div></div>';
+  const fill=Math.min(1,today/pace)*100,arcs=[];let acc=0;
+  parts.forEach(function(x){const seg=Math.min(100-acc,x.xp/Math.max(today,1)*fill);if(seg<=0)return;arcs.push({color:ATTR_COL[x.a.id],length:Math.max(0.5,seg-(parts.length>1?gap:0)),offset:-acc});acc+=seg});
+  const over=today>pace?Math.round((today/pace-1)*100):0,wk=ovSum(m,0,6),dots=[];
+  for(let i=6;i>=0;i--)dots.push({on:!!m[ovKey(i)],now:i===0});
+  return {ring:{label:'TODAY',today:today,over:over>0,of:'of '+pace+' XP'+(over?' · +'+over+'%':''),arcs:arcs},
+    avatar:state.avatar||'',initial:((state.name||'?').trim()[0]||'?').toUpperCase(),level:lv.level,title:titleFor(lv.level).toUpperCase(),className:cls?cls.name.toUpperCase():'',
+    xp:{text:lv.into.toLocaleString()+' / '+lv.needed.toLocaleString()+' XP',next:'LV '+(lv.level+1)+' →',pct:lv.pct},
+    streak:{days:streak(),label:'day streak',dots:dots},
+    foot:[{label:'THIS WEEK',value:'+'+wk.toLocaleString()+' XP',delta:ovDelta(wk,ovSum(m,7,13))},{label:'TOTAL XP',value:totalXP().toLocaleString()},{label:'ACHIEVEMENTS',value:Object.keys(state.badges||{}).length+' / '+BADGES.length}]};
+}
+function ovHeroHtml(d){
+  const R=62,r=d.ring;
+  return '<div class="ov-hero-main"><div class="ov-ring"><svg viewBox="0 0 148 148" aria-hidden="true"><circle class="ov-ring-track" cx="74" cy="74" r="'+R+'"/><g transform="rotate(-90 74 74)"><g class="ov-segs">'+r.arcs.map(function(a){
+     return '<circle class="ov-seg" cx="74" cy="74" r="'+R+'" pathLength="100" stroke="'+a.color+'" style="--c:'+a.color+'66" stroke-dasharray="'+a.length.toFixed(2)+' '+(100-a.length).toFixed(2)+'" stroke-dashoffset="'+a.offset.toFixed(2)+'"/>'}).join('')+'</g></g></svg>'
+   +'<div class="ov-ring-c"><div><small>'+esc(r.label)+'</small><b id="ovToday" data-v="'+r.today+'" class="'+(r.over?'over':'')+'">'+r.today+'</b><span>'+esc(r.of)+'</span></div></div></div>'
+   +'<div class="ov-meta"><div class="ov-lvrow"><span class="ov-ava"'+(d.avatar?' style="background-image:url(&quot;'+d.avatar+'&quot;)"':'')+'>'+(d.avatar?'':esc(d.initial))+'</span><span class="ov-lvbadge">'+d.level+'</span><div style="min-width:0;flex:1"><div class="ov-title">'+esc(d.title)+(d.className?'<br><span>'+esc(d.className)+'</span>':'')+'</div></div><span class="ov-go" aria-hidden="true">›</span></div><div class="ov-xpt"><span>'+esc(d.xp.text)+'</span><span>'+esc(d.xp.next)+'</span></div>'
+   +'<div class="xpbar ov-xpbar"><div class="xpfill" data-w="'+d.xp.pct.toFixed(1)+'%" style="width:'+d.xp.pct.toFixed(1)+'%"></div></div>'
+   +'<div class="ov-streak"><span class="ov-flame">'+px('flame',16)+'</span><b>'+d.streak.days+'</b><span>'+esc(d.streak.label)+'</span><span class="ov-dots">'+d.streak.dots.map(function(x){return '<i class="'+(x.on?'on':'')+(x.now?' now':'')+'"></i>'}).join('')+'</span></div></div></div>'
+   +'<div class="ov-hero-foot">'+d.foot.map(function(f){return '<div><small>'+esc(f.label)+'</small><b>'+esc(f.value)+'</b>'+(f.delta?'<em class="'+(f.delta.up?'up':'dn')+'">'+esc(f.delta.text)+'</em>':'')+'</div>'}).join('')+'</div>';
 }

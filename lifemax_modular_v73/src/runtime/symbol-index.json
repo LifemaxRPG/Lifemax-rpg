@@ -4458,7 +4458,13 @@
  "ovAgo": [
   "src/runtime/segments/17-runtime.js"
  ],
+ "ovAppsData": [
+  "src/runtime/segments/41-ov-apps.js"
+ ],
  "ovAppsFetching": [
+  "src/runtime/segments/41-ov-apps.js"
+ ],
+ "ovAppsHtml": [
   "src/runtime/segments/41-ov-apps.js"
  ],
  "ovAppsRender": [
@@ -4467,8 +4473,17 @@
  "ovAttrOf": [
   "src/runtime/segments/17-runtime.js"
  ],
+ "ovAttrsData": [
+  "src/runtime/segments/18-runtime.js"
+ ],
  "ovAttrsHtml": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "ovChipsHtml": [
+  "src/runtime/segments/18-runtime.js"
+ ],
+ "ovDelta": [
+  "src/runtime/segments/17-runtime.js"
  ],
  "ovEditClose": [
   "src/runtime/segments/31-overview-edit.js"
@@ -4497,10 +4512,22 @@
  "ovEye": [
   "src/runtime/segments/31-overview-edit.js"
  ],
+ "ovGoJs": [
+  "src/runtime/segments/18-runtime.js"
+ ],
  "ovGreeting": [
   "src/runtime/segments/17-runtime.js"
  ],
+ "ovHeadData": [
+  "src/runtime/segments/18-runtime.js"
+ ],
+ "ovHealthData": [
+  "src/runtime/segments/39-health.js"
+ ],
  "ovHealthDur": [
+  "src/runtime/segments/39-health.js"
+ ],
+ "ovHealthHtml": [
   "src/runtime/segments/39-health.js"
  ],
  "ovHealthRender": [
@@ -4508,6 +4535,9 @@
  ],
  "ovHealthTap": [
   "src/runtime/segments/39-health.js"
+ ],
+ "ovHeroData": [
+  "src/runtime/segments/17-runtime.js"
  ],
  "ovHeroHtml": [
   "src/runtime/segments/17-runtime.js"
@@ -4524,6 +4554,9 @@
  "ovLayoutSave": [
   "src/runtime/segments/31-overview-edit.js"
  ],
+ "ovLuckData": [
+  "src/runtime/segments/18-runtime.js"
+ ],
  "ovLuckHtml": [
   "src/runtime/segments/18-runtime.js"
  ],
@@ -4531,6 +4564,9 @@
   "src/runtime/segments/17-runtime.js"
  ],
  "ovMoves": [
+  "src/runtime/segments/18-runtime.js"
+ ],
+ "ovNextData": [
   "src/runtime/segments/18-runtime.js"
  ],
  "ovNextHtml": [
@@ -4545,11 +4581,20 @@
  "ovPlanGlance": [
   "src/runtime/segments/18-runtime.js"
  ],
+ "ovRecentData": [
+  "src/runtime/segments/18-runtime.js"
+ ],
  "ovRecentHtml": [
   "src/runtime/segments/18-runtime.js"
  ],
  "ovReplay": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "ovRewardsData": [
+  "src/runtime/segments/44-rewards.js"
+ ],
+ "ovRewardsHtml": [
+  "src/runtime/segments/44-rewards.js"
  ],
  "ovRewardsRender": [
   "src/runtime/segments/44-rewards.js"
@@ -4563,7 +4608,13 @@
  "ovTileNote": [
   "src/runtime/segments/31-overview-edit.js"
  ],
- "ovTipText": [
+ "ovTipHtml": [
+  "src/runtime/segments/18-runtime.js"
+ ],
+ "ovTipParts": [
+  "src/runtime/segments/18-runtime.js"
+ ],
+ "ovWeekData": [
   "src/runtime/segments/18-runtime.js"
  ],
  "ovWeekHtml": [
@@ -5854,6 +5905,15 @@
  ],
  "petPatGap": [
   "src/runtime/segments/27-pet-play.js"
+ ],
+ "petPeekData": [
+  "src/runtime/segments/17-runtime.js"
+ ],
+ "petPeekHtml": [
+  "src/runtime/segments/17-runtime.js"
+ ],
+ "petPeekName": [
+  "src/runtime/segments/17-runtime.js"
  ],
  "petPetDone": [
   "src/runtime/segments/15-runtime.js"

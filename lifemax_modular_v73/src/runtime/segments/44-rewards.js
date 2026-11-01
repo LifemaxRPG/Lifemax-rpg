@@ -128,11 +128,16 @@ function ecoShopRender(){
  h+='</div>';
  const top=(o.querySelector('.hs-body')||{}).scrollTop||0;o.innerHTML=h;const nb=o.querySelector('.hs-body');if(nb)nb.scrollTop=top;
 }
-/* ---- Overview tile ---- */
+/* ---- Overview tile: sparks, the streak with its shields, and rested XP while there is some ---- */
+function ovRewardsData(){
+ const sh=state.streakShields||0,chips=[{label:'Sparks',value:'✦ '+ecoSparks().toLocaleString()},{label:'Streak',value:streak()+'d'+(sh?' · '+'🛡'.repeat(sh):'')}];
+ if(state.restedXP>0)chips.push({label:'Rested',value:'+50% · '+Math.round(state.restedXP)});
+ return {title:'Rewards',link:'Shop ›',chips:chips};
+}
+function ovRewardsHtml(d){return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><button type="button" class="ov-link" onclick="ecoShopOpen()">'+esc(d.link)+'</button></div>'+ovChipsHtml(d.chips)}
 function ovRewardsRender(){
  const el=document.getElementById('ovRewards');if(!el)return;
- const sh=state.streakShields||0;
- el.innerHTML='<div class="ov-h"><h3>Rewards</h3><button type="button" class="ov-link" onclick="ecoShopOpen()">Shop ›</button></div><div class="ovh-chips"><div class="ovh-chip"><span>Sparks</span><b>✦ '+ecoSparks().toLocaleString()+'</b></div><div class="ovh-chip"><span>Streak</span><b>'+streak()+'d'+(sh?' · '+'🛡'.repeat(sh):'')+'</b></div>'+(state.restedXP>0?'<div class="ovh-chip"><span>Rested</span><b>+50% · '+Math.round(state.restedXP)+'</b></div>':'')+'</div>';
+ el.innerHTML=ovRewardsHtml(ovRewardsData());
  el.onclick=e=>{if(!e.target.closest('button'))ecoShopOpen()};el.style.cursor='pointer';
 }
 (function ecoRewardsBoot(){

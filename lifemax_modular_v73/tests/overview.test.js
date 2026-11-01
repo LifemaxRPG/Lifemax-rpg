@@ -4,6 +4,8 @@
    - Back closes the open editor, after any popup over it, and leaves the live Overview's bars as they were (Edit, Done and Back).
    - A layout change that could not be stored is taken back (the tiles and the editor's rows keep the stored layout), and storage
      full says so once; a read-only save keeps its one alert. dismissFeatureTip answers whether it was stored.
+   - The cards' data functions decide what a drawing shows: Next moves' ranking and its cut at four, the pace, the ring's arcs,
+     the week chart's scale, and the cat card's name for two cats (tests/overview-classic.test.js proves the HTML drawn from them).
    Run: NODE_PATH=$(npm root -g) node tests/overview.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const file = require('./current-page')(process.argv[2]);
@@ -147,6 +149,63 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b), sameSet = (a, b)
   r = await p.evaluate(() => { const out = { stored: dismissFeatureTip('quests') }; saveReadOnly = 'Read-only for this check'; saveReadOnlyTold = true; try { out.readOnly = dismissFeatureTip('character') } finally { saveReadOnly = ''; saveReadOnlyTold = false } return out });
   r.full = await full(`() => dismissFeatureTip('history')`);
   ok('dismissFeatureTip answers whether the dismissal was stored: true, false when read-only, false with storage full', r.stored === true && r.readOnly === false && r.full === false, r);
+
+  /* ---- the cards' data functions: the decisions a native drawing reads (tests/overview-classic.test.js proves the HTML) ---- */
+  r = await a.evaluate(() => {
+    const was = JSON.stringify(state), out = {}, A = ATTRS.map(x => x.id), H = 36e5;
+    const day = (back, h) => { const d = new Date(); d.setDate(d.getDate() - back); d.setHours(h || 12, 0, 0, 0); return d.toISOString() };
+    const act = (back, split, h) => ({ id: 'a' + Math.random(), name: 'Test', date: day(back, h), primary: split[0][0], xp: split.reduce((s, x) => s + x[1], 0), xpSplit: split.map(x => ({ attr: x[0], xp: x[1] })), duration: 0 });
+    const cat = (hours, o) => Object.assign({ v: 1, name: 'Miso', coat: 'ginger', trait: 'curious', born: Date.now() - 40 * 864e5, lastFed: Date.now() - hours * H, meals: [], day: getToday(), fedToday: 0, petsToday: 0, playsToday: 0, bondPts: 0, care: 0, vacation: { on: false, since: 0 }, gifts: 0, lastGiftDay: '', alive: true, passed: 0, seen: {}, greeted: 0 }, o || {});
+    const quests = n => Array.from({ length: n }, (_, i) => ({ id: 'tq' + i, name: 'Quest ' + i, cadence: 'daily', xp: 10 }));
+    const moves = () => ovMoves().map(m => m.title + ' ' + JSON.stringify(m.go));
+    const reset = () => { Object.keys(state).forEach(k => delete state[k]); Object.assign(state, JSON.parse(was)); state.plan = null; state.petInviteHidden = true };
+    try {
+      /* Next moves: a starving cat, two fading attributes and the daily quests take the four places; the workout-free luck roll and
+         the attribute due a session are cut */
+      reset(); state.activities = [act(6, [[A[0], 30]]), act(9, [[A[1], 30]]), act(4, [[A[2], 30]])]; state.attrXP = { [A[0]]: 500, [A[1]]: 500, [A[2]]: 500 };
+      state.quests = quests(3); state.questDone = {}; state.pet = cat(30);
+      out.rush = moves();
+      state.pet = cat(20); out.hungry = moves();
+      state.decay = { on: false }; out.calm = moves();
+      state.quests.forEach(q => { state.questDone[questKey(q)] = true }); state.luck = null; state.pet = null; state.petInviteHidden = false; out.done = ovMoves().map(m => [m.title, !!m.done, m.cta || '']);
+      state.activities = []; out.first = moves()[0];
+      /* ovPace: last week's daily average to the nearest 10, between 60 and 400, from two active days; 100 before that. Today never counts */
+      const pace = days => { const m = {}; days.forEach(([back, xp]) => { m[ovKey(back)] = xp }); return ovPace(m) };
+      out.pace = [pace([[0, 900], [1, 300]]), pace([[1, 900], [3, 850]]), pace([[1, 70], [2, 70]]), pace([[2, 3000], [5, 9000]]), pace([[8, 700], [9, 700], [1, 70]]), pace([[7, 700], [1, 70]])];
+      /* the ring: before any history the pace is 100, so today's XP is the fill; each arc is its share less the 2.4 gap (none for one) */
+      reset(); state.activities = [act(0, [[A[0], 30]])]; out.one = ovHeroData().ring;
+      state.activities = [act(0, [[A[0], 20], [A[1], 40]])]; out.two = ovHeroData().ring;
+      state.activities = [act(0, [[A[0], 60], [A[1], 50], [A[2], 40]])]; out.over = ovHeroData().ring;
+      /* the week: the scale is the larger of 1.2 x pace, 40 and the biggest day; bars and the pace line are fractions of it */
+      state.activities = [act(0, [[A[0], 30]]), act(2, [[A[0], 20], [A[1], 10]])]; out.week = ovWeekData();
+      state.activities = [act(0, [[A[0], 200], [A[1], 100]])]; out.big = ovWeekData();
+      /* the cat card names both cats while both live, and the survivor alone once the second has passed, without a redraw */
+      reset(); state.pet = cat(2); state.pet2 = cat(2, { name: 'Pip', coat: 'gray' });
+      const peek = document.getElementById('petPeek'); peek.dataset.stamp = ''; renderPetPeek();
+      out.pair = [petPeekData().name, peek.querySelector('.pet-peek-row strong').textContent];
+      state.pet2 = null; renderPetPeek(); out.alone = [petPeekData().name, peek.querySelector('.pet-peek-row strong').textContent];
+    } finally { reset(); state.plan = JSON.parse(was).plan; state.petInviteHidden = JSON.parse(was).petInviteHidden; const peek = document.getElementById('petPeek'); peek.dataset.stamp = ''; renderPetPeek(); renderOverview() }
+    return out;
+  });
+  const near = (x, y) => Math.abs(x - y) < 1e-9, A0 = await a.evaluate(() => ATTRS.map(x => x.short));
+  ok('Next moves: a starving cat first, then two fading attributes and the daily quests; the cut at four drops the due attribute and the luck roll',
+    same(r.rush, ['Miso really needs a meal {"view":"pet"}', A0[0] + ' is fading {"attr":"' + (await a.evaluate(() => ATTRS[0].id)) + '"}', A0[1] + ' is fading {"attr":"' + (await a.evaluate(() => ATTRS[1].id)) + '"}', '3 daily quests left {"view":"quests"}']), r.rush);
+  ok('...a cat that is only hungry comes after the quests', r.hungry.indexOf('Miso is hungry {"view":"pet"}') === 3 && r.hungry.length === 4, r.hungry);
+  ok('...with decay off: the quests, the hungry cat, then the luck roll', same(r.calm, ['3 daily quests left {"view":"quests"}', 'Miso is hungry {"view":"pet"}', 'Roll today\'s luck {"luck":true}']), r.calm);
+  ok('...all done: the luck roll, the stray kitten, then the quests as done with no call to action',
+    same(r.done, [['Roll today\'s luck', false, 'Roll'], ['A stray kitten keeps stopping by', false, 'Meet'], ['Daily quests complete', true, '']]), r.done);
+  ok('...and with nothing logged, the first activity first', r.first === 'Log your first activity {"view":"log"}', r.first);
+  ok('ovPace: 100 with fewer than two active days, then last week\'s daily average to the nearest 10 held between 60 and 400; the last seven days are yesterday back to a week ago, so today and older days never count',
+    same(r.pace, [100, 250, 60, 400, 100, 110]), r.pace);
+  const lens = ring => ring.arcs.map(x => +x.length.toFixed(6)), offs = ring => ring.arcs.map(x => +(-x.offset).toFixed(6));
+  ok('the ring: one attribute is one arc as long as today\'s fill, with no gap', same(lens(r.one), [30]) && same(offs(r.one), [0]) && r.one.of === 'of 100 XP' && !r.one.over, r.one);
+  ok('...two are largest first, each its share less the 2.4 gap, the second starting where the first share ends', same(lens(r.two), [37.6, 17.6]) && same(offs(r.two), [0, 40]), r.two);
+  ok('...over pace the shares fill the ring and never pass it, and the line says by how much', r.over.over && r.over.of === 'of 100 XP · +50%' && near(r.over.arcs.reduce((s, x) => s + x.length, 0) + 2.4 * 3, 100) && same(offs(r.over), [0, 40, 73.333333]), r.over);
+  const fr = (w, i) => w.bars[i].segs.reduce((s, x) => s + x.frac, 0);
+  ok('the week: the scale is 1.2 x pace when that is largest, the pace line and each day are fractions of it, and today is picked',
+    near(r.week.pace.frac, 1 / 1.2) && near(fr(r.week, 6), 30 / 120) && near(fr(r.week, 4), 30 / 120) && r.week.bars[4].segs.length === 2 && r.week.bars[5].segs.length === 0 && r.week.bars[6].today && r.week.selected === 6 && r.week.pace.label === 'pace 100' && r.week.total === '60 XP', r.week);
+  ok('...a bigger day becomes the scale: it fills its bar and the pace line drops to a third', near(fr(r.big, 6), 1) && near(r.big.pace.frac, 100 / 300) && r.big.bars[6].tip.rest === '300 XP — ' + A0[0] + ' 200, ' + A0[1] + ' 100', r.big);
+  ok('the cat card names both cats while both live, and the survivor alone once the second has passed (the card is not redrawn)', same(r.pair, ['Miso & Pip', 'Miso & Pip']) && same(r.alone, ['Miso', 'Miso']), { pair: r.pair, alone: r.alone });
 
   ok('no script errors', p.errors.length === 0 && a.errors.length === 0, [...p.errors, ...a.errors]);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);

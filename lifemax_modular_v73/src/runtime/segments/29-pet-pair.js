@@ -520,8 +520,11 @@ petPairWrap('renderPetView',function(orig){return function(force){
   if(det2!==det||force)petPairDecorate(true);else petPairDecorate(false);
   return r;
 }});
+/* the Overview card names both cats while both live; the name is set in place too, since the card is not redrawn when the
+   second cat arrives or passes */
+petPairWrap('petPeekName',function(orig){return function(){return state.pet&&state.pet.alive&&state.pet2&&state.pet2.alive?state.pet.name+' & '+state.pet2.name:orig()}});
 petPairWrap('renderPetPeek',function(orig){return function(){const r=petAs(0,orig);
-  const s=document.querySelector('#petPeek .pet-peek-row strong');if(s&&state.pet&&state.pet.alive&&state.pet2&&state.pet2.alive){const t=state.pet.name+' & '+state.pet2.name;if(s.textContent!==t)s.textContent=t}
+  const s=document.querySelector('#petPeek .pet-peek-row strong');if(s){const t=petAs(0,petPeekName,null,true);if(s.textContent!==t)s.textContent=t}
   return r}});
 /* hunger: each cat on its own clock. If the first cat dies and the second lives, the second becomes the main cat */
 petPairWrap('petCheck',function(orig){return function(now){

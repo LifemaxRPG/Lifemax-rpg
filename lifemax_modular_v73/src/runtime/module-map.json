@@ -870,8 +870,8 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 35944,
-   "statement_count": 65,
+   "bytes": 37420,
+   "statement_count": 70,
    "tags": [
     "pet",
     "interface"
@@ -929,6 +929,9 @@
     "petBlitSoon",
     "petOpen",
     "petRenderPeekText",
+    "petPeekName",
+    "petPeekData",
+    "petPeekHtml",
     "renderPetPeek",
     "renderPetAll",
     "window.__petReady",
@@ -940,25 +943,36 @@
     "ovPace",
     "ovAgo",
     "ovAttrOf",
+    "ovDelta",
+    "ovHeroData",
     "ovHeroHtml"
    ]
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28238,
-   "statement_count": 55,
+   "bytes": 30369,
+   "statement_count": 64,
    "tags": [
     "interface"
    ],
    "symbols": [
     "ovMoves",
+    "ovNextData",
+    "ovGoJs",
     "ovNextHtml",
+    "ovAttrsData",
     "ovAttrsHtml",
+    "ovWeekData",
+    "ovTipParts",
+    "ovTipHtml",
     "ovWeekHtml",
-    "ovTipText",
     "ovPick",
+    "ovLuckData",
     "ovLuckHtml",
+    "ovRecentData",
     "ovRecentHtml",
+    "ovChipsHtml",
+    "ovHeadData",
     "renderOverview",
     "ovPlanGlance",
     "ovReplay",
@@ -1042,7 +1056,7 @@
   },
   {
    "file": "src/runtime/segments/20-runtime.js",
-   "bytes": 30836,
+   "bytes": 31000,
    "statement_count": 19,
    "tags": [
     "devchat",
@@ -1471,8 +1485,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 45606,
-   "statement_count": 97,
+   "bytes": 45871,
+   "statement_count": 98,
    "tags": [
     "pet",
     "interface",
@@ -2000,8 +2014,8 @@
   },
   {
    "file": "src/runtime/segments/39-health.js",
-   "bytes": 21366,
-   "statement_count": 19,
+   "bytes": 21961,
+   "statement_count": 21,
    "tags": [
     "android",
     "health"
@@ -2021,6 +2035,8 @@
     "lmaHealthSet",
     "lmaHealthRender",
     "ovHealthDur",
+    "ovHealthData",
+    "ovHealthHtml",
     "ovHealthRender",
     "ovHealthTap",
     "lmaHealthOpen",
@@ -2047,14 +2063,16 @@
   },
   {
    "file": "src/runtime/segments/41-ov-apps.js",
-   "bytes": 2741,
-   "statement_count": 4,
+   "bytes": 3159,
+   "statement_count": 6,
    "tags": [
     "android",
     "overview"
    ],
    "symbols": [
     "ovAppsFetching",
+    "ovAppsData",
+    "ovAppsHtml",
     "ovAppsRender"
    ]
   },
@@ -2099,8 +2117,8 @@
   },
   {
    "file": "src/runtime/segments/44-rewards.js",
-   "bytes": 12702,
-   "statement_count": 21,
+   "bytes": 12848,
+   "statement_count": 23,
    "tags": [
     "economy",
     "rewards"
@@ -2125,6 +2143,8 @@
     "ecoBuy",
     "ecoShopOpen",
     "ecoShopRender",
+    "ovRewardsData",
+    "ovRewardsHtml",
     "ovRewardsRender"
    ]
   },

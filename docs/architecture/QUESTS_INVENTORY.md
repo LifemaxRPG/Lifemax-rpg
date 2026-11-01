@@ -22,7 +22,7 @@ ADR 0003 applies: the 3D quest table (and its opening gate, reading and resting 
 | Bottom-bar scrubbing and tab swipe | `42-scrubnav.js:86` (icon), `34-navigation.js:95-106` (`lmaTabList`, `lmaSwipeBlocked`) | `lmaNavTo` |
 | Native tab bars (Character, Food, Log screens) | `android-wrapper/native/src/main/java/com/lifemax/rpg/feature/character/presentation/components/CharacterChrome.kt:71` maps `quests` to `flag`; `50-native-tabkit.js:133-136` | native `action` with `view:'quests'` closes the native screen, then `lmaNavTo('quests')` (A23 item 2: web destination) |
 | Overview "Review today's quests" button | `views/dashboard.html:22` | `navigate('quests')` |
-| Overview "next moves" card | `18-runtime.js:6-7` (`ovMoves`) | daily quests left / complete, `fn:"navigate('quests')"` |
+| Overview "next moves" card | `18-runtime.js:7-8` (`ovMoves`) | daily quests left / complete, `go:{view:'quests'}` (drawn as `navigate('quests')` by `ovNextHtml`) |
 | Back history | `34-navigation.js:69-74` (`lmaBack`), stack kept by `34-navigation.js:78-90` | previous view |
 | Deep link `lifemax://open?feature=quests` | `50-deeplink.js:11,51` | `lmvGo({id:'quests'})` -> `lmaNavTo` (`46-voice-nlu.js:121-126`) |
 | Launcher shortcut and Assistant "Open quests" | `android-wrapper/res/xml/shortcuts.xml:42-56,71-80`, strings `res/values/lifemax_shortcuts.xml:7-8,29-33` | the deep link above |
