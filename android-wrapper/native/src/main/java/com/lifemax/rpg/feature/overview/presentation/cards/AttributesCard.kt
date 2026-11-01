@@ -36,9 +36,9 @@ import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.core.designsystem.components.tapTarget
+import com.lifemax.rpg.feature.overview.domain.AttrsCard
 import com.lifemax.rpg.feature.overview.domain.DotKind
 import com.lifemax.rpg.feature.overview.domain.Gem
-import com.lifemax.rpg.feature.overview.domain.AttrsCard
 
 /**
  * The Attributes card (ovAttrsHtml): two columns of gems, each its attribute's level, this week's

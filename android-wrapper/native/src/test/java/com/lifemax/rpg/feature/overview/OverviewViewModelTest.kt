@@ -6,7 +6,6 @@ import com.lifemax.rpg.feature.overview.domain.OverviewNotice
 import com.lifemax.rpg.feature.overview.domain.OverviewReply
 import com.lifemax.rpg.feature.overview.presentation.OverviewActions
 import com.lifemax.rpg.feature.overview.presentation.OverviewViewModel
-import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -16,12 +15,12 @@ import org.junit.Test
 
 /** The cards' view model: its own state, and the commands its taps send (plan §3.4, §5). */
 class OverviewViewModelTest {
-    private fun fixture(name: String = "sample") =
+    private fun fixture(name: String = "health") =
         JSONObject(javaClass.getResource("/fixtures/overview-cards-$name.json")!!.readText())
 
     private var ids = 0
 
-    private inner class Setup(val name: String = "sample") {
+    private inner class Setup(val name: String = "health") {
         val repo = WebOverviewRepository().apply { accept(fixture(name), true) }
         val sent = OverviewRecorder()
         val views = mutableListOf<String>()
@@ -39,25 +38,6 @@ class OverviewViewModelTest {
             vm.projected()
         }
     }
-
-    private fun celebration(id: String, gains: Boolean = true) =
-        JSONObject()
-            .put("id", id)
-            .put("xp", 40)
-            .put("origin", JSONObject().put("x", 200).put("y", 800))
-            .put(
-                "gains",
-                if (!gains) JSONArray()
-                else
-                    JSONArray()
-                        .put(
-                            JSONObject()
-                                .put("attribute", "physique")
-                                .put("short", "STR")
-                                .put("xp", 40)
-                                .put("color", 0xFFFF7A57)
-                        ),
-            )
 
     @Test
     fun oneSteppingAsideTapPerOpening() {
@@ -127,7 +107,7 @@ class OverviewViewModelTest {
         s.update(
             fixture().apply {
                 getJSONObject("tiles")
-                    .put("luck", fixture("new").getJSONObject("tiles").getJSONObject("luck"))
+                    .put("luck", fixture("luck").getJSONObject("tiles").getJSONObject("luck"))
             }
         )
         assertNull(s.vm.taps.operation("luck", "WEDNESDAY, OCTOBER 14"))
@@ -135,7 +115,7 @@ class OverviewViewModelTest {
 
     @Test
     fun theTipIsDismissedOnceAndARefusalSaysWhy() {
-        val s = Setup("new")
+        val s = Setup("tip")
         s.actions.dismissTip()
         s.actions.dismissTip() // waiting for the page
         assertEquals(listOf("tip" to listOf("op-1")), s.sent.sent)
@@ -158,7 +138,7 @@ class OverviewViewModelTest {
 
     @Test
     fun aWaitingCommandStopsWaitingOnReopen() {
-        val s = Setup("new")
+        val s = Setup("tip")
         s.actions.dismissTip()
         assertTrue(s.vm.taps.tipWaiting)
         s.vm.hidden()
@@ -183,34 +163,6 @@ class OverviewViewModelTest {
         assertEquals(6, s.vm.weekDay)
         s.actions.pickDay(9)
         assertEquals(6, s.vm.weekDay)
-    }
-
-    @Test
-    fun aCelebrationPlaysOncePerIdAndNeverWhileHidden() {
-        val s = Setup()
-        s.vm.hidden()
-        s.update(fixture().put("celebrations", JSONArray().put(celebration("a"))))
-        assertNull(s.vm.celebration)
-        s.vm.opened()
-        assertEquals("a", s.vm.celebration!!.id)
-        s.update(
-            fixture().put("celebrations", JSONArray().put(celebration("a")).put(celebration("b")))
-        )
-        assertEquals("a", s.vm.celebration!!.id)
-        s.vm.celebrationShown(s.vm.celebration!!)
-        assertEquals("b", s.vm.celebration!!.id)
-        s.vm.celebrationShown(s.vm.celebration!!)
-        s.update(
-            fixture()
-                .put(
-                    "celebrations",
-                    JSONArray()
-                        .put(celebration("a"))
-                        .put(celebration("b"))
-                        .put(celebration("c", gains = false)),
-                )
-        )
-        assertNull(s.vm.celebration)
     }
 
     @Test

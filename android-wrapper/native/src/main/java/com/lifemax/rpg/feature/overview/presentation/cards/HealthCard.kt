@@ -30,8 +30,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
-import com.lifemax.rpg.feature.overview.domain.HealthDay
 import com.lifemax.rpg.feature.overview.domain.HealthCard
+import com.lifemax.rpg.feature.overview.domain.HealthDay
 
 /**
  * The Activity today card (ovHealthHtml). The whole card opens the Health page ([onOpen], the

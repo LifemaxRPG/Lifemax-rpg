@@ -1,9 +1,12 @@
 package com.lifemax.rpg.bridge.web
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.OverviewContainer
+import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.feature.overview.data.OverviewCommandSender
 import com.lifemax.rpg.feature.overview.data.overviewReply
 import com.lifemax.rpg.feature.overview.presentation.OverviewRoute
@@ -45,5 +48,9 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
         topInsetDp: Float,
         bottomInsetDp: Float,
         emit: (action: String, id: String) -> Unit,
-    ) = OverviewRoute(viewModel, visible, topInsetDp, bottomInsetDp, emit)
+    ) {
+        CompositionLocalProvider(LocalPageBuzz provides container.buzz(LocalContext.current)) {
+            OverviewRoute(viewModel, visible, topInsetDp, bottomInsetDp, emit)
+        }
+    }
 }

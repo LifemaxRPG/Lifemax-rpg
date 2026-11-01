@@ -3,8 +3,7 @@ package com.lifemax.rpg.feature.overview.domain
 import com.lifemax.rpg.core.designsystem.feedback.HapticScale
 import com.lifemax.rpg.core.designsystem.feedback.HeldCelebration
 import com.lifemax.rpg.core.designsystem.feedback.PagePoint
-import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
-import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
+import com.lifemax.rpg.feature.lifedirector.domain.DirectorGlance
 
 /*
  * The whole projection `overview.cards.v1` (plan OVERVIEW_BODY §3.3): what the page's Overview
@@ -32,7 +31,10 @@ data class OverviewCards(
      */
     val images: Map<String, String>,
     val notice: OverviewNotice?,
-    /** The XP celebrations the page handed over (fxSink), each held 2 s; PageCelebrations plays them. */
+    /**
+     * The XP celebrations the page handed over (fxSink), each held 2 s; PageCelebrations plays
+     * them.
+     */
     val celebrations: List<HeldCelebration>,
     /** Where the orbs fly: the logo in the shared bar, in the page's CSS px. */
     val celebrationTarget: PagePoint,
@@ -110,7 +112,8 @@ data class TileInfo(
 
 /** Each card's model; null where the page draws nothing for it. */
 data class OverviewTiles(
-    val plan: PlanGlance?,
+    /** Life Director's glance (LifeDirector.native.glance), drawn by its DirectorGlance. */
+    val plan: DirectorGlance?,
     val next: NextMoves,
     val hero: HeroCard,
     val rewards: RewardsCard,
@@ -131,35 +134,6 @@ data class OverviewTiles(
             else -> true
         }
 }
-
-/* ---- Today's plan: Life Director's glance (LifeDirector.native.glance(), drawn by DirectorGlance) */
-
-enum class GlanceState {
-    /** Life Director not set up: the intro and its button. */
-    SETUP,
-    /** Set up, but no plan for today. */
-    NONE,
-    /** Today's dial, its centre and its foot. */
-    DAY,
-}
-
-/**
- * The glance: its head ([title], the [link] to Life Director), then by [state] the set-up [intro]
- * and [button], the no-plan [intro], or the read-only [dial] with its [core] and [foot].
- */
-data class PlanGlance(
-    val state: GlanceState,
-    val title: String,
-    val link: String,
-    val intro: String?,
-    val button: String?,
-    val dial: DirectorDial?,
-    val core: DialCentre?,
-    val foot: GlanceFoot?,
-)
-
-/** "2 sessions left · 1h 30m", and "1 done" ("" when none is done). */
-data class GlanceFoot(val text: String, val done: String)
 
 /* ---- Next moves */
 

@@ -26,8 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,8 +49,8 @@ internal val Tabular = TextStyle(fontFeatureSettings = "tnum")
 
 /**
  * Level & today (.ov-hero): today's ring beside the level, the XP bar and the streak, then the
- * week, total and achievements. The whole card is one button to Character, read by TalkBack as the
- * page's [HeroCard.a11y]; [avatar] is the decoded picture, if any.
+ * week, total and achievements. The whole card is one button to Character; TalkBack reads its words
+ * together, as the page gives it no label of its own. [avatar] is the decoded picture.
  */
 @Composable
 internal fun HeroCardView(
@@ -67,7 +66,7 @@ internal fun HeroCardView(
                 .cssRadialGlow(0.9f, 0.7f, -0.08f, 1.08f, c.good.copy(alpha = 0.10f), 0.60f)
                 .cssRadialGlow(1.2f, 0.9f, 0.88f, -0.12f, c.accent.copy(alpha = 0.24f), 0.62f)
                 .tapTarget(Role.Button, onClick = onOpen)
-                .clearAndSetSemantics { contentDescription = hero.a11y },
+                .semantics(mergeDescendants = true) {},
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),

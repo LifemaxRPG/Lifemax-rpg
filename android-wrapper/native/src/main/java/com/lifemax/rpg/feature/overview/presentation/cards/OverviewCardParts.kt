@@ -68,7 +68,10 @@ internal fun OverviewCard(
             .pageShadow(CardShape, c.light)
             .clip(CardShape)
             .then(background ?: Modifier.background(c.panel))
-            .then(if (onClick == null) Modifier else Modifier.tapTarget(Role.Button, onClick = onClick))
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.tapTarget(Role.Button, onClick = onClick)
+            )
             .border(1.dp, c.lineSoft, CardShape)
             .padding(padding),
         content = content,

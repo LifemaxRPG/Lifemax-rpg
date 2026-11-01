@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
-import com.lifemax.rpg.core.designsystem.components.pageButtonShadow
 import com.lifemax.rpg.core.designsystem.components.tapTarget
 import com.lifemax.rpg.core.designsystem.mix
 import com.lifemax.rpg.feature.overview.domain.LuckCard

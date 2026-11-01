@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import com.lifemax.rpg.feature.overview.domain.catPortrait
+import com.lifemax.rpg.feature.overview.domain.CatPortrait
 import com.lifemax.rpg.feature.overview.presentation.cards.PetPortrait
 import org.json.JSONObject
 import org.junit.Rule
@@ -35,7 +35,8 @@ class OverviewPetPortraitScreenshotTest {
     fun portraitAndPlaceholder() {
         val fixture =
             JSONObject(javaClass.getResource("/fixtures/overview-cat-portrait.json")!!.readText())
-        val portrait = fixture.getJSONObject("cat").catPortrait(fixture.getJSONObject("images"))
+        val key = fixture.getJSONObject("cat").getString("portrait")
+        val portrait = CatPortrait(key, fixture.getJSONObject("images").getString(key))
         paparazzi.snapshot {
             Box(Modifier.fillMaxSize().background(Backdrop).padding(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

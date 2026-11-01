@@ -16,28 +16,29 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
-import com.lifemax.rpg.core.designsystem.feedback.XpAward
-import com.lifemax.rpg.core.designsystem.feedback.XpCelebration
+import com.lifemax.rpg.core.designsystem.feedback.PageCelebrations
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialIntroLedger
+import com.lifemax.rpg.feature.lifedirector.presentation.glance.DirectorGlance
 import com.lifemax.rpg.feature.overview.data.OverviewViews
-import com.lifemax.rpg.feature.overview.domain.CardCelebration
 import com.lifemax.rpg.feature.overview.domain.MoveGo
 import com.lifemax.rpg.feature.overview.domain.OverviewCards
 import com.lifemax.rpg.feature.overview.domain.OverviewNotice
 import com.lifemax.rpg.feature.overview.domain.OverviewTileIds
+import com.lifemax.rpg.feature.overview.presentation.cards.AppsCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.AttributesCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.CatCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.HealthCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.HeroCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.LuckCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.NextMovesCard
 import com.lifemax.rpg.feature.overview.presentation.cards.OverviewHeadRow
 import com.lifemax.rpg.feature.overview.presentation.cards.OverviewTipCard
-import com.lifemax.rpg.feature.overview.presentation.cards.PendingTile
 import com.lifemax.rpg.feature.overview.presentation.cards.RecentCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.RewardsCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.WeekCardView
 
 /**
  * The cards' screen as the plugin shows it: [visible] is the plugin's, [emit] its action sender
@@ -56,16 +57,7 @@ fun OverviewRoute(
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
     val cards = vm.cards ?: return
     val actions = remember(vm) { OverviewActions(vm) }
-    OverviewScreen(
-        cards,
-        actions,
-        visible,
-        topInsetDp,
-        bottomInsetDp,
-        vm.weekDay,
-        vm.notice,
-        vm.celebration,
-    )
+    OverviewScreen(cards, actions, visible, topInsetDp, bottomInsetDp, vm.weekDay, vm.notice)
 }
 
 /** Everything the cards can ask for, so the screen itself holds no state. */
@@ -84,7 +76,6 @@ class OverviewActions(
     val dismissTip: () -> Unit = {},
     val pickDay: (Int) -> Unit = {},
     val noticeShown: (OverviewNotice) -> Unit = {},
-    val celebrationShown: (CardCelebration) -> Unit = {},
 ) {
     constructor(
         vm: OverviewViewModel
@@ -103,15 +94,15 @@ class OverviewActions(
         dismissTip = vm.taps::dismissTip,
         pickDay = vm::pickDay,
         noticeShown = vm::noticeShown,
-        celebrationShown = vm::celebrationShown,
     )
 }
 
 /**
  * The Overview as the page lays it out on a phone: the head, the tip, then each tile in the page's
  * order (`layout`), one item per tile keyed by its id, under the shared bars ([topInsetDp],
- * [bottomInsetDp]); the page's message as its toast, and a celebration the page handed over drawn
- * over everything.
+ * [bottomInsetDp]); the page's message as its toast, and the celebrations the page handed over
+ * (fxSink) drawn over everything, each once, from the page's last tap to the logo, only while
+ * [visible]. [celebrationAt] freezes the first at a moment (screenshots).
  */
 @Composable
 fun OverviewScreen(
@@ -122,10 +113,12 @@ fun OverviewScreen(
     bottomInsetDp: Float = 72f,
     weekDay: Int = cards.tiles.week.selected,
     notice: OverviewNotice? = null,
-    celebration: CardCelebration? = null,
     list: LazyListState = rememberLazyListState(),
+    celebrationAt: Float = 0f,
 ) {
     val images = remember { OverviewImages() }
+    // the glance's arrival plays once per arrival for the whole screen, not once per glance redraw
+    val introLedger = remember { DialIntroLedger() }
     OverviewTheme(cards.tokens, cards.light) {
         val c = LocalOverviewColors.current
         Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -145,7 +138,7 @@ fun OverviewScreen(
                     item("tip", "tip") { OverviewTipCard(tip, actions.dismissTip) }
                 }
                 items(cards.shown, key = { "tile/$it" }, contentType = { it }) { id ->
-                    Tile(id, cards, actions, weekDay, images)
+                    Tile(id, cards, actions, visible, weekDay, images, introLedger)
                 }
             }
             if (visible && notice != null)
@@ -156,23 +149,44 @@ fun OverviewScreen(
                         .padding(start = 12.dp, end = 12.dp, bottom = bottomInsetDp.dp + 12.dp),
                     actions.noticeShown,
                 )
-            if (visible && celebration != null)
-                CelebrationLayer(celebration, cards, actions.celebrationShown)
+            PageCelebrations(
+                cards.celebrations,
+                cards.celebrationTarget,
+                cards.reducedMotion,
+                visible,
+                startAt = celebrationAt,
+            )
         }
     }
 }
 
-/** One tile by its id: Cards A here, the others where their own files draw them. */
+/** One tile by its id, each drawn by its own card from its model in the projection. */
 @Composable
 private fun Tile(
     id: String,
     cards: OverviewCards,
     actions: OverviewActions,
+    visible: Boolean,
     weekDay: Int,
     images: OverviewImages,
+    introLedger: DialIntroLedger,
 ) {
     val t = cards.tiles
     when (id) {
+        OverviewTileIds.PLAN ->
+            t.plan?.let {
+                DirectorGlance(
+                    it,
+                    visible,
+                    onTap = { tap -> actions.plan(tap.act, tap.id) },
+                    // the 14 dp every tile keeps under it (OverviewCard's own for the others)
+                    modifier = Modifier.padding(bottom = 14.dp),
+                    // the page sends no arrival yet (phase 3): the dial's arrival never plays
+                    arrival = cards.arrival,
+                    reducedMotion = cards.reducedMotion,
+                    introLedger = introLedger,
+                )
+            }
         OverviewTileIds.NEXT -> NextMovesCard(t.next) { actions.move(it.go) }
         OverviewTileIds.HERO ->
             HeroCardView(t.hero, images.get(cards.images, t.hero.avatar)) {
@@ -181,7 +195,31 @@ private fun Tile(
         OverviewTileIds.REWARDS -> RewardsCardView(t.rewards, actions.shop)
         OverviewTileIds.LUCK -> LuckCardView(t.luck, actions.luck)
         OverviewTileIds.RECENT -> RecentCardView(t.recent) { actions.go(OverviewViews.HISTORY) }
-        else -> PendingTile(id, cards, actions, weekDay)
+        OverviewTileIds.APPS ->
+            t.apps?.let {
+                AppsCardView(
+                    it,
+                    { key -> images.get(cards.images, key) },
+                    actions.appLaunch,
+                    actions.appAdd,
+                    actions.appsEdit,
+                )
+            }
+        OverviewTileIds.HEALTH ->
+            t.health?.let {
+                HealthCardView(it, actions.health, onSetup = { actions.go(OverviewViews.SETTINGS) })
+            }
+        OverviewTileIds.ATTRS ->
+            AttributesCardView(
+                t.attrs,
+                { actions.go(OverviewViews.CHARACTER) },
+                { gem -> actions.attr(gem, OverviewTileIds.ATTRS) },
+            )
+        OverviewTileIds.WEEK -> WeekCardView(t.week, weekDay, cards.haptics, actions.pickDay)
+        OverviewTileIds.CAT ->
+            t.cat?.let {
+                CatCardView(it, cards.catPortrait, onOpen = { actions.go(OverviewViews.PET) })
+            }
     }
 }
 
@@ -199,25 +237,4 @@ private fun NoticeToast(
         onShown(notice)
     }
     PageToast(notice.text, cards.tokens, cards.light, modifier, shown = { shown.value })
-}
-
-/**
- * An XP celebration the page handed to the cards (fxSink): orbs from the page's last tap to the
- * logo in the shared bar, as Workout plan draws its own; the page plays the sound and buzz.
- */
-@Composable
-private fun CelebrationLayer(
-    celebration: CardCelebration,
-    cards: OverviewCards,
-    onShown: (CardCelebration) -> Unit,
-) {
-    val density = LocalDensity.current.density
-    XpCelebration(
-        id = celebration.id.hashCode().toLong(),
-        awards = listOf(XpAward(celebration.xp, celebration.gains)),
-        origin = Offset(celebration.origin.x * density, celebration.origin.y * density),
-        target = DpOffset(cards.celebrationTarget.x.dp, cards.celebrationTarget.y.dp),
-        reduced = cards.reducedMotion,
-        onFinished = { onShown(celebration) },
-    )
 }

@@ -3,9 +3,12 @@ package com.lifemax.rpg.feature.overview.presentation.cards
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -26,46 +30,70 @@ import com.lifemax.rpg.core.designsystem.components.PageEyebrow
 import com.lifemax.rpg.core.designsystem.components.pixelIconPath
 import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.core.designsystem.mix
-import com.lifemax.rpg.feature.overview.domain.CatMode
 import com.lifemax.rpg.feature.overview.domain.CatCard
+import com.lifemax.rpg.feature.overview.domain.CatMode
+import com.lifemax.rpg.feature.overview.domain.CatPortrait
 
 /**
  * The Cat card: a door to the live room, which stays on the page (ADR 0003), so [onOpen] is the
- * page's `{view:'pet'}`. A living cat (or two, "Miso & Pip") is the page's name row with the cat's
- * hearts, its icon standing in for the room's window until phase 3's portrait; a cat that has
- * passed and the stray kitten are the page's own icon cards (petPeekHtml, as the Overview's
- * `.ov-duo` lays them out: icon, words, arrow, one under the other).
+ * page's `{view:'pet'}`. A living cat (or two, "Miso & Pip") is the page's stage with the cat
+ * sitting ([portrait], the page's petPortrait; a quiet paw while its art loads) over the name and
+ * hearts; a cat that has passed is the page's own icon card (petPeekHtml, as the Overview's
+ * `.ov-duo` lays it out: icon, words, arrow, one under the other).
  */
 @Composable
-internal fun CatCardView(tile: CatCard, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+internal fun CatCardView(
+    tile: CatCard,
+    portrait: CatPortrait?,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     OverviewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
         when (tile.mode) {
-            CatMode.Alive -> Alive(tile)
-            CatMode.Gone -> Door(tile, "heart")
-            CatMode.Invite -> Door(tile, "paw")
+            CatMode.ALIVE -> Alive(tile, portrait)
+            CatMode.GONE -> Door(tile, "heart")
         }
     }
 }
 
-/** `.pet-peek-row`: the cat's icon, its name and its five hearts in one row. */
+/**
+ * `.pet-peek-stage` over `.pet-peek-row`: the room's window (192 x 144 room pixels, scaled to the
+ * card's width) with the cat sitting in it at about the room's scale, then its name and its five
+ * hearts. The room itself stays on the page (ADR 0003): its dark stage stands in for it here.
+ */
 @Composable
-private fun Alive(tile: CatCard) {
+private fun Alive(tile: CatCard, portrait: CatPortrait?) {
     val c = LocalPageColors.current
-    Row(
-        Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().aspectRatio(STAGE_ASPECT).background(Stage).drawBehind {
+            val w = 1.dp.toPx()
+            drawRect(c.lineSoft, Offset(0f, size.height - w), Size(size.width, w))
+        }
     ) {
-        Badge("paw")
+        // the portrait is 96 x 64 room pixels, the window 192 wide: half the stage across, standing
+        // on the room's floor (about a sixth of the window up from its bottom)
+        PetPortrait(
+            portrait,
+            Modifier.align(Alignment.BottomCenter)
+                .padding(bottom = maxWidth * FLOOR)
+                .size(maxWidth / 2, maxWidth / 3),
+            placeholder = c.muted.copy(alpha = .5f),
+        )
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(start = 16.dp, top = 11.dp, end = 16.dp, bottom = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             tile.name,
-            Modifier.weight(1f),
+            Modifier.weight(1f, fill = false).padding(end = 9.dp),
             color = c.text,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             lineHeight = 22.5.sp,
         )
-        Hearts(tile.hearts)
+        Hearts(tile.hearts ?: 0)
     }
 }
 
@@ -84,14 +112,6 @@ private fun Door(tile: CatCard, icon: String) {
                 fontWeight = FontWeight.Bold,
                 lineHeight = 21.sp,
             )
-            if (tile.text.isNotEmpty())
-                Text(
-                    tile.text,
-                    Modifier.padding(top = 2.dp),
-                    color = c.muted,
-                    fontSize = 12.5.sp,
-                    lineHeight = 18.75.sp,
-                )
         }
         Text(
             "→",
@@ -141,3 +161,8 @@ private fun Hearts(on: Int) {
 private val Heart = Color(0xFFFF5F7E)
 private val HeartGlow = Color(0x66FF5F7E)
 private val BadgeShape = RoundedCornerShape(12.dp)
+
+/** `.pet-peek-stage`'s fixed dark (#10131c) and the room window's 192 x 144. */
+private val Stage = Color(0xFF10131C)
+private const val STAGE_ASPECT = 192f / 144f
+private const val FLOOR = 0.09f

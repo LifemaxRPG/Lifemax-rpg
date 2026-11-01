@@ -1,15 +1,19 @@
 package com.lifemax.rpg.feature.overview
 
+import com.lifemax.rpg.core.designsystem.feedback.HapticScale
+import com.lifemax.rpg.feature.overview.data.WebOverviewRepository
 import com.lifemax.rpg.feature.overview.presentation.cards.CardsBGeometry as G
 import com.lifemax.rpg.feature.overview.presentation.cards.WEEK_PICK_MS
-import com.lifemax.rpg.feature.overview.presentation.cards.chipsPerRow
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
  * Where Cards B put the page's numbers: the week chart's columns, segments and pace line, and the
  * health mini-bars, against what the page lays out at 412 CSS px (measured in the built page on the
- * established save, 2026-10-14 21:30), and the chips' rows.
+ * established save, 2026-10-14 21:30); and the projection's haptics, which reach the week card as
+ * the page's own level (overview-hapscale.json, from the page; PageBuzzTest plays every level).
  */
 class OverviewCardsBTest {
     private val eps = 0.05f
@@ -73,16 +77,32 @@ class OverviewCardsBTest {
     }
 
     @Test
-    fun chipsShareARowAtNinetyDpEach() {
-        // the card's 358 px: all three health chips in one row
-        assertEquals(3, chipsPerRow(358f))
-        assertEquals(1, chipsPerRow(150f))
-        assertEquals(1, chipsPerRow(10f))
-        assertEquals(2, chipsPerRow(188f))
+    fun theWeekPickIsTheSixMillisecondBuzz() {
+        assertEquals(6L, WEEK_PICK_MS)
     }
 
     @Test
-    fun theWeekPickIsTheSixMillisecondBuzz() {
-        assertEquals(6L, WEEK_PICK_MS)
+    fun theProjectionsHapticsAreThePagesLevel() {
+        fun res(name: String) = javaClass.getResource("/fixtures/$name")!!.readText()
+        val cards =
+            WebOverviewRepository()
+                .apply { accept(JSONObject(res("overview-cards-established.json")), true) }
+                .state
+                .value!!
+        val levels = JSONArray(res("overview-hapscale.json"))
+        val normal =
+            (0 until levels.length()).map(levels::getJSONObject).first {
+                it.getString("level") == "normal"
+            }
+        assertEquals(
+            HapticScale(
+                normal.getDouble("dm"),
+                normal.getDouble("add"),
+                normal.getInt("amp"),
+                normal.getLong("min"),
+                normal.getLong("max"),
+            ),
+            cards.haptics,
+        )
     }
 }

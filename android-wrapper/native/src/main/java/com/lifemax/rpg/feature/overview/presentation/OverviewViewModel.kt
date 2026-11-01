@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.lifemax.rpg.feature.overview.domain.CardCelebration
 import com.lifemax.rpg.feature.overview.domain.OverviewCards
 import com.lifemax.rpg.feature.overview.domain.OverviewCommands
 import com.lifemax.rpg.feature.overview.domain.OverviewNotice
@@ -15,13 +14,12 @@ import java.util.UUID
 
 /**
  * The cards' screen state: the page's projection, and what is the screen's own (the week day
- * picked, the message showing, the celebration playing). Taps go through [taps]. The state is
- * snapshot state so a tap redraws at once.
+ * picked, the message showing). Taps go through [taps]. The state is snapshot state so a tap
+ * redraws at once. The page's celebrations are played by the screen (PageCelebrations), each once.
  * - The week day picked survives projections and goes back to the page's when the week's dates move
  *   (a new day).
  * - The page's message ([notice]) shows once per id; one cut short by the screen hiding is not
  *   shown again. The screen's own messages (a refused tip) show the same way.
- * - A celebration the page handed over plays once per id, and never while the screen is hidden.
  */
 class OverviewViewModel(
     private val repository: OverviewRepository,
@@ -32,9 +30,6 @@ class OverviewViewModel(
         private set
 
     var notice by mutableStateOf<OverviewNotice?>(null)
-        private set
-
-    var celebration by mutableStateOf<CardCelebration?>(null)
         private set
 
     /** The week bar picked (0 to 6). */
@@ -49,7 +44,6 @@ class OverviewViewModel(
     private var showing = false
     private var weekDates: List<String>? = null
     private var noticed: Pair<String, Long>? = null
-    private val played = HashSet<String>()
     private var said = 0L
 
     /** The screen opened (again). */
@@ -60,11 +54,10 @@ class OverviewViewModel(
         projected()
     }
 
-    /** The screen went behind the page: it draws no message and plays nothing. */
+    /** The screen went behind the page: it draws no message. */
     fun hidden() {
         showing = false
         notice = null
-        celebration = null
     }
 
     /** The repository has taken a projection. */
@@ -84,7 +77,6 @@ class OverviewViewModel(
                 notice = it
             }
         }
-        if (showing && celebration == null) nextCelebration(p)
     }
 
     fun onReply(reply: OverviewReply) {
@@ -99,21 +91,6 @@ class OverviewViewModel(
     /** The message has shown to the end. */
     fun noticeShown(shown: OverviewNotice) {
         if (notice == shown) notice = null
-    }
-
-    /** The celebration has played to the end: the next one, if the page handed over another. */
-    fun celebrationShown(shown: CardCelebration) {
-        if (celebration != shown) return
-        celebration = null
-        if (showing) cards?.let(::nextCelebration)
-    }
-
-    private fun nextCelebration(p: OverviewCards) {
-        // an award without gains is not drawn (XpAward): it counts as played
-        p.celebrations.filter { it.gains.isEmpty() }.forEach { played += it.id }
-        val next = p.celebrations.firstOrNull { it.id !in played } ?: return
-        played += next.id
-        celebration = next
     }
 
     private fun say(text: String) {

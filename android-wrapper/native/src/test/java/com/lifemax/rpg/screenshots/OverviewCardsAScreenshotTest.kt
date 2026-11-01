@@ -16,7 +16,7 @@ import org.junit.Test
  * The Overview cards of Cards A (the head, the tip, Next moves, Level & today, Rewards, Daily luck,
  * Recent activity) as the phone draws them, on a 411 dp wide phone like the owner's, from the
  * page's projections (overview-cards-*.json, made from the page's own data functions). Each image
- * is a square screenful scrolled to a tile; the tiles Cards B draws are not drawn here.
+ * is a square screenful scrolled to a tile.
  */
 class OverviewCardsAScreenshotTest {
     @get:Rule
@@ -35,7 +35,7 @@ class OverviewCardsAScreenshotTest {
 
     /** The screen from tile [tile] down ("" for the top), in [light] or dark. */
     private fun snap(
-        name: String = "sample",
+        name: String = "established",
         light: Boolean = false,
         tile: String = "",
         edit: (JSONObject) -> Unit = {},
@@ -66,15 +66,18 @@ class OverviewCardsAScreenshotTest {
 
     @Test fun rewardsLuckRecentLight() = snap(light = true, tile = "rewards")
 
-    /** A new player: the feature tip under the head, and Next moves' first steps. */
-    @Test fun newTipDark() = snap("new")
+    /** The feature tip under the head, then Next moves. */
+    @Test fun newTipDark() = snap("tip")
 
-    @Test fun newTipLight() = snap("new", light = true)
+    @Test fun newTipLight() = snap("tip", light = true)
 
-    /** A new player's empty ring, then luck rolled (its tier's colour) and no activity yet. */
+    /** A new player's empty ring and first steps, down to an empty week. */
     @Test fun newHeroLuckDark() = snap("new", tile = "hero")
 
     @Test fun newHeroLuckLight() = snap("new", light = true, tile = "hero")
+
+    /** Luck rolled: the score in its tier's colour, then Recent activity. */
+    @Test fun luckRolledDark() = snap("luck", tile = "luck")
 
     /** Over the pace: the gold, glowing number and two attributes' arcs. */
     @Test

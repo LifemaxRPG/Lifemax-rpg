@@ -1,7 +1,6 @@
 package com.lifemax.rpg.feature.overview.data
 
-import com.lifemax.rpg.feature.lifedirector.data.centre
-import com.lifemax.rpg.feature.lifedirector.data.dial
+import com.lifemax.rpg.feature.lifedirector.data.DirectorGlanceJson
 import com.lifemax.rpg.feature.overview.domain.AppItem
 import com.lifemax.rpg.feature.overview.domain.AppsCard
 import com.lifemax.rpg.feature.overview.domain.AttrsCard
@@ -10,8 +9,6 @@ import com.lifemax.rpg.feature.overview.domain.CatMode
 import com.lifemax.rpg.feature.overview.domain.DotKind
 import com.lifemax.rpg.feature.overview.domain.Gem
 import com.lifemax.rpg.feature.overview.domain.GemDot
-import com.lifemax.rpg.feature.overview.domain.GlanceFoot
-import com.lifemax.rpg.feature.overview.domain.GlanceState
 import com.lifemax.rpg.feature.overview.domain.HealthCard
 import com.lifemax.rpg.feature.overview.domain.HealthDay
 import com.lifemax.rpg.feature.overview.domain.HeroArc
@@ -27,7 +24,6 @@ import com.lifemax.rpg.feature.overview.domain.MoveWarn
 import com.lifemax.rpg.feature.overview.domain.NextMove
 import com.lifemax.rpg.feature.overview.domain.NextMoves
 import com.lifemax.rpg.feature.overview.domain.OverviewTiles
-import com.lifemax.rpg.feature.overview.domain.PlanGlance
 import com.lifemax.rpg.feature.overview.domain.RecentCard
 import com.lifemax.rpg.feature.overview.domain.RecentItem
 import com.lifemax.rpg.feature.overview.domain.RewardsCard
@@ -48,7 +44,7 @@ import org.json.JSONObject
 
 internal fun tiles(t: JSONObject) =
     OverviewTiles(
-        plan = t.orNull("plan") { plan(this) },
+        plan = t.orNull("plan") { DirectorGlanceJson.decode(this) },
         next = next(t.getJSONObject("next")),
         hero = hero(t.getJSONObject("hero")),
         rewards =
@@ -63,34 +59,6 @@ internal fun tiles(t: JSONObject) =
         luck = luck(t.getJSONObject("luck")),
         recent = recent(t.getJSONObject("recent")),
     )
-
-/** Life Director's glance; the dial and centre are read as Life Director reads Today's. */
-internal fun plan(p: JSONObject): PlanGlance {
-    val state =
-        when (val s = p.str("state")) {
-            "setup" -> GlanceState.SETUP
-            "none" -> GlanceState.NONE
-            "day" -> GlanceState.DAY
-            else -> throw IllegalArgumentException("Unknown glance state $s")
-        }
-    val glance =
-        PlanGlance(
-            state = state,
-            title = p.str("title"),
-            link = p.str("link"),
-            intro = p.strOrNull("intro"),
-            button = p.strOrNull("button"),
-            dial = p.orNull("dial") { dial(this) },
-            core = p.orNull("core") { centre(this) },
-            foot = p.orNull("foot") { GlanceFoot(str("text"), str("done")) },
-        )
-    when (state) {
-        GlanceState.SETUP -> require(glance.intro != null && glance.button != null)
-        GlanceState.NONE -> require(glance.intro != null)
-        GlanceState.DAY -> require(glance.dial != null && glance.foot != null)
-    }
-    return glance
-}
 
 private fun next(n: JSONObject): NextMoves {
     val moves =

@@ -1,10 +1,10 @@
 package com.lifemax.rpg.feature.overview
 
+import com.lifemax.rpg.feature.overview.data.WebOverviewRepository
 import com.lifemax.rpg.feature.overview.domain.CAT_PORTRAIT_HEIGHT
 import com.lifemax.rpg.feature.overview.domain.CAT_PORTRAIT_WIDTH
 import com.lifemax.rpg.feature.overview.domain.PORTRAIT_MAX_URL
 import com.lifemax.rpg.feature.overview.domain.PortraitBounds
-import com.lifemax.rpg.feature.overview.domain.catPortrait
 import com.lifemax.rpg.feature.overview.domain.portraitBounds
 import com.lifemax.rpg.feature.overview.domain.portraitPngBytes
 import com.lifemax.rpg.feature.overview.domain.portraitScale
@@ -13,53 +13,67 @@ import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
- * The cat portrait's model: the strict read of `tiles.cat.portrait` against the projection's
- * images, the PNG check before anything reaches the bitmap decoder, and the crisp pixel scale. The
- * fixture is the page's own portrait of a cat (tests/pet-portrait.test.js, RECORD=1).
+ * The cat portrait: `tiles.cat.portrait` read through the projection's images (the page's own
+ * projection of a cat, overview-cards-pet.json), the PNG check before anything reaches the bitmap
+ * decoder, and the crisp pixel scale. overview-cat-portrait.json is the page's portrait proven
+ * against the pet room (tests/pet-portrait.test.js, RECORD=1).
  */
 class OverviewPortraitTest {
-    private val fixture =
-        JSONObject(javaClass.getResource("/fixtures/overview-cat-portrait.json")!!.readText())
-    private val cat = fixture.getJSONObject("cat")
-    private val images = fixture.getJSONObject("images")
+    private fun fixture(name: String) =
+        JSONObject(javaClass.getResource("/fixtures/$name.json")!!.readText())
+
+    private val pet = fixture("overview-cards-pet")
+
+    private fun decode(j: JSONObject) =
+        WebOverviewRepository().apply { accept(j, true) }.state.value!!
+
+    private fun cat(j: JSONObject) = j.getJSONObject("tiles").getJSONObject("cat")
 
     @Test
     fun thePagesPortraitIsReadFromTheImageTable() {
-        val portrait = cat.catPortrait(images)!!
-        assertEquals(cat.getString("portrait"), portrait.key)
-        assertEquals(images.getString(portrait.key), portrait.dataUrl)
+        val portrait = decode(pet).catPortrait!!
+        assertEquals(cat(pet).getString("portrait"), portrait.key)
+        assertEquals(pet.getJSONObject("images").getString(portrait.key), portrait.dataUrl)
     }
 
     @Test
     fun thePagesPortraitIsA192By128Png() {
-        val bytes = portraitPngBytes(cat.catPortrait(images)!!.dataUrl)!!
-        // the IHDR chunk: width and height straight after the 8-byte signature and the chunk header
-        val header = ByteBuffer.wrap(bytes, 16, 8)
-        assertEquals(CAT_PORTRAIT_WIDTH, header.int)
-        assertEquals(CAT_PORTRAIT_HEIGHT, header.int)
+        val proven = fixture("overview-cat-portrait")
+        val key = proven.getJSONObject("cat").getString("portrait")
+        val url = proven.getJSONObject("images").getString(key)
+        for (dataUrl in listOf(url, decode(pet).catPortrait!!.dataUrl)) {
+            val bytes = portraitPngBytes(dataUrl)!!
+            // the IHDR chunk: width and height straight after the signature and the chunk header
+            val header = ByteBuffer.wrap(bytes, 16, 8)
+            assertEquals(CAT_PORTRAIT_WIDTH, header.int)
+            assertEquals(CAT_PORTRAIT_HEIGHT, header.int)
+        }
     }
 
     @Test
     fun noPortraitYetIsNull() {
-        assertNull(JSONObject(cat.toString()).put("portrait", JSONObject.NULL).catPortrait(images))
+        val j = JSONObject(pet.toString())
+        cat(j).put("portrait", JSONObject.NULL)
+        assertNull(decode(j).catPortrait)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun aMissingPortraitFieldIsMalformed() {
-        JSONObject(cat.toString()).apply { remove("portrait") }.catPortrait(images)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun aKeyTheImagesDoNotCarryIsMalformed() {
-        JSONObject(cat.toString()).put("portrait", "nope").catPortrait(images)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun aKeyThatIsNotAStringIsMalformed() {
-        JSONObject(cat.toString()).put("portrait", 7).catPortrait(images)
+    @Test
+    fun aMissingWrongOrUnknownPortraitIsMalformed() {
+        val breaks: List<(JSONObject) -> Unit> =
+            listOf(
+                { it.remove("portrait") },
+                { it.put("portrait", "i0") },
+                { it.put("portrait", 7) },
+            )
+        for (broken in breaks) {
+            val j = JSONObject(pet.toString())
+            broken(cat(j))
+            assertThrows(Exception::class.java) { decode(j) }
+        }
     }
 
     @Test

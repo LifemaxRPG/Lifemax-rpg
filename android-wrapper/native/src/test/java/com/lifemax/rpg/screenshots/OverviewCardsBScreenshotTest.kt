@@ -5,40 +5,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
 import com.android.resources.Density
-import com.lifemax.rpg.core.designsystem.PageColors
-import com.lifemax.rpg.core.designsystem.PageTheme
-import com.lifemax.rpg.feature.overview.domain.AppsTile
-import com.lifemax.rpg.feature.overview.domain.HealthTile
-import com.lifemax.rpg.feature.overview.domain.WeekTile
-import com.lifemax.rpg.feature.overview.presentation.cards.AppsCard
-import com.lifemax.rpg.feature.overview.presentation.cards.AttributesCard
-import com.lifemax.rpg.feature.overview.presentation.cards.CatCard
-import com.lifemax.rpg.feature.overview.presentation.cards.HealthCard
-import com.lifemax.rpg.feature.overview.presentation.cards.WeekCard
-import com.lifemax.rpg.screenshots.OverviewCardsBFixtures as F
+import com.lifemax.rpg.feature.overview.data.WebOverviewRepository
+import com.lifemax.rpg.feature.overview.domain.OverviewCards
+import com.lifemax.rpg.feature.overview.presentation.LocalOverviewColors
+import com.lifemax.rpg.feature.overview.presentation.OverviewImages
+import com.lifemax.rpg.feature.overview.presentation.OverviewTheme
+import com.lifemax.rpg.feature.overview.presentation.cards.AppsCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.AttributesCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.CatCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.HealthCardView
+import com.lifemax.rpg.feature.overview.presentation.cards.WeekCardView
+import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 
 /**
- * Cards B (attributes, the week chart, health, apps and the cat) as the phone draws them: each card
- * on its own, as tall as it draws, on a phone like the owner's (411 dp wide) with the page's 12 px
- * side margins, so each image lies beside the page's own card at 412 CSS px. Dark and light, the
- * extras states (a cat, two cats, a cat that has passed, the stray kitten, health off, waiting and
- * goal reached, apps with icons and none, over pace, a picked day, an empty week) and twice the
- * text size.
+ * Cards B (attributes, the week chart, health, apps and the cat) as the phone draws them, from the
+ * page's own projections (overview-cards-*.json): each card on its own, as tall as it draws, on a
+ * phone like the owner's (411 dp wide) with the page's 12 px side margins, so each image lies
+ * beside the page's own card at 412 CSS px. Dark and light, the states the page's fixtures hold (a
+ * cat with its portrait, two cats, a cat that has passed, health off, on and goal reached, apps
+ * with an icon and none, over pace, a picked day, an empty week) and twice the text size.
  */
 class OverviewCardsBScreenshotTest {
     @get:Rule
@@ -52,104 +46,105 @@ class OverviewCardsBScreenshotTest {
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(density = Density(420), fontScale = fontScale)
 
-    private fun card(light: Boolean, name: String? = null, content: @Composable () -> Unit) =
+    private fun cards(name: String, light: Boolean): OverviewCards {
+        val j =
+            JSONObject(javaClass.getResource("/fixtures/overview-cards-$name.json")!!.readText())
+                .put("light", light)
+                .put("tokens", ScreenshotPalette.tokens(light))
+        return WebOverviewRepository().apply { accept(j, true) }.state.value!!
+    }
+
+    private fun card(
+        fixture: String,
+        light: Boolean = false,
+        name: String? = null,
+        content: @Composable (OverviewCards) -> Unit,
+    ) {
+        val p = cards(fixture, light)
         paparazzi.snapshot(name) {
-            val colors = PageColors(ScreenshotPalette.tokenMap(light), light)
-            PageTheme(colors) {
-                Box(Modifier.fillMaxWidth().background(colors.bg).padding(12.dp)) { content() }
+            OverviewTheme(p.tokens, p.light) {
+                val c = LocalOverviewColors.current
+                Box(Modifier.fillMaxWidth().background(c.bg).padding(12.dp)) { content(p) }
             }
         }
+    }
 
     private fun attrs(light: Boolean, name: String? = null) =
-        card(light, name) { AttributesCard(F.attrs, {}, {}) }
+        card("established", light, name) { AttributesCardView(it.tiles.attrs, {}, {}) }
 
     private fun week(
-        light: Boolean,
-        tile: WeekTile = F.week,
-        selected: Int = tile.selected,
+        fixture: String = "established",
+        light: Boolean = false,
+        selected: Int? = null,
         name: String? = null,
-    ) = card(light, name) { WeekCard(tile, selected, null, {}) }
+    ) =
+        card(fixture, light, name) {
+            WeekCardView(it.tiles.week, selected ?: it.tiles.week.selected, null, {})
+        }
 
-    private fun health(light: Boolean, tile: HealthTile = F.healthOn, name: String? = null) =
-        card(light, name) { HealthCard(tile, {}, {}) }
+    private fun health(fixture: String, light: Boolean = false, name: String? = null) =
+        card(fixture, light, name) { HealthCardView(it.tiles.health!!, {}, {}) }
 
-    private fun apps(light: Boolean, tile: AppsTile = F.apps, name: String? = null) =
-        card(light, name) { AppsCard(tile, icons::get, {}, {}, {}) }
+    private fun apps(fixture: String, light: Boolean = false, name: String? = null) =
+        card(fixture, light, name) { p ->
+            val images = remember { OverviewImages() }
+            AppsCardView(p.tiles.apps!!, { images.get(p.images, it) }, {}, {}, {})
+        }
+
+    private fun cat(fixture: String, light: Boolean = false, name: String? = null) =
+        card(fixture, light, name) { CatCardView(it.tiles.cat!!, it.catPortrait, {}) }
 
     @Test fun attributesDark() = attrs(false)
 
     @Test fun attributesLight() = attrs(true)
 
-    @Test fun weekDark() = week(false)
+    @Test fun weekDark() = week()
 
-    @Test fun weekLight() = week(true)
+    @Test fun weekLight() = week(light = true)
 
-    @Test fun weekOverPaceDark() = week(false, F.weekOverPace)
+    @Test fun weekOverPaceDark() = week("over-pace")
 
-    @Test fun weekOverPaceLight() = week(true, F.weekOverPace)
+    @Test fun weekOverPaceLight() = week("over-pace", light = true)
 
-    @Test fun weekPickedDay() = week(false, selected = 3)
+    @Test fun weekPickedDay() = week(selected = 3)
 
-    @Test fun weekEmpty() = week(false, F.weekEmpty)
+    @Test fun weekEmpty() = week("new")
 
-    @Test fun healthOnDark() = health(false)
+    @Test fun healthOnDark() = health("health")
 
-    @Test fun healthOnLight() = health(true)
+    @Test fun healthOnLight() = health("health", light = true)
 
-    @Test fun healthOffDark() = health(false, F.healthOff)
+    @Test fun healthOffDark() = health("established")
 
-    @Test fun healthOffLight() = health(true, F.healthOff)
+    @Test fun healthOffLight() = health("established", light = true)
 
-    @Test fun healthWaiting() = health(false, F.healthWaiting)
+    @Test fun healthGoalReached() = health("health-goal")
 
-    @Test fun healthGoalReached() = health(false, F.healthGoal)
+    @Test fun appsDark() = apps("health")
 
-    @Test fun appsDark() = apps(false)
+    @Test fun appsLight() = apps("health", light = true)
 
-    @Test fun appsLight() = apps(true)
+    @Test fun appsEmptyDark() = apps("established")
 
-    @Test fun appsEmptyDark() = apps(false, F.appsEmpty)
+    @Test fun appsEmptyLight() = apps("established", light = true)
 
-    @Test fun appsEmptyLight() = apps(true, F.appsEmpty)
+    @Test fun catDark() = cat("pet")
 
-    @Test fun catDark() = card(false) { CatCard(F.pet, {}) }
+    @Test fun catLight() = cat("pet", light = true)
 
-    @Test fun catLight() = card(true) { CatCard(F.pet, {}) }
+    @Test fun twoCats() = cat("two-cats")
 
-    @Test fun twoCats() = card(false) { CatCard(F.twoCats, {}) }
+    @Test fun catGoneDark() = cat("cat-gone")
 
-    @Test fun catGoneDark() = card(false) { CatCard(F.catGone, {}) }
-
-    @Test fun catGoneLight() = card(true) { CatCard(F.catGone, {}) }
-
-    @Test fun strayKitten() = card(false) { CatCard(F.stray, {}) }
+    @Test fun catGoneLight() = cat("cat-gone", light = true)
 
     @Test
     fun largerText() {
         paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
         attrs(false, "attributes")
-        week(false, F.weekOverPace, name = "week")
-        health(false, name = "health")
-        apps(false, name = "apps")
-        card(false, "cat") { CatCard(F.twoCats, {}) }
-    }
-
-    private companion object {
-        /** App icons as the launcher sends them (84 px), plain squares of colour. */
-        val icons: Map<String, ImageBitmap> =
-            mapOf(
-                "icon-green" to square(Color(0xFF0B8A12)),
-                "icon-blue" to square(Color(0xFF1A73E8)),
-                "icon-orange" to square(Color(0xFFF57C00)),
-            )
-
-        fun square(color: Color): ImageBitmap =
-            ImageBitmap(84, 84).also {
-                Canvas(it)
-                    .drawRect(
-                        Rect(Offset.Zero, Size(84f, 84f)),
-                        Paint().apply { this.color = color },
-                    )
-            }
+        week("over-pace", name = "week")
+        health("health", name = "health")
+        apps("health", name = "apps")
+        cat("two-cats", name = "cat")
     }
 }
