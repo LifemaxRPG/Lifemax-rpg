@@ -3,10 +3,8 @@ package com.lifemax.rpg.feature.lifedirector
 import com.lifemax.rpg.feature.lifedirector.data.WebLifeDirectorRepository
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
-import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorNotice
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
-import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.SectionFlick
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
@@ -42,47 +40,10 @@ class LifeDirectorTest {
         throw AssertionError("accepted a malformed projection")
     }
 
-    private class Recorder : LifeDirectorCommands {
-        val days = mutableListOf<Int>()
-
-        override fun showDay(index: Int): String {
-            days += index
-            return "day-${days.size}"
-        }
-
-        val sections = mutableListOf<String>()
-
-        override fun showSection(id: String): String {
-            sections += id
-            return "section-${sections.size}"
-        }
-
-        override fun gotoDay(index: Int): String {
-            sections += "today@$index"
-            return "section-${sections.size}"
-        }
-
-        val seen = mutableListOf<Pair<String, Boolean>>()
-        val changes = mutableListOf<Pair<String, Map<String, Any>>>()
-
-        override fun change(name: String, args: Map<String, Any>): String {
-            changes += name to args
-            return "change-${changes.size}"
-        }
-
-        override fun tourSeen(key: String, finished: Boolean): String {
-            seen += key to finished
-            return "seen-${seen.size}"
-        }
-
-        override fun dialDrop(key: String, place: DialPlace) = error("not dragged here")
-
-        override fun dialApply(key: String, place: DialPlace) = error("not dragged here")
-    }
-
-    private fun viewModel(): Triple<WebLifeDirectorRepository, LifeDirectorViewModel, Recorder> {
+    private fun viewModel():
+        Triple<WebLifeDirectorRepository, LifeDirectorViewModel, DirectorRecorder> {
         val repo = repository()
-        val commands = Recorder()
+        val commands = DirectorRecorder()
         return Triple(repo, LifeDirectorViewModel(repo, commands).apply { opened() }, commands)
     }
 
@@ -521,8 +482,12 @@ class LifeDirectorTest {
 
     @Test
     fun aTipLeavesTheTapForThePageAndSeeTomorrowAsksForTheDay() {
-        val repo = repository("evening")
-        val commands = Recorder()
+        // a page from before phase 4A (no sheet field): a session's tap is still the page's
+        val repo =
+            WebLifeDirectorRepository().apply {
+                accept(fixture("evening").apply { remove("sheet") }, true)
+            }
+        val commands = DirectorRecorder()
         val vm = LifeDirectorViewModel(repo, commands).apply { opened() }
         val emitted = mutableListOf<Tap>()
         val actions = DirectorActions(vm) { act, id -> emitted += Tap(act, id) }

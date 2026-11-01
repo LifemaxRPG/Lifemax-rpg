@@ -67,6 +67,8 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 guide = j.guide(),
                 goals = j.goals(),
                 settings = j.settings(),
+                sheets = j.knowsSheets(),
+                sheet = j.sheet(),
             )
     }
 }

@@ -306,7 +306,7 @@ async function director(b) {
     if (!snap.sheet || snap.sheet.kind !== kind || snap.sheet.gone) throw Error(name + ': the sheet is not in the projection');
     write('fixtures/director-sheet-' + name + '.json', snap);
   };
-  await sheet('session', 'session', ids.now);
+  await sheet('session-now', 'session', ids.now);
   await sheet('session-later', 'session', ids.later);
   await sheet('session-past', 'session', ids.past);
   await sheet('meal', 'meal', ids.meal);
