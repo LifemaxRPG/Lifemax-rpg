@@ -38,11 +38,12 @@ async function lmaThumbSnapNow(v){
  }catch(e){lmaThumbErr=String((e&&e.message)||e).slice(0,160)}
  return false;
 }
+/* no picture while the cold-start veil hides the Overview (html.native-boot): it would store a blank page */
 function lmaThumbSchedule(v){
  clearTimeout(lmaThumbTimer);
  lmaThumbTimer=setTimeout(async()=>{
   const S=lmaScrub;
-  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
+  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||document.documentElement.classList.contains('native-boot')||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}

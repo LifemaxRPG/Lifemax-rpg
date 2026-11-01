@@ -18,6 +18,18 @@
   let waiting = false; // a wait for the page's celebration to end is registered (afterCelebrations)
   let held = []; // celebrations handed to the screen: {id, xp, origin, gains, at}
   let lastCelebration = 0;
+  /* arrival: the page's Overview arrival (ovReplay: the cards rise, the ring sweeps, the bars grow) is the screen's to play when
+     it opens on a real arrival, and only then: the counter rises when the screen opens within ARRIVAL_MS of the page going to the
+     Overview from another view, or on a cold start while the veil still hides the page. A screen that comes back after a sheet,
+     Luck or a celebration opens with the counter unchanged, so it stays still. It rises with the clock, so a reloaded page never
+     repeats one the screen has played; 0 until the first arrival. */
+  const ARRIVAL_MS = 600;
+  let arrival = 0, arrivedAt = -Infinity;
+  /* the cold-start veil: while the cards are wanted at boot the page's Overview stays hidden (html.native-boot), so the screen
+     appears over an empty body instead of over the page's cards; lifted when the screen opens, when it declines, or at the latest
+     after BOOT_VEIL_MS so a slow or silent plugin never leaves the Overview blank */
+  const BOOT_VEIL_MS = 1500;
+  let veiled = false, veilTimer = 0;
 
   /* ---- colours and images ---- */
   /** a colour the page writes (a hex, an rgba, or var(--token)) as the ARGB the native theme takes */
@@ -149,6 +161,7 @@
       celebrationTarget: NativeTabKit.celebrationTarget(),
       motion: { reduced: fxReduced() },
       haptics: haptics(),
+      arrival,
     };
   }
 
@@ -235,6 +248,7 @@
   }
   /** the cards could not draw: give up for the session, let the live shell take the view, say so once */
   function onFail(reason) {
+    unveil();
     if (gaveUp) return;
     gaveUp = true;
     failReason = reason;
@@ -256,8 +270,15 @@
     notices: true,
     projection,
     commands,
+    arrive() {
+      arrivedAt = Date.now();
+    },
+    beforeOpen(entered) {
+      if (entered && (veiled || Date.now() - arrivedAt <= ARRIVAL_MS)) arrival = Math.max(arrival + 1, Date.now());
+    },
     afterOpen() {
       if (window.NativeOverviewShell && NativeOverviewShell.isOpen()) NativeOverviewShell.close(); // never two drawings behind one entry
+      unveil();
       pets();
     },
     afterClose: pets,
@@ -317,16 +338,36 @@
   }
 
   const wanted = () => tab.enabled() && !gaveUp;
+
+  /* the cold-start veil (see BOOT_VEIL_MS): set now, while the page is still loading, so the page's cards never paint first */
+  function unveil() {
+    if (!veiled) return;
+    veiled = false;
+    clearTimeout(veilTimer);
+    document.documentElement.classList.remove("native-boot");
+  }
+  if (wanted() && state.onboardingComplete && lmaView() === "dashboard" && innerWidth <= WIDE) {
+    veiled = true;
+    document.documentElement.classList.add("native-boot");
+    veilTimer = setTimeout(unveil, BOOT_VEIL_MS);
+  }
+  /** an open the owner asked for; one that ends without the screen showing (declined: blocked, not wanted, gave up) lifts the veil */
+  async function open() {
+    const r = await tab.open(false);
+    if (!tab.active() && !tab.opening()) unveil();
+    return r;
+  }
+
   window.NativeOverviewCards = {
     wanted,
     active: () => tab.active(),
     opening: () => tab.opening(),
     coverable: () => !gaveUp && tab.coverable(),
-    open: () => tab.open(false),
+    open,
     close: () => tab.close(),
     covering: () => tab.active(),
     diagnostics: () => ({ enabled: tab.enabled(), wanted: wanted(), gaveUp, failReason, active: tab.active(), opening: tab.opening(),
-      blocked: tab.blocked(), petLoop: typeof petWantRun === "function" ? petWantRun() : false, celebrations: held.length }),
+      blocked: tab.blocked(), veiled, arrival, petLoop: typeof petWantRun === "function" ? petWantRun() : false, celebrations: held.length }),
   };
   window.NativeOverviewCardsProjection.commands = commands;
 })();

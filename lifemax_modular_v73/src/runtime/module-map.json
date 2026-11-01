@@ -2081,7 +2081,7 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 14694,
+   "bytes": 14864,
    "statement_count": 27,
    "tags": [
     "navigation",
@@ -3459,7 +3459,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 16141,
+   "bytes": 18238,
    "statement_count": 1,
    "tags": [
     "native",
