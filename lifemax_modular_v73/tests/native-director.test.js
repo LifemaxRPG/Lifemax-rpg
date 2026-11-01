@@ -104,7 +104,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await emit('command', { command: 'day', payload: { index: 1 }, requestId: 'd1' }); await settle(p, 300);
   const d1 = await reply(n, 'd1'), kept = await p.evaluate(n => ({ closes: __since(n).filter(c => c[1] === 'close').length, webDay: [...document.querySelectorAll('#view-life-director .ld-chipday')].findIndex(e => e.classList.contains('on')) }), n);
   ok('the day command shows tomorrow: not today, a date in the centre, no hand, up-next or earlier rows', !!d1 && d1.reply.ok === true && d1.today.dayIndex === 1 && !d1.today.isToday && d1.today.core.date && d1.today.dial.hand === null && d1.today.upNext === null && d1.today.rows.earlier === null, d1 && d1.reply);
-  ok('choosing a day keeps the screen and leaves the page\'s own day alone', kept.closes === 0 && kept.webDay === 0, kept);
+  ok('choosing a day keeps the screen and the page\'s own strip follows it (phase 3A: one day, page and screen)', kept.closes === 0 && kept.webDay === 1, kept);
   n = await mark(p);
   for (const [id, index] of [['d2', 7], ['d3', -1], ['d4', 'x']]) await emit('command', { command: 'day', payload: { index }, requestId: id });
   await settle(p, 300);

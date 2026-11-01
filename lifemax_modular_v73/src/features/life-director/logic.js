@@ -3766,19 +3766,26 @@ const LifeDirectorApp = (function () {
       earlier + roHtml(ahead, tz()) +
       '<div class="ld-row ld-foot"><button class="ld-btn" data-act="disrupt">Something came up</button><button class="ld-btn ld-ghost" data-act="replan">Re-plan from now</button></div>';
   }
-  /* the week: every day on one 24-hour scale */
-  function weekBar(day, blocks) {
-    const d0 = day.startEpoch, d1 = day.endEpoch, span = Math.max(1, d1 - d0);
-    return '<div class="ld-wbar">' + blocks.map(b => {
-      const k = b.inst ? 'task ld-s-' + sesState(b.inst.lifecycleState) : blockClass(b);
-      if (k === 'free') return '';
+  /* the week: every day on one 24-hour scale. A day's bar as data: each block that is not free time, its kind (a session
+     with its state) and where it sits, in percent of the day, as the bar draws it */
+  function weekSegs(day, blocks) {
+    const d0 = day.startEpoch, d1 = day.endEpoch, span = Math.max(1, d1 - d0), out = [];
+    for (const b of blocks) {
+      const k = b.inst ? 'task' : blockClass(b);
+      if (k === 'free') continue;
       const l = (Math.max(d0, b.startEpoch) - d0) / span * 100, w = (Math.min(d1, b.endEpoch) - Math.max(d0, b.startEpoch)) / span * 100;
-      return w > 0 ? '<i class="ld-c-' + k + '" style="left:' + l.toFixed(2) + '%;width:' + w.toFixed(2) + '%"></i>' : '';
-    }).join('') + '</div>';
+      if (w > 0) out.push({ kind: k, state: b.inst ? sesState(b.inst.lifecycleState) : '', left: l, width: w });
+    }
+    return out;
   }
-  function renderWeek() {
-    if (!ST.setupComplete || !ST.schedule) return needSetup();
-    const s = ST.schedule, days = horizonDays(s, tz()), now = nowEpoch();
+  function weekBar(day, blocks) {
+    return '<div class="ld-wbar">' + weekSegs(day, blocks).map(g => '<i class="ld-c-' + g.kind + (g.state ? ' ld-s-' + g.state : '') + '" style="left:' + g.left.toFixed(2) + '%;width:' + g.width.toFixed(2) + '%"></i>').join('') + '</div>';
+  }
+  const WEEK_LEGEND = [['sleep', 'Sleep'], ['work', 'Work & travel'], ['maint', 'Routines'], ['meal', 'Meals'], ['task', 'Sessions'], ['rest', 'Downtime']];
+  const WEEK_TICKS = ['00', '06', '12', '18', '24'];
+  /* everything Week shows, decided once for the page's Week and the native one (nativeWeek) */
+  function weekModel() {
+    const s = ST.schedule, days = horizonDays(s, tz());
     let nSes = 0, nDone = 0, minTot = 0, xpTot = 0;
     const byAttr = {};
     const rows = days.map((d, k) => {
@@ -3792,33 +3799,50 @@ const LifeDirectorApp = (function () {
         xpTot += x.xp;
         for (const sp of x.split) { const a = byAttr[sp.attr] = byAttr[sp.attr] || { plan: 0, done: 0 }; a[i.lifecycleState === 'PLANNED' ? 'plan' : 'done'] += sp.xp; }
       }
-      return '<button class="ld-wrow' + (k === 0 ? ' ld-wtoday' : '') + '" data-act="gotoDay" data-i="' + k + '" aria-label="' + esc((k === 0 ? 'Today' : DOW[d.dow] + ' ' + d.ymd.d) + ': ' + insts.length + ' sessions, ' + mins(m)) + '">' +
-        '<span class="ld-wd"><b>' + (k === 0 ? 'Today' : DOW[d.dow]) + '</b><small>' + d.ymd.d + '</small></span>' + weekBar(d, blocks) +
-        '<span class="ld-wst"><b>' + insts.length + (done ? '<i>✓' + done + '</i>' : '') + '</b><small>' + (m ? mins(m) : '—') + '</small></span></button>';
-    }).join('');
+      return { k, d, blocks, n: insts.length, done, m, name: k === 0 ? 'Today' : DOW[d.dow], aria: (k === 0 ? 'Today' : DOW[d.dow] + ' ' + d.ymd.d) + ': ' + insts.length + ' sessions, ' + mins(m) };
+    });
     const tot = s.capacity.reduce((a, c) => ({ free: a.free + c.freeMin, rest: a.rest + c.recoveryMin }), { free: 0, rest: 0 });
     const q = s.validation.qualityMetrics;
-    const ticks = '<div class="ld-wticks" aria-hidden="true"><span></span><div>' + ['00', '06', '12', '18', '24'].map((h, k) => '<b style="left:' + (k * 25) + '%">' + h + '</b>').join('') + '</div><span></span></div>';
     const colOf = a => (typeof ATTR_COL !== 'undefined' && ATTR_COL && ATTR_COL[a]) || '#10B981';
     const attrs = Object.entries(byAttr).sort((a, b) => (b[1].plan + b[1].done) - (a[1].plan + a[1].done));
     const maxA = Math.max(1, ...attrs.map(([, v]) => v.plan + v.done));
-    const yieldCard = attrs.length ? '<div class="ld-card ld-card-yield"><h4>Where your XP goes</h4><p class="ld-muted">Estimated with LifeMax’s own XP rules. Solid is earned, outlined is still planned.</p><ul class="ld-yield">' +
-      attrs.map(([a, v]) => '<li style="--a:' + colOf(a) + '"><span>' + esc(attrName(a)) + '</span><div><i class="ld-y-done" style="width:' + (v.done / maxA * 100).toFixed(1) + '%"></i><i class="ld-y-plan" style="width:' + (v.plan / maxA * 100).toFixed(1) + '%"></i></div><b>' + Math.round(v.done + v.plan) + '</b></li>').join('') + '</ul></div>' : '';
-    return '<div class="ld-stats"><div><b>' + nSes + '</b><small>sessions' + (nDone ? ', ' + nDone + ' done' : '') + '</small></div><div><b>' + mins(minTot) + '</b><small>planned</small></div><div><b>' + (xpTot ? '≈' + xpTot : '—') + '</b><small>XP on the table</small></div></div>' +
-      '<div class="ld-week">' + ticks + rows + '</div>' +
-      '<ul class="ld-mix-l ld-legend">' + [['sleep', 'Sleep'], ['work', 'Work & travel'], ['maint', 'Routines'], ['meal', 'Meals'], ['task', 'Sessions'], ['rest', 'Downtime']].map(([k, l]) => '<li class="ld-c-' + k + '"><i></i>' + l + '</li>').join('') + '</ul>' +
-      yieldCard +
-      '<div class="ld-card ld-card-fit"><h4>How the week fits</h4><p>' + mins(tot.rest) + ' of protected downtime and ' + mins(tot.free) + ' left completely free. ' +
-      Math.round(q.coverageRequired * 100) + '% of must-do sessions (weekly minimums and quests) are placed.</p>' + unscheduledHtml(s) + '</div>';
-    void now;
+    return {
+      s, rows, colOf, attrs, maxA,
+      stats: [[String(nSes), 'sessions' + (nDone ? ', ' + nDone + ' done' : '')], [mins(minTot), 'planned'], [xpTot ? '≈' + xpTot : '—', 'XP on the table']],
+      fitText: mins(tot.rest) + ' of protected downtime and ' + mins(tot.free) + ' left completely free. ' + Math.round(q.coverageRequired * 100) + '% of must-do sessions (weekly minimums and quests) are placed.',
+    };
   }
-  function unscheduledHtml(s, lab) {
+  const YIELD_NOTE = 'Estimated with LifeMax’s own XP rules. Solid is earned, outlined is still planned.';
+  function renderWeek() {
+    if (!ST.setupComplete || !ST.schedule) return needSetup();
+    const W = weekModel();
+    const rows = W.rows.map(r =>
+      '<button class="ld-wrow' + (r.k === 0 ? ' ld-wtoday' : '') + '" data-act="gotoDay" data-i="' + r.k + '" aria-label="' + esc(r.aria) + '">' +
+        '<span class="ld-wd"><b>' + r.name + '</b><small>' + r.d.ymd.d + '</small></span>' + weekBar(r.d, r.blocks) +
+        '<span class="ld-wst"><b>' + r.n + (r.done ? '<i>✓' + r.done + '</i>' : '') + '</b><small>' + (r.m ? mins(r.m) : '—') + '</small></span></button>').join('');
+    const ticks = '<div class="ld-wticks" aria-hidden="true"><span></span><div>' + WEEK_TICKS.map((h, k) => '<b style="left:' + (k * 25) + '%">' + h + '</b>').join('') + '</div><span></span></div>';
+    const yieldCard = W.attrs.length ? '<div class="ld-card ld-card-yield"><h4>Where your XP goes</h4><p class="ld-muted">' + YIELD_NOTE + '</p><ul class="ld-yield">' +
+      W.attrs.map(([a, v]) => '<li style="--a:' + W.colOf(a) + '"><span>' + esc(attrName(a)) + '</span><div><i class="ld-y-done" style="width:' + (v.done / W.maxA * 100).toFixed(1) + '%"></i><i class="ld-y-plan" style="width:' + (v.plan / W.maxA * 100).toFixed(1) + '%"></i></div><b>' + Math.round(v.done + v.plan) + '</b></li>').join('') + '</ul></div>' : '';
+    return '<div class="ld-stats">' + W.stats.map(([v, l]) => '<div><b>' + v + '</b><small>' + l + '</small></div>').join('') + '</div>' +
+      '<div class="ld-week">' + ticks + rows + '</div>' +
+      '<ul class="ld-mix-l ld-legend">' + WEEK_LEGEND.map(([k, l]) => '<li class="ld-c-' + k + '"><i></i>' + l + '</li>').join('') + '</ul>' +
+      yieldCard +
+      '<div class="ld-card ld-card-fit"><h4>How the week fits</h4><p>' + W.fitText + '</p>' + unscheduledHtml(W.s) + '</div>';
+  }
+  const ALL_FIT = 'Everything requested fits this week.';
+  /* the sessions the engine could not place, grouped by what and why, most important tier first */
+  function unscheduledGroups(s) {
     const list = (s.unscheduledDiagnostics || []).filter(d => d.tier);
-    if (!list.length) return '<p class="ld-muted">Everything requested fits this week.</p>';
     const groups = {};
     for (const d of list) { const k = d.title + '|' + d.reasonCode; (groups[k] = groups[k] || { d, n: 0 }).n++; }
-    return '<details class="ld-details"' + (lab ? ' open' : '') + '><summary>' + list.length + ' session' + (list.length === 1 ? '' : 's') + ' could not fit</summary><ul class="ld-why">' +
-      Object.values(groups).sort((a, b) => (b.d.tier || 0) - (a.d.tier || 0)).map(g => '<li><b>' + esc(g.d.title) + (g.n > 1 ? ' ×' + g.n : '') + '</b> <span class="ld-tierlbl">tier ' + g.d.tier + '</span><p>' + esc(g.d.humanExplanation) + '</p></li>').join('') + '</ul></details>';
+    return { count: list.length, groups: Object.values(groups).sort((a, b) => (b.d.tier || 0) - (a.d.tier || 0)) };
+  }
+  const unfitSummary = n => n + ' session' + (n === 1 ? '' : 's') + ' could not fit';
+  function unscheduledHtml(s, lab) {
+    const U = unscheduledGroups(s);
+    if (!U.count) return '<p class="ld-muted">' + ALL_FIT + '</p>';
+    return '<details class="ld-details"' + (lab ? ' open' : '') + '><summary>' + unfitSummary(U.count) + '</summary><ul class="ld-why">' +
+      U.groups.map(g => '<li><b>' + esc(g.d.title) + (g.n > 1 ? ' ×' + g.n : '') + '</b> <span class="ld-tierlbl">tier ' + g.d.tier + '</span><p>' + esc(g.d.humanExplanation) + '</p></li>').join('') + '</ul></details>';
   }
   const PRIO = ['', 'Low', 'Light', 'Medium', 'High', 'Top'];
   function renderGoals() {
@@ -3842,22 +3866,36 @@ const LifeDirectorApp = (function () {
       (cards || '<div class="ld-empty"><h3>No goals yet</h3><p>Goals turn into regular sessions on your calendar. Quests that ask for the same kind of activity share those sessions instead of doubling up.</p></div>') +
       '<button class="ld-btn ld-primary ld-wide" data-act="addGoal">Add a goal</button>';
   }
-  function renderQuests() {
+  const QUEST_HEAD = { title: 'Connected to your Quest Board', text: 'Life Director reads your quests, schedules time for the ones that need it, and checks them off on the Quest Board when the sessions are done. Quest XP is paid by LifeMax once per period, so nothing is counted twice.', open: 'Open Quest Board' };
+  const MILESTONE_NOTE = 'These are earned through everything else you do, so Life Director doesn’t plan time for them.';
+  /* everything Quests shows, decided once for the page's Quests and the native one (nativeQuests) */
+  function questsModel() {
     const cap = Host.capabilities(), s = ST.schedule;
-    const head = cap.connected ? '<div class="ld-card"><h4>' + icon('flag', 12) + ' Connected to your Quest Board</h4><p>Life Director reads your quests, schedules time for the ones that need it, and checks them off on the Quest Board when the sessions are done. Quest XP is paid by LifeMax once per period, so nothing is counted twice.</p><button class="ld-btn ld-small ld-ghost" data-act="openQuests">Open Quest Board</button></div>'
-      : '<div class="ld-card"><h4>Quest Board not detected</h4><p>Open Life Director inside LifeMax to connect quests. Missing: ' + esc(cap.missing.join(', ')) + '.</p></div>';
-    if (!s) return head;
-    const cov = s.questCoverage.filter(q => !String(q.questId).endsWith('@next'));
-    const rows = cov.map(q => {
+    const head = cap.connected ? QUEST_HEAD : { title: 'Quest Board not detected', text: 'Open Life Director inside LifeMax to connect quests. Missing: ' + cap.missing.join(', ') + '.', open: '' };
+    if (!s) return { head, rows: null };
+    const rows = s.questCoverage.filter(q => !String(q.questId).endsWith('@next')).map(q => {
       const diag = (s.unscheduledDiagnostics || []).filter(d => (d.linkedQuestIds || []).includes(q.questId) || d.taskId === q.questId);
       const status = q.status === 'PASSIVE' ? 'All-day reminder' : q.status === 'COMPLETED' ? 'Done this period' : q.covered ? q.scheduledSessions + ' session' + (q.scheduledSessions === 1 ? '' : 's') + ' scheduled' : diag.length ? 'Could not fit' : q.status === 'LOCKED' ? 'Locked' : q.scheduledSessions + ' scheduled';
-      return '<li class="ld-q ' + (q.covered || q.status === 'COMPLETED' ? 'ok' : q.status === 'PASSIVE' ? 'pas' : 'no') + '"><div><b>' + esc(q.title) + '</b><small>' + (q.recurrence === 'DAILY' ? 'Daily' : q.deadlineEpoch ? 'Due ' + fDay(q.deadlineEpoch) : 'No deadline') + '</small></div><span>' + status + '</span>' + (diag.length && !q.covered ? '<p>' + esc(diag[0].humanExplanation) + '</p>' : '') + '</li>';
-    }).join('');
-    const passive = (s.passiveReminders || []).map(r => '<li class="ld-q pas"><div><b>' + esc(r.title) + '</b><small>Tracked on the Quest Board</small></div><span>All-day</span></li>').join('');
+      return { title: q.title, when: q.recurrence === 'DAILY' ? 'Daily' : q.deadlineEpoch ? 'Due ' + fDay(q.deadlineEpoch) : 'No deadline', status,
+        tone: q.covered || q.status === 'COMPLETED' ? 'ok' : q.status === 'PASSIVE' ? 'pas' : 'no', why: diag.length && !q.covered ? diag[0].humanExplanation : '' };
+    });
+    const passive = (s.passiveReminders || []).map(r => ({ title: r.title, when: 'Tracked on the Quest Board', status: 'All-day' }));
     const ms = Host.milestones().filter(m => !m.locked);
-    const miles = ms.length ? '<h4 class="ld-sec">Milestones<small>' + ms.filter(m => m.done).length + ' of ' + ms.length + ' earned</small></h4><p class="ld-muted">These are earned through everything else you do, so Life Director doesn’t plan time for them.</p>' +
-      '<ul class="ld-qlist">' + ms.map(m => '<li class="ld-q ' + (m.done ? 'ok' : 'pas') + '"><div><b>' + esc(m.title) + '</b><small>' + esc(m.desc) + '</small></div><span>' + (m.done ? 'Earned' : 'In progress') + '</span></li>').join('') + '</ul>' : '';
-    return head + '<ul class="ld-qlist">' + (rows || '<li class="ld-muted">No active quests.</li>') + passive + '</ul>' + miles;
+    const milestones = ms.length ? { summary: ms.filter(m => m.done).length + ' of ' + ms.length + ' earned', note: MILESTONE_NOTE,
+      rows: ms.map(m => ({ title: m.title, desc: m.desc, earned: !!m.done, status: m.done ? 'Earned' : 'In progress' })) } : null;
+    return { head, rows, passive, milestones, empty: 'No active quests.' };
+  }
+  function renderQuests() {
+    const Q = questsModel();
+    const head = '<div class="ld-card"><h4>' + (Q.head.open ? icon('flag', 12) + ' ' : '') + esc(Q.head.title) + '</h4><p>' + esc(Q.head.text) + '</p>' + (Q.head.open ? '<button class="ld-btn ld-small ld-ghost" data-act="openQuests">' + Q.head.open + '</button>' : '') + '</div>';
+    if (!Q.rows) return head;
+    const li = (cls, r) => '<li class="ld-q ' + cls + '"><div><b>' + esc(r.title) + '</b><small>' + esc(r.when) + '</small></div><span>' + esc(r.status) + '</span>' + (r.why ? '<p>' + esc(r.why) + '</p>' : '') + '</li>';
+    const rows = Q.rows.map(r => li(r.tone, r)).join('');
+    const passive = Q.passive.map(r => li('pas', r)).join('');
+    const M = Q.milestones;
+    const miles = M ? '<h4 class="ld-sec">Milestones<small>' + M.summary + '</small></h4><p class="ld-muted">' + M.note + '</p>' +
+      '<ul class="ld-qlist">' + M.rows.map(r => '<li class="ld-q ' + (r.earned ? 'ok' : 'pas') + '"><div><b>' + esc(r.title) + '</b><small>' + esc(r.desc) + '</small></div><span>' + r.status + '</span></li>').join('') + '</ul>' : '';
+    return head + '<ul class="ld-qlist">' + (rows || '<li class="ld-muted">' + Q.empty + '</li>') + passive + '</ul>' + miles;
   }
 
   /* ── my time (setup) ── */
@@ -5184,7 +5222,7 @@ const LifeDirectorApp = (function () {
     if (!root || !root.isConnected) return null;
     if (root.querySelector('.ld-sheet.open')) return 'sheet';
     if (ui.tour || tourDue(ui.tab)) return 'guide';
-    if (ui.tab === 'today' && !(ST.setupComplete && ST.schedule)) return 'first-run';
+    if ((ui.tab === 'today' || ui.tab === 'week') && !(ST.setupComplete && ST.schedule)) return 'first-run'; // both draw needSetup
     return ui.tab;
   }
   /* A tap handed back by a native screen, run as its web element runs it: the element's act and the one id it needs
@@ -5257,10 +5295,59 @@ const LifeDirectorApp = (function () {
     ui.pendingDial = c.P;
     return applyDial(nowEpoch());
   }
+  /* Week as data for a native screen (phase 3A): weekModel's decisions in the page's words, null without a plan. A day row's
+     segments are its bar's (weekSegs), in percent of the day; a colour is ARGB, from the attribute colours LifeMax draws with. */
+  function nativeWeek() {
+    if (!ST) boot();
+    if (!ST.setupComplete || !ST.schedule) return null;
+    const W = weekModel(), argb = c => (typeof NativeTabKit !== 'undefined' && NativeTabKit.color ? NativeTabKit.color(c) : 0);
+    const U = unscheduledGroups(W.s), round2 = v => Math.round(v * 100) / 100;
+    return {
+      stats: W.stats.map(([value, label]) => ({ value, label })),
+      ticks: WEEK_TICKS.slice(),
+      days: W.rows.map(r => ({ index: r.k, label: r.name, date: r.d.ymd.d, today: r.k === 0, aria: r.aria, count: String(r.n), done: r.done ? '✓' + r.done : '', minutes: r.m ? mins(r.m) : '—',
+        segs: weekSegs(r.d, r.blocks).map(g => ({ kind: g.kind, state: g.state, left: round2(g.left), width: round2(g.width) })) })),
+      legend: WEEK_LEGEND.map(([kind, label]) => ({ kind, label })),
+      yield: W.attrs.length ? { title: 'Where your XP goes', note: YIELD_NOTE,
+        rows: W.attrs.map(([a, v]) => ({ label: attrName(a), color: argb(W.colOf(a)), done: round2(v.done / W.maxA), plan: round2(v.plan / W.maxA), total: String(Math.round(v.done + v.plan)) })) } : null,
+      fit: { title: 'How the week fits', text: W.fitText, allFit: ALL_FIT,
+        unscheduled: U.count ? { summary: unfitSummary(U.count), groups: U.groups.map(g => ({ title: g.d.title + (g.n > 1 ? ' ×' + g.n : ''), tier: 'tier ' + g.d.tier, text: g.d.humanExplanation })) } : null },
+    };
+  }
+  /* Quests as data for a native screen (phase 3A): questsModel's decisions; rows is [] without a plan */
+  function nativeQuests() {
+    if (!ST) boot();
+    const Q = questsModel();
+    return { head: Q.head, rows: Q.rows || [], passive: Q.passive || [], empty: Q.empty || '', milestones: Q.milestones || null };
+  }
+  /* Section and day changes asked for by a native screen. Each renders once, so the page underneath shows the same, and saves
+     nothing: the section rides on the next save, as phase 1's day did (the page's own tab buttons save on every switch). */
+  const SECTIONS = new Set(TABS.map(t => t[0]).concat('lab'));
+  function nativeSection(id) {
+    if (!ST) boot();
+    if (!SECTIONS.has(id) || (id === 'lab' && !(ST.ui && ST.ui.lab))) return { ok: false, message: 'That section is not in Life Director.' };
+    ui.tab = id; ST.ui.tab = id;
+    if (root && root.isConnected) render();
+    return { ok: true };
+  }
+  /* the strip's day (day) or a day from Week or up next (gotoDay, which also goes to Today), as the page's own handlers do */
+  function nativeDay(i, toToday) {
+    if (!ST) boot();
+    const days = ST.setupComplete && ST.schedule ? horizonDays(ST.schedule, tz()) : [];
+    if (!Number.isInteger(i) || i < 0 || i >= days.length) return { ok: false, message: 'That day is not on the plan.' };
+    ui.dayIdx = i;
+    if (toToday) ui.tab = 'today';
+    if (root && root.isConnected) render();
+    return { ok: true };
+  }
   /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
      and cover() stops one already playing (the screen has just come over it) */
   let nativeCovers = () => false;
-  const nativeApi = Object.freeze({ frame: nativeFrame, today: nativeToday, showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: i => nativeToday(i === undefined ? ui.dayIdx : i), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+    week: nativeWeek, quests: nativeQuests, section: nativeSection, day: i => nativeDay(i, false), gotoDay: i => nativeDay(i, true),
+    dayIndex: () => ui.dayIdx,
+    /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */
+    arrive() { ui.dayIdx = 0; },
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────

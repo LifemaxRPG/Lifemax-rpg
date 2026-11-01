@@ -3,25 +3,30 @@
    while Life Director shows Today with nothing over it, picks the day of the strip itself, drags a handle over the places the
    page says it can land, asks the page what letting go there would change (dialDrop), has the page's own Change it run
    (dialApply) and plays the build the page describes; every other tap goes to the page's own handler.
-   The tab lifecycle is NativeTabKit's. */
+   Phase 3A: a screen that says it draws Week and Quests (director.week.v1) also covers those sections; the page keeps the
+   section and the day (section, gotoDay and day render the page underneath), and every arrival lands on today (arrive).
+   The tab lifecycle is NativeTabKit's, warm: the kit asks the screen what it draws as soon as the switch is on. */
 (function () {
   const director = () => window.LifeDirector && window.LifeDirector.native; // the feature's script runs after the runtime
-  let day = 0; // the day of the strip on screen; today whenever the user comes to Life Director
   let celebrating = false; // XP is being celebrated on the page, which the screen must not cover
 
+  /** the sections a screen draws besides Today, by the capability that says so */
+  const PARTS = { week: "director.week.v1", quests: "director.week.v1" };
+  const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
+
+  /** the frame, and the one section on the page now, only while the screen draws it (null when it has nothing to draw) */
   function projection() {
-    const ld = director();
-    return Object.assign(ld.frame(), { today: ld.today(day) });
+    const ld = director(), c = covers(), t = ld.frame().tab;
+    const part = (k, f) => (t === k && c.includes(k) ? f() : null);
+    return Object.assign(ld.frame(), { covers: c, today: part("today", () => ld.today()), week: part("week", () => ld.week()), quests: part("quests", () => ld.quests()) });
   }
   const commands = {
-    /** show another day of the strip; nothing is saved and the screen stays */
-    day(p) {
-      const i = Number(p.index),
-        today = Number.isInteger(i) ? director().today(i) : null;
-      if (!today || today.dayIndex !== i) return { ok: false, message: "That day is not on the plan." };
-      day = i;
-      return { ok: true };
-    },
+    /** show another day of the strip; the page's strip follows, nothing is saved and the screen stays */
+    day: (p) => director().day(Number(p.index)),
+    /** a day from Week or up next: Today on that day, as the page's own row does */
+    gotoDay: (p) => director().gotoDay(Number(p.index)),
+    /** another section; one the screen does not draw is shown by the page, and the kit steps the screen aside after the reply */
+    section: (p) => director().section(String(p.id || "")),
     /** a handle let go on the dial ({key, minute}: a stop's minute) or moved a quarter hour by TalkBack ({key, step: 1 or -1}):
         the confirmation the page would open (reply.confirm), or changed: false where the handle already is; nothing is held or
         saved, so Keep (or OK after a problem) needs no command */
@@ -60,6 +65,7 @@
     id: "life-director",
     plugin: "NativeLifeDirector",
     capability: "director.today.v2",
+    warm: true,
     setting: "nativeDirector",
     toggle: "nativeDirectorToggle",
     projection,
@@ -70,11 +76,9 @@
       tab.revisit();
     },
     commands,
-    beforeOpen(entered) {
-      if (entered) day = 0;
-    },
+    arrive: () => director() && director().arrive(), // today on the strip whenever the player comes to Life Director
     afterOpen: () => director() && director().cover(), // the screen plays the build now, so a build playing on the page stops
-    blocked: () => celebrating || !director() || director().showing() !== "today",
+    blocked: () => celebrating || !director() || !covers().includes(director().showing()),
     globals: { open: "openNativeDirector", enable: "setNativeDirectorEnabled", projection: "NativeDirectorTabProjection" },
   });
 

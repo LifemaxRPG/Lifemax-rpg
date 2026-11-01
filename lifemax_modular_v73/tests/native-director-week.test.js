@@ -1,0 +1,199 @@
+/* Native Life Director, phase 3A, web half: Week and Quests as data for a native screen, and the section rules around them.
+   Checked:
+   - the page's own Week and Quests are byte-identical to the goldens recorded before their data was split out of their
+     renderers (tests/fixtures/director-week-golden.json; RECORD=1 rewrites it, only ever from code known to be right);
+   - nativeWeek and nativeQuests say what the page's own Week and Quests draw;
+   - an APK that draws Week (director.week.v1): the kit asks it what it draws as soon as the switch is on, the screen covers Week
+     and Quests, the section, gotoDay and day commands each render once and answer, a section the screen does not draw steps it
+     aside as soon as the reply is sent, a day chosen on a page-drawn Week survives to the next open, and every arrival lands on
+     today;
+   - an APK that draws only Today (director.today.v2) sees exactly phase 2: Week stays the page's.
+   A fake NativeLifeDirector plugin stands in for Android; the page runs on Playwright's clock through the lived-in day of
+   tests/fixtures/director-day.js. Run: NODE_PATH=$(npm root -g) node tests/native-director-week.test.js [built html] */
+const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const file = require('./current-page')(process.argv[2]);
+const directorDay = require('./fixtures/director-day.js');
+const GOLDEN = path.join(__dirname, 'fixtures', 'director-week-golden.json');
+let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+const FAKES = caps => `
+  window.__calls = [];
+  window.__since = n => window.__calls.slice(n).filter(c => c[0] === 'director');
+  const mk = (name, caps) => { const ls = {}; return {
+    __emit: (e, d) => (ls[e] || []).map(f => f(d)),
+    addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
+    open: async a => { window.__calls.push([name, 'open', a]) },
+    update: async a => { window.__calls.push([name, 'update', a]) },
+    close: async a => { window.__calls.push([name, 'close', a]); (ls.closed || []).forEach(f => f({ session: a && a.session })) },
+    capabilities: async () => ({ liveWeb: true, version: 1, authoritativeData: true }),
+    handshake: async () => { window.__calls.push([name, 'handshake']); return { protocol: 1, capabilities: caps } } } };
+  window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector' || n === 'NativeOverview', getPlatform: () => 'android',
+    Plugins: { NativeLifeDirector: mk('director', ${JSON.stringify(caps)}), NativeOverview: mk('overview', []) }, registerPlugin: () => ({}), convertFileSrc: u => u };`;
+
+async function start(b, caps, { switchOn = true } = {}) {
+  const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
+  p.errors = []; p.on('pageerror', e => p.errors.push(String(e)));
+  await directorDay.seed(p, { planned: true });
+  await p.addInitScript(FAKES(caps));
+  await p.goto('file://' + file, { timeout: 120000 });
+  await p.evaluate(() => { lmaThumbWarm = async () => { }; showLevelUp = function () { }; lmaLoad().nativeOverview = false; lmaSave() });
+  if (switchOn) await p.evaluate(() => setNativeDirectorEnabled(true)); // the Settings switch, as the player turns it on
+  await directorDay.play(p);
+  return p;
+}
+async function settle(p, ms = 500) { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 200 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(10) }
+async function go(p, v, ms) { await p.evaluate(v => lmaNavTo(v), v); await p.waitForFunction(v => lmaView() === v, v); await settle(p, ms) }
+const mark = p => p.evaluate(() => window.__calls.length);
+/* a section of the page's own Life Director, drawn by its own tab button, then its main area's HTML */
+async function pageSection(p, tab) {
+  return p.evaluate(tab => { document.querySelector('#view-life-director .ld-tab[data-tab="' + tab + '"]').click(); return document.querySelector('#view-life-director .ld-main').innerHTML }, tab);
+}
+/* the screen's command, as the native side sends it, and the reply that comes back with the next update */
+async function command(p, command, payload) {
+  const n = await mark(p);
+  await p.evaluate(([c, pl]) => Capacitor.Plugins.NativeLifeDirector.__emit('command', { command: c, payload: pl, requestId: 'r-' + c }), [command, payload]);
+  await settle(p, 400);
+  return p.evaluate(n => { const u = __since(n).filter(c => c[1] === 'update' && c[2].reply); return { reply: u.length ? u[0][2].reply : null, snapshot: u.length ? u[0][2].snapshot : null, calls: __since(n).map(c => c[1]) } }, n);
+}
+
+(async () => {
+  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+
+  /* 1. the page's own Week and Quests, against the goldens; the data the screen gets, against the page's drawing */
+  {
+    const p = await start(b, ['director.today.v2'], { switchOn: false });
+    await go(p, 'life-director', 1500);
+    const html = { week: await pageSection(p, 'week'), quests: await pageSection(p, 'quests') };
+    if (process.env.RECORD) { fs.writeFileSync(GOLDEN, JSON.stringify(html, null, 1) + '\n'); console.log('recorded ' + GOLDEN) }
+    const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
+    ok('the page draws Week byte for byte as before its data was split out', html.week === golden.week, html.week.length + ' vs ' + golden.week.length);
+    ok('the page draws Quests byte for byte as before its data was split out', html.quests === golden.quests, html.quests.length + ' vs ' + golden.quests.length);
+
+    await pageSection(p, 'week');
+    const w = await p.evaluate(() => {
+      const W = LifeDirector.native.week(), m = document.querySelector('#view-life-director .ld-main'), all = s => [...m.querySelectorAll(s)], t = e => e ? e.textContent : '';
+      const rows = all('.ld-wrow');
+      return {
+        stats: same(W.stats.map(x => [x.value, x.label]), all('.ld-stats > div').map(d => [t(d.querySelector('b')), t(d.querySelector('small'))])),
+        ticks: same(W.ticks, all('.ld-wticks b').map(t)),
+        days: W.days.length === rows.length && W.days.every((d, k) => {
+          const r = rows[k], bars = [...r.querySelectorAll('.ld-wbar i')];
+          return d.index === k && d.label === t(r.querySelector('.ld-wd b')) && String(d.date) === t(r.querySelector('.ld-wd small')) && d.aria === r.getAttribute('aria-label') &&
+            d.count + (d.done ? d.done : '') === t(r.querySelector('.ld-wst b')) && d.minutes === t(r.querySelector('.ld-wst small')) && d.today === (k === 0) &&
+            d.segs.length === bars.length && d.segs.every((g, j) => bars[j].className === 'ld-c-' + g.kind + (g.state ? ' ld-s-' + g.state : '') &&
+              parseFloat(bars[j].style.left).toFixed(2) === g.left.toFixed(2) && parseFloat(bars[j].style.width).toFixed(2) === g.width.toFixed(2));
+        }),
+        legend: same(W.legend.map(x => [x.kind, x.label]), all('.ld-legend li').map(e => [e.className.replace('ld-c-', ''), t(e)])),
+        yield: !!W.yield && W.yield.title === t(m.querySelector('.ld-card-yield h4')) && W.yield.note === t(m.querySelector('.ld-card-yield p')) &&
+          same(W.yield.rows.map(r => [r.label, r.total]), all('.ld-yield li').map(e => [t(e.querySelector('span')), t(e.querySelector('b'))])) &&
+          W.yield.rows.every(r => Number.isInteger(r.color) && r.done >= 0 && r.plan >= 0 && r.done + r.plan <= 1.0001),
+        fit: W.fit.title === t(m.querySelector('.ld-card-fit h4')) && W.fit.text === t(m.querySelector('.ld-card-fit > p')) &&
+          (W.fit.unscheduled ? W.fit.unscheduled.summary === t(m.querySelector('.ld-card-fit summary')) && same(W.fit.unscheduled.groups.map(g => [g.title, g.tier, g.text]), all('.ld-why li').map(e => [t(e.querySelector('b')), t(e.querySelector('.ld-tierlbl')), t(e.querySelector('p'))]))
+            : W.fit.allFit === t(m.querySelector('.ld-card-fit .ld-muted'))),
+        size: JSON.stringify(W).length,
+      };
+      function same(a, b) { return JSON.stringify(a) === JSON.stringify(b) }
+    });
+    ok('Week as data: the three numbers say what the page shows', w.stats, w);
+    ok('Week as data: the hour ticks', w.ticks, w);
+    ok('Week as data: every day row (its name, date, count, done, minutes, what TalkBack reads) and every bar segment in place', w.days, w);
+    ok('Week as data: the legend', w.legend, w);
+    ok('Week as data: where the XP goes, with each attribute\'s colour and shares', w.yield, w);
+    ok('Week as data: how the week fits, and what could not fit', w.fit, w);
+    ok('Week as data stays small (under 20 KB on the lived-in week)', w.size < 20000, w.size);
+
+    await pageSection(p, 'quests');
+    const q = await p.evaluate(() => {
+      const Q = LifeDirector.native.quests(), m = document.querySelector('#view-life-director .ld-main'), all = s => [...m.querySelectorAll(s)], t = e => e ? e.textContent.trim() : '';
+      const card = m.querySelector('.ld-card'), lists = all('.ld-qlist'), first = lists[0] ? [...lists[0].children] : [];
+      const qRows = first.filter(e => e.classList.contains('ld-q') && !e.classList.contains('pas') || (e.classList.contains('ld-q') && Q.rows.some(r => r.title === t(e.querySelector('b')) && r.tone === 'pas')));
+      return {
+        head: Q.head.title === t(card.querySelector('h4')) && Q.head.text === t(card.querySelector('p')) && (Q.head.open || '') === t(card.querySelector('button')),
+        rows: same(Q.rows.map(r => [r.title, r.when, r.status, r.tone, r.why]), first.slice(0, Q.rows.length).map(e => [t(e.querySelector('b')), t(e.querySelector('small')), t(e.querySelector(':scope > span')), e.classList[1], t(e.querySelector('p'))])),
+        passive: same(Q.passive.map(r => [r.title, r.when, r.status]), first.slice(Q.rows.length).filter(e => e.classList.contains('ld-q')).map(e => [t(e.querySelector('b')), t(e.querySelector('small')), t(e.querySelector(':scope > span'))])),
+        empty: Q.rows.length || Q.passive.length || Q.empty === t(lists[0] && lists[0].querySelector('.ld-muted')),
+        miles: !Q.milestones ? !m.querySelector('.ld-sec') : Q.milestones.summary === t(m.querySelector('.ld-sec small')) && Q.milestones.note === t(m.querySelector('.ld-sec + .ld-muted')) &&
+          same(Q.milestones.rows.map(r => [r.title, r.desc, r.status, r.earned]), [...(lists[1] ? lists[1].children : [])].map(e => [t(e.querySelector('b')), t(e.querySelector('small')), t(e.querySelector(':scope > span')), e.classList.contains('ok')])),
+        n: Q.rows.length, np: Q.passive.length,
+      };
+      function same(a, b) { return JSON.stringify(a) === JSON.stringify(b) }
+    });
+    ok('Quests as data: the Quest Board card', q.head, q);
+    ok('Quests as data: every quest row (title, due, status, tone, why it could not fit)', q.rows && q.n > 0, q);
+    ok('Quests as data: the all-day reminders', q.passive, q);
+    ok('Quests as data: the empty list\'s words when there are no quests', q.empty, q);
+    ok('Quests as data: the milestones', q.miles, q);
+    ok('no script errors on the page-drawn sections', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  /* 2. an APK that draws Week and Quests */
+  {
+    const p = await start(b, ['director.today.v2', 'director.week.v1']);
+    const asked = await p.evaluate(() => __since(0).filter(c => c[1] === 'handshake').length);
+    ok('the kit asks the screen what it draws as soon as the switch is turned on, before Life Director is ever opened', asked === 1, asked);
+
+    // a day chosen on the page while the screen is away survives to the next open
+    await p.evaluate(() => { LifeDirector.native.section('week') });
+    await go(p, 'life-director', 1500);
+    let s = await p.evaluate(() => { const o = __since(0).filter(c => c[1] === 'open'); return o.length ? o[o.length - 1][2].snapshot : null });
+    ok('arriving lands on today, and the screen covers Week: the projection names the sections it may draw and carries Week', s && s.tab === 'week' && same(s.covers, ['today', 'week', 'quests']) && !!s.week && s.today === null, s && { tab: s.tab, covers: s.covers, week: !!s.week, today: s.today });
+
+    let r = await command(p, 'section', { id: 'quests' });
+    ok('section: the screen switches to Quests, the page shows Quests underneath, and the reply carries Quests', r.reply && r.reply.ok && r.snapshot.tab === 'quests' && !!r.snapshot.quests && !r.snapshot.week &&
+      await p.evaluate(() => document.querySelector('#view-life-director .ld-root').dataset.tab === 'quests'), r);
+    const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).ui.tab);
+    ok('section saves nothing by itself (the tab rides on the next save)', saved !== 'quests', saved);
+
+    r = await command(p, 'gotoDay', { index: 2 });
+    ok('gotoDay: Today on that day, the page too, in one reply', r.reply && r.reply.ok && r.snapshot.tab === 'today' && r.snapshot.today && r.snapshot.today.dayIndex === 2 &&
+      await p.evaluate(() => document.querySelector('#view-life-director .ld-root').dataset.tab === 'today'), r.reply);
+    r = await command(p, 'day', { index: 1 });
+    ok('day: another day of the strip, the page\'s strip follows', r.reply && r.reply.ok && r.snapshot.today.dayIndex === 1 &&
+      await p.evaluate(() => document.querySelector('#view-life-director .ld-chipday.on, #view-life-director .ld-chipday[aria-selected="true"]') !== null), r.reply);
+    r = await command(p, 'day', { index: 99 });
+    ok('day: a day off the plan is refused and changes nothing', r.reply && r.reply.ok === false && r.snapshot.today.dayIndex === 1, r.reply);
+    r = await command(p, 'section', { id: 'nowhere' });
+    ok('section: an unknown section is refused', r.reply && r.reply.ok === false, r.reply);
+
+    r = await command(p, 'section', { id: 'goals' });
+    ok('section to one the screen does not draw (Goals): the reply goes, then the screen steps aside at once, not at the next refresh', r.reply && r.reply.ok &&
+      r.calls.indexOf('close') > r.calls.indexOf('update'), r.calls);
+    ok('...and the page shows Goals', await p.evaluate(() => document.querySelector('#view-life-director .ld-root').dataset.tab === 'goals'));
+
+    // back to Week on the page: the screen comes back by itself; then leave and come back: today again
+    await p.evaluate(() => document.querySelector('#view-life-director .ld-tab[data-tab="week"]').click());
+    await settle(p, 600);
+    const back = await p.evaluate(() => { const o = __since(0).filter(c => c[1] === 'open'); return o.length && o[o.length - 1][2].snapshot.tab });
+    ok('choosing Week on the page brings the screen back over it', back === 'week', back);
+    await command(p, 'gotoDay', { index: 3 });
+    await go(p, 'dashboard', 800);
+    await go(p, 'life-director', 1500);
+    s = await p.evaluate(() => { const o = __since(0).filter(c => c[1] === 'open'); return o[o.length - 1][2].snapshot });
+    ok('every arrival lands on today', s.tab === 'today' && s.today && s.today.dayIndex === 0, { tab: s.tab, day: s.today && s.today.dayIndex });
+    ok('no script errors with the Week screen', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  /* 3. an APK that draws only Today: phase 2 unchanged */
+  {
+    const p = await start(b, ['director.today.v2']);
+    await p.evaluate(() => LifeDirector.native.section('week'));
+    await go(p, 'life-director', 1500);
+    const o = await p.evaluate(() => __since(0).filter(c => c[1] === 'open').length);
+    const s = await p.evaluate(() => NativeDirectorTabProjection.snapshot());
+    ok('without director.week.v1 the screen never covers Week', o === 0, o);
+    ok('...and its projection says it covers Today only', same(s.covers, ['today']), s.covers);
+    await p.evaluate(() => document.querySelector('#view-life-director .ld-tab[data-tab="today"]').click());
+    await settle(p, 600);
+    const t = await p.evaluate(() => { const o = __since(0).filter(c => c[1] === 'open'); return o.length ? o[o.length - 1][2].snapshot : null });
+    ok('Today is covered as in phase 2, with Today in the projection', t && t.tab === 'today' && t.today && t.today.dayIndex === 0 && !('week' in t && t.week), t && t.tab);
+    ok('no script errors with a Today-only screen', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  await b.close();
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  process.exit(fail ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1) });
