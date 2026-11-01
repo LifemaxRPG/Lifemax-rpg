@@ -264,4 +264,8 @@ data class LifeDirectorProjection(
     val guide: DirectorGuide? = null,
     val goals: DirectorGoals? = null,
     val settings: DirectorSettings? = null,
+    /** whether the page draws Today's sheets for this screen and runs Today's actions (phase 4A) */
+    val sheets: Boolean = false,
+    /** the model of the sheet the screen asked for (phase 4A), null while it has none open */
+    val sheet: SheetModel? = null,
 )

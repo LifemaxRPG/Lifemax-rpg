@@ -31,6 +31,19 @@ interface LifeDirectorCommands {
      */
     fun tourSeen(key: String, finished: Boolean): String
 
+    /**
+     * The sheet the screen shows (phase 4A): the page sends its model ([kind] "session" with the
+     * session's [id]) with the reply and every update after it; [kind] "" closes it. Read-only.
+     */
+    fun showSheet(kind: String, id: String): String
+
+    /**
+     * One of Today's writes (phase 4A) by [name] (done, logToday, skip, pin, moveTo, timer), with
+     * its [args]; the page answers ok only once saved, and a repeat of one that landed answers ok,
+     * unchanged, with "Already recorded." or "Already skipped.".
+     */
+    fun today(name: String, args: Map<String, Any>): String
+
     /** What letting the handle [key] go at [place] would change: the page's confirmation. */
     fun dialDrop(key: String, place: DialPlace): String
 

@@ -21,6 +21,9 @@ import com.lifemax.rpg.feature.lifedirector.data.WebLifeDirectorRepository
 import com.lifemax.rpg.feature.lifedirector.data.directorReply
 import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.domain.OpenSheet
+import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
 import com.lifemax.rpg.feature.lifedirector.presentation.ChangeConfirm
 import com.lifemax.rpg.feature.lifedirector.presentation.DialAsk
 import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
@@ -33,6 +36,8 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPale
 import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalWallClock
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.BuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionSheet
 import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
@@ -245,6 +250,27 @@ class LifeDirectorScreenshotTest {
     @Test
     fun sectionAskedFor() =
         snap(projection("today"), DirectorUi(pendingSection = "week"), "top" to TOP)
+
+    /**
+     * Today's session sheet (phase 4A) as the page sends it: the evening session on now (Start
+     * timer, the minutes and Mark done, Move, Pin here, Skip), tomorrow's first later (the note,
+     * Log it for today and its small print) and this morning's done one past, on a taller phone so
+     * each sheet shows whole; then "Why this time?" unfolded with its factor bars.
+     */
+    @Test
+    fun sessionSheets() {
+        paparazzi.unsafeUpdateConfig(phone().copy(screenHeight = 1900))
+        for (mode in listOf("now", "later", "past")) {
+            val p = projection("sheet-session-$mode")
+            snap(p, DirectorUi(sheet = OpenSheet(SheetKinds.SESSION, p.sheet!!.id)), mode to null)
+        }
+        val past = projection("sheet-session-past").sheet as SessionSheetModel
+        paparazzi.snapshot("why") {
+            Box(Modifier.fillMaxSize().background(DirectorPalette.bg0)) {
+                SessionSheet(past, "", null, 72.dp, SessionActions(), whyOpen = true)
+            }
+        }
+    }
 
     /** Life Director before it has a plan: only its frame. */
     @Test fun unplanned() = snap("unplanned", "screen" to null)

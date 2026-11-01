@@ -10,7 +10,12 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.DragWords
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorRepository
+import com.lifemax.rpg.feature.lifedirector.domain.OpenSheet
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
+import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
+import com.lifemax.rpg.feature.lifedirector.domain.SheetRowButton
+import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DragGeometry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +34,7 @@ class LifeDirectorViewModel(
     val projection = repository.state
     private val mutableUi = MutableStateFlow(DirectorUi())
     val ui = mutableUi.asStateFlow()
+    private val sheets = SheetController(commands, projection, mutableUi, ::show)
     private var handedOver = false
     private var dayRequest: String? = null
     private var sectionRequest: String? = null
@@ -54,6 +60,7 @@ class LifeDirectorViewModel(
         sectionRequest = null
         changeRequest = null
         letGo()
+        sheets.reset()
         mutableUi.update { it.copy(pendingDay = null, pendingSection = null, pendingChange = null) }
     }
 
@@ -66,15 +73,24 @@ class LifeDirectorViewModel(
         // closed, not seen: it may start by itself again when the screen comes back (A24); the page
         // starts none of its own
         ui.value.guide?.let { autoGuides.remove(it.key) }
-        // sheets close too (no reply reaches a hidden screen); the restore draft stays
+        // sheets close too (no reply reaches a hidden screen); the restore draft, the minutes typed
+        // and the operation ids of Today's writes stay
+        sheets.reset()
         mutableUi.update { it.copy(guide = null, confirm = null, restoring = false) }
     }
 
     /** A new projection arrived: a guide whose section has gone ends. */
-    fun projected() = guideStillShown()
+    fun projected() {
+        guideStillShown()
+        sheets.projected()
+    }
 
     /** A handle is held or the page is asked about one: the rest of the screen waits. */
     val busy: Boolean
+        get() = blocked || ui.value.sheet != null
+
+    /** A handle, a guide or a sheet of Goals and Settings holds the screen (not Today's sheet). */
+    private val blocked: Boolean
         get() =
             ui.value.hold != null ||
                 ui.value.ask != null ||
@@ -271,6 +287,7 @@ class LifeDirectorViewModel(
      * earlier dial answer belongs to a handle let go since.
      */
     fun onReply(reply: DirectorReply) {
+        if (sheets.onReply(reply)) return
         when (reply.command) {
             "day" ->
                 if (reply.requestId == dayRequest) {
@@ -297,6 +314,78 @@ class LifeDirectorViewModel(
         if (handedOver || busy) return false
         handedOver = true
         return true
+    }
+
+    // Today's sheets and actions (phase 4A)
+
+    /** Whether the page draws Today's sheets and runs Today's actions for this screen. */
+    val sheetsAvailable: Boolean
+        get() = sheets.available
+
+    /** The session sheet on show, once the page has sent its model. */
+    val session: SessionSheetModel?
+        get() = sheets.session
+
+    /** A session's sheet: asked of the page, which sends its model with the reply. */
+    fun openSession(id: String) {
+        if (busy || !sheets.available || id.isEmpty()) return
+        sheets.open(SheetKinds.SESSION, id)
+    }
+
+    fun closeSheet() = sheets.close()
+
+    fun sessionMinutes(text: String) = sheets.minutes(text)
+
+    fun sessionStep(delta: Int) = sheets.session?.let { sheets.step(it, delta) }
+
+    /** The operation id the next [command] on [target] carries: kept until a terminal reply. */
+    fun operation(command: String, target: String) = sheets.operation(command, target)
+
+    /** Start a session's timer (up next's Start, the centre's Start). */
+    fun startTimer(id: String) = today("timer", id, mapOf("act" to "start"), fromSheet = false)
+
+    /** Mark a session done as planned (up next's Done). */
+    fun doneQuick(id: String) = today("done", id, emptyMap(), fromSheet = false)
+
+    /** The sheet's main button: start the timer, or a tap for the page (its timer, for now). */
+    fun sessionPrimary(): Tap? {
+        val s = sheets.session ?: return null
+        val p = s.primary ?: return null
+        if (p.command == "timer" && p.act != null)
+            today("timer", s.id, mapOf("act" to p.act), fromSheet = true)
+        return if (p.sheet == SheetKinds.TIMER) Tap("focusOpen") else null
+    }
+
+    /** Mark done, or Log it for today, with the minutes in the field. */
+    fun sessionComplete() {
+        val s = sheets.session ?: return
+        val c = s.complete ?: return
+        today(c.command, s.id, mapOf("minutes" to sheets.minutesOf(s)), fromSheet = true)
+    }
+
+    /**
+     * A button of the sheet's row: pin or skip here, or a tap for the page (Open in Plan, Move).
+     */
+    fun sessionRow(b: SheetRowButton): Tap? {
+        val s = sheets.session ?: return null
+        when (b.command) {
+            "pin" -> today("pin", s.id, mapOf("on" to (b.on == true)), fromSheet = true)
+            "skip" -> today("skip", s.id, emptyMap(), fromSheet = true)
+            "openPlan" -> return Tap("openPlan", b.key.orEmpty())
+        }
+        return if (b.sheet == SheetKinds.MOVE) Tap("movePick", s.id) else null
+    }
+
+    /** A tap from the sheet the page answers: the sheet closes first, as the screen does. */
+    fun handOverFromSheet(): Boolean {
+        if (blocked || handedOver) return false
+        sheets.close()
+        return handOver()
+    }
+
+    private fun today(name: String, id: String, args: Map<String, Any>, fromSheet: Boolean) {
+        if (blocked || !sheets.available || (!fromSheet && ui.value.sheet != null)) return
+        sheets.today(name, id, args, fromSheet)
     }
 
     // The dial's handles
@@ -490,4 +579,10 @@ data class DirectorUi(
     val toast: DirectorToast? = null,
     val hold: DialHold? = null,
     val ask: DialAsk? = null,
+    /** Today's sheet the screen asked for (phase 4A), shown once the page sends its model */
+    val sheet: OpenSheet? = null,
+    /** the minutes typed in a session sheet's field */
+    val minutesDraft: MinutesDraft? = null,
+    /** Today's write sent to the page and not answered yet ("done", "timer.start", ...) */
+    val pendingToday: String? = null,
 )

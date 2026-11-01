@@ -174,6 +174,8 @@ async function plan(b) {
    replan     just after Re-plan from now: the full build, with its sweep
    reduced    the same Change it with reduced motion: the frame says so and carries no build
    skip       just after the next session was skipped from its sheet: a repair whose build flashes that session (flips)
+   sheet-session-{now,later,past}  Today's session sheet (phase 4A) of the evening session, tomorrow's first and the one done
+              today, asked for with the sheet command
    and director-replies.json: what the page answers each of the handles' commands (dialDrop, dialApply), in the envelope
    NativeTabKit sends them in */
 async function director(b) {
@@ -273,7 +275,7 @@ async function director(b) {
   await directorDay.seed(p, { planned: true });
   await p.addInitScript(`(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector', getPlatform: () => 'android',
     registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeLifeDirector: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1', 'director.goals.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
+      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
   await p.goto('file://' + out, { timeout: 120000 });
   await p.evaluate(() => { lmaThumbWarm = async () => { }; lmaLoad().nativeOverview = false; setNativeDirectorEnabled(true) });
   await directorDay.play(p);
@@ -286,6 +288,24 @@ async function director(b) {
     if (!snap[section] || snap.today !== null || !snap.covers.includes(section)) throw Error(section + ' is not in the projection');
     write('fixtures/director-' + section + '.json', snap);
   }
+  // phase 4A: Today's session sheet, asked for with the sheet command as the screen asks for it: the evening session on now,
+  // tomorrow's first session later, and the session already done today past
+  await p.evaluate(() => { if (!LifeDirector.native.section('today').ok) throw Error('no Today') });
+  await p.clock.runFor(300);
+  const sessions = await p.evaluate(() => {
+    const inst = (rows) => rows.filter((r) => r.act === 'inst').map((r) => r.id);
+    const today = LifeDirector.native.today(0), tomorrow = LifeDirector.native.today(1);
+    return { now: today.upNext.actions[0].id, later: inst(tomorrow.rows.ahead)[0], past: inst(today.rows.earlier ? today.rows.earlier.rows : [])[0] };
+  });
+  for (const mode of ['now', 'later', 'past']) {
+    const reply = await p.evaluate((id) => NativeDirectorProjection.commands.sheet({ kind: 'session', id }), sessions[mode]);
+    if (!reply.ok) throw Error('no ' + mode + ' sheet');
+    await p.clock.runFor(300);
+    const snap = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));
+    if (!snap.sheet || snap.sheet.mode !== mode) throw Error('the ' + mode + ' sheet is ' + JSON.stringify(snap.sheet));
+    write('fixtures/director-sheet-session-' + mode + '.json', snap);
+  }
+  await p.evaluate(() => NativeDirectorProjection.commands.sheet({ kind: '' }));
 
   p = await live(true);
   await act(p, 'inst', await upNext(p));

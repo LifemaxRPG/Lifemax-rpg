@@ -10,7 +10,6 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.FlyKind
 import com.lifemax.rpg.feature.lifedirector.domain.HandleEnd
-import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorViewModel
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.BuildBuzz
@@ -62,34 +61,11 @@ class LifeDirectorDialTest {
         throw AssertionError("accepted a malformed projection")
     }
 
-    private class Recorder : LifeDirectorCommands {
-        val sent = mutableListOf<Triple<String, String, DialPlace>>()
-
-        override fun showDay(index: Int) = "day-$index"
-
-        override fun showSection(id: String) = "section-$id"
-
-        override fun gotoDay(index: Int) = "goto-$index"
-
-        override fun tourSeen(key: String, finished: Boolean) = "seen-$key"
-
-        override fun change(name: String, args: Map<String, Any>) = "change-$name"
-
-        override fun dialDrop(key: String, place: DialPlace) = record("dialDrop", key, place)
-
-        override fun dialApply(key: String, place: DialPlace) = record("dialApply", key, place)
-
-        private fun record(command: String, key: String, place: DialPlace): String {
-            sent += Triple(command, key, place)
-            return "director-${sent.size}"
-        }
-    }
-
     private fun viewModel(
         name: String = "today"
-    ): Triple<WebLifeDirectorRepository, LifeDirectorViewModel, Recorder> {
+    ): Triple<WebLifeDirectorRepository, LifeDirectorViewModel, DirectorRecorder> {
         val repo = repository(name)
-        val commands = Recorder()
+        val commands = DirectorRecorder()
         return Triple(repo, LifeDirectorViewModel(repo, commands).apply { opened() }, commands)
     }
 
