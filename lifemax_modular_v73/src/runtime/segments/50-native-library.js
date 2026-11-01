@@ -42,7 +42,6 @@
   const FILE_BUTTON = "#mediaList [data-media-file]"; // a row's Attach or Replace file
   let filterRevision = 1; // rises whenever the page's filter is set (typed on the page, or by a voice search), so the screen adopts it
   let acting = false; // a tap handed back to the page is still running: what it shows may come only after an await (the player)
-  let toasts = 0; // the page's toasts so far, so the screen tells a message from a repeat of the same words
   let hint = 0; // the toast that points the owner to a file button: it is about the page, so the screen does not show it
 
   /** a link the screen may open: http and https only (the page draws any stored link; only its form checks the scheme) */
@@ -85,24 +84,6 @@
       ? { icon: t.icon, title: t.title, body: t.body, dismiss: "Dismiss tip" }
       : null;
   }
-  /* Each toast() writes the toast's text: that is how the page's toasts are counted. One that comes while the screen shows is
-     sent at once. */
-  const toastEl = document.getElementById("toast");
-  const toastWatch = new MutationObserver((records) => {
-    toasts += records.length;
-    tab.schedule();
-  });
-  toastWatch.observe(toastEl, { childList: true });
-  /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
-  function latestToast() {
-    toasts += toastWatch.takeRecords().length;
-    return toasts;
-  }
-  /** the page's message while its toast shows */
-  function notice() {
-    const id = latestToast();
-    return toastEl.classList.contains("show") && id !== hint ? { id, text: toastEl.textContent } : null;
-  }
   /** the audio player at the bottom of the page; idle whenever the screen covers the pane, since a loaded player keeps it away */
   function player() {
     const el = document.getElementById("audioEl");
@@ -135,7 +116,7 @@
       noMatch: WORDS.noMatch,
       buttons: WORDS.buttons,
       player: player(),
-      notice: notice(),
+      // notice: the kit's (cfg.notices), the page's toast while it shows
     };
   }
 
@@ -154,7 +135,7 @@
     b.scrollIntoView({ block: "center" });
     b.focus({ preventScroll: true });
     toast(`Tap "${b.textContent.trim()}" to choose the file`);
-    hint = latestToast();
+    hint = tab.toasts();
   }
   /** open an item's link as its row's anchor does: a new window, no referrer */
   function openLink(link) {
@@ -200,6 +181,8 @@
     projection,
     onAction,
     render: "renderMedia",
+    // the page's toast goes to the screen, which hides it; the one pointing the owner to a file button is about the page
+    notices: { quiet: (id) => id === hint },
     // until a native mini-player exists, a player that is loading, loaded or showing keeps the pane on the page, so its
     // controls never vanish under the screen
     blocked: () =>
