@@ -30,7 +30,8 @@
   }
 
   /**
-   * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (key in lmaLoad()),
+   * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (the owner's switch, a key in
+   * lmaLoad(): off until they turn it on, or, with defaultOn for a tab that has become the default, on until they turn it off),
    * toggle (settings checkbox id), projection() (the tab's own fields), onAction(event) (what a native action does on the page,
    * after the screen has closed; none for a tab whose screen sends only views and commands), render (name of the page's render
    * function to follow while open), globals {open, enable, projection}. An action naming a view ({view}) instead goes there
@@ -67,8 +68,13 @@
         return null;
       }
     }
+    /** what the owner chose: an unset switch is off, or on for a tab that has become the default (cfg.defaultOn) */
+    function wanted() {
+      const on = lmaLoad()[cfg.setting];
+      return cfg.defaultOn ? on !== false : on === true;
+    }
     function enabled() {
-      return !!available() && lmaLoad()[cfg.setting] === true;
+      return !!available() && wanted();
     }
     /** the page would let the screen cover the tab's view, wherever the page is now: nothing over it, nothing the screen cannot draw */
     function coverable() {
@@ -88,7 +94,7 @@
       const input = document.getElementById(cfg.toggle);
       if (input) {
         input.disabled = !available();
-        input.checked = !!available() && lmaLoad()[cfg.setting] === true;
+        input.checked = enabled();
       }
     }
     function schedule() {
@@ -153,7 +159,7 @@
     }
     async function open(force) {
       plugin = available();
-      if (!plugin || active || opening || blocked() || (!force && lmaLoad()[cfg.setting] !== true)) {
+      if (!plugin || active || opening || blocked() || (!force && !wanted())) {
         if (!opening) NativeTabs.flush(cfg.id);
         return false;
       }

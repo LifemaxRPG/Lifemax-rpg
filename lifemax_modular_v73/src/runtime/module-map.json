@@ -3279,7 +3279,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 14226,
+   "bytes": 14526,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3335,7 +3335,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-log.js",
-   "bytes": 5518,
+   "bytes": 5650,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3348,7 +3348,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-director.js",
-   "bytes": 2828,
+   "bytes": 3126,
    "statement_count": 1,
    "tags": [
     "android",

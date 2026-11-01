@@ -34,7 +34,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     const showing = name => at(name, 'open') > at(name, 'close');
     const until = async (f, ms = 8000) => { for (let t = 0; t < ms && !f(); t += 50) await wait(50); return f() };
     lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } // the one-off thumbnail walk visits every tab
-    const S = lmaLoad(); Object.assign(S, { nativeOverview: false, nativeCharacter: true, nativeLog: true, nativeRecipes: true, nativeLibrary: true, nativePlan: true }); lmaSave();
+    const S = lmaLoad(); Object.assign(S, { nativeOverview: false, nativeCharacter: true, nativeRecipes: true, nativeLibrary: true, nativePlan: true }); lmaSave(); // Log is on by default
     const out = {};
     for (const [view, comesBack] of [['character', false], ['log', false], ['recipes', false], ['media', true], ['plan', true]]) {
       navigate(view);

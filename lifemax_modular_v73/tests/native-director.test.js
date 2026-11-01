@@ -227,7 +227,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
     const out = { button: !!btn, fulfilled: isQuestDone(card), notice: (LifeDirector.native.frame().notice || {}).text || '' };
     return out;
   });
-  await settle(p, 500);
+  await settle(p, 2000); // its XP celebration plays out on the page, which the screen waits for
   ok('with the save working, the same "Log it for today" pays the quest bounty, and its notice says so', paid.button && paid.fulfilled && /Quest complete/.test(paid.notice), paid);
 
   r = await tap('tab', 'week');
@@ -267,6 +267,39 @@ const mark = p => p.evaluate(() => window.__calls.length);
   const away = await p.evaluate(([n, h]) => ({ closed: __since(n).some(c => c[1] === 'close'), after: __since(h).map(c => c[1]) }), [n, hidden]);
   ok('leaving Life Director closes the screen, and a hidden screen gets no updates', away.closed && away.after.length === 0, away);
   ok('no script errors', p.errors.length === 0, p.errors);
+  await fresh.context().close(); await p.context().close();
+
+  // The phone check of build 292: Done on a session that has started, in the page's own session sheet. A tap on the session hands
+  // it to the page, which opens the sheet; Mark done there earns the XP, and its celebration plays on the page from the button. The
+  // screen stays away until it has played, then comes back with the session done (it used to come straight back, over it).
+  const q = await start(b, true);
+  await go(q, 'life-director', 1500);
+  const on = await q.evaluate(day => LifeDirector.voice.sessions(day).find(s => s.startEpoch * 1000 > Date.now()), directorDay.DAY);
+  await q.clock.setSystemTime(on.startEpoch * 1000 + 5 * 60000); await settle(q, 300);
+  const sheetDone = () => q.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=done]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  const since = k => q.evaluate(([k, t]) => {
+    const calls = __since(k), open = calls.filter(c => c[1] === 'open').pop(), arc = open && open[2].snapshot.today.dial.arcs.find(a => a.title === t);
+    return { calls: calls.map(c => c[1]).filter(c => c !== 'update'), shows: LifeDirector.native.showing(), logged: state.activities.some(a => a.name === t && a.ldEventId), flying: !!document.querySelector('.fx-xp'), state: arc ? arc.state : '' };
+  }, [k, on.title]);
+  let k = await mark(q);
+  await q.evaluate(id => Capacitor.Plugins.NativeLifeDirector.__emit('action', { action: 'inst', id }), on.id); await settle(q, 500);
+  const inSheet = await since(k);
+  await sheetDone(); await settle(q, 1300); // the celebration plays for 1.55 s
+  const playing = await since(k);
+  await settle(q, 700);
+  const back = await since(k);
+  ok('Done in the page\'s sheet on a session that has started: its XP celebration plays on the page, and the screen stays away while it does',
+    inSheet.shows === 'sheet' && playing.logged && playing.flying && same(playing.calls, ['close']), { inSheet, playing });
+  ok('...then the screen comes back, with the session done', same(back.calls, ['close', 'open']) && !back.flying && back.state === 'done', back);
+  // the classic page (no native screen) celebrates the same Done the same way: the celebration comes from the save, as Log's does
+  const last = await q.evaluate(day => { setNativeDirectorEnabled(false); return LifeDirector.voice.sessions(day)[0] }, directorDay.DAY);
+  await settle(q, 300);
+  k = await mark(q);
+  await q.evaluate(id => document.querySelector('#view-life-director .ld-ses[data-id="' + id + '"]').dispatchEvent(new MouseEvent('click', { bubbles: true })), last.id); await settle(q, 300);
+  await sheetDone(); await settle(q, 300);
+  const classic = await q.evaluate(([k, t]) => ({ calls: __since(k).length, logged: state.activities.some(a => a.name === t && a.ldEventId), flying: !!document.querySelector('.fx-xp') }), [k, last.title]);
+  ok('the classic page\'s Done celebrates its XP the same way', !!last && classic.calls === 0 && classic.logged && classic.flying, { last, classic });
+  ok('no script errors around Done in the sheet', q.errors.length === 0, q.errors);
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);
 })();
