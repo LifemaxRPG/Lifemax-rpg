@@ -28,7 +28,8 @@ runs every golden case against it.
 lifemax_modular_v73/                    the web app, the authority (read only for you)
   src/runtime/segments/NN-*.js          the runtime, joined in order by build.py
   src/features/life-director/logic.js   the Life Director engine
-  build.py, forge_features.py           build the page into dist/ (generated; never commit)
+  build.py                              builds the page into dist/ (generated; never commit)
+  forge_features.py                     turns that page into the app's www/index.html
   tests/fixtures/<area>-golden.json     the golden cases: one JSON array, one case per line
   tools/gen_<area>_golden.js            records them from the built page; its header defines the case format
   tests/<area>-golden.test.js           records every case again on each web test run, so the file stays true
@@ -40,7 +41,7 @@ android-wrapper/native/src/main/java/com/lifemax/rpg/
 android-wrapper/native/src/test/java/com/lifemax/rpg/
   core/golden/                          golden-file loader and JSON comparison, shared by every area (section 4)
   core/<area>/                          your tests
-android-wrapper/native/NativeApi.java, android-wrapper/patch_*.py   app version and Gradle set-up: do not touch
+android-wrapper/native/NativeApi.java, android-wrapper/patch_*.py   native API level and Gradle set-up: do not touch
 tools/build_android_local.sh            builds and tests the Android app the way CI does
 tools/check_native_format.py            ktfmt check over every Kotlin file, as CI runs it
 ```
@@ -111,24 +112,29 @@ in full. In outline:
 - **`input.state`.** It lists only the save fields that differ from the fresh save. The fresh save is the input state of the
   first case (`fresh/save`): build each case's state by laying its fields over the fresh save. Pure cases have only `calls`
   and `returns`.
-- **`fn` and `env`.** `fn` is the page's name for a function (or a constant). `env` is what the page would read around the
-  call: a failed save, plugin records, a dialog's answer, the values in input fields.
+- **`fn`, `at` and `env`.** `fn` is the page's name for a function (or a constant). `at` moves the clock for that one call.
+  `env` is what the page would read around the call: a failed save, plugin records, a dialog's answer, the values in input
+  fields.
 - **The adapter table.** The test has one entry per page name. Each entry turns `args` and `env` into a call on your module,
   and turns the result back into JSON. A name with no entry fails its case.
 - **`output.state`.** These are the save fields the calls changed, with their values afterwards. Compute them the way the
-  generator does: encode the state before and after the calls and compare. `deleted` names the fields the calls removed.
-  `toasts` are the messages the page showed, in order and exactly as written, Unicode included.
+  generator does: encode each field before and after the calls, and list it when its JSON text differs. `deleted` names the
+  fields the calls removed. `toasts` are the messages the page showed, in order and exactly as written, Unicode included.
+- **JSON normal form.** The recorder passes every return value and every state field through `JSON.stringify`. So `NaN`
+  and the infinities are `null`, `-0` is `0`, a field whose value is `undefined` is absent, and a call that returns nothing
+  returns `null`. Encode your results the same way before you compare them.
 - **Equality** is JSON-value equality:
   - object key order is ignored; array order is not;
   - strings must match exactly;
-  - numbers must match exactly as binary64, never within a tolerance. `org.json` returns decimals as `BigDecimal`, so compare
-    numbers as `n.toString().toDouble()`.
+  - numbers must match exactly as binary64, never within a tolerance. `org.json` returns decimals as `BigDecimal`, so turn
+    each number into a `Double` with `n.toString().toDouble()` and compare the two with `==`.
 
   Port `same` and `firstDifference` from `lifemax_modular_v73/tests/<area>-golden.test.js`, so that a failure names the
   path and both values.
 
-**Loading.** The golden file is read in place from the repository. Never copy it into test resources. Gradle runs unit tests
-in `android-wrapper/android/app`, so the shared loader walks up from the working directory:
+**Loading.** The golden file is read in place from the repository. Never copy it into test resources: the web test checks
+only the original, so a copy could go stale unnoticed. (The JSON files in `native/src/test/resources` are inputs for the visual phase's screens, not golden
+cases.) Gradle runs unit tests in `android-wrapper/android/app`, so the shared loader walks up from the working directory:
 
 ```kotlin
 package com.lifemax.rpg.core.golden
@@ -273,8 +279,9 @@ others). 600 cases carry a state and 280 are pure.
 - **The cases call 86 page names** (functions, and constants such as `ECO`), so the adapter table needs all 86.
 - **74 cases pass an `env`:** mostly `health`, then `dom`, `failSave`, `stored`, `prompt` and `confirm`.
 
-**Clocks.** Most cases run at 2026-10-28T12:00Z in UTC. Nine `zone/` and `time/` cases run in America/New_York, across the
-end of daylight saving time on 2026-11-01. Day keys come from the zone the case gives, never from the machine's zone.
+**Clocks.** Most cases run at 2026-10-28T12:00Z in UTC. Nine `zone/` and `time/` cases run in America/New_York: three on
+2026-10-28 (two of them at 03:00Z, the evening before in New York), and six at 2026-11-03T17:00Z, after daylight saving time
+ended there on 2026-11-01. Day keys come from the zone the case gives, never from the machine's zone.
 
 **A possible split, by spec section.**
 
