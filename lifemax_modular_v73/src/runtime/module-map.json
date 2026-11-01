@@ -2461,6 +2461,29 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-pet-portrait.js",
+   "bytes": 6226,
+   "statement_count": 12,
+   "tags": [
+    "pet",
+    "portrait"
+   ],
+   "symbols": [
+    "PET_PORTRAIT",
+    "petPortraitFeet",
+    "petPortraitRt",
+    "petPortraitSlot",
+    "petPortraitAs",
+    "petPortraitAnim",
+    "petPortraitMorphKey",
+    "petPortraitKey",
+    "petPortraitReady",
+    "petPortraitCanvas",
+    "petPortrait",
+    "petPortraitWait"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-voice-gen4.js",
    "bytes": 54048,
    "statement_count": 66,
