@@ -1818,7 +1818,18 @@ const LifeDirectorApp = (function () {
     if (!host || !st.mode || st.mode === 'center') return;
     const svg = host.querySelector('svg');
     if (svg.querySelector('.ld-tl')) return;
-    const L = [], placed = [];
+    let out = '';
+    for (const l of tourTags(st, host)) out += '<g class="ld-tl-p' + (l.k ? ' ld-c-' + l.k : '') + '"><rect x="' + (l.x - l.w / 2).toFixed(1) + '" y="' + (l.y - 12).toFixed(1) + '" width="' + l.w.toFixed(1) + '" height="24" rx="12"/><text x="' + l.x.toFixed(1) + '" y="' + (l.y + 0.5).toFixed(1) + '">' + esc(l.txt) + '</text></g>';
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'ld-tl'); g.dataset.k = T.key + T.i; g.innerHTML = out;
+    svg.appendChild(g);
+  }
+  /* The name tags of guide step st on its dial (host: the page's .ld-dial, or .ld-mini): each pill's centre in the dial's 360-unit
+     square, its width, words and colour key, placed so that no two overlap and none leaves the square. tourLabels draws them on
+     the page; a native screen draws the same ones (nativeGuide). */
+  function tourTags(st, host) {
+    if (!host || !st.mode || st.mode === 'center') return [];
+    const L = [], placed = [], tags = [];
     const add = (a, r, txt, k) => L.push({ a, r, txt, k });
     if (st.mode === 'mini') {
       add(+host.dataset.bed / 4, 166, 'Bedtime', 'sleep'); add(+host.dataset.wake / 4, 166, 'Wake up', 'sleep');
@@ -1841,18 +1852,15 @@ const LifeDirectorApp = (function () {
         host.querySelectorAll('.ld-hd').forEach(h => { const r = (ST.availability.rules || []).find(x => x.id === h.dataset.rule); if (r) add(angOf(+h.dataset.ep, d0, d1), 166, handleLabel(r, h.dataset.end), r.kind === 'SLEEP' ? 'sleep' : 'work'); });
       }
     }
-    let out = '';
     for (const l of L) {
       let [x, y] = polar(l.r, l.a);
       if (placed.some(([px, py]) => Math.abs(px - x) < 58 && Math.abs(py - y) < 24)) continue;
       const w = l.txt.length * 6.7 + 18;
       x = Math.max(w / 2 + 4, Math.min(356 - w / 2, x)); y = Math.max(14, Math.min(346, y));
       placed.push([x, y]);
-      out += '<g class="ld-tl-p' + (l.k ? ' ld-c-' + l.k : '') + '"><rect x="' + (x - w / 2).toFixed(1) + '" y="' + (y - 12).toFixed(1) + '" width="' + w.toFixed(1) + '" height="24" rx="12"/><text x="' + x.toFixed(1) + '" y="' + (y + 0.5).toFixed(1) + '">' + esc(l.txt) + '</text></g>';
+      tags.push({ x, y, w, txt: l.txt, k: l.k || '' });
     }
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('class', 'ld-tl'); g.dataset.k = T.key + T.i; g.innerHTML = out;
-    svg.appendChild(g);
+    return tags;
   }
   function tourSteps(key) { return (TOURS[key] || []).filter(s => (!s.sel || root.querySelector(s.sel)) && (!s.need || root.querySelector(s.need))); }
   function tourCanRun(key) {
@@ -3183,16 +3191,22 @@ const LifeDirectorApp = (function () {
     if (!Object.prototype.hasOwnProperty.call(Do, name)) return { ok: false, message: 'Life Director cannot do that.' };
     return Do[name](payload && typeof payload === 'object' ? payload : {});
   }
-  /* A section's guide as data for a native screen that draws it (phase 3A: Week): its steps as tourSteps keeps them (a step
+  /* A section's guide as data for a native screen that draws it (phase 3A: Week; 4A: Today): its steps as tourSteps keeps them (a step
      whose part is not on the page is left out), each with the name of the part it points at, and whether it is due to start
      by itself (not seen yet). Text comes as spans: the page's <b> is the only markup in TOURS. */
-  const GUIDE_ANCHORS = { '.ld-week': 'week.rows', '.ld-stats': 'week.stats', '.ld-card-yield': 'week.yield' };
+  const GUIDE_ANCHORS = { '.ld-week': 'week.rows', '.ld-stats': 'week.stats', '.ld-card-yield': 'week.yield',
+    '.ld-dial': 'dial', '.ld-dial .ld-core': 'dial.centre', '.ld-up:not(.ld-up-rest)': 'upNext', '.ld-foot': 'footer' };
   const GUIDE_LABELS = { skip: 'Skip guide', back: 'Back', next: 'Next', last: 'Got it', tap: 'Tap anywhere to continue' };
   const spans = html => String(html).split(/(<b>.*?<\/b>)/).filter(Boolean).map(t => /^<b>/.test(t) ? { t: t.slice(3, -4), b: true } : { t, b: false });
   function nativeGuide(key) {
     if (!ST) boot();
     if (!TOURS[key] || !root || !root.isConnected || ui.tab !== key || !tourCanRun(key)) return null;
-    const steps = tourSteps(key).map(st => ({ anchor: GUIDE_ANCHORS[st.sel] || '', title: st.title, text: spans(st.text), hint: !!st.hint }));
+    /* phase 4A (Today): how the dial looks on the step (the page's data-tour), the spotlight's shape as tourPlace cuts it, and the
+       name tags tourLabels pins, read from the page's own dial underneath the screen */
+    const host = st => root.querySelector(st.mode === 'mini' ? '.ld-mini' : '.ld-dial');
+    const tags = st => tourTags(st, host(st)).map(l => ({ x: +l.x.toFixed(1), y: +l.y.toFixed(1), text: l.txt, kind: l.k }));
+    const steps = tourSteps(key).map(st => ({ anchor: GUIDE_ANCHORS[st.sel] || '', title: st.title, text: spans(st.text), hint: !!st.hint,
+      mode: st.mode || '', round: !!st.round, pad: st.pad != null ? st.pad : 8, tags: tags(st) }));
     if (!steps.length || steps.some(st => !st.anchor)) return null; // a step the screen cannot point at: the page keeps this guide
     return { key, auto: tourDue(key), steps, labels: Object.assign({}, GUIDE_LABELS, { last: key === 'setup' ? 'Let’s go' : 'Got it' }) };
   }

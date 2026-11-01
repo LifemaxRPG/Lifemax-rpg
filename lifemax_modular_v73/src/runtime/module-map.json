@@ -3385,7 +3385,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-director.js",
-   "bytes": 8431,
+   "bytes": 8670,
    "statement_count": 1,
    "tags": [
     "android",

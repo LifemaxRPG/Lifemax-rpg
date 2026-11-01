@@ -88,7 +88,7 @@ class GuideAnchors {
 
 /**
  * Names this part for the guide ([name] as the page's guide data names it: week.rows, week.stats,
- * week.yield).
+ * week.yield; Today's dial, dial.centre, upNext, footer).
  */
 fun Modifier.guideAnchor(anchors: GuideAnchors, name: String): Modifier =
     onGloballyPositioned { anchors.rects[name] = it.boundsInRoot() }
@@ -116,9 +116,10 @@ private class ForgetNode(var anchors: GuideAnchors, var name: String) : Modifier
 
 /**
  * The page's guide (.ld-tour), drawn natively: the screen dims, the part a step explains shows
- * through a lit cut-out (the page's spotlight, 8 dp around the part, corners of 18), and a card
- * with the step's words sits below the part, or above it when it does not fit below. A tap outside
- * the card goes on, as the page's overlay does; Android Back ends the guide like Skip guide.
+ * through a lit cut-out (the page's spotlight, the step's padding around the part, corners of 18,
+ * or round as the page's is around the dial and its middle), and a card with the step's words sits
+ * below the part, or above it when it does not fit below. A tap outside the card goes on, as the
+ * page's overlay does; Android Back ends the guide like Skip guide.
  */
 @Composable
 fun CoachMarks(
@@ -132,7 +133,7 @@ fun CoachMarks(
     val s = guide.steps.getOrNull(step) ?: return
     BackHandler(onBack = onSkip)
     val density = LocalDensity.current
-    val pad = with(density) { 8.dp.toPx() }
+    val pad = with(density) { s.pad.dp.toPx() } // the page's 8 around a part; 2 round the dial
     val corner = with(density) { 18.dp.toPx() }
     val spot =
         anchors.rect(s.anchor)?.let {
@@ -151,23 +152,30 @@ fun CoachMarks(
         ) {
             drawRect(P.scrim)
             if (spot != null)
-                drawRoundRect(
-                    Color.Black,
-                    Offset(spot.left, spot.top),
-                    Size(spot.width, spot.height),
-                    CornerRadius(corner),
-                    blendMode = BlendMode.Clear,
-                )
+                if (s.round)
+                    drawOval(Color.Black, spot.topLeft, spot.size, blendMode = BlendMode.Clear)
+                else
+                    drawRoundRect(
+                        Color.Black,
+                        Offset(spot.left, spot.top),
+                        Size(spot.width, spot.height),
+                        CornerRadius(corner),
+                        blendMode = BlendMode.Clear,
+                    )
         }
         if (spot != null)
             Canvas(Modifier.fillMaxSize()) {
-                drawRoundRect(
-                    P.sky.copy(alpha = .6f),
-                    Offset(spot.left, spot.top),
-                    Size(spot.width, spot.height),
-                    CornerRadius(corner),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()),
-                )
+                val edge = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())
+                if (s.round)
+                    drawOval(P.sky.copy(alpha = .6f), spot.topLeft, spot.size, style = edge)
+                else
+                    drawRoundRect(
+                        P.sky.copy(alpha = .6f),
+                        Offset(spot.left, spot.top),
+                        Size(spot.width, spot.height),
+                        CornerRadius(corner),
+                        style = edge,
+                    )
             }
         val screenH = with(density) { maxHeight.toPx() }
         val gap = with(density) { 12.dp.toPx() }

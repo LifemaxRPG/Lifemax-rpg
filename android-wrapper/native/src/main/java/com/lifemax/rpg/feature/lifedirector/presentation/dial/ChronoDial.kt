@@ -56,7 +56,9 @@ import kotlin.math.abs
  * layer, and nothing around the dial redraws the face. A tap finds its arc by ring and angle; a
  * touch on a handle drags it ([DialGestures]); every arc and handle is also a node TalkBack can
  * read and use. [hold] is a handle held or let go, [asking] that the page is asked about one (the
- * handles wait), [run] a build playing. [animate] is false while the screen is hidden.
+ * handles wait), [run] a build playing. [animate] is false while the screen is hidden. [tour] is a
+ * step of Today's guide: its layers dim, its name tags pin on and, on the handles step, the handles
+ * pulse (TourMode); [centreAnchor] names the middle for the guide's spotlight.
  */
 @Composable
 fun ChronoDial(
@@ -70,6 +72,8 @@ fun ChronoDial(
     asking: Boolean = false,
     handles: HandleActions = HandleActions(),
     run: BuildRun? = null,
+    tour: DialTourRun? = null,
+    centreAnchor: Modifier = Modifier,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -80,6 +84,8 @@ fun ChronoDial(
     val halo = remember(dial.radii, next) { next?.let { DialHalo(it, dial.radii) } }
     val art = remember(run?.build, dial) { run?.let { BuildArt(it.build, dial) } }
     val held = hold?.takeIf { it.held && run == null }
+    val look = rememberTourLook(tour)
+    val pulse = rememberTourPulse(look, tour, animate)
     val buzz = LocalDirectorBuzz.current
     val input by
         rememberUpdatedState(
@@ -113,7 +119,7 @@ fun ChronoDial(
                                 }
                             art.drawPlan(this, plan, t)
                         } else if (held != null) plan.draw(this, OUTER_HELD, WORDS_HELD, INNER_HELD)
-                        else plan.draw(this)
+                        else plan.draw(this, look.outer, look.words, look.inner)
                     }
                 }
                 Canvas(
@@ -131,7 +137,7 @@ fun ChronoDial(
                                 when {
                                     run != null -> art?.haloShown(next, run.ms) ?: 1f
                                     held != null -> INNER_HELD
-                                    else -> 1f
+                                    else -> look.inner
                                 }
                             alpha = lerp(1f, .41f, pulse.value) * shown
                         }
@@ -149,7 +155,9 @@ fun ChronoDial(
                 }
                 dial.hand?.let { Hand(it, animate, run) }
                 if (dial.handles.isNotEmpty() || hold != null)
-                    Canvas(Modifier.fillMaxSize()) { inUnits { drawHandles(dial, hold, run) } }
+                    Canvas(Modifier.fillMaxSize().dimmed(look.handles)) {
+                        inUnits { drawHandles(dial, hold, run, pulse.value) }
+                    }
                 if (run != null && art != null && run.build.full)
                     Canvas(Modifier.fillMaxSize()) {
                         inUnits {
@@ -160,10 +168,11 @@ fun ChronoDial(
                             )
                         }
                     }
+                tour?.let { TourTags(it.step.tags, it.still, animate) }
             }
             ArcTargets(dial.arcs, dial.radii, onArc)
             HandleTargets(dial, hold, asking || run != null, handles)
-            val centreBox = Modifier.align(Alignment.Center)
+            val centreBox = Modifier.align(Alignment.Center).then(centreAnchor)
             when {
                 run != null -> {
                     DialCentreView(
@@ -187,7 +196,7 @@ fun ChronoDial(
                         side / DialGeometry.SIDE,
                         animate,
                         onTap,
-                        centreBox.width(side * .42f),
+                        centreBox.width(side * .42f).dimmed(look.centre),
                     )
             }
         }
@@ -203,11 +212,16 @@ class HandleActions(
 )
 
 /** The handles: each where it is, a held one where the finger has it; popping in after a build. */
-private fun DrawScope.drawHandles(dial: DirectorDial, hold: DialHold?, run: BuildRun?) {
+private fun DrawScope.drawHandles(
+    dial: DirectorDial,
+    hold: DialHold?,
+    run: BuildRun?,
+    pulse: Float = 1f,
+) {
     val ring = dial.radii.outer
     dial.handles.forEachIndexed { k, h ->
         if (h.key == hold?.handle?.key) return@forEachIndexed
-        val scale = run?.let { BuildTimeline.handleScale(it.build, it.ms, k) } ?: 1f
+        val scale = run?.let { BuildTimeline.handleScale(it.build, it.ms, k) } ?: pulse
         handle(ring, h.a, DirectorPalette.of(h.kind), held = false, scale)
     }
     if (hold != null)
@@ -273,6 +287,10 @@ private fun ArcTargets(arcs: List<DialArc>, radii: DialRadii, onArc: (DialArc) -
         }
     }
 }
+
+/** Drawn at [alpha] as one layer (a guide step dims a part of the dial); no layer while opaque. */
+private fun Modifier.dimmed(alpha: Float): Modifier =
+    if (alpha < 1f) graphicsLayer { this.alpha = alpha } else this
 
 internal fun unitPx(sidePx: Float) = sidePx / DialGeometry.SIDE
 

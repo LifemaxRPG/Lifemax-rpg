@@ -2338,7 +2338,222 @@
  "quests": null,
  "goals": null,
  "settings": null,
- "guide": null,
+ "guide": {
+  "key": "today",
+  "auto": false,
+  "steps": [
+   {
+    "anchor": "dial",
+    "title": "This is your day as a clock",
+    "text": [
+     {
+      "t": "Midnight is at the top and it runs clockwise. The blue hand is now; the greyed part has passed.",
+      "b": false
+     }
+    ],
+    "hint": true,
+    "mode": "clock",
+    "round": true,
+    "pad": 2,
+    "tags": [
+     {
+      "x": 53.2,
+      "y": 296.2,
+      "text": "Now",
+      "kind": "now"
+     },
+     {
+      "x": 285.7,
+      "y": 226.5,
+      "text": "Already passed",
+      "kind": ""
+     }
+    ]
+   },
+   {
+    "anchor": "dial",
+    "title": "Outer ring: time that’s taken",
+    "text": [
+     {
+      "t": "Sleep, work, travel and daily routines. Nothing gets planned here.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "outer",
+    "round": true,
+    "pad": 2,
+    "tags": [
+     {
+      "x": 277.7,
+      "y": 265.7,
+      "text": "Travel",
+      "kind": "commute"
+     },
+     {
+      "x": 303.1,
+      "y": 221.8,
+      "text": "Routine",
+      "kind": "maint"
+     }
+    ]
+   },
+   {
+    "anchor": "dial",
+    "title": "Inner ring: what’s planned for you",
+    "text": [
+     {
+      "t": "Green blocks are sessions, peach ones are meals. Tap one to open it. Gaps are free time.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "inner",
+    "round": true,
+    "pad": 2,
+    "tags": [
+     {
+      "x": 264,
+      "y": 236.1,
+      "text": "Meal",
+      "kind": "meal"
+     },
+     {
+      "x": 89.4,
+      "y": 135.3,
+      "text": "Session",
+      "kind": "task"
+     },
+     {
+      "x": 123.9,
+      "y": 96,
+      "text": "Downtime",
+      "kind": "rest"
+     }
+    ]
+   },
+   {
+    "anchor": "dial",
+    "title": "Drag a handle to change your hours",
+    "text": [
+     {
+      "t": "It asks first, then re-plans your week.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "handles",
+    "round": true,
+    "pad": 2,
+    "tags": [
+     {
+      "x": 323.6,
+      "y": 223,
+      "text": "Wake up",
+      "kind": "sleep"
+     },
+     {
+      "x": 137,
+      "y": 19.7,
+      "text": "Bedtime",
+      "kind": "sleep"
+     },
+     {
+      "x": 297.4,
+      "y": 297.4,
+      "text": "Work starts",
+      "kind": "work"
+     },
+     {
+      "x": 43.2,
+      "y": 223,
+      "text": "Work ends",
+      "kind": "work"
+     }
+    ]
+   },
+   {
+    "anchor": "dial.centre",
+    "title": "The middle tells you what to do now",
+    "text": [
+     {
+      "t": "How long is left, what’s next, and a heads-up in amber before something starts or ends.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "center",
+    "round": true,
+    "pad": 14,
+    "tags": []
+   },
+   {
+    "anchor": "upNext",
+    "title": "Ready? Press Start",
+    "text": [
+     {
+      "t": "Start",
+      "b": true
+     },
+     {
+      "t": " runs a timer. ",
+      "b": false
+     },
+     {
+      "t": "Done",
+      "b": true
+     },
+     {
+      "t": " logs it straight away.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   },
+   {
+    "anchor": "footer",
+    "title": "Plans changed?",
+    "text": [
+     {
+      "t": "Tap ",
+      "b": false
+     },
+     {
+      "t": "Something came up",
+      "b": true
+     },
+     {
+      "t": ". Only what’s affected moves, with no penalty. Tap ",
+      "b": false
+     },
+     {
+      "t": "?",
+      "b": true
+     },
+     {
+      "t": " at the top to see this again.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   }
+  ],
+  "labels": {
+   "skip": "Skip guide",
+   "back": "Back",
+   "next": "Next",
+   "last": "Got it",
+   "tap": "Tap anywhere to continue"
+  }
+ },
  "sheet": {
   "kind": "move",
   "id": "i_1o9khh740bh2dpbco8cef4",

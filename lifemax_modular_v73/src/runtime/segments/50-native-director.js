@@ -16,8 +16,10 @@
   const SHEETS = "director.sheets.v1";
   let sheet = null; // {kind, id}: the sheet the screen asked to see; none whenever the screen opens
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
-  /** the guides a screen draws, by section: Week's with Week (Today's comes in 4A, set-up's in 4B) */
-  const GUIDES = { week: "director.week.v1" };
+  /** the guides a screen draws, by section: Week's with Week, Today's with Today's sheets (set-up's comes in 4B). With Today's
+      drawn by the screen, the page reports Today rather than its guide after set-up, so the screen covers Today and plays the
+      first build itself (cover() stops the page's), then its guide. */
+  const GUIDES = { week: "director.week.v1", today: SHEETS };
   const guides = (key) => tab.enabled() && !!GUIDES[key] && tab.has(GUIDES[key]);
 
   /** the frame, and the one section on the page now, only while the screen draws it (null when it has nothing to draw) */
