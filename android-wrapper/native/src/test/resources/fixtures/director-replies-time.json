@@ -1,0 +1,149 @@
+{
+ "sleepSave": {
+  "command": "do",
+  "requestId": "director-7",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "sleepSaveAgain": {
+  "command": "do",
+  "requestId": "director-8",
+  "ok": true,
+  "changed": false,
+  "message": ""
+ },
+ "sleepSaveTooShort": {
+  "command": "do",
+  "requestId": "director-9",
+  "ok": false,
+  "changed": false,
+  "message": "That is under 5 hours of sleep. Please check the times."
+ },
+ "ruleSave": {
+  "command": "do",
+  "requestId": "director-10",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "ruleSaveAgain": {
+  "command": "do",
+  "requestId": "director-11",
+  "ok": true,
+  "changed": false,
+  "message": "Already added"
+ },
+ "ruleSaveNoDays": {
+  "command": "do",
+  "requestId": "director-12",
+  "ok": false,
+  "changed": false,
+  "message": "Pick at least one day"
+ },
+ "ruleSaveRemoved": {
+  "command": "do",
+  "requestId": "director-13",
+  "ok": false,
+  "changed": false,
+  "message": "That commitment was removed."
+ },
+ "ruleSaveEdit": {
+  "command": "do",
+  "requestId": "director-14",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "ruleRemove": {
+  "command": "do",
+  "requestId": "director-15",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "ruleRemoveAgain": {
+  "command": "do",
+  "requestId": "director-16",
+  "ok": true,
+  "changed": false,
+  "message": ""
+ },
+ "routine": {
+  "command": "do",
+  "requestId": "director-17",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "routineAgain": {
+  "command": "do",
+  "requestId": "director-18",
+  "ok": true,
+  "changed": false,
+  "message": ""
+ },
+ "routineClamped": {
+  "command": "do",
+  "requestId": "director-19",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "meals": {
+  "command": "do",
+  "requestId": "director-20",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "mealsAgain": {
+  "command": "do",
+  "requestId": "director-21",
+  "ok": true,
+  "changed": false,
+  "message": ""
+ },
+ "goalAdd": {
+  "command": "do",
+  "requestId": "director-22",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "goalAddAgain": {
+  "command": "do",
+  "requestId": "director-23",
+  "ok": true,
+  "changed": false,
+  "message": "Already added"
+ },
+ "goalAddNoName": {
+  "command": "do",
+  "requestId": "director-24",
+  "ok": false,
+  "changed": false,
+  "message": "Give the goal a name"
+ },
+ "finishSetup": {
+  "command": "do",
+  "requestId": "director-25",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "sleepSaveNotSaved": {
+  "command": "do",
+  "requestId": "director-26",
+  "ok": false,
+  "message": "Not saved: Storage is full. Export a backup and clear old Life Director history.",
+  "changed": true
+ },
+ "finishSetupWithoutSleep": {
+  "command": "do",
+  "requestId": "director-30",
+  "ok": false,
+  "changed": false,
+  "message": "Save your sleep times first"
+ }
+}

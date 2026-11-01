@@ -8,7 +8,9 @@
  },
  "clock": {
   "time": "3:10 PM",
-  "day": "Wed, Oct 28"
+  "day": "Wed, Oct 28",
+  "h12": true,
+  "locale": "en-US"
  },
  "tab": "today",
  "tabs": [
@@ -2338,6 +2340,8 @@
  "quests": null,
  "goals": null,
  "settings": null,
+ "time": null,
+ "firstRun": null,
  "guide": {
   "key": "today",
   "auto": false,

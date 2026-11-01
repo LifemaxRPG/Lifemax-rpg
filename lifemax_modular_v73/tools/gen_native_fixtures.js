@@ -8,7 +8,8 @@
    changes, all of them or the ones named:
      NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
-   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json and director-replies-today.json), fixtures/recipes-*.json,
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json, director-replies-today.json and
+   director-replies-time.json; phase 4B's in tools/gen_director_time_fixtures.js), fixtures/recipes-*.json,
    fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
    and fixtures/swipe-{tune,state}.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -344,6 +345,7 @@ async function director(b) {
     if (!snap.today || !snap.guide || snap.guide.key !== 'today' || !snap.guide.auto) throw Error('Today\'s guide is not in the projection');
     write('fixtures/director-guide-today.json', snap);
   }
+  await require('./gen_director_time_fixtures.js')({ b, out, write, directorDay }); // phase 4B: My time, first run and the forms
 
   p = await live(true);
   await act(p, 'inst', await upNext(p));

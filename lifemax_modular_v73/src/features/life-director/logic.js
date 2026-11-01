@@ -545,6 +545,7 @@ const LifeDirectorApp = (function () {
   }
   /* clock-face words: "6 AM", "Noon" in 12-hour places; 06, 12 in 24-hour ones */
   const H12 = (() => { try { const c = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions(); return c.hourCycle ? /h1[12]/.test(c.hourCycle) : !!c.hour12; } catch (e) { return true; } })();
+  const LOCALE = (() => { try { return new Intl.DateTimeFormat().resolvedOptions().locale; } catch (e) { return 'en-US'; } })(); // the locale times are written in
   const hourWord = h => H12 ? (h === 0 ? 'Midnight' : h === 12 ? 'Noon' : (h % 12) + (h < 12 ? ' AM' : ' PM')) : String(h).padStart(2, '0') + ':00';
   /* "9 AM", "5:30 PM": short times for writing on the rings */
   const fC = ep => fTime(ep).replace(/:00(?=\D|$)/, '').replace(/\s+/g, ' ');
@@ -1181,12 +1182,20 @@ const LifeDirectorApp = (function () {
         '<div class="ld-ri-b"><div class="ld-ri-t">' + (b.inst ? icon(tagIcon(b.inst.tag), 13) : kindIcon(k, 13)) + '<span>' + esc(b.title) + '</span>' + stl + (isNow ? '<span class="ld-nowtag">Now</span>' : '') + '</div>' + chips + sub + '</div></li>';
     }).join('') + '</ol>';
   }
+  /* the first-run card, decided once for the page (needSetup) and a native screen (nativeFirstRun): the demo dial's arcs in minutes
+     after midnight (an arc past midnight ends after 1440), its words, and its button, which opens My time */
+  const FIRST_RUN = Object.freeze({
+    arcs: [{ ring: 'outer', kind: 'sleep', from: 1380, to: 1800 }, { ring: 'outer', kind: 'work', from: 544, to: 1024 },
+      { ring: 'inner', kind: 'session', from: 1120, to: 1200 }, { ring: 'inner', kind: 'session', from: 420, to: 480 }],
+    title: 'Tell it when you’re busy. It plans the rest.',
+    text: 'Add your sleep and your work or school hours. Life Director fits your goals and quests into the time that’s left and keeps downtime protected. You never have to build the day yourself.',
+    button: 'Set up my time', section: 'setup',
+  });
   function needSetup() {
-    return '<div class="ld-empty ld-first"><div class="ld-first-dial" aria-hidden="true"><svg viewBox="0 0 360 360">' + faceHtml() +
-      '<path class="ld-o ld-c-sleep" d="' + arcD(DIAL.RO, 345, 450 - 360 + 360) + '" stroke-width="' + DIAL.WO + '"/><path class="ld-o ld-c-work" d="' + arcD(DIAL.RO, 136, 256) + '" stroke-width="' + DIAL.WO + '"/>' +
-      '<path class="ld-sa ld-ses-demo" d="' + arcD(DIAL.RI, 280, 300) + '" stroke-width="' + DIAL.WI + '"/><path class="ld-sa ld-ses-demo" d="' + arcD(DIAL.RI, 105, 120) + '" stroke-width="' + DIAL.WI + '"/></svg></div>' +
-      '<h3>Tell it when you’re busy. It plans the rest.</h3><p>Add your sleep and your work or school hours. Life Director fits your goals and quests into the time that’s left and keeps downtime protected. You never have to build the day yourself.</p>' +
-      '<button class="ld-btn ld-primary ld-wide" data-act="tab" data-tab="setup">Set up my time</button></div>';
+    const F = FIRST_RUN, arc = a => a.ring === 'outer' ? '<path class="ld-o ld-c-' + a.kind + '" d="' + arcD(DIAL.RO, a.from / 4, a.to / 4) + '" stroke-width="' + DIAL.WO + '"/>'
+      : '<path class="ld-sa ld-ses-demo" d="' + arcD(DIAL.RI, a.from / 4, a.to / 4) + '" stroke-width="' + DIAL.WI + '"/>';
+    return '<div class="ld-empty ld-first"><div class="ld-first-dial" aria-hidden="true"><svg viewBox="0 0 360 360">' + faceHtml() + F.arcs.map(arc).join('') + '</svg></div>' +
+      '<h3>' + F.title + '</h3><p>' + F.text + '</p><button class="ld-btn ld-primary ld-wide" data-act="tab" data-tab="' + F.section + '">' + F.button + '</button></div>';
   }
   function renderToday() {
     if (!ST.setupComplete || !ST.schedule) return needSetup();
@@ -1400,83 +1409,186 @@ const LifeDirectorApp = (function () {
   /* 24h minutes → the person's own clock style (12h or 24h) */
   function fHm(m) { const d = new Date(Date.UTC(2020, 0, 1, Math.floor(m / 60) % 24, m % 60)); return fmt({ hour: 'numeric', minute: '2-digit' }, 'UTC').format(d); }
   const sleepRules = () => (ST.availability.rules || []).filter(r => r.kind === 'SLEEP');
+  /* the work arcs the mini sleep dial shows for context (a rotating shift, or anything on a weekday), in minutes after midnight */
+  const sleepContext = () => (ST.availability.rules || []).filter(r => r.kind !== 'SLEEP' && r.kind !== 'PREFERRED' && (r.rotation || (r.days || []).some(d => d >= 1 && d <= 5)))
+    .map(r => ({ from: r.startMin, to: r.startMin + r.durationMin }));
   function miniDialHtml(bed, wake) {
     const a0 = bed / 4, a1 = (wake <= bed ? wake + 1440 : wake) / 4, dur = ((wake - bed) + 1440) % 1440 || 1440;
-    const ctx = (ST.availability.rules || []).filter(r => r.kind !== 'SLEEP' && r.kind !== 'PREFERRED' && (r.rotation || (r.days || []).some(d => d >= 1 && d <= 5)))
-      .map(r => { const s = r.startMin / 4, e = (r.startMin + r.durationMin) / 4; return '<path class="ld-o ld-c-work ld-ctx" d="' + arcD(DIAL.RO, s, e) + '" stroke-width="' + DIAL.WO + '"/>'; }).join('');
+    const ctx = sleepContext().map(c => '<path class="ld-o ld-c-work ld-ctx" d="' + arcD(DIAL.RO, c.from / 4, c.to / 4) + '" stroke-width="' + DIAL.WO + '"/>').join('');
     const h = (end, a) => { const [x, y] = polar(DIAL.RO, a); return '<g class="ld-hd ld-c-sleep" data-end="' + end + '" role="slider" tabindex="0" aria-label="' + (end === 'start' ? 'Bedtime' : 'Wake up') + '"><circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="26"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="12"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"/></g>'; };
     return '<svg viewBox="0 0 360 360" aria-hidden="false" role="group" aria-label="Sleep window">' + faceHtml() + ctx +
       '<path class="ld-o ld-c-sleep ld-mini-arc" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '"/>' + h('start', a0) + h('end', a1 % 360) + '</svg>' +
       '<div class="ld-core"><small class="ld-core-k">Sleep</small><b class="ld-core-big ld-mini-dur">' + mins(dur) + '</b><span class="ld-core-s ld-mini-span">' + fHm(bed) + ' – ' + fHm(wake) + '</span></div>';
   }
-  function renderSetup() {
+  /* My time, decided once for the page (renderSetup) and a native screen (nativeTime): set-up's steps, sleep, the commitments, the
+     daily routines, goals and the build, in the page's words. Times are minutes after midnight; a stepper sends one label per stop. */
+  const ROUTINES = [['morningRoutineMinutes', 0, 120, 5, 'Getting ready', 'After you wake up'], ['windDownMinutes', 0, 120, 5, 'Wind-down', 'Before bed']];
+  const MEAL_RANGE = ['mealMinutes', 10, 90, 5, 'Meals', 'Breakfast, lunch and dinner blocks'];
+  const stopLabels = (lo, hi, step, f) => { const out = []; for (let v = lo; v <= hi; v += step) out.push(f(v)); return out; };
+  function timeModel() {
     const sleeps = sleepRules();
     const wk = sleeps.find(r => r.id === 'sleep-wk') || sleeps[0], we = sleeps.find(r => r.id === 'sleep-we');
     const bed = wk ? wk.startMin : 23 * 60, wake = wk ? (wk.startMin + wk.durationMin) % 1440 : 7 * 60;
     const other = (ST.availability.rules || []).filter(r => r.kind !== 'SLEEP' && r.kind !== 'PREFERRED');
-    const p = E.normalizePreferences(ST.prefs);
-    const first = !ST.setupComplete;
-    const steps = first ? '<ol class="ld-steps"><li class="' + (wk ? 'ok' : 'cur') + '">Sleep</li><li class="' + (other.length ? 'ok' : wk ? 'cur' : '') + '">Work & school</li><li class="' + (ST.goals.length ? 'ok' : wk ? 'cur' : '') + '">Goals</li><li>Build</li></ol>' +
-      '<p class="ld-lede">Tell Life Director what your time is already spoken for. It plans everything else.</p>' : '<p class="ld-lede">Change anything here and your plan rebuilds around it automatically.</p>';
-    const stepper = (k, lo, hi, st, label, hint) => '<div class="ld-step-row"><div><b>' + label + '</b><small>' + hint + '</small></div><div class="ld-stepper"><button class="ld-btn ld-small" data-act="routine" data-k="' + k + '" data-v="' + (-st) + '" data-lo="' + lo + '" data-hi="' + hi + '" aria-label="Less">−</button><output>' + (p[k] ? mins(p[k]) : 'Off') + '</output><button class="ld-btn ld-small" data-act="routine" data-k="' + k + '" data-v="' + st + '" data-lo="' + lo + '" data-hi="' + hi + '" aria-label="More">+</button></div></div>';
-    return steps +
-      '<div class="ld-card ld-sleepcard"><h4>' + icon('moon', 14) + ' Sleep</h4><p class="ld-muted">Drag the two handles, or type the times. Nothing is ever planned into sleep.</p>' +
-      '<div class="ld-mini" data-bed="' + bed + '" data-wake="' + wake + '">' + miniDialHtml(bed, wake) + '</div>' +
-      '<div class="ld-grid2"><label>' + (we ? 'Weeknight bedtime' : 'Bedtime') + '<input type="time" id="ldBed" value="' + hm(bed) + '"></label><label>Wake up<input type="time" id="ldWake" value="' + hm(wake) + '"></label></div>' +
-      '<label class="ld-check"><input type="checkbox" id="ldWeekendOn"' + (we ? ' checked' : '') + '> Different on Friday and Saturday nights</label>' +
-      '<div class="ld-grid2" id="ldWeekendRow"' + (we ? '' : ' hidden') + '><label>Weekend bedtime<input type="time" id="ldBedWe" value="' + hm(we ? we.startMin : (bed + 60) % 1440) + '"></label><label>Weekend wake<input type="time" id="ldWakeWe" value="' + hm(we ? (we.startMin + we.durationMin) % 1440 : (wake + 60) % 1440) + '"></label></div>' +
-      '<button class="ld-btn' + (wk ? '' : ' ld-primary') + '" data-act="saveSleep">' + (wk ? 'Save sleep' : 'Save sleep and continue') + '</button></div>' +
-      '<div class="ld-card ld-card-commit"><h4>' + icon('briefcase', 14) + ' Work, school and fixed commitments</h4><ul class="ld-rules">' +
-      (other.map(r => '<li data-act="editRule" data-id="' + esc(r.id) + '" role="button" tabindex="0"><i class="ld-rdot ld-c-' + (r.kind === 'UNAVAILABLE' ? 'block' : 'work') + '"></i><div><b>' + esc(r.title) + '</b><small>' + esc(KIND_LABEL[r.kind] || r.kind) + ' · ' + esc(ruleText(r)) + '</small></div><span class="ld-chev" aria-hidden="true">›</span></li>').join('') ||
-        '<li class="ld-muted ld-rules-empty">Nothing yet. Add your job, classes, or anything else that happens at the same time each week.</li>') +
-      '</ul><button class="ld-btn" data-act="addRule">Add a commitment</button></div>' +
-      '<div class="ld-card ld-card-routines"><h4>' + icon('smile', 14) + ' Daily routines</h4><p class="ld-muted">Time Life Director keeps around your day so it never books you the minute you wake up.</p>' +
-      stepper('morningRoutineMinutes', 0, 120, 5, 'Getting ready', 'After you wake up') +
-      stepper('windDownMinutes', 0, 120, 5, 'Wind-down', 'Before bed') +
-      '<div class="ld-step-row"><div><b>Meals</b><small>Breakfast, lunch and dinner blocks</small></div><div class="ld-stepper">' + (p.mealsEnabled ? '<button class="ld-btn ld-small" data-act="routine" data-k="mealMinutes" data-v="-5" data-lo="10" data-hi="90" aria-label="Shorter">−</button><output>' + mins(p.mealMinutes) + '</output><button class="ld-btn ld-small" data-act="routine" data-k="mealMinutes" data-v="5" data-lo="10" data-hi="90" aria-label="Longer">+</button>' : '<output>Off</output>') +
-      '<button class="ld-btn ld-small ld-ghost" data-act="meals">' + (p.mealsEnabled ? 'Turn off' : 'Turn on') + '</button></div></div>' +
-      '<p class="ld-muted">Travel and unwind time after work are set on each commitment.</p></div>' +
-      '<div class="ld-card ld-card-goals"><h4>' + icon('target', 14) + ' Goals</h4>' + (ST.goals.length ? '<div class="ld-chips ld-goalchips">' + ST.goals.map(g => '<span class="ld-chip">' + esc(g.title) + '</span>').join('') + '</div>' : '<p class="ld-muted">Add at least one goal so there is something to plan. Your LifeMax quests are included automatically.</p>') +
-      '<div class="ld-row"><button class="ld-btn' + (wk && !ST.goals.length ? ' ld-primary' : '') + '" data-act="addGoal">Add a goal</button>' + (ST.goals.length ? '<button class="ld-btn ld-ghost" data-act="tab" data-tab="goals">Manage goals</button>' : '') + '</div></div>' +
-      (first ? '<div class="ld-card ld-build"><h4>Build my week</h4><p class="ld-muted">Time zone: ' + esc(tz()) + '. You can change everything later.</p><button class="ld-btn ld-primary ld-wide" data-act="finishSetup"' + (wk ? '' : ' aria-disabled="true"') + '>Build my week</button></div>'
-        : '<div class="ld-row ld-foot"><button class="ld-btn ld-ghost" data-act="finishSetup">Re-plan now</button></div>');
+    const p = E.normalizePreferences(ST.prefs), first = !ST.setupComplete;
+    const routine = ([key, min, max, step, label, hint]) => ({ key, label, hint, min, max, step, value: p[key], text: p[key] ? mins(p[key]) : 'Off',
+      stops: stopLabels(min, max, step, v => v ? mins(v) : 'Off'), less: 'Less', more: 'More' });
+    return {
+      first,
+      steps: first ? [['Sleep', wk ? 'ok' : 'cur'], ['Work & school', other.length ? 'ok' : wk ? 'cur' : ''], ['Goals', ST.goals.length ? 'ok' : wk ? 'cur' : ''], ['Build', '']].map(([label, state]) => ({ label, state })) : [],
+      lede: first ? 'Tell Life Director what your time is already spoken for. It plans everything else.' : 'Change anything here and your plan rebuilds around it automatically.',
+      sleep: { title: 'Sleep', note: 'Drag the two handles, or type the times. Nothing is ever planned into sleep.', saved: !!wk,
+        bed, wake, bedText: fHm(bed), wakeText: fHm(wake), length: mins(((wake - bed) + 1440) % 1440 || 1440),
+        weekend: { on: !!we, bed: we ? we.startMin : (bed + 60) % 1440, wake: we ? (we.startMin + we.durationMin) % 1440 : (wake + 60) % 1440 },
+        labels: { centre: 'Sleep', bed: we ? 'Weeknight bedtime' : 'Bedtime', wake: 'Wake up', weekend: 'Different on Friday and Saturday nights', weekendBed: 'Weekend bedtime', weekendWake: 'Weekend wake',
+          bedHandle: 'Bedtime', wakeHandle: 'Wake up' },
+        save: { label: wk ? 'Save sleep' : 'Save sleep and continue', primary: !wk } },
+      commitments: { title: 'Work, school and fixed commitments', rows: other.map(r => ({ id: r.id, title: r.title, dot: r.kind === 'UNAVAILABLE' ? 'block' : 'work', line: (KIND_LABEL[r.kind] || r.kind) + ' · ' + ruleText(r) })),
+        empty: 'Nothing yet. Add your job, classes, or anything else that happens at the same time each week.', add: 'Add a commitment' },
+      routines: { title: 'Daily routines', text: 'Time Life Director keeps around your day so it never books you the minute you wake up.', rows: ROUTINES.map(routine),
+        meals: Object.assign(routine(MEAL_RANGE), { on: !!p.mealsEnabled, text: p.mealsEnabled ? mins(p.mealMinutes) : 'Off', toggle: p.mealsEnabled ? 'Turn off' : 'Turn on', less: 'Shorter', more: 'Longer' }),
+        note: 'Travel and unwind time after work are set on each commitment.' },
+      goals: { title: 'Goals', chips: ST.goals.map(g => g.title), empty: 'Add at least one goal so there is something to plan. Your LifeMax quests are included automatically.',
+        add: { label: 'Add a goal', primary: !!wk && !ST.goals.length }, manage: ST.goals.length ? 'Manage goals' : null },
+      build: first ? { title: 'Build my week', text: 'Time zone: ' + tz() + '. You can change everything later.', label: 'Build my week', enabled: !!wk } : null,
+      replan: first ? null : { label: 'Re-plan now' },
+    };
   }
-  function ruleSheet(r) {
+  function renderSetup() {
+    const T = timeModel(), S = T.sleep, C = T.commitments, R = T.routines, M = R.meals, G = T.goals;
+    const btn = (r, sign) => '<button class="ld-btn ld-small" data-act="routine" data-k="' + r.key + '" data-v="' + sign * r.step + '" data-lo="' + r.min + '" data-hi="' + r.max + '" aria-label="' + (sign < 0 ? r.less : r.more) + '">' + (sign < 0 ? '−' : '+') + '</button>';
+    const stepper = r => '<div class="ld-step-row"><div><b>' + r.label + '</b><small>' + r.hint + '</small></div><div class="ld-stepper">' + btn(r, -1) + '<output>' + r.text + '</output>' + btn(r, 1) + '</div></div>';
+    return (T.first ? '<ol class="ld-steps">' + T.steps.map((s, k) => '<li' + (k < 3 ? ' class="' + s.state + '"' : '') + '>' + s.label + '</li>').join('') + '</ol>' : '') + // Build never has a state
+      '<p class="ld-lede">' + T.lede + '</p>' +
+      '<div class="ld-card ld-sleepcard"><h4>' + icon('moon', 14) + ' ' + S.title + '</h4><p class="ld-muted">' + S.note + '</p>' +
+      '<div class="ld-mini" data-bed="' + S.bed + '" data-wake="' + S.wake + '">' + miniDialHtml(S.bed, S.wake) + '</div>' +
+      '<div class="ld-grid2"><label>' + S.labels.bed + '<input type="time" id="ldBed" value="' + hm(S.bed) + '"></label><label>' + S.labels.wake + '<input type="time" id="ldWake" value="' + hm(S.wake) + '"></label></div>' +
+      '<label class="ld-check"><input type="checkbox" id="ldWeekendOn"' + (S.weekend.on ? ' checked' : '') + '> ' + S.labels.weekend + '</label>' +
+      '<div class="ld-grid2" id="ldWeekendRow"' + (S.weekend.on ? '' : ' hidden') + '><label>' + S.labels.weekendBed + '<input type="time" id="ldBedWe" value="' + hm(S.weekend.bed) + '"></label><label>' + S.labels.weekendWake + '<input type="time" id="ldWakeWe" value="' + hm(S.weekend.wake) + '"></label></div>' +
+      '<button class="ld-btn' + (S.save.primary ? ' ld-primary' : '') + '" data-act="saveSleep">' + S.save.label + '</button></div>' +
+      '<div class="ld-card ld-card-commit"><h4>' + icon('briefcase', 14) + ' ' + C.title + '</h4><ul class="ld-rules">' +
+      (C.rows.map(r => '<li data-act="editRule" data-id="' + esc(r.id) + '" role="button" tabindex="0"><i class="ld-rdot ld-c-' + r.dot + '"></i><div><b>' + esc(r.title) + '</b><small>' + esc(r.line) + '</small></div><span class="ld-chev" aria-hidden="true">›</span></li>').join('') ||
+        '<li class="ld-muted ld-rules-empty">' + C.empty + '</li>') +
+      '</ul><button class="ld-btn" data-act="addRule">' + C.add + '</button></div>' +
+      '<div class="ld-card ld-card-routines"><h4>' + icon('smile', 14) + ' ' + R.title + '</h4><p class="ld-muted">' + R.text + '</p>' + R.rows.map(stepper).join('') +
+      '<div class="ld-step-row"><div><b>' + M.label + '</b><small>' + M.hint + '</small></div><div class="ld-stepper">' + (M.on ? btn(M, -1) + '<output>' + M.text + '</output>' + btn(M, 1) : '<output>' + M.text + '</output>') +
+      '<button class="ld-btn ld-small ld-ghost" data-act="meals">' + M.toggle + '</button></div></div>' +
+      '<p class="ld-muted">' + R.note + '</p></div>' +
+      '<div class="ld-card ld-card-goals"><h4>' + icon('target', 14) + ' ' + G.title + '</h4>' + (G.chips.length ? '<div class="ld-chips ld-goalchips">' + G.chips.map(t => '<span class="ld-chip">' + esc(t) + '</span>').join('') + '</div>' : '<p class="ld-muted">' + G.empty + '</p>') +
+      '<div class="ld-row"><button class="ld-btn' + (G.add.primary ? ' ld-primary' : '') + '" data-act="addGoal">' + G.add.label + '</button>' + (G.manage ? '<button class="ld-btn ld-ghost" data-act="tab" data-tab="goals">' + G.manage + '</button>' : '') + '</div></div>' +
+      (T.build ? '<div class="ld-card ld-build"><h4>' + T.build.title + '</h4><p class="ld-muted">' + esc(T.build.text) + '</p><button class="ld-btn ld-primary ld-wide" data-act="finishSetup"' + (T.build.enabled ? '' : ' aria-disabled="true"') + '>' + T.build.label + '</button></div>'
+        : '<div class="ld-row ld-foot"><button class="ld-btn ld-ghost" data-act="finishSetup">' + T.replan.label + '</button></div>');
+  }
+
+  /* ── forms: the commitment and goal sheets, decided once as a schema the page draws (ruleSheet, goalForm) and a native screen draws
+     with any form kit (nativeSheet). Every field has key, kind (text, choice, check, days, time, date, number), label, value, required
+     and group (fields sharing a group share a row); text adds maxLength and placeholder, number min, max, step and placeholder (null:
+     no limit), time the page's text for its value, choice and days their options, and check the fields it reveals and hides. ── */
+  function formField(key, kind, label, value, more) {
+    const extra = kind === 'time' ? { text: fHm(value) } : { text: { maxLength: null, placeholder: '' }, number: { min: null, max: null, step: 1, placeholder: '' }, check: { reveals: [], hides: [] } }[kind];
+    return Object.assign({ key, kind, label, value, required: false, group: null }, extra, more);
+  }
+  const byKey = fields => Object.fromEntries(fields.map(f => [f.key, f]));
+  const choices = list => list.map(([value, label]) => ({ value: String(value), label }));
+  const numberInput = (id, f) => '<input type="number" id="' + id + '"' + (f.value != null ? ' value="' + f.value + '"' : '') + (f.min != null ? ' min="' + f.min + '"' : '') + (f.max != null ? ' max="' + f.max + '"' : '') +
+    (f.step !== 1 ? ' step="' + f.step + '"' : '') + (f.placeholder ? ' placeholder="' + f.placeholder + '"' : '') + '>';
+  const RULE_KINDS = [['WORK', 'Work shift'], ['CLASS', 'School / class'], ['APPOINTMENT', 'Regular commitment'], ['UNAVAILABLE', 'Unavailable (personal)']];
+  const RULE_LOADS = [['MIXED_MODERATE', 'Mixed'], ['PHYSICAL_HEAVY', 'Physically hard'], ['COGNITIVE_HEAVY', 'Mentally hard'], ['LIGHT', 'Light']];
+  const NEW_RULE = Object.freeze({ title: 'Work', kind: 'WORK', days: [1, 2, 3, 4, 5], startMin: 540, durationMin: 480, commuteMin: 0, load: 'MIXED_MODERATE', rotation: null, decompressMin: null });
+  /* the commitment sheet: a new one (no r) or an edit of r; ruleSave takes every field's value by its key */
+  function ruleForm(r) {
     const edit = !!r;
-    r = r || { title: 'Work', kind: 'WORK', days: [1, 2, 3, 4, 5], startMin: 540, durationMin: 480, commuteMin: 0, load: 'MIXED_MODERATE', rotation: null, decompressMin: null };
+    r = r || NEW_RULE;
     const unwind = r.decompressMin != null ? r.decompressMin : (r.kind === 'WORK' && r.load !== 'LIGHT' ? 30 : 0);
     const rot = r.rotation, on = rot ? rot.activeDays.length : 4, off = rot ? rot.cycleLength - rot.activeDays.length : 4;
-    const dayChips = id => DOW.map((d, k) => '<label class="ld-dchip"><input type="checkbox" name="' + id + '" value="' + k + '"' + ((r.days || []).includes(k) && !rot ? ' checked' : '') + '><span>' + d.slice(0, 2) + '</span></label>').join('');
-    const opt = (v, l, cur) => '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + l + '</option>';
-    openSheet('<h3>' + (edit ? 'Edit ' + esc(r.title) : 'Add a commitment') + '</h3><label>Name<input id="rTitle" value="' + esc(r.title) + '" maxlength="40"></label>' +
-      '<label>Type<select id="rKind">' + opt('WORK', 'Work shift', r.kind) + opt('CLASS', 'School / class', r.kind) + opt('APPOINTMENT', 'Regular commitment', r.kind) + opt('UNAVAILABLE', 'Unavailable (personal)', r.kind) + '</select></label>' +
-      '<label class="ld-check"><input type="checkbox" id="rRot"' + (rot ? ' checked' : '') + '> Rotating shift pattern (e.g. 4 on / 4 off)</label>' +
-      '<div id="rDaysWrap"' + (rot ? ' hidden' : '') + '><span class="ld-lbl">Days</span><div class="ld-dchips">' + dayChips('rDays') + '</div></div>' +
-      '<div id="rRotWrap"' + (rot ? '' : ' hidden') + ' class="ld-grid3"><label>Days on<input type="number" id="rOn" value="' + on + '" min="1" max="14"></label><label>Days off<input type="number" id="rOff" value="' + off + '" min="1" max="14"></label><label>First day on<input type="date" id="rAnchor" value="' + esc(rot ? rot.anchorDate : U.ymdKey(U.localParts(nowEpoch(), tz()))) + '"></label></div>' +
-      '<div class="ld-grid2"><label>Starts<input type="time" id="rStart" value="' + hm(r.startMin) + '"></label><label>Ends<input type="time" id="rEnd" value="' + hm((r.startMin + r.durationMin) % 1440) + '"></label></div>' +
-      '<div class="ld-grid2"><label>Travel each way (min)<input type="number" id="rCommute" value="' + (r.commuteMin || 0) + '" min="0" max="240" step="5"></label><label>Unwind after (min)<input type="number" id="rUnwind" value="' + unwind + '" min="0" max="120" step="5"></label></div>' +
-      '<label>How tiring<select id="rLoad">' + opt('MIXED_MODERATE', 'Mixed', r.load) + opt('PHYSICAL_HEAVY', 'Physically hard', r.load) + opt('COGNITIVE_HEAVY', 'Mentally hard', r.load) + opt('LIGHT', 'Light', r.load) + '</select></label>' +
-      '<p class="ld-muted">Overnight shifts are fine: an end time earlier than the start runs into the next morning. Tiring shifts keep heavy sessions away from the hours after them.</p>' +
-      '<div class="ld-row"><button class="ld-btn ld-primary" data-act="saveRule"' + (edit ? ' data-id="' + esc(r.id) + '"' : '') + '>' + (edit ? 'Save' : 'Add') + '</button><button class="ld-btn ld-ghost" data-act="closeSheet">Cancel</button>' +
-      (edit ? '<button class="ld-btn ld-ghost ld-danger" data-act="delRule" data-id="' + esc(r.id) + '">Remove</button>' : '') + '</div>');
+    return { kind: 'rule', id: edit ? r.id : null, title: edit ? 'Edit ' + r.title : 'Add a commitment', text: '',
+      fields: [
+        formField('title', 'text', 'Name', r.title, { maxLength: 40 }),
+        formField('kind', 'choice', 'Type', r.kind, { options: choices(RULE_KINDS) }),
+        formField('rotating', 'check', 'Rotating shift pattern (e.g. 4 on / 4 off)', !!rot, { reveals: ['on', 'off', 'anchor'], hides: ['days'] }),
+        formField('days', 'days', 'Days', rot ? [] : (r.days || []).slice(), { options: DOW.map((d, k) => ({ value: k, label: d.slice(0, 2) })), required: true }),
+        formField('on', 'number', 'Days on', on, { min: 1, max: 14, group: 0 }),
+        formField('off', 'number', 'Days off', off, { min: 1, max: 14, group: 0 }),
+        formField('anchor', 'date', 'First day on', rot ? rot.anchorDate : U.ymdKey(U.localParts(nowEpoch(), tz())), { required: true, group: 0 }),
+        formField('start', 'time', 'Starts', r.startMin, { required: true, group: 1 }),
+        formField('end', 'time', 'Ends', (r.startMin + r.durationMin) % 1440, { required: true, group: 1 }),
+        formField('commute', 'number', 'Travel each way (min)', r.commuteMin || 0, { min: 0, max: 240, step: 5, group: 2 }),
+        formField('unwind', 'number', 'Unwind after (min)', unwind, { min: 0, max: 120, step: 5, group: 2 }),
+        formField('load', 'choice', 'How tiring', r.load || 'MIXED_MODERATE', { options: choices(RULE_LOADS) }),
+      ],
+      fold: null,
+      note: 'Overnight shifts are fine: an end time earlier than the start runs into the next morning. Tiring shifts keep heavy sessions away from the hours after them.',
+      save: { label: edit ? 'Save' : 'Add', command: 'ruleSave' }, cancel: 'Cancel', remove: edit ? { label: 'Remove', command: 'ruleRemove' } : null };
+  }
+  const RULE_INPUT = { title: 'rTitle', kind: 'rKind', rotating: 'rRot', days: 'rDays', on: 'rOn', off: 'rOff', anchor: 'rAnchor', start: 'rStart', end: 'rEnd', commute: 'rCommute', unwind: 'rUnwind', load: 'rLoad' };
+  function ruleSheet(r) {
+    const F = ruleForm(r), f = byKey(F.fields), rot = f.rotating.value;
+    const select = x => '<label>' + x.label + '<select id="' + RULE_INPUT[x.key] + '">' + x.options.map(o => '<option value="' + o.value + '"' + (o.value === x.value ? ' selected' : '') + '>' + o.label + '</option>').join('') + '</select></label>';
+    const num = x => '<label>' + x.label + numberInput(RULE_INPUT[x.key], x) + '</label>';
+    const time = x => '<label>' + x.label + '<input type="time" id="' + RULE_INPUT[x.key] + '" value="' + hm(x.value) + '"></label>';
+    openSheet('<h3>' + esc(F.title) + '</h3><label>' + f.title.label + '<input id="rTitle" value="' + esc(f.title.value) + '" maxlength="' + f.title.maxLength + '"></label>' + select(f.kind) +
+      '<label class="ld-check"><input type="checkbox" id="rRot"' + (rot ? ' checked' : '') + '> ' + f.rotating.label + '</label>' +
+      '<div id="rDaysWrap"' + (rot ? ' hidden' : '') + '><span class="ld-lbl">' + f.days.label + '</span><div class="ld-dchips">' +
+      f.days.options.map(o => '<label class="ld-dchip"><input type="checkbox" name="rDays" value="' + o.value + '"' + (f.days.value.includes(o.value) ? ' checked' : '') + '><span>' + o.label + '</span></label>').join('') + '</div></div>' +
+      '<div id="rRotWrap"' + (rot ? '' : ' hidden') + ' class="ld-grid3">' + num(f.on) + num(f.off) + '<label>' + f.anchor.label + '<input type="date" id="rAnchor" value="' + esc(f.anchor.value) + '"></label></div>' +
+      '<div class="ld-grid2">' + time(f.start) + time(f.end) + '</div><div class="ld-grid2">' + num(f.commute) + num(f.unwind) + '</div>' + select(f.load) +
+      '<p class="ld-muted">' + F.note + '</p>' +
+      '<div class="ld-row"><button class="ld-btn ld-primary" data-act="saveRule"' + (F.id ? ' data-id="' + esc(F.id) + '"' : '') + '>' + F.save.label + '</button><button class="ld-btn ld-ghost" data-act="closeSheet">' + F.cancel + '</button>' +
+      (F.remove ? '<button class="ld-btn ld-ghost ld-danger" data-act="delRule" data-id="' + esc(F.id) + '">' + F.remove.label + '</button>' : '') + '</div>');
   }
 
   /* ── goal sheet ── */
+  /* the goal kinds "Add a goal" offers: the engine's archetypes, then your own */
+  function goalTypeModel() {
+    return { kind: 'goalType', title: 'Add a goal', text: 'Pick the closest kind of goal. Life Director turns it into regular, sensibly spaced sessions.',
+      options: Object.entries(E.ARCHETYPES).map(([arch, a]) => ({ arch, icon: tagIcon(a.templates[0].tag), title: a.title, sub: a.templates.map(t => t.title).join(', ') }))
+        .concat({ arch: 'CUSTOM', icon: 'plus', title: 'Something else', sub: 'Describe your own activity' }) };
+  }
   function goalSheet() {
-    openSheet('<h3>Add a goal</h3><p class="ld-muted">Pick the closest kind of goal. Life Director turns it into regular, sensibly spaced sessions.</p><div class="ld-arch">' +
-      Object.entries(E.ARCHETYPES).map(([id, a]) => '<button class="ld-archbtn" data-act="pickArch" data-arch="' + id + '">' + icon(tagIcon(a.templates[0].tag), 16) + '<b>' + esc(a.title) + '</b><small>' + esc(a.templates.map(t => t.title).join(', ')) + '</small></button>').join('') +
-      '<button class="ld-archbtn" data-act="pickArch" data-arch="CUSTOM">' + icon('plus', 16) + '<b>Something else</b><small>Describe your own activity</small></button></div>');
+    const T = goalTypeModel();
+    openSheet('<h3>' + T.title + '</h3><p class="ld-muted">' + T.text + '</p><div class="ld-arch">' +
+      T.options.map(o => '<button class="ld-archbtn" data-act="pickArch" data-arch="' + o.arch + '">' + icon(o.icon, 16) + '<b>' + esc(o.title) + '</b><small>' + esc(o.sub) + '</small></button>').join('') + '</div>');
   }
   const CUSTOM_TAGS = [['fitness.strength', 'Strength training'], ['fitness.cardio', 'Cardio'], ['fitness.mobility', 'Mobility / yoga'], ['study.deep', 'Study'], ['reading', 'Reading'], ['language', 'Language'], ['creative.practice', 'Creative practice'], ['business', 'Business / side project'], ['admin.finance', 'Money admin'], ['chores', 'Household'], ['social', 'Social'], ['wellbeing.mindfulness', 'Mindfulness']];
+  const GOAL_LEVELS = [['NOVICE', 'New to this'], ['INTERMEDIATE', 'Some experience'], ['ADVANCED', 'Experienced']];
+  /* the goal form for a kind of goal (an archetype, or CUSTOM: your own activity); goalAdd takes every field's value by its key, the
+     optional measurable target's (fold) included */
+  function goalFormModel(arch) {
+    const a = E.ARCHETYPES[arch], vol = a && a.templates.some(t => t.volumeDriver);
+    const fields = [formField('title', 'text', 'Name', a ? a.title : '', { maxLength: 50, placeholder: 'e.g. Learn guitar', required: true })];
+    if (arch === 'SKILL_LANGUAGE') fields.push(formField('subject', 'text', 'Language', 'spanish', { maxLength: 20 }));
+    if (!a) fields.push(formField('tag', 'choice', 'Activity', CUSTOM_TAGS[0][0], { options: choices(CUSTOM_TAGS) }),
+      formField('minutes', 'number', 'Minutes per session', 30, { min: 15, max: 180, step: 15, group: 0 }), formField('perWeek', 'number', 'Times per week', 3, { min: 1, max: 14, group: 0 }),
+      formField('physical', 'number', 'Physical effort (1–5)', 2, { min: 1, max: 5, group: 1 }), formField('mental', 'number', 'Mental effort (1–5)', 2, { min: 1, max: 5, group: 1 }));
+    fields.push(formField('priority', 'choice', 'Priority', '3', { options: [5, 4, 3, 2, 1].map(p => ({ value: String(p), label: PRIO[p] })), group: 2 }),
+      formField('level', 'choice', 'Experience', 'NOVICE', { options: choices(GOAL_LEVELS), group: 2 }));
+    return { kind: 'goalForm', id: a ? arch : 'CUSTOM', title: a ? a.title : 'Custom goal', text: '', fields,
+      fold: vol ? { summary: 'Add a measurable target (optional)', note: 'Life Director paces sessions to hit the date, and tells you honestly if the date is not realistic.',
+        fields: [formField('units', 'number', 'Total', null, { placeholder: '3600', group: 3 }), formField('unit', 'text', 'Unit', '', { placeholder: 'pages', group: 3 }),
+          formField('rate', 'number', 'Per hour', null, { placeholder: '30', group: 4 }), formField('deadline', 'date', 'By', '', { group: 4 })] } : null,
+      note: '', save: { label: 'Add goal', command: 'goalAdd' }, cancel: 'Cancel', remove: null };
+  }
+  /* the page's own form read back as its fields' values by key, typed as a native screen sends them (time: minutes, number: null
+     when empty, days: the ticked days), ids naming each field's control */
+  function formValues(fields, ids) {
+    const el = id => root.querySelector('#' + id);
+    const read = f => f.kind === 'check' ? el(ids[f.key]).checked : f.kind === 'days' ? [...root.querySelectorAll('input[name=' + ids[f.key] + ']:checked')].map(x => +x.value)
+      : f.kind === 'time' ? parseHm(el(ids[f.key]).value) : f.kind === 'number' ? (el(ids[f.key]).value === '' ? null : +el(ids[f.key]).value) : el(ids[f.key]).value;
+    return Object.fromEntries(fields.map(f => [f.key, read(f)]));
+  }
+  const GOAL_INPUT = { title: 'gTitle', subject: 'gSubject', tag: 'gTag', minutes: 'gMin', perWeek: 'gFreq', physical: 'gIP', mental: 'gIC', priority: 'gPrio', level: 'gLevel', units: 'gUnits', unit: 'gUnit', rate: 'gRate', deadline: 'gDeadline' };
   function goalForm(arch) {
-    const a = E.ARCHETYPES[arch];
-    const vol = a && a.templates.some(t => t.volumeDriver);
-    openSheet('<h3>' + (a ? esc(a.title) : 'Custom goal') + '</h3><label>Name<input id="gTitle" maxlength="50" value="' + esc(a ? a.title : '') + '" placeholder="e.g. Learn guitar"></label>' +
-      (arch === 'SKILL_LANGUAGE' ? '<label>Language<input id="gSubject" value="spanish" maxlength="20"></label>' : '') +
-      (a ? '' : '<label>Activity<select id="gTag">' + CUSTOM_TAGS.map(([t, l]) => '<option value="' + t + '">' + l + '</option>').join('') + '</select></label><div class="ld-grid2"><label>Minutes per session<input type="number" id="gMin" value="30" min="15" max="180" step="15"></label><label>Times per week<input type="number" id="gFreq" value="3" min="1" max="14"></label></div><div class="ld-grid2"><label>Physical effort (1–5)<input type="number" id="gIP" value="2" min="1" max="5"></label><label>Mental effort (1–5)<input type="number" id="gIC" value="2" min="1" max="5"></label></div>') +
-      '<div class="ld-grid2"><label>Priority<select id="gPrio">' + [5, 4, 3, 2, 1].map(p => '<option value="' + p + '"' + (p === 3 ? ' selected' : '') + '>' + PRIO[p] + '</option>').join('') + '</select></label><label>Experience<select id="gLevel"><option value="NOVICE">New to this</option><option value="INTERMEDIATE">Some experience</option><option value="ADVANCED">Experienced</option></select></label></div>' +
-      (vol ? '<details class="ld-details"><summary>Add a measurable target (optional)</summary><div class="ld-grid2"><label>Total<input type="number" id="gUnits" placeholder="3600"></label><label>Unit<input id="gUnit" placeholder="pages"></label></div><div class="ld-grid2"><label>Per hour<input type="number" id="gRate" placeholder="30"></label><label>By<input type="date" id="gDeadline"></label></div><p class="ld-muted">Life Director paces sessions to hit the date, and tells you honestly if the date is not realistic.</p></details>' : '') +
-      '<div class="ld-row"><button class="ld-btn ld-primary" data-act="saveGoal" data-arch="' + esc(arch) + '">Add goal</button><button class="ld-btn ld-ghost" data-act="closeSheet">Cancel</button></div>');
+    const F = goalFormModel(arch), f = byKey(F.fields), t = F.fold && byKey(F.fold.fields);
+    const label = (x, input) => '<label>' + x.label + input + '</label>', num = x => label(x, numberInput(GOAL_INPUT[x.key], x));
+    // the page marks only the priority's choice: the others start on their first option, as a select does by itself
+    const select = (x, mark) => label(x, '<select id="' + GOAL_INPUT[x.key] + '">' + x.options.map(o => '<option value="' + o.value + '"' + (mark && o.value === x.value ? ' selected' : '') + '>' + o.label + '</option>').join('') + '</select>');
+    openSheet('<h3>' + esc(F.title) + '</h3>' + label(f.title, '<input id="gTitle" maxlength="' + f.title.maxLength + '" value="' + esc(f.title.value) + '" placeholder="' + f.title.placeholder + '">') +
+      (f.subject ? label(f.subject, '<input id="gSubject" value="' + esc(f.subject.value) + '" maxlength="' + f.subject.maxLength + '">') : '') +
+      (f.tag ? select(f.tag, false) + '<div class="ld-grid2">' + num(f.minutes) + num(f.perWeek) + '</div><div class="ld-grid2">' + num(f.physical) + num(f.mental) + '</div>' : '') +
+      '<div class="ld-grid2">' + select(f.priority, true) + select(f.level, false) + '</div>' +
+      (t ? '<details class="ld-details"><summary>' + F.fold.summary + '</summary><div class="ld-grid2">' + num(t.units) + label(t.unit, '<input id="gUnit" placeholder="' + t.unit.placeholder + '">') + '</div>' +
+        '<div class="ld-grid2">' + num(t.rate) + label(t.deadline, '<input type="date" id="gDeadline">') + '</div><p class="ld-muted">' + F.fold.note + '</p></details>' : '') +
+      '<div class="ld-row"><button class="ld-btn ld-primary" data-act="saveGoal" data-arch="' + esc(arch) + '">' + F.save.label + '</button><button class="ld-btn ld-ghost" data-act="closeSheet">' + F.cancel + '</button></div>');
   }
 
   /* ── settings ── */
@@ -1724,7 +1836,8 @@ const LifeDirectorApp = (function () {
     if (saved) say(message); // a refused save shows its banner alone: no "now 10:30 PM" under "Not saved"
     return { ok: saved, changed: true, moved: changed, message: saved ? message : ui.banner.text };
   }
-  /* My time: the sleep dial. Handles move freely; the inputs follow; Save commits. */
+  /* My time: the sleep dial. Handles move freely, a quarter hour at a time (MINI_SNAP, sent to a native screen too); the inputs follow; Save commits. */
+  const MINI_SNAP = 15;
   function attachMini(mini) {
     mini.classList.add('ld-draggable');
     const svg = mini.querySelector('svg');
@@ -1741,7 +1854,7 @@ const LifeDirectorApp = (function () {
       const hd = e.target.closest('.ld-hd'); if (!hd) return;
       let last = -1;
       dragOn(svg, hd, e, a => {
-        const m = Math.round(a * 4 / 15) * 15 % 1440;
+        const m = Math.round(a * 4 / MINI_SNAP) * MINI_SNAP % 1440;
         if (m !== last) { last = m; buzz(); }
         let bed = +mini.dataset.bed, wake = +mini.dataset.wake;
         if (hd.dataset.end === 'start') bed = m; else wake = m;
@@ -2140,6 +2253,9 @@ const LifeDirectorApp = (function () {
   const saved = (message) => (lastSave.ok ? { ok: true, message } : { ok: false, message: 'Not saved: ' + lastSave.error });
   const goalById = (id) => ST.goals.find(x => x.id === String(id));
   function replanOrSave(reason) { if (ST.setupComplete) regenerate(reason, true); else persist(); }
+  const refuse = (message) => ({ ok: false, changed: false, message }); // nothing was changed, and why
+  const NO_OP = 'Nothing was added.'; // a new commitment or goal asked for without its operation id
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const Do = Object.freeze({
     goalPriority({ id, value }) {
       const g = goalById(id), v = Number(value);
@@ -2202,7 +2318,100 @@ const LifeDirectorApp = (function () {
       render(); say('Backup restored'); return { ok: true, message: 'Backup restored' };
     },
     reset() { store.clear(); boot(); render(); return { ok: true, message: '' }; },
+    /* ── My time (phase 4B). Each answers {ok, changed, message}: a refusal changes nothing and its words are the message; a change
+       is ok only when saved, and the page's notice says what happened; the same values again change nothing (changed: false). ── */
+    /* bed and wake: minutes after midnight; weekend: Friday and Saturday nights' {bed, wake}, or null for every night the same */
+    sleepSave({ bed, wake, weekend }) {
+      const b = dayMinute(bed), w = dayMinute(wake), we = weekend ? [dayMinute(weekend.bed), dayMinute(weekend.wake)] : null;
+      if (b == null || w == null || (we && (we[0] == null || we[1] == null))) return refuse('Enter both times');
+      const dur = ((w - b) + 1440) % 1440 || 480;
+      if (dur < 300) return refuse('That is under 5 hours of sleep. Please check the times.');
+      const sleep = (id, days, startMin, durationMin) => ({ id, kind: 'SLEEP', title: 'Sleep', days, startMin, durationMin });
+      const rules = !we ? [sleep('sleep-wk', [0, 1, 2, 3, 4, 5, 6], b, dur)] : [sleep('sleep-wk', [0, 1, 2, 3, 4], b, dur), sleep('sleep-we', [5, 6], we[0], ((we[1] - we[0]) + 1440) % 1440 || 480)];
+      if (same(rules, sleepRules()) && ST.availability.sleepRequirementMinutes === dur) return recorded('');
+      ST.availability.rules = ST.availability.rules.filter(r => r.kind !== 'SLEEP').concat(rules);
+      ST.availability.sleepRequirementMinutes = dur; autoReplan('sleep changed'); render(); say(ST.setupComplete ? 'Sleep saved · plan rebuilt' : 'Sleep saved');
+      return applied();
+    },
+    /* a commitment: the commitment sheet's fields by key (ruleForm). A new one (no id) is named from op, so the same request again
+       finds it ("Already added"); an edit names its commitment, and one removed since is refused rather than added again. */
+    ruleSave({ id, op, title, kind, rotating, days, on, off, anchor, start, end, commute, unwind, load }) {
+      const s0 = dayMinute(start), e0 = dayMinute(end), rot = rotating === true;
+      if (s0 == null || e0 == null) return refuse('Enter start and end times');
+      const picked = Array.isArray(days) ? days.filter(d => Number.isInteger(d) && d >= 0 && d <= 6) : [];
+      if (!rot && !picked.length) return refuse('Pick at least one day');
+      if (rot && !/^\d{4}-\d{2}-\d{2}$/.test(String(anchor || ''))) return refuse('Pick the first day on');
+      if (!RULE_KINDS.some(([k]) => k === kind) || !RULE_LOADS.some(([k]) => k === load)) return refuse('That is not one of the choices.');
+      const was = id ? ST.availability.rules.find(r => r.id === String(id) && r.kind !== 'SLEEP' && r.kind !== 'PREFERRED') : null;
+      if (id && !was) return refuse('That commitment was removed.');
+      if (!id && !op) return refuse(NO_OP);
+      const rid = id ? String(id) : 'r-' + op;
+      if (!id && ST.availability.rules.some(r => r.id === rid)) return recorded('Already added');
+      const n = Math.max(1, Number(on) || 4), f = Math.max(1, Number(off) || 4);
+      const rule = { id: rid, kind, title: String(title || '').trim() || KIND_LABEL[kind], days: rot ? [0, 1, 2, 3, 4, 5, 6] : picked, startMin: s0, durationMin: ((e0 - s0) + 1440) % 1440 || 1440,
+        commuteMin: Math.max(0, Math.min(240, Number(commute) || 0)), decompressMin: Math.max(0, Math.min(120, Number(unwind) || 0)), load,
+        rotation: rot ? { anchorDate: String(anchor), cycleLength: n + f, activeDays: Array.from({ length: n }, (_, k) => k) } : null };
+      if (was && same(was, rule)) return recorded('');
+      const at = ST.availability.rules.findIndex(r => r.id === rid);
+      if (at >= 0) ST.availability.rules[at] = rule; else ST.availability.rules.push(rule);
+      autoReplan(at >= 0 ? 'commitment changed' : 'commitment added'); render();
+      say(at >= 0 ? 'Saved' + (ST.setupComplete ? ' · plan rebuilt' : '') : 'Commitment added' + (ST.setupComplete ? ' · plan rebuilt' : ''));
+      return applied();
+    },
+    /* a commitment removed; one already gone changes nothing */
+    ruleRemove({ id }) {
+      const r = ST.availability.rules.find(x => x.id === String(id));
+      if (!r) return recorded('');
+      if (r.kind === 'SLEEP' || r.kind === 'PREFERRED') return refuse('That is not a commitment.');
+      ST.availability.rules = ST.availability.rules.filter(x => x.id !== r.id); autoReplan('commitment removed'); render(); say('Removed'); return applied();
+    },
+    /* a daily routine's minutes (getting ready, wind-down, meals), absolute; the page keeps it within the stepper's limits */
+    routine({ key, value }) {
+      const r = ROUTINES.concat([MEAL_RANGE]).find(x => x[0] === key), v = Number(value);
+      if (!r || !Number.isFinite(v)) return refuse('That is not a setting.');
+      const want = Math.max(r[1], Math.min(r[2], Math.round(v)));
+      if (E.normalizePreferences(ST.prefs)[key] === want) return recorded('');
+      ST.prefs[key] = want; autoReplan('routines changed'); render(); return applied();
+    },
+    /* meal blocks on or off: on is the state wanted (a screen sends it, so a repeat changes nothing); without it, the page's toggle */
+    meals({ on }) {
+      const has = !!E.normalizePreferences(ST.prefs).mealsEnabled, want = typeof on === 'boolean' ? on : !has;
+      if (want === has) return recorded('');
+      ST.prefs.mealsEnabled = want; autoReplan('routines changed'); render(); return applied();
+    },
+    /* a new goal: the goal form's fields by key (goalFormModel), for the kind arch. Its id is named from op (its first 12 characters,
+       a UUID's), so the same request again finds it ("Already added"). */
+    goalAdd({ op, arch, title, subject, tag, minutes, perWeek, physical, mental, priority, level, units, unit, rate, deadline }) {
+      const a = E.ARCHETYPES[arch], name = String(title || '').trim(), prio = Number(priority) || 3, lvl = level || 'NOVICE';
+      if (!a && arch !== 'CUSTOM') return refuse('That is not a kind of goal.');
+      if (!name) return refuse('Give the goal a name');
+      if (![1, 2, 3, 4, 5].includes(prio) || !GOAL_LEVELS.some(([k]) => k === lvl) || (!a && !CUSTOM_TAGS.some(([t]) => t === tag))) return refuse('That is not one of the choices.');
+      if (!op) return refuse(NO_OP);
+      const id = 'g-' + String(op).slice(0, 12);
+      if (goalById(id)) return recorded('Already added');
+      const g = { id, title: name, priority: prio, level: lvl, status: 'ACTIVE', createdEpoch: nowEpoch() };
+      if (a) g.archetypeId = arch; else g.customTemplates = [{ title: name, tag, minutes: Number(minutes) || 30, perWeek: Number(perWeek) || 3, IP: Number(physical) || 2, IC: Number(mental) || 2 }];
+      if (arch === 'SKILL_LANGUAGE') g.subject = String(subject || '').trim() || null;
+      const u = Number(units), per = Number(rate);
+      if (goalFormModel(arch).fold && u > 0 && per > 0 && /^\d{4}-\d{2}-\d{2}$/.test(String(deadline || ''))) {
+        const [y, mo, d] = String(deadline).split('-').map(Number);
+        g.target = { units: u, completed: 0, unit: unit || 'units', unitsPerHour: per, deadlineEpoch: U.zonedToEpoch(y, mo, d, 1439, tz()) };
+      }
+      ST.goals.push(g);
+      if (ST.setupComplete) regenerate('goal added', true); else persist();
+      render(); say('Goal added'); return applied();
+    },
+    /* Build my week (and, once set up, Re-plan now): needs sleep first; a second run is a re-plan */
+    finishSetup() {
+      if (!ST.availability.rules.some(r => r.kind === 'SLEEP')) return refuse('Save your sleep times first');
+      ST.setupComplete = true; if (regenerate('setup')) { ui.tab = 'today'; ST.ui.tab = 'today'; ui.dayIdx = 0; } persist(); render(); return applied();
+    },
   });
+  /* the page's own My time forms: a refusal is said and the sheet stays open (false); anything else lets it close (true) */
+  const told = r => { if (!r.ok && r.changed === false) { if (r.message) say(r.message); return false; } return true; };
+  /* a new commitment or goal from the page's own form: its operation id is drawn only once the form is complete (asked without one,
+     a complete form is refused for the missing id alone), so the page never spends an id on a refusal, as before Do */
+  const addFrom = (f, form) => { const r = f(form); return r.message === NO_OP ? f(Object.assign(form, { op: uuid() })) : r; };
 
   /* the page's own Something came up: a new operation each tap; the sheet closes once the plan has changed, and a refusal the
      repair has not said already is said */
@@ -2224,12 +2433,8 @@ const LifeDirectorApp = (function () {
       case 'dialApply': applyDial(now); break;
       case 'dialCancel': ui.pendingDial = null; closeSheet(); render(); break;
       case 'editRule': { const r = ST.availability.rules.find(x => x.id === id); if (r) ruleSheet(r); break; }
-      case 'routine': {
-        const k = b.dataset.k, p = E.normalizePreferences(ST.prefs);
-        ST.prefs[k] = Math.max(+b.dataset.lo, Math.min(+b.dataset.hi, (+p[k] || 0) + (+v)));
-        autoReplan('routines changed'); render(); break;
-      }
-      case 'meals': { const p = E.normalizePreferences(ST.prefs); ST.prefs.mealsEnabled = !p.mealsEnabled; autoReplan('routines changed'); render(); break; }
+      case 'routine': told(Do.routine({ key: b.dataset.k, value: (+E.normalizePreferences(ST.prefs)[b.dataset.k] || 0) + (+v) })); break;
+      case 'meals': told(Do.meals({})); break;
       case 'focusStart': {
         const i = findInst(id); if (!i || i.lifecycleState !== 'PLANNED') break;
         if (!doable(i, now)) { instSheet(i); break; }
@@ -2273,54 +2478,31 @@ const LifeDirectorApp = (function () {
       case 'dEnergy': closeSheet(); Today.energy({ level: v }); break;
       case 'replan': Today.replan(); break;
       case 'regroup': Today.regroup({ v, op: uuid() }); break;
+      /* My time: the page's own forms, read as their fields' values by key, through the same functions a native screen's commands run */
       case 'saveSleep': {
-        const bed = parseHm(val('#ldBed')), wake = parseHm(val('#ldWake'));
-        if (bed == null || wake == null) { say('Enter both times'); break; }
-        const dur = ((wake - bed) + 1440) % 1440 || 480;
-        if (dur < 300) { say('That is under 5 hours of sleep. Please check the times.'); break; }
         const we = root.querySelector('#ldWeekendOn').checked;
-        ST.availability.rules = ST.availability.rules.filter(r => r.kind !== 'SLEEP');
-        if (!we) ST.availability.rules.push({ id: 'sleep-wk', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4, 5, 6], startMin: bed, durationMin: dur });
-        else {
-          const b2 = parseHm(val('#ldBedWe')), w2 = parseHm(val('#ldWakeWe')), d2 = ((w2 - b2) + 1440) % 1440 || 480;
-          ST.availability.rules.push({ id: 'sleep-wk', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4], startMin: bed, durationMin: dur }, { id: 'sleep-we', kind: 'SLEEP', title: 'Sleep', days: [5, 6], startMin: b2, durationMin: d2 });
-        }
-        ST.availability.sleepRequirementMinutes = dur; autoReplan('sleep changed'); render(); say(ST.setupComplete ? 'Sleep saved · plan rebuilt' : 'Sleep saved'); break;
+        told(Do.sleepSave({ bed: parseHm(val('#ldBed')), wake: parseHm(val('#ldWake')), weekend: we ? { bed: parseHm(val('#ldBedWe')), wake: parseHm(val('#ldWakeWe')) } : null }));
+        break;
       }
       case 'addRule': ruleSheet(); break;
       case 'saveRule': {
-        const s0 = parseHm(val('#rStart')), e0 = parseHm(val('#rEnd'));
-        if (s0 == null || e0 == null) { say('Enter start and end times'); break; }
-        const rot = root.querySelector('#rRot').checked;
-        const days = [...root.querySelectorAll('input[name=rDays]:checked')].map(x => +x.value);
-        if (!rot && !days.length) { say('Pick at least one day'); break; }
-        const on = Math.max(1, +val('#rOn') || 4), off = Math.max(1, +val('#rOff') || 4);
-        const kind = val('#rKind');
-        if (rot && !/^\d{4}-\d{2}-\d{2}$/.test(val('#rAnchor'))) { say('Pick the first day on'); break; }
-        const rule = { id: id || 'r-' + uuid(), kind, title: val('#rTitle').trim() || KIND_LABEL[kind], days: rot ? [0, 1, 2, 3, 4, 5, 6] : days, startMin: s0, durationMin: ((e0 - s0) + 1440) % 1440 || 1440,
-          commuteMin: Math.max(0, Math.min(240, +val('#rCommute') || 0)), decompressMin: Math.max(0, Math.min(120, +val('#rUnwind') || 0)), load: val('#rLoad'), rotation: rot ? { anchorDate: val('#rAnchor'), cycleLength: on + off, activeDays: Array.from({ length: on }, (_, k) => k) } : null };
-        const at = ST.availability.rules.findIndex(r => r.id === rule.id);
-        if (at >= 0) ST.availability.rules[at] = rule; else ST.availability.rules.push(rule);
-        closeSheet(); autoReplan(at >= 0 ? 'commitment changed' : 'commitment added'); render(); say(at >= 0 ? 'Saved' + (ST.setupComplete ? ' · plan rebuilt' : '') : 'Commitment added' + (ST.setupComplete ? ' · plan rebuilt' : '')); break;
+        const form = formValues(ruleForm(null).fields, RULE_INPUT);
+        if (told(id ? Do.ruleSave(Object.assign(form, { id })) : addFrom(Do.ruleSave, form))) closeSheet();
+        break;
       }
-      case 'delRule': ST.availability.rules = ST.availability.rules.filter(r => r.id !== id); closeSheet(); autoReplan('commitment removed'); render(); say('Removed'); break;
+      case 'delRule': if (told(Do.ruleRemove({ id }))) closeSheet(); break;
       case 'finishSetup': {
-        if (!ST.availability.rules.some(r => r.kind === 'SLEEP')) { say('Save your sleep times first'); const c = root.querySelector('.ld-sleepcard'); if (c) { c.scrollIntoView({ block: 'center' }); play(c, 'ld-ping'); } break; }
-        ST.setupComplete = true; if (regenerate('setup')) { ui.tab = 'today'; ST.ui.tab = 'today'; ui.dayIdx = 0; } persist(); render(); break;
+        if (told(Do.finishSetup())) break;
+        const c = !ST.availability.rules.some(r => r.kind === 'SLEEP') && root.querySelector('.ld-sleepcard'); // show where sleep is set
+        if (c) { c.scrollIntoView({ block: 'center' }); play(c, 'ld-ping'); }
+        break;
       }
       case 'addGoal': goalSheet(); break;
       case 'pickArch': goalForm(b.dataset.arch); break;
       case 'saveGoal': {
-        const arch = b.dataset.arch, title = val('#gTitle').trim();
-        if (!title) { say('Give the goal a name'); break; }
-        const g = { id: 'g-' + uuid().slice(0, 12), title, priority: +val('#gPrio') || 3, level: val('#gLevel') || 'NOVICE', status: 'ACTIVE', createdEpoch: now };
-        if (arch !== 'CUSTOM') g.archetypeId = arch; else g.customTemplates = [{ title, tag: val('#gTag'), minutes: +val('#gMin') || 30, perWeek: +val('#gFreq') || 3, IP: +val('#gIP') || 2, IC: +val('#gIC') || 2 }];
-        if (root.querySelector('#gSubject')) g.subject = val('#gSubject').trim() || null;
-        const units = +val('#gUnits'), rate = +val('#gRate'), dl = val('#gDeadline');
-        if (units > 0 && rate > 0 && dl) { const [y, mo, d] = dl.split('-').map(Number); g.target = { units, completed: 0, unit: val('#gUnit') || 'units', unitsPerHour: rate, deadlineEpoch: U.zonedToEpoch(y, mo, d, 1439, tz()) }; }
-        ST.goals.push(g); closeSheet();
-        if (ST.setupComplete) regenerate('goal added', true); else persist();
-        render(); say('Goal added'); break;
+        const F = goalFormModel(b.dataset.arch), form = formValues(F.fields.concat(F.fold ? F.fold.fields : []), GOAL_INPUT);
+        if (told(addFrom(Do.goalAdd, Object.assign(form, { arch: b.dataset.arch })))) closeSheet();
+        break;
       }
       case 'clarify': Do.clarify({ id, arch: b.dataset.arch }); break;
       case 'goalPause': Do.goalPause({ id }); break;
@@ -2652,7 +2834,7 @@ const LifeDirectorApp = (function () {
     const now = nowEpoch(), n = ui.notice;
     return {
       header: planStatus(now),
-      clock: { time: fTime(now), day: fDay(now) },
+      clock: { time: fTime(now), day: fDay(now), h12: H12, locale: LOCALE }, // h12 and locale: how a screen writes a time the player picked
       tab: ui.tab,
       tabs: tabList().map(([id, label]) => ({ id, label, icon: TAB_ICON[id] })),
       banner: ui.banner ? { kind: ui.banner.kind, text: ui.banner.text, actions: bannerActions(ui.banner), dismiss: !ui.banner.regroup } : null,
@@ -2985,6 +3167,7 @@ const LifeDirectorApp = (function () {
   }
   function nativeSheet(kind, id) {
     if (!ST) boot();
+    if (FORM_SHEETS.has(kind)) return nativeForm(kind, String(id || ''));
     if (!ST.setupComplete || !ST.schedule) return null;
     const key = String(id || ''), gone = { kind, gone: true };
     if (kind === 'session') return nativeSessionSheet(key);
@@ -3185,6 +3368,31 @@ const LifeDirectorApp = (function () {
       lab: { label: T.lab, on: !!ST.ui.lab },
     };
   }
+  /* My time as data for a native screen (phase 4B): timeModel's decisions, and what the mini sleep dial needs to follow the finger in
+     the page's words: its snap (step, minutes), the page's clock text for every quarter hour (clock[k] is minute 15k), the length
+     text for every quarter-hour length (lengths[k] is 15k minutes; 0 is a full day, as the dial draws it) and its work arcs */
+  function nativeTime() {
+    if (!ST) boot();
+    const T = timeModel(), quarters = f => Array.from({ length: 1440 / MINI_SNAP }, (_, k) => f(k * MINI_SNAP));
+    Object.assign(T.sleep, { step: MINI_SNAP, context: sleepContext(), clock: quarters(fHm), lengths: quarters(m => mins(m || 1440)) });
+    return T;
+  }
+  /* the first-run card as data for a native screen: what the page draws while there is no plan (null once there is one) */
+  function nativeFirstRun() {
+    if (!ST) boot();
+    if (ST.setupComplete && ST.schedule) return null;
+    return { arcs: FIRST_RUN.arcs.map(a => Object.assign({}, a)), title: FIRST_RUN.title, text: FIRST_RUN.text, button: FIRST_RUN.button, section: FIRST_RUN.section };
+  }
+  /* My time's sheets as data (phase 4B): the commitment sheet (id: a commitment's, or '' for a new one), the goal-kind grid, and a goal
+     form (id: the kind). A commitment removed since answers gone; a kind of goal the page does not know has nothing to draw. */
+  const FORM_SHEETS = new Set(['rule', 'goalType', 'goalForm']);
+  function nativeForm(kind, id) {
+    if (kind === 'goalType') return goalTypeModel();
+    if (kind === 'goalForm') return E.ARCHETYPES[id] || id === 'CUSTOM' ? goalFormModel(id) : null;
+    if (!id) return ruleForm(null);
+    const r = ST.availability.rules.find(x => x.id === id && x.kind !== 'SLEEP' && x.kind !== 'PREFERRED');
+    return r ? ruleForm(r) : { kind, id, gone: true };
+  }
   /* a native screen's change: one of Do's, with its payload; an unknown name is refused */
   function nativeRun(name, payload) {
     if (!ST) boot();
@@ -3233,7 +3441,7 @@ const LifeDirectorApp = (function () {
     /* fn(key) is true when a native screen draws that section's guide: the page then starts none of its own there */
     guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },
     guide: nativeGuide, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
-    goals: nativeGoals, settings: nativeSettings, run: nativeRun,
+    goals: nativeGoals, settings: nativeSettings, run: nativeRun, time: nativeTime, firstRun: nativeFirstRun,
     sheet: nativeSheet, todayRun: nativeTodayRun,
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
