@@ -1,7 +1,6 @@
 package com.lifemax.rpg.feature.lifedirector.presentation
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,11 +12,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
+import com.lifemax.rpg.core.designsystem.feedback.PageCelebrationLayer
 import com.lifemax.rpg.core.designsystem.feedback.XpAward
-import com.lifemax.rpg.core.designsystem.feedback.XpCelebration
-import com.lifemax.rpg.core.designsystem.feedback.rememberXpCelebration
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorPoint
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
@@ -160,19 +156,16 @@ internal fun DirectorCelebrationLayer(
     reduced: Boolean,
     onFinished: (Long) -> Unit,
     startAt: Float = 0f,
-) {
-    val state = rememberXpCelebration(celebration.id, celebration.awards, reduced, startAt)
-    LaunchedEffect(celebration.id) {
-        state?.play()
-        onFinished(celebration.id)
-    }
-    if (state == null) return
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        // NativeTabKit's own fallback when the page has no logo to aim at: the top centre
-        val to = target?.let { DpOffset(it.x.dp, it.y.dp) } ?: DpOffset(maxWidth / 2, 44.dp)
-        XpCelebration(state, origin, to)
-    }
-}
+) =
+    PageCelebrationLayer(
+        celebration.id,
+        celebration.awards,
+        origin,
+        target,
+        reduced,
+        onFinished,
+        startAt,
+    )
 
 /** Notes every finger that comes down, taking nothing from it. */
 private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.recordTaps(spot: TapSpot) =

@@ -75,8 +75,8 @@ data class PlanKeyTag(val icon: String, val label: String)
 /** A line of the General rules, with its bold lead (empty when it has none). */
 data class PlanRule(val lead: String, val text: String)
 
-/** A point of the page in CSS pixels from its top left, which are dp on the phone. */
-data class PagePoint(val x: Float, val y: Float)
+/** A point of the page in CSS pixels from its top left: the shared celebration's type. */
+typealias PagePoint = com.lifemax.rpg.core.designsystem.feedback.PagePoint
 
 data class PlanProjection(
     val session: String,
