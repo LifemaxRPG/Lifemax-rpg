@@ -123,15 +123,15 @@
     },
     {
      "type": "row",
-     "title": "Native Log activity (beta)",
-     "hint": "The native Log screen. Saving uses the same rules and save as the classic form. Turn off for the classic form.",
+     "title": "Native Log activity",
+     "hint": "The native Log screen. Saving uses the same rules and save as the classic form. The classic Log is one tap away: turn this off.",
      "danger": false,
      "controls": [
       {
        "kind": "switch",
        "id": "nativeLog",
-       "label": "Native Log activity (beta)",
-       "on": false,
+       "label": "Native Log activity",
+       "on": true,
        "enabled": true,
        "op": "toggle"
       }
