@@ -11,6 +11,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.addInitScript(`
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));
     window.__calls=[];
+    /* the one-off thumbnail walk (9 s after launch on Android) visits every tab and ends on the tab it started from: switched off
+       as the page's scripts finish, before its timer, however long a busy machine takes to boot (after the reload too) */
+    addEventListener('DOMContentLoaded',()=>{lmaThumbWarm=async()=>{}});
     const mk=(name,caps)=>{const ls={};return {
       __emit:(e,d)=>(ls[e]||[]).map(f=>f(d)),
       addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
@@ -29,8 +32,6 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     const opens = () => window.__calls.filter(c => c[0] === 'log' && c[1] === 'open').length;
     const openLog = async () => { const n = opens(); navigate('log'); for (let t = 0; t < 100 && opens() === n; t++) await wait(50) };
     const out = {};
-    // the one-off thumbnail walk (9 s after launch on Android) visits every tab; the other tab tests switch it off too
-    lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { }
     const S = lmaLoad(); S.nativeOverview = false; lmaSave();
     // a fresh save: the owner never touched the switch, so the native Log is on by default (NativeTabKit's defaultOn)
     const toggle = document.getElementById('nativeLogToggle');
@@ -95,16 +96,20 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     out.off = JSON.parse(localStorage.getItem(LMA_PREF_KEY)).nativeLog === false && !toggle.checked && lmaView() === 'log' && opens() === n2 && !NativeTabs.covered('log') && !!document.getElementById('activityType').offsetParent;
     return out;
   });
-  // after a restart the owner's off still holds
-  await p.reload(); await p.waitForTimeout(3000);
+  // after a restart the owner's off still holds: the check polls for the classic form, however long the page takes to come back
+  await p.reload();
   const r2 = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));
-    lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { }
+    const until = async (f, ms) => { for (let t = 0; t < ms && !f(); t += 50) await wait(50); return !!f() };
     const opens = () => window.__calls.filter(c => c[0] === 'log' && c[1] === 'open').length;
-    navigate('settings'); await wait(300);
+    const classic = () => lmaView() === 'log' && !!document.getElementById('activityType').offsetParent;
+    navigate('settings'); // the kit syncs the switch as Settings shows
     const toggle = document.getElementById('nativeLogToggle'), checked = toggle.checked;
-    navigate('log'); await wait(1500);
-    return { checked, disabled: toggle.disabled, opens: opens(), covered: NativeTabs.covered('log'), classic: lmaView() === 'log' && !!document.getElementById('activityType').offsetParent };
+    navigate('log');
+    const shown = await until(classic, 10000);
+    // were the native screen wanted, it would open on arrival (a handshake, then the bars' capture): give it 1.5 s to (wrongly) come
+    await until(() => opens() > 0, 1500);
+    return { checked, disabled: toggle.disabled, opens: opens(), covered: NativeTabs.covered('log'), classic: shown && classic() };
   });
   ok('a fresh save has the native Log on: no stored choice, its switch shows on, and the tab counts as covered', r.fresh, r);
   ok('opening sends a full projection (presets, eight attributes)', r.opened, r);
