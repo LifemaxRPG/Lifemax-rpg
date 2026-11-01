@@ -123,6 +123,7 @@ public class MainActivity extends BridgeActivity {
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
             v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            com.lifemax.rpg.app.shell.ImeState.set(ime.bottom > bars.bottom); // NAV-5: the shared bottom bar hides under the keyboard
             return WindowInsetsCompat.CONSUMED;
         });
         ViewCompat.requestApplyInsets(content);

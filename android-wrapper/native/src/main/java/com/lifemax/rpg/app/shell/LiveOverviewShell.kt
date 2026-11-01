@@ -57,6 +57,14 @@ internal class LiveOverviewShell(
 
     private var first = true
 
+    /**
+     * NAV-5: the bottom bar goes while the keyboard is up, so it never sits over a field above the
+     * keyboard
+     */
+    private val keyboard: (Boolean) -> Unit = { up ->
+        nav.visibility = if (up) View.GONE else View.VISIBLE
+    }
+
     /** The page's bar scroll last followed (px), and the glide toward it. */
     private var navScroll = 0
     private var glide: ValueAnimator? = null
@@ -85,6 +93,8 @@ internal class LiveOverviewShell(
         frame.addView(nav, FrameLayout.LayoutParams(-1, 1, Gravity.BOTTOM))
         parent.addView(frame, FrameLayout.LayoutParams(-1, -1))
         if (!chromeOnly) web.viewTreeObserver.addOnScrollChangedListener(scroll)
+        ImeState.listen(keyboard)
+        keyboard(ImeState.up)
     }
 
     fun show(scene: JSONObject) {
@@ -170,6 +180,7 @@ internal class LiveOverviewShell(
     }
 
     fun close() {
+        ImeState.forget(keyboard)
         glide?.cancel()
         if (!chromeOnly && web.viewTreeObserver.isAlive)
             web.viewTreeObserver.removeOnScrollChangedListener(scroll)
