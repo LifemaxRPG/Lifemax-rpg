@@ -35,6 +35,33 @@ class DirectorGlanceTest {
         assertThrows(Exception::class.java) { DirectorGlanceJson.decode(j) }
     }
 
+    /** tiles.plan exactly as the Overview's projection carries it (overview-glance-*.json). */
+    @Test
+    fun theOverviewsTilesPlanDecodes() {
+        val text = { n: String ->
+            javaClass.getResource("/fixtures/overview-glance-$n.json")!!.readText()
+        }
+        val setup = DirectorGlanceJson.decode(text("setup"))
+        assertEquals(GlanceState.SETUP, setup.state)
+        assertEquals("Plan my days", setup.button)
+        val day = DirectorGlanceJson.decode(text("day"))
+        assertEquals(GlanceState.DAY, day.state)
+        assertTrue(day.dial!!.handles.isEmpty() && day.dial!!.build == null)
+        assertNotNull(day.foot)
+        val timer = DirectorGlanceJson.decode(text("timer")).centre!!.timer!!
+        assertEquals(Tap("focusOpen"), timer.tap)
+        // fixed time's tip says nothing about a handle the glance does not have
+        val bands = day.dial!!.arcs.filter { it.style == ArcStyle.BAND }
+        assertTrue(bands.isNotEmpty())
+        for (n in listOf("day", "next", "evening")) assertTrue(
+            glance(n)
+                .dial!!
+                .arcs
+                .filter { it.style == ArcStyle.BAND }
+                .none { it.tip.contains("drag", ignoreCase = true) }
+        )
+    }
+
     @Test
     fun setUpIsTheEmptyStateWithItsButton() {
         val g = glance("setup")
@@ -101,16 +128,10 @@ class DirectorGlanceTest {
         rejects("day") { getJSONObject("foot").remove("done") }
         rejects("day") { getJSONObject("dial").remove("arcs") }
         rejects("day") { getJSONObject("dial").put("hand", 400) }
-        // a glance is read-only: a dial with handles is not a glance's
-        rejects("day") {
-            val dial = getJSONObject("dial")
-            val today =
-                JSONObject(javaClass.getResource("/fixtures/director-today.json")!!.readText())
-            val handles = today.getJSONObject("today").getJSONObject("dial")
-            dial
-                .put("handles", handles.getJSONArray("handles"))
-                .put("stops", handles.getJSONArray("stops"))
-        }
+        // a glance is read-only: what only Today has must not be there, even empty
+        rejects("day") { getJSONObject("dial").put("handles", org.json.JSONArray()) }
+        rejects("day") { getJSONObject("dial").put("build", JSONObject.NULL) }
+        rejects("day") { getJSONObject("dial").put("dragWords", JSONObject()) }
         rejects("setup") { put("button", JSONObject.NULL) }
         rejects("setup") { put("dial", json("day").getJSONObject("dial")) }
         rejects("setup") { remove("core") }
@@ -128,7 +149,7 @@ class DirectorGlanceTest {
         assertEquals(meal.tap!!.id, GlanceTaps.arc(meal).id)
         // fixed time shows its tip only on Life Director itself: the glance just opens
         val band = dial.arcs.first { it.style == ArcStyle.BAND }
-        assertEquals(Tap("glanceOpen"), GlanceTaps.arc(band))
+        assertEquals(Tap(""), GlanceTaps.arc(band))
         // the middle lets only the running timer through, as the page's glance does
         assertEquals(Tap("focusOpen"), GlanceTaps.centre(glance("timer").centre!!.timer!!.tap!!))
         assertEquals(Tap("glanceOpen"), GlanceTaps.centre(glance("next").centre!!.button!!.tap))

@@ -1,20 +1,16 @@
-/* Life Director's glance (Today's plan on the Overview) as data for a native screen (plans/OVERVIEW_BODY.md, phase 0 step 3 and the
-   phase 1 glance). Checked:
-   - the page's own glance is byte-identical to tests/fixtures/director-glance-golden.json, recorded before its decisions were split
-     out of glanceHtml into glanceData (RECORD=1 rewrites it, only ever from code known to be right). The dial's paint and text-path
-     ids count every dial drawn since load, so they are compared as names, not numbers;
-   - LifeDirector.native.glance() says what the page's glance draws: the head, the empty states, the foot, the centre's cleaned title
-     (the full one kept), no "Nothing else planned today", the dial's sessions, no handles and no build;
-   - native.glance() is a pure read: it neither saves nor redraws;
+/* Life Director's glance as data for the native Overview, beyond what tests/overview-glance.test.js checks (its golden and the
+   head, foot and sessions): plans/OVERVIEW_BODY.md, the phase 1 glance. Checked, in more states (set-up, morning, work, a timer
+   running and paused, the evening):
+   - LifeDirector.native.glance() is a pure read: it neither saves nor redraws the page's glance;
+   - the middle's name (cleaned, the full one kept), kick, line under it ("Nothing else planned today" left out) and running timer
+     are the page's; the dial has no handles, stops or build; fixed time's tip has no hint about dragging a handle;
    - native.fromGlance(act, id) opens Life Director's Today as a glance tap does: the session's sheet on the page, or, when a native
-     screen draws Today's sheets, the intent it opens its own sheet from; '' and 'glanceOpen' only open; an act the glance does not
-     have is refused with words.
+     screen draws Today's sheets, the intent it opens its own sheet from (a session, a meal, the running timer); '' only opens.
    The page runs on Playwright's clock through the lived-in day of tests/fixtures/director-day.js.
    Run: NODE_PATH=$(npm root -g) node tests/director-glance.test.js [built html] */
-const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
+const { chromium } = require('playwright');
 const file = require('./current-page')(process.argv[2]);
 const directorDay = require('./fixtures/director-day.js');
-const GOLDEN = path.join(__dirname, 'fixtures', 'director-glance-golden.json');
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
 
 async function start(b, { planned = true, lived = true } = {}) {
@@ -28,8 +24,6 @@ async function start(b, { planned = true, lived = true } = {}) {
 }
 async function settle(p, ms = 500) { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 200 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(10) }
 async function go(p, v, ms = 800) { await p.evaluate(v => lmaNavTo(v), v); await p.waitForFunction(v => lmaView() === v, v); await settle(p, ms) }
-/* the glance as the Overview draws it, its counted ids named alike */
-const glanceHtml = p => p.evaluate(() => { ovPlanGlance(); return document.getElementById('ovPlan').innerHTML.replace(/\b(ldf|ldtp)\d+/g, '$1#') });
 /* Today's running timer, started (and paused) the way the screen's timer command does, back on the Overview */
 async function timer(p, pause) {
   await go(p, 'life-director', 1500);
@@ -41,7 +35,7 @@ async function timer(p, pause) {
   }
   await go(p, 'dashboard');
 }
-/* each state the golden holds: a name and how to reach it on a fresh page */
+/* each state: a name and how to reach it on a fresh page */
 const STATES = {
   setup: async b => start(b, { planned: false }),
   morning: async b => start(b, { lived: false }),
@@ -53,18 +47,12 @@ const STATES = {
 
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const html = {}, pages = {};
+  const pages = {};
   for (const [name, reach] of Object.entries(STATES)) {
     const p = await reach(b);
     await go(p, 'dashboard', 300);
-    html[name] = await glanceHtml(p);
     pages[name] = p;
   }
-
-  /* 1. the page's own glance, against the golden */
-  if (process.env.RECORD) { fs.writeFileSync(GOLDEN, JSON.stringify(html, null, 1) + '\n'); console.log('recorded ' + GOLDEN) }
-  const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
-  for (const name of Object.keys(STATES)) ok('the glance (' + name + ') draws byte for byte as before its data was split out', html[name] === golden[name], (html[name] || '').length + ' vs ' + (golden[name] || '').length);
 
   /* 2. native.glance() against the page's own glance, drawn at the same moment */
   for (const [name, p] of Object.entries(pages)) {
@@ -92,23 +80,23 @@ const STATES = {
     ok(name + ': the middle\'s kick is the page\'s', g.core.kick === dom.kick, [g.core.kick, dom.kick]);
     ok(name + ': the line under the middle is the page\'s ("Nothing else planned today" left out)', (g.core.next ? g.core.next.label : null) === dom.next, [g.core.next, dom.next]);
     ok(name + ': the running timer shows as the page shows it', !!g.core.timer === dom.clock, [g.core.timer, dom.clock]);
-    ok(name + ': the dial\'s sessions are the page\'s, with no handles and no build', g.dial.arcs.filter(a => a.style === 'session').length === dom.sessions && !g.dial.handles.length && !g.dial.stops.length && g.dial.build === null,
-      [g.dial.arcs.length, dom.sessions, g.dial.handles.length]);
+    ok(name + ': the dial\'s sessions are the page\'s, with no handles, stops or build', g.dial.arcs.filter(a => a.style === 'session').length === dom.sessions && !('handles' in g.dial) && !('stops' in g.dial) && !('build' in g.dial),
+      [g.dial.arcs.length, dom.sessions, Object.keys(g.dial)]);
+    const bands = g.dial.arcs.filter(a => a.style === 'band');
+    ok(name + ': fixed time\'s tip says nothing about dragging a handle the glance does not have', bands.length && bands.every(a => a.tip && !/drag/i.test(a.tip)), bands.map(a => a.tip));
   }
 
   /* 3. a tap on a native glance opens Life Director's Today as the page's glance does */
   {
     const p = pages.day;
     const ids = await p.evaluate(() => { const a = LifeDirector.native.glance().dial.arcs; return { inst: a.find(x => x.act === 'inst' && x.state === 'plan').id, meal: a.find(x => x.act === 'meal').id } });
-    const refused = await p.evaluate(() => LifeDirector.native.fromGlance('doneQuick', 'x'));
-    ok('an act the glance does not have is refused with words', refused.ok === false && typeof refused.message === 'string' && refused.message.length > 0 && await p.evaluate(() => lmaView() === 'dashboard'), refused);
     let reply = await p.evaluate(() => LifeDirector.native.fromGlance('', ''));
     await settle(p, 400);
-    ok('an empty tap only opens Life Director\'s Today', reply.ok === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'today'), reply);
+    ok('an empty tap only opens Life Director\'s Today', reply === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'today'), reply);
     await go(p, 'dashboard');
     reply = await p.evaluate(id => LifeDirector.native.fromGlance('inst', id), ids.inst);
     await settle(p, 400);
-    ok('a session tapped on the glance opens its sheet on the page', reply.ok === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'sheet'), reply);
+    ok('a session tapped on the glance opens its sheet on the page', reply === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'sheet'), reply);
     await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open .ld-sheet-bg').click());
     await go(p, 'dashboard');
     /* a native screen that draws Today's sheets: the tap becomes the intent it opens its own sheet from */

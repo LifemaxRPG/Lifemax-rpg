@@ -14,9 +14,9 @@ internal object GlanceTaps {
 
     /**
      * An arc: its own tap (a session, a meal), or, for fixed time (whose tip the page shows only on
-     * Life Director itself), just opening.
+     * Life Director itself), an empty act, which also only opens.
      */
-    fun arc(arc: DialArc): Tap = arc.tap ?: open
+    fun arc(arc: DialArc): Tap = arc.tap ?: Tap("")
 
     /**
      * A tap in the middle: the page's glance lets only the running timer's clock take one

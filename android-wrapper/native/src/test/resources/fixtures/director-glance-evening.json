@@ -67,7 +67,7 @@
     "icon": "",
     "act": "",
     "id": "",
-    "tip": "Sleep · 12:00 AM–7:00 AM. Drag its handle to change it."
+    "tip": "Sleep · 12:00 AM–7:00 AM"
    },
    {
     "ring": "outer",
@@ -152,7 +152,7 @@
     "icon": "",
     "act": "",
     "id": "",
-    "tip": "Work · 9:00 AM–5:00 PM. Drag its handle to change it."
+    "tip": "Work · 9:00 AM–5:00 PM"
    },
    {
     "ring": "outer",
@@ -305,7 +305,7 @@
     "icon": "",
     "act": "",
     "id": "",
-    "tip": "Sleep · 11:00 PM–12:00 AM. Drag its handle to change it."
+    "tip": "Sleep · 11:00 PM–12:00 AM"
    }
   ],
   "words": [
@@ -334,14 +334,7 @@
    "frac": 0.3333333333333333,
    "kind": "maint",
    "warn": false
-  },
-  "handles": [],
-  "stops": [],
-  "dragWords": {
-   "tooShort": "Too short",
-   "release": "Release to apply"
-  },
-  "build": null
+  }
  },
  "core": {
   "kick": "Now",

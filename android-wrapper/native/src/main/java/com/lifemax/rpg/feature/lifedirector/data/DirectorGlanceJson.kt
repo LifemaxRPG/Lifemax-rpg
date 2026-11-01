@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.lifedirector.data
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorGlance
 import com.lifemax.rpg.feature.lifedirector.domain.GlanceFoot
 import com.lifemax.rpg.feature.lifedirector.domain.GlanceState
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -11,9 +12,10 @@ import org.json.JSONObject
  * kind, or a state whose parts do not match it throws, so the Overview's decoder rejects the whole
  * projection and keeps its last good state.
  *
- * The entry point for the Overview: its decoder hands the `tiles.plan` object (when not null) to
- * [decode]. The dial and its middle are Today's, decoded by Today's own decoders, so the glance
- * draws exactly what Today would.
+ * The entry point for the Overview: its decoder hands the `tiles.plan` object to [decode] (the page
+ * sends null there without Life Director; the Overview then has no glance to draw). The dial and
+ * its middle are Today's, decoded by Today's own decoders, so the glance draws exactly what Today
+ * would.
  */
 object DirectorGlanceJson {
     fun decode(g: JSONObject): DirectorGlance {
@@ -44,10 +46,7 @@ object DirectorGlanceJson {
                 null,
                 null,
             )
-        val dial = dial(g.getJSONObject("dial"))
-        require(dial.handles.isEmpty() && dial.build == null) {
-            "The glance's dial has no handles and plays no build"
-        }
+        val dial = dial(readOnly(g.getJSONObject("dial")))
         val core = g.getJSONObject("core")
         val foot = g.getJSONObject("foot")
         return DirectorGlance(
@@ -65,6 +64,21 @@ object DirectorGlanceJson {
 
     /** [decode] for the page's JSON text, as a fixture or a test holds it. */
     fun decode(text: String): DirectorGlance = decode(JSONObject(text))
+
+    /**
+     * The glance's dial is Today's without what only Today has (handles, stops, drag words, a
+     * build): those keys must be absent, and the copy Today's decoder reads gets them empty.
+     */
+    private fun readOnly(d: JSONObject): JSONObject {
+        for (key in TODAY_ONLY) require(!d.has(key)) { "The glance's dial has no $key" }
+        return JSONObject(d.toString())
+            .put("handles", JSONArray())
+            .put("stops", JSONArray())
+            .put("dragWords", JSONObject().put("tooShort", "").put("release", ""))
+            .put("build", JSONObject.NULL)
+    }
+
+    private val TODAY_ONLY = listOf("handles", "stops", "dragWords", "build")
 }
 
 private fun JSONObject.string(key: String): String =
