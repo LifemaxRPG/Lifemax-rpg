@@ -58,7 +58,8 @@ import kotlin.math.abs
  * read and use. [hold] is a handle held or let go, [asking] that the page is asked about one (the
  * handles wait), [run] a build playing. [animate] is false while the screen is hidden. [tour] is a
  * step of Today's guide: its layers dim, its name tags pin on and, on the handles step, the handles
- * pulse (TourMode); [centreAnchor] names the middle for the guide's spotlight.
+ * pulse (TourMode); [centreAnchor] names the middle for the guide's spotlight. [intro] is the
+ * glance's arrival playing (DialIntro): the rings, sessions and hand fade in.
  */
 @Composable
 fun ChronoDial(
@@ -74,6 +75,7 @@ fun ChronoDial(
     run: BuildRun? = null,
     tour: DialTourRun? = null,
     centreAnchor: Modifier = Modifier,
+    intro: DialIntroRun? = null,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -83,6 +85,7 @@ fun ChronoDial(
     val next = dial.arcs.firstOrNull { it.next }
     val halo = remember(dial.radii, next) { next?.let { DialHalo(it, dial.radii) } }
     val art = remember(run?.build, dial) { run?.let { BuildArt(it.build, dial) } }
+    val introOrder = remember(dial.arcs) { DialIntro.order(dial.arcs) }
     val held = hold?.takeIf { it.held && run == null }
     val look = rememberTourLook(tour)
     val pulse = rememberTourPulse(look, tour, animate)
@@ -119,6 +122,7 @@ fun ChronoDial(
                                 }
                             art.drawPlan(this, plan, t)
                         } else if (held != null) plan.draw(this, OUTER_HELD, WORDS_HELD, INNER_HELD)
+                        else if (intro != null) drawIntro(plan, introOrder, intro.ms)
                         else plan.draw(this, look.outer, look.words, look.inner)
                     }
                 }
@@ -139,7 +143,9 @@ fun ChronoDial(
                                     held != null -> INNER_HELD
                                     else -> look.inner
                                 }
-                            alpha = lerp(1f, .41f, pulse.value) * shown
+                            val arrived =
+                                intro?.let { DialIntro.session(it.ms, introOrder[next] ?: 0) } ?: 1f
+                            alpha = lerp(1f, .41f, pulse.value) * shown * arrived
                         }
                     ) {
                         inUnits { halo.draw(this) }
@@ -153,7 +159,7 @@ fun ChronoDial(
                         inUnits { dragArc(dial.radii, a0, a1, color) }
                     }
                 }
-                dial.hand?.let { Hand(it, animate, run) }
+                dial.hand?.let { Hand(it, animate, run, intro) }
                 if (dial.handles.isNotEmpty() || hold != null)
                     Canvas(Modifier.fillMaxSize().dimmed(look.handles)) {
                         inUnits { drawHandles(dial, hold, run, pulse.value) }
@@ -230,7 +236,7 @@ private fun DrawScope.drawHandles(
 
 /** The hand, turned by its layer: a small step glides as the web's does, a jump snaps. */
 @Composable
-private fun Hand(angle: Float, animate: Boolean, run: BuildRun?) {
+private fun Hand(angle: Float, animate: Boolean, run: BuildRun?, intro: DialIntroRun?) {
     val turn = remember { Animatable(angle) }
     LaunchedEffect(angle) {
         if (animate && abs(angle - turn.value) <= 3f)
@@ -240,7 +246,10 @@ private fun Hand(angle: Float, animate: Boolean, run: BuildRun?) {
     Canvas(
         Modifier.fillMaxSize().graphicsLayer {
             rotationZ = run?.let { BuildTimeline.handAngle(it.build, it.ms, angle) } ?: turn.value
-            alpha = run?.let { BuildTimeline.faceShown(it.build, it.ms) } ?: 1f
+            alpha =
+                run?.let { BuildTimeline.faceShown(it.build, it.ms) }
+                    ?: intro?.let { DialIntro.hand(it.ms) }
+                    ?: 1f
         }
     ) {
         inUnits { handLayer.draw(this) }
