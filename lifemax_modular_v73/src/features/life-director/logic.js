@@ -2077,9 +2077,11 @@ const LifeDirectorApp = (function () {
     if (j >= T.steps.length) { tourEnd(true); return; }
     T.i = j; tourShow();
   }
-  /* the ? button: the guide for this screen, or Today's */
+  /* the guide the ? button plays: this screen's, or Today's (set-up's until the week is built) */
+  const helpKey = () => TOURS[ui.tab] && (ui.tab === 'setup' || tourCanRun(ui.tab)) ? ui.tab : ST.setupComplete && ST.schedule ? 'today' : 'setup';
+  /* the ? button: that guide, on its own screen */
   function tourHelp() {
-    const key = TOURS[ui.tab] && (ui.tab === 'setup' || tourCanRun(ui.tab)) ? ui.tab : ST.setupComplete && ST.schedule ? 'today' : 'setup';
+    const key = helpKey();
     if (key !== ui.tab) { ui.tab = key; ST.ui.tab = key; persist(); render(); }
     tourStart(key);
   }
@@ -3418,11 +3420,14 @@ const LifeDirectorApp = (function () {
     if (!Object.prototype.hasOwnProperty.call(Do, name)) return { ok: false, message: 'Life Director cannot do that.' };
     return Do[name](payload && typeof payload === 'object' ? payload : {});
   }
-  /* A section's guide as data for a native screen that draws it (phase 3A: Week; 4A: Today): its steps as tourSteps keeps them (a step
+  /* A section's guide as data for a native screen that draws it (phase 3A: Week; 4A: Today; 4B: set-up, its mini-dial tags too): its steps as tourSteps keeps them (a step
      whose part is not on the page is left out), each with the name of the part it points at, and whether it is due to start
      by itself (not seen yet). Text comes as spans: the page's <b> is the only markup in TOURS. */
   const GUIDE_ANCHORS = { '.ld-week': 'week.rows', '.ld-stats': 'week.stats', '.ld-card-yield': 'week.yield',
-    '.ld-dial': 'dial', '.ld-dial .ld-core': 'dial.centre', '.ld-up:not(.ld-up-rest)': 'upNext', '.ld-foot': 'footer' };
+    '.ld-dial': 'dial', '.ld-dial .ld-core': 'dial.centre', '.ld-up:not(.ld-up-rest)': 'upNext', '.ld-foot': 'footer',
+    /* phase 4B, My time: the numbered steps, the mini sleep dial, and the commitments, routines, goals and build cards */
+    '.ld-steps': 'time.steps', '.ld-mini': 'time.sleep', '.ld-card-commit': 'time.commitments', '.ld-card-routines': 'time.routines',
+    '.ld-card-goals': 'time.goals', '.ld-build': 'time.build' };
   const GUIDE_LABELS = { skip: 'Skip guide', back: 'Back', next: 'Next', last: 'Got it', tap: 'Tap anywhere to continue' };
   const spans = html => String(html).split(/(<b>.*?<\/b>)/).filter(Boolean).map(t => /^<b>/.test(t) ? { t: t.slice(3, -4), b: true } : { t, b: false });
   function nativeGuide(key) {
@@ -3436,6 +3441,16 @@ const LifeDirectorApp = (function () {
       mode: st.mode || '', round: !!st.round, pad: st.pad != null ? st.pad : 8, tags: tags(st) }));
     if (!steps.length || steps.some(st => !st.anchor)) return null; // a step the screen cannot point at: the page keeps this guide
     return { key, auto: tourDue(key), steps, labels: Object.assign({}, GUIDE_LABELS, { last: key === 'setup' ? 'Let’s go' : 'Got it' }) };
+  }
+  /* The guide the ? button plays (helpKey), when a native screen can draw it there: the section on show's own when nativeGuide has it,
+     Today's once there is a plan to show (its dial is then on Today), set-up's while set-up is not finished; else null. The screen
+     switches to that section and plays it; with null it hands the ? over and the page plays it. */
+  function nativeHelp() {
+    if (!ST) boot();
+    if (!root || !root.isConnected) return null;
+    const key = helpKey();
+    const can = key === ui.tab ? !!nativeGuide(key) : key === 'today' ? !!(ST.setupComplete && ST.schedule) : key === 'setup' && !ST.setupComplete;
+    return can ? key : null;
   }
   /* the screen finished or skipped a guide it drew: seen, as the page's tourEnd records it, and the same words when skipped */
   function nativeTourSeen(key, finished) {
@@ -3461,7 +3476,7 @@ const LifeDirectorApp = (function () {
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
     /* fn(key) is true when a native screen draws that section's guide: the page then starts none of its own there */
     guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },
-    guide: nativeGuide, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
+    guide: nativeGuide, help: nativeHelp, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
     goals: nativeGoals, settings: nativeSettings, run: nativeRun, time: nativeTime, firstRun: nativeFirstRun,
     sheet: nativeSheet, todayRun: nativeTodayRun,
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });

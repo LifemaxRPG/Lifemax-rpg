@@ -450,6 +450,7 @@
  },
  "firstRun": null,
  "guide": null,
+ "help": null,
  "sheet": {
   "kind": "goalForm",
   "id": "HABIT_READING",

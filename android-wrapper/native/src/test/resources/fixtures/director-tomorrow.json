@@ -2358,6 +2358,7 @@
  "time": null,
  "firstRun": null,
  "guide": null,
+ "help": null,
  "sheet": null,
  "intent": null,
  "celebrationTarget": {

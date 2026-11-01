@@ -57,7 +57,8 @@ class DirectorActions(
                 t.act == "replan" && vm.sheetsAvailable -> vm.moves.replan()
                 t.act == "regroup" && vm.sheetsAvailable -> vm.moves.regroup(t.id)
                 t.act == "dismissBanner" && vm.sheetsAvailable -> vm.moves.dismissBanner()
-                t.act == "tour" && vm.projection.value?.guide != null -> vm.startGuide()
+                // the ? plays a guide the screen draws, from Goals or Settings in its own section
+                t.act == "tour" && vm.guideHelp.ask() -> Unit
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
                     t.id.toIntOrNull()?.let(vm::gotoDay)

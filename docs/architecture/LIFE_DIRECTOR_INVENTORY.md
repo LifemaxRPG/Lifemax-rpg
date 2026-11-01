@@ -11,7 +11,7 @@ over: it closes and the page's own handler runs.
 | Status dot and line, clock, ? | phase 1 | `frame().header`, `clock`; ? hands over `tour` |
 | Section tabs | 3A | `frame().tabs`; a covered section is the `section` command, any other hands over `tab` |
 | A sideways flick between sections | 3A | the next or previous tab, as a tap on it; the body slides in, the frame stays (none with reduced motion) |
-| ? | 3A | plays the section's guide natively when the screen draws it; otherwise hands over `tour` |
+| ? | 3A, 4B | plays the section's guide natively when the screen draws it; from Goals, Settings or Quests (4B) the guide the page names in `help` (tourHelp's pick: Today's, or set-up's until the week is built), switching to its section first (`GuideHelp`); otherwise, or when that section arrives without it, hands over `tour` |
 | Banner and its buttons, last message | phase 1 | `frame().banner`, `notice`; buttons hand over |
 
 ## Today (phases 1–2; sheets in 4A)
@@ -32,6 +32,7 @@ Session, timer, meal, Move and "Something came up" sheets, Done, Skip, Pin, Re-p
 | Where your XP goes | `week.yield` (ARGB colour, done and plan shares) | absent with no XP |
 | How the week fits, what could not fit | `week.fit` | the list is folded, as the page's details |
 | Week's guide | 3A step 5: `guide` (steps with anchors week.rows, week.stats, week.yield; `auto` when not seen) | native coach marks; Next, Back, Skip, a tap outside the card; Android Back is Skip; finished or skipped is `tourSeen`; the page starts none of its own while a screen draws it (`guidedBy`) |
+| Set-up's guide | 4B: `guide` key setup on My time (anchors time.steps, time.sleep, time.commitments, time.routines, time.goals, time.build; the sleep step mode mini, round, with the Bedtime and Wake up `tags`; last button "Let’s go") | the same coach marks; the tags drawn on `MiniSleepDial(tags = miniGuideTags(p, run))` |
 | Week without a plan | page | `showing()` is 'first-run' |
 
 ## Quests (3A, `director.week.v1`)

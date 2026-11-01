@@ -150,6 +150,12 @@ fun LifeDirectorRoute(
         LaunchedEffect(visible, p.tab, p.guide?.key, p.guide?.auto, run == null, buildDue) {
             if (visible && run == null && !buildDue) vm.startGuide(auto = true)
         }
+        // a ? whose guide did not come with its section after all goes to the page
+        val helpOver by vm.guideHelp.handOverDue.collectAsState()
+        LaunchedEffect(helpOver, visible) {
+            if (helpOver && visible && vm.guideHelp.takeHandOver() && vm.handOver())
+                emit("tour", "")
+        }
         WithDirectorFeedback(vm.feedback, p, visible, vm::handOver, emit) {
             LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
         }

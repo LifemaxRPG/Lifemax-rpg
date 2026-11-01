@@ -475,7 +475,131 @@
   "replan": null
  },
  "firstRun": null,
- "guide": null,
+ "guide": {
+  "key": "setup",
+  "auto": false,
+  "steps": [
+   {
+    "anchor": "time.steps",
+    "title": "Life Director plans your days for you",
+    "text": [
+     {
+      "t": "Tell it when you’re busy. It fits your goals into the rest. Four steps, about a minute.",
+      "b": false
+     }
+    ],
+    "hint": true,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   },
+   {
+    "anchor": "time.sleep",
+    "title": "Drag to set your sleep",
+    "text": [
+     {
+      "t": "Move the two handles, then press ",
+      "b": false
+     },
+     {
+      "t": "Save sleep",
+      "b": true
+     },
+     {
+      "t": ".",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "mini",
+    "round": true,
+    "pad": 4,
+    "tags": [
+     {
+      "x": 126.6,
+      "y": 22.8,
+      "text": "Bedtime",
+      "kind": "sleep"
+     },
+     {
+      "x": 323.6,
+      "y": 223,
+      "text": "Wake up",
+      "kind": "sleep"
+     }
+    ]
+   },
+   {
+    "anchor": "time.commitments",
+    "title": "Add work or school",
+    "text": [
+     {
+      "t": "Anything at the same time every week. Shifts can rotate.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   },
+   {
+    "anchor": "time.routines",
+    "title": "Time around your day",
+    "text": [
+     {
+      "t": "Getting ready, winding down, meals. Use − and +.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   },
+   {
+    "anchor": "time.goals",
+    "title": "Pick what to work on",
+    "text": [
+     {
+      "t": "Life Director turns each goal into regular sessions. Quests are added for you.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   },
+   {
+    "anchor": "time.build",
+    "title": "Then build your week",
+    "text": [
+     {
+      "t": "Your plan appears on Today.",
+      "b": false
+     }
+    ],
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
+   }
+  ],
+  "labels": {
+   "skip": "Skip guide",
+   "back": "Back",
+   "next": "Next",
+   "last": "Let’s go",
+   "tap": "Tap anywhere to continue"
+  }
+ },
+ "help": "setup",
  "sheet": null,
  "intent": null,
  "celebrationTarget": {

@@ -2,6 +2,7 @@
    time's forms as a screen that draws them (director.setup.v1) gets them, and what the page answers My time's commands.
      director-time.json             My time on the lived-in day (set up: Re-plan now, no steps)
      director-time-first.json       My time with set-up not finished (tests/fixtures/director-day.js unfinished: steps, weekend sleep)
+     director-guide-setup.json      the same with set-up's guide not seen yet: each step's part of My time, the mini dial's tags
      director-firstrun.json         Today for a new player: the first-run card
      director-form-rule.json        the commitment sheet for a new commitment (schema)
      director-form-rule-rotating.json  the commitment sheet editing a rotating night shift
@@ -87,6 +88,10 @@ module.exports = async function directorTime({ b, out, write, directorDay }) {
   await section(p, 'setup');
   await shoot(p, 'time-first', (s) => s.time && s.time.first && s.time.sleep.weekend.on);
   await form(p, 'rule-rotating', 'rule', 'r-rot');
+  // set-up's guide, not seen yet, as a screen that draws My time gets it: a part of My time for each step, the mini dial's tags
+  await p.evaluate(() => { NativeDirectorProjection.commands.sheet({ kind: '' }); if (!LifeDirector.native.run('tourReset', {}).ok) throw Error('the guides were not reset') });
+  await p.clock.runFor(300);
+  await shoot(p, 'guide-setup', (s) => s.time && s.guide && s.guide.key === 'setup' && s.guide.auto && s.guide.steps.some((x) => x.tags.length));
 
   p = await covered('new');
   await section(p, 'today');
