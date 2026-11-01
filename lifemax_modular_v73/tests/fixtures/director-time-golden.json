@@ -51,36 +51,36 @@
     "said": "4:Sleep saved"
    },
    "a weekly commitment": {
-    "saved": "2dd39c5663bc212f19232d23",
+    "saved": "afb66ce4add987993a2ca6aa",
     "said": "5:Commitment added"
    },
    "a commitment without days": {
-    "saved": "2dd39c5663bc212f19232d23",
+    "saved": "afb66ce4add987993a2ca6aa",
     "said": "6:Pick at least one day"
    },
    "a rotating shift": {
-    "saved": "f6cd29655c47bcfc4d339692",
+    "saved": "218dba3fda379070cd6a437c",
     "said": "7:Commitment added"
    },
    "a goal without a name": {
-    "saved": "f6cd29655c47bcfc4d339692",
+    "saved": "218dba3fda379070cd6a437c",
     "said": "8:Give the goal a name"
    },
    "a reading goal with a target": {
-    "saved": "0f455fe56b71352f4a6fed33",
+    "saved": "a11f82607475531867f5fa1f",
     "said": "9:Goal added"
    },
    "a custom goal": {
-    "saved": "d00b79185c6a26ef5b125457",
+    "saved": "158832b424be5a909c514c86",
     "said": "10:Goal added"
    },
    "a language goal": {
-    "saved": "cc75a49bce117ce8210d44de",
+    "saved": "4b59060e2a78340e6e913315",
     "said": "11:Goal added"
    },
    "build my week": {
-    "saved": "3575daa390ea6f793adc10ba",
-    "said": "12:Plan updated · 52 activities"
+    "saved": "f87ca026430748d8556eae7c",
+    "said": "12:Plan updated · 53 activities"
    }
   },
   "lived": {
@@ -97,15 +97,15 @@
     "said": "3:Sleep saved · plan rebuilt"
    },
    "a goal after set-up": {
-    "saved": "c43af28e7395296130d0fc85",
+    "saved": "8ca060c82f324d2d039fcddb",
     "said": "4:Goal added"
    },
    "work removed": {
-    "saved": "daf5ea75b68682c2c32f2e6b",
+    "saved": "2353cc290c43b84a651cd5fd",
     "said": "5:Removed"
    },
    "re-plan now": {
-    "saved": "ffe8a7146c03c97162e9efb4",
+    "saved": "0e02b8dc3b72ee2e42a547d7",
     "said": "6:Plan updated · 40 activities"
    }
   }

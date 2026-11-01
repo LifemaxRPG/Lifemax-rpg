@@ -5,15 +5,22 @@
    (dialApply) and plays the build the page describes; every other tap goes to the page's own handler.
    Phase 3A: a screen that says it draws Week and Quests (director.week.v1) also covers those sections; the page keeps the
    section and the day (section, gotoDay and day render the page underneath), and every arrival lands on today (arrive).
+   Phase 4B: a screen that says it draws My time (director.setup.v1) also covers My time and the first-run card, gets them as data
+   (time, firstRun) with My time's sheets (rule, goalType, goalForm: form schemas), and saves through the do command.
    The tab lifecycle is NativeTabKit's, warm: the kit asks the screen what it draws as soon as the switch is on. */
 (function () {
   const director = () => window.LifeDirector && window.LifeDirector.native; // the feature's script runs after the runtime
   let celebrating = false; // XP is being celebrated on the page, which the screen must not cover
 
   /** the sections a screen draws besides Today, by the capability that says so */
-  const PARTS = { week: "director.week.v1", quests: "director.week.v1", goals: "director.goals.v1", settings: "director.goals.v1" };
+  const PARTS = { week: "director.week.v1", quests: "director.week.v1", goals: "director.goals.v1", settings: "director.goals.v1",
+                  setup: "director.setup.v1", "first-run": "director.setup.v1" };
   /** phase 4A: the screen draws Today's sheets and runs Today's actions itself */
   const SHEETS = "director.sheets.v1";
+  /** phase 4B: My time's sheets, which are forms (Today's are the rest) */
+  const SETUP = "director.setup.v1";
+  const FORMS = new Set(["rule", "goalType", "goalForm"]);
+  const drawsSheet = (kind) => tab.has(FORMS.has(kind) ? SETUP : SHEETS);
   let sheet = null; // {kind, id}: the sheet the screen asked to see; none whenever the screen opens
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
   /** the guides a screen draws, by section: Week's with Week (Today's comes in 4A, set-up's in 4B) */
@@ -31,8 +38,10 @@
       quests: part("quests", () => ld.quests()),
       goals: part("goals", () => ld.goals()),
       settings: part("settings", () => ld.settings()),
+      time: part("setup", () => ld.time()),
+      firstRun: c.includes("first-run") && ld.showing() === "first-run" ? ld.firstRun() : null,
       guide: guides(t) ? ld.guide(t) : null,
-      sheet: sheet && tab.has(SHEETS) ? ld.sheet(sheet.kind, sheet.id) : null,
+      sheet: sheet && drawsSheet(sheet.kind) ? ld.sheet(sheet.kind, sheet.id) : null,
     });
   }
   const commands = {
@@ -42,10 +51,10 @@
     gotoDay: (p) => director().gotoDay(Number(p.index)),
     /** another section; one the screen does not draw is shown by the page, and the kit steps the screen aside after the reply */
     section: (p) => director().section(String(p.id || "")),
-    /** the sheet the screen shows (phase 4A: session, timer, meal, move, disrupt): its model comes with this reply and every update
-        after it; {kind: ""} closes it */
+    /** the sheet the screen shows (phase 4A: session, timer, meal, move, disrupt; 4B: rule, goalType, goalForm): its model comes with
+        this reply and every update after it; {kind: ""} closes it */
     sheet: (p) => {
-      if (!tab.has(SHEETS)) return { ok: false, message: "Life Director cannot do that." };
+      if (p.kind ? !drawsSheet(String(p.kind)) : !tab.has(SHEETS) && !tab.has(SETUP)) return { ok: false, message: "Life Director cannot do that." };
       sheet = p.kind ? { kind: String(p.kind), id: String(p.id || "") } : null;
       return { ok: true };
     },
@@ -62,7 +71,8 @@
     /** a guide the screen drew was finished ({key, finished: true}) or skipped (Skip, Back): seen, saved on the page */
     tourSeen: (p) => director().tourSeen(p.key, p.finished === true),
     /** a change to a goal or a setting ({name, ...payload}): the page's own function runs, re-plans and saves; ok only when saved.
-        exportBackup answers the backup's text, which the screen copies. A repeat after a reply is the screen's to avoid (set-like
+        exportBackup answers the backup's text, which the screen copies. Phase 4B adds My time's: sleepSave, ruleSave, ruleRemove,
+        routine, meals, goalAdd and finishSetup, which also answer changed and know a repeat (a new commitment or goal by its op). A repeat after a reply is the screen's to avoid (set-like
         changes: the same priority again changes nothing; a removed goal is "gone"). */
     do: (p) => director().run(String(p.name || ""), p),
     /** a handle let go on the dial ({key, minute}: a stop's minute) or moved a quarter hour by TalkBack ({key, step: 1 or -1}):
