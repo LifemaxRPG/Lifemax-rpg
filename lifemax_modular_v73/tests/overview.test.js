@@ -202,8 +202,8 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b), sameSet = (a, b)
   ok('...two are largest first, each its share less the 2.4 gap, the second starting where the first share ends', same(lens(r.two), [37.6, 17.6]) && same(offs(r.two), [0, 40]), r.two);
   ok('...over pace the shares fill the ring and never pass it, and the line says by how much', r.over.over && r.over.of === 'of 100 XP · +50%' && near(r.over.arcs.reduce((s, x) => s + x.length, 0) + 2.4 * 3, 100) && same(offs(r.over), [0, 40, 73.333333]), r.over);
   const fr = (w, i) => w.bars[i].segs.reduce((s, x) => s + x.frac, 0);
-  ok('the week: the scale is 1.2 x pace when that is largest, the pace line and each day are fractions of it, and today is picked',
-    near(r.week.pace.frac, 1 / 1.2) && near(fr(r.week, 6), 30 / 120) && near(fr(r.week, 4), 30 / 120) && r.week.bars[4].segs.length === 2 && r.week.bars[5].segs.length === 0 && r.week.bars[6].today && r.week.selected === 6 && r.week.pace.label === 'pace 100' && r.week.total === '60 XP', r.week);
+  ok('the week: the scale is 1.2 x pace when that is largest, the pace line and each day are fractions of it, each day carries its XP, and today is picked',
+    near(r.week.pace.frac, 1 / 1.2) && near(fr(r.week, 6), 30 / 120) && near(fr(r.week, 4), 30 / 120) && r.week.bars[4].segs.length === 2 && r.week.bars[5].segs.length === 0 && same(r.week.bars.map(x => x.xp), [0, 0, 0, 0, 30, 0, 30]) && r.week.bars[6].today && r.week.selected === 6 && r.week.pace.label === 'pace 100' && r.week.total === '60 XP', r.week);
   ok('...a bigger day becomes the scale: it fills its bar and the pace line drops to a third', near(fr(r.big, 6), 1) && near(r.big.pace.frac, 100 / 300) && r.big.bars[6].tip.rest === '300 XP — ' + A0[0] + ' 200, ' + A0[1] + ' 100', r.big);
   ok('the cat card names both cats while both live, and the survivor alone once the second has passed (the card is not redrawn)', same(r.pair, ['Miso & Pip', 'Miso & Pip']) && same(r.alone, ['Miso', 'Miso']), { pair: r.pair, alone: r.alone });
 

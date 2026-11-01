@@ -38,7 +38,7 @@ function ovWeekData(){
   const max=Math.max(pace*1.2,40,Math.max.apply(null,days.map(function(d){return d.xp}))),wk=days.reduce(function(s,d){return s+d.xp},0);
   const top=ATTRS.map(function(a){return {a:a,v:D.wk[a.id]}}).filter(function(x){return x.v>0}).sort(function(x,y){return y.v-x.v}).slice(0,3);
   return {title:'This week',total:wk.toLocaleString()+' XP',delta:ovDelta(wk,ovSum(m,7,13),' vs last week'),pace:{label:'pace '+pace,frac:pace/max},selected:OV_SEL,
-    bars:days.map(function(d){return {date:d.k,label:d.i===6?'Today':'SMTWTFS'.charAt(new Date(d.k+'T12:00:00').getDay()),today:d.i===6,a11y:d.k+' '+d.xp+' XP',
+    bars:days.map(function(d){return {date:d.k,label:d.i===6?'Today':'SMTWTFS'.charAt(new Date(d.k+'T12:00:00').getDay()),today:d.i===6,xp:d.xp,a11y:d.k+' '+d.xp+' XP',
       segs:ATTRS.filter(function(a){return D.per[a.id][d.i]>0}).map(function(a){return {color:ATTR_COL[a.id],frac:D.per[a.id][d.i]/max}}),tip:ovTipParts(D,days,d.i)}}),
     top:top.map(function(x){return {color:ATTR_COL[x.a.id],text:x.a.short+' '+x.v.toLocaleString()}}),empty:'Log an activity and your week lights up here.'};
 }
@@ -67,8 +67,9 @@ function ovRecentHtml(d){
 }
 /* the label-and-value chips Rewards and Activity today share */
 function ovChipsHtml(chips){return '<div class="ovh-chips">'+chips.map(function(c){return '<div class="ovh-chip"><span>'+esc(c.label)+'</span><b>'+esc(c.value)+'</b></div>'}).join('')+'</div>'}
-/* ---------- the head: today's date, the greeting and the class crest ---------- */
-function ovHeadData(){const cls=state.classId?classById(state.classId):null;return {date:new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase(),hello:ovGreeting(),classId:cls?cls.id:''}}
+/* ---------- the head: today's date, the greeting, the Edit button's words and the class crest ---------- */
+function ovHeadData(){const cls=state.classId?classById(state.classId):null;return {date:new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase(),hello:ovGreeting(),
+  edit:{label:'Edit',a11y:'Edit the Overview: reorder or hide tiles'},classId:cls?cls.id:''}}
 /* ---------- render + motion. Each card is a data function (what it says) and an HTML function that draws it ---------- */
 function renderOverview(){
   const v=document.getElementById('ovHero');if(!v)return;
@@ -78,6 +79,7 @@ function renderOverview(){
   if(cr&&cr.dataset.k!==h.classId){let s='';try{if(h.classId&&typeof onbSvgCrest==='function'&&ONB_CLASS_VISUALS[h.classId])s=onbSvgCrest(h.classId,ONB_CLASS_VISUALS[h.classId].color)}catch(e){}cr.innerHTML=s;cr.dataset.k=h.classId}
   const d=document.getElementById('ovDate');if(d)d.textContent=h.date;
   const g=document.getElementById('ovHello');if(g&&g.textContent!==h.hello)g.textContent=h.hello;
+  const eb=document.getElementById('ovEditBtn');if(eb){if(eb.getAttribute('aria-label')!==h.edit.a11y)eb.setAttribute('aria-label',h.edit.a11y);const t=eb.lastChild&&eb.lastChild.nodeType===3?eb.lastChild:eb.appendChild(document.createTextNode(''));if(t.nodeValue!==h.edit.label)t.nodeValue=h.edit.label}
   const duo=document.getElementById('ovDuo');if(duo)duo.classList.toggle('solo',!petData());
   ovPlanGlance();
   if(typeof ovLayoutApply==='function')ovLayoutApply();

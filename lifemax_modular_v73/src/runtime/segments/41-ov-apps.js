@@ -1,10 +1,11 @@
 /* ---------- Overview: a row of app shortcuts (Android app only; same list as the Apps tab, with each app's own icon) ---------- */
 let ovAppsFetching=false;
-/* null outside the Android app, where the tile is hidden. icon is the app's own icon as a data URL, '' until it has arrived */
+/* null outside the Android app, where the tile is hidden. icon is the app's own icon as a data URL, '' until it has arrived; an app
+   stored without a label has '' */
 function ovAppsData(){
  if(!lmaNative())return null;
  const apps=lmaLoad().apps;
- return {title:'Apps',link:'Edit ›',items:apps.map(function(a){return {pkg:a.pkg,label:a.label,a11y:'Open '+a.label,icon:a.icon||''}}),add:'Add app',
+ return {title:'Apps',link:'Edit ›',items:apps.map(function(a){const label=a.label??'';return {pkg:a.pkg,label:label,a11y:'Open '+label,icon:a.icon||''}}),add:'Add app',
   hint:apps.length?'':'Add the apps you open most and they will sit right here.'};
 }
 function ovAppsHtml(d){

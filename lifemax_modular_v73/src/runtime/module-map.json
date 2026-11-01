@@ -950,7 +950,7 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 30369,
+   "bytes": 30778,
    "statement_count": 64,
    "tags": [
     "interface"
@@ -2063,7 +2063,7 @@
   },
   {
    "file": "src/runtime/segments/41-ov-apps.js",
-   "bytes": 3159,
+   "bytes": 3220,
    "statement_count": 6,
    "tags": [
     "android",

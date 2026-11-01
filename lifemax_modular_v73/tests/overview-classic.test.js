@@ -3,8 +3,8 @@
    from it, so a native drawing can read the same data and copy no rule. Splitting them must not change one byte of the page:
    every card's innerHTML is compared with tests/fixtures/overview-classic, captured before the split.
    States: the four golden saves, each on a fixed clock, and on top of them one cat (hungry, starving, away), two cats, a cat that
-   has passed, health off and on (partway, goal reached, waiting for the first sync), app shortcuts (with and without icons, and
-   none), luck rolled, over pace, shields and rested XP, an avatar, no class, decay off, daily quests done, a workout day (open
+   has passed, health off and on (partway, goal reached, waiting for the first sync), app shortcuts (with and without icons, without
+   a label, and none), luck rolled, over pace, shields and rested XP, an avatar, no class, decay off, daily quests done, a workout day (open
    and done) and a rest day, and a week day picked.
    Life Director's glance (Today's plan) is not here: its data split is step 3, after Life Director phase 2 rewrites it.
    Run: NODE_PATH=$(npm root -g) node tests/overview-classic.test.js [built html]
@@ -59,6 +59,7 @@ const EXTRAS = {
         lmaLoad().apps=[{pkg:'com.example.one',label:'Maps & more',icon:${JSON.stringify(ICON)}},{pkg:'com.example.two',label:'Two'}]`,
     'android-health-goal': `lmaNative=()=>true;Object.assign(lmaHealthCfg(),{on:true,goal:5000,src:'',last:now-26*36e5,today:{date:getToday(),count:5000},snap:{steps:[{date:getToday(),count:5000}],ex:{count:0,min:0}}})`,
     'android-health-waiting': `lmaNative=()=>true;Object.assign(lmaHealthCfg(),{on:true,last:0,today:{date:'2020-01-01',count:999},snap:{}})`,
+    'android-apps-unlabelled': `lmaNative=()=>true;lmaLoad().apps=[{pkg:'a.b'},{pkg:'c.d',label:null,icon:${JSON.stringify(ICON)}}]`, // stored with no label
   },
   'established-sunday': {
     'plan-rest': `state.plan={id:'athlete_foundation8',classId:'athlete',start:'2026-10-05',from:'2026-10-05',checks:{}};
@@ -80,7 +81,7 @@ const read = () => {
   renderOverview(); // Classic's own cards, then the tiles later segments wrap it with: health, apps, rewards
   const peek = q('petPeek'); peek.dataset.stamp = ''; renderPetPeek(); // read at once, before the cat's runtime fills its mood line
   return {
-    head: { date: q('ovDate').textContent, hello: q('ovHello').textContent, crest: q('ovCrest').innerHTML, solo: q('ovDuo').classList.contains('solo') },
+    head: { date: q('ovDate').textContent, hello: q('ovHello').textContent, edit: q('ovEditBtn').outerHTML, crest: q('ovCrest').innerHTML, solo: q('ovDuo').classList.contains('solo') },
     hero: q('ovHero').innerHTML, next: q('ovNext').innerHTML, rewards: q('ovRewards').innerHTML,
     apps: { shown: shown('ovApps'), html: q('ovApps').innerHTML }, health: { shown: shown('ovHealth'), html: q('ovHealth').innerHTML },
     attrs: q('ovAttrs').innerHTML, week: q('ovWeek').innerHTML, cat: peek.innerHTML, luck: q('ovLuck').innerHTML, recent: q('ovRecent').innerHTML,
