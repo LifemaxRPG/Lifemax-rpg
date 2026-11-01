@@ -59,7 +59,7 @@ s.sdOpenDirectorMeal({...ref,title:'Meal'});
 check('unmatched meal falls back to the date plan with an explanation',()=>{assert.equal(view,'meals');assert(messages.at(-1).includes('No Smart Diet meal'))});
 // Load the real scheduler/app. Expose closure-local handlers in this test only;
 // production has no test API and the scheduler itself remains unchanged.
-let director=read('src/features/life-director/logic.js');
+let director=read('src/features/life-director/engine.js')+read('src/features/life-director/logic.js');
 const marker='  return { mount, glance, widgetSnapshot, voice: voiceApi';assert(director.includes(marker));
 director=director.replace(marker,`  return { test: { doingName, scheduledMealRef, scheduledMeal, mealAnchor, roHtml, onClick, openFromGlance, dayBlocks,
  setRoot(r){root=r;ST={availability:{timezone:'Asia/Tokyo'},ui:{},schedule:null};} }, mount, glance, widgetSnapshot, voice: voiceApi`);

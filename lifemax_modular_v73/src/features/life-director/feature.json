@@ -6,9 +6,14 @@
   "version": "1.9.3",
   "type": "tab",
   "dependencies": [],
+  "scripts": [
+    "engine.js",
+    "logic.js"
+  ],
   "files": [
     "view.html",
     "style.css",
+    "engine.js",
     "logic.js"
   ]
 }
