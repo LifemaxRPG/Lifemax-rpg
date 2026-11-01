@@ -10,9 +10,13 @@ object Sections {
     const val QUESTS = "quests"
     const val GOALS = "goals"
     const val SETTINGS = "settings"
+    /** My time (phase 4B) */
+    const val SETUP = "setup"
+    /** not a section: the page's cover of Today and Week while there is no plan (phase 4B) */
+    const val FIRST_RUN = "first-run"
 
     /** What this screen can draw; the page's `covers` is the subset it will actually hand over. */
-    val DRAWN = setOf(TODAY, WEEK, QUESTS, GOALS, SETTINGS)
+    val DRAWN = setOf(TODAY, WEEK, QUESTS, GOALS, SETTINGS, SETUP)
 }
 
 /** One number of Week's three (sessions, time planned, XP on the table). */

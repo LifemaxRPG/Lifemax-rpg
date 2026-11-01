@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.TimeActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealActions
@@ -36,6 +37,7 @@ class DirectorActions(
     val session: SessionActions = SessionActions(),
     val timerMeal: TimerMealActions = TimerMealActions(),
     val moves: MoveDisruptActions = MoveDisruptActions(),
+    val time: TimeActions = TimeActions(),
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -123,6 +125,18 @@ class DirectorActions(
                 },
             ),
         moves = MoveDisruptActions(vm::closeSheet, vm.moves::moveTo, vm.moves::answer),
+        time =
+            TimeActions(
+                sleep = vm.time::setSleep,
+                weekend = vm.time::setWeekend,
+                weekendTimes = vm.time::setWeekendTimes,
+                saveSleep = vm.time::saveSleep,
+                rule = vm.time::openRule,
+                routine = vm.time::stepRoutine,
+                meals = vm.time::meals,
+                addGoal = vm.time::addGoal,
+                build = vm.time::build,
+            ),
         flick = { dir ->
             val p = vm.projection.value
             val to =

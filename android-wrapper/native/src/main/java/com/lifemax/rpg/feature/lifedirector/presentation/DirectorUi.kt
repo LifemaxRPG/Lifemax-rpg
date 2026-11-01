@@ -79,4 +79,6 @@ data class DirectorUi(
     val minutesDraft: MinutesDraft? = null,
     /** Today's write sent to the page and not answered yet ("done", "timer.start", ...) */
     val pendingToday: String? = null,
+    /** My time's sleep times and routine minutes not yet with the page (phase 4B) */
+    val timeDrafts: TimeDrafts = TimeDrafts(),
 )

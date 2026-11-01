@@ -183,8 +183,21 @@ fun LifeDirectorScreen(
             val quests = p.quests?.takeIf { p.tab == Sections.QUESTS }
             val goals = p.goals?.takeIf { p.tab == Sections.GOALS }
             val settings = p.settings?.takeIf { p.tab == Sections.SETTINGS }
+            val time = p.time?.takeIf { p.tab == Sections.SETUP }
+            // Today and Week with no plan show the first-run card (phase 4B)
+            val firstRun =
+                p.firstRun?.takeIf {
+                    (p.tab == Sections.TODAY && today == null) ||
+                        (p.tab == Sections.WEEK && week == null)
+                }
             val more =
-                today != null || week != null || quests != null || goals != null || settings != null
+                today != null ||
+                    week != null ||
+                    quests != null ||
+                    goals != null ||
+                    settings != null ||
+                    time != null ||
+                    firstRun != null
             val list = rememberLazyListState()
             val anchors = remember { GuideAnchors() }
             val guideRun = ui.guide?.takeIf { g -> p.guide?.key == g.key }
@@ -206,7 +219,7 @@ fun LifeDirectorScreen(
                         "dial.centre" -> 0
                         "upNext" -> 1
                         "footer" -> list.layoutInfo.totalItemsCount - 1
-                        else -> -1
+                        else -> time?.let { timeItemIndex(it, step.anchor) } ?: -1
                     }
                 if (index == 0) list.animateScrollToItem(0)
                 else if (index > 0) list.animateScrollToItem(index, scrollOffset = -200)
@@ -273,6 +286,9 @@ fun LifeDirectorScreen(
                 if (quests != null) questsBody(quests, actions, body)
                 if (goals != null) goalsBody(goals, ui, actions, body)
                 if (settings != null) settingsBody(settings, ui, actions, body)
+                if (time != null)
+                    timeBody(time, ui, actions, anchors, body, p.clock.h12, p.reducedMotion)
+                if (firstRun != null) firstRunBody(firstRun, actions, body)
             }
             if (confirm != null)
                 DialConfirmSheet(confirm, bottomInsetDp.dp, actions.change, actions.keep)

@@ -1412,11 +1412,12 @@ const LifeDirectorApp = (function () {
   /* the work arcs the mini sleep dial shows for context (a rotating shift, or anything on a weekday), in minutes after midnight */
   const sleepContext = () => (ST.availability.rules || []).filter(r => r.kind !== 'SLEEP' && r.kind !== 'PREFERRED' && (r.rotation || (r.days || []).some(d => d >= 1 && d <= 5)))
     .map(r => ({ from: r.startMin, to: r.startMin + r.durationMin }));
+  const MINI_GROUP = 'Sleep window'; // the mini dial's name, for a screen reader
   function miniDialHtml(bed, wake) {
     const a0 = bed / 4, a1 = (wake <= bed ? wake + 1440 : wake) / 4, dur = ((wake - bed) + 1440) % 1440 || 1440;
     const ctx = sleepContext().map(c => '<path class="ld-o ld-c-work ld-ctx" d="' + arcD(DIAL.RO, c.from / 4, c.to / 4) + '" stroke-width="' + DIAL.WO + '"/>').join('');
     const h = (end, a) => { const [x, y] = polar(DIAL.RO, a); return '<g class="ld-hd ld-c-sleep" data-end="' + end + '" role="slider" tabindex="0" aria-label="' + (end === 'start' ? 'Bedtime' : 'Wake up') + '"><circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="26"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="12"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"/></g>'; };
-    return '<svg viewBox="0 0 360 360" aria-hidden="false" role="group" aria-label="Sleep window">' + faceHtml() + ctx +
+    return '<svg viewBox="0 0 360 360" aria-hidden="false" role="group" aria-label="' + MINI_GROUP + '">' + faceHtml() + ctx +
       '<path class="ld-o ld-c-sleep ld-mini-arc" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '"/>' + h('start', a0) + h('end', a1 % 360) + '</svg>' +
       '<div class="ld-core"><small class="ld-core-k">Sleep</small><b class="ld-core-big ld-mini-dur">' + mins(dur) + '</b><span class="ld-core-s ld-mini-span">' + fHm(bed) + ' – ' + fHm(wake) + '</span></div>';
   }
@@ -2907,7 +2908,7 @@ const LifeDirectorApp = (function () {
       dayIndex: idx,
       isToday,
       strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
-      dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) })), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
+      dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: nativeHourWords(), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
         nativeHandles(handles, d0, d1), { build: nativeBuild(d0, d1, arcs, isToday) }),
       hint: DIAL_HINT,
       core: nativeCore(day, blocks, isToday, now, st),
@@ -3390,17 +3391,22 @@ const LifeDirectorApp = (function () {
   /* My time as data for a native screen (phase 4B): timeModel's decisions, and what the mini sleep dial needs to follow the finger in
      the page's words: its snap (step, minutes), the page's clock text for every quarter hour (clock[k] is minute 15k), the length
      text for every quarter-hour length (lengths[k] is 15k minutes; 0 is a full day, as the dial draws it) and its work arcs */
+  /* the dial face a native screen draws (Today's dial, My time's mini dial, the first-run card): the page's radii and its hour words
+     in the person's clock style */
+  const nativeHourWords = () => [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({ h, word: hourWord(h) }));
+  const nativeFace = () => ({ radii: DIAL, hourWords: nativeHourWords() });
   function nativeTime() {
     if (!ST) boot();
     const T = timeModel(), quarters = f => Array.from({ length: 1440 / MINI_SNAP }, (_, k) => f(k * MINI_SNAP));
-    Object.assign(T.sleep, { step: MINI_SNAP, context: sleepContext(), clock: quarters(fHm), lengths: quarters(m => mins(m || 1440)) });
+    Object.assign(T.sleep, { step: MINI_SNAP, context: sleepContext(), clock: quarters(fHm), lengths: quarters(m => mins(m || 1440)), face: nativeFace() });
+    T.sleep.labels.group = MINI_GROUP;
     return T;
   }
   /* the first-run card as data for a native screen: what the page draws while there is no plan (null once there is one) */
   function nativeFirstRun() {
     if (!ST) boot();
     if (ST.setupComplete && ST.schedule) return null;
-    return { arcs: FIRST_RUN.arcs.map(a => Object.assign({}, a)), title: FIRST_RUN.title, text: FIRST_RUN.text, button: FIRST_RUN.button, section: FIRST_RUN.section };
+    return { arcs: FIRST_RUN.arcs.map(a => Object.assign({}, a)), title: FIRST_RUN.title, text: FIRST_RUN.text, button: FIRST_RUN.button, section: FIRST_RUN.section, face: nativeFace() };
   }
   /* My time's sheets as data (phase 4B): the commitment sheet (id: a commitment's, or '' for a new one), the goal-kind grid, and a goal
      form (id: the kind). A commitment removed since answers gone; a kind of goal the page does not know has nothing to draw. */

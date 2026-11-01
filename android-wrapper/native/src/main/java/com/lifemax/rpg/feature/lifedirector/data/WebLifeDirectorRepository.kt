@@ -2,7 +2,6 @@ package com.lifemax.rpg.feature.lifedirector.data
 
 import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.core.data.pageTokens
-import com.lifemax.rpg.feature.lifedirector.domain.DirectorClock
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorHeader
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorTab
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
@@ -33,7 +32,6 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
         if (old?.session == session && sequence <= old.sequence) return
 
         val header = j.getJSONObject("header")
-        val clock = j.getJSONObject("clock")
         val tabs =
             j.getJSONArray("tabs").objects().map {
                 DirectorTab(it.getString("id"), it.getString("label"), it.getString("icon"))
@@ -50,7 +48,7 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                         StatusDot.valueOf(header.getString("dot").uppercase()),
                         header.getString("line"),
                     ),
-                clock = DirectorClock(clock.getString("time"), clock.getString("day")),
+                clock = j.directorClock(),
                 tabs = tabs,
                 tab = tab,
                 banner = j.banner(),
@@ -71,6 +69,8 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 sheet = j.sheet(),
                 celebrationTarget = j.celebrationTarget(),
                 intent = j.intent(),
+                time = j.time(),
+                firstRun = j.firstRun(),
             )
     }
 }

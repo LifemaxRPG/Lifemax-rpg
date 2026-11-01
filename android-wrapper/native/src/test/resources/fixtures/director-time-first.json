@@ -1,7 +1,7 @@
 {
  "protocol": 1,
  "webSessionId": "director-fixture",
- "sequence": 5,
+ "sequence": 3,
  "header": {
   "dot": "off",
   "line": "Not set up yet"
@@ -105,7 +105,8 @@
     "weekendBed": "Weekend bedtime",
     "weekendWake": "Weekend wake",
     "bedHandle": "Bedtime",
-    "wakeHandle": "Wake up"
+    "wakeHandle": "Wake up",
+    "group": "Sleep window"
    },
    "save": {
     "label": "Save sleep",
@@ -317,7 +318,53 @@
     "23h 15m",
     "23h 30m",
     "23h 45m"
-   ]
+   ],
+   "face": {
+    "radii": {
+     "C": 180,
+     "RO": 130,
+     "WO": 18,
+     "RI": 101,
+     "WI": 20,
+     "T0": 146,
+     "T1": 152,
+     "RL": 164
+    },
+    "hourWords": [
+     {
+      "h": 0,
+      "word": "Midnight"
+     },
+     {
+      "h": 3,
+      "word": "3 AM"
+     },
+     {
+      "h": 6,
+      "word": "6 AM"
+     },
+     {
+      "h": 9,
+      "word": "9 AM"
+     },
+     {
+      "h": 12,
+      "word": "Noon"
+     },
+     {
+      "h": 15,
+      "word": "3 PM"
+     },
+     {
+      "h": 18,
+      "word": "6 PM"
+     },
+     {
+      "h": 21,
+      "word": "9 PM"
+     }
+    ]
+   }
   },
   "commitments": {
    "title": "Work, school and fixed commitments",
