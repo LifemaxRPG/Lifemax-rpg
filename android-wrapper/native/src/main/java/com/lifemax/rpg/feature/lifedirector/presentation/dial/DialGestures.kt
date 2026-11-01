@@ -221,5 +221,5 @@ internal fun HandleTargets(
     }
 }
 
-private const val LATER = "Move 15 minutes later"
-private const val EARLIER = "Move 15 minutes earlier"
+internal const val LATER = "Move 15 minutes later"
+internal const val EARLIER = "Move 15 minutes earlier"
