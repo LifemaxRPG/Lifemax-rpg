@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -21,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -147,6 +151,7 @@ private fun StatusLight(dot: StatusDot) {
  * Life Director's sections; every one but the current one opens on the page. 38 dp pills in a 48 dp
  * tall row that scrolls to the panel's edges, on a band of the panel's own black.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun SectionTabs(tabs: List<DirectorTab>, current: String, onTap: (Tap) -> Unit) {
     Row(
@@ -160,8 +165,15 @@ fun SectionTabs(tabs: List<DirectorTab>, current: String, onTap: (Tap) -> Unit) 
         tabs.forEach { tab ->
             val on = tab.id == current
             val shape = RoundedCornerShape(12.dp)
+            // the chosen tab is brought into view sideways, as the page scrolls its active tab into
+            // view
+            val bring = remember { BringIntoViewRequester() }
+            if (on) LaunchedEffect(current) { bring.bringIntoView() }
             Box(
-                Modifier.heightIn(min = 48.dp).selectable(on, role = Role.Tab) {
+                Modifier.heightIn(min = 48.dp).bringIntoViewRequester(bring).selectable(
+                    on,
+                    role = Role.Tab,
+                ) {
                     if (!on) onTap(Tap("tab", tab.id))
                 },
                 contentAlignment = Alignment.Center,

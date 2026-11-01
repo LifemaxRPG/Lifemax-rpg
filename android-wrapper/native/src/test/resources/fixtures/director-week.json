@@ -49,7 +49,9 @@
  "covers": [
   "today",
   "week",
-  "quests"
+  "quests",
+  "goals",
+  "settings"
  ],
  "today": null,
  "week": {
@@ -948,6 +950,8 @@
   }
  },
  "quests": null,
+ "goals": null,
+ "settings": null,
  "guide": {
   "key": "week",
   "auto": false,

@@ -273,13 +273,13 @@ async function director(b) {
   await directorDay.seed(p, { planned: true });
   await p.addInitScript(`(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector', getPlatform: () => 'android',
     registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeLifeDirector: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
+      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1', 'director.goals.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
   await p.goto('file://' + out, { timeout: 120000 });
   await p.evaluate(() => { lmaThumbWarm = async () => { }; lmaLoad().nativeOverview = false; setNativeDirectorEnabled(true) });
   await directorDay.play(p);
   await p.evaluate(() => lmaNavTo('life-director'));
   await p.clock.runFor(1500);
-  for (const section of ['week', 'quests']) {
+  for (const section of ['week', 'quests', 'goals', 'settings']) {
     await p.evaluate((s) => { if (!LifeDirector.native.section(s).ok) throw Error('no section ' + s) }, section);
     await p.clock.runFor(300);
     const snap = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));

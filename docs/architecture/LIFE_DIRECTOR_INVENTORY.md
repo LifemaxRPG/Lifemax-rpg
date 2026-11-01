@@ -45,6 +45,38 @@ Session, timer, meal, Move and "Something came up" sheets, Done, Skip, Pin, Re-p
 | Empty list | `quests.empty` | |
 | Milestones: summary, note, rows | `quests.milestones` | absent when none is unlocked |
 
-## Goals, Settings (3B), My time and set-up (4B), Lab
+## Goals (3B, `director.goals.v1`)
+
+| Fact or action | Projection / command | Notes |
+|---|---|---|
+| How your time is shared | `goals.explain` | |
+| Each goal: name, kind and level (paused) | `goals.cards[]` | paused cards dimmed, as the page's .paused |
+| Priority | `do goalPriority {id, value}` | the page's select drawn as five words in a row |
+| Target and scheduled share, sessions line | `cards[].share` (0..1 with the page's percentages) | from `goalShare`, with the engine's fallback |
+| Trajectory warning | `cards[].warning` | |
+| Clarify ("what this goal looks like") | `do clarify {id, arch}` | |
+| Pause / Resume | `do goalPause {id, paused}` | the state wanted, so a repeat changes nothing |
+| Remove | asks first in the page's words (`removeConfirm`), then `do goalRemove {id}` | |
+| No goals yet | `goals.empty` | |
+| Add a goal | hands over `addGoal` | the page's goal sheet until 4B |
+
+## Settings (3B, `director.goals.v1`)
+
+| Fact or action | Projection / command | Notes |
+|---|---|---|
+| How much to schedule | `do pref {key: intensityLevel}` | |
+| The three daily limits and the grace period | `do prefRange {key, value}` | sliders with the page's label at every stop (31, 23, 15, 16), sent when the finger lets go |
+| Rest days | `do restDay {day, on}` | the state wanted |
+| Planning window, what a miss costs | `do pref` | the rest tokens in bold (spans) |
+| Show the guide again | `do tourReset` | |
+| Copy backup | `do exportBackup` answers the text; the phone's clipboard takes it | |
+| Restore backup | a sheet with a field (its draft kept while the screen hides), then `do importBackup {text}` | a refused restore reopens the sheet with the draft; a backup that cannot be saved takes itself back |
+| Reset Life Director | asks first in the page's words, then `do reset` | |
+| Diagnostics, Simulation Lab switch | `settings.diagnostics`, `do labToggle {on}` | folded, as the page's details; the Lab section itself stays the page's |
+
+Every `do` answers ok only once the page has saved; a refused write answers with the page's "Not saved" words, which the
+screen shows, and the page's banner says so too.
+
+## My time and set-up (4B), Lab
 
 Page: their tabs hand over until their merge. Lab stays the page's (a developer harness).

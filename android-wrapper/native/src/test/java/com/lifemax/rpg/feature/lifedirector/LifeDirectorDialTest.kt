@@ -73,6 +73,8 @@ class LifeDirectorDialTest {
 
         override fun tourSeen(key: String, finished: Boolean) = "seen-$key"
 
+        override fun change(name: String, args: Map<String, Any>) = "change-$name"
+
         override fun dialDrop(key: String, place: DialPlace) = record("dialDrop", key, place)
 
         override fun dialApply(key: String, place: DialPlace) = record("dialApply", key, place)

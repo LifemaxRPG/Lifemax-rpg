@@ -63,6 +63,12 @@ class LifeDirectorTest {
         }
 
         val seen = mutableListOf<Pair<String, Boolean>>()
+        val changes = mutableListOf<Pair<String, Map<String, Any>>>()
+
+        override fun change(name: String, args: Map<String, Any>): String {
+            changes += name to args
+            return "change-${changes.size}"
+        }
 
         override fun tourSeen(key: String, finished: Boolean): String {
             seen += key to finished
@@ -189,7 +195,10 @@ class LifeDirectorTest {
         val repo = repository()
         repo.accept(fixture("week").put("sequence", 1000), true)
         val w = repo.state.value!!.week!!
-        assertEquals(listOf("today", "week", "quests"), repo.state.value!!.covers)
+        assertEquals(
+            listOf("today", "week", "quests", "goals", "settings"),
+            repo.state.value!!.covers,
+        )
         assertEquals(7, w.days.size)
         assertTrue(w.days.first().today && w.days.drop(1).none { it.today })
         assertTrue(
@@ -265,6 +274,95 @@ class LifeDirectorTest {
     // The view model
 
     @Test
+    fun aChangeIsSentOnceAndARefusalShowsThePagesWords() {
+        val (repo, vm, commands) = viewModel()
+        repo.accept(fixture("goals").put("webSessionId", "c").put("sequence", 9), true)
+        vm.opened()
+        val id = repo.state.value!!.goals!!.cards.first().id
+        vm.change("goalPriority", mapOf("id" to id, "value" to 1))
+        vm.change("goalPriority", mapOf("id" to id, "value" to 2)) // one at a time
+        assertEquals(1, commands.changes.size)
+        assertEquals("goalPriority", vm.ui.value.pendingChange)
+        vm.onReply(
+            DirectorReply("change-1", "do", false, "Not saved: the quota has been exceeded.")
+        )
+        assertNull(vm.ui.value.pendingChange)
+        assertEquals("Not saved: the quota has been exceeded.", vm.ui.value.toast?.text)
+    }
+
+    @Test
+    fun removingAGoalAsksFirstWithThePagesWords() {
+        val (repo, vm, commands) = viewModel()
+        repo.accept(fixture("goals").put("webSessionId", "c").put("sequence", 9), true)
+        vm.opened()
+        val g = repo.state.value!!.goals!!
+        vm.askRemoveGoal(g.cards.first().id)
+        assertEquals(g.removeConfirm, vm.ui.value.confirm?.text)
+        assertTrue(commands.changes.isEmpty())
+        vm.cancelChange()
+        assertTrue(commands.changes.isEmpty())
+        vm.askRemoveGoal(g.cards.first().id)
+        vm.confirmChange()
+        assertEquals(
+            "goalRemove" to mapOf<String, Any>("id" to g.cards.first().id),
+            commands.changes.single(),
+        )
+    }
+
+    @Test
+    fun copyingABackupPutsThePagesTextOnTheClipboardAndAFailedRestoreKeepsTheDraft() {
+        val (repo, vm, commands) = viewModel()
+        repo.accept(fixture("settings").put("webSessionId", "c").put("sequence", 9), true)
+        vm.opened()
+        vm.change("exportBackup")
+        vm.onReply(DirectorReply("change-1", "do", true, "", text = "{backup}"))
+        assertEquals("{backup}", vm.ui.value.copyText)
+        vm.copied(true)
+        assertNull(vm.ui.value.copyText)
+        assertEquals("Backup copied to clipboard", vm.ui.value.toast?.text)
+        vm.openRestore()
+        vm.restoreDraft("  not a backup ")
+        vm.submitRestore()
+        assertEquals(
+            "importBackup" to mapOf<String, Any>("text" to "not a backup"),
+            commands.changes.last(),
+        )
+        assertFalse(vm.ui.value.restoring)
+        vm.onReply(DirectorReply("change-2", "do", false, "That is not a Life Director backup."))
+        assertTrue("the sheet comes back with the draft to fix", vm.ui.value.restoring)
+        assertEquals("  not a backup ", vm.ui.value.restoreDraft)
+        vm.hidden()
+        assertFalse(vm.ui.value.restoring)
+        assertEquals(
+            "the draft survives the screen hiding",
+            "  not a backup ",
+            vm.ui.value.restoreDraft,
+        )
+    }
+
+    @Test
+    fun goalsAndSettingsDecodeStrictly() {
+        val repo = repository()
+        repo.accept(fixture("goals").put("sequence", 2000), true)
+        val g = repo.state.value!!.goals!!
+        assertEquals(listOf("Top", "High", "Medium", "Light", "Low"), g.priorities.map { it.label })
+        assertTrue(g.cards.isNotEmpty())
+        repo.accept(fixture("settings").put("sequence", 2001), true)
+        val s = repo.state.value!!.settings!!
+        assertEquals(listOf(31, 23, 15), s.ranges.map { it.stops.size })
+        assertEquals(16, s.grace.stops.size)
+        assertEquals("2h", s.ranges[0].labelAt(120))
+        val bad = fixture("settings").put("sequence", 2002)
+        bad.getJSONObject("settings")
+            .getJSONArray("ranges")
+            .getJSONObject(0)
+            .getJSONArray("stops")
+            .remove(0)
+        assertThrows(IllegalArgumentException::class.java) { repo.accept(bad) }
+        assertEquals(31, repo.state.value!!.settings!!.ranges[0].stops.size)
+    }
+
+    @Test
     fun weeksGuideStartsByItselfOnceAndEndsWithTheSeenCommand() {
         val (repo, vm, commands) = viewModel()
         val due = fixture("week").put("webSessionId", "g").put("sequence", 7)
@@ -327,7 +425,7 @@ class LifeDirectorTest {
         assertEquals("quests", vm.ui.value.pendingSection)
         vm.onReply(DirectorReply("section-1", "section", true, ""))
         assertNull(vm.ui.value.pendingSection)
-        assertFalse("Goals is not drawn here, so its tap goes to the page", vm.draws("goals"))
+        assertFalse("My time is not drawn here, so its tap goes to the page", vm.draws("setup"))
         vm.gotoDay(3)
         assertEquals("today@3", commands.sections.last())
         assertEquals(3, vm.ui.value.pendingDay)

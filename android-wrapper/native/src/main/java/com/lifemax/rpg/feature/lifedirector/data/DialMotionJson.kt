@@ -174,6 +174,7 @@ fun directorReply(r: JSONObject): DirectorReply =
         changed = r.optBoolean("changed"),
         moved = r.optBoolean("moved"),
         confirm = r.optJSONObject("confirm")?.let { runCatching { confirm(it) }.getOrNull() },
+        text = r.optString("text"),
     )
 
 private fun confirm(c: JSONObject) =

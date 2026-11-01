@@ -49,7 +49,9 @@
  "covers": [
   "today",
   "week",
-  "quests"
+  "quests",
+  "goals",
+  "settings"
  ],
  "today": null,
  "week": null,
@@ -213,6 +215,8 @@
    ]
   }
  },
+ "goals": null,
+ "settings": null,
  "guide": null,
  "tokens": {
   "bg": 4278980114,

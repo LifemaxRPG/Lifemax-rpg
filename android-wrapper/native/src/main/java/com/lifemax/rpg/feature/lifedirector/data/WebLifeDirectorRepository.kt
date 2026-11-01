@@ -65,6 +65,8 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 week = j.week(),
                 quests = j.quests(),
                 guide = j.guide(),
+                goals = j.goals(),
+                settings = j.settings(),
             )
     }
 }

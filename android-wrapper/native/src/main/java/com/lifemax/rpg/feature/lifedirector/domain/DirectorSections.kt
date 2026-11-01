@@ -8,9 +8,11 @@ object Sections {
     const val TODAY = "today"
     const val WEEK = "week"
     const val QUESTS = "quests"
+    const val GOALS = "goals"
+    const val SETTINGS = "settings"
 
     /** What this screen can draw; the page's `covers` is the subset it will actually hand over. */
-    val DRAWN = setOf(TODAY, WEEK, QUESTS)
+    val DRAWN = setOf(TODAY, WEEK, QUESTS, GOALS, SETTINGS)
 }
 
 /** One number of Week's three (sessions, time planned, XP on the table). */

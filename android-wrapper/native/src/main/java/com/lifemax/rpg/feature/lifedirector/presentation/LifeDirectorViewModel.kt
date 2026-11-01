@@ -52,8 +52,9 @@ class LifeDirectorViewModel(
         handedOver = false
         dayRequest = null
         sectionRequest = null
+        changeRequest = null
         letGo()
-        mutableUi.update { it.copy(pendingDay = null, pendingSection = null) }
+        mutableUi.update { it.copy(pendingDay = null, pendingSection = null, pendingChange = null) }
     }
 
     /**
@@ -65,7 +66,8 @@ class LifeDirectorViewModel(
         // closed, not seen: it may start by itself again when the screen comes back (A24); the page
         // starts none of its own
         ui.value.guide?.let { autoGuides.remove(it.key) }
-        mutableUi.update { it.copy(guide = null) }
+        // sheets close too (no reply reaches a hidden screen); the restore draft stays
+        mutableUi.update { it.copy(guide = null, confirm = null, restoring = false) }
     }
 
     /** A new projection arrived: a guide whose section has gone ends. */
@@ -73,7 +75,12 @@ class LifeDirectorViewModel(
 
     /** A handle is held or the page is asked about one: the rest of the screen waits. */
     val busy: Boolean
-        get() = ui.value.hold != null || ui.value.ask != null || ui.value.guide != null
+        get() =
+            ui.value.hold != null ||
+                ui.value.ask != null ||
+                ui.value.guide != null ||
+                ui.value.confirm != null ||
+                ui.value.restoring
 
     fun showDay(index: Int) {
         val today = projection.value?.today ?: return
@@ -100,6 +107,105 @@ class LifeDirectorViewModel(
         if (busy || !draws(id) || id == (ui.value.pendingSection ?: p.tab)) return
         mutableUi.update { it.copy(pendingSection = id) }
         sectionRequest = commands.showSection(id)
+    }
+
+    // Goals and Settings (phase 3B)
+
+    private var changeRequest: String? = null
+
+    /**
+     * A change to a goal or a setting: sent to the page, one at a time (the control shows it
+     * pending); the page re-plans or saves and the projection that comes with the reply shows the
+     * result. A refused one shows the page's words.
+     */
+    fun change(name: String, args: Map<String, Any> = emptyMap()) {
+        if (busy || ui.value.pendingChange != null) return
+        mutableUi.update { it.copy(pendingChange = name) }
+        changeRequest = commands.change(name, args)
+    }
+
+    /** Remove [goalId], once the player has said yes to the page's question. */
+    fun askRemoveGoal(goalId: String) {
+        val g = projection.value?.goals ?: return
+        if (busy) return
+        val card = g.cards.firstOrNull { it.id == goalId } ?: return
+        mutableUi.update {
+            it.copy(
+                confirm =
+                    ChangeConfirm(
+                        card.title,
+                        g.removeConfirm,
+                        card.remove,
+                        "goalRemove",
+                        mapOf("id" to goalId),
+                    )
+            )
+        }
+    }
+
+    /** Reset Life Director, once the player has said yes to the page's question. */
+    fun askReset() {
+        val d = projection.value?.settings?.data ?: return
+        if (busy) return
+        mutableUi.update {
+            it.copy(confirm = ChangeConfirm(d.reset, d.resetConfirm, d.reset, "reset", emptyMap()))
+        }
+    }
+
+    fun confirmChange() {
+        val c = ui.value.confirm ?: return
+        mutableUi.update { it.copy(confirm = null) }
+        change(c.name, c.args)
+    }
+
+    fun cancelChange() = mutableUi.update { it.copy(confirm = null) }
+
+    /**
+     * Restore backup: the sheet with a field to paste into; its draft stays while the screen hides
+     * (A24 drafts).
+     */
+    fun openRestore() {
+        if (busy) return
+        mutableUi.update { it.copy(restoring = true) }
+    }
+
+    fun restoreDraft(text: String) = mutableUi.update { it.copy(restoreDraft = text) }
+
+    fun closeRestore() = mutableUi.update { it.copy(restoring = false) }
+
+    fun submitRestore() {
+        val text = ui.value.restoreDraft.trim()
+        if (text.isEmpty()) return
+        mutableUi.update { it.copy(restoring = false) }
+        if (ui.value.pendingChange != null) return
+        mutableUi.update { it.copy(pendingChange = "importBackup") }
+        changeRequest = commands.change("importBackup", mapOf("text" to text))
+    }
+
+    /** The backup's text reached the clipboard (or could not); the screen says which. */
+    fun copied(ok: Boolean) {
+        mutableUi.update { it.copy(copyText = null) }
+        show(if (ok) "Backup copied to clipboard" else "Could not copy the backup.")
+    }
+
+    private fun changed(reply: DirectorReply) {
+        changeRequest = null
+        val name = ui.value.pendingChange
+        mutableUi.update { it.copy(pendingChange = null) }
+        when {
+            !reply.ok -> {
+                show(reply.message.ifBlank { "Nothing was changed." })
+                if (name == "importBackup")
+                    mutableUi.update {
+                        it.copy(restoring = true)
+                    } // the draft is still there to fix
+            }
+            name == "exportBackup" -> mutableUi.update { it.copy(copyText = reply.text) }
+            name == "importBackup" -> {
+                mutableUi.update { it.copy(restoreDraft = "") }
+                show(reply.message.ifBlank { "Backup restored" })
+            }
+        }
     }
 
     // The guide (coach marks)
@@ -180,6 +286,7 @@ class LifeDirectorViewModel(
                     if (!reply.ok)
                         show(reply.message.ifBlank { "That section is not in Life Director." })
                 }
+            "do" -> if (reply.requestId == changeRequest) changed(reply)
             "dialDrop" -> if (reply.requestId == dropRequest) dropped(reply)
             "dialApply" -> if (reply.requestId == applyRequest) applied(reply)
         }
@@ -355,6 +462,15 @@ data class DialAsk(
     val applying: Boolean = false,
 )
 
+/** A change that asks first: the page's question, its button, and the change it then sends. */
+data class ChangeConfirm(
+    val title: String,
+    val text: String,
+    val button: String,
+    val name: String,
+    val args: Map<String, Any>,
+)
+
 /** A guide being shown: which, and its step. */
 data class GuideRun(val key: String, val step: Int)
 
@@ -363,6 +479,13 @@ data class DirectorUi(
     /** the section asked for, shown as chosen until the page answers */
     val pendingSection: String? = null,
     val guide: GuideRun? = null,
+    /** the change sent to the page and not answered yet */
+    val pendingChange: String? = null,
+    val confirm: ChangeConfirm? = null,
+    val restoring: Boolean = false,
+    val restoreDraft: String = "",
+    /** the backup the page answered with, for the screen to put on the clipboard */
+    val copyText: String? = null,
     val earlierOpen: Boolean = false,
     val toast: DirectorToast? = null,
     val hold: DialHold? = null,

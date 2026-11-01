@@ -1,0 +1,168 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 3,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "goals",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "reducedMotion": false,
+ "covers": [
+  "today",
+  "week",
+  "quests",
+  "goals",
+  "settings"
+ ],
+ "today": null,
+ "week": null,
+ "quests": null,
+ "goals": {
+  "explain": {
+   "title": "How your time is shared",
+   "text": "Each goal gets a share of activity time in proportion to its priority. First every goal reaches its weekly minimum, then deadline quests, then weekly targets, and extra volume only if your intensity setting allows it. No single goal may take more than 60% of the time while another is below its minimum."
+  },
+  "priorities": [
+   {
+    "value": 5,
+    "label": "Top"
+   },
+   {
+    "value": 4,
+    "label": "High"
+   },
+   {
+    "value": 3,
+    "label": "Medium"
+   },
+   {
+    "value": 2,
+    "label": "Light"
+   },
+   {
+    "value": 1,
+    "label": "Low"
+   }
+  ],
+  "cards": [
+   {
+    "id": "g-muscle",
+    "title": "Build muscle",
+    "sub": "Build Muscle · intermediate",
+    "paused": false,
+    "priority": 4,
+    "share": {
+     "target": 0.4444444444444444,
+     "targetText": "44%",
+     "scheduled": 0.6190476190476191,
+     "scheduledText": "62%",
+     "line": "8 sessions · 6h 30m this week · Resistance Training 2–3×, Meal Prep Batch 1×, Progress Check-in 1×"
+    },
+    "warning": null,
+    "clarify": null,
+    "pause": "Pause",
+    "remove": "Remove"
+   },
+   {
+    "id": "g-spanish",
+    "title": "Learn Spanish",
+    "sub": "Learn a Language · novice",
+    "paused": false,
+    "priority": 3,
+    "share": {
+     "target": 0.3333333333333333,
+     "targetText": "33%",
+     "scheduled": 0.2619047619047619,
+     "scheduledText": "26%",
+     "line": "8 sessions · 2h 45m this week · Vocab Review 4×, Grammar & Drills 2×, Speaking & Listening 1×, Weekly Skill Check 1×"
+    },
+    "warning": null,
+    "clarify": null,
+    "pause": "Pause",
+    "remove": "Remove"
+   },
+   {
+    "id": "g-read",
+    "title": "Read more",
+    "sub": "Read More · novice",
+    "paused": false,
+    "priority": 2,
+    "share": {
+     "target": 0.2222222222222222,
+     "targetText": "22%",
+     "scheduled": 0.11904761904761904,
+     "scheduledText": "12%",
+     "line": "3 sessions · 1h 15m this week · Focused Reading 3×, Reading Checkpoint 0×"
+    },
+    "warning": null,
+    "clarify": null,
+    "pause": "Pause",
+    "remove": "Remove"
+   }
+  ],
+  "empty": null,
+  "add": "Add a goal",
+  "removeConfirm": "Remove this goal? Its future sessions are removed; completed ones stay in your history."
+ },
+ "settings": null,
+ "guide": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

@@ -21,6 +21,12 @@ interface LifeDirectorCommands {
     fun gotoDay(index: Int): String
 
     /**
+     * A change to a goal or a setting (phase 3B): one of the page's own functions by [name], with
+     * its [args]; the page re-plans or saves and answers ok only once saved.
+     */
+    fun change(name: String, args: Map<String, Any>): String
+
+    /**
      * A guide the screen drew was finished, or skipped (Skip, Back): the page records it as seen.
      */
     fun tourSeen(key: String, finished: Boolean): String

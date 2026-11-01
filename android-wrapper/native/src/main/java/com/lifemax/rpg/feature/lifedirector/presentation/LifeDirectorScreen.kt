@@ -37,14 +37,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
@@ -56,15 +54,14 @@ import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
-import com.lifemax.rpg.feature.lifedirector.domain.DirectorQuests
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
-import com.lifemax.rpg.feature.lifedirector.domain.DirectorWeek
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.SectionFlick
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
+import com.lifemax.rpg.feature.lifedirector.presentation.components.ConfirmChangeSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayMix
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayStrip
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DialConfirmSheet
@@ -78,6 +75,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalDirecto
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderHeading
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
 import com.lifemax.rpg.feature.lifedirector.presentation.components.RemindersCard
+import com.lifemax.rpg.feature.lifedirector.presentation.components.RestoreSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.SectionTabs
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Slice
 import com.lifemax.rpg.feature.lifedirector.presentation.components.UpNextCard
@@ -91,18 +89,8 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.CoachMarks
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideAnchors
-import com.lifemax.rpg.feature.lifedirector.presentation.guide.guideAnchor
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.MilestoneRowView
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.MilestonesHeading
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestBoardCard
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestRowView
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestsEmpty
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekFitCard
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekLegend
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekRow
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekStats
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekTicks
-import com.lifemax.rpg.feature.lifedirector.presentation.sections.XpYieldCard
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
 import kotlinx.coroutines.delay
 
 /**
@@ -133,6 +121,16 @@ fun LifeDirectorRoute(
         }
     }
     BackHandler(enabled = visible && ui.ask?.confirm != null) { vm.keep() }
+    BackHandler(enabled = visible && ui.confirm != null) { vm.cancelChange() }
+    BackHandler(enabled = visible && ui.restoring) { vm.closeRestore() }
+    // the backup the page answered with goes on the phone's clipboard, as the page's Copy backup
+    // puts it on the browser's
+    val clipboard = LocalClipboardManager.current
+    ui.copyText?.let { text ->
+        LaunchedEffect(text) {
+            vm.copied(runCatching { clipboard.setText(AnnotatedString(text)) }.isSuccess)
+        }
+    }
     val context = LocalContext.current
     val buzz = remember(context) { VibratorBuzz(context) }
     val actions = remember(vm, emit) { DirectorActions(vm, emit) }
@@ -164,6 +162,13 @@ class DirectorActions(
     val guideBack: () -> Unit = {},
     val guideSkip: () -> Unit = {},
     val flick: (Int) -> Unit = {},
+    val goals: GoalActions = GoalActions(),
+    val settings: SettingsActions = SettingsActions(),
+    val confirmChange: () -> Unit = {},
+    val cancelChange: () -> Unit = {},
+    val restoreDraft: (String) -> Unit = {},
+    val submitRestore: () -> Unit = {},
+    val closeRestore: () -> Unit = {},
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -190,6 +195,31 @@ class DirectorActions(
         guideNext = vm::guideNext,
         guideBack = vm::guideBack,
         guideSkip = vm::guideSkip,
+        goals =
+            GoalActions(
+                priority = { id, v -> vm.change("goalPriority", mapOf("id" to id, "value" to v)) },
+                pause = { id, paused ->
+                    vm.change("goalPause", mapOf("id" to id, "paused" to paused))
+                },
+                remove = vm::askRemoveGoal,
+                clarify = { id, arch -> vm.change("clarify", mapOf("id" to id, "arch" to arch)) },
+            ),
+        settings =
+            SettingsActions(
+                choose = { key, v -> vm.change("pref", mapOf("key" to key, "value" to v)) },
+                range = { key, v -> vm.change("prefRange", mapOf("key" to key, "value" to v)) },
+                restDay = { day, on -> vm.change("restDay", mapOf("day" to day, "on" to on)) },
+                replayGuides = { vm.change("tourReset") },
+                copy = { vm.change("exportBackup") },
+                restore = vm::openRestore,
+                reset = vm::askReset,
+                lab = { on -> vm.change("labToggle", mapOf("on" to on)) },
+            ),
+        confirmChange = vm::confirmChange,
+        cancelChange = vm::cancelChange,
+        restoreDraft = vm::restoreDraft,
+        submitRestore = vm::submitRestore,
+        closeRestore = vm::closeRestore,
         flick = { dir ->
             val p = vm.projection.value
             val to =
@@ -248,7 +278,10 @@ fun LifeDirectorScreen(
             val today = p.today?.takeIf { p.tab == Sections.TODAY }
             val week = p.week?.takeIf { p.tab == Sections.WEEK }
             val quests = p.quests?.takeIf { p.tab == Sections.QUESTS }
-            val more = today != null || week != null || quests != null
+            val goals = p.goals?.takeIf { p.tab == Sections.GOALS }
+            val settings = p.settings?.takeIf { p.tab == Sections.SETTINGS }
+            val more =
+                today != null || week != null || quests != null || goals != null || settings != null
             val list = rememberLazyListState()
             val anchors = remember { GuideAnchors() }
             val guideRun = ui.guide?.takeIf { g -> p.guide?.key == g.key }
@@ -319,9 +352,26 @@ fun LifeDirectorScreen(
                 if (today != null) todayBelow(today, ui, actions, animate)
                 if (week != null) weekBody(week, ui, actions, anchors, body)
                 if (quests != null) questsBody(quests, actions, body)
+                if (goals != null) goalsBody(goals, ui, actions, body)
+                if (settings != null) settingsBody(settings, ui, actions, body)
             }
             if (confirm != null)
                 DialConfirmSheet(confirm, bottomInsetDp.dp, actions.change, actions.keep)
+            ui.confirm?.let { c ->
+                ConfirmChangeSheet(c, bottomInsetDp.dp, actions.confirmChange, actions.cancelChange)
+            }
+            val data = p.settings?.data
+            if (ui.restoring && data != null)
+                RestoreSheet(
+                    data.restoreTitle,
+                    data.restoreText,
+                    data.restoreButton,
+                    ui.restoreDraft,
+                    bottomInsetDp.dp,
+                    actions.restoreDraft,
+                    actions.submitRestore,
+                    actions.closeRestore,
+                )
             val guide = p.guide
             if (guideRun != null && guide != null)
                 CoachMarks(
@@ -418,57 +468,6 @@ private val HINT_PIP =
             }
     )
 
-/**
- * A sideways flick over the screen, between sections ([SectionFlick]). It reads the drag after the
- * screen's own parts (main pass, parent last): a drag one of them took (a dial handle, the strip,
- * the tabs, the list scrolling) is theirs. Once the finger has clearly gone sideways the flick
- * takes the drag, so a row under the finger does not also take it as a tap.
- */
-private suspend fun PointerInputScope.detectSectionFlick(flick: (Int) -> Unit) =
-    awaitPointerEventScope {
-        while (true) {
-            val down =
-                awaitPointerEvent().changes.firstOrNull { it.changedToDownIgnoreConsumed() }
-                    ?: continue
-            val start = down.position
-            val startMs = down.uptimeMillis
-            var mine = false
-            var theirs = false
-            var end = start
-            var endMs = startMs
-            while (true) {
-                val c = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                if (!mine && c.isConsumed && c.positionChanged()) theirs = true
-                end = c.position
-                endMs = c.uptimeMillis
-                val d = end - start
-                if (
-                    !theirs &&
-                        !mine &&
-                        kotlin.math.abs(d.x) > viewConfiguration.touchSlop &&
-                        kotlin.math.abs(d.x) > kotlin.math.abs(d.y) * 1.6f
-                )
-                    mine = true
-                if (mine) c.consume()
-                if (!c.pressed) break
-            }
-            if (theirs || !mine) continue
-            val dx = (end.x - start.x).toDp().value
-            val dy = (end.y - start.y).toDp().value
-            val v = dx / ((endMs - startMs).coerceAtLeast(1) / 1000f)
-            val dir = SectionFlick.decide(dx, dy, v)
-            if (dir != 0) flick(dir)
-        }
-    }
-
-/** Tells [touched] of every finger that comes down on the screen, taking nothing from it. */
-private suspend fun PointerInputScope.observeTouches(touched: () -> Unit) = awaitPointerEventScope {
-    while (true) {
-        val event = awaitPointerEvent(PointerEventPass.Initial)
-        if (event.changes.any { it.changedToDownIgnoreConsumed() }) touched()
-    }
-}
-
 private fun LazyListScope.todayBelow(
     today: DirectorToday,
     ui: DirectorUi,
@@ -513,78 +512,9 @@ private fun LazyListScope.todayBelow(
     item("footer") { Panel(Slice.BOTTOM) { DirectorFooter(actions.tap) } }
 }
 
-/** Week below the frame (renderWeek's order); a day row opens that day on Today. */
-private fun LazyListScope.weekBody(
-    week: DirectorWeek,
-    ui: DirectorUi,
-    actions: DirectorActions,
-    anchors: GuideAnchors,
-    body: Modifier,
-) {
-    item("week-stats") {
-        Panel(Slice.MIDDLE) { Box(body.guideAnchor(anchors, "week.stats")) { WeekStats(week) } }
-    }
-    // Week's guide points at the bars: the ticks and the first rows, as the page's spotlight takes
-    // its .ld-week
-    item("week-ticks") {
-        Panel(Slice.MIDDLE) {
-            Box(body.guideAnchor(anchors, "week.rows")) { WeekTicks(week.ticks) }
-        }
-    }
-    items(week.days, key = { "week-day-" + it.index }) { day ->
-        Panel(Slice.MIDDLE) {
-            Box(body.padding(vertical = 2.dp).guideAnchor(anchors, "week.rows#" + day.index)) {
-                WeekRow(day, ui.pendingSection != null) {
-                    actions.tap(Tap("gotoDay", it.toString()))
-                }
-            }
-        }
-    }
-    item("week-legend") { Panel(Slice.MIDDLE) { Box(body) { WeekLegend(week) } } }
-    week.yield?.let { y ->
-        item("week-yield") {
-            Panel(Slice.MIDDLE) { Box(body.guideAnchor(anchors, "week.yield")) { XpYieldCard(y) } }
-        }
-    }
-    item("week-fit") { Panel(Slice.BOTTOM) { Box(body) { WeekFitCard(week.fit) } } }
-}
-
-/** Quests below the frame (renderQuests' order). */
-private fun LazyListScope.questsBody(q: DirectorQuests, actions: DirectorActions, body: Modifier) {
-    val miles = q.milestones
-    val hasRows = q.rows.isNotEmpty() || q.passive.isNotEmpty()
-    val headLast = !hasRows && miles == null && q.empty.isEmpty()
-    item("quests-head") {
-        Panel(if (headLast) Slice.BOTTOM else Slice.MIDDLE) {
-            Box(body) { QuestBoardCard(q, actions.tap) }
-        }
-    }
-    if (!hasRows && q.empty.isNotEmpty())
-        item("quests-empty") {
-            Panel(if (miles == null) Slice.BOTTOM else Slice.MIDDLE) {
-                Box(body) { QuestsEmpty(q.empty) }
-            }
-        }
-    val all = q.rows + q.passive
-    itemsIndexed(all, key = { i, _ -> "quest-$i" }) { i, row ->
-        Panel(if (miles == null && i == all.lastIndex) Slice.BOTTOM else Slice.MIDDLE) {
-            Box(body) { QuestRowView(row) }
-        }
-    }
-    if (miles != null) {
-        item("milestones") { Panel(Slice.MIDDLE) { Box(body) { MilestonesHeading(miles) } } }
-        itemsIndexed(miles.rows, key = { i, _ -> "milestone-$i" }) { i, m ->
-            Panel(if (i == miles.rows.lastIndex) Slice.BOTTOM else Slice.MIDDLE) {
-                Box(body) { MilestoneRowView(m.title, m.desc, m.earned, m.status) }
-            }
-        }
-        if (miles.rows.isEmpty()) item("milestones-end") { Panel(Slice.BOTTOM) {} }
-    }
-}
-
 /** One item's slice of Life Director's panel, with the panel's side padding. */
 @Composable
-private fun Panel(
+internal fun Panel(
     slice: Slice,
     washes: List<Brush> = emptyList(),
     content: @Composable () -> Unit,

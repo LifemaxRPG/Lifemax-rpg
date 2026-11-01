@@ -1,0 +1,350 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 4,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "settings",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "reducedMotion": false,
+ "covers": [
+  "today",
+  "week",
+  "quests",
+  "goals",
+  "settings"
+ ],
+ "today": null,
+ "week": null,
+ "quests": null,
+ "goals": null,
+ "settings": {
+  "intensity": {
+   "title": "How much to schedule",
+   "value": "BALANCED",
+   "options": [
+    {
+     "value": "LIGHT",
+     "label": "Light"
+    },
+    {
+     "value": "BALANCED",
+     "label": "Balanced"
+    },
+    {
+     "value": "AGGRESSIVE",
+     "label": "Ambitious"
+    },
+    {
+     "value": "HARDCORE",
+     "label": "All in"
+    }
+   ],
+   "note": "Light schedules only each goal’s weekly minimum. Ambitious and All in add extra sessions when time allows."
+  },
+  "ranges": [
+   {
+    "key": "maxDailyGoalMinutes",
+    "label": "Most activity time per day",
+    "hint": "A hard daily ceiling, even on free days.",
+    "min": 30,
+    "max": 480,
+    "step": 15,
+    "value": 180,
+    "stops": [
+     "30m",
+     "45m",
+     "1h",
+     "1h 15m",
+     "1h 30m",
+     "1h 45m",
+     "2h",
+     "2h 15m",
+     "2h 30m",
+     "2h 45m",
+     "3h",
+     "3h 15m",
+     "3h 30m",
+     "3h 45m",
+     "4h",
+     "4h 15m",
+     "4h 30m",
+     "4h 45m",
+     "5h",
+     "5h 15m",
+     "5h 30m",
+     "5h 45m",
+     "6h",
+     "6h 15m",
+     "6h 30m",
+     "6h 45m",
+     "7h",
+     "7h 15m",
+     "7h 30m",
+     "7h 45m",
+     "8h"
+    ]
+   },
+   {
+    "key": "minDailyRecoveryMinutes",
+    "label": "Protected downtime per day",
+    "hint": "Kept clear before anything else is planned.",
+    "min": 30,
+    "max": 360,
+    "step": 15,
+    "value": 90,
+    "stops": [
+     "30m",
+     "45m",
+     "1h",
+     "1h 15m",
+     "1h 30m",
+     "1h 45m",
+     "2h",
+     "2h 15m",
+     "2h 30m",
+     "2h 45m",
+     "3h",
+     "3h 15m",
+     "3h 30m",
+     "3h 45m",
+     "4h",
+     "4h 15m",
+     "4h 30m",
+     "4h 45m",
+     "5h",
+     "5h 15m",
+     "5h 30m",
+     "5h 45m",
+     "6h"
+    ]
+   },
+   {
+    "key": "maxConsecutiveHighLoadMinutes",
+    "label": "Longest run of demanding work",
+    "hint": "After this, Life Director inserts something lighter.",
+    "min": 30,
+    "max": 240,
+    "step": 15,
+    "value": 90,
+    "stops": [
+     "30m",
+     "45m",
+     "1h",
+     "1h 15m",
+     "1h 30m",
+     "1h 45m",
+     "2h",
+     "2h 15m",
+     "2h 30m",
+     "2h 45m",
+     "3h",
+     "3h 15m",
+     "3h 30m",
+     "3h 45m",
+     "4h"
+    ]
+   }
+  ],
+  "restDays": {
+   "title": "Rest days",
+   "note": "Hard workouts and heavy study are avoided on these days when possible.",
+   "days": [
+    {
+     "day": 0,
+     "label": "Su",
+     "on": false
+    },
+    {
+     "day": 1,
+     "label": "Mo",
+     "on": false
+    },
+    {
+     "day": 2,
+     "label": "Tu",
+     "on": false
+    },
+    {
+     "day": 3,
+     "label": "We",
+     "on": false
+    },
+    {
+     "day": 4,
+     "label": "Th",
+     "on": false
+    },
+    {
+     "day": 5,
+     "label": "Fr",
+     "on": false
+    },
+    {
+     "day": 6,
+     "label": "Sa",
+     "on": false
+    }
+   ]
+  },
+  "horizon": {
+   "title": "Planning window",
+   "value": "7",
+   "options": [
+    {
+     "value": "7",
+     "label": "7 days"
+    },
+    {
+     "value": "14",
+     "label": "14 days"
+    }
+   ]
+  },
+  "misses": {
+   "title": "When I miss something",
+   "value": "LENIENT",
+   "options": [
+    {
+     "value": "LENIENT",
+     "label": "Gentle"
+    },
+    {
+     "value": "MODERATE",
+     "label": "Standard"
+    },
+    {
+     "value": "HARDCORE_RPG",
+     "label": "Hardcore"
+    }
+   ],
+   "text": [
+    {
+     "t": "Gentle: no consequences, missed sessions are just re-planned. Standard: a rest token covers a miss; without one, that activity’s streak drops by one. Hardcore: also reports an HP penalty (never below 1 HP). At most one consequence per day, and never any XP or level loss. Rest tokens: ",
+     "b": false
+    },
+    {
+     "t": "1",
+     "b": true
+    },
+    {
+     "t": " of 3 (earn one every 5 completions).",
+     "b": false
+    }
+   ],
+   "grace": {
+    "key": "missGraceMinutes",
+    "label": "Grace period before a session counts as missed",
+    "hint": "",
+    "min": 15,
+    "max": 240,
+    "step": 15,
+    "value": 60,
+    "stops": [
+     "15m",
+     "30m",
+     "45m",
+     "60m",
+     "75m",
+     "90m",
+     "105m",
+     "120m",
+     "135m",
+     "150m",
+     "165m",
+     "180m",
+     "195m",
+     "210m",
+     "225m",
+     "240m"
+    ]
+   }
+  },
+  "guide": {
+   "title": "Guide",
+   "text": "A short walkthrough of how to read each screen. It shows once on its own; you can replay it here or with the ? button at the top.",
+   "button": "Show the guide again"
+  },
+  "data": {
+   "title": "Your data",
+   "text": "Saved on this device under its own key, separate from your LifeMax save. ",
+   "storageWarning": "Storage is unavailable here.",
+   "copy": "Copy backup",
+   "restore": "Restore backup",
+   "reset": "Reset Life Director",
+   "resetConfirm": "Reset Life Director? Your schedule, goals and settings here are cleared. LifeMax XP and quests are not affected.",
+   "restoreTitle": "Restore backup",
+   "restoreText": "Paste a Life Director backup. This replaces Life Director data only; your LifeMax save is not touched.",
+   "restoreButton": "Restore",
+   "storageUnavailable": false
+  },
+  "diagnostics": {
+   "title": "Diagnostics",
+   "line": "engine 1.0.0 · VALID_SCHEDULE · 0 ms · quality 93.5 · 39 planned · events 1 · host connected"
+  },
+  "lab": {
+   "label": "Show Simulation Lab (developer)",
+   "on": false
+  }
+ },
+ "guide": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

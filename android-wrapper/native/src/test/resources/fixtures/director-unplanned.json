@@ -52,6 +52,8 @@
  "today": null,
  "week": null,
  "quests": null,
+ "goals": null,
+ "settings": null,
  "guide": null,
  "tokens": {
   "bg": 4278980114,

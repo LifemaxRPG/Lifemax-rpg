@@ -262,4 +262,6 @@ data class LifeDirectorProjection(
     val quests: DirectorQuests? = null,
     /** the guide of the section on show, when this screen draws it */
     val guide: DirectorGuide? = null,
+    val goals: DirectorGoals? = null,
+    val settings: DirectorSettings? = null,
 )

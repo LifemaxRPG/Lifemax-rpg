@@ -74,4 +74,6 @@ data class DirectorReply(
     val changed: Boolean = false,
     val moved: Boolean = false,
     val confirm: DialConfirm? = null,
+    /** what a change answered with besides ok (exportBackup: the backup to copy) */
+    val text: String = "",
 )

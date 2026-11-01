@@ -28,6 +28,9 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
 
                 override fun gotoDay(index: Int) = send("gotoDay", JSONObject().put("index", index))
 
+                override fun change(name: String, args: Map<String, Any>) =
+                    send("do", JSONObject(args).put("name", name))
+
                 override fun tourSeen(key: String, finished: Boolean) =
                     send("tourSeen", JSONObject().put("key", key).put("finished", finished))
 
@@ -45,7 +48,7 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         "director-${++nextRequest}".also { sendCommand(command, payload, it) }
 
     override val tabId = "life-director"
-    override val capabilities = listOf("director.today.v2", "director.week.v1")
+    override val capabilities = listOf("director.today.v2", "director.week.v1", "director.goals.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)

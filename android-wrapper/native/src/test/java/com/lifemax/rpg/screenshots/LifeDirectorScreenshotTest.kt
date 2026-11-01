@@ -21,6 +21,7 @@ import com.lifemax.rpg.feature.lifedirector.data.WebLifeDirectorRepository
 import com.lifemax.rpg.feature.lifedirector.data.directorReply
 import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.presentation.ChangeConfirm
 import com.lifemax.rpg.feature.lifedirector.presentation.DialAsk
 import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorActions
@@ -203,6 +204,41 @@ class LifeDirectorScreenshotTest {
     fun weekGuide() {
         snap(projection("week"), DirectorUi(guide = GuideRun("week", 0)), "rows" to null)
         snap(projection("week"), DirectorUi(guide = GuideRun("week", 1)), "stats" to null)
+    }
+
+    /**
+     * Goals (phase 3B), a screenful at a time: the explanation, each goal's card with its priority,
+     * shares and buttons.
+     */
+    @Test fun goals() = snap("goals", *Array(3) { k -> "g$k" to SCREEN * k })
+
+    /** Settings (phase 3B), a screenful at a time; Diagnostics stays folded as on the page. */
+    @Test fun settings() = snap("settings", *Array(4) { k -> "s$k" to SCREEN * k })
+
+    /** Removing a goal asks first, in the page's words; Restore backup has its field. */
+    @Test
+    fun changeSheets() {
+        val g = projection("goals")
+        val card = g.goals!!.cards.first()
+        snap(
+            g,
+            DirectorUi(
+                confirm =
+                    ChangeConfirm(
+                        card.title,
+                        g.goals!!.removeConfirm,
+                        card.remove,
+                        "goalRemove",
+                        mapOf("id" to card.id),
+                    )
+            ),
+            "remove" to null,
+        )
+        snap(
+            projection("settings"),
+            DirectorUi(restoring = true, restoreDraft = "{\"schemaVersion\":1"),
+            "restore" to null,
+        )
     }
 
     /** Week asked for from Today: the tab shows as chosen while the page answers. */
