@@ -486,6 +486,9 @@ class LifeDirectorViewModel(
     /** Whether build [id] of page [session] is still to play: true once per plugin lifetime. */
     fun takeBuild(session: String, id: Long): Boolean = played.add(session to id)
 
+    /** Whether build [id] is yet to play, without taking it: a guide due waits for it. */
+    fun buildDue(session: String, id: Long): Boolean = (session to id) !in played
+
     /** The user touched the screen. */
     fun touch() {
         touched = true

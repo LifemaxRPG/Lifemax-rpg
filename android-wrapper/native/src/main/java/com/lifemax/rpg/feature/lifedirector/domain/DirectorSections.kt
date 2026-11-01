@@ -114,13 +114,19 @@ data class GuideSpan(val t: String, val b: Boolean)
 
 /**
  * One step of a guide: the part of the screen it points at (an anchor name), its title and text,
- * and whether it says "tap anywhere".
+ * and whether it says "tap anywhere". Phase 4A (Today): how the dial looks on the step ([mode], the
+ * page's data-tour: clock, outer, inner, handles, center, or none), the spotlight's shape ([round],
+ * [pad] dp around the part) and the dial's name tags.
  */
 data class GuideStep(
     val anchor: String,
     val title: String,
     val text: List<GuideSpan>,
     val hint: Boolean,
+    val mode: String = "",
+    val round: Boolean = false,
+    val pad: Float = 8f,
+    val tags: List<GuideTag> = emptyList(),
 )
 
 data class GuideLabels(

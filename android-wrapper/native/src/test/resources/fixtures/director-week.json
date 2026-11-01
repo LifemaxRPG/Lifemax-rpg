@@ -965,7 +965,11 @@
       "b": false
      }
     ],
-    "hint": false
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
    },
    {
     "anchor": "week.stats",
@@ -976,7 +980,11 @@
       "b": false
      }
     ],
-    "hint": false
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
    },
    {
     "anchor": "week.yield",
@@ -987,7 +995,11 @@
       "b": false
      }
     ],
-    "hint": false
+    "hint": false,
+    "mode": "",
+    "round": false,
+    "pad": 8,
+    "tags": []
    }
   ],
   "labels": {

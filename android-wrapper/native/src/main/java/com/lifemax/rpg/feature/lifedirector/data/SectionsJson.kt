@@ -182,6 +182,7 @@ internal fun JSONObject.guide(): com.lifemax.rpg.feature.lifedirector.domain.Dir
     val l = g.getJSONObject("labels")
     val steps =
         g.getJSONArray("steps").objects().map { s ->
+            val dial = s.guideDial() // phase 4A: the dial's mode, the spotlight and the name tags
             com.lifemax.rpg.feature.lifedirector.domain.GuideStep(
                 anchor =
                     s.text("anchor").also {
@@ -196,6 +197,10 @@ internal fun JSONObject.guide(): com.lifemax.rpg.feature.lifedirector.domain.Dir
                         )
                     },
                 hint = s.getBoolean("hint"),
+                mode = dial.mode,
+                round = dial.round,
+                pad = dial.pad,
+                tags = dial.tags,
             )
         }
     require(steps.isNotEmpty()) { "A guide without steps" }

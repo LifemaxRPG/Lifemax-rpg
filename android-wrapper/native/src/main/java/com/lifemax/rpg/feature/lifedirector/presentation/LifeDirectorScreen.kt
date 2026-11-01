@@ -77,14 +77,18 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.SectionTabs
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Slice
 import com.lifemax.rpg.feature.lifedirector.presentation.components.UpNextCard
 import com.lifemax.rpg.feature.lifedirector.presentation.components.VibratorBuzz
+import com.lifemax.rpg.feature.lifedirector.presentation.components.animatorScale
 import com.lifemax.rpg.feature.lifedirector.presentation.components.cardSlice
 import com.lifemax.rpg.feature.lifedirector.presentation.components.earlierCard
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ellipseWash
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.BuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialTourRun
+import com.lifemax.rpg.feature.lifedirector.presentation.dial.dialTour
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.CoachMarks
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideAnchors
+import com.lifemax.rpg.feature.lifedirector.presentation.guide.guideAnchor
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionSheet
 import kotlinx.coroutines.delay
 
@@ -105,10 +109,6 @@ fun LifeDirectorRoute(
     val p = projection ?: return
     LaunchedEffect(p.session, p.notice?.id) { p.notice?.let { vm.notice(p.session, it) } }
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
-    // a guide not seen yet starts by itself, once, when its section shows on a visible screen
-    LaunchedEffect(visible, p.tab, p.guide?.key, p.guide?.auto) {
-        if (visible) vm.startGuide(auto = true)
-    }
     ui.toast?.let { toast ->
         LaunchedEffect(toast.serial) {
             delay(TOAST_MS)
@@ -140,6 +140,14 @@ fun LifeDirectorRoute(
                 ledger = vm::takeBuild,
                 touched = { vm.touched },
             )
+        // a guide not seen yet starts by itself, once, when its section shows on a visible screen;
+        // after a build still to play, once it is over (the page's waits for its build too)
+        val build = p.today?.dial?.build?.takeUnless { p.reducedMotion }
+        val playable = remember(build?.id) { animatorScale(context) > 0f }
+        val buildDue = build != null && playable && vm.buildDue(p.session, build.id)
+        LaunchedEffect(visible, p.tab, p.guide?.key, p.guide?.auto, run == null, buildDue) {
+            if (visible && run == null && !buildDue) vm.startGuide(auto = true)
+        }
         LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
     }
 }
@@ -188,9 +196,16 @@ fun LifeDirectorScreen(
                         "week.stats" -> 1
                         "week.rows" -> 2
                         "week.yield" -> 4 + days
+                        // Today's: the dial and its middle are in the first item, up next the
+                        // second
+                        "dial",
+                        "dial.centre" -> 0
+                        "upNext" -> 1
+                        "footer" -> list.layoutInfo.totalItemsCount - 1
                         else -> -1
                     }
-                if (index >= 0) list.animateScrollToItem(index, scrollOffset = -200)
+                if (index == 0) list.animateScrollToItem(0)
+                else if (index > 0) list.animateScrollToItem(index, scrollOffset = -200)
             }
             // a section change slides the body in from below, the frame stays (the page's
             // .ld-v-in); none with reduced motion
@@ -236,11 +251,20 @@ fun LifeDirectorScreen(
                                 Banner(it, actions.tap)
                                 Spacer(Modifier.height(12.dp))
                             }
-                            if (today != null) TodayTop(today, ui, actions, animate, run)
+                            if (today != null)
+                                TodayTop(
+                                    today,
+                                    ui,
+                                    actions,
+                                    animate,
+                                    run,
+                                    anchors,
+                                    dialTour(p, guideRun),
+                                )
                         }
                     }
                 }
-                if (today != null) todayBelow(today, ui, actions, animate)
+                if (today != null) todayBelow(today, ui, actions, animate, anchors)
                 if (week != null) weekBody(week, ui, actions, anchors, body)
                 if (quests != null) questsBody(quests, actions, body)
                 if (goals != null) goalsBody(goals, ui, actions, body)
@@ -318,6 +342,8 @@ private fun TodayTop(
     actions: DirectorActions,
     animate: Boolean,
     run: BuildRun?,
+    anchors: GuideAnchors,
+    tour: DialTourRun?,
 ) {
     DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
     Spacer(Modifier.height(8.dp))
@@ -327,10 +353,13 @@ private fun TodayTop(
         animate,
         actions::arc,
         actions.tap,
+        Modifier.guideAnchor(anchors, "dial"),
         hold = ui.hold,
         asking = ui.ask != null,
         handles = actions.handles,
         run = run,
+        tour = tour,
+        centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
     )
     DialHint(today.hint)
     DayMix(today.mix)
@@ -380,9 +409,16 @@ private fun LazyListScope.todayBelow(
     ui: DirectorUi,
     actions: DirectorActions,
     animate: Boolean,
+    anchors: GuideAnchors,
 ) {
     today.upNext?.let { up ->
-        item("up-next") { Panel(Slice.MIDDLE) { UpNextCard(up, animate, actions::upNext) } }
+        item("up-next") {
+            Panel(Slice.MIDDLE) {
+                Box(Modifier.guideAnchor(anchors, "upNext")) {
+                    UpNextCard(up, animate, actions::upNext)
+                }
+            }
+        }
     }
     if (today.reminders.isNotEmpty())
         item("reminders") { Panel(Slice.MIDDLE) { RemindersCard(today.reminders) } }
@@ -416,7 +452,11 @@ private fun LazyListScope.todayBelow(
     items(today.ahead, key = { it.key }) { row ->
         Panel(Slice.MIDDLE) { OrderRowView(row, actions.tap) }
     }
-    item("footer") { Panel(Slice.BOTTOM) { DirectorFooter(actions.tap) } }
+    item("footer") {
+        Panel(Slice.BOTTOM) {
+            Box(Modifier.guideAnchor(anchors, "footer")) { DirectorFooter(actions.tap) }
+        }
+    }
 }
 
 /** One item's slice of Life Director's panel, with the panel's side padding. */

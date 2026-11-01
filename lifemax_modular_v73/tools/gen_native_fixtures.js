@@ -335,6 +335,15 @@ async function director(b) {
   today.regroupNotShowing = await cmd(p, 'today', { name: 'regroup', v: 'pause', op: 'fixture-pause' });
   today.dismissBannerNotShowing = await cmd(p, 'today', { name: 'dismissBanner', text: 'Not showing' });
   write('fixtures/director-replies-today.json', today);
+  // Today's guide, not seen yet, as a screen that draws it gets it: each step's part, the dial's mode and the page's name tags
+  await cmd(p, 'sheet', { kind: '' });
+  await p.evaluate(() => { if (!LifeDirector.native.run('tourReset', {}).ok) throw Error('the guides were not reset') });
+  await p.clock.runFor(300);
+  {
+    const snap = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));
+    if (!snap.today || !snap.guide || snap.guide.key !== 'today' || !snap.guide.auto) throw Error('Today\'s guide is not in the projection');
+    write('fixtures/director-guide-today.json', snap);
+  }
 
   p = await live(true);
   await act(p, 'inst', await upNext(p));
