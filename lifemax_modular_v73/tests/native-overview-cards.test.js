@@ -302,7 +302,8 @@ const HELPERS = `
         out.toast = __toasts.filter(t => /native Overview cards could not open/.test(t)).length === 1;        const asks = count('cards', 'open') + count('cards', 'handshake');
         document.body.appendChild(document.createElement('div')); document.body.classList.add('x'); document.body.classList.remove('x');
         lmaNavTo('quests', { fast: true }); await wait(200); lmaNavTo('dashboard', { fast: true }); await wait(800);
-        out.noRetry = count('cards', 'open') + count('cards', 'handshake') === asks && showing('overview');
+        const shellBack = await until(() => showing('overview'), 3000); // a busy machine may take longer than 800 ms to reopen the shell
+        out.noRetry = count('cards', 'open') + count('cards', 'handshake') === asks && shellBack;
         // the switch, off and on, tries once more
         __cards.caps = ['overview.cards.v1']; __cards.openFails = false; __cards.updateFails = false;
         navigate('settings'); await setNativeOverviewCardsEnabled(false); await setNativeOverviewCardsEnabled(true);
