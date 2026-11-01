@@ -600,7 +600,7 @@
   },
   {
    "file": "src/runtime/segments/13-runtime.js",
-   "bytes": 27186,
+   "bytes": 27261,
    "statement_count": 77,
    "tags": [
     "training",
@@ -870,8 +870,8 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 35996,
-   "statement_count": 66,
+   "bytes": 37420,
+   "statement_count": 70,
    "tags": [
     "pet",
     "interface"
@@ -929,6 +929,9 @@
     "petBlitSoon",
     "petOpen",
     "petRenderPeekText",
+    "petPeekName",
+    "petPeekData",
+    "petPeekHtml",
     "renderPetPeek",
     "renderPetAll",
     "window.__petReady",
@@ -940,25 +943,36 @@
     "ovPace",
     "ovAgo",
     "ovAttrOf",
+    "ovDelta",
+    "ovHeroData",
     "ovHeroHtml"
    ]
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28186,
-   "statement_count": 54,
+   "bytes": 30778,
+   "statement_count": 64,
    "tags": [
     "interface"
    ],
    "symbols": [
     "ovMoves",
+    "ovNextData",
+    "ovGoJs",
     "ovNextHtml",
+    "ovAttrsData",
     "ovAttrsHtml",
+    "ovWeekData",
+    "ovTipParts",
+    "ovTipHtml",
     "ovWeekHtml",
-    "ovTipText",
     "ovPick",
+    "ovLuckData",
     "ovLuckHtml",
+    "ovRecentData",
     "ovRecentHtml",
+    "ovChipsHtml",
+    "ovHeadData",
     "renderOverview",
     "ovPlanGlance",
     "ovReplay",
@@ -1042,7 +1056,7 @@
   },
   {
    "file": "src/runtime/segments/20-runtime.js",
-   "bytes": 30836,
+   "bytes": 31000,
    "statement_count": 19,
    "tags": [
     "devchat",
@@ -1471,8 +1485,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 45606,
-   "statement_count": 97,
+   "bytes": 45871,
+   "statement_count": 98,
    "tags": [
     "pet",
     "interface",
@@ -1612,8 +1626,8 @@
   },
   {
    "file": "src/runtime/segments/31-overview-edit.js",
-   "bytes": 10951,
-   "statement_count": 18,
+   "bytes": 12052,
+   "statement_count": 19,
    "tags": [
     "overview"
    ],
@@ -1623,6 +1637,7 @@
     "ovLayout",
     "ovLayoutSave",
     "ovLayoutApply",
+    "ovTileAdd",
     "ovTileNote",
     "ovEditRowsHtml",
     "ovEye",
@@ -1792,7 +1807,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 13740,
+   "bytes": 14077,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -2000,8 +2015,8 @@
   },
   {
    "file": "src/runtime/segments/39-health.js",
-   "bytes": 21506,
-   "statement_count": 19,
+   "bytes": 21991,
+   "statement_count": 21,
    "tags": [
     "android",
     "health"
@@ -2021,6 +2036,8 @@
     "lmaHealthSet",
     "lmaHealthRender",
     "ovHealthDur",
+    "ovHealthData",
+    "ovHealthHtml",
     "ovHealthRender",
     "ovHealthTap",
     "lmaHealthOpen",
@@ -2047,14 +2064,16 @@
   },
   {
    "file": "src/runtime/segments/41-ov-apps.js",
-   "bytes": 2849,
-   "statement_count": 4,
+   "bytes": 3220,
+   "statement_count": 6,
    "tags": [
     "android",
     "overview"
    ],
    "symbols": [
     "ovAppsFetching",
+    "ovAppsData",
+    "ovAppsHtml",
     "ovAppsRender"
    ]
   },
@@ -2099,8 +2118,8 @@
   },
   {
    "file": "src/runtime/segments/44-rewards.js",
-   "bytes": 12796,
-   "statement_count": 21,
+   "bytes": 12848,
+   "statement_count": 23,
    "tags": [
     "economy",
     "rewards"
@@ -2125,6 +2144,8 @@
     "ecoBuy",
     "ecoShopOpen",
     "ecoShopRender",
+    "ovRewardsData",
+    "ovRewardsHtml",
     "ovRewardsRender"
    ]
   },
@@ -3259,7 +3280,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 25423,
+   "bytes": 25450,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3293,7 +3314,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 23400,
+   "bytes": 23427,
    "statement_count": 1,
    "tags": [
     "android",

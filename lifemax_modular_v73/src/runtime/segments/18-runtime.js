@@ -1,61 +1,85 @@
-ves(){
+/* ---------- next moves: the four most useful things to do now. go is where a tap leads: {view}, {attr} or {luck} ---------- */
+function ovMoves(){
   const mv=[],p=petData();
-  if(!(state.activities||[]).length){mv.push({pri:0,col:'var(--accent)',icon:'bolt',t:'Log your first activity',s:'Every level starts with one. Pick any attribute.',cta:'Log',fn:"navigate('log')"});}
+  if(!(state.activities||[]).length){mv.push({pri:0,color:'var(--accent)',icon:'bolt',title:'Log your first activity',sub:'Every level starts with one. Pick any attribute.',cta:'Log',go:{view:'log'}});}
   ATTRS.map(function(a){return {a:a,d:chDecay(a)}}).filter(function(x){return x.d.k==='decay'||x.d.k==='soon'}).sort(function(x,y){return x.d.rank-y.d.rank}).slice(0,2).forEach(function(x){
-    mv.push({pri:x.d.k==='decay'?1:3.5,col:ATTR_COL[x.a.id],icon:x.a.icon,t:x.a.short+(x.d.k==='decay'?' is fading':' is due a session'),s:x.d.txt+' · trained '+x.d.sub,cta:'Train',fn:"openAttr('"+x.a.id+"')",warn:x.d.k==='decay'?'bad':'warn'})});
+    mv.push({pri:x.d.k==='decay'?1:3.5,color:ATTR_COL[x.a.id],icon:x.a.icon,title:x.a.short+(x.d.k==='decay'?' is fading':' is due a session'),sub:x.d.txt+' · trained '+x.d.sub,cta:'Train',go:{attr:x.a.id},warn:x.d.k==='decay'?'bad':'warn'})});
   const dq=(state.quests||[]).filter(function(q){return q.cadence==='daily'&&questToday(q)&&!questLocked(q)}),left=dq.filter(function(q){return !isQuestDone(q)});
-  if(dq.length){if(left.length){const xp=left.reduce(function(s,q){return s+(q.xp||0)},0);mv.push({pri:2,col:'var(--gold)',icon:'flag',t:left.length+' daily quest'+(left.length>1?'s':'')+' left',s:left.slice(0,2).map(function(q){return q.name}).join(' · ')+(left.length>2?' +'+(left.length-2):''),cta:'+'+xp+' XP',fn:"navigate('quests')",pill:1})}else mv.push({pri:9,col:'var(--good)',icon:'trophy',t:'Daily quests complete',s:'Nicely done. Weekly quests are next.',done:1,fn:"navigate('quests')"})}
-  if(state.plan){const d=planDay(getToday());if(d){if(d.kind==='rest')mv.push({pri:7,col:'var(--accent)',icon:'bed',t:'Rest day',s:'Prescribed recovery. Nothing to log.',done:1,fn:"navigate('plan')"});else{const dn=dayDone(getToday());mv.push({pri:dn?9:3,col:'var(--accent)',icon:d.icon||'dumbbell',t:dn?'Workout done':'Today: '+(d.short&&d.short!==d.label?d.short+' · ':'')+(d.label||d.cell||'Session'),s:dn?'Session complete. Well earned.':'+'+(d.xp||0)+' XP when every box is ticked',done:dn?1:0,fn:"navigate('plan')",cta:dn?'':'Open'})}}}
-  if(!luckToday())mv.push({pri:6,col:'#ffd35c',icon:'dice',t:"Roll today's luck",s:'Four dice, one fate number',cta:'Roll',fn:'openLuck()'});
-  if(p&&p.alive&&petStage(p)>=2&&!p.vacation.on)mv.push({pri:petStage(p)>=3?0:2.5,col:'#ff7a9a',icon:'paw',t:p.name+(petStage(p)>=3?' really needs a meal':' is hungry'),s:'A meal about twice a day is all it needs.',cta:'Feed',fn:"navigate('pet')",warn:petStage(p)>=3?'bad':'warn'});
-  if(!p&&!(state.petInviteHidden))mv.push({pri:8,col:'#ff9bb0',icon:'paw',t:'A stray kitten keeps stopping by',s:'Open the door and see who it is.',cta:'Meet',fn:"navigate('pet')"});
+  if(dq.length){if(left.length){const xp=left.reduce(function(s,q){return s+(q.xp||0)},0);mv.push({pri:2,color:'var(--gold)',icon:'flag',title:left.length+' daily quest'+(left.length>1?'s':'')+' left',sub:left.slice(0,2).map(function(q){return q.name}).join(' · ')+(left.length>2?' +'+(left.length-2):''),cta:'+'+xp+' XP',go:{view:'quests'},pill:true})}else mv.push({pri:9,color:'var(--good)',icon:'trophy',title:'Daily quests complete',sub:'Nicely done. Weekly quests are next.',done:true,go:{view:'quests'}})}
+  if(state.plan){const d=planDay(getToday());if(d){if(d.kind==='rest')mv.push({pri:7,color:'var(--accent)',icon:'bed',title:'Rest day',sub:'Prescribed recovery. Nothing to log.',done:true,go:{view:'plan'}});else{const dn=dayDone(getToday());mv.push({pri:dn?9:3,color:'var(--accent)',icon:d.icon||'dumbbell',title:dn?'Workout done':'Today: '+(d.short&&d.short!==d.label?d.short+' · ':'')+(d.label||d.cell||'Session'),sub:dn?'Session complete. Well earned.':'+'+(d.xp||0)+' XP when every box is ticked',done:dn,go:{view:'plan'},cta:dn?'':'Open'})}}}
+  if(!luckToday())mv.push({pri:6,color:'#ffd35c',icon:'dice',title:"Roll today's luck",sub:'Four dice, one fate number',cta:'Roll',go:{luck:true}});
+  if(p&&p.alive&&petStage(p)>=2&&!p.vacation.on)mv.push({pri:petStage(p)>=3?0:2.5,color:'#ff7a9a',icon:'paw',title:p.name+(petStage(p)>=3?' really needs a meal':' is hungry'),sub:'A meal about twice a day is all it needs.',cta:'Feed',go:{view:'pet'},warn:petStage(p)>=3?'bad':'warn'});
+  if(!p&&!(state.petInviteHidden))mv.push({pri:8,color:'#ff9bb0',icon:'paw',title:'A stray kitten keeps stopping by',sub:'Open the door and see who it is.',cta:'Meet',go:{view:'pet'}});
   mv.sort(function(a,b){return a.pri-b.pri});return mv.slice(0,4);
 }
-function ovNextHtml(){
-  const mv=ovMoves();
-  return '<div class="ov-h"><h3>Next moves</h3><span class="muted">most useful first</span></div><div class="ov-moves">'+mv.map(function(x){
-    return '<button type="button" class="ov-move'+(x.done?' done':'')+(x.warn?' '+x.warn:'')+'" style="--c:'+x.col+'" onclick="'+x.fn+'"><span class="ov-mic">'+px(x.icon,20)+'</span><span class="ov-mt"><b>'+esc(x.t)+'</b><small>'+esc(x.s)+'</small></span>'+(x.cta?'<span class="ov-cta'+(x.pill?' pill':'')+'">'+esc(x.cta)+'</span>':'<span class="ov-chev">'+(x.done?'✓':'›')+'</span>')+'</button>'}).join('')+'</div>';
+function ovNextData(){return {title:'Next moves',note:'most useful first',moves:ovMoves()}}
+/* the page's own handler for a move's go */
+function ovGoJs(go){return go.attr?"openAttr('"+go.attr+"')":go.luck?'openLuck()':"navigate('"+go.view+"')"}
+function ovNextHtml(d){
+  return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><span class="muted">'+esc(d.note)+'</span></div><div class="ov-moves">'+d.moves.map(function(x){
+    return '<button type="button" class="ov-move'+(x.done?' done':'')+(x.warn?' '+x.warn:'')+'" style="--c:'+x.color+'" onclick="'+ovGoJs(x.go)+'"><span class="ov-mic">'+px(x.icon,20)+'</span><span class="ov-mt"><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></span>'+(x.cta?'<span class="ov-cta'+(x.pill?' pill':'')+'">'+esc(x.cta)+'</span>':'<span class="ov-chev">'+(x.done?'✓':'›')+'</span>')+'</button>'}).join('')+'</div>';
 }
-/* ---------- attribute tiles ---------- */
-function ovAttrsHtml(){
+/* ---------- attribute tiles: level, this week's XP and a status dot (trained today, or the decay state) ---------- */
+function ovAttrsData(){
   const D=chCompute(),foc=chFocus();
-  const dot=function(a,td){const d=chDecay(a);if(td>0)return ['today','Trained today'];return [d.k,d.txt]};
-  return '<div class="ov-h"><h3>Attributes</h3><button type="button" class="ov-link" onclick="navigate(\'character\')">Details ›</button></div><div class="ov-gems">'+ATTRS.map(function(a){
-    const l=attrLevel(a.id),col=ATTR_COL[a.id],wk=D.wk[a.id],td=D.per[a.id][6],st=dot(a,td);
-    return '<button type="button" class="ov-gem" style="--c:'+col+'" onclick="openAttr(\''+a.id+'\')" title="'+esc(st[1])+'"><div class="ov-g1"><span class="ov-gic">'+px(a.icon,18)+'</span><span class="ov-gnm">'+a.short+(foc.indexOf(a.id)>=0?' <i class="ch-star">★</i>':'')+'</span><i class="ov-dot s-'+st[0]+'"></i></div><div class="ov-g2"><b>LV '+l.level+'</b><em>'+(wk>0?'+'+wk.toLocaleString():'quiet')+'</em></div><div class="ch-bar"><i style="width:'+l.pct.toFixed(1)+'%"></i></div></button>'}).join('')
-   +'</div><div class="ov-legend"><span><i class="ov-dot s-today"></i>today</span><span><i class="ov-dot s-ok"></i>safe</span><span><i class="ov-dot s-soon"></i>due soon</span><span><i class="ov-dot s-decay"></i>fading</span></div>';
+  return {title:'Attributes',link:'Details ›',gems:ATTRS.map(function(a){
+    const l=attrLevel(a.id),wk=D.wk[a.id],st=D.per[a.id][6]>0?{k:'today',txt:'Trained today'}:chDecay(a);
+    return {id:a.id,short:a.short,icon:a.icon,color:ATTR_COL[a.id],focus:foc.indexOf(a.id)>=0,dot:{kind:st.k,text:st.txt},level:'LV '+l.level,week:wk>0?'+'+wk.toLocaleString():'quiet',pct:l.pct}}),
+   legend:[{kind:'today',label:'today'},{kind:'ok',label:'safe'},{kind:'soon',label:'due soon'},{kind:'decay',label:'fading'}]};
 }
-/* ---------- week chart ---------- */
-function ovWeekHtml(){
+function ovAttrsHtml(d){
+  return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><button type="button" class="ov-link" onclick="navigate(\'character\')">'+esc(d.link)+'</button></div><div class="ov-gems">'+d.gems.map(function(g){
+    return '<button type="button" class="ov-gem" style="--c:'+g.color+'" onclick="openAttr(\''+g.id+'\')" title="'+esc(g.dot.text)+'"><div class="ov-g1"><span class="ov-gic">'+px(g.icon,18)+'</span><span class="ov-gnm">'+esc(g.short)+(g.focus?' <i class="ch-star">★</i>':'')+'</span><i class="ov-dot s-'+g.dot.kind+'"></i></div><div class="ov-g2"><b>'+esc(g.level)+'</b><em>'+esc(g.week)+'</em></div><div class="ch-bar"><i style="width:'+g.pct.toFixed(1)+'%"></i></div></button>'}).join('')
+   +'</div><div class="ov-legend">'+d.legend.map(function(l){return '<span><i class="ov-dot s-'+l.kind+'"></i>'+esc(l.label)+'</span>'}).join('')+'</div>';
+}
+/* ---------- week chart: each day's XP stacked by attribute, against the pace line ---------- */
+function ovWeekData(){
   const D=chCompute(),m=ovMap(),pace=ovPace(m),days=D.days.map(function(k,i){return {k:k,i:i,xp:ATTRS.reduce(function(s,a){return s+D.per[a.id][i]},0)}});
-  const max=Math.max(pace*1.2,40,Math.max.apply(null,days.map(function(d){return d.xp}))),wk=days.reduce(function(s,d){return s+d.xp},0),prev=ovSum(m,7,13),delta=prev>0?Math.round((wk-prev)/prev*100):null;
-  const best=days.reduce(function(b,d){return d.xp>b.xp?d:b},days[0]);
-  const bars=days.map(function(d){
-    const segs=ATTRS.map(function(a){const v=D.per[a.id][d.i];return v>0?'<i style="height:'+(v/max*100).toFixed(1)+'%;background:linear-gradient(180deg,'+ATTR_COL[a.id]+','+ATTR_COL[a.id]+'bb)"></i>':''}).join('');
-    const dt=new Date(d.k+'T12:00:00');
-    return '<button type="button" class="ov-bar'+(d.i===OV_SEL?' sel':'')+(d.i===6?' today':'')+'" onclick="ovPick('+d.i+')" aria-label="'+d.k+' '+d.xp+' XP"><span class="ov-bs">'+(segs||'<i class="empty"></i>')+'</span><small>'+(d.i===6?'Today':'SMTWTFS'.charAt(dt.getDay()))+'</small></button>'});
+  const max=Math.max(pace*1.2,40,Math.max.apply(null,days.map(function(d){return d.xp}))),wk=days.reduce(function(s,d){return s+d.xp},0);
   const top=ATTRS.map(function(a){return {a:a,v:D.wk[a.id]}}).filter(function(x){return x.v>0}).sort(function(x,y){return y.v-x.v}).slice(0,3);
-  return '<div class="ov-h"><h3>This week</h3><span class="ov-sum"><b>'+wk.toLocaleString()+' XP</b>'+(delta===null?'':'<em class="'+(delta>=0?'up':'dn')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'% vs last week</em>')+'</span></div>'
-   +'<div class="ov-chart"><div class="ov-pace" style="bottom:calc('+(pace/max*100).toFixed(1)+'% + 22px)"><span>pace '+pace+'</span></div><div class="ov-bars">'+bars.join('')+'</div></div>'
-   +'<div class="ov-tip" id="ovTip">'+ovTipText(D,days,OV_SEL)+'</div>'
-   +(top.length?'<div class="ov-top">'+top.map(function(x){return '<span style="--c:'+ATTR_COL[x.a.id]+'"><i></i>'+x.a.short+' '+x.v.toLocaleString()+'</span>'}).join('')+'</div>':'<div class="ov-top muted" style="font-size:12px">Log an activity and your week lights up here.</div>');
+  return {title:'This week',total:wk.toLocaleString()+' XP',delta:ovDelta(wk,ovSum(m,7,13),' vs last week'),pace:{label:'pace '+pace,frac:pace/max},selected:OV_SEL,
+    bars:days.map(function(d){return {date:d.k,label:d.i===6?'Today':'SMTWTFS'.charAt(new Date(d.k+'T12:00:00').getDay()),today:d.i===6,xp:d.xp,a11y:d.k+' '+d.xp+' XP',
+      segs:ATTRS.filter(function(a){return D.per[a.id][d.i]>0}).map(function(a){return {color:ATTR_COL[a.id],frac:D.per[a.id][d.i]/max}}),tip:ovTipParts(D,days,d.i)}}),
+    top:top.map(function(x){return {color:ATTR_COL[x.a.id],text:x.a.short+' '+x.v.toLocaleString()}}),empty:'Log an activity and your week lights up here.'};
 }
-function ovTipText(D,days,i){const d=days[i];if(!d)return '';const parts=ATTRS.map(function(a){return {a:a,v:D.per[a.id][i]}}).filter(function(x){return x.v>0}).sort(function(x,y){return y.v-x.v});const dt=new Date(d.k+'T12:00:00'),lab=i===6?'Today':dt.toLocaleDateString(undefined,{weekday:'long'});return '<b>'+lab+'</b> · '+d.xp+' XP'+(parts.length?' — '+parts.map(function(x){return x.a.short+' '+x.v}).join(', '):' — a rest day')}
-function ovPick(i){OV_SEL=i;const D=chCompute(),m=ovMap();const days=D.days.map(function(k,j){return {k:k,xp:ATTRS.reduce(function(s,a){return s+D.per[a.id][j]},0)}});const t=document.getElementById('ovTip');if(t)t.innerHTML=ovTipText(D,days,i);document.querySelectorAll('#ovWeek .ov-bar').forEach(function(b,j){b.classList.toggle('sel',j===i)});haptic(6)}
+/* the line under the chart for the day picked: its name, then its XP and where it went */
+function ovTipParts(D,days,i){const d=days[i],parts=ATTRS.map(function(a){return {a:a,v:D.per[a.id][i]}}).filter(function(x){return x.v>0}).sort(function(x,y){return y.v-x.v});return {label:i===6?'Today':new Date(d.k+'T12:00:00').toLocaleDateString(undefined,{weekday:'long'}),rest:d.xp+' XP'+(parts.length?' — '+parts.map(function(x){return x.a.short+' '+x.v}).join(', '):' — a rest day')}}
+function ovTipHtml(t){return t?'<b>'+esc(t.label)+'</b> · '+esc(t.rest):''}
+function ovWeekHtml(d){
+  const sel=d.bars[d.selected];
+  return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><span class="ov-sum"><b>'+esc(d.total)+'</b>'+(d.delta?'<em class="'+(d.delta.up?'up':'dn')+'">'+esc(d.delta.text)+'</em>':'')+'</span></div>'
+   +'<div class="ov-chart"><div class="ov-pace" style="bottom:calc('+(d.pace.frac*100).toFixed(1)+'% + 22px)"><span>'+esc(d.pace.label)+'</span></div><div class="ov-bars">'+d.bars.map(function(b,i){
+     return '<button type="button" class="ov-bar'+(i===d.selected?' sel':'')+(b.today?' today':'')+'" onclick="ovPick('+i+')" aria-label="'+esc(b.a11y)+'"><span class="ov-bs">'+(b.segs.length?b.segs.map(function(s){return '<i style="height:'+(s.frac*100).toFixed(1)+'%;background:linear-gradient(180deg,'+s.color+','+s.color+'bb)"></i>'}).join(''):'<i class="empty"></i>')+'</span><small>'+esc(b.label)+'</small></button>'}).join('')+'</div></div>'
+   +'<div class="ov-tip" id="ovTip">'+ovTipHtml(sel&&sel.tip)+'</div>'
+   +(d.top.length?'<div class="ov-top">'+d.top.map(function(x){return '<span style="--c:'+x.color+'"><i></i>'+esc(x.text)+'</span>'}).join('')+'</div>':'<div class="ov-top muted" style="font-size:12px">'+esc(d.empty)+'</div>');
+}
+function ovPick(i){OV_SEL=i;const b=ovWeekData().bars[i],t=document.getElementById('ovTip');if(t)t.innerHTML=ovTipHtml(b&&b.tip);document.querySelectorAll('#ovWeek .ov-bar').forEach(function(e,j){e.classList.toggle('sel',j===i)});haptic(6)}
 /* ---------- luck, recent ---------- */
-function ovLuckHtml(){const L=luckToday(),t=L?luckTier(L.score):null;return '<div class="eyebrow">DAILY LUCK</div><div class="ov-luck-n'+(L?'':' dim')+'"'+(L?' style="color:'+t.c+'"':'')+'>'+(L?luckFmt(L.score):'— — — —')+'</div><div class="ov-luck-t">'+(L?t.name:'Not rolled yet')+'</div><button type="button" class="btn small '+(L?'secondary':'')+' ov-luck-btn" onclick="openLuck()">'+(L?'View roll':'Roll the dice')+'</button>'}
-function ovRecentHtml(){
+function ovLuckData(){const L=luckToday(),t=L?luckTier(L.score):null;return {eyebrow:'DAILY LUCK',rolled:!!L,score:L?luckFmt(L.score):'— — — —',color:L?t.c:'',text:L?t.name:'Not rolled yet',button:L?'View roll':'Roll the dice'}}
+function ovLuckHtml(d){return '<div class="eyebrow">'+esc(d.eyebrow)+'</div><div class="ov-luck-n'+(d.rolled?'':' dim')+'"'+(d.rolled?' style="color:'+d.color+'"':'')+'>'+esc(d.score)+'</div><div class="ov-luck-t">'+esc(d.text)+'</div><button type="button" class="btn small '+(d.rolled?'secondary':'')+' ov-luck-btn" onclick="openLuck()">'+esc(d.button)+'</button>'}
+function ovRecentData(){
   const list=(state.activities||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)}).slice(0,4);
-  return '<div class="ov-h"><h3>Recent activity</h3><button type="button" class="ov-link" onclick="navigate(\'history\')">History ›</button></div>'+(list.length?'<div class="ov-feed">'+list.map(function(a){const at=ovAttrOf(a.primary),col=ATTR_COL[at.id];return '<div class="ov-fi" style="--c:'+col+'"><span class="ov-fic">'+px(at.icon,18)+'</span><div style="min-width:0;flex:1"><b>'+esc(a.name||'Activity')+'</b><small>'+at.short+' · '+ovAgo(a)+(a.duration?' · '+a.duration+' min':'')+'</small></div><span class="ov-fxp">+'+(a.xp||0)+'</span></div>'}).join('')+'</div>':'<div class="empty" style="padding:14px 0"><div>⌁</div>Nothing logged yet. Your first activity shows up here.</div>');
+  return {title:'Recent activity',link:'History ›',items:list.map(function(a){const at=ovAttrOf(a.primary);return {name:a.name||'Activity',icon:at.icon,color:ATTR_COL[at.id],meta:at.short+' · '+ovAgo(a)+(a.duration?' · '+a.duration+' min':''),xp:'+'+(a.xp||0)}}),
+    empty:{icon:'⌁',text:'Nothing logged yet. Your first activity shows up here.'}};
 }
-/* ---------- render + motion ---------- */
+function ovRecentHtml(d){
+  return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><button type="button" class="ov-link" onclick="navigate(\'history\')">'+esc(d.link)+'</button></div>'+(d.items.length?'<div class="ov-feed">'+d.items.map(function(a){return '<div class="ov-fi" style="--c:'+a.color+'"><span class="ov-fic">'+px(a.icon,18)+'</span><div style="min-width:0;flex:1"><b>'+esc(a.name)+'</b><small>'+esc(a.meta)+'</small></div><span class="ov-fxp">'+esc(a.xp)+'</span></div>'}).join('')+'</div>':'<div class="empty" style="padding:14px 0"><div>'+esc(d.empty.icon)+'</div>'+esc(d.empty.text)+'</div>');
+}
+/* the label-and-value chips Rewards and Activity today share */
+function ovChipsHtml(chips){return '<div class="ovh-chips">'+chips.map(function(c){return '<div class="ovh-chip"><span>'+esc(c.label)+'</span><b>'+esc(c.value)+'</b></div>'}).join('')+'</div>'}
+/* ---------- the head: today's date, the greeting, the Edit button's words and the class crest ---------- */
+function ovHeadData(){const cls=state.classId?classById(state.classId):null;return {date:new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase(),hello:ovGreeting(),
+  edit:{label:'Edit',a11y:'Edit the Overview: reorder or hide tiles'},classId:cls?cls.id:''}}
+/* ---------- render + motion. Each card is a data function (what it says) and an HTML function that draws it ---------- */
 function renderOverview(){
   const v=document.getElementById('ovHero');if(!v)return;
   const set=function(id,h){const e=document.getElementById(id);if(e&&e.__h!==h){e.innerHTML=h;e.__h=h}};
-  set('ovHero',ovHeroHtml());set('ovNext',ovNextHtml());set('ovAttrs',ovAttrsHtml());set('ovWeek',ovWeekHtml());set('ovLuck',ovLuckHtml());set('ovRecent',ovRecentHtml());
-  const cr=document.getElementById('ovCrest');if(cr){const cls=state.classId?classById(state.classId):null,k=cls?cls.id:'';if(cr.dataset.k!==k){let h='';try{if(cls&&typeof onbSvgCrest==='function'&&ONB_CLASS_VISUALS[cls.id])h=onbSvgCrest(cls.id,ONB_CLASS_VISUALS[cls.id].color)}catch(e){}cr.innerHTML=h;cr.dataset.k=k}}
-  const d=document.getElementById('ovDate');if(d)d.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
-  const g=document.getElementById('ovHello');if(g&&g.textContent!==ovGreeting())g.textContent=ovGreeting();
+  set('ovHero',ovHeroHtml(ovHeroData()));set('ovNext',ovNextHtml(ovNextData()));set('ovAttrs',ovAttrsHtml(ovAttrsData()));set('ovWeek',ovWeekHtml(ovWeekData()));set('ovLuck',ovLuckHtml(ovLuckData()));set('ovRecent',ovRecentHtml(ovRecentData()));
+  const h=ovHeadData(),cr=document.getElementById('ovCrest');
+  if(cr&&cr.dataset.k!==h.classId){let s='';try{if(h.classId&&typeof onbSvgCrest==='function'&&ONB_CLASS_VISUALS[h.classId])s=onbSvgCrest(h.classId,ONB_CLASS_VISUALS[h.classId].color)}catch(e){}cr.innerHTML=s;cr.dataset.k=h.classId}
+  const d=document.getElementById('ovDate');if(d)d.textContent=h.date;
+  const g=document.getElementById('ovHello');if(g&&g.textContent!==h.hello)g.textContent=h.hello;
+  const eb=document.getElementById('ovEditBtn');if(eb){if(eb.getAttribute('aria-label')!==h.edit.a11y)eb.setAttribute('aria-label',h.edit.a11y);const t=eb.lastChild&&eb.lastChild.nodeType===3?eb.lastChild:eb.appendChild(document.createTextNode(''));if(t.nodeValue!==h.edit.label)t.nodeValue=h.edit.label}
   const duo=document.getElementById('ovDuo');if(duo)duo.classList.toggle('solo',!petData());
   ovPlanGlance();
   if(typeof ovLayoutApply==='function')ovLayoutApply();

@@ -61,7 +61,7 @@ function lmaTopOverlay(){
  const hs=q('.hsheet');if(hs)return {close(){hs.remove()}};
  const as=all('.apps-sheet').pop();
  if(as)return {close(){const b=as.querySelector('[data-k="__close"],[data-act="close"]');b?b.click():as.remove()}};
- const ld=q('.ld-sheet.open:not([hidden])');
+ const ld=q('#view-life-director.active .ld-sheet.open:not([hidden])'); /* only on Life Director's own view: a sheet left open there is over no other page */
  if(ld)return {close(){const b=ld.querySelector('.ld-sheet-bg');b?b.click():0}};
  const so=all('.sheet-ov.show').pop();
  if(so)return {close(){so.click()}};
@@ -70,6 +70,8 @@ function lmaTopOverlay(){
 /* Android Back: close a popup, else the previous tab, else Overview. Returns true when it did something. */
 function lmaBack(){
  const o=lmaTopOverlay();if(o){o.close();return true}
+ /* then the Overview's editor, as Done closes it. Not as an overlay: the live Overview's bars would step aside for the whole edit */
+ const ed=document.getElementById('ovEdit');if(ed&&!ed.hidden){ovEditClose();return true}
  while(lmaNavStack.length){const v=lmaNavStack.pop();if(v&&v!==lmaView()&&document.getElementById('view-'+v))return lmaGoView(v)}
  if(lmaView()!=='dashboard')return lmaGoView('dashboard');
  return false;

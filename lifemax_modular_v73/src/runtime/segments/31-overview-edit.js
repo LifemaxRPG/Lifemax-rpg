@@ -24,12 +24,25 @@ function ovLayout(){
   const hidden=(Array.isArray(L.hidden)?L.hidden:[]).filter(function(id){return known.indexOf(id)>=0});
   return {order:order,hidden:hidden};
 }
-function ovLayoutSave(L){state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};writeSave()}
+/* Stores a layout and shows it; answers whether it was stored. A layout that could not be stored is taken back, so the tiles keep the
+   stored one, and storage full says so (a read-only save has had its one alert, from writeSave). */
+function ovLayoutSave(L){
+  const was=state.ovLayout;
+  state.ovLayout={order:L.order.slice(),hidden:L.hidden.slice()};
+  const saved=writeSave();
+  if(!saved)state.ovLayout=was;
+  ovLayoutApply();
+  if(!saved&&!saveReadOnly)toast(unsavedMessage());
+  return saved;
+}
 function ovLayoutApply(){
   const box=document.getElementById('ovTiles');if(!box)return;
   const L=ovLayout();
   L.order.forEach(function(id){const t=box.querySelector(':scope>.ov-tile[data-tile="'+id+'"]');if(t){box.appendChild(t);t.classList.toggle('ov-off',L.hidden.indexOf(id)>=0)}});
 }
+/* A tile drawn by a later segment (Rewards, Apps, Health) joins the list right after Level & today and takes its saved place at once:
+   the segments all run while the page is still parsing, so the first frame already shows the editor's order. */
+function ovTileAdd(tile){const i=OV_DEFAULT.indexOf('hero')+1;OV_TILES.splice(i,0,tile);OV_DEFAULT.splice(i,0,tile.id);ovLayoutApply()}
 /* why a tile might be empty even when shown */
 function ovTileNote(id){
   if(id==='cat'&&!petData())return 'Appears once you adopt a cat';
@@ -73,14 +86,14 @@ function ovEditClose(quiet){
 function ovEditToggle(id){
   const L=ovLayout(),i=L.hidden.indexOf(id);
   if(i>=0)L.hidden.splice(i,1);else L.hidden.push(id);
-  ovLayoutSave(L);ovLayoutApply();
+  if(!ovLayoutSave(L))return;
   const row=document.querySelector('#ovEditList .ov-er[data-tile="'+id+'"]');
   if(row){const off=L.hidden.indexOf(id)>=0,t=OV_TILES.find(function(x){return x.id===id});row.classList.toggle('off',off);const e=row.querySelector('.ov-er-eye');e.innerHTML=ovEye(!off);e.setAttribute('aria-pressed',String(!off));e.setAttribute('aria-label',(off?'Show ':'Hide ')+t.name);
     let sub=t.sub;if(id==='cat'&&petData())sub=petData().name+'\u2019s room';row.querySelector('small').textContent=off?'Hidden':(ovTileNote(id)||sub)}
   haptic(6);
 }
 function ovEditReset(){
-  state.ovLayout=null;ovLayoutSave(ovLayout());ovLayoutApply();
+  if(!ovLayoutSave({order:OV_DEFAULT.slice(),hidden:[]}))return;
   const list=document.getElementById('ovEditList');if(list){ovEditFlip(list,function(){list.innerHTML=ovEditRowsHtml()});ovEditWire(list)}
   haptic([8,30,8]);
 }
@@ -91,7 +104,13 @@ function ovEditFlip(list,change){
   if(fxReduced())return;
   list.querySelectorAll('.ov-er').forEach(function(r){const b=before[r.dataset.tile];if(b==null)return;const d=b-r.getBoundingClientRect().top;if(!d)return;r.animate([{transform:'translateY('+d+'px)'},{transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'})});
 }
-function ovEditCommit(list){const L=ovLayout();L.order=[].map.call(list.querySelectorAll('.ov-er'),function(r){return r.dataset.tile});ovLayoutSave(L);ovLayoutApply()}
+/* stores the rows' new order; answers whether it was stored. Rows that could not be stored glide back to the stored order. */
+function ovEditCommit(list){
+  const L=ovLayout();L.order=[].map.call(list.querySelectorAll('.ov-er'),function(r){return r.dataset.tile});
+  if(ovLayoutSave(L))return true;
+  ovEditFlip(list,function(){list.innerHTML=ovEditRowsHtml()});
+  return false;
+}
 function ovEditWire(list){
   if(!list||list.__wired)return;list.__wired=true;
   /* keyboard: arrows on a grip move that row */
@@ -99,7 +118,8 @@ function ovEditWire(list){
     const g=e.target.closest('.ov-er-grip');if(!g||(e.key!=='ArrowUp'&&e.key!=='ArrowDown'))return;
     e.preventDefault();const row=g.closest('.ov-er'),sib=e.key==='ArrowUp'?row.previousElementSibling:row.nextElementSibling;if(!sib)return;
     ovEditFlip(list,function(){if(e.key==='ArrowUp')list.insertBefore(row,sib);else list.insertBefore(sib,row)});
-    ovEditCommit(list);row.querySelector('.ov-er-grip').focus();haptic(5);
+    if(ovEditCommit(list))haptic(5);
+    list.querySelector('.ov-er[data-tile="'+row.dataset.tile+'"] .ov-er-grip').focus(); /* the row's grip, or its copy's after a take-back */
   });
   /* drag by the grip (or anywhere on the row with a mouse) */
   let drag=null,hold=0;
@@ -133,7 +153,7 @@ function ovEditWire(list){
     void list.offsetWidth;d.rows.forEach(function(x){x.style.transition=''});
     d.row.classList.remove('lift');list.classList.remove('dragging');
     if(!fxReduced()){const off=lifted-d.row.getBoundingClientRect().top;if(off)d.row.animate([{transform:'translateY('+off+'px) scale(1.03)'},{transform:'none'}],{duration:220,easing:'cubic-bezier(.2,.8,.2,1)'})}
-    if(d.to!==d.from){ovEditCommit(list);haptic(8)}
+    if(d.to!==d.from&&ovEditCommit(list))haptic(8);
   }
   list.addEventListener('pointerdown',function(e){
     const row=e.target.closest('.ov-er');if(!row||e.target.closest('.ov-er-eye'))return;

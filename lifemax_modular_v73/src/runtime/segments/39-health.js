@@ -136,28 +136,39 @@ function lmaHealthRender(){
 
 /* ---------- the Overview tile ---------- */
 function ovHealthDur(m){const h=Math.floor(m/60),r=m%60;return h?h+'h '+String(r).padStart(2,'0')+'m':r+'m'}
+/* null outside the Android app, where the tile is hidden; off until health sync is turned on; then today's steps against the goal,
+   the last seven days' steps (each as a fraction of the tallest bar) and the latest workouts, sleep and weight */
+function ovHealthData(){
+ if(!lmaNative())return null;
+ const H=lmaHealthCfg(),S=H.snap||{};
+ if(!H.on)return {on:false,title:'Activity today',text:'Connect Samsung Health to see your steps, workouts, sleep and weight here, and turn them into XP.',button:'Set up health sync'};
+ const goal=H.goal||8000,today=H.today&&H.today.date===new Date().toLocaleDateString('en-CA')?H.today.count:null,pct=today==null?0:Math.min(100,Math.round(today/goal*100));
+ const days=(S.steps||[]).slice(-7),mx=Math.max(goal,...days.map(function(d){return d.count}),1),chips=[];
+ if(S.ex)chips.push({label:'Workouts',value:S.ex.count?S.ex.count+' · '+ovHealthDur(S.ex.min):'none yet'});
+ if(S.sleep)chips.push({label:'Last night',value:ovHealthDur(S.sleep.min)});
+ if(S.wt)chips.push({label:'Weight',value:S.wt+' lb'});
+ return {on:true,title:'Activity today',meta:(H.src?H.src+' · ':'')+(H.last?lmaAgo(H.last):'not synced yet'),steps:today==null?'–':today.toLocaleString(),unit:'steps',
+  sub:today==null?'Waiting for the first sync':pct>=100?'Goal reached 🎉':(goal-today).toLocaleString()+' to your '+goal.toLocaleString()+' goal',pct:pct,
+  days:days.map(function(d,i){return {label:'SMTWTFS'.charAt(new Date(d.date+'T12:00:00').getDay()),frac:d.count/mx,now:i===days.length-1,a11y:d.count.toLocaleString()}}),chips:chips,more:'Details ›'};
+}
+function ovHealthHtml(d){
+ if(!d.on)return '<div class="ov-h"><h3>'+esc(d.title)+'</h3></div><p class="muted" style="font-size:13px;margin:0 0 10px">'+esc(d.text)+'</p><button class="btn small" onclick="navigate(\'settings\')">'+esc(d.button)+'</button>';
+ return '<div class="ov-h"><h3>'+esc(d.title)+'</h3><span class="muted" style="font-size:11.5px">'+esc(d.meta)+'</span></div>'
+  +'<div class="ovh-steps"><div><b>'+esc(d.steps)+'</b><span> '+esc(d.unit)+'</span></div><small>'+esc(d.sub)+'</small></div>'
+  +'<div class="ovh-bar"><i style="width:'+d.pct+'%"></i></div>'
+  +(d.days.length?'<div class="ovh-days">'+d.days.map(function(x){return '<div class="'+(x.now?'now':'')+'" title="'+esc(x.a11y)+'"><i style="height:'+Math.max(4,Math.round(x.frac*38))+'px"></i><small>'+esc(x.label)+'</small></div>'}).join('')+'</div>':'')
+  +ovChipsHtml(d.chips)+'<div class="ovh-more">'+esc(d.more)+'</div>';
+}
 function ovHealthRender(){
  const el=document.getElementById('ovHealth');if(!el)return;
  el.onclick=ovHealthTap;el.style.cursor='pointer';
- const tile=el.closest('.ov-tile');if(!lmaNative()){if(tile)tile.style.display='none';return}
- if(tile)tile.style.display='';
- const H=lmaHealthCfg(),S=H.snap||{};
- if(!H.on){el.innerHTML='<div class="ov-h"><h3>Activity today</h3></div><p class="muted" style="font-size:13px;margin:0 0 10px">Connect Samsung Health to see your steps, workouts, sleep and weight here, and turn them into XP.</p><button class="btn small" onclick="navigate(\'settings\')">Set up health sync</button>';return}
- const goal=H.goal||8000,today=H.today&&H.today.date===new Date().toLocaleDateString('en-CA')?H.today.count:null,pct=today==null?0:Math.min(100,Math.round(today/goal*100));
- const days=(S.steps||[]).slice(-7),mx=Math.max(goal,...days.map(function(d){return d.count}),1);
- const chip=function(ico,l,v){return '<div class="ovh-chip"><span>'+l+'</span><b>'+v+'</b></div>'};
- let h='<div class="ov-h"><h3>Activity today</h3><span class="muted" style="font-size:11.5px">'+(H.src?esc(H.src)+' · ':'')+(H.last?esc(lmaAgo(H.last)):'not synced yet')+'</span></div>';
- h+='<div class="ovh-steps"><div><b>'+(today==null?'–':today.toLocaleString())+'</b><span> steps</span></div><small>'+(today==null?'Waiting for the first sync':pct>=100?'Goal reached 🎉':(goal-today).toLocaleString()+' to your '+goal.toLocaleString()+' goal')+'</small></div>';
- h+='<div class="ovh-bar"><i style="width:'+pct+'%"></i></div>';
- if(days.length)h+='<div class="ovh-days">'+days.map(function(d,i){const t=new Date(d.date+'T12:00:00');return '<div class="'+(i===days.length-1?'now':'')+'" title="'+d.count.toLocaleString()+'"><i style="height:'+Math.max(4,Math.round(d.count/mx*38))+'px"></i><small>'+'SMTWTFS'.charAt(t.getDay())+'</small></div>'}).join('')+'</div>';
- h+='<div class="ovh-chips">'+(S.ex?chip('','Workouts',S.ex.count?S.ex.count+' · '+ovHealthDur(S.ex.min):'none yet'):'')+(S.sleep?chip('','Last night',ovHealthDur(S.sleep.min)):'')+(S.wt?chip('','Weight',S.wt+' lb'):'')+'</div>';
-el.innerHTML=h+'<div class="ovh-more">Details ›</div>';
+ const tile=el.closest('.ov-tile'),d=ovHealthData();
+ if(tile)tile.style.display=d?'':'none';
+ if(d)el.innerHTML=ovHealthHtml(d);
 }
 function ovHealthTap(e){if(e.target.closest('button'))return;lmaHealthOpen()}
 (function ovHealthBoot(){
- const i=OV_TILES.findIndex(function(t){return t.id==='hero'})+1;
- OV_TILES.splice(i,0,{id:'health',name:'Activity today',sub:'Steps, workouts, sleep and weight from Health Connect',icon:'bolt',col:'#34d399'});
- OV_DEFAULT.splice(i,0,'health');
+ ovTileAdd({id:'health',name:'Activity today',sub:'Steps, workouts, sleep and weight from Health Connect',icon:'bolt',col:'#34d399'});
  const nt=ovTileNote;ovTileNote=function(id){return id==='health'&&!lmaNative()?'Appears in the Android app':nt.apply(this,arguments)};
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovHealthRender()}catch(e){console.warn('[health tile]',e)}return r};
  setTimeout(function(){try{ovHealthRender()}catch(e){}},1500);
