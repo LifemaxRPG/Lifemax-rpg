@@ -4057,10 +4057,14 @@ const LifeDirectorApp = (function () {
     stopCache.set(ck, out);
     return out;
   }
-  /* what the dial shows while a handle of rule r (its instance s0..e0) is held at cur: the new span, and its length or that it is too short */
-  function dragPreview(r, end, s0, e0, cur) {
-    const ns = end === 'start' ? cur.ep : s0, ne = end === 'end' ? cur.ep : e0, bad = ne - ns < 900;
-    return { ns, ne, bad, text: bad ? DRAG_WORDS.tooShort : mins(Math.round((ne - ns) / 60)) + (r.kind === 'SLEEP' ? ' of sleep' : '') };
+  /* What the dial shows while a handle of rule r (where it was: minute om) is held at cur on the day from d0: the length letting go there
+     gives the rule, from dialChange as the confirmation and Change it read it (so a bedtime held past midnight is the sleep left before
+     the wake-up time, not a span back to yesterday), or that it is too short; and the span ns..ne from the handle that long towards the
+     rule's other end, in wall-clock minutes as the rule's instances are placed. The dial keeps it on the day, as it keeps every arc. */
+  function dragPreview(r, end, om, d0, cur) {
+    const dur = dialChange(r, end, om, cur.m).durationMin, bad = dur < 15, day = U.localParts(d0, tz());
+    const other = U.zonedToEpoch(day.y, day.mo, day.d, end === 'start' ? cur.m + dur : cur.m - dur, tz());
+    return { ns: end === 'start' ? cur.ep : other, ne: end === 'start' ? other : cur.ep, bad, text: bad ? DRAG_WORDS.tooShort : mins(dur) + (r.kind === 'SLEEP' ? ' of sleep' : '') };
   }
   const DRAG_WORDS = Object.freeze({ tooShort: 'Too short', release: 'Release to apply' });
   /* the change a handle released at minute m of the day asks for (om: where it was) */
@@ -4107,7 +4111,7 @@ const LifeDirectorApp = (function () {
       dragOn(svg, hd, e, a => {
         cur = snap(a);
         if (cur.m !== lastM) { lastM = cur.m; buzz(); }
-        const v = dragPreview(r, end, s0, e0, cur);
+        const v = dragPreview(r, end, om, d0, cur);
         ghost.setAttribute('d', v.bad ? '' : arcD(DIAL.RO, angOf(v.ns, d0, d1), angOf(v.ne, d0, d1)));
         moveHandle(hd, angOf(cur.ep, d0, d1), DIAL.RO);
         core.innerHTML = '<small class="ld-core-k">' + esc(handleLabel(r, end)) + '</small><b class="ld-core-big">' + fHm(cur.m) + '</b><span class="ld-core-s">' + v.text + '</span><span class="ld-core-s">' + DRAG_WORDS.release + '</span>';
@@ -4170,7 +4174,8 @@ const LifeDirectorApp = (function () {
     const changed = out.scheduledInstances.some(i => positions.get(i.instanceId) !== i.startEpoch + ':' + i.endEpoch) || positions.size !== out.scheduledInstances.length;
     if (!changed) dropBuild();
     const saved = persist(), message = handleLabel(r, P.end) + ' now ' + fHm(P.to) + (changed ? ' · schedule adjusted' : ' · sessions kept in place');
-    closeSheet(); render(); say(message);
+    closeSheet(); render();
+    if (saved) say(message); // a refused save shows its banner alone: no "now 10:30 PM" under "Not saved"
     return { ok: saved, changed: true, moved: changed, message: saved ? message : ui.banner.text };
   }
   /* My time: the sleep dial. Handles move freely; the inputs follow; Save commits. */
@@ -5062,16 +5067,17 @@ const LifeDirectorApp = (function () {
   }
   /* The dial's handles for a native screen, with everything a drag shows, decided here: stops (every place a handle can land on
      this day: its minute m, its angle a, the angle from which the finger picks it, and its time), and for each handle its key (what
-     a drop names), where it is (a, minute), the angle of its rule's other end (fixed), the readout's label, its TalkBack label, and
-     for each stop the length the readout shows ('' when the span would be too short: then dragWords.tooShort and no arc). */
+     a drop names), where it is (a, minute), the readout's label, its TalkBack label, and for each stop the length the readout shows
+     ('' when the span would be too short: then dragWords.tooShort and no arc) and where the lit arc ends (ends: the angle of the
+     span's other end, kept on the day; the arc runs from the stop to it for a start handle, from it to the stop for an end handle). */
   function nativeHandles(handles, d0, d1) {
     if (!handles.length) return { handles: [], stops: [], dragWords: DRAG_WORDS };
     const stops = dialStops(d0, d1);
     return {
       handles: handles.map(h => {
-        const { ri, rule: r, end, ep } = h, label = handleLabel(r, end);
-        return { key: h.key, rule: String(r.id), end, kind: h.kind, a: angOf(ep, d0, d1), minute: minuteOf(ep), fixed: angOf(end === 'start' ? ri.endEpoch : ri.startEpoch, d0, d1), label, aria: label + ' ' + fTime(ep),
-          lengths: stops.map(st => { const v = dragPreview(r, end, ri.startEpoch, ri.endEpoch, st); return v.bad ? '' : v.text; }) };
+        const { rule: r, end, ep } = h, label = handleLabel(r, end), om = minuteOf(ep), held = stops.map(st => dragPreview(r, end, om, d0, st));
+        return { key: h.key, rule: String(r.id), end, kind: h.kind, a: angOf(ep, d0, d1), minute: om, label, aria: label + ' ' + fTime(ep),
+          lengths: held.map(v => v.bad ? '' : v.text), ends: held.map(v => angOf(end === 'start' ? v.ne : v.ns, d0, d1)) };
       }),
       stops: stops.map(st => ({ m: st.m, a: st.a, from: st.from, time: fHm(st.m) })),
       dragWords: DRAG_WORDS,
@@ -5214,9 +5220,12 @@ const LifeDirectorApp = (function () {
      today(day).dial.handles on any day of the plan, and p is {minute} (a stop's m, where the finger let go) or {step} (1 or -1:
      a quarter hour later or earlier, as the handle's arrow keys move it). Returns {P, rule}, the change the page would hold
      (ui.pendingDial), or {same} for a release where the handle already is, or {message} when the handle or the time is not on
-     the dial any more (the rule changed since the screen drew it: its handles have new keys). */
+     the dial any more (the rule changed since the screen drew it: its handles have new keys). Only while the page shows Today with
+     nothing over it, the state a native screen covers: a change asked for after the screen left it would close what the page shows
+     now and apply what nobody saw confirmed. */
   function nativeChange(key, p) {
     if (!root || !root.isConnected || !ST.setupComplete || !ST.schedule) return { message: 'Life Director has no plan to change.' };
+    if (showing() !== 'today') return { message: 'Today is not on the page. Nothing was changed.' };
     let day = null, h = null;
     for (const d of horizonDays(ST.schedule, tz())) { h = dialHandles(d).find(x => x.key === key); if (h) { day = d; break; } }
     if (!h) return { message: 'That handle is no longer on the dial. Nothing was changed.' };

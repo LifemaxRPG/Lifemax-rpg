@@ -1,5 +1,5 @@
-/* Life Director projection v1 (Today, with the dial's handles and its build). Life Director (src/features/life-director) stays the
-   owner of the plan, its rules and its save: the native screen draws LifeDirector.native's frame and Today, covers the page only
+/* Life Director projection v2 (Today, with the dial's handles and its build; v1 was Today without them). Life Director
+   (src/features/life-director) stays the owner of the plan, its rules and its save: the native screen draws LifeDirector.native's frame and Today, covers the page only
    while Life Director shows Today with nothing over it, picks the day of the strip itself, drags a handle over the places the
    page says it can land, asks the page what letting go there would change (dialDrop), has the page's own Change it run
    (dialApply) and plays the build the page describes; every other tap goes to the page's own handler.
@@ -53,7 +53,7 @@
   const tab = NativeTabKit.create({
     id: "life-director",
     plugin: "NativeLifeDirector",
-    capability: "director.today.v1",
+    capability: "director.today.v2",
     setting: "nativeDirector",
     toggle: "nativeDirectorToggle",
     projection,

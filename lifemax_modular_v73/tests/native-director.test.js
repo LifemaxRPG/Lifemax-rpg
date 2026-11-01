@@ -25,7 +25,7 @@ const FAKES = `
     capabilities: async () => ({ liveWeb: true, version: 1, authoritativeData: true }),
     handshake: async () => ({ protocol: 1, capabilities: caps }) } };
   window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector' || n === 'NativeOverview', getPlatform: () => 'android',
-    Plugins: { NativeLifeDirector: mk('director', ['director.today.v1']), NativeOverview: mk('overview', []) }, registerPlugin: () => ({}), convertFileSrc: u => u };`;
+    Plugins: { NativeLifeDirector: mk('director', ['director.today.v2']), NativeOverview: mk('overview', []) }, registerPlugin: () => ({}), convertFileSrc: u => u };`;
 
 async function start(b, planned) {
   const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
@@ -259,7 +259,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
   const predicted = (dial, h, a) => {
     const i = dial.stops.reduce((k, s, j) => (s.from <= a ? j : k), 0), st = dial.stops[i], len = h.lengths[i];
     const polar = x => [Math.cos((x - 90) * Math.PI / 180), Math.sin((x - 90) * Math.PI / 180)].map(v => (180 + 130 * v).toFixed(2)).join(' ');
-    const [g0, g1] = [h.end === 'start' ? st.a : h.fixed, h.end === 'end' ? st.a : h.fixed];
+    const [g0, g1] = [h.end === 'start' ? st.a : h.ends[i], h.end === 'end' ? st.a : h.ends[i]];
     return { kick: h.label, time: st.time, subs: [len || dial.dragWords.tooShort, dial.dragWords.release], ghost: !len ? '' : g1 - g0 >= 359.95 ? 'ring' : polar(g0) + '|' + polar(g1) };
   };
   const misses = [];
@@ -273,6 +273,29 @@ const mark = p => p.evaluate(() => window.__calls.length);
     }
   }
   ok('a drag shows what the page\'s own dial shows at every angle tried: the time, the length or "Too short", the arc, "Release to apply"', misses.length === 0, misses.slice(0, 3));
+
+  /* the length a drag shows at each stop is the length letting go there gives the rule: the page's own release holds the change its
+     confirmation asks about and its Change it applies (ui.pendingDial), so a bedtime held past midnight reads the sleep left before the
+     wake-up time; the lit arc runs from the stop that long towards the rule's other end, kept on the day */
+  const lengths = await A.evaluate((dial) => {
+    const { ST, ui } = LifeDirectorApp._debug(), wrong = [], even = dial.stops.every(st => st.a === st.m / 4);
+    const minutes = t => { const m = /^(?:(\d+)h)? ?(?:(\d+)m)?/.exec(t); return (+m[1] || 0) * 60 + (+m[2] || 0); };
+    for (const h of dial.handles) {
+      const r = ST.availability.rules.find(x => x.id === h.rule);
+      dial.stops.forEach((st, i) => {
+        ui.pendingDial = null;
+        __drag(h.key, st.a, true);
+        const dur = ui.pendingDial ? ui.pendingDial.durationMin : st.m === h.minute ? r.durationMin : NaN, len = h.lengths[i];
+        const end = h.end === 'start' ? Math.min(360, (st.m + dur) / 4) : Math.max(0, (st.m - dur) / 4);
+        if (!(dur < 15 ? len === '' : minutes(len) === dur) || (even && Math.abs(h.ends[i] - end) > 1e-9)) wrong.push({ key: h.key, m: st.m, len, dur, end: h.ends[i], want: end });
+      });
+    }
+    __keep();
+    return { even, checked: dial.handles.length * dial.stops.length, wrong };
+  }, seen.today.dial);
+  await settle(A, 500);
+  const bed60 = H.bed.lengths[seen.today.dial.stops.findIndex(s => s.m === 60)];
+  ok('the length a drag shows at every stop is the length letting go there gives the rule (1:00 AM bedtime: "6h of sleep"), and the arc spans it', lengths.even && lengths.checked === 4 * 96 && lengths.wrong.length === 0 && bed60 === '6h of sleep', { bed60, wrong: lengths.wrong.slice(0, 4) });
 
   /* a drop's confirmation against the sheet the page opens when its own handle is let go at the same place */
   const confirmations = [];
@@ -372,8 +395,9 @@ const mark = p => p.evaluate(() => window.__calls.length);
   const refusedSave = await cmd('dialApply', { key: handle(applied.snap, 'sleep', 'start').key, minute: 1320 });
   await A.evaluate(() => { Storage.prototype.setItem = window.__realSet });
   const refusedBanner = refusedSave.snap && refusedSave.snap.banner;
-  ok('a Change it the save refuses replies not ok with the page\'s reason, the page\'s banner comes with it, the screen stays and the saved rule is untouched', refusedSave.reply.ok === false && refusedSave.reply.changed === true && /^Not saved: Storage is full/.test(refusedSave.reply.message) &&
-    !!refusedBanner && refusedBanner.kind === 'bad' && refusedBanner.text === refusedSave.reply.message && !refusedSave.closed && JSON.stringify((await rule()).saved) === JSON.stringify(savedBefore), { reply: refusedSave.reply, banner: refusedBanner });
+  const refusedNotice = refusedSave.snap && refusedSave.snap.notice;
+  ok('a Change it the save refuses replies not ok with the page\'s reason, the page\'s banner comes with it and no message that it changed, the screen stays and the saved rule is untouched', refusedSave.reply.ok === false && refusedSave.reply.changed === true && /^Not saved: Storage is full/.test(refusedSave.reply.message) &&
+    !!refusedBanner && refusedBanner.kind === 'bad' && refusedBanner.text === refusedSave.reply.message && !(refusedNotice && /now 10:00 PM/.test(refusedNotice.text)) && !refusedSave.closed && JSON.stringify((await rule()).saved) === JSON.stringify(savedBefore), { reply: refusedSave.reply, banner: refusedBanner, notice: refusedNotice });
 
   /* reduced motion: the frame says so and no build is projected, as the page plays none */
   await A.emulateMedia({ reducedMotion: 'reduce' }); await B.emulateMedia({ reducedMotion: 'reduce' });
@@ -382,6 +406,15 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await B.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=dialApply]').click()); await B.clock.runFor(100);
   const bCalm = await B.evaluate(() => ({ hud: __hud(), build: LifeDirector.native.today(0).dial.build, reduced: LifeDirector.native.frame().reducedMotion }));
   ok('with reduced motion the frame says so and carries no build, and the page plays none either', calm.reply.ok && calm.snap.reducedMotion === true && calm.snap.today.dial.build === null && bCalm.reduced && bCalm.build === null && bCalm.hud === null, { reply: calm.reply, bCalm });
+
+  /* a dial command changes the rule only while the page shows Today with nothing over it, the state the screen covers: Change it
+     would otherwise close the page's sheet and apply what was confirmed over something else */
+  const bedNow = handle(await A.evaluate(() => NativeDirectorTabProjection.snapshot()), 'sleep', 'start'), ruleNow = await rule();
+  const underSheet = await A.evaluate((k) => { LifeDirector.native.act('disrupt', ''); const r = { showing: LifeDirector.native.showing(), drop: LifeDirector.native.drop(k, { minute: 1380 }), apply: LifeDirector.native.apply(k, { minute: 1380 }), sheet: !!__ld().querySelector('.ld-sheet.open') };
+    __ld().querySelector('.ld-sheet.open [data-act=closeSheet]').click(); return r; }, bedNow.key);
+  await settle(A, 800);
+  ok('a dial command is refused while a sheet is over Today, which stays open, and the rule is untouched', underSheet.showing === 'sheet' && underSheet.sheet && underSheet.drop.ok === false && underSheet.apply.ok === false && /not on the page/.test(underSheet.apply.message) &&
+    JSON.stringify(await rule()) === JSON.stringify(ruleNow), { underSheet, rule: [ruleNow, await rule()] });
   ok('no script errors in phase 2', A.errors.length === 0 && B.errors.length === 0, A.errors.concat(B.errors));
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); fs.unlinkSync(out); process.exit(fail ? 1 : 0);

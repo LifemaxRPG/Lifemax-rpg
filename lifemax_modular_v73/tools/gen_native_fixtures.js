@@ -188,6 +188,7 @@ async function director(b) {
   replies.drop = await cmd(p, 'dialDrop', { key: bed, minute: 1350 });
   replies.dropWhereItWas = await cmd(p, 'dialDrop', { key: bed, minute: 1380 });
   replies.dropWithProblem = await cmd(p, 'dialDrop', { key: bed, minute: 240 });
+  replies.dropPastMidnight = await cmd(p, 'dialDrop', { key: bed, minute: 60 });
   replies.dropStale = await cmd(p, 'dialDrop', { key: 'sleep|start|2026-10-28|1', minute: 1350 });
   replies.dropOffTheDial = await cmd(p, 'dialDrop', { key: bed, minute: 1352 });
   replies.step = await cmd(p, 'dialDrop', { key: await key(p, 'work', 'end'), step: 1 });
