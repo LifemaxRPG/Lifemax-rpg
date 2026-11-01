@@ -215,3 +215,14 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
   Add one CI step before the node tests in build-android.yml: `npm i --no-save playwright@<pinned> && npx playwright install --with-deps chromium`. Then run `NODE_PATH=$PWD/node_modules node… *(data-safety, verified)*
 
 - Smart Diet: on some days a skipped meal cannot be fully covered. On Sunday's standard plan at the moderate level (2026-11-01), skipping the second meal grows the rest of the day to its cap (twice its size) and lands at about 2,584 of 2,800 kcal. The day's plan depends on the weekday, so tests/smartdiet.test.js now runs on a fixed Wednesday. Decide whether the cap should rise or the plan should say the day falls short.
+
+- Merge track/journal0 (Journal phase 0, verified sound against 8ad7560: honest Journal writers that take back only the
+  reward, no private text in the page while locked, the double render gone, the coach split into data builders, the
+  Media owners and `audioBusy()`). It merges cleanly into main, but `economy-golden.test.js` then differs on 14 of 880
+  cases, all intended phase-0 changes: six save-failure cases show one fewer "Could not save" toast (drawing no longer
+  saves), five coach reflection cases (`jcOnReflect` now answers true/false and drawing creates no record), three welcome
+  cases (the new `jcOffered` tier check refuses the golden seed `{gap:12, claimed:{}}`). At merge: give the welcome seeds a
+  real tier and gap and regenerate (`node tools/gen_economy_golden.js`); update `docs/specs/ECONOMY_SPEC.md` 11.7.3 (the
+  tier condition, words stored before the reward's own save, the "<X> saved · XP not saved (storage full?)" line, return
+  values, stale citations) and the save-failure toast sequences; update the unwired Kotlin
+  `core/economy/Coach.kt` (its claim checks only `claimed[kind]`), since `EconomyGoldenTest` reads the same file.
