@@ -100,10 +100,17 @@
       top: d.top.map((x) => ({ color: argb(x.color), text: x.text })),
     };
   }
-  /** the cat's card: none without a cat (the page hides the card then: #ovDuo.solo) */
-  function cat() {
+  /** the cat's card: none without a cat (the page hides the card then: #ovDuo.solo). portrait: the first cat sitting, drawn by the
+      room's own code (petPortrait), by image key; null while its art loads (the screen is refreshed once it has) or for a cat gone */
+  function cat(images) {
     const d = petPeekData();
-    return d.mode === "invite" ? null : { mode: d.mode, eyebrow: d.eyebrow, name: d.name, hearts: d.mode === "alive" ? d.hearts : null };
+    if (d.mode === "invite") return null;
+    let url = null;
+    if (d.mode === "alive" && typeof petPortrait === "function") {
+      try { url = petPortrait(state.pet, () => tab.schedule()); } catch (e) { console.warn("overview cards: portrait", e); }
+    }
+    if (url) images[keyOf(url)] = url;
+    return { mode: d.mode, eyebrow: d.eyebrow, name: d.name, hearts: d.mode === "alive" ? d.hearts : null, portrait: url ? keyOf(url) : null };
   }
   function luck() {
     const d = ovLuckData();
@@ -136,7 +143,7 @@
       tip: tip(),
       layout: ovLayout(),
       tileInfo: tileInfo(),
-      tiles: { plan: plan(), next: next(), hero: hero(images), rewards: ovRewardsData(), apps: apps(images), health: health(), attrs: attrs(), week: week(), cat: cat(), luck: luck(), recent: recent() },
+      tiles: { plan: plan(), next: next(), hero: hero(images), rewards: ovRewardsData(), apps: apps(images), health: health(), attrs: attrs(), week: week(), cat: cat(images), luck: luck(), recent: recent() },
       images,
       celebrations: held.map((c) => ({ id: c.id, xp: c.xp, origin: c.origin, gains: c.gains })),
       celebrationTarget: NativeTabKit.celebrationTarget(),

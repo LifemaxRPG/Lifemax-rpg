@@ -577,7 +577,8 @@
    "mode": "gone",
    "eyebrow": "IN MEMORY",
    "name": "Miso",
-   "hearts": null
+   "hearts": null,
+   "portrait": null
   },
   "luck": {
    "eyebrow": "DAILY LUCK",

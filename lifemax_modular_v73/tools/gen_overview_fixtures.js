@@ -59,13 +59,15 @@ module.exports = async function overview({ b, out, write, directorDay }) {
     return p;
   };
   // the toast comes and goes on its own timer, so a fixture carries it only when asked to
-  const shoot = (p, name, setup, withToast = false) => p.evaluate(([setup, withToast]) => {
+  const shoot = (p, name, setup, withToast = false) => p.evaluate(async ([setup, withToast]) => {
     const B = window.__base, s = JSON.parse(B.state), pr = JSON.parse(B.prefs), P = lmaLoad();
     Object.keys(state).forEach((k) => delete state[k]); Object.assign(state, s);
     Object.keys(P).forEach((k) => delete P[k]); Object.assign(P, pr); Object.assign(lmaHealthCfg(), JSON.parse(B.health));
     lmaNative = B.native; OV_SEL = 6;
     (0, eval)('(function(){const now=Date.now();' + (setup || '') + '})()');
     renderOverview(); renderPetPeek();
+    // a living cat's portrait comes once the room's art has loaded (petPortrait answers null until then)
+    for (let t = 0; t < 8000 && state.pet && state.pet.alive && !petPortrait(state.pet); t += 100) await new Promise((r) => setTimeout(r, 100));
     if (withToast) toast('Saved · +12 XP'); else document.getElementById('toast').classList.remove('show');
     return Object.assign(NativeOverviewCardsProjection.snapshot(), { webSessionId: 'overview-fixture', sequence: 1 });
   }, [setup, withToast]).then((s) => write('fixtures/overview-cards-' + name + '.json', s));

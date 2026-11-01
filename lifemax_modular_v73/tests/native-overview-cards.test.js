@@ -182,10 +182,14 @@ const HELPERS = `
       const nt = latest().notice; out.notice = !!nt && typeof nt.id === 'number' && nt.text === 'Saved your thing';
       lmaLoad().apps[0].icon = ICON; ovAppsRender(); await until(() => latest().tiles.apps.items[0].image, 2000);
       const s = latest(), key = s.tiles.apps.items[0].image; out.icon = !!key && s.images[key] === ICON;
+      // the cat's portrait (petPortrait), once its art has loaded, by key, with the page's own picture in images
+      await until(() => latest().tiles.cat.portrait, 8000);
+      const c = latest(), pk = c.tiles.cat.portrait; out.portrait = !!pk && /^i[0-9a-f]+$/.test(pk) && c.images[pk] === petPortrait(state.pet);
       return out;
     }, ICON);
     ok('notices: the page\'s toast reaches the screen', misc.notice, misc);
     ok('an app icon arriving refreshes the open screen, by key', misc.icon, misc);
+    ok('the cat card carries the page\'s portrait by image key', misc.portrait, misc);
 
     /* celebrations, real timers */
     const fx = await p.evaluate(async () => {
