@@ -8,6 +8,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.lifemax.rpg.app.update.DownloadRules;
+import com.lifemax.rpg.app.update.KeepAwake;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -64,16 +65,14 @@ public class LiveWebPlugin extends Plugin {
 
     private void download(PluginCall call, String url, String sha, long build, SharedPreferences p) {
         File tmp = new File(LiveWeb.root(getContext()), "download.tmp");
+        KeepAwake awake = null;
         try {
-            HttpURLConnection c = DownloadRules.open(DownloadRules.freshUrl(url));
-            if (c.getResponseCode() != 200) { call.reject("server answered " + c.getResponseCode()); return; }
-            try (OutputStream out = new FileOutputStream(tmp)) {
-                DownloadRules.copy(c, out, DownloadRules.WEB_MAX_BYTES, pct -> {
-                    JSObject e = new JSObject();
-                    e.put("pct", pct);
-                    notifyListeners("progress", e);
-                });
-            }
+            awake = KeepAwake.start(getActivity());
+            DownloadRules.fetch(DownloadRules.freshUrl(url), tmp, DownloadRules.WEB_MAX_BYTES, pct -> {
+                JSObject e = new JSObject();
+                e.put("pct", pct);
+                notifyListeners("progress", e);
+            }, 6);
             if (tmp.length() < 100000) { tmp.delete(); call.reject("the download was too small"); return; }
             if (!sha.equals(LiveWeb.sha256(tmp))) { tmp.delete(); call.reject("the download did not match its fingerprint"); return; }
             File dir = LiveWeb.dirOf(getContext(), build);
@@ -86,6 +85,8 @@ public class LiveWebPlugin extends Plugin {
             JSObject ret = new JSObject(); ret.put("staged", build); call.resolve(ret);
         } catch (Throwable t) {
             tmp.delete(); call.reject("download failed: " + t);
+        } finally {
+            if (awake != null) awake.release();
         }
     }
 

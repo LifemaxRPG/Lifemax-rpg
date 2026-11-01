@@ -16,16 +16,33 @@ public class DownloadRulesCheck {
     static final Map<String, String> redirects = new HashMap<>();   // host, or host + path, -> Location it answers with
     static byte[] body = new byte[0];
     static long declared = -1;
+    static boolean rangeAware = false;
+    static int dropAt = -1;
     static class Fake extends HttpURLConnection {
         Fake(URL u) { super(u); requests.add(this); }
         public void connect() {}
         public void disconnect() {}
         public boolean usingProxy() { return false; }
         String loc() { String k = url.getHost() + url.getPath(); return redirects.containsKey(k) ? redirects.get(k) : redirects.get(url.getHost()); }
-        public int getResponseCode() { return loc() != null ? 302 : 200; }
-        public String getHeaderField(String name) { return name.equals("Location") ? loc() : null; }
-        public long getContentLengthLong() { return declared; }
-        public InputStream getInputStream() { return new ByteArrayInputStream(body); }
+        int from() { String r = getRequestProperty("Range"); return rangeAware && r != null ? Integer.parseInt(r.replaceAll("[^0-9]", "")) : 0; }
+        public int getResponseCode() { return loc() != null ? 302 : from() > 0 ? 206 : 200; }
+        public String getHeaderField(String name) {
+            if (name.equals("Location")) return loc();
+            return name.equals("Content-Range") && from() > 0 ? "bytes " + from() + "-" + (body.length - 1) + "/" + body.length : null;
+        }
+        public long getContentLengthLong() { return rangeAware ? body.length - from() : declared; }
+        public InputStream getInputStream() {
+            InputStream in = new ByteArrayInputStream(body, from(), body.length - from());
+            if (dropAt < 0 || requests.indexOf(this) > 0) return in;
+            return new InputStream() {   // the first connection dies after dropAt bytes
+                int n = 0;
+                public int read() throws IOException { throw new UnsupportedOperationException(); }
+                public int read(byte[] b, int off, int len) throws IOException {
+                    if (n >= dropAt) throw new IOException("connection reset");
+                    int r = in.read(b, off, Math.min(len, dropAt - n)); n += Math.max(r, 0); return r;
+                }
+            };
+        }
     }
     static int failures = 0;
     static void require(boolean value, String message) {
@@ -117,6 +134,22 @@ public class DownloadRulesCheck {
         require(DownloadRules.WEB_MAX_BYTES >= 4 * 13_802_259L, "the web cap leaves room for four times today's app.html");
         require(DownloadRules.APK_MAX_BYTES >= 4 * 28_637_916L, "the APK cap leaves room for four times today's APK");
         require(DownloadRules.MANIFEST_MAX_BYTES >= 100 * 1024, "the manifest cap leaves room for a much larger version.json");
+        // a dropped connection is resumed from where it stopped, not restarted
+        requests.clear(); redirects.clear();
+        body = new byte[200000]; new Random(7).nextBytes(body); rangeAware = true; dropAt = 70000;
+        File part = File.createTempFile("lma", ".apk");
+        int[] last = {0};
+        DownloadRules.fetch(base + "LifeMax-RPG.apk", part, 1 << 20, p -> last[0] = p, 3);
+        require(java.util.Arrays.equals(java.nio.file.Files.readAllBytes(part.toPath()), body), "a dropped download is completed by asking for the rest, byte for byte");
+        require(requests.size() == 2 && requests.get(1).getRequestProperty("Range").startsWith("bytes=7"), "the second request asks for the bytes after the ones it has");
+        require(last[0] == 100, "the percent counts the whole file across the resume");
+        requests.clear(); rangeAware = false; dropAt = 70000; declared = body.length;
+        DownloadRules.fetch(base + "LifeMax-RPG.apk", part, 1 << 20, null, 3);
+        require(java.util.Arrays.equals(java.nio.file.Files.readAllBytes(part.toPath()), body), "a server that ignores the range sends the file again and it starts over");
+        dropAt = -1;
+        String over = null;
+        try { DownloadRules.fetch(base + "LifeMax-RPG.apk", part, 1000, null, 3); } catch (IOException e) { over = e.getMessage(); }
+        require(over != null && over.contains("too large") && requests.size() == 3, "a file over the cap is refused at once, not retried");
         if (failures > 0) { System.out.println(failures + " failed"); System.exit(1); }
         System.out.println("PASS: GitHub-only download rules, fresh check URLs, clean signed redirects and size caps");
     }
@@ -138,8 +171,8 @@ fails = []
 def check(cond, msg):
     print(('PASS ' if cond else 'FAIL ') + msg)
     if not cond: fails.append(msg)
-check(updater.count('DownloadRules.open(') == 2 and 'openConnection' not in updater, 'UpdaterPlugin downloads version.json and the APK only through DownloadRules.open')
-check(live.count('DownloadRules.open(') == 1 and 'openConnection' not in live and 'setInstanceFollowRedirects(true)' not in live, 'LiveWebPlugin downloads the web bundle only through DownloadRules.open (no automatic redirects)')
+check(updater.count('DownloadRules.open(') == 1 and updater.count('DownloadRules.fetch(') == 1 and 'openConnection' not in updater, 'UpdaterPlugin downloads version.json and the APK only through DownloadRules (open, fetch)')
+check(live.count('DownloadRules.fetch(') == 1 and 'openConnection' not in live and 'setInstanceFollowRedirects(true)' not in live, 'LiveWebPlugin downloads the web bundle only through DownloadRules.fetch (no automatic redirects)')
 check('DownloadRules.isStart(url)' in updater and 'DownloadRules.isStart(url)' in live, 'both plugins refuse a non-GitHub address before starting')
 check('WEB_MAX_BYTES' in live and 'APK_MAX_BYTES' in updater and 'MANIFEST_MAX_BYTES' in updater, 'every download has its size cap')
 check(re.search(r'AtomicBoolean \w+ = new AtomicBoolean\(false\)', updater) and re.search(r'AtomicBoolean \w+ = new AtomicBoolean\(false\)', live), 'install and fetch each have an in-progress guard')

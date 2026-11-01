@@ -1,5 +1,7 @@
 package com.lifemax.rpg.app.update;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -88,6 +90,11 @@ public final class DownloadRules {
      * GitHub sends release downloads to a signed storage address that rejects extra headers (it answers "bad request").
      */
     public static HttpURLConnection open(String url) throws IOException {
+        return open(url, 0);
+    }
+
+    /** As [open], asking the server for the bytes from [from] on when [from] is above zero (a resumed download). */
+    public static HttpURLConnection open(String url, long from) throws IOException {
         URL u = new URL(url);
         if (!isStart(u)) throw new IOException("updates are only downloaded from https://github.com, not " + where(u));
         for (int hop = 0; hop < MAX_HOPS; hop++) {
@@ -101,6 +108,7 @@ public final class DownloadRules {
                 c.setRequestProperty("Pragma", "no-cache");
             }
             c.setRequestProperty("User-Agent", "LifeMax-Updater");
+            if (from > 0) c.setRequestProperty("Range", "bytes=" + from + "-");
             int code = c.getResponseCode();
             if (code >= 300 && code < 400) {
                 String loc = c.getHeaderField("Location");
@@ -117,23 +125,81 @@ public final class DownloadRules {
 
     /** Copies a response body, refusing one larger than max bytes, whether declared up front or counted. Returns its size. */
     public static long copy(HttpURLConnection c, OutputStream out, long max, Progress progress) throws IOException {
+        return copy(c, out, max, progress, 0);
+    }
+
+    /** As above for a body that continues a file already [start] bytes long: the size and the percent count the whole file. */
+    public static long copy(HttpURLConnection c, OutputStream out, long max, Progress progress, long start) throws IOException {
         long total = c.getContentLengthLong();
-        if (total > max) throw new IOException(tooBig(max));
-        long got = 0;
+        if (total >= 0) total += start;
+        if (total > max) throw new Fatal(tooBig(max));
+        long got = start;
         int last = -2;
         try (InputStream in = c.getInputStream()) {
             byte[] buf = new byte[65536];
             int n;
             while ((n = in.read(buf)) > 0) {
                 got += n;
-                if (got > max) throw new IOException(tooBig(max));
+                if (got > max) throw new Fatal(tooBig(max));
                 out.write(buf, 0, n);
                 int pct = total > 0 ? (int) (got * 100 / total) : -1;
                 if (progress != null && pct != last) progress.percent(pct);
                 last = pct;
             }
         }
-        return got;
+        return got - start;
+    }
+
+    /** An error that trying again cannot cure (a size over the cap, a refusal), unlike a dropped connection. */
+    private static final class Fatal extends IOException {
+        Fatal(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Downloads [url] into [file], and when the connection drops (a slow or changing network, a locked phone) asks the
+     * server for the rest and carries on, up to [attempts] tries in all. A server that ignores the request for a range
+     * sends the whole file again, which then starts it over. The first try always starts from nothing.
+     */
+    public static void fetch(String url, File file, long max, Progress progress, int attempts) throws IOException {
+        IOException last = null;
+        for (int i = 0; i < attempts; i++) {
+            long have = i == 0 ? 0 : file.length();
+            HttpURLConnection c = null;
+            try {
+                c = open(url, have);
+                int code = c.getResponseCode();
+                boolean more = have > 0 && code == 206 && startsAt(c.getHeaderField("Content-Range"), have);
+                if (code == 416) { file.delete(); throw new IOException("the server could not continue the download"); }
+                if (!more && code != 200) throw new Fatal("Download answered " + code);
+                long start = more ? have : 0;
+                try (OutputStream out = new FileOutputStream(file, more)) {
+                    copy(c, out, max, progress, start);
+                }
+                return;
+            } catch (Fatal e) {
+                throw e;
+            } catch (IOException e) {
+                last = e;
+                if (i + 1 < attempts) {
+                    try {
+                        Thread.sleep(2000L * (i + 1));
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw e;
+                    }
+                }
+            } finally {
+                if (c != null) c.disconnect();
+            }
+        }
+        throw last;
+    }
+
+    /** Whether a Content-Range header ("bytes 100-999/1000") continues a file at [offset]. */
+    static boolean startsAt(String contentRange, long offset) {
+        return contentRange != null && contentRange.startsWith("bytes " + offset + "-");
     }
 
     private static String tooBig(long max) {

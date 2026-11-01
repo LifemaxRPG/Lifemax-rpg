@@ -13,6 +13,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.lifemax.rpg.app.update.DownloadRules;
+import com.lifemax.rpg.app.update.KeepAwake;
 
 import org.json.JSONObject;
 
@@ -33,6 +34,26 @@ public class UpdaterPlugin extends Plugin {
             "https://github.com/LifemaxRPG/Lifemax-rpg/releases/download/latest/version.json";
     /** One APK download at a time (backlog SEC-5): two would write the same file. */
     private static final AtomicBoolean INSTALLING = new AtomicBoolean(false);
+
+    /** Whether the app is on screen; an installer cannot be opened from the background (Android 10 and later). */
+    private volatile boolean foreground = true;
+    /** The installer's intent, held when the download finished while the app was away, and opened on return. */
+    private volatile Intent pendingInstall;
+
+    @Override
+    protected void handleOnPause() {
+        super.handleOnPause();
+        foreground = false;
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        foreground = true;
+        Intent i = pendingInstall;
+        pendingInstall = null;
+        if (i != null) getContext().startActivity(i);
+    }
 
     private long installedBuild() {
         try {
@@ -112,29 +133,30 @@ public class UpdaterPlugin extends Plugin {
     /* The APK goes to cache/update/, the one cache folder res/xml/file_paths.xml shares with Android's installer. */
     private void download(PluginCall call, String url) {
         File apk = new File(new File(getContext().getCacheDir(), "update"), "LifeMax-RPG.apk");
+        KeepAwake awake = null;
         try {
             File dir = apk.getParentFile();
             if (!dir.exists()) dir.mkdirs();
-            HttpURLConnection c = DownloadRules.open(DownloadRules.freshUrl(url));
-            if (c.getResponseCode() != 200) { call.reject("Download answered " + c.getResponseCode()); return; }
-            try (OutputStream out = new FileOutputStream(apk)) {
-                DownloadRules.copy(c, out, DownloadRules.APK_MAX_BYTES, pct -> {
-                    JSObject p = new JSObject();
-                    p.put("pct", pct);
-                    notifyListeners("progress", p);
-                });
-            }
+            awake = KeepAwake.start(getActivity());
+            DownloadRules.fetch(DownloadRules.freshUrl(url), apk, DownloadRules.APK_MAX_BYTES, pct -> {
+                JSObject p = new JSObject();
+                p.put("pct", pct);
+                notifyListeners("progress", p);
+            }, 6);
             Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", apk);
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setDataAndType(uri, "application/vnd.android.package-archive");
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            getContext().startActivity(i);
+            if (foreground) getContext().startActivity(i);
+            else pendingInstall = i;
             JSObject ret = new JSObject();
             ret.put("started", true);
             call.resolve(ret);
         } catch (Throwable e) {
             apk.delete();
             call.reject("Update failed: " + e);
+        } finally {
+            if (awake != null) awake.release();
         }
     }
 }
