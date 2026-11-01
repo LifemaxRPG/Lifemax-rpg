@@ -81,8 +81,8 @@ class SettingsTest {
         assertEquals(8, p.cardsIn("look").size)
         assertEquals(listOf("appearance", "tabsCard", "lmaNavCard"), p.cards.take(3).map { it.id })
         // every control of the page's phone, each with its own id (inventory section 9, item 6)
-        assertEquals(132, p.controls().size)
-        assertEquals(132, p.controls().map { it.id }.toSet().size)
+        assertEquals(133, p.controls().size)
+        assertEquals(133, p.controls().map { it.id }.toSet().size)
 
         val light = p.control<SettingsControl.Switch>("lightMode")
         assertEquals("Enable light mode", light.label)

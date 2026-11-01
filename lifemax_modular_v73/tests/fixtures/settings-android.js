@@ -6,6 +6,7 @@
 const NATIVE = {
   NativeSettings: ['settings', ['settings.projection.v1']],
   NativeOverview: ['overview', []],
+  NativeOverviewCards: ['cards', ['overview.cards.v1']],
   NativeCharacter: ['character', ['character.projection.v1']],
   NativeLog: ['log', ['log.projection.v1']],
   NativePlan: ['plan', ['plan.projection.v1']],
