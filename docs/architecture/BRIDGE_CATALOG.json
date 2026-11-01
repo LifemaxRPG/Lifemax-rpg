@@ -310,13 +310,13 @@
    "commands": {
     "plan": "{act, id}: LifeDirector.native.fromGlance(act, id); leaves the view, never answered",
     "attr": "{id, tile}: scrolls the tile into view, then openAttr(id); the screen steps aside",
-    "luck": "{op}: openLuck(), which rolls today's dice when not rolled (a write); the screen steps aside; a repeat of the same op rolls nothing",
+    "luck": "{}: openLuck(), which rolls today's dice when not rolled (a write); the screen steps aside; answered {ok, changed}, and a second roll changes nothing",
     "shop": "{}: ecoShopOpen(); steps aside",
     "health": "{}: lmaHealthOpen(); steps aside",
     "appLaunch": "{pkg}: AppsShortcuts.launch(pkg) for a pkg in lmaLoad().apps only; the screen stays; a failure arrives as notice",
     "appAdd": "{}: AppsShortcuts.openPicker(); steps aside",
     "appsEdit": "{}: navigate('apps'); leaves the view",
-    "tip": "{op}: dismissFeatureTip('dashboard'); the screen stays; ok only once stored, else the page's unsavedMessage()",
+    "tip": "{}: dismissFeatureTip('dashboard'); the screen stays; ok only once stored, else the page's unsavedMessage(); a repeat answers changed: false, \"Already recorded.\"",
     "edit": "{}: ovEditOpen() (phase 1: the page's editor); steps aside"
    },
    "writes": [
@@ -324,16 +324,20 @@
     "tipsSeen.dashboard via tip"
    ],
    "delegatedInteractions": [
-    "navigate actions: character (hero, Attributes' Details), history (Recent's History), settings (Health off), pet (the cat card), and a Next move's view"
+    "navigate actions ({view}): character (hero, Attributes' Details), history (Recent's History), settings (Health off), pet (the cat card), and a Next move's view (log, quests, plan)"
    ],
+   "swipe": "a native neighbour while the cards are wanted and coverable (the composite's body getter and wouldOpen in 50-native-overview.js); a wall while the live shell draws the Overview (ADR 0012, amending ADR 0011 item 5); the apps row takes noTabSwipe while it overflows",
    "readContract": {
     "snapshotDto": "feature/overview/domain/OverviewCards.kt",
     "decoder": "feature/overview/data/WebOverviewRepository.kt (OverviewJson.kt, OverviewTilesJson.kt)",
-    "fixtures": "native/src/test/resources/fixtures/overview-cards-sample.json and overview-cards-new.json (hand-made from the page's data functions until tools/gen_native_fixtures.js writes them)",
+    "fixtures": "native/src/test/resources/fixtures/overview-cards-*.json (the four golden saves and the extras states), overview-cards-replies.json, overview-glance-*.json, overview-cat-portrait.json and overview-hapscale.json, written by tools/gen_overview_fixtures.js from the page",
     "ordering": "webSessionId and increasing sequence; tiles in layout.order, never the JSON's; notice.id counts the page's toasts; celebrations play once per id",
     "invalidation": "renderOverview, ovAppsRender, command replies, the celebration sink, host resume and the 15-second refresh while visible"
    },
-   "mutationsGate": "no native writes: every change is the page's own handler; payload size, memory cost (A24) and tab timing are measured on the phone in phase 1",
+   "mutationsGate": "no native writes: every change is the page's own handler",
+   "payload": "10.7 KB (a new save) to 13.8 KB (health on, apps) per projection in the fixtures, 18 KB with the cat portrait; every image is sent by key with each projection, so a real avatar and app icons add their data URLs",
+   "memoryCost": "to be measured on the phone (OVERVIEW_BODY.md phone check 13: dumpsys meminfo before the first open, after it and after 20 switches)",
+   "tabTiming": "to be measured on the phone with Show tab timing (phone check 13: Character to Overview and back, warm)",
    "rollout": "opt-in under Settings, Appearance: Native Overview cards (beta), off by default",
    "canonicalLayout": true
   },
@@ -417,7 +421,7 @@
    "status": "native-opt-in-beta",
    "source": "app/shell/swipe/ (TabSwipe drives the pure SwipeModel; TabScreenView reads the gesture; SwipeVeil, SwipeHaptics)",
    "owner": "native draws the motion, the page decides (50-native-swipe.js)",
-   "purpose": "swipe from one native tab to the next with a catch half way (phase 1: native to native, walls at web tabs, the Overview, Money and the ends of the bar); a swipe moves pixels, never ownership",
+   "purpose": "swipe from one native tab to the next with a catch half way (phase 1: native to native, walls at web tabs, the Overview while its live shell draws it (with the Overview cards on it is a native neighbour; ADR 0012), Money and the ends of the bar); a swipe moves pixels, never ownership",
    "decision": "CONTRACT A34 and A23 item 11, ADR 0011",
    "scene": "while the switch is on, every navScene (NativeTabKit) and chromeScene (Food) carries swipe {v: 1, on, motion, haptics: off | light | normal | strong | max, view, active (the bar key of view, or \"\"), tabs [{key, view, label, icon, kind: native | web | stop, source?}] in bar order, colors {bg, text, muted} as opaque ARGB numbers (NativeTabKit.color), tune: null or the owner's changed keys}; only a scene ChromeHost draws reaches the swipe, so it keeps the bars' sequence and stale rule. Switched off, the scenes carry none and native does nothing of the swipe. fixtures/swipe-state.json is the page's own (tools/gen_native_fixtures.js), read by SwipeStateTest",
    "plugins": {
