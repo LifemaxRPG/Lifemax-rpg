@@ -1,0 +1,69 @@
+{
+ "disrupt": {
+  "command": "today",
+  "requestId": "director-23",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "disruptAgain": {
+  "command": "today",
+  "requestId": "director-24",
+  "ok": true,
+  "changed": false,
+  "message": "Already added"
+ },
+ "disruptInvalid": {
+  "command": "today",
+  "requestId": "director-25",
+  "ok": false,
+  "message": "Enter a date, start and end"
+ },
+ "disruptNotOffered": {
+  "command": "today",
+  "requestId": "director-26",
+  "ok": false,
+  "message": "That is not one of the choices."
+ },
+ "disruptNotSaved": {
+  "command": "today",
+  "requestId": "director-27",
+  "ok": false,
+  "message": "Not saved: Storage is full. Export a backup and clear old Life Director history.",
+  "changed": true
+ },
+ "disruptAfterFault": {
+  "command": "today",
+  "requestId": "director-28",
+  "ok": true,
+  "changed": false,
+  "message": "Already added"
+ },
+ "energy": {
+  "command": "today",
+  "requestId": "director-29",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "replan": {
+  "command": "today",
+  "requestId": "director-30",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "regroupNotShowing": {
+  "command": "today",
+  "requestId": "director-31",
+  "ok": false,
+  "message": "That question is no longer showing."
+ },
+ "dismissBannerNotShowing": {
+  "command": "today",
+  "requestId": "director-32",
+  "ok": true,
+  "changed": false,
+  "message": ""
+ }
+}

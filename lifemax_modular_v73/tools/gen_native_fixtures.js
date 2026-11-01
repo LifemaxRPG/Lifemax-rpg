@@ -8,7 +8,7 @@
    changes, all of them or the ones named:
      NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
-   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json), fixtures/recipes-*.json,
+   fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json and director-replies-today.json), fixtures/recipes-*.json,
    fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
    and fixtures/swipe-{tune,state}.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -268,17 +268,21 @@ async function director(b) {
   await shoot(p, 'replan');
 
   // phase 3A: Week and Quests, from a page whose screen says it draws them (a fake plugin answers the kit's warm handshake)
-  if (last) await last.context().close();
-  p = last = await page(b);
-  await directorDay.seed(p, { planned: true });
-  await p.addInitScript(`(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector', getPlatform: () => 'android',
-    registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeLifeDirector: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1', 'director.goals.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
-  await p.goto('file://' + out, { timeout: 120000 });
-  await p.evaluate(() => { lmaThumbWarm = async () => { }; lmaLoad().nativeOverview = false; setNativeDirectorEnabled(true) });
-  await directorDay.play(p);
-  await p.evaluate(() => lmaNavTo('life-director'));
-  await p.clock.runFor(1500);
+  const covered = async (caps) => {
+    if (last) await last.context().close();
+    const p = last = await page(b);
+    await directorDay.seed(p, { planned: true });
+    await p.addInitScript(`(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector', getPlatform: () => 'android',
+      registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeLifeDirector: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
+        handshake: async () => ({ protocol: 1, capabilities: ${JSON.stringify(caps)} }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
+    await p.goto('file://' + out, { timeout: 120000 });
+    await p.evaluate(() => { lmaThumbWarm = async () => { }; lmaLoad().nativeOverview = false; setNativeDirectorEnabled(true) });
+    await directorDay.play(p);
+    await p.evaluate(() => lmaNavTo('life-director'));
+    await p.clock.runFor(1500);
+    return p;
+  };
+  p = await covered(['director.today.v2', 'director.week.v1', 'director.goals.v1']);
   for (const section of ['week', 'quests', 'goals', 'settings']) {
     await p.evaluate((s) => { if (!LifeDirector.native.section(s).ok) throw Error('no section ' + s) }, section);
     await p.clock.runFor(300);
@@ -286,6 +290,51 @@ async function director(b) {
     if (!snap[section] || snap.today !== null || !snap.covers.includes(section)) throw Error(section + ' is not in the projection');
     write('fixtures/director-' + section + '.json', snap);
   }
+
+  /* phase 4A: Today's sheets as a screen that draws them (director.sheets.v1) gets them, through the sheet command: a session now,
+     later and past, the timer running and paused, a meal, Move and Something came up; and director-replies-today.json, what the
+     page answers Something came up's commands (a repeat, a refusal, a refused save and the same operation once it clears) */
+  p = await covered(['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1']);
+  const ids = await p.evaluate(() => {
+    const t0 = LifeDirector.native.today(0), t1 = LifeDirector.native.today(1);
+    return { now: t0.upNext.actions.find((a) => a.act === 'focusStart').id, later: t1.rows.ahead.find((r) => r.act === 'inst').id,
+      past: t0.rows.earlier.rows.find((r) => r.act === 'inst').id, meal: t0.rows.ahead.find((r) => r.act === 'meal').id };
+  });
+  const sheet = async (name, kind, id) => {
+    if (!(await cmd(p, 'sheet', { kind, id })).ok) throw Error('no sheet ' + kind);
+    const snap = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));
+    if (!snap.sheet || snap.sheet.kind !== kind || snap.sheet.gone) throw Error(name + ': the sheet is not in the projection');
+    write('fixtures/director-sheet-' + name + '.json', snap);
+  };
+  await sheet('session', 'session', ids.now);
+  await sheet('session-later', 'session', ids.later);
+  await sheet('session-past', 'session', ids.past);
+  await sheet('meal', 'meal', ids.meal);
+  await sheet('move', 'move', ids.later);
+  await sheet('disrupt', 'disrupt', '');
+  if (!(await cmd(p, 'today', { name: 'timer', act: 'start', id: ids.now })).ok) throw Error('the timer did not start');
+  await p.clock.runFor((12 * 60 + 34) * 1000);
+  await sheet('timer', 'timer', ids.now);
+  await cmd(p, 'today', { name: 'timer', act: 'pause', id: ids.now });
+  await p.clock.runFor(3 * 60 * 1000);
+  await sheet('timer-paused', 'timer', ids.now);
+  const today = {}, work = { name: 'disrupt', kind: 'work', op: 'fixture-work', date: directorDay.DAY, from: 20 * 60, until: 21 * 60, commute: 15 };
+  today.disrupt = await cmd(p, 'today', work);
+  today.disruptAgain = await cmd(p, 'today', work);
+  today.disruptInvalid = await cmd(p, 'today', { name: 'disrupt', kind: 'work', op: 'fixture-bad', date: '', from: 600, until: 700 });
+  today.disruptNotOffered = await cmd(p, 'today', { name: 'disrupt', kind: 'block', op: 'fixture-b5', hours: 5 });
+  await p.evaluate(() => {
+    const real = window.__realSet = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k) { if (k === 'lifemax_director_state_v1') throw new DOMException('The quota has been exceeded.', 'QuotaExceededError'); return real.apply(this, arguments) };
+  });
+  today.disruptNotSaved = await cmd(p, 'today', { name: 'disrupt', kind: 'block', op: 'fixture-block', hours: 1 });
+  await p.evaluate(() => { Storage.prototype.setItem = window.__realSet; });
+  today.disruptAfterFault = await cmd(p, 'today', { name: 'disrupt', kind: 'block', op: 'fixture-block', hours: 1 });
+  today.energy = await cmd(p, 'today', { name: 'energy', level: 'LOW' });
+  today.replan = await cmd(p, 'today', { name: 'replan' });
+  today.regroupNotShowing = await cmd(p, 'today', { name: 'regroup', v: 'pause', op: 'fixture-pause' });
+  today.dismissBannerNotShowing = await cmd(p, 'today', { name: 'dismissBanner', text: 'Not showing' });
+  write('fixtures/director-replies-today.json', today);
 
   p = await live(true);
   await act(p, 'inst', await upNext(p));
