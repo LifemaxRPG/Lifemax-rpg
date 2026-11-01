@@ -15,28 +15,35 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
 
 /**
- * The centre while a handle is held or let go (attachDial's core): its label, the time it is over,
- * the length the rule would have (or that it is too short), and how to apply. Sizes in dial units,
- * as the page's .ld-core-k, .ld-core-big and .ld-core-s on a 360-unit dial.
+ * The centre while a handle is held or let go (attachDial's core): its label, the time it is over
+ * (in the monospace face, as .ld-core-big's var(--ld-num)), the length the rule would have (or that
+ * it is too short), and how to apply. Sizes are the page's .ld-core-k, .ld-core-big and .ld-core-s,
+ * fixed rem whatever the dial's size (in dp, so they follow the font scale no more than the rest of
+ * the dial does), the time smaller on a phone 380 dp wide or less as the page's (max-width:380px)
+ * rule makes it.
  */
 @Composable
-internal fun DragCentre(preview: DragPreview, unit: Dp, modifier: Modifier = Modifier) {
-    val u = DialUnits(unit, LocalDensity.current)
+internal fun DragCentre(preview: DragPreview, modifier: Modifier = Modifier) {
+    val u = pagePx(LocalDensity.current)
+    val narrow = LocalConfiguration.current.screenWidthDp <= NARROW_DP
     Column(
         modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -54,8 +61,8 @@ internal fun DragCentre(preview: DragPreview, unit: Dp, modifier: Modifier = Mod
         Text(
             preview.time,
             Modifier.padding(top = u.dp(2f)),
-            style = DirectorText,
-            fontSize = u.sp(21.6f),
+            style = DirectorText.copy(fontFamily = FontFamily.Monospace),
+            fontSize = u.sp(if (narrow) 18.4f else 21.6f),
             fontWeight = FontWeight.Bold,
             letterSpacing = (-.03).em,
             lineHeight = 1.1.em,
@@ -76,12 +83,15 @@ internal fun DragCentre(preview: DragPreview, unit: Dp, modifier: Modifier = Mod
  * The build's read-out over the centre (.ld-bhud): the phase in small capitals, a big line (the
  * hour under the arm, the sessions landed, their count at the lock) and what it means. It fades in,
  * holds, and grows away before the end; each touchdown ticks the count. Only its words recompose,
- * when they change; the rest follows the clock as it is drawn.
+ * when they change; the rest follows the clock as it is drawn. Sizes are the page's fixed rem, as
+ * in [DragCentre]; the big line is smaller on a phone 400 dp wide or less, as the page's
+ * (max-width:400px) rule makes .ld-bh-n.
  */
 @Composable
-internal fun BuildHud(run: BuildRun, unit: Dp, modifier: Modifier = Modifier) {
+internal fun BuildHud(run: BuildRun, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
-    val u = DialUnits(unit, density)
+    val u = pagePx(density)
+    val big = if (LocalConfiguration.current.screenWidthDp <= HUD_NARROW_DP) 30.4f else 36.8f
     val words by remember(run) { derivedStateOf { BuildTimeline.words(run.build, run.ms) } }
     Column(
         modifier
@@ -116,7 +126,7 @@ internal fun BuildHud(run: BuildRun, unit: Dp, modifier: Modifier = Modifier) {
             },
             style =
                 DirectorText.copy(
-                    fontSize = u.sp(36.8f),
+                    fontSize = u.sp(big),
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-.04).em,
                     lineHeight = 1.05.em,
@@ -136,3 +146,16 @@ internal fun BuildHud(run: BuildRun, unit: Dp, modifier: Modifier = Modifier) {
         )
     }
 }
+
+/**
+ * The page's CSS px as dp (a rem is 16), for words the page sizes in rem over the dial: they keep
+ * their size when the dial is drawn smaller or larger, as on the page, and do not grow with the
+ * font scale, as nothing on the dial does.
+ */
+private fun pagePx(density: Density) = DialUnits(1.dp, density)
+
+/**
+ * The page's narrow phones: (max-width:380px) for the held time, (max-width:400px) for .ld-bh-n.
+ */
+private const val NARROW_DP = 380
+private const val HUD_NARROW_DP = 400

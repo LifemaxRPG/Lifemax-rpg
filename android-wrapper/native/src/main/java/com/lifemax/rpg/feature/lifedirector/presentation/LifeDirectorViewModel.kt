@@ -102,7 +102,8 @@ class LifeDirectorViewModel(
      */
     fun hold(hold: DialHold) {
         if (busy || !hold.held || hold.stop !in hold.stops.indices) return
-        if (hold.handle.lengths.size != hold.stops.size) return
+        if (hold.handle.lengths.size != hold.stops.size || hold.handle.ends.size != hold.stops.size)
+            return
         mutableUi.update { it.copy(hold = hold) }
     }
 

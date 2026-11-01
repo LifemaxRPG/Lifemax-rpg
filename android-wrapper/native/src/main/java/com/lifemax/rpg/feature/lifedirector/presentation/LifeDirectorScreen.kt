@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -37,15 +38,18 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.core.designsystem.components.tokenColor
+import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
@@ -186,7 +190,13 @@ fun LifeDirectorScreen(
             val today = p.today
             LazyColumn(
                 Modifier.fillMaxSize()
-                    .then(if (confirm != null) Modifier.clearAndSetSemantics {} else Modifier),
+                    .then(
+                        // behind a confirmation the screen is blurred as .ld-sheet-bg blurs the
+                        // page, on Android 12 and later
+                        if (confirm != null)
+                            Modifier.clearAndSetSemantics {}.blur(sheetBlur(LocalDensity.current))
+                        else Modifier
+                    ),
                 contentPadding =
                     PaddingValues(
                         start = 12.dp,
@@ -382,3 +392,9 @@ private val PANEL_WASHES =
     )
 
 private const val TOAST_MS = 4000L
+
+/**
+ * The blur of .ld-sheet-bg's backdrop-filter: blur(2px), a deviation of 2 px: the deviation a CSS
+ * shadow blur of 4 px has ([cssBlurRadius]; Android's radius r blurs with 0.57735 r + 0.5 pixels).
+ */
+private fun sheetBlur(density: Density) = with(density) { cssBlurRadius(4.dp.toPx()).toDp() }

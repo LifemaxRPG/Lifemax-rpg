@@ -9,10 +9,11 @@ enum class HandleEnd {
 /**
  * A handle on the dial's outer ring (the page's dialHandles): one end of a sleep, work, class or
  * appointment rule. [key] names it to the page and changes whenever the rule moves. [a] is where it
- * sits and [minute] its local minute; [fixed] is the angle of the rule's other end, kept on the
- * dial. [label] is the centre's kick while it is held, [aria] what TalkBack calls it. [lengths] has
- * one entry per stop: the length the centre shows with the handle there, or "" when the span would
- * be too short (then no arc is drawn).
+ * sits and [minute] its local minute. [label] is the centre's kick while it is held, [aria] what
+ * TalkBack calls it. [lengths] and [ends] have one entry per stop: the length letting go there
+ * gives the rule (what the confirmation asks about), or "" when that is too short (then no arc is
+ * drawn); and the angle where the lit span from the stop ends, towards the rule's other end and
+ * kept on the dial.
  */
 data class DialHandle(
     val key: String,
@@ -21,10 +22,10 @@ data class DialHandle(
     val kind: BlockKind,
     val a: Float,
     val minute: Int,
-    val fixed: Float,
     val label: String,
     val aria: String,
     val lengths: List<String>,
+    val ends: List<Float>,
 )
 
 /**

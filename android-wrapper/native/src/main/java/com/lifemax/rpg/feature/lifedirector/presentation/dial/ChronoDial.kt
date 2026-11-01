@@ -178,10 +178,9 @@ fun ChronoDial(
                             scaleY = scale
                         },
                     )
-                    BuildHud(run, side / DialGeometry.SIDE, centreBox.width(side * .44f))
+                    BuildHud(run, centreBox.width(side * .44f))
                 }
-                hold != null ->
-                    DragCentre(hold.preview, side / DialGeometry.SIDE, centreBox.width(side * .42f))
+                hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->
                     DialCentreView(
                         centre,

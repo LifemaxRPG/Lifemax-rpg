@@ -187,7 +187,7 @@ private fun dial(d: JSONObject): DirectorDial {
         handles = handles.handles,
         stops = handles.stops,
         dragWords = handles.words,
-        build = build(d),
+        build = build(d)?.onDial(arcs),
     )
 }
 

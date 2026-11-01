@@ -39,11 +39,12 @@ import org.junit.Test
  * The native Life Director Today from projections the web app produced (LifeDirector.native over
  * the lived-in day of tests/fixtures/director-day.js, by tools/gen_native_fixtures.js), on a 411 dp
  * wide phone like the owner's, where the dial is about 360 dp as on the web. Each image is one
- * screenful at full resolution, the screen scrolled down to a given point, so a change of a dp or a
- * colour shows. The clock stands at the projection's own time.
+ * screenful at full resolution (1080 by 1080 pixels: Paparazzi would shrink it to 1000 without
+ * useDeviceResolution), the screen scrolled down to a given point, so a change of a dp or a colour
+ * shows. The clock stands at the projection's own time.
  */
 class LifeDirectorScreenshotTest {
-    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone())
+    @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), useDeviceResolution = true)
 
     private fun phone(fontScale: Float = 1f) =
         DeviceConfig.PIXEL_5.copy(
@@ -51,6 +52,10 @@ class LifeDirectorScreenshotTest {
             density = Density(420),
             fontScale = fontScale,
         )
+
+    /** A 393 dp wide phone (1081 pixels at 440 dpi), under the page's 400 px rules. */
+    private fun narrowPhone() =
+        DeviceConfig.PIXEL_5.copy(screenWidth = 1081, screenHeight = 1081, density = Density(440))
 
     private fun projection(fixture: String, light: Boolean = false) =
         WebLifeDirectorRepository()
@@ -198,11 +203,21 @@ class LifeDirectorScreenshotTest {
         snapHeld(projection("today"))
     }
 
-    /** Work's start held past its end: too short, so no arc. */
+    /** Work's start held on its end: too short, so no arc. */
     @Test
     fun dragTooShort() {
         val p = projection("today")
-        snap(p, DirectorUi(hold = hold(p, "Work starts", 1320)), "dial" to DIAL)
+        snap(p, DirectorUi(hold = hold(p, "Work starts", 1020)), "dial" to DIAL)
+    }
+
+    /**
+     * Bedtime held past midnight, at 1:00 AM: the six hours of sleep left before the wake-up time,
+     * lit from 1 to 7 AM, as letting go there would ask.
+     */
+    @Test
+    fun dragPastMidnight() {
+        val p = projection("today")
+        snap(p, DirectorUi(hold = hold(p, "Bedtime", 60)), "dial" to DIAL)
     }
 
     /** Let go at 10:30 PM: the page's confirmation over the screen. */
@@ -221,6 +236,13 @@ class LifeDirectorScreenshotTest {
 
     /** The repair after Change it, just after its session touched down: ripple, sparks, count. */
     @Test fun buildRepair() = snap(projection("build"), DirectorUi(), "dial" to DIAL, buildMs = 560)
+
+    /** The same repair on a 393 dp phone, where the page's read-out has its smaller big line. */
+    @Test
+    fun buildRepairNarrow() {
+        paparazzi.unsafeUpdateConfig(narrowPhone())
+        snap(projection("build"), DirectorUi(), "dial" to DIAL, buildMs = 560)
+    }
 
     /** A full build half way round its sweep: the day drawn up to the arm, the read-out. */
     @Test fun buildSweep() = snap(projection("replan"), DirectorUi(), "dial" to DIAL, buildMs = 700)

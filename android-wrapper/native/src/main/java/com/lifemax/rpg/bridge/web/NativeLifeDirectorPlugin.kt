@@ -38,7 +38,7 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         "director-${++nextRequest}".also { sendCommand(command, payload, it) }
 
     override val tabId = "life-director"
-    override val capabilities = listOf("director.today.v1")
+    override val capabilities = listOf("director.today.v2")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)

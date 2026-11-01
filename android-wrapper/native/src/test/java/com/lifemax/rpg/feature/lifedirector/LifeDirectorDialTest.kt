@@ -113,7 +113,9 @@ class LifeDirectorDialTest {
         assertEquals(BlockKind.SLEEP, bed.kind)
         assertEquals(345f, bed.a, 0f)
         assertEquals(1380, bed.minute)
-        assertEquals(360f, bed.fixed, 0f)
+        assertEquals(d.stops.size, bed.ends.size)
+        // where it is, its span runs to midnight, as the dial keeps it on the day
+        assertEquals(360f, bed.ends[d.stopAt(1380)], 0f)
         assertEquals("Bedtime 11:00 PM", bed.aria)
         assertEquals(BlockKind.WORK, d.handle("Work ends").kind)
         assertEquals(96, d.stops.size)
@@ -203,6 +205,63 @@ class LifeDirectorDialTest {
         )
         rejects(fixture("today").also { it.getJSONObject("today").getJSONArray("hint").remove(1) })
         rejects(fixture("today").also { it.remove("reducedMotion") })
+        rejects(
+            fixture("today").also {
+                dialOf(it).getJSONArray("handles").getJSONObject(0).getJSONArray("ends").remove(3)
+            }
+        )
+        rejects(
+            fixture("today").also {
+                dialOf(it).getJSONArray("handles").getJSONObject(0).getJSONArray("ends").put(2, 361)
+            }
+        )
+        rejects(
+            fixture("today").also {
+                val handles = dialOf(it).getJSONArray("handles")
+                handles.getJSONObject(1).put("key", handles.getJSONObject(0).getString("key"))
+            }
+        )
+        rejects(
+            fixture("replan").also {
+                val readout =
+                    dialOf(it).getJSONObject("build").getJSONObject("sweep").getJSONArray("readout")
+                readout.getJSONObject(2).put("a", readout.getJSONObject(1).getDouble("a") - 1)
+            }
+        )
+        rejects(
+            fixture("build").also {
+                val item = dialOf(it).getJSONObject("build").getJSONArray("items").getJSONObject(0)
+                item.put("land", item.getInt("at") + item.getInt("ms") + 1)
+            }
+        )
+        rejects(
+            fixture("build").also {
+                dialOf(it)
+                    .getJSONObject("build")
+                    .getJSONArray("ghosts")
+                    .put(JSONObject().put("a0", 20).put("a1", 10))
+            }
+        )
+    }
+
+    @Test
+    fun aBuildPlaysOnlyTheSessionsOnTheDial() {
+        val j = fixture("build")
+        val b = j.getJSONObject("today").getJSONObject("dial").getJSONObject("build")
+        b.getJSONArray("items")
+            .put(
+                JSONObject(b.getJSONArray("items").getJSONObject(0).toString()).put("id", "i_gone")
+            )
+        b.getJSONArray("keep").put("i_gone_too")
+        b.getJSONArray("flips").put("i_gone_as_well")
+        val build =
+            WebLifeDirectorRepository().apply { accept(j, true) }.state.value!!.today!!.dial.build!!
+        val real = dial("build").build!!
+        // the page's own flight and kept sessions are all on the dial and stay
+        assertEquals(1 to 3, real.items.size to real.keep.size)
+        assertEquals(real.items, build.items)
+        assertEquals(real.keep, build.keep)
+        assertEquals(real.flips, build.flips)
     }
 
     @Test
@@ -263,22 +322,45 @@ class LifeDirectorDialTest {
         val d = dial()
         val bed = d.handle("Bedtime")
         assertEquals(330f to 360f, DragGeometry.span(bed, d.stops, d.stopAt(1320)))
-        // bedtime at midnight: the page's 31 hours of sleep fill the whole ring
-        assertEquals("31h of sleep", bed.lengths[0])
-        assertEquals(0f to 360f, DragGeometry.span(bed, d.stops, 0))
         val wake = d.handle("Wake up")
         assertEquals(0f to 120f, DragGeometry.span(wake, d.stops, d.stopAt(480)))
         val workStart = d.handle("Work starts")
-        val late = d.stopAt(1320)
-        assertEquals("", workStart.lengths[late])
-        assertNull(DragGeometry.span(workStart, d.stops, late))
-        val preview = DragGeometry.preview(workStart, d.stops, late, d.dragWords)
+        val atItsEnd = d.stopAt(1020)
+        assertEquals("", workStart.lengths[atItsEnd])
+        assertNull(DragGeometry.span(workStart, d.stops, atItsEnd))
+        val preview = DragGeometry.preview(workStart, d.stops, atItsEnd, d.dragWords)
         assertEquals("Work starts", preview.kick)
-        assertEquals("10:00 PM", preview.time)
+        assertEquals("5:00 PM", preview.time)
         assertEquals("Too short", preview.length)
         assertEquals("Release to apply", preview.release)
+        // past its end, work would run from 10 PM to 5 PM the next day, as letting go there asks
+        assertEquals("19h", workStart.lengths[d.stopAt(1320)])
+        assertEquals(330f to 360f, DragGeometry.span(workStart, d.stops, d.stopAt(1320)))
         val sleep = DragGeometry.preview(bed, d.stops, d.stopAt(1350), d.dragWords)
         assertEquals("8h 30m of sleep", sleep.length)
+    }
+
+    @Test
+    fun aBedtimeHeldPastMidnightIsTheSleepLeftBeforeWakingUp() {
+        val d = dial()
+        val bed = d.handle("Bedtime")
+        // at midnight and at 1 AM: seven and six hours until 7 AM, lit up to it
+        assertEquals("7h of sleep", bed.lengths[0])
+        assertEquals(0f to 105f, DragGeometry.span(bed, d.stops, 0))
+        assertEquals("6h of sleep", bed.lengths[d.stopAt(60)])
+        assertEquals(15f to 105f, DragGeometry.span(bed, d.stops, d.stopAt(60)))
+        // letting go at 1 AM asks without a problem; at 4 AM three hours are under five
+        val past = reply("dropPastMidnight", "r").confirm!!
+        assertEquals("11:00 PM" to "1:00 AM", past.from to past.to)
+        assertTrue(past.problem.isEmpty() && past.apply == "Change it")
+        assertEquals("3h of sleep", bed.lengths[d.stopAt(240)])
+        assertTrue(
+            reply("dropWithProblem", "r").confirm!!.problem.startsWith("That leaves under 5")
+        )
+        // the wake-up time held after bedtime: the half hour from 11 PM, not a day and a half
+        val wake = d.handle("Wake up")
+        assertEquals("30m of sleep", wake.lengths[d.stopAt(1410)])
+        assertEquals(345f to 352.5f, DragGeometry.span(wake, d.stops, d.stopAt(1410)))
     }
 
     // The command flow

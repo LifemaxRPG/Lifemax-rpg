@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.lifedirector.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -49,7 +51,9 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPale
  * The page's confirmation of a dial change (confirmDial in logic.js, the .ld-sheet panel): the
  * question, the time struck through and the new one, then either the problem and OK, or what the
  * change does with Change it, Keep and the small print. The dimmed screen around it, the close
- * button and Back all keep the time. It sits above the shared bottom bar ([bottomInset]).
+ * button and Back all keep the time. It sits above the shared bottom bar ([bottomInset]), which a
+ * native screen does not cover. A tap on the panel stays there without making the panel a button:
+ * TalkBack reads its heading, words and buttons one by one.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -75,7 +79,7 @@ fun BoxScope.DialConfirmSheet(
             .clip(shape)
             .background(sheetFill(LocalDensity.current))
             .border(1.dp, P.line2, shape)
-            .clickable(remember { MutableInteractionSource() }, indication = null) {}
+            .pointerInput(Unit) { detectTapGestures {} }
             .semantics { paneTitle = confirm.title }
     ) {
         Box(
@@ -143,11 +147,16 @@ fun BoxScope.DialConfirmSheet(
     }
 }
 
-/** The old time struck through, an arrow, the new time in bold (.ld-change). */
+/**
+ * The old time struck through, an arrow, the new time in bold (.ld-change). The strike and the
+ * arrow are silent, so TalkBack hears "From 11:00 PM to 10:30 PM".
+ */
 @Composable
 private fun Change(from: String, to: String) {
     Row(
-        Modifier.padding(top = 14.dp, bottom = 6.dp).semantics(mergeDescendants = true) {},
+        Modifier.padding(top = 14.dp, bottom = 6.dp).clearAndSetSemantics {
+            contentDescription = "From $from to $to"
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -160,13 +169,7 @@ private fun Change(from: String, to: String) {
             fontWeight = FontWeight.Medium,
             textDecoration = TextDecoration.LineThrough,
         )
-        Text(
-            "→",
-            Modifier.clearAndSetSemantics {},
-            style = mono,
-            color = P.ink3,
-            fontSize = 17.6.sp,
-        )
+        Text("→", style = mono, color = P.ink3, fontSize = 17.6.sp, fontWeight = FontWeight.Bold)
         Text(to, style = mono, fontSize = 24.sp, fontWeight = FontWeight.Bold)
     }
 }

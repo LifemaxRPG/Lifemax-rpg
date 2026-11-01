@@ -45,10 +45,12 @@ internal class DialInput(
  * The dial's touches (attachDial and dragOn in logic.js). A touch on a handle is the dial's from
  * the start, so neither the list's scroll nor a swipe takes it; it holds the handle, which stays on
  * its own stop until the finger has moved past the touch slop and then follows the finger from stop
- * to stop with a 6 ms buzz each. Letting go reports where; a touch the system takes away reports a
- * cancel. Any other touch is a tap only when it stays put, so the list scrolls from anywhere else
- * on the dial; a tap within 400 ms of a drag ending is ignored, as on the page. While a build
- * plays, a touch skips it and is swallowed, so the tap never opens a session.
+ * to stop with a 6 ms buzz each. Letting go reports where; a touch the system takes away, or one
+ * that never passed the slop, reports a cancel: a tap on a handle on a minute between the stops
+ * (rules may sit on any minute) would otherwise ask to move it to the nearest. Any other touch is a
+ * tap only when it stays put, so the list scrolls from anywhere else on the dial; a tap within 400
+ * ms of a drag ending is ignored, as on the page. While a build plays, a touch skips it and is
+ * swallowed, so the tap never opens a session.
  */
 internal class DialGestures(
     private val scope: PointerInputScope,
@@ -138,7 +140,7 @@ internal class DialGestures(
             }
         } finally {
             dragEnd = last
-            now.actions.release(cancelled)
+            now.actions.release(cancelled || !moved)
         }
     }
 

@@ -1,10 +1,12 @@
 package com.lifemax.rpg.feature.lifedirector.data
 
+import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
 import com.lifemax.rpg.feature.lifedirector.domain.BuildGhost
 import com.lifemax.rpg.feature.lifedirector.domain.BuildItem
 import com.lifemax.rpg.feature.lifedirector.domain.BuildSweep
 import com.lifemax.rpg.feature.lifedirector.domain.BuildWords
+import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DialBuild
 import com.lifemax.rpg.feature.lifedirector.domain.DialConfirm
 import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
@@ -14,6 +16,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.DragWords
 import com.lifemax.rpg.feature.lifedirector.domain.FlyKind
 import com.lifemax.rpg.feature.lifedirector.domain.HandleEnd
 import com.lifemax.rpg.feature.lifedirector.domain.ReadoutStep
+import org.json.JSONArray
 import org.json.JSONObject
 
 /*
@@ -22,7 +25,7 @@ import org.json.JSONObject
  * throws, so the repository keeps the last good projection.
  */
 
-/** The dial's handles over its stops; every handle has a length for every stop. */
+/** The dial's handles over its stops; every handle has a length and a span's end for every stop. */
 internal class DialHandles(
     val handles: List<DialHandle>,
     val stops: List<DialStop>,
@@ -47,6 +50,8 @@ internal fun handles(d: JSONObject): DialHandles {
             require(end == "start" || end == "end") { "Unknown handle end $end" }
             val lengths = it.getJSONArray("lengths").strings()
             require(lengths.size == stops.size) { "A length for every stop" }
+            val ends = it.getJSONArray("ends").let { e -> (0 until e.length()).map(e::angle) }
+            require(ends.size == stops.size) { "A span's end for every stop" }
             DialHandle(
                 key = it.getString("key").also { k -> require(k.isNotBlank()) },
                 rule = it.getString("rule"),
@@ -54,13 +59,15 @@ internal fun handles(d: JSONObject): DialHandles {
                 kind = if (kind == "sleep") BlockKind.SLEEP else BlockKind.WORK,
                 a = it.angle("a"),
                 minute = it.getInt("minute").also { m -> require(m in 0 until DAY_MINUTES) },
-                fixed = it.angle("fixed"),
                 label = it.getString("label"),
                 aria = it.getString("aria"),
                 lengths = lengths,
+                ends = ends,
             )
         }
     require(handles.isEmpty() || stops.isNotEmpty()) { "Handles without places to land" }
+    // a drop names its handle by key, and the dial hides a handle by key while it flies in
+    require(handles.map { it.key }.toSet().size == handles.size) { "Two handles with one key" }
     val words = d.getJSONObject("dragWords")
     return DialHandles(
         handles,
@@ -90,6 +97,10 @@ internal fun build(d: JSONObject): DialBuild? {
             }
     require((sweep != null) == full) { "A full build sweeps, a repair does not" }
     require(sweep == null || sweep.readout.isNotEmpty()) { "A sweep without a read-out" }
+    // the read-out at an angle is the last step at or before it, as the page reads it out
+    sweep?.readout?.zipWithNext()?.forEach { (a, b) ->
+        require(b.a >= a.a) { "A read-out out of dial order" }
+    }
     val start = words(b.getJSONObject("start"))
     val lock = words(b.getJSONObject("lock"))
     val end = b.getInt("end")
@@ -110,8 +121,13 @@ internal fun build(d: JSONObject): DialBuild? {
             )
         }
     items.forEach {
-        require(it.at >= 0 && it.ms > 0 && it.land >= it.at) { "A flight out of time" }
+        require(it.at >= 0 && it.ms > 0 && it.land in it.at..it.at + it.ms) {
+            "A flight out of time"
+        }
     }
+    val ghosts =
+        b.getJSONArray("ghosts").objects().map { BuildGhost(it.angle("a0"), it.angle("a1")) }
+    ghosts.forEach { require(it.a0 <= it.a1) { "A ghost that runs backwards" } }
     return DialBuild(
         id = b.getLong("id"),
         full = full,
@@ -121,10 +137,22 @@ internal fun build(d: JSONObject): DialBuild? {
         items = items,
         keep = b.getJSONArray("keep").strings(),
         flips = b.getJSONArray("flips").strings(),
-        ghosts =
-            b.getJSONArray("ghosts").objects().map { BuildGhost(it.angle("a0"), it.angle("a1")) },
+        ghosts = ghosts,
         lock = lock,
         end = end,
+    )
+}
+
+/**
+ * [build] with only the sessions on the dial ([arcs]): one the dial does not draw would fly, ripple
+ * and count with nothing there, and its keep or flash would have nothing to show.
+ */
+internal fun DialBuild.onDial(arcs: List<DialArc>): DialBuild {
+    val ids = arcs.filter { it.style == ArcStyle.SESSION }.mapNotNull { it.tap?.id }.toSet()
+    return copy(
+        items = items.filter { it.id in ids },
+        keep = keep.filter { it in ids },
+        flips = flips.filter { it in ids },
     )
 }
 
@@ -161,5 +189,8 @@ private fun confirm(c: JSONObject) =
 
 private fun JSONObject.angle(key: String) =
     getDouble(key).toFloat().also { require(it in 0f..360f) { "$key $it is off the dial" } }
+
+private fun JSONArray.angle(i: Int) =
+    getDouble(i).toFloat().also { require(it in 0f..360f) { "Angle $it is off the dial" } }
 
 private const val DAY_MINUTES = 1440

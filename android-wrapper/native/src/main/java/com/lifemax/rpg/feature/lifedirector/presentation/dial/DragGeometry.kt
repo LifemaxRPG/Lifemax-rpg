@@ -54,14 +54,15 @@ object DragGeometry {
             ?.first
 
     /**
-     * The arc [handle] spans held at stop [i]: from the stop to its rule's other end, or the other
-     * way for an end handle. Null when the span would be too short (the page gives no length).
+     * The arc [handle] spans held at stop [i]: from the stop to where the page says the span ends,
+     * or from there to the stop for an end handle. Null when the span would be too short (the page
+     * gives no length) or nothing of it is on the dial.
      */
     fun span(handle: DialHandle, stops: List<DialStop>, i: Int): Pair<Float, Float>? {
         if (handle.lengths[i].isEmpty()) return null
         val at = stops[i].a
-        val a0 = if (handle.end == HandleEnd.START) at else handle.fixed
-        val a1 = if (handle.end == HandleEnd.END) at else handle.fixed
+        val a0 = if (handle.end == HandleEnd.START) at else handle.ends[i]
+        val a1 = if (handle.end == HandleEnd.END) at else handle.ends[i]
         return if (a1 > a0) a0 to a1 else null
     }
 
