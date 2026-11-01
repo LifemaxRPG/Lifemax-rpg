@@ -199,10 +199,15 @@ jobs:
             android-wrapper/android/app/build/reports/androidTests/
             android-wrapper/android/app/build/outputs/androidTest-results/
 
-  # Every web test and the hand-over simulation, on their own runner in parallel with the APK build.
+  # Every web test and the hand-over simulation, beside the APK build: the tests split over three runners (SHARD k/3 runs every
+  # third file) and the simulation on a fourth, so each finishes well inside its time limit as the suite grows.
   web-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        part: ['1/3', '2/3', '3/3', 'sim']
     steps:
       - uses: actions/checkout@v4
 
@@ -229,10 +234,12 @@ jobs:
       - name: Segments parse as one script; module map and symbol index current
         run: python3 lifemax_modular_v73/check_source.py
 
-      - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt)
-        run: lifemax_modular_v73/tools/run_tests.sh
+      - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt), part ${{ matrix.part }}
+        if: matrix.part != 'sim'
+        run: SHARD=${{ matrix.part }} lifemax_modular_v73/tools/run_tests.sh
 
       - name: Tab hand-over simulation
+        if: matrix.part == 'sim'
         run: SEEDS=40 lifemax_modular_v73/tools/run_tests.sh sim
 
   # Only a build whose APK compiled, passed its unit and screenshot tests and whose web tests passed reaches the phone.

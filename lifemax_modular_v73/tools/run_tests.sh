@@ -2,6 +2,7 @@
 # Run the web app's tests the way CI does.
 #   tools/run_tests.sh        every tests/*.test.js and tests/*.test.py except those in tests/SKIP_IN_CI.txt
 #   tools/run_tests.sh sim    the hand-over simulation with a fixed seed base (SEEDS=n to change how many)
+#   SHARD=k/n tools/run_tests.sh   only every n-th test file, starting with the k-th (CI splits the suite over runners)
 # Needs node and python3; most tests need Playwright with Chromium (NODE_PATH must reach it).
 set -uo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -23,9 +24,14 @@ node -e "require('$here/tests/current-page.js').build(process.env.LMA_TEST_PAGE)
 skip=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$here/tests/SKIP_IN_CI.txt" | grep -v '^$' || true)
 failed=()
 passed=0
+shard_k=1; shard_n=1
+if [ -n "${SHARD:-}" ]; then shard_k=${SHARD%/*}; shard_n=${SHARD#*/}; fi
+i=0
 for t in "$here"/tests/*.test.js "$here"/tests/*.test.py; do
   name=$(basename "$t")
   if grep -qx "$name" <<<"$skip"; then echo "SKIP $name"; continue; fi
+  i=$((i + 1))
+  if [ $(( (i - 1) % shard_n + 1 )) -ne "$shard_k" ]; then continue; fi
   start=$SECONDS
   if [[ $name == *.py ]]; then (cd "$repo" && python3 "$t") >"$out" 2>&1; else node "$t" >"$out" 2>&1; fi
   rc=$?
