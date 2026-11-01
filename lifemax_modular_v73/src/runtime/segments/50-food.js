@@ -151,16 +151,16 @@ function fv2Go(view){const sh=fv2S().sh;sh.stack.push(sh.view);sh.view=view;fv2P
 function fv2Back(){const sh=fv2S().sh;if(sh.stack.length){sh.view=sh.stack.pop();fv2Paint();if(sh.view==='search')setTimeout(function(){const q=document.getElementById('fv2Q');q&&q.focus()},80)}else fv2Close()}
 function fv2OpenEntry(id){const e=state.foodLog.find(x=>x.id===id);if(!e)return;const sh=fv2S().sh;sh.open=true;sh.stack=[];sh.edit=e;sh.pick=fv2FoodOf(e);sh.grams=+e.grams||100;sh.slot=e.slot;sh.view='edit';const o=fv2Ov();fv2Paint();o.classList.add('show');document.body.classList.add('noscroll');requestAnimationFrame(function(){const p=o.querySelector('.sheet');p&&p.classList.add('fv2-in')})}
 function fv2SlotPills(){const sl=fv2S().sh.slot;return '<div class="fv2-pills">'+fv2Slots().map(function(s){return '<button type="button" data-s="'+s[0]+'" class="'+(sl===s[0]?'on':'')+'" style="--sc:'+s[2]+'">'+s[1]+'</button>'}).join('')+'</div>'}
-function fv2Head(title,back){return '<div class="fv2-sh"><button type="button" class="bk" data-s2="back" aria-label="'+(back?'Back':'Close')+'">'+(back?'‹':'✕')+'</button><h2>'+esc(title)+'</h2><span></span></div>'}
+function fv2Head(title,back){const w=fv2SheetWords();return '<div class="fv2-sh"><button type="button" class="bk" data-s2="back" aria-label="'+(back?w.back:w.close)+'">'+(back?'‹':'✕')+'</button><h2>'+esc(title)+'</h2><span></span></div>'}
 function fv2Paint(){const sh=fv2S().sh,p=document.querySelector('#fv2Ov .sheet');if(!p)return;let h='';
  if(sh.view==='search'){
-  h=fv2Head('Add food')+'<div class="fv2-sb"><div class="fv2-si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.500-3.500"/></svg><input id="fv2Q" type="search" placeholder="Search chicken, rice, yogurt…" autocomplete="off" value="'+esc(sh.q)+'" enterkeyhint="search"></div>'+fv2SlotPills()
-   +'<div class="fv2-tabs"><button type="button" data-tab="recent" class="'+(sh.tab==='recent'?'on':'')+'">Recent</button><button type="button" data-tab="fav" class="'+(sh.tab==='fav'?'on':'')+'">Favorites</button><button type="button" data-tab="mine" class="'+(sh.tab==='mine'?'on':'')+'">My foods</button></div></div><div class="fv2-list" id="fv2List"></div>'
-   +'<div class="fv2-foot"><button type="button" class="ghost" data-s2="quick">Quick calories</button><button type="button" class="ghost" data-s2="create">Create food</button></div>';
+  const w=fv2SheetWords();h=fv2HeadFor('search')+'<div class="fv2-sb"><div class="fv2-si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.500-3.500"/></svg><input id="fv2Q" type="search" placeholder="'+w.search+'" autocomplete="off" value="'+esc(sh.q)+'" enterkeyhint="search"></div>'+fv2SlotPills()
+   +'<div class="fv2-tabs">'+fv2TabsData().map(t=>'<button type="button" data-tab="'+t[0]+'" class="'+(sh.tab===t[0]?'on':'')+'">'+t[1]+'</button>').join('')+'</div></div><div class="fv2-list" id="fv2List"></div>'
+   +'<div class="fv2-foot"><button type="button" class="ghost" data-s2="quick">'+w.quick+'</button><button type="button" class="ghost" data-s2="create">'+w.create+'</button></div>';
   p.innerHTML=h;fv2List();
  }else if(sh.view==='portion'||sh.view==='edit'){h=fv2Portion();p.innerHTML=h}
  else if(sh.view==='create'){h=fv2Create();p.innerHTML=h}
- else if(sh.view==='quick'){h=fv2Head('Quick calories',true)+'<div class="fv2-form"><label>Calories<input id="fv2QK" type="number" inputmode="numeric" min="0" placeholder="e.g. 450"></label><label>Name <small>(optional)</small><input id="fv2QN" type="text" maxlength="60" placeholder="Restaurant lunch"></label>'+fv2SlotPills()+'</div><div class="fv2-foot"><button type="button" class="pri" data-s2="quicksave">Add to '+esc(fv2Slots().find(s=>s[0]===sh.slot)[1])+'</button></div>';p.innerHTML=h;setTimeout(function(){const i=document.getElementById('fv2QK');i&&i.focus()},120)}
+ else if(sh.view==='quick'){const qd=fv2QuickData(sh.slot);h=fv2HeadFor('quick')+'<div class="fv2-form"><label>'+qd.kcal.label+'<input id="fv2QK" type="number" inputmode="numeric" min="0" placeholder="'+qd.kcal.hint+'"></label><label>'+qd.name.label+' <small>'+qd.name.small+'</small><input id="fv2QN" type="text" maxlength="'+qd.name.max+'" placeholder="'+qd.name.hint+'"></label>'+fv2SlotPills()+'</div><div class="fv2-foot"><button type="button" class="pri" data-s2="quicksave">'+esc(qd.save)+'</button></div>';p.innerHTML=h;setTimeout(function(){const i=document.getElementById('fv2QK');i&&i.focus()},120)}
  else if(sh.view==='goal'){h=fv2Goal();p.innerHTML=h;fv2GoalLive()}}
 function fv2Match(f,toks){const hay=((f.n||'')+' '+(f.brand||'')+' '+(f.cat||'')).toLowerCase();return toks.every(t=>hay.indexOf(t)>=0)}
 /* what a row of the list shows for a food: the amount a tap logs (the last amount used, else its first serving), its words
@@ -212,8 +212,8 @@ function fv2SheetClick(ev){const sh=fv2S().sh,t=ev.target;let b;
   if(a==='mult'){sh.grams=fv2MultGrams(sh.pick,+b.dataset.x);fv2Live(true);return}
   if(a==='serv'){sh.grams=+b.dataset.g;fv2Live(true);return}
   if(a==='save'){fv2SaveEdit();return}
-  if(a==='del'){const id=sh.edit.id,e=sh.edit,was=state.foodLog;state.foodLog=was.filter(x=>x.id!==id);if(!fv2Saved(()=>{state.foodLog=was}))return;fv2Close();renderMeals();fv2Snack('Removed '+e.name,'Undo',function(){state.foodLog.push(e);if(fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==e)}))renderMeals()});return}
-  if(a==='again'){const e=sh.edit,n=Object.assign({},e,{id:'food_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),date:getToday(),at:new Date().toISOString()});state.foodLog.push(n);if(!fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==n)}))return;fv2Close();mealsDay=getToday();renderMeals();fv2Hap('success');fv2Snack('Logged again today');return}
+  if(a==='del'){if(fv2RemoveEntry(sh.edit))fv2Close();return}
+  if(a==='again'){if(fv2LogAgain(sh.edit))fv2Close();return}
   if(a==='createsave'){fv2SaveCreate();return}
   if(a==='goalsave'){fv2SaveGoal();return}
   if(a==='preset'){fv2Preset(b.dataset.p);return}}
@@ -228,17 +228,17 @@ function fv2MultGrams(food,x){return Math.max(1,Math.round(fv2Unit(food).g*x*10)
 /* a one-off food from calories alone (and an optional name), logged as 100 g of it */
 function fv2QuickFood(kcal,name){return {id:'quick_'+Date.now(),n:String(name||'').trim()||'Quick calories',cat:'Quick',kcal:kcal,p:0,c:0,f:0,fib:0,sug:0,na:0,port:[{l:'1 entry',g:100}]}}
 function fv2Totals(){const day=mealsDayKey();return fv2Tot(dayFoodLog(day))}
-function fv2Portion(){const sh=fv2S().sh,f=sh.pick,ed=sh.view==='edit',s=scaleFood(f,sh.grams);
+function fv2Portion(){const sh=fv2S().sh,f=sh.pick,ed=sh.view==='edit',s=scaleFood(f,sh.grams),w=fv2SheetWords();
  let sv='';fv2ServingsData(f,sh.grams).forEach(function(p){sv+='<button type="button" data-s2="serv" data-g="'+p.grams+'" class="'+(p.on?'on':'')+'">'+esc(p.label)+(p.small?'<small>'+p.grams+' g</small>':'')+'</button>'});
  const e0=ed?sh.edit:null;
  let imp='';fv2ImpactData(f,sh.grams,e0).forEach(function(d){imp+='<div class="fv2-im" style="--mc:'+d.color+'"><span>'+d.name+'</span><i><u style="width:'+d.before+'%"></u><b id="fv2Imb'+d.k+'" style="left:'+d.before+'%;width:'+d.add+'%"></b></i><em id="fv2Imv'+d.k+'">'+d.label+'</em></div>'});
- return fv2Head(ed?'Edit entry':'Add food',!ed)+'<div class="fv2-pt"><div class="fv2-fh"><div><h3>'+esc(f.n)+'</h3><p>'+esc([f.brand,f.cat].filter(Boolean).join(' · ')||'Food')+'</p></div>'+(ed?'':'<button type="button" class="fv2-star'+(fv2IsFav(f)?' on':'')+'" data-s2="fav" aria-label="Favorite" aria-pressed="'+fv2IsFav(f)+'"><svg viewBox="0 0 24 24"><path d="M12 3.500l2.700 5.500 6 .9-4.400 4.200 1.100 6-5.400-2.900-5.400 2.900 1.100-6L3.300 9.900l6-.9z"/></svg></button>')+'</div>'
-  +'<div class="fv2-big"><span id="fv2K">'+fv2Fmt(s.kcal)+'</span><small>kcal</small></div>'
-  +'<div class="fv2-amt"><button type="button" data-s2="step" data-d="-1" aria-label="Less">−</button><label><input id="fv2G" type="number" inputmode="decimal" min="1" value="'+sh.grams+'"><span>grams</span></label><button type="button" data-s2="step" data-d="1" aria-label="More">+</button></div>'
+ return fv2HeadFor(ed?'edit':'portion')+'<div class="fv2-pt"><div class="fv2-fh"><div><h3>'+esc(f.n)+'</h3><p>'+esc([f.brand,f.cat].filter(Boolean).join(' · ')||'Food')+'</p></div>'+(ed?'':'<button type="button" class="fv2-star'+(fv2IsFav(f)?' on':'')+'" data-s2="fav" aria-label="'+w.fav+'" aria-pressed="'+fv2IsFav(f)+'"><svg viewBox="0 0 24 24"><path d="M12 3.500l2.700 5.500 6 .9-4.400 4.200 1.100 6-5.400-2.900-5.400 2.900 1.100-6L3.300 9.900l6-.9z"/></svg></button>')+'</div>'
+  +'<div class="fv2-big"><span id="fv2K">'+fv2Fmt(s.kcal)+'</span><small>'+w.kcal+'</small></div>'
+  +'<div class="fv2-amt"><button type="button" data-s2="step" data-d="-1" aria-label="'+w.less+'">−</button><label><input id="fv2G" type="number" inputmode="decimal" min="1" value="'+sh.grams+'"><span>'+w.grams+'</span></label><button type="button" data-s2="step" data-d="1" aria-label="'+w.more+'">+</button></div>'
   +'<div class="fv2-serv">'+sv+'</div><div class="fv2-mult">'+FV2_MULTS.map(x=>'<button type="button" data-s2="mult" data-x="'+x+'">'+fv2MultLabel(x)+'</button>').join('')+'</div>'
   +'<div class="fv2-imp">'+imp+'<div class="fv2-sm" id="fv2Sm">'+fv2Small(s)+'</div></div>'
   +(ed?'':fv2SlotPills())+(ed?fv2SlotPills():'')+'</div>'
-  +'<div class="fv2-foot">'+(ed?'<button type="button" class="ghost danger" data-s2="del">Remove</button>'+(e0.date!==getToday()?'<button type="button" class="ghost" data-s2="again">Log today</button>':''):'')+'<button type="button" class="pri" id="fv2LogBtn" data-s2="'+(ed?'save':'log')+'">'+fv2LogLabel(s,ed)+'</button></div>'}
+  +'<div class="fv2-foot">'+(ed?'<button type="button" class="ghost danger" data-s2="del">'+w.remove+'</button>'+(e0.date!==getToday()?'<button type="button" class="ghost" data-s2="again">'+w.again+'</button>':''):'')+'<button type="button" class="pri" id="fv2LogBtn" data-s2="'+(ed?'save':'log')+'">'+fv2LogLabel(s,ed)+'</button></div>'}
 /* what an amount of a food adds to the day's protein, carbs and fat against the day's targets, for the bars of the portion view:
    `before` is how much of the target the day already has (an entry being edited is taken out of it), `add` how much this adds
    (both as percentages of the bar, together at most 100), `label` the words under the bar. e0 is the entry being edited, if any. */
@@ -261,26 +261,21 @@ function fv2Live(rewrite){const sh=fv2S().sh,s=scaleFood(sh.pick,sh.grams||0),e0
 function fv2DoLog(){const sh=fv2S().sh;if(!sh.pick||!(sh.grams>0))return;const f=sh.pick,gr=sh.grams,sl=sh.slot;fv2Close();
  if(String(f.id).indexOf('custom_')!==0&&f.cat==='Logged'&&state.customFoods.every(x=>x.id!==f.id)){/* keep as is: per-100 numbers came from the entry */}
  fv2Log(f,gr,sl)}
-function fv2SaveEdit(){const sh=fv2S().sh,e=sh.edit;if(!e)return;const s=Object.assign({grams:sh.grams,slot:sh.slot},scaleFood(sh.pick,sh.grams)),was={};Object.keys(s).forEach(k=>{was[k]=e[k]});Object.assign(e,s);if(!fv2Saved(()=>{Object.assign(e,was)}))return;fv2Close();fv2S().lastId=e.id;renderMeals();fv2Hap('success')}
-function fv2Create(){const sh=fv2S().sh;return fv2Head('Create food',true)+'<div class="fv2-form"><label>Name<input id="fv2CN" type="text" maxlength="80" placeholder="Homemade protein shake"></label><label>Brand <small>(optional)</small><input id="fv2CB" type="text" maxlength="60"></label>'
- +'<label>Serving size<span class="u"><input id="fv2CS" type="number" inputmode="decimal" min="1" value="100"><em>grams</em></span></label>'
- +'<div class="fv2-grid"><label>Calories<input id="fv2CK" type="number" inputmode="decimal" min="0"></label><label>Protein g<input id="fv2CP" type="number" inputmode="decimal" min="0" step="0.1"></label><label>Carbs g<input id="fv2CC" type="number" inputmode="decimal" min="0" step="0.1"></label><label>Fat g<input id="fv2CF" type="number" inputmode="decimal" min="0" step="0.1"></label></div>'
- +'<p class="fv2-hint">Enter the numbers for one serving, exactly as the label shows them.</p></div><div class="fv2-foot"><button type="button" class="pri" data-s2="createsave">Save and continue</button></div>'}
-function fv2SaveCreate(){const v=id=>{const n=document.getElementById(id);return n?n.value:''},name=v('fv2CN').trim();if(!name){fv2Snack('Give it a name');return}
- const sv=Math.max(1,+v('fv2CS')||100),k=100/sv,r=x=>Math.round((+x||0)*k*100)/100;let kc=r(v('fv2CK'));const p=r(v('fv2CP')),c=r(v('fv2CC')),fa=r(v('fv2CF'));if(!kc&&(p||c||fa))kc=Math.round(p*4+c*4+fa*9);
- const f={id:'custom_'+Date.now(),n:name,brand:v('fv2CB').trim(),cat:'Custom',kcal:kc,p,c,f:fa,fib:0,sug:0,na:0,port:sv===100?[]:[{l:'1 serving',g:sv}]};mealsEnsure();state.customFoods.unshift(f);
- if(!fv2Saved(()=>{state.customFoods=state.customFoods.filter(x=>x!==f)}))return; // the form stays filled in
- const sh=fv2S().sh;sh.pick=f;sh.grams=sv;sh.view='portion';sh.stack=['search'];fv2Paint();fv2Hap('success')}
+function fv2SaveEdit(){const sh=fv2S().sh,e=sh.edit;if(!e)return;if(fv2EditEntry(e,sh.pick,sh.grams,sh.slot))fv2Close()}
+function fv2Create(){const d=fv2CreateData(),fs=d.fields;return fv2HeadFor('create')+'<div class="fv2-form">'+fs.filter(f=>!f.group).map(fv2CreateFieldHtml).join('')
+ +'<div class="fv2-grid">'+fs.filter(f=>f.group).map(fv2CreateFieldHtml).join('')+'</div>'
+ +'<p class="fv2-hint">'+esc(d.hint)+'</p></div><div class="fv2-foot"><button type="button" class="pri" data-s2="createsave">'+esc(d.save)+'</button></div>'}
+function fv2SaveCreate(){const v={};fv2CreateData().fields.forEach(x=>{const n=document.getElementById(x.id);v[x.key]=n?n.value:''});const f=fv2CreateFood(v);if(!f)return; // the form stays filled in
+ const sh=fv2S().sh;sh.pick=f;sh.grams=fv2Unit(f).g;sh.view='portion';sh.stack=['search'];fv2Paint();fv2Hap('success')}
 /* goals */
-function fv2Goal(){const m=state.mealsMeta||{},g=fv2Goals(),cal=g.cal||2000;return fv2Head('Daily targets')+'<div class="fv2-form fv2-goal"><div class="fv2-gc"><button type="button" data-s2="goalstep" data-d="-50" aria-label="Less">−</button><label><input id="fv2GC" data-goal="cal" type="number" inputmode="numeric" value="'+cal+'"><span>calories a day</span></label><button type="button" data-s2="goalstep" data-d="50" aria-label="More">+</button></div>'
- +'<div class="fv2-pre"><button type="button" data-s2="preset" data-p="bal">Balanced<small>30 / 40 / 30</small></button><button type="button" data-s2="preset" data-p="hi">High protein<small>40 / 35 / 25</small></button><button type="button" data-s2="preset" data-p="low">Low carb<small>30 / 25 / 45</small></button></div>'
- +'<div class="fv2-grid"><label style="--mc:#ff7a8a">Protein g<input id="fv2GP" data-goal="p" type="number" inputmode="numeric" value="'+(g.cal?g.p:Math.round(cal*.3/4))+'"></label><label style="--mc:#ffc15e">Carbs g<input id="fv2GCb" data-goal="c" type="number" inputmode="numeric" value="'+(g.cal?g.c:Math.round(cal*.4/4))+'"></label><label style="--mc:#4fd6c0">Fat g<input id="fv2GF" data-goal="f" type="number" inputmode="numeric" value="'+(g.cal?g.f:Math.round(cal*.3/9))+'"></label></div>'
- +'<div class="fv2-gs" id="fv2Gs"></div><label>Water goal<span class="u"><input id="fv2GW" type="number" inputmode="numeric" value="'+g.water+'"><em>ml</em></span></label></div><div class="fv2-foot"><button type="button" class="pri" data-s2="goalsave">Save targets</button></div>'}
-function fv2GoalLive(){const n=id=>+(document.getElementById(id)||{}).value||0,k=n('fv2GP')*4+n('fv2GCb')*4+n('fv2GF')*9,c=n('fv2GC'),el=document.getElementById('fv2Gs');if(el)el.innerHTML='Your macros add up to <b>'+fv2Fmt(k)+' kcal</b>'+(c?' · '+(k>c+30?'<span class="bad">'+fv2Fmt(k-c)+' over your calorie target</span>':k<c-30?fv2Fmt(c-k)+' under':'matches your target'):'')}
-function fv2Preset(p){const c=+document.getElementById('fv2GC').value||2000,sp={bal:[.3,.4,.3],hi:[.4,.35,.25],low:[.3,.25,.45]}[p];document.getElementById('fv2GP').value=Math.round(c*sp[0]/4);document.getElementById('fv2GCb').value=Math.round(c*sp[1]/4);document.getElementById('fv2GF').value=Math.round(c*sp[2]/9);fv2GoalLive()}
-function fv2SaveGoal(){const n=id=>Math.max(0,Math.round(+(document.getElementById(id)||{}).value||0));mealsEnsure();const m=state.mealsMeta,keys=['calGoal','protGoal','carbGoal','fatGoal','waterGoalMl'],was={};keys.forEach(k=>{was[k]=m[k]});
- m.calGoal=n('fv2GC');m.protGoal=n('fv2GP');m.carbGoal=n('fv2GCb');m.fatGoal=n('fv2GF');m.waterGoalMl=n('fv2GW')||2000;if(!fv2Saved(()=>{Object.assign(m,was)}))return;fv2Close();renderMeals();fv2Hap('success')}
-(function(){document.addEventListener('click',function(ev){const b=ev.target.closest&&ev.target.closest('#fv2Ov [data-s2="goalstep"]');if(!b)return;const i=document.getElementById('fv2GC');i.value=Math.max(0,(+i.value||0)+(+b.dataset.d));fv2GoalLive()});
+function fv2Goal(){const d=fv2GoalData(),w=fv2SheetWords();return fv2HeadFor('goal')+'<div class="fv2-form fv2-goal"><div class="fv2-gc"><button type="button" data-s2="goalstep" data-d="-'+d.cal.step+'" aria-label="'+w.less+'">−</button><label><input id="fv2GC" data-goal="cal" type="number" inputmode="numeric" value="'+d.cal.value+'"><span>'+d.cal.label+'</span></label><button type="button" data-s2="goalstep" data-d="'+d.cal.step+'" aria-label="'+w.more+'">+</button></div>'
+ +'<div class="fv2-pre">'+d.presets.map(x=>'<button type="button" data-s2="preset" data-p="'+x.id+'">'+x.label+'<small>'+x.sub+'</small></button>').join('')+'</div>'
+ +'<div class="fv2-grid">'+d.fields.map(x=>'<label style="--mc:'+x.color+'">'+x.label+'<input id="'+x.id+'" data-goal="'+x.key+'" type="number" inputmode="numeric" value="'+x.value+'"></label>').join('')+'</div>'
+ +'<div class="fv2-gs" id="fv2Gs"></div><label>'+d.water.label+'<span class="u"><input id="fv2GW" type="number" inputmode="numeric" value="'+d.water.value+'"><em>'+d.water.unit+'</em></span></label></div><div class="fv2-foot"><button type="button" class="pri" data-s2="goalsave">'+d.save+'</button></div>'}
+function fv2GoalLive(){const n=id=>+(document.getElementById(id)||{}).value||0,el=document.getElementById('fv2Gs');if(el)el.innerHTML=fv2GoalSumHtml(fv2GoalSum(n('fv2GC'),n('fv2GP'),n('fv2GCb'),n('fv2GF')))}
+function fv2Preset(p){const g=fv2PresetGrams(p,document.getElementById('fv2GC').value);document.getElementById('fv2GP').value=g.p;document.getElementById('fv2GCb').value=g.c;document.getElementById('fv2GF').value=g.f;fv2GoalLive()}
+function fv2SaveGoal(){const n=id=>(document.getElementById(id)||{}).value;if(!fv2SetGoals({cal:n('fv2GC'),p:n('fv2GP'),c:n('fv2GCb'),f:n('fv2GF'),water:n('fv2GW')}))return;fv2Close();renderMeals();fv2Hap('success')}
+(function(){document.addEventListener('click',function(ev){const b=ev.target.closest&&ev.target.closest('#fv2Ov [data-s2="goalstep"]');if(!b)return;const i=document.getElementById('fv2GC');i.value=fv2GoalStep(i.value,+b.dataset.d);fv2GoalLive()});
  document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&fv2S().sh.open)fv2Back()})})();
 
 /* ---------- Settings: the optional USDA branded-foods database (import, count, remove). The import button used to live on the old Food page. ---------- */

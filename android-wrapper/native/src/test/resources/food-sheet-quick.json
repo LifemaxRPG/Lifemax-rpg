@@ -196,7 +196,7 @@
    "f": 15
   },
   {
-   "id": "food_1793188804180_ub5t",
+   "id": "food_1793188807374_jl56",
    "slot": "dinner",
    "name": "Chicken, breast, meat and skin, raw",
    "grams": 175,
@@ -210,6 +210,8 @@
  "shop": null,
  "sheet": {
   "view": "quick",
+  "title": "Quick calories",
+  "back": true,
   "slot": "lunch",
   "slots": [
    {
@@ -231,14 +233,63 @@
   ],
   "query": "",
   "tab": "recent",
+  "tabs": [
+   {
+    "id": "recent",
+    "label": "Recent"
+   },
+   {
+    "id": "fav",
+    "label": "Favorites"
+   },
+   {
+    "id": "mine",
+    "label": "My foods"
+   }
+  ],
+  "words": {
+   "search": "Search chicken, rice, yogurt…",
+   "quick": "Quick calories",
+   "create": "Create food",
+   "searching": "Searching…",
+   "back": "Back",
+   "close": "Close",
+   "less": "Less",
+   "more": "More",
+   "grams": "grams",
+   "fav": "Favorite",
+   "kcal": "kcal"
+  },
   "searching": false,
   "rows": [],
   "empty": null,
-  "portion": null
+  "portion": null,
+  "quick": {
+   "kcal": {
+    "label": "Calories",
+    "hint": "e.g. 450"
+   },
+   "name": {
+    "label": "Name",
+    "small": "(optional)",
+    "hint": "Restaurant lunch",
+    "max": 60
+   },
+   "save": "Add to Lunch"
+  },
+  "create": null,
+  "goal": null
  },
+ "sheetForms": true,
  "notice": {
   "id": 1,
   "text": "Chicken, breast, meat and… · 222 kcal",
   "action": "Undo"
+ },
+ "answer": {
+  "op": "",
+  "ok": true,
+  "changed": true,
+  "message": "Chicken, breast, meat and… · 222 kcal"
  }
 }

@@ -190,6 +190,8 @@
  "shop": null,
  "sheet": {
   "view": "search",
+  "title": "Add food",
+  "back": false,
   "slot": "lunch",
   "slots": [
    {
@@ -211,6 +213,33 @@
   ],
   "query": "",
   "tab": "recent",
+  "tabs": [
+   {
+    "id": "recent",
+    "label": "Recent"
+   },
+   {
+    "id": "fav",
+    "label": "Favorites"
+   },
+   {
+    "id": "mine",
+    "label": "My foods"
+   }
+  ],
+  "words": {
+   "search": "Search chicken, rice, yogurt…",
+   "quick": "Quick calories",
+   "create": "Create food",
+   "searching": "Searching…",
+   "back": "Back",
+   "close": "Close",
+   "less": "Less",
+   "more": "More",
+   "grams": "grams",
+   "fav": "Favorite",
+   "kcal": "kcal"
+  },
   "searching": false,
   "rows": [
    {
@@ -259,7 +288,12 @@
    }
   ],
   "empty": null,
-  "portion": null
+  "portion": null,
+  "quick": null,
+  "create": null,
+  "goal": null
  },
- "notice": null
+ "sheetForms": true,
+ "notice": null,
+ "answer": null
 }

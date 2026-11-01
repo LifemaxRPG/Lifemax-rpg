@@ -15,12 +15,20 @@
     generation: 0,
     notice: null, // the page's last message ({id, text, action}) and what its action does
     noticeFn: null,
-    noticeId: 0
+    noticeId: 0,
+    answer: null, // the last write's answer ({op, ok, changed, message}), sent with the updates after it
+    done: [] // the operations that landed lately: the same one again is answered "Already recorded." and not done twice
   };
+  const ALREADY = 'Already recorded.';
+  /** the sheet's writes: each carries an operation id (op) from the screen and is answered */
+  const WRITES = ['sheetLog', 'sheetRowAdd', 'sheetQuickSave', 'sheetFav', 'sheetCreateSave', 'sheetGoalSave', 'sheetEditSave', 'sheetEditDelete', 'sheetEditAgain', 'noticeAction'];
 
   /* The add-food sheet, drawn by the native screen from this state. The rules are the page's (fv2* in 50-food.js: the search, the
      steps, the macros, the logging); this holds only what the sheet is showing, since the page's own sheet is not open. */
-  const Q = { open: false, view: 'search', slot: 'lunch', q: '', tab: 'recent', list: [], serial: 0, searching: false, pick: null, grams: 100, stack: [] };
+  const Q = { open: false, view: 'search', slot: 'lunch', q: '', tab: 'recent', list: [], serial: 0, searching: false, pick: null, grams: 100, stack: [],
+    edit: null, // the entry the edit view changes
+    goal: null, // the daily targets' boxes, as typed on the screen
+    forms: false }; // the screen draws create, the targets and the edit view itself (else they hand over to the page's sheet)
 
   function plugin() {
     try {
@@ -307,7 +315,9 @@
       plan: buildPlanSnapshot(day),
       shop: buildShopSnapshot(day),
       sheet: sheetData(),
-      notice: N.notice ? { id: N.notice.id, text: N.notice.text, action: N.notice.action } : null
+      sheetForms: true, // this page runs create, the targets and the edit view inside the native sheet
+      notice: N.notice ? { id: N.notice.id, text: N.notice.text, action: N.notice.action } : null,
+      answer: N.answer
     };
     if (JSON.stringify(data).length > 245000) return null;
     return data;
@@ -319,7 +329,7 @@
   }
 
   function sheetPortion() {
-    const f = Q.pick, s = scaleFood(f, Q.grams);
+    const f = Q.pick, s = scaleFood(f, Q.grams), ed = Q.view === 'edit' ? Q.edit : null, w = fv2SheetWords();
     return {
       name: String(f.n || 'Food'),
       sub: [f.brand, f.cat].filter(Boolean).join(' · ') || 'Food',
@@ -329,24 +339,34 @@
       small: { fib: +s.fib || 0, sug: +s.sug || 0, na: Math.round(+s.na || 0) },
       servings: fv2ServingsData(f, Q.grams),
       mults: FV2_MULTS.map(function (x) { return { x: x, label: fv2MultLabel(x) }; }),
-      impact: fv2ImpactData(f, Q.grams, null),
-      logLabel: fv2LogLabel(s, false, Q.slot)
+      impact: fv2ImpactData(f, Q.grams, ed),
+      logLabel: fv2LogLabel(s, !!ed, Q.slot),
+      // an entry being edited: its id, and its Remove and Log today (only for an entry of another day), as the page's edit view
+      edit: ed ? { id: String(ed.id), remove: w.remove, again: ed.date !== getToday() ? w.again : null } : null
     };
   }
 
   function sheetData() {
     if (!Q.open) return null;
     const none = Q.view === 'search' && !Q.list.length && !Q.searching ? fv2NoneWords(Q.q.trim(), Q.tab) : null;
+    const head = fv2HeadData(Q.view), w = fv2SheetWords();
     return {
       view: Q.view,
+      title: head.title,
+      back: head.back, // the head's button steps back (else it closes)
       slot: Q.slot,
       slots: fv2Slots().map(function (x) { return { id: x[0], label: x[1] }; }),
       query: Q.q,
       tab: Q.tab,
+      tabs: fv2TabsData().map(function (x) { return { id: x[0], label: x[1] }; }),
+      words: { search: w.search, quick: w.quick, create: w.create, searching: w.searching, back: w.back, close: w.close, less: w.less, more: w.more, grams: w.grams, fav: w.fav, kcal: w.kcal },
       searching: Q.searching,
       rows: Q.view === 'search' ? Q.list.map(function (f, i) { return sheetRow(f, i, Q.q.trim()); }) : [],
       empty: none ? { title: none[0], text: none[1] } : null,
-      portion: Q.view === 'portion' && Q.pick ? sheetPortion() : null
+      portion: (Q.view === 'portion' || Q.view === 'edit') && Q.pick ? sheetPortion() : null,
+      quick: Q.view === 'quick' ? fv2QuickData(Q.slot) : null,
+      create: Q.view === 'create' ? fv2CreateData() : null,
+      goal: Q.view === 'goal' && Q.goal ? fv2GoalView(Q.goal) : null
     };
   }
 
@@ -361,6 +381,52 @@
     Q.pick = null;
     Q.list = [];
     Q.stack = [];
+    Q.edit = null;
+    Q.goal = null;
+  }
+
+  /** Runs a write of the sheet's once per operation: fn does it and says whether it was saved. The answer goes with the next
+      update, ok only when the save succeeded, with the page's words if it said something; the same operation again (an answer
+      lost while the screen was away) is answered "Already recorded." without doing it twice. */
+  function write(e, fn) {
+    const op = typeof e.op === 'string' ? e.op : '';
+    if (op && N.done.indexOf(op) >= 0) {
+      N.answer = { op: op, ok: true, changed: false, message: ALREADY };
+      if (window.__fv2Notice) window.__fv2Notice(ALREADY);
+      return;
+    }
+    const said = N.noticeId;
+    const saved = !!fn();
+    N.answer = { op: op, ok: saved, changed: saved, message: N.noticeId !== said && N.notice ? N.notice.text : '' };
+    if (saved && op) {
+      N.done.push(op);
+      if (N.done.length > 40) N.done.shift();
+    }
+  }
+
+  /** whether the amount controls apply: a food is on show at an amount */
+  function amounts() {
+    return !!Q.pick && (Q.view === 'portion' || Q.view === 'edit');
+  }
+
+  /** the edit view's entry, if it is the one the screen means */
+  function editing(e) {
+    return Q.view === 'edit' && Q.edit && String(Q.edit.id) === String(e.id) ? Q.edit : null;
+  }
+
+  /** opens the sheet on a view with nothing picked */
+  function sheetStart(view, slot) {
+    Q.open = true;
+    Q.view = view;
+    Q.slot = fv2Slots().some(function (x) { return x[0] === slot; }) ? slot : fv2Slot();
+    Q.q = '';
+    Q.pick = null;
+    Q.edit = null;
+    Q.goal = null;
+    Q.stack = [];
+    Q.list = [];
+    Q.searching = false;
+    Q.serial++;
   }
 
   function sheetGo(view) {
@@ -395,18 +461,31 @@
 
   /** an action of the add-food sheet; true when it was one */
   function onSheet(command, e) {
+    const isWrite = WRITES.indexOf(command) >= 0;
     if (command === 'sheetOpen') {
-      Q.open = true;
-      Q.view = 'search';
-      Q.slot = fv2Slots().some(function (x) { return x[0] === e.slot; }) ? e.slot : fv2Slot();
-      Q.q = '';
+      sheetStart('search', e.slot);
+      Q.forms = e.forms === true;
       Q.tab = fv2Recents(1).length ? 'recent' : (fv2Favs().length ? 'fav' : 'recent');
-      Q.pick = null;
-      Q.stack = [];
-      Q.searching = false;
-      Q.serial++;
       sheetList();
+    } else if (command === 'sheetEntry') {
+      // a logged entry, in the edit view (the page's fv2OpenEntry)
+      const en = state.foodLog.find(function (x) { return x.id === e.id; });
+      if (en) {
+        sheetStart('edit', en.slot);
+        Q.forms = true;
+        Q.slot = en.slot;
+        Q.edit = en;
+        Q.pick = fv2FoodOf(en);
+        Q.grams = +en.grams || 100;
+      }
+    } else if (command === 'sheetGoal') {
+      sheetStart('goal', null);
+      Q.forms = true;
+      Q.goal = fv2GoalDraft();
+    } else if (isWrite && typeof e.op === 'string' && e.op && N.done.indexOf(e.op) >= 0) {
+      write(e, function () { return false; }); // a repeat of a write that landed, whatever the sheet shows now
     } else if (!Q.open) {
+      if (isWrite) write(e, function () { return false; }); // a write to a sheet that is not open changes nothing
       return command.indexOf('sheet') === 0; // an action of a sheet that is not open: nothing to do
     } else if (command === 'sheetQuery') {
       sheetQuery(e.q);
@@ -426,49 +505,118 @@
         sheetGo('portion');
       }
     } else if (command === 'sheetRowAdd') {
-      const f = sheetFood(e);
-      if (f) {
+      write(e, function () {
+        const f = sheetFood(e);
+        if (!f) return false;
         const grams = f._grams || fv2Unit(f).g, slot = Q.slot;
         sheetClose();
-        fv2Log(f, grams, slot);
-      }
+        return !!fv2Log(f, grams, slot);
+      });
     } else if (command === 'sheetStep') {
-      if (Q.pick) Q.grams = fv2StepGrams(Q.grams, Number(e.dir) < 0 ? -1 : 1);
+      if (amounts()) Q.grams = fv2StepGrams(Q.grams, Number(e.dir) < 0 ? -1 : 1);
     } else if (command === 'sheetGrams') {
-      if (Q.pick) Q.grams = Math.max(0, Math.min(99999, Number(e.grams) || 0));
+      if (amounts()) Q.grams = Math.max(0, Math.min(99999, Number(e.grams) || 0));
     } else if (command === 'sheetServing') {
-      if (Q.pick && Number(e.grams) > 0) Q.grams = Number(e.grams);
+      // only a serving the view offers
+      if (amounts() && fv2ServingsData(Q.pick, Q.grams).some(function (x) { return x.grams === Number(e.grams); })) Q.grams = Number(e.grams);
     } else if (command === 'sheetMult') {
-      if (Q.pick && FV2_MULTS.indexOf(Number(e.x)) >= 0) Q.grams = fv2MultGrams(Q.pick, Number(e.x));
+      if (amounts() && FV2_MULTS.indexOf(Number(e.x)) >= 0) Q.grams = fv2MultGrams(Q.pick, Number(e.x));
     } else if (command === 'sheetSlot') {
       if (fv2Slots().some(function (x) { return x[0] === e.slot; })) Q.slot = e.slot;
     } else if (command === 'sheetFav') {
-      if (Q.pick) {
+      write(e, function () {
+        if (Q.view !== 'portion' || !Q.pick) return false;
+        const was = fv2IsFav(Q.pick);
         fv2ToggleFav(Q.pick);
         fv2Hap('tap');
-      }
+        return fv2IsFav(Q.pick) !== was;
+      });
     } else if (command === 'sheetQuick') {
       if (Q.view === 'search') sheetGo('quick');
     } else if (command === 'sheetQuickSave') {
-      const kcal = Math.round(Number(e.kcal) || 0);
-      if (kcal <= 0) {
-        fv2Snack('Enter the calories');
-      } else if (Q.view === 'quick') {
+      write(e, function () {
+        if (Q.view !== 'quick') return false;
+        const kcal = Math.round(Number(e.kcal) || 0);
+        if (kcal <= 0) {
+          fv2Snack('Enter the calories');
+          return false;
+        }
         const food = fv2QuickFood(kcal, String(e.name || '').slice(0, 60)), slot = Q.slot;
         sheetClose();
-        fv2Log(food, 100, slot);
-      }
+        return !!fv2Log(food, 100, slot);
+      });
     } else if (command === 'sheetLog') {
-      if (Q.pick && Q.grams > 0 && Q.view === 'portion') {
+      write(e, function () {
+        if (!Q.pick || !(Q.grams > 0) || Q.view !== 'portion') return false;
         const food = Q.pick, grams = Q.grams, slot = Q.slot;
         sheetClose();
-        fv2Log(food, grams, slot);
-      }
+        return !!fv2Log(food, grams, slot);
+      });
     } else if (command === 'sheetCreate') {
-      // making a food stays on the page's own sheet for now: the screen steps aside and the page's create form opens
-      const slot = Q.slot;
-      sheetClose();
-      fallback('add', { slot: slot, view: 'create' });
+      if (Q.forms) {
+        if (Q.view === 'search') sheetGo('create');
+      } else {
+        // a screen that does not draw the create form: it steps aside and the page's own create form opens
+        const slot = Q.slot;
+        sheetClose();
+        fallback('add', { slot: slot, view: 'create' });
+      }
+    } else if (command === 'sheetCreateSave') {
+      // the boxes' text comes with the action (name, brand, serving, kcal, p, c, f); the page makes the food as its own Save does
+      write(e, function () {
+        if (Q.view !== 'create') return false;
+        const v = {};
+        fv2CreateData().fields.forEach(function (x) { v[x.key] = typeof e[x.key] === 'string' ? e[x.key] : ''; });
+        const f = fv2CreateFood(v);
+        if (!f) return false; // the screen's form stays filled in
+        Q.pick = f;
+        Q.grams = fv2Unit(f).g;
+        Q.view = 'portion';
+        Q.stack = ['search'];
+        fv2Hap('success');
+        return true;
+      });
+    } else if (command === 'sheetGoalField') {
+      if (Q.view === 'goal' && Q.goal && ['cal', 'p', 'c', 'f', 'water'].indexOf(e.key) >= 0) Q.goal[e.key] = String(e.value == null ? '' : e.value).slice(0, 9);
+    } else if (command === 'sheetGoalPreset') {
+      if (Q.view === 'goal' && Q.goal && FV2_PRESETS.some(function (x) { return x[0] === e.preset; })) {
+        const g = fv2PresetGrams(e.preset, Q.goal.cal);
+        Q.goal.p = String(g.p);
+        Q.goal.c = String(g.c);
+        Q.goal.f = String(g.f);
+      }
+    } else if (command === 'sheetGoalSave') {
+      // the boxes as they are on the screen come with Save, so a box typed a moment ago is not lost
+      write(e, function () {
+        if (Q.view !== 'goal' || !Q.goal) return false;
+        ['cal', 'p', 'c', 'f', 'water'].forEach(function (k) { if (typeof e[k] === 'string') Q.goal[k] = e[k].slice(0, 9); });
+        if (!fv2SetGoals(Q.goal)) return false;
+        sheetClose();
+        renderMeals();
+        fv2Hap('success');
+        return true;
+      });
+    } else if (command === 'sheetEditSave') {
+      write(e, function () {
+        const en = editing(e);
+        if (!en || !fv2EditEntry(en, Q.pick, Q.grams, Q.slot)) return false;
+        sheetClose();
+        return true;
+      });
+    } else if (command === 'sheetEditDelete') {
+      write(e, function () {
+        const en = editing(e);
+        if (!en || !fv2RemoveEntry(en)) return false;
+        sheetClose();
+        return true;
+      });
+    } else if (command === 'sheetEditAgain') {
+      write(e, function () {
+        const en = editing(e);
+        if (!en || en.date === getToday() || !fv2LogAgain(en)) return false;
+        sheetClose();
+        return true;
+      });
     } else if (command === 'sheetBack') {
       if (Q.stack.length) Q.view = Q.stack.pop();
       else sheetClose();
@@ -507,6 +655,7 @@
             N.blocked = true;
             N.notice = null;
             N.noticeFn = null;
+            N.answer = null;
             sheetClose();
           }
         });
@@ -528,6 +677,7 @@
     N.session = '';
     N.notice = null;
     N.noticeFn = null;
+    N.answer = null;
     sheetClose();
     if (p && id) {
       try {
@@ -665,11 +815,14 @@
     const command = e.command;
     try {
       if (command === 'noticeAction') {
-        if (N.notice && N.notice.id === e.id && N.noticeFn) {
-          const fn = N.noticeFn;
+        write(e, function () {
+          if (!(N.notice && N.notice.id === e.id && N.noticeFn)) return false;
+          const fn = N.noticeFn, said = N.noticeId;
           N.noticeFn = null; // once: a second tap on the same Undo does nothing
           fn();
-        }
+          // the page's Undo says nothing when it lands, and "could not save" when it does not
+          return !(N.noticeId !== said && N.notice && N.notice.text === unsavedMessage());
+        });
         scheduleSync();
         return;
       }
