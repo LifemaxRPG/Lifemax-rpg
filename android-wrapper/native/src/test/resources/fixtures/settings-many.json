@@ -633,6 +633,22 @@
     },
     {
      "type": "row",
+     "title": "Native tab swipe (beta)",
+     "hint": "Install the latest Android update to use this.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeSwipe",
+       "label": "Native tab swipe (beta)",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
      "title": "Swipe animation",
      "hint": "The page follows your finger as you swipe, then the next page slides in from the side. Turn this off for plain, instant tab switches.",
      "danger": false,
@@ -2202,6 +2218,131 @@
     {
      "type": "text",
      "text": "Opens the class selector. Pick a different class and tap the button to switch to it (ends your current plan, XP stays). Closing without switching changes nothing."
+    },
+    {
+     "type": "text",
+     "text": "For Native tab swipe (beta). A change takes effect the next time a native tab opens. Note the numbers you like best."
+    },
+    {
+     "type": "row",
+     "title": "Tension starts at",
+     "hint": "18% of the screen width",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#swipeTune-knee",
+       "label": "Tension starts at",
+       "value": "0.18",
+       "placeholder": "",
+       "input": "range",
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Catch point",
+     "hint": "45% of the screen width",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#swipeTune-breakAt",
+       "label": "Catch point",
+       "value": "0.45",
+       "placeholder": "",
+       "input": "range",
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Heaviness",
+     "hint": "0.25: lower is heavier",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#swipeTune-heavy",
+       "label": "Heaviness",
+       "value": "0.25",
+       "placeholder": "",
+       "input": "range",
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Flick speed",
+     "hint": "1200 dp/s commits without the catch",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#swipeTune-flingDp",
+       "label": "Flick speed",
+       "value": "1200",
+       "placeholder": "",
+       "input": "range",
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Detent haptic",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "#swipeTune-haptic",
+       "label": "Detent haptic",
+       "value": "threshold",
+       "options": [
+        {
+         "value": "threshold",
+         "label": "Gesture threshold (default)"
+        },
+        {
+         "value": "tick",
+         "label": "Clock tick"
+        },
+        {
+         "value": "click",
+         "label": "Click"
+        },
+        {
+         "value": "off",
+         "label": "Off"
+        }
+       ],
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "devModeCard/3",
+       "label": "Reset swipe feel",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
     }
    ]
   },

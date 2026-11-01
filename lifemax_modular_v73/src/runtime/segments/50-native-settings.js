@@ -33,6 +33,7 @@
     ["nativeSettings", "#nativeSettingsToggle", PREFS],
     ["tabs.reset", "#tabsResetBtn", PREFS],
     ["swipe", "#lmaSwipeToggle", PREFS],
+    ["nativeSwipe", "#nativeSwipeToggle", PREFS],
     ["swipeAnimation", "#lmaSwipeAnimToggle", PREFS],
     ["scrubSpeed", "#lmaScrubSpeed", PREFS],
     ["cardEffects", "#qfxToggle", "lma_qfx"],

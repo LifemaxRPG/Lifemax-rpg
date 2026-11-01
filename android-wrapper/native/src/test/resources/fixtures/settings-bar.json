@@ -651,6 +651,22 @@
     },
     {
      "type": "row",
+     "title": "Native tab swipe (beta)",
+     "hint": "Install the latest Android update to use this.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeSwipe",
+       "label": "Native tab swipe (beta)",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
      "title": "Swipe animation",
      "hint": "The page follows your finger as you swipe, then the next page slides in from the side. Turn this off for plain, instant tab switches.",
      "danger": false,

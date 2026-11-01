@@ -3396,7 +3396,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 29323,
+   "bytes": 29373,
    "statement_count": 1,
    "tags": [
     "native",
