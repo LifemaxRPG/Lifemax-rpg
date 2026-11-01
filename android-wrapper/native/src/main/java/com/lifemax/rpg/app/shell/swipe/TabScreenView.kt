@@ -147,7 +147,7 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
             widthPx = root.width,
             density = resources.displayMetrics.density,
             touchSlopPx = touchSlop,
-            pointers = event.pointerCount,
+            pointers = TabSwipe.fingers(event.pointerCount),
             tool =
                 when (event.getToolType(0)) {
                     MotionEvent.TOOL_TYPE_FINGER -> ToolKind.Finger

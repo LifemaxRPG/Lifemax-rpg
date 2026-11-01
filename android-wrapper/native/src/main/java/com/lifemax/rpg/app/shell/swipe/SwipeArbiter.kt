@@ -50,6 +50,7 @@ data class TouchFacts(
     val density: Float,
     /** `ViewConfiguration.scaledTouchSlop`: the slop Compose's own scrollers claim at. */
     val touchSlopPx: Float,
+    /** Fingers down: the event's own, and those on the views above the screens (the bars). */
     val pointers: Int = 1,
     val tool: ToolKind = ToolKind.Finger,
     val imeVisible: Boolean = false,

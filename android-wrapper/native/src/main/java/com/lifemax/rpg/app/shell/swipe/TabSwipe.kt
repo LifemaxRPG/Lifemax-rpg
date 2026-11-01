@@ -61,6 +61,9 @@ internal object TabSwipe {
     }
     private var drawWatch: View? = null
 
+    /** The views above the screens (the bars' frames) with a touch in progress. */
+    private val touchedAbove = HashSet<Any>()
+
     /**
      * The latest notes, oldest first: aborts, cuts, refusals, the watchdog and repairs. A start on
      * A29's trace; each is also logged.
@@ -142,6 +145,18 @@ internal object TabSwipe {
         gesture(input, event.eventTime * NANOS_PER_MILLI)
         return input == SwipeInput.DragCancel
     }
+
+    /** [view], above the screens (the shared bars), has a touch in progress, or no longer. */
+    fun touched(view: Any, touching: Boolean) {
+        if (touching) touchedAbove += view else touchedAbove -= view
+    }
+
+    /**
+     * The fingers down at a screen's DOWN: its event's [own], and one for each view above the
+     * screens with a touch in progress, which the screen's events never count (android.R.id.content
+     * splits touches). So no swipe starts beside a finger resting on a bar.
+     */
+    fun fingers(own: Int): Int = own + touchedAbove.size
 
     private fun step(input: SwipeInput, now: Long = System.nanoTime(), drawNow: Boolean = true) {
         val env = env(now)

@@ -119,8 +119,12 @@ data class SwipeModel(
                 SwipeInput.Disarm -> letGo(env)
                 SwipeInput.Tick -> SwipeStep(this)
             }
-        val advanced = step.model.advance(env)
-        return SwipeStep(advanced.model, step.effects + advanced.effects)
+        val (model, later) = step.model.advance(env)
+        return when {
+            later.isNotEmpty() -> SwipeStep(model, step.effects + later)
+            model === step.model -> step // most frames: time brought no move of its own
+            else -> SwipeStep(model, step.effects)
+        }
     }
 
     private fun opened(pane: String): SwipeStep {

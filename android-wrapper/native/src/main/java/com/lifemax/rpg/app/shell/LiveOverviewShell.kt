@@ -175,9 +175,10 @@ internal class LiveOverviewShell(
 
 /**
  * The frame that holds the bars, above every native screen. android.R.id.content splits touches, so
- * a finger that lands here never reaches the screen under it as a second pointer: it tells the tab
- * swipe instead ([TabSwipe.stray]). One that cuts a drag short is swallowed to its end, so no tab
- * of the bar acts mid-swipe (CONTRACT A34).
+ * a finger here is never a pointer of the screen under it: the frame tells the tab swipe instead
+ * (CONTRACT A34). A finger that lands during a swipe is a second finger ([TabSwipe.stray]); one
+ * that cuts a drag short is swallowed to its end, so no tab of the bar acts mid-swipe. A finger
+ * resting here counts at a screen's DOWN ([TabSwipe.touched]), so no swipe starts beside it.
  */
 private class BarsFrame(context: Context) : FrameLayout(context) {
     private var swallowing = false
@@ -185,9 +186,20 @@ private class BarsFrame(context: Context) : FrameLayout(context) {
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val action = event.actionMasked
         if (action == MotionEvent.ACTION_DOWN) swallowing = TabSwipe.stray(event)
-        if (!swallowing) return super.dispatchTouchEvent(event)
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
-            swallowing = false
-        return true
+        val taken = swallowing || super.dispatchTouchEvent(event)
+        when (action) {
+            MotionEvent.ACTION_DOWN -> TabSwipe.touched(this, taken)
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                TabSwipe.touched(this, false)
+                swallowing = false
+            }
+        }
+        return taken
+    }
+
+    override fun onDetachedFromWindow() {
+        TabSwipe.touched(this, false)
+        super.onDetachedFromWindow()
     }
 }
