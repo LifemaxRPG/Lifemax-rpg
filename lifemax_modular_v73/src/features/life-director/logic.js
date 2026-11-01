@@ -2700,7 +2700,8 @@ const LifeDirectorApp = (function () {
           const cleaned = name.textContent.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
           if (cleaned) { name.title = name.textContent; name.textContent = cleaned; }
         }
-        const openTimer = glanceCore.querySelector('[data-act="focusOpen"]');
+        // a separate open-timer button gives way to the clock, which becomes the tap; a clock that already is the tap stays
+        const openTimer = glanceCore.querySelector('[data-act="focusOpen"]:not([data-fclock])');
         if (openTimer) {
           openTimer.remove();
           const clock = glanceCore.querySelector('[data-fclock]');
