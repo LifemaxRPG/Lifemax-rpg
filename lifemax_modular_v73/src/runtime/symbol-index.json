@@ -3377,6 +3377,9 @@
  "lmaQuiet": [
   "src/runtime/segments/33-android.js"
  ],
+ "lmaReloading": [
+  "src/runtime/segments/35-android-upkeep.js"
+ ],
  "lmaRenderBackup": [
   "src/runtime/segments/35-android-upkeep.js"
  ],
@@ -7203,6 +7206,9 @@
  ],
  "window.setNativeOverviewEnabled": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.setNativeSettingsEnabled": [
+  "src/runtime/segments/50-native-settings.js"
  ],
  "window.setTabTimingToast": [
   "src/runtime/segments/50-native-overview.js"

@@ -291,6 +291,56 @@
    "canonicalLayout": false
   },
   {
+   "feature": "settings",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeSettings",
+   "owner": "web-settings",
+   "pluginSource": "bridge/web/NativeSettingsPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/settings/presentation/SettingsScreen.kt",
+   "webModule": "50-native-settings.js (NativeTabKit)",
+   "inventory": "docs/architecture/SETTINGS_INVENTORY.md",
+   "capabilities": [
+    "settings.projection.v1"
+   ],
+   "commands": {
+    "toggle": "{id, on}: the page's checkbox with that id is set and its own change handler runs (the native tabs' setNativeXEnabled, setLightMode, lmaSetSwipe, qfxSet, hapSet, lmaSet, lmaSetBackup, lmaHealthSet, lmcSet off, lmaTabShow for bar rows ...); answers {ok, changed, message} with the page's toast as message, ok:false with the page's words when it refused (disabled, the bar's last two tabs), reveal:id for a switch that asks Android before turning on, saved:false when the handler's write failed (core save: unsavedMessage(), read-only or full)",
+    "choose": "{id, value}: a select is set to one of its options and its change handler runs, or the haptic strength button with that value is clicked; same answers as toggle",
+    "press": "{id}: a bound button is clicked (the bar's arrows and Reset to default, the haptic tries); same answers",
+    "category": "{id}: the chip's own setPickCat, which the page keeps (lma_set_cat)"
+   },
+   "actions": {
+    "reveal": "id of any control whose op is reveal: the screen closes, the page shows the card on its category with the control focused; back once the owner's next tap has done its work, unless a sheet, a picker, the import or a focused field keeps the page in front; an unknown id comes straight back",
+    "classic": "the screen closes and the page stays in front until the owner leaves Settings",
+    "navigate": "not used by the screen itself; a native tab's gear (view 'settings') hands over to it make-before-break"
+   },
+   "writes": [
+    "lifemax_android_prefs_v1 via the page's setters (native tab switches, tab timing, swipe, scrub speed, reminders, backup on/frequency/keep, bottom bar)",
+    "lifeMaxTheme, lma_qfx, lma_sfxvol, lma_qdeal, lma_qpack, lma_gwr3d, lma_g3dbg, lifemax_voice_enabled, lifemax_calsync_v1 (off), lma_set_cat via the page's setters",
+    "core save fields fx.haptics, fx.hapticLevel, hdCat, health.{ex,steps,sleep,wt,goal,on off} via the page's save()"
+   ],
+   "delegatedInteractions": [
+    "text, number and time fields and form selects (saveCharacter, saveDecay, saveRules, lmaSet times; the build select; the developer class select, #devClassSel)",
+    "file pickers: avatar, Import JSON, trainer pack, USDA file",
+    "removing what a picker brought: removeAvatar (Profile picture, Remove), g3PackClear (Trainer pack, Remove), fv2UsdaClear (#usdaRemoveBtn, Remove: deletes the food database)",
+    "resetRules (XP rules, Reset defaults: writes the default rules, no confirmation)",
+    "ecoShopOpen (rewards sheet), lmvDiagOpen, openDevChat, previewOnboarding, resetTips",
+    "update buttons, lmaPickBackupFolder, lmaRunBackup, widget buttons, lmaHealthSync, lmaHealthAsk, lmcSync, lmaThumbWarm, lmaPermission, lmaExactTiming, lmaTestNotification",
+    "reminders, health sync and calendar import while off; journal lock; Android device backup (setDeviceBackupAllowed); Enable decay",
+    "developer mode (toggleDevMode) and its tools: openDevChat, luckResetToday (Reset today's luck roll), devSwitchClass (Switch, with the class select), previewOnboarding",
+    "Data management: exportData, exportReport, importData, resetDemo, deleteAll; the voice log's Export and Clear"
+   ],
+   "readContract": {
+    "snapshotDto": "feature/settings/domain/SettingsProjection.kt",
+    "decoder": "feature/settings/data/WebSettingsRepository.kt",
+    "fixtures": "native/src/test/resources/fixtures/settings-default.json, settings-many.json, settings-light.json, settings-bar.json (tools/gen_native_fixtures.js settings, on the phone of tests/fixtures/settings-android.js)",
+    "ordering": "webSessionId and increasing sequence; notice.id rises with each page toast",
+    "invalidation": "any redraw inside #view-settings (the renderers, an attribute disabled/style/hidden), sheets and overlays coming and going on the body, the tutorial/onboarding/dev chat class, the page's toast, host resume, foreground return, 15-second refresh while visible"
+   },
+   "mutationsGate": "no native writes: every change is the page's own handler run as a tap would run it, with the write watched and reported; set semantics (a toggle to the state already shown answers changed:false and writes nothing); a request id is answered from an in-memory receipt (the last 64 of the page's life), so a request delivered twice runs once and the same id with another command or payload is refused; the screen gives each tap a new UUID and never resends one; no durable receipt across a reload or process death (A14/A15 gap)",
+   "rollout": "opt-in under Settings, Appearance: Native Settings (beta), off by default; nothing opens until an APK has the plugin",
+   "canonicalLayout": true
+  },
+  {
    "feature": "shell",
    "status": "native",
    "source": "app/shell/ChromeHost.kt",

@@ -1,6 +1,8 @@
 /* Hand-over simulation (CONTRACT A23, A28). Fake native plugins with seeded random delays stand in for Android, the page runs on
    virtual time (Playwright's clock) so a run is exactly repeatable, and many seeded tab-hopping sequences are replayed. A hop is the
-   page going to a tab, or a tap in a native screen that goes to another one (the Meals pill in Recipes, the Recipes pill in Food).
+   page going to a tab, or a tap in a native screen that goes to another one (the Meals pill in Recipes, the Recipes pill in Food,
+   a native tab's gear to Settings), or a tap on a native tab's switch in native Settings (off and on again: the page's own
+   setNativeOverviewEnabled, which must not leave Overview over Settings, nor keep it from the dashboard).
    After each sequence settles, exactly the screen of the last tab must be showing. A screen tapped while it alone showed, with
    nothing in flight, may not close before the tab the tap goes to shows (every tab here is native), and a hidden screen of the
    shared scaffold may receive no update (A24). A failing seed prints its sequence so it can be replayed.
@@ -13,9 +15,11 @@ const root = path.resolve(__dirname, '..'), out = path.join(os.tmpdir(), 'lm_han
 execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 const SEEDS = Number(process.argv[2]) || 80;
-const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media' };
+const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings' };
 // taps in a native screen: its plugin and screen, the view it shows and the view the tap goes to
-const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 'recipes', to: 'meals' }, 'tap-recipes': { plugin: 'NativeNutrition', screen: 'food', from: 'meals', to: 'recipes' } };
+const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 'recipes', to: 'meals' }, 'tap-recipes': { plugin: 'NativeNutrition', screen: 'food', from: 'meals', to: 'recipes' },
+  'tap-gear': { plugin: 'NativeCharacter', screen: 'character', from: 'character', to: 'settings' },
+  'tap-switch': { plugin: 'NativeSettings', screen: 'settings', from: 'settings', commands: [{ id: 'nativeOverview', on: false }, { id: 'nativeOverview', on: true }] } };
 const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -26,11 +30,11 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
       plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__t=()=>Math.round(performance.now());
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__vis={overview:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__t=()=>Math.round(performance.now());
     const wait=ms=>new Promise(r=>setTimeout(r,ms));
     /* Capacitor hands a plugin's calls to the main thread in the order they were made, so each fake does its calls one after another */
     /* Overview and Food only hide on a close that names the session they currently hold (as the Kotlin plugins do); the close of Character,
-       Log, Plan, Life Director, Recipes and Library (ComposeTabPlugin) is unconditional, and an update reaching one of those while hidden is a fault */
+       Log, Plan, Life Director, Recipes, Library and Settings (ComposeTabPlugin) is unconditional, and an update reaching one of those while hidden is a fault */
     const fault=m=>{window.__faults.push(m);window.__log.push(window.__t()+' !! '+m)};
     const mk=(name,vis,sessions)=>{const ls={};let current='';let chain=Promise.resolve();const inOrder=fn=>{window.__busy++;const r=chain.then(fn);chain=r.catch(()=>{});return r.finally(()=>{window.__busy--})};const emit=(e,d)=>(ls[e]||[]).forEach(f=>{try{f(d)}catch(x){}});return {
       __emit:emit,__session:()=>current,
@@ -40,14 +44,14 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
       close:a=>inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session})),
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1']})}};
-    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false)},registerPlugin:()=>({}),convertFileSrc:u=>u};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1','settings.projection.v1']})}};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false)},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   await p.goto('file://' + out);
   let loads = 0; p.on('load', () => loads++);   /* on Android a page load takes every native screen away (NativeScreens), so no tab switch may load one */
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
   if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
-  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativeLog = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; lmaSave(); navigate('dashboard') });
+  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativeLog = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; lmaSave(); navigate('dashboard') });
   const settle = async (ms) => { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 400 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(20) };
   await settle(4000);
   const failures = []; let hops = 0;
@@ -61,12 +65,13 @@ const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS)]; // the Food t
       // a tap is only possible on a screen that shows; the view after the hop is where it went (Food's screen ignores a tap it no longer owns)
       view = await p.evaluate(([v, tap]) => {
         if (!tap) { window.__log.push(window.__t() + ' >> go ' + v); window.__tapped = ''; lmaNavTo(v, { fast: true }); return lmaView() }
-        const { plugin, screen, from, to } = tap, P = Capacitor.Plugins[plugin];
+        const { plugin, screen, from, to, commands } = tap, P = Capacitor.Plugins[plugin];
         if (!window.__vis[screen]) return lmaView();
-        window.__log.push(window.__t() + ' >> tap ' + to + ' in ' + screen);
+        window.__log.push(window.__t() + ' >> tap ' + (to || 'a switch') + ' in ' + screen);
         const settled = !window.__busy && lmaView() === from && Object.keys(window.__vis).every(k => window.__vis[k] === (k === screen));
-        window.__tapped = settled ? screen : '';
-        P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
+        window.__tapped = settled && to ? screen : ''; // a switch goes nowhere: no hand-over to check
+        if (commands) commands.forEach((payload) => P.__emit('command', { command: 'toggle', payload, requestId: 'sim' + (window.__rid = (window.__rid || 0) + 1) })); // each its own id, as the screen's
+        else P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
         return lmaView();
       }, [step.to, TAPS[step.to]]);
       if (step.gap) await settle(step.gap);

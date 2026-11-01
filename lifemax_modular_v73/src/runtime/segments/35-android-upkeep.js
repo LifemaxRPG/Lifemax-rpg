@@ -55,14 +55,16 @@ async function lmaWebUpdate(ask){
  }catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}
  lmaRenderUpdates();
 }
-/* the page is about to reload: leave a native tab for Settings (which none covers, so nothing reopens) and close every native screen */
-async function lmaLeaveNative(){if(!window.NativeTabs)return;if(NativeTabs.covered(lmaView()))lmaNavTo('settings',{fast:true});await NativeTabs.closeAll()}
+/* the page is about to reload: leave a native tab for Settings and close every native screen. lmaReloading keeps native Settings
+   (and so every screen) from opening meanwhile; it is cleared only if the reload does not happen. */
+let lmaReloading=false;
+async function lmaLeaveNative(){if(!window.NativeTabs)return;lmaReloading=true;if(NativeTabs.covered(lmaView()))lmaNavTo('settings',{fast:true});await NativeTabs.closeAll()}
 async function lmaWebRestart(){
  const L=lmaPlugin('LiveWeb');if(!L||LMA_UPD_BUSY.includes(lmaUpd.state))return;
  lmaUpd.state='backup';lmaRenderUpdates();
  if(!await lmaBackupFirst('update')){lmaUpd.state='webready';lmaRenderUpdates();return}
  await lmaLeaveNative();   /* the backup took seconds, in which a native tab may have opened */
- try{await L.restart();lmaUpd.state='webready'}catch(e){lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}   /* still here: the switch has not happened yet */
+ try{await L.restart();lmaUpd.state='webready'}catch(e){lmaReloading=false;lmaUpd.state='error';lmaUpd.err=String((e&&e.message)||e).slice(0,140)}   /* still here: the switch has not happened yet */
  lmaRenderUpdates();
 }
 /* a small pill above the bottom bar, never blocking: one at a time, gone after 20 s */
@@ -193,12 +195,12 @@ function lmaRenderBackup(){
  if(!lmaNative()){lmaSetHtml('lmaBakBody','<div class="note">Automatic backups are available in the Android app.</div>');return}
  const b=lmaLoad().backup,off=!b.uri,warn=lmaBackupWarning();
  const row=(l,hint,ctl)=>'<div class="settingsline"><div style="flex:1"><strong>'+l+'</strong>'+(hint?'<div class="muted" style="font-size:12px">'+hint+'</div>':'')+'</div>'+ctl+'</div>';
- const sel=(k,opts,dis)=>'<select '+(dis?'disabled ':'')+'onchange="lmaSetBackup(\''+k+'\',+this.value)" style="'+LMA_IN+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(b[k]===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
+ const sel=(k,opts,dis,name)=>'<select aria-label="'+name+'" '+(dis?'disabled ':'')+'onchange="lmaSetBackup(\''+k+'\',+this.value)" style="'+LMA_IN+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(b[k]===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
  let h=warn?'<div class="note" style="margin-bottom:10px;border-color:var(--warn);color:var(--text)">'+warn+'</div>':'';
  h+=row('Automatic backup','Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.','<input type="checkbox" class="check" '+(b.on&&!off?'checked ':'')+(off?'disabled ':'')+'onchange="lmaSetBackup(\'on\',this.checked)" aria-label="Automatic backup">');
  h+=row('Folder',off?'Nothing chosen yet.':esc(b.folder||'Chosen'),'<button class="btn small secondary" onclick="lmaPickBackupFolder()">'+(off?'Choose folder':'Change')+'</button>');
- h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off));
- h+=row('Keep the newest','Older automatic backups are deleted. Copies taken before an update, an import or a reset are kept apart, the '+LMA_SNAPSHOTS+' newest of each.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off));
+ h+=row('How often','',sel('days',[[1,'Daily'],[3,'Every 3 days'],[7,'Weekly']],off,'How often'));
+ h+=row('Keep the newest','Older automatic backups are deleted. Copies taken before an update, an import or a reset are kept apart, the '+LMA_SNAPSHOTS+' newest of each.',sel('keep',[[3,'3 files'],[7,'7 files'],[14,'14 files'],[30,'30 files']],off,'Keep the newest'));
  h+='<div class="settingsline"><div style="flex:1"><strong>Last verified backup</strong><div class="muted" style="font-size:12px">'+(b.verified?lmaAgo(b.verified)+(b.lastName?' · '+esc(b.lastName):''):'None yet')+'</div></div><button class="btn small" '+(off||lmaBakRun?'disabled ':'')+'onclick="lmaRunBackup(true)">'+(lmaBakRun?'Saving…':'Back up now')+'</button></div>';
  lmaSetHtml('lmaBakBody',h);
 }
