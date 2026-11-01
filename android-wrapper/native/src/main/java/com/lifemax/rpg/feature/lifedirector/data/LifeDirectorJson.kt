@@ -105,7 +105,6 @@ internal fun JSONObject.today(): DirectorToday? {
     )
 }
 
-/** Also read by the Overview cards for the glance's dial (feature/overview). */
 internal fun dial(d: JSONObject): DirectorDial {
     val radii = dialRadii(d.getJSONObject("radii"))
     val arcs =
@@ -201,7 +200,6 @@ internal fun dialRadii(r: JSONObject): DialRadii {
 internal fun hourWords(a: JSONArray): List<HourWord> =
     a.objects().map { HourWord(it.getInt("h"), it.getString("word")) }
 
-/** Also read by the Overview cards for the glance's centre (feature/overview). */
 internal fun centre(c: JSONObject): DialCentre {
     val kickKind = c.getString("kickKind")
     return DialCentre(

@@ -2672,7 +2672,9 @@ const LifeDirectorApp = (function () {
     core.fullTitle = core.title;
     if (cleaned) core.title = cleaned;
     if (core.next && !core.next.act && /nothing else planned today/i.test(core.next.label)) core.next = null;
-    out.dial = { startEpoch: d.startEpoch, endEpoch: d.endEpoch, radii: d.radii, hourWords: d.hourWords, arcs: d.arcs, words: d.words, hand: d.hand, ring: d.ring };
+    // the glance's dial has no handles, so fixed time's tip leaves out the hint about dragging one (anchorTip without handles)
+    const arcs = d.arcs.map(a => a.style === 'band' ? Object.assign({}, a, { tip: anchorTip(a.kind, a.title, a.s, a.e, false) }) : a);
+    out.dial = { startEpoch: d.startEpoch, endEpoch: d.endEpoch, radii: d.radii, hourWords: d.hourWords, arcs, words: d.words, hand: d.hand, ring: d.ring };
     out.core = core;
     out.foot = g.foot;
     return out;
