@@ -9,7 +9,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.OpenSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DragGeometry
 
 /* The screen's state that is not the page's projection: what the view model holds between
-   projections (a pending request, a held handle, an open sheet, a draft). */
+projections (a pending request, a held handle, an open sheet, a draft). */
 
 /** A short message over the screen; [serial] tells a repeat of the same words apart. */
 data class DirectorToast(val serial: Int, val text: String)
