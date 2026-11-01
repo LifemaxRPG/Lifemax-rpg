@@ -4,7 +4,7 @@ package com.lifemax.rpg.feature.lifedirector.domain
  * Where the XP celebration's orbs fly (the projection's `celebrationTarget`, NativeTabKit's): the
  * centre of the top bar's logo, in page px (dp here) from the top left of the page.
  */
-data class DirectorPoint(val x: Float, val y: Float)
+typealias DirectorPoint = com.lifemax.rpg.core.designsystem.feedback.PagePoint
 
 /**
  * A sheet the Overview's glance asked for (the projection's `intent`, phase 4A): the screen opens
