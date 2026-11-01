@@ -123,10 +123,76 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   }, d0x);
   ok('a failed reflection write is reported, naming a read-only save as the reason', unsaved.full === 'Could not save to this browser (storage full?)' && unsaved.readOnly === 'Not saved: this version is read-only for your save' && unsaved.stored === undefined, unsaved);
   ok('and no XP is paid for it', (await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0))) === xpW);
+  // drawing only reads: the builders and renderers create no coach record and write nothing. The page decides a day's chip and welcome
+  // record when it draws the day (jcDecide), stored with a plain write and never save(), so the Journal is not drawn again from inside
+  // its own drawing (it was: an undecided recent day ran renderHistory twice, nested)
+  await seed(night, true);
+  const counting = () => p.evaluate(() => {
+    const c = window.__calls = { renders: 0, depth: 0, nested: 0, saves: 0, writes: 0 }, r = window.renderHistory, s = window.save, w = window.writeSave;
+    window.renderHistory = function () { c.renders++; c.nested = Math.max(c.nested, ++c.depth); try { return r.apply(this, arguments) } finally { c.depth-- } };
+    window.save = function () { c.saves++; return s.apply(this, arguments) }; window.writeSave = function () { c.writes++; return w.apply(this, arguments) };
+    window.__uncount = () => { window.renderHistory = r; window.save = s; window.writeSave = w; return { renders: c.renders, nested: c.nested, saves: c.saves, writes: c.writes } };
+  });
+  const decided = d => p.evaluate(d => (JSON.parse(localStorage.getItem(STORE)).journalCoach.pats || {})[d] !== undefined, d);
+  await p.evaluate(() => { jcStore().pats = {}; jcStore().cooldown = {}; histSel = getToday(); renderHistory() });
+  const dTap = await dstr(1); await counting();
+  const tapped = await p.evaluate(d => { selectJournalDay(d); return __uncount() }, dTap);
+  ok('a tap on an undecided recent day draws the Journal once, never from inside its own drawing, and stores the chip without save()', tapped.renders === 1 && tapped.nested === 1 && tapped.saves === 0 && tapped.writes === 1 && await decided(dTap), tapped);
+  const dPick = await dstr(2); await counting();
+  const picked = await p.evaluate(d => {
+    if (typeof selectJournalEntry !== 'function') { __uncount(); return { missing: true } }
+    const answer = selectJournalEntry(d), first = __uncount();
+    return { answer, first, entryIs: document.getElementById('dayReflection').getAttribute('onchange').includes("'" + d + "'"), on: [...document.querySelectorAll('#journalDays .on')].map(b => b.getAttribute('onclick')) };
+  }, dPick);
+  ok('selectJournalEntry draws only the entry: no Journal render, no save(), one write for the new chip', picked.answer === true && picked.first.renders === 0 && picked.first.saves === 0 && picked.first.writes === 1 && await decided(dPick), picked);
+  ok('the entry shows the selected day and the highlight moves to its tile alone', picked.entryIs && JSON.stringify(picked.on) === JSON.stringify(["selectJournalDay('" + dPick + "')"]), picked);
+  await counting();
+  const again = await p.evaluate(d => { if (typeof selectJournalEntry !== 'function') { __uncount(); return { missing: true } } selectJournalEntry(d); return __uncount() }, dPick);
+  ok('selecting the same day again writes nothing and draws only the entry', again.writes === 0 && again.saves === 0 && again.renders === 0, again);
+  const odd = await p.evaluate(() => { if (typeof selectJournalEntry !== 'function') return { missing: true }; const was = histSel, coach = JSON.stringify(state.journalCoach), disk = localStorage.getItem(STORE); return { answer: selectJournalEntry('1999-01-01'), kept: histSel === was && JSON.stringify(state.journalCoach) === coach && localStorage.getItem(STORE) === disk } });
+  ok('a key the Journal does not list is refused and changes nothing', odd.answer === false && odd.kept, odd);
+  const revKey = await p.evaluate(() => LifeMaxCoach.reviewList(journalDays())[0].key);
+  ok('a review can be selected the same way', await p.evaluate(k => typeof selectJournalEntry === 'function' && selectJournalEntry(k) && !!document.querySelector('#journalEntry .jc-grid') && document.querySelector('#journalDays .jx-rev.on').getAttribute('onclick').includes(k), revKey));
+  const reads = await p.evaluate(k => {
+    histSel = getToday(); renderHistory();
+    const coach = JSON.stringify(state.journalCoach), all = JSON.stringify(state), disk = localStorage.getItem(STORE), days = journalDays(), old = days[days.length - 1];
+    const same = () => JSON.stringify(state.journalCoach) === coach;
+    renderJournalDay(old); const olderDay = same();
+    histSel = k; renderHistory(); renderHistory(); const review = same();
+    let builders = 'missing';
+    if (typeof jcHeroData === 'function') { jcHeroData(); jcListData(days); journalDayData(old); jcDayData(old); jcDayData(getToday()); jcReviewData(k); builders = JSON.stringify(state) === all && localStorage.getItem(STORE) === disk }
+    histSel = getToday(); renderHistory(); return { olderDay, review, builders };
+  }, revKey);
+  ok('drawing an older day creates no coach record', reads.olderDay, reads);
+  ok('a review opened twice leaves the coach records unchanged', reads.review, reads);
+  ok('the data builders change neither the state nor the stored save', reads.builders === true, reads);
+  const sameAsDrawing = await p.evaluate(() => {
+    if (typeof jcDecide !== 'function') return { missing: true };
+    const d = getToday(); state.journalCoach = {}; histSel = d; renderHistory(); const drawn = JSON.stringify(state.journalCoach);
+    state.journalCoach = {}; jcDecide(d); return { drawn, decided: JSON.stringify(state.journalCoach) };
+  });
+  ok('jcDecide stores exactly what drawing the day stores', sameAsDrawing.drawn === sameAsDrawing.decided && /PAT_/.test(sameAsDrawing.drawn), sameAsDrawing);
+  const rev = await p.evaluate(() => {
+    if (typeof histRev !== 'number') return { missing: true };
+    const r0 = histRev; renderHistory(); const r1 = histRev, days = journalDays(); let renders = 0;
+    const r = window.renderHistory; window.renderHistory = function () { renders++; return r.apply(this, arguments) };
+    try { saveDayReflection(days[days.length - 1], 'A short note on an older day') } finally { window.renderHistory = r }
+    return { drew: r1 > r0, stored: histRev > r1, renders };
+  });
+  ok('histRev rises with every Journal render, and with a reflection stored without one', rev.drew && rev.stored && rev.renders === 0, rev);
+  // a new reset baseline (tier 3 welcome) changes the hero's and the tiles' numbers, so selecting today then draws the whole Journal
+  await seed([[30, 100, 9, 'Study', 'intelligence'], [31, 100, 9, 'Study', 'intelligence'], [32, 100, 9, 'Study', 'intelligence'], [0, 60, 9, 'Back', 'discipline']], true);
+  const dOldest = await dstr(32);
+  await p.evaluate(d => { state.journalCoach = {}; selectJournalDay(d) }, dOldest); await counting();
+  const reset = await p.evaluate(() => { const r0 = typeof histRev === 'number' ? histRev : 0, answer = typeof selectJournalEntry === 'function' && selectJournalEntry(getToday()), c = __uncount(); return { answer, c, base: (jcStore().base || {}).value, raised: typeof histRev === 'number' && histRev > r0, welcome: !!document.querySelector('#journalEntry .jc-welcome') } });
+  ok('selecting today on a long comeback resets the baseline and draws the whole Journal once, without save()', reset.answer === true && reset.base === 120 && reset.raised && reset.c.renders === 1 && reset.c.saves === 0 && reset.welcome, reset);
   // care note
   await seed([[0, 100, 9, 'Study', 'intelligence']], true); const dd = await dstr(0);
   await p.evaluate(d => { saveDayReflection(d, 'I feel like there is no reason to live and I want to die'); histSel = d; renderHistory() }, dd);
   const care = await p.evaluate(() => (document.querySelector('.jc-care') || {}).textContent || ''); ok('distress words get a gentle note with a crisis line and no coach card', /988/.test(care) && !(await p.evaluate(() => document.querySelector('.jc-card'))), care.slice(0, 60));
+  ok('the care note is one page constant, word for word, and stands alone above a plain reflection box', await p.evaluate(t => typeof JC_CARE === 'object' && JC_CARE.lead === 'That sounds really heavy.' && JC_CARE.text === t && document.querySelector('.jc-care').textContent === JC_CARE.lead + ' ' + JC_CARE.text &&
+    !document.querySelector('#journalEntry .jc-welcome') && !document.querySelector('#journalEntry .jc-q') && /^Reflection \(optional\)$/.test(document.querySelector('#journalEntry label[for=dayReflection]').textContent),
+    'You do not have to carry it alone. If you might hurt yourself, please call or text 988 (in the US) or your local emergency number right now, or reach out to someone you trust. The coach stays quiet today.'));
   // loading the app with a saved history must not touch the coach before it exists (this once broke start-up)
   await seed(wk, true); await p.evaluate(() => save());
   const errs2 = []; const p2 = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p2.on('pageerror', e => errs2.push(String(e)));

@@ -5,12 +5,22 @@
    type 'coach', so they never count as a training day or a streak day. Never mentions weight, food or calories. ---------- */
 const JC={baseDefault:150,baseReset:120,minPatternDays:7,cooldownDays:7,reflectMin:40,weeklyMin:50,monthlyMin:60,rewardReflect:15,rewardWeekly:30,rewardMonthly:50,dialMinSched:120};
 let jcCache={sig:'',idx:null,day:{}};
+/* The coach's records in the core save (state.journalCoach): days (the question chosen, the reflection paid), reviews (answer, paid),
+   the pattern chips (pats) with their cooldown, welcome records and the reset baseline (base). The Journal's data builders read them
+   through jcRead and jcRec and never create one, so drawing (or a native projection) changes nothing; the writers and jcDecide take
+   them from jcStore, which creates what they need. */
+const JC_NONE=Object.freeze({});
+function jcRead(kind){const s=typeof state!=='undefined'&&state.journalCoach;return s&&s[kind]||JC_NONE}
+function jcRec(kind,key){return jcRead(kind)[key]||JC_NONE}
 function jcStore(){
  if(typeof state==='undefined')return {days:{},reviews:{},cooldown:{},pats:{},welcome:{},base:null};
  const s=state.journalCoach||(state.journalCoach={});
  ['days','reviews','cooldown','pats','welcome'].forEach(function(k){if(!s[k])s[k]={}});
  return s;
 }
+/* Stores the core save without save()'s rebuild, badges and redraw, for coach records that carry no XP (decisions, the question
+   chosen, the words written), as a dismissed tip is stored. Answers whether it was stored. */
+function jcWrite(){state.customRules=rules;return writeSave()}
 /* ----- small utilities ----- */
 function jcAdd(ymd,n){const a=ymd.split('-').map(Number),t=new Date(Date.UTC(a[0],a[1]-1,a[2]+n));return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(t.getUTCDate()).padStart(2,'0')}
 function jcDow(ymd){const a=ymd.split('-').map(Number);return new Date(Date.UTC(a[0],a[1]-1,a[2])).getUTCDay()}
@@ -27,7 +37,7 @@ function jcIndex(){
 const jcCoachAct=function(a){return a&&a.type==='coach'};
 const jcPassive=function(a){try{return ecoPassive(a)}catch(e){return false}};
 /* a day's own numbers */
-function jcBaseOn(d){const b=jcStore().base;return b&&d>=b.from&&d<=b.until?b.value:null}
+function jcBaseOn(d){const b=jcRead('base');return d>=b.from&&d<=b.until?b.value:null}
 function jcDay(d){
  if(jcCache.day[d])return jcCache.day[d];
  const idx=jcIndex(),all=(idx[d]||[]).filter(function(a){return !jcCoachAct(a)}),eff=all.filter(function(a){return !jcPassive(a)});
@@ -55,21 +65,28 @@ function jcGap(d){let g=0;for(let i=1;i<400;i++){const k=jcAdd(d,-i),m=jcDay(k);
  return first&&jcAdd(d,-g-1)>=first?g:0}
 const JC_ATTR_COL={physique:'#f87171',endurance:'#fb923c',intelligence:'#60a5fa',business:'#fbbf24',social:'#f472b6',discipline:'#a78bfa',adventure:'#34d399',wellbeing:'#2dd4bf'};
 function jcAttrColor(id){return JC_ATTR_COL[id]||'#7c9cff'}
-/* the Journal's header: four numbers and the last four weeks as a strip of colours */
-function jcHeroHtml(){
+/* The Journal's header as data: four numbers as the page prints them, and the last four weeks as a strip of colours, oldest first
+   (a day without an archetype is off; a brighter cell is a bigger day against its average) */
+function jcHeroData(){
  const today=getToday(),mo=today.slice(0,7);
- let monthDays=0,refs=0,weekXp=0;
+ let monthDays=0,refs=0,weekXp=0,st=0;
  for(let i=0;i<31;i++){const d=jcAdd(today,-i);if(d.slice(0,7)===mo&&jcDay(d).n>0)monthDays++}
  for(let i=0;i<7;i++)weekXp+=jcDay(jcAdd(today,-i)).xp;
  Object.keys(state.dayReflections||{}).forEach(function(k){if((state.dayReflections[k]||'').trim())refs++});
- let st=0;try{st=streak()}catch(e){}
- const stat=function(v,l,c){return '<div class="jx-stat" style="--c:'+c+'"><b>'+v+'</b><small>'+l+'</small></div>'};
- let cells='';
+ try{st=streak()}catch(e){}
+ const cells=[];
  for(let i=27;i>=0;i--){const d=jcAdd(today,-i),a=jcArch(d),m=jcDay(d);
-  cells+='<i class="jx-cell'+(d===today?' now':'')+(a?'':' off')+'"'+(a?' style="--c:'+JC_ARCH[a].color+';--o:'+(Math.min(1,.35+m.xp/Math.max(1,m.avg*1.6)*.65)).toFixed(2)+'"':'')+' title="'+jcShort(d)+(a?': '+m.xp+' XP':'')+'"></i>'}
+  cells.push({day:d,today:d===today,off:!a,color:a?JC_ARCH[a].color:null,alpha:a?Math.min(1,.35+m.xp/Math.max(1,m.avg*1.6)*.65):null,label:jcShort(d)+(a?': '+m.xp+' XP':'')})}
+ return {stats:[{value:String(st),label:'day streak',color:'#fb923c'},{value:String(monthDays),label:'days this month',color:'#60a5fa'},
+  {value:weekXp.toLocaleString(),label:'XP this week',color:'#34d399'},{value:String(refs),label:'reflections',color:'#f472b6'}],cells:cells};
+}
+function jcHeroHtml(){
+ const h=jcHeroData();
+ const stat=function(s){return '<div class="jx-stat" style="--c:'+s.color+'"><b>'+jcEsc(s.value)+'</b><small>'+s.label+'</small></div>'};
+ const cell=function(c){return '<i class="jx-cell'+(c.today?' now':'')+(c.off?' off':'')+'"'+(c.off?'':' style="--c:'+c.color+';--o:'+c.alpha.toFixed(2)+'"')+' title="'+jcEsc(c.label)+'"></i>'};
  return '<div class="jx-hero-top"><div><div class="eyebrow">YOUR CHRONICLE</div><h2>Journal</h2></div><button type="button" class="jx-ghost" onclick="exportData()" aria-label="Export backup">Backup</button></div>'+
-  '<div class="jx-stats">'+stat(st,'day streak','#fb923c')+stat(monthDays,'days this month','#60a5fa')+stat(weekXp.toLocaleString(),'XP this week','#34d399')+stat(refs,'reflections','#f472b6')+'</div>'+
-  '<div class="jx-rhythm"><div class="jx-rhythm-h"><span>Last 4 weeks</span><span class="jx-legend">brighter = bigger day</span></div><div class="jx-cells">'+cells+'</div></div>';
+  '<div class="jx-stats">'+h.stats.map(stat).join('')+'</div>'+
+  '<div class="jx-rhythm"><div class="jx-rhythm-h"><span>Last 4 weeks</span><span class="jx-legend">brighter = bigger day</span></div><div class="jx-cells">'+h.cells.map(cell).join('')+'</div></div>';
 }
 /* ----- archetypes (priority order) ----- */
 const JC_ARCH={
@@ -120,14 +137,14 @@ const JC_POOLS={
 const JC_POOL_OF={OVERDRIVE:'A',DIRECTOR_SYNC:'B',PIVOT_DAY:'B',QUEST_HUNTER:'C',BALANCED_STRIDE:'C',COMPANION_ANCHOR:'D',LOW_POWER:'D',REST_DAY:'D',WELCOME_BACK:'E'};
 function jcPrompt(d){
  const a=jcArch(d);if(!a)return null;
- const pool=JC_POOLS[JC_POOL_OF[a]],st=jcStore(),rec=st.days[d]||(st.days[d]={});
- let id=rec.promptId;
+ const pool=JC_POOLS[JC_POOL_OF[a]];
+ let id=jcRec('days',d).promptId;
  if(!id||!pool.some(function(q){return q[0]===id}))id=pool[jcHash(d+'q')%pool.length][0];
  return {id:id,text:(pool.filter(function(q){return q[0]===id})[0]||pool[0])[1],pool:pool};
 }
 function jcSwap(d){
- const p=jcPrompt(d);if(!p)return;const i=p.pool.findIndex(function(q){return q[0]===p.id});
- jcStore().days[d].promptId=p.pool[(i+1)%p.pool.length][0];try{save()}catch(e){}renderHistory();
+ const p=jcPrompt(d);if(!p)return;const i=p.pool.findIndex(function(q){return q[0]===p.id}),days=jcStore().days;
+ (days[d]||(days[d]={})).promptId=p.pool[(i+1)%p.pool.length][0];try{save()}catch(e){}renderHistory();
 }
 /* ----- rewards (once each; through the normal economy, never a streak or training day) ----- */
 function jcAward(xp,name,note){
@@ -137,18 +154,27 @@ function jcAward(xp,name,note){
  jcCache.sig='';return xp;
 }
 function jcCare(n){try{const p=jcCat();if(p&&typeof petGain==='function')petGain(p,n)}catch(e){}}
+/* a reflection pays only on its own day or the day after */
+function jcCanPay(d){return d===getToday()||d===jcAdd(getToday(),-1)}
 function jcOnReflect(d,text){
- const st=jcStore(),rec=st.days[d]||(st.days[d]={}),t=String(text||'').trim(),y=jcAdd(getToday(),-1);
- if(rec.xpAwarded||t.length<JC.reflectMin||(d!==getToday()&&d!==y))return;
+ const st=jcStore(),rec=st.days[d]||(st.days[d]={}),t=String(text||'').trim();
+ if(rec.xpAwarded||t.length<JC.reflectMin||!jcCanPay(d))return;
  rec.xpAwarded=true;jcAward(JC.rewardReflect,'Journal reflection');jcCare(2);
  try{save()}catch(e){}
  try{toast('+'+JC.rewardReflect+' XP · +2 bond · Reflection saved')}catch(e){}
 }
+/* The reflection box's counter: one of four lines, chosen by whether the reward is paid, can still be paid, and the length (while
+   typing, the short line also counts the characters), and its meter */
+const JC_COUNTER=Object.freeze({awarded:'+'+JC.rewardReflect+' XP & +2 bond claimed',ready:'Saves for +'+JC.rewardReflect+' XP',
+ short:'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP',old:'Reflections on older days earn no XP'});
+function jcCounterText(awarded,canPay,n,typing){return awarded?JC_COUNTER.awarded:!canPay?JC_COUNTER.old:n>=JC.reflectMin?JC_COUNTER.ready:JC_COUNTER.short+(typing?' ('+n+')':'')}
+function jcMeter(awarded,n){return awarded?100:Math.min(100,n/JC.reflectMin*100)}
 function jcCounter(el,d){
- const n=el.value.trim().length,rec=jcStore().days[d]||{},b=document.getElementById('jcCount');if(!b)return;
- b.textContent=rec.xpAwarded?'+'+JC.rewardReflect+' XP & +2 bond claimed':(d===getToday()||d===jcAdd(getToday(),-1))?(n>=JC.reflectMin?'Saves for +'+JC.rewardReflect+' XP':'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP ('+n+')'):'Reflections on older days earn no XP';
- b.className='jc-count'+(rec.xpAwarded||n>=JC.reflectMin?' on':'');
- const mt=document.getElementById('jcMeter');if(mt)mt.style.width=(rec.xpAwarded?100:Math.min(100,n/JC.reflectMin*100))+'%';
+ const b=document.getElementById('jcCount');if(!b)return;
+ const n=el.value.trim().length,awarded=!!jcRec('days',d).xpAwarded;
+ b.textContent=jcCounterText(awarded,jcCanPay(d),n,true);
+ b.className='jc-count'+(awarded||n>=JC.reflectMin?' on':'');
+ const mt=document.getElementById('jcMeter');if(mt)mt.style.width=jcMeter(awarded,n)+'%';
 }
 /* ----- patterns over the last 21 days (one chip a day, a pattern rests 7 days after it is shown) ----- */
 function jcPatterns(d){
@@ -193,44 +219,58 @@ function jcPatterns(d){
  }
  return out;
 }
+/* A recent day's pattern line, decided the first time the day is drawn and then kept: the first pattern found that has rested its
+   cooldown, or none (0). Stored at once with jcWrite: a decision carries no XP, so drawing never runs save() and its redraw. */
 function jcChip(d){
- const st=jcStore();
- if(st.pats[d]!==undefined)return st.pats[d]||null;
+ const kept=jcRead('pats')[d];
+ if(kept!==undefined)return kept||null;
  const today=getToday();
  if(d>today||d<jcAdd(today,-3)){return null}      /* only recent days get a chip, so history never rewrites itself */
- const list=jcPatterns(d);let pick=null;
- for(let i=0;i<list.length&&!pick;i++){const p=list[i],k=p.key||p.id,last=st.cooldown[p.id];if(!last||Math.abs((Date.parse(d+'T12:00:00')-Date.parse(last+'T12:00:00'))/86400000)>=JC.cooldownDays)pick=p}
+ const st=jcStore(),list=jcPatterns(d);let pick=null;
+ for(let i=0;i<list.length&&!pick;i++){const p=list[i],last=st.cooldown[p.id];if(!last||Math.abs((Date.parse(d+'T12:00:00')-Date.parse(last+'T12:00:00'))/86400000)>=JC.cooldownDays)pick=p}
  if(pick){st.cooldown[pick.id]=d;st.pats[d]={id:pick.id,text:pick.text}}else st.pats[d]=0;
- try{save()}catch(e){}
+ jcWrite();
  return st.pats[d]||null;
 }
 /* ----- care note: only ever words from the person, never data about weight or food ----- */
 const JC_DISTRESS=/\b(kill myself|suicid\w*|want to die|end my life|self[- ]?harm|hurt myself|no reason to live|better off dead|can'?t go on)\b/i;
-function jcCareNote(d){const r=((state.dayReflections||{})[d]||'');return JC_DISTRESS.test(r)?'<div class="jc-care"><b>That sounds really heavy.</b> You do not have to carry it alone. If you might hurt yourself, please call or text 988 (in the US) or your local emergency number right now, or reach out to someone you trust. The coach stays quiet today.</div>':''}
+const JC_CARE=Object.freeze({lead:'That sounds really heavy.',text:'You do not have to carry it alone. If you might hurt yourself, please call or text 988 (in the US) or your local emergency number right now, or reach out to someone you trust. The coach stays quiet today.'});
+function jcCares(d){return JC_DISTRESS.test((state.dayReflections||{})[d]||'')}
 /* ----- welcome back ----- */
-function jcWelcome(d){
- if(d!==getToday())return '';
- const g=jcGap(d);if(g<3)return '';
- const st=jcStore(),key=d,w=st.welcome[key]||(st.welcome[key]={tier:g>=14?3:g>=7?2:1,gap:g,claimed:{}});
- const cat=jcCat(),cn=cat?cat.name:'';const lv=(function(){try{return characterLevel().level}catch(e){return 1}})();
- if(w.tier===3&&!st.base){st.base={from:d,until:jcAdd(d,7),value:JC.baseReset};try{save()}catch(e){}}
- let head,body,chips='';
- const chip=function(id,label,fn,done){return '<button type="button" class="jc-chip'+(done?' done':'')+'" '+(done?'disabled':'onclick="'+fn+'"')+'>'+jcEsc(label)+'</button>'};
- if(w.tier===1){
-  head='Welcome back. Ready when you are.';
-  body='You were off-grid for '+g+' days. '+(cat?jcEsc(cn)+' held down the fort. ':'')+'No penalties, no backlog to clear. Today is a clean slate.';
-  chips=chip('pet',cat?'Pet '+cn+' · +10 XP':'Claim +10 XP','jcClaim(\'pet\')',w.claimed.pet);
- }else if(w.tier===2){
-  head='Good to see you again.';
-  body='It has been '+g+' days since your last log. Life happens outside the screen. Do not try to make up for last week, just pick one small block on the Director dial today.';
-  chips=chip('line','One-sentence catch-up · +20 XP','jcCatchUp()',w.claimed.line)+'<button type="button" class="jc-chip" onclick="lmaNavTo(\'life-director\');if(window.LifeMaxFeatures)LifeMaxFeatures.open(\'life-director\')">Open Life Director</button>';
- }else{
-  head='New chapter unlocked.';
-  body='You have been away for '+g+' days. Your level ('+lv+'), Sparks and '+(cat?jcEsc(cn):'everything')+' are right where you left them, and your rolling average is reset for a week so today feels fair.';
-  chips=chip('fresh','Start fresh · +25 XP','jcClaim(\'fresh\')',w.claimed.fresh);
- }
- return '<div class="jc-welcome"><svg class="jx-moon" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="jxg" cx="35%" cy="30%"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><circle cx="32" cy="32" r="22" fill="url(#jxg)"/><circle cx="43" cy="26" r="19" fill="var(--panel)"/></svg><div class="jc-wh">'+jcEsc(head)+'</div><p>'+body+'</p><div class="jc-chips">'+chips+'</div></div>';
+/* Today's welcome record, decided the first time today is drawn after 3 or more quiet days, then kept: the tier (1 for 3-6 days, 2 for
+   7-13, 3 for 14 or more), the gap and the chips claimed. Tier 3 also resets the rolling average to 120 XP for a week; that changes
+   the numbers jcDay gives for the days it covers, so its cache is dropped and histRev raised. Stored at once with jcWrite. */
+function jcWelcomeRecord(d){
+ if(d!==getToday())return null;
+ const g=jcGap(d);if(g<3)return null;
+ const st=jcStore(),had=st.welcome[d],w=had||(st.welcome[d]={tier:g>=14?3:g>=7?2:1,gap:g,claimed:{}}),reset=w.tier===3&&!st.base;
+ if(reset){st.base={from:d,until:jcAdd(d,7),value:JC.baseReset};jcCache.day={};histRev++}
+ if(!had||reset)jcWrite();
+ return w;
 }
+/* Today's welcome card as data, once its record is decided: null on any other day, before 3 quiet days or while undecided. The body
+   counts the quiet days as they are now; the tier is the one decided. */
+function jcWelcomeData(d){
+ if(d!==getToday())return null;
+ const g=jcGap(d),w=jcRec('welcome',d);if(g<3||!w.tier)return null;
+ const cat=jcCat(),cn=cat?cat.name:'',claimed=w.claimed||JC_NONE;
+ if(w.tier===1)return {tier:1,head:'Welcome back. Ready when you are.',body:'You were off-grid for '+g+' days. '+(cat?cn+' held down the fort. ':'')+'No penalties, no backlog to clear. Today is a clean slate.',
+  chips:[{id:'pet',label:cat?'Pet '+cn+' · +10 XP':'Claim +10 XP',done:!!claimed.pet}]};
+ if(w.tier===2)return {tier:2,head:'Good to see you again.',body:'It has been '+g+' days since your last log. Life happens outside the screen. Do not try to make up for last week, just pick one small block on the Director dial today.',
+  chips:[{id:'line',label:'One-sentence catch-up · +20 XP',done:!!claimed.line},{id:'director',label:'Open Life Director',done:false}]};
+ let lv=1;try{lv=characterLevel().level}catch(e){}
+ return {tier:3,head:'New chapter unlocked.',body:'You have been away for '+g+' days. Your level ('+lv+'), Sparks and '+(cat?cn:'everything')+' are right where you left them, and your rolling average is reset for a week so today feels fair.',
+  chips:[{id:'fresh',label:'Start fresh · +25 XP',done:!!claimed.fresh}]};
+}
+const JC_CHIP_DO={pet:"jcClaim('pet')",fresh:"jcClaim('fresh')",line:'jcCatchUp()',director:"lmaNavTo('life-director');if(window.LifeMaxFeatures)LifeMaxFeatures.open('life-director')"};
+function jcWelcomeHtml(w){
+ const chip=function(c){return '<button type="button" class="jc-chip'+(c.done?' done':'')+'" '+(c.done?'disabled':'onclick="'+JC_CHIP_DO[c.id]+'"')+'>'+jcEsc(c.label)+'</button>'};
+ return '<div class="jc-welcome"><svg class="jx-moon" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="jxg" cx="35%" cy="30%"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></radialGradient></defs><circle cx="32" cy="32" r="22" fill="url(#jxg)"/><circle cx="43" cy="26" r="19" fill="var(--panel)"/></svg><div class="jc-wh">'+jcEsc(w.head)+'</div><p>'+jcEsc(w.body)+'</p><div class="jc-chips">'+w.chips.map(chip).join('')+'</div></div>';
+}
+/* The two things the coach decides once and keeps, a recent day's chip and today's welcome record. The page decides them when it
+   draws the day (renderHistory, selectJournalEntry); the data builders only read them, so one not yet decided reads as none. A review,
+   or a day the care note quiets, decides nothing. */
+function jcDecide(d){if(/^\d{4}-\d\d-\d\d$/.test(d)&&!jcCares(d)){jcChip(d);jcWelcomeRecord(d)}}
 function jcClaim(kind){
  const st=jcStore(),w=st.welcome[getToday()];if(!w||w.claimed[kind])return;
  if(kind==='pet'){try{if(jcCat())petPetDone()}catch(e){}jcAward(10,'Welcome back','Returned after '+w.gap+' days');w.claimed.pet=1;try{toast('+10 XP · Welcome back')}catch(e){}}
@@ -245,21 +285,28 @@ function jcCatchUp(){
  jcAward(20,'Catch-up note');w.claimed.line=1;try{save()}catch(e){}try{toast('+20 XP · Catch-up saved')}catch(e){}renderHistory();
 }
 /* ----- the day view's top: welcome, insight, reflection box ----- */
-function jcTop(d){
- const care=jcCareNote(d);
- if(care)return care+jcReflectBox(d,null);
- const ins=jcInsight(d),chip=jcChip(d),w=jcWelcome(d);
- let h=w;
- if(ins)h+='<div class="jc-card" style="--jc:'+ins.color+'"><span class="jc-badge">'+jcEsc(ins.label)+'</span><p>'+jcEsc(ins.text)+'</p>'+(chip?'<div class="jc-pat">'+jcEsc(chip.text)+'</div>':'')+'</div>';
- return h+jcReflectBox(d,jcPrompt(d));
+/* A day's coach cards as data. The care note stands alone when the day's own words call for it; otherwise the welcome card, the
+   insight with its pattern line, and the reflection box with its question. */
+function jcDayData(d){
+ if(jcCares(d))return {care:JC_CARE,welcome:null,insight:null,reflect:jcReflectData(d,null)};
+ const ins=jcInsight(d),chip=jcRead('pats')[d];
+ return {care:null,welcome:jcWelcomeData(d),insight:ins&&{label:ins.label,color:ins.color,text:ins.text,pattern:chip?chip.text:null},reflect:jcReflectData(d,jcPrompt(d))};
 }
-function jcReflectBox(d,pr){
- const ref=(state.dayReflections&&state.dayReflections[d])||'',rec=jcStore().days[d]||{},n=ref.trim().length;
- const canPay=d===getToday()||d===jcAdd(getToday(),-1);
- const label=rec.xpAwarded?'+'+JC.rewardReflect+' XP & +2 bond claimed':canPay?(n>=JC.reflectMin?'Saves for +'+JC.rewardReflect+' XP':'Write '+JC.reflectMin+'+ characters for +'+JC.rewardReflect+' XP'):'Reflections on older days earn no XP';
- return '<div class="j-reflect jx-reflect">'+(pr?'<div class="jc-q"><span class="jx-qmark">Reflect</span><span>'+jcEsc(pr.text)+'</span><button type="button" class="jc-swap" onclick="jcSwap(\''+d+'\')" aria-label="Swap question">&#8635;</button></div>':'<label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>')+
-  '<textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" oninput="jcCounter(this,\''+d+'\')" onchange="saveDayReflection(\''+d+'\',this.value)">'+jcEsc(ref)+'</textarea>'+
-  '<div class="jx-meter"><i id="jcMeter" style="width:'+(rec.xpAwarded?100:Math.min(100,n/JC.reflectMin*100))+'%"></i></div><div id="jcCount" class="jc-count'+(rec.xpAwarded?' on':'')+'">'+label+'</div></div>';
+function jcReflectData(d,pr){
+ const text=(state.dayReflections&&state.dayReflections[d])||'',n=text.trim().length,awarded=!!jcRec('days',d).xpAwarded,canPay=jcCanPay(d);
+ return {prompt:pr&&{id:pr.id,text:pr.text},text:text,awarded:awarded,canPay:canPay,meter:jcMeter(awarded,n),counter:jcCounterText(awarded,canPay,n)};
+}
+function jcTop(d){
+ const c=jcDayData(d),w=c.welcome,ins=c.insight;
+ if(c.care)return '<div class="jc-care"><b>'+jcEsc(c.care.lead)+'</b> '+jcEsc(c.care.text)+'</div>'+jcReflectBox(d,c.reflect);
+ return (w?jcWelcomeHtml(w):'')+
+  (ins?'<div class="jc-card" style="--jc:'+ins.color+'"><span class="jc-badge">'+jcEsc(ins.label)+'</span><p>'+jcEsc(ins.text)+'</p>'+(ins.pattern?'<div class="jc-pat">'+jcEsc(ins.pattern)+'</div>':'')+'</div>':'')+
+  jcReflectBox(d,c.reflect);
+}
+function jcReflectBox(d,r){
+ return '<div class="j-reflect jx-reflect">'+(r.prompt?'<div class="jc-q"><span class="jx-qmark">Reflect</span><span>'+jcEsc(r.prompt.text)+'</span><button type="button" class="jc-swap" onclick="jcSwap(\''+d+'\')" aria-label="Swap question">&#8635;</button></div>':'<label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>')+
+  '<textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" oninput="jcCounter(this,\''+d+'\')" onchange="saveDayReflection(\''+d+'\',this.value)">'+jcEsc(r.text)+'</textarea>'+
+  '<div class="jx-meter"><i id="jcMeter" style="width:'+r.meter+'%"></i></div><div id="jcCount" class="jc-count'+(r.awarded?' on':'')+'">'+jcEsc(r.counter)+'</div></div>';
 }
 /* ----- the day list: coloured dots, quiet stretches, weekly and monthly reviews ----- */
 function jcWeekId(d){const a=d.split('-').map(Number),t=new Date(Date.UTC(a[0],a[1]-1,a[2])),dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn+3);const y=t.getUTCFullYear(),j=new Date(Date.UTC(y,0,4)),w=1+Math.round(((t-j)/86400000-3+((j.getUTCDay()+6)%7))/7);return y+'-W'+String(w).padStart(2,'0')}
@@ -278,31 +325,44 @@ function jcReviewList(days){
  });
  return out.sort(function(a,b){return b.sort.localeCompare(a.sort)}).slice(0,40);
 }
-function jcListHtml(days,sel){
+/* The day list as data, newest first: day tiles (bar against the biggest listed day, a pen when written about), a pill for 3 or more
+   quiet days between two of them, and the weekly and monthly reviews in their places. The selection is not in it; renderers mark it. */
+function jcListData(days){
  const items=days.map(function(d){return {sort:d,day:d}}).concat(jcReviewList(days).map(function(r){return {sort:r.sort,rev:r}}));
  items.sort(function(a,b){return b.sort.localeCompare(a.sort)});
- const today=getToday();let html='',prevDay=null,maxXp=1;
+ const today=getToday(),out=[];let prevDay=null,maxXp=1;
  days.forEach(function(d){maxXp=Math.max(maxXp,jcDay(d).xp)});
  items.forEach(function(it){
   if(it.rev){
-   const r=it.rev,on=sel===r.key?' on':'';
-   html+='<button type="button" class="jx-rev'+on+'" onclick="selectJournalDay(\''+r.key+'\')"><span class="jx-rev-ico">'+(r.kind==='W'?'W':'M')+'</span><span class="jx-rev-t">'+(r.kind==='W'?'Week '+r.key.split('-W')[1]:new Date(r.start+'T12:00:00').toLocaleDateString(undefined,{month:'long'}))+'</span><small>'+(r.kind==='W'?'weekly review':'monthly chronicle')+'</small></button>';return;
+   const r=it.rev,W=r.kind==='W';
+   out.push({kind:'review',key:r.key,badge:W?'W':'M',title:W?'Week '+r.key.split('-W')[1]:new Date(r.start+'T12:00:00').toLocaleDateString(undefined,{month:'long'}),sub:W?'weekly review':'monthly chronicle'});return;
   }
   const d=it.day;
-  if(prevDay){const gap=(Date.parse(prevDay+'T12:00:00')-Date.parse(d+'T12:00:00'))/86400000-1;if(gap>=3)html+='<div class="jx-quiet"><span>'+gap+' quiet days</span></div>'}
+  if(prevDay){const gap=(Date.parse(prevDay+'T12:00:00')-Date.parse(d+'T12:00:00'))/86400000-1;if(gap>=3)out.push({kind:'quiet',text:gap+' quiet days'})}
   prevDay=d;
-  const a=jcArch(d),m=jcDay(d),hasRef=!!((state.dayReflections||{})[d]||'').trim(),dt=new Date(d+'T12:00:00'),col=a?JC_ARCH[a].color:'#64748b';
-  html+='<button type="button" class="jx-tile'+(d===sel?' on':'')+(d===today?' today':'')+'" style="--c:'+col+'" onclick="selectJournalDay(\''+d+'\')" aria-label="'+jcEsc(journalDayLabel(d))+', '+m.xp+' XP">'+
-   '<span class="jx-tw">'+(d===today?'Today':dt.toLocaleDateString(undefined,{weekday:'short'}))+'</span><span class="jx-td">'+dt.getDate()+'</span>'+
-   '<span class="jx-tbar"><i style="width:'+Math.max(6,Math.round(m.xp/maxXp*100))+'%"></i></span><span class="jx-tf">'+(hasRef?'<u>&#9998;</u>':'')+m.xp+'</span></button>';
+  const a=jcArch(d),m=jcDay(d),dt=new Date(d+'T12:00:00');
+  out.push({kind:'day',key:d,today:d===today,weekday:d===today?'Today':dt.toLocaleDateString(undefined,{weekday:'short'}),date:String(dt.getDate()),
+   bar:Math.max(6,Math.round(m.xp/maxXp*100)),xp:m.xp,pen:!!((state.dayReflections||{})[d]||'').trim(),color:a?JC_ARCH[a].color:'#64748b',spoken:journalDayLabel(d)+', '+m.xp+' XP'});
  });
- return html;
+ return out;
+}
+function jcListHtml(days,sel){
+ return jcListData(days).map(function(it){
+  if(it.kind==='quiet')return '<div class="jx-quiet"><span>'+jcEsc(it.text)+'</span></div>';
+  const on=it.key===sel?' on':'',tap='onclick="selectJournalDay(\''+it.key+'\')"';
+  if(it.kind==='review')return '<button type="button" class="jx-rev'+on+'" '+tap+'><span class="jx-rev-ico">'+it.badge+'</span><span class="jx-rev-t">'+jcEsc(it.title)+'</span><small>'+it.sub+'</small></button>';
+  return '<button type="button" class="jx-tile'+on+(it.today?' today':'')+'" style="--c:'+it.color+'" '+tap+' aria-label="'+jcEsc(it.spoken)+'">'+
+   '<span class="jx-tw">'+jcEsc(it.weekday)+'</span><span class="jx-td">'+it.date+'</span>'+
+   '<span class="jx-tbar"><i style="width:'+it.bar+'%"></i></span><span class="jx-tf">'+(it.pen?'<u>&#9998;</u>':'')+it.xp+'</span></button>';
+ }).join('');
 }
 function jcShort(d){return new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}
 /* ----- weekly and monthly review cards ----- */
 function jcRange(a,b){const out=[];for(let d=a;d<=b;d=jcAdd(d,1))out.push(d);return out}
-function jcReviewHtml(key){
- const kind=key[0],id=key.slice(2),st=jcStore(),rec=st.reviews[key]||(st.reviews[key]={});
+/* A weekly or monthly review as data: its badge, headline and range, the chart (a bar a day for a week, a heat grid for a month), the
+   numbers, the coach's synthesis, the question, and the stored answer with its reward state */
+function jcReviewData(key){
+ const kind=key[0],id=key.slice(2),rec=jcRec('reviews',key);
  let start,end;
  if(kind==='W'){const m=/^(\d+)-W(\d+)$/.exec(id),y=+m[1],w=+m[2],j=new Date(Date.UTC(y,0,4)),mon=new Date(j.getTime()+((w-1)*7-((j.getUTCDay()+6)%7))*86400000);start=jcAdd(mon.toISOString().slice(0,10),0);end=jcAdd(start,6)}
  else{start=id+'-01';const a=id.split('-').map(Number);end=jcAdd(start,new Date(Date.UTC(a[0],a[1],0)).getUTCDate()-1)}
@@ -333,19 +393,22 @@ function jcReviewHtml(key){
   synth=hd==null?'A fresh month. Notice what you want more of.':'Second-half momentum was '+(hd>=10?'rising':hd<=-10?'easing':'steady')+' ('+(hd>=0?'+':'')+hd+'% XP vs. the first half of the month). Your strongest stat was '+topName+' ('+topPct+'% of output).';
   qText='If '+mn+' was a chapter in your character\'s story, what was the title of this chapter, and what skill did you actually level up in real life?';bonus=JC.rewardMonthly;minLen=JC.monthlyMin;
  }
- const n=(rec.answer||'').trim().length;
- let chart='';
- const mx=Math.max.apply(null,ds.map(function(m){return m.xp}).concat([1]));
- if(kind==='W'){
-  chart='<div class="jx-bars">'+ds.map(function(m){const a=jcArch(m.d),c=a?JC_ARCH[a].color:'#475569';return '<div class="jx-bar'+(m.d===getToday()?' now':'')+'" style="--c:'+c+'"><span class="jx-bv">'+(m.xp||'')+'</span><i style="height:'+Math.max(m.xp?8:3,Math.round(m.xp/mx*100))+'%"></i><small>'+new Date(m.d+'T12:00:00').toLocaleDateString(undefined,{weekday:'narrow'})+'</small></div>'}).join('')+'</div>';
- }else{
-  const off=(jcDow(start)+6)%7;
-  chart='<div class="jx-heat"><div class="jx-heat-w">'+['M','T','W','T','F','S','S'].map(function(x){return '<small>'+x+'</small>'}).join('')+'</div><div class="jx-heat-g">'+Array(off).fill('<i class="jx-hc void"></i>').join('')+ds.map(function(m){const a=jcArch(m.d),c=a?JC_ARCH[a].color:'#475569';return '<i class="jx-hc'+(m.n?'':' off')+'" style="--c:'+c+';--o:'+(m.n?(Math.min(1,.3+m.xp/mx*.7)).toFixed(2):'.18')+'" title="'+jcShort(m.d)+': '+m.xp+' XP"><b>'+new Date(m.d+'T12:00:00').getDate()+'</b></i>'}).join('')+'</div></div>';
- }
- return '<div class="jx-dayhead jx-revhead"><div class="jx-bignum">'+(kind==='W'?'W'+id.split('-W')[1]:new Date(start+'T12:00:00').toLocaleDateString(undefined,{month:'short'}).toUpperCase())+'</div><div class="jx-dayname"><b>'+jcEsc(head)+'</b><span>'+jcShort(start)+' to '+jcShort(end)+'</span></div></div>'+
-  chart+'<div class="jc-grid">'+grid.map(function(g){return '<div><small>'+jcEsc(g[0])+'</small><b>'+jcEsc(g[1])+'</b></div>'}).join('')+'</div>'+
-  '<div class="jc-card" style="--jc:#F59E0B"><span class="jc-badge">Coach</span><p>'+jcEsc(synth)+'</p></div>'+
-  '<div class="j-reflect jx-reflect"><div class="jc-q"><span>'+jcEsc(qText)+'</span></div><textarea maxlength="2000" placeholder="Write if you want to." onchange="jcSaveReview(\''+key+'\',this.value)">'+jcEsc(rec.answer||'')+'</textarea><div class="jc-count'+(rec.paid?' on':'')+'">'+(rec.paid?'+'+bonus+' XP claimed':'Write '+minLen+'+ characters for +'+bonus+' XP')+'</div></div>';
+ const mx=Math.max.apply(null,ds.map(function(m){return m.xp}).concat([1])),col=function(m){const a=jcArch(m.d);return a?JC_ARCH[a].color:'#475569'};
+ const chart=kind==='W'?{kind:'bars',bars:ds.map(function(m){return {label:new Date(m.d+'T12:00:00').toLocaleDateString(undefined,{weekday:'narrow'}),value:m.xp?String(m.xp):'',height:Math.max(m.xp?8:3,Math.round(m.xp/mx*100)),color:col(m),today:m.d===getToday()}})}
+  :{kind:'heat',weekdays:['M','T','W','T','F','S','S'],lead:(jcDow(start)+6)%7,cells:ds.map(function(m){return {day:String(new Date(m.d+'T12:00:00').getDate()),color:col(m),off:!m.n,alpha:m.n?Math.min(1,.3+m.xp/mx*.7):.18,label:jcShort(m.d)+': '+m.xp+' XP'}})};
+ return {key:key,kind:kind,badge:kind==='W'?'W'+id.split('-W')[1]:new Date(start+'T12:00:00').toLocaleDateString(undefined,{month:'short'}).toUpperCase(),title:head,range:jcShort(start)+' to '+jcShort(end),
+  chart:chart,grid:grid.map(function(g){return {label:g[0],value:g[1]}}),coach:synth,question:qText,answer:rec.answer||'',paid:!!rec.paid,
+  counter:rec.paid?'+'+bonus+' XP claimed':'Write '+minLen+'+ characters for +'+bonus+' XP'};
+}
+function jcReviewHtml(key){
+ const r=jcReviewData(key),c=r.chart;
+ const chart=c.kind==='bars'?'<div class="jx-bars">'+c.bars.map(function(b){return '<div class="jx-bar'+(b.today?' now':'')+'" style="--c:'+b.color+'"><span class="jx-bv">'+b.value+'</span><i style="height:'+b.height+'%"></i><small>'+jcEsc(b.label)+'</small></div>'}).join('')+'</div>'
+  :'<div class="jx-heat"><div class="jx-heat-w">'+c.weekdays.map(function(x){return '<small>'+x+'</small>'}).join('')+'</div><div class="jx-heat-g">'+Array(c.lead).fill('<i class="jx-hc void"></i>').join('')+
+   c.cells.map(function(h){return '<i class="jx-hc'+(h.off?' off':'')+'" style="--c:'+h.color+';--o:'+(h.off?'.18':h.alpha.toFixed(2))+'" title="'+jcEsc(h.label)+'"><b>'+h.day+'</b></i>'}).join('')+'</div></div>';
+ return '<div class="jx-dayhead jx-revhead"><div class="jx-bignum">'+jcEsc(r.badge)+'</div><div class="jx-dayname"><b>'+jcEsc(r.title)+'</b><span>'+jcEsc(r.range)+'</span></div></div>'+
+  chart+'<div class="jc-grid">'+r.grid.map(function(g){return '<div><small>'+jcEsc(g.label)+'</small><b>'+jcEsc(g.value)+'</b></div>'}).join('')+'</div>'+
+  '<div class="jc-card" style="--jc:#F59E0B"><span class="jc-badge">Coach</span><p>'+jcEsc(r.coach)+'</p></div>'+
+  '<div class="j-reflect jx-reflect"><div class="jc-q"><span>'+jcEsc(r.question)+'</span></div><textarea maxlength="2000" placeholder="Write if you want to." onchange="jcSaveReview(\''+key+'\',this.value)">'+jcEsc(r.answer)+'</textarea><div class="jc-count'+(r.paid?' on':'')+'">'+r.counter+'</div></div>';
 }
 function jcSaveReview(key,val){
  const st=jcStore(),rec=st.reviews[key]||(st.reviews[key]={}),t=String(val||'').trim();rec.answer=t.slice(0,2000);

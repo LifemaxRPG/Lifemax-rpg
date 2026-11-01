@@ -293,7 +293,19 @@
  "JC_ATTR_COL": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_CARE": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_CHIP_DO": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_COUNTER": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JC_DISTRESS": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_NONE": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "JC_POOLS": [
@@ -2861,6 +2873,9 @@
  "histDrawn": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "histRev": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "histSel": [
   "src/runtime/segments/04-runtime.js"
  ],
@@ -2909,10 +2924,13 @@
  "jcCache": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcCanPay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcCare": [
   "src/runtime/segments/47-journal-coach.js"
  ],
- "jcCareNote": [
+ "jcCares": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcCat": [
@@ -2933,7 +2951,16 @@
  "jcCounter": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcCounterText": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcDay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDayData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDecide": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcDow": [
@@ -2951,6 +2978,9 @@
  "jcHash": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcHeroData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcHeroHtml": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -2960,10 +2990,16 @@
  "jcInsight": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcListData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcListHtml": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcMean": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcMeter": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcOnReflect": [
@@ -2981,7 +3017,19 @@
  "jcRange": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcRead": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcRec": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcReflectBox": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReflectData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReviewData": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcReviewHtml": [
@@ -3011,7 +3059,16 @@
  "jcWeekStart": [
   "src/runtime/segments/47-journal-coach.js"
  ],
- "jcWelcome": [
+ "jcWelcomeData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWelcomeHtml": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWelcomeRecord": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWrite": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jlApply": [
@@ -3077,13 +3134,16 @@
  "jlWatchers": [
   "src/runtime/segments/48-journal-lock.js"
  ],
+ "journalDayData": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "journalDayLabel": [
   "src/runtime/segments/04-runtime.js"
  ],
- "journalDayTitle": [
+ "journalDays": [
   "src/runtime/segments/04-runtime.js"
  ],
- "journalDays": [
+ "journalListHtml": [
   "src/runtime/segments/04-runtime.js"
  ],
  "keepSafetyCopy": [
@@ -6526,6 +6586,9 @@
  "renderJournalDay": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "renderJournalEntry": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "renderList": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -6820,6 +6883,9 @@
   "src/runtime/segments/06-runtime.js"
  ],
  "selectJournalDay": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "selectJournalEntry": [
   "src/runtime/segments/04-runtime.js"
  ],
  "selectMealFood": [
