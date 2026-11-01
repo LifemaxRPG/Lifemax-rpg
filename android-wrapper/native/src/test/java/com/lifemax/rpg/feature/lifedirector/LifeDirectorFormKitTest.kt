@@ -55,33 +55,34 @@ class LifeDirectorFormKitTest {
                     .put(
                         field("rDays", "days", "Days", JSONArray(listOf(1, 2, 3, 4, 5)))
                             .put("options", days)
-                            .put("required", "Pick at least one day")
+                            .put("required", true)
                     )
-                    .put(num("rOn", "Days on", 4, 1, 14).put("group", "rot"))
-                    .put(num("rOff", "Days off", 4, 1, 14).put("group", "rot"))
+                    .put(num("rOn", "Days on", 4, 1, 14).put("group", 0))
+                    .put(num("rOff", "Days off", 4, 1, 14).put("group", 0))
                     .put(
                         field("rAnchor", "date", "First day on", "2026-11-01")
-                            .put("group", "rot")
-                            .put("required", "Pick the first day on")
+                            .put("group", 0)
+                            .put("required", true)
                     )
-                    .put(field("rStart", "time", "Starts", 540).put("group", "times"))
-                    .put(field("rEnd", "time", "Ends", 1020).put("group", "times"))
+                    .put(field("rStart", "time", "Starts", 540).put("group", 1))
+                    .put(field("rEnd", "time", "Ends", 1020).put("group", 1))
                     .put(
                         num("rCommute", "Travel each way (min)", 0, 0, 240)
                             .put("step", 5)
-                            .put("group", "c")
+                            .put("group", 2)
                     )
                     .put(
                         num("rUnwind", "Unwind after (min)", 30, 0, 120)
                             .put("step", 5)
-                            .put("group", "c")
+                            .put("group", 2)
                     )
                     .put(field("rNote", "text", "Note", "").put("note", JSONObject.NULL)),
             )
             .put(
                 "fold",
                 JSONObject()
-                    .put("label", "Add a measurable target (optional)")
+                    .put("summary", "Add a measurable target (optional)")
+                    .put("note", "Life Director paces sessions to hit the date.")
                     .put(
                         "fields",
                         JSONArray()
@@ -94,7 +95,26 @@ class LifeDirectorFormKitTest {
             )
 
     private fun field(key: String, kind: String, label: String, value: Any) =
-        JSONObject().put("key", key).put("kind", kind).put("label", label).put("value", value)
+        JSONObject()
+            .put("key", key)
+            .put("kind", kind)
+            .put("label", label)
+            .put("value", value)
+            .put("required", false)
+            .put("group", JSONObject.NULL)
+
+    /**
+     * The page's words for the required fields of this test's form (FormWords for the real ones).
+     */
+    private val words =
+        mapOf(
+            "rDays" to "Pick at least one day",
+            "rAnchor" to "Pick the first day on",
+            "rTitle" to "Give the goal a name",
+            "rRot" to "Tick it",
+        )
+
+    private fun JSONObject.formSchema() = formSchema(words)
 
     private fun num(key: String, label: String, value: Int, min: Int, max: Int) =
         field(key, "number", label, value).put("min", min).put("max", max)
@@ -148,6 +168,7 @@ class LifeDirectorFormKitTest {
         assertEquals(40, s.fields[0].maxLength)
         assertNull(s.fields[11].note)
         assertEquals("Add a measurable target (optional)", s.fold!!.label)
+        assertEquals("Life Director paces sessions to hit the date.", s.fold!!.note)
         assertEquals(FieldValue.Number(null), s.fold!!.fields[0].value)
         assertTrue(s.fold!!.fields[0].typedNumber)
         assertEquals(FieldValue.Date(""), s.fold!!.fields[1].value)
@@ -193,11 +214,15 @@ class LifeDirectorFormKitTest {
         refused(ruleWith("rRot") { put("hides", JSONArray(listOf("rRot"))) })
         refused(ruleWith("rTitle") { put("reveals", JSONArray(listOf("rKind"))) })
         refused(ruleWith("rTitle") { put("note", 5) })
-        refused(ruleWith("rTitle") { put("required", true) })
+        refused(ruleWith("rTitle") { put("required", "Give the goal a name") })
+        refused(ruleWith("rTitle") { remove("required") })
+        refused(ruleWith("rOn") { put("group", "rot") })
+        refused(ruleWith("rOn") { put("group", 0.5) })
         refused(ruleWith("rOff") { put("key", "rOn") })
         refused(rule().apply { remove("fields") })
         refused(rule().apply { put("fold", "target") })
-        refused(rule().apply { getJSONObject("fold").remove("label") })
+        refused(rule().apply { getJSONObject("fold").remove("summary") })
+        refused(rule().apply { getJSONObject("fold").remove("note") })
     }
 
     @Test
@@ -247,8 +272,8 @@ class LifeDirectorFormKitTest {
     @Test
     fun aRequiredTextOrCheckIsEmptyWhenBlankOrUnticked() {
         val s =
-            ruleWith("rTitle") { put("required", "Give the goal a name") }
-                .also { j -> j.getJSONArray("fields").getJSONObject(2).put("required", "Tick it") }
+            ruleWith("rTitle") { put("required", true) }
+                .also { j -> j.getJSONArray("fields").getJSONObject(2).put("required", true) }
                 .formSchema()
         val blank = s.initialValues() + ("rTitle" to FieldValue.Text("   "))
         assertEquals(

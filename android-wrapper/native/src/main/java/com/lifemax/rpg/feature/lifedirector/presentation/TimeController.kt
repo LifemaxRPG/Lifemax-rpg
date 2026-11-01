@@ -48,8 +48,7 @@ fun interface Later {
 /**
  * My time (phase 4B): its writes, each the page's own `do` command through the screen's change path
  * ([change]: one at a time, the control dimmed while it is out, the page's words when it refuses,
- * its notice when it has saved), and the sheets it opens (the commitment sheet and the goal kinds),
- * which another part of the screen draws once the page sends their models.
+ * its notice when it has saved). The commitment and goal sheets it opens are FormSheetController's.
  *
  * A routine's − and + move a pending value at once and send it, absolute, after [QUIET_MS] of quiet
  * (plan §3.5 #13): quick taps add up to one re-plan, and a repeat of a value the page has is
@@ -57,7 +56,6 @@ fun interface Later {
  * times (none when every night is the same).
  */
 internal class TimeController(
-    private val sheets: SheetController,
     private val projection: StateFlow<LifeDirectorProjection?>,
     private val ui: MutableStateFlow<DirectorUi>,
     private val change: (String, Map<String, Any>) -> Unit,
@@ -150,17 +148,6 @@ internal class TimeController(
         if (time != null && free()) change("finishSetup", emptyMap())
     }
 
-    /** A commitment's sheet; [id] empty for a new one. */
-    fun openRule(id: String) = openSheet(RULE_SHEET, id)
-
-    /** Add a goal: the goal kinds first. */
-    fun addGoal() = openSheet(GOAL_TYPE_SHEET, "")
-
-    private fun openSheet(kind: String, id: String) {
-        if (time == null || !sheets.available || !free() || ui.value.sheet != null) return
-        sheets.open(kind, id)
-    }
-
     /** A new projection: a draft the page now has is done with. */
     fun projected() {
         val t = time ?: return
@@ -184,8 +171,6 @@ internal class TimeController(
     private fun Int.dayMinute() = mod(DAY)
 
     companion object {
-        const val RULE_SHEET = "rule"
-        const val GOAL_TYPE_SHEET = "goalType"
         /** the quiet after the last − or + before a routine's minutes go to the page */
         const val QUIET_MS = 400L
         private const val DAY = 1440

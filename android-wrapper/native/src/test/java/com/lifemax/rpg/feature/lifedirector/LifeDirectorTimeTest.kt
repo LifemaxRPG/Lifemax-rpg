@@ -12,7 +12,6 @@ import com.lifemax.rpg.feature.lifedirector.presentation.DirectorActions
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorUi
 import com.lifemax.rpg.feature.lifedirector.presentation.Later
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorViewModel
-import com.lifemax.rpg.feature.lifedirector.presentation.SheetController
 import com.lifemax.rpg.feature.lifedirector.presentation.SleepDraft
 import com.lifemax.rpg.feature.lifedirector.presentation.TimeController
 import com.lifemax.rpg.feature.lifedirector.presentation.timeItemIndex
@@ -331,9 +330,7 @@ class LifeDirectorTimeTest {
         s.actions.time.saveSleep()
         s.actions.time.meals(true)
         s.actions.time.build()
-        s.actions.time.rule("work")
         assertTrue(s.commands.changes.isEmpty())
-        assertTrue(s.commands.sheets.isEmpty())
     }
 
     @Test
@@ -363,21 +360,12 @@ class LifeDirectorTimeTest {
     }
 
     private class Steppers(j: JSONObject) {
-        val commands = DirectorRecorder()
         val repo = WebLifeDirectorRepository().apply { accept(j, true) }
         val ui = MutableStateFlow(DirectorUi())
         val sent = mutableListOf<Pair<String, Map<String, Any>>>()
         var free = true
         val clock = Clock()
-        val time =
-            TimeController(
-                SheetController(commands, repo.state, ui, {}),
-                repo.state,
-                ui,
-                { n, a -> sent += n to a },
-                { free },
-                clock,
-            )
+        val time = TimeController(repo.state, ui, { n, a -> sent += n to a }, { free }, clock)
     }
 
     @Test

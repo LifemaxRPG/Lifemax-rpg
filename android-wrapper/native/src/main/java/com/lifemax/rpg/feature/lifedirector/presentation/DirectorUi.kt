@@ -81,4 +81,6 @@ data class DirectorUi(
     val pendingToday: String? = null,
     /** My time's sleep times and routine minutes not yet with the page (phase 4B) */
     val timeDrafts: TimeDrafts = TimeDrafts(),
+    /** My time's form sheets (phase 4B): drafts, the page's words, the write in flight */
+    val forms: FormUi = FormUi(),
 )

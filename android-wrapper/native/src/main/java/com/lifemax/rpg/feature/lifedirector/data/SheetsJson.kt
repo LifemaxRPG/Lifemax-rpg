@@ -42,6 +42,9 @@ internal fun JSONObject.sheet(): SheetModel? {
         MEAL_SHEET -> mealSheet(s)
         SheetKinds.MOVE -> moveSheet(s)
         com.lifemax.rpg.feature.lifedirector.domain.DISRUPT_SHEET -> disruptSheet(s)
+        com.lifemax.rpg.feature.lifedirector.domain.FormSheetKinds.RULE -> ruleSheet(s)
+        com.lifemax.rpg.feature.lifedirector.domain.FormSheetKinds.GOAL_TYPE -> goalTypeSheet(s)
+        com.lifemax.rpg.feature.lifedirector.domain.FormSheetKinds.GOAL_FORM -> goalFormSheet(s)
         else -> throw IllegalArgumentException("Unknown sheet $kind")
     }
 }

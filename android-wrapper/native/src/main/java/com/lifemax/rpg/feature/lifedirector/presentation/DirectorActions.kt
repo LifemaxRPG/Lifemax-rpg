@@ -9,6 +9,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.TimeActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.FormSheetActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealActions
@@ -38,6 +39,7 @@ class DirectorActions(
     val timerMeal: TimerMealActions = TimerMealActions(),
     val moves: MoveDisruptActions = MoveDisruptActions(),
     val time: TimeActions = TimeActions(),
+    val forms: FormSheetActions = FormSheetActions(),
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -61,6 +63,8 @@ class DirectorActions(
                 t.act == "dismissBanner" && vm.sheetsAvailable -> vm.moves.dismissBanner()
                 // the ? plays a guide the screen draws, from Goals or Settings in its own section
                 t.act == "tour" && vm.guideHelp.ask() -> Unit
+                // My time's sheets are the screen's own where the page draws them for it (4B)
+                t.act == "addGoal" && vm.forms.available -> vm.forms.openGoalType()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
                     t.id.toIntOrNull()?.let(vm::gotoDay)
@@ -132,12 +136,13 @@ class DirectorActions(
                 weekend = vm.time::setWeekend,
                 weekendTimes = vm.time::setWeekendTimes,
                 saveSleep = vm.time::saveSleep,
-                rule = vm.time::openRule,
+                rule = vm.forms::openRule,
                 routine = vm.time::stepRoutine,
                 meals = vm.time::meals,
-                addGoal = vm.time::addGoal,
+                addGoal = vm.forms::openGoalType,
                 build = vm.time::build,
             ),
+        forms = FormSheetActions(vm.forms),
         flick = { dir ->
             val p = vm.projection.value
             val to =
