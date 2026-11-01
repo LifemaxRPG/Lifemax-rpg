@@ -3,7 +3,9 @@ package com.lifemax.rpg.feature.lifedirector
 import com.lifemax.rpg.feature.lifedirector.data.WebLifeDirectorRepository
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
+import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorNotice
+import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
@@ -44,6 +46,10 @@ class LifeDirectorTest {
             days += index
             return "day-${days.size}"
         }
+
+        override fun dialDrop(key: String, place: DialPlace) = error("not dragged here")
+
+        override fun dialApply(key: String, place: DialPlace) = error("not dragged here")
     }
 
     private fun viewModel(): Triple<WebLifeDirectorRepository, LifeDirectorViewModel, Recorder> {
@@ -200,7 +206,7 @@ class LifeDirectorTest {
         assertEquals(listOf(1), commands.days)
         assertEquals(1, vm.ui.value.pendingDay)
         repo.accept(fixture("tomorrow").put("sequence", 2))
-        vm.onReply("day-1", "day", true, "")
+        vm.onReply(DirectorReply("day-1", "day", true, ""))
         assertNull(vm.ui.value.pendingDay)
         assertNull(vm.ui.value.toast)
         vm.showDay(1)
@@ -213,9 +219,9 @@ class LifeDirectorTest {
         val (_, vm, commands) = viewModel()
         vm.showDay(1)
         vm.showDay(2)
-        vm.onReply("day-1", "day", true, "")
+        vm.onReply(DirectorReply("day-1", "day", true, ""))
         assertEquals(2, vm.ui.value.pendingDay)
-        vm.onReply("day-2", "day", true, "")
+        vm.onReply(DirectorReply("day-2", "day", true, ""))
         assertNull(vm.ui.value.pendingDay)
         assertEquals(listOf(1, 2), commands.days)
     }
@@ -224,9 +230,9 @@ class LifeDirectorTest {
     fun aRefusedDaySaysWhy() {
         val (_, vm, _) = viewModel()
         vm.showDay(3)
-        vm.onReply("day-1", "preview", false, "not mine")
+        vm.onReply(DirectorReply("day-1", "preview", false, "not mine"))
         assertEquals(3, vm.ui.value.pendingDay)
-        vm.onReply("day-1", "day", false, "That day is not on the plan.")
+        vm.onReply(DirectorReply("day-1", "day", false, "That day is not on the plan."))
         assertNull(vm.ui.value.pendingDay)
         assertEquals("That day is not on the plan.", vm.ui.value.toast!!.text)
     }
@@ -237,7 +243,7 @@ class LifeDirectorTest {
         vm.showDay(3)
         vm.opened()
         assertNull(vm.ui.value.pendingDay)
-        vm.onReply("day-1", "day", false, "late")
+        vm.onReply(DirectorReply("day-1", "day", false, "late"))
         assertNull(vm.ui.value.toast)
     }
 

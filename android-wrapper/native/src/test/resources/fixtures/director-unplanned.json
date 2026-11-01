@@ -45,6 +45,7 @@
  ],
  "banner": null,
  "notice": null,
+ "reducedMotion": false,
  "today": null,
  "tokens": {
   "bg": 4278980114,

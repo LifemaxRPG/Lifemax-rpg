@@ -97,6 +97,11 @@ internal fun JSONObject.today(): DirectorToday? {
                 rows.getJSONObject("earlier").let {
                     EarlierToday(it.getString("summary"), rows(it.getJSONArray("rows"), "e"))
                 },
+        hint =
+            t.getJSONArray("hint").strings().let {
+                require(it.size == 2) { "The hint is the words either side of the pip" }
+                it[0] to it[1]
+            },
     )
 }
 
@@ -157,6 +162,7 @@ private fun dial(d: JSONObject): DirectorDial {
     words.forEach { requireSpan(it.a0, it.a1) }
     val hand = if (d.isNull("hand")) null else d.float("hand")
     require(hand == null || hand in 0f..360f) { "The hand is off the dial" }
+    val handles = handles(d)
     return DirectorDial(
         start = d.getLong("startEpoch"),
         end = d.getLong("endEpoch"),
@@ -179,6 +185,10 @@ private fun dial(d: JSONObject): DirectorDial {
                         it.getBoolean("warn"),
                     )
                 },
+        handles = handles.handles,
+        stops = handles.stops,
+        dragWords = handles.words,
+        build = build(d)?.onDial(arcs),
     )
 }
 

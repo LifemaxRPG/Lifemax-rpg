@@ -71,6 +71,13 @@ object DirectorPalette {
     val toastShadow = Color.Black.copy(alpha = .45f)
     val statusOk = Color(0xFF38E6B4)
 
+    // The sheet (.ld-sheet) and the note of a problem (.ld-warn-t)
+    val scrim = Color(0xB803050A)
+    val sheetTop = Color(0xFF151B29)
+    val sheetBottom = Color(0xFF0E121B)
+    val sheetShadow = Color.Black.copy(alpha = .5f)
+    val warnNote = work.copy(alpha = .08f)
+
     // White washes over the panel: cards, fills and rules
     val cardTop = Color.White.copy(alpha = .035f)
     val cardBottom = Color.White.copy(alpha = .015f)
@@ -126,4 +133,17 @@ object DirectorPalette {
     val handTip = Color(0xFFE0F2FE)
     val ringTrack = Color.White.copy(alpha = .05f)
     val ringFree = Color(0xFF6F9CFF)
+
+    // The handles (.ld-hd) and the hint's pip (.ld-hint-pip)
+    val handleFill = Color(0xFF0B0F17)
+
+    // The build (.ld-bf-*, .ld-bhud)
+    val flash = handTip
+    val trail = Color(0xFFA7F3D0)
+    val ripple = mint
+    val spark = check
+    val wave = nowBlue
+    val armTop = Color(0xFFF0F9FF)
+    val hudKick = nowBlue
+    val lockGlow = good.copy(alpha = .55f)
 }

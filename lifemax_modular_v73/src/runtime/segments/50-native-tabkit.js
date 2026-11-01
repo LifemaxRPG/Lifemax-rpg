@@ -47,7 +47,7 @@
    * blocked() returns true while the tab's own page must stay visible on its view (a sheet, a sub-page the screen does not
    * draw); the screen closes at its next refresh (send()) and does not open. When the page changes in a way that may unblock
    * it, the tab calls revisit() on the returned object, which opens the screen again if it is wanted; the returned blocked()
-   * tells which of the two applies.
+   * tells which of the two applies, and active() whether the screen is open over the page now.
    * Every tab steps aside at once when the page puts something over it that blocked() counts (a sheet or other top overlay, the
    * launch update prompt, a noscroll body, and whatever the tab's own cfg.blocked adds, such as Library's and Workout plan's
    * level-up): the kit watches the body's children and classes. watch(observe), for a tab whose screen comes back by
@@ -272,7 +272,7 @@
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, active: () => active };
   }
 
   window.NativeTabKit = { create, color, tokens, light };

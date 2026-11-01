@@ -130,6 +130,10 @@ data class RingWord(
 /** How much of the current block is gone ([frac]), drawn as the ring around the centre. */
 data class CurrentRing(val radius: Float, val frac: Float, val kind: BlockKind, val warn: Boolean)
 
+/**
+ * The day's dial. [handles] can be dragged over [stops] (both empty when there are none); [build]
+ * is the latest build or repair to play, null when there is none or motion is reduced.
+ */
 data class DirectorDial(
     val start: Long,
     val end: Long,
@@ -139,6 +143,10 @@ data class DirectorDial(
     val words: List<RingWord>,
     val hand: Float?,
     val ring: CurrentRing?,
+    val handles: List<DialHandle> = emptyList(),
+    val stops: List<DialStop> = emptyList(),
+    val dragWords: DragWords = DragWords("", ""),
+    val build: DialBuild? = null,
 )
 
 /** Time left, as the centre shows it; [less] is "under a minute". */
@@ -228,9 +236,13 @@ data class DirectorToday(
     val sessions: Int,
     val ahead: List<OrderRow>,
     val earlier: EarlierToday?,
+    val hint: Pair<String, String> = "" to "",
 )
 
-/** What the page projects for the Today screen: Life Director's frame and the day on the strip. */
+/**
+ * What the page projects for the Today screen: Life Director's frame and the day on the strip.
+ * [reducedMotion] is the page's prefers-reduced-motion reading.
+ */
 data class LifeDirectorProjection(
     val session: String,
     val sequence: Long,
@@ -243,4 +255,5 @@ data class LifeDirectorProjection(
     val today: DirectorToday?,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    val reducedMotion: Boolean = false,
 )
