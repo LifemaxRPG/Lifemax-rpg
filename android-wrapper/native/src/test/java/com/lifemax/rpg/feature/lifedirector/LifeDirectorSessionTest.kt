@@ -234,11 +234,25 @@ class LifeDirectorSessionTest {
         s.actions.upNext(up.actions[1]) // Done, while Start is in flight: dropped
         assertEquals(1, s.commands.todays.size)
         s.vm.onReply(DirectorReply("today-1", "today", true))
+        // the started timer's sheet opens, as the page's Start opens it; closed, Done runs
+        assertEquals(OpenSheet("timer", up.actions[0].tap!!.id), s.vm.ui.value.sheet)
+        s.vm.closeSheet()
         s.actions.upNext(up.actions[1])
         assertEquals("done", s.commands.todays.last().first)
         assertFalse(s.commands.todays.last().second.containsKey("minutes")) // the planned length
         s.actions.upNext(up.actions[2]) // Details: the sheet
         assertTrue(s.emitted.isEmpty())
+    }
+
+    @Test
+    fun aWriteThatLandsClosesOnlyTheSheetItCameFrom() {
+        val s = screen(sheet("now"))
+        val model = s.openNow()
+        s.vm.sessionRow(model.row.single { it.command == "skip" })
+        s.vm.closeSheet() // closed by hand before the reply
+        s.vm.timerMeal.openTimer("") // and another sheet opened
+        s.vm.onReply(DirectorReply("today-1", "today", true))
+        assertEquals(OpenSheet("timer", ""), s.vm.ui.value.sheet)
     }
 
     @Test
@@ -365,6 +379,9 @@ class LifeDirectorSessionTest {
             s.commands.todays.last().second - "op",
         )
         s.vm.onReply(DirectorReply("today-2", "today", true))
+        // Start opens the timer's sheet, as the page's Start does
+        assertEquals(OpenSheet("timer", model.id), s.vm.ui.value.sheet)
+        s.vm.closeSheet()
         s.openNow()
         s.actions.session.row(model.row.single { it.sheet == "move" })
         assertTrue(s.emitted.isEmpty()) // Move is the screen's own sheet now

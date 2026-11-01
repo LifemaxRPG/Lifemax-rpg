@@ -6,6 +6,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.OpenSheet
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
 import com.lifemax.rpg.feature.lifedirector.domain.answers
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,8 @@ internal class SheetController(
         val key: Pair<String, String>,
         val fromSheet: Boolean,
         val keepOnRepeat: Boolean,
+        /** the sheet it was sent from: only that one closes when it lands, not one opened since */
+        val sheet: OpenSheet?,
     )
 
     /** Whether the page draws Today's sheets and runs Today's actions for this screen. */
@@ -122,7 +125,7 @@ internal class SheetController(
     ) {
         if (pending != null) return
         val op = ops.getOrPut(key, newId)
-        pending = Pending(key, fromSheet, keepOnRepeat)
+        pending = Pending(key, fromSheet, keepOnRepeat, ui.value.sheet)
         ui.update { it.copy(pendingToday = key.first) }
         todayRequest = commands.today(name, args + ("op" to op))
     }
@@ -164,10 +167,21 @@ internal class SheetController(
         ui.update { it.copy(pendingToday = null) }
         // a save the store refused keeps the change in memory: the same operation again lands it
         if (reply.ok || !reply.message.startsWith(NOT_SAVED)) ops.remove(p.key)
+        val same = p.fromSheet && ui.value.sheet == p.sheet
         if (reply.ok) {
-            if (p.fromSheet && (reply.changed || !p.keepOnRepeat)) close()
+            if (same && (reply.changed || !p.keepOnRepeat)) close()
             if (reply.message.isNotBlank()) show(reply.message)
-        } else if (!reply.said) show(reply.message.ifBlank { NOTHING_CHANGED })
+            // Start opens the timer's sheet, as the page's Start does
+            if (p.key.first == "timer.start" && available && ui.value.sheet == null)
+                open(SheetKinds.TIMER, p.key.second)
+        } else {
+            if (!reply.said) show(reply.message.ifBlank { NOTHING_CHANGED })
+            // a refused Finish can still end what the sheet showed (the page cleared it in memory):
+            // a sheet left with nothing to show closes rather than hold the screen invisibly
+            val model = projection.value?.sheet
+            val open = ui.value.sheet
+            if (same && open != null && model is GoneSheet && model.matches(open)) close()
+        }
     }
 
     private fun com.lifemax.rpg.feature.lifedirector.domain.SheetModel.matches(open: OpenSheet) =

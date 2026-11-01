@@ -72,6 +72,13 @@ internal constructor(
      * other comes back as the tap the page answers. Null too when there is none, it was taken
      * already, or the screen is busy.
      */
+    /** An intent the glance sent that has not been taken yet: a guide starting by itself waits. */
+    fun intentWaiting(): Boolean {
+        val p = projection.value ?: return false
+        val i = p.intent ?: return false
+        return (p.session to i.id) !in taken
+    }
+
     fun takeIntent(): Tap? {
         val p = projection.value ?: return null
         val i = p.intent ?: return null
@@ -112,9 +119,13 @@ internal fun WithDirectorFeedback(
     visible: Boolean,
     handOver: () -> Boolean,
     emit: (action: String, id: String) -> Unit,
+    /**
+     * nothing (a guide, a sheet) holds the screen: an intent that arrived while busy is tried again
+     */
+    free: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    LaunchedEffect(visible, p.session, p.intent?.id) {
+    LaunchedEffect(visible, p.session, p.intent?.id, free) {
         if (visible) feedback.takeIntent()?.let { t -> if (handOver()) emit(t.act, t.id) }
     }
     val spot = remember { TapSpot() }
