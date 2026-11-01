@@ -60,12 +60,9 @@ internal class PlanColors(tokens: Map<String, Long>, light: Boolean) : PageColor
 internal val LocalPlanColors = staticCompositionLocalOf<PlanColors> { error("No plan colours") }
 
 /**
- * Colours the page's styles fix (beyond PageInk's): the dot on the selected week, the shadows of
- * the calendar and its sessions count, and the XP celebration's white with the dark drop under its
- * "+N XP".
+ * Colours the page's styles fix (beyond PageInk's): the dot on the selected week and the shadows of
+ * the calendar and its sessions count.
  */
 internal val SelectedWeekInk = Color.White
 internal val CalendarShadow = Color(0x30000000)
 internal val CountShadow = Color(0x18000000)
-internal val FxWhite = Color.White
-internal val LabelDrop = Color(0x77000000)
