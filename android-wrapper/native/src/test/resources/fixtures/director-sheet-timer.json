@@ -2576,6 +2576,11 @@
   "stop": "Stop without logging",
   "note": "You can leave this screen. The timer keeps running."
  },
+ "intent": null,
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

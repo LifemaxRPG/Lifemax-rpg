@@ -29,6 +29,24 @@
     return document.documentElement.classList.contains("light-theme");
   }
 
+  const CUE_AFTER_MS = 120; // the sound and buzz of a celebration, once the reply carrying it has reached the screen
+  /** where celebrateXP's orbs fly: the centre of the top bar's logo, from the top of the page, as the shared bar draws it */
+  function celebrationTarget() {
+    const r = document.getElementById("brandLogo")?.getBoundingClientRect();
+    return r && r.width ? { x: r.x + r.width / 2, y: r.y + scrollY + r.height / 2 } : { x: innerWidth / 2, y: 44 };
+  }
+  /** what an attribute gain looks like on the screen: the page's colour and short name for it */
+  function gainOf(g) {
+    const a = ATTRS.find((x) => x.id === g.id);
+    return { attribute: g.id, short: a ? a.short : g.id, xp: g.xp, color: color(ATTR_COL[g.id] || "#6c8cff") };
+  }
+  /** XP a command held back (holdCelebrations) for a screen that draws the celebration itself: the reply's `celebrations`
+      ([{xp, gains}]), while the page plays only the sound and buzz (xpCue), once the reply has reached the screen */
+  function celebrations(held) {
+    if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
+    return held.map(([xp, gains]) => ({ xp, gains: gains.map(gainOf) }));
+  }
+
   /**
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (the owner's switch, a key in
    * lmaLoad(): off until they turn it on, or, with defaultOn for a tab that has become the default, on until they turn it off),
@@ -312,5 +330,5 @@
     return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, active: () => active };
   }
 
-  window.NativeTabKit = { create, color, tokens, light };
+  window.NativeTabKit = { create, color, tokens, light, celebrationTarget, celebrations };
 })();

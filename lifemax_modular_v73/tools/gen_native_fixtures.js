@@ -347,6 +347,22 @@ async function director(b) {
   }
   await require('./gen_director_time_fixtures.js')({ b, out, write, directorDay }); // phase 4B: My time, first run and the forms
 
+  /* phase 4A, a screen that draws celebrations (director.celebrations.v1): director-replies-celebrate.json, the page's answer to a
+     done that pays XP and to its repeat; director-intent.json, the projection once a session is tapped on the Overview's glance */
+  p = await covered(['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1', 'director.celebrations.v1']);
+  const paid = await p.evaluate(() => LifeDirector.native.today(0).upNext.actions.find((a) => a.act === 'focusStart').id);
+  const celebrate = { done: await cmd(p, 'today', { name: 'done', id: paid, minutes: 20 }) };
+  if (!(celebrate.done.celebrations || []).length) throw Error('done paid no XP');
+  celebrate.doneAgain = await cmd(p, 'today', { name: 'done', id: paid, minutes: 20 });
+  write('fixtures/director-replies-celebrate.json', celebrate);
+  await p.evaluate(() => lmaNavTo('dashboard'));
+  await p.clock.runFor(800);
+  await p.evaluate(() => document.querySelector('#ovPlan .ld-dial [data-act="inst"]').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await p.clock.runFor(800);
+  const glanced = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));
+  if (!glanced.intent || glanced.intent.sheet !== 'session') throw Error('the glance asked for no sheet');
+  write('fixtures/director-intent.json', glanced);
+
   p = await live(true);
   await act(p, 'inst', await upNext(p));
   await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=skip]').click());

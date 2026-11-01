@@ -150,7 +150,9 @@ fun LifeDirectorRoute(
         LaunchedEffect(visible, p.tab, p.guide?.key, p.guide?.auto, run == null, buildDue) {
             if (visible && run == null && !buildDue) vm.startGuide(auto = true)
         }
-        LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+        WithDirectorFeedback(vm.feedback, p, visible, vm::handOver, emit) {
+            LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+        }
     }
 }
 

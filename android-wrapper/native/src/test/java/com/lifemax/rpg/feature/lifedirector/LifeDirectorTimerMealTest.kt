@@ -380,7 +380,7 @@ class LifeDirectorTimerMealTest {
         assertEquals("Turkey & Sweet Potato Hash", m.title)
         assertNull(s.vm.timerMeal.timer)
         s.actions.timerMeal.openMeal()
-        assertEquals(listOf(Tap("meal", "1793210400")), s.emitted)
+        assertEquals(listOf(Tap("mealOpen", "1793210400")), s.emitted)
         assertNull(s.vm.ui.value.sheet)
         assertEquals("" to "", s.commands.sheets.last())
     }

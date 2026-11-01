@@ -14,7 +14,6 @@
   };
   const EDITING = "#planBody .pv, #planBody .plog"; // the page's own value and session-log fields
   const FIELDS = { value: ".pv", sessionLog: ".plog" };
-  const CUE_AFTER_MS = 120; // the sound and buzz of a celebration, once the reply carrying it has reached the screen
   // the page's date wording (toLocaleDateString), with the formatters made once: there are some 130 dates in a projection
   const DATES = {
     day: new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }),
@@ -168,12 +167,6 @@
     };
   }
 
-  /** where celebrateXP's orbs fly: the centre of the top bar's logo, from the top of the page, as the shared bar draws it */
-  function celebrationTarget() {
-    const r = document.getElementById("brandLogo")?.getBoundingClientRect();
-    return r && r.width ? { x: r.x + r.width / 2, y: r.y + scrollY + r.height / 2 } : { x: innerWidth / 2, y: 44 };
-  }
-
   function projection() {
     const p = state.plan,
       t = getToday(),
@@ -194,15 +187,10 @@
       key: key(p),
       rules: rules(p),
       reducedMotion: fxReduced(),
-      celebrationTarget: celebrationTarget(),
+      celebrationTarget: NativeTabKit.celebrationTarget(),
     };
   }
 
-  /** what an attribute gain looks like on the screen: the page's colour and short name for it */
-  function gainOf(g) {
-    const a = ATTRS.find((x) => x.id === g.id);
-    return { attribute: g.id, short: a ? a.short : g.id, xp: g.xp, color: NativeTabKit.color(ATTR_COL[g.id] || "#6c8cff") };
-  }
   const commands = {
     /** tick or clear one set, like the page's checkbox. The set ends as asked, so repeating the command changes nothing; a day
         completed by it pays its XP once (planToggle keeps the session's activity id). A failed save leaves the change in memory,
@@ -221,13 +209,7 @@
       // the celebration would play under the screen; the screen draws it from the reply and the page adds the sound and buzz
       const { result, held } = holdCelebrations(() => planToggle(c.date, c.key, i, checked));
       if (!result.saved) return { ok: false, message: unsavedMessage() };
-      if (held.length) setTimeout(() => held.forEach((h) => xpCue(h[0])), CUE_AFTER_MS);
-      return {
-        ok: true,
-        changed: true,
-        message: result.message,
-        celebrations: held.map(([xp, gains]) => ({ xp, gains: gains.map(gainOf) })),
-      };
+      return { ok: true, changed: true, message: result.message, celebrations: NativeTabKit.celebrations(held) };
     },
   };
 

@@ -83,10 +83,10 @@ internal class TimerMealController(
     }
 
     /**
-     * The meal sheet's button: the page's meal flow, handed over as the meal's own tap, the one way
-     * a screen's tap reaches it; the page shows its meal sheet, whose button opens the menu.
+     * The meal sheet's button: the page's meal menu, handed over as mealOpen (the page's own sheet
+     * button's act), so one tap opens the menu rather than the page's meal sheet first.
      */
-    fun mealTap(): Tap? = meal?.let { Tap("meal", it.id) }
+    fun mealTap(): Tap? = meal?.let { Tap("mealOpen", it.id) }
 
     private fun act(id: String, act: String, extra: Map<String, Any>, fromSheet: Boolean) {
         if (blocked() || !sheets.available) return

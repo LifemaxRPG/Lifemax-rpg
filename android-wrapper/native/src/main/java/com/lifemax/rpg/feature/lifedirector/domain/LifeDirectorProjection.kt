@@ -268,4 +268,8 @@ data class LifeDirectorProjection(
     val sheets: Boolean = false,
     /** the model of the sheet the screen asked for (phase 4A), null while it has none open */
     val sheet: SheetModel? = null,
+    /** where the XP celebration's orbs fly; the top centre from a page that sends none */
+    val celebrationTarget: DirectorPoint? = null,
+    /** a sheet the Overview's glance asked for (phase 4A), taken once by its id */
+    val intent: GlanceIntent? = null,
 )

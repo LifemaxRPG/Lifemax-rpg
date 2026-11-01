@@ -2739,6 +2739,11 @@
   "none": "No open time fits this week.",
   "note": "Open times that fit 15m. The moved session is pinned so automatic re-planning leaves it alone."
  },
+ "intent": null,
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,
