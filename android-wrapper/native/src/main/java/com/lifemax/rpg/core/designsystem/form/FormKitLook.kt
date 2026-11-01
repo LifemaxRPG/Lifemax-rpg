@@ -106,3 +106,22 @@ fun FormKitNote(text: String, modifier: Modifier = Modifier) {
         lineHeight = 1.5.em,
     )
 }
+
+/**
+ * The same look for the picker fields (TimeField, DateField, StepperField), which take theirs from
+ * [LocalPickerFieldLook]: a form drawn by [SchemaForm] gives its pickers the kit's dark wells, so
+ * they match the text fields beside them instead of falling back to Material's light colours.
+ */
+fun FormKitLook.pickers(): PickerFieldLook =
+    PickerFieldLook(
+        label = ink2,
+        ink = ink,
+        fill = well,
+        border = edge,
+        accent = focus,
+        onAccent = Color.White,
+        button = Color.White.copy(alpha = .08f),
+        panel = Color(0xFF131A26),
+        scrim = Color.Black.copy(alpha = .55f),
+        muted = ink3,
+    )

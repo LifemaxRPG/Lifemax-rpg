@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,13 +42,17 @@ fun SchemaForm(
     enabled: Boolean = true,
 ) {
     val shown = FormValidation.visibleKeys(schema, values)
-    Column(modifier.fillMaxWidth()) {
-        Fields(schema.fields, shown, values, onChange, errors, enabled)
-        schema.fold?.let { fold ->
-            var open by rememberSaveable { mutableStateOf(false) }
-            val refused = fold.fields.any { it.key in errors }
-            FoldSummary(fold.label, open || refused) { open = !open }
-            if (open || refused) Fields(fold.fields, shown, values, onChange, errors, enabled)
+    // the screen's picker look if it set one, else the kit's own, so the pickers match the form
+    val pickers = LocalPickerFieldLook.current ?: LocalFormKitLook.current.pickers()
+    CompositionLocalProvider(LocalPickerFieldLook provides pickers) {
+        Column(modifier.fillMaxWidth()) {
+            Fields(schema.fields, shown, values, onChange, errors, enabled)
+            schema.fold?.let { fold ->
+                var open by rememberSaveable { mutableStateOf(false) }
+                val refused = fold.fields.any { it.key in errors }
+                FoldSummary(fold.label, open || refused) { open = !open }
+                if (open || refused) Fields(fold.fields, shown, values, onChange, errors, enabled)
+            }
         }
     }
 }
