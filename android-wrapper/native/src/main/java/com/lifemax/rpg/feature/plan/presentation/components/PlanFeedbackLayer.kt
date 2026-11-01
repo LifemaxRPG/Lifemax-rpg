@@ -53,7 +53,8 @@ import kotlinx.coroutines.launch
  * the bottom bar, and an award the way celebrateXP draws one (07-runtime.js): a ring and a burst at
  * the tapped box in the colour of the largest gain, orbs flying to the top bar's logo ([target]),
  * each bursting there, and a rising "+N XP". Under reduced motion it draws fewer particles, as the
- * page does.
+ * page does. [startAt] is how many seconds of the celebration have already played (0 on the phone;
+ * screenshot tests freeze a moment with it).
  */
 @Composable
 internal fun PlanFeedbackLayer(
@@ -63,6 +64,7 @@ internal fun PlanFeedbackLayer(
     bottomInsetDp: Float,
     reduced: Boolean,
     onShown: (Long) -> Unit,
+    startAt: Float = 0f,
 ) {
     val density = LocalDensity.current.density
     val particles =
@@ -71,7 +73,7 @@ internal fun PlanFeedbackLayer(
                 .takeIf { it.isNotEmpty() }
                 ?.let { Particles(it, reduced, density, Random(feedback.id)) }
         }
-    val clock = remember(feedback.id) { Animatable(0f) }
+    val clock = remember(feedback.id) { Animatable(startAt) }
     val toast = remember(feedback.id) { Animatable(0f) }
     LaunchedEffect(feedback.id) {
         coroutineScope {
