@@ -182,7 +182,7 @@ class LifeDirectorSessionTest {
                 { put("kind", "meal") },
                 { put("gone", false) },
             )
-        for (edit in edits) rejects(sheet("now").apply { sheetPart().edit() })
+        for (edit in edits) rejects(sheet("now").apply { edit(sheetPart()) })
         // a past session with actions
         rejects(
             sheet("past").apply {

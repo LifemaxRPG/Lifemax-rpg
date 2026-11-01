@@ -107,7 +107,7 @@ class LifeDirectorFeedbackTest {
         val j = JSONObject(replies.getJSONObject("done").toString())
         j.getJSONArray("celebrations").getJSONObject(0).put("xp", "lots")
         val r = directorReply(j)
-        assertEquals("director-33", r.requestId)
+        assertEquals(replies.getJSONObject("done").getString("requestId"), r.requestId)
         assertTrue(r.ok)
         assertTrue(r.celebrations.isEmpty())
     }

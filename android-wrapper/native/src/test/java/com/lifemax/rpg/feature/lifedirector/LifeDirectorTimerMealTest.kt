@@ -216,7 +216,7 @@ class LifeDirectorTimerMealTest {
                 { getJSONArray("xp").getJSONObject(1).remove("b") },
                 { put("xp", "+12 XP") },
             )
-        for (edit in timerEdits) rejects(running.apply { sheetPart().edit() })
+        for (edit in timerEdits) rejects(running.apply { edit(sheetPart()) })
         val mealEdits: List<JSONObject.() -> Unit> =
             listOf(
                 { put("start", "1793210400") },
@@ -226,7 +226,7 @@ class LifeDirectorTimerMealTest {
                 { getJSONArray("chips").getJSONObject(0).put("kind", "kcal") },
                 { put("title", JSONObject.NULL) },
             )
-        for (edit in mealEdits) rejects(meal.apply { sheetPart().edit() })
+        for (edit in mealEdits) rejects(meal.apply { edit(sheetPart()) })
         rejects(running.put("sheet", JSONObject().put("kind", "timer").put("gone", false)))
     }
 

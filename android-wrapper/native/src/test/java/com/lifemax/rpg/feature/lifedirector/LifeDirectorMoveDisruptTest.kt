@@ -210,7 +210,7 @@ class LifeDirectorMoveDisruptTest {
                     while (t.length() <= 48) t.put(JSONObject(t.getJSONObject(0).toString()))
                 },
             )
-        for (edit in moves) rejects(move().apply { sheetPart().edit() })
+        for (edit in moves) rejects(move().apply { edit(sheetPart()) })
         val sections: List<Pair<Int, JSONObject.() -> Unit>> =
             listOf(
                 0 to { put("command", "nap") },
@@ -228,7 +228,7 @@ class LifeDirectorMoveDisruptTest {
                 4 to { put("open", "yes") },
                 4 to { put("title", JSONObject.NULL) },
             )
-        for ((i, edit) in sections) rejects(disrupt().apply { section(i).edit() })
+        for ((i, edit) in sections) rejects(disrupt().apply { edit(section(i)) })
         rejects(
             disrupt().apply {
                 sheetPart().put("sections", JSONArray().put(section(1)).put(section(1)))
