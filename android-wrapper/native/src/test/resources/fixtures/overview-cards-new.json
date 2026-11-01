@@ -1,0 +1,560 @@
+{
+ "protocol": 1,
+ "webSessionId": "overview-fixture",
+ "sequence": 1,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false,
+ "head": {
+  "date": "FRIDAY, OCTOBER 30",
+  "hello": "Good afternoon, Synthetic Hero",
+  "classId": "athlete",
+  "edit": {
+   "label": "Edit",
+   "a11y": "Edit the Overview: reorder or hide tiles"
+  }
+ },
+ "tip": {
+  "key": "dashboard",
+  "icon": "⚠",
+  "title": "Your command center",
+  "body": "The ring shows today against your own pace. Next moves lists what matters most, and the dot on each attribute shows what is about to fade. Tune decay anytime in Settings.",
+  "dismiss": "Dismiss tip"
+ },
+ "layout": {
+  "order": [
+   "plan",
+   "next",
+   "hero",
+   "rewards",
+   "apps",
+   "health",
+   "attrs",
+   "week",
+   "cat",
+   "luck",
+   "recent"
+  ],
+  "hidden": []
+ },
+ "tileInfo": [
+  {
+   "id": "plan",
+   "name": "Today’s plan",
+   "sub": "Life Director’s live day dial",
+   "note": "",
+   "icon": "clock",
+   "color": 4281908728
+  },
+  {
+   "id": "next",
+   "name": "Next moves",
+   "sub": "The most useful things to do now",
+   "note": "",
+   "icon": "bolt",
+   "color": 4286356735
+  },
+  {
+   "id": "hero",
+   "name": "Level & today",
+   "sub": "Today’s XP ring, level and streak",
+   "note": "",
+   "icon": "star",
+   "color": 4293441610
+  },
+  {
+   "id": "rewards",
+   "name": "Rewards",
+   "sub": "Sparks, shields and the shop",
+   "note": "",
+   "icon": "star",
+   "color": 4294688548
+  },
+  {
+   "id": "apps",
+   "name": "App shortcuts",
+   "sub": "Your phone apps in one row",
+   "note": "Appears in the Android app",
+   "icon": "grid",
+   "color": 4289170426
+  },
+  {
+   "id": "health",
+   "name": "Activity today",
+   "sub": "Steps, workouts, sleep and weight from Health Connect",
+   "note": "Appears in the Android app",
+   "icon": "bolt",
+   "color": 4281652121
+  },
+  {
+   "id": "attrs",
+   "name": "Attributes",
+   "sub": "All eight stats at a glance",
+   "note": "",
+   "icon": "target",
+   "color": 4289170426
+  },
+  {
+   "id": "week",
+   "name": "This week",
+   "sub": "XP day by day",
+   "note": "",
+   "icon": "grid",
+   "color": 4282242700
+  },
+  {
+   "id": "cat",
+   "name": "Cat",
+   "sub": "Your companion’s room",
+   "note": "Appears once you adopt a cat",
+   "icon": "paw",
+   "color": 4294933146
+  },
+  {
+   "id": "luck",
+   "name": "Daily luck",
+   "sub": "Today’s dice roll",
+   "note": "",
+   "icon": "dice",
+   "color": 4294955868
+  },
+  {
+   "id": "recent",
+   "name": "Recent activity",
+   "sub": "Your last few logs",
+   "note": "",
+   "icon": "list",
+   "color": 4287931320
+  }
+ ],
+ "tiles": {
+  "plan": {
+   "state": "setup",
+   "title": "Today’s plan",
+   "link": "Life Director ›",
+   "intro": "Tell Life Director when you’re busy and it fits your goals into the rest of the day.",
+   "button": "Plan my days",
+   "dial": null,
+   "core": null,
+   "foot": null
+  },
+  "next": {
+   "title": "Next moves",
+   "note": "most useful first",
+   "moves": [
+    {
+     "title": "Log your first activity",
+     "sub": "Every level starts with one. Pick any attribute.",
+     "icon": "bolt",
+     "color": 4286356735,
+     "warn": "",
+     "done": false,
+     "cta": "Log",
+     "pill": false,
+     "go": {
+      "view": "log"
+     }
+    },
+    {
+     "title": "8 daily quests left",
+     "sub": "Hydration Target Met · Pre-Workout Glycogen Top-Off +6",
+     "icon": "flag",
+     "color": 4293441610,
+     "warn": "",
+     "done": false,
+     "cta": "+125 XP",
+     "pill": true,
+     "go": {
+      "view": "quests"
+     }
+    },
+    {
+     "title": "A stray kitten keeps stopping by",
+     "sub": "Open the door and see who it is.",
+     "icon": "paw",
+     "color": 4294941616,
+     "warn": "",
+     "done": false,
+     "cta": "Meet",
+     "pill": false,
+     "go": {
+      "view": "pet"
+     }
+    }
+   ]
+  },
+  "hero": {
+   "ring": {
+    "label": "TODAY",
+    "today": 0,
+    "over": false,
+    "of": "of 100 XP",
+    "arcs": []
+   },
+   "avatar": null,
+   "initial": "S",
+   "level": 1,
+   "title": "NOVICE",
+   "className": "ATHLETE",
+   "xp": {
+    "text": "0 / 200 XP",
+    "next": "LV 2 →",
+    "pct": 0
+   },
+   "streak": {
+    "days": 0,
+    "label": "day streak",
+    "dots": [
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": true
+     }
+    ]
+   },
+   "foot": [
+    {
+     "label": "THIS WEEK",
+     "value": "+0 XP",
+     "delta": null
+    },
+    {
+     "label": "TOTAL XP",
+     "value": "0",
+     "delta": null
+    },
+    {
+     "label": "ACHIEVEMENTS",
+     "value": "0 / 13",
+     "delta": null
+    }
+   ],
+   "a11y": "Level 1 NOVICE. Today 0 XP of 100 XP. Open Character"
+  },
+  "rewards": {
+   "title": "Rewards",
+   "link": "Shop ›",
+   "chips": [
+    {
+     "label": "Sparks",
+     "value": "✦ 0"
+    },
+    {
+     "label": "Streak",
+     "value": "0d"
+    }
+   ]
+  },
+  "apps": null,
+  "health": null,
+  "attrs": {
+   "title": "Attributes",
+   "link": "Details ›",
+   "gems": [
+    {
+     "id": "physique",
+     "short": "Physique",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "focus": true,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "endurance",
+     "short": "Endurance",
+     "icon": "heart",
+     "color": 4294921613,
+     "focus": true,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "intelligence",
+     "short": "Intelligence",
+     "icon": "book",
+     "color": 4284189951,
+     "focus": false,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "business",
+     "short": "Business",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "focus": false,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "social",
+     "short": "Social",
+     "icon": "chat",
+     "color": 4294942531,
+     "focus": false,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "discipline",
+     "short": "Discipline",
+     "icon": "target",
+     "color": 4289170426,
+     "focus": false,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "adventure",
+     "short": "Adventure",
+     "icon": "mountain",
+     "color": 4282244228,
+     "focus": false,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    },
+    {
+     "id": "wellbeing",
+     "short": "Wellbeing",
+     "icon": "moon",
+     "color": 4283289825,
+     "focus": true,
+     "dot": {
+      "kind": "none",
+      "text": "Not trained yet"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 0
+    }
+   ],
+   "legend": [
+    {
+     "kind": "today",
+     "label": "today"
+    },
+    {
+     "kind": "ok",
+     "label": "safe"
+    },
+    {
+     "kind": "soon",
+     "label": "due soon"
+    },
+    {
+     "kind": "decay",
+     "label": "fading"
+    }
+   ]
+  },
+  "week": {
+   "title": "This week",
+   "total": "0 XP",
+   "delta": null,
+   "pace": {
+    "label": "pace 100",
+    "frac": 0.8333
+   },
+   "selected": 6,
+   "bars": [
+    {
+     "date": "2026-10-24",
+     "label": "S",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-24 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Saturday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-25",
+     "label": "S",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-25 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Sunday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-26",
+     "label": "M",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-26 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Monday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-27",
+     "label": "T",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-27 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Tuesday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-28",
+     "label": "W",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-28 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Wednesday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-29",
+     "label": "T",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-29 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Thursday",
+      "rest": "0 XP — a rest day"
+     }
+    },
+    {
+     "date": "2026-10-30",
+     "label": "Today",
+     "today": true,
+     "xp": 0,
+     "a11y": "2026-10-30 0 XP",
+     "segs": [],
+     "tip": {
+      "label": "Today",
+      "rest": "0 XP — a rest day"
+     }
+    }
+   ],
+   "top": [],
+   "empty": "Log an activity and your week lights up here."
+  },
+  "cat": null,
+  "luck": {
+   "eyebrow": "DAILY LUCK",
+   "rolled": true,
+   "score": "7,316",
+   "color": 4284208800,
+   "text": "Lucky",
+   "button": "View roll"
+  },
+  "recent": {
+   "title": "Recent activity",
+   "link": "History ›",
+   "items": [],
+   "empty": {
+    "icon": "⌁",
+    "text": "Nothing logged yet. Your first activity shows up here."
+   }
+  }
+ },
+ "images": {},
+ "notice": null,
+ "celebrations": [],
+ "celebrationTarget": {
+  "x": 36,
+  "y": 34
+ },
+ "motion": {
+  "reduced": false
+ },
+ "haptics": {
+  "dm": 1,
+  "add": 0,
+  "amp": 150,
+  "min": 5,
+  "max": 260
+ }
+}

@@ -294,6 +294,50 @@
    "canonicalLayout": true
   },
   {
+   "feature": "overview-cards",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeOverviewCards",
+   "owner": "web-overview",
+   "pluginSource": "bridge/web/NativeOverviewCardsPlugin.kt (extends ComposeTabPlugin, tabId dashboard)",
+   "screenSource": "feature/overview/presentation/OverviewScreen.kt",
+   "webModule": "50-native-overview-cards.js (NativeTabKit, managed: true, under the composite registration in 50-native-overview.js)",
+   "plan": "docs/architecture/plans/OVERVIEW_BODY.md",
+   "capabilities": [
+    "overview.cards.v1",
+    "shell.swipe.v1"
+   ],
+   "covers": "the Overview's head and cards at phone width; steps aside for the page's sheets (attribute, Luck, shop, Health, app picker), the web editor, the voice HUD, level-ups and celebrations the page plays, the thumbnail pass and widths above 860 px",
+   "commands": {
+    "plan": "{act, id}: LifeDirector.native.fromGlance(act, id); leaves the view, never answered",
+    "attr": "{id, tile}: scrolls the tile into view, then openAttr(id); the screen steps aside",
+    "luck": "{op}: openLuck(), which rolls today's dice when not rolled (a write); the screen steps aside; a repeat of the same op rolls nothing",
+    "shop": "{}: ecoShopOpen(); steps aside",
+    "health": "{}: lmaHealthOpen(); steps aside",
+    "appLaunch": "{pkg}: AppsShortcuts.launch(pkg) for a pkg in lmaLoad().apps only; the screen stays; a failure arrives as notice",
+    "appAdd": "{}: AppsShortcuts.openPicker(); steps aside",
+    "appsEdit": "{}: navigate('apps'); leaves the view",
+    "tip": "{op}: dismissFeatureTip('dashboard'); the screen stays; ok only once stored, else the page's unsavedMessage()",
+    "edit": "{}: ovEditOpen() (phase 1: the page's editor); steps aside"
+   },
+   "writes": [
+    "the day's luck roll via luck (the page's openLuck)",
+    "tipsSeen.dashboard via tip"
+   ],
+   "delegatedInteractions": [
+    "navigate actions: character (hero, Attributes' Details), history (Recent's History), settings (Health off), pet (the cat card), and a Next move's view"
+   ],
+   "readContract": {
+    "snapshotDto": "feature/overview/domain/OverviewCards.kt",
+    "decoder": "feature/overview/data/WebOverviewRepository.kt (OverviewJson.kt, OverviewTilesJson.kt)",
+    "fixtures": "native/src/test/resources/fixtures/overview-cards-sample.json and overview-cards-new.json (hand-made from the page's data functions until tools/gen_native_fixtures.js writes them)",
+    "ordering": "webSessionId and increasing sequence; tiles in layout.order, never the JSON's; notice.id counts the page's toasts; celebrations play once per id",
+    "invalidation": "renderOverview, ovAppsRender, command replies, the celebration sink, host resume and the 15-second refresh while visible"
+   },
+   "mutationsGate": "no native writes: every change is the page's own handler; payload size, memory cost (A24) and tab timing are measured on the phone in phase 1",
+   "rollout": "opt-in under Settings, Appearance: Native Overview cards (beta), off by default",
+   "canonicalLayout": true
+  },
+  {
    "feature": "cash",
    "status": "native-activity",
    "nativePlugin": "NativeCash",
