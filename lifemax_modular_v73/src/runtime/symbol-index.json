@@ -719,6 +719,9 @@
  "PET_POI": [
   "src/runtime/segments/25-pet-likes.js"
  ],
+ "PET_PORTRAIT": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
  "PET_PRON": [
   "src/runtime/segments/32-pet-dna.js"
  ],
@@ -6067,6 +6070,39 @@
  ],
  "petPointer": [
   "src/runtime/segments/16-runtime.js"
+ ],
+ "petPortrait": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitAnim": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitAs": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitCanvas": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitFeet": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitKey": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitMorphKey": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitReady": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitRt": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitSlot": [
+  "src/runtime/segments/50-pet-portrait.js"
+ ],
+ "petPortraitWait": [
+  "src/runtime/segments/50-pet-portrait.js"
  ],
  "petPosXOf": [
   "src/runtime/segments/24-pet-depth.js"
