@@ -1124,6 +1124,9 @@
  "celebrateXP": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "celebrating": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "chArchetype": [
   "src/runtime/segments/14-runtime.js"
  ],
@@ -2000,6 +2003,9 @@
   "src/runtime/segments/07-runtime.js"
  ],
  "fxSettle": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "fxSink": [
   "src/runtime/segments/07-runtime.js"
  ],
  "fxTarget": [
@@ -7231,6 +7237,12 @@
  "window.NativeNutritionBeta": [
   "src/runtime/segments/50-native-nutrition.js"
  ],
+ "window.NativeOverviewCards": [
+  "src/runtime/segments/50-native-overview-cards.js"
+ ],
+ "window.NativeOverviewShell": [
+  "src/runtime/segments/50-native-overview.js"
+ ],
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
  ],
@@ -7329,6 +7341,9 @@
  ],
  "window.setNativeNutritionEnabled": [
   "src/runtime/segments/50-native-nutrition.js"
+ ],
+ "window.setNativeOverviewCardsEnabled": [
+  "src/runtime/segments/50-native-overview-cards.js"
  ],
  "window.setNativeOverviewEnabled": [
   "src/runtime/segments/50-native-overview.js"
