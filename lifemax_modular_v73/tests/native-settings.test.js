@@ -241,6 +241,9 @@ const HELPERS = `
   /* ---------- the native tabs' switches: the page's own setters, and no native tab over Settings ---------- */
   const t = await p.evaluate(async (H) => {
     eval(H); const out = {}, spied = [], from = window.__calls.length;
+    // Log is the kit's tab on by default (NativeTabKit defaultOn): with no key stored the screen shows its switch on, as the page's box
+    out.logDefault = lmaLoad().nativeLog === undefined && document.getElementById('nativeLogToggle').checked && ctl(latest(), 'nativeLog').on === true;
+    await setNativeLogEnabled(false); // so every tab starts off (Overview since the start), and each switch below turns on, then off
     const TABS = { nativeCharacter: 'setNativeCharacterEnabled', nativeLog: 'setNativeLogEnabled', nativePlan: 'setNativePlanEnabled', nativeDirector: 'setNativeDirectorEnabled',
       nativeRecipes: 'setNativeRecipesEnabled', nativeLibrary: 'setNativeLibraryEnabled', nativeNutrition: 'setNativeNutritionEnabled', nativeOverview: 'setNativeOverviewEnabled' };
     for (const [id, fn] of Object.entries(TABS)) { const real = window[fn]; window[fn] = function (on) { spied.push(id + '=' + on); return real.apply(this, arguments) } }
@@ -260,6 +263,7 @@ const HELPERS = `
     await command('toggle', { id: 'nativeCharacter', on: true });
     return out;
   }, HELPERS);
+  ok('native Log\'s switch shows on from its default, with no key stored', t.logDefault, t);
   ok('each native tab\'s switch runs the page\'s own setNativeXEnabled, on and off', t.setters && Object.values(t.results).every(Boolean), t);
   ok('no native tab opens over Settings, and Settings stays', t.noneOver, t);
 
