@@ -2289,8 +2289,8 @@
   },
   {
    "file": "src/runtime/segments/47-journal-coach.js",
-   "bytes": 44440,
-   "statement_count": 68,
+   "bytes": 46455,
+   "statement_count": 72,
    "tags": [
     "journal",
     "coach"
@@ -2327,9 +2327,12 @@
     "JC_POOLS",
     "JC_POOL_OF",
     "jcPrompt",
+    "jcSwapPrompt",
     "jcSwap",
     "jcAward",
     "jcCare",
+    "jcKeepWords",
+    "jcPay",
     "jcCanPay",
     "jcOnReflect",
     "JC_COUNTER",
@@ -2346,6 +2349,7 @@
     "JC_CHIP_DO",
     "jcWelcomeHtml",
     "jcDecide",
+    "JC_GIFT",
     "jcClaim",
     "jcCatchUp",
     "jcDayData",

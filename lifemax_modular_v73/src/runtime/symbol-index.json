@@ -305,6 +305,9 @@
  "JC_DISTRESS": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_GIFT": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JC_NONE": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -2990,6 +2993,9 @@
  "jcInsight": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcKeepWords": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcListData": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -3009,6 +3015,9 @@
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcPatterns": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcPay": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcPrompt": [
@@ -3048,6 +3057,9 @@
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcSwap": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcSwapPrompt": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcTop": [

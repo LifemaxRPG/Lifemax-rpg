@@ -186,6 +186,92 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.evaluate(d => { state.journalCoach = {}; selectJournalDay(d) }, dOldest); await counting();
   const reset = await p.evaluate(() => { const r0 = typeof histRev === 'number' ? histRev : 0, answer = typeof selectJournalEntry === 'function' && selectJournalEntry(getToday()), c = __uncount(); return { answer, c, base: (jcStore().base || {}).value, raised: typeof histRev === 'number' && histRev > r0, welcome: !!document.querySelector('#journalEntry .jc-welcome') } });
   ok('selecting today on a long comeback resets the baseline and draws the whole Journal once, without save()', reset.answer === true && reset.base === 120 && reset.raised && reset.c.renders === 1 && reset.c.saves === 0 && reset.welcome, reset);
+  // the coach's writers are honest. The words (a reflection, a review answer, the catch-up line) are stored first; the reward is paid in
+  // a save of its own and, when that save fails, only the reward is taken back, never the words, and the page says nothing was saved.
+  // A read-only save stores and pays nothing and keeps the words in memory and on screen.
+  // arm('reward'): storage is full for a write that adds a coach award (the words alone still fit); 'full': for every write; 'readOnly';
+  // 'none': nothing fails, toasts and awards are counted
+  const arm = mode => p.evaluate(mode => {
+    const toasts = [], show = window.toast, real = Storage.prototype.setItem, awards = s => s.activities.filter(a => a.type === 'coach').length, had = awards(state);
+    window.toast = m => { toasts.push(String(m)); return show(m) };
+    if (mode === 'readOnly') { saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true }
+    else if (mode !== 'none') Storage.prototype.setItem = function (k, v) { if (k === STORE && (mode === 'full' || awards(JSON.parse(v)) > had)) throw new Error('quota'); return real.apply(this, arguments) };
+    window.__disarm = () => { Storage.prototype.setItem = real; saveReadOnly = ''; saveReadOnlyTold = false; window.toast = show; return toasts };
+    window.__awards = () => ({ memory: awards(state) - had, stored: awards(JSON.parse(localStorage.getItem(STORE))) - had });
+  }, mode);
+  const FULL = 'Could not save to this browser (storage full?)', READ_ONLY = 'Not saved: this version is read-only for your save';
+  const honest = (r, said, last) => r.toasts.slice(-1)[0] === last && !r.toasts.some(t => said.test(t)) && r.awards.memory === 0 && r.awards.stored === 0;
+  // a reflection on yesterday, long enough to pay
+  await seed(wk, true); const dRef = await dstr(1), words = 'Kept every promise to myself today, even the small and boring ones.';
+  await p.evaluate(d => { histSel = d; renderHistory(); save() }, dRef);
+  const reflect = async (mode, w) => { await arm(mode); return p.evaluate(([d, w]) => {
+    const box = document.getElementById('dayReflection'); box.value = w; box.dispatchEvent(new Event('change'));
+    const toasts = __disarm(), disk = JSON.parse(localStorage.getItem(STORE));
+    return { toasts, awards: __awards(), memory: state.dayReflections[d], stored: (disk.dayReflections || {})[d], box: document.getElementById('dayReflection').value, paid: !!jcRec('days', d).xpAwarded };
+  }, [dRef, w]) };
+  let r1 = await reflect('reward', words);
+  ok('a reflection whose reward cannot be saved keeps its words stored, in memory and in the box, and pays nothing', honest(r1, /Reflection saved/, FULL) && r1.memory === words && r1.stored === words && r1.box === words && !r1.paid, r1);
+  r1 = await reflect('readOnly', words + ' Again.');
+  ok('with a read-only save the reflection stays in memory and in the box, unpaid', honest(r1, /Reflection saved/, READ_ONLY) && r1.memory === words + ' Again.' && r1.stored === words && r1.box === words + ' Again.' && !r1.paid, r1);
+  // a weekly review answer, long enough for the bonus
+  const wkH = (await p.evaluate(() => LifeMaxCoach.reviewList(journalDays()).filter(r => r.kind === 'W').map(r => r.key)))[2], said2 = 'Plan two short blocks a day instead of one long one, and protect them.';
+  await p.evaluate(k => { histSel = k; renderHistory() }, wkH);
+  const review = async (mode, w) => { await arm(mode); return p.evaluate(([k, w]) => {
+    const box = document.querySelector('#journalEntry textarea'); box.value = w; box.dispatchEvent(new Event('change'));
+    const toasts = __disarm(), disk = JSON.parse(localStorage.getItem(STORE)), rec = jcRec('reviews', k);
+    return { toasts, awards: __awards(), memory: rec.answer, stored: (((disk.journalCoach || {}).reviews || {})[k] || {}).answer, box: document.querySelector('#journalEntry textarea').value, paid: !!rec.paid };
+  }, [wkH, w]) };
+  let r2 = await review('reward', said2);
+  ok('a review answer whose bonus cannot be saved keeps its words stored, in memory and in the box, and pays nothing', honest(r2, /Review saved/, FULL) && r2.memory === said2 && r2.stored === said2 && r2.box === said2 && !r2.paid, r2);
+  r2 = await review('readOnly', said2 + ' Again.');
+  ok('with a read-only save the review answer stays in memory and in the box, unpaid', honest(r2, /Review saved/, READ_ONLY) && r2.memory === said2 + ' Again.' && r2.stored === said2 && r2.box === said2 + ' Again.' && !r2.paid, r2);
+  // the one-sentence catch-up (welcome tier 2)
+  await seed([[10, 100, 9, 'Study', 'intelligence'], [11, 100, 9, 'Study', 'intelligence'], [12, 100, 9, 'Study', 'intelligence']], true); await seed([[0, 60, 9, 'Back', 'discipline']]);
+  await p.evaluate(() => { state.journalCoach = {}; histSel = getToday(); renderHistory(); save() });
+  const catchUp = async (mode, line) => { await arm(mode); return p.evaluate(line => {
+    window.prompt = () => line; jcCatchUp();
+    const toasts = __disarm(), d = getToday(), disk = JSON.parse(localStorage.getItem(STORE));
+    return { toasts, awards: __awards(), memory: state.dayReflections[d], stored: (disk.dayReflections || {})[d], box: document.getElementById('dayReflection').value, claimed: !!(jcRec('welcome', d).claimed || {}).line };
+  }, line) };
+  const lineA = 'Moved house this week and finally unpacked.', lineB = 'Spent the weekend with my family by the lake.';
+  let r3 = await catchUp('readOnly', lineA);
+  ok('with a read-only save the catch-up line stays in memory and in the box, unclaimed', honest(r3, /Catch-up saved/, READ_ONLY) && r3.memory === lineA && r3.stored === undefined && r3.box === lineA && !r3.claimed, r3);
+  r3 = await catchUp('reward', lineB);
+  ok('a catch-up whose reward cannot be saved keeps its line stored, in memory and in the box, and pays nothing', honest(r3, /Catch-up saved/, FULL) && r3.memory === lineA + '\n' + lineB && r3.stored === r3.memory && r3.box === r3.memory && !r3.claimed, r3);
+  const retry = await p.evaluate(line => {
+    const toasts = [], show = window.toast; window.toast = m => { toasts.push(String(m)); return show(m) };
+    window.prompt = () => line; const before = state.activities.filter(a => a.type === 'coach').length; jcCatchUp(); window.toast = show;
+    return { toasts, memory: state.dayReflections[getToday()], claimed: !!jcRec('welcome', getToday()).claimed.line, paid: state.activities.filter(a => a.type === 'coach').length - before };
+  }, lineB);
+  ok('a retry after the failed reward pays once and does not add the line twice', retry.memory === lineA + '\n' + lineB && retry.claimed && retry.paid === 1 && retry.toasts.slice(-1)[0] === '+20 XP · Catch-up saved', retry);
+  // a welcome chip (tier 1: Claim +10 XP)
+  await seed([[5, 100, 9, 'Study', 'intelligence'], [6, 100, 9, 'Study', 'intelligence'], [7, 100, 9, 'Study', 'intelligence']], true); await seed([[0, 60, 9, 'Back', 'discipline']]);
+  await p.evaluate(() => { state.journalCoach = {}; histSel = getToday(); renderHistory(); save() });
+  const claim = async mode => { await arm(mode); return p.evaluate(() => {
+    jcClaim('pet'); const toasts = __disarm(), chip = [...document.querySelectorAll('#journalEntry .jc-chip')].find(b => /\+10 XP/.test(b.textContent));
+    return { toasts, awards: __awards(), claimed: !!(jcRec('welcome', getToday()).claimed || {}).pet, open: !!chip && !chip.disabled };
+  }) };
+  let r4 = await claim('reward');
+  ok('a welcome reward that cannot be saved is taken back, the chip stays open and the page says so', honest(r4, /^\+10 XP/, FULL) && !r4.claimed && r4.open, r4);
+  r4 = await claim('readOnly');
+  ok('with a read-only save the welcome reward is not paid and the chip stays open', honest(r4, /^\+10 XP/, READ_ONLY) && !r4.claimed && r4.open, r4);
+  r4 = await claim('none');
+  ok('the claim then pays once, with its toast after the stored save', r4.claimed && !r4.open && r4.awards.memory === 1 && r4.awards.stored === 1 && r4.toasts.slice(-1)[0] === '+10 XP · Welcome back', r4);
+  // swapping the question: compare-and-set, stored with a plain write
+  await counting();
+  const swap = await p.evaluate(() => {
+    if (typeof jcSwapPrompt !== 'function') { __uncount(); return { missing: true } }
+    const d = getToday(), p0 = jcPrompt(d).id, first = jcSwapPrompt(d, p0), p1 = jcPrompt(d).id, again = jcSwapPrompt(d, p0), c = __uncount();
+    const shown = document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent, stored = ((JSON.parse(localStorage.getItem(STORE)).journalCoach.days || {})[d] || {}).promptId;
+    return { first, again, moved: p1 !== p0, once: jcPrompt(d).id === p1, stored: stored === p1, shown: shown === jcPrompt(d).text, c };
+  });
+  ok('a swap moves the question once and stores it without save(); the same swap again changes nothing', swap.first && swap.first.changed && swap.again && swap.again.ok && !swap.again.changed && swap.moved && swap.once && swap.stored && swap.shown && swap.c.saves === 0 && swap.c.writes === 1, swap);
+  await arm('full');
+  const swapFail = await p.evaluate(() => {
+    const d = getToday(), p1 = jcPrompt(d).id; jcSwap(d); const toasts = __disarm();
+    return { toasts, kept: jcPrompt(d).id === p1, shown: document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent === jcPrompt(d).text, stored: ((JSON.parse(localStorage.getItem(STORE)).journalCoach.days || {})[d] || {}).promptId === p1 };
+  });
+  ok('a swap that cannot be stored keeps the question shown and says nothing was saved', swapFail.kept && swapFail.shown && swapFail.stored && swapFail.toasts.slice(-1)[0] === FULL, swapFail);
   // care note
   await seed([[0, 100, 9, 'Study', 'intelligence']], true); const dd = await dstr(0);
   await p.evaluate(d => { saveDayReflection(d, 'I feel like there is no reason to live and I want to die'); histSel = d; renderHistory() }, dd);

@@ -142,10 +142,19 @@ function jcPrompt(d){
  if(!id||!pool.some(function(q){return q[0]===id}))id=pool[jcHash(d+'q')%pool.length][0];
  return {id:id,text:(pool.filter(function(q){return q[0]===id})[0]||pool[0])[1],pool:pool};
 }
-function jcSwap(d){
- const p=jcPrompt(d);if(!p)return;const i=p.pool.findIndex(function(q){return q[0]===p.id}),days=jcStore().days;
- (days[d]||(days[d]={})).promptId=p.pool[(i+1)%p.pool.length][0];try{save()}catch(e){}renderHistory();
+/* Moves a day's question to the next one in its pool, only while from is the question shown, so a repeat changes nothing, then draws
+   the entry again. The choice is stored with a plain write; when that fails the record goes back as it was and the page says so.
+   Answers {ok, changed}. */
+function jcSwapPrompt(d,from){
+ const p=jcPrompt(d);if(!p)return {ok:false,changed:false};
+ if(p.id!==from)return {ok:true,changed:false};
+ const days=jcStore().days,was=days[d],next=p.pool[(p.pool.findIndex(function(q){return q[0]===p.id})+1)%p.pool.length][0];
+ days[d]=Object.assign({},was,{promptId:next});
+ if(!jcWrite()){if(was)days[d]=was;else delete days[d];toast(unsavedMessage());return {ok:false,changed:false}}
+ renderJournalEntry();
+ return {ok:true,changed:true};
 }
+function jcSwap(d){const p=jcPrompt(d);if(p)jcSwapPrompt(d,p.id)}
 /* ----- rewards (once each; through the normal economy, never a streak or training day) ----- */
 function jcAward(xp,name,note){
  const act={id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()),type:'coach',name:name,icon:'book',duration:0,quality:1,skill:'Reflection',primary:'wellbeing',secondary:'',xp:xp,
@@ -154,14 +163,27 @@ function jcAward(xp,name,note){
  jcCache.sig='';return xp;
 }
 function jcCare(n){try{const p=jcCat();if(p&&typeof petGain==='function')petGain(p,n)}catch(e){}}
+/* What the owner writes (a reflection, a review answer, the catch-up line) is stored first, with a plain write; when it cannot be, it
+   stays in memory and on screen, and the page says nothing was saved. */
+function jcKeepWords(){if(jcWrite())return true;toast(unsavedMessage());return false}
+/* Then the reward for it is paid in a save of its own. was is taken after the words were stored, so a save that fails takes back the
+   reward alone and never the words: takeBack restores the state, draws it, and says nothing was saved. The reward's toast comes only
+   after a stored save. Answers whether it was paid. */
+function jcPay(award,said){
+ const was=JSON.stringify(state);
+ award();
+ if(!save()){takeBack(was);return false}
+ try{toast(said)}catch(e){}
+ return true;
+}
 /* a reflection pays only on its own day or the day after */
 function jcCanPay(d){return d===getToday()||d===jcAdd(getToday(),-1)}
+/* The reflection's reward (40 or more characters, once a day), after saveDayReflection has stored the words. Answers whether it was
+   paid. */
 function jcOnReflect(d,text){
- const st=jcStore(),rec=st.days[d]||(st.days[d]={}),t=String(text||'').trim();
- if(rec.xpAwarded||t.length<JC.reflectMin||!jcCanPay(d))return;
- rec.xpAwarded=true;jcAward(JC.rewardReflect,'Journal reflection');jcCare(2);
- try{save()}catch(e){}
- try{toast('+'+JC.rewardReflect+' XP · +2 bond · Reflection saved')}catch(e){}
+ if(jcRec('days',d).xpAwarded||String(text||'').trim().length<JC.reflectMin||!jcCanPay(d))return false;
+ return jcPay(function(){const days=jcStore().days;(days[d]||(days[d]={})).xpAwarded=true;jcAward(JC.rewardReflect,'Journal reflection');jcCare(2)},
+  '+'+JC.rewardReflect+' XP · +2 bond · Reflection saved');
 }
 /* The reflection box's counter: one of four lines, chosen by whether the reward is paid, can still be paid, and the length (while
    typing, the short line also counts the characters), and its meter */
@@ -271,18 +293,22 @@ function jcWelcomeHtml(w){
    draws the day (renderHistory, selectJournalEntry); the data builders only read them, so one not yet decided reads as none. A review,
    or a day the care note quiets, decides nothing. */
 function jcDecide(d){if(/^\d{4}-\d\d-\d\d$/.test(d)&&!jcCares(d)){jcChip(d);jcWelcomeRecord(d)}}
+/* A welcome chip's reward, once: Claim or Pet (+10 XP, and a pet for the cat) or Start fresh (+25 XP), paid in its own save */
+const JC_GIFT={pet:{xp:10,name:'Welcome back'},fresh:{xp:25,name:'New chapter'}};
 function jcClaim(kind){
- const st=jcStore(),w=st.welcome[getToday()];if(!w||w.claimed[kind])return;
- if(kind==='pet'){try{if(jcCat())petPetDone()}catch(e){}jcAward(10,'Welcome back','Returned after '+w.gap+' days');w.claimed.pet=1;try{toast('+10 XP · Welcome back')}catch(e){}}
- if(kind==='fresh'){jcAward(25,'New chapter','Returned after '+w.gap+' days');w.claimed.fresh=1;try{toast('+25 XP · New chapter')}catch(e){}}
- try{save()}catch(e){}renderHistory();
+ const w=jcRec('welcome',getToday()),gift=JC_GIFT[kind];if(!gift||!w.claimed||w.claimed[kind])return false;
+ return jcPay(function(){if(kind==='pet')try{if(jcCat())petPetDone()}catch(e){}jcAward(gift.xp,gift.name,'Returned after '+w.gap+' days');w.claimed[kind]=1},'+'+gift.xp+' XP · '+gift.name);
 }
+/* The one-sentence catch-up: the sentence joins today's reflection and is stored first, then its +20 XP is paid in its own save. The
+   sentence is not added again when it already ends the reflection (a retry after a failed reward). */
 function jcCatchUp(){
  const t=prompt('One sentence: what have you been up to?');if(t==null)return;
  const s=String(t).trim();if(s.length<12){try{toast('Write a full sentence (12+ characters)')}catch(e){}return}
- const st=jcStore(),w=st.welcome[getToday()];if(!w||w.claimed.line)return;
- const d=getToday();state.dayReflections=state.dayReflections||{};state.dayReflections[d]=((state.dayReflections[d]||'')+(state.dayReflections[d]?'\n':'')+s).slice(0,4000);
- jcAward(20,'Catch-up note');w.claimed.line=1;try{save()}catch(e){}try{toast('+20 XP · Catch-up saved')}catch(e){}renderHistory();
+ const d=getToday(),w=jcRec('welcome',d);if(!w.claimed||w.claimed.line)return;
+ const refs=state.dayReflections||(state.dayReflections={}),had=refs[d]||'';
+ if(had!==s&&!had.endsWith('\n'+s))refs[d]=(had+(had?'\n':'')+s).slice(0,4000);
+ if(jcKeepWords())jcPay(function(){jcAward(20,'Catch-up note');w.claimed.line=1},'+20 XP · Catch-up saved');
+ else renderHistory();
 }
 /* ----- the day view's top: welcome, insight, reflection box ----- */
 /* A day's coach cards as data. The care note stands alone when the day's own words call for it; otherwise the welcome card, the
@@ -410,11 +436,13 @@ function jcReviewHtml(key){
   '<div class="jc-card" style="--jc:#F59E0B"><span class="jc-badge">Coach</span><p>'+jcEsc(r.coach)+'</p></div>'+
   '<div class="j-reflect jx-reflect"><div class="jc-q"><span>'+jcEsc(r.question)+'</span></div><textarea maxlength="2000" placeholder="Write if you want to." onchange="jcSaveReview(\''+key+'\',this.value)">'+jcEsc(r.answer)+'</textarea><div class="jc-count'+(r.paid?' on':'')+'">'+r.counter+'</div></div>';
 }
+/* A review answer: the words are stored first, then the first answer long enough (50 characters for a week, 60 for a month) pays the
+   review's bonus in its own save, which draws the Journal; otherwise the Journal is drawn here */
 function jcSaveReview(key,val){
- const st=jcStore(),rec=st.reviews[key]||(st.reviews[key]={}),t=String(val||'').trim();rec.answer=t.slice(0,2000);
- const bonus=key[0]==='W'?JC.rewardWeekly:JC.rewardMonthly,min=key[0]==='W'?JC.weeklyMin:JC.monthlyMin;
- if(!rec.paid&&t.length>=min){rec.paid=true;jcAward(bonus,key[0]==='W'?'Weekly review':'Monthly chronicle');try{toast('+'+bonus+' XP · Review saved')}catch(e){}}
- try{save()}catch(e){}renderHistory();
+ const t=String(val||'').trim(),W=key[0]==='W',bonus=W?JC.rewardWeekly:JC.rewardMonthly,reviews=jcStore().reviews,rec=reviews[key]||(reviews[key]={});
+ rec.answer=t.slice(0,2000);
+ if(jcKeepWords()&&!rec.paid&&t.length>=(W?JC.weeklyMin:JC.monthlyMin))jcPay(function(){rec.paid=true;jcAward(bonus,W?'Weekly review':'Monthly chronicle')},'+'+bonus+' XP · Review saved');
+ else renderHistory();
 }
 window.LifeMaxCoach=Object.freeze({day:jcDay,arch:jcArch,insight:jcInsight,prompt:jcPrompt,patterns:jcPatterns,gap:jcGap,reviewList:jcReviewList,reviewHtml:jcReviewHtml,reflect:jcOnReflect,store:jcStore,hash:jcHash,reset:function(){jcCache={sig:'',idx:null,day:{}}}});
 /* the Journal was first drawn during start-up, before this module existed: draw it again now */
