@@ -192,3 +192,5 @@ Everything below is recorded, not scheduled. Items marked *verified* were checke
   Smallest useful step, with no new architecture. (1) Add `schema:1` to freshState and a constant SAVE_SCHEMA=1. (2) In load(), after parsing, if (state.schema||1) > SAVE_SCHEMA, do not call the migrations and do not write back;… *(data-safety, verified)*
 - **medium** — Golden tests cover only an empty profile, and the Playwright suites that guard the save-writing path (log-activity, ota, handover-sim) are not run by CI; there…  
   Add one CI step before the node tests in build-android.yml: `npm i --no-save playwright@<pinned> && npx playwright install --with-deps chromium`. Then run `NODE_PATH=$PWD/node_modules node… *(data-safety, verified)*
+
+- Smart Diet: on some days a skipped meal cannot be fully covered. On Sunday's standard plan at the moderate level (2026-11-01), skipping the second meal grows the rest of the day to its cap (twice its size) and lands at about 2,584 of 2,800 kcal. The day's plan depends on the weekday, so tests/smartdiet.test.js now runs on a fixed Wednesday. Decide whether the cap should rise or the plan should say the day falls short.
