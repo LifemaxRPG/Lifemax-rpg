@@ -1,15 +1,12 @@
 package com.lifemax.rpg.feature.overview.domain
 
 import java.util.Base64
-import org.json.JSONObject
 
 /*
- * The cat card's portrait (plan OVERVIEW_BODY §3.3 tiles.cat, phase 3), the minimal model the
- * PetPortrait composable needs.
- *
- * align at merge: ov-native-a's OverviewCards.kt owns the cat tile and the projection's image table
- * (`images`, decoded once per key by PageImages). There `portrait` becomes a field of its cat tile
- * and `catPortrait` reads its images map; these two types and the decoder fold into that file.
+ * The cat card's portrait (plan OVERVIEW_BODY §3.3 tiles.cat, phase 3): what the PetPortrait
+ * composable needs, and the checks on its bytes. The cat tile carries the image key (`portrait`)
+ * and OverviewCards.catPortrait looks it up in the projection's `images`; the decoder refuses a key
+ * the table does not carry.
  *
  * The page draws the portrait (petPortrait in 50-pet-portrait.js, with the pet room's own drawing
  * code) and sends it as a PNG data URL in `images`, named from `tiles.cat.portrait`. It is 192 x 128
@@ -23,21 +20,6 @@ data class CatPortrait(val key: String, val dataUrl: String)
 /** The portrait's size in image pixels, as petPortrait draws it (PET_PORTRAIT W x H at S = 2). */
 const val CAT_PORTRAIT_WIDTH = 192
 const val CAT_PORTRAIT_HEIGHT = 128
-
-/**
- * The cat tile's portrait from the tile object and the projection's images: `portrait` is an image
- * key or null (no portrait yet: the room's art is still loading on the page, or a cat in memory).
- * Strict, like every decoder here: a missing `portrait` field, a key that is not a string, or a key
- * the images table does not carry is malformed (throws).
- */
-fun JSONObject.catPortrait(images: JSONObject): CatPortrait? {
-    require(has("portrait")) { "tiles.cat.portrait is missing" }
-    if (isNull("portrait")) return null
-    val key = get("portrait")
-    require(key is String && key.isNotEmpty()) { "tiles.cat.portrait is not an image key" }
-    require(images.has(key)) { "tiles.cat.portrait names an image the projection does not carry" }
-    return CatPortrait(key, images.getString(key))
-}
 
 /** The largest data URL decoded, the cap Character's avatar uses (CharacterHeroCard.kt). */
 const val PORTRAIT_MAX_URL = 2_000_000

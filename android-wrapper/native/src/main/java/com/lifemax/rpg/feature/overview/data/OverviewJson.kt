@@ -1,11 +1,11 @@
 package com.lifemax.rpg.feature.overview.data
 
 import com.lifemax.rpg.core.data.objects
+import com.lifemax.rpg.core.designsystem.feedback.HapticScale
+import com.lifemax.rpg.core.designsystem.feedback.HeldCelebration
+import com.lifemax.rpg.core.designsystem.feedback.PagePoint
 import com.lifemax.rpg.core.designsystem.feedback.XpGain
-import com.lifemax.rpg.feature.overview.domain.CardCelebration
 import com.lifemax.rpg.feature.overview.domain.CardChip
-import com.lifemax.rpg.feature.overview.domain.CardHaptics
-import com.lifemax.rpg.feature.overview.domain.CardPoint
 import com.lifemax.rpg.feature.overview.domain.Delta
 import com.lifemax.rpg.feature.overview.domain.OverviewHead
 import com.lifemax.rpg.feature.overview.domain.OverviewLayout
@@ -112,29 +112,39 @@ internal fun delta(d: JSONObject) = Delta(d.bool("up"), d.str("text"))
 
 internal fun chip(c: JSONObject) = CardChip(c.str("label"), c.str("value"))
 
-internal fun point(p: JSONObject) = CardPoint(p.num("x"), p.num("y"))
+internal fun point(p: JSONObject) = PagePoint(p.num("x"), p.num("y"))
 
 internal fun notice(n: JSONObject) = OverviewNotice(n.long("id"), n.str("text"))
 
-/** The image table: each key a data URL of an image (the avatar, app icons). */
+/** An image key as the page makes it: "i" and FNV-1a of the data URL, in lowercase hex. */
+private val IMAGE_KEY = Regex("i[0-9a-f]{1,8}")
+
+/** The image table: each key the page's, each value a data URL of an image (avatar, icons, cat). */
 internal fun images(j: JSONObject): Map<String, String> =
     j.keys().asSequence().associateWith {
+        require(IMAGE_KEY.matches(it)) { "$it is not an image key" }
         j.str(it).also { url -> require(url.startsWith("data:image/")) { "$it is no image" } }
     }
 
-/** A celebration the page handed over (fxSink): its gains as Workout plan's gainOf makes them. */
-internal fun celebration(c: JSONObject): CardCelebration {
+/**
+ * A celebration the page handed over (fxSink): its id (rising with the page's clock), where the
+ * finger was, and its gains as Workout plan's gainOf makes them.
+ */
+internal fun celebration(c: JSONObject): HeldCelebration {
     val gains =
         c.list("gains").map {
             XpGain(it.str("attribute"), it.str("short"), it.int("xp"), it.color("color"))
         }
-    return CardCelebration(c.str("id"), c.int("xp"), point(c.getJSONObject("origin")), gains)
+    return HeldCelebration(c.long("id"), c.int("xp"), c.orNull("origin") { point(this) }, gains)
 }
 
-internal fun haptics(h: JSONObject): CardHaptics {
-    val max = h.int("max")
+/** The owner's haptic level (HAP_LEVELS) and the page's cap (HAP_MAX), as hapScale uses them. */
+internal fun haptics(h: JSONObject): HapticScale {
+    val max = h.long("max")
     require(max in 1..1000) { "The haptic cap is out of range" }
-    return CardHaptics(h.num("dm"), h.num("add"), h.int("amp"), h.num("min"), max)
+    val amp = h.int("amp")
+    require(amp in 1..255) { "The haptic strength is out of range" }
+    return HapticScale(h.num("dm").toDouble(), h.num("add").toDouble(), amp, h.long("min"), max)
 }
 
 /** The page's answer to a command, from the kit's reply (it arrives with an update). */

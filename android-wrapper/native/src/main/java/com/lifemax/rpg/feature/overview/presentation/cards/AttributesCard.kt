@@ -36,8 +36,9 @@ import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
 import com.lifemax.rpg.core.designsystem.components.barFade
 import com.lifemax.rpg.core.designsystem.components.tapTarget
-import com.lifemax.rpg.feature.overview.domain.AttrGem
-import com.lifemax.rpg.feature.overview.domain.AttrsTile
+import com.lifemax.rpg.feature.overview.domain.DotKind
+import com.lifemax.rpg.feature.overview.domain.Gem
+import com.lifemax.rpg.feature.overview.domain.AttrsCard
 
 /**
  * The Attributes card (ovAttrsHtml): two columns of gems, each its attribute's level, this week's
@@ -46,19 +47,19 @@ import com.lifemax.rpg.feature.overview.domain.AttrsTile
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AttributesCard(
-    tile: AttrsTile,
+internal fun AttributesCardView(
+    tile: AttrsCard,
     onDetails: () -> Unit,
     onGem: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val c = LocalPageColors.current
-    CardsBFrame(modifier) {
-        CardsBHead(tile.title) { CardsBLink(tile.link, onDetails) }
+    OverviewCard(modifier) {
+        CardHead(tile.title) { CardLink(tile.link, onDetails) }
         Column(verticalArrangement = Arrangement.spacedBy(GemGap)) {
             tile.gems.chunked(2).forEach { pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(GemGap)) {
-                    pair.forEach { g -> Gem(g, { onGem(g.id) }, Modifier.weight(1f)) }
+                    pair.forEach { g -> GemView(g, { onGem(g.id) }, Modifier.weight(1f)) }
                     if (pair.size == 1) Box(Modifier.weight(1f))
                 }
             }
@@ -89,7 +90,7 @@ fun AttributesCard(
  * level and week, then the dot's words (the page's `title`).
  */
 @Composable
-private fun Gem(g: AttrGem, onClick: () -> Unit, modifier: Modifier) {
+private fun GemView(g: Gem, onClick: () -> Unit, modifier: Modifier) {
     val c = LocalPageColors.current
     val color = Color(g.color.toInt())
     Column(
@@ -158,13 +159,13 @@ private fun Gem(g: AttrGem, onClick: () -> Unit, modifier: Modifier) {
  * fading; a kind the page does not style is its plain muted dot.
  */
 @Composable
-internal fun StatusDot(kind: String, c: PageColors, modifier: Modifier = Modifier) {
+internal fun StatusDot(kind: DotKind, c: PageColors, modifier: Modifier = Modifier) {
     val (dot, ring) =
         when (kind) {
-            "today" -> c.good to c.good.copy(alpha = .25f)
-            "ok" -> SafeBlue.copy(alpha = .95f) to Color.Transparent
-            "soon" -> c.gold to c.gold.copy(alpha = .25f)
-            "decay" -> c.bad to c.bad.copy(alpha = .28f)
+            DotKind.TODAY -> c.good to c.good.copy(alpha = .25f)
+            DotKind.OK -> SafeBlue.copy(alpha = .95f) to Color.Transparent
+            DotKind.SOON -> c.gold to c.gold.copy(alpha = .25f)
+            DotKind.DECAY -> c.bad to c.bad.copy(alpha = .28f)
             else -> c.muted.copy(alpha = .5f) to Color.Transparent
         }
     Box(

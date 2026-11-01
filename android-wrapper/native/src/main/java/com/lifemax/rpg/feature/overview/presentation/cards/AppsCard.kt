@@ -36,7 +36,7 @@ import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.core.designsystem.components.tapTarget
 import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.overview.domain.AppItem
-import com.lifemax.rpg.feature.overview.domain.AppsTile
+import com.lifemax.rpg.feature.overview.domain.AppsCard
 
 /**
  * The App shortcuts card (ovAppsHtml): a row of the owner's apps, each its own icon over its name,
@@ -49,8 +49,8 @@ import com.lifemax.rpg.feature.overview.domain.AppsTile
  * never a tab swipe ([noTabSwipe]), as the web's swipe refuses to start on an overflowing strip.
  */
 @Composable
-fun AppsCard(
-    tile: AppsTile,
+internal fun AppsCardView(
+    tile: AppsCard,
     image: (String) -> ImageBitmap?,
     onLaunch: (String) -> Unit,
     onAdd: () -> Unit,
@@ -58,8 +58,8 @@ fun AppsCard(
     modifier: Modifier = Modifier,
 ) {
     val c = LocalPageColors.current
-    CardsBFrame(modifier) {
-        CardsBHead(tile.title) { CardsBLink(tile.link, onEdit) }
+    OverviewCard(modifier) {
+        CardHead(tile.title) { CardLink(tile.link, onEdit) }
         val scroll = rememberScrollState()
         Row(
             Modifier.then(if (scroll.maxValue > 0) Modifier.noTabSwipe() else Modifier)

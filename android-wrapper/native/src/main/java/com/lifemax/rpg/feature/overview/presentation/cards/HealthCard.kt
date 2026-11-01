@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
 import com.lifemax.rpg.feature.overview.domain.HealthDay
-import com.lifemax.rpg.feature.overview.domain.HealthTile
+import com.lifemax.rpg.feature.overview.domain.HealthCard
 
 /**
  * The Activity today card (ovHealthHtml). The whole card opens the Health page ([onOpen], the
@@ -40,17 +40,17 @@ import com.lifemax.rpg.feature.overview.domain.HealthTile
  * last seven days as mini-bars, and the latest workouts, sleep and weight.
  */
 @Composable
-fun HealthCard(
-    tile: HealthTile,
+internal fun HealthCardView(
+    tile: HealthCard,
     onOpen: () -> Unit,
     onSetup: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val c = LocalPageColors.current
-    CardsBFrame(modifier, onClick = onOpen) {
+    OverviewCard(modifier, onClick = onOpen) {
         when (tile) {
-            is HealthTile.Off -> {
-                CardsBHead(tile.title)
+            is HealthCard.Off -> {
+                CardHead(tile.title)
                 Text(
                     tile.text,
                     Modifier.padding(bottom = 10.dp),
@@ -58,17 +58,17 @@ fun HealthCard(
                     fontSize = 13.sp,
                     lineHeight = 19.5.sp,
                 )
-                CardsBSmallButton(tile.button, onSetup)
+                CardButton(tile.button, onSetup)
             }
-            is HealthTile.On -> On(tile)
+            is HealthCard.On -> On(tile)
         }
     }
 }
 
 @Composable
-private fun On(tile: HealthTile.On) {
+private fun On(tile: HealthCard.On) {
     val c = LocalPageColors.current
-    CardsBHead(tile.title, below = 6.dp, gap = 8.dp) { CardsBNote(tile.meta) }
+    CardHead(tile.title, bottom = 6.dp, gap = 8.dp) { CardNote(tile.meta) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
             buildAnnotatedString {
@@ -112,7 +112,7 @@ private fun On(tile: HealthTile.On) {
         )
     }
     if (tile.days.isNotEmpty()) Days(tile.days)
-    CardsBChips(tile.chips)
+    CardChips(tile.chips)
     Text(
         tile.more,
         Modifier.fillMaxWidth().padding(top = 10.dp),

@@ -92,49 +92,10 @@ internal fun LuckCardView(luck: LuckCard, onLuck: () -> Unit) {
                     lineHeight = 18.sp,
                 )
             }
-            SmallButton(luck.button, secondary = luck.rolled, onClick = onLuck)
+            CardButton(luck.button, onLuck, secondary = luck.rolled, horizontal = 18.dp)
         }
     }
 }
-
-/** The page's .btn.small (.secondary when [secondary]), 18 dp either side as the luck card's. */
-@Composable
-private fun SmallButton(text: String, secondary: Boolean, onClick: () -> Unit) {
-    val c = LocalOverviewColors.current
-    val shape = RoundedCornerShape(8.dp)
-    Box(
-        // the 48 dp target around the page's smaller button, which keeps its own size and corners
-        Modifier.tapTarget(Role.Button, onClick = onClick)
-            .pageButtonShadow(shape, c.light, primary = !secondary)
-            .clip(shape)
-            .background(if (secondary) c.secondaryFill else c.accent)
-            .then(if (secondary) Modifier.border(1.dp, c.line, shape) else Modifier)
-            .then(
-                if (secondary) Modifier
-                else
-                    Modifier.drawBehind {
-                        drawRect(
-                            if (c.light) ButtonEdgeLight else ButtonEdgeDark,
-                            size = size.copy(height = 1.dp.toPx()),
-                        )
-                    }
-            )
-            .padding(horizontal = 18.dp, vertical = 7.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text,
-            color = if (secondary) c.text else c.onAccent,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 18.sp,
-            maxLines = 1,
-        )
-    }
-}
-
-private val ButtonEdgeDark = androidx.compose.ui.graphics.Color(0x22FFFFFF)
-private val ButtonEdgeLight = androidx.compose.ui.graphics.Color(0x44FFFFFF)
 
 /** Recent activity (.ov-feed): the last four logs, or the page's empty line; "History ›". */
 @Composable

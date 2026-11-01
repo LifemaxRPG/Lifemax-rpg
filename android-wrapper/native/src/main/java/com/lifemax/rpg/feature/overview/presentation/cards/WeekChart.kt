@@ -176,7 +176,7 @@ private fun PaceLine(pace: WeekPace, bottom: Float) {
             )
         }
         Text(
-            pace.value,
+            pace.label,
             Modifier.align(Alignment.TopEnd)
                 .offset(y = y - 17.dp)
                 .background(c.panel)

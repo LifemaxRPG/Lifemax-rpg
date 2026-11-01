@@ -140,7 +140,16 @@ private fun hero(h: JSONObject): HeroCard {
     val dots = streak.list("dots").map { StreakDot(it.bool("on"), it.bool("now")) }
     require(dots.size == 7) { "The streak shows seven days" }
     return HeroCard(
-        ring = HeroRing(r.str("label"), r.int("today"), r.bool("over"), r.str("of"), arcs),
+        ring =
+            HeroRing(
+                r.str("label"),
+                r.int("today"),
+                r.bool("over"),
+                r.str("of"),
+                arcs,
+                r.int("r"),
+                r.int("stroke"),
+            ),
         avatar = h.strOrNull("avatar"),
         initial = h.str("initial"),
         level = h.int("level"),
@@ -152,7 +161,6 @@ private fun hero(h: JSONObject): HeroCard {
             h.list("foot").map {
                 HeroFoot(it.str("label"), it.str("value"), it.orNull("delta") { delta(this) })
             },
-        a11y = h.str("a11y"),
     )
 }
 
@@ -255,10 +263,13 @@ private fun cat(c: JSONObject): CatCard {
             "gone" -> CatMode.GONE
             else -> throw IllegalArgumentException("Unknown cat card $m")
         }
-    val hearts = c.int("hearts")
-    require(hearts in 0..5) { "A cat has five hearts" }
-    // the portrait is phase 3's: a page before it sends none
-    val portrait = if (c.has("portrait")) c.strOrNull("portrait") else null
+    // a living cat has its hearts; a cat in memory has none, and no portrait
+    require(c.has("hearts")) { "Missing hearts" }
+    val hearts = if (mode == CatMode.ALIVE) c.int("hearts") else null
+    if (hearts == null) require(c.isNull("hearts")) { "A cat in memory has no hearts" }
+    else require(hearts in 0..5) { "A cat has five hearts" }
+    val portrait = c.strOrNull("portrait")
+    require(portrait == null || mode == CatMode.ALIVE) { "Only a living cat has a portrait" }
     return CatCard(mode, c.str("eyebrow"), c.str("name"), hearts, portrait)
 }
 

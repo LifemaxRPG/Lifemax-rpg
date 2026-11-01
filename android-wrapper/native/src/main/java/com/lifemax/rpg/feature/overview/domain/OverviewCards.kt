@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.overview.domain
 
-import com.lifemax.rpg.core.designsystem.feedback.XpGain
+import com.lifemax.rpg.core.designsystem.feedback.HapticScale
+import com.lifemax.rpg.core.designsystem.feedback.HeldCelebration
+import com.lifemax.rpg.core.designsystem.feedback.PagePoint
 import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
 
@@ -24,13 +26,19 @@ data class OverviewCards(
     val layout: OverviewLayout,
     val tileInfo: List<TileInfo>,
     val tiles: OverviewTiles,
-    /** Data URLs by the page's key (FNV-1a of the URL), for the avatar and app icons. */
+    /**
+     * Data URLs by the page's key ("i" + FNV-1a of the URL in hex), for the avatar, the app icons
+     * and the cat's portrait.
+     */
     val images: Map<String, String>,
     val notice: OverviewNotice?,
-    val celebrations: List<CardCelebration>,
-    val celebrationTarget: CardPoint,
+    /** The XP celebrations the page handed over (fxSink), each held 2 s; PageCelebrations plays them. */
+    val celebrations: List<HeldCelebration>,
+    /** Where the orbs fly: the logo in the shared bar, in the page's CSS px. */
+    val celebrationTarget: PagePoint,
     val reducedMotion: Boolean,
-    val haptics: CardHaptics?,
+    /** The owner's haptic strength (HAP_LEVELS, HAP_MAX); null with haptics off. */
+    val haptics: HapticScale?,
     /** Rises when the screen opens on a page arrival (phase 3); 0 until the page sends it. */
     val arrival: Long,
     val tokens: Map<String, Long>,
@@ -46,6 +54,10 @@ data class OverviewCards(
             layout.order.filter {
                 it in OverviewTileIds.ALL && it !in layout.hidden && tiles.has(it)
             }
+
+    /** The cat's portrait, its key looked up in [images]; null when the page sent none. */
+    val catPortrait: CatPortrait?
+        get() = tiles.cat?.portrait?.let { key -> images[key]?.let { CatPortrait(key, it) } }
 }
 
 /** The tile ids the page knows (OV_TILES with the three tiles later segments add). */
@@ -194,13 +206,18 @@ data class Delta(val up: Boolean, val text: String)
 /** One attribute's arc of today's ring, in pathLength-100 units as the page's SVG draws it. */
 data class HeroArc(val color: Long, val offset: Float, val length: Float)
 
-/** The ring's centre: "TODAY", today's XP (gold when [over] the pace), "of 60 XP · +20%". */
+/**
+ * The ring's centre: "TODAY", today's XP (gold when [over] the pace), "of 60 XP · +20%"; [r] and
+ * [stroke] are the page's SVG circle (62 and 11 in its 148 box).
+ */
 data class HeroRing(
     val label: String,
     val today: Int,
     val over: Boolean,
     val of: String,
     val arcs: List<HeroArc>,
+    val r: Int = 62,
+    val stroke: Int = 11,
 )
 
 data class HeroXp(val text: String, val next: String, val pct: Float)
@@ -213,8 +230,8 @@ data class HeroFoot(val label: String, val value: String, val delta: Delta?)
 
 /**
  * The hero (.ov-hero): the ring, the avatar ([avatar] an image key, or the [initial]), the level
- * badge, title and class, the XP bar, the streak and its seven days, and the foot. [a11y] is what
- * TalkBack reads for the whole card, a button to Character.
+ * badge, title and class, the XP bar, the streak and its seven days, and the foot. The whole card
+ * is a button to Character; TalkBack reads its words, as on the page (which gives it no label).
  */
 data class HeroCard(
     val ring: HeroRing,
@@ -226,7 +243,6 @@ data class HeroCard(
     val xp: HeroXp,
     val streak: HeroStreak,
     val foot: List<HeroFoot>,
-    val a11y: String,
 )
 
 /* ---- Rewards, apps, health */
@@ -351,14 +367,16 @@ enum class CatMode {
 }
 
 /**
- * The cat card: "Miso" (or "Miso & Pip") and its [hearts] (0 to 5), or "IN MEMORY". [portrait] is
- * phase 3's sitting sprite (an image key).
+ * The cat card (petPeekData): "Miso" (or "Miso & Pip") and its [hearts] (0 to 5, null for a cat in
+ * memory), or "IN MEMORY". [portrait] is the cat sitting as the page's room draws it (petPortrait),
+ * an image key in the projection's images; null while its art loads, and for a cat in memory. The
+ * page sends no card for the stray kitten (no cat yet).
  */
 data class CatCard(
     val mode: CatMode,
     val eyebrow: String,
     val name: String,
-    val hearts: Int,
+    val hearts: Int?,
     val portrait: String?,
 )
 
@@ -392,20 +410,3 @@ data class RecentCard(
 
 /** The page's toast while it shows. */
 data class OverviewNotice(val id: Long, val text: String)
-
-/** A point in the screen's dp coordinates, as the page measures CSS px. */
-data class CardPoint(val x: Float, val y: Float)
-
-/**
- * An XP celebration the page handed to the cards (fxSink): played once per [id], from [origin] (the
- * last tap) to celebrationTarget.
- */
-data class CardCelebration(
-    val id: String,
-    val xp: Int,
-    val origin: CardPoint,
-    val gains: List<XpGain>,
-)
-
-/** The owner's haptic level as the page scales it (HAP_LEVELS, HAP_MAX). */
-data class CardHaptics(val dm: Float, val add: Float, val amp: Int, val min: Float, val max: Int)

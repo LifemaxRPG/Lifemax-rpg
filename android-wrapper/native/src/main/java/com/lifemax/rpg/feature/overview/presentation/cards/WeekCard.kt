@@ -31,7 +31,7 @@ import com.lifemax.rpg.core.designsystem.feedback.HapticScale
 import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.core.designsystem.feedback.play
 import com.lifemax.rpg.core.designsystem.mix
-import com.lifemax.rpg.feature.overview.domain.WeekTile
+import com.lifemax.rpg.feature.overview.domain.WeekCard
 
 /**
  * The This week card (ovWeekHtml): the week's total against last week's, the chart, the picked
@@ -42,8 +42,8 @@ import com.lifemax.rpg.feature.overview.domain.WeekTile
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WeekCard(
-    tile: WeekTile,
+internal fun WeekCardView(
+    tile: WeekCard,
     selected: Int,
     haptics: HapticScale?,
     onSelect: (Int) -> Unit,
@@ -51,8 +51,8 @@ fun WeekCard(
 ) {
     val c = LocalPageColors.current
     val buzz = LocalPageBuzz.current
-    CardsBFrame(modifier) {
-        CardsBHead(tile.title) { Total(tile) }
+    OverviewCard(modifier) {
+        CardHead(tile.title) { Total(tile) }
         WeekChart(
             tile.bars,
             tile.pace,
@@ -82,7 +82,7 @@ fun WeekCard(
             lineHeight = 18.75.sp,
         )
         if (tile.top.isEmpty()) {
-            if (tile.empty != null)
+            if (tile.empty.isNotEmpty())
                 Text(
                     tile.empty,
                     Modifier.padding(top = 10.dp),
@@ -103,7 +103,7 @@ fun WeekCard(
 
 /** `.ov-sum`: the week's XP, then the change against last week in green or red. */
 @Composable
-private fun Total(tile: WeekTile) {
+private fun Total(tile: WeekCard) {
     val c = LocalPageColors.current
     Row {
         Text(

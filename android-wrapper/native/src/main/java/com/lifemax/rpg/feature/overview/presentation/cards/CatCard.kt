@@ -27,7 +27,7 @@ import com.lifemax.rpg.core.designsystem.components.pixelIconPath
 import com.lifemax.rpg.core.designsystem.glowPaint
 import com.lifemax.rpg.core.designsystem.mix
 import com.lifemax.rpg.feature.overview.domain.CatMode
-import com.lifemax.rpg.feature.overview.domain.CatTile
+import com.lifemax.rpg.feature.overview.domain.CatCard
 
 /**
  * The Cat card: a door to the live room, which stays on the page (ADR 0003), so [onOpen] is the
@@ -37,8 +37,8 @@ import com.lifemax.rpg.feature.overview.domain.CatTile
  * `.ov-duo` lays them out: icon, words, arrow, one under the other).
  */
 @Composable
-fun CatCard(tile: CatTile, onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    CardsBFrame(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
+internal fun CatCardView(tile: CatCard, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    OverviewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
         when (tile.mode) {
             CatMode.Alive -> Alive(tile)
             CatMode.Gone -> Door(tile, "heart")
@@ -49,7 +49,7 @@ fun CatCard(tile: CatTile, onOpen: () -> Unit, modifier: Modifier = Modifier) {
 
 /** `.pet-peek-row`: the cat's icon, its name and its five hearts in one row. */
 @Composable
-private fun Alive(tile: CatTile) {
+private fun Alive(tile: CatCard) {
     val c = LocalPageColors.current
     Row(
         Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -71,7 +71,7 @@ private fun Alive(tile: CatTile) {
 
 /** `.pet-peek-in` in the Overview's column: the badge, the eyebrow and name, then the arrow. */
 @Composable
-private fun Door(tile: CatTile, icon: String) {
+private fun Door(tile: CatCard, icon: String) {
     val c = LocalPageColors.current
     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Badge(icon)
