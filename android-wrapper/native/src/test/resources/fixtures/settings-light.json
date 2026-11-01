@@ -107,6 +107,22 @@
     },
     {
      "type": "row",
+     "title": "Native Overview cards (beta)",
+     "hint": "Draws the Overview's cards natively. The cat's room, Daily Luck, the shop and the health page still open on the page. Swiping between tabs on the Overview needs Native tab swipe (beta). Turn off for the live Overview.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeOverviewCards",
+       "label": "Native Overview cards (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
      "title": "Native Character preview",
      "hint": "Native cards and charts. Logging and edits use their existing screens. Turn off for Classic Character.",
      "danger": false,

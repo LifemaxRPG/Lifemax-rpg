@@ -25,6 +25,7 @@
     ["nativeNutrition", "#nativeNutritionToggle", PREFS],
     ["tabTiming", "#tabTimingToggle", PREFS],
     ["nativeOverview", "#nativeOverviewToggle", PREFS],
+    ["nativeOverviewCards", "#nativeOverviewCardsToggle", PREFS],
     ["nativeCharacter", "#nativeCharacterToggle", PREFS],
     ["nativeLog", "#nativeLogToggle", PREFS],
     ["nativePlan", "#nativePlanToggle", PREFS],
