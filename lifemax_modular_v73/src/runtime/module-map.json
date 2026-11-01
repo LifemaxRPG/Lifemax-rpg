@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 42020,
-   "statement_count": 87,
+   "bytes": 42296,
+   "statement_count": 88,
    "tags": [
     "training",
     "quests",
@@ -148,6 +148,7 @@
     "histStale",
     "histRev",
     "journalLocked",
+    "journalBlank",
     "journalDays",
     "actsForDay",
     "journalDayLabel",
@@ -2293,7 +2294,7 @@
   },
   {
    "file": "src/runtime/segments/47-journal-coach.js",
-   "bytes": 46455,
+   "bytes": 46699,
    "statement_count": 72,
    "tags": [
     "journal",
@@ -2375,8 +2376,8 @@
   },
   {
    "file": "src/runtime/segments/48-journal-lock.js",
-   "bytes": 8006,
-   "statement_count": 23,
+   "bytes": 8551,
+   "statement_count": 24,
    "tags": [
     "journal",
     "lock"
@@ -2385,6 +2386,7 @@
     "JL",
     "jlUnlocked",
     "jlLeftAt",
+    "jlGraceTimer",
     "jlPrompting",
     "jlError",
     "jlPrevView",
@@ -2406,6 +2408,7 @@
     "jlSetStatus",
     "jlPrompt",
     "jlRelock",
+    "jlGraceEnd",
     "jlOnNavigate",
     "jlSettingsRender",
     "window.LifeMaxJournalLock"

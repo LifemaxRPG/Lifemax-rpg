@@ -291,8 +291,12 @@ function jcWelcomeHtml(w){
 }
 /* The two things the coach decides once and keeps, a recent day's chip and today's welcome record. The page decides them when it
    draws the day (renderHistory, selectJournalEntry); the data builders only read them, so one not yet decided reads as none. A review,
-   or a day the care note quiets, decides nothing. */
-function jcDecide(d){if(/^\d{4}-\d\d-\d\d$/.test(d)&&!jcCares(d)){jcChip(d);jcWelcomeRecord(d)}}
+   or a day the care note quiets, decides nothing. A decision runs rules over the owner's data, so one that fails is logged and left
+   undecided: it never stops the drawing, nor a locked Journal being emptied. */
+function jcDecide(d){
+ if(!/^\d{4}-\d\d-\d\d$/.test(d)||jcCares(d))return;
+ [jcChip,jcWelcomeRecord].forEach(function(decide){try{decide(d)}catch(e){console.warn('[coach]',e)}});
+}
 /* A welcome chip's reward, once: Claim or Pet (+10 XP, and a pet for the cat) or Start fresh (+25 XP), paid in its own save */
 const JC_GIFT={pet:{xp:10,name:'Welcome back'},fresh:{xp:25,name:'New chapter'}};
 function jcClaim(kind){

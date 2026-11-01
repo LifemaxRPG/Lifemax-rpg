@@ -3,7 +3,7 @@
    a minute after you leave the Journal. While the Journal is open the screen is hidden from the app switcher and
    screenshots, and tab previews never capture it. While it is locked its words are not in the page at all. ---------- */
 const JL={graceMs:60000};
-let jlUnlocked=false,jlLeftAt=0,jlPrompting=false,jlError='',jlPrevView='';
+let jlUnlocked=false,jlLeftAt=0,jlGraceTimer=0,jlPrompting=false,jlError='',jlPrevView='';
 function jlOn(){return !!(typeof state!=='undefined'&&state.journalLock&&state.journalLock.on)}
 function jlPlugin(){try{return typeof lmaNative==='function'&&lmaNative()?lmaPlugin('BiometricLock'):null}catch(e){return null}}
 async function jlStatus(){const p=jlPlugin();if(!p)return {available:false,kind:'web'};try{return await p.status()}catch(e){return {available:false,kind:'unavailable'}}}
@@ -24,14 +24,14 @@ function jlOverlay(){
  return o;
 }
 /* Shows or hides the cover to match the lock state. Locked, the Journal's words leave the page as well: what is being typed is saved
-   first (the blur stores it), then the Journal is drawn again, empty (renderHistory). Every relock ends here: leaving the app, the
-   grace minute, relock() and the start-up check. */
+   first (the blur stores it), then the Journal is drawn again, empty (renderHistory), or simply emptied when that drawing fails. Every
+   relock ends here: leaving the app, the grace minute, relock() and the start-up check. */
 function jlApply(){
  const s=jlSection();if(!s)return;
  const locked=jlBlocksNative();
  if(locked){
   if(s.contains(document.activeElement))document.activeElement.blur();
-  try{renderHistory()}catch(e){console.warn('[lock]',e)}
+  try{renderHistory()}catch(e){console.warn('[lock]',e);journalBlank()}
  }
  s.classList.toggle('jlocked',locked);
  if(jlOn())jlOverlay();
@@ -70,12 +70,17 @@ async function jlPrompt(){
  return true;
 }
 function jlRelock(){jlUnlocked=false;jlApply()}
+/* The grace minute: leaving the Journal starts it, coming back inside it cancels it. When it ends the Journal locks there and then, so
+   its words leave the page and native screens are told at that moment, not at the next visit; the check on coming back covers a timer
+   that ran late. */
+function jlGraceEnd(){if(jlOn()&&jlUnlocked&&!jlViewIsJournal())jlRelock()}
 function jlOnNavigate(v,prev){
  if(v==='history'){
+  clearTimeout(jlGraceTimer);
   if(jlOn()){if(jlUnlocked&&Date.now()-jlLeftAt>JL.graceMs)jlUnlocked=false;jlApply();if(!jlUnlocked)jlPrompt()}
   else jlApply();
  }else{
-  if(prev==='history'){jlLeftAt=Date.now()}
+  if(prev==='history'){jlLeftAt=Date.now();clearTimeout(jlGraceTimer);jlGraceTimer=setTimeout(jlGraceEnd,JL.graceMs)}
   jlSecure(false);
   const s=jlSection();if(s&&!jlOn())s.classList.remove('jlocked');
  }

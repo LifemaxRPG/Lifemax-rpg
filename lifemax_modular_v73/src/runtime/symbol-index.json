@@ -3101,6 +3101,12 @@
  "jlError": [
   "src/runtime/segments/48-journal-lock.js"
  ],
+ "jlGraceEnd": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlGraceTimer": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
  "jlLeftAt": [
   "src/runtime/segments/48-journal-lock.js"
  ],
@@ -3160,6 +3166,9 @@
  ],
  "jlWatchers": [
   "src/runtime/segments/48-journal-lock.js"
+ ],
+ "journalBlank": [
+  "src/runtime/segments/04-runtime.js"
  ],
  "journalDayData": [
   "src/runtime/segments/04-runtime.js"

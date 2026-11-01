@@ -1,6 +1,6 @@
 /* Journal lock tests (the Android prompt is replaced by a mock): the switch, the cover, the grace minute, what a native screen follows
    (blocksNative and onChange, state and onStatus), and the Journal's words kept out of the page while it is locked: at load, after a
-   save, and right after each relock (the background, the grace minute, relock()).
+   save, right after each relock (the background, the grace minute, on return and when it ends, relock()), and when a drawing fails.
    Run:  NODE_PATH=$(npm root -g) node tests/lock.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x ? '  ' + JSON.stringify(x) : '')) } };
@@ -18,10 +18,11 @@ const canary = () => ({ id: 'z', type: 'custom', name: 'Canary walk', icon: 'boo
   await p.evaluate(() => navigate('settings')); await p.waitForTimeout(200);
   ok('in a browser the toggle is disabled with a note', await p.evaluate(() => document.getElementById('jlToggle').disabled && /Android app/.test(document.getElementById('jlSettingsBody').textContent)));
   await p.evaluate(() => navigate('history')); ok('a browser never shows the lock', await p.evaluate(() => !document.getElementById('view-history').classList.contains('jlocked')));
-  // mock the Android side
+  // mock the Android side. The tab-preview warm-up that a native page runs 9 s after load would walk through every tab, the Journal
+  // included, in the middle of these checks, so it is left out.
   await p.evaluate(act => {
     window.__bio = { auth: [], secure: [], status: { available: true, kind: 'ok' }, next: { ok: true } };
-    lmaNative = () => true;
+    lmaNative = () => true; lmaThumbWarm = async () => { };
     lmaPlugin = n => n === 'BiometricLock' ? { status: async () => __bio.status, authenticate: async o => { __bio.auth.push(o.subtitle); return __bio.next }, secure: async o => { __bio.secure.push(o.on) } } : (n === 'PageThumb' ? { snap: async () => ({ img: 'x'.repeat(500) }) } : {});
     state.activities.push(act); state.dayReflections = { [getToday()]: 'secret thoughts' };
     navigate('settings'); jlSettingsRender();
@@ -92,6 +93,33 @@ const canary = () => ({ id: 'z', type: 'custom', name: 'Canary walk', icon: 'boo
   ok('relock() locks the Journal and its words leave the page', relocked.blocked && relocked.bare, relocked);
   await p.evaluate(() => { jlPrompt() }); await until(p, () => !jlBlocksNative());
   ok('unlocked again, the Journal is drawn with what was typed', await p.evaluate(() => /secret thoughts and more/.test(document.getElementById('journalEntry').innerHTML)));
+  // a coach decision that fails over the owner's data (a pattern rule here, on a day not yet decided) leaves the locked Journal empty
+  // all the same, and does not stop the open Journal being drawn
+  const failing = await p.evaluate(async () => {
+    const real = jcPatterns; jcPatterns = () => { throw new Error('a pattern rule failed') };
+    try {
+      histSel = getToday(); delete jcStore().pats[histSel];
+      LifeMaxJournalLock.relock(); const bare = __bare(), blocked = jlBlocksNative();
+      const opened = await jlPrompt();
+      return { undecided: !(histSel in jcStore().pats), blocked, bare, opened, drawn: /secret thoughts and more/.test(document.getElementById('journalEntry').innerHTML) };
+    } finally { jcPatterns = real }
+  });
+  ok('a coach decision that fails still leaves the locked Journal without its words', failing.undecided && failing.blocked && failing.bare, failing);
+  ok('and the unlocked Journal is still drawn', failing.opened === true && failing.drawn, failing);
+  // whatever else fails while the Journal is drawn empty, the lock empties it itself
+  const backstop = await p.evaluate(() => { const real = journalDays; journalDays = () => { throw new Error('the Journal could not be drawn') }; try { LifeMaxJournalLock.relock(); return { blocked: jlBlocksNative(), bare: __bare() } } finally { journalDays = real } });
+  ok('a locked drawing that fails leaves the Journal empty all the same', backstop.blocked && backstop.bare, backstop);
+  await p.evaluate(() => { jlPrompt() }); await until(p, () => !jlBlocksNative());
+  // the grace minute ends on time (shortened here): back inside it nothing locks later, and left for another tab the Journal locks when
+  // it ends, its words leave the page and native screens are told then, before any return to the Journal
+  await p.evaluate(() => { JL.graceMs = 400; navigate('dashboard'); navigate('history') }); await p.waitForTimeout(800);
+  ok('back inside the grace minute: it does not lock afterwards', await p.evaluate(() => !jlBlocksNative() && /secret thoughts and more/.test(document.getElementById('journalEntry').innerHTML)));
+  const told0 = await p.evaluate(() => { navigate('dashboard'); return __told.length });
+  const graceEnded = await until(p, () => jlBlocksNative());
+  const atGrace = await p.evaluate(() => { JL.graceMs = 60000; return { view: lmaView(), bare: __bare(), told: __told.slice(-1)[0], toldOnce: __told.length } });
+  ok('left for another tab, the Journal locks when the grace minute ends and its words leave the page', graceEnded && atGrace.view === 'dashboard' && atGrace.bare, atGrace);
+  ok('native screens are told when the grace minute ends', atGrace.told === true && atGrace.toldOnce === told0 + 1, { told0, atGrace });
+  await p.evaluate(() => { __bio.next = { ok: true }; navigate('history') }); await until(p, () => !jlBlocksNative());
   // tab previews never keep a picture of the Journal
   const snap = await p.evaluate(async () => { navigate('history'); return await lmaThumbSnapNow('history') });
   ok('tab previews skip a locked-Journal screen', snap === false);

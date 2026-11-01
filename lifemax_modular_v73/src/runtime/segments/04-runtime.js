@@ -94,7 +94,7 @@ function renderBenchmarks(){document.getElementById('benchmarks').innerHTML=stat
 /* The Journal: the hero, the day list and the selected day or review, drawn from the data builders (jcHeroData, jcListData, jcDayData,
    jcReviewData, journalDayData), which a native Journal projects as they are. Before drawing it decides the selected day's chip and
    welcome record (jcDecide), stored without a save, so drawing never draws itself again. While the Journal is locked it decides the
-   same and draws nothing: the hero, the list and the entry are left empty. */
+   same and draws nothing: the hero, the list and the entry are left empty (journalBlank). */
 function renderHistory(){
   if(!state.dayReflections)state.dayReflections={};
   histRev++;
@@ -105,8 +105,8 @@ function renderHistory(){
   const entryEl=document.getElementById('journalEntry');
   if(!daysEl||!entryEl)return;
   if(coach&&days.length)jcDecide(histSel);
+  if(journalLocked()){journalBlank();return}
   const hero=document.getElementById('journalHero');
-  if(journalLocked()){if(hero)hero.innerHTML='';daysEl.innerHTML='';renderJournalEntry();return}
   if(hero&&coach)hero.innerHTML=jcHeroHtml();
   if(!days.length){
     daysEl.innerHTML='';
@@ -139,6 +139,8 @@ let histSel=null,histDrawn=null,histStale=false,histRev=0;
 /* The Journal lock keeps the Journal's words out of the page while it is locked (48-journal-lock.js). The start-up drawing comes before
    that module: a lock that is on is locked then, as every page load starts locked. */
 function journalLocked(){return window.LifeMaxJournalLock?LifeMaxJournalLock.blocksNative():!!(state.journalLock&&state.journalLock.on)}
+/* The locked Journal: its hero, day list and entry emptied. The lock also calls it when a drawing fails, so no words are left behind. */
+function journalBlank(){['journalHero','journalDays','journalEntry'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=''});histDrawn=null;histStale=false}
 document.getElementById('journalEntry')?.addEventListener('focusout',e=>{if(histStale&&e.target.matches('textarea'))setTimeout(renderHistory)});
 function journalDays(){
   const set=new Set();
