@@ -12,6 +12,9 @@ function closeAudioPlayer(reset){
   if(minBtn){minBtn.textContent='—';minBtn.title='Minimize player';minBtn.setAttribute('aria-label','Minimize player')}
   if(reset){/* stay closed */}
 }
+/* The player is in use: a file loading or loaded, or the player showing. A native screen over the Library steps aside while it is, so
+   the player's controls never vanish under it (until a native player exists). */
+function audioBusy(){return !!audioCtx.loading||!!audioCtx.mediaId||!!document.getElementById('audioPlayer')?.classList.contains('show')}
 function toggleMinimizeAudioPlayer(){
   const bar=document.getElementById('audioPlayer');
   if(!bar||!bar.classList.contains('show'))return;

@@ -304,8 +304,8 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 29999,
-   "statement_count": 74,
+   "bytes": 31641,
+   "statement_count": 76,
    "tags": [
     "training",
     "pet",
@@ -380,8 +380,9 @@
     "hideMediaForm",
     "saveMediaItem",
     "mediaUpsert",
+    "mediaSetStatus",
     "toggleMediaFinished",
-    "setMediaStatus",
+    "mediaRemove",
     "deleteMediaItem",
     "AUDIO_DB",
     "AUDIO_STORE",
@@ -395,13 +396,14 @@
     "mediaById",
     "pickAudioForMedia",
     "attachAudioFile",
+    "mediaRemoveAudio",
     "removeMediaAudio"
    ]
   },
   {
    "file": "src/runtime/segments/08-runtime.js",
-   "bytes": 26883,
-   "statement_count": 58,
+   "bytes": 27238,
+   "statement_count": 59,
    "tags": [
     "nutrition",
     "pet",
@@ -413,6 +415,7 @@
    "symbols": [
     "revokeAudioUrl",
     "closeAudioPlayer",
+    "audioBusy",
     "toggleMinimizeAudioPlayer",
     "expandAudioPlayer",
     "playMediaAudio",
@@ -3398,7 +3401,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 10687,
+   "bytes": 10589,
    "statement_count": 1,
    "tags": [
     "android",
