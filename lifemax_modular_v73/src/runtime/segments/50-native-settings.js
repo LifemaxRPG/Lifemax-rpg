@@ -15,6 +15,7 @@
   const NOT_STORED = "Could not save to this browser (storage full?)";
   // a control the owner is working in on the page: a text, number or time field, or a select (its list, then the form's own button)
   const EDITING = "input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button]), textarea, select";
+  const FIELD_INPUT = { text: "text", number: "number", range: "number", time: "time" }; // the field kinds the screen draws
   const COMEBACK_MS = 350; // after the owner's tap on the page: time for its handler to open what it opens before the screen returns
   /* The controls a command may operate, by the id the projection gives them, with the storage their handler writes (checked after
      the handler ran, so a write that failed is reported) and, for a switch, whether turning it on asks Android for a permission:
@@ -189,8 +190,9 @@
       const image = /url\(["']?(.*?)["']?\)/.exec(el.style.backgroundImage || "");
       return { kind: "avatar", id, label: el.title || label || "", image: image ? image[1] : "", initial: el.textContent.trim(), enabled, op: "reveal" };
     }
-    // a text, number or time field: shown with what it holds, typed into on the page
-    return { kind: "field", id, label: name, value: el.value, placeholder: el.placeholder || "", input: el.type || "text", enabled, op: "reveal" };
+    // a text, number or time field: shown with what it holds, typed into on the page. The screen knows those three kinds, so any
+    // other input is named as the nearest one (a slider holds a number, everything else is text); it is worked on the page either way
+    return { kind: "field", id, label: name, value: el.value, placeholder: el.placeholder || "", input: FIELD_INPUT[el.type] || "text", enabled, op: "reveal" };
   }
   const CONTROLS = "input, select, button, [role=group], .avatar";
   function controlsIn(el, ctx, label) {

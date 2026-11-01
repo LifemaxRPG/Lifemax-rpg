@@ -81,8 +81,8 @@ class SettingsTest {
         assertEquals(8, p.cardsIn("look").size)
         assertEquals(listOf("appearance", "tabsCard", "lmaNavCard"), p.cards.take(3).map { it.id })
         // every control of the page's phone, each with its own id (inventory section 9, item 6)
-        assertEquals(131, p.controls().size)
-        assertEquals(131, p.controls().map { it.id }.toSet().size)
+        assertEquals(132, p.controls().size)
+        assertEquals(132, p.controls().map { it.id }.toSet().size)
 
         val light = p.control<SettingsControl.Switch>("lightMode")
         assertEquals("Enable light mode", light.label)
@@ -136,7 +136,7 @@ class SettingsTest {
         val times = many.controls().filterIsInstance<SettingsControl.Field>()
         assertTrue(times.any { it.input == FieldInput.Time && it.value == "17:00" })
         val dev = many.cards.first { it.id == "devModeCard" }
-        assertEquals(9, dev.rows.size)
+        assertEquals(16, dev.rows.size) // with the native tab swipe's feel (testing) at its end
         assertTrue(dev.rows[1] is SettingsRow.Note)
 
         assertTrue(decode("light").light)
@@ -283,7 +283,7 @@ class SettingsTest {
                 "light as text" to { put("light", "false") },
                 "options that are not a list" to
                     {
-                        firstControl("lmaNavCard", 2).put("options", 3)
+                        firstControl("lmaNavCard", 3).put("options", 3)
                     },
                 "a picture from the web" to
                     {

@@ -126,6 +126,16 @@ const HELPERS = `
   ok('a fact a renderer learns later arrives with the next projection', r.async, r);
   ok('the page\'s toast comes with the projection', r.notice, r);
   ok('the projection stays small (' + r.size + ' characters)', r.size < 120000, r.size);
+  // with developer mode on (its swipe feel sliders among its tools), every field is a kind the screen draws: an unknown kind makes
+  // the screen refuse the whole projection
+  const kinds = await p.evaluate(async (H) => {
+    eval(H);
+    const dev = document.getElementById('devModeOn'); dev.checked = true; dev.dispatchEvent(new Event('change')); await wait(400);
+    const fields = controls(latest()).filter(k => k.kind === 'field');
+    dev.checked = false; dev.dispatchEvent(new Event('change')); await wait(300);
+    return { odd: fields.filter(k => !['text', 'number', 'time'].includes(k.input)).map(k => k.id + ':' + k.input), sliders: fields.filter(k => /swipeTune|tune/i.test(k.id)).length };
+  }, HELPERS);
+  ok('every field is one the screen draws, developer mode\'s sliders included', kinds.odd.length === 0 && kinds.sliders > 0, kinds);
 
   /* ---------- commands against the page's own result ---------- */
   const c = await p.evaluate(async (H) => {

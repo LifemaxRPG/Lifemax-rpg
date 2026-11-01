@@ -2235,7 +2235,7 @@
        "label": "Tension starts at",
        "value": "0.18",
        "placeholder": "",
-       "input": "range",
+       "input": "number",
        "enabled": true,
        "op": "reveal"
       }
@@ -2253,7 +2253,7 @@
        "label": "Catch point",
        "value": "0.45",
        "placeholder": "",
-       "input": "range",
+       "input": "number",
        "enabled": true,
        "op": "reveal"
       }
@@ -2271,7 +2271,7 @@
        "label": "Heaviness",
        "value": "0.25",
        "placeholder": "",
-       "input": "range",
+       "input": "number",
        "enabled": true,
        "op": "reveal"
       }
@@ -2289,7 +2289,7 @@
        "label": "Flick speed",
        "value": "1200",
        "placeholder": "",
-       "input": "range",
+       "input": "number",
        "enabled": true,
        "op": "reveal"
       }
