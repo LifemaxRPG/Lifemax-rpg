@@ -148,7 +148,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
   ok('no swipe state with the switch off, and off with Swipe to switch tabs off', flags.switchOff === 'none' && flags.swipeOff === false, flags);
   ok('off before onboarding is done and during the thumbnail pass', flags.onboarding === false && flags.warm === false, flags);
   ok('off under a sheet, a body that must not scroll, or a lock cover', flags.overlay === false && flags.noscroll === false && flags.lock === false, flags);
-  ok('motion off with reduced motion or Swipe animation off', flags.reduced === false && flags.noAnim === false, flags);
+  ok('motion off with reduced motion, and the old web swipe\'s "Swipe animation" switch does not turn it off', flags.reduced === false && flags.noAnim === true, flags);
   ok('haptics follow the page: its level, or off', flags.strong === 'strong' && flags.noHaptics === 'off', flags);
 
   /* ---------- every refusal: answered at once, nothing else done ---------- */

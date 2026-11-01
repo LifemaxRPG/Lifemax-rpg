@@ -67,6 +67,10 @@ const LMA_TABSWIPE = Object.freeze({
       Food and Library panes), so native finds a neighbour exactly where the owner sees it. Switched off, there is none: the scenes go
       without it and native does nothing of the swipe, as with a page from before it. A state that cannot be built costs the swipe,
       never the bars it rides with: the scene goes without it, and native starts no swipe. */
+  /* the swipe follows the finger unless the owner asked the app or the phone for less motion; the old web swipe's own
+     "Swipe animation" switch is not asked (it belongs to that swipe: turning it off must not flatten this one) */
+  const reducedMotion = () =>
+    document.documentElement.classList.contains("reduce-motion") || !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   function swipeState() {
     try {
       if (lmaLoad().nativeSwipe !== true) return undefined;
@@ -74,7 +78,7 @@ const LMA_TABSWIPE = Object.freeze({
       return {
         v: 1,
         on: allowed() && !covered(),
-        motion: !lmaMotionOff(),
+        motion: !reducedMotion(),
         haptics: fxOpt().haptics ? hapLevelKey() : "off",
         view,
         active: bar.some((b) => b.dataset.view === key) ? key : "",
