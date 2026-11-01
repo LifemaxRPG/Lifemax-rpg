@@ -141,6 +141,18 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     await F.__emit('action', { session: session(), command: 'sheetLog' }); await wait(120);
     out.closedIgnores = state.foodLog.length === n2;
 
+    // Android Back (the page's lmaBack) steps back inside the native sheet before it leaves Food
+    await act('sheetOpen', { slot: 'lunch' });
+    await act('sheetQuery', { q: 'chicken' });
+    await act('sheetPick', { index: 0, id: String(want[0].id) });
+    const viewBefore = lmaView();
+    lmaBack(); await until(() => latest().sheet && latest().sheet.view === 'search', 2000);
+    out.backStep = latest().sheet.view === 'search' && lmaView() === viewBefore;
+    lmaBack(); await until(() => latest().sheet === null, 2000);
+    out.backCloses = latest().sheet === null && lmaView() === viewBefore;
+    out.noSwipeUnderSheet = (await act('sheetOpen', { slot: 'lunch' }), !!lmaTopOverlay());
+    await act('sheetClose');
+
     // an action from another session does nothing
     const m = window.__calls.length;
     await F.__emit('action', { session: 'someone-else', command: 'sheetOpen', slot: 'lunch' }); await wait(150);
@@ -163,6 +175,12 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     document.getElementById('fv2Q').value = 'chicken'; document.getElementById('fv2Q').dispatchEvent(new Event('input', { bubbles: true })); await wait(500);
     out.pageSheet = document.querySelectorAll('#fv2List .fv2-r').length >= 1;
     fv2Close();
+    // Create food stays on the page's own sheet: the screen steps aside and the page's create form opens
+    await act('sheetOpen', { slot: 'dinner' });
+    await F.__emit('action', { session: session(), command: 'sheetCreate' });
+    await until(() => calls('close').length === 1 && document.querySelector('#fv2Ov.show'), 3000);
+    out.create = calls('close').length === 1 && !!document.querySelector('#fv2Ov.show') && fv2S().sh.view === 'create' && fv2S().sh.slot === 'dinner';
+    fv2Close();
     return out;
   });
   const names = {
@@ -183,7 +201,9 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     failedSave: 'a save that fails keeps nothing and the page\'s "could not save" reaches the screen',
     quickView: 'Quick calories opens its view', quickEmpty: 'no calories: the page\'s message, and the view stays', quickSaved: 'quick calories log a named one-off food as 100 g',
     backView: 'Back goes a view back', backClose: 'Back at the start closes the sheet', closedIgnores: 'a closed sheet ignores Log',
+    backStep: 'Android Back steps back a view inside the native sheet and stays on Food', backCloses: 'and the next Back closes the sheet, still on Food', noSwipeUnderSheet: 'an open sheet counts as an overlay (no tab swipe under it)',
     otherSession: 'an action from another session does nothing', noLostUpdate: 'an update asked for while one is in flight is sent after it',
+    create: 'Create food hands over to the page\'s own create form at the same meal',
     neverClosed: 'the screen was never closed, and the page\'s own sheet never opened', pageSheet: 'the page\'s own sheet still searches the same'
   };
   for (const k of Object.keys(names)) ok(names[k], r[k] === true, r[k]);

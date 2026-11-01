@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.lifemax.rpg.feature.food.presentation.sheet.FoodSheetHost
 import org.json.JSONObject
 
 /**
@@ -49,6 +50,7 @@ internal fun NativeNutritionScreen(
                 }
             }
             FoodSearchBar(c)
+            FoodSheetHost(c)
         }
     }
 }

@@ -10,6 +10,7 @@
     queued: false,
     blocked: false,
     updating: false,
+    seam: false, // a fixture or a test is driving the sheet without a native screen
     dirty: false, // an update was asked for while one was in flight: send another when it is done
     generation: 0,
     notice: null, // the page's last message ({id, text, action}) and what its action does
@@ -463,6 +464,11 @@
         sheetClose();
         fv2Log(food, grams, slot);
       }
+    } else if (command === 'sheetCreate') {
+      // making a food stays on the page's own sheet for now: the screen steps aside and the page's create form opens
+      const slot = Q.slot;
+      sheetClose();
+      fallback('add', { slot: slot, view: 'create' });
     } else if (command === 'sheetBack') {
       if (Q.stack.length) Q.view = Q.stack.pop();
       else sheetClose();
@@ -476,10 +482,10 @@
 
   /** the page said something to the player (a saved food, a refusal, Undo): the native screen shows it */
   window.__fv2Notice = function (text, action, fn) {
-    if (!N.open) return;
+    if (!N.open && !N.seam) return;
     N.notice = { id: ++N.noticeId, text: String(text || ''), action: action ? String(action) : '' };
     N.noticeFn = typeof fn === 'function' ? fn : null;
-    scheduleSync();
+    if (N.open) scheduleSync();
   };
 
   async function ready(p) {
@@ -645,7 +651,7 @@
     } else if (command === 'add' || command === 'goals') {
       const slot = (payload && payload.slot) || (typeof fv2Slot === 'function' ? fv2Slot() : 'breakfast');
       if (typeof fv2Open === 'function') {
-        fv2Open(command === 'add' ? slot : null, command === 'goals' ? 'goal' : 'search');
+        fv2Open(command === 'add' ? slot : null, command === 'goals' ? 'goal' : (payload && payload.view) || 'search');
       }
     } else if (command === 'entry' && payload && payload.id) {
       if (typeof fv2OpenEntry === 'function') fv2OpenEntry(payload.id);
@@ -801,7 +807,25 @@
     snapshot: snapshot,
     open: open,
     close: close,
-    enabled: enabled
+    enabled: enabled,
+    /** run an action of the add-food sheet as the native screen would (the fixtures and the tests drive it this way) */
+    sheetAct: function (command, payload) {
+      N.seam = true;
+      try {
+        return onSheet(command, payload || {});
+      } finally {
+        N.seam = false;
+      }
+    }
+  };
+
+  /** Android Back, from the page's lmaBack: a native sheet that is open takes it, one view at a time */
+  window.NativeFoodSheet = {
+    open: function () { return N.open && Q.open; },
+    back: function () {
+      onSheet('sheetBack', {});
+      scheduleSync();
+    }
   };
 
   const nav = navigate;

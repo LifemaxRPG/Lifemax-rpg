@@ -87,6 +87,23 @@ async function food(b) {
     if (!data) throw new Error('no snapshot for ' + pane);
     write('food-' + pane + '.json', data);
   }
+  // the add-food sheet, as the screen drives it: the recent tab, a search, a food's portion view (at 175 g, for dinner), quick
+  // calories, and the message the page sends after a log (with Undo). Without the plan and the shopping list, which it does not draw.
+  const sheets = await p.evaluate(async () => {
+    const B = NativeNutritionBeta, wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const snap = () => { const d = JSON.parse(JSON.stringify(B.snapshot())); d.plan = null; d.shop = null; return d; };
+    const res = {};
+    fv2S().pane = 'log'; state.mealsMeta.calGoal = 2500;
+    B.sheetAct('sheetOpen', { slot: 'lunch' }); res.search = snap();
+    B.sheetAct('sheetQuery', { q: 'chicken breast' }); await wait(600); res.results = snap();
+    const row = res.results.sheet.rows[0];
+    B.sheetAct('sheetPick', { index: row.index, id: row.id }); B.sheetAct('sheetGrams', { grams: 175 }); B.sheetAct('sheetSlot', { slot: 'dinner' }); res.portion = snap();
+    B.sheetAct('sheetLog'); res.notice = snap();
+    B.sheetAct('sheetOpen', { slot: 'lunch' }); B.sheetAct('sheetQuick'); res.quick = snap();
+    B.sheetAct('sheetClose');
+    return res;
+  });
+  for (const [name, data] of Object.entries(sheets)) write('food-sheet-' + name + '.json', data);
 }
 
 /* Log on the same day: the default draft, a strength workout, that workout under the daily cap, and refused as a fourth of its type */

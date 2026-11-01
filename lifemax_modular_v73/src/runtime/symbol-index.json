@@ -7222,6 +7222,9 @@
  "window.NativeDirectorProjection": [
   "src/runtime/segments/50-native-director.js"
  ],
+ "window.NativeFoodSheet": [
+  "src/runtime/segments/50-native-nutrition.js"
+ ],
  "window.NativeLogProjection": [
   "src/runtime/segments/50-native-log.js"
  ],

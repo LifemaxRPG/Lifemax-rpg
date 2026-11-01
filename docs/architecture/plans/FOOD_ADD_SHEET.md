@@ -1,7 +1,6 @@
 # Food's add-food sheet: native build plan
 
-Status: phase 1a (the web half) is built on the page (`50-food.js` seams, `50-native-nutrition.js`, `native-food-sheet.test.js`); the native half is not. Written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Nothing is built yet.
-Not yet reviewed by a second reader: before building, have it checked against the code (the way the other plans in this folder were).
+Status: phases 1a (web) and 1b (native: decoder, search, portion and quick views, notice snack, screenshots) are built and tested; the Native API bump to 33 happens at merge. Phase 1c (review fixes) and phase 2 are open. Written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Not yet reviewed by a second reader: before building, have it checked against the code (the way the other plans in this folder were).
 
 ## 1. What there is today
 
@@ -78,7 +77,7 @@ A Native API bump at merge.
 | Phase | Contents | Steps |
 |---|---|---|
 | 1a, web (built) | the notice relay, the `sheet` projection, the commands, tests, fixtures, the simulation | 2 |
-| 1b, native | decoder and view model, search and portion and quick views, screenshots, docs | 3 |
+| 1b, native (built) | decoder, search and portion and quick views, notice snack, screenshots, docs | 3 |
 | 1c | review fixes | 1 |
 | 2 | create food, the daily targets, edit / delete / again with a native Undo | 3 |
 

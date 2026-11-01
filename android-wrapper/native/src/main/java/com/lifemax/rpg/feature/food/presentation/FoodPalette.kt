@@ -25,3 +25,12 @@ internal val DinnerIndigo = Color(0xFF818CF8)
 internal val SnacksCoral = Color(0xFFFF7A8A)
 
 internal fun fmtNum(n: Int): String = NumberFormat.getNumberInstance(Locale.US).format(n)
+
+/** The colour of a meal's pill and dot. */
+internal fun slotColor(id: String): Color =
+    when (id) {
+        "breakfast" -> BreakfastAmber
+        "lunch" -> LunchGreen
+        "dinner" -> DinnerIndigo
+        else -> SnacksCoral
+    }

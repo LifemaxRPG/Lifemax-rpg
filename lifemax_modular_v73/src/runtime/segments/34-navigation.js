@@ -55,6 +55,7 @@ function lmaGoView(v){return lmaNavTo(v,{skip:true})}
 function lmaTopOverlay(){
  const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
  if(q('#onboarding.show,#tutorial.show'))return {close(){}}; /* swallow Back during first-run screens */
+ if(window.NativeFoodSheet&&NativeFoodSheet.open())return {close(){NativeFoodSheet.back()}}; /* native Food's add-food sheet steps back a view, then closes */
  const full=q('#petRoomFullscreen.is-open');if(full)return {close(){petRoomFullscreenClose()}};
  const up=q('.updpop');if(up)return {close(){up.remove()}};
  const dl=q('.lmdl-ask');if(dl)return {close(){dl.remove()}};

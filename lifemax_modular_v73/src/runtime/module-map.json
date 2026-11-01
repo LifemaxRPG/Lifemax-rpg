@@ -1807,7 +1807,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 14077,
+   "bytes": 14236,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -3328,7 +3328,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 30733,
+   "bytes": 31227,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3339,7 +3339,8 @@
     "window.setNativeNutritionEnabled",
     "window.__fv2Notice",
     "window.__nativeTabPerf",
-    "window.NativeNutritionBeta"
+    "window.NativeNutritionBeta",
+    "window.NativeFoodSheet"
    ]
   },
   {
