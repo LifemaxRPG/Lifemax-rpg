@@ -54,10 +54,17 @@
    * itself once the page is clear again, makes the same watcher also call revisit(), and names with observe(node, options)
    * the tab's own nodes to watch (a form shown, a list redrawn); follow() on the returned object runs the watcher by hand
    * (once the focus has left a field).
+   * Optional, for a tab whose screen covers only some of what its view shows (Life Director):
+   * warm: true asks the native side what it can draw (the handshake) as soon as the tab is enabled, not first inside open(), and
+   * calls revisit() when it answers; has(capability) then tells, from the cached answer, whether the screen draws a part (false
+   * until the answer). Also with warm, a command whose renders leave the view on something blocked() counts steps the screen
+   * aside as soon as its reply has been sent, instead of waiting for the next refresh.
+   * arrive() runs when the page goes to the tab's view from somewhere else, just before the page shows it, while the screen is
+   * not open (for example to put the tab on today).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
-    let sequence = 0, active = false, opening = false, handshake = null, plugin = null, ready = false, timer = 0, queued = 0;
+    let sequence = 0, active = false, opening = false, handshake = null, asked = null, plugin = null, ready = false, timer = 0, queued = 0;
     let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
     let entered = true; // the page went to this view and no open has projected since
 
@@ -75,6 +82,25 @@
     }
     function enabled() {
       return !!available() && wanted();
+    }
+    /** the native side's answer to the handshake, asked once; open() awaits the same question. A failed answer is forgotten,
+        so the next open asks again. */
+    function ask() {
+      if (!asked) {
+        const p = available();
+        if (!p) return Promise.reject(Error("plugin unavailable"));
+        plugin = p;
+        asked = p.handshake().then((h) => (handshake = h), (e) => { asked = null; throw e; });
+      }
+      return asked;
+    }
+    /** with cfg.warm: ask as soon as the tab is enabled, and look again at the page once the answer is in */
+    function warm() {
+      if (cfg.warm && !asked && enabled()) ask().then(() => revisit(), () => {});
+    }
+    /** whether the screen says it draws this capability: false until the handshake has answered */
+    function has(capability) {
+      return !!handshake && handshake.protocol === 1 && handshake.capabilities.includes(capability);
     }
     /** the page would let the screen cover the tab's view, wherever the page is now: nothing over it, nothing the screen cannot draw */
     function coverable() {
@@ -144,6 +170,7 @@
           } catch (err) {
             console.warn(cfg.id + " reply", err);
           }
+          if (cfg.warm && active && lmaView() === cfg.id && blocked()) send(); // the command left the page on what the screen cannot draw
         }
         if (reply.navigate) lmaNavTo(reply.navigate, { fast: true }); // no web transition under a native screen
         return reply;
@@ -185,7 +212,7 @@
           });
           ready = true;
         }
-        const h = handshake || (handshake = await plugin.handshake());
+        const h = handshake || (await ask());
         const handshakeAt = now();
         if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
         if (blocked()) return false;
@@ -242,6 +269,7 @@
     const nav = navigate;
     navigate = function (v) {
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
+      if (v === cfg.id && !active && cfg.arrive) cfg.arrive(); // before the page shows the view, so it shows what arrive set
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
         if (!active) entered = true; // choosing the tab again while its screen shows is not a new arrival
@@ -268,11 +296,13 @@
       lmaSave();
       sync();
       if (!on) await close();
+      else warm();
     };
     window[cfg.globals.projection] = { snapshot };
     sync();
     setTimeout(sync, 700);
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, active: () => active };
+    setTimeout(warm, 0); // after the page has finished loading, so the plugin and the owner's switch are known
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, active: () => active };
   }
 
   window.NativeTabKit = { create, color, tokens, light };
