@@ -24,6 +24,8 @@ data class OverviewCards(
     val tip: OverviewTip?,
     val layout: OverviewLayout,
     val tileInfo: List<TileInfo>,
+    /** The editor's words (OV_EDIT_WORDS): phase 2's native editor draws them. */
+    val editor: EditorWords,
     val tiles: OverviewTiles,
     /**
      * Data URLs by the page's key ("i" + FNV-1a of the URL in hex), for the avatar, the app icons

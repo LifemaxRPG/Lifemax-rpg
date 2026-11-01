@@ -7,6 +7,7 @@ import com.lifemax.rpg.core.designsystem.feedback.PagePoint
 import com.lifemax.rpg.core.designsystem.feedback.XpGain
 import com.lifemax.rpg.feature.overview.domain.CardChip
 import com.lifemax.rpg.feature.overview.domain.Delta
+import com.lifemax.rpg.feature.overview.domain.EditorWords
 import com.lifemax.rpg.feature.overview.domain.OverviewHead
 import com.lifemax.rpg.feature.overview.domain.OverviewLayout
 import com.lifemax.rpg.feature.overview.domain.OverviewNotice
@@ -106,6 +107,24 @@ internal fun requireTileInfo(info: List<TileInfo>) {
     val ids = info.map { it.id }
     require(ids.toSet().size == ids.size) { "A tile is named twice" }
     require(ids.toSet().containsAll(OverviewTileIds.ALL)) { "A tile has no name" }
+}
+
+/** The editor's words (OV_EDIT_WORDS), every one the page's and none empty. */
+internal fun editorWords(e: JSONObject): EditorWords {
+    fun word(key: String) = e.str(key).also { require(it.isNotBlank()) { "$key is empty" } }
+    return EditorWords(
+        title = word("title"),
+        hint = word("hint"),
+        done = word("done"),
+        reset = word("reset"),
+        hiddenSub = word("hidden"),
+        hide = word("hide"),
+        show = word("show"),
+        moveUp = word("moveUp"),
+        moveDown = word("moveDown"),
+        moveTop = word("moveTop"),
+        moveBottom = word("moveBottom"),
+    )
 }
 
 internal fun delta(d: JSONObject) = Delta(d.bool("up"), d.str("text"))

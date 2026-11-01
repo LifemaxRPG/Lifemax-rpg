@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.lifemax.rpg.feature.overview.domain.EditorBuzz
 import com.lifemax.rpg.feature.overview.domain.OverviewCards
 import com.lifemax.rpg.feature.overview.domain.OverviewCommands
 import com.lifemax.rpg.feature.overview.domain.OverviewNotice
@@ -19,7 +20,8 @@ import java.util.UUID
  * - The week day picked survives projections and goes back to the page's when the week's dates move
  *   (a new day).
  * - The page's message ([notice]) shows once per id; one cut short by the screen hiding is not
- *   shown again. The screen's own messages (a refused tip) show the same way.
+ *   shown again. The screen's own messages (a refused tip, a refused layout) show the same way.
+ * - The editor (phase 2) is [editor]'s; it ends when the screen goes behind the page.
  */
 class OverviewViewModel(
     private val repository: OverviewRepository,
@@ -39,10 +41,14 @@ class OverviewViewModel(
     /** A page view the screen hands over to; set by the route (the plugin's "navigate"). */
     var onNavigate: (String) -> Unit = {}
 
+    /** The page's buzz at the owner's strength; set by the route (PageBuzz). */
+    var onBuzz: (EditorBuzz) -> Unit = {}
+
     internal val taps = OverviewTaps(commands, { cards }, { onNavigate(it) }, ::say, newId)
 
     /** The page's arrival the cards play, once each, only while showing (phase 3). */
     val arrival = ArrivalController()
+    internal val editor = OverviewEditController(commands, { cards }, ::say) { onBuzz(it) }
 
     private var showing = false
     private var weekDates: List<String>? = null
@@ -54,6 +60,7 @@ class OverviewViewModel(
         showing = true
         notice = null
         taps.opened()
+        editor.forget()
         projected()
     }
 
@@ -62,6 +69,7 @@ class OverviewViewModel(
         showing = false
         notice = null
         arrival.hidden()
+        editor.forget()
     }
 
     /** The repository has taken a projection. */
@@ -85,7 +93,7 @@ class OverviewViewModel(
     }
 
     fun onReply(reply: OverviewReply) {
-        taps.onReply(reply)
+        if (!editor.onReply(reply)) taps.onReply(reply)
     }
 
     /** Pick a week bar; the page's own ovPick only redraws its line, so nothing is sent. */

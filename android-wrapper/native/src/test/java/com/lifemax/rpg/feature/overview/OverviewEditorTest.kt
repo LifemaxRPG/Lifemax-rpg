@@ -3,7 +3,6 @@ package com.lifemax.rpg.feature.overview
 import androidx.compose.runtime.MonotonicFrameClock
 import com.lifemax.rpg.feature.overview.domain.EditorBuzz
 import com.lifemax.rpg.feature.overview.domain.EditorRow
-import com.lifemax.rpg.feature.overview.domain.EditorWords
 import com.lifemax.rpg.feature.overview.presentation.editor.EditorMove
 import com.lifemax.rpg.feature.overview.presentation.editor.ReorderState
 import com.lifemax.rpg.feature.overview.presentation.editor.autoScrollStep
@@ -101,7 +100,7 @@ class OverviewEditorTest {
 
     @Test
     fun aRowOffersOnlyTheMovesItCanMake() {
-        val words = EditorWords()
+        val words = pageEditorWords()
         fun labels(id: String) = talkBackActions(row(id), order, words) {}.map { it.label }
         assertEquals(listOf("Move down", "Move to bottom"), labels("plan"))
         assertEquals(
@@ -114,13 +113,13 @@ class OverviewEditorTest {
     @Test
     fun aTalkBackActionHandsOverTheMovedOrder() {
         var got: List<String>? = null
-        val actions = talkBackActions(row("hero"), order, EditorWords()) { got = it }
+        val actions = talkBackActions(row("hero"), order, pageEditorWords()) { got = it }
         actions.first { it.label == "Move to top" }.action()
         assertEquals(listOf("hero", "plan", "next", "attrs", "week"), got)
     }
 
     @Test
-    fun aDragLiftsCrossesAndDropsWithThePagesBuzzes() {
+    fun aDragLiftsAndCrossesWithThePagesBuzzesAndLeavesTheDropsToTheSave() {
         val buzzes = mutableListOf<EditorBuzz>()
         val state =
             ReorderState(order, immediate, reduced = true, gap = 8f, buzz = { buzzes += it })
@@ -133,7 +132,8 @@ class OverviewEditorTest {
         state.drop { dropped = it }
         assertEquals(listOf("plan", "hero", "next", "attrs", "week"), dropped)
         assertEquals(dropped, state.order)
-        assertEquals(listOf(EditorBuzz.Lift, EditorBuzz.Cross, EditorBuzz.Drop), buzzes)
+        // the drop's buzz comes once the page has stored the order (OverviewEditController)
+        assertEquals(listOf(EditorBuzz.Lift, EditorBuzz.Cross), buzzes)
         assertNull(state.dragging)
     }
 

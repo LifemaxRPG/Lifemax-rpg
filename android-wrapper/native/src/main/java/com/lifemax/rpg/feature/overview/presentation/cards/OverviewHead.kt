@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PixelIcon
 import com.lifemax.rpg.core.designsystem.components.pageShadow
 import com.lifemax.rpg.core.designsystem.components.tapTarget
+import com.lifemax.rpg.core.designsystem.mix
 import com.lifemax.rpg.feature.character.presentation.components.CharacterClassCrest
 import com.lifemax.rpg.feature.overview.domain.OverviewHead
 import com.lifemax.rpg.feature.overview.domain.OverviewTip
@@ -37,10 +38,11 @@ import com.lifemax.rpg.feature.overview.presentation.LocalOverviewColors
 
 /**
  * The head (.ov-head): the date in the accent, the greeting (the page's h1), and on the right the
- * Edit button above the class crest (none without a class).
+ * Edit button above the class crest (none without a class). The button is lit while the editor is
+ * open ([editing]), as the page's .ov-editbtn.on.
  */
 @Composable
-internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit) {
+internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit, editing: Boolean = false) {
     val c = LocalOverviewColors.current
     Row(
         Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 14.dp),
@@ -70,7 +72,7 @@ internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit) {
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            EditButton(head, onEdit)
+            EditButton(head, onEdit, editing)
             if (head.classId.isNotEmpty())
                 CharacterClassCrest(head.classId, Modifier.size(54.dp).clearAndSetSemantics {})
         }
@@ -79,24 +81,25 @@ internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit) {
 
 /** .ov-editbtn: the grid icon and "Edit" in a pill; TalkBack says what it edits. */
 @Composable
-private fun EditButton(head: OverviewHead, onEdit: () -> Unit) {
+private fun EditButton(head: OverviewHead, onEdit: () -> Unit, on: Boolean) {
     val c = LocalOverviewColors.current
     val shape = RoundedCornerShape(99.dp)
+    val ink = if (on) c.text else c.muted
     Row(
         Modifier.tapTarget(Role.Button, onClick = onEdit)
             .clearAndSetSemantics { contentDescription = head.editA11y }
             .clip(shape)
             .heightIn(min = 32.dp)
-            .background(c.editFill)
-            .border(1.dp, c.line, shape)
+            .background(if (on) c.accent.mix(0.12f, c.panel) else c.editFill)
+            .border(1.dp, if (on) c.accent.copy(alpha = 0.55f) else c.line, shape)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PixelIcon("grid", c.muted, Modifier.size(12.dp).alpha(0.85f))
+        PixelIcon("grid", ink, Modifier.size(12.dp).alpha(0.85f))
         Text(
             head.editLabel,
-            color = c.muted,
+            color = ink,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
             lineHeight = 18.75.sp,

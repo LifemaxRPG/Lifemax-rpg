@@ -17,9 +17,9 @@ import org.json.JSONObject
  * The Overview's cards (Native Overview cards, beta): the page decides and words every card and
  * stays the only writer; the screen draws its projection (`overview.cards.v1`), hands page views
  * over with "navigate" and asks the page for everything else with commands (plan, attr, luck, shop,
- * health, appLaunch, appAdd, appsEdit, tip, edit). The page's live Overview (NativeOverviewPlugin)
- * is a separate drawing of the same view; this one uses the shared bars like every other native
- * tab.
+ * health, appLaunch, appAdd, appsEdit, tip, layout, layoutReset). The page's live Overview
+ * (NativeOverviewPlugin) is a separate drawing of the same view; this one uses the shared bars like
+ * every other native tab.
  */
 @CapacitorPlugin(name = "NativeOverviewCards")
 class NativeOverviewCardsPlugin : ComposeTabPlugin() {

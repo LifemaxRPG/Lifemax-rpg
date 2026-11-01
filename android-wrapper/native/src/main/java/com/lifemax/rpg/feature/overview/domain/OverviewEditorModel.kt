@@ -1,13 +1,9 @@
 package com.lifemax.rpg.feature.overview.domain
 
-// align at merge: these are the editor's own minimal types until the projection's decoder
-// (OverviewCards.kt / OverviewProjection.kt) lands. A row is one `tileInfo[]` entry joined with
-// `layout {order, hidden}`; the words are 31-overview-edit.js's until the page projects them.
-
 /**
  * One row of the Overview editor, in the layout's order: the tile's [id] ("plan", "hero", ...), its
- * [name], its [sub] (or the page's note on why it may be empty, `tileInfo[].note`, when it has
- * one), its pixel [icon], its colour as 0xAARRGGBB and whether it is [hidden].
+ * [name], its [sub] (or the page's note on why it may be empty, when it has one), its pixel [icon],
+ * its colour as 0xAARRGGBB and whether it is [hidden]. Made from the projection by [editorRows].
  */
 data class EditorRow(
     val id: String,
@@ -18,24 +14,50 @@ data class EditorRow(
     val hidden: Boolean = false,
 )
 
-/** The editor's words, the page's own (31-overview-edit.js: ovEditOpen, ovEditRowsHtml). */
+/**
+ * The rows the page's editor lists (ovEditRowsHtml): every tile of [layout]'s order that [info]
+ * names, its words "note or sub" as the page has them, hidden or not.
+ */
+fun editorRows(layout: OverviewLayout, info: List<TileInfo>): List<EditorRow> {
+    val byId = info.associateBy { it.id }
+    return layout.order.mapNotNull { id ->
+        byId[id]?.let {
+            EditorRow(
+                it.id,
+                it.name,
+                it.note.ifEmpty { it.sub },
+                it.icon,
+                it.color,
+                id in layout.hidden,
+            )
+        }
+    }
+}
+
+/**
+ * The editor's words, the page's own (OV_EDIT_WORDS in 31-overview-edit.js, projected as `editor`):
+ * its head, Done, Reset, a hidden row's line, the eye's "Hide "/"Show " before the tile's name, and
+ * the TalkBack moves.
+ */
 data class EditorWords(
-    val title: String = "Edit Overview",
-    val hint: String = "Drag to reorder. Tap the eye to hide a tile.",
-    val done: String = "Done",
-    val reset: String = "Reset to default",
-    val hiddenSub: String = "Hidden",
-    val hide: String = "Hide ",
-    val show: String = "Show ",
-    val moveUp: String = "Move up",
-    val moveDown: String = "Move down",
-    val moveTop: String = "Move to top",
-    val moveBottom: String = "Move to bottom",
+    val title: String,
+    val hint: String,
+    val done: String,
+    val reset: String,
+    val hiddenSub: String,
+    val hide: String,
+    val show: String,
+    val moveUp: String,
+    val moveDown: String,
+    val moveTop: String,
+    val moveBottom: String,
 )
 
 /**
  * The editor's buzzes, at the page's moments and lengths (haptic() in 31-overview-edit.js), on and
  * off in milliseconds starting on: the screen plays them through PageBuzz at the owner's strength.
+ * Open, Lift and Cross play at once; Drop, Toggle, Reset and Move only once the page has stored the
+ * change, as the page's own editor buzzes after its save.
  */
 enum class EditorBuzz(vararg val timings: Long) {
     Open(8),

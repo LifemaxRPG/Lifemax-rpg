@@ -75,8 +75,6 @@ internal class OverviewTaps(
 
     fun appsEdit() = step { commands.appsEdit() }
 
-    fun edit() = step { commands.edit() }
-
     /** A glance tap: [act] on [id] ("" or "glanceOpen" only opens Life Director). */
     fun plan(act: String, id: String) = step { commands.plan(act, id) }
 

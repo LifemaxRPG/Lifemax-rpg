@@ -151,7 +151,7 @@ class OverviewTest {
         assertEquals(5L, p.haptics!!.min)
         assertEquals(32.5f, p.celebrationTarget.y)
         assertTrue(p.celebrations.isEmpty())
-        assertEquals(0L, p.arrival)
+        assertTrue("the cards opened on an arrival", p.arrival > 0L)
         assertFalse(p.light)
     }
 
@@ -320,7 +320,12 @@ class OverviewTest {
             sent += command to payload
             "r${sent.size}"
         }
-        val calls: Map<String, () -> String> =
+        val order =
+            table.getJSONObject("layout").getJSONObject("payload").getJSONArray("order").let { a ->
+                (0 until a.length()).map { a.getString(it) }
+            }
+        // the page's own editor (edit) is no longer asked: the native editor sends layout
+        val calls: Map<String, (() -> String)?> =
             mapOf(
                 "tip" to { wire.tip("op-1") },
                 "luck" to { wire.luck("op-2") },
@@ -330,17 +335,24 @@ class OverviewTest {
                 "appLaunch" to { wire.appLaunch("com.example.maps") },
                 "appAdd" to { wire.appAdd() },
                 "appsEdit" to { wire.appsEdit() },
-                "edit" to { wire.edit() },
+                "edit" to null,
+                "layout" to { wire.layout(order, listOf("luck")) },
+                "layoutReset" to { wire.layoutReset() },
                 "planOpen" to { wire.plan("", "") },
                 "planGone" to { wire.plan("inst", "no-such-session") },
             )
         for ((name, call) in calls) {
             val row = table.getJSONObject(name)
+            if (call == null) continue
             call()
             val (command, payload) = sent.last()
             assertEquals(name, row.getString("command"), command)
             val want = row.getJSONObject("payload")
-            for (k in want.keys()) assertEquals("$name.$k", want.get(k), payload.get(k))
+            for (k in want.keys()) assertEquals(
+                "$name.$k",
+                want.get(k).toString(),
+                payload.get(k).toString(),
+            )
             val extra = payload.keys().asSequence().toSet() - want.keys().asSequence().toSet()
             assertTrue("$name sends $extra", extra.isEmpty() || extra == setOf("op"))
         }

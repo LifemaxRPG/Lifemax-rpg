@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
+import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.core.designsystem.feedback.PageCelebrations
+import com.lifemax.rpg.core.designsystem.feedback.play
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.presentation.glance.DirectorGlance
 import com.lifemax.rpg.feature.overview.data.OverviewViews
@@ -55,11 +57,18 @@ fun OverviewRoute(
     bottomInsetDp: Float,
     emit: (action: String, id: String) -> Unit,
 ) {
-    SideEffect { vm.onNavigate = { emit("navigate", it) } }
+    val buzz = LocalPageBuzz.current
+    SideEffect {
+        vm.onNavigate = { emit("navigate", it) }
+        vm.onBuzz = { buzz?.play(vm.cards?.haptics, *it.timings) }
+    }
     LaunchedEffect(visible) { if (!visible) vm.hidden() }
     val cards = vm.cards ?: return
     val actions = remember(vm) { OverviewActions(vm) }
     val arrival = rememberOverviewArrival(vm.arrival.playing, cards.sessions, vm.arrival::played)
+    val ed = vm.editor
+    val editing =
+        OverviewEditing(ed.editing, ed.rows, ed::reorder, ed::toggle, ed::reset, ed::close)
     OverviewScreen(
         cards,
         actions,
@@ -68,6 +77,7 @@ fun OverviewRoute(
         bottomInsetDp,
         vm.weekDay,
         vm.notice,
+        editing = editing,
         arrival = arrival,
     )
 }
@@ -106,7 +116,7 @@ class OverviewActions(
         appAdd = vm.taps::appAdd,
         appsEdit = vm.taps::appsEdit,
         plan = vm.taps::plan,
-        edit = vm.taps::edit,
+        edit = vm.editor::toggleEditing,
         dismissTip = vm.taps::dismissTip,
         pickDay = vm::pickDay,
         noticeShown = vm::noticeShown,
@@ -120,7 +130,8 @@ class OverviewActions(
  * (fxSink) drawn over everything, each once, from the page's last tap to the logo, only while
  * [visible]. [celebrationAt] freezes the first at a moment (screenshots). [arrival] is the page's
  * arrival being played (OverviewArrival): the rows rise in turn, the ring, bars and count move, and
- * the glance's dial arrives off the same clock; null draws everything still.
+ * the glance's dial arrives off the same clock; null draws everything still. While [editing] is
+ * open its editor stands in place of the tiles, as the page's #ovEdit does.
  */
 @Composable
 fun OverviewScreen(
@@ -131,6 +142,7 @@ fun OverviewScreen(
     bottomInsetDp: Float = 72f,
     weekDay: Int = cards.tiles.week.selected,
     notice: OverviewNotice? = null,
+    editing: OverviewEditing = OverviewEditing(),
     list: LazyListState = rememberLazyListState(),
     celebrationAt: Float = 0f,
     arrival: OverviewArrivalRun? = null,
@@ -151,24 +163,35 @@ fun OverviewScreen(
                     ),
             ) {
                 item("head", "head") {
-                    Rise(arrival, 0) { OverviewHeadRow(cards.head, actions.edit) }
+                    Rise(arrival, 0) { OverviewHeadRow(cards.head, actions.edit, editing.open) }
                 }
                 cards.tip?.let { tip ->
                     item("tip", "tip") {
                         Rise(arrival, 1) { OverviewTipCard(tip, actions.dismissTip) }
                     }
                 }
-                val first = if (cards.tip != null) 2 else 1
-                itemsIndexed(
-                    cards.shown,
-                    key = { _, id -> "tile/$id" },
-                    contentType = { _, id -> id },
-                ) { i, id ->
-                    Rise(arrival, first + i) {
-                        Tile(id, cards, actions, visible, weekDay, images, arrival)
+                if (editing.open)
+                    item("editor", "editor") { OverviewEditorItem(cards, editing, visible, list) }
+                else {
+                    val first = if (cards.tip != null) 2 else 1
+                    itemsIndexed(
+                        cards.shown,
+                        key = { _, id -> "tile/$id" },
+                        contentType = { _, id -> id },
+                    ) { i, id ->
+                        Rise(arrival, first + i) {
+                            Tile(id, cards, actions, visible, weekDay, images, arrival)
+                        }
                     }
                 }
             }
+            FollowEditor(
+                editing.open,
+                if (cards.tip != null) 2 else 1,
+                list,
+                cards.reducedMotion,
+                visible,
+            )
             if (visible && notice != null)
                 NoticeToast(
                     notice,

@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.overview.data
 
 import com.lifemax.rpg.feature.overview.domain.OverviewCommands
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -31,7 +32,10 @@ class OverviewCommandSender(private val send: (command: String, payload: JSONObj
 
     override fun tip(op: String) = send(TIP, JSONObject().put("op", op))
 
-    override fun edit() = send(EDIT, JSONObject())
+    override fun layout(order: List<String>, hidden: List<String>) =
+        send(LAYOUT, JSONObject().put("order", JSONArray(order)).put("hidden", JSONArray(hidden)))
+
+    override fun layoutReset() = send(LAYOUT_RESET, JSONObject())
 
     companion object {
         const val PLAN = "plan"
@@ -43,7 +47,8 @@ class OverviewCommandSender(private val send: (command: String, payload: JSONObj
         const val APP_ADD = "appAdd"
         const val APPS_EDIT = "appsEdit"
         const val TIP = "tip"
-        const val EDIT = "edit"
+        const val LAYOUT = "layout"
+        const val LAYOUT_RESET = "layoutReset"
     }
 }
 

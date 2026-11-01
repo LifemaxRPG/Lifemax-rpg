@@ -166,10 +166,8 @@ internal class ReorderState(
             lift.animateTo(0f, motion(SETTLE_MS))
             if (dragging == null) raised = null
         }
-        if (changed) {
-            onMoved(next)
-            buzz(EditorBuzz.Drop)
-        }
+        // the drop's buzz is the caller's, once the page has stored the new order
+        if (changed) onMoved(next)
     }
 
     private fun motion(ms: Int): AnimationSpec<Float> = tween(if (reduced) 0 else ms, 0, EditorEase)

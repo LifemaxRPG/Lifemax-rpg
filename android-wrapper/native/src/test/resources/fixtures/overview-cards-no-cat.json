@@ -118,6 +118,19 @@
    "color": 4287931320
   }
  ],
+ "editor": {
+  "title": "Edit Overview",
+  "hint": "Drag to reorder. Tap the eye to hide a tile.",
+  "done": "Done",
+  "reset": "Reset to default",
+  "hidden": "Hidden",
+  "hide": "Hide ",
+  "show": "Show ",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "moveTop": "Move to top",
+  "moveBottom": "Move to bottom"
+ },
  "tiles": {
   "plan": {
    "state": "setup",
@@ -639,6 +652,7 @@
   "min": 5,
   "max": 260
  },
+ "arrival": 1792013400000,
  "notice": null,
  "tokens": {
   "bg": 4278980114,

@@ -491,6 +491,9 @@
  "OV_DEFAULT": [
   "src/runtime/segments/31-overview-edit.js"
  ],
+ "OV_EDIT_WORDS": [
+  "src/runtime/segments/31-overview-edit.js"
+ ],
  "OV_SEL": [
   "src/runtime/segments/17-runtime.js"
  ],
