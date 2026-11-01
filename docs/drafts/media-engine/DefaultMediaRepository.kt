@@ -38,15 +38,21 @@ class DefaultMediaRepository(
 
     override val state: StateFlow<MediaLibraryState> = mutableState.asStateFlow()
 
+    /**
+     * Loads the store. A store that cannot be read fails here (the screen shows Media read-only with the reason) and is never
+     * replaced by an empty one. Orphaned audio is swept aside (never deleted, FileAudioBinaryStore.sweepOrphans) only when the
+     * store came from the live file: a store restored from its backup may be older than the audio on disk, and a first run has
+     * nothing to compare with.
+     */
     override suspend fun initialize(): Result<MediaLibraryState> =
         mutex.withLock {
-            val loaded = persistenceStore.load()
-            if (loaded.isFailure) return@withLock Result.failure(loaded.exceptionOrNull()!!)
-            currentSnapshot = loaded.getOrThrow()
+            val loaded = persistenceStore.load().getOrElse { return@withLock Result.failure(it) }
+            currentSnapshot = loaded.snapshot
             mutableState.value = currentSnapshot.toLibraryState()
-            val activeAudioFiles =
-                currentSnapshot.items.mapNotNull { it.audio?.localFileName }.toSet()
-            runCatching { audioBinaryStore.cleanupOrphans(activeAudioFiles) }
+            if (loaded.source == SnapshotSource.LIVE) {
+                val activeAudioFiles = currentSnapshot.items.mapNotNull { it.audio?.localFileName }.toSet()
+                runCatching { audioBinaryStore.sweepOrphans(activeAudioFiles) }
+            }
             Result.success(mutableState.value)
         }
 
@@ -148,6 +154,11 @@ class DefaultMediaRepository(
         }
     }
 
+    /**
+     * Copies the audio in first, outside the store's lock, so a long copy (up to 512 MB) never holds up other commands; then
+     * commits under the lock. A copy whose command turns out to be a repeat, a conflict or a stale request, or whose item went
+     * away meanwhile, is discarded.
+     */
     override suspend fun attachAudio(
         context: MediaOperationContext,
         itemId: String,
@@ -163,47 +174,57 @@ class DefaultMediaRepository(
                 descriptor.sizeBytes.toString(),
                 descriptor.expectedSha256,
             )
-        // Stage binary before holding commit lock so large streams do not block reads,
-        // or inside executeSerialized if deduplication check should short-circuit first.
-        return executeSerialized(context, "attachAudio", hash) { snap ->
-            val idx = snap.items.indexOfFirst { it.id == itemId }
-            if (idx < 0) throw MediaValidationException(MediaError.ItemNotFound(itemId))
-            val existing = snap.items[idx]
-            val oldFileName = existing.audio?.localFileName
-            val staged = audioBinaryStore.stageAudioStream(itemId, descriptor, inputStream).getOrThrow()
-            val nextRev = snap.authorityRevision + 1L
-            val targetFileName = "${FileAudioBinaryStore.sanitizeId(itemId)}_r$nextRev.audio"
-
-            val promoteRes = audioBinaryStore.promoteStagedFile(staged, targetFileName)
-            if (promoteRes.isFailure) {
-                audioBinaryStore.discardStagedFile(staged)
-                throw promoteRes.exceptionOrNull()!!
+        // a cheap look first: a repeat, a conflict or a missing item needs no copy at all
+        mutex.withLock {
+            val snap = currentSnapshot
+            val early = preflight(snap, context, "attachAudio", hash)
+            if (early != null) return early
+            if (snap.items.none { it.id == itemId }) {
+                return MediaCommandResult.Failure(MediaError.ItemNotFound(itemId), snap.toLibraryState())
             }
-
-            val nowMs = clock.nowEpochMs()
-            val updated =
-                MediaDomainRules.applyAudioAttachment(
-                    item = existing,
-                    descriptor = descriptor.copy(sizeBytes = staged.actualSizeBytes),
-                    localFileName = targetFileName,
-                    sha256 = staged.sha256,
-                    nowEpochMs = nowMs,
-                    nowIso = clock.nowIsoUtc(),
-                )
-            val nextItems = snap.items.toMutableList().also { it[idx] = updated }
-            StagedMutation(
-                nextItems = nextItems,
-                nextSeeded = snap.mediaSeededV1,
-                affectedItemId = itemId,
-                message = "Audio attached",
-                onCommitFailed = { audioBinaryStore.deleteCommittedFile(targetFileName) },
-                afterCommit = {
-                    if (!oldFileName.isNullOrBlank() && oldFileName != targetFileName) {
-                        audioBinaryStore.deleteCommittedFile(oldFileName)
-                    }
-                },
-            )
         }
+        val staged =
+            audioBinaryStore.stageAudioStream(itemId, descriptor, inputStream).getOrElse { e ->
+                val err = (e as? MediaValidationException)?.mediaError ?: MediaError.StorageWriteFailed(e.message ?: "Copy failed")
+                return MediaCommandResult.Failure(err, state.value)
+            }
+        var promoted: String? = null
+        val result =
+            executeSerialized(context, "attachAudio", hash) { snap ->
+                val idx = snap.items.indexOfFirst { it.id == itemId }
+                if (idx < 0) throw MediaValidationException(MediaError.ItemNotFound(itemId))
+                val existing = snap.items[idx]
+                val oldFileName = existing.audio?.localFileName
+                val targetFileName = "${FileAudioBinaryStore.sanitizeId(itemId)}_r${snap.authorityRevision + 1L}.audio"
+                audioBinaryStore.promoteStagedFile(staged, targetFileName).getOrThrow()
+                promoted = targetFileName
+                val updated =
+                    MediaDomainRules.applyAudioAttachment(
+                        item = existing,
+                        descriptor = descriptor.copy(sizeBytes = staged.actualSizeBytes),
+                        localFileName = targetFileName,
+                        sha256 = staged.sha256,
+                        nowEpochMs = clock.nowEpochMs(),
+                        nowIso = clock.nowIsoUtc(),
+                    )
+                StagedMutation(
+                    nextItems = snap.items.toMutableList().also { it[idx] = updated },
+                    nextSeeded = snap.mediaSeededV1,
+                    affectedItemId = itemId,
+                    message = "Audio attached",
+                    onCommitFailed = { audioBinaryStore.deleteCommittedFile(targetFileName) },
+                    afterCommit = {
+                        if (!oldFileName.isNullOrBlank() && oldFileName != targetFileName) audioBinaryStore.deleteCommittedFile(oldFileName)
+                    },
+                )
+            }
+        // not committed (a repeat, a conflict, a vanished item, a failed write): nothing the copy made may stay behind
+        val committed = result is MediaCommandResult.Success && !result.deduplicated
+        if (!committed) {
+            val file = promoted
+            if (file == null) audioBinaryStore.discardStagedFile(staged) else audioBinaryStore.deleteCommittedFile(file)
+        }
+        return result
     }
 
     override suspend fun removeAudio(
@@ -230,67 +251,85 @@ class DefaultMediaRepository(
         }
     }
 
+    /**
+     * Before playing: a file that is where the item says writes nothing and answers "Ready to play" (deduplicated = true:
+     * nothing was committed). A missing file is repaired as the page does (08-runtime.js:50-55): the attachment is cleared and
+     * saved, and the answer is AudioFileMissing.
+     */
     override suspend fun verifyAndPreparePlayback(
         context: MediaOperationContext,
         itemId: String,
     ): MediaCommandResult {
+        mutex.withLock {
+            val snap = currentSnapshot
+            val item = snap.items.firstOrNull { it.id == itemId }
+                ?: return MediaCommandResult.Failure(MediaError.ItemNotFound(itemId), snap.toLibraryState())
+            val audio = item.audio ?: return MediaCommandResult.Failure(MediaError.AudioFileMissing, snap.toLibraryState())
+            val fileOk = !audio.localFileName.isNullOrBlank() && audioBinaryStore.verifyCommittedFile(audio.localFileName, audio.sizeBytes)
+            if (fileOk) {
+                // NEEDS (not supplied): if CommitReceipt cannot describe "nothing written", give MediaCommandResult a Ready case
+                val nothingWritten =
+                    CommitReceipt(context.operationId, context.clientId, context.clientSequence, "verifyAndPreparePlayback",
+                        MediaCanonicalHash.sha256("verifyAndPreparePlayback", itemId), snap.authorityRevision, clock.nowEpochMs(), itemId, "Ready to play")
+                return MediaCommandResult.Success(snap.toLibraryState(), nothingWritten, deduplicated = true)
+            }
+        }
         val hash = MediaCanonicalHash.sha256("verifyAndPreparePlayback", itemId)
         return executeSerialized(context, "verifyAndPreparePlayback", hash) { snap ->
             val idx = snap.items.indexOfFirst { it.id == itemId }
             if (idx < 0) throw MediaValidationException(MediaError.ItemNotFound(itemId))
-            val item = snap.items[idx]
-            val audio = item.audio ?: throw MediaValidationException(MediaError.AudioFileMissing)
-            val fileOk =
-                !audio.localFileName.isNullOrBlank() &&
-                    audioBinaryStore.verifyCommittedFile(audio.localFileName, audio.sizeBytes)
-            if (!fileOk) {
-                // Reconcile missing file exactly like 08-runtime.js:50-55: clear item.audio and save
-                val cleared = item.copy(audio = null, updatedAtIso = clock.nowIsoUtc())
-                val nextItems = snap.items.toMutableList().also { it[idx] = cleared }
-                StagedMutation(
-                    nextItems = nextItems,
-                    nextSeeded = snap.mediaSeededV1,
-                    affectedItemId = itemId,
-                    message = MediaError.AudioFileMissing.userMessage,
-                    postCommitError = MediaError.AudioFileMissing,
-                )
-            } else {
-                StagedMutation(snap.items, snap.mediaSeededV1, itemId, "Ready to play")
-            }
+            val cleared = snap.items[idx].copy(audio = null, updatedAtIso = clock.nowIsoUtc())
+            StagedMutation(
+                nextItems = snap.items.toMutableList().also { it[idx] = cleared },
+                nextSeeded = snap.mediaSeededV1,
+                affectedItemId = itemId,
+                message = MediaError.AudioFileMissing.userMessage,
+                postCommitError = MediaError.AudioFileMissing,
+            )
         }
     }
 
-    override suspend fun updatePlaybackProgress(
-        context: MediaOperationContext,
-        itemId: String,
-        positionSeconds: Double,
-        durationSeconds: Double,
-    ): MediaCommandResult {
-        val safePos = positionSeconds.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
-        val safeDur = durationSeconds.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
-        val hash =
-            MediaCanonicalHash.sha256(
-                "updatePlaybackProgress",
-                itemId,
-                "%.3f".format(java.util.Locale.US, safePos),
-                "%.3f".format(java.util.Locale.US, safeDur),
-            )
-        return executeSerialized(context, "updatePlaybackProgress", hash) { snap ->
+    /**
+     * Playback position: last write wins, so no receipt and no sequence check (a receipt per tick would push the receipts of
+     * real changes out of the 256 kept per client). The position is published at once and written at most every
+     * [PROGRESS_WRITE_MS], and always by [flushPlaybackProgress] (pause, the app going to the background, end of the file).
+     * NEEDS (not supplied): MediaRepository's updatePlaybackProgress(context, ...) is replaced by these two.
+     */
+    suspend fun recordPlaybackProgress(itemId: String, positionSeconds: Double, durationSeconds: Double): Result<MediaLibraryState> =
+        mutex.withLock {
+            val snap = currentSnapshot
             val idx = snap.items.indexOfFirst { it.id == itemId }
-            if (idx < 0) throw MediaValidationException(MediaError.ItemNotFound(itemId))
+            if (idx < 0) return@withLock Result.failure(MediaValidationException(MediaError.ItemNotFound(itemId)))
             val item = snap.items[idx]
-            val audio = item.audio ?: throw MediaValidationException(MediaError.AudioFileMissing)
+            val audio = item.audio ?: return@withLock Result.failure(MediaValidationException(MediaError.AudioFileMissing))
+            val safePos = positionSeconds.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
+            val safeDur = durationSeconds.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
             val resolvedDur = if (safeDur > 0.0) safeDur else audio.durationSeconds
             val clampedPos = if (resolvedDur > 0.0) safePos.coerceIn(0.0, resolvedDur) else safePos
-            val updatedAudio =
-                audio.copy(
-                    positionSeconds = clampedPos,
-                    durationSeconds = resolvedDur,
-                    updatedAtEpochMs = clock.nowEpochMs(),
+            val updatedItem =
+                item.copy(
+                    audio = audio.copy(positionSeconds = clampedPos, durationSeconds = resolvedDur, updatedAtEpochMs = clock.nowEpochMs()),
+                    updatedAtIso = clock.nowIsoUtc(),
                 )
-            val updatedItem = item.copy(audio = updatedAudio, updatedAtIso = clock.nowIsoUtc())
-            val nextItems = snap.items.toMutableList().also { it[idx] = updatedItem }
-            StagedMutation(nextItems, snap.mediaSeededV1, itemId, "Progress saved")
+            currentSnapshot = snap.copy(items = snap.items.toMutableList().also { it[idx] = updatedItem })
+            mutableState.value = currentSnapshot.toLibraryState()
+            progressDirty = true
+            if (clock.nowEpochMs() - lastProgressWriteMs >= PROGRESS_WRITE_MS) writeProgress()
+            Result.success(mutableState.value)
+        }
+
+    /** Writes a position not yet written. A failed write keeps it pending for the next try. */
+    suspend fun flushPlaybackProgress(): Result<Unit> = mutex.withLock { writeProgress() }
+
+    private var progressDirty = false
+    private var lastProgressWriteMs = 0L
+
+    /* under the lock: the store as it is, revision unchanged (a position is not a change other clients must order against) */
+    private suspend fun writeProgress(): Result<Unit> {
+        if (!progressDirty) return Result.success(Unit)
+        return persistenceStore.commit(currentSnapshot).onSuccess {
+            progressDirty = false
+            lastProgressWriteMs = clock.nowEpochMs()
         }
     }
 
@@ -350,6 +389,11 @@ class DefaultMediaRepository(
             Result.success(mutableState.value)
         }
 
+    companion object {
+        /** how often a playing position is written at most */
+        const val PROGRESS_WRITE_MS = 15_000L
+    }
+
     private class StagedMutation(
         val nextItems: List<MediaItem>,
         val nextSeeded: Boolean,
@@ -368,42 +412,8 @@ class DefaultMediaRepository(
     ): MediaCommandResult =
         mutex.withLock {
             val snap = currentSnapshot
-            if (context.expectedEpoch != snap.saveEpoch) {
-                return@withLock MediaCommandResult.Failure(
-                    MediaError.InvalidEpoch(context.expectedEpoch, snap.saveEpoch),
-                    snap.toLibraryState(),
-                )
-            }
-
-            val existingReceipt = snap.receipts.firstOrNull { it.operationId == context.operationId }
-            if (existingReceipt != null) {
-                return@withLock if (existingReceipt.payloadHash == payloadHash &&
-                    existingReceipt.commandName == commandName
-                ) {
-                    MediaCommandResult.Success(
-                        state = snap.toLibraryState(),
-                        receipt = existingReceipt,
-                        deduplicated = true,
-                    )
-                } else {
-                    MediaCommandResult.Failure(
-                        MediaError.OperationConflict(context.operationId),
-                        snap.toLibraryState(),
-                    )
-                }
-            }
-
+            preflight(snap, context, commandName, payloadHash)?.let { return@withLock it }
             val clientHwm = snap.clientHighWaterMarks[context.clientId] ?: 0L
-            if (context.clientSequence <= clientHwm) {
-                return@withLock MediaCommandResult.Failure(
-                    MediaError.StaleOrEvictedOperation(
-                        context.operationId,
-                        context.clientSequence,
-                        clientHwm,
-                    ),
-                    snap.toLibraryState(),
-                )
-            }
 
             val staged =
                 try {
@@ -456,6 +466,7 @@ class DefaultMediaRepository(
             }
 
             currentSnapshot = candidateSnapshot
+            progressDirty = false // the snapshot just written carries any pending position
             val publishedState = candidateSnapshot.toLibraryState()
             mutableState.value = publishedState
             runCatching { staged.afterCommit?.invoke() }
@@ -465,6 +476,29 @@ class DefaultMediaRepository(
             }
             MediaCommandResult.Success(publishedState, receipt, deduplicated = false)
         }
+
+    /** The answer a command gets before any work: a wrong epoch, a repeat (the stored receipt), a conflict, or a stale request. */
+    private fun preflight(snap: MediaStoreSnapshot, context: MediaOperationContext, commandName: String, payloadHash: String): MediaCommandResult? {
+        if (context.expectedEpoch != snap.saveEpoch) {
+            return MediaCommandResult.Failure(MediaError.InvalidEpoch(context.expectedEpoch, snap.saveEpoch), snap.toLibraryState())
+        }
+        val existing = snap.receipts.firstOrNull { it.operationId == context.operationId }
+        if (existing != null) {
+            return if (existing.payloadHash == payloadHash && existing.commandName == commandName) {
+                MediaCommandResult.Success(state = snap.toLibraryState(), receipt = existing, deduplicated = true)
+            } else {
+                MediaCommandResult.Failure(MediaError.OperationConflict(context.operationId), snap.toLibraryState())
+            }
+        }
+        val clientHwm = snap.clientHighWaterMarks[context.clientId] ?: 0L
+        if (context.clientSequence <= clientHwm) {
+            return MediaCommandResult.Failure(
+                MediaError.StaleOrEvictedOperation(context.operationId, context.clientSequence, clientHwm),
+                snap.toLibraryState(),
+            )
+        }
+        return null
+    }
 
     private fun pruneReceipts(all: List<CommitReceipt>): List<CommitReceipt> {
         val byClient = all.groupBy { it.clientId }

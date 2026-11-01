@@ -91,53 +91,56 @@ data class MediaStoreSnapshot(
                 items = emptyList(),
             )
 
+        /**
+         * Reads the store strictly: a missing or wrong-kind field is an error, never a default. This is the authoritative copy
+         * once native owns Media, so a damaged field must not quietly turn into "web owns it" (an older copy winning) or an
+         * empty list. The caller treats the failure as an unreadable file (AtomicJsonFileMediaStore falls back to its backup).
+         */
         fun fromJson(root: JSONObject): MediaStoreSnapshot {
-            val schema = root.optInt("schemaVersion", 1)
+            val schema = root.requireInt("schemaVersion")
             if (schema > CURRENT_SCHEMA_VERSION) {
                 throw MediaValidationException(
                     MediaError.UnsupportedSchemaVersion(schema, CURRENT_SCHEMA_VERSION)
                 )
             }
-            val epoch = root.optString("saveEpoch", "media-epoch-initial").ifBlank { "media-epoch-initial" }
-            val revision = root.optLong("authorityRevision", 0L).coerceAtLeast(0L)
+            require(schema >= 1) { "schemaVersion $schema is not a version" }
+            val epoch = root.requireString("saveEpoch")
+            require(epoch.isNotBlank()) { "saveEpoch is blank" }
+            val revision = root.requireLong("authorityRevision")
+            require(revision >= 0L) { "authorityRevision is negative" }
+            val modeName = root.requireString("authorityMode")
             val mode =
-                runCatching { AuthorityMode.valueOf(root.optString("authorityMode", "WEB_OWNED")) }
-                    .getOrDefault(AuthorityMode.WEB_OWNED)
-            val seeded = root.optBoolean("mediaSeededV1", false)
+                AuthorityMode.values().firstOrNull { it.name == modeName }
+                    ?: throw IllegalArgumentException("Unknown authorityMode $modeName")
+            val seeded = root.requireBoolean("mediaSeededV1")
 
             val hwmMap = mutableMapOf<String, Long>()
-            root.optJSONObject("clientHighWaterMarks")?.let { obj ->
-                val keys = obj.keys()
-                while (keys.hasNext()) {
-                    val k = keys.next()
-                    hwmMap[k] = obj.optLong(k, 0L)
-                }
-            }
+            val hwm = root.requireObject("clientHighWaterMarks")
+            for (k in hwm.keys()) hwmMap[k] = hwm.requireLong(k).also { require(it >= 0L) { "high-water mark of $k is negative" } }
 
             val receiptsList = mutableListOf<CommitReceipt>()
-            root.optJSONArray("receipts")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val r = arr.optJSONObject(i) ?: continue
-                    val opId = r.optString("operationId")
-                    if (opId.isBlank()) continue
-                    receiptsList +=
-                        CommitReceipt(
-                            operationId = opId,
-                            clientId = r.optString("clientId", "default"),
-                            clientSequence = r.optLong("clientSequence", 1L),
-                            commandName = r.optString("commandName"),
-                            payloadHash = r.optString("payloadHash"),
-                            resultingRevision = r.optLong("resultingRevision", 0L),
-                            committedAtEpochMs = r.optLong("committedAtEpochMs", 0L),
-                            affectedItemId =
-                                if (r.isNull("affectedItemId")) null
-                                else r.optString("affectedItemId").takeIf { it.isNotEmpty() },
-                            message = r.optString("message", ""),
-                        )
-                }
+            val receipts = root.requireArray("receipts")
+            for (i in 0 until receipts.length()) {
+                val r = receipts.get(i) as? JSONObject ?: throw IllegalArgumentException("receipt $i is not an object")
+                val opId = r.requireString("operationId")
+                require(opId.isNotBlank()) { "receipt $i has no operationId" }
+                receiptsList +=
+                    CommitReceipt(
+                        operationId = opId,
+                        clientId = r.requireString("clientId"),
+                        clientSequence = r.requireLong("clientSequence"),
+                        commandName = r.requireString("commandName"),
+                        payloadHash = r.requireString("payloadHash"),
+                        resultingRevision = r.requireLong("resultingRevision"),
+                        committedAtEpochMs = r.requireLong("committedAtEpochMs"),
+                        affectedItemId = if (r.isNull("affectedItemId")) null else r.requireString("affectedItemId"),
+                        message = r.requireString("message"),
+                    )
             }
 
-            val itemsList = LegacySaveMediaAdapter.parseItemsArray(root.optJSONArray("items"))
+            // NEEDS (not supplied): parseItemsArray must be strict in the same way for the native store; the lenient legacy
+            // import (duplicate ids repaired, unknown fields kept) belongs to importFromLegacySaveJson only.
+            val itemsList = LegacySaveMediaAdapter.parseItemsArray(root.requireArray("items"))
             return MediaStoreSnapshot(
                 schemaVersion = schema,
                 saveEpoch = epoch,
@@ -151,3 +154,31 @@ data class MediaStoreSnapshot(
         }
     }
 }
+
+/* Strict readers: present and of the right kind, or an IllegalArgumentException naming the field. */
+private fun JSONObject.need(name: String): Any {
+    require(has(name) && !isNull(name)) { "$name is missing" }
+    return get(name)
+}
+
+internal fun JSONObject.requireString(name: String): String =
+    need(name) as? String ?: throw IllegalArgumentException("$name is not text")
+
+internal fun JSONObject.requireBoolean(name: String): Boolean =
+    need(name) as? Boolean ?: throw IllegalArgumentException("$name is not true or false")
+
+internal fun JSONObject.requireLong(name: String): Long {
+    val v = need(name) as? Number ?: throw IllegalArgumentException("$name is not a number")
+    val d = v.toDouble()
+    require(d == Math.floor(d) && !d.isInfinite()) { "$name is not a whole number" }
+    return v.toLong()
+}
+
+internal fun JSONObject.requireInt(name: String): Int =
+    requireLong(name).also { require(it in Int.MIN_VALUE..Int.MAX_VALUE) { "$name is out of range" } }.toInt()
+
+internal fun JSONObject.requireObject(name: String): JSONObject =
+    need(name) as? JSONObject ?: throw IllegalArgumentException("$name is not an object")
+
+internal fun JSONObject.requireArray(name: String): JSONArray =
+    need(name) as? JSONArray ?: throw IllegalArgumentException("$name is not a list")

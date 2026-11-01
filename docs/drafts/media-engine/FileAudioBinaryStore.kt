@@ -243,19 +243,29 @@ class FileAudioBinaryStore(
         File(audioDirectory, localFileName).delete()
     }
 
-    override suspend fun cleanupOrphans(activeFileNames: Set<String>): Int {
+    /**
+     * Stale `.part` files (no transfer open) are deleted. An `.audio` file no item names is NOT deleted: it is moved to
+     * `orphans/`, where it stays until the owner clears it, because "no item names it" is only as true as the list it was given
+     * (a store restored from an older backup, or a bug that dropped an attachment, would otherwise cost the audiobook itself).
+     * Returns how many files were moved or deleted.
+     * NEEDS (not supplied): AudioBinaryStore declares this as `cleanupOrphans`; rename it there, and give Settings or
+     * Diagnostics a way to list and clear `orphans/`.
+     */
+    override suspend fun sweepOrphans(activeFileNames: Set<String>): Int {
         if (!audioDirectory.exists()) return 0
-        var removed = 0
-        val children = audioDirectory.listFiles().orEmpty()
-        for (file in children) {
+        val orphanDir = File(audioDirectory, ORPHAN_DIR)
+        var moved = 0
+        for (file in audioDirectory.listFiles().orEmpty()) {
             if (!file.isFile) continue
-            val isStalePart = file.name.endsWith(".part") && activeTransfers.values.none { it.tempFile.name == file.name }
-            val isOrphanAudio = file.name.endsWith(".audio") && file.name !in activeFileNames
-            if (isStalePart || isOrphanAudio) {
-                if (file.delete()) removed++
+            if (file.name.endsWith(".part")) {
+                if (activeTransfers.values.none { it.tempFile.name == file.name } && file.delete()) moved++
+            } else if (file.name.endsWith(".audio") && file.name !in activeFileNames) {
+                if (!orphanDir.exists() && !orphanDir.mkdirs()) continue
+                val target = File(orphanDir, file.name)
+                if (runCatching { Files.move(file.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING) }.isSuccess) moved++
             }
         }
-        return removed
+        return moved
     }
 
     private fun validateDescriptorAndSpace(descriptor: AudioAttachmentDescriptor) {
@@ -272,13 +282,15 @@ class FileAudioBinaryStore(
         }
         val requiredSpace = descriptor.sizeBytes + HEADROOM_BYTES
         val availableSpace = spaceProvider.usableSpaceBytes(audioDirectory)
-        if (availableSpace in 1 until requiredSpace) {
+        // usableSpace() answers 0 both for a full disk and when it cannot tell; either way the copy may not fit, so refuse
+        if (availableSpace < requiredSpace) {
             throw MediaValidationException(MediaError.InsufficientStorage(requiredSpace, availableSpace))
         }
     }
 
     companion object {
         private const val HEADROOM_BYTES = 16L * 1024L * 1024L // 16 MB safety margin
+        const val ORPHAN_DIR = "orphans"
 
         fun sanitizeId(id: String): String =
             id.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(64).ifEmpty { "media" }

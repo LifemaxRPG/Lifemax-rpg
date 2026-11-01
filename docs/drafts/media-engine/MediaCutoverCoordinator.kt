@@ -39,7 +39,9 @@ class MediaCutoverCoordinator(
     suspend fun stageMetadataFromLegacySave(
         rawSaveJson: JSONObject,
         applySeedIfUnseeded: Boolean = true,
-    ): Result<MediaLibraryState> = runCatching {
+    ): Result<MediaLibr
+    // NEEDS (not supplied): the supplied file stops here, mid-declaration. activateNativeOwnership and
+    // rollbackToWebOwnership must be written before anything here is wired up; see FIXES.md for what they must do.aryState> = runCatching {
         val newEpoch = "media-epoch-${clock.nowEpochMs()}-${UUID.randomUUID().toString().take(8)}"
         val stagedSnapshot =
             LegacySaveMediaAdapter.importFromLegacySaveJson(
@@ -76,7 +78,10 @@ class MediaCutoverCoordinator(
         val audio = existing.audio ?: error("Item ${staged.mediaId} has no audio metadata")
         val nextRev = snap.authorityRevision + 1L
         val targetFileName = "${FileAudioBinaryStore.sanitizeId(staged.mediaId)}_r$nextRev.audio"
-        audioBinaryStore.promoteStagedFile(staged, targetFileName).getOrThrow()
+        audioBinaryStore.promoteStagedFile(staged, targetFileName).getOrElse {
+            audioBinaryStore.discardStagedFile(staged)
+            throw it
+        }
         val updatedAudio =
             audio.copy(
                 sizeBytes = staged.actualSizeBytes,
@@ -86,7 +91,10 @@ class MediaCutoverCoordinator(
             )
         val nextItems = snap.items.toMutableList().also { it[idx] = existing.copy(audio = updatedAudio) }
         val nextSnap = snap.copy(authorityRevision = nextRev, items = nextItems)
-        repository.replaceSnapshotForCutover(nextSnap).getOrThrow()
+        repository.replaceSnapshotForCutover(nextSnap).getOrElse {
+            audioBinaryStore.deleteCommittedFile(targetFileName) // not recorded, so not kept
+            throw it
+        }
     }
 
     /**
@@ -113,19 +121,28 @@ class MediaCutoverCoordinator(
             val actItem = actualById[expItem.id]
             if (actItem == null ||
                 actItem.title != expItem.title ||
+                actItem.type != expItem.type ||
                 actItem.status != expItem.status ||
                 actItem.creator != expItem.creator ||
                 actItem.notes != expItem.notes ||
-                actItem.link != expItem.link
+                actItem.link != expItem.link ||
+                actItem.finishedAtIso != expItem.finishedAtIso ||
+                (expItem.audio == null) != (actItem.audio == null)
             ) {
                 mismatched += expItem.id
                 continue
             }
-            if (expItem.audio != null) {
+            val expAudio = expItem.audio
+            if (expAudio != null) {
                 val actAudio = actItem.audio
+                // against what the old save says the file is, not what the copy recorded about itself: a copy cut short, or
+                // one of the wrong blob, must not pass
                 val fileOk =
                     actAudio != null &&
                         !actAudio.localFileName.isNullOrBlank() &&
+                        (expAudio.sizeBytes <= 0L || actAudio.sizeBytes == expAudio.sizeBytes) &&
+                        actAudio.positionSeconds == expAudio.positionSeconds &&
+                        actAudio.durationSeconds == expAudio.durationSeconds &&
                         audioBinaryStore.verifyCommittedFile(actAudio.localFileName, actAudio.sizeBytes)
                 if (!fileOk) {
                     missingAudio += expItem.id
@@ -152,3 +169,5 @@ class MediaCutoverCoordinator(
         referenceLegacySaveJson: JSONObject,
         applySeedIfUnseeded: Boolean = true,
     ): Result<MediaLibr
+    // NEEDS (not supplied): the supplied file stops here, mid-declaration. activateNativeOwnership and
+    // rollbackToWebOwnership must be written before anything here is wired up; see FIXES.md for what they must do.

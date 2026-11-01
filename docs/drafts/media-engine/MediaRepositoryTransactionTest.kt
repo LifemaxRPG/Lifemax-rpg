@@ -66,7 +66,7 @@ class MediaRepositoryTransactionTest {
             assertTrue(badEpochRes.error is MediaError.InvalidEpoch)
 
             // 6. Failed storage write leaves in-memory state and revision untouched
-            store.simulateWriteFailure = true
+            store.failWrites = true
             val failCtx = MediaOperationContext("op-3", "client-A", 11L, epoch)
             val failRes = repo.upsert(failCtx, MediaDraft(title = "Should Not Persist")) as MediaCommandResult.Failure
             assertTrue(failRes.error is MediaError.StorageWriteFailed)
@@ -74,7 +74,7 @@ class MediaRepositoryTransactionTest {
             assertEquals(1L, repo.state.value.authorityRevision)
 
             // 7. Re-enable storage and retry op-3 succeeds cleanly
-            store.simulateWriteFailure = false
+            store.failWrites = false
             val recoveredRes = repo.upsert(failCtx, MediaDraft(title = "Should Not Persist")) as MediaCommandResult.Success
             assertEquals(2, recoveredRes.state.items.size)
             assertEquals(2L, recoveredRes.state.authorityRevision)

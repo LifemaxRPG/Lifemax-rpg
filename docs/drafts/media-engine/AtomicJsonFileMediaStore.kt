@@ -10,74 +10,85 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import org.json.JSONObject
 
-/**
- * Persistence boundary for [MediaStoreSnapshot].
- */
+/** Where a loaded snapshot came from. Only a snapshot read from a file the store wrote may be trusted to name every audio file. */
+enum class SnapshotSource {
+    /** the live file, checksum verified */
+    LIVE,
+    /** the live file was unreadable; the backup was verified and restored over it */
+    BACKUP,
+    /** no store file has ever been written (first run): an empty store */
+    FIRST_RUN,
+}
+
+data class LoadedSnapshot(val snapshot: MediaStoreSnapshot, val source: SnapshotSource)
+
+/** Persistence boundary for [MediaStoreSnapshot]. */
 interface MediaPersistenceStore {
-    suspend fun load(): Result<MediaStoreSnapshot>
+    suspend fun load(): Result<LoadedSnapshot>
     suspend fun commit(snapshot: MediaStoreSnapshot): Result<Unit>
 }
 
 /**
  * Crash-safe atomic file store for [MediaStoreSnapshot].
  *
- * Write protocol:
- * 1. Serialize [snapshot] with an envelope `{ "sha256": "...", "payload": { ... } }`.
- * 2. Write to `lifemax_media_store_v1.json.tmp` and call `fd.sync()`.
- * 3. Read back and verify the SHA-256 of the `.tmp` file.
- * 4. Copy current live file (if valid) to `lifemax_media_store_v1.json.bak`.
- * 5. Atomically move `.tmp` over `lifemax_media_store_v1.json`.
+ * The file is an envelope `{"sha256": "<hex>", "payload": "<the snapshot's JSON as text>"}`. The payload is stored as text and
+ * hashed exactly as written, so the check never depends on how a JSON library re-serialises an object (key order, number
+ * formatting).
  *
- * Read protocol:
- * - Reads live file and verifies envelope SHA-256.
- * - If live file is missing or corrupted by an interrupted power loss, falls back to `.bak`.
- * - Cleans up any leftover `.tmp` file on load.
+ * Write: serialise; write `.tmp` and fsync; read `.tmp` back and verify; copy the live file to `.bak`; move `.tmp` over the live
+ * file (atomically where the file system allows).
+ *
+ * Read: the live file if it verifies. If it exists but does not verify, it is kept as `<name>_unreadable_<ms>` and the backup is
+ * tried; a verified backup is restored over the live file. If neither verifies, the load FAILS: an unreadable store is never
+ * replaced by an empty one, because an empty store would then be saved over it and its audio files cleaned away. Only when no
+ * store file exists at all (first run) is the result an empty store.
  */
 class AtomicJsonFileMediaStore(
     private val directory: File,
     private val fileName: String = "lifemax_media_store_v1.json",
-    var simulateWriteFailure: Boolean = false,
 ) : MediaPersistenceStore {
     private val liveFile = File(directory, fileName)
     private val tempFile = File(directory, "$fileName.tmp")
     private val backupFile = File(directory, "$fileName.bak")
 
-    override suspend fun load(): Result<MediaStoreSnapshot> = runCatching {
-        if (!directory.exists()) directory.mkdirs()
-        if (tempFile.exists()) tempFile.delete()
+    /** Tests only: the next commits fail as a full or read-only disk would. */
+    internal var failWrites: Boolean = false
 
-        if (liveFile.exists()) {
-            val primary = runCatching { readVerified(liveFile) }
-            if (primary.isSuccess) return@runCatching primary.getOrThrow()
-            // Preserve unreadable live file for diagnostics (ADR 0008)
-            val quarantine = File(directory, "${fileName}_unreadable_${System.currentTimeMillis()}")
-            runCatching { Files.copy(liveFile.toPath(), quarantine.toPath(), StandardCopyOption.REPLACE_EXISTING) }
-        }
+    override suspend fun load(): Result<LoadedSnapshot> = runCatching {
+        if (!directory.exists()) directory.mkdirs()
+        if (tempFile.exists()) tempFile.delete() // an interrupted write; the live file is still the last good one
+
+        val liveError: Throwable? =
+            if (liveFile.exists()) {
+                val primary = runCatching { readVerified(liveFile) }
+                if (primary.isSuccess) return@runCatching LoadedSnapshot(primary.getOrThrow(), SnapshotSource.LIVE)
+                // keep the unreadable file for diagnosis and recovery (ADR 0008)
+                runCatching {
+                    Files.copy(liveFile.toPath(), File(directory, "${fileName}_unreadable_${System.currentTimeMillis()}").toPath())
+                }
+                primary.exceptionOrNull()
+            } else null
 
         if (backupFile.exists()) {
-            val recovered = readVerified(backupFile)
-            Files.copy(backupFile.toPath(), liveFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            return@runCatching recovered
+            val recovered = runCatching { readVerified(backupFile) }
+            if (recovered.isSuccess) {
+                Files.copy(backupFile.toPath(), liveFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                return@runCatching LoadedSnapshot(recovered.getOrThrow(), SnapshotSource.BACKUP)
+            }
+            throw IllegalStateException("The media store and its backup are both unreadable", recovered.exceptionOrNull())
         }
+        if (liveError != null) throw IllegalStateException("The media store is unreadable and there is no backup", liveError)
 
-        MediaStoreSnapshot.empty()
+        LoadedSnapshot(MediaStoreSnapshot.empty(), SnapshotSource.FIRST_RUN)
     }
 
     override suspend fun commit(snapshot: MediaStoreSnapshot): Result<Unit> = runCatching {
-        if (simulateWriteFailure) {
-            throw MediaValidationException(MediaError.StorageWriteFailed("Simulated write failure"))
-        }
+        if (failWrites) throw MediaValidationException(MediaError.StorageWriteFailed("Simulated write failure"))
         if (!directory.exists() && !directory.mkdirs()) {
             throw MediaValidationException(MediaError.StorageWriteFailed("Cannot create storage directory"))
         }
-        val payloadJson = snapshot.toJson()
-        val payloadText = payloadJson.toString()
-        val sha = sha256(payloadText)
-        val envelope =
-            JSONObject()
-                .put("sha256", sha)
-                .put("payload", payloadJson)
-                .toString(2)
+        val payloadText = snapshot.toJson().toString()
+        val envelope = JSONObject().put("sha256", sha256(payloadText)).put("payload", payloadText).toString()
 
         FileOutputStream(tempFile).use { fos ->
             fos.write(envelope.toByteArray(StandardCharsets.UTF_8))
@@ -86,44 +97,24 @@ class AtomicJsonFileMediaStore(
         }
 
         val verified = readVerified(tempFile)
-        check(verified.authorityRevision == snapshot.authorityRevision) {
-            "Read-after-write revision mismatch"
-        }
+        check(verified.authorityRevision == snapshot.authorityRevision) { "Read-after-write revision mismatch" }
 
-        if (liveFile.exists()) {
-            runCatching {
-                Files.copy(liveFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            }
-        }
+        if (liveFile.exists()) Files.copy(liveFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
 
         try {
-            Files.move(
-                tempFile.toPath(),
-                liveFile.toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE,
-            )
-        } catch (_: Exception) {
-            Files.move(
-                tempFile.toPath(),
-                liveFile.toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-            )
+            Files.move(tempFile.toPath(), liveFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+            Files.move(tempFile.toPath(), liveFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 
     private fun readVerified(file: File): MediaStoreSnapshot {
-        val raw = file.readText(StandardCharsets.UTF_8)
-        val outer = JSONObject(raw)
-        val payloadObj = outer.getJSONObject("payload")
-        val expectedSha = outer.getString("sha256")
-        val actualSha = sha256(payloadObj.toString())
-        check(expectedSha == actualSha) { "Checksum mismatch in ${file.name}" }
-        return MediaStoreSnapshot.fromJson(payloadObj)
+        val outer = JSONObject(file.readText(StandardCharsets.UTF_8))
+        val payloadText = outer.requireString("payload")
+        check(outer.requireString("sha256") == sha256(payloadText)) { "Checksum mismatch in ${file.name}" }
+        return MediaStoreSnapshot.fromJson(JSONObject(payloadText))
     }
 
-    private fun sha256(text: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(text.toByteArray(StandardCharsets.UTF_8)).joinToString("") { "%02x".format(it) }
-    }
+    private fun sha256(text: String): String =
+        MessageDigest.getInstance("SHA-256").digest(text.toByteArray(StandardCharsets.UTF_8)).joinToString("") { "%02x".format(it) }
 }

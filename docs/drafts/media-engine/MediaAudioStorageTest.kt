@@ -55,7 +55,8 @@ class MediaAudioStorageTest {
             assertNotNull(item1.audio?.localFileName)
 
             // 3. Update playback progress
-            repo.updatePlaybackProgress(ctx(), "media_1", positionSeconds = 420.0, durationSeconds = 3600.0)
+            repo.recordPlaybackProgress("media_1", positionSeconds = 420.0, durationSeconds = 3600.0).getOrThrow()
+            repo.flushPlaybackProgress().getOrThrow()
 
             // 4. Replace audio -> preserves position & duration, deletes old file after commit
             val oldFile = repo.state.value.items.single().audio!!.localFileName!!
