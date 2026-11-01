@@ -35,6 +35,8 @@ class LifeDirectorViewModel(
     private val mutableUi = MutableStateFlow(DirectorUi())
     val ui = mutableUi.asStateFlow()
     private val sheets = SheetController(commands, projection, mutableUi, ::show)
+    /** Move, Something came up and the banner's answers (phase 4A) */
+    internal val moves = MoveDisruptController(sheets, projection, ui) { blocked }
     private var handedOver = false
     private var dayRequest: String? = null
     private var sectionRequest: String? = null
@@ -364,7 +366,7 @@ class LifeDirectorViewModel(
     }
 
     /**
-     * A button of the sheet's row: pin or skip here, or a tap for the page (Open in Plan, Move).
+     * A button of the sheet's row: pin, skip and Move here, or a tap for the page (Open in Plan).
      */
     fun sessionRow(b: SheetRowButton): Tap? {
         val s = sheets.session ?: return null
@@ -373,7 +375,8 @@ class LifeDirectorViewModel(
             "skip" -> today("skip", s.id, emptyMap(), fromSheet = true)
             "openPlan" -> return Tap("openPlan", b.key.orEmpty())
         }
-        return if (b.sheet == SheetKinds.MOVE) Tap("movePick", s.id) else null
+        if (b.sheet == SheetKinds.MOVE) moves.openMove(s.id)
+        return null
     }
 
     /** A tap from the sheet the page answers: the sheet closes first, as the screen does. */

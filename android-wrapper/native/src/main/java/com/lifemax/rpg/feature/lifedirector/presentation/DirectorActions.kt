@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
@@ -32,6 +33,7 @@ class DirectorActions(
     val submitRestore: () -> Unit = {},
     val closeRestore: () -> Unit = {},
     val session: SessionActions = SessionActions(),
+    val moves: MoveDisruptActions = MoveDisruptActions(),
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -45,6 +47,11 @@ class DirectorActions(
                 t.act == "inst" && vm.sheetsAvailable -> vm.openSession(t.id)
                 t.act == "focusStart" && vm.sheetsAvailable -> vm.startTimer(t.id)
                 t.act == "doneQuick" && vm.sheetsAvailable -> vm.doneQuick(t.id)
+                // Something came up, Re-plan and the banner's answers too (phase 4A)
+                t.act == "disrupt" && vm.sheetsAvailable -> vm.moves.openDisrupt()
+                t.act == "replan" && vm.sheetsAvailable -> vm.moves.replan()
+                t.act == "regroup" && vm.sheetsAvailable -> vm.moves.regroup(t.id)
+                t.act == "dismissBanner" && vm.sheetsAvailable -> vm.moves.dismissBanner()
                 t.act == "tour" && vm.projection.value?.guide != null -> vm.startGuide()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
@@ -100,6 +107,7 @@ class DirectorActions(
                     vm.sessionRow(b)?.let { if (vm.handOverFromSheet()) emit(it.act, it.id) }
                 },
             ),
+        moves = MoveDisruptActions(vm::closeSheet, vm.moves::moveTo, vm.moves::answer),
         flick = { dir ->
             val p = vm.projection.value
             val to =

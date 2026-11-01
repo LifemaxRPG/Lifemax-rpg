@@ -76,4 +76,6 @@ data class DirectorReply(
     val confirm: DialConfirm? = null,
     /** what a change answered with besides ok (exportBackup: the backup to copy) */
     val text: String = "",
+    /** the page has said [message] already (its notice or banner): the screen does not repeat it */
+    val said: Boolean = false,
 )

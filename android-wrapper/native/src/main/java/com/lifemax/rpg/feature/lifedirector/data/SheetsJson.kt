@@ -36,6 +36,8 @@ internal fun JSONObject.sheet(): SheetModel? {
     }
     return when (kind) {
         SheetKinds.SESSION -> session(s)
+        SheetKinds.MOVE -> moveSheet(s)
+        com.lifemax.rpg.feature.lifedirector.domain.DISRUPT_SHEET -> disruptSheet(s)
         else -> throw IllegalArgumentException("Unknown sheet $kind")
     }
 }

@@ -31,7 +31,11 @@ internal class SheetController(
     private var pending: Pending? = null
     private val ops = HashMap<Pair<String, String>, String>()
 
-    private data class Pending(val key: Pair<String, String>, val fromSheet: Boolean)
+    private data class Pending(
+        val key: Pair<String, String>,
+        val fromSheet: Boolean,
+        val keepOnRepeat: Boolean,
+    )
 
     /** Whether the page draws Today's sheets and runs Today's actions for this screen. */
     val available: Boolean
@@ -99,13 +103,27 @@ internal class SheetController(
      * flight. [fromSheet]: the sheet closes once it has landed, as the page's does.
      */
     fun today(name: String, target: String, args: Map<String, Any>, fromSheet: Boolean) {
-        if (pending != null) return
         val command = (args["act"] as? String)?.let { "$name.$it" } ?: name
-        val key = command to target
+        send(name, command to target, args + ("id" to target), fromSheet)
+    }
+
+    /**
+     * Today's write [name] with its [args] as they are, its operation id keyed by [key] (command,
+     * target). [keepOnRepeat]: a landed repeat that changed nothing leaves the sheet open, as the
+     * page's Something came up does ("Already added").
+     */
+    fun send(
+        name: String,
+        key: Pair<String, String>,
+        args: Map<String, Any>,
+        fromSheet: Boolean,
+        keepOnRepeat: Boolean = false,
+    ) {
+        if (pending != null) return
         val op = ops.getOrPut(key, newId)
-        pending = Pending(key, fromSheet)
-        ui.update { it.copy(pendingToday = command) }
-        todayRequest = commands.today(name, args + mapOf("id" to target, "op" to op))
+        pending = Pending(key, fromSheet, keepOnRepeat)
+        ui.update { it.copy(pendingToday = key.first) }
+        todayRequest = commands.today(name, args + ("op" to op))
     }
 
     /** A new projection: a sheet whose session has left the plan closes, and the screen says so. */
@@ -143,9 +161,9 @@ internal class SheetController(
         // a save the store refused keeps the change in memory: the same operation again lands it
         if (reply.ok || !reply.message.startsWith(NOT_SAVED)) ops.remove(p.key)
         if (reply.ok) {
-            if (p.fromSheet) close()
+            if (p.fromSheet && (reply.changed || !p.keepOnRepeat)) close()
             if (reply.message.isNotBlank()) show(reply.message)
-        } else show(reply.message.ifBlank { NOTHING_CHANGED })
+        } else if (!reply.said) show(reply.message.ifBlank { NOTHING_CHANGED })
     }
 
     private fun com.lifemax.rpg.feature.lifedirector.domain.SheetModel.matches(open: OpenSheet) =
