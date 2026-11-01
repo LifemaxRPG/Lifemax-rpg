@@ -32,7 +32,7 @@ const fakes = ({ swipe = true, native = true } = {}) => `
       close:async a=>{log('close',a);setTimeout(()=>emit('closed',{session:a&&a.session}),0)},
       swipeSettle:async a=>{log('swipeSettle',a)},
       capabilities:async()=>(${swipe}?{liveWeb:true,version:1,authoritativeData:true,swipe:1}:{liveWeb:true,version:1,authoritativeData:true}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1'].concat(${swipe}?['shell.swipe.v1']:[])})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1'].concat(${swipe}?['shell.swipe.v1']:[])})}};
   const P={};for(const n of ['NativeOverview','NativeCharacter','NativeNutrition','NativeLog','NativePlan','NativeLifeDirector','NativeRecipes','NativeMedia','NativeCash'])P[n]=mk(n);
   if(${native})window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>!!P[n],getPlatform:()=>'android',Plugins:P,registerPlugin:()=>({}),convertFileSrc:u=>u};`;
 

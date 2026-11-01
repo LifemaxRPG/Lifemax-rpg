@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.lifedirector.data
 
+import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
 import com.lifemax.rpg.feature.lifedirector.domain.BuildGhost
