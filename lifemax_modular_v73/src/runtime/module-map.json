@@ -1628,14 +1628,15 @@
   },
   {
    "file": "src/runtime/segments/31-overview-edit.js",
-   "bytes": 12052,
-   "statement_count": 19,
+   "bytes": 12690,
+   "statement_count": 20,
    "tags": [
     "overview"
    ],
    "symbols": [
     "OV_TILES",
     "OV_DEFAULT",
+    "OV_EDIT_WORDS",
     "ovLayout",
     "ovLayoutSave",
     "ovLayoutApply",
@@ -3459,7 +3460,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 16141,
+   "bytes": 17750,
    "statement_count": 1,
    "tags": [
     "native",

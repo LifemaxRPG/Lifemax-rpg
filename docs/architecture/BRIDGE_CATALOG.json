@@ -317,11 +317,14 @@
     "appAdd": "{}: AppsShortcuts.openPicker(); steps aside",
     "appsEdit": "{}: navigate('apps'); leaves the view",
     "tip": "{}: dismissFeatureTip('dashboard'); the screen stays; ok only once stored, else the page's unsavedMessage(); a repeat answers changed: false, \"Already recorded.\"",
-    "edit": "{}: ovEditOpen() (phase 1: the page's editor); steps aside"
+    "edit": "{}: ovEditOpen() (phase 1: the page's editor, kept for an older app); steps aside",
+    "layout": "{order, hidden}: the native editor's change, made whole by ovLayout(from) and stored by ovLayoutSave; the screen stays; ok only once stored, else ovLayoutSave's take-back and the page's unsavedMessage() (storage full's toast is quiet: the reply says it); the stored layout again answers changed: false, \"Already recorded.\"",
+    "layoutReset": "{}: the default layout (OV_DEFAULT, nothing hidden) through ovLayoutSave, answered as layout"
    },
    "writes": [
     "the day's luck roll via luck (the page's openLuck)",
-    "tipsSeen.dashboard via tip"
+    "tipsSeen.dashboard via tip",
+    "state.ovLayout via layout and layoutReset (the page's ovLayoutSave)"
    ],
    "delegatedInteractions": [
     "navigate actions ({view}): character (hero, Attributes' Details), history (Recent's History), settings (Health off), pet (the cat card), and a Next move's view (log, quests, plan)"

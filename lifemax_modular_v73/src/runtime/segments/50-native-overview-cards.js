@@ -18,6 +18,7 @@
   let waiting = false; // a wait for the page's celebration to end is registered (afterCelebrations)
   let held = []; // celebrations handed to the screen: {id, xp, origin, gains, at}
   let lastCelebration = 0;
+  let quietToast = -1; // the page's toast of a layout it could not store: the screen says the reply's message instead
 
   /* ---- colours and images ---- */
   /** a colour the page writes (a hex, an rgba, or var(--token)) as the ARGB the native theme takes */
@@ -143,6 +144,7 @@
       tip: tip(),
       layout: ovLayout(),
       tileInfo: tileInfo(),
+      editor: Object.assign({}, OV_EDIT_WORDS),
       tiles: { plan: plan(), next: next(), hero: hero(images), rewards: ovRewardsData(), apps: apps(images), health: health(), attrs: attrs(), week: week(), cat: cat(images), luck: luck(), recent: recent() },
       images,
       celebrations: held.map((c) => ({ id: c.id, xp: c.xp, origin: c.origin, gains: c.gains })),
@@ -207,13 +209,33 @@
       if ((state.tipsSeen || {}).dashboard) return ok({ changed: false, message: "Already recorded." });
       return dismissFeatureTip("dashboard") ? ok({ changed: true }) : no(unsavedMessage());
     },
-    /** Edit (phase 1): the page's own editor; the screen steps aside while it shows and comes back on Done or Back */
+    /** the native editor's change (phase 2): stored through the page's own layout save, made whole as ovLayout() makes any */
+    layout(p) {
+      const strings = (a) => Array.isArray(a) && a.every((x) => typeof x === "string");
+      if (!strings(p.order) || !strings(p.hidden)) return no("Something went wrong. Nothing was changed.");
+      return saveLayout(ovLayout({ order: p.order, hidden: p.hidden.filter((id, i, a) => a.indexOf(id) === i) }));
+    },
+    /** the native editor's Reset to default */
+    layoutReset: () => saveLayout({ order: OV_DEFAULT.slice(), hidden: [] }),
+    /** Edit (phase 1, kept for an older app): the page's own editor; the screen steps aside while it shows and comes back on
+        Done or Back. The app's own editor (phase 2) sends layout and layoutReset instead. */
     edit() {
       const ed = document.getElementById("ovEdit");
       if (ed && ed.hidden) ovEditOpen();
       return ok();
     },
   };
+
+  /** a layout from the native editor, stored by ovLayoutSave (the owner: a write it could not store is taken back, and the
+      reply's projection carries the stored layout); a layout already stored is recognised and not written again */
+  function saveLayout(L) {
+    const was = ovLayout(), set = (a) => a.slice().sort().join();
+    if (L.order.join() === was.order.join() && set(L.hidden) === set(was.hidden)) return ok({ changed: false, message: "Already recorded." }); // hidden is a set
+    const before = tab.toasts();
+    if (ovLayoutSave(L)) return ok({ changed: true });
+    if (tab.toasts() > before) quietToast = tab.toasts(); // storage full's toast: the reply says it
+    return no(unsavedMessage());
+  }
 
   /* ---- covering and stepping aside ---- */
   /** a celebration plays on the page: the screen keeps away, and a wait registered once brings it back after (however it began) */
@@ -253,7 +275,7 @@
     toggle: "nativeOverviewCardsToggle",
     managed: true,
     render: "renderOverview",
-    notices: true,
+    notices: { quiet: (id) => id === quietToast },
     projection,
     commands,
     afterOpen() {

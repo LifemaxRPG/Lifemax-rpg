@@ -16,8 +16,13 @@ const OV_TILES=[
   {id:'recent',name:'Recent activity',sub:'Your last few logs',icon:'list',col:'#94a3b8'}
 ];
 const OV_DEFAULT=OV_TILES.map(function(t){return t.id});
-function ovLayout(){
-  const L=state.ovLayout||{},known=OV_DEFAULT;
+/* the editor's words, here and on the native screen's editor (projected as `editor`); the TalkBack moves are the screen's,
+   where the page has its arrow keys */
+const OV_EDIT_WORDS={title:'Edit Overview',hint:'Drag to reorder. Tap the eye to hide a tile.',done:'Done',reset:'Reset to default',hidden:'Hidden',
+  hide:'Hide ',show:'Show ',moveUp:'Move up',moveDown:'Move down',moveTop:'Move to top',moveBottom:'Move to bottom'};
+/* the saved layout, or [from] (a layout the native editor sent), made whole: known ids once each, every tile in it */
+function ovLayout(from){
+  const L=from||state.ovLayout||{},known=OV_DEFAULT;
   let order=(Array.isArray(L.order)?L.order:[]).filter(function(id,i,a){return known.indexOf(id)>=0&&a.indexOf(id)===i});
   /* a tile this save has never seen goes back to its default neighbour */
   known.forEach(function(id,i){if(order.indexOf(id)<0){const before=known.slice(0,i).reverse().find(function(x){return order.indexOf(x)>=0});order.splice(before?order.indexOf(before)+1:0,0,id)}});
@@ -56,17 +61,18 @@ function ovEditRowsHtml(){
     let sub=t.sub;if(id==='cat'&&petData())sub=petData().name+'\u2019s room';
     return '<li class="ov-er'+(off?' off':'')+'" data-tile="'+id+'" style="--c:'+t.col+'">'
       +'<span class="ov-er-ic">'+px(t.icon,16)+'</span>'
-      +'<span class="ov-er-t"><b>'+esc(t.name)+'</b><small>'+esc(off?'Hidden':(note||sub))+'</small></span>'
-      +'<button type="button" class="ov-er-eye" aria-pressed="'+(!off)+'" aria-label="'+(off?'Show ':'Hide ')+esc(t.name)+'" onclick="ovEditToggle(\''+id+'\')">'+ovEye(!off)+'</button>'
+      +'<span class="ov-er-t"><b>'+esc(t.name)+'</b><small>'+esc(off?OV_EDIT_WORDS.hidden:(note||sub))+'</small></span>'
+      +'<button type="button" class="ov-er-eye" aria-pressed="'+(!off)+'" aria-label="'+(off?OV_EDIT_WORDS.show:OV_EDIT_WORDS.hide)+esc(t.name)+'" onclick="ovEditToggle(\''+id+'\')">'+ovEye(!off)+'</button>'
       +'<span class="ov-er-grip" role="button" tabindex="0" aria-label="Move '+esc(t.name)+'. Arrow keys move it up or down."><i></i><i></i><i></i></span></li>'}).join('');
 }
 function ovEye(on){return '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'+(on?'':'<path d="M3 3l18 18"/>')+'</svg>'}
 function ovEditOpen(){
   const ed=document.getElementById('ovEdit'),box=document.getElementById('ovTiles'),view=document.getElementById('view-dashboard');if(!ed||!box)return;
   if(!ed.hidden)return ovEditClose();
-  ed.innerHTML='<div class="ov-edit-h"><div><h3>Edit Overview</h3><small>Drag to reorder. Tap the eye to hide a tile.</small></div><button type="button" class="btn ov-edit-done" onclick="ovEditClose()">Done</button></div>'
+  const W=OV_EDIT_WORDS;
+  ed.innerHTML='<div class="ov-edit-h"><div><h3>'+esc(W.title)+'</h3><small>'+esc(W.hint)+'</small></div><button type="button" class="btn ov-edit-done" onclick="ovEditClose()">'+esc(W.done)+'</button></div>'
     +'<ol class="ov-edit-list" id="ovEditList">'+ovEditRowsHtml()+'</ol>'
-    +'<button type="button" class="ov-edit-reset" onclick="ovEditReset()">Reset to default</button>';
+    +'<button type="button" class="ov-edit-reset" onclick="ovEditReset()">'+esc(W.reset)+'</button>';
   ed.hidden=false;box.hidden=true;view.classList.add('ov-editing');
   const b=document.getElementById('ovEditBtn');if(b){b.classList.add('on');b.setAttribute('aria-expanded','true')}
   ovEditWire(document.getElementById('ovEditList'));
@@ -88,8 +94,8 @@ function ovEditToggle(id){
   if(i>=0)L.hidden.splice(i,1);else L.hidden.push(id);
   if(!ovLayoutSave(L))return;
   const row=document.querySelector('#ovEditList .ov-er[data-tile="'+id+'"]');
-  if(row){const off=L.hidden.indexOf(id)>=0,t=OV_TILES.find(function(x){return x.id===id});row.classList.toggle('off',off);const e=row.querySelector('.ov-er-eye');e.innerHTML=ovEye(!off);e.setAttribute('aria-pressed',String(!off));e.setAttribute('aria-label',(off?'Show ':'Hide ')+t.name);
-    let sub=t.sub;if(id==='cat'&&petData())sub=petData().name+'\u2019s room';row.querySelector('small').textContent=off?'Hidden':(ovTileNote(id)||sub)}
+  if(row){const off=L.hidden.indexOf(id)>=0,t=OV_TILES.find(function(x){return x.id===id});row.classList.toggle('off',off);const e=row.querySelector('.ov-er-eye');e.innerHTML=ovEye(!off);e.setAttribute('aria-pressed',String(!off));e.setAttribute('aria-label',(off?OV_EDIT_WORDS.show:OV_EDIT_WORDS.hide)+t.name);
+    let sub=t.sub;if(id==='cat'&&petData())sub=petData().name+'\u2019s room';row.querySelector('small').textContent=off?OV_EDIT_WORDS.hidden:(ovTileNote(id)||sub)}
   haptic(6);
 }
 function ovEditReset(){

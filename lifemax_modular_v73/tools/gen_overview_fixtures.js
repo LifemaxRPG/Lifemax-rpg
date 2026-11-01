@@ -10,7 +10,8 @@
                                       the feature tip; overview-cards-celebration.json a celebration's held orbs, handed over
                                       while the cards show; overview-cards-notice.json the page's toast showing
      overview-glance-{setup,day,timer}.json  LifeDirector.native.glance() on tests/fixtures/director-day.js (tiles.plan)
-     overview-cards-replies.json      every command answered, in the envelope NativeTabKit sends a reply in
+     overview-cards-replies.json      every command answered, in the envelope NativeTabKit sends a reply in (the editor's layout
+                                      and layoutReset too, one refused for storage full)
      overview-hapscale.json           the page's hapScale at every haptic level, which native HapticScale must equal
    A fake NativeOverviewCards plugin lets the cards open (a celebration is handed over only to an open screen). */
 const STORE = 'lifemax_rpg_prototype_v1';
@@ -114,7 +115,7 @@ module.exports = async function overview({ b, out, write, directorDay }) {
 /* in the page: each command as the screen sends it, answered in the kit's envelope ({command, requestId, ok, ...}); what it opened
    over the page is closed again before the next */
 function replies() {
-  const C = NativeOverviewCardsProjection.commands, out = {};
+  const STORE_KEY = 'lifemax_rpg_prototype_v1', C = NativeOverviewCardsProjection.commands, out = {};
   const run = (key, command, payload) => {
     let r;
     try { r = C[command] ? C[command](payload) || {} : { ok: false, message: 'Unknown command' } } catch (e) { r = { ok: false, message: 'Something went wrong. Nothing was changed.' } }
@@ -141,6 +142,15 @@ function replies() {
   run('appAdd', 'appAdd', {});
   run('appsEdit', 'appsEdit', {});
   run('edit', 'edit', {});
+  // the native editor (phase 2): a layout stored, the same again, one the save refuses (storage full), and Reset
+  const L = { order: OV_DEFAULT.slice().reverse(), hidden: ['luck'] };
+  run('layout', 'layout', L);
+  run('layoutAgain', 'layout', L);
+  run('layoutBad', 'layout', { order: 'plan' });
+  const real = Storage.prototype.setItem;
+  Storage.prototype.setItem = function (k) { if (k === STORE_KEY) throw new Error('QuotaExceededError'); return real.apply(this, arguments) };
+  try { run('layoutFull', 'layout', { order: OV_DEFAULT.slice(), hidden: [] }) } finally { Storage.prototype.setItem = real }
+  run('layoutReset', 'layoutReset', {});
   run('planOpen', 'plan', { act: '', id: '' });
   run('planGone', 'plan', { act: 'inst', id: 'no-such-session' });
   run('unknown', 'nope', {});

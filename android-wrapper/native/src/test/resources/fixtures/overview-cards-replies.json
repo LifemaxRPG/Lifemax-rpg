@@ -134,6 +134,108 @@
    "ok": true
   }
  },
+ "layout": {
+  "command": "layout",
+  "payload": {
+   "order": [
+    "recent",
+    "luck",
+    "cat",
+    "week",
+    "attrs",
+    "health",
+    "apps",
+    "rewards",
+    "hero",
+    "next",
+    "plan"
+   ],
+   "hidden": [
+    "luck"
+   ]
+  },
+  "reply": {
+   "command": "layout",
+   "requestId": "req-layout",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "layoutAgain": {
+  "command": "layout",
+  "payload": {
+   "order": [
+    "recent",
+    "luck",
+    "cat",
+    "week",
+    "attrs",
+    "health",
+    "apps",
+    "rewards",
+    "hero",
+    "next",
+    "plan"
+   ],
+   "hidden": [
+    "luck"
+   ]
+  },
+  "reply": {
+   "command": "layout",
+   "requestId": "req-layoutAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded."
+  }
+ },
+ "layoutBad": {
+  "command": "layout",
+  "payload": {
+   "order": "plan"
+  },
+  "reply": {
+   "command": "layout",
+   "requestId": "req-layoutBad",
+   "ok": false,
+   "message": "Something went wrong. Nothing was changed."
+  }
+ },
+ "layoutFull": {
+  "command": "layout",
+  "payload": {
+   "order": [
+    "plan",
+    "next",
+    "hero",
+    "rewards",
+    "apps",
+    "health",
+    "attrs",
+    "week",
+    "cat",
+    "luck",
+    "recent"
+   ],
+   "hidden": []
+  },
+  "reply": {
+   "command": "layout",
+   "requestId": "req-layoutFull",
+   "ok": false,
+   "message": "Could not save to this browser (storage full?)"
+  }
+ },
+ "layoutReset": {
+  "command": "layoutReset",
+  "payload": {},
+  "reply": {
+   "command": "layoutReset",
+   "requestId": "req-layoutReset",
+   "ok": true,
+   "changed": true
+  }
+ },
  "planOpen": {
   "command": "plan",
   "payload": {
