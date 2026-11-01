@@ -26,6 +26,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorActions
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorToast
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorUi
+import com.lifemax.rpg.feature.lifedirector.presentation.GuideRun
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorScreen
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette
 import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalWallClock
@@ -193,6 +194,16 @@ class LifeDirectorScreenshotTest {
      * milestones.
      */
     @Test fun quests() = snap("quests", *Array(3) { k -> "q$k" to SCREEN * k })
+
+    /**
+     * Week's guide, drawn natively: its first two steps, the screen dimmed around the part each
+     * explains.
+     */
+    @Test
+    fun weekGuide() {
+        snap(projection("week"), DirectorUi(guide = GuideRun("week", 0)), "rows" to null)
+        snap(projection("week"), DirectorUi(guide = GuideRun("week", 1)), "stats" to null)
+    }
 
     /** Week asked for from Today: the tab shows as chosen while the page answers. */
     @Test

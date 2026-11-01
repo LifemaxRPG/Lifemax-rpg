@@ -32,6 +32,8 @@ class LifeDirectorViewModel(
     private var handedOver = false
     private var dayRequest: String? = null
     private var sectionRequest: String? = null
+    /** the guides started by themselves since the plugin started: each starts by itself once */
+    private val autoGuides = HashSet<String>()
     private var dropRequest: String? = null
     private var applyRequest: String? = null
     private var shownNotice: Pair<String, Long>? = null
@@ -58,11 +60,17 @@ class LifeDirectorViewModel(
      * The screen went behind the page. A held or pending handle goes back and the confirmation
      * closes: the page holds nothing, and no reply reaches a hidden screen.
      */
-    fun hidden() = letGo()
+    fun hidden() {
+        letGo()
+        mutableUi.update { it.copy(guide = null) } // closed, not seen: it may start again (A24)
+    }
+
+    /** A new projection arrived: a guide whose section has gone ends. */
+    fun projected() = guideStillShown()
 
     /** A handle is held or the page is asked about one: the rest of the screen waits. */
     val busy: Boolean
-        get() = ui.value.hold != null || ui.value.ask != null
+        get() = ui.value.hold != null || ui.value.ask != null || ui.value.guide != null
 
     fun showDay(index: Int) {
         val today = projection.value?.today ?: return
@@ -89,6 +97,54 @@ class LifeDirectorViewModel(
         if (busy || !draws(id) || id == (ui.value.pendingSection ?: p.tab)) return
         mutableUi.update { it.copy(pendingSection = id) }
         sectionRequest = commands.showSection(id)
+    }
+
+    // The guide (coach marks)
+
+    /**
+     * A guide whose section has gone (another section, a guide no longer sent) ends; it starts
+     * again from ?.
+     */
+    private fun guideStillShown() {
+        val run = ui.value.guide ?: return
+        val p = projection.value
+        val g = p?.guide
+        if (g == null || g.key != run.key || p.tab != run.key || run.step > g.steps.lastIndex)
+            mutableUi.update { it.copy(guide = null) }
+    }
+
+    /**
+     * The section's guide, if the screen draws it: from the ? button, or by itself once when it is
+     * not seen yet.
+     */
+    fun startGuide(auto: Boolean = false) {
+        val g = projection.value?.guide ?: return
+        if (busy || ui.value.guide != null || g.key != projection.value?.tab) return
+        if (auto && (!g.auto || !autoGuides.add(g.key))) return
+        mutableUi.update { it.copy(guide = GuideRun(g.key, 0)) }
+    }
+
+    /** Next, or the last step's Got it (the guide is finished and the page records it). */
+    fun guideNext() {
+        val run = ui.value.guide ?: return
+        val g = projection.value?.guide?.takeIf { it.key == run.key }
+        if (g == null || run.step >= g.steps.lastIndex) endGuide(finished = true)
+        else mutableUi.update { it.copy(guide = run.copy(step = run.step + 1)) }
+    }
+
+    fun guideBack() =
+        mutableUi.update { u ->
+            u.guide?.takeIf { it.step > 0 }?.let { u.copy(guide = it.copy(step = it.step - 1)) }
+                ?: u
+        }
+
+    /** Skip guide, or Android Back: ended unfinished, and the page says how to see it again. */
+    fun guideSkip() = endGuide(finished = false)
+
+    private fun endGuide(finished: Boolean) {
+        val run = ui.value.guide ?: return
+        mutableUi.update { it.copy(guide = null) }
+        commands.tourSeen(run.key, finished)
     }
 
     /** A day from Week: Today on that day. */
@@ -296,10 +352,14 @@ data class DialAsk(
     val applying: Boolean = false,
 )
 
+/** A guide being shown: which, and its step. */
+data class GuideRun(val key: String, val step: Int)
+
 data class DirectorUi(
     val pendingDay: Int? = null,
     /** the section asked for, shown as chosen until the page answers */
     val pendingSection: String? = null,
+    val guide: GuideRun? = null,
     val earlierOpen: Boolean = false,
     val toast: DirectorToast? = null,
     val hold: DialHold? = null,

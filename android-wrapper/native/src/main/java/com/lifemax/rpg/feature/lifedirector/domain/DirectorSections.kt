@@ -106,3 +106,36 @@ data class DirectorQuests(
     val empty: String,
     val milestones: Milestones?,
 )
+
+/** A run of text in a guide; [b] where the page's guide text is bold. */
+data class GuideSpan(val t: String, val b: Boolean)
+
+/**
+ * One step of a guide: the part of the screen it points at (an anchor name), its title and text,
+ * and whether it says "tap anywhere".
+ */
+data class GuideStep(
+    val anchor: String,
+    val title: String,
+    val text: List<GuideSpan>,
+    val hint: Boolean,
+)
+
+data class GuideLabels(
+    val skip: String,
+    val back: String,
+    val next: String,
+    val last: String,
+    val tap: String,
+)
+
+/**
+ * A section's guide, as the page's TOURS has it (phase 3A: Week's). [auto]: not seen yet, so it
+ * starts by itself.
+ */
+data class DirectorGuide(
+    val key: String,
+    val auto: Boolean,
+    val steps: List<GuideStep>,
+    val labels: GuideLabels,
+)

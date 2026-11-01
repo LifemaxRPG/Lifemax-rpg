@@ -7,9 +7,11 @@ import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorNotice
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
+import com.lifemax.rpg.feature.lifedirector.domain.SectionFlick
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.DirectorActions
+import com.lifemax.rpg.feature.lifedirector.presentation.GuideRun
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorViewModel
 import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialGeometry
@@ -58,6 +60,13 @@ class LifeDirectorTest {
         override fun gotoDay(index: Int): String {
             sections += "today@$index"
             return "section-${sections.size}"
+        }
+
+        val seen = mutableListOf<Pair<String, Boolean>>()
+
+        override fun tourSeen(key: String, finished: Boolean): String {
+            seen += key to finished
+            return "seen-${seen.size}"
         }
 
         override fun dialDrop(key: String, place: DialPlace) = error("not dragged here")
@@ -254,6 +263,57 @@ class LifeDirectorTest {
     }
 
     // The view model
+
+    @Test
+    fun weeksGuideStartsByItselfOnceAndEndsWithTheSeenCommand() {
+        val (repo, vm, commands) = viewModel()
+        val due = fixture("week").put("webSessionId", "g").put("sequence", 7)
+        due.getJSONObject("guide").put("auto", true)
+        repo.accept(due, true)
+        vm.opened()
+        vm.startGuide(auto = true)
+        assertEquals(GuideRun("week", 0), vm.ui.value.guide)
+        vm.showSection("quests") // the rest of the screen waits while the guide shows
+        assertTrue(commands.sections.isEmpty())
+        vm.guideBack()
+        assertEquals(0, vm.ui.value.guide!!.step)
+        vm.guideNext()
+        vm.guideNext()
+        assertEquals(2, vm.ui.value.guide!!.step)
+        vm.guideNext() // Got it
+        assertNull(vm.ui.value.guide)
+        assertEquals(listOf("week" to true), commands.seen)
+        vm.startGuide(auto = true) // once only by itself
+        assertNull(vm.ui.value.guide)
+        vm.startGuide() // from ?
+        vm.guideSkip()
+        assertEquals("week" to false, commands.seen.last())
+    }
+
+    @Test
+    fun aGuideEndsWhenItsSectionGoes() {
+        val (repo, vm, _) = viewModel()
+        repo.accept(fixture("week").put("webSessionId", "g").put("sequence", 7), true)
+        vm.opened()
+        vm.startGuide()
+        assertNotNull(vm.ui.value.guide)
+        repo.accept(fixture("quests").put("webSessionId", "g").put("sequence", 8))
+        vm.projected()
+        assertNull(vm.ui.value.guide)
+    }
+
+    @Test
+    fun aFlickIsSidewaysFarOrFastAndLandsOnTheNeighbourTab() {
+        assertEquals(1, SectionFlick.decide(-90f, 10f, 0f))
+        assertEquals(-1, SectionFlick.decide(90f, -20f, 0f))
+        assertEquals(0, SectionFlick.decide(-50f, 0f, 200f)) // short and slow
+        assertEquals(1, SectionFlick.decide(-30f, 0f, -1200f)) // short but fast
+        assertEquals(0, SectionFlick.decide(-90f, 80f, 0f)) // as much down as across: a scroll
+        val tabs = listOf("today", "week", "goals", "quests")
+        assertEquals("goals", SectionFlick.neighbour(tabs, "week", 1))
+        assertEquals("today", SectionFlick.neighbour(tabs, "week", -1))
+        assertNull(SectionFlick.neighbour(tabs, "today", -1))
+    }
 
     @Test
     fun aSectionTheScreenDrawsIsACommandAndOneItDoesNotDrawIsHandedOver() {

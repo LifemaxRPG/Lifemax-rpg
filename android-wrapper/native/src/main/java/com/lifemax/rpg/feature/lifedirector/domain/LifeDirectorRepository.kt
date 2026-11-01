@@ -20,6 +20,11 @@ interface LifeDirectorCommands {
     /** A day from Week: Today on that day, as the page's own row does; read-only. */
     fun gotoDay(index: Int): String
 
+    /**
+     * A guide the screen drew was finished, or skipped (Skip, Back): the page records it as seen.
+     */
+    fun tourSeen(key: String, finished: Boolean): String
+
     /** What letting the handle [key] go at [place] would change: the page's confirmation. */
     fun dialDrop(key: String, place: DialPlace): String
 

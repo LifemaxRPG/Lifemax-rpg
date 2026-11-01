@@ -28,6 +28,9 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
 
                 override fun gotoDay(index: Int) = send("gotoDay", JSONObject().put("index", index))
 
+                override fun tourSeen(key: String, finished: Boolean) =
+                    send("tourSeen", JSONObject().put("key", key).put("finished", finished))
+
                 override fun dialDrop(key: String, place: DialPlace) =
                     send("dialDrop", place.payload(key))
 
@@ -47,6 +50,7 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
         if (explicitOpen) viewModel.opened()
+        viewModel.projected()
     }
 
     override fun onReply(reply: JSONObject) = viewModel.onReply(directorReply(reply))

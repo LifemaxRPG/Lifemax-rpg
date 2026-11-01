@@ -4355,7 +4355,7 @@ const LifeDirectorApp = (function () {
   function tourAuto() {
     if (ui.tour || ui.drag) return;
     const key = ui.tab;
-    if (!tourDue(key)) return;
+    if (!tourDue(key) || nativeGuides(key)) return; // a native screen draws this guide itself
     if (!root.querySelector('.ld-sheet').hidden) return;
     clearTimeout(ui.tourT);
     ui.tourT = setTimeout(() => { if (ui.tab === key && !ui.tour && root.querySelector('.ld-sheet').hidden) tourStart(key); }, 500);
@@ -5221,7 +5221,7 @@ const LifeDirectorApp = (function () {
   function showing() {
     if (!root || !root.isConnected) return null;
     if (root.querySelector('.ld-sheet.open')) return 'sheet';
-    if (ui.tour || tourDue(ui.tab)) return 'guide';
+    if (ui.tour || (tourDue(ui.tab) && !nativeGuides(ui.tab))) return 'guide'; // a guide the screen draws does not stop it covering
     if ((ui.tab === 'today' || ui.tab === 'week') && !(ST.setupComplete && ST.schedule)) return 'first-run'; // both draw needSetup
     return ui.tab;
   }
@@ -5340,6 +5340,30 @@ const LifeDirectorApp = (function () {
     if (root && root.isConnected) render();
     return { ok: true };
   }
+  /* A section's guide as data for a native screen that draws it (phase 3A: Week): its steps as tourSteps keeps them (a step
+     whose part is not on the page is left out), each with the name of the part it points at, and whether it is due to start
+     by itself (not seen yet). Text comes as spans: the page's <b> is the only markup in TOURS. */
+  const GUIDE_ANCHORS = { '.ld-week': 'week.rows', '.ld-stats': 'week.stats', '.ld-card-yield': 'week.yield' };
+  const GUIDE_LABELS = { skip: 'Skip guide', back: 'Back', next: 'Next', last: 'Got it', tap: 'Tap anywhere to continue' };
+  const spans = html => String(html).split(/(<b>.*?<\/b>)/).filter(Boolean).map(t => /^<b>/.test(t) ? { t: t.slice(3, -4), b: true } : { t, b: false });
+  function nativeGuide(key) {
+    if (!ST) boot();
+    if (!TOURS[key] || !root || !root.isConnected || ui.tab !== key || !tourCanRun(key)) return null;
+    const steps = tourSteps(key).map(st => ({ anchor: GUIDE_ANCHORS[st.sel] || '', title: st.title, text: spans(st.text), hint: !!st.hint }));
+    if (!steps.length || steps.some(st => !st.anchor)) return null; // a step the screen cannot point at: the page keeps this guide
+    return { key, auto: tourDue(key), steps, labels: Object.assign({}, GUIDE_LABELS, { last: key === 'setup' ? 'Let’s go' : 'Got it' }) };
+  }
+  /* the screen finished or skipped a guide it drew: seen, as the page's tourEnd records it, and the same words when skipped */
+  function nativeTourSeen(key, finished) {
+    if (!ST) boot();
+    if (!TOURS[key]) return { ok: false, message: 'There is no such guide.' };
+    ST.ui.tours = Object.assign({}, ST.ui.tours, { [key]: true });
+    persist();
+    if (!finished) say('Guide closed. Tap ? at the top to see it again.');
+    changed();
+    return { ok: true };
+  }
+  let nativeGuides = () => false;
   /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
      and cover() stops one already playing (the screen has just come over it) */
   let nativeCovers = () => false;
@@ -5349,6 +5373,9 @@ const LifeDirectorApp = (function () {
     /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */
     arrive() { ui.dayIdx = 0; },
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
+    /* fn(key) is true when a native screen draws that section's guide: the page then starts none of its own there */
+    guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },
+    guide: nativeGuide, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own

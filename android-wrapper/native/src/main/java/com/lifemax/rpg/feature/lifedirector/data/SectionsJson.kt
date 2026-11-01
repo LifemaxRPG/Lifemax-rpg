@@ -175,3 +175,41 @@ private fun sessionState(s: String) =
 /** text, never a number or null taken as text */
 private fun JSONObject.text(key: String): String =
     get(key) as? String ?: throw IllegalArgumentException("$key is not text")
+
+internal fun JSONObject.guide(): com.lifemax.rpg.feature.lifedirector.domain.DirectorGuide? {
+    if (!has("guide") || isNull("guide")) return null
+    val g = getJSONObject("guide")
+    val l = g.getJSONObject("labels")
+    val steps =
+        g.getJSONArray("steps").objects().map { s ->
+            com.lifemax.rpg.feature.lifedirector.domain.GuideStep(
+                anchor =
+                    s.text("anchor").also {
+                        require(it.isNotEmpty()) { "A guide step points at nothing" }
+                    },
+                title = s.text("title"),
+                text =
+                    s.getJSONArray("text").objects().map {
+                        com.lifemax.rpg.feature.lifedirector.domain.GuideSpan(
+                            it.text("t"),
+                            it.getBoolean("b"),
+                        )
+                    },
+                hint = s.getBoolean("hint"),
+            )
+        }
+    require(steps.isNotEmpty()) { "A guide without steps" }
+    return com.lifemax.rpg.feature.lifedirector.domain.DirectorGuide(
+        key = g.text("key"),
+        auto = g.getBoolean("auto"),
+        steps = steps,
+        labels =
+            com.lifemax.rpg.feature.lifedirector.domain.GuideLabels(
+                l.text("skip"),
+                l.text("back"),
+                l.text("next"),
+                l.text("last"),
+                l.text("tap"),
+            ),
+    )
+}

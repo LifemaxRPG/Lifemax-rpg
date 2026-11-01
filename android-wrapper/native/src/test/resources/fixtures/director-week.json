@@ -948,6 +948,52 @@
   }
  },
  "quests": null,
+ "guide": {
+  "key": "week",
+  "auto": false,
+  "steps": [
+   {
+    "anchor": "week.rows",
+    "title": "Each bar is one day",
+    "text": [
+     {
+      "t": "Midnight to midnight, same colours as the dial. Tap a day to open it.",
+      "b": false
+     }
+    ],
+    "hint": false
+   },
+   {
+    "anchor": "week.stats",
+    "title": "Your week in numbers",
+    "text": [
+     {
+      "t": "Sessions, time, and XP if you do them all.",
+      "b": false
+     }
+    ],
+    "hint": false
+   },
+   {
+    "anchor": "week.yield",
+    "title": "Where your XP goes",
+    "text": [
+     {
+      "t": "Solid is earned. Outlined is still planned.",
+      "b": false
+     }
+    ],
+    "hint": false
+   }
+  ],
+  "labels": {
+   "skip": "Skip guide",
+   "back": "Back",
+   "next": "Next",
+   "last": "Got it",
+   "tap": "Tap anywhere to continue"
+  }
+ },
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

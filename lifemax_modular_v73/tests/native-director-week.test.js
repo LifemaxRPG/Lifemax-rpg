@@ -31,10 +31,11 @@ const FAKES = caps => `
   window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector' || n === 'NativeOverview', getPlatform: () => 'android',
     Plugins: { NativeLifeDirector: mk('director', ${JSON.stringify(caps)}), NativeOverview: mk('overview', []) }, registerPlugin: () => ({}), convertFileSrc: u => u };`;
 
-async function start(b, caps, { switchOn = true } = {}) {
+async function start(b, caps, { switchOn = true, weekGuideSeen = true } = {}) {
   const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
   p.errors = []; p.on('pageerror', e => p.errors.push(String(e)));
   await directorDay.seed(p, { planned: true });
+  if (!weekGuideSeen) await p.addInitScript(() => { const k = 'lifemax_director_state_v1', s = JSON.parse(localStorage.getItem(k)); delete s.ui.tours.week; localStorage.setItem(k, JSON.stringify(s)) });
   await p.addInitScript(FAKES(caps));
   await p.goto('file://' + file, { timeout: 120000 });
   await p.evaluate(() => { lmaThumbWarm = async () => { }; showLevelUp = function () { }; lmaLoad().nativeOverview = false; lmaSave() });
@@ -190,6 +191,36 @@ async function command(p, command, payload) {
     const t = await p.evaluate(() => { const o = __since(0).filter(c => c[1] === 'open'); return o.length ? o[o.length - 1][2].snapshot : null });
     ok('Today is covered as in phase 2, with Today in the projection', t && t.tab === 'today' && t.today && t.today.dayIndex === 0 && !('week' in t && t.week), t && t.tab);
     ok('no script errors with a Today-only screen', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  /* 4. Week's guide, not seen yet: the screen that draws Week draws it; the page starts none of its own */
+  {
+    const p = await start(b, ['director.today.v2', 'director.week.v1'], { weekGuideSeen: false });
+    await go(p, 'life-director', 1500);
+    let r = await command(p, 'section', { id: 'week' });
+    await settle(p, 900); // longer than the page's own guide waits before it starts (500 ms)
+    const g = r.snapshot && r.snapshot.guide;
+    ok('the projection carries Week\'s guide, due to start, with a part to point at for each step', !!g && g.key === 'week' && g.auto === true && g.steps.length === 3 &&
+      same(g.steps.map(x => x.anchor), ['week.rows', 'week.stats', 'week.yield']) && g.steps.every(x => x.title && x.text.length && x.text.every(t => typeof t.t === 'string' && typeof t.b === 'boolean')) && g.labels.last === 'Got it', g);
+    const page = await p.evaluate(() => ({ tour: !!document.querySelector('#view-life-director .ld-tour.on'), shows: LifeDirector.native.showing() }));
+    ok('the page starts no guide of its own, and the screen keeps covering Week', !page.tour && page.shows === 'week', page);
+    r = await command(p, 'tourSeen', { key: 'week', finished: true });
+    const seen = await p.evaluate(() => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).ui.tours.week);
+    ok('tourSeen (finished): the guide is seen and saved, and the next projection no longer starts it', r.reply && r.reply.ok && seen === true && r.snapshot.guide && r.snapshot.guide.auto === false && r.snapshot.notice === null, { reply: r.reply, seen, guide: r.snapshot && r.snapshot.guide });
+    r = await command(p, 'tourSeen', { key: 'week', finished: false });
+    ok('tourSeen (skipped, as Skip or Back): the page\'s words say how to see it again', r.reply && r.reply.ok && r.snapshot.notice && /Tap \? at the top/.test(r.snapshot.notice.text), r.snapshot && r.snapshot.notice);
+    r = await command(p, 'tourSeen', { key: 'nowhere', finished: true });
+    ok('tourSeen of a guide that does not exist is refused', r.reply && r.reply.ok === false, r.reply);
+    ok('no script errors with the native guide', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+  {
+    const p = await start(b, ['director.today.v2'], { weekGuideSeen: false });
+    await p.evaluate(() => LifeDirector.native.section('week'));
+    await go(p, 'life-director', 1500);
+    const page = await p.evaluate(() => ({ tour: !!document.querySelector('#view-life-director .ld-tour.on'), shows: LifeDirector.native.showing(), guide: NativeDirectorTabProjection.snapshot().guide }));
+    ok('without director.week.v1 the page plays Week\'s guide itself, as before', page.tour && page.shows === 'guide' && page.guide === null, page);
     await p.context().close();
   }
 

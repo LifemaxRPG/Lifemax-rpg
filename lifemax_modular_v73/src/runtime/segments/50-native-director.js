@@ -13,12 +13,21 @@
   /** the sections a screen draws besides Today, by the capability that says so */
   const PARTS = { week: "director.week.v1", quests: "director.week.v1" };
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
+  /** the guides a screen draws, by section: Week's with Week (Today's comes in 4A, set-up's in 4B) */
+  const GUIDES = { week: "director.week.v1" };
+  const guides = (key) => tab.enabled() && !!GUIDES[key] && tab.has(GUIDES[key]);
 
   /** the frame, and the one section on the page now, only while the screen draws it (null when it has nothing to draw) */
   function projection() {
     const ld = director(), c = covers(), t = ld.frame().tab;
     const part = (k, f) => (t === k && c.includes(k) ? f() : null);
-    return Object.assign(ld.frame(), { covers: c, today: part("today", () => ld.today()), week: part("week", () => ld.week()), quests: part("quests", () => ld.quests()) });
+    return Object.assign(ld.frame(), {
+      covers: c,
+      today: part("today", () => ld.today()),
+      week: part("week", () => ld.week()),
+      quests: part("quests", () => ld.quests()),
+      guide: guides(t) ? ld.guide(t) : null,
+    });
   }
   const commands = {
     /** show another day of the strip; the page's strip follows, nothing is saved and the screen stays */
@@ -27,6 +36,8 @@
     gotoDay: (p) => director().gotoDay(Number(p.index)),
     /** another section; one the screen does not draw is shown by the page, and the kit steps the screen aside after the reply */
     section: (p) => director().section(String(p.id || "")),
+    /** a guide the screen drew was finished ({key, finished: true}) or skipped (Skip, Back): seen, saved on the page */
+    tourSeen: (p) => director().tourSeen(p.key, p.finished === true),
     /** a handle let go on the dial ({key, minute}: a stop's minute) or moved a quarter hour by TalkBack ({key, step: 1 or -1}):
         the confirmation the page would open (reply.confirm), or changed: false where the handle already is; nothing is held or
         saved, so Keep (or OK after a problem) needs no command */
@@ -91,6 +102,7 @@
       comeBack();
     });
     ld.coveredBy(() => tab.active());
+    ld.guidedBy(guides);
   });
 
   window.NativeDirectorProjection = { snapshot: projection, commands };
