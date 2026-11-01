@@ -352,5 +352,3 @@ function ovHeroHtml(){
    +'<div class="ov-streak"><span class="ov-flame">'+px('flame',16)+'</span><b>'+streak()+'</b><span>day streak</span><span class="ov-dots">'+dots+'</span></div></div></div>'
    +'<div class="ov-hero-foot"><div><small>THIS WEEK</small><b>+'+wk.toLocaleString()+' XP</b>'+(delta===null?'':'<em class="'+(delta>=0?'up':'dn')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'%</em>')+'</div><div><small>TOTAL XP</small><b>'+totalXP().toLocaleString()+'</b></div><div><small>ACHIEVEMENTS</small><b>'+Object.keys(state.badges||{}).length+' / '+BADGES.length+'</b></div></div>';
 }
-/* ---------- next moves ---------- */
-function ovMo

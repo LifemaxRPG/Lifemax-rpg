@@ -1,4 +1,5 @@
-ves(){
+/* ---------- next moves ---------- */
+function ovMoves(){
   const mv=[],p=petData();
   if(!(state.activities||[]).length){mv.push({pri:0,col:'var(--accent)',icon:'bolt',t:'Log your first activity',s:'Every level starts with one. Pick any attribute.',cta:'Log',fn:"navigate('log')"});}
   ATTRS.map(function(a){return {a:a,d:chDecay(a)}}).filter(function(x){return x.d.k==='decay'||x.d.k==='soon'}).sort(function(x,y){return x.d.rank-y.d.rank}).slice(0,2).forEach(function(x){

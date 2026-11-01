@@ -870,8 +870,8 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 35996,
-   "statement_count": 66,
+   "bytes": 35944,
+   "statement_count": 65,
    "tags": [
     "pet",
     "interface"
@@ -945,8 +945,8 @@
   },
   {
    "file": "src/runtime/segments/18-runtime.js",
-   "bytes": 28186,
-   "statement_count": 54,
+   "bytes": 28238,
+   "statement_count": 55,
    "tags": [
     "interface"
    ],
