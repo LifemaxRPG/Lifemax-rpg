@@ -15,8 +15,18 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     await p.evaluate(([coat, age]) => { const pt = petAdopt(coat, 'Mo', 'playful'); pt.born = Date.now() - age * 864e5; pt.lastFed = Date.now(); pt.bondPts = 300; save(); navigate('pet') }, [coat, age]); await p.waitForTimeout(2600);
     if (dna) { await p.evaluate(() => { for (let t = 0; t < 300; t++) { petDevDnaReroll(); const r = petDnaRecipe(petData().coat); if (r && r.tab && r.white > 0) break } }); await p.waitForTimeout(2400) }
     await p.evaluate(() => { const rt = PET_RT, c = rt.c; const q = petRoute(c, 'floor', 40); q.push(...petRoute(c, 'floor', 150)); petInterrupt(rt, q) });
-    let seen = null; for (let i = 0; i < 30; i++) { await p.waitForTimeout(250); seen = await p.evaluate(() => ({ a: PET_RT.c.anim, h: LifeMaxHD.stats() })); if (/walk/.test(seen.a) && seen.h.hits > 0) break }
-    return seen;
+    // watched on every frame, not sampled every 250 ms: on a busy machine a short walk can start and end between two samples
+    return p.evaluate(() => new Promise(done => {
+      const until = performance.now() + 7500; let seen = null;
+      const look = () => {
+        const now = { a: PET_RT.c.anim, h: LifeMaxHD.stats() };
+        if (/walk/.test(now.a) && now.h.hits > 0) return done(now);
+        seen = now;
+        if (performance.now() > until) return done(seen);
+        requestAnimationFrame(look);
+      };
+      look();
+    }));
   };
   let r = await walk('ginger', 40); ok('adult: the walk is drawn from the HD sheet', /walk/.test(r.a) && r.h.hits > 0 && r.h.sheets.some(k => /^adult\|/.test(k)) && r.h.err === 0, r);
   r = await walk('gray', 3); ok('kitten: its own HD sheet, no errors', r.h.err === 0 && r.h.sheets.some(k => /^st0\|/.test(k)), r);
