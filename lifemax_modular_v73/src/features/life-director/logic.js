@@ -2640,18 +2640,30 @@ const LifeDirectorApp = (function () {
      (a session opens its details, Start starts the timer). Works before Life Director
      has ever been opened: it loads the saved plan on its own. */
   let glanceEl = null, glanceTimer = null;
-  function glanceHtml() {
-    const head = t => '<div class="ov-h ld-gl-h"><h3>' + t + '</h3><button type="button" class="ov-link" data-act="glanceOpen">Life Director ›</button></div>';
-    if (!ST.setupComplete || !ST.schedule) {
-      return head('Today’s plan') + '<div class="ld-gl-empty"><p>Tell Life Director when you’re busy and it fits your goals into the rest of the day.</p><button type="button" class="ld-btn ld-primary" data-act="glanceOpen">Plan my days</button></div>';
-    }
+  /* What the glance shows, decided once for the page's glanceHtml and a native screen's native.glance(): its state ('setup' before
+     Life Director is set up, 'none' without a day to show, 'day'), its head, the empty states' words, and on a day the foot (its
+     text, and how many sessions are done, '' for none) with the day, its blocks and the time the dial is drawn at. */
+  const GLANCE_HEAD = Object.freeze({ title: 'Today’s plan', link: 'Life Director ›' });
+  function glanceData() {
+    if (!ST.setupComplete || !ST.schedule) return Object.assign({ state: 'setup', intro: 'Tell Life Director when you’re busy and it fits your goals into the rest of the day.', button: 'Plan my days' }, GLANCE_HEAD);
     const days = horizonDays(ST.schedule, tz()), day = days[0], now = nowEpoch();
-    if (!day) return head('Today’s plan') + '<p class="ld-muted">No plan for today yet.</p>';
+    if (!day) return Object.assign({ state: 'none', intro: 'No plan for today yet.' }, GLANCE_HEAD);
     const blocks = dayBlocks(ST.schedule, day, tz()), tasks = blocks.filter(b => b.inst);
     const left = tasks.filter(b => b.inst.lifecycleState === 'PLANNED' && b.endEpoch > now), done = tasks.filter(b => sesState(b.inst.lifecycleState) === 'done').length;
     const m = left.reduce((n, b) => n + Math.round((b.endEpoch - Math.max(now, b.startEpoch)) / 60), 0);
-    const foot = tasks.length ? (left.length ? left.length + ' session' + (left.length === 1 ? '' : 's') + ' left · ' + mins(Math.round(m / 15) * 15 || m) : 'Every session done') + (done ? '<span>' + done + ' done</span>' : '') : 'No sessions today';
-    return head('Today’s plan') + dialHtml(day, blocks, true, now) + '<div class="ld-gl-foot">' + foot + '</div>';
+    const text = tasks.length ? (left.length ? left.length + ' session' + (left.length === 1 ? '' : 's') + ' left · ' + mins(Math.round(m / 15) * 15 || m) : 'Every session done') : 'No sessions today';
+    return Object.assign({ state: 'day', foot: { text, done: done ? done + ' done' : '' }, day, blocks, now }, GLANCE_HEAD);
+  }
+  /* the glance's middle writes a session's name without its "Plan:" prefix or trailing note ('' when nothing would be left) */
+  const glanceName = t => String(t).replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+  /* the line under the glance's middle that only repeats what its foot says */
+  const glanceRedundant = t => /nothing else planned today/i.test(t);
+  function glanceHtml() {
+    const g = glanceData();
+    const head = '<div class="ov-h ld-gl-h"><h3>' + g.title + '</h3><button type="button" class="ov-link" data-act="glanceOpen">' + g.link + '</button></div>';
+    if (g.state === 'setup') return head + '<div class="ld-gl-empty"><p>' + g.intro + '</p><button type="button" class="ld-btn ld-primary" data-act="glanceOpen">' + g.button + '</button></div>';
+    if (g.state === 'none') return head + '<p class="ld-muted">' + g.intro + '</p>';
+    return head + dialHtml(g.day, g.blocks, true, g.now) + '<div class="ld-gl-foot">' + g.foot.text + (g.foot.done ? '<span>' + g.foot.done + '</span>' : '') + '</div>';
   }
   function glance(el, opts) {
     if (!el) return false;
@@ -2673,10 +2685,12 @@ const LifeDirectorApp = (function () {
       if (glanceCore) {
         const name = glanceCore.querySelector('.ld-core-t');
         if (name) {
-          const cleaned = name.textContent.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+          const cleaned = glanceName(name.textContent);
           if (cleaned) { name.title = name.textContent; name.textContent = cleaned; }
         }
-        const openTimer = glanceCore.querySelector('[data-act="focusOpen"]');
+        // a separate open button, not the clock: coreToday's clock is its own "Open running timer" button, and removing it left the
+        // glance's running timer with no time showing
+        const openTimer = glanceCore.querySelector('[data-act="focusOpen"]:not([data-fclock])');
         if (openTimer) {
           openTimer.remove();
           const clock = glanceCore.querySelector('[data-fclock]');
@@ -2688,7 +2702,7 @@ const LifeDirectorApp = (function () {
           }
         }
         const redundant = glanceCore.querySelector('.ld-core-nx:not([data-act])');
-        if (redundant && /nothing else planned today/i.test(redundant.textContent)) redundant.remove();
+        if (redundant && glanceRedundant(redundant.textContent)) redundant.remove();
       }
       el.hidden = false;
       const dial = el.querySelector('.ld-dial');
@@ -2730,6 +2744,36 @@ const LifeDirectorApp = (function () {
     const d = t.dataset, sel = '[data-act="' + d.act + '"]' + (d.id ? '[data-id="' + CSS.escape(d.id) + '"]' : '') + (d.s ? '[data-s="' + d.s + '"]' : '');
     const twin = root.querySelector('.ld-dial ' + sel) || root.querySelector(sel);
     if (twin) setTimeout(() => twin.dispatchEvent(new MouseEvent('click', { bubbles: true })), 30);
+  }
+  /* The glance as data for a native screen (the Overview's cards: overview.cards.v1's tiles.plan), from the same decisions as
+     glanceHtml and glance(). A pure read: the page's own glance keeps its sync and save on its 30 s redraw. The dial and its middle
+     are Today's (nativeToday) with what the glance changes: no handles and no build (the glance plays its own arrival); the middle's
+     name cleaned, the full one kept in fullTitle as the page keeps it in title (for TalkBack); no "Nothing else planned today". On the
+     page only the running timer takes a tap in the middle (.ld-glance .ld-core lets nothing else through); a native screen sends
+     every tap back through fromGlance. */
+  function nativeGlance() {
+    if (!ST) boot();
+    const g = glanceData();
+    const out = { state: g.state, title: g.title, link: g.link, intro: g.intro || null, button: g.button || null, dial: null, core: null, foot: null };
+    if (g.state !== 'day') return out;
+    const t = nativeToday(0);
+    const core = Object.assign({}, t.core, { fullTitle: t.core.title });
+    if (glanceName(core.title)) core.title = glanceName(core.title);
+    if (core.next && !core.next.act && glanceRedundant(core.next.label)) core.next = null;
+    return Object.assign(out, { dial: Object.assign({}, t.dial, { handles: [], stops: [], build: null }), core, foot: g.foot });
+  }
+  /* A tap on a native glance (the Overview's plan command): openFromGlance's jump into Life Director's Today, then the tap repeated
+     there as the page's glance repeats it, from the act and the one id it needs (a meal's is its first minute, as nativeAct takes
+     it). '' and 'glanceOpen' only open, as a tap on the head, the empty state or fixed time does. A meal gone from the plan opens. */
+  const GLANCE_ACTS = new Set(['inst', 'focusStart', 'focusOpen', 'meal']);
+  function nativeFromGlance(act, id) {
+    act = act == null ? '' : String(act); id = id == null ? '' : String(id);
+    if (act && act !== 'glanceOpen' && !GLANCE_ACTS.has(act)) return { ok: false, message: 'The glance cannot do that.' };
+    if (!ST) boot();
+    const meal = act === 'meal' ? mealSegment(id) : null;
+    const data = act === 'meal' ? (meal ? { act: 'anchor', k: 'meal', s: String(meal.startEpoch) } : null) : act === 'focusOpen' ? { act } : act && act !== 'glanceOpen' ? { act, id } : null;
+    openFromGlance(data ? { dataset: data } : null);
+    return { ok: true };
   }
   /* ── lifecycle ── */
   function tick() {
@@ -3485,6 +3529,8 @@ const LifeDirectorApp = (function () {
     guide: nativeGuide, help: nativeHelp, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
     goals: nativeGoals, settings: nativeSettings, run: nativeRun, time: nativeTime, firstRun: nativeFirstRun,
     sheet: nativeSheet, todayRun: nativeTodayRun,
+    /* the Overview's glance as data, and a tap on it (the Overview's cards, overview.cards.v1) */
+    glance: nativeGlance, fromGlance: nativeFromGlance,
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own

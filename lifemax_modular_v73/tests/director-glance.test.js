@@ -66,6 +66,68 @@ const STATES = {
   const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
   for (const name of Object.keys(STATES)) ok('the glance (' + name + ') draws byte for byte as before its data was split out', html[name] === golden[name], (html[name] || '').length + ' vs ' + (golden[name] || '').length);
 
+  /* 2. native.glance() against the page's own glance, drawn at the same moment */
+  for (const [name, p] of Object.entries(pages)) {
+    const r = await p.evaluate(() => {
+      ovPlanGlance();
+      const el = document.getElementById('ovPlan'), q = s => el.querySelector(s), tx = s => (q(s) || {}).textContent;
+      const store = localStorage.getItem('lifemax_director_state_v1'), html = el.innerHTML;
+      const g = LifeDirector.native.glance(); LifeDirector.native.glance();
+      const t = q('.ld-core-t'), foot = q('.ld-gl-foot');
+      return { g, pure: store === localStorage.getItem('lifemax_director_state_v1') && html === el.innerHTML,
+        dom: { title: tx('.ld-gl-h h3'), link: tx('.ov-link'), intro: tx('.ld-gl-empty p') || tx('.ld-muted'), button: tx('.ld-gl-empty .ld-btn'),
+          foot: foot ? { text: foot.firstChild.textContent, done: tx('.ld-gl-foot span') || '' } : null,
+          name: t && t.textContent, full: t && (t.title || t.textContent), next: tx('.ld-core-nx span') || null, sessions: el.querySelectorAll('.ld-ses').length,
+          clock: !!q('[data-fclock]'), kick: tx('.ld-core-k') } };
+    });
+    const { g, dom } = r;
+    ok(name + ': native.glance() is a pure read (nothing saved, the page\'s glance not redrawn)', r.pure);
+    ok(name + ': the head says what the page\'s says', g.title === dom.title && g.link === dom.link, [g.title, g.link, dom]);
+    if (g.state !== 'day') {
+      ok(name + ': an empty state with the page\'s words and no dial', g.intro === dom.intro && (g.button || undefined) === dom.button && !g.dial && !g.core && !g.foot, [g, dom]);
+      continue;
+    }
+    ok(name + ': the foot says what the page\'s says', JSON.stringify(g.foot) === JSON.stringify(dom.foot), [g.foot, dom.foot]);
+    ok(name + ': the middle\'s name is the page\'s, cleaned, with the full one kept', g.core.title === dom.name && g.core.fullTitle === dom.full, [g.core.title, g.core.fullTitle, dom.name, dom.full]);
+    ok(name + ': the middle\'s kick is the page\'s', g.core.kick === dom.kick, [g.core.kick, dom.kick]);
+    ok(name + ': the line under the middle is the page\'s ("Nothing else planned today" left out)', (g.core.next ? g.core.next.label : null) === dom.next, [g.core.next, dom.next]);
+    ok(name + ': the running timer shows as the page shows it', !!g.core.timer === dom.clock, [g.core.timer, dom.clock]);
+    ok(name + ': the dial\'s sessions are the page\'s, with no handles and no build', g.dial.arcs.filter(a => a.style === 'session').length === dom.sessions && !g.dial.handles.length && !g.dial.stops.length && g.dial.build === null,
+      [g.dial.arcs.length, dom.sessions, g.dial.handles.length]);
+  }
+
+  /* 3. a tap on a native glance opens Life Director's Today as the page's glance does */
+  {
+    const p = pages.day;
+    const ids = await p.evaluate(() => { const a = LifeDirector.native.glance().dial.arcs; return { inst: a.find(x => x.act === 'inst' && x.state === 'plan').id, meal: a.find(x => x.act === 'meal').id } });
+    const refused = await p.evaluate(() => LifeDirector.native.fromGlance('doneQuick', 'x'));
+    ok('an act the glance does not have is refused with words', refused.ok === false && typeof refused.message === 'string' && refused.message.length > 0 && await p.evaluate(() => lmaView() === 'dashboard'), refused);
+    let reply = await p.evaluate(() => LifeDirector.native.fromGlance('', ''));
+    await settle(p, 400);
+    ok('an empty tap only opens Life Director\'s Today', reply.ok === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'today'), reply);
+    await go(p, 'dashboard');
+    reply = await p.evaluate(id => LifeDirector.native.fromGlance('inst', id), ids.inst);
+    await settle(p, 400);
+    ok('a session tapped on the glance opens its sheet on the page', reply.ok === true && await p.evaluate(() => lmaView() === 'life-director' && LifeDirector.native.showing() === 'sheet'), reply);
+    await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open .ld-sheet-bg').click());
+    await go(p, 'dashboard');
+    /* a native screen that draws Today's sheets: the tap becomes the intent it opens its own sheet from */
+    await p.evaluate(() => LifeDirector.native.intendedBy(() => true));
+    const intent = async (act, id) => { await p.evaluate(([a, i]) => LifeDirector.native.fromGlance(a, i), [act, id]); await settle(p, 200); const it = await p.evaluate(() => LifeDirector.native.intent()); await go(p, 'dashboard'); return it };
+    let it = await intent('inst', ids.inst);
+    ok('with a screen drawing the sheets, a session asks for its sheet', it && it.sheet === 'session' && it.target === ids.inst, it);
+    it = await intent('meal', ids.meal);
+    ok('with a screen drawing the sheets, a meal asks for its sheet', it && it.sheet === 'meal' && String(it.target) === String(ids.meal), it);
+    it = await intent('glanceOpen', '');
+    ok('the head opens Life Director and asks for no sheet', it === null, it);
+    const t = pages.timer;
+    await t.evaluate(() => LifeDirector.native.intendedBy(() => true));
+    await t.evaluate(() => LifeDirector.native.fromGlance('focusOpen', ''));
+    await settle(t, 200);
+    it = await t.evaluate(() => LifeDirector.native.intent());
+    ok('with a screen drawing the sheets, the running timer asks for its sheet', it && it.sheet === 'timer', it);
+  }
+
   for (const p of Object.values(pages)) ok('no page errors', !p.errors.length, p.errors);
   await b.close();
   console.log(`\n${pass} passed, ${fail} failed`);
