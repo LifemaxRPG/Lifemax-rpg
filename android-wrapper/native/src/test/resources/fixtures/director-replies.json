@@ -37,23 +37,39 @@
    "keep": "OK"
   }
  },
- "dropStale": {
+ "dropPastMidnight": {
   "command": "dialDrop",
   "requestId": "director-4",
+  "ok": true,
+  "changed": true,
+  "confirm": {
+   "title": "Change your bedtime?",
+   "from": "11:00 PM",
+   "to": "1:00 AM",
+   "problem": "",
+   "body": "This changes the bedtime for your sleep (every day), not just this one day. Sessions that still fit stay put. Life Director uses new free time for unmet goals, and adjusts sessions if they no longer fit.",
+   "note": "Only today is different? Close this and use “Something came up” instead.",
+   "apply": "Change it",
+   "keep": "Keep 11:00 PM"
+  }
+ },
+ "dropStale": {
+  "command": "dialDrop",
+  "requestId": "director-5",
   "ok": false,
   "changed": false,
   "message": "That handle is no longer on the dial. Nothing was changed."
  },
  "dropOffTheDial": {
   "command": "dialDrop",
-  "requestId": "director-5",
+  "requestId": "director-6",
   "ok": false,
   "changed": false,
   "message": "That time is not on the dial. Nothing was changed."
  },
  "step": {
   "command": "dialDrop",
-  "requestId": "director-6",
+  "requestId": "director-7",
   "ok": true,
   "changed": true,
   "confirm": {
@@ -69,7 +85,7 @@
  },
  "applyWithProblem": {
   "command": "dialApply",
-  "requestId": "director-7",
+  "requestId": "director-8",
   "ok": false,
   "changed": false,
   "moved": false,
@@ -77,7 +93,7 @@
  },
  "applyWhereItWas": {
   "command": "dialApply",
-  "requestId": "director-8",
+  "requestId": "director-9",
   "ok": true,
   "changed": false,
   "moved": false,
@@ -85,7 +101,7 @@
  },
  "apply": {
   "command": "dialApply",
-  "requestId": "director-9",
+  "requestId": "director-10",
   "ok": true,
   "changed": true,
   "moved": true,
@@ -93,7 +109,7 @@
  },
  "applyAgain": {
   "command": "dialApply",
-  "requestId": "director-10",
+  "requestId": "director-11",
   "ok": false,
   "changed": false,
   "moved": false,
@@ -101,7 +117,7 @@
  },
  "applyNotSaved": {
   "command": "dialApply",
-  "requestId": "director-11",
+  "requestId": "director-12",
   "ok": false,
   "changed": true,
   "moved": true,
