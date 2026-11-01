@@ -77,7 +77,7 @@ fun TimerClock(timer: FocusTimer, running: Boolean, content: @Composable (String
 
 /** The wall clock, ticking each second while [running]; each tick waits for a frame. */
 @Composable
-private fun rememberTickingClock(running: Boolean): State<Long> {
+internal fun rememberTickingClock(running: Boolean): State<Long> {
     val clock = LocalWallClock.current
     val now = remember { mutableLongStateOf(clock()) }
     LaunchedEffect(running, clock) {

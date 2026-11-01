@@ -35,6 +35,8 @@ class LifeDirectorViewModel(
     private val mutableUi = MutableStateFlow(DirectorUi())
     val ui = mutableUi.asStateFlow()
     private val sheets = SheetController(commands, projection, mutableUi, ::show)
+    /** Today's timer and meal sheets (phase 4A) */
+    internal val timerMeal = TimerMealController(sheets, projection, mutableUi) { blocked }
     private var handedOver = false
     private var dayRequest: String? = null
     private var sectionRequest: String? = null
@@ -347,13 +349,14 @@ class LifeDirectorViewModel(
     /** Mark a session done as planned (up next's Done). */
     fun doneQuick(id: String) = today("done", id, emptyMap(), fromSheet = false)
 
-    /** The sheet's main button: start the timer, or a tap for the page (its timer, for now). */
+    /** The sheet's main button: start the timer, or open its sheet. */
     fun sessionPrimary(): Tap? {
         val s = sheets.session ?: return null
         val p = s.primary ?: return null
         if (p.command == "timer" && p.act != null)
             today("timer", s.id, mapOf("act" to p.act), fromSheet = true)
-        return if (p.sheet == SheetKinds.TIMER) Tap("focusOpen") else null
+        if (p.sheet == SheetKinds.TIMER) sheets.open(SheetKinds.TIMER, s.id) // the native one
+        return null
     }
 
     /** Mark done, or Log it for today, with the minutes in the field. */

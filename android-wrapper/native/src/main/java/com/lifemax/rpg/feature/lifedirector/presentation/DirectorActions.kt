@@ -9,6 +9,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealActions
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
 class DirectorActions(
@@ -32,19 +33,23 @@ class DirectorActions(
     val submitRestore: () -> Unit = {},
     val closeRestore: () -> Unit = {},
     val session: SessionActions = SessionActions(),
+    val timerMeal: TimerMealActions = TimerMealActions(),
 ) {
     constructor(
         vm: LifeDirectorViewModel,
         emit: (action: String, id: String) -> Unit,
     ) : this(
         // a section or a day the screen draws is a command, and so is a session's sheet, its timer
-        // and Done where the page runs them for the screen (phase 4A); any other tap the page
-        // answers (it closes the screen)
+        // and Done, the timer's and a meal's sheets, and Finish and log, where the page runs them
+        // for the screen (phase 4A); any other tap the page answers (it closes the screen)
         tap = { t ->
             when {
                 t.act == "inst" && vm.sheetsAvailable -> vm.openSession(t.id)
                 t.act == "focusStart" && vm.sheetsAvailable -> vm.startTimer(t.id)
                 t.act == "doneQuick" && vm.sheetsAvailable -> vm.doneQuick(t.id)
+                t.act == "focusOpen" && vm.sheetsAvailable -> vm.timerMeal.openTimer(t.id)
+                t.act == "focusFinish" && vm.sheetsAvailable -> vm.timerMeal.finishRunning()
+                t.act == "meal" && vm.sheetsAvailable -> vm.timerMeal.openMeal(t.id)
                 t.act == "tour" && vm.projection.value?.guide != null -> vm.startGuide()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
@@ -98,6 +103,16 @@ class DirectorActions(
                 complete = vm::sessionComplete,
                 row = { b ->
                     vm.sessionRow(b)?.let { if (vm.handOverFromSheet()) emit(it.act, it.id) }
+                },
+            ),
+        timerMeal =
+            TimerMealActions(
+                close = vm::closeSheet,
+                pause = vm.timerMeal::pauseOrResume,
+                finish = vm.timerMeal::finish,
+                stop = vm.timerMeal::stop,
+                openMeal = {
+                    vm.timerMeal.mealTap()?.let { if (vm.handOverFromSheet()) emit(it.act, it.id) }
                 },
             ),
         flick = { dir ->

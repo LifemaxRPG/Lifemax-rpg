@@ -5,6 +5,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.Chip
 import com.lifemax.rpg.feature.lifedirector.domain.ChipKind
 import com.lifemax.rpg.feature.lifedirector.domain.GoneSheet
 import com.lifemax.rpg.feature.lifedirector.domain.GuideSpan
+import com.lifemax.rpg.feature.lifedirector.domain.MEAL_SHEET
 import com.lifemax.rpg.feature.lifedirector.domain.SessionMode
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
@@ -32,10 +33,13 @@ internal fun JSONObject.sheet(): SheetModel? {
     val kind = s.str("kind")
     if (s.has("gone")) {
         require(s.getBoolean("gone")) { "gone is only ever true" }
-        return GoneSheet(kind, s.str("id"))
+        // a session names itself; a timer, meal or move the page no longer finds does not
+        return GoneSheet(kind, if (s.has("id")) s.str("id") else "")
     }
     return when (kind) {
         SheetKinds.SESSION -> session(s)
+        SheetKinds.TIMER -> timerSheet(s)
+        MEAL_SHEET -> mealSheet(s)
         else -> throw IllegalArgumentException("Unknown sheet $kind")
     }
 }

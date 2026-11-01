@@ -352,7 +352,7 @@ class LifeDirectorSessionTest {
     }
 
     @Test
-    fun pinStartsHereAndTheTimerMoveAndPlanAreThePages() {
+    fun pinAndTheTimerStartHereAndMoveAndPlanAreThePages() {
         val s = screen(sheet("now"))
         val model = s.openNow()
         s.actions.session.row(model.row.single { it.command == "pin" })
@@ -379,7 +379,9 @@ class LifeDirectorSessionTest {
             )
         running.openNow()
         running.actions.session.primary()
-        assertEquals(listOf(Tap("focusOpen")), running.emitted)
+        // Open timer opens the timer's own sheet here (LifeDirectorTimerMealTest)
+        assertEquals(OpenSheet("timer", model.id), running.vm.ui.value.sheet)
+        assertTrue(running.emitted.isEmpty())
         assertTrue(running.commands.todays.isEmpty())
     }
 }

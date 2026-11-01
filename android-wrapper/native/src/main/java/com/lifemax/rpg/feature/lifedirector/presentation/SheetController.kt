@@ -6,6 +6,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.OpenSheet
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.answers
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -113,6 +114,9 @@ internal class SheetController(
         val open = ui.value.sheet ?: return
         val model = projection.value?.sheet
         if (model is GoneSheet && model.matches(open)) {
+            // the sheet's own Finish or Stop ends what it showed: its reply, which comes next,
+            // closes it with the page's words
+            if (pending?.fromSheet == true) return
             close()
             show(GONE)
         } else if (sheetRequest == null && (model == null || !model.matches(open))) forget()
@@ -149,7 +153,7 @@ internal class SheetController(
     }
 
     private fun com.lifemax.rpg.feature.lifedirector.domain.SheetModel.matches(open: OpenSheet) =
-        kind == open.kind && id == open.id
+        answers(open)
 
     companion object {
         const val GONE = "That is no longer on the plan."
