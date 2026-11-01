@@ -49,4 +49,9 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         bottomInsetDp: Float,
         emit: (action: String, id: String) -> Unit,
     ) = LifeDirectorRoute(viewModel, visible, topInsetDp, bottomInsetDp, emit)
+
+    /**
+     * Its sideways gestures (the section swipe, the dial's handles) are its own: never a source.
+     */
+    override val swipeSource = false
 }

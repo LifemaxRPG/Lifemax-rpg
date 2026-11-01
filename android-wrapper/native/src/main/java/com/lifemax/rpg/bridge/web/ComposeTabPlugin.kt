@@ -8,7 +8,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.JSArray
@@ -19,6 +18,9 @@ import com.getcapacitor.PluginMethod
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
+import com.lifemax.rpg.app.shell.swipe.SettleOutcome
+import com.lifemax.rpg.app.shell.swipe.TabScreenView
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import org.json.JSONObject
 
 /**
@@ -28,8 +30,10 @@ import org.json.JSONObject
  * take a projection from the page ([accept]) and what to draw ([Content]).
  *
  * Calls arrive in the order the page made them. Closing only hides the screen, which stays composed
- * so coming back is instant; a page that starts loading removes it ([NativeScreens]). Contract:
- * A03, A07, A23, A24.
+ * so coming back is instant; a page that starts loading removes it ([NativeScreens]). The screen's
+ * place and visibility are TabSwipe's, which also lets the owner swipe to the next native tab: on a
+ * release that commits the plugin sends `swipe`, and the page answers with [swipeSettle] before it
+ * navigates. Contract: A03, A07, A23, A24.
  */
 abstract class ComposeTabPlugin : Plugin() {
     /** The page view this tab shows. Also the timing label and the view's tag. */
@@ -37,6 +41,9 @@ abstract class ComposeTabPlugin : Plugin() {
 
     /** Capability names the page checks in the handshake. */
     protected abstract val capabilities: List<String>
+
+    /** Whether a swipe may start on this tab's screen. It can always be a swipe's destination. */
+    protected open val swipeSource = true
 
     /**
      * Decode and keep a projection from the page. [explicitOpen] binds a new page session. Throws
@@ -83,14 +90,14 @@ abstract class ComposeTabPlugin : Plugin() {
     protected var visible by mutableStateOf(false)
         private set
 
-    private var view: ComposeView? = null
+    private var view: TabScreenView? = null
     private var topInsetDp by mutableFloatStateOf(64f)
     private var bottomInsetDp by mutableFloatStateOf(72f)
 
     @PluginMethod
     fun handshake(call: PluginCall) {
         call.resolve(
-            JSObject().put("protocol", 1).put("capabilities", JSArray(capabilities.toList()))
+            JSObject().put("protocol", 1).put("capabilities", JSArray(capabilities + SWIPE))
         )
     }
 
@@ -102,7 +109,7 @@ abstract class ComposeTabPlugin : Plugin() {
             try {
                 accept(data, true)
                 val screen = view ?: createView()
-                screen.visibility = View.VISIBLE
+                TabSwipe.opened(tabId)
                 screen.bringToFront()
                 visible = true
                 showChrome(call.getObject("navScene"), opening = true)
@@ -145,8 +152,23 @@ abstract class ComposeTabPlugin : Plugin() {
         }
     }
 
+    /** The page's answer to a `swipe`: the token it names, taken or refused (and why). */
+    @PluginMethod
+    fun swipeSettle(call: PluginCall) {
+        val token = call.getString("token")
+        if (token == null) {
+            call.reject("Missing swipe token")
+            return
+        }
+        val outcome = SettleOutcome.of(call.getString("outcome"))
+        activity.runOnUiThread {
+            TabSwipe.settle(token, outcome, call.getString("reason"))
+            call.resolve()
+        }
+    }
+
     override fun handleOnResume() {
-        if (view?.visibility == View.VISIBLE) notifyListeners("refresh", JSObject())
+        if (visible) notifyListeners("refresh", JSObject())
     }
 
     override fun load() {
@@ -171,8 +193,8 @@ abstract class ComposeTabPlugin : Plugin() {
         return data
     }
 
-    private fun createView(): ComposeView =
-        ComposeView(activity)
+    private fun createView(): TabScreenView =
+        TabScreenView(activity, tabId)
             .apply {
                 id = View.generateViewId()
                 tag = "native-$tabId-screen"
@@ -184,6 +206,9 @@ abstract class ComposeTabPlugin : Plugin() {
                     .findViewById<ViewGroup>(android.R.id.content)
                     .addView(it, FrameLayout.LayoutParams(-1, -1))
                 view = it
+                TabSwipe.register(tabId, it, swipeSource) { request ->
+                    notifyListeners("swipe", JSObject.fromJSONObject(request.toJson()))
+                }
             }
 
     private fun emit(action: String, id: String) {
@@ -210,14 +235,15 @@ abstract class ComposeTabPlugin : Plugin() {
 
     /** Leaving the tab only hides the screen; it stays composed so the next visit is instant. */
     private fun hide() {
-        view?.visibility = View.GONE
         visible = false
+        TabSwipe.closed(tabId)
         ChromeHost.leave(this)
         notifyListeners("closed", JSObject())
     }
 
     private fun remove() {
         visible = false
+        if (view != null) TabSwipe.removed(tabId) // a screen never made was never registered
         ChromeHost.closeNow(this)
         view?.let {
             (it.parent as? ViewGroup)?.removeView(it)
@@ -229,5 +255,8 @@ abstract class ComposeTabPlugin : Plugin() {
 
     private companion object {
         const val MAX_SNAPSHOT_CHARS = 2_000_000
+
+        /** This build draws the native tab swipe (protocol v1). */
+        const val SWIPE = "shell.swipe.v1"
     }
 }

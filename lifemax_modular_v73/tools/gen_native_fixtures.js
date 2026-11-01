@@ -3,12 +3,14 @@
    on that day, the Workout plan's NativePlanTabProjection.snapshot() after ticking sets with the page's own planToggle, planVal
    and planLog, Life Director's tab snapshot on the lived-in day of tests/fixtures/director-day.js, what the Recipes tab opens its
    screen with, the Library's Media pane (NativeLibraryTabProjection.snapshot()) with a list built through the page's own
-   mediaUpsert and attachAudioFile, and Settings (NativeSettingsTabProjection.snapshot()) on a phone as Android shows it to the
-   page, changed through the screen's own commands. Regenerate only when a projection changes, all of them or the ones named:
-     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings]
+   mediaUpsert and attachAudioFile, Settings (NativeSettingsTabProjection.snapshot()) on a phone as Android shows it to the
+   page, changed through the screen's own commands, and the native tab swipe's feel and state. Regenerate only when a projection
+   changes, all of them or the ones named:
+     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json, fixtures/recipes-*.json,
-   fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json and fixtures/settings-{default,many,light,bar}.json */
+   fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
+   and fixtures/swipe-{tune,state}.json */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -22,6 +24,45 @@ function write(name, data) {
   fs.mkdirSync(path.dirname(path.join(target, name)), { recursive: true });
   fs.writeFileSync(path.join(target, name), JSON.stringify(data, null, 1) + '\n');
   console.log('wrote ' + name, JSON.stringify(data).length, 'bytes');
+}
+
+/* The native tab swipe, which belongs to the shell rather than a screen:
+   swipe-tune  the page's LMA_TABSWIPE, which native's defaults (SwipeTune.kt) must equal (SwipeTuneTest)
+   swipe-state the swipe field of the bar scenes two native screens open with, every native tab on and the bar as it comes:
+               Character's navScene (NativeTabKit) and Food's chromeScene, as the page sends them (SwipeStateTest)
+   Fake plugins keep the scene each screen is opened with. */
+async function swipe(b) {
+  const p = await page(b);
+  await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') });
+  await p.addInitScript(`
+    localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',
+      plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
+    window.__opened={};
+    const caps=['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v1','recipes.projection.v1','library.media.projection.v1','shell.swipe.v1'];
+    const fake=name=>{const ls={};return {addListener:async(e,f)=>{(ls[e]=ls[e]||[]).push(f);return {remove(){}}},
+      open:async a=>{window.__opened[name]=JSON.parse(JSON.stringify(a.navScene||a.chromeScene))},update:async()=>{},swipeSettle:async()=>{},
+      close:async a=>{(ls.closed||[]).forEach(f=>f({session:a&&a.session}))},
+      handshake:async()=>({protocol:1,capabilities:caps}),capabilities:async()=>({version:1,authoritativeData:true,swipe:1})}};
+    const P={};for(const n of ['NativeCharacter','NativeNutrition','NativeLog','NativePlan','NativeLifeDirector','NativeRecipes','NativeMedia','NativeCash'])P[n]=fake(n);
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>!!P[n],getPlatform:()=>'android',Plugins:P,registerPlugin:()=>({}),convertFileSrc:u=>u};`);
+  await p.goto('file://' + out); await p.waitForTimeout(2500);
+  const { tune, state } = await p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const scene = async (tab, plugin) => {
+      delete window.__opened[plugin];
+      lmaNavTo(tab, { fast: true });
+      for (let t = 0; t < 8000 && !window.__opened[plugin]; t += 50) await wait(50);
+      const swipe = window.__opened[plugin]?.swipe;
+      if (!swipe || !swipe.on) throw Error(tab + ' opened without a swipe that is on: ' + JSON.stringify(swipe));
+      return swipe;
+    };
+    lmaThumbWarm = async () => { }; lmaThumbWarmBusy = false;
+    Object.assign(lmaLoad(), { nativeOverview: false, nativeCharacter: true, nativeNutrition: true, nativeLog: true, nativePlan: true, nativeLibrary: true, nativeRecipes: true, nativeDirector: true, nativeSwipe: true });
+    lmaSave();
+    return { tune: LMA_TABSWIPE, state: { character: await scene('character', 'NativeCharacter'), meals: await scene('food', 'NativeNutrition') } };
+  });
+  write('fixtures/swipe-tune.json', tune);
+  write('fixtures/swipe-state.json', state);
 }
 
 async function food(b) {
@@ -364,7 +405,7 @@ async function settings(b) {
   await shoot(p, 'bar');
 }
 
-const JOBS = { food, log, plan, director, recipes, media, settings };
+const JOBS = { food, log, plan, director, recipes, media, settings, swipe };
 (async () => {
   const only = process.argv.slice(2);
   for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');

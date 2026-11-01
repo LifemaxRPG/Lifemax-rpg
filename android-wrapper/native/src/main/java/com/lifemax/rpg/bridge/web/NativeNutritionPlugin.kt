@@ -1,11 +1,9 @@
 package com.lifemax.rpg.bridge.web
 
-import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -15,6 +13,9 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
+import com.lifemax.rpg.app.shell.swipe.SettleOutcome
+import com.lifemax.rpg.app.shell.swipe.TabScreenView
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import com.lifemax.rpg.feature.food.presentation.NativeNutritionScreen
 import org.json.JSONObject
 
@@ -26,11 +27,14 @@ import org.json.JSONObject
  * from the authoritative live WebView (`50-native-nutrition.js`). All persistent mutations route
  * back through canonical handlers (`fv2Log`, `fv2AddWater`, `fv2CopySlot`, `sdLogMeal`,
  * `setMealsDay`, `fv2Open`, `sdOpenSwap`).
+ *
+ * Its screen takes part in the native tab swipe as the 'meals' pane, as ComposeTabPlugin's do, with
+ * the screen session on the `swipe` event and checked on the page's `swipeSettle`.
  */
 @CapacitorPlugin(name = "NativeNutrition")
 class NativeNutritionPlugin : Plugin() {
     private var session = ""
-    private var layer: ComposeView? = null
+    private var layer: TabScreenView? = null
     private var snapshot by mutableStateOf<JSONObject?>(null)
     private var shown by mutableStateOf(false)
     private var topInsetDp by mutableFloatStateOf(64f)
@@ -38,7 +42,9 @@ class NativeNutritionPlugin : Plugin() {
 
     @PluginMethod
     fun capabilities(call: PluginCall) {
-        call.resolve(JSObject().put("version", 1).put("authoritativeData", true))
+        call.resolve(
+            JSObject().put("version", 1).put("authoritativeData", true).put("swipe", SWIPE_VERSION)
+        )
     }
 
     @PluginMethod
@@ -63,7 +69,7 @@ class NativeNutritionPlugin : Plugin() {
                 snapshot = JSONObject(data.toString())
                 // the screen stays composed while another tab is showing, so coming back is instant
                 val view = layer ?: createLayer()
-                view.visibility = View.VISIBLE
+                TabSwipe.opened(PANE)
                 view.bringToFront()
                 shown = true
                 showChrome(call.getObject("chromeScene"), opening = true)
@@ -76,8 +82,8 @@ class NativeNutritionPlugin : Plugin() {
         }
     }
 
-    private fun createLayer(): ComposeView {
-        val view = ComposeView(activity)
+    private fun createLayer(): TabScreenView {
+        val view = TabScreenView(activity, PANE)
         view.tag = "native-nutrition-screen"
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         view.setContent {
@@ -93,6 +99,12 @@ class NativeNutritionPlugin : Plugin() {
         activity
             .findViewById<ViewGroup>(android.R.id.content)
             .addView(view, FrameLayout.LayoutParams(-1, -1))
+        TabSwipe.register(PANE, view, source = true) { request ->
+            notifyListeners(
+                "swipe",
+                JSObject.fromJSONObject(request.toJson()).put("session", session),
+            )
+        }
         return view
     }
 
@@ -130,6 +142,22 @@ class NativeNutritionPlugin : Plugin() {
         }
     }
 
+    /** The page's answer to a `swipe` from this screen session; one for another is ignored. */
+    @PluginMethod
+    fun swipeSettle(call: PluginCall) {
+        val token = call.getString("token")
+        if (token == null) {
+            call.reject("Missing swipe token")
+            return
+        }
+        val outcome = SettleOutcome.of(call.getString("outcome"))
+        activity.runOnUiThread {
+            if (call.getString("session") == session)
+                TabSwipe.settle(token, outcome, call.getString("reason"))
+            call.resolve()
+        }
+    }
+
     override fun load() {
         NativeScreens.add(this) { dismiss(false) }
     }
@@ -155,7 +183,7 @@ class NativeNutritionPlugin : Plugin() {
     private fun hide() {
         session = ""
         shown = false
-        layer?.visibility = View.GONE
+        TabSwipe.closed(PANE)
         ChromeHost.leave(this)
     }
 
@@ -165,10 +193,19 @@ class NativeNutritionPlugin : Plugin() {
         val id = session
         session = ""
         snapshot = null
+        if (layer != null) TabSwipe.removed(PANE) // a screen never made was never registered
         layer?.let { view -> (view.parent as? ViewGroup)?.removeView(view) }
         layer = null
         if (notify && id.isNotEmpty()) {
             notifyListeners("closed", JSObject().put("session", id))
         }
+    }
+
+    private companion object {
+        /** The page view the screen draws, its pane in the tab swipe. */
+        const val PANE = "meals"
+
+        /** The tab swipe protocol this build draws. */
+        const val SWIPE_VERSION = 1
     }
 }

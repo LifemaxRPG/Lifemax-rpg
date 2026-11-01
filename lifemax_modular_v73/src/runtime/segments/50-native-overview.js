@@ -4,7 +4,7 @@
  /* Native tab hand-over. A tab you leave closes only AFTER the native tab you go to has opened, so the page behind never
     shows through and two sets of bars never fight. Going to a web tab closes it at once, and so does a tab that hands its own view back
     to the page (a sheet over it): nothing there takes over. A 2.5 s timeout is the last-resort safety net (a destination that finishes or fails releases it at once). */
- if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0,healTimer=0;const tabs=new Map();
+ if(!window.NativeTabs){const covers=new Map(),pending=new Map(),ct=typeof clearTimeout==='function'?clearTimeout:()=>{},st=typeof setTimeout==='function'?setTimeout:()=>0;let timer=0,healTimer=0;const tabs=new Map(),stops=new Map();
   window.NativeTabs={
    cover(view,fn){covers.set(view,fn)},
    covered(view){const fn=covers.get(view);try{return !!(fn&&fn())}catch(e){return false}},
@@ -25,6 +25,14 @@
       and a screen left open would stay on top of the new page, which does not know it is there. */
    closeAll(){this.flush();return Promise.allSettled([...tabs.values()].map(t=>t.close()))},
    has(view){return tabs.has(view)},
+   isOpen(view){const t=tabs.get(view);try{return !!(t&&t.isOpen())}catch(e){return false}},
+   /* What the native tab swipe asks of a view (50-native-swipe.js). A tab may register wouldOpen(): its screen would open over the
+      view if the page went there now (without it, covered() answers); and body:'web': the page draws its body, under native bars
+      (the Overview). A stop is a view whose tab leaves the window for another (Money's Cash): a wall to the swipe. */
+   wouldOpen(view){const t=tabs.get(view);try{return t&&t.wouldOpen?!!t.wouldOpen():this.covered(view)}catch(e){return false}},
+   webBody(view){return tabs.get(view)?.body==='web'},
+   stop(view,fn){stops.set(view,fn)},
+   stopped(view){const fn=stops.get(view);try{return !!(fn&&fn())}catch(e){return false}},
    heal(tries=0){
     ct(healTimer);
     healTimer=st(()=>{
@@ -105,7 +113,7 @@
  }
  function mask(on){for(const el of [document.querySelector('.topbar'),document.querySelector('.sidebar')])if(el){if(on){if(!el.dataset.nativeOverviewMasked){el.dataset.nativeOverviewOpacity=el.style.opacity;el.dataset.nativeOverviewMasked='1';el.style.opacity='0'}}else if(el.dataset.nativeOverviewMasked){el.style.opacity=el.dataset.nativeOverviewOpacity||'';delete el.dataset.nativeOverviewMasked;delete el.dataset.nativeOverviewOpacity}}}
  function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
- function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0}}
+ function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0,swipe:window.NativeSwipe?.state()}}
  function snapshot(){
   try{lmaSyncActive()}catch(e){}
   const key=chromeKey(),cached=chromeCache.get(key);
@@ -155,7 +163,7 @@
  window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
  setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
  NativeTabs.cover('dashboard',()=>!!plugin()&&!blocked(true));
- NativeTabs.register('dashboard',{isOpen:()=>N.open,isOpening:()=>N.opening,open:()=>open(false),close:()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}}});
+ NativeTabs.register('dashboard',{isOpen:()=>N.open,isOpening:()=>N.opening,open:()=>open(false),close:()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}},body:'web'});
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can

@@ -79,6 +79,8 @@
  const nav=navigate;navigate=function(v){const r=nav.apply(this,arguments);if(v==='money')open();return r};
  const render=renderMoney;renderMoney=function(){const r=render.apply(this,arguments);sync();return r};
  window.openNativeCash=open;
+ // Money leaves the window for Cash's own: a wall to the native tab swipe (NativeTabs comes from a later segment of this script)
+ Promise.resolve().then(()=>window.NativeTabs?.stop('money',()=>!!plugin()));
  // A retry entry also permits deliberate side-by-side comparison with the web UI.
  setTimeout(()=>{if(!plugin())return;const head=document.querySelector('#view-money .pagehead');if(head){const b=document.createElement('button');b.className='btn secondary';b.textContent='Open Cash';b.onclick=open;head.appendChild(b)}},700);
 })();

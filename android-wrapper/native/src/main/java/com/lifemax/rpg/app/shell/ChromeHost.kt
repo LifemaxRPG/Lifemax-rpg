@@ -6,6 +6,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.webkit.WebView
+import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import org.json.JSONObject
 
 /**
@@ -28,7 +29,8 @@ internal object OverviewBars {
  *
  * Replies from the page can arrive out of order when you switch quickly, so every scene carries the
  * page's running sequence number and a scene older than the one already showing is ignored. Only
- * the screen that currently owns the bars may release them.
+ * the screen that currently owns the bars may release them. A scene that is drawn also brings the
+ * tab swipe its state (`swipe`), so the swipe follows the same sequence and stale rule.
  */
 internal object ChromeHost {
     private var shell: LiveOverviewShell? = null
@@ -73,9 +75,10 @@ internal object ChromeHost {
                     }
                     .also { shell = it }
         // an older scene that arrives late must not overwrite a newer one (the highlighted tab
-        // would go back)
+        // would go back), nor reach the tab swipe: only a scene the bars draw does (A34)
         if (!stale) {
             current.show(scene)
+            TabSwipe.scene(scene.optJSONObject("swipe"), sequence)
             lastSequence = sequence
             lastShownAt = now
         }

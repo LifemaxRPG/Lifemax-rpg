@@ -309,6 +309,10 @@
         await p.addListener('nav-action', function (e) {
           window.NativeOverviewSnapshot?.activate(e.id);
         });
+        await p.addListener('swipe', function (e) {
+          // a committed swipe: the page decides; one from a screen session that has ended is answered as stale
+          window.NativeSwipe?.request('meals', p, e, e?.session === N.session);
+        });
         await p.addListener('closed', function (e) {
           if (e.session === N.session) {
             N.open = false;
@@ -615,6 +619,8 @@
       return open();
     },
     close,
+    // the screen would open over Meals if the page went there now
+    wouldOpen: () => !!plugin() && enabled() && !!state.onboardingComplete && !lmaTopOverlay() && !document.body.classList.contains('noscroll'),
   });
 
   if (typeof renderMeals === 'function') {

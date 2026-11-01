@@ -70,8 +70,12 @@
     function enabled() {
       return !!available() && lmaLoad()[cfg.setting] === true;
     }
+    /** the page would let the screen cover the tab's view, wherever the page is now: nothing over it, nothing the screen cannot draw */
+    function coverable() {
+      return !!state.onboardingComplete && !lmaTopOverlay() && !document.body.classList.contains("noscroll") && !(cfg.blocked && cfg.blocked());
+    }
     function blocked() {
-      return lmaView() !== cfg.id || !state.onboardingComplete || !!lmaTopOverlay() || document.body.classList.contains("noscroll") || !!(cfg.blocked && cfg.blocked());
+      return lmaView() !== cfg.id || !coverable();
     }
     function snapshot() {
       return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), { tokens: tokens(), light: light() });
@@ -168,6 +172,7 @@
           await plugin.addListener("command", (e) => runCommand(e));
           await plugin.addListener("refresh", send);
           await plugin.addListener("nav-action", (e) => window.NativeOverviewSnapshot?.activate(e.id));
+          await plugin.addListener("swipe", (e) => window.NativeSwipe?.request(cfg.id, plugin, e)); // a committed swipe: the page decides
           await plugin.addListener("closed", () => {
             active = false;
             clearInterval(timer);
@@ -227,7 +232,7 @@
     if (cfg.watch) cfg.watch((node, options) => watcher.observe(node, options));
 
     NativeTabs.cover(cfg.id, enabled);
-    NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close });
+    NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close, wouldOpen: () => enabled() && coverable() });
     const nav = navigate;
     navigate = function (v) {
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());

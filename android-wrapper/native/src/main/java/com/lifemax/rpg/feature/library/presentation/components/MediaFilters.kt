@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.PageInk
+import com.lifemax.rpg.core.designsystem.gesture.noTabSwipe
 import com.lifemax.rpg.feature.library.domain.FilterControl
 import com.lifemax.rpg.feature.library.domain.MediaFilter
 
@@ -139,7 +140,7 @@ private fun SearchBox(
     BasicTextField(
         text,
         onChange,
-        Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
+        Modifier.fillMaxWidth().noTabSwipe().onFocusChanged { focused = it.isFocused },
         textStyle = style,
         singleLine = true,
         cursorBrush = SolidColor(c.text),
