@@ -1,0 +1,172 @@
+{
+ "tip": {
+  "command": "tip",
+  "payload": {},
+  "reply": {
+   "command": "tip",
+   "requestId": "req-tip",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "tipAgain": {
+  "command": "tip",
+  "payload": {},
+  "reply": {
+   "command": "tip",
+   "requestId": "req-tipAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded."
+  }
+ },
+ "luck": {
+  "command": "luck",
+  "payload": {},
+  "reply": {
+   "command": "luck",
+   "requestId": "req-luck",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "luckAgain": {
+  "command": "luck",
+  "payload": {},
+  "reply": {
+   "command": "luck",
+   "requestId": "req-luckAgain",
+   "ok": true,
+   "changed": false
+  }
+ },
+ "attr": {
+  "command": "attr",
+  "payload": {
+   "id": "physique",
+   "tile": "attrs"
+  },
+  "reply": {
+   "command": "attr",
+   "requestId": "req-attr",
+   "ok": true
+  }
+ },
+ "attrUnknown": {
+  "command": "attr",
+  "payload": {
+   "id": "nope",
+   "tile": "attrs"
+  },
+  "reply": {
+   "command": "attr",
+   "requestId": "req-attrUnknown",
+   "ok": false,
+   "message": "Something went wrong. Nothing was changed."
+  }
+ },
+ "shop": {
+  "command": "shop",
+  "payload": {},
+  "reply": {
+   "command": "shop",
+   "requestId": "req-shop",
+   "ok": true
+  }
+ },
+ "health": {
+  "command": "health",
+  "payload": {},
+  "reply": {
+   "command": "health",
+   "requestId": "req-health",
+   "ok": true
+  }
+ },
+ "appLaunch": {
+  "command": "appLaunch",
+  "payload": {
+   "pkg": "com.example.maps"
+  },
+  "reply": {
+   "command": "appLaunch",
+   "requestId": "req-appLaunch",
+   "ok": true
+  }
+ },
+ "appLaunchUnknown": {
+  "command": "appLaunch",
+  "payload": {
+   "pkg": "com.not.added"
+  },
+  "reply": {
+   "command": "appLaunch",
+   "requestId": "req-appLaunchUnknown",
+   "ok": false,
+   "message": "That app is not in your shortcuts."
+  }
+ },
+ "appAdd": {
+  "command": "appAdd",
+  "payload": {},
+  "reply": {
+   "command": "appAdd",
+   "requestId": "req-appAdd",
+   "ok": true
+  }
+ },
+ "appsEdit": {
+  "command": "appsEdit",
+  "payload": {},
+  "reply": {
+   "command": "appsEdit",
+   "requestId": "req-appsEdit",
+   "ok": true,
+   "navigate": "apps"
+  }
+ },
+ "edit": {
+  "command": "edit",
+  "payload": {},
+  "reply": {
+   "command": "edit",
+   "requestId": "req-edit",
+   "ok": true
+  }
+ },
+ "planOpen": {
+  "command": "plan",
+  "payload": {
+   "act": "",
+   "id": ""
+  },
+  "reply": {
+   "command": "plan",
+   "requestId": "req-planOpen",
+   "ok": true
+  }
+ },
+ "planGone": {
+  "command": "plan",
+  "payload": {
+   "act": "inst",
+   "id": "no-such-session"
+  },
+  "reply": {
+   "command": "plan",
+   "requestId": "req-planGone",
+   "ok": false,
+   "message": "That is no longer on the plan."
+  }
+ },
+ "unknown": {
+  "command": "nope",
+  "payload": {},
+  "reply": {
+   "command": "nope",
+   "requestId": "req-unknown",
+   "ok": false,
+   "message": "Unknown command"
+  }
+ }
+}

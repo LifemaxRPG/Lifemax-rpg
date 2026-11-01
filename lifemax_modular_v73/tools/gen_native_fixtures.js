@@ -6,12 +6,12 @@
    mediaUpsert and attachAudioFile, Settings (NativeSettingsTabProjection.snapshot()) on a phone as Android shows it to the
    page, changed through the screen's own commands, and the native tab swipe's feel and state. Regenerate only when a projection
    changes, all of them or the ones named:
-     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe]
+     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe overview]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json, director-replies-today.json and
    director-replies-time.json; phase 4B's in tools/gen_director_time_fixtures.js), fixtures/recipes-*.json,
    fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
-   and fixtures/swipe-{tune,state}.json */
+   fixtures/swipe-{tune,state}.json, and the Overview cards' fixtures/overview-*.json (tools/gen_overview_fixtures.js) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -567,7 +567,9 @@ async function settings(b) {
   await shoot(p, 'bar');
 }
 
-const JOBS = { food, log, plan, director, recipes, media, settings, swipe };
+/* the native Overview cards (overview.cards.v1): tools/gen_overview_fixtures.js */
+const overview = (b) => require('./gen_overview_fixtures.js')({ b, out, write, directorDay });
+const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview };
 (async () => {
   const only = process.argv.slice(2);
   for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');
