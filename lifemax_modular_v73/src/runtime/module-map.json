@@ -98,7 +98,7 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 42296,
+   "bytes": 42449,
    "statement_count": 88,
    "tags": [
     "training",
@@ -2294,8 +2294,8 @@
   },
   {
    "file": "src/runtime/segments/47-journal-coach.js",
-   "bytes": 46699,
-   "statement_count": 72,
+   "bytes": 47415,
+   "statement_count": 73,
    "tags": [
     "journal",
     "coach"
@@ -2354,6 +2354,7 @@
     "JC_CHIP_DO",
     "jcWelcomeHtml",
     "jcDecide",
+    "jcOffered",
     "JC_GIFT",
     "jcClaim",
     "jcCatchUp",

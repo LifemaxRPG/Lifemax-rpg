@@ -167,12 +167,13 @@ function jcCare(n){try{const p=jcCat();if(p&&typeof petGain==='function')petGain
    stays in memory and on screen, and the page says nothing was saved. */
 function jcKeepWords(){if(jcWrite())return true;toast(unsavedMessage());return false}
 /* Then the reward for it is paid in a save of its own. was is taken after the words were stored, so a save that fails takes back the
-   reward alone and never the words: takeBack restores the state, draws it, and says nothing was saved. The reward's toast comes only
-   after a stored save. Answers whether it was paid. */
-function jcPay(award,said){
+   reward alone and never the words: takeBack restores the state and draws it, and the page says the words were kept but not the XP
+   (kept names them, as 'Reflection saved'), or, for a reward with no words of its own (a welcome chip), that nothing was saved. The
+   reward's toast (said) comes only after a stored save. Answers whether it was paid. */
+function jcPay(award,said,kept){
  const was=JSON.stringify(state);
  award();
- if(!save()){takeBack(was);return false}
+ if(!save()){takeBack(was,kept&&kept+' · XP not saved (storage full?)');return false}
  try{toast(said)}catch(e){}
  return true;
 }
@@ -183,7 +184,7 @@ function jcCanPay(d){return d===getToday()||d===jcAdd(getToday(),-1)}
 function jcOnReflect(d,text){
  if(jcRec('days',d).xpAwarded||String(text||'').trim().length<JC.reflectMin||!jcCanPay(d))return false;
  return jcPay(function(){const days=jcStore().days;(days[d]||(days[d]={})).xpAwarded=true;jcAward(JC.rewardReflect,'Journal reflection');jcCare(2)},
-  '+'+JC.rewardReflect+' XP · +2 bond · Reflection saved');
+  '+'+JC.rewardReflect+' XP · +2 bond · Reflection saved','Reflection saved');
 }
 /* The reflection box's counter: one of four lines, chosen by whether the reward is paid, can still be paid, and the length (while
    typing, the short line also counts the characters), and its meter */
@@ -297,21 +298,26 @@ function jcDecide(d){
  if(!/^\d{4}-\d\d-\d\d$/.test(d)||jcCares(d))return;
  [jcChip,jcWelcomeRecord].forEach(function(decide){try{decide(d)}catch(e){console.warn('[coach]',e)}});
 }
+/* Whether today's welcome card offers the chip kind, not yet claimed: each tier offers its own (1 pet, 2 line, 3 fresh). The welcome
+   rewards pay nothing else, so a wrong or replayed request cannot pay a chip the card never showed. */
+function jcOffered(kind){const w=jcWelcomeData(getToday());return !!w&&w.chips.some(function(c){return c.id===kind&&!c.done})}
 /* A welcome chip's reward, once: Claim or Pet (+10 XP, and a pet for the cat) or Start fresh (+25 XP), paid in its own save */
 const JC_GIFT={pet:{xp:10,name:'Welcome back'},fresh:{xp:25,name:'New chapter'}};
 function jcClaim(kind){
- const w=jcRec('welcome',getToday()),gift=JC_GIFT[kind];if(!gift||!w.claimed||w.claimed[kind])return false;
+ const w=jcRec('welcome',getToday()),gift=JC_GIFT[kind];if(!gift||!w.claimed||!jcOffered(kind))return false;
  return jcPay(function(){if(kind==='pet')try{if(jcCat())petPetDone()}catch(e){}jcAward(gift.xp,gift.name,'Returned after '+w.gap+' days');w.claimed[kind]=1},'+'+gift.xp+' XP · '+gift.name);
 }
-/* The one-sentence catch-up: the sentence joins today's reflection and is stored first, then its +20 XP is paid in its own save. The
-   sentence is not added again when it already ends the reflection (a retry after a failed reward). */
+/* The one-sentence catch-up, asked only while today's card offers it (tier 2): the sentence joins today's reflection and is stored
+   first, then its +20 XP is paid in its own save. The sentence is not added again when it already ends the reflection (a retry after a
+   failed reward). */
 function jcCatchUp(){
+ if(!jcOffered('line'))return;
  const t=prompt('One sentence: what have you been up to?');if(t==null)return;
  const s=String(t).trim();if(s.length<12){try{toast('Write a full sentence (12+ characters)')}catch(e){}return}
  const d=getToday(),w=jcRec('welcome',d);if(!w.claimed||w.claimed.line)return;
  const refs=state.dayReflections||(state.dayReflections={}),had=refs[d]||'';
  if(had!==s&&!had.endsWith('\n'+s))refs[d]=(had+(had?'\n':'')+s).slice(0,4000);
- if(jcKeepWords())jcPay(function(){jcAward(20,'Catch-up note');w.claimed.line=1},'+20 XP · Catch-up saved');
+ if(jcKeepWords())jcPay(function(){jcAward(20,'Catch-up note');w.claimed.line=1},'+20 XP · Catch-up saved','Catch-up saved');
  else renderHistory();
 }
 /* ----- the day view's top: welcome, insight, reflection box ----- */
@@ -445,7 +451,7 @@ function jcReviewHtml(key){
 function jcSaveReview(key,val){
  const t=String(val||'').trim(),W=key[0]==='W',bonus=W?JC.rewardWeekly:JC.rewardMonthly,reviews=jcStore().reviews,rec=reviews[key]||(reviews[key]={});
  rec.answer=t.slice(0,2000);
- if(jcKeepWords()&&!rec.paid&&t.length>=(W?JC.weeklyMin:JC.monthlyMin))jcPay(function(){rec.paid=true;jcAward(bonus,W?'Weekly review':'Monthly chronicle')},'+'+bonus+' XP · Review saved');
+ if(jcKeepWords()&&!rec.paid&&t.length>=(W?JC.weeklyMin:JC.monthlyMin))jcPay(function(){rec.paid=true;jcAward(bonus,W?'Weekly review':'Monthly chronicle')},'+'+bonus+' XP · Review saved','Review saved');
  else renderHistory();
 }
 window.LifeMaxCoach=Object.freeze({day:jcDay,arch:jcArch,insight:jcInsight,prompt:jcPrompt,patterns:jcPatterns,gap:jcGap,reviewList:jcReviewList,reviewHtml:jcReviewHtml,reflect:jcOnReflect,store:jcStore,hash:jcHash,reset:function(){jcCache={sig:'',idx:null,day:{}}}});

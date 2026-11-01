@@ -3011,6 +3011,9 @@
  "jcMeter": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcOffered": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcOnReflect": [
   "src/runtime/segments/47-journal-coach.js"
  ],

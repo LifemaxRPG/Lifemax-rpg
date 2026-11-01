@@ -49,8 +49,9 @@ function unsavedMessage(){return saveReadOnly?'Not saved: this version is read-o
    pays Sparks and records badges, and the save's redraw can fulfil a Daily Hand card that pays a quest of its own. The state is plain
    JSON by construction (it is stored that way), so the copy is exact. The message comes after the redraw, so the failed save's quest
    toast is not what the page is left showing, and its badges are not announced (checkBadges announces only a badge still held).
-   Log (recordActivity) and Life Director (LifeMaxHost.awardActivity) share it. */
-function takeBack(was){state=JSON.parse(was);renderAll();toast(unsavedMessage())}
+   said, when given, is what it says instead of unsavedMessage(): the Journal coach names the words it did keep. Log (recordActivity),
+   Life Director (LifeMaxHost.awardActivity) and the coach's rewards (jcPay) share it. */
+function takeBack(was,said){state=JSON.parse(was);renderAll();toast(said||unsavedMessage())}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
