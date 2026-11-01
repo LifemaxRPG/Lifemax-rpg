@@ -3328,7 +3328,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 31227,
+   "bytes": 31713,
    "statement_count": 1,
    "tags": [
     "android",
