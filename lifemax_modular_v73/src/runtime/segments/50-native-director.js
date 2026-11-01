@@ -5,6 +5,9 @@
    (dialApply) and plays the build the page describes; every other tap goes to the page's own handler.
    Phase 3A: a screen that says it draws Week and Quests (director.week.v1) also covers those sections; the page keeps the
    section and the day (section, gotoDay and day render the page underneath), and every arrival lands on today (arrive).
+   Phase 4A: Today's sheets and writes (director.sheets.v1), the XP of those writes celebrated by the screen from the reply
+   (director.celebrations.v1), a level-up stepping the screen aside until it is dismissed, and the Overview's glance opening
+   the screen's sheet (intent).
    The tab lifecycle is NativeTabKit's, warm: the kit asks the screen what it draws as soon as the switch is on. */
 (function () {
   const director = () => window.LifeDirector && window.LifeDirector.native; // the feature's script runs after the runtime
@@ -15,6 +18,14 @@
   /** phase 4A: the screen draws Today's sheets and runs Today's actions itself */
   const SHEETS = "director.sheets.v1";
   let sheet = null; // {kind, id}: the sheet the screen asked to see; none whenever the screen opens
+  /** phase 4A: the screen draws the XP celebration of its own writes (the reply's celebrations), so the page stays covered and
+      plays only the sound and buzz; without it the page plays the celebration itself and the screen steps aside for it */
+  const CELEBRATES = "director.celebrations.v1";
+  /** XP a write held back: in the reply for a screen that draws it, else played on the page once the reply has gone */
+  const withCelebrations = (result, held) =>
+    !held.length ? result
+    : tab.has(CELEBRATES) ? Object.assign({}, result, { celebrations: NativeTabKit.celebrations(held) })
+    : Object.assign({}, result, { after: () => celebrate(held) });
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
   /** the guides a screen draws, by section: Week's with Week (Today's comes in 4A, set-up's in 4B) */
   const GUIDES = { week: "director.week.v1" };
@@ -33,6 +44,8 @@
       settings: part("settings", () => ld.settings()),
       guide: guides(t) ? ld.guide(t) : null,
       sheet: sheet && tab.has(SHEETS) ? ld.sheet(sheet.kind, sheet.id) : null,
+      intent: tab.has(SHEETS) ? ld.intent() : null, // a sheet the Overview's glance asked for, taken once by its id
+      celebrationTarget: NativeTabKit.celebrationTarget(),
     });
   }
   const commands = {
@@ -50,14 +63,14 @@
       return { ok: true };
     },
     /** Today's writes (phase 4A): done, logToday, skip, pin, moveTo, timer, and Something came up's disrupt, energy, replan, regroup
-        and dismissBanner. Those that can pay XP run with the page's celebration held, which plays on the page (the screen waits for
-        it); a repeat of one that landed answers "Already recorded." (or "Already added", "Already skipped.") */
+        and dismissBanner. Those that can pay XP run with the page's celebration held: the reply carries it for a screen that draws
+        it (director.celebrations.v1), else it plays on the page once the reply has reached the screen, which steps aside for it;
+        a repeat of one that landed answers "Already recorded." (or "Already added", "Already skipped.") */
     today: (p) => {
       if (!tab.has(SHEETS)) return { ok: false, message: "Life Director cannot do that." };
       const name = String(p.name || "");
       const { result, held } = holdCelebrations(() => director().todayRun(name, p));
-      // the celebration plays on the page once the reply has reached the screen, which then steps aside for it
-      return held.length ? Object.assign({}, result, { after: () => celebrate(held) }) : result;
+      return withCelebrations(result, held);
     },
     /** a guide the screen drew was finished ({key, finished: true}) or skipped (Skip, Back): seen, saved on the page */
     tourSeen: (p) => director().tourSeen(p.key, p.finished === true),
@@ -77,7 +90,8 @@
         handle has moved), so the save changes once. */
     dialApply(p) {
       const { result, held } = holdCelebrations(() => director().apply(String(p.key || ""), { minute: p.minute, step: p.step }));
-      if (held.length) celebrate(held);
+      if (tab.has(CELEBRATES)) return withCelebrations(result, held);
+      if (held.length) celebrate(held); // the page plays it now and the screen waits for it
       return result;
     },
   };
@@ -119,7 +133,10 @@
       sheet = null; // the screen opens with no sheet (it closes them when hidden, A24)
     },
     afterOpen: () => director() && director().cover(), // the screen plays the build now, so a build playing on the page stops
-    blocked: () => celebrating || !director() || !covers().includes(director().showing()),
+    // a level-up is not held: it comes over the page (.luov) while the screen covers it, so the screen steps aside for it; nor is
+    // XP earned on the page itself (its rising +N XP, .fx-xp), which the screen must not cover either
+    blocked: () => celebrating || !director() || !covers().includes(director().showing()) || !!document.querySelector(".luov, .fx-xp"),
+    watch() {}, // and comes back by itself once the page is clear again (the level-up dismissed)
     globals: { open: "openNativeDirector", enable: "setNativeDirectorEnabled", projection: "NativeDirectorTabProjection" },
   });
 
@@ -133,6 +150,8 @@
     });
     ld.coveredBy(() => tab.active());
     ld.guidedBy(guides);
+    // a tap on the Overview's glance opens the screen's own sheet (intent) instead of the page's, once the screen draws them
+    ld.intendedBy(() => tab.enabled() && tab.has(SHEETS));
   });
 
   window.NativeDirectorProjection = { snapshot: projection, commands };

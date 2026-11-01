@@ -69,6 +69,8 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                 settings = j.settings(),
                 sheets = j.knowsSheets(),
                 sheet = j.sheet(),
+                celebrationTarget = j.celebrationTarget(),
+                intent = j.intent(),
             )
     }
 }

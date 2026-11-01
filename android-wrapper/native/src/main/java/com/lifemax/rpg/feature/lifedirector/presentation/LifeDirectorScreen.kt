@@ -140,7 +140,9 @@ fun LifeDirectorRoute(
                 ledger = vm::takeBuild,
                 touched = { vm.touched },
             )
-        LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+        WithDirectorFeedback(vm.feedback, p, visible, vm::handOver, emit) {
+            LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+        }
     }
 }
 

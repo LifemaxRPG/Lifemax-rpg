@@ -2508,6 +2508,23 @@ const LifeDirectorApp = (function () {
       return true;
     } catch (err) { console.warn('[Life Director] glance', err); el.hidden = true; return false; }
   }
+  /* A glance tap that a native screen drawing Today's sheets (phase 4A) answers with its own sheet: the intent {id, sheet, target}
+     it takes once by id. The session's sheet; the running timer's, Start starting it first as the page's Start does (or the
+     session's sheet when it cannot start yet, as the page opens it); a meal's. Any other tap (a band's tip) is replayed on the
+     page. An intent lasts until the next arrival or INTENT_MS, so an open that never came does not pop a sheet up later. */
+  let nativeIntends = () => false, intent = null, intentSeq = 0;
+  const INTENT_MS = 10000;
+  function glanceIntent(d) {
+    if (!ST || !ST.setupComplete || !ST.schedule) return null;
+    if (d.act === 'inst' && findInst(d.id)) return { sheet: 'session', target: d.id };
+    if (d.act === 'focusOpen' && ST.ui.focus) return { sheet: 'timer', target: ST.ui.focus.id };
+    if (d.act === 'anchor' && d.k === 'meal' && mealSegment(d.s)) return { sheet: 'meal', target: d.s };
+    if (d.act !== 'focusStart' || !plannedInst(d.id)) return null;
+    const f = ST.ui.focus;
+    if (f && f.id !== d.id && findInst(f.id)) { say('Another timer is running. Finish or stop it first.'); return { sheet: 'timer', target: f.id }; }
+    return Today.timer({ act: 'start', id: d.id }).ok ? { sheet: 'timer', target: d.id } : { sheet: 'session', target: d.id };
+  }
+  const nativeIntent = () => (intent && Date.now() - intent.at < INTENT_MS ? { id: intent.id, sheet: intent.sheet, target: intent.target } : null);
   /* jump from the Overview into Life Director, then repeat the tap there */
   function openFromGlance(t) {
     if (typeof navigate === 'function') navigate('life-director');
@@ -2515,6 +2532,8 @@ const LifeDirectorApp = (function () {
     const v = document.getElementById('view-life-director');
     if (window.LifeMaxFeatures && LifeMaxFeatures.list && LifeMaxFeatures.list().includes(FEATURE_ID)) LifeMaxFeatures.open(FEATURE_ID); else mount(v);
     if (!t || !root) return;
+    const it = nativeIntends() ? glanceIntent(t.dataset) : null;
+    if (it) { intent = Object.assign({ id: ++intentSeq, at: Date.now() }, it); changed(); return; } // the screen opens its own sheet
     const d = t.dataset, sel = '[data-act="' + d.act + '"]' + (d.id ? '[data-id="' + CSS.escape(d.id) + '"]' : '') + (d.s ? '[data-s="' + d.s + '"]' : '');
     const twin = root.querySelector('.ld-dial ' + sel) || root.querySelector(sel);
     if (twin) setTimeout(() => twin.dispatchEvent(new MouseEvent('click', { bubbles: true })), 30);
@@ -3214,7 +3233,9 @@ const LifeDirectorApp = (function () {
     week: nativeWeek, quests: nativeQuests, section: nativeSection, day: i => nativeDay(i, false), gotoDay: i => nativeDay(i, true),
     dayIndex: () => ui.dayIdx,
     /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */
-    arrive() { ui.dayIdx = 0; },
+    arrive() { ui.dayIdx = 0; intent = null; },
+    /* fn() is true when a native screen draws Today's sheets: a glance tap then asks for its sheet (intent) instead */
+    intendedBy(fn) { nativeIntends = typeof fn === 'function' ? fn : () => false; }, intent: nativeIntent,
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
     /* fn(key) is true when a native screen draws that section's guide: the page then starts none of its own there */
     guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },

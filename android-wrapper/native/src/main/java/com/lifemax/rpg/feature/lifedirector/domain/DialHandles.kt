@@ -76,4 +76,6 @@ data class DirectorReply(
     val confirm: DialConfirm? = null,
     /** what a change answered with besides ok (exportBackup: the backup to copy) */
     val text: String = "",
+    /** the XP a write paid, for a screen that draws its celebration (director.celebrations.v1) */
+    val celebrations: List<com.lifemax.rpg.core.designsystem.feedback.XpAward> = emptyList(),
 )

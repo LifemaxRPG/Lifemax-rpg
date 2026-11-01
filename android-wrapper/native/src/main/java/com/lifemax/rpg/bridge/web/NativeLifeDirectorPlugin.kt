@@ -57,7 +57,13 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
 
     override val tabId = "life-director"
     override val capabilities =
-        listOf("director.today.v2", "director.week.v1", "director.goals.v1", "director.sheets.v1")
+        listOf(
+            "director.today.v2",
+            "director.week.v1",
+            "director.goals.v1",
+            "director.sheets.v1",
+            "director.celebrations.v1",
+        )
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
