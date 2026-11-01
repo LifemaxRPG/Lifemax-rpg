@@ -267,6 +267,26 @@ async function director(b) {
   await act(p, 'replan');
   await shoot(p, 'replan');
 
+  // phase 3A: Week and Quests, from a page whose screen says it draws them (a fake plugin answers the kit's warm handshake)
+  if (last) await last.context().close();
+  p = last = await page(b);
+  await directorDay.seed(p, { planned: true });
+  await p.addInitScript(`(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeLifeDirector', getPlatform: () => 'android',
+    registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeLifeDirector: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
+      handshake: async () => ({ protocol: 1, capabilities: ['director.today.v2', 'director.week.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`);
+  await p.goto('file://' + out, { timeout: 120000 });
+  await p.evaluate(() => { lmaThumbWarm = async () => { }; lmaLoad().nativeOverview = false; setNativeDirectorEnabled(true) });
+  await directorDay.play(p);
+  await p.evaluate(() => lmaNavTo('life-director'));
+  await p.clock.runFor(1500);
+  for (const section of ['week', 'quests']) {
+    await p.evaluate((s) => { if (!LifeDirector.native.section(s).ok) throw Error('no section ' + s) }, section);
+    await p.clock.runFor(300);
+    const snap = await p.evaluate(() => Object.assign(NativeDirectorTabProjection.snapshot(), { webSessionId: 'director-fixture' }));
+    if (!snap[section] || snap.today !== null || !snap.covers.includes(section)) throw Error(section + ' is not in the projection');
+    write('fixtures/director-' + section + '.json', snap);
+  }
+
   p = await live(true);
   await act(p, 'inst', await upNext(p));
   await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=skip]').click());

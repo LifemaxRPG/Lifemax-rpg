@@ -10,6 +10,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.DragWords
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorRepository
+import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DragGeometry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,7 @@ class LifeDirectorViewModel(
     val ui = mutableUi.asStateFlow()
     private var handedOver = false
     private var dayRequest: String? = null
+    private var sectionRequest: String? = null
     private var dropRequest: String? = null
     private var applyRequest: String? = null
     private var shownNotice: Pair<String, Long>? = null
@@ -47,8 +49,9 @@ class LifeDirectorViewModel(
     fun opened() {
         handedOver = false
         dayRequest = null
+        sectionRequest = null
         letGo()
-        mutableUi.update { it.copy(pendingDay = null) }
+        mutableUi.update { it.copy(pendingDay = null, pendingSection = null) }
     }
 
     /**
@@ -70,6 +73,34 @@ class LifeDirectorViewModel(
     }
 
     /**
+     * Whether this screen draws section [id] now: the page hands it over and the screen knows how
+     * to draw it.
+     */
+    fun draws(id: String): Boolean =
+        id in Sections.DRAWN && projection.value?.covers?.contains(id) == true
+
+    /**
+     * Another section the screen draws: asked of the page, which renders it underneath too and
+     * sends it with the reply; the tab shows as chosen meanwhile. A section the screen does not
+     * draw is a tap the page answers (it closes the screen).
+     */
+    fun showSection(id: String) {
+        val p = projection.value ?: return
+        if (busy || !draws(id) || id == (ui.value.pendingSection ?: p.tab)) return
+        mutableUi.update { it.copy(pendingSection = id) }
+        sectionRequest = commands.showSection(id)
+    }
+
+    /** A day from Week: Today on that day. */
+    fun gotoDay(index: Int) {
+        val p = projection.value ?: return
+        if (busy || !draws(Sections.TODAY) || p.week?.days?.any { it.index == index } != true)
+            return
+        mutableUi.update { it.copy(pendingSection = Sections.TODAY, pendingDay = index) }
+        sectionRequest = commands.gotoDay(index)
+    }
+
+    /**
      * The page's answer to a command; it arrives with the projection it produced. Only the answer
      * to the latest request of its kind counts: an earlier day would move the strip back, and an
      * earlier dial answer belongs to a handle let go since.
@@ -81,6 +112,14 @@ class LifeDirectorViewModel(
                     dayRequest = null
                     mutableUi.update { it.copy(pendingDay = null) }
                     if (!reply.ok) show(reply.message.ifBlank { "That day is not on the plan." })
+                }
+            "section",
+            "gotoDay" ->
+                if (reply.requestId == sectionRequest) {
+                    sectionRequest = null
+                    mutableUi.update { it.copy(pendingSection = null, pendingDay = null) }
+                    if (!reply.ok)
+                        show(reply.message.ifBlank { "That section is not in Life Director." })
                 }
             "dialDrop" -> if (reply.requestId == dropRequest) dropped(reply)
             "dialApply" -> if (reply.requestId == applyRequest) applied(reply)
@@ -259,6 +298,8 @@ data class DialAsk(
 
 data class DirectorUi(
     val pendingDay: Int? = null,
+    /** the section asked for, shown as chosen until the page answers */
+    val pendingSection: String? = null,
     val earlierOpen: Boolean = false,
     val toast: DirectorToast? = null,
     val hold: DialHold? = null,

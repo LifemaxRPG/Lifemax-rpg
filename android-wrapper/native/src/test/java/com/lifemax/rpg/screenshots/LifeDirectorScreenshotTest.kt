@@ -182,6 +182,23 @@ class LifeDirectorScreenshotTest {
     /** Asked for another day, before the page has answered: the strip shows it, the dial today. */
     @Test fun dayAskedFor() = snap(projection("today"), DirectorUi(pendingDay = 2), "top" to TOP)
 
+    /**
+     * Week (phase 3A), a screenful at a time: the numbers, a bar per day, the legend, where the XP
+     * goes, how the week fits.
+     */
+    @Test fun week() = snap("week", *Array(3) { k -> "w$k" to SCREEN * k })
+
+    /**
+     * Quests (phase 3A): the Quest Board card, each quest and its plan, the all-day ones, the
+     * milestones.
+     */
+    @Test fun quests() = snap("quests", *Array(3) { k -> "q$k" to SCREEN * k })
+
+    /** Week asked for from Today: the tab shows as chosen while the page answers. */
+    @Test
+    fun sectionAskedFor() =
+        snap(projection("today"), DirectorUi(pendingSection = "week"), "top" to TOP)
+
     /** Life Director before it has a plan: only its frame. */
     @Test fun unplanned() = snap("unplanned", "screen" to null)
 

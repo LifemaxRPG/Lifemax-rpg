@@ -5230,7 +5230,7 @@ const LifeDirectorApp = (function () {
      as its arc and row do. Returns false for an act Today does not have, and, saying so, for a session or meal that has
      left the plan since the screen drew it. */
   const ACT_ID = new Map([['inst', 'id'], ['focusStart', 'id'], ['doneQuick', 'id'], ['tab', 'tab'], ['regroup', 'v'],
-    ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', '']]);
+    ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', ''], ['openQuests', '']]);
   function nativeAct(act, id) {
     if (!root || !root.isConnected) return false;
     const gone = () => { say('That is no longer on the plan.'); return false; };

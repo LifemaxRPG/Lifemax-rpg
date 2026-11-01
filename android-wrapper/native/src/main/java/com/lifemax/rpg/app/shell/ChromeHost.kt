@@ -38,6 +38,22 @@ internal object ChromeHost {
     private var owner: Any? = null
     private var lastSequence = -1
     private var lastShownAt = 0L
+    private var ownerPane = ""
+    /**
+     * how far each native screen is scrolled from its top (px), so the header is right when a
+     * screen comes back
+     */
+    private val scrolled = HashMap<String, Float>()
+
+    /**
+     * Native screen [pane] is scrolled [px] from its top; the header follows it while that screen
+     * owns the bars.
+     */
+    fun scrolled(pane: String, px: Float) {
+        scrolled[pane] = px
+        if (pane == ownerPane) shell?.followScroll(px)
+    }
+
     private val handler = Handler(Looper.getMainLooper())
     private val release = Runnable {
         shell?.close()
@@ -58,6 +74,7 @@ internal object ChromeHost {
         web: WebView,
         scene: JSONObject,
         opening: Boolean = false,
+        pane: String = "",
         onAction: (String) -> Unit,
     ): LiveOverviewShell {
         handler.removeCallbacks(release)
@@ -68,6 +85,8 @@ internal object ChromeHost {
         if (stale && !opening) return existing!!
         this.owner = owner
         listener = onAction
+        val paneChanged = pane != ownerPane
+        ownerPane = pane
         val current =
             existing
                 ?: LiveOverviewShell(activity, web, chromeOnly = true) { id ->
@@ -82,6 +101,7 @@ internal object ChromeHost {
             lastSequence = sequence
             lastShownAt = now
         }
+        if (paneChanged) current.followScroll(scrolled[pane] ?: 0f)
         OverviewBars.hide()
         // a screen added after the bars must not cover them
         val parent = current.root.parent as? android.view.ViewGroup

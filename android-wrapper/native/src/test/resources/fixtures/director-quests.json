@@ -1,0 +1,236 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 2,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "quests",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "reducedMotion": false,
+ "covers": [
+  "today",
+  "week",
+  "quests"
+ ],
+ "today": null,
+ "week": null,
+ "quests": {
+  "head": {
+   "title": "Connected to your Quest Board",
+   "text": "Life Director reads your quests, schedules time for the ones that need it, and checks them off on the Quest Board when the sessions are done. Quest XP is paid by LifeMax once per period, so nothing is counted twice.",
+   "open": "Open Quest Board"
+  },
+  "rows": [
+   {
+    "title": "Hydration Target Met",
+    "when": "Daily",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Three Strength Sessions",
+    "when": "Due Sun, Nov 1",
+    "status": "3 sessions scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "Endurance Progression Block",
+    "when": "Due Sun, Nov 1",
+    "status": "2 sessions scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "Active Recovery Execution",
+    "when": "Due Sun, Nov 1",
+    "status": "1 session scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "Weekly Training Log Audit",
+    "when": "Due Sun, Nov 1",
+    "status": "1 session scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "Pre-Workout Glycogen Top-Off",
+    "when": "Daily",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Post-Training Protein Window",
+    "when": "Daily",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Hydration Balance Check",
+    "when": "Daily",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Even Protein Distribution",
+    "when": "Daily",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Sunday Athletic Fuel Prep",
+    "when": "Due Sun, Nov 1",
+    "status": "0 scheduled",
+    "tone": "no",
+    "why": ""
+   },
+   {
+    "title": "Posture reset",
+    "when": "Daily",
+    "status": "6 sessions scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "Full care day",
+    "when": "Daily",
+    "status": "6 sessions scheduled",
+    "tone": "ok",
+    "why": ""
+   },
+   {
+    "title": "No-scroll hour",
+    "when": "Daily",
+    "status": "6 sessions scheduled",
+    "tone": "ok",
+    "why": ""
+   }
+  ],
+  "passive": [
+   {
+    "title": "Hydration Target Met",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Full Program Adherence",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Full Program Adherence",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Pre-Workout Glycogen Top-Off",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Post-Training Protein Window",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Hydration Balance Check",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Even Protein Distribution",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Sunday Athletic Fuel Prep",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   },
+   {
+    "title": "Sunday Athletic Fuel Prep",
+    "when": "Tracked on the Quest Board",
+    "status": "All-day"
+   }
+  ],
+  "empty": "No active quests.",
+  "milestones": {
+   "summary": "0 of 1 earned",
+   "note": "These are earned through everything else you do, so Life Director doesn’t plan time for them.",
+   "rows": [
+    {
+     "title": "First Training Block Complete",
+     "desc": "Complete two full consecutive weeks of structured strength and cardio sessions.",
+     "earned": false,
+     "status": "In progress"
+    }
+   ]
+  }
+ },
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

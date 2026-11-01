@@ -1,0 +1,108 @@
+package com.lifemax.rpg.feature.lifedirector.domain
+
+/**
+ * The sections a screen may draw besides Today (phase 3A), as the page decides them (nativeWeek and
+ * nativeQuests in logic.js). Every word is the page's; nothing here is computed.
+ */
+object Sections {
+    const val TODAY = "today"
+    const val WEEK = "week"
+    const val QUESTS = "quests"
+
+    /** What this screen can draw; the page's `covers` is the subset it will actually hand over. */
+    val DRAWN = setOf(TODAY, WEEK, QUESTS)
+}
+
+/** One number of Week's three (sessions, time planned, XP on the table). */
+data class WeekStat(val value: String, val label: String)
+
+/**
+ * A part of a day's bar, in percent of the day from midnight. [state] is a session's, NONE for
+ * other time.
+ */
+data class WeekSeg(val kind: BlockKind, val state: SessionState, val left: Float, val width: Float)
+
+data class WeekDay(
+    val index: Int,
+    val label: String,
+    val date: Int,
+    val today: Boolean,
+    /** what TalkBack reads for the row */
+    val aria: String,
+    val count: String,
+    /** "✓2", or empty when none is done */
+    val done: String,
+    val minutes: String,
+    val segs: List<WeekSeg>,
+)
+
+data class LegendEntry(val kind: BlockKind, val label: String)
+
+/**
+ * An attribute's XP: [done] and [plan] as shares of the longest bar (together at most 1), [total]
+ * in the page's words.
+ */
+data class YieldRow(
+    val label: String,
+    val color: Long,
+    val done: Float,
+    val plan: Float,
+    val total: String,
+)
+
+data class XpYield(val title: String, val note: String, val rows: List<YieldRow>)
+
+data class UnfitGroup(val title: String, val tier: String, val text: String)
+
+data class Unscheduled(val summary: String, val groups: List<UnfitGroup>)
+
+data class WeekFit(
+    val title: String,
+    val text: String,
+    val allFit: String,
+    val unscheduled: Unscheduled?,
+)
+
+data class DirectorWeek(
+    val stats: List<WeekStat>,
+    val ticks: List<String>,
+    val days: List<WeekDay>,
+    val legend: List<LegendEntry>,
+    val yield: XpYield?,
+    val fit: WeekFit,
+)
+
+/** ok: covered or done; pas: tracked without time; no: not placed. */
+enum class QuestTone {
+    OK,
+    PAS,
+    NO,
+}
+
+/** The Quest Board card; [open] is its button's words, empty when the board is not connected. */
+data class QuestHead(val title: String, val text: String, val open: String)
+
+data class QuestRow(
+    val title: String,
+    val whenText: String,
+    val status: String,
+    val tone: QuestTone,
+    val why: String,
+)
+
+data class MilestoneRow(
+    val title: String,
+    val desc: String,
+    val earned: Boolean,
+    val status: String,
+)
+
+data class Milestones(val summary: String, val note: String, val rows: List<MilestoneRow>)
+
+data class DirectorQuests(
+    val head: QuestHead,
+    val rows: List<QuestRow>,
+    val passive: List<QuestRow>,
+    val empty: String,
+    val milestones: Milestones?,
+)

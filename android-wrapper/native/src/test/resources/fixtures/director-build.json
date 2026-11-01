@@ -49,6 +49,9 @@
   "text": "Bedtime now 10:30 PM · schedule adjusted"
  },
  "reducedMotion": false,
+ "covers": [
+  "today"
+ ],
  "today": {
   "now": 1793200201,
   "dayIndex": 0,
@@ -2381,6 +2384,8 @@
    }
   }
  },
+ "week": null,
+ "quests": null,
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

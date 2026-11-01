@@ -18,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -45,6 +46,18 @@ class LifeDirectorTest {
         override fun showDay(index: Int): String {
             days += index
             return "day-${days.size}"
+        }
+
+        val sections = mutableListOf<String>()
+
+        override fun showSection(id: String): String {
+            sections += id
+            return "section-${sections.size}"
+        }
+
+        override fun gotoDay(index: Int): String {
+            sections += "today@$index"
+            return "section-${sections.size}"
         }
 
         override fun dialDrop(key: String, place: DialPlace) = error("not dragged here")
@@ -152,11 +165,55 @@ class LifeDirectorTest {
     }
 
     @Test
-    fun aProjectionWithoutAPlanKeepsTheDayLastShown() {
+    fun aProjectionWithoutAPlanKeepsTheDayLastShownOnTodayOnly() {
         val repo = repository()
-        repo.accept(fixture().put("sequence", 2).put("today", JSONObject.NULL).put("tab", "week"))
-        assertEquals("week", repo.state.value!!.tab)
+        repo.accept(fixture().put("sequence", 2).put("today", JSONObject.NULL))
         assertEquals(0, repo.state.value!!.today!!.dayIndex)
+        // phase 3A: another section sends no Today, and none is kept for it
+        repo.accept(fixture().put("sequence", 3).put("today", JSONObject.NULL).put("tab", "week"))
+        assertEquals("week", repo.state.value!!.tab)
+        assertNull(repo.state.value!!.today)
+    }
+
+    @Test
+    fun weekAndQuestsDecodeFromThePage() {
+        val repo = repository()
+        repo.accept(fixture("week").put("sequence", 1000), true)
+        val w = repo.state.value!!.week!!
+        assertEquals(listOf("today", "week", "quests"), repo.state.value!!.covers)
+        assertEquals(7, w.days.size)
+        assertTrue(w.days.first().today && w.days.drop(1).none { it.today })
+        assertTrue(
+            w.days.all { d -> d.segs.all { it.left >= 0f && it.left + it.width <= 100.01f } }
+        )
+        repo.accept(fixture("quests").put("sequence", 1001), true)
+        val q = repo.state.value!!.quests!!
+        assertEquals("Open Quest Board", q.head.open)
+        assertTrue(q.rows.isNotEmpty())
+    }
+
+    @Test
+    fun aMalformedWeekIsRefusedAndTheLastGoodStateKept() {
+        val repo = repository()
+        repo.accept(fixture("week").put("sequence", 1000), true)
+        val bad = fixture("week").put("sequence", 1002)
+        bad.getJSONObject("week")
+            .getJSONArray("days")
+            .getJSONObject(0)
+            .getJSONArray("segs")
+            .getJSONObject(0)
+            .put("kind", "nap")
+        assertThrows(IllegalArgumentException::class.java) { repo.accept(bad) }
+        assertEquals(7, repo.state.value!!.week!!.days.size)
+    }
+
+    @Test
+    fun anOlderPageCoversTodayOnly() {
+        val repo = repository()
+        val old = fixture()
+        old.remove("covers")
+        repo.accept(old, true)
+        assertEquals(listOf("today"), repo.state.value!!.covers)
     }
 
     @Test
@@ -197,6 +254,27 @@ class LifeDirectorTest {
     }
 
     // The view model
+
+    @Test
+    fun aSectionTheScreenDrawsIsACommandAndOneItDoesNotDrawIsHandedOver() {
+        val (repo, vm, commands) = viewModel()
+        assertFalse("a Today-only page: Week is the page's", vm.draws("week"))
+        repo.accept(fixture("week").put("webSessionId", "s").put("sequence", 5), true)
+        vm.opened()
+        vm.showSection("quests")
+        vm.showSection("quests")
+        assertEquals(listOf("quests"), commands.sections)
+        assertEquals("quests", vm.ui.value.pendingSection)
+        vm.onReply(DirectorReply("section-1", "section", true, ""))
+        assertNull(vm.ui.value.pendingSection)
+        assertFalse("Goals is not drawn here, so its tap goes to the page", vm.draws("goals"))
+        vm.gotoDay(3)
+        assertEquals("today@3", commands.sections.last())
+        assertEquals(3, vm.ui.value.pendingDay)
+        vm.onReply(DirectorReply("section-2", "gotoDay", false, ""))
+        assertNull(vm.ui.value.pendingDay)
+        assertEquals("That section is not in Life Director.", vm.ui.value.toast?.text)
+    }
 
     @Test
     fun choosingADayAsksThePageOnceAndTheReplyClearsIt() {

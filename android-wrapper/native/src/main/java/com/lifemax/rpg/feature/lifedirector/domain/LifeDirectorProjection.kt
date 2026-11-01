@@ -256,4 +256,8 @@ data class LifeDirectorProjection(
     val tokens: Map<String, Long>,
     val light: Boolean,
     val reducedMotion: Boolean = false,
+    /** the sections the page hands this screen (phase 3A); Today only from an older page */
+    val covers: List<String> = listOf(Sections.TODAY),
+    val week: DirectorWeek? = null,
+    val quests: DirectorQuests? = null,
 )

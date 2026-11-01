@@ -67,6 +67,10 @@ class LifeDirectorDialTest {
 
         override fun showDay(index: Int) = "day-$index"
 
+        override fun showSection(id: String) = "section-$id"
+
+        override fun gotoDay(index: Int) = "goto-$index"
+
         override fun dialDrop(key: String, place: DialPlace) = record("dialDrop", key, place)
 
         override fun dialApply(key: String, place: DialPlace) = record("dialApply", key, place)

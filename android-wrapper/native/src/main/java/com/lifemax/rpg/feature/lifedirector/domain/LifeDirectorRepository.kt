@@ -14,6 +14,12 @@ interface LifeDirectorCommands {
     /** Show another day of the strip; read-only. */
     fun showDay(index: Int): String
 
+    /** Show another section (phase 3A); read-only, the page renders it underneath too. */
+    fun showSection(id: String): String
+
+    /** A day from Week: Today on that day, as the page's own row does; read-only. */
+    fun gotoDay(index: Int): String
+
     /** What letting the handle [key] go at [place] would change: the page's confirmation. */
     fun dialDrop(key: String, place: DialPlace): String
 

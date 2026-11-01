@@ -7,6 +7,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.DirectorHeader
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorTab
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorRepository
+import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.StatusDot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,8 +16,8 @@ import org.json.JSONObject
 /**
  * Decodes the page's Life Director projection (50-native-director.js). Malformed data is rejected
  * and the last good state kept; an update older than the one held is ignored; a projection from
- * another page session is taken only on an explicit open. A projection without a plan keeps the day
- * last shown.
+ * another page session is taken only on an explicit open. On Today, a projection without a plan
+ * keeps the day last shown; on another section, Today is not sent and not kept.
  */
 class WebLifeDirectorRepository : LifeDirectorRepository {
     private val mutable = MutableStateFlow<LifeDirectorProjection?>(null)
@@ -39,6 +40,7 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
             }
         require(tabs.isNotEmpty()) { "Missing section tabs" }
         val colors = j.getJSONObject("tokens")
+        val tab = j.getString("tab")
         mutable.value =
             LifeDirectorProjection(
                 session = session,
@@ -50,13 +52,18 @@ class WebLifeDirectorRepository : LifeDirectorRepository {
                     ),
                 clock = DirectorClock(clock.getString("time"), clock.getString("day")),
                 tabs = tabs,
-                tab = j.getString("tab"),
+                tab = tab,
                 banner = j.banner(),
                 notice = j.notice(),
-                today = j.today() ?: old?.takeIf { it.session == session }?.today,
+                today =
+                    j.today()
+                        ?: old?.takeIf { it.session == session && tab == Sections.TODAY }?.today,
                 tokens = colors.pageTokens(),
                 light = j.getBoolean("light"),
                 reducedMotion = j.getBoolean("reducedMotion"),
+                covers = j.covers(),
+                week = j.week(),
+                quests = j.quests(),
             )
     }
 }

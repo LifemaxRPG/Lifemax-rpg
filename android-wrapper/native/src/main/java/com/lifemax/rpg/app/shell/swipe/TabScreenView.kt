@@ -6,11 +6,18 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.accessibility.AccessibilityManager
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.AbstractComposeView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.lifemax.rpg.app.shell.ChromeHost
 
 /**
  * A native tab's screen: a Compose host like ComposeView (which is final), that also decides
@@ -41,9 +48,27 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
         if (isAttachedToWindow) createComposition()
     }
 
+    /** How far the content is scrolled from its top, read from the scrolling it does (px). */
+    private var scrolledPx = 0f
+    private val scrollWatch =
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                // a drag or fling toward the top that nothing could take: the content is at its top
+                scrolledPx =
+                    if (available.y > 0f && consumed.y >= 0f) 0f
+                    else (scrolledPx - consumed.y).coerceAtLeast(0f)
+                ChromeHost.scrolled(pane, scrolledPx)
+                return Offset.Zero
+            }
+        }
+
     @Composable
     override fun Content() {
-        content.value?.invoke()
+        Box(Modifier.nestedScroll(scrollWatch)) { content.value?.invoke() }
     }
 
     override fun getAccessibilityClassName(): CharSequence = javaClass.name

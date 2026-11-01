@@ -1,0 +1,971 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 1,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28"
+ },
+ "tab": "week",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "reducedMotion": false,
+ "covers": [
+  "today",
+  "week",
+  "quests"
+ ],
+ "today": null,
+ "week": {
+  "stats": [
+   {
+    "value": "41",
+    "label": "sessions, 1 done"
+   },
+   {
+    "value": "18h 45m",
+    "label": "planned"
+   },
+   {
+    "value": "≈884",
+    "label": "XP on the table"
+   }
+  ],
+  "ticks": [
+   "00",
+   "06",
+   "12",
+   "18",
+   "24"
+  ],
+  "days": [
+   {
+    "index": 0,
+    "label": "Today",
+    "date": 28,
+    "today": true,
+    "aria": "Today: 4 sessions, 2h 15m",
+    "count": "4",
+    "done": "✓1",
+    "minutes": "2h 15m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "done",
+      "left": 31.25,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 37.5,
+      "width": 33.33
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 70.83,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 75,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 77.08,
+      "width": 3.13
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 80.21,
+      "width": 4.17
+     },
+     {
+      "kind": "task",
+      "state": "off",
+      "left": 84.38,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 85.42,
+      "width": 2.08
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 1,
+    "label": "Thu",
+    "date": 29,
+    "today": false,
+    "aria": "Thu 29: 6 sessions, 2h 45m",
+    "count": "6",
+    "done": "",
+    "minutes": "2h 45m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 31.25,
+      "width": 1.04
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 37.5,
+      "width": 33.33
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 70.83,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 75,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 77.08,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 79.17,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 80.21,
+      "width": 3.13
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 83.33,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 85.42,
+      "width": 2.08
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 2,
+    "label": "Fri",
+    "date": 30,
+    "today": false,
+    "aria": "Fri 30: 6 sessions, 2h 45m",
+    "count": "6",
+    "done": "",
+    "minutes": "2h 45m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 31.25,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 32.29,
+      "width": 1.04
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 37.5,
+      "width": 33.33
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 70.83,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 75,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 77.08,
+      "width": 4.17
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 81.25,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 83.33,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 85.42,
+      "width": 1.04
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 3,
+    "label": "Sat",
+    "date": 31,
+    "today": false,
+    "aria": "Sat 31: 7 sessions, 2h 45m",
+    "count": "7",
+    "done": "",
+    "minutes": "2h 45m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 38.54,
+      "width": 1.04
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 52.08,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 58.33,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 59.38,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 60.42,
+      "width": 3.13
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 64.58,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 85.42,
+      "width": 1.04
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 4,
+    "label": "Sun",
+    "date": 1,
+    "today": false,
+    "aria": "Sun 1: 8 sessions, 3h",
+    "count": "8",
+    "done": "",
+    "minutes": "3h",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 38.54,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 39.58,
+      "width": 1.04
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 52.08,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 69.79,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 75,
+      "width": 3.13
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 78.13,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 79.17,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 84.38,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 86.46,
+      "width": 1.04
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 5,
+    "label": "Mon",
+    "date": 2,
+    "today": false,
+    "aria": "Mon 2: 5 sessions, 2h 30m",
+    "count": "5",
+    "done": "",
+    "minutes": "2h 30m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 37.5,
+      "width": 33.33
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 70.83,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 75,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 77.08,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 78.13,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 80.21,
+      "width": 4.17
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 84.38,
+      "width": 1.04
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 85.42,
+      "width": 2.08
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   },
+   {
+    "index": 6,
+    "label": "Tue",
+    "date": 3,
+    "today": false,
+    "aria": "Tue 3: 5 sessions, 2h 45m",
+    "count": "5",
+    "done": "",
+    "minutes": "2h 45m",
+    "segs": [
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 0,
+      "width": 29.17
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 29.17,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 31.25,
+      "width": 1.04
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 33.33,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 35.42,
+      "width": 2.08
+     },
+     {
+      "kind": "work",
+      "state": "",
+      "left": 37.5,
+      "width": 33.33
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 70.83,
+      "width": 2.08
+     },
+     {
+      "kind": "commute",
+      "state": "",
+      "left": 72.92,
+      "width": 2.08
+     },
+     {
+      "kind": "meal",
+      "state": "",
+      "left": 75,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 77.08,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 79.17,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 81.25,
+      "width": 2.08
+     },
+     {
+      "kind": "task",
+      "state": "plan",
+      "left": 83.33,
+      "width": 4.17
+     },
+     {
+      "kind": "rest",
+      "state": "",
+      "left": 87.5,
+      "width": 6.25
+     },
+     {
+      "kind": "maint",
+      "state": "",
+      "left": 93.75,
+      "width": 2.08
+     },
+     {
+      "kind": "sleep",
+      "state": "",
+      "left": 95.83,
+      "width": 4.17
+     }
+    ]
+   }
+  ],
+  "legend": [
+   {
+    "kind": "sleep",
+    "label": "Sleep"
+   },
+   {
+    "kind": "work",
+    "label": "Work & travel"
+   },
+   {
+    "kind": "maint",
+    "label": "Routines"
+   },
+   {
+    "kind": "meal",
+    "label": "Meals"
+   },
+   {
+    "kind": "task",
+    "label": "Sessions"
+   },
+   {
+    "kind": "rest",
+    "label": "Downtime"
+   }
+  ],
+  "yield": {
+   "title": "Where your XP goes",
+   "note": "Estimated with LifeMax’s own XP rules. Solid is earned, outlined is still planned.",
+   "rows": [
+    {
+     "label": "Physique",
+     "color": 4294929239,
+     "done": 0,
+     "plan": 1,
+     "total": "214"
+    },
+    {
+     "label": "Adventure",
+     "color": 4282244228,
+     "done": 0.09,
+     "plan": 0.67,
+     "total": "164"
+    },
+    {
+     "label": "Intelligence",
+     "color": 4284189951,
+     "done": 0,
+     "plan": 0.69,
+     "total": "147"
+    },
+    {
+     "label": "Discipline",
+     "color": 4289170426,
+     "done": 0,
+     "plan": 0.57,
+     "total": "123"
+    },
+    {
+     "label": "Endurance",
+     "color": 4294921613,
+     "done": 0,
+     "plan": 0.41,
+     "total": "88"
+    },
+    {
+     "label": "Wellbeing",
+     "color": 4283289825,
+     "done": 0,
+     "plan": 0.37,
+     "total": "80"
+    },
+    {
+     "label": "Social",
+     "color": 4294942531,
+     "done": 0,
+     "plan": 0.19,
+     "total": "41"
+    },
+    {
+     "label": "Business",
+     "color": 4294296898,
+     "done": 0,
+     "plan": 0.13,
+     "total": "27"
+    }
+   ]
+  },
+  "fit": {
+   "title": "How the week fits",
+   "text": "10h 30m of protected downtime and 20h 15m left completely free. 93% of must-do sessions (weekly minimums and quests) are placed.",
+   "allFit": "Everything requested fits this week.",
+   "unscheduled": {
+    "summary": "3 sessions could not fit",
+    "groups": [
+     {
+      "title": "Full care day",
+      "tier": "tier 4",
+      "text": "\"Full care day\" (quest: Full care day) could not be scheduled — the only free time left is protected recovery. Life Director keeps 90 minutes of downtime per day and will not trade it for tasks."
+     },
+     {
+      "title": "Resistance Training ×2",
+      "tier": "tier 3",
+      "text": "\"Resistance Training\" (quest: Posture reset) could not be scheduled — the only free time left is protected recovery. Life Director keeps 90 minutes of downtime per day and will not trade it for tasks."
+     }
+    ]
+   }
+  }
+ },
+ "quests": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

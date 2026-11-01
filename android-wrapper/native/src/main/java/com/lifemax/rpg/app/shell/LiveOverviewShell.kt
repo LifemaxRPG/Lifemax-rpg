@@ -119,7 +119,7 @@ internal class LiveOverviewShell(
                     .coerceAtLeast(1),
                 Gravity.BOTTOM,
             )
-        header.translationY = if (chromeOnly) 0f else -web.scrollY.toFloat()
+        if (!chromeOnly) header.translationY = -web.scrollY.toFloat()
         follow(scene)
     }
 
@@ -153,6 +153,15 @@ internal class LiveOverviewShell(
                 addUpdateListener { nav.scrollTo(it.animatedValue as Int, 0) }
                 start()
             }
+    }
+
+    /**
+     * A native screen scrolled [px] down from its top: the shared header goes up with it, as the
+     * page's header scrolls with the page, until it is gone; it never floats over the content.
+     */
+    fun followScroll(px: Float) {
+        if (!chromeOnly) return
+        header.translationY = -px.coerceIn(0f, header.layoutParams.height.toFloat())
     }
 
     fun contentInsetsDp(): Pair<Float, Float> {

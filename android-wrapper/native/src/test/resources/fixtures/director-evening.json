@@ -46,6 +46,9 @@
  "banner": null,
  "notice": null,
  "reducedMotion": false,
+ "covers": [
+  "today"
+ ],
  "today": {
   "now": 1793227200,
   "dayIndex": 0,
@@ -2297,6 +2300,8 @@
    }
   }
  },
+ "week": null,
+ "quests": null,
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

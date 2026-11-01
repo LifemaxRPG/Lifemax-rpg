@@ -12,9 +12,9 @@ import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorViewModel
 import org.json.JSONObject
 
 /**
- * Life Director's Today: the page plans, decides and saves; the screen draws its projection, asks
- * for another day of the strip and about a dragged handle with commands (dialDrop, dialApply), and
- * hands every other tap to the page.
+ * Life Director's Today, Week and Quests: the page plans, decides and saves; the screen draws its
+ * projection, asks for another section or day (section, gotoDay, day) and about a dragged handle
+ * with commands (dialDrop, dialApply), and hands every other tap to the page.
  */
 @CapacitorPlugin(name = "NativeLifeDirector")
 class NativeLifeDirectorPlugin : ComposeTabPlugin() {
@@ -23,6 +23,10 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         LifeDirectorContainer(
             object : LifeDirectorCommands {
                 override fun showDay(index: Int) = send("day", JSONObject().put("index", index))
+
+                override fun showSection(id: String) = send("section", JSONObject().put("id", id))
+
+                override fun gotoDay(index: Int) = send("gotoDay", JSONObject().put("index", index))
 
                 override fun dialDrop(key: String, place: DialPlace) =
                     send("dialDrop", place.payload(key))
@@ -38,7 +42,7 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
         "director-${++nextRequest}".also { sendCommand(command, payload, it) }
 
     override val tabId = "life-director"
-    override val capabilities = listOf("director.today.v2")
+    override val capabilities = listOf("director.today.v2", "director.week.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)

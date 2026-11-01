@@ -46,7 +46,12 @@
  "banner": null,
  "notice": null,
  "reducedMotion": false,
+ "covers": [
+  "today"
+ ],
  "today": null,
+ "week": null,
+ "quests": null,
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

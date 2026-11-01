@@ -51,8 +51,11 @@ import com.lifemax.rpg.core.designsystem.LifeMaxTheme
 import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
+import com.lifemax.rpg.feature.lifedirector.domain.DirectorQuests
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
+import com.lifemax.rpg.feature.lifedirector.domain.DirectorWeek
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
@@ -80,6 +83,17 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.BuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.MilestoneRowView
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.MilestonesHeading
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestBoardCard
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestRowView
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.QuestsEmpty
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekFitCard
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekLegend
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekRow
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekStats
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.WeekTicks
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.XpYieldCard
 import kotlinx.coroutines.delay
 
 /**
@@ -138,7 +152,16 @@ class DirectorActions(
         vm: LifeDirectorViewModel,
         emit: (action: String, id: String) -> Unit,
     ) : this(
-        tap = { if (vm.handOver()) emit(it.act, it.id) },
+        // a section or a day the screen draws is a command; any other tap the page answers (it
+        // closes the screen)
+        tap = { t ->
+            when {
+                t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
+                t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
+                    t.id.toIntOrNull()?.let(vm::gotoDay)
+                vm.handOver() -> emit(t.act, t.id)
+            }
+        },
         day = vm::showDay,
         tip = vm::tip,
         earlier = vm::toggleEarlier,
@@ -187,7 +210,10 @@ fun LifeDirectorScreen(
                 observeTouches(actions.touch)
             }
         ) {
-            val today = p.today
+            val today = p.today?.takeIf { p.tab == Sections.TODAY }
+            val week = p.week?.takeIf { p.tab == Sections.WEEK }
+            val quests = p.quests?.takeIf { p.tab == Sections.QUESTS }
+            val more = today != null || week != null || quests != null
             LazyColumn(
                 Modifier.fillMaxSize()
                     .then(
@@ -206,11 +232,11 @@ fun LifeDirectorScreen(
                     ),
             ) {
                 item("top") {
-                    Panel(if (today == null) Slice.WHOLE else Slice.TOP, PANEL_WASHES) {
+                    Panel(if (more) Slice.TOP else Slice.WHOLE, PANEL_WASHES) {
                         Column(Modifier.padding(top = 16.dp)) {
                             DirectorTopLine(p.header, p.clock, actions.tap)
                             Spacer(Modifier.height(12.dp))
-                            SectionTabs(p.tabs, p.tab, actions.tap)
+                            SectionTabs(p.tabs, ui.pendingSection ?: p.tab, actions.tap)
                             Spacer(Modifier.height(15.dp))
                             p.banner?.let {
                                 Banner(it, actions.tap)
@@ -221,6 +247,8 @@ fun LifeDirectorScreen(
                     }
                 }
                 if (today != null) todayBelow(today, ui, actions, animate)
+                if (week != null) weekBody(week, ui, actions)
+                if (quests != null) questsBody(quests, actions)
             }
             if (confirm != null)
                 DialConfirmSheet(confirm, bottomInsetDp.dp, actions.change, actions.keep)
@@ -360,6 +388,54 @@ private fun LazyListScope.todayBelow(
         Panel(Slice.MIDDLE) { OrderRowView(row, actions.tap) }
     }
     item("footer") { Panel(Slice.BOTTOM) { DirectorFooter(actions.tap) } }
+}
+
+/** Week below the frame (renderWeek's order); a day row opens that day on Today. */
+private fun LazyListScope.weekBody(week: DirectorWeek, ui: DirectorUi, actions: DirectorActions) {
+    item("week-stats") { Panel(Slice.MIDDLE) { WeekStats(week) } }
+    item("week-ticks") { Panel(Slice.MIDDLE) { WeekTicks(week.ticks) } }
+    items(week.days, key = { "week-day-" + it.index }) { day ->
+        Panel(Slice.MIDDLE) {
+            Box(Modifier.padding(vertical = 2.dp)) {
+                WeekRow(day, ui.pendingSection != null) {
+                    actions.tap(Tap("gotoDay", it.toString()))
+                }
+            }
+        }
+    }
+    item("week-legend") { Panel(Slice.MIDDLE) { WeekLegend(week) } }
+    week.yield?.let { y -> item("week-yield") { Panel(Slice.MIDDLE) { XpYieldCard(y) } } }
+    item("week-fit") { Panel(Slice.BOTTOM) { WeekFitCard(week.fit) } }
+}
+
+/** Quests below the frame (renderQuests' order). */
+private fun LazyListScope.questsBody(q: DirectorQuests, actions: DirectorActions) {
+    val miles = q.milestones
+    val hasRows = q.rows.isNotEmpty() || q.passive.isNotEmpty()
+    item("quests-head") {
+        Panel(if (!hasRows && miles == null && q.empty.isEmpty()) Slice.BOTTOM else Slice.MIDDLE) {
+            QuestBoardCard(q, actions.tap)
+        }
+    }
+    if (!hasRows && q.empty.isNotEmpty())
+        item("quests-empty") {
+            Panel(if (miles == null) Slice.BOTTOM else Slice.MIDDLE) { QuestsEmpty(q.empty) }
+        }
+    val all = q.rows + q.passive
+    itemsIndexed(all, key = { i, _ -> "quest-$i" }) { i, row ->
+        Panel(if (miles == null && i == all.lastIndex) Slice.BOTTOM else Slice.MIDDLE) {
+            QuestRowView(row)
+        }
+    }
+    if (miles != null) {
+        item("milestones") { Panel(Slice.MIDDLE) { MilestonesHeading(miles) } }
+        itemsIndexed(miles.rows, key = { i, _ -> "milestone-$i" }) { i, m ->
+            Panel(if (i == miles.rows.lastIndex) Slice.BOTTOM else Slice.MIDDLE) {
+                MilestoneRowView(m.title, m.desc, m.earned, m.status)
+            }
+        }
+        if (miles.rows.isEmpty()) item("milestones-end") { Panel(Slice.BOTTOM) {} }
+    }
 }
 
 /** One item's slice of Life Director's panel, with the panel's side padding. */
