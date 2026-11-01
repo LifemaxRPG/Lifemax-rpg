@@ -89,6 +89,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.CoachMarks
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideAnchors
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.guideAnchor
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.FormSheets
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptSheets
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerMealSheet
@@ -121,6 +122,8 @@ fun LifeDirectorRoute(
     BackHandler(enabled = visible && ui.confirm != null) { vm.cancelChange() }
     BackHandler(enabled = visible && ui.restoring) { vm.closeRestore() }
     BackHandler(enabled = visible && ui.sheet != null) { vm.closeSheet() }
+    // a goal form steps back to its grid, a question before Remove closes first (4B)
+    BackHandler(enabled = visible && vm.forms.stepsBack(ui.sheet, ui.forms)) { vm.forms.back() }
     // the backup the page answered with goes on the phone's clipboard, as the page's Copy backup
     // puts it on the browser's
     val clipboard = LocalClipboardManager.current
@@ -309,6 +312,7 @@ fun LifeDirectorScreen(
             }
             TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
             MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
+            FormSheets(p, ui, bottomInsetDp.dp, actions.forms, animate)
             val guide = p.guide
             if (guideRun != null && guide != null)
                 CoachMarks(

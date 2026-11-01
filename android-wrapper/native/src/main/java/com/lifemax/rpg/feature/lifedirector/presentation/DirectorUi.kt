@@ -79,4 +79,6 @@ data class DirectorUi(
     val minutesDraft: MinutesDraft? = null,
     /** Today's write sent to the page and not answered yet ("done", "timer.start", ...) */
     val pendingToday: String? = null,
+    /** My time's form sheets (phase 4B): drafts, the page's words, the write in flight */
+    val forms: FormUi = FormUi(),
 )

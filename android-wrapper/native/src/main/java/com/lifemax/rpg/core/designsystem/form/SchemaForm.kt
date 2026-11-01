@@ -29,8 +29,11 @@ import com.lifemax.rpg.core.designsystem.components.tapTarget
  * each with its page's words in [errors] under it and its note. Fields of one group share a row as
  * the page's ld-grid2 (two equal columns) and ld-grid3 (1fr 1fr 1.3fr) do, their bottoms lined up;
  * a field a check hides is left out. The fold is the page's details element, closed until opened
- * (or until one of its fields is refused). Every change goes to [onChange] with the field's key;
- * nothing is checked or sent here (FormValidation, the sheet's Save).
+ * (or until one of its fields is refused; [foldOpen] starts it open). [typedInThrees] draws a
+ * number sharing a row of three as the page's typed box (input type=number) rather than a stepper,
+ * which has no room there; off by default only to keep the kit's recorded images. Every change goes
+ * to [onChange] with the field's key; nothing is checked or sent here (FormValidation, the sheet's
+ * Save).
  */
 @Composable
 fun SchemaForm(
@@ -40,18 +43,23 @@ fun SchemaForm(
     modifier: Modifier = Modifier,
     errors: Map<String, String> = emptyMap(),
     enabled: Boolean = true,
+    foldOpen: Boolean = false,
+    typedInThrees: Boolean = false,
 ) {
     val shown = FormValidation.visibleKeys(schema, values)
     // the screen's picker look if it set one, else the kit's own, so the pickers match the form
     val pickers = LocalPickerFieldLook.current ?: LocalFormKitLook.current.pickers()
     CompositionLocalProvider(LocalPickerFieldLook provides pickers) {
         Column(modifier.fillMaxWidth()) {
-            Fields(schema.fields, shown, values, onChange, errors, enabled)
+            Fields(schema.fields, shown, values, onChange, errors, enabled, typedInThrees)
             schema.fold?.let { fold ->
-                var open by rememberSaveable { mutableStateOf(false) }
+                var open by rememberSaveable { mutableStateOf(foldOpen) }
                 val refused = fold.fields.any { it.key in errors }
                 FoldSummary(fold.label, open || refused) { open = !open }
-                if (open || refused) Fields(fold.fields, shown, values, onChange, errors, enabled)
+                if (open || refused) {
+                    Fields(fold.fields, shown, values, onChange, errors, enabled, typedInThrees)
+                    fold.note?.let { FormKitNote(it) }
+                }
             }
         }
     }
@@ -66,6 +74,7 @@ private fun Fields(
     onChange: (String, FieldValue) -> Unit,
     errors: Map<String, String>,
     enabled: Boolean,
+    typedInThrees: Boolean,
 ) {
     formRows(fields.filter { it.key in shown }).forEach { row ->
         if (row.size == 1) {
@@ -85,7 +94,12 @@ private fun Fields(
                 verticalAlignment = Alignment.Bottom,
             ) {
                 row.forEachIndexed { i, f ->
-                    Cell(f, values, onChange, errors, enabled, Modifier.weight(weights[i]))
+                    // a stepper has no room in a third of the row: the page's own number box
+                    val cell =
+                        if (typedInThrees && row.size >= 3 && f.kind == FieldKind.NUMBER)
+                            f.copy(placeholder = f.placeholder ?: "")
+                        else f
+                    Cell(cell, values, onChange, errors, enabled, Modifier.weight(weights[i]))
                 }
             }
             if (row.any { it.key in errors || it.note != null })
@@ -184,13 +198,18 @@ private fun FieldFor(
                     enabled = enabled,
                 )
         }
-        FieldKind.TIME ->
+        FieldKind.TIME -> {
+            val m = (v as FieldValue.Time).minutes
             TimeField(
                 label = f.label,
-                value = (v as FieldValue.Time).minutes,
+                value = m,
                 onChange = { set(FieldValue.Time(it)) },
                 enabled = enabled,
+                // the page's clock style, and its own words while the time is the page's
+                h12 = f.text?.let(ClockText::is12h) ?: true,
+                text = f.text.takeIf { m == (f.value as FieldValue.Time).minutes },
             )
+        }
         FieldKind.DATE ->
             DateField(
                 label = f.label,
