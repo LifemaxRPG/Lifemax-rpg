@@ -1,6 +1,6 @@
 # Food's add-food sheet: native build plan
 
-Status: plan only, written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Nothing is built yet.
+Status: phase 1a (the web half) is built on the page (`50-food.js` seams, `50-native-nutrition.js`, `native-food-sheet.test.js`); the native half is not. Written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Nothing is built yet.
 Not yet reviewed by a second reader: before building, have it checked against the code (the way the other plans in this folder were).
 
 ## 1. What there is today
@@ -33,11 +33,17 @@ the slot or step rules).
 - The projection gains a `sheet` field: `null` when closed, otherwise the page's `sh` rendered as data (view, slot, query,
   tab, the rows with their kcal and macros, the picked food, grams, servings, the live kcal and macros, the day's targets
   with this food added, whether it is a favourite).
-- Commands (each answered with a fresh projection, as the kit does): `sheetOpen{slot}`, `sheetQuery{q}` (debounced on the
-  native side), `sheetTab{tab}`, `sheetPick{index}`, `sheetGrams{grams}` and `sheetStep{dir}`, `sheetServing{grams}`,
-  `sheetSlot{slot}`, `sheetFav`, `sheetLog`, `sheetQuick{kcal,name}`, `sheetBack`, `sheetClose`.
-- Search is the one asynchronous part (the USDA lookup): the page answers `sheetQuery` at once with the local rows and sends
-  an update when the database rows arrive. A search serial discards stale results (the page already does: `sh.serial`).
+- **Food is not on the shared tab kit.** It has its own plugin that works by `action` events from native and `update` pushes
+  from the page (every page change calls `scheduleSync`), with no command-and-reply channel. The sheet uses that model, not a
+  new one: each sheet action runs on the page and the next update carries the result.
+- Actions (all session-checked): `sheetOpen{slot}`, `sheetQuery{q}` (debounced on the native side), `sheetTab{tab}`,
+  `sheetPick{index,id}`, `sheetRowAdd{index,id}`, `sheetStep{dir}`, `sheetGrams{grams}`, `sheetServing{grams}`,
+  `sheetMult{x}`, `sheetSlot{slot}`, `sheetFav`, `sheetQuick`, `sheetQuickSave{kcal,name}`, `sheetLog`, `sheetBack`,
+  `sheetClose`, and `noticeAction{id}` (the page's Undo). A row is addressed by its index and id, so a list that changed
+  under the finger is ignored, not mis-tapped.
+- Search is the one asynchronous part (the USDA lookup): the page answers at once with its own foods (`searching: true`) and
+  sends an update when the database rows arrive; a serial discards stale results. An update asked for while one is in flight
+  is sent after it (it used to be dropped).
 - **Phase 1 draws search, portion and quick.** Create food, the daily targets and editing an entry keep handing over to the
   page's own sheet (today's behaviour), so nothing is lost while they wait.
 - A prerequisite: native Food has **no message channel** today. The page's toasts and the Undo snack are drawn on the page,
@@ -71,7 +77,7 @@ A Native API bump at merge.
 
 | Phase | Contents | Steps |
 |---|---|---|
-| 1a, web | the notice relay, the `sheet` projection, the commands, tests, fixtures, the simulation | 2 |
+| 1a, web (built) | the notice relay, the `sheet` projection, the commands, tests, fixtures, the simulation | 2 |
 | 1b, native | decoder and view model, search and portion and quick views, screenshots, docs | 3 |
 | 1c | review fixes | 1 |
 | 2 | create food, the daily targets, edit / delete / again with a native Undo | 3 |

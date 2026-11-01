@@ -3050,8 +3050,8 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 41627,
-   "statement_count": 71,
+   "bytes": 44127,
+   "statement_count": 85,
    "tags": [
     "nutrition",
     "food"
@@ -3107,13 +3107,27 @@
     "fv2Head",
     "fv2Paint",
     "fv2Match",
+    "fv2RowData",
     "fv2Row",
+    "fv2TabFoods",
+    "fv2NoneWords",
+    "fv2NoneHtml",
     "fv2List",
+    "fv2SearchTokens",
+    "fv2LocalFoods",
+    "fv2UsdaFoods",
     "fv2Search",
     "fv2SheetInput",
     "fv2SheetClick",
+    "fv2StepGrams",
+    "fv2MultGrams",
+    "fv2QuickFood",
     "fv2Totals",
     "fv2Portion",
+    "fv2ImpactData",
+    "fv2ServingsData",
+    "FV2_MULTS",
+    "fv2MultLabel",
     "fv2Small",
     "fv2LogLabel",
     "fv2Live",
@@ -3314,7 +3328,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 23427,
+   "bytes": 30733,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3323,6 +3337,7 @@
    ],
    "symbols": [
     "window.setNativeNutritionEnabled",
+    "window.__fv2Notice",
     "window.__nativeTabPerf",
     "window.NativeNutritionBeta"
    ]

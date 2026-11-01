@@ -125,6 +125,9 @@
  "FOOD_DB": [
   "src/runtime/segments/01-runtime.js"
  ],
+ "FV2_MULTS": [
+  "src/runtime/segments/50-food.js"
+ ],
  "FX": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -1813,6 +1816,9 @@
  "fv2Head": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2ImpactData": [
+  "src/runtime/segments/50-food.js"
+ ],
  "fv2IsFav": [
   "src/runtime/segments/50-food.js"
  ],
@@ -1823,6 +1829,9 @@
   "src/runtime/segments/50-food.js"
  ],
  "fv2Live": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2LocalFoods": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2Log": [
@@ -1838,6 +1847,18 @@
   "src/runtime/segments/50-food.js"
  ],
  "fv2Mid": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2MultGrams": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2MultLabel": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2NoneHtml": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2NoneWords": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2Open": [
@@ -1864,6 +1885,9 @@
  "fv2Preset": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2QuickFood": [
+  "src/runtime/segments/50-food.js"
+ ],
  "fv2Recents": [
   "src/runtime/segments/50-food.js"
  ],
@@ -1871,6 +1895,9 @@
   "src/runtime/segments/50-food.js"
  ],
  "fv2Row": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2RowData": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2S": [
@@ -1889,6 +1916,12 @@
   "src/runtime/segments/50-food.js"
  ],
  "fv2Search": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2SearchTokens": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2ServingsData": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2SheetClick": [
@@ -1912,6 +1945,12 @@
  "fv2Snack": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2StepGrams": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2TabFoods": [
+  "src/runtime/segments/50-food.js"
+ ],
  "fv2ToggleFav": [
   "src/runtime/segments/50-food.js"
  ],
@@ -1925,6 +1964,9 @@
   "src/runtime/segments/50-food.js"
  ],
  "fv2UsdaClear": [
+  "src/runtime/segments/50-food.js"
+ ],
+ "fv2UsdaFoods": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2UsdaRender": [
@@ -7206,6 +7248,9 @@
  ],
  "window.__fv2": [
   "src/runtime/segments/50-food.js"
+ ],
+ "window.__fv2Notice": [
+  "src/runtime/segments/50-native-nutrition.js"
  ],
  "window.__lmaBooted": [
   "src/runtime/segments/51-boot-ok.js"

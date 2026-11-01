@@ -39,7 +39,7 @@ function fv2Log(food,grams,slot,opts){
  fv2Snack((food.n.length>26?food.n.slice(0,25)+'…':food.n)+' · '+fv2Fmt(s.kcal)+' kcal','Undo',function(){const was=state.foodLog;state.foodLog=was.filter(x=>x.id!==e.id);if(fv2Saved(()=>{state.foodLog=was}))renderMeals()});
  return e;
 }
-function fv2Snack(msg,act,fn){let el=document.getElementById('fv2Snack');if(!el){el=document.createElement('div');el.id='fv2Snack';el.className='fv2-snack';document.body.appendChild(el)}
+function fv2Snack(msg,act,fn){if(window.__fv2Notice)window.__fv2Notice(msg,act,fn);let el=document.getElementById('fv2Snack');if(!el){el=document.createElement('div');el.id='fv2Snack';el.className='fv2-snack';document.body.appendChild(el)}
  el.innerHTML='<span></span>'+(act?'<button type="button">'+esc(act)+'</button>':'');el.firstChild.textContent=msg;el.classList.add('on');
  if(act)el.querySelector('button').onclick=function(){el.classList.remove('on');fn&&fn()};clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('on')},4200)}
 function deleteMealEntry(id){mealsEnsure();const was=state.foodLog;state.foodLog=was.filter(x=>x.id!==id);if(fv2Saved(()=>{state.foodLog=was}))renderMeals()}
@@ -163,20 +163,39 @@ function fv2Paint(){const sh=fv2S().sh,p=document.querySelector('#fv2Ov .sheet')
  else if(sh.view==='quick'){h=fv2Head('Quick calories',true)+'<div class="fv2-form"><label>Calories<input id="fv2QK" type="number" inputmode="numeric" min="0" placeholder="e.g. 450"></label><label>Name <small>(optional)</small><input id="fv2QN" type="text" maxlength="60" placeholder="Restaurant lunch"></label>'+fv2SlotPills()+'</div><div class="fv2-foot"><button type="button" class="pri" data-s2="quicksave">Add to '+esc(fv2Slots().find(s=>s[0]===sh.slot)[1])+'</button></div>';p.innerHTML=h;setTimeout(function(){const i=document.getElementById('fv2QK');i&&i.focus()},120)}
  else if(sh.view==='goal'){h=fv2Goal();p.innerHTML=h;fv2GoalLive()}}
 function fv2Match(f,toks){const hay=((f.n||'')+' '+(f.brand||'')+' '+(f.cat||'')).toLowerCase();return toks.every(t=>hay.indexOf(t)>=0)}
-function fv2Row(f,i,sub){const u=f._grams?{g:f._grams,l:f._grams+' g'}:fv2Unit(f);const k=fv2KcalFor(f,u.g);
- return '<div class="fv2-r" data-i="'+i+'"><button type="button" class="m" data-r="'+i+'"><b>'+esc(f.n)+'</b><span>'+esc((f.brand?f.brand+' · ':'')+(sub||u.l))+' · P '+Math.round(scaleFood(f,u.g).p)+' C '+Math.round(scaleFood(f,u.g).c)+' F '+Math.round(scaleFood(f,u.g).f)+'</span></button><span class="k">'+fv2Fmt(k)+'<small>kcal</small></span><button type="button" class="q" data-q="'+i+'" aria-label="Add '+esc(f.n)+'">+</button></div>'}
+/* what a row of the list shows for a food: the amount a tap logs (the last amount used, else its first serving), its words
+   (brand, then `sub` or the serving), and its kcal and macros at that amount */
+function fv2RowData(f,sub){const u=f._grams?{g:f._grams,l:f._grams+' g'}:fv2Unit(f),s=scaleFood(f,u.g);
+ return {name:f.n,detail:(f.brand?f.brand+' · ':'')+(sub||u.l),grams:u.g,kcal:fv2KcalFor(f,u.g),p:Math.round(s.p),c:Math.round(s.c),f:Math.round(s.f)}}
+function fv2Row(f,i,sub){const d=fv2RowData(f,sub);
+ return '<div class="fv2-r" data-i="'+i+'"><button type="button" class="m" data-r="'+i+'"><b>'+esc(d.name)+'</b><span>'+esc(d.detail)+' · P '+d.p+' C '+d.c+' F '+d.f+'</span></button><span class="k">'+fv2Fmt(d.kcal)+'<small>kcal</small></span><button type="button" class="q" data-q="'+i+'" aria-label="Add '+esc(d.name)+'">+</button></div>'}
+/* the foods under a tab of the empty search: what you logged lately, your favourites, the foods you made */
+function fv2TabFoods(tab){return tab==='recent'?fv2Recents(20):tab==='fav'?fv2Favs().map(f=>Object.assign({},f)):(state.customFoods||[]).slice(0,60)}
+/* what an empty list says: [title, line] for a search with no match (q), or for an empty tab */
+function fv2NoneWords(q,tab){return q?['No matches yet','Try another word, or create the food yourself.']
+ :tab==='recent'?['Nothing logged yet','Search for a food above. Everything you log shows up here for one-tap repeats.']
+ :tab==='fav'?['No favorites yet','Open any food and tap the star to keep it here.']
+ :['No custom foods','Create a food with its label values and it will live here.']}
+function fv2NoneHtml(w){return '<div class="fv2-none"><b>'+w[0]+'</b><span>'+w[1]+'</span></div>'}
 function fv2List(){const sh=fv2S().sh,box=document.getElementById('fv2List');if(!box)return;let list=[],note='';const q=sh.q.trim().toLowerCase();
- if(q){list=sh.list;note=list.length?'':'<div class="fv2-none"><b>No matches yet</b><span>Try another word, or create the food yourself.</span></div>'}
- else if(sh.tab==='recent'){list=fv2Recents(20);sh.list=list;note=list.length?'':'<div class="fv2-none"><b>Nothing logged yet</b><span>Search for a food above. Everything you log shows up here for one-tap repeats.</span></div>'}
- else if(sh.tab==='fav'){list=fv2Favs().map(f=>Object.assign({},f));sh.list=list;note=list.length?'':'<div class="fv2-none"><b>No favorites yet</b><span>Open any food and tap the star to keep it here.</span></div>'}
- else{list=(state.customFoods||[]).slice(0,60);sh.list=list;note=list.length?'':'<div class="fv2-none"><b>No custom foods</b><span>Create a food with its label values and it will live here.</span></div>'}
+ if(q){list=sh.list;note=list.length?'':fv2NoneHtml(fv2NoneWords(q,sh.tab))}
+ else if(sh.tab==='recent'){list=fv2TabFoods('recent');sh.list=list;note=list.length?'':fv2NoneHtml(fv2NoneWords('',sh.tab))}
+ else if(sh.tab==='fav'){list=fv2TabFoods('fav');sh.list=list;note=list.length?'':fv2NoneHtml(fv2NoneWords('',sh.tab))}
+ else{list=fv2TabFoods('mine');sh.list=list;note=list.length?'':fv2NoneHtml(fv2NoneWords('',sh.tab))}
  box.innerHTML=list.map((f,i)=>fv2Row(f,i,q?'':(f._grams?'last '+f._grams+' g':''))).join('')+note}
-async function fv2Search(){const sh=fv2S().sh,q=sh.q.trim().toLowerCase(),ser=++sh.serial;if(!q){fv2List();return}
- const toks=q.split(/\s+/).filter(Boolean);let local=allFoods().filter(f=>fv2Match(f,toks));
- local.sort((a,b)=>((a.n||'').toLowerCase().startsWith(toks[0])?0:1)-((b.n||'').toLowerCase().startsWith(toks[0])?0:1)||(a.n||'').length-(b.n||'').length);local=local.slice(0,25);sh.list=local;fv2List();
- try{const db=await usdaDb();const tx=db.transaction('foods','readonly');const idx=tx.objectStore('foods').index('terms');const req=idx.getAll(IDBKeyRange.bound(toks[0],toks[0]+'￿'),80);const found=await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error)});db.close();if(ser!==sh.serial)return;
+/* the words of a typed search (lower case) */
+function fv2SearchTokens(q){return String(q||'').trim().toLowerCase().split(/\s+/).filter(Boolean)}
+/* the page's own foods for those words: names that start with the first word first, then the shorter names; up to 25 */
+function fv2LocalFoods(toks){let local=allFoods().filter(f=>fv2Match(f,toks));
+ local.sort((a,b)=>((a.n||'').toLowerCase().startsWith(toks[0])?0:1)-((b.n||'').toLowerCase().startsWith(toks[0])?0:1)||(a.n||'').length-(b.n||'').length);return local.slice(0,25)}
+/* the USDA database's foods for the same words that `local` does not have, up to 30; [] when the database cannot be read */
+async function fv2UsdaFoods(toks,local){
+ try{const db=await usdaDb();const tx=db.transaction('foods','readonly');const idx=tx.objectStore('foods').index('terms');const req=idx.getAll(IDBKeyRange.bound(toks[0],toks[0]+'\uffff'),80);const found=await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error)});db.close();
   const seen=new Set(local.map(f=>f.id)),br=[];for(const f of found){if(seen.has(f.id)||!fv2Match(f,toks))continue;seen.add(f.id);usdaFoodsCache[f.id]=f;br.push(f);if(br.length>=30)break}
-  if(br.length){sh.list=local.concat(br);fv2List()}}catch(e){}}
+  return br}catch(e){return[]}}
+async function fv2Search(){const sh=fv2S().sh,q=sh.q.trim().toLowerCase(),ser=++sh.serial;if(!q){fv2List();return}
+ const toks=fv2SearchTokens(q),local=fv2LocalFoods(toks);sh.list=local;fv2List();
+ const br=await fv2UsdaFoods(toks,local);if(ser!==sh.serial)return;if(br.length){sh.list=local.concat(br);fv2List()}}
 function fv2SheetInput(ev){const sh=fv2S().sh,t=ev.target;
  if(t.id==='fv2Q'){sh.q=t.value;clearTimeout(sh._t);sh._t=setTimeout(fv2Search,110)}
  else if(t.id==='fv2G'){sh.grams=Math.max(0,+t.value||0);fv2Live()}
@@ -186,12 +205,11 @@ function fv2SheetClick(ev){const sh=fv2S().sh,t=ev.target;let b;
   if(a==='back'){fv2Back();return}
   if(a==='quick'){fv2Go('quick');return}
   if(a==='create'){fv2Go('create');return}
-  if(a==='quicksave'){const k=Math.round(+document.getElementById('fv2QK').value||0);if(k<=0){fv2Snack('Enter the calories');return}const nm=(document.getElementById('fv2QN').value||'').trim()||'Quick calories';
-   const f={id:'quick_'+Date.now(),n:nm,cat:'Quick',kcal:k,p:0,c:0,f:0,fib:0,sug:0,na:0,port:[{l:'1 entry',g:100}]};fv2Close();fv2Log(f,100,sh.slot);return}
+  if(a==='quicksave'){const k=Math.round(+document.getElementById('fv2QK').value||0);if(k<=0){fv2Snack('Enter the calories');return}const f=fv2QuickFood(k,document.getElementById('fv2QN').value);fv2Close();fv2Log(f,100,sh.slot);return}
   if(a==='log'){fv2DoLog();return}
   if(a==='fav'){const on=fv2ToggleFav(sh.pick);fv2Hap('tap');const bt=document.querySelector('.fv2-star');if(bt){bt.classList.toggle('on',on);bt.setAttribute('aria-pressed',on)}return}
-  if(a==='step'){const d=+b.dataset.d,g=sh.grams,st=g<50?5:g<200?10:25;sh.grams=Math.max(1,Math.round((g+d*st)/st)*st);if(d<0&&sh.grams<1)sh.grams=1;fv2Live(true);return}
-  if(a==='mult'){const u=fv2Unit(sh.pick);sh.grams=Math.max(1,Math.round(u.g*(+b.dataset.x)*10)/10);fv2Live(true);return}
+  if(a==='step'){sh.grams=fv2StepGrams(sh.grams,+b.dataset.d);fv2Live(true);return}
+  if(a==='mult'){sh.grams=fv2MultGrams(sh.pick,+b.dataset.x);fv2Live(true);return}
   if(a==='serv'){sh.grams=+b.dataset.g;fv2Live(true);return}
   if(a==='save'){fv2SaveEdit();return}
   if(a==='del'){const id=sh.edit.id,e=sh.edit,was=state.foodLog;state.foodLog=was.filter(x=>x.id!==id);if(!fv2Saved(()=>{state.foodLog=was}))return;fv2Close();renderMeals();fv2Snack('Removed '+e.name,'Undo',function(){state.foodLog.push(e);if(fv2Saved(()=>{state.foodLog=state.foodLog.filter(x=>x!==e)}))renderMeals()});return}
@@ -203,24 +221,41 @@ function fv2SheetClick(ev){const sh=fv2S().sh,t=ev.target;let b;
  if((b=t.closest('[data-tab]'))){sh.tab=b.dataset.tab;sh.q='';const q=document.getElementById('fv2Q');if(q)q.value='';b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fv2List();return}
  if((b=t.closest('[data-q]'))){const f=sh.list[+b.dataset.q];if(!f)return;const u=f._grams?{g:f._grams}:fv2Unit(f);fv2Close();fv2Log(f,u.g,sh.slot);return}
  if((b=t.closest('[data-r]'))){const f=sh.list[+b.dataset.r];if(!f)return;sh.pick=f;sh.grams=f._grams||fv2Unit(f).g;fv2Go('portion');return}}
+/* one step of the amount: 5 g below 50 g, 10 g below 200 g, 25 g above; d is 1 or -1; never below 1 g */
+function fv2StepGrams(g,d){const st=g<50?5:g<200?10:25;return Math.max(1,Math.round((g+d*st)/st)*st)}
+/* the amount for a multiple (½, 1, 1.5, 2, 3 times) of the food's first serving */
+function fv2MultGrams(food,x){return Math.max(1,Math.round(fv2Unit(food).g*x*10)/10)}
+/* a one-off food from calories alone (and an optional name), logged as 100 g of it */
+function fv2QuickFood(kcal,name){return {id:'quick_'+Date.now(),n:String(name||'').trim()||'Quick calories',cat:'Quick',kcal:kcal,p:0,c:0,f:0,fib:0,sug:0,na:0,port:[{l:'1 entry',g:100}]}}
 function fv2Totals(){const day=mealsDayKey();return fv2Tot(dayFoodLog(day))}
-function fv2Portion(){const sh=fv2S().sh,f=sh.pick,ed=sh.view==='edit',s=scaleFood(f,sh.grams),g=fv2Goals(),base=fv2Totals(),ports=(f.port||[]).slice();
- let sv='';ports.slice(0,4).forEach(function(p){sv+='<button type="button" data-s2="serv" data-g="'+p.g+'" class="'+(Math.abs(sh.grams-p.g)<.5?'on':'')+'">'+esc(fv2PL(p.l))+'<small>'+p.g+' g</small></button>'});
- if(!ports.some(p=>p.g===100))sv+='<button type="button" data-s2="serv" data-g="100" class="'+(sh.grams===100?'on':'')+'">100 g</button>';
- const e0=ed?sh.edit:null,bk=e0?{kcal:base.kcal-(+e0.kcal||0),p:base.p-(+e0.p||0),c:base.c-(+e0.c||0),f:base.f-(+e0.f||0)}:base;
- let imp='';['p','c','f'].forEach(function(k){const m=fv2Mac()[k],gl=g[k],a=bk[k],n=s[k],tot=a+n;imp+='<div class="fv2-im" style="--mc:'+m[1]+'"><span>'+m[0]+'</span><i><u style="width:'+(gl?Math.min(100,a/gl*100):0)+'%"></u><b id="fv2Imb'+k+'" style="left:'+(gl?Math.min(100,a/gl*100):0)+'%;width:'+(gl?Math.max(0,Math.min(100-a/gl*100,n/gl*100)):0)+'%"></b></i><em id="fv2Imv'+k+'">'+Math.round(n)+' g'+(gl?' · '+Math.round(tot/gl*100)+'%':'')+'</em></div>'});
+function fv2Portion(){const sh=fv2S().sh,f=sh.pick,ed=sh.view==='edit',s=scaleFood(f,sh.grams);
+ let sv='';fv2ServingsData(f,sh.grams).forEach(function(p){sv+='<button type="button" data-s2="serv" data-g="'+p.grams+'" class="'+(p.on?'on':'')+'">'+esc(p.label)+(p.small?'<small>'+p.grams+' g</small>':'')+'</button>'});
+ const e0=ed?sh.edit:null;
+ let imp='';fv2ImpactData(f,sh.grams,e0).forEach(function(d){imp+='<div class="fv2-im" style="--mc:'+d.color+'"><span>'+d.name+'</span><i><u style="width:'+d.before+'%"></u><b id="fv2Imb'+d.k+'" style="left:'+d.before+'%;width:'+d.add+'%"></b></i><em id="fv2Imv'+d.k+'">'+d.label+'</em></div>'});
  return fv2Head(ed?'Edit entry':'Add food',!ed)+'<div class="fv2-pt"><div class="fv2-fh"><div><h3>'+esc(f.n)+'</h3><p>'+esc([f.brand,f.cat].filter(Boolean).join(' · ')||'Food')+'</p></div>'+(ed?'':'<button type="button" class="fv2-star'+(fv2IsFav(f)?' on':'')+'" data-s2="fav" aria-label="Favorite" aria-pressed="'+fv2IsFav(f)+'"><svg viewBox="0 0 24 24"><path d="M12 3.500l2.700 5.500 6 .9-4.400 4.200 1.100 6-5.400-2.900-5.400 2.900 1.100-6L3.300 9.900l6-.9z"/></svg></button>')+'</div>'
   +'<div class="fv2-big"><span id="fv2K">'+fv2Fmt(s.kcal)+'</span><small>kcal</small></div>'
   +'<div class="fv2-amt"><button type="button" data-s2="step" data-d="-1" aria-label="Less">−</button><label><input id="fv2G" type="number" inputmode="decimal" min="1" value="'+sh.grams+'"><span>grams</span></label><button type="button" data-s2="step" data-d="1" aria-label="More">+</button></div>'
-  +'<div class="fv2-serv">'+sv+'</div><div class="fv2-mult">'+[.5,1,1.5,2,3].map(x=>'<button type="button" data-s2="mult" data-x="'+x+'">'+(x===.5?'½':x)+'×</button>').join('')+'</div>'
+  +'<div class="fv2-serv">'+sv+'</div><div class="fv2-mult">'+FV2_MULTS.map(x=>'<button type="button" data-s2="mult" data-x="'+x+'">'+fv2MultLabel(x)+'</button>').join('')+'</div>'
   +'<div class="fv2-imp">'+imp+'<div class="fv2-sm" id="fv2Sm">'+fv2Small(s)+'</div></div>'
   +(ed?'':fv2SlotPills())+(ed?fv2SlotPills():'')+'</div>'
   +'<div class="fv2-foot">'+(ed?'<button type="button" class="ghost danger" data-s2="del">Remove</button>'+(e0.date!==getToday()?'<button type="button" class="ghost" data-s2="again">Log today</button>':''):'')+'<button type="button" class="pri" id="fv2LogBtn" data-s2="'+(ed?'save':'log')+'">'+fv2LogLabel(s,ed)+'</button></div>'}
+/* what an amount of a food adds to the day's protein, carbs and fat against the day's targets, for the bars of the portion view:
+   `before` is how much of the target the day already has (an entry being edited is taken out of it), `add` how much this adds
+   (both as percentages of the bar, together at most 100), `label` the words under the bar. e0 is the entry being edited, if any. */
+function fv2ImpactData(f,grams,e0){const s=scaleFood(f,grams),g=fv2Goals(),base=fv2Totals(),bk=e0?{p:base.p-(+e0.p||0),c:base.c-(+e0.c||0),f:base.f-(+e0.f||0)}:base;
+ return ['p','c','f'].map(function(k){const m=fv2Mac()[k],gl=g[k],a=bk[k],n=s[k];
+  return {k:k,name:m[0],color:m[1],grams:n,goal:gl,before:gl?Math.min(100,a/gl*100):0,add:gl?Math.max(0,Math.min(100-a/gl*100,n/gl*100)):0,label:Math.round(n)+' g'+(gl?' · '+Math.round((a+n)/gl*100)+'%':'')}})}
+/* the serving buttons of a food at an amount: its first four servings (each with its grams) and, unless it has one, 100 g;
+   `on` marks the one the amount matches */
+function fv2ServingsData(f,grams){const ports=(f.port||[]).slice(),out=ports.slice(0,4).map(function(p){return {label:fv2PL(p.l),grams:p.g,on:Math.abs(grams-p.g)<.5,small:true}});
+ if(!ports.some(p=>p.g===100))out.push({label:'100 g',grams:100,on:grams===100,small:false});return out}
+const FV2_MULTS=[.5,1,1.5,2,3];
+function fv2MultLabel(x){return (x===.5?'½':x)+'×'}
 function fv2Small(s){return '<span>Fiber <b>'+(+s.fib||0)+' g</b></span><span>Sugar <b>'+(+s.sug||0)+' g</b></span><span>Sodium <b>'+Math.round(+s.na||0)+' mg</b></span>'}
-function fv2LogLabel(s,ed){const sh=fv2S().sh;return (ed?'Save changes':'Add to '+fv2Slots().find(x=>x[0]===sh.slot)[1])+' · '+fv2Fmt(s.kcal)+' kcal'}
-function fv2Live(rewrite){const sh=fv2S().sh,s=scaleFood(sh.pick,sh.grams||0),g=fv2Goals(),base=fv2Totals(),e0=sh.view==='edit'?sh.edit:null,bk=e0?{p:base.p-(+e0.p||0),c:base.c-(+e0.c||0),f:base.f-(+e0.f||0)}:base;
+function fv2LogLabel(s,ed,slot){return (ed?'Save changes':'Add to '+fv2Slots().find(x=>x[0]===(slot||fv2S().sh.slot))[1])+' · '+fv2Fmt(s.kcal)+' kcal'}
+function fv2Live(rewrite){const sh=fv2S().sh,s=scaleFood(sh.pick,sh.grams||0),e0=sh.view==='edit'?sh.edit:null;
  const k=document.getElementById('fv2K');if(k)k.textContent=fv2Fmt(s.kcal);
- ['p','c','f'].forEach(function(m){const gl=g[m],a=bk[m],n=s[m],bb=document.getElementById('fv2Imb'+m),vv=document.getElementById('fv2Imv'+m);if(bb){bb.style.width=(gl?Math.max(0,Math.min(100-a/gl*100,n/gl*100)):0)+'%'}if(vv)vv.textContent=Math.round(n)+' g'+(gl?' · '+Math.round((a+n)/gl*100)+'%':'')});
+ fv2ImpactData(sh.pick,sh.grams||0,e0).forEach(function(d){const bb=document.getElementById('fv2Imb'+d.k),vv=document.getElementById('fv2Imv'+d.k);if(bb){bb.style.width=d.add+'%'}if(vv)vv.textContent=d.label});
  const sm=document.getElementById('fv2Sm');if(sm)sm.innerHTML=fv2Small(s);const lb=document.getElementById('fv2LogBtn');if(lb)lb.textContent=fv2LogLabel(s,sh.view==='edit');
  if(rewrite){const gi=document.getElementById('fv2G');if(gi)gi.value=sh.grams;document.querySelectorAll('.fv2-serv button').forEach(function(b){b.classList.toggle('on',Math.abs(+b.dataset.g-sh.grams)<.5)})}}
 function fv2DoLog(){const sh=fv2S().sh;if(!sh.pick||!(sh.grams>0))return;const f=sh.pick,gr=sh.grams,sl=sh.slot;fv2Close();
