@@ -3579,15 +3579,23 @@ const LifeDirectorApp = (function () {
     try { return LifeMaxMeals.openScheduled(scheduledMealRef({title: d.t, startEpoch: +d.s, mealStartEpoch: +d.ms || +d.s})); }
     catch (e) { console.warn('[Life Director] meal link', e); say('Could not open this meal. Try Food → Plan.'); return true; }
   }
+  /* a planned meal block b in the page's words, with Smart Diet's recipe when it has one: the page's meal sheet and a native screen's */
+  function mealModel(b) {
+    const meal = scheduledMeal(b), s = b.startEpoch, e = b.endEpoch;
+    return { start: b.mealStartEpoch || s, title: meal ? meal.name : 'Your meal plan', when: fDay(s) + ' · ' + fTime(s) + '–' + fTime(e) + ' · ' + mins(Math.round((e - s) / 60)),
+      chips: [{ kind: 'meal', text: b.title || 'Meal' }].concat(meal ? [{ kind: 'kcal', text: meal.kcal + ' kcal' }, { kind: 'state', text: meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : 'On your plan' }] : []),
+      open: 'Open meal menu' };
+  }
+  /* the meal block a native screen names by its first minute (epoch seconds), as its arc and row name it */
+  const mealSegment = start => ST.schedule && (ST.schedule.segments || []).find(g => g.kind === 'MEAL' && String(g.startEpoch) === String(start));
   function mealPreview(d) {
     const b = { title: d.t, startEpoch: +d.s, endEpoch: +d.e, mealStartEpoch: +d.ms || +d.s, kind: 'MEAL' };
-    const meal = scheduledMeal(b);
+    const m = mealModel(b);
     const attrs = mealAnchor(b).replace('data-act="anchor"', 'data-act="mealOpen"').replace(' role="button" tabindex="0"', '');
-    openSheet('<div class="ld-meal-preview"' + attrs + '><div class="ld-sh-head ld-c-meal"><i class="ld-rail" aria-hidden="true"></i><div><h3>' + mealPx(16) + ' ' + esc(meal ? meal.name : 'Your meal plan') + '</h3>' +
-      '<p class="ld-when">' + fDay(+d.s) + ' · ' + fTime(+d.s) + '–' + fTime(+d.e) + ' · ' + mins(Math.round((+d.e - +d.s) / 60)) + '</p></div></div>' +
-      '<div class="ld-chips"><span class="ld-chip">' + esc(d.t || 'Meal') + '</span>' +
-      (meal ? '<span class="ld-chip">' + meal.kcal + ' kcal</span><span class="ld-chip">' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : 'On your plan') + '</span>' : '') + '</div>' +
-      '<div class="ld-row ld-sh-main"><button type="button" class="ld-btn ld-primary"' + attrs + '>Open meal menu</button></div></div>');
+    openSheet('<div class="ld-meal-preview"' + attrs + '><div class="ld-sh-head ld-c-meal"><i class="ld-rail" aria-hidden="true"></i><div><h3>' + mealPx(16) + ' ' + esc(m.title) + '</h3>' +
+      '<p class="ld-when">' + m.when + '</p></div></div>' +
+      '<div class="ld-chips">' + m.chips.map(c => '<span class="ld-chip">' + esc(c.text) + '</span>').join('') + '</div>' +
+      '<div class="ld-row ld-sh-main"><button type="button" class="ld-btn ld-primary"' + attrs + '>' + m.open + '</button></div></div>');
   }
   /* what to call the thing you are doing */
   function doingName(b) {
@@ -4299,18 +4307,26 @@ const LifeDirectorApp = (function () {
   /* ── focus timer: start a session, the clock runs even if you leave ── */
   const focusMs = f => Math.max(0, (f.paused || Date.now()) - f.start - (f.pausedMs || 0));
   function clockText(ms) { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(x).padStart(2, '0'); }
+  /* The running timer of session i in the page's words, with the times it runs from (ms), for the page's sheet and a native
+     screen's; xp is the estimate now, as spans (the page bolds the XP) */
+  function focusModel(f, i) {
+    const plannedMs = Math.max(60, i.endEpoch - i.startEpoch) * 1000, x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
+    return { id: i.instanceId, title: i.title, label: f.paused ? 'Paused' : 'In progress', paused: !!f.paused, startedAt: f.start, pausedMs: f.pausedMs || 0, pausedAt: f.paused || null,
+      plannedMs, planned: 'of ' + mins(Math.round(plannedMs / 60000)) + ' planned',
+      xp: x ? [{ t: 'Logging now earns about ', b: false }, { t: '+' + x.xp + ' XP', b: true }, { t: ' in ' + attrName(x.rule.primary) + '.', b: false }] : null,
+      finish: 'Finish and log', pause: f.paused ? 'Resume' : 'Pause', stop: 'Stop without logging', note: 'You can leave this screen. The timer keeps running.' };
+  }
   function focusSheet() {
     const f = ST.ui.focus, i = f && findInst(f.id);
     if (!i) { ST.ui.focus = null; persist(); render(); return; }
-    const plan = Math.max(60, i.endEpoch - i.startEpoch) * 1000, C = 2 * Math.PI * 92;
-    const p = Math.min(1, focusMs(f) / plan), x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
-    openSheet('<div class="ld-focus' + (f.paused ? ' paused' : '') + '"><small class="ld-core-k ld-core-go">' + (f.paused ? 'Paused' : 'In progress') + '</small><h3>' + esc(i.title) + '</h3>' +
+    const m = focusModel(f, i), C = 2 * Math.PI * 92, p = Math.min(1, focusMs(f) / m.plannedMs);
+    openSheet('<div class="ld-focus' + (m.paused ? ' paused' : '') + '"><small class="ld-core-k ld-core-go">' + m.label + '</small><h3>' + esc(m.title) + '</h3>' +
       '<div class="ld-fring"><svg viewBox="0 0 220 220" aria-hidden="true"><circle class="ld-fr-trk" cx="110" cy="110" r="92"/><circle class="ld-fr-val" data-fring cx="110" cy="110" r="92" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p)).toFixed(1) + '" transform="rotate(-90 110 110)"/></svg>' +
-      '<div><b data-fclock>' + clockText(focusMs(f)) + '</b><small>of ' + mins(Math.round(plan / 60000)) + ' planned</small></div></div>' +
-      (x ? '<p class="ld-muted ld-center">Logging now earns about <b data-fxp>+' + x.xp + ' XP</b> in ' + esc(attrName(x.rule.primary)) + '.</p>' : '') +
-      '<div class="ld-row ld-center"><button class="ld-btn ld-primary" data-act="focusFinish">Finish and log</button><button class="ld-btn" data-act="' + (f.paused ? 'focusResume' : 'focusPause') + '">' + (f.paused ? 'Resume' : 'Pause') + '</button></div>' +
-      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">Stop without logging</button></div>' +
-      '<p class="ld-muted ld-center ld-small-print">You can leave this screen. The timer keeps running.</p></div>');
+      '<div><b data-fclock>' + clockText(focusMs(f)) + '</b><small>' + m.planned + '</small></div></div>' +
+      (m.xp ? '<p class="ld-muted ld-center">' + m.xp[0].t + '<b data-fxp>' + m.xp[1].t + '</b>' + esc(m.xp[2].t) + '</p>' : '') +
+      '<div class="ld-row ld-center"><button class="ld-btn ld-primary" data-act="focusFinish">' + m.finish + '</button><button class="ld-btn" data-act="' + (m.paused ? 'focusResume' : 'focusPause') + '">' + m.pause + '</button></div>' +
+      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">' + m.stop + '</button></div>' +
+      '<p class="ld-muted ld-center ld-small-print">' + m.note + '</p></div>');
   }
   function focusTick() {
     const f = ST && ST.ui && ST.ui.focus; if (!f || !root || !root.isConnected) return;
@@ -4533,7 +4549,9 @@ const LifeDirectorApp = (function () {
     for (const x of dayBlocks(ST.schedule, day, tz())) { if (x.startEpoch > now) b = Math.min(b, x.startEpoch); if (x.endEpoch > now) b = Math.min(b, x.endEpoch); }
     return b;
   }
-  function moveSheet(inst) {
+  /* Where a session can move to: every half hour of free time (or of its own slot) from the next quarter hour on that fits it,
+     the first 48, each with the page's label. One list for the page's Move sheet and a native screen's. */
+  function moveTimes(inst) {
     const s = ST.schedule, days = horizonDays(s, tz()), now = nowEpoch(), dur = inst.endEpoch - inst.startEpoch;
     const opts = [];
     days.forEach(d => {
@@ -4542,17 +4560,41 @@ const LifeDirectorApp = (function () {
       for (const b of blocks.sort((a, c) => a.startEpoch - c.startEpoch)) { const l = merged[merged.length - 1]; if (l && l.endEpoch >= b.startEpoch) l.endEpoch = Math.max(l.endEpoch, b.endEpoch); else merged.push({ startEpoch: b.startEpoch, endEpoch: b.endEpoch }); }
       for (const g of merged) for (let t = Math.max(g.startEpoch, Math.ceil((now + 900) / 900) * 900); t + dur <= g.endEpoch; t += 1800) if (t !== inst.startEpoch) opts.push(t);
     });
-    openSheet('<h3>Move “' + esc(inst.title) + '”</h3><p class="ld-muted">Open times that fit ' + mins(dur / 60) + '. The moved session is pinned so automatic re-planning leaves it alone.</p><div class="ld-times">' +
-      (opts.slice(0, 48).map(t => '<button class="ld-btn ld-small" data-act="moveTo" data-id="' + esc(inst.instanceId) + '" data-v="' + t + '">' + fDay(t).replace(/,.*/, '') + ' ' + fTime(t) + '</button>').join('') || '<p>No open time fits this week.</p>') + '</div>');
+    return opts.slice(0, 48).map(t => ({ label: fDay(t).replace(/,.*/, '') + ' ' + fTime(t), start: t }));
   }
+  const moveModel = inst => ({ id: inst.instanceId, title: 'Move “' + inst.title + '”', times: moveTimes(inst), none: 'No open time fits this week.',
+    note: 'Open times that fit ' + mins((inst.endEpoch - inst.startEpoch) / 60) + '. The moved session is pinned so automatic re-planning leaves it alone.' });
+  function moveSheet(inst) {
+    const m = moveModel(inst);
+    openSheet('<h3>' + esc(m.title) + '</h3><p class="ld-muted">' + m.note + '</p><div class="ld-times">' +
+      (m.times.map(o => '<button class="ld-btn ld-small" data-act="moveTo" data-id="' + esc(m.id) + '" data-v="' + o.start + '">' + o.label + '</button>').join('') || '<p>' + m.none + '</p>') + '</div>');
+  }
+  /* Something came up, as parts: what each asks for and offers, in the page's words. The page's sheet draws them and a native screen
+     gets them as they are; the actions check a choice against them (Today.disrupt, Today.energy). Times are minutes after midnight. */
+  const DISRUPT = { title: 'Something came up', note: 'Nothing here counts against you. Life Director only moves what it has to.' };
+  function disruptParts() {
+    const field = (key, kind, label, value, more) => Object.assign({ key, kind, label, value }, kind === 'time' ? { text: fHm(value) } : {}, more);
+    return [
+      { key: 'work', title: 'Called into work or an extra commitment', open: true, command: 'disrupt', button: 'Add and re-plan', form: [
+        field('date', 'date', 'Date', U.ymdKey(U.localParts(nowEpoch(), tz())), { group: 0 }), field('commute', 'number', 'Travel each way (min)', 0, { min: 0, step: 5, group: 0 }),
+        field('from', 'time', 'From', 17 * 60, { group: 1 }), field('until', 'time', 'Until', 21 * 60, { group: 1 })] },
+      { key: 'block', title: 'Lose the next few hours', command: 'disrupt', param: 'hours', options: [1, 2, 3, 4, 6].map(h => ({ value: h, label: h + 'h' })) },
+      { key: 'day', title: 'Today is a write-off', command: 'disrupt', button: 'Clear the rest of today' },
+      { key: 'sick', title: 'I’m sick', command: 'disrupt', param: 'days', options: [1, 2, 3].map(n => ({ value: n, label: n + ' day' + (n > 1 ? 's' : '') })),
+        note: 'Demanding sessions are cleared and only must-do work is moved to after you recover.' },
+      { key: 'energy', title: 'Energy check-in', command: 'energy', param: 'level', options: [['LOW', 'Running low'], ['NORMAL', 'Normal'], ['HIGH', 'Full of energy']].map(([value, label]) => ({ value, label })),
+        note: 'Adjusts estimates for the next several hours, then fades out.' },
+    ];
+  }
+  const DISRUPT_ACT = { work: 'dWork', block: 'dBlock', day: 'dDay', sick: 'dSick', energy: 'dEnergy' };
+  const DISRUPT_INPUT = { date: 'dDate', commute: 'dCommute', from: 'dStart', until: 'dEnd' };
   function disruptSheet() {
-    const d = U.ymdKey(U.localParts(nowEpoch(), tz()));
-    openSheet('<h3>Something came up</h3><p class="ld-muted">Nothing here counts against you. Life Director only moves what it has to.</p>' +
-      '<details class="ld-details" open><summary>Called into work or an extra commitment</summary><div class="ld-grid2"><label>Date<input type="date" id="dDate" value="' + d + '"></label><label>Travel each way (min)<input type="number" id="dCommute" value="0" min="0" step="5"></label></div><div class="ld-grid2"><label>From<input type="time" id="dStart" value="17:00"></label><label>Until<input type="time" id="dEnd" value="21:00"></label></div><button class="ld-btn" data-act="dWork">Add and re-plan</button></details>' +
-      '<details class="ld-details"><summary>Lose the next few hours</summary><div class="ld-row">' + [1, 2, 3, 4, 6].map(h => '<button class="ld-btn ld-small" data-act="dBlock" data-v="' + h + '">' + h + 'h</button>').join('') + '</div></details>' +
-      '<details class="ld-details"><summary>Today is a write-off</summary><button class="ld-btn" data-act="dDay">Clear the rest of today</button></details>' +
-      '<details class="ld-details"><summary>I’m sick</summary><div class="ld-row">' + [1, 2, 3].map(n => '<button class="ld-btn ld-small" data-act="dSick" data-v="' + n + '">' + n + ' day' + (n > 1 ? 's' : '') + '</button>').join('') + '</div><p class="ld-muted">Demanding sessions are cleared and only must-do work is moved to after you recover.</p></details>' +
-      '<details class="ld-details"><summary>Energy check-in</summary><div class="ld-row">' + [['LOW', 'Running low'], ['NORMAL', 'Normal'], ['HIGH', 'Full of energy']].map(([v, l]) => '<button class="ld-btn ld-small" data-act="dEnergy" data-v="' + v + '">' + l + '</button>').join('') + '</div><p class="ld-muted">Adjusts estimates for the next several hours, then fades out.</p></details>');
+    const input = f => '<label>' + f.label + '<input type="' + f.kind + '" id="' + DISRUPT_INPUT[f.key] + '" value="' + (f.kind === 'time' ? hm(f.value) : f.value) + '"' +
+      (f.min !== undefined ? ' min="' + f.min + '"' : '') + (f.step ? ' step="' + f.step + '"' : '') + '></label>';
+    const rows = form => [0, 1].map(g => '<div class="ld-grid2">' + form.filter(f => f.group === g).map(input).join('') + '</div>').join('');
+    openSheet('<h3>' + DISRUPT.title + '</h3><p class="ld-muted">' + DISRUPT.note + '</p>' + disruptParts().map(s => '<details class="ld-details"' + (s.open ? ' open' : '') + '><summary>' + s.title + '</summary>' +
+      (s.form ? rows(s.form) : '') + (s.options ? '<div class="ld-row">' + s.options.map(o => '<button class="ld-btn ld-small" data-act="' + DISRUPT_ACT[s.key] + '" data-v="' + o.value + '">' + o.label + '</button>').join('') + '</div>' : '') +
+      (s.button ? '<button class="ld-btn" data-act="' + DISRUPT_ACT[s.key] + '">' + s.button + '</button>' : '') + (s.note ? '<p class="ld-muted">' + s.note + '</p>' : '') + '</details>').join(''));
   }
 
   /* ── sheet ── */
@@ -4707,6 +4749,9 @@ const LifeDirectorApp = (function () {
     reset() { store.clear(); boot(); render(); return { ok: true, message: '' }; },
   });
 
+  /* the page's own Something came up: a new operation each tap; the sheet closes once the plan has changed, and a refusal the
+     repair has not said already is said */
+  function disruptFrom(p) { const r = Today.disrupt(Object.assign({ op: uuid() }, p)); if (r.changed) closeSheet(); else if (!r.said) say(r.message); }
   function perform(b) {
     const act = b.dataset.act, id = b.dataset.id, v = b.dataset.v;
     if (act === 'doneQuick' || act === 'done') { ui.fx.justDone = id; if (ST.ui.focus && ST.ui.focus.id === id) ST.ui.focus = null; }
@@ -4765,23 +4810,14 @@ const LifeDirectorApp = (function () {
       case 'openPlan': closeSheet(); Host.openPlanDay(v); break;
       case 'openQuests': Host.openView('quests'); break;
       case 'disrupt': disruptSheet(); break;
-      case 'dWork': {
-        const [y, mo, d] = val('#dDate').split('-').map(Number), s0 = parseHm(val('#dStart')), e0 = parseHm(val('#dEnd'));
-        if (!y || s0 == null || e0 == null) { say('Enter a date, start and end'); break; }
-        const st = U.zonedToEpoch(y, mo, d, s0, tz()), en = U.zonedToEpoch(y, mo, d, e0 <= s0 ? e0 + 1440 : e0, tz());
-        const r = reschedule({ type: 'NEW_COMMITMENT', commitment: { id: 'c-' + uuid(), title: 'Extra shift', startEpoch: st, endEpoch: en, commuteMin: +val('#dCommute') || 0, kind: 'WORK' } });
-        if (r) { persist(); closeSheet(); render(); say(summarize(r)); } break;
-      }
-      case 'dBlock': { const r = reschedule({ type: 'BLOCK_HOURS', commitment: { id: 'b-' + uuid(), title: 'Unavailable', startEpoch: now, endEpoch: now + (+v) * 3600 } }); if (r) { persist(); closeSheet(); render(); say(summarize(r)); } break; }
-      case 'dDay': { const p = U.localParts(now, tz()), nx = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, 1); const r = reschedule({ type: 'BLACKOUT_DAY', commitment: { id: 'd-' + uuid(), title: 'Day off the plan', startEpoch: now, endEpoch: U.zonedToEpoch(nx.y, nx.mo, nx.d, 0, tz()) } }); if (r) { persist(); closeSheet(); render(); say(summarize(r)); } break; }
-      case 'dSick': { const r = reschedule({ type: 'SICK', commitment: { id: 's-' + uuid(), title: 'Sick', startEpoch: now, endEpoch: now + (+v) * 86400 } }); if (r) { persist(); closeSheet(); render(); say('Rest up · ' + summarize(r)); } break; }
-      case 'dEnergy': ST.energyCheckin = { level: v, epoch: now }; closeSheet(); regenerate('energy check-in', true); render(); say('Energy noted'); break;
-      case 'replan': if (ui.banner && ui.banner.kind === 'bad') ui.banner = null; regenerate('requested'); render(); break;
-      case 'regroup': {
-        if (v === 'pause') reschedule({ type: 'BLACKOUT_DAY', commitment: { id: 'p-' + uuid(), title: 'Paused', startEpoch: now, endEpoch: now + 48 * 3600 } });
-        if (v === 'light') { ST.prefsLightRestore = E.normalizePreferences(ST.prefs).intensityLevel; ST.prefs.intensityLevel = 'LIGHT'; ST.prefsLightUntil = now + 7 * 86400; regenerate('light mode', true); }
-        ST.ledger = Object.assign({}, ST.ledger, { consecutiveMisses: 0 }); ui.banner = null; persist(); render(); break;
-      }
+      /* Something came up: the page's form and buttons, through the same functions a native screen's commands run */
+      case 'dWork': disruptFrom({ kind: 'work', date: val('#dDate'), from: parseHm(val('#dStart')), until: parseHm(val('#dEnd')), commute: +val('#dCommute') || 0 }); break;
+      case 'dBlock': disruptFrom({ kind: 'block', hours: +v }); break;
+      case 'dDay': disruptFrom({ kind: 'day' }); break;
+      case 'dSick': disruptFrom({ kind: 'sick', days: +v }); break;
+      case 'dEnergy': closeSheet(); Today.energy({ level: v }); break;
+      case 'replan': Today.replan(); break;
+      case 'regroup': Today.regroup({ v, op: uuid() }); break;
       case 'saveSleep': {
         const bed = parseHm(val('#ldBed')), wake = parseHm(val('#ldWake'));
         if (bed == null || wake == null) { say('Enter both times'); break; }
@@ -5355,7 +5391,7 @@ const LifeDirectorApp = (function () {
     const gone = () => { say('That is no longer on the plan.'); return false; };
     let data;
     if (act === 'meal') {
-      const m = ST.schedule && (ST.schedule.segments || []).find(g => g.kind === 'MEAL' && String(g.startEpoch) === String(id));
+      const m = mealSegment(id);
       if (!m) return gone();
       data = { act: 'anchor', k: 'meal', t: m.title, s: m.startEpoch, e: m.endEpoch, ms: m.startEpoch };
     } else if (ACT_ID.has(act)) {
@@ -5495,7 +5531,15 @@ const LifeDirectorApp = (function () {
   function nativeSheet(kind, id) {
     if (!ST) boot();
     if (!ST.setupComplete || !ST.schedule) return null;
-    if (kind === 'session') return nativeSessionSheet(String(id || ''));
+    const key = String(id || ''), gone = { kind, gone: true };
+    if (kind === 'session') return nativeSessionSheet(key);
+    if (kind === 'timer') { // the running timer, of that session (any session when none is named)
+      const f = ST.ui.focus, i = f && (!key || f.id === key) && findInst(f.id);
+      return i ? Object.assign({ kind }, focusModel(f, i)) : gone;
+    }
+    if (kind === 'move') { const i = plannedInst(key); return i && i.lifecycleState === 'PLANNED' ? Object.assign({ kind }, moveModel(i)) : gone; }
+    if (kind === 'meal') { const m = mealSegment(key); return m ? Object.assign({ kind }, mealModel({ title: m.title, startEpoch: m.startEpoch, endEpoch: m.endEpoch, mealStartEpoch: m.startEpoch, kind: 'MEAL' })) : gone; }
+    if (kind === 'disrupt') return Object.assign({ kind }, DISRUPT, { sections: disruptParts() });
     return null;
   }
   /* a session still on the plan (findInst also finds resolved ones, which no action may touch) */
@@ -5505,6 +5549,10 @@ const LifeDirectorApp = (function () {
   const minutesOf = (inst, m) => Math.max(1, Math.min(MINUTES_MAX, Math.round(Number(m)) || inst.durationSlots * 15));
   const recorded = (message) => ({ ok: persist(), changed: false, message }); // a repeat: is what landed saved now?
   const gone = { ok: false, message: 'That is no longer on the plan.' };
+  const applied = () => Object.assign(saved(''), { changed: true }); // a change made: ok when it is saved
+  const offered = (part, v) => !!part && part.options.some(o => String(o.value) === String(v));
+  const dayMinute = v => (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < 1440 ? v : null);
+  const DISRUPT_ID = { work: 'c', block: 'b', day: 'd', sick: 's' }; // the page's id prefixes for each kind of disruption
   /* a refused completion: a repeat of one that landed, or the ledger's reason in the page's words */
   const refusedFinish = () => lastFinishRefusal === 'DUPLICATE_EVENT_ID' ? recorded('Already recorded.') : { ok: false, message: 'Cannot complete this block (' + lastFinishRefusal + ').' };
   /* Today's writes from a native screen (phase 4A). Each answers {ok, changed, message}: ok only when saved; a repeat of a write
@@ -5586,6 +5634,61 @@ const LifeDirectorApp = (function () {
         render(); return r ? saved('') : refusedFinish();
       }
       return { ok: false, message: 'Life Director cannot do that.' };
+    },
+    /* Something came up: the commitment or blackout is named from op, so the same request again finds it ("Already added").
+       A choice must be one the sheet offers (disruptParts). A repair that changed nothing has said why already (reschedule's notice,
+       or the banner): said tells the page not to say it twice. */
+    disrupt({ kind, op, date, from, until, commute, hours, days }) {
+      const part = disruptParts().find(s => s.key === kind && s.command === 'disrupt'), now = nowEpoch();
+      if (!part) return { ok: false, message: 'Life Director cannot do that.' };
+      if (!op) return { ok: false, message: 'Nothing was added.' };
+      const id = DISRUPT_ID[kind] + '-' + op;
+      if ((ST.fixedCommitments || []).concat(ST.availability.blackouts || []).some(c => String(c.id) === id)) return recorded('Already added');
+      if (part.options && !offered(part, kind === 'block' ? hours : days)) return { ok: false, message: 'That is not one of the choices.' };
+      let trigger;
+      if (kind === 'work') {
+        const [y, mo, d] = String(date || '').split('-').map(Number), s0 = dayMinute(from), e0 = dayMinute(until);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || s0 == null || e0 == null) return { ok: false, message: 'Enter a date, start and end' };
+        trigger = { type: 'NEW_COMMITMENT', commitment: { id, title: 'Extra shift', startEpoch: U.zonedToEpoch(y, mo, d, s0, tz()), endEpoch: U.zonedToEpoch(y, mo, d, e0 <= s0 ? e0 + 1440 : e0, tz()), commuteMin: Math.max(0, Number(commute) || 0), kind: 'WORK' } };
+      } else if (kind === 'block') trigger = { type: 'BLOCK_HOURS', commitment: { id, title: 'Unavailable', startEpoch: now, endEpoch: now + Number(hours) * 3600 } };
+      else if (kind === 'day') { const p = U.localParts(now, tz()), nx = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, 1); trigger = { type: 'BLACKOUT_DAY', commitment: { id, title: 'Day off the plan', startEpoch: now, endEpoch: U.zonedToEpoch(nx.y, nx.mo, nx.d, 0, tz()) } }; }
+      else trigger = { type: 'SICK', commitment: { id, title: 'Sick', startEpoch: now, endEpoch: now + Number(days) * 86400 } };
+      const told = ui.notice && ui.notice.id, r = reschedule(trigger);
+      if (!r) return { ok: false, said: true, message: ui.notice && ui.notice.id !== told ? ui.notice.text : (ui.banner && ui.banner.text) || 'Nothing was changed.' };
+      persist(); render(); say((kind === 'sick' ? 'Rest up · ' : '') + summarize(r)); return applied();
+    },
+    /* an energy check-in: set, and it re-plans (the same level again re-plans the same way) */
+    energy({ level }) {
+      if (!offered(disruptParts().find(s => s.key === 'energy'), level)) return { ok: false, message: 'That is not one of the choices.' };
+      ST.energyCheckin = { level: String(level), epoch: nowEpoch() }; regenerate('energy check-in', true); render(); say('Energy noted'); return applied();
+    },
+    /* Re-plan from now (a re-plan twice is the same plan); a plan the engine refused leaves its banner, whose words are the answer */
+    replan() {
+      if (ui.banner && ui.banner.kind === 'bad') ui.banner = null;
+      const ok = regenerate('requested'); render();
+      return ok ? applied() : { ok: false, message: (ui.banner && ui.banner.text) || 'Nothing was changed.' };
+    },
+    /* the regroup question's answers, only while it shows. Answered already, the same answer again is recorded (the pause is named
+       from op, light mode and carrying on are states); any other answer is refused, as the question has gone. */
+    regroup({ v, op }) {
+      const now = nowEpoch(), id = 'p-' + op;
+      if (!['pause', 'light', 'go'].includes(v)) return { ok: false, message: 'Life Director cannot do that.' };
+      if (v === 'pause' && !op) return { ok: false, message: 'Nothing was changed.' };
+      if (!(ui.banner && ui.banner.regroup)) {
+        const landed = v === 'pause' ? (ST.availability.blackouts || []).some(c => c.id === id)
+          : v === 'light' ? E.normalizePreferences(ST.prefs).intensityLevel === 'LIGHT' && ST.prefsLightUntil > now : !ST.ledger.consecutiveMisses;
+        return landed ? recorded(v === 'pause' ? 'Already added' : '') : { ok: false, message: 'That question is no longer showing.' };
+      }
+      if (v === 'pause') reschedule({ type: 'BLACKOUT_DAY', commitment: { id, title: 'Paused', startEpoch: now, endEpoch: now + 48 * 3600 } });
+      if (v === 'light') { ST.prefsLightRestore = E.normalizePreferences(ST.prefs).intensityLevel; ST.prefs.intensityLevel = 'LIGHT'; ST.prefsLightUntil = now + 7 * 86400; regenerate('light mode', true); }
+      ST.ledger = Object.assign({}, ST.ledger, { consecutiveMisses: 0 }); ui.banner = null; persist(); render(); return applied();
+    },
+    /* the banner's ×, only for the banner the screen showed (the regroup question has none: it wants an answer). Nothing is saved:
+       the page's own × saves nothing either. */
+    dismissBanner({ text }) {
+      if (!ui.banner || ui.banner.text !== String(text || '')) return { ok: true, changed: false, message: '' };
+      if (ui.banner.regroup) return { ok: false, message: 'Choose one of the answers.' };
+      ui.banner = null; render(); return { ok: true, changed: true, message: '' };
     },
   });
   function nativeTodayRun(name, payload) {

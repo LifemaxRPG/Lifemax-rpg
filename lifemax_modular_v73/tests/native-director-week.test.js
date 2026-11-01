@@ -7,13 +7,17 @@
      and Quests, the section, gotoDay and day commands each render once and answer, a section the screen does not draw steps it
      aside as soon as the reply is sent, a day chosen on a page-drawn Week survives to the next open, and every arrival lands on
      today;
-   - an APK that draws only Today (director.today.v2) sees exactly phase 2: Week stays the page's.
+   - an APK that draws only Today (director.today.v2) sees exactly phase 2: Week stays the page's;
+   - phase 4A (director.sheets.v1): Today's sheets as data (session, timer, meal, Move, Something came up) against what the page
+     draws, the page's Move, disrupt, timer and meal sheets byte-identical to tests/fixtures/director-sheets-golden.json, and
+     Today's actions answering once per operation, ok only when saved.
    A fake NativeLifeDirector plugin stands in for Android; the page runs on Playwright's clock through the lived-in day of
    tests/fixtures/director-day.js. Run: NODE_PATH=$(npm root -g) node tests/native-director-week.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const file = require('./current-page')(process.argv[2]);
 const directorDay = require('./fixtures/director-day.js');
 const GOLDEN = path.join(__dirname, 'fixtures', 'director-week-golden.json');
+const SHEETS_GOLDEN = path.join(__dirname, 'fixtures', 'director-sheets-golden.json');
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -387,6 +391,230 @@ async function command(p, command, payload) {
     await go(p, 'life-director', 1500);
     const r = await command(p, 'sheet', { kind: 'session', id: 'x' });
     ok('without director.sheets.v1 a screen gets no sheets', r.reply && r.reply.ok === false && r.snapshot.sheet === null, r.reply);
+    await p.context().close();
+  }
+
+  /* 7. Today's other sheets as data (phase 4A): the page's own Move, Something came up, timer and meal sheets, byte for byte as
+     before their words and Move's times were shared with the screen (tests/fixtures/director-sheets-golden.json, recorded with
+     RECORD=1 before the split), and the data saying what each of them draws */
+  {
+    const p = await start(b, ['director.today.v2'], { switchOn: false });
+    await go(p, 'life-director', 1500);
+    const ids = await p.evaluate(() => ({
+      next: (LifeDirector.native.today(0).upNext.actions.find(a => a.act === 'focusStart') || {}).id,
+      later: LifeDirector.native.today(1).rows.ahead.filter(r => r.act === 'inst').map(r => r.id),
+      meals: LifeDirector.native.today(0).rows.ahead.concat(LifeDirector.native.today(1).rows.ahead).filter(r => r.act === 'meal').map(r => r.id),
+    }));
+    const body = () => p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open .ld-sheet-body').innerHTML);
+    const tap = sel => p.evaluate(sel => document.querySelector('#view-life-director ' + sel).click(), sel);
+    const act = (a, id) => p.evaluate(([a, id]) => LifeDirector.native.act(a, id), [a, id]);
+    const html = {}, data = {};
+    for (const [k, id] of [['move', ids.next], ['moveLater', ids.later[0]], ['moveLast', ids.later[ids.later.length - 1]]]) {
+      await act('inst', id); await settle(p, 400); await tap('.ld-sheet.open [data-act=movePick]'); await settle(p, 400);
+      html[k] = await body(); data[k] = await p.evaluate(id => LifeDirector.native.sheet && LifeDirector.native.sheet('move', id), id);
+    }
+    await act('disrupt'); await settle(p, 400);
+    html.disrupt = await body(); data.disrupt = await p.evaluate(() => LifeDirector.native.sheet && LifeDirector.native.sheet('disrupt', ''));
+    for (const [k, id] of [['meal', ids.meals[0]], ['mealTomorrow', ids.meals[ids.meals.length - 1]]]) {
+      await act('meal', id); await settle(p, 400);
+      html[k] = await body(); data[k] = await p.evaluate(id => LifeDirector.native.sheet && LifeDirector.native.sheet('meal', id), id);
+    }
+    await act('focusStart', ids.next); await p.clock.runFor(12 * 60000 + 34000); await act('focusOpen'); await settle(p, 100);
+    html.timer = await body(); data.timer = await p.evaluate(id => LifeDirector.native.sheet && LifeDirector.native.sheet('timer', id), ids.next);
+    await tap('.ld-sheet.open [data-act=focusPause]'); await p.clock.runFor(3 * 60000); await act('focusOpen'); await settle(p, 100);
+    html.timerPaused = await body(); data.timerPaused = await p.evaluate(id => LifeDirector.native.sheet && LifeDirector.native.sheet('timer', id), ids.next);
+    const focus = await p.evaluate(() => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).ui.focus);
+    if (process.env.RECORD) { fs.writeFileSync(SHEETS_GOLDEN, JSON.stringify(html, null, 1) + '\n'); console.log('recorded ' + SHEETS_GOLDEN) }
+    const golden = JSON.parse(fs.readFileSync(SHEETS_GOLDEN, 'utf8'));
+    ok('the page draws its Move, Something came up, timer and meal sheets byte for byte as before their data was split out', same(Object.keys(golden), Object.keys(html)) && Object.keys(golden).every(k => golden[k] === html[k]),
+      Object.keys(golden).filter(k => golden[k] !== html[k]));
+
+    /* each model against the drawing it stands for, read from the recorded HTML in a page of its own */
+    const dom = await p.evaluate(html => {
+      const read = h => { const d = document.createElement('div'); d.innerHTML = h; return d; };
+      const t = e => e ? e.textContent.trim() : null, out = {};
+      for (const k of ['move', 'moveLater', 'moveLast']) {
+        const d = read(html[k]);
+        out[k] = { title: t(d.querySelector('h3')), note: t(d.querySelector('p.ld-muted')), times: [...d.querySelectorAll('[data-act=moveTo]')].map(e => ({ label: t(e), start: +e.dataset.v, id: e.dataset.id })), none: t(d.querySelector('.ld-times > p')) };
+      }
+      { const d = read(html.disrupt), det = [...d.querySelectorAll('details')];
+        out.disrupt = { title: t(d.querySelector('h3')), note: t(d.querySelector(':scope > p')), sections: det.map(e => ({ title: t(e.querySelector('summary')), open: e.open,
+          fields: [...e.querySelectorAll('label')].map(l => ({ label: l.firstChild.textContent, type: l.querySelector('input').type, value: l.querySelector('input').value, min: l.querySelector('input').getAttribute('min'), step: l.querySelector('input').getAttribute('step') })),
+          buttons: [...e.querySelectorAll('button')].map(x => ({ label: t(x), act: x.dataset.act, v: x.dataset.v })), note: t(e.querySelector('p.ld-muted')) })) }; }
+      for (const k of ['meal', 'mealTomorrow']) {
+        const d = read(html[k]), m = d.querySelector('.ld-meal-preview');
+        out[k] = { title: t(d.querySelector('h3')), when: t(d.querySelector('.ld-when')), chips: [...d.querySelectorAll('.ld-chip')].map(t), open: t(d.querySelector('.ld-primary')), start: m && +m.dataset.ms };
+      }
+      for (const k of ['timer', 'timerPaused']) {
+        const d = read(html[k]);
+        out[k] = { label: t(d.querySelector('small.ld-core-k')), title: t(d.querySelector('h3')), planned: t(d.querySelector('.ld-fring small')), xp: t(d.querySelector('p.ld-muted.ld-center:not(.ld-small-print)')),
+          finish: t(d.querySelector('[data-act=focusFinish]')), pause: t(d.querySelector('[data-act=focusPause],[data-act=focusResume]')), stop: t(d.querySelector('[data-act=focusCancel]')), note: t(d.querySelector('.ld-small-print')) };
+      }
+      return out;
+    }, html);
+    const words = s => (s || []).map(x => x.t).join('');
+    for (const k of ['move', 'moveLater', 'moveLast']) {
+      const m = data[k] || {}, d = dom[k];
+      ok('Move as data (' + k + '): the heading, the note and every open time (label and start) as the page draws them, at most 48',
+        m.kind === 'move' && m.title === d.title && m.note === d.note && same((m.times || []).map(x => ({ label: x.label, start: x.start, id: m.id })), d.times) && m.times.length <= 48 && (m.times.length ? true : m.none === d.none), { m, d });
+    }
+    {
+      const m = data.disrupt || {}, d = dom.disrupt, S = m.sections || [];
+      const hm = v => String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+      const acts = { work: 'dWork', block: 'dBlock', day: 'dDay', sick: 'dSick', energy: 'dEnergy' };
+      ok('Something came up as data: the heading, its note, and each part (title, open, note) in the page\'s order', m.kind === 'disrupt' && m.title === d.title && m.note === d.note &&
+        same(S.map(s => [s.title, !!s.open, s.note || null]), d.sections.map(s => [s.title, s.open, s.note])) && same(S.map(s => s.key), Object.keys(acts)), { m, d });
+      ok('Something came up as data: the extra commitment\'s form (labels, kinds, values, limits) and its button',
+        S[0] && same(S[0].form.map(f => [f.label, f.kind, f.kind === 'time' ? hm(f.value) : String(f.value), f.min === undefined ? null : String(f.min), f.step === undefined ? null : String(f.step)]), d.sections[0].fields.map(f => [f.label, f.type, f.value, f.min, f.step])) &&
+        same([S[0].button], d.sections[0].buttons.map(x => x.label)) && S[0].form.filter(f => f.kind === 'time').every(f => typeof f.text === 'string' && f.text.length > 0), { s: S[0], d: d.sections[0] });
+      ok('Something came up as data: every choice (label and value) and button, each with the action the page\'s button runs',
+        S.length === d.sections.length && S.every((s, k) => same(s.options ? s.options.map(o => [o.label, String(o.value), acts[s.key]]) : [[s.button, undefined, acts[s.key]]], d.sections[k].buttons.map(x => [x.label, x.v, x.act]))), { S, d: d.sections });
+    }
+    for (const k of ['meal', 'mealTomorrow']) {
+      const m = data[k] || {}, d = dom[k];
+      ok('the meal sheet as data (' + k + '): name, when, chips and the open button as the page draws them', m.kind === 'meal' && m.start === d.start && d.title.endsWith(m.title) && m.when === d.when && same(m.chips.map(c => c.text), d.chips) && m.open === d.open, { m, d });
+    }
+    for (const k of ['timer', 'timerPaused']) {
+      const m = data[k] || {}, d = dom[k];
+      ok('the timer as data (' + k + '): its words as the page draws them, and the times it runs from', m.kind === 'timer' && m.id === ids.next && m.label === d.label && m.title === d.title && m.planned === d.planned && words(m.xp) === (d.xp || '') &&
+        m.finish === d.finish && m.pause === d.pause && m.stop === d.stop && m.note === d.note && m.startedAt === focus.start && m.paused === (k === 'timerPaused') &&
+        (k === 'timerPaused' ? m.pausedAt === focus.paused : m.pausedAt === null) && m.pausedMs === (focus.pausedMs || 0) && Number.isInteger(m.plannedMs) && m.plannedMs > 0, { m, d, focus });
+    }
+    const gone = await p.evaluate(() => LifeDirector.native.sheet && ['move', 'meal', 'timer'].map(k => LifeDirector.native.sheet(k, 'nowhere')));
+    ok('a Move, meal or timer sheet for something not on the plan says it is gone', same(gone, [{ kind: 'move', gone: true }, { kind: 'meal', gone: true }, { kind: 'timer', gone: true }]), gone);
+    ok('no script errors with the page\'s sheets', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  /* 8. Today's other sheets and actions from a native screen (phase 4A): the timer, Move, meal and Something came up sheets through
+     the sheet command, and disrupt, energy, replan, regroup and dismissBanner answering honestly: once per operation, ok only when
+     saved, and a repeat after a refused save recorded once the fault clears */
+  const SHEET_CAPS = ['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1'];
+  const stored = p => p.evaluate(() => JSON.parse(localStorage.getItem('lifemax_director_state_v1')));
+  const quota = (p, on) => p.evaluate(on => {
+    if (!on) { Storage.prototype.setItem = window.__realSet; return }
+    window.__realSet = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k) { if (k === 'lifemax_director_state_v1') throw new DOMException('The quota has been exceeded.', 'QuotaExceededError'); return window.__realSet.apply(this, arguments) };
+  }, on);
+  {
+    const p = await start(b, SHEET_CAPS);
+    await go(p, 'life-director', 1500);
+    const ids = await p.evaluate(() => ({
+      next: (LifeDirector.native.today(0).upNext.actions.find(a => a.act === 'focusStart') || {}).id,
+      later: LifeDirector.native.today(1).rows.ahead.filter(r => r.act === 'inst').map(r => r.id)[1],
+      meal: LifeDirector.native.today(0).rows.ahead.filter(r => r.act === 'meal').map(r => r.id)[0],
+    }));
+    const kept = async id => { const s = await stored(p); return (s.fixedCommitments || []).concat(s.availability.blackouts || []).filter(c => c.id === id) };
+
+    let r = await command(p, 'today', { name: 'timer', act: 'start', id: ids.next });
+    r = await command(p, 'sheet', { kind: 'timer', id: ids.next });
+    let sh = r.snapshot && r.snapshot.sheet;
+    const f = (await stored(p)).ui.focus;
+    ok('sheet timer: the running timer comes with the reply, from its start, in the page\'s words', r.reply.ok && sh && sh.kind === 'timer' && sh.id === ids.next && sh.startedAt === f.start && sh.paused === false &&
+      sh.label === 'In progress' && sh.pause === 'Pause' && sh.finish === 'Finish and log' && /planned$/.test(sh.planned), sh);
+    r = await command(p, 'today', { name: 'timer', act: 'pause', id: ids.next });
+    sh = r.snapshot.sheet;
+    ok('the timer paused: the sheet that comes with the reply says so, and offers Resume', sh.paused === true && sh.label === 'Paused' && sh.pause === 'Resume' && sh.pausedAt === (await stored(p)).ui.focus.paused, sh);
+    r = await command(p, 'today', { name: 'timer', act: 'cancel', id: ids.next, start: f.start });
+    ok('the timer stopped: its sheet says it is gone', r.reply.ok && r.snapshot.sheet && r.snapshot.sheet.gone === true, r.snapshot.sheet);
+
+    r = await command(p, 'sheet', { kind: 'move', id: ids.later });
+    sh = r.snapshot.sheet;
+    ok('sheet move: its open times, each with the page\'s label and a start', sh.kind === 'move' && sh.id === ids.later && sh.times.length > 0 && sh.times.length <= 48 && sh.times.every(t => typeof t.label === 'string' && Number.isInteger(t.start)), sh);
+    const to = sh.times[0].start;
+    r = await command(p, 'today', { name: 'moveTo', id: ids.later, start: to });
+    const moved = (await stored(p)).schedule.scheduledInstances.find(i => i.instanceId === ids.later);
+    ok('moving to one of those times: saved there, pinned', r.reply.ok && moved && moved.startEpoch === to && moved.isUserLocked, { reply: r.reply, moved: moved && [moved.startEpoch, moved.isUserLocked] });
+
+    r = await command(p, 'sheet', { kind: 'meal', id: ids.meal });
+    sh = r.snapshot.sheet;
+    ok('sheet meal: the meal named by its first minute, with Smart Diet\'s recipe', sh.kind === 'meal' && sh.start === +ids.meal && sh.title.length > 0 && / · /.test(sh.when) && sh.chips.length === 3 && sh.open === 'Open meal menu', sh);
+    r = await command(p, 'sheet', { kind: 'meal', id: '1' });
+    ok('a meal not on the plan is gone', r.snapshot.sheet.gone === true, r.snapshot.sheet);
+
+    r = await command(p, 'sheet', { kind: 'disrupt' });
+    sh = r.snapshot.sheet;
+    ok('sheet disrupt: Something came up\'s parts, each with the command it sends', sh.kind === 'disrupt' && same(sh.sections.map(s => [s.key, s.command]), [['work', 'disrupt'], ['block', 'disrupt'], ['day', 'disrupt'], ['sick', 'disrupt'], ['energy', 'energy']]), sh);
+
+    const w = { name: 'disrupt', kind: 'work', op: 'op-w', date: '2026-10-29', from: 18 * 60, until: 20 * 60, commute: 15 };
+    r = await command(p, 'today', w);
+    const w1 = r;
+    r = await command(p, 'today', w);
+    const c = await kept('c-op-w');
+    ok('today disrupt work: added, re-planned and the page\'s notice; the same operation again answers "Already added", one commitment', w1.reply.ok && w1.reply.changed === true && w1.snapshot.notice && w1.snapshot.notice.text.length > 0 &&
+      r.reply.ok && r.reply.changed === false && r.reply.message === 'Already added' && c.length === 1 && c[0].startEpoch === Date.parse('2026-10-29T18:00:00Z') / 1000 && c[0].endEpoch === Date.parse('2026-10-29T20:00:00Z') / 1000 && c[0].commuteMin === 15,
+      { w1: w1.reply, reply: r.reply, c });
+    r = await command(p, 'today', { name: 'disrupt', kind: 'work', op: 'op-w2', date: '', from: 600, until: 700 });
+    ok('disrupt work without a date is refused with the page\'s words', r.reply.ok === false && r.reply.message === 'Enter a date, start and end', r.reply);
+    r = await command(p, 'today', { name: 'disrupt', kind: 'block', op: 'op-b5', hours: 5 });
+    ok('disrupt block for hours the sheet does not offer is refused', r.reply.ok === false && !(await kept('b-op-b5')).length, r.reply);
+    r = await command(p, 'today', { name: 'disrupt', kind: 'block', hours: 2 });
+    ok('disrupt without an operation id is refused', r.reply.ok === false, r.reply);
+    r = await command(p, 'today', { name: 'disrupt', kind: 'block', op: 'op-b', hours: 2 });
+    const bl = await kept('b-op-b');
+    ok('today disrupt block: the next two hours blocked', r.reply.ok && bl.length === 1 && bl[0].endEpoch - bl[0].startEpoch === 7200, { reply: r.reply, bl });
+
+    await quota(p, true);
+    r = await command(p, 'today', { name: 'disrupt', kind: 'block', op: 'op-b1', hours: 1 });
+    const refused = r;
+    await quota(p, false);
+    r = await command(p, 'today', { name: 'disrupt', kind: 'block', op: 'op-b1', hours: 1 });
+    ok('a refused save answers ok: false with the banner\'s words; the same operation after the fault clears is recorded once', refused.reply.ok === false && /^Not saved/.test(refused.reply.message) && refused.snapshot.banner && /^Not saved/.test(refused.snapshot.banner.text) &&
+      r.reply.ok === true && r.reply.changed === false && r.reply.message === 'Already added' && (await kept('b-op-b1')).length === 1 && r.snapshot.banner === null, { refused: refused.reply, reply: r.reply, banner: r.snapshot && r.snapshot.banner });
+
+    await quota(p, true);
+    r = await command(p, 'today', { name: 'energy', level: 'LOW' });
+    await quota(p, false);
+    const text = r.snapshot.banner && r.snapshot.banner.text;
+    ok('energy with the save refused: ok false, and the Not saved banner shows', r.reply.ok === false && /^Not saved/.test(text || ''), r.reply);
+    r = await command(p, 'today', { name: 'dismissBanner', text: 'Some other banner' });
+    ok('dismissBanner naming a banner that is not showing changes nothing', r.reply.ok && r.reply.changed === false && r.snapshot.banner && r.snapshot.banner.text === text, r.reply);
+    r = await command(p, 'today', { name: 'dismissBanner', text });
+    const d1 = r;
+    r = await command(p, 'today', { name: 'dismissBanner', text });
+    ok('dismissBanner of the banner showing: gone; again, nothing to do', d1.reply.ok && d1.reply.changed === true && d1.snapshot.banner === null && r.reply.ok && r.reply.changed === false, { d1: d1.reply, reply: r.reply });
+
+    r = await command(p, 'today', { name: 'energy', level: 'HIGH' });
+    ok('today energy: noted, re-planned and saved', r.reply.ok && r.reply.changed && r.snapshot.notice.text === 'Energy noted' && (await stored(p)).energyCheckin.level === 'HIGH', r.reply);
+    r = await command(p, 'today', { name: 'energy', level: 'MAX' });
+    ok('an energy level the sheet does not offer is refused', r.reply.ok === false, r.reply);
+    r = await command(p, 'today', { name: 'replan' });
+    ok('today replan: a new plan, saved, with the page\'s notice', r.reply.ok && r.reply.changed && /^Plan updated/.test(r.snapshot.notice.text), { reply: r.reply, notice: r.snapshot.notice });
+    r = await command(p, 'today', { name: 'regroup', v: 'pause', op: 'op-p' });
+    ok('regroup while the question is not showing is refused, nothing paused', r.reply.ok === false && !(await kept('p-op-p')).length, r.reply);
+
+    r = await command(p, 'today', { name: 'disrupt', kind: 'day', op: 'op-d' });
+    const dd = r;
+    r = await command(p, 'today', { name: 'disrupt', kind: 'day', op: 'op-d' });
+    ok('today disrupt day: the rest of today off the plan; again: "Already added"', dd.reply.ok && dd.reply.changed && r.reply.message === 'Already added' && (await kept('d-op-d')).length === 1, { dd: dd.reply, reply: r.reply });
+    r = await command(p, 'today', { name: 'disrupt', kind: 'sick', op: 'op-s', days: 1 });
+    const ss = r;
+    r = await command(p, 'today', { name: 'disrupt', kind: 'sick', op: 'op-s', days: 1 });
+    ok('today disrupt sick: a day of rest with the page\'s "Rest up" notice; again: "Already added"', ss.reply.ok && /^Rest up/.test(ss.snapshot.notice.text) && r.reply.message === 'Already added' && (await kept('s-op-s')).length === 1, { ss: ss.reply, notice: ss.snapshot.notice, reply: r.reply });
+    ok('no script errors with Today\'s other actions', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+
+  /* 9. the regroup question: three missed sessions in a row bring it, and a native screen answers it */
+  {
+    const p = await start(b, SHEET_CAPS);
+    await go(p, 'life-director', 1500);
+    await p.clock.setSystemTime(new Date('2026-10-29T15:00:00Z')); // the evening and the next morning missed
+    await p.clock.runFor(65000);
+    await settle(p, 200);
+    const q = await p.evaluate(() => LifeDirector.native.frame().banner);
+    ok('three missed sessions in a row bring the regroup question, which has no ×', q && q.actions.length === 3 && q.dismiss === false, q);
+    let r = await command(p, 'today', { name: 'dismissBanner', text: q && q.text });
+    ok('dismissBanner does not take the question away', r.reply.ok === false && r.snapshot.banner && r.snapshot.banner.text === q.text, r.reply);
+    r = await command(p, 'today', { name: 'regroup', v: 'pause', op: 'op-p' });
+    const p1 = r;
+    r = await command(p, 'today', { name: 'regroup', v: 'pause', op: 'op-p' });
+    const paused = await stored(p).then(s => (s.availability.blackouts || []).filter(x => x.id === 'p-op-p'));
+    ok('regroup pause: 48 hours paused, the question gone; the same answer again: "Already added"', p1.reply.ok && p1.reply.changed && p1.snapshot.banner === null && paused.length === 1 && paused[0].endEpoch - paused[0].startEpoch === 48 * 3600 &&
+      r.reply.ok && r.reply.changed === false && r.reply.message === 'Already added' && (await stored(p)).ledger.consecutiveMisses === 0, { p1: p1.reply, reply: r.reply, paused });
+    r = await command(p, 'today', { name: 'regroup', v: 'light', op: 'op-l' });
+    ok('another answer once the question has gone is refused', r.reply.ok === false && /no longer showing/.test(r.reply.message), r.reply);
+    ok('no script errors with the regroup question', p.errors.length === 0, p.errors);
     await p.context().close();
   }
 

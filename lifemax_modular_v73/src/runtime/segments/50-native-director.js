@@ -42,14 +42,16 @@
     gotoDay: (p) => director().gotoDay(Number(p.index)),
     /** another section; one the screen does not draw is shown by the page, and the kit steps the screen aside after the reply */
     section: (p) => director().section(String(p.id || "")),
-    /** the sheet the screen shows (phase 4A): its model comes with this reply and every update after it; {kind: ""} closes it */
+    /** the sheet the screen shows (phase 4A: session, timer, meal, move, disrupt): its model comes with this reply and every update
+        after it; {kind: ""} closes it */
     sheet: (p) => {
       if (!tab.has(SHEETS)) return { ok: false, message: "Life Director cannot do that." };
       sheet = p.kind ? { kind: String(p.kind), id: String(p.id || "") } : null;
       return { ok: true };
     },
-    /** Today's writes (phase 4A): done, logToday, skip, pin, moveTo, timer. Those that can pay XP run with the page's celebration
-        held, which plays on the page (the screen waits for it); a repeat of one that landed answers "Already recorded." */
+    /** Today's writes (phase 4A): done, logToday, skip, pin, moveTo, timer, and Something came up's disrupt, energy, replan, regroup
+        and dismissBanner. Those that can pay XP run with the page's celebration held, which plays on the page (the screen waits for
+        it); a repeat of one that landed answers "Already recorded." (or "Already added", "Already skipped.") */
     today: (p) => {
       if (!tab.has(SHEETS)) return { ok: false, message: "Life Director cannot do that." };
       const name = String(p.name || "");
