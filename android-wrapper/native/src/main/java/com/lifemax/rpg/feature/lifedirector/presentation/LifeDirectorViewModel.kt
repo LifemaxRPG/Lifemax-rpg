@@ -34,6 +34,9 @@ class LifeDirectorViewModel(
     internal val timerMeal = TimerMealController(sheets, projection, mutableUi) { blocked }
     /** Move, Something came up and the banner's answers (phase 4A) */
     internal val moves = MoveDisruptController(sheets, projection, ui) { blocked }
+    /** My time's commitment and goal sheets (phase 4B) */
+    internal val forms =
+        FormSheetController(sheets, commands, projection, mutableUi, ::show, { blocked })
     /** the XP replies celebrate, and the sheet the glance asks for (DirectorFeedback.kt) */
     val feedback =
         DirectorFeedback(projection, { busy }) { k, id -> if (sheets.available) sheets.open(k, id) }
@@ -63,6 +66,7 @@ class LifeDirectorViewModel(
         changeRequest = null
         letGo()
         sheets.reset()
+        forms.reset()
         mutableUi.update { it.copy(pendingDay = null, pendingSection = null, pendingChange = null) }
     }
 
@@ -78,6 +82,7 @@ class LifeDirectorViewModel(
         // sheets close too (no reply reaches a hidden screen); the restore draft, the minutes typed
         // and the operation ids of Today's writes stay
         sheets.reset()
+        forms.reset()
         feedback.hidden()
         mutableUi.update { it.copy(guide = null, confirm = null, restoring = false) }
     }
@@ -291,7 +296,7 @@ class LifeDirectorViewModel(
      */
     fun onReply(reply: DirectorReply) {
         feedback.onReply(reply)
-        if (sheets.onReply(reply)) return
+        if (sheets.onReply(reply) || forms.onReply(reply)) return
         when (reply.command) {
             "day" ->
                 if (reply.requestId == dayRequest) {

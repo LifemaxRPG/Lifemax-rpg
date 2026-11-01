@@ -11,21 +11,28 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /*
- * The form schema of the rule, goal-type and goal-form sheets (plan §3.4), strict like every projection decoder:
- *   {fields:[{key, kind, label, value, min?, max?, step?, maxLength?, placeholder?, options?:[{value,label}],
- *             reveals?:[key], hides?:[key], group?, required?, note?}], fold?:{label, fields}}
- * kind is text | number | time | date | select | check | days ("choice" is read as select). An optional key may be
- * absent or null; present, it must be of its kind. A value must suit its kind (A18: a time is minutes 0..1439, a date
- * "YYYY-MM-DD" or "" for none), a select's value one of its options, days the numbers 0..6 among its options, a
- * number within its limits (null only in a box with a placeholder), and every key unique, so a form the screen
- * could send wrongly is refused. The sheet's buttons (save, cancel, remove, help) belong to the sheet's decoder.
- * Kept in one file so it is easy to align with the page's schema.
+ * The form schema of the rule and goal-form sheets (plan §3.4), as the page's formField writes it (logic.js), strict like
+ * every projection decoder:
+ *   {fields:[{key, kind, label, value, required, group, maxLength?, placeholder?, min?, max?, step?, text?,
+ *             options?:[{value,label}], reveals?:[key], hides?:[key], note?}], fold:null|{summary, note, fields}}
+ * kind is text | number | time | date | choice | check | days ("select" is read as choice). required is true or false and
+ * group a whole number or null (fields of one group share a row). An optional key may be absent or null; present, it must
+ * be of its kind. The page writes "" for no placeholder: it is read as none, so a number without one is a stepper. A value
+ * must suit its kind (A18: a time is minutes 0..1439, a date "YYYY-MM-DD" or "" for none), a choice's value one of its
+ * options, days the numbers 0..6 among its options, a number within its limits (null only in a box with a placeholder),
+ * and every key unique, so a form the screen could send wrongly is refused.
+ *
+ * The page says only whether a field is required; the words it refuses an empty one with are in its Do functions
+ * (ruleSave, goalAdd), so [words] gives them by key (FormWords). A required field the screen has no words for is left
+ * to the page, which refuses it in its own words after Save. The sheet's buttons belong to the sheet's decoder.
  */
 
-internal fun JSONObject.formSchema(): FormSchema {
-    val fields = getJSONArray("fields").fields()
+internal fun JSONObject.formSchema(words: Map<String, String> = emptyMap()): FormSchema {
+    val fields = getJSONArray("fields").fields(words)
     val fold =
-        optObject("fold")?.let { FormFold(it.text("label"), it.getJSONArray("fields").fields()) }
+        optObject("fold")?.let {
+            FormFold(it.text("summary"), it.getJSONArray("fields").fields(words), it.text("note"))
+        }
     val all = fields + fold?.fields.orEmpty()
     val keys = all.map { it.key }
     require(keys.toSet().size == keys.size) { "A form has two fields with one key" }
@@ -37,9 +44,10 @@ internal fun JSONObject.formSchema(): FormSchema {
     return FormSchema(fields, fold)
 }
 
-private fun JSONArray.fields(): List<FormField> = objects().map { it.field() }
+private fun JSONArray.fields(words: Map<String, String>): List<FormField> =
+    objects().map { it.field(words) }
 
-private fun JSONObject.field(): FormField {
+private fun JSONObject.field(words: Map<String, String>): FormField {
     val key = text("key")
     val kind =
         when (val k = text("kind")) {
@@ -68,7 +76,8 @@ private fun JSONObject.field(): FormField {
     step?.let { require(it > 0) { "$key has a step that is not positive" } }
     val maxLength = intOrNull("maxLength")
     maxLength?.let { require(it > 0) { "$key has a maxLength that is not positive" } }
-    val placeholder = optText("placeholder")
+    // "" is the page's "no placeholder" (formField's default)
+    val placeholder = optText("placeholder")?.takeIf { it.isNotEmpty() }
     val reveals = optArray("reveals")?.texts() ?: emptyList()
     val hides = optArray("hides")?.texts() ?: emptyList()
     require(kind == FieldKind.CHECK || (reveals.isEmpty() && hides.isEmpty())) {
@@ -132,9 +141,10 @@ private fun JSONObject.field(): FormField {
         options = options,
         reveals = reveals,
         hides = hides,
-        group = optText("group"),
-        required = optText("required"),
+        group = intOrNull("group")?.toString(),
+        required = if (bool("required")) words[key] else null,
         note = optText("note"),
+        text = if (kind == FieldKind.TIME) optText("text") else null,
     )
 }
 

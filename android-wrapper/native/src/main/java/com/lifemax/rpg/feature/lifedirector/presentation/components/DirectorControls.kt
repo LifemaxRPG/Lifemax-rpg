@@ -58,6 +58,8 @@ enum class ButtonLook {
     PRIMARY,
     PLAIN,
     GHOST,
+    /** .ld-ghost.ld-danger: a ghost button in the page's red (Remove) */
+    DANGER,
 }
 
 /** The web's .ld-btn, at least 48 dp tall; [small] is .ld-small. */
@@ -83,7 +85,8 @@ fun DirectorButton(
             ButtonLook.PLAIN ->
                 Modifier.background(DirectorPalette.buttonFill, shape)
                     .border(1.dp, DirectorPalette.line2, shape)
-            ButtonLook.GHOST -> Modifier
+            ButtonLook.GHOST,
+            ButtonLook.DANGER -> Modifier
         }
     Box(
         modifier
@@ -102,6 +105,7 @@ fun DirectorButton(
                     ButtonLook.PRIMARY -> DirectorPalette.goInk
                     ButtonLook.PLAIN -> DirectorPalette.ink
                     ButtonLook.GHOST -> DirectorPalette.ink2
+                    ButtonLook.DANGER -> DANGER_INK
                 },
             fontSize = if (small) 13.1.sp else 14.4.sp,
             fontWeight = FontWeight(650),
@@ -204,3 +208,6 @@ fun GlowDot(size: Dp, color: Color, glow: Dp, pulse: State<Float>? = null) {
             }
     )
 }
+
+/** .ld-root .ld-btn.ld-danger's colour */
+private val DANGER_INK = Color(0xFFFF9B9B)

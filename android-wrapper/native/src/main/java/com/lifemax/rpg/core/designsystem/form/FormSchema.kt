@@ -8,8 +8,8 @@ package com.lifemax.rpg.core.designsystem.form
  */
 
 /**
- * What a field holds and how it is drawn. The wire names are the plan's: text, number, time, date,
- * select, check, days.
+ * What a field holds and how it is drawn. The wire names are the page's: text, number, time, date,
+ * choice (or select), check, days.
  */
 enum class FieldKind {
     TEXT,
@@ -51,7 +51,9 @@ sealed interface FieldValue {
  * ticked and [hides] those it hides while ticked (the rule sheet's rotating shift, the weekend
  * sleep times). Fields with the same [group] next to each other share a row, as the page's ld-grid2
  * and ld-grid3 do. [required] is the page's own words for a field left empty ("Pick at least one
- * day"); null when it may be empty. [note] is the muted line under it.
+ * day"); null when it may be empty. [note] is the muted line under it. [text] is the page's own
+ * words for a time's value ("9:00 AM"), shown while the value is the page's and telling the
+ * picker's clock style.
  */
 data class FormField(
     val key: String,
@@ -69,6 +71,7 @@ data class FormField(
     val group: String? = null,
     val required: String? = null,
     val note: String? = null,
+    val text: String? = null,
 ) {
     /** A number drawn as the page's free box (it has a placeholder) rather than as a stepper. */
     val typedNumber: Boolean
@@ -77,9 +80,9 @@ data class FormField(
 
 /**
  * The page's folded part of a form (the goal form's optional target, a details element): its
- * summary and fields.
+ * summary ([label]), fields, and the muted [note] under them.
  */
-data class FormFold(val label: String, val fields: List<FormField>)
+data class FormFold(val label: String, val fields: List<FormField>, val note: String? = null)
 
 data class FormSchema(val fields: List<FormField>, val fold: FormFold? = null) {
     /** Every field, the fold's last. */
