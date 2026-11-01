@@ -269,7 +269,9 @@
     const nav = navigate;
     navigate = function (v) {
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
-      if (v === cfg.id && !active && cfg.arrive) cfg.arrive(); // before the page shows the view, so it shows what arrive set
+      // an arrival from another view, before the page shows it, so it shows what arrive set (choosing the view it is already on
+      // is no arrival: nothing would draw the reset)
+      if (v === cfg.id && lmaView() !== cfg.id && !active && cfg.arrive) cfg.arrive();
       const r = nav.apply(this, arguments);
       if (v === cfg.id) {
         if (!active) entered = true; // choosing the tab again while its screen shows is not a new arrival

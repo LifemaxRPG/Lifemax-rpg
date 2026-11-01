@@ -419,31 +419,40 @@ private val HINT_PIP =
     )
 
 /**
- * A sideways flick over the screen, between sections ([SectionFlick]). It reads the drag in the
- * final pass and only what nothing took: the dial's handles, the strip and the section tabs scroll
- * and drag first, and an up-and-down scroll is the list's.
+ * A sideways flick over the screen, between sections ([SectionFlick]). It reads the drag after the
+ * screen's own parts (main pass, parent last): a drag one of them took (a dial handle, the strip,
+ * the tabs, the list scrolling) is theirs. Once the finger has clearly gone sideways the flick
+ * takes the drag, so a row under the finger does not also take it as a tap.
  */
 private suspend fun PointerInputScope.detectSectionFlick(flick: (Int) -> Unit) =
     awaitPointerEventScope {
         while (true) {
             val down =
-                awaitPointerEvent(PointerEventPass.Final).changes.firstOrNull {
-                    it.changedToDownIgnoreConsumed()
-                } ?: continue
+                awaitPointerEvent().changes.firstOrNull { it.changedToDownIgnoreConsumed() }
+                    ?: continue
             val start = down.position
             val startMs = down.uptimeMillis
-            var taken = false
+            var mine = false
+            var theirs = false
             var end = start
             var endMs = startMs
             while (true) {
-                val e = awaitPointerEvent(PointerEventPass.Final)
-                val c = e.changes.firstOrNull { it.id == down.id } ?: break
-                if (c.isConsumed && c.positionChanged()) taken = true
+                val c = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                if (!mine && c.isConsumed && c.positionChanged()) theirs = true
                 end = c.position
                 endMs = c.uptimeMillis
+                val d = end - start
+                if (
+                    !theirs &&
+                        !mine &&
+                        kotlin.math.abs(d.x) > viewConfiguration.touchSlop &&
+                        kotlin.math.abs(d.x) > kotlin.math.abs(d.y) * 1.6f
+                )
+                    mine = true
+                if (mine) c.consume()
                 if (!c.pressed) break
             }
-            if (taken) continue
+            if (theirs || !mine) continue
             val dx = (end.x - start.x).toDp().value
             val dy = (end.y - start.y).toDp().value
             val v = dx / ((endMs - startMs).coerceAtLeast(1) / 1000f)

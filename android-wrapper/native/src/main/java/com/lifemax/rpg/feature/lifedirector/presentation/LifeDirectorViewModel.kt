@@ -62,7 +62,10 @@ class LifeDirectorViewModel(
      */
     fun hidden() {
         letGo()
-        mutableUi.update { it.copy(guide = null) } // closed, not seen: it may start again (A24)
+        // closed, not seen: it may start by itself again when the screen comes back (A24); the page
+        // starts none of its own
+        ui.value.guide?.let { autoGuides.remove(it.key) }
+        mutableUi.update { it.copy(guide = null) }
     }
 
     /** A new projection arrived: a guide whose section has gone ends. */
