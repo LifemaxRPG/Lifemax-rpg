@@ -65,11 +65,13 @@ async function command(p, command, payload) {
   {
     const p = await start(b, ['director.today.v2'], { switchOn: false });
     await go(p, 'life-director', 1500);
-    const html = { week: await pageSection(p, 'week'), quests: await pageSection(p, 'quests') };
+    const html = { week: await pageSection(p, 'week'), quests: await pageSection(p, 'quests'), goals: await pageSection(p, 'goals'), settings: await pageSection(p, 'settings') };
     if (process.env.RECORD) { fs.writeFileSync(GOLDEN, JSON.stringify(html, null, 1) + '\n'); console.log('recorded ' + GOLDEN) }
     const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
     ok('the page draws Week byte for byte as before its data was split out', html.week === golden.week, html.week.length + ' vs ' + golden.week.length);
     ok('the page draws Quests byte for byte as before its data was split out', html.quests === golden.quests, html.quests.length + ' vs ' + golden.quests.length);
+    ok('the page draws Goals byte for byte as before its data was split out', html.goals === golden.goals, html.goals.length + ' vs ' + golden.goals.length);
+    ok('the page draws Settings byte for byte as before its data was split out', html.settings === golden.settings, html.settings.length + ' vs ' + golden.settings.length);
 
     await pageSection(p, 'week');
     const w = await p.evaluate(() => {
@@ -221,6 +223,87 @@ async function command(p, command, payload) {
     await go(p, 'life-director', 1500);
     const page = await p.evaluate(() => ({ tour: !!document.querySelector('#view-life-director .ld-tour.on'), shows: LifeDirector.native.showing(), guide: NativeDirectorTabProjection.snapshot().guide }));
     ok('without director.week.v1 the page plays Week\'s guide itself, as before', page.tour && page.shows === 'guide' && page.guide === null, page);
+    await p.context().close();
+  }
+
+  /* 5. Goals and Settings (phase 3B, director.goals.v1): the data says what the page draws, and every change runs the page's own */
+  {
+    const caps = ['director.today.v2', 'director.week.v1', 'director.goals.v1'];
+    const p = await start(b, caps);
+    await go(p, 'life-director', 1500);
+    let r = await command(p, 'section', { id: 'goals' });
+    ok('a screen that draws Goals covers it, and the reply carries Goals', r.reply && r.reply.ok && r.snapshot.tab === 'goals' && !!r.snapshot.goals && same(r.snapshot.covers, ['today', 'week', 'quests', 'goals', 'settings']) && !r.calls.includes('close'), r.reply);
+    const g = await p.evaluate(() => {
+      const G = LifeDirector.native.goals(), m = document.querySelector('#view-life-director .ld-main'), t = e => e ? e.textContent : '';
+      const cards = [...m.querySelectorAll('.ld-goal')];
+      return {
+        explain: G.explain.title === t(m.querySelector('.ld-explain h4')) && G.explain.text === t(m.querySelector('.ld-explain p')),
+        cards: G.cards.length === cards.length && cards.length > 0 && G.cards.every((c, k) => {
+          const e = cards[k], shares = [...e.querySelectorAll('.ld-share b')].map(t);
+          return c.title === t(e.querySelector('h4')) && c.sub === t(e.querySelector('small')) && String(c.priority) === e.querySelector('select').value &&
+            (c.share ? c.share.targetText === shares[0] && c.share.scheduledText === shares[1] && c.share.line === t(e.querySelector('.ld-share + .ld-muted')) : shares.length === 0) &&
+            (c.warning || '') === t(e.querySelector('.ld-warn-t')) && c.pause === t(e.querySelector('[data-act=goalPause]')) &&
+            (c.clarify ? JSON.stringify(c.clarify.options.map(o => o.label)) === JSON.stringify([...e.querySelectorAll('[data-act=clarify]')].map(t)) : !e.querySelector('[data-act=clarify]'));
+        }),
+        priorities: JSON.stringify(G.priorities.map(x => x.label)) === JSON.stringify([...m.querySelector('.ld-goal select').options].map(o => o.textContent)),
+        id: G.cards[0].id, n: G.cards.length,
+      };
+    });
+    ok('Goals as data: the explanation, every card (title, kind and level, priority, shares, sessions line, warning, clarify, pause) and the priority names', g.explain && g.cards && g.priorities, g);
+
+    r = await command(p, 'do', { name: 'goalPriority', id: g.id, value: 1 });
+    const prio = await p.evaluate((id) => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).goals.find(x => x.id === id).priority, g.id);
+    ok('do goalPriority: the page re-plans and saves, the reply says ok and carries the new card', r.reply && r.reply.ok && prio === 1 && r.snapshot.goals.cards.find(c => c.id === g.id).priority === 1, { reply: r.reply, prio });
+    r = await command(p, 'do', { name: 'goalPause', id: g.id, paused: true });
+    const p1 = r.snapshot && r.snapshot.goals.cards.find(c => c.id === g.id);
+    r = await command(p, 'do', { name: 'goalPause', id: g.id, paused: true });
+    const p2 = r.snapshot && r.snapshot.goals.cards.find(c => c.id === g.id);
+    ok('do goalPause with the state wanted: paused once, and the same request again changes nothing', p1 && p1.paused && p1.pause === 'Resume' && r.reply.ok && p2.paused, { p1, p2 });
+    r = await command(p, 'do', { name: 'goalPriority', id: g.id, value: 9 });
+    ok('do goalPriority with a priority that does not exist is refused', r.reply && r.reply.ok === false, r.reply);
+    r = await command(p, 'do', { name: 'nowhere' });
+    ok('an unknown change is refused', r.reply && r.reply.ok === false, r.reply);
+
+    // a refused write: the page's "Not saved" banner, and the reply says so
+    await p.evaluate(() => { window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === 'lifemax_director_state_v1') throw new DOMException('The quota has been exceeded.', 'QuotaExceededError'); return window.__realSet.apply(this, arguments) } });
+    r = await command(p, 'do', { name: 'goalPriority', id: g.id, value: 4 });
+    await p.evaluate(() => { Storage.prototype.setItem = window.__realSet });
+    ok('a refused save is not ok: the reply has the page\'s words and the banner shows them', r.reply && r.reply.ok === false && /^Not saved/.test(r.reply.message) && r.snapshot.banner && /^Not saved/.test(r.snapshot.banner.text), r.reply);
+
+    r = await command(p, 'do', { name: 'goalRemove', id: g.id });
+    ok('do goalRemove: the goal and its card are gone (the screen asks first, with the page\'s words)', r.reply && r.reply.ok && r.snapshot.goals.cards.length === g.n - 1 && !r.snapshot.goals.cards.some(c => c.id === g.id) && /^Remove this goal\?/.test(r.snapshot.goals.removeConfirm), r.reply);
+
+    r = await command(p, 'section', { id: 'settings' });
+    const st = await p.evaluate(() => {
+      const S = LifeDirector.native.settings(), m = document.querySelector('#view-life-director .ld-main'), t = e => e ? e.textContent : '';
+      const labels = [...m.querySelectorAll('.ld-range')];
+      return {
+        intensity: JSON.stringify(S.intensity.options.map(o => o.label)) === JSON.stringify([...m.querySelectorAll('.ld-seg')][0].querySelectorAll('button').length ? [...[...m.querySelectorAll('.ld-seg')][0].querySelectorAll('button')].map(t) : []) &&
+          S.intensity.options.find(o => o.value === S.intensity.value).label === t([...m.querySelectorAll('.ld-seg')][0].querySelector('.on')),
+        ranges: S.ranges.concat([S.misses.grace]).every((r, k) => { const e = labels[k], i = e.querySelector('input'); return String(r.value) === i.value && r.stops[(r.value - r.min) / r.step] === t(e.querySelector('b')) && r.stops.length === (r.max - r.min) / r.step + 1 && r.label === e.firstChild.textContent.trim() }),
+        days: JSON.stringify(S.restDays.days.map(d => [d.label, d.on])) === JSON.stringify([...m.querySelectorAll('.ld-dchip-btn')].map(e => [t(e), e.classList.contains('on')])),
+        misses: S.misses.text.map(x => x.t).join('') === t([...m.querySelectorAll('.ld-card')][3].querySelector('.ld-muted')),
+        diag: S.diagnostics.line === t(m.querySelector('.ld-mono')),
+        sizes: S.ranges.map(r => r.stops.length).concat(S.misses.grace.stops.length),
+      };
+    });
+    ok('Settings as data: intensity, the three ranges and the grace period (value, label at every stop), rest days, what a miss costs, diagnostics', st.intensity && st.ranges && st.days && st.misses && st.diag && same(st.sizes, [31, 23, 15, 16]), st);
+    r = await command(p, 'do', { name: 'prefRange', key: 'maxDailyGoalMinutes', value: 120 });
+    ok('do prefRange: saved, and the label at the new stop is the page\'s', r.reply && r.reply.ok && r.snapshot.settings.ranges[0].value === 120 && r.snapshot.settings.ranges[0].stops[6] === '2h', r.snapshot && r.snapshot.settings.ranges[0].stops[6]);
+    r = await command(p, 'do', { name: 'prefRange', key: 'maxDailyGoalMinutes', value: 121 });
+    ok('do prefRange off its steps is refused', r.reply && r.reply.ok === false, r.reply);
+    r = await command(p, 'do', { name: 'restDay', day: 0, on: true });
+    const rd = r.snapshot && r.snapshot.settings.restDays.days[0].on;
+    r = await command(p, 'do', { name: 'restDay', day: 0, on: true });
+    ok('do restDay with the state wanted: on, and on again changes nothing', rd === true && r.reply.ok && r.snapshot.settings.restDays.days[0].on === true, r.reply);
+    r = await command(p, 'do', { name: 'exportBackup' });
+    const backup = r.reply && r.reply.text;
+    ok('do exportBackup answers the backup text for the screen to copy', r.reply && r.reply.ok && typeof backup === 'string' && backup.length > 1000 && JSON.parse(backup), backup && backup.length);
+    r = await command(p, 'do', { name: 'importBackup', text: 'not a backup' });
+    ok('do importBackup of something that is not a backup is refused with the page\'s words, nothing changed', r.reply && r.reply.ok === false && r.reply.message.length > 0, r.reply);
+    r = await command(p, 'do', { name: 'importBackup', text: backup });
+    ok('do importBackup of a real backup restores it', r.reply && r.reply.ok && r.reply.message === 'Backup restored', r.reply);
+    ok('no script errors with Goals and Settings', p.errors.length === 0, p.errors);
     await p.context().close();
   }
 

@@ -11,7 +11,7 @@
   let celebrating = false; // XP is being celebrated on the page, which the screen must not cover
 
   /** the sections a screen draws besides Today, by the capability that says so */
-  const PARTS = { week: "director.week.v1", quests: "director.week.v1" };
+  const PARTS = { week: "director.week.v1", quests: "director.week.v1", goals: "director.goals.v1", settings: "director.goals.v1" };
   const covers = () => ["today"].concat(Object.keys(PARTS).filter((k) => tab.has(PARTS[k])));
   /** the guides a screen draws, by section: Week's with Week (Today's comes in 4A, set-up's in 4B) */
   const GUIDES = { week: "director.week.v1" };
@@ -26,6 +26,8 @@
       today: part("today", () => ld.today()),
       week: part("week", () => ld.week()),
       quests: part("quests", () => ld.quests()),
+      goals: part("goals", () => ld.goals()),
+      settings: part("settings", () => ld.settings()),
       guide: guides(t) ? ld.guide(t) : null,
     });
   }
@@ -38,6 +40,10 @@
     section: (p) => director().section(String(p.id || "")),
     /** a guide the screen drew was finished ({key, finished: true}) or skipped (Skip, Back): seen, saved on the page */
     tourSeen: (p) => director().tourSeen(p.key, p.finished === true),
+    /** a change to a goal or a setting ({name, ...payload}): the page's own function runs, re-plans and saves; ok only when saved.
+        exportBackup answers the backup's text, which the screen copies. A repeat after a reply is the screen's to avoid (set-like
+        changes: the same priority again changes nothing; a removed goal is "gone"). */
+    do: (p) => director().run(String(p.name || ""), p),
     /** a handle let go on the dial ({key, minute}: a stop's minute) or moved a quarter hour by TalkBack ({key, step: 1 or -1}):
         the confirmation the page would open (reply.confirm), or changed: false where the handle already is; nothing is held or
         saved, so Keep (or OK after a problem) needs no command */

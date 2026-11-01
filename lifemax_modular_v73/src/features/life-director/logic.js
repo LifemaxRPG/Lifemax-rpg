@@ -2620,6 +2620,7 @@ const LifeDirectorApp = (function () {
     return { cls: ' ld-fx ld-arrive ld-new', tag: 'Added' };
   }
   /* ── persistence ── */
+  let lastSave = { ok: true }; // the last write's outcome, which a native command reports
   function persist() {
     if (ST.schedule) {
       const cut = nowEpoch() - 21 * 86400; // keep 3 weeks of history inside the schedule; the ledger keeps everything
@@ -2628,6 +2629,7 @@ const LifeDirectorApp = (function () {
     ST.changeLog = (ST.changeLog || []).slice(-60);
     ST.updatedEpoch = nowEpoch();
     const r = store.save(ST);
+    lastSave = r;
     if (!r.ok) ui.banner = { kind: 'bad', text: 'Not saved: ' + r.error };
     else if (ui.banner && ui.banner.kind === 'bad' && /^Not saved/.test(ui.banner.text)) ui.banner = null;
     return r.ok;
@@ -3845,25 +3847,47 @@ const LifeDirectorApp = (function () {
       U.groups.map(g => '<li><b>' + esc(g.d.title) + (g.n > 1 ? ' ×' + g.n : '') + '</b> <span class="ld-tierlbl">tier ' + g.d.tier + '</span><p>' + esc(g.d.humanExplanation) + '</p></li>').join('') + '</ul></details>';
   }
   const PRIO = ['', 'Low', 'Light', 'Medium', 'High', 'Top'];
-  function renderGoals() {
+  const GOALS_EXPLAIN = { title: 'How your time is shared', text: 'Each goal gets a share of activity time in proportion to its priority. First every goal reaches its weekly minimum, then deadline quests, then weekly targets, and extra volume only if your intensity setting allows it. No single goal may take more than 60% of the time while another is below its minimum.' };
+  const GOALS_EMPTY = { title: 'No goals yet', text: 'Goals turn into regular sessions on your calendar. Quests that ask for the same kind of activity share those sessions instead of doubling up.' };
+  const GOAL_REMOVE_CONFIRM = 'Remove this goal? Its future sessions are removed; completed ones stay in your history.';
+  const CLARIFY_TEXT = 'Life Director needs to know what this goal looks like in practice. Pick the closest match:';
+  /* a goal's share of the week: the engine's allocation, with the engine's own rule (priority over the sum of priorities) where a
+     local repair left the target share at 0 */
+  function goalShare(g, alloc) {
+    const a0 = alloc.find(x => x.goalId === g.id);
+    return a0 && !a0.targetShare ? Object.assign({}, a0, { targetShare: (g.priority || 3) / Math.max(1, alloc.reduce((n, x) => { const gg = ST.goals.find(y => y.id === x.goalId); return n + ((gg && gg.priority) || 3); }, 0)) }) : a0;
+  }
+  /* everything a goal's card shows, decided once for the page's Goals and the native one (nativeGoals) */
+  function goalCards() {
     const s = ST.schedule, alloc = s ? s.goalAllocation : [];
     const warn = s ? s.trajectoryWarnings : [];
     const clar = s ? s.clarificationPrompts : [];
-    const cards = ST.goals.map(g => {
-      const a0 = alloc.find(x => x.goalId === g.id), tw = warn.find(w => w.goalId === g.id), cp = clar.find(c => c.goalId === g.id);
-      /* local repairs do not recompute target shares; use the engine's own rule (priority / sum of priorities) */
-      const a = a0 && !a0.targetShare ? Object.assign({}, a0, { targetShare: (g.priority || 3) / Math.max(1, alloc.reduce((n, x) => { const gg = ST.goals.find(y => y.id === x.goalId); return n + ((gg && gg.priority) || 3); }, 0)) }) : a0;
-      const arch = g.archetypeId && E.ARCHETYPES[g.archetypeId];
-      const share = a ? '<div class="ld-share"><div><span>Target share</span><em><i style="width:' + Math.round(a.targetShare * 100) + '%"></i></em><b>' + Math.round(a.targetShare * 100) + '%</b></div><div><span>Scheduled</span><em><i class="act" style="width:' + Math.round((a.actualShare || 0) * 100) + '%"></i></em><b>' + Math.round((a.actualShare || 0) * 100) + '%</b></div></div><p class="ld-muted">' +
-        a.plannedSessions + ' sessions · ' + mins(a.scheduledMin) + ' this week · ' + a.templates.map(t => esc(t.title) + ' ' + t.med + (t.base > t.med ? '–' + t.base : '') + '×').join(', ') + '</p>' : '';
-      return '<div class="ld-card ld-goal' + (g.status === 'PAUSED' ? ' paused' : '') + '"><div class="ld-goal-h"><div><h4>' + esc(g.title) + '</h4><small>' + (arch ? esc(arch.title) : 'Custom') + ' · ' + esc((g.level || 'NOVICE').toLowerCase()) + (g.status === 'PAUSED' ? ' · paused' : '') + '</small></div>' +
+    return ST.goals.map(g => {
+      const a = goalShare(g, alloc), tw = warn.find(w => w.goalId === g.id), cp = clar.find(c => c.goalId === g.id);
+      const arch = g.archetypeId && E.ARCHETYPES[g.archetypeId], paused = g.status === 'PAUSED';
+      return {
+        g, a, paused,
+        sub: (arch ? arch.title : 'Custom') + ' · ' + (g.level || 'NOVICE').toLowerCase() + (paused ? ' · paused' : ''),
+        line: a ? a.plannedSessions + ' sessions · ' + mins(a.scheduledMin) + ' this week · ' + a.templates.map(t => t.title + ' ' + t.med + (t.base > t.med ? '–' + t.base : '') + '×').join(', ') : '',
+        warning: tw ? tw.message + ' Projected finish: ' + fDay(tw.projectedCompletionEpoch) + '.' : null,
+        clarify: cp ? (cp.suggestedTemplateIds.length ? cp.suggestedTemplateIds : Object.keys(E.ARCHETYPES).slice(0, 4)).map(t => ({ arch: t, label: E.ARCHETYPES[t].title })) : null,
+        pause: paused ? 'Resume' : 'Pause',
+      };
+    });
+  }
+  function renderGoals() {
+    const pct = v => Math.round((v || 0) * 100);
+    const cards = goalCards().map(c => {
+      const { g, a } = c;
+      const share = a ? '<div class="ld-share"><div><span>Target share</span><em><i style="width:' + pct(a.targetShare) + '%"></i></em><b>' + pct(a.targetShare) + '%</b></div><div><span>Scheduled</span><em><i class="act" style="width:' + pct(a.actualShare) + '%"></i></em><b>' + pct(a.actualShare) + '%</b></div></div><p class="ld-muted">' + esc(c.line) + '</p>' : '';
+      return '<div class="ld-card ld-goal' + (c.paused ? ' paused' : '') + '"><div class="ld-goal-h"><div><h4>' + esc(g.title) + '</h4><small>' + esc(c.sub) + '</small></div>' +
         '<select class="ld-sel" data-act="goalPrio" data-id="' + esc(g.id) + '" aria-label="Priority">' + [5, 4, 3, 2, 1].map(p => '<option value="' + p + '"' + (g.priority === p ? ' selected' : '') + '>' + PRIO[p] + '</option>').join('') + '</select></div>' + share +
-        (tw ? '<p class="ld-note ld-warn-t">' + esc(tw.message) + ' Projected finish: ' + fDay(tw.projectedCompletionEpoch) + '.</p>' : '') +
-        (cp ? '<div class="ld-note"><p>Life Director needs to know what this goal looks like in practice. Pick the closest match:</p><div class="ld-row">' + (cp.suggestedTemplateIds.length ? cp.suggestedTemplateIds : Object.keys(E.ARCHETYPES).slice(0, 4)).map(t => '<button class="ld-btn ld-small" data-act="clarify" data-id="' + esc(g.id) + '" data-arch="' + t + '">' + esc(E.ARCHETYPES[t].title) + '</button>').join('') + '</div></div>' : '') +
-        '<div class="ld-row"><button class="ld-btn ld-small ld-ghost" data-act="goalPause" data-id="' + esc(g.id) + '">' + (g.status === 'PAUSED' ? 'Resume' : 'Pause') + '</button><button class="ld-btn ld-small ld-ghost" data-act="goalDel" data-id="' + esc(g.id) + '">Remove</button></div></div>';
+        (c.warning ? '<p class="ld-note ld-warn-t">' + esc(c.warning) + '</p>' : '') +
+        (c.clarify ? '<div class="ld-note"><p>' + CLARIFY_TEXT + '</p><div class="ld-row">' + c.clarify.map(o => '<button class="ld-btn ld-small" data-act="clarify" data-id="' + esc(g.id) + '" data-arch="' + o.arch + '">' + esc(o.label) + '</button>').join('') + '</div></div>' : '') +
+        '<div class="ld-row"><button class="ld-btn ld-small ld-ghost" data-act="goalPause" data-id="' + esc(g.id) + '">' + c.pause + '</button><button class="ld-btn ld-small ld-ghost" data-act="goalDel" data-id="' + esc(g.id) + '">Remove</button></div></div>';
     }).join('');
-    return '<div class="ld-card ld-explain"><h4>How your time is shared</h4><p>Each goal gets a share of activity time in proportion to its priority. First every goal reaches its weekly minimum, then deadline quests, then weekly targets, and extra volume only if your intensity setting allows it. No single goal may take more than 60% of the time while another is below its minimum.</p></div>' +
-      (cards || '<div class="ld-empty"><h3>No goals yet</h3><p>Goals turn into regular sessions on your calendar. Quests that ask for the same kind of activity share those sessions instead of doubling up.</p></div>') +
+    return '<div class="ld-card ld-explain"><h4>' + GOALS_EXPLAIN.title + '</h4><p>' + GOALS_EXPLAIN.text + '</p></div>' +
+      (cards || '<div class="ld-empty"><h3>' + GOALS_EMPTY.title + '</h3><p>' + GOALS_EMPTY.text + '</p></div>') +
       '<button class="ld-btn ld-primary ld-wide" data-act="addGoal">Add a goal</button>';
   }
   const QUEST_HEAD = { title: 'Connected to your Quest Board', text: 'Life Director reads your quests, schedules time for the ones that need it, and checks them off on the Quest Board when the sessions are done. Quest XP is paid by LifeMax once per period, so nothing is counted twice.', open: 'Open Quest Board' };
@@ -3996,26 +4020,46 @@ const LifeDirectorApp = (function () {
   }
 
   /* ── settings ── */
+  const INTENSITY = { options: [['LIGHT', 'Light'], ['BALANCED', 'Balanced'], ['AGGRESSIVE', 'Ambitious'], ['HARDCORE', 'All in']], note: 'Light schedules only each goal’s weekly minimum. Ambitious and All in add extra sessions when time allows.' };
+  const PREF_RANGES = [
+    ['maxDailyGoalMinutes', 30, 480, 15, 'Most activity time per day', 'A hard daily ceiling, even on free days.'],
+    ['minDailyRecoveryMinutes', 30, 360, 15, 'Protected downtime per day', 'Kept clear before anything else is planned.'],
+    ['maxConsecutiveHighLoadMinutes', 30, 240, 15, 'Longest run of demanding work', 'After this, Life Director inserts something lighter.'],
+  ];
+  const GRACE = ['missGraceMinutes', 15, 240, 15, 'Grace period before a session counts as missed'];
+  const HORIZON = [[7, '7 days'], [14, '14 days']];
+  const MISSES = { options: [['LENIENT', 'Gentle'], ['MODERATE', 'Standard'], ['HARDCORE_RPG', 'Hardcore']], text: 'Gentle: no consequences, missed sessions are just re-planned. Standard: a rest token covers a miss; without one, that activity’s streak drops by one. Hardcore: also reports an HP penalty (never below 1 HP). At most one consequence per day, and never any XP or level loss. ' };
+  const SETTINGS_TEXT = {
+    intensity: 'How much to schedule', restDays: 'Rest days', restNote: 'Hard workouts and heavy study are avoided on these days when possible.', horizon: 'Planning window', misses: 'When I miss something',
+    guide: { title: 'Guide', text: 'A short walkthrough of how to read each screen. It shows once on its own; you can replay it here or with the ? button at the top.', button: 'Show the guide again' },
+    data: { title: 'Your data', text: 'Saved on this device under its own key, separate from your LifeMax save. ', storageWarning: 'Storage is unavailable here.', copy: 'Copy backup', restore: 'Restore backup', reset: 'Reset Life Director',
+      resetConfirm: 'Reset Life Director? Your schedule, goals and settings here are cleared. LifeMax XP and quests are not affected.', restoreTitle: 'Restore backup', restoreText: 'Paste a Life Director backup. This replaces Life Director data only; your LifeMax save is not touched.', restoreButton: 'Restore' },
+    diagnostics: 'Diagnostics', lab: 'Show Simulation Lab (developer)',
+  };
+  const graceLabel = m => m + 'm';
+  /* the Diagnostics line, as plain text (the page escapes it) */
+  function diagnosticsLine() {
+    const s = ST.schedule, L = ST.ledger;
+    return 'engine ' + E.ENGINE_VERSION + ' · ' + (s ? s.status + ' · ' + s.computeTimeMs + ' ms · quality ' + s.validation.qualityMetrics.sqi + ' · ' + s.scheduledInstances.length + ' planned' : 'no plan') +
+      ' · events ' + L.order.length + ' · host ' + (Host.connected() ? 'connected' : 'missing ' + Host.capabilities().missing.join(',')) + (ST.lastRejected ? ' · last rejected plan: ' + JSON.stringify(ST.lastRejected.violations) : '');
+  }
   function renderSettings() {
-    const p = E.normalizePreferences(ST.prefs);
+    const p = E.normalizePreferences(ST.prefs), T = SETTINGS_TEXT;
     const seg = (key, opts) => '<div class="ld-seg">' + opts.map(([v, l]) => '<button class="' + (p[key] === v ? 'on' : '') + '" data-act="pref" data-k="' + key + '" data-v="' + v + '">' + l + '</button>').join('') + '</div>';
     const range = (key, lo, hi, step, label, hint) => '<label class="ld-range">' + label + ' <b id="v-' + key + '">' + mins(p[key]) + '</b><input type="range" min="' + lo + '" max="' + hi + '" step="' + step + '" value="' + p[key] + '" data-act="prefRange" data-k="' + key + '"><small>' + hint + '</small></label>';
-    const s = ST.schedule, L = ST.ledger;
-    return '<div class="ld-card"><h4>How much to schedule</h4>' + seg('intensityLevel', [['LIGHT', 'Light'], ['BALANCED', 'Balanced'], ['AGGRESSIVE', 'Ambitious'], ['HARDCORE', 'All in']]) +
-      '<p class="ld-muted">Light schedules only each goal’s weekly minimum. Ambitious and All in add extra sessions when time allows.</p>' +
-      range('maxDailyGoalMinutes', 30, 480, 15, 'Most activity time per day', 'A hard daily ceiling, even on free days.') +
-      range('minDailyRecoveryMinutes', 30, 360, 15, 'Protected downtime per day', 'Kept clear before anything else is planned.') +
-      range('maxConsecutiveHighLoadMinutes', 30, 240, 15, 'Longest run of demanding work', 'After this, Life Director inserts something lighter.') + '</div>' +
-      '<div class="ld-card"><h4>Rest days</h4><p class="ld-muted">Hard workouts and heavy study are avoided on these days when possible.</p><div class="ld-dchips">' + DOW.map((d, k) => '<button class="ld-dchip-btn' + (p.preferredRestDays.includes(k) ? ' on' : '') + '" data-act="restDay" data-v="' + k + '">' + d.slice(0, 2) + '</button>').join('') + '</div></div>' +
-      '<div class="ld-card"><h4>Planning window</h4>' + seg('planningHorizonDays', [[7, '7 days'], [14, '14 days']]) + '</div>' +
-      '<div class="ld-card"><h4>When I miss something</h4>' + seg('consequenceMode', [['LENIENT', 'Gentle'], ['MODERATE', 'Standard'], ['HARDCORE_RPG', 'Hardcore']]) +
-      '<p class="ld-muted">Gentle: no consequences, missed sessions are just re-planned. Standard: a rest token covers a miss; without one, that activity’s streak drops by one. Hardcore: also reports an HP penalty (never below 1 HP). At most one consequence per day, and never any XP or level loss. Rest tokens: <b>' + L.restTokens + '</b> of 3 (earn one every 5 completions).</p>' +
-      '<label class="ld-range">Grace period before a session counts as missed <b>' + p.missGraceMinutes + 'm</b><input type="range" min="15" max="240" step="15" value="' + p.missGraceMinutes + '" data-act="prefRange" data-k="missGraceMinutes"></label></div>' +
-      '<div class="ld-card"><h4>Guide</h4><p class="ld-muted">A short walkthrough of how to read each screen. It shows once on its own; you can replay it here or with the ? button at the top.</p><div class="ld-row"><button class="ld-btn ld-small" data-act="tourReset">Show the guide again</button></div></div>' +
-      '<div class="ld-card"><h4>Your data</h4><p class="ld-muted">Saved on this device under its own key, separate from your LifeMax save. ' + (loadReport && loadReport.source === 'MEMORY_ONLY' ? '<b>Storage is unavailable here.</b>' : '') + '</p><div class="ld-row"><button class="ld-btn ld-small" data-act="export">Copy backup</button><button class="ld-btn ld-small" data-act="import">Restore backup</button><button class="ld-btn ld-small ld-danger" data-act="reset">Reset Life Director</button></div></div>' +
-      '<details class="ld-card ld-details"><summary>Diagnostics</summary><p class="ld-mono">engine ' + E.ENGINE_VERSION + ' · ' + (s ? s.status + ' · ' + s.computeTimeMs + ' ms · quality ' + s.validation.qualityMetrics.sqi + ' · ' + s.scheduledInstances.length + ' planned' : 'no plan') +
-      ' · events ' + L.order.length + ' · host ' + (Host.connected() ? 'connected' : 'missing ' + Host.capabilities().missing.join(',')) + (ST.lastRejected ? ' · last rejected plan: ' + esc(JSON.stringify(ST.lastRejected.violations)) : '') + '</p>' +
-      '<label class="ld-check"><input type="checkbox" data-act="labToggle"' + (ST.ui.lab ? ' checked' : '') + '> Show Simulation Lab (developer)</label></details>';
+    const L = ST.ledger;
+    return '<div class="ld-card"><h4>' + T.intensity + '</h4>' + seg('intensityLevel', INTENSITY.options) +
+      '<p class="ld-muted">' + INTENSITY.note + '</p>' +
+      PREF_RANGES.map(r => range(...r)).join('') + '</div>' +
+      '<div class="ld-card"><h4>' + T.restDays + '</h4><p class="ld-muted">' + T.restNote + '</p><div class="ld-dchips">' + DOW.map((d, k) => '<button class="ld-dchip-btn' + (p.preferredRestDays.includes(k) ? ' on' : '') + '" data-act="restDay" data-v="' + k + '">' + d.slice(0, 2) + '</button>').join('') + '</div></div>' +
+      '<div class="ld-card"><h4>' + T.horizon + '</h4>' + seg('planningHorizonDays', HORIZON) + '</div>' +
+      '<div class="ld-card"><h4>' + T.misses + '</h4>' + seg('consequenceMode', MISSES.options) +
+      '<p class="ld-muted">' + MISSES.text + 'Rest tokens: <b>' + L.restTokens + '</b> of 3 (earn one every 5 completions).</p>' +
+      '<label class="ld-range">' + GRACE[4] + ' <b>' + graceLabel(p.missGraceMinutes) + '</b><input type="range" min="' + GRACE[1] + '" max="' + GRACE[2] + '" step="' + GRACE[3] + '" value="' + p.missGraceMinutes + '" data-act="prefRange" data-k="missGraceMinutes"></label></div>' +
+      '<div class="ld-card"><h4>' + T.guide.title + '</h4><p class="ld-muted">' + T.guide.text + '</p><div class="ld-row"><button class="ld-btn ld-small" data-act="tourReset">' + T.guide.button + '</button></div></div>' +
+      '<div class="ld-card"><h4>' + T.data.title + '</h4><p class="ld-muted">' + T.data.text + (loadReport && loadReport.source === 'MEMORY_ONLY' ? '<b>' + T.data.storageWarning + '</b>' : '') + '</p><div class="ld-row"><button class="ld-btn ld-small" data-act="export">' + T.data.copy + '</button><button class="ld-btn ld-small" data-act="import">' + T.data.restore + '</button><button class="ld-btn ld-small ld-danger" data-act="reset">' + T.data.reset + '</button></div></div>' +
+      '<details class="ld-card ld-details"><summary>' + T.diagnostics + '</summary><p class="ld-mono">' + esc(diagnosticsLine()) + '</p>' +
+      '<label class="ld-check"><input type="checkbox" data-act="labToggle"' + (ST.ui.lab ? ' checked' : '') + '> ' + T.lab + '</label></details>';
   }
 
   /* ── activity detail ── */
@@ -4588,6 +4632,76 @@ const LifeDirectorApp = (function () {
     perform(b);
   }
   /* what the element b with data-act does; b may also be an object that carries only a dataset (see nativeAct) */
+  /* ── changes to goals and settings, shared by the page's own controls and a native screen's commands ──
+     Each changes what its control changes, re-plans or saves as the control does, renders, and answers {ok, message}: ok only
+     when the write went through (a refused write leaves the page's "Not saved" banner, and its words are the message). */
+  const saved = (message) => (lastSave.ok ? { ok: true, message } : { ok: false, message: 'Not saved: ' + lastSave.error });
+  const goalById = (id) => ST.goals.find(x => x.id === String(id));
+  function replanOrSave(reason) { if (ST.setupComplete) regenerate(reason, true); else persist(); }
+  const Do = Object.freeze({
+    goalPriority({ id, value }) {
+      const g = goalById(id), v = Number(value);
+      if (!g) return { ok: false, message: 'That goal is gone.' };
+      if (![1, 2, 3, 4, 5].includes(v)) return { ok: false, message: 'That is not a priority.' };
+      g.priority = v; regenerate('priority', true); render(); return saved('');
+    },
+    /* paused: the state wanted (a screen sends it, so a repeat changes nothing); without it, the page's toggle */
+    goalPause({ id, paused }) {
+      const g = goalById(id);
+      if (!g) return { ok: false, message: 'That goal is gone.' };
+      const want = typeof paused === 'boolean' ? paused : g.status !== 'PAUSED';
+      if (want === (g.status === 'PAUSED')) return { ok: true, message: '' };
+      g.status = want ? 'PAUSED' : 'ACTIVE'; regenerate('goal changed', true); render(); return saved('');
+    },
+    goalRemove({ id }) {
+      if (!goalById(id)) return { ok: false, message: 'That goal is gone.' };
+      ST.goals = ST.goals.filter(x => x.id !== String(id)); regenerate('goal removed', true); render(); return saved('');
+    },
+    clarify({ id, arch }) {
+      const g = goalById(id);
+      if (!g) return { ok: false, message: 'That goal is gone.' };
+      if (!E.ARCHETYPES[arch]) return { ok: false, message: 'That is not a kind of goal.' };
+      g.archetypeId = arch; regenerate('goal clarified', true); render(); return saved('');
+    },
+    pref({ key, value }) {
+      const allowed = { intensityLevel: INTENSITY.options, planningHorizonDays: HORIZON, consequenceMode: MISSES.options }[key];
+      if (!allowed || !allowed.some(([v]) => String(v) === String(value))) return { ok: false, message: 'That is not a setting.' };
+      ST.prefs[key] = isNaN(+value) ? value : +value;
+      if (key === 'intensityLevel') ST.prefsLightUntil = null;
+      replanOrSave('settings'); render(); return saved('');
+    },
+    prefRange({ key, value }) {
+      const r = PREF_RANGES.concat([GRACE]).find(x => x[0] === key), v = Number(value);
+      if (!r || !Number.isFinite(v) || v < r[1] || v > r[2] || (v - r[1]) % r[3]) return { ok: false, message: 'That is not a setting.' };
+      ST.prefs[key] = v; replanOrSave('settings'); render(); return saved('');
+    },
+    /* on: the state wanted (a screen sends it, so a repeat changes nothing); without it, the page's toggle */
+    restDay({ day, on }) {
+      const k = Number(day);
+      if (!Number.isInteger(k) || k < 0 || k > 6) return { ok: false, message: 'That is not a day.' };
+      const p = E.normalizePreferences(ST.prefs), has = p.preferredRestDays.includes(k), want = typeof on === 'boolean' ? on : !has;
+      if (want === has) return { ok: true, message: '' };
+      ST.prefs.preferredRestDays = has ? p.preferredRestDays.filter(x => x !== k) : p.preferredRestDays.concat(k);
+      replanOrSave('settings'); render(); return saved('');
+    },
+    labToggle({ on }) { ST.ui.lab = !!on; persist(); render(); return saved(''); },
+    tourReset() {
+      ST.ui.tours = {}; persist();
+      if (ST.setupComplete && ST.schedule) { ui.tab = 'today'; ST.ui.tab = 'today'; ui.dayIdx = 0; } else ui.tab = 'setup';
+      render(); return saved('');
+    },
+    /* the backup as text; copying it is the caller's (the page's clipboard, or the phone's) */
+    exportBackup() { return { ok: true, message: '', text: store.exportJson(ST) }; },
+    importBackup({ text }) {
+      let next;
+      try { next = store.importJson(String(text || '')); } catch (err) { return { ok: false, message: err.message }; }
+      const was = ST; ST = next;
+      if (!persist()) { ST = was; render(); return { ok: false, message: 'Not saved: ' + lastSave.error + ' Nothing was restored.' }; }
+      render(); say('Backup restored'); return { ok: true, message: 'Backup restored' };
+    },
+    reset() { store.clear(); boot(); render(); return { ok: true, message: '' }; },
+  });
+
   function perform(b) {
     const act = b.dataset.act, id = b.dataset.id, v = b.dataset.v;
     if (act === 'doneQuick' || act === 'done') { ui.fx.justDone = id; if (ST.ui.focus && ST.ui.focus.id === id) ST.ui.focus = null; }
@@ -4712,22 +4826,22 @@ const LifeDirectorApp = (function () {
         if (ST.setupComplete) regenerate('goal added', true); else persist();
         render(); say('Goal added'); break;
       }
-      case 'clarify': { const g = ST.goals.find(x => x.id === id); if (g) { g.archetypeId = b.dataset.arch; regenerate('goal clarified', true); render(); } break; }
-      case 'goalPause': { const g = ST.goals.find(x => x.id === id); if (g) { g.status = g.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED'; regenerate('goal changed', true); render(); } break; }
-      case 'goalDel': { if (!confirm('Remove this goal? Its future sessions are removed; completed ones stay in your history.')) break; ST.goals = ST.goals.filter(x => x.id !== id); regenerate('goal removed', true); render(); break; }
-      case 'pref': { const key = b.dataset.k; ST.prefs[key] = isNaN(+v) ? v : +v; if (key === 'intensityLevel') ST.prefsLightUntil = null; if (ST.setupComplete) regenerate('settings', true); else persist(); render(); break; }
-      case 'restDay': { const p = E.normalizePreferences(ST.prefs); const k = +v; ST.prefs.preferredRestDays = p.preferredRestDays.includes(k) ? p.preferredRestDays.filter(x => x !== k) : p.preferredRestDays.concat(k); if (ST.setupComplete) regenerate('settings', true); else persist(); render(); break; }
-      case 'labToggle': ST.ui.lab = b.checked; persist(); render(); break;
-      case 'export': { const txt = store.exportJson(ST); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => say('Backup copied to clipboard'), () => { openSheet('<h3>Backup</h3><textarea class="ld-ta" readonly>' + esc(txt) + '</textarea>'); }); break; }
-      case 'import': openSheet('<h3>Restore backup</h3><p class="ld-muted">Paste a Life Director backup. This replaces Life Director data only; your LifeMax save is not touched.</p><textarea class="ld-ta" id="ldImport"></textarea><button class="ld-btn ld-primary" data-act="doImport">Restore</button>'); break;
-      case 'doImport': { try { ST = store.importJson(val('#ldImport')); persist(); closeSheet(); render(); say('Backup restored'); } catch (err) { say(err.message); } break; }
-      case 'reset': if (confirm('Reset Life Director? Your schedule, goals and settings here are cleared. LifeMax XP and quests are not affected.')) { store.clear(); boot(); render(); } break;
+      case 'clarify': Do.clarify({ id, arch: b.dataset.arch }); break;
+      case 'goalPause': Do.goalPause({ id }); break;
+      case 'goalDel': if (confirm(GOAL_REMOVE_CONFIRM)) Do.goalRemove({ id }); break;
+      case 'pref': Do.pref({ key: b.dataset.k, value: v }); break;
+      case 'restDay': Do.restDay({ day: v }); break;
+      case 'labToggle': Do.labToggle({ on: b.checked }); break;
+      case 'export': { const txt = Do.exportBackup().text; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => say('Backup copied to clipboard'), () => { openSheet('<h3>Backup</h3><textarea class="ld-ta" readonly>' + esc(txt) + '</textarea>'); }); break; }
+      case 'import': openSheet('<h3>' + SETTINGS_TEXT.data.restoreTitle + '</h3><p class="ld-muted">' + SETTINGS_TEXT.data.restoreText + '</p><textarea class="ld-ta" id="ldImport"></textarea><button class="ld-btn ld-primary" data-act="doImport">' + SETTINGS_TEXT.data.restoreButton + '</button>'); break;
+      case 'doImport': { const r = Do.importBackup({ text: val('#ldImport') }); if (r.ok) closeSheet(); else say(r.message); break; }
+      case 'reset': if (confirm(SETTINGS_TEXT.data.resetConfirm)) Do.reset(); break;
       case 'closeSheet': case 'sheetBg': closeSheet(); break;
       case 'tour': tourHelp(); break;
       case 'tourNext': tourMove(1); break;
       case 'tourBack': tourMove(-1); break;
       case 'tourEnd': tourEnd(false); break;
-      case 'tourReset': ST.ui.tours = {}; persist(); if (ST.setupComplete && ST.schedule) { ui.tab = 'today'; ST.ui.tab = 'today'; ui.dayIdx = 0; render(); } else { ui.tab = 'setup'; render(); } break;
+      case 'tourReset': Do.tourReset(); break;
       default: if (act.startsWith('lab')) labAction(act, b);
     }
   }
@@ -4740,8 +4854,8 @@ const LifeDirectorApp = (function () {
   }
   function onChange(e) {
     const t = e.target;
-    if (t.dataset && t.dataset.act === 'prefRange') { ST.prefs[t.dataset.k] = +t.value; if (ST.setupComplete) regenerate('settings', true); else persist(); render(); }
-    if (t.dataset && t.dataset.act === 'goalPrio') { const g = ST.goals.find(x => x.id === t.dataset.id); if (g) { g.priority = +t.value; regenerate('priority', true); render(); } }
+    if (t.dataset && t.dataset.act === 'prefRange') Do.prefRange({ key: t.dataset.k, value: +t.value });
+    if (t.dataset && t.dataset.act === 'goalPrio') Do.goalPriority({ id: t.dataset.id, value: +t.value });
     if (t.dataset && t.dataset.act === 'labScenario') { ui.lab.scenario = t.value; ui.lab.result = null; render(); }
   }
 
@@ -5340,6 +5454,46 @@ const LifeDirectorApp = (function () {
     if (root && root.isConnected) render();
     return { ok: true };
   }
+  /* Goals as data for a native screen (phase 3B): goalCards' decisions in the page's words; shares are 0..1 with the page's own
+     rounded percentages beside them. "Add a goal" stays the page's sheet. */
+  function nativeGoals() {
+    if (!ST) boot();
+    const pct = v => Math.round((v || 0) * 100);
+    const cards = goalCards().map(c => ({
+      id: c.g.id, title: c.g.title, sub: c.sub, paused: c.paused, priority: c.g.priority,
+      share: c.a ? { target: Math.min(1, Math.max(0, c.a.targetShare || 0)), targetText: pct(c.a.targetShare) + '%', scheduled: Math.min(1, Math.max(0, c.a.actualShare || 0)), scheduledText: pct(c.a.actualShare) + '%', line: c.line } : null,
+      warning: c.warning, clarify: c.clarify ? { text: CLARIFY_TEXT, options: c.clarify } : null, pause: c.pause, remove: 'Remove',
+    }));
+    return { explain: GOALS_EXPLAIN, priorities: [5, 4, 3, 2, 1].map(v => ({ value: v, label: PRIO[v] })), cards, empty: cards.length ? null : GOALS_EMPTY,
+      add: 'Add a goal', removeConfirm: GOAL_REMOVE_CONFIRM };
+  }
+  /* Settings as data for a native screen (phase 3B). A range sends one label per stop, in the page's words, so its label follows
+     the finger without the screen formatting time; rich text comes as spans (the rest tokens' bold). */
+  function nativeSettings() {
+    if (!ST) boot();
+    const p = E.normalizePreferences(ST.prefs), T = SETTINGS_TEXT, L = ST.ledger;
+    const stops = (lo, hi, step, f) => { const out = []; for (let v = lo; v <= hi; v += step) out.push(f(v)); return out; };
+    const range = ([key, lo, hi, step, label, hint], f) => ({ key, label, hint: hint || '', min: lo, max: hi, step, value: p[key], stops: stops(lo, hi, step, f) });
+    return {
+      intensity: { title: T.intensity, value: p.intensityLevel, options: INTENSITY.options.map(([v, l]) => ({ value: v, label: l })), note: INTENSITY.note },
+      ranges: PREF_RANGES.map(r => range(r, mins)),
+      restDays: { title: T.restDays, note: T.restNote, days: DOW.map((d, k) => ({ day: k, label: d.slice(0, 2), on: p.preferredRestDays.includes(k) })) },
+      horizon: { title: T.horizon, value: String(p.planningHorizonDays), options: HORIZON.map(([v, l]) => ({ value: String(v), label: l })) },
+      misses: { title: T.misses, value: p.consequenceMode, options: MISSES.options.map(([v, l]) => ({ value: v, label: l })),
+        text: [{ t: MISSES.text + 'Rest tokens: ', b: false }, { t: String(L.restTokens), b: true }, { t: ' of 3 (earn one every 5 completions).', b: false }],
+        grace: range(GRACE, graceLabel) },
+      guide: T.guide,
+      data: Object.assign({}, T.data, { storageUnavailable: !!(loadReport && loadReport.source === 'MEMORY_ONLY') }),
+      diagnostics: { title: T.diagnostics, line: diagnosticsLine() },
+      lab: { label: T.lab, on: !!ST.ui.lab },
+    };
+  }
+  /* a native screen's change: one of Do's, with its payload; an unknown name is refused */
+  function nativeRun(name, payload) {
+    if (!ST) boot();
+    if (!Object.prototype.hasOwnProperty.call(Do, name)) return { ok: false, message: 'Life Director cannot do that.' };
+    return Do[name](payload && typeof payload === 'object' ? payload : {});
+  }
   /* A section's guide as data for a native screen that draws it (phase 3A: Week): its steps as tourSteps keeps them (a step
      whose part is not on the page is left out), each with the name of the part it points at, and whether it is due to start
      by itself (not seen yet). Text comes as spans: the page's <b> is the only markup in TOURS. */
@@ -5376,6 +5530,7 @@ const LifeDirectorApp = (function () {
     /* fn(key) is true when a native screen draws that section's guide: the page then starts none of its own there */
     guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },
     guide: nativeGuide, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
+    goals: nativeGoals, settings: nativeSettings, run: nativeRun,
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own
