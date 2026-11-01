@@ -85,7 +85,11 @@
  }
  window.setNativeOverviewEnabled=setEnabled;
  window.syncNativeOverviewSetting=syncSetting;
- function blocked(ignoreView){return !enabled()||!state.onboardingComplete||(!ignoreView&&lmaView()!=='dashboard')||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,#view-life-director.active .ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')}
+ function blocked(ignoreView){return !enabled()||!state.onboardingComplete||(!ignoreView&&lmaView()!=='dashboard')||window.innerWidth>860||typeof lmaThumbWarmBusy!=='undefined'&&lmaThumbWarmBusy||typeof lmaTopOverlay==='function'&&!!lmaTopOverlay()||document.querySelector('#onboarding:not([aria-hidden="true"]).show,#tutorial.show,#view-life-director.active .ld-sheet.open,.sheet-ov.show,.updpop,.hsheet,.apps-sheet,.lock-ov,.journal-lock')||document.body.classList.contains('noscroll')||cardsWanted()}
+ /* The Overview has two native drawings: the cards (50-native-overview-cards.js, beta) and this live shell. One registration
+    answers for the view and asks the cards first (ADR 0012); while the cards are wanted, this shell counts itself blocked. */
+ const cards=()=>window.NativeOverviewCards||null;
+ const cardsWanted=()=>!!(cards()&&cards().wanted());
  function identify(el){if(!ids.has(el))ids.set(el,'o'+(++nextId));const id=ids.get(el);(N.buildActions||N.actions).set(id,el);if(el.closest('.sidebar'))N.navActions.set(id,el);return id}
  const drawableProps=['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','fill-opacity','stroke-opacity','opacity','color','font-family','font-size','font-weight','letter-spacing','text-anchor','dominant-baseline','paint-order','display','visibility','filter'];
  async function svgImage(el){const clone=el.cloneNode(true),src=[el,...el.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];for(let i=0;i<src.length;i++){const cs=getComputedStyle(src[i]);for(const p of drawableProps){let v=cs.getPropertyValue(p);v=v.replace(/url\("?[^"#)]*(#[^")]+)"?\)/g,'url($1)');dst[i].style.setProperty(p,v)}}clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const rect=el.getBoundingClientRect();clone.setAttribute('width',String(Math.max(1,rect.width)));clone.setAttribute('height',String(Math.max(1,rect.height)));return raster('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(clone)),rect.width,rect.height)}
@@ -146,24 +150,35 @@
  function closeOverview(){NativeTabs.leave('overview',typeof lmaView==='function'?lmaView():'',()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}})}
  async function open(force){
   if(window.__nativeOverviewManual&&!force)return{opened:false,reason:'manual'};
+  if(cardsWanted())return{opened:false,reason:'cards'}; // the cards answer for the view: this drawing neither opens nor flushes the hand-over
   const p=plugin();if(!p||N.open||N.opening||blocked()){if(!N.opening)NativeTabs.flush('overview');return{opened:N.open,diagnostics:diagnostics()}}
   N.opening=true;N.plugin=p;
   try{const capabilities=N.caps||(N.caps=await p.capabilities().catch(()=>null));if(!capabilities?.liveWeb)return{opened:false,reason:'live-shell-update-required'};await ready(p);if(!force){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const page=document.getElementById('view-dashboard');const animations=page&&page.getAnimations?page.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity):[];if(animations.length)await Promise.race([Promise.allSettled(animations.map(a=>a.finished)),new Promise(r=>setTimeout(r,700))])}if(blocked())return{opened:false,diagnostics:diagnostics()};
-   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});NativeTabs.flush('overview');N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
+   const scene=await snapshot();if(blocked())return{opened:false,diagnostics:diagnostics()};N.session='overview_'+Date.now();N.open=true;N.suspended=false;await p.open({session:N.session,snapshot:scene});if(cards()&&cards().active())cards().close();NativeTabs.flush('overview');N.lastPaint=signature(scene);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(N.open)mask(true);return{opened:N.open};
   }catch(e){N.open=false;mask(false);console.warn('Native Overview',e);toast('Native Overview could not open. Your original Overview is available.');return{opened:false,error:String(e)}}finally{N.opening=false;NativeTabs.flush('overview')}
  }
 
  /* A view with a registered native tab ('food' is the tab key for meals or recipes). */
  const nativeView=v=>NativeTabs.has(typeof lmaResolve==='function'?lmaResolve(v):v);
- const nav=navigate;navigate=function(v){if(!nativeView(v))document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>open(from!=='dashboard'&&nativeView(from)))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
+ const nav=navigate;navigate=function(v){if(!nativeView(v))document.documentElement?.classList?.remove('native-cover');N.suspended=false;const from=typeof lmaView==='function'?lmaView():'',result=nav.apply(this,arguments);if(v==='dashboard'){NativeTabs.cancel('overview');queueMicrotask(()=>cardsWanted()?cards().open():open(from!=='dashboard'&&nativeView(from)))}if(v==='settings'){syncSetting();syncTiming()}if(v!=='dashboard'&&N.open)NativeTabs.leave('overview',v,()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}});return result};
  /* testing aid: real tap-to-screen timing measured by the Android side (Settings, Appearance) */
  const timingOn=()=>typeof lmaLoad==='function'&&lmaLoad().tabTiming===true;
  function syncTiming(){const c=document.getElementById('tabTimingToggle'),h=document.getElementById('tabTimingHint');if(!c)return;const p=plugin();c.disabled=!p||!p.setTimingToast;c.checked=!!p&&timingOn();
   if(p&&p.timing&&h)p.timing().then(r=>{if(r&&r.last)h.textContent='Last: '+r.last}).catch(()=>{})}
  window.setTabTimingToast=async on=>{if(typeof lmaLoad==='function'&&typeof lmaSave==='function'){lmaLoad().tabTiming=!!on;lmaSave()}const p=plugin();if(p&&p.setTimingToast)await p.setTimingToast({on:!!on})};
  setTimeout(()=>{const p=plugin();if(p&&p.setTimingToast&&timingOn())p.setTimingToast({on:true}).catch(()=>{});syncTiming()},2500);
- NativeTabs.cover('dashboard',()=>!!plugin()&&!blocked(true));
- NativeTabs.register('dashboard',{isOpen:()=>N.open,isOpening:()=>N.opening,open:()=>open(false),close:()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}},body:'web'});
+ const closeShell=()=>{if(N.open){mask(false);N.plugin.close({session:N.session})}};
+ NativeTabs.cover('dashboard',()=>cardsWanted()||(!!plugin()&&!blocked(true)));
+ NativeTabs.register('dashboard',{
+  isOpen:()=>N.open||!!(cards()&&cards().active()),
+  isOpening:()=>N.opening||!!(cards()&&cards().opening()),
+  open:()=>cardsWanted()?cards().open():open(false),
+  close:()=>Promise.all([cards()&&cards().close(),closeShell()]),
+  get body(){return cardsWanted()?undefined:'web'}, // native tab swipe's webBody(): the cards are a native neighbour, the shell is a wall
+  wouldOpen:()=>cardsWanted()?cards().coverable():NativeTabs.covered('dashboard'), // native tab swipe's kind()
+ });
+ /* whichever drawing opens closes a stray other at once: the repair heal() cannot make, since it sees one entry for the view */
+ window.NativeOverviewShell={isOpen:()=>N.open,close:closeShell};
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
@@ -173,6 +188,7 @@
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);if(N.open)send();return r};
  new MutationObserver(()=>{if(N.open&&blocked())closeOverview()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  setTimeout(()=>{if(plugin()&&!blocked())open()},1800);
+ setTimeout(()=>{if(cardsWanted()&&lmaView()==='dashboard')cards().open()},900); // after the 800-ms theme and rewards pass (44-rewards.js), so the first projection has the bought accent
  syncSetting();setTimeout(syncSetting,700);
  window.NativeOverviewSnapshot={capture,snapshot,color,split,diagnostics,activate:id=>{
    const prior=N.navActions.get(id),target=prior?.isConnected?prior:N.actions.get(id);
@@ -180,7 +196,7 @@
    const to=target.dataset.view,from=typeof lmaView==='function'?lmaView():'';
    /* Tab changes between the native screens run the page change straight away: no View Transition slide, and no fade-in of a page that is covered anyway. */
    if(to&&typeof lmaNavTo==='function'&&(nativeView(to)||nativeView(from))){
-    const covered=to!=='dashboard'&&NativeTabs.covered(typeof lmaResolve==='function'?lmaResolve(to):to);
+    const covered=(to!=='dashboard'||cardsWanted())&&NativeTabs.covered(typeof lmaResolve==='function'?lmaResolve(to):to);
     document.documentElement?.classList?.toggle('native-cover',covered);
     lmaNavTo(to,{fast:true});
    }else target.click();

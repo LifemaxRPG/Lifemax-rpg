@@ -299,8 +299,8 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 29999,
-   "statement_count": 74,
+   "bytes": 30493,
+   "statement_count": 76,
    "tags": [
     "training",
     "pet",
@@ -355,6 +355,8 @@
     "fxCalm",
     "afterCelebrations",
     "fxSettle",
+    "celebrating",
+    "fxSink",
     "celebrateXP",
     "xpCue",
     "luBusy",
@@ -870,7 +872,7 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 37420,
+   "bytes": 37483,
    "statement_count": 70,
    "tags": [
     "pet",
@@ -2461,6 +2463,29 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-pet-portrait.js",
+   "bytes": 6226,
+   "statement_count": 12,
+   "tags": [
+    "pet",
+    "portrait"
+   ],
+   "symbols": [
+    "PET_PORTRAIT",
+    "petPortraitFeet",
+    "petPortraitRt",
+    "petPortraitSlot",
+    "petPortraitAs",
+    "petPortraitAnim",
+    "petPortraitMorphKey",
+    "petPortraitKey",
+    "petPortraitReady",
+    "petPortraitCanvas",
+    "petPortrait",
+    "petPortraitWait"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-voice-gen4.js",
    "bytes": 54048,
    "statement_count": 66,
@@ -3294,7 +3319,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 25450,
+   "bytes": 26879,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3308,13 +3333,14 @@
     "window.syncNativeOverviewSetting",
     "window.__nativeOverviewError",
     "window.setTabTimingToast",
+    "window.NativeOverviewShell",
     "window.openNativeOverview",
     "window.NativeOverviewSnapshot"
    ]
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 18394,
+   "bytes": 21104,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3421,7 +3447,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 10687,
+   "bytes": 9991,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3430,6 +3456,20 @@
     "media"
    ],
    "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-native-overview-cards.js",
+   "bytes": 16141,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "overview",
+    "cards"
+   ],
+   "symbols": [
+    "window.setNativeOverviewCardsEnabled",
+    "window.NativeOverviewCards"
+   ]
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",

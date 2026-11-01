@@ -1,0 +1,673 @@
+{
+ "protocol": 1,
+ "webSessionId": "overview-fixture",
+ "sequence": 1,
+ "head": {
+  "date": "THURSDAY, AUGUST 1",
+  "hello": "Good morning, Synthetic Elder",
+  "edit": {
+   "label": "Edit",
+   "a11y": "Edit the Overview: reorder or hide tiles"
+  },
+  "classId": ""
+ },
+ "tip": null,
+ "layout": {
+  "order": [
+   "plan",
+   "next",
+   "hero",
+   "rewards",
+   "apps",
+   "health",
+   "attrs",
+   "week",
+   "cat",
+   "luck",
+   "recent"
+  ],
+  "hidden": []
+ },
+ "tileInfo": [
+  {
+   "id": "plan",
+   "name": "Today’s plan",
+   "sub": "Life Director’s live day dial",
+   "note": "",
+   "icon": "clock",
+   "color": 4281908728
+  },
+  {
+   "id": "next",
+   "name": "Next moves",
+   "sub": "The most useful things to do now",
+   "note": "",
+   "icon": "bolt",
+   "color": 4286356735
+  },
+  {
+   "id": "hero",
+   "name": "Level & today",
+   "sub": "Today’s XP ring, level and streak",
+   "note": "",
+   "icon": "star",
+   "color": 4293441610
+  },
+  {
+   "id": "rewards",
+   "name": "Rewards",
+   "sub": "Sparks, shields and the shop",
+   "note": "",
+   "icon": "star",
+   "color": 4294688548
+  },
+  {
+   "id": "apps",
+   "name": "App shortcuts",
+   "sub": "Your phone apps in one row",
+   "note": "",
+   "icon": "grid",
+   "color": 4289170426
+  },
+  {
+   "id": "health",
+   "name": "Activity today",
+   "sub": "Steps, workouts, sleep and weight from Health Connect",
+   "note": "",
+   "icon": "bolt",
+   "color": 4281652121
+  },
+  {
+   "id": "attrs",
+   "name": "Attributes",
+   "sub": "All eight stats at a glance",
+   "note": "",
+   "icon": "target",
+   "color": 4289170426
+  },
+  {
+   "id": "week",
+   "name": "This week",
+   "sub": "XP day by day",
+   "note": "",
+   "icon": "grid",
+   "color": 4282242700
+  },
+  {
+   "id": "cat",
+   "name": "Cat",
+   "sub": "Your companion’s room",
+   "note": "Appears once you adopt a cat",
+   "icon": "paw",
+   "color": 4294933146
+  },
+  {
+   "id": "luck",
+   "name": "Daily luck",
+   "sub": "Today’s dice roll",
+   "note": "",
+   "icon": "dice",
+   "color": 4294955868
+  },
+  {
+   "id": "recent",
+   "name": "Recent activity",
+   "sub": "Your last few logs",
+   "note": "",
+   "icon": "list",
+   "color": 4287931320
+  }
+ ],
+ "tiles": {
+  "plan": {
+   "state": "setup",
+   "title": "Today’s plan",
+   "link": "Life Director ›",
+   "intro": "Tell Life Director when you’re busy and it fits your goals into the rest of the day.",
+   "button": "Plan my days",
+   "dial": null,
+   "core": null,
+   "foot": null
+  },
+  "next": {
+   "title": "Next moves",
+   "note": "most useful first",
+   "moves": [
+    {
+     "title": "Physique is fading",
+     "sub": "Decaying about 10 XP a day · trained 6 days ago",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "warn": "bad",
+     "done": false,
+     "cta": "Train",
+     "pill": false,
+     "go": {
+      "attr": "physique"
+     }
+    },
+    {
+     "title": "Intelligence is fading",
+     "sub": "Decaying about 11 XP a day · trained 5 days ago",
+     "icon": "book",
+     "color": 4284189951,
+     "warn": "bad",
+     "done": false,
+     "cta": "Train",
+     "pill": false,
+     "go": {
+      "attr": "intelligence"
+     }
+    },
+    {
+     "title": "3 daily quests left",
+     "sub": "Give a compliment · Send a kind message +1",
+     "icon": "flag",
+     "color": 4293441610,
+     "warn": "",
+     "done": false,
+     "cta": "+30 XP",
+     "pill": true,
+     "go": {
+      "view": "quests"
+     }
+    },
+    {
+     "title": "Roll today's luck",
+     "sub": "Four dice, one fate number",
+     "icon": "dice",
+     "color": 4294955868,
+     "warn": "",
+     "done": false,
+     "cta": "Roll",
+     "pill": false,
+     "go": {
+      "luck": true
+     }
+    }
+   ]
+  },
+  "hero": {
+   "ring": {
+    "label": "TODAY",
+    "today": 0,
+    "over": false,
+    "of": "of 60 XP",
+    "r": 62,
+    "stroke": 11,
+    "arcs": []
+   },
+   "avatar": null,
+   "initial": "S",
+   "level": 10,
+   "title": "VETERAN",
+   "className": "",
+   "xp": {
+    "text": "431 / 875 XP",
+    "next": "LV 11 →",
+    "pct": 49.25714285714285
+   },
+   "streak": {
+    "days": 60,
+    "label": "day streak",
+    "dots": [
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": true
+     }
+    ]
+   },
+   "foot": [
+    {
+     "label": "THIS WEEK",
+     "value": "+210 XP",
+     "delta": {
+      "up": false,
+      "text": "▼ 7%"
+     }
+    },
+    {
+     "label": "TOTAL XP",
+     "value": "1,960",
+     "delta": null
+    },
+    {
+     "label": "ACHIEVEMENTS",
+     "value": "8 / 13",
+     "delta": null
+    }
+   ]
+  },
+  "rewards": {
+   "title": "Rewards",
+   "link": "Shop ›",
+   "chips": [
+    {
+     "label": "Sparks",
+     "value": "✦ 980"
+    },
+    {
+     "label": "Streak",
+     "value": "60d"
+    }
+   ]
+  },
+  "apps": {
+   "title": "Apps",
+   "link": "Edit ›",
+   "add": "Add app",
+   "hint": "Add the apps you open most and they will sit right here.",
+   "items": []
+  },
+  "health": {
+   "on": false,
+   "title": "Activity today",
+   "text": "Connect Samsung Health to see your steps, workouts, sleep and weight here, and turn them into XP.",
+   "button": "Set up health sync"
+  },
+  "attrs": {
+   "title": "Attributes",
+   "link": "Details ›",
+   "legend": [
+    {
+     "kind": "today",
+     "label": "today"
+    },
+    {
+     "kind": "ok",
+     "label": "safe"
+    },
+    {
+     "kind": "soon",
+     "label": "due soon"
+    },
+    {
+     "kind": "decay",
+     "label": "fading"
+    }
+   ],
+   "gems": [
+    {
+     "id": "physique",
+     "short": "Physique",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 10 XP a day"
+     },
+     "level": "LV 3",
+     "week": "+18",
+     "pct": 65.33333333333333
+    },
+    {
+     "id": "endurance",
+     "short": "Endurance",
+     "icon": "heart",
+     "color": 4294921613,
+     "focus": false,
+     "dot": {
+      "kind": "soon",
+      "text": "Decay starts in 1 day"
+     },
+     "level": "LV 2",
+     "week": "+25",
+     "pct": 32
+    },
+    {
+     "id": "intelligence",
+     "short": "Intelligence",
+     "icon": "book",
+     "color": 4284189951,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 11 XP a day"
+     },
+     "level": "LV 3",
+     "week": "+44",
+     "pct": 84.66666666666667
+    },
+    {
+     "id": "business",
+     "short": "Business",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "focus": false,
+     "dot": {
+      "kind": "ok",
+      "text": "Decay starts in 4 days"
+     },
+     "level": "LV 3",
+     "week": "+76",
+     "pct": 56.00000000000001
+    },
+    {
+     "id": "social",
+     "short": "Social",
+     "icon": "chat",
+     "color": 4294942531,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 1 XP a day"
+     },
+     "level": "LV 1",
+     "week": "quiet",
+     "pct": 48
+    },
+    {
+     "id": "discipline",
+     "short": "Discipline",
+     "icon": "target",
+     "color": 4289170426,
+     "focus": false,
+     "dot": {
+      "kind": "ok",
+      "text": "Decay starts in 4 days"
+     },
+     "level": "LV 2",
+     "week": "+37",
+     "pct": 72
+    },
+    {
+     "id": "adventure",
+     "short": "Adventure",
+     "icon": "mountain",
+     "color": 4282244228,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 12 XP a day"
+     },
+     "level": "LV 4",
+     "week": "quiet",
+     "pct": 19.428571428571427
+    },
+    {
+     "id": "wellbeing",
+     "short": "Wellbeing",
+     "icon": "moon",
+     "color": 4283289825,
+     "focus": false,
+     "dot": {
+      "kind": "soon",
+      "text": "Decay starts in 1 day"
+     },
+     "level": "LV 2",
+     "week": "+10",
+     "pct": 71.2
+    }
+   ]
+  },
+  "week": {
+   "title": "This week",
+   "total": "210 XP",
+   "delta": {
+    "up": false,
+    "text": "▼ 7% vs last week"
+   },
+   "pace": {
+    "label": "pace 60",
+    "frac": 0.8333333333333334
+   },
+   "selected": 6,
+   "empty": "Log an activity and your week lights up here.",
+   "bars": [
+    {
+     "date": "2024-07-26",
+     "label": "F",
+     "today": false,
+     "xp": 25,
+     "a11y": "2024-07-26 25 XP",
+     "tip": {
+      "label": "Friday",
+      "rest": "25 XP — Physique 18, Discipline 7"
+     },
+     "segs": [
+      {
+       "color": 4294929239,
+       "frac": 0.25
+      },
+      {
+       "color": 4289170426,
+       "frac": 0.09722222222222222
+      }
+     ]
+    },
+    {
+     "date": "2024-07-27",
+     "label": "S",
+     "today": false,
+     "xp": 44,
+     "a11y": "2024-07-27 44 XP",
+     "tip": {
+      "label": "Saturday",
+      "rest": "44 XP — Intelligence 44"
+     },
+     "segs": [
+      {
+       "color": 4284189951,
+       "frac": 0.6111111111111112
+      }
+     ]
+    },
+    {
+     "date": "2024-07-28",
+     "label": "S",
+     "today": false,
+     "xp": 35,
+     "a11y": "2024-07-28 35 XP",
+     "tip": {
+      "label": "Sunday",
+      "rest": "35 XP — Endurance 25, Wellbeing 10"
+     },
+     "segs": [
+      {
+       "color": 4294921613,
+       "frac": 0.3472222222222222
+      },
+      {
+       "color": 4283289825,
+       "frac": 0.1388888888888889
+      }
+     ]
+    },
+    {
+     "date": "2024-07-29",
+     "label": "M",
+     "today": false,
+     "xp": 33,
+     "a11y": "2024-07-29 33 XP",
+     "tip": {
+      "label": "Monday",
+      "rest": "33 XP — Discipline 23, Business 10"
+     },
+     "segs": [
+      {
+       "color": 4294296898,
+       "frac": 0.1388888888888889
+      },
+      {
+       "color": 4289170426,
+       "frac": 0.3194444444444444
+      }
+     ]
+    },
+    {
+     "date": "2024-07-30",
+     "label": "T",
+     "today": false,
+     "xp": 50,
+     "a11y": "2024-07-30 50 XP",
+     "tip": {
+      "label": "Tuesday",
+      "rest": "50 XP — Business 50"
+     },
+     "segs": [
+      {
+       "color": 4294296898,
+       "frac": 0.6944444444444444
+      }
+     ]
+    },
+    {
+     "date": "2024-07-31",
+     "label": "W",
+     "today": false,
+     "xp": 23,
+     "a11y": "2024-07-31 23 XP",
+     "tip": {
+      "label": "Wednesday",
+      "rest": "23 XP — Business 16, Discipline 7"
+     },
+     "segs": [
+      {
+       "color": 4294296898,
+       "frac": 0.2222222222222222
+      },
+      {
+       "color": 4289170426,
+       "frac": 0.09722222222222222
+      }
+     ]
+    },
+    {
+     "date": "2024-08-01",
+     "label": "Today",
+     "today": true,
+     "xp": 0,
+     "a11y": "2024-08-01 0 XP",
+     "tip": {
+      "label": "Today",
+      "rest": "0 XP — a rest day"
+     },
+     "segs": []
+    }
+   ],
+   "top": [
+    {
+     "color": 4294296898,
+     "text": "Business 76"
+    },
+    {
+     "color": 4284189951,
+     "text": "Intelligence 44"
+    },
+    {
+     "color": 4289170426,
+     "text": "Discipline 37"
+    }
+   ]
+  },
+  "cat": null,
+  "luck": {
+   "eyebrow": "DAILY LUCK",
+   "rolled": false,
+   "score": "— — — —",
+   "color": null,
+   "text": "Not rolled yet",
+   "button": "Roll the dice"
+  },
+  "recent": {
+   "title": "Recent activity",
+   "link": "History ›",
+   "empty": {
+    "icon": "⌁",
+    "text": "Nothing logged yet. Your first activity shows up here."
+   },
+   "items": [
+    {
+     "name": "Focused business work",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "meta": "Business · Yesterday · 28 min",
+     "xp": "+23"
+    },
+    {
+     "name": "Focused business work",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "meta": "Business · Tue, Jul 30 · 61 min",
+     "xp": "+50"
+    },
+    {
+     "name": "Difficult planned task",
+     "icon": "target",
+     "color": 4289170426,
+     "meta": "Discipline · Mon, Jul 29 · 62 min",
+     "xp": "+33"
+    },
+    {
+     "name": "Run / cardio",
+     "icon": "heart",
+     "color": 4294921613,
+     "meta": "Endurance · Sun, Jul 28 · 34 min",
+     "xp": "+35"
+    }
+   ]
+  }
+ },
+ "images": {},
+ "celebrations": [],
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
+ "motion": {
+  "reduced": false
+ },
+ "haptics": {
+  "dm": 1,
+  "add": 0,
+  "amp": 150,
+  "min": 5,
+  "max": 260
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

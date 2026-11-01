@@ -1,0 +1,669 @@
+{
+ "protocol": 1,
+ "webSessionId": "overview-fixture",
+ "sequence": 1,
+ "head": {
+  "date": "WEDNESDAY, OCTOBER 14",
+  "hello": "Good evening, Synthetic Hero",
+  "edit": {
+   "label": "Edit",
+   "a11y": "Edit the Overview: reorder or hide tiles"
+  },
+  "classId": "athlete"
+ },
+ "tip": null,
+ "layout": {
+  "order": [
+   "plan",
+   "next",
+   "hero",
+   "rewards",
+   "apps",
+   "health",
+   "attrs",
+   "week",
+   "cat",
+   "luck",
+   "recent"
+  ],
+  "hidden": []
+ },
+ "tileInfo": [
+  {
+   "id": "plan",
+   "name": "Today’s plan",
+   "sub": "Life Director’s live day dial",
+   "note": "",
+   "icon": "clock",
+   "color": 4281908728
+  },
+  {
+   "id": "next",
+   "name": "Next moves",
+   "sub": "The most useful things to do now",
+   "note": "",
+   "icon": "bolt",
+   "color": 4286356735
+  },
+  {
+   "id": "hero",
+   "name": "Level & today",
+   "sub": "Today’s XP ring, level and streak",
+   "note": "",
+   "icon": "star",
+   "color": 4293441610
+  },
+  {
+   "id": "rewards",
+   "name": "Rewards",
+   "sub": "Sparks, shields and the shop",
+   "note": "",
+   "icon": "star",
+   "color": 4294688548
+  },
+  {
+   "id": "apps",
+   "name": "App shortcuts",
+   "sub": "Your phone apps in one row",
+   "note": "",
+   "icon": "grid",
+   "color": 4289170426
+  },
+  {
+   "id": "health",
+   "name": "Activity today",
+   "sub": "Steps, workouts, sleep and weight from Health Connect",
+   "note": "",
+   "icon": "bolt",
+   "color": 4281652121
+  },
+  {
+   "id": "attrs",
+   "name": "Attributes",
+   "sub": "All eight stats at a glance",
+   "note": "",
+   "icon": "target",
+   "color": 4289170426
+  },
+  {
+   "id": "week",
+   "name": "This week",
+   "sub": "XP day by day",
+   "note": "",
+   "icon": "grid",
+   "color": 4282242700
+  },
+  {
+   "id": "cat",
+   "name": "Cat",
+   "sub": "Miso’s room",
+   "note": "",
+   "icon": "paw",
+   "color": 4294933146
+  },
+  {
+   "id": "luck",
+   "name": "Daily luck",
+   "sub": "Today’s dice roll",
+   "note": "",
+   "icon": "dice",
+   "color": 4294955868
+  },
+  {
+   "id": "recent",
+   "name": "Recent activity",
+   "sub": "Your last few logs",
+   "note": "",
+   "icon": "list",
+   "color": 4287931320
+  }
+ ],
+ "tiles": {
+  "plan": {
+   "state": "setup",
+   "title": "Today’s plan",
+   "link": "Life Director ›",
+   "intro": "Tell Life Director when you’re busy and it fits your goals into the rest of the day.",
+   "button": "Plan my days",
+   "dial": null,
+   "core": null,
+   "foot": null
+  },
+  "next": {
+   "title": "Next moves",
+   "note": "most useful first",
+   "moves": [
+    {
+     "title": "Physique is fading",
+     "sub": "Decaying about 28 XP a day · trained 5 days ago",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "warn": "bad",
+     "done": false,
+     "cta": "Train",
+     "pill": false,
+     "go": {
+      "attr": "physique"
+     }
+    },
+    {
+     "title": "Intelligence is fading",
+     "sub": "Decaying about 98 XP a day · trained 13 days ago",
+     "icon": "book",
+     "color": 4284189951,
+     "warn": "bad",
+     "done": false,
+     "cta": "Train",
+     "pill": false,
+     "go": {
+      "attr": "intelligence"
+     }
+    },
+    {
+     "title": "8 daily quests left",
+     "sub": "Hydration Target Met · Pre-Workout Glycogen Top-Off +6",
+     "icon": "flag",
+     "color": 4293441610,
+     "warn": "",
+     "done": false,
+     "cta": "+95 XP",
+     "pill": true,
+     "go": {
+      "view": "quests"
+     }
+    },
+    {
+     "title": "Miso is hungry",
+     "sub": "A meal about twice a day is all it needs.",
+     "icon": "paw",
+     "color": 4294933146,
+     "warn": "warn",
+     "done": false,
+     "cta": "Feed",
+     "pill": false,
+     "go": {
+      "view": "pet"
+     }
+    }
+   ]
+  },
+  "hero": {
+   "ring": {
+    "label": "TODAY",
+    "today": 38,
+    "over": false,
+    "of": "of 60 XP",
+    "r": 62,
+    "stroke": 11,
+    "arcs": [
+     {
+      "color": 4289170426,
+      "length": 63.33333333333333,
+      "offset": 0
+     }
+    ]
+   },
+   "avatar": null,
+   "initial": "S",
+   "level": 18,
+   "title": "GRANDMASTER",
+   "className": "ATHLETE",
+   "xp": {
+    "text": "1,296 / 1,475 XP",
+    "next": "LV 19 →",
+    "pct": 87.86440677966102
+   },
+   "streak": {
+    "days": 236,
+    "label": "day streak",
+    "dots": [
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": false
+     },
+     {
+      "on": false,
+      "now": false
+     },
+     {
+      "on": true,
+      "now": true
+     }
+    ]
+   },
+   "foot": [
+    {
+     "label": "THIS WEEK",
+     "value": "+134 XP",
+     "delta": {
+      "up": false,
+      "text": "▼ 15%"
+     }
+    },
+    {
+     "label": "TOTAL XP",
+     "value": "13,696",
+     "delta": null
+    },
+    {
+     "label": "ACHIEVEMENTS",
+     "value": "10 / 13",
+     "delta": null
+    }
+   ]
+  },
+  "rewards": {
+   "title": "Rewards",
+   "link": "Shop ›",
+   "chips": [
+    {
+     "label": "Sparks",
+     "value": "✦ 14,896"
+    },
+    {
+     "label": "Streak",
+     "value": "236d · 🛡🛡"
+    }
+   ]
+  },
+  "apps": {
+   "title": "Apps",
+   "link": "Edit ›",
+   "add": "Add app",
+   "hint": "Add the apps you open most and they will sit right here.",
+   "items": []
+  },
+  "health": {
+   "on": false,
+   "title": "Activity today",
+   "text": "Connect Samsung Health to see your steps, workouts, sleep and weight here, and turn them into XP.",
+   "button": "Set up health sync"
+  },
+  "attrs": {
+   "title": "Attributes",
+   "link": "Details ›",
+   "legend": [
+    {
+     "kind": "today",
+     "label": "today"
+    },
+    {
+     "kind": "ok",
+     "label": "safe"
+    },
+    {
+     "kind": "soon",
+     "label": "due soon"
+    },
+    {
+     "kind": "decay",
+     "label": "fading"
+    }
+   ],
+   "gems": [
+    {
+     "id": "physique",
+     "short": "Physique",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "focus": true,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 28 XP a day"
+     },
+     "level": "LV 6",
+     "week": "+41",
+     "pct": 81.77777777777779
+    },
+    {
+     "id": "endurance",
+     "short": "Endurance",
+     "icon": "heart",
+     "color": 4294921613,
+     "focus": true,
+     "dot": {
+      "kind": "ok",
+      "text": "Decay starts in 3 days"
+     },
+     "level": "LV 9",
+     "week": "+2",
+     "pct": 94.33333333333334
+    },
+    {
+     "id": "intelligence",
+     "short": "Intelligence",
+     "icon": "book",
+     "color": 4284189951,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 98 XP a day"
+     },
+     "level": "LV 14",
+     "week": "quiet",
+     "pct": 1.411764705882353
+    },
+    {
+     "id": "business",
+     "short": "Business",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "focus": false,
+     "dot": {
+      "kind": "soon",
+      "text": "Decay starts in 2 days"
+     },
+     "level": "LV 9",
+     "week": "+31",
+     "pct": 83.33333333333334
+    },
+    {
+     "id": "social",
+     "short": "Social",
+     "icon": "chat",
+     "color": 4294942531,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 7 XP a day"
+     },
+     "level": "LV 3",
+     "week": "quiet",
+     "pct": 10.666666666666668
+    },
+    {
+     "id": "discipline",
+     "short": "Discipline",
+     "icon": "target",
+     "color": 4289170426,
+     "focus": false,
+     "dot": {
+      "kind": "today",
+      "text": "Trained today"
+     },
+     "level": "LV 10",
+     "week": "+56",
+     "pct": 11.076923076923077
+    },
+    {
+     "id": "adventure",
+     "short": "Adventure",
+     "icon": "mountain",
+     "color": 4282244228,
+     "focus": false,
+     "dot": {
+      "kind": "decay",
+      "text": "Decaying about 70 XP a day"
+     },
+     "level": "LV 11",
+     "week": "quiet",
+     "pct": 63.714285714285715
+    },
+    {
+     "id": "wellbeing",
+     "short": "Wellbeing",
+     "icon": "moon",
+     "color": 4283289825,
+     "focus": true,
+     "dot": {
+      "kind": "ok",
+      "text": "Decay starts in 3 days"
+     },
+     "level": "LV 9",
+     "week": "+4",
+     "pct": 16
+    }
+   ]
+  },
+  "week": {
+   "title": "This week",
+   "total": "134 XP",
+   "delta": {
+    "up": false,
+    "text": "▼ 15% vs last week"
+   },
+   "pace": {
+    "label": "pace 60",
+    "frac": 0.8333333333333334
+   },
+   "selected": 6,
+   "empty": "Log an activity and your week lights up here.",
+   "bars": [
+    {
+     "date": "2026-10-08",
+     "label": "T",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-08 0 XP",
+     "tip": {
+      "label": "Thursday",
+      "rest": "0 XP — a rest day"
+     },
+     "segs": []
+    },
+    {
+     "date": "2026-10-09",
+     "label": "F",
+     "today": false,
+     "xp": 59,
+     "a11y": "2026-10-09 59 XP",
+     "tip": {
+      "label": "Friday",
+      "rest": "59 XP — Physique 41, Discipline 18"
+     },
+     "segs": [
+      {
+       "color": 4294929239,
+       "frac": 0.5694444444444444
+      },
+      {
+       "color": 4289170426,
+       "frac": 0.25
+      }
+     ]
+    },
+    {
+     "date": "2026-10-10",
+     "label": "S",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-10 0 XP",
+     "tip": {
+      "label": "Saturday",
+      "rest": "0 XP — a rest day"
+     },
+     "segs": []
+    },
+    {
+     "date": "2026-10-11",
+     "label": "S",
+     "today": false,
+     "xp": 31,
+     "a11y": "2026-10-11 31 XP",
+     "tip": {
+      "label": "Sunday",
+      "rest": "31 XP — Business 31"
+     },
+     "segs": [
+      {
+       "color": 4294296898,
+       "frac": 0.4305555555555556
+      }
+     ]
+    },
+    {
+     "date": "2026-10-12",
+     "label": "M",
+     "today": false,
+     "xp": 6,
+     "a11y": "2026-10-12 6 XP",
+     "tip": {
+      "label": "Monday",
+      "rest": "6 XP — Wellbeing 4, Endurance 2"
+     },
+     "segs": [
+      {
+       "color": 4294921613,
+       "frac": 0.027777777777777776
+      },
+      {
+       "color": 4283289825,
+       "frac": 0.05555555555555555
+      }
+     ]
+    },
+    {
+     "date": "2026-10-13",
+     "label": "T",
+     "today": false,
+     "xp": 0,
+     "a11y": "2026-10-13 0 XP",
+     "tip": {
+      "label": "Tuesday",
+      "rest": "0 XP — a rest day"
+     },
+     "segs": []
+    },
+    {
+     "date": "2026-10-14",
+     "label": "Today",
+     "today": true,
+     "xp": 38,
+     "a11y": "2026-10-14 38 XP",
+     "tip": {
+      "label": "Today",
+      "rest": "38 XP — Discipline 38"
+     },
+     "segs": [
+      {
+       "color": 4289170426,
+       "frac": 0.5277777777777778
+      }
+     ]
+    }
+   ],
+   "top": [
+    {
+     "color": 4289170426,
+     "text": "Discipline 56"
+    },
+    {
+     "color": 4294929239,
+     "text": "Physique 41"
+    },
+    {
+     "color": 4294296898,
+     "text": "Business 31"
+    }
+   ]
+  },
+  "cat": {
+   "mode": "alive",
+   "eyebrow": "COMPANION",
+   "name": "Miso",
+   "hearts": 3,
+   "portrait": "i5247850a"
+  },
+  "luck": {
+   "eyebrow": "DAILY LUCK",
+   "rolled": false,
+   "score": "— — — —",
+   "color": null,
+   "text": "Not rolled yet",
+   "button": "Roll the dice"
+  },
+  "recent": {
+   "title": "Recent activity",
+   "link": "History ›",
+   "empty": {
+    "icon": "⌁",
+    "text": "Nothing logged yet. Your first activity shows up here."
+   },
+   "items": [
+    {
+     "name": "Difficult planned task",
+     "icon": "target",
+     "color": 4289170426,
+     "meta": "Discipline · 48 min ago · 48 min",
+     "xp": "+38"
+    },
+    {
+     "name": "Sleep / recovery routine",
+     "icon": "moon",
+     "color": 4283289825,
+     "meta": "Wellbeing · Mon, Oct 12 · 14 min",
+     "xp": "+6"
+    },
+    {
+     "name": "Focused business work",
+     "icon": "briefcase",
+     "color": 4294296898,
+     "meta": "Business · Sun, Oct 11 · 37 min",
+     "xp": "+31"
+    },
+    {
+     "name": "Strength workout",
+     "icon": "dumbbell",
+     "color": 4294929239,
+     "meta": "Physique · Fri, Oct 9 · 66 min",
+     "xp": "+59"
+    }
+   ]
+  }
+ },
+ "images": {
+  "i5247850a": "data:image/png;base64,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"
+ },
+ "celebrations": [],
+ "celebrationTarget": {
+  "x": 32,
+  "y": 32.5
+ },
+ "motion": {
+  "reduced": false
+ },
+ "haptics": {
+  "dm": 1,
+  "add": 0,
+  "amp": 150,
+  "min": 5,
+  "max": 260
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}
