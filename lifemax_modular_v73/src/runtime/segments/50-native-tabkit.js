@@ -79,12 +79,41 @@
    * aside as soon as its reply has been sent, instead of waiting for the next refresh.
    * arrive() runs when the page goes to the tab's view from somewhere else, just before the page shows it, while the screen is
    * not open (for example to put the tab on today).
+   * Optional, for a view with two native drawings (the Overview's cards and its live shell, ADR 0012):
+   * managed: true leaves the hand-over registration (NativeTabs.cover/register) and the open on arrival to the view's owner, which
+   * asks one drawing at a time; the kit still cancels a pending close and marks the arrival, closes the screen when the page
+   * leaves the view, and keeps its watcher, refresh and revisit(). The returned active(), opening() and coverable() are what the
+   * owner registers.
+   * afterClose() runs after every close, the kit's own and the native side's (its closed event).
+   * onFail(reason) runs, after the kit has closed, when the screen cannot draw: 'capability' (the handshake lacks cfg.capability),
+   * 'open' (an open threw or was rejected) or 'update' (a refresh was rejected).
+   * notices: true (or {quiet(id)}) counts the page's toasts and adds notice {id, text} to every projection while the toast shows,
+   * for the screen to draw, since it hides the page's; quiet(id) leaves out a toast that is about the page (the returned toasts()
+   * is the latest toast's number).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
     let sequence = 0, active = false, opening = false, handshake = null, asked = null, plugin = null, ready = false, timer = 0, queued = 0;
     let generation = 0; // raised by every close, so an open still in flight knows it was cancelled
     let entered = true; // the page went to this view and no open has projected since
+    const fail = (reason) => { try { cfg.onFail?.(reason); } catch (e) { console.warn(cfg.id + " onFail", e); } };
+    const afterClose = () => { try { cfg.afterClose?.(); } catch (e) { console.warn(cfg.id + " afterClose", e); } };
+    /* the page's toasts (cfg.notices): each toast() writes the toast's text, which is how they are counted; one that comes while
+       the screen shows is sent at once */
+    const toastEl = cfg.notices ? document.getElementById("toast") : null;
+    let toasts = 0;
+    const toastWatch = toastEl ? new MutationObserver((records) => { toasts += records.length; schedule(); }) : null;
+    if (toastWatch) toastWatch.observe(toastEl, { childList: true });
+    /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
+    function latestToast() {
+      if (toastWatch) toasts += toastWatch.takeRecords().length;
+      return toasts;
+    }
+    /** the page's message while its toast shows */
+    function notice() {
+      const id = latestToast(), quiet = cfg.notices && cfg.notices.quiet;
+      return toastEl.classList.contains("show") && !(quiet && quiet(id)) ? { id, text: toastEl.textContent } : null;
+    }
 
     function available() {
       try {
@@ -128,7 +157,7 @@
       return lmaView() !== cfg.id || !coverable();
     }
     function snapshot() {
-      return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), { tokens: tokens(), light: light() });
+      return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), cfg.notices && { notice: notice() }, { tokens: tokens(), light: light() });
     }
     async function navScene() {
       if (!window.NativeOverviewSnapshot) throw Error("Overview chrome unavailable");
@@ -165,6 +194,7 @@
       } catch (e) {
         console.warn(cfg.id + " refresh", e);
         await close();
+        fail("update");
       }
     }
     /** A command from the screen: run it on the page, then send the fresh projection with the reply. Never closes the screen. */
@@ -206,6 +236,7 @@
       clearTimeout(queued);
       active = false;
       if (plugin) await plugin.close();
+      afterClose();
     }
     async function open(force) {
       plugin = available();
@@ -232,12 +263,16 @@
           await plugin.addListener("closed", () => {
             active = false;
             clearInterval(timer);
+            afterClose();
           });
           ready = true;
         }
         const h = handshake || (await ask());
         const handshakeAt = now();
-        if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) return false;
+        if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability)) {
+          fail("capability");
+          return false;
+        }
         if (blocked()) return false;
         if (cfg.beforeOpen) cfg.beforeOpen(entered);
         entered = false;
@@ -267,6 +302,7 @@
       } catch (e) {
         console.warn("Native " + cfg.id + " unavailable", e);
         await close();
+        fail("open");
         return false;
       } finally {
         opening = false;
@@ -287,8 +323,10 @@
     watcher.observe(document.body, { childList: true, attributes: true, attributeFilter: ["class"] });
     if (cfg.watch) cfg.watch((node, options) => watcher.observe(node, options));
 
-    NativeTabs.cover(cfg.id, enabled);
-    NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close, wouldOpen: () => enabled() && coverable() });
+    if (!cfg.managed) {
+      NativeTabs.cover(cfg.id, enabled);
+      NativeTabs.register(cfg.id, { isOpen: () => active, isOpening: () => opening, open: () => open(false), close, wouldOpen: () => enabled() && coverable() });
+    }
     const nav = navigate;
     navigate = function (v) {
       if (v !== cfg.id && (active || opening)) NativeTabs.leave(cfg.id, v, () => close());
@@ -299,7 +337,7 @@
       if (v === cfg.id) {
         if (!active) entered = true; // choosing the tab again while its screen shows is not a new arrival
         NativeTabs.cancel(cfg.id);
-        queueMicrotask(() => open(false));
+        if (!cfg.managed) queueMicrotask(() => open(false)); // a managed tab is opened by the view's owner, which asks one drawing
       }
       if (v === "settings") sync();
       return r;
@@ -327,7 +365,8 @@
     sync();
     setTimeout(sync, 700);
     setTimeout(warm, 0); // after the page has finished loading, so the plugin and the owner's switch are known
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, active: () => active };
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, coverable, toasts: latestToast,
+             active: () => active, opening: () => opening };
   }
 
   window.NativeTabKit = { create, color, tokens, light, celebrationTarget, celebrations };

@@ -80,7 +80,12 @@ function holdCelebrations(run){const prev=fxHold;fxHold=[];try{return {result:ru
 let fxUntil=0;const fxCalm=[];
 function afterCelebrations(fn){fxCalm.push(fn);fxSettle()}
 function fxSettle(){if(!luBusy&&Date.now()>=fxUntil)fxCalm.splice(0).forEach(f=>f())}
-function celebrateXP(delta,gains){if(fxHold){fxHold.push([delta,gains]);return}const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
+/* celebrating(): an XP celebration or a level-up is playing on the page now. fxSink(delta, gains, origin), when a native screen sets it,
+   is asked first by celebrateXP and answers true when that screen draws the celebration itself (the Overview's cards); the page
+   then plays nothing and holds nothing (no fxUntil), and the screen's owner plays the sound and buzz. */
+function celebrating(){return luBusy||Date.now()<fxUntil}
+let fxSink=null;
+function celebrateXP(delta,gains){if(fxHold){fxHold.push([delta,gains]);return}if(fxSink&&fxSink(delta,gains,lastTap))return;const red=fxReduced(),o=lastTap,main=gains.slice().sort((a,b)=>b.xp-a.xp)[0],col=ATTR_COL[main.id]||'#6c8cff',tg=fxTarget();
  FX.ring(o.x,o.y,col,80,.55,5);FX.burst(o.x,o.y,col,red?8:30,280,420);
  gains.forEach(g=>{const c=ATTR_COL[g.id]||col,n=Math.min(red?4:16,3+Math.round(g.xp/3));for(let i=0;i<n;i++)FX.orb(o.x,o.y,tg.x,tg.y,c,i*38,()=>{const t=fxTarget();FX.burst(t.x,t.y,c,3,130,80);if(i===n-1)pulse(t.el)})});
  const t=document.createElement('div');t.className='fx-xp';t.style.cssText='left:'+Math.min(innerWidth-70,Math.max(70,o.x))+'px;top:'+Math.max(110,o.y-24)+'px;--c:'+col;const a=ATTRS.find(x=>x.id===main.id);t.innerHTML='+'+delta+' XP'+(gains.length===1&&a?'<small>'+a.short+'</small>':'');document.body.appendChild(t);fxUntil=Math.max(fxUntil,Date.now()+1550);setTimeout(()=>{t.remove();fxSettle()},1550);
