@@ -99,8 +99,11 @@ internal fun go(g: JSONObject): MoveGo {
 private fun hero(h: JSONObject): HeroCard {
     val r = h.getJSONObject("ring")
     val arcs = r.list("arcs").map { HeroArc(it.color("color"), it.num("offset"), it.num("length")) }
-    // the page's arcs never fill more than the ring (17-runtime.js, ovHeroData)
-    require(arcs.all { it.length > 0f && it.offset <= 0f && -it.offset + it.length <= 100.01f }) {
+    // each part starts on the ring; a small last part can end just past its end, because the page
+    // draws every part at least 0.5 long (17-runtime.js, ovHeroData), so only the start is held
+    require(
+        arcs.all { it.length > 0f && it.length <= 100f && it.offset <= 0f && -it.offset < 100f }
+    ) {
         "An arc is off the ring"
     }
     val xp = h.getJSONObject("xp")

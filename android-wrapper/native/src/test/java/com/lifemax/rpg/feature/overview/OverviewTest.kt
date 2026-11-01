@@ -49,6 +49,23 @@ class OverviewTest {
             .sorted()
 
     @Test
+    fun aSmallLastPartOnAFullRingDecodes() {
+        // pace 100 with 249 XP in one attribute and 1 in another: the page draws the small part at
+        // its 0.5 floor from 99.6, so it ends at 100.1 (17-runtime.js, ovHeroData)
+        val j = fixture()
+        val ring = j.at("tiles.hero.ring")
+        val color = ring.getJSONArray("arcs").getJSONObject(0).get("color")
+        ring.put(
+            "arcs",
+            org.json
+                .JSONArray()
+                .put(JSONObject().put("color", color).put("length", 97.2).put("offset", 0))
+                .put(JSONObject().put("color", color).put("length", 0.5).put("offset", -99.6)),
+        )
+        assertEquals(2, decode(j).tiles.hero.ring.arcs.size)
+    }
+
+    @Test
     fun everyProjectionThePageWroteDecodes() {
         assertTrue("the generator's states are all here", generated.size >= 16)
         generated.forEach { name ->

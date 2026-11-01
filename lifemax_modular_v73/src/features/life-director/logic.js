@@ -1890,8 +1890,11 @@ const LifeDirectorApp = (function () {
       '<p class="ld-muted ld-center ld-small-print">' + m.note + '</p></div>');
   }
   function focusTick() {
-    const f = ST && ST.ui && ST.ui.focus; if (!f || !root || !root.isConnected) return;
+    const f = ST && ST.ui && ST.ui.focus; if (!f) return;
     const ms = focusMs(f);
+    // the Overview's glance shows the running clock too: it ticks with Life Director's own
+    document.querySelectorAll('.ld-glance [data-fclock]').forEach(el => { el.textContent = clockText(ms); });
+    if (!root || !root.isConnected) return;
     root.querySelectorAll('[data-fclock]').forEach(el => { el.textContent = clockText(ms); });
     const ring = root.querySelector('[data-fring]');
     if (ring) { const i = findInst(f.id); if (i) { const C = 2 * Math.PI * 92, p = Math.min(1, ms / (Math.max(60, i.endEpoch - i.startEpoch) * 1000)); ring.setAttribute('stroke-dashoffset', (C * (1 - p)).toFixed(1));
@@ -2639,7 +2642,9 @@ const LifeDirectorApp = (function () {
      is on screen. Any tap opens Life Director's Today and does the same thing there
      (a session opens its details, Start starts the timer). Works before Life Director
      has ever been opened: it loads the saved plan on its own. */
-  let glanceEl = null, glanceTimer = null;
+  let glanceEl = null, glanceTimer = null, clockTimer = null;
+  /* the running timer's clocks tick each second, Life Director's and the Overview glance's alike, whichever drew first */
+  const tickClocks = () => { if (!clockTimer) clockTimer = setInterval(focusTick, 1000); };
   /* The glance's decisions, which the page's glance (glanceHtml) and a native Overview (native.glance) both draw from: setup
      before set-up is done, none when the plan has no today, else day with today's dial and its foot (sessions left, and done). */
   const GLANCE = { title: 'Today’s plan', link: 'Life Director ›', intro: 'Tell Life Director when you’re busy and it fits your goals into the rest of the day.', button: 'Plan my days', none: 'No plan for today yet.' };
@@ -2720,6 +2725,7 @@ const LifeDirectorApp = (function () {
       el.hidden = false;
       const dial = el.querySelector('.ld-dial');
       if (dial) { dial.querySelectorAll('.ld-hd').forEach(h => h.remove()); if (opts && opts.intro && !reduced()) play(dial, 'ld-dial-in'); }
+      tickClocks();
       if (!glanceTimer) glanceTimer = setInterval(() => {
         const v = glanceEl && glanceEl.closest('.view');
         if (!glanceEl || !glanceEl.isConnected || document.hidden || (v && !v.classList.contains('active'))) return;
@@ -2795,7 +2801,7 @@ const LifeDirectorApp = (function () {
       document.addEventListener('scroll', () => { if (ui.tour) tourPlace(); }, { capture: true, passive: true });
       if (!ST) boot();
       else { ui.tab = ST.setupComplete ? (ST.ui && ST.ui.tab || 'today') : 'setup'; }
-      if (!timer) { timer = setInterval(tick, 5 * 60 * 1000); setInterval(liveTick, 15 * 1000); setInterval(focusTick, 1000); }
+      if (!timer) { timer = setInterval(tick, 5 * 60 * 1000); setInterval(liveTick, 15 * 1000); tickClocks(); }
       /* swipe the stage left or right to swing to the neighbouring section */
       const main = root.querySelector('.ld-main');
       let sw = null;

@@ -53,6 +53,12 @@ const text = s => String(s).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').repla
     await p.clock.runFor(65000);
     html.timer = await glanceHtml(p);
     data.timer = await p.evaluate(() => LifeDirector.native.glance && LifeDirector.native.glance());
+    { // the glance's clock ticks each second with Life Director's own, not only when the glance redraws (every 30 s)
+      const read = () => p.evaluate(() => { const c = document.querySelector('.ld-glance [data-fclock]'); return c ? c.textContent : null });
+      const before = await read(); await p.clock.runFor(3000); const after = await read();
+      const secs = (t) => t ? t.split(':').reduce((a, n) => a * 60 + Number(n), 0) : NaN;
+      ok("the glance's running clock ticks each second", before !== null && secs(after) - secs(before) === 3, { before, after });
+    }
 
     if (process.env.RECORD) { fs.writeFileSync(GOLDEN, JSON.stringify(html, null, 1) + '\n'); console.log('recorded ' + GOLDEN) }
     const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
