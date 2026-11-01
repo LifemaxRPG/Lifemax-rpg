@@ -1,0 +1,685 @@
+{
+ "protocol": 1,
+ "webSessionId": "director-fixture",
+ "sequence": 3,
+ "header": {
+  "dot": "ok",
+  "line": "39 sessions ahead"
+ },
+ "clock": {
+  "time": "3:10 PM",
+  "day": "Wed, Oct 28",
+  "h12": true,
+  "locale": "en-US"
+ },
+ "tab": "setup",
+ "tabs": [
+  {
+   "id": "today",
+   "label": "Today",
+   "icon": "clock"
+  },
+  {
+   "id": "week",
+   "label": "Week",
+   "icon": "grid"
+  },
+  {
+   "id": "goals",
+   "label": "Goals",
+   "icon": "target"
+  },
+  {
+   "id": "quests",
+   "label": "Quests",
+   "icon": "flag"
+  },
+  {
+   "id": "setup",
+   "label": "My time",
+   "icon": "moon"
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "icon": "gear"
+  }
+ ],
+ "banner": null,
+ "notice": null,
+ "reducedMotion": false,
+ "covers": [
+  "today",
+  "week",
+  "quests",
+  "goals",
+  "settings",
+  "setup",
+  "first-run"
+ ],
+ "today": null,
+ "week": null,
+ "quests": null,
+ "goals": null,
+ "settings": null,
+ "time": {
+  "first": false,
+  "steps": [],
+  "lede": "Change anything here and your plan rebuilds around it automatically.",
+  "sleep": {
+   "title": "Sleep",
+   "note": "Drag the two handles, or type the times. Nothing is ever planned into sleep.",
+   "saved": true,
+   "bed": 1380,
+   "wake": 420,
+   "bedText": "11:00 PM",
+   "wakeText": "7:00 AM",
+   "length": "8h",
+   "weekend": {
+    "on": false,
+    "bed": 0,
+    "wake": 480
+   },
+   "labels": {
+    "centre": "Sleep",
+    "bed": "Bedtime",
+    "wake": "Wake up",
+    "weekend": "Different on Friday and Saturday nights",
+    "weekendBed": "Weekend bedtime",
+    "weekendWake": "Weekend wake",
+    "bedHandle": "Bedtime",
+    "wakeHandle": "Wake up"
+   },
+   "save": {
+    "label": "Save sleep",
+    "primary": false
+   },
+   "step": 15,
+   "context": [
+    {
+     "from": 540,
+     "to": 1020
+    }
+   ],
+   "clock": [
+    "12:00 AM",
+    "12:15 AM",
+    "12:30 AM",
+    "12:45 AM",
+    "1:00 AM",
+    "1:15 AM",
+    "1:30 AM",
+    "1:45 AM",
+    "2:00 AM",
+    "2:15 AM",
+    "2:30 AM",
+    "2:45 AM",
+    "3:00 AM",
+    "3:15 AM",
+    "3:30 AM",
+    "3:45 AM",
+    "4:00 AM",
+    "4:15 AM",
+    "4:30 AM",
+    "4:45 AM",
+    "5:00 AM",
+    "5:15 AM",
+    "5:30 AM",
+    "5:45 AM",
+    "6:00 AM",
+    "6:15 AM",
+    "6:30 AM",
+    "6:45 AM",
+    "7:00 AM",
+    "7:15 AM",
+    "7:30 AM",
+    "7:45 AM",
+    "8:00 AM",
+    "8:15 AM",
+    "8:30 AM",
+    "8:45 AM",
+    "9:00 AM",
+    "9:15 AM",
+    "9:30 AM",
+    "9:45 AM",
+    "10:00 AM",
+    "10:15 AM",
+    "10:30 AM",
+    "10:45 AM",
+    "11:00 AM",
+    "11:15 AM",
+    "11:30 AM",
+    "11:45 AM",
+    "12:00 PM",
+    "12:15 PM",
+    "12:30 PM",
+    "12:45 PM",
+    "1:00 PM",
+    "1:15 PM",
+    "1:30 PM",
+    "1:45 PM",
+    "2:00 PM",
+    "2:15 PM",
+    "2:30 PM",
+    "2:45 PM",
+    "3:00 PM",
+    "3:15 PM",
+    "3:30 PM",
+    "3:45 PM",
+    "4:00 PM",
+    "4:15 PM",
+    "4:30 PM",
+    "4:45 PM",
+    "5:00 PM",
+    "5:15 PM",
+    "5:30 PM",
+    "5:45 PM",
+    "6:00 PM",
+    "6:15 PM",
+    "6:30 PM",
+    "6:45 PM",
+    "7:00 PM",
+    "7:15 PM",
+    "7:30 PM",
+    "7:45 PM",
+    "8:00 PM",
+    "8:15 PM",
+    "8:30 PM",
+    "8:45 PM",
+    "9:00 PM",
+    "9:15 PM",
+    "9:30 PM",
+    "9:45 PM",
+    "10:00 PM",
+    "10:15 PM",
+    "10:30 PM",
+    "10:45 PM",
+    "11:00 PM",
+    "11:15 PM",
+    "11:30 PM",
+    "11:45 PM"
+   ],
+   "lengths": [
+    "24h",
+    "15m",
+    "30m",
+    "45m",
+    "1h",
+    "1h 15m",
+    "1h 30m",
+    "1h 45m",
+    "2h",
+    "2h 15m",
+    "2h 30m",
+    "2h 45m",
+    "3h",
+    "3h 15m",
+    "3h 30m",
+    "3h 45m",
+    "4h",
+    "4h 15m",
+    "4h 30m",
+    "4h 45m",
+    "5h",
+    "5h 15m",
+    "5h 30m",
+    "5h 45m",
+    "6h",
+    "6h 15m",
+    "6h 30m",
+    "6h 45m",
+    "7h",
+    "7h 15m",
+    "7h 30m",
+    "7h 45m",
+    "8h",
+    "8h 15m",
+    "8h 30m",
+    "8h 45m",
+    "9h",
+    "9h 15m",
+    "9h 30m",
+    "9h 45m",
+    "10h",
+    "10h 15m",
+    "10h 30m",
+    "10h 45m",
+    "11h",
+    "11h 15m",
+    "11h 30m",
+    "11h 45m",
+    "12h",
+    "12h 15m",
+    "12h 30m",
+    "12h 45m",
+    "13h",
+    "13h 15m",
+    "13h 30m",
+    "13h 45m",
+    "14h",
+    "14h 15m",
+    "14h 30m",
+    "14h 45m",
+    "15h",
+    "15h 15m",
+    "15h 30m",
+    "15h 45m",
+    "16h",
+    "16h 15m",
+    "16h 30m",
+    "16h 45m",
+    "17h",
+    "17h 15m",
+    "17h 30m",
+    "17h 45m",
+    "18h",
+    "18h 15m",
+    "18h 30m",
+    "18h 45m",
+    "19h",
+    "19h 15m",
+    "19h 30m",
+    "19h 45m",
+    "20h",
+    "20h 15m",
+    "20h 30m",
+    "20h 45m",
+    "21h",
+    "21h 15m",
+    "21h 30m",
+    "21h 45m",
+    "22h",
+    "22h 15m",
+    "22h 30m",
+    "22h 45m",
+    "23h",
+    "23h 15m",
+    "23h 30m",
+    "23h 45m"
+   ]
+  },
+  "commitments": {
+   "title": "Work, school and fixed commitments",
+   "rows": [
+    {
+     "id": "work",
+     "title": "Work",
+     "dot": "work",
+     "line": "Work · weekdays · 9:00 AM–5:00 PM · 30m travel each way"
+    }
+   ],
+   "empty": "Nothing yet. Add your job, classes, or anything else that happens at the same time each week.",
+   "add": "Add a commitment"
+  },
+  "routines": {
+   "title": "Daily routines",
+   "text": "Time Life Director keeps around your day so it never books you the minute you wake up.",
+   "rows": [
+    {
+     "key": "morningRoutineMinutes",
+     "label": "Getting ready",
+     "hint": "After you wake up",
+     "min": 0,
+     "max": 120,
+     "step": 5,
+     "value": 30,
+     "text": "30m",
+     "stops": [
+      "Off",
+      "5m",
+      "10m",
+      "15m",
+      "20m",
+      "25m",
+      "30m",
+      "35m",
+      "40m",
+      "45m",
+      "50m",
+      "55m",
+      "1h",
+      "1h 5m",
+      "1h 10m",
+      "1h 15m",
+      "1h 20m",
+      "1h 25m",
+      "1h 30m",
+      "1h 35m",
+      "1h 40m",
+      "1h 45m",
+      "1h 50m",
+      "1h 55m",
+      "2h"
+     ],
+     "less": "Less",
+     "more": "More"
+    },
+    {
+     "key": "windDownMinutes",
+     "label": "Wind-down",
+     "hint": "Before bed",
+     "min": 0,
+     "max": 120,
+     "step": 5,
+     "value": 30,
+     "text": "30m",
+     "stops": [
+      "Off",
+      "5m",
+      "10m",
+      "15m",
+      "20m",
+      "25m",
+      "30m",
+      "35m",
+      "40m",
+      "45m",
+      "50m",
+      "55m",
+      "1h",
+      "1h 5m",
+      "1h 10m",
+      "1h 15m",
+      "1h 20m",
+      "1h 25m",
+      "1h 30m",
+      "1h 35m",
+      "1h 40m",
+      "1h 45m",
+      "1h 50m",
+      "1h 55m",
+      "2h"
+     ],
+     "less": "Less",
+     "more": "More"
+    }
+   ],
+   "meals": {
+    "key": "mealMinutes",
+    "label": "Meals",
+    "hint": "Breakfast, lunch and dinner blocks",
+    "min": 10,
+    "max": 90,
+    "step": 5,
+    "value": 30,
+    "text": "30m",
+    "stops": [
+     "10m",
+     "15m",
+     "20m",
+     "25m",
+     "30m",
+     "35m",
+     "40m",
+     "45m",
+     "50m",
+     "55m",
+     "1h",
+     "1h 5m",
+     "1h 10m",
+     "1h 15m",
+     "1h 20m",
+     "1h 25m",
+     "1h 30m"
+    ],
+    "less": "Shorter",
+    "more": "Longer",
+    "on": true,
+    "toggle": "Turn off"
+   },
+   "note": "Travel and unwind time after work are set on each commitment."
+  },
+  "goals": {
+   "title": "Goals",
+   "chips": [
+    "Build muscle",
+    "Learn Spanish",
+    "Read more"
+   ],
+   "empty": "Add at least one goal so there is something to plan. Your LifeMax quests are included automatically.",
+   "add": {
+    "label": "Add a goal",
+    "primary": false
+   },
+   "manage": "Manage goals"
+  },
+  "build": null,
+  "replan": {
+   "label": "Re-plan now"
+  }
+ },
+ "firstRun": null,
+ "guide": null,
+ "sheet": {
+  "kind": "rule",
+  "id": null,
+  "title": "Add a commitment",
+  "text": "",
+  "fields": [
+   {
+    "key": "title",
+    "kind": "text",
+    "label": "Name",
+    "value": "Work",
+    "required": false,
+    "group": null,
+    "maxLength": 40,
+    "placeholder": ""
+   },
+   {
+    "key": "kind",
+    "kind": "choice",
+    "label": "Type",
+    "value": "WORK",
+    "required": false,
+    "group": null,
+    "options": [
+     {
+      "value": "WORK",
+      "label": "Work shift"
+     },
+     {
+      "value": "CLASS",
+      "label": "School / class"
+     },
+     {
+      "value": "APPOINTMENT",
+      "label": "Regular commitment"
+     },
+     {
+      "value": "UNAVAILABLE",
+      "label": "Unavailable (personal)"
+     }
+    ]
+   },
+   {
+    "key": "rotating",
+    "kind": "check",
+    "label": "Rotating shift pattern (e.g. 4 on / 4 off)",
+    "value": false,
+    "required": false,
+    "group": null,
+    "reveals": [
+     "on",
+     "off",
+     "anchor"
+    ],
+    "hides": [
+     "days"
+    ]
+   },
+   {
+    "key": "days",
+    "kind": "days",
+    "label": "Days",
+    "value": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "required": true,
+    "group": null,
+    "options": [
+     {
+      "value": 0,
+      "label": "Su"
+     },
+     {
+      "value": 1,
+      "label": "Mo"
+     },
+     {
+      "value": 2,
+      "label": "Tu"
+     },
+     {
+      "value": 3,
+      "label": "We"
+     },
+     {
+      "value": 4,
+      "label": "Th"
+     },
+     {
+      "value": 5,
+      "label": "Fr"
+     },
+     {
+      "value": 6,
+      "label": "Sa"
+     }
+    ]
+   },
+   {
+    "key": "on",
+    "kind": "number",
+    "label": "Days on",
+    "value": 4,
+    "required": false,
+    "group": 0,
+    "min": 1,
+    "max": 14,
+    "step": 1,
+    "placeholder": ""
+   },
+   {
+    "key": "off",
+    "kind": "number",
+    "label": "Days off",
+    "value": 4,
+    "required": false,
+    "group": 0,
+    "min": 1,
+    "max": 14,
+    "step": 1,
+    "placeholder": ""
+   },
+   {
+    "key": "anchor",
+    "kind": "date",
+    "label": "First day on",
+    "value": "2026-10-28",
+    "required": true,
+    "group": 0
+   },
+   {
+    "key": "start",
+    "kind": "time",
+    "label": "Starts",
+    "value": 540,
+    "required": true,
+    "group": 1,
+    "text": "9:00 AM"
+   },
+   {
+    "key": "end",
+    "kind": "time",
+    "label": "Ends",
+    "value": 1020,
+    "required": true,
+    "group": 1,
+    "text": "5:00 PM"
+   },
+   {
+    "key": "commute",
+    "kind": "number",
+    "label": "Travel each way (min)",
+    "value": 0,
+    "required": false,
+    "group": 2,
+    "min": 0,
+    "max": 240,
+    "step": 5,
+    "placeholder": ""
+   },
+   {
+    "key": "unwind",
+    "kind": "number",
+    "label": "Unwind after (min)",
+    "value": 30,
+    "required": false,
+    "group": 2,
+    "min": 0,
+    "max": 120,
+    "step": 5,
+    "placeholder": ""
+   },
+   {
+    "key": "load",
+    "kind": "choice",
+    "label": "How tiring",
+    "value": "MIXED_MODERATE",
+    "required": false,
+    "group": null,
+    "options": [
+     {
+      "value": "MIXED_MODERATE",
+      "label": "Mixed"
+     },
+     {
+      "value": "PHYSICAL_HEAVY",
+      "label": "Physically hard"
+     },
+     {
+      "value": "COGNITIVE_HEAVY",
+      "label": "Mentally hard"
+     },
+     {
+      "value": "LIGHT",
+      "label": "Light"
+     }
+    ]
+   }
+  ],
+  "fold": null,
+  "note": "Overnight shifts are fine: an end time earlier than the start runs into the next morning. Tiring shifts keep heavy sessions away from the hours after them.",
+  "save": {
+   "label": "Add",
+   "command": "ruleSave"
+  },
+  "cancel": "Cancel",
+  "remove": null
+ },
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

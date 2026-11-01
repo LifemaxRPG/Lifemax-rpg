@@ -42,18 +42,7 @@ const COUNTED_IDS = `(() => { let n = 0; window.__uuids = []; crypto.randomUUID 
 async function start(b, { state = 'lived', caps = null, switchOn = false } = {}) {
   const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
   p.errors = []; p.on('pageerror', e => p.errors.push(String(e)));
-  await directorDay.seed(p, { planned: state !== 'fresh' });
-  if (state === 'mixed') await p.addInitScript(k => {
-    const s = JSON.parse(localStorage.getItem(k));
-    s.setupComplete = false; s.goals = []; s.ui.tab = 'setup'; delete s.ui.tours.setup;
-    s.availability.rules = [
-      { id: 'sleep-wk', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4], startMin: 22 * 60 + 45, durationMin: 495 },
-      { id: 'sleep-we', kind: 'SLEEP', title: 'Sleep', days: [5, 6], startMin: 30, durationMin: 540 },
-      { id: 'r-rot', kind: 'WORK', title: 'Nurse shift', days: [0, 1, 2, 3, 4, 5, 6], startMin: 19 * 60, durationMin: 720, commuteMin: 20, decompressMin: 45, load: 'PHYSICAL_HEAVY',
-        rotation: { anchorDate: '2026-10-26', cycleLength: 7, activeDays: [0, 1, 2] } },
-      { id: 'r-class', kind: 'CLASS', title: 'Pottery', days: [2, 4], startMin: 18 * 60, durationMin: 90, commuteMin: 0, decompressMin: 0, load: 'LIGHT', rotation: null }];
-    localStorage.setItem(k, JSON.stringify(s));
-  }, KEY);
+  await directorDay.seed(p, { planned: state !== 'fresh', setup: state === 'mixed' ? 'unfinished' : 'done' });
   await p.addInitScript(COUNTED_IDS);
   await p.addInitScript(FAKES(caps || ['director.today.v2']));
   await p.goto('file://' + file, { timeout: 120000 });
@@ -349,6 +338,8 @@ const timeAgainstPage = p => p.evaluate(() => {
     const p = await start(b, { state: 'mixed', caps: ALL, switchOn: true });
     await p.evaluate(() => LifeDirector.native.tourSeen('setup', true));
     await go(p, 'life-director', 1500);
+    await p.waitForFunction(() => NativeDirectorTabProjection.snapshot().covers.includes('setup')); // the handshake answers in its own time
+    await settle(p, 300);
     let n = await mark(p);
     const open = await p.evaluate(() => { const s = NativeDirectorTabProjection.snapshot(); return { shows: LifeDirector.native.showing(), covers: s.covers, time: s.time, firstRun: s.firstRun, today: s.today } });
     const calls = await p.evaluate(n => __calls.slice(0, n).filter(c => c[0] === 'director').map(c => c[1]), n);
@@ -374,6 +365,8 @@ const timeAgainstPage = p => p.evaluate(() => {
     const p = await start(b, { state: 'mixed', caps: ALL.slice(0, 4), switchOn: true });
     await p.evaluate(() => LifeDirector.native.tourSeen('setup', true));
     await go(p, 'life-director', 1500);
+    await p.waitForFunction(() => NativeDirectorTabProjection.snapshot().covers.includes('goals')); // the handshake has answered
+    await settle(p, 300);
     const s = await p.evaluate(() => { const s = NativeDirectorTabProjection.snapshot(); return { covers: s.covers, time: s.time, sheet: NativeDirectorProjection.commands.sheet({ kind: 'rule', id: '' }) } });
     const calls = await p.evaluate(() => __calls.filter(c => c[0] === 'director').map(c => c[1]));
     ok('without director.setup.v1 My time stays the page\'s: not covered, not projected, its forms refused', !s.covers.includes('setup') && s.time === null && !s.sheet.ok && !calls.includes('open'), [s, calls]);

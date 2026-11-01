@@ -31,7 +31,21 @@ function state() {
   };
 }
 
-async function seed(page, { planned = true } = {}) {
+/* set-up not finished, as My time's numbered steps show it: different sleep on Friday and Saturday nights, a rotating night shift and
+   a class, no goals yet, and set-up's guide not seen (phase 4B's tests and fixtures) */
+function unfinished() {
+  const s = state();
+  s.setupComplete = false; s.goals = []; s.ui.tab = 'setup'; delete s.ui.tours.setup;
+  s.availability.rules = [
+    { id: 'sleep-wk', kind: 'SLEEP', title: 'Sleep', days: [0, 1, 2, 3, 4], startMin: 22 * 60 + 45, durationMin: 495 },
+    { id: 'sleep-we', kind: 'SLEEP', title: 'Sleep', days: [5, 6], startMin: 30, durationMin: 540 },
+    { id: 'r-rot', kind: 'WORK', title: 'Nurse shift', days: [0, 1, 2, 3, 4, 5, 6], startMin: 19 * 60, durationMin: 720, commuteMin: 20, decompressMin: 45, load: 'PHYSICAL_HEAVY',
+      rotation: { anchorDate: '2026-10-26', cycleLength: 7, activeDays: [0, 1, 2] } },
+    { id: 'r-class', kind: 'CLASS', title: 'Pottery', days: [2, 4], startMin: 18 * 60, durationMin: 90, commuteMin: 0, decompressMin: 0, load: 'LIGHT', rotation: null }];
+  return s;
+}
+
+async function seed(page, { planned = true, setup = 'done' } = {}) {
   // installed a minute early: the installed clock runs until it is paused, and on a loaded machine pausing at the very time it was
   // installed at can already be in its past
   await page.clock.install({ time: new Date(at('06:30').getTime() - 60000) });
@@ -39,7 +53,7 @@ async function seed(page, { planned = true } = {}) {
   await page.addInitScript((s) => {
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({ onboardingComplete: true, name: 'N', tutorialDone: true, classId: 'athlete' }));
     if (s) localStorage.setItem('lifemax_director_state_v1', s);
-  }, planned ? JSON.stringify(state()) : '');
+  }, planned ? JSON.stringify(setup === 'unfinished' ? unfinished() : state()) : '');
 }
 
 async function play(page) {
@@ -56,4 +70,4 @@ async function play(page) {
   await page.clock.pauseAt(at('15:10'));
 }
 
-module.exports = { DAY, at, epoch, state, seed, play };
+module.exports = { DAY, at, epoch, state, unfinished, seed, play };

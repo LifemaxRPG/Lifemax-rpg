@@ -8,7 +8,9 @@
  },
  "clock": {
   "time": "3:10 PM",
-  "day": "Wed, Oct 28"
+  "day": "Wed, Oct 28",
+  "h12": true,
+  "locale": "en-US"
  },
  "tab": "goals",
  "tabs": [
@@ -144,6 +146,8 @@
   "removeConfirm": "Remove this goal? Its future sessions are removed; completed ones stay in your history."
  },
  "settings": null,
+ "time": null,
+ "firstRun": null,
  "guide": null,
  "sheet": null,
  "tokens": {
