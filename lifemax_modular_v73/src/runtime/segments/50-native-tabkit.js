@@ -162,7 +162,11 @@
           console.warn(cfg.id + " command " + (e && e.command), err);
           reply = { ok: false, message: "Something went wrong. Nothing was changed." };
         }
+        // reply.after: page work that must wait until the reply has gone to the screen (an XP celebration the screen steps aside
+        // for would otherwise close it before its answer arrived); it is not part of the reply
+        const after = typeof reply.after === "function" ? reply.after : null;
         reply = Object.assign({ command: e && e.command, requestId: (e && e.requestId) || "" }, reply);
+        delete reply.after;
         if (active) {
           clearTimeout(queued); // a refresh the command's renders asked for: the projection sent with the reply carries them
           try {
@@ -173,6 +177,7 @@
           if (cfg.warm && active && lmaView() === cfg.id && blocked()) send(); // the command left the page on what the screen cannot draw
         }
         if (reply.navigate) lmaNavTo(reply.navigate, { fast: true }); // no web transition under a native screen
+        if (after) after();
         return reply;
       });
       return commands;

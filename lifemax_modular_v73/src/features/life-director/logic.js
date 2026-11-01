@@ -2829,13 +2829,16 @@ const LifeDirectorApp = (function () {
     void inst;
     return notes;
   }
+  let lastFinishRefusal = null; // why the last finishInstance was refused, for a native screen's answer
   function finishInstance(inst, minutes, opt) {
     opt = opt || {};
     const now = nowEpoch();
     const start = opt.startEpoch || Math.min(inst.startEpoch, now - minutes * 60) || now;
     const r = E.recordCompletion({ ledger: ST.ledger, playerId: ST.playerId, instance: inst, actualStartEpoch: Math.max(start, inst.startEpoch - 12 * 3600), actualDurationMinutes: minutes, nowEpoch: now,
       satisfiedRatio: E.normalizePreferences(ST.prefs).partialSatisfiedRatio });
-    if (!r.applied) { if (!opt.silent) say(r.reason === 'DUPLICATE_EVENT_ID' ? 'Already recorded.' : 'Cannot complete this block (' + r.reason + ').'); return null; }
+    lastFinishRefusal = r.applied ? null : r.reason;
+    // quietRefusal: a native screen answers a refusal itself (its reply), so the page says nothing then
+    if (!r.applied) { if (!opt.silent && !opt.quietRefusal) say(r.reason === 'DUPLICATE_EVENT_ID' ? 'Already recorded.' : 'Cannot complete this block (' + r.reason + ').'); return null; }
     ST.ledger = r.ledger;
     let xpNote = '', hostActivityId = opt.hostActivityId || null, bounty = true;
     if (opt.awardXp !== false) {
@@ -2893,11 +2896,13 @@ const LifeDirectorApp = (function () {
     return true;
   }
   /* did it today, though it was planned for a later day: count it now, keep the plan */
-  function logToday(inst, minutes) {
+  /* op: the screen's operation id, so the same request again is the same ledger event (refused as a duplicate, which the caller
+     answers with "Already recorded."); the page's own button mints a new one each time */
+  function logToday(inst, minutes, op) {
     const now = nowEpoch();
-    const r = E.recordCompletion({ ledger: ST.ledger, playerId: ST.playerId, adhoc: { tag: inst.tag, title: inst.title }, clientEventId: 'ld-today:' + uuid(),
+    const r = E.recordCompletion({ ledger: ST.ledger, playerId: ST.playerId, adhoc: { tag: inst.tag, title: inst.title }, clientEventId: 'ld-today:' + (op || uuid()),
       actualStartEpoch: now - minutes * 60, actualDurationMinutes: minutes, nowEpoch: now });
-    if (!r.applied) { say('Could not log it (' + r.reason + ').'); return null; }
+    if (!r.applied) { if (op && r.reason === 'DUPLICATE_EVENT_ID') return { duplicate: true }; say('Could not log it (' + r.reason + ').'); return null; }
     ST.ledger = r.ledger;
     const a = Host.awardActivity(r.event, { title: inst.title });
     (ST.schedule.historyInstances = ST.schedule.historyInstances || []).push(showAsDoneNow({
@@ -5454,6 +5459,140 @@ const LifeDirectorApp = (function () {
     if (root && root.isConnected) render();
     return { ok: true };
   }
+  /* ── Today's sheets for a native screen (phase 4A) ──
+     The session sheet as data: instSheet's branches (now, later, past) in the page's words. A session that has left the plan
+     answers {kind, gone: true}; the screen closes the sheet and says so. */
+  const MINUTES_MAX = 480;
+  function nativeSessionSheet(id) {
+    const inst = findInst(id) || ((ST.schedule && ST.schedule.historyInstances) || []).find(h => h.instanceId === id);
+    if (!inst) return { kind: 'session', id: String(id), gone: true };
+    const x = inst.explanation || {}, planned = inst.lifecycleState === 'PLANNED', now = nowEpoch();
+    const ref = (inst.linkedQuestRequirementIds || []).find(l => String(l.questId).startsWith('plan:'));
+    const running = !!(ST.ui.focus && ST.ui.focus.id === inst.instanceId), xp = planned ? xpOf(inst) : null;
+    const mode = !planned ? 'past' : doable(inst, now) ? 'now' : 'later';
+    const row = [];
+    if (mode === 'now' && ref) row.push({ label: 'Open in Plan', command: 'openPlan', key: ref.questId.slice(5) });
+    if (planned) row.push({ label: 'Move', sheet: 'move' }, { label: inst.isUserLocked ? 'Unpin' : 'Pin here', command: 'pin', on: !inst.isUserLocked }, { label: 'Skip', command: 'skip' });
+    return {
+      kind: 'session', id: inst.instanceId, state: sesState(inst.lifecycleState), icon: tagIcon(inst.tag), title: inst.title,
+      when: fDay(inst.startEpoch) + ' · ' + fTime(inst.startEpoch) + '–' + fTime(inst.endEpoch) + ' · ' + mins(inst.durationSlots * 15) + (inst.compressed ? ' (shortened)' : ''),
+      chips: (inst.linkedQuestRequirementIds || []).map(l => ({ kind: 'quest', text: l.questTitle }))
+        .concat(inst.goalTitle ? [{ kind: 'goal', text: 'Goal: ' + inst.goalTitle }] : [], xp ? [{ kind: 'xp', text: '+' + xp.xp + ' XP · ' + attrName(xp.rule.primary) }] : []),
+      mode,
+      note: mode === 'later' ? [{ t: 'Planned for ', b: false }, { t: fDay(inst.startEpoch) + ' at ' + fTime(inst.startEpoch), b: true }, { t: '. You can start it or mark it done on the day, or from 6 hours before.', b: false }] : [],
+      minutes: planned ? { label: mode === 'later' ? 'Did it today anyway? Minutes' : 'Already did it? Minutes', value: inst.durationSlots * 15, min: 1, max: MINUTES_MAX } : null,
+      primary: mode === 'now' ? (running ? { label: 'Open timer', sheet: 'timer' } : { label: 'Start timer', command: 'timer', act: 'start' }) : null,
+      complete: mode === 'now' ? { label: 'Mark done', command: 'done', smallPrint: '' }
+        : mode === 'later' ? { label: 'Log it for today', command: 'logToday', smallPrint: 'You get the XP now, and this session stays on ' + DOW[U.localParts(inst.startEpoch, tz()).dow] + '.' } : null,
+      row,
+      past: mode === 'past' ? (STATE_LABEL[inst.lifecycleState] || inst.lifecycleState) + (inst.actualMinutes ? ' · ' + inst.actualMinutes + ' min' : '') + (inst.undone ? ' · undone in your log' : '') : '',
+      why: { title: 'Why this time?', summary: x.summary || 'Placed by Life Director.',
+        factors: (x.factors || []).map(f => ({ name: f.factor, points: f.points, frac: Math.min(1, Math.max(0, f.points / 24)) })),
+        feasible: x.selection && x.selection.feasibleDays ? 'It could have fitted on ' + x.selection.feasibleDays + ' day' + (x.selection.feasibleDays === 1 ? '' : 's') + '.' : '' },
+      orphan: inst.orphanWarning ? 'Its quest was completed or removed. Keep it as free practice or remove it.' : '',
+    };
+  }
+  function nativeSheet(kind, id) {
+    if (!ST) boot();
+    if (!ST.setupComplete || !ST.schedule) return null;
+    if (kind === 'session') return nativeSessionSheet(String(id || ''));
+    return null;
+  }
+  /* a session still on the plan (findInst also finds resolved ones, which no action may touch) */
+  const plannedInst = (id) => ST.schedule && ST.schedule.scheduledInstances.find(i => i.instanceId === String(id));
+  /* A session already resolved by an earlier, identical request: its history entry */
+  const resolved = (id) => ((ST.schedule && ST.schedule.historyInstances) || []).find(h => h.instanceId === id);
+  const minutesOf = (inst, m) => Math.max(1, Math.min(MINUTES_MAX, Math.round(Number(m)) || inst.durationSlots * 15));
+  const recorded = (message) => ({ ok: persist(), changed: false, message }); // a repeat: is what landed saved now?
+  const gone = { ok: false, message: 'That is no longer on the plan.' };
+  /* a refused completion: a repeat of one that landed, or the ledger's reason in the page's words */
+  const refusedFinish = () => lastFinishRefusal === 'DUPLICATE_EVENT_ID' ? recorded('Already recorded.') : { ok: false, message: 'Cannot complete this block (' + lastFinishRefusal + ').' };
+  /* Today's writes from a native screen (phase 4A). Each answers {ok, changed, message}: ok only when saved; a repeat of a write
+     that already landed answers changed: false with "Already recorded." or "Already skipped."; the page's own notice (say)
+     carries what happened on success. */
+  const Today = Object.freeze({
+    done({ id, minutes }) {
+      const inst = plannedInst(id);
+      if (!inst) return resolved(id) && /COMPLETED/.test(resolved(id).lifecycleState) ? recorded('Already recorded.') : gone;
+      if (inst.lifecycleState !== 'PLANNED') return gone;
+      if (!doable(inst, nowEpoch())) return { ok: false, message: 'You can mark it done on the day, or from 6 hours before.' };
+      const r = finishInstance(inst, minutesOf(inst, minutes), { quietRefusal: true });
+      if (!r) return refusedFinish();
+      if (ST.ui.focus && ST.ui.focus.id === inst.instanceId) { ST.ui.focus = null; persist(); }
+      render(); return saved('');
+    },
+    logToday({ id, minutes, op }) {
+      const inst = plannedInst(id);
+      if (!inst) return gone;
+      if (!op) return { ok: false, message: 'Nothing was logged.' };
+      const r = logToday(inst, minutesOf(inst, minutes), String(op));
+      if (r && r.duplicate) return recorded('Already recorded.');
+      if (!r) return { ok: false, message: 'Nothing was logged.' };
+      render(); return saved('');
+    },
+    skip({ id }) {
+      const inst = plannedInst(id);
+      if (!inst) return resolved(id) && /SKIPPED/.test(resolved(id).lifecycleState) ? recorded('Already skipped.') : gone;
+      if (inst.lifecycleState !== 'PLANNED') return gone;
+      const c = E.applyMissConsequence(ST.ledger, inst, ST.prefs, nowEpoch(), 'SKIP'); ST.ledger = c.ledger;
+      const r = reschedule({ type: 'SKIPPED', instanceId: id });
+      persist(); render();
+      say('Skipped' + (c.consequence && c.consequence.type === 'REST_TOKEN_SPENT' ? ' · used a rest token' : '') + (r ? ' · ' + summarize(r) : ''));
+      return saved('');
+    },
+    pin({ id, on }) {
+      const inst = plannedInst(id);
+      if (!inst) return gone;
+      const want = !!on;
+      if (inst.isUserLocked === want) return recorded('');
+      inst.isUserLocked = want;
+      if (inst.explanation) inst.explanation = Object.assign({}, inst.explanation, { summary: want ? 'You pinned this time, so Life Director never moves it automatically.' : inst.explanation.summary });
+      persist(); render(); say(want ? 'Pinned' : 'Unpinned'); return saved('');
+    },
+    moveTo({ id, start }) {
+      const inst = plannedInst(id), at = Number(start);
+      if (!inst) return gone;
+      if (!Number.isInteger(at)) return { ok: false, message: 'That time is not on the plan.' };
+      if (inst.startEpoch === at && inst.isUserLocked) return recorded('');
+      const r = reschedule({ type: 'MOVE', instanceId: id, newStartEpoch: at });
+      if (!r) return { ok: false, message: 'It does not fit there. Nothing was moved.' };
+      persist(); render(); say('Moved and pinned · ' + summarize(r)); return saved('');
+    },
+    /* the timer: start is set-like for the same session; pause and resume are guarded on state; finish and cancel name the start
+       they mean, so a repeat after one landed is not taken for a new timer */
+    timer({ act, id, start }) {
+      const f = ST.ui.focus;
+      if (act === 'start') {
+        const inst = plannedInst(id);
+        if (!inst || inst.lifecycleState !== 'PLANNED') return gone;
+        if (!doable(inst, nowEpoch())) return { ok: false, message: 'You can start it on the day, or from 6 hours before.' };
+        if (f && f.id === id) return recorded('');
+        if (f && plannedInst(f.id)) return { ok: false, message: 'Another timer is running. Finish or stop it first.' };
+        ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0 }; persist(); render(); return saved('');
+      }
+      if (act === 'pause') { if (!f || f.paused) return recorded(''); f.paused = Date.now(); persist(); render(); return saved(''); }
+      if (act === 'resume') { if (!f || !f.paused) return recorded(''); f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); render(); return saved(''); }
+      if (act === 'finish' || act === 'cancel') {
+        if (!f || f.start !== Number(start)) {
+          const done = act === 'finish' && ((ST.schedule && ST.schedule.historyInstances) || []).some(h => h.instanceId === id && /COMPLETED/.test(h.lifecycleState));
+          return done ? recorded('Already recorded.') : !f ? recorded('') : { ok: false, message: 'That timer is not running.' };
+        }
+        if (act === 'cancel') { ST.ui.focus = null; persist(); render(); say('Timer stopped. Nothing was logged.'); return saved(''); }
+        const inst = plannedInst(f.id), minutes = Math.max(1, Math.round(focusMs(f) / 60000));
+        ST.ui.focus = null;
+        if (!inst || inst.lifecycleState !== 'PLANNED') { persist(); render(); say('That session is no longer on the plan. Log it from the Log page.'); return saved(''); }
+        ui.fx.justDone = inst.instanceId;
+        const r = finishInstance(inst, minutes, { startEpoch: Math.floor(f.start / 1000), quietRefusal: true });
+        render(); return r ? saved('') : refusedFinish();
+      }
+      return { ok: false, message: 'Life Director cannot do that.' };
+    },
+  });
+  function nativeTodayRun(name, payload) {
+    if (!ST) boot();
+    if (!Object.prototype.hasOwnProperty.call(Today, name)) return { ok: false, message: 'Life Director cannot do that.' };
+    return Today[name](payload && typeof payload === 'object' ? payload : {});
+  }
   /* Goals as data for a native screen (phase 3B): goalCards' decisions in the page's words; shares are 0..1 with the page's own
      rounded percentages beside them. "Add a goal" stays the page's sheet. */
   function nativeGoals() {
@@ -5531,6 +5670,7 @@ const LifeDirectorApp = (function () {
     guidedBy(fn) { nativeGuides = typeof fn === 'function' ? fn : () => false; },
     guide: nativeGuide, tourSeen: (key, finished) => nativeTourSeen(String(key || ''), !!finished),
     goals: nativeGoals, settings: nativeSettings, run: nativeRun,
+    sheet: nativeSheet, todayRun: nativeTodayRun,
     onChange(fn) { watchers.add(fn); return () => watchers.delete(fn); } });
   /* ── Voice seam (LifeMax Voice, phase 1) ─────────────────────────────────────
      Everything the voice engine may do to Life Director: add a one-off timed commitment through the engine's own

@@ -3314,7 +3314,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 16803,
+   "bytes": 17163,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3385,7 +3385,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-director.js",
-   "bytes": 6775,
+   "bytes": 8261,
    "statement_count": 1,
    "tags": [
     "android",

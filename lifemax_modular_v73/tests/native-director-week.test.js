@@ -307,6 +307,89 @@ async function command(p, command, payload) {
     await p.context().close();
   }
 
+  /* 6. Today's session sheet and actions (phase 4A, director.sheets.v1): the sheet as data, and every write answering honestly,
+     with a repeat of one that landed recorded once */
+  {
+    const caps = ['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1'];
+    const p = await start(b, caps);
+    await go(p, 'life-director', 1500);
+    const ids = await p.evaluate(() => {
+      const t = LifeDirector.native.today(0), next = t.upNext && t.upNext.actions.find(a => a.act === 'focusStart');
+      const tomorrow = LifeDirector.native.today(1).rows.ahead.filter(r => r.act === 'inst').map(r => r.id);
+      return { next: next && next.id, later: tomorrow[0], later2: tomorrow[1], later3: tomorrow[2] };
+    });
+    const acts = () => p.evaluate(() => state.activities.length);
+    let r = await command(p, 'sheet', { kind: 'session', id: ids.next });
+    let sh = r.snapshot && r.snapshot.sheet;
+    ok('sheet: the session sheet comes with the reply, as the page\'s instSheet has it (now: Start timer, Mark done, Move, Pin, Skip, why)', r.reply && r.reply.ok && sh && sh.kind === 'session' && sh.id === ids.next && sh.mode === 'now' &&
+      sh.primary.label === 'Start timer' && sh.complete.command === 'done' && JSON.stringify(sh.row.map(x => x.label).slice(-3)) === JSON.stringify(['Move', 'Pin here', 'Skip']) && sh.minutes.max === 480 && sh.why.summary.length > 0, sh);
+
+    let before = await acts();
+    r = await command(p, 'today', { name: 'done', id: ids.next, minutes: 20 });
+    let after = await acts();
+    const hist = await p.evaluate(id => (JSON.parse(localStorage.getItem('lifemax_director_state_v1')).schedule.historyInstances || []).find(h => h.instanceId === id), ids.next);
+    ok('today done: saved, the session is in the history, one LifeMax activity, the page\'s notice says so', r.reply && r.reply.ok && hist && /COMPLETED/.test(hist.lifecycleState) && hist.actualMinutes === 20 && after === before + 1 && r.snapshot.notice && /done/.test(r.snapshot.notice.text), { reply: r.reply, after, before, notice: r.snapshot && r.snapshot.notice });
+    await settle(p, 3000); // the XP celebration plays on the page and the screen comes back
+    r = await command(p, 'today', { name: 'done', id: ids.next, minutes: 20 });
+    ok('today done again: "Already recorded.", nothing paid twice', r.reply && r.reply.ok === true && r.reply.changed === false && r.reply.message === 'Already recorded.' && await acts() === after, r.reply);
+    r = await command(p, 'sheet', { kind: 'session', id: ids.next });
+    ok('the sheet of a session done shows what happened (past)', r.snapshot.sheet.mode === 'past' && /^(Partly done|Done)/.test(r.snapshot.sheet.past), r.snapshot.sheet);
+
+    r = await command(p, 'sheet', { kind: 'session', id: ids.later });
+    sh = r.snapshot.sheet;
+    ok('a session tomorrow: the later sheet, Log it for today with its small print', sh.mode === 'later' && sh.complete.command === 'logToday' && /stays on/.test(sh.complete.smallPrint) && sh.note.some(x => x.b) && !sh.primary, sh);
+    before = await acts();
+    r = await command(p, 'today', { name: 'logToday', id: ids.later, minutes: 15, op: 'op-log-1' });
+    await settle(p, 3000);
+    const once = await acts();
+    r = await command(p, 'today', { name: 'logToday', id: ids.later, minutes: 15, op: 'op-log-1' });
+    ok('today logToday: logged once; the same operation again answers "Already recorded." and pays nothing', once === before + 1 && r.reply.ok && r.reply.changed === false && r.reply.message === 'Already recorded.' && await acts() === once, { once, before, reply: r.reply });
+    r = await command(p, 'today', { name: 'logToday', id: ids.later, minutes: 15, op: 'op-log-2' });
+    await settle(p, 3000);
+    ok('a new operation logs it again (doing it twice on purpose still works)', r.reply.ok && r.reply.changed !== false && await acts() === once + 1, r.reply);
+    r = await command(p, 'today', { name: 'logToday', id: ids.later, minutes: 15 });
+    ok('logToday without an operation id is refused', r.reply.ok === false, r.reply);
+
+    // the timer on the next session that can be started now
+    const next2 = await p.evaluate(() => { const a = LifeDirector.native.today(0).upNext; return a && (a.actions.find(x => x.act === 'focusStart') || {}).id });
+    if (next2) {
+      r = await command(p, 'today', { name: 'timer', act: 'start', id: next2 });
+      const f = await p.evaluate(() => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).ui.focus);
+      r = await command(p, 'today', { name: 'timer', act: 'start', id: next2 });
+      ok('timer start: one timer, and starting it again changes nothing', f && f.id === next2 && r.reply.ok && r.reply.changed === false, { f, reply: r.reply });
+      r = await command(p, 'today', { name: 'timer', act: 'finish', id: next2, start: f.start + 1 });
+      ok('timer finish naming another start is refused', r.reply.ok === false && /not running/.test(r.reply.message), r.reply);
+      await p.clock.runFor(10 * 60000);
+      r = await command(p, 'today', { name: 'timer', act: 'finish', id: next2, start: f.start });
+      await settle(p, 3000);
+      const a2 = await acts();
+      r = await command(p, 'today', { name: 'timer', act: 'finish', id: next2, start: f.start });
+      ok('timer finish: logged; the same finish again answers "Already recorded."', r.reply.ok && r.reply.message === 'Already recorded.' && await acts() === a2, r.reply);
+    } else ok('a session to time is on the plan', false);
+
+    r = await command(p, 'today', { name: 'pin', id: ids.later2, on: true });
+    const pinned = await p.evaluate(id => LifeDirector.native.sheet('session', id).row.find(x => x.command === 'pin').label, ids.later2);
+    r = await command(p, 'today', { name: 'pin', id: ids.later2, on: true });
+    ok('today pin: pinned (the sheet now offers Unpin), and pinning again changes nothing', pinned === 'Unpin' && r.reply.ok && r.reply.changed === false, { pinned, reply: r.reply });
+    r = await command(p, 'today', { name: 'skip', id: ids.later3 });
+    const sk = r.reply;
+    r = await command(p, 'today', { name: 'skip', id: ids.later3 });
+    ok('today skip: skipped, and skipping again answers "Already skipped."', sk.ok && r.reply.ok && r.reply.message === 'Already skipped.', { sk, reply: r.reply });
+    r = await command(p, 'sheet', { kind: 'session', id: 'nowhere' });
+    ok('the sheet of a session that left the plan says it is gone', r.snapshot.sheet && r.snapshot.sheet.gone === true, r.snapshot.sheet);
+    r = await command(p, 'today', { name: 'nowhere' });
+    ok('an unknown action is refused', r.reply.ok === false, r.reply);
+    ok('no script errors with Today\'s actions', p.errors.length === 0, p.errors);
+    await p.context().close();
+  }
+  {
+    const p = await start(b, ['director.today.v2', 'director.week.v1', 'director.goals.v1']);
+    await go(p, 'life-director', 1500);
+    const r = await command(p, 'sheet', { kind: 'session', id: 'x' });
+    ok('without director.sheets.v1 a screen gets no sheets', r.reply && r.reply.ok === false && r.snapshot.sheet === null, r.reply);
+    await p.context().close();
+  }
+
   await b.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
