@@ -413,6 +413,8 @@ async function command(p, command, payload) {
       await act('inst', id); await settle(p, 400); await tap('.ld-sheet.open [data-act=movePick]'); await settle(p, 400);
       html[k] = await body(); data[k] = await p.evaluate(id => LifeDirector.native.sheet && LifeDirector.native.sheet('move', id), id);
     }
+    await act('movePick', ids.next); await settle(p, 400);
+    const moveByAct = await body(); // a screen's Move hands the page this tap: it must open the same sheet
     await act('disrupt'); await settle(p, 400);
     html.disrupt = await body(); data.disrupt = await p.evaluate(() => LifeDirector.native.sheet && LifeDirector.native.sheet('disrupt', ''));
     for (const [k, id] of [['meal', ids.meals[0]], ['mealTomorrow', ids.meals[ids.meals.length - 1]]]) {
@@ -428,6 +430,7 @@ async function command(p, command, payload) {
     const golden = JSON.parse(fs.readFileSync(SHEETS_GOLDEN, 'utf8'));
     ok('the page draws its Move, Something came up, timer and meal sheets byte for byte as before their data was split out', same(Object.keys(golden), Object.keys(html)) && Object.keys(golden).every(k => golden[k] === html[k]),
       Object.keys(golden).filter(k => golden[k] !== html[k]));
+    ok("a screen's Move (act movePick) opens the page's Move sheet", moveByAct === golden.move);
 
     /* each model against the drawing it stands for, read from the recorded HTML in a page of its own */
     const dom = await p.evaluate(html => {
