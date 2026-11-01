@@ -73,11 +73,13 @@ const FEATURE_TIPS={
     body:'Every logged activity lands here by day. Add a short reflection if you want a record beyond XP numbers.'
   }
 };
+/* answers whether the dismissal was stored */
 function dismissFeatureTip(key){
   ensureTipsState();
   state.tipsSeen[key]=true;
-  state.customRules=rules;writeSave();
+  state.customRules=rules;const saved=writeSave();
   document.querySelectorAll('[data-feature-tip="'+key+'"]').forEach(n=>n.remove());
+  return saved;
 }
 
 function resetTips(){

@@ -136,9 +136,7 @@ function ovRewardsRender(){
  el.onclick=e=>{if(!e.target.closest('button'))ecoShopOpen()};el.style.cursor='pointer';
 }
 (function ecoRewardsBoot(){
- const i=OV_TILES.findIndex(t=>t.id==='hero')+1;
- OV_TILES.splice(i,0,{id:'rewards',name:'Rewards',sub:'Sparks, shields and the shop',icon:'star',col:'#fbbf24'});
- OV_DEFAULT.splice(i,0,'rewards');
+ ovTileAdd({id:'rewards',name:'Rewards',sub:'Sparks, shields and the shop',icon:'star',col:'#fbbf24'});
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovRewardsRender()}catch(e){console.warn('[rewards tile]',e)}return r};
  /* cat care, nutrition, toys */
  const pf=petFeed;petFeed=function(){const r=pf.apply(this,arguments);try{if(r&&r.ok)ecoCare('feed')}catch(e){}return r};

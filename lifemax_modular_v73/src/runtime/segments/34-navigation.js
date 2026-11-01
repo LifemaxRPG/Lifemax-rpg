@@ -70,6 +70,8 @@ function lmaTopOverlay(){
 /* Android Back: close a popup, else the previous tab, else Overview. Returns true when it did something. */
 function lmaBack(){
  const o=lmaTopOverlay();if(o){o.close();return true}
+ /* then the Overview's editor, as Done closes it. Not as an overlay: the live Overview's bars would step aside for the whole edit */
+ const ed=document.getElementById('ovEdit');if(ed&&!ed.hidden){ovEditClose();return true}
  while(lmaNavStack.length){const v=lmaNavStack.pop();if(v&&v!==lmaView()&&document.getElementById('view-'+v))return lmaGoView(v)}
  if(lmaView()!=='dashboard')return lmaGoView('dashboard');
  return false;

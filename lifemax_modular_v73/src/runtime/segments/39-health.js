@@ -155,9 +155,7 @@ el.innerHTML=h+'<div class="ovh-more">Details ›</div>';
 }
 function ovHealthTap(e){if(e.target.closest('button'))return;lmaHealthOpen()}
 (function ovHealthBoot(){
- const i=OV_TILES.findIndex(function(t){return t.id==='hero'})+1;
- OV_TILES.splice(i,0,{id:'health',name:'Activity today',sub:'Steps, workouts, sleep and weight from Health Connect',icon:'bolt',col:'#34d399'});
- OV_DEFAULT.splice(i,0,'health');
+ ovTileAdd({id:'health',name:'Activity today',sub:'Steps, workouts, sleep and weight from Health Connect',icon:'bolt',col:'#34d399'});
  const nt=ovTileNote;ovTileNote=function(id){return id==='health'&&!lmaNative()?'Appears in the Android app':nt.apply(this,arguments)};
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovHealthRender()}catch(e){console.warn('[health tile]',e)}return r};
  setTimeout(function(){try{ovHealthRender()}catch(e){}},1500);

@@ -600,7 +600,7 @@
   },
   {
    "file": "src/runtime/segments/13-runtime.js",
-   "bytes": 27186,
+   "bytes": 27261,
    "statement_count": 77,
    "tags": [
     "training",
@@ -1612,8 +1612,8 @@
   },
   {
    "file": "src/runtime/segments/31-overview-edit.js",
-   "bytes": 10951,
-   "statement_count": 18,
+   "bytes": 12052,
+   "statement_count": 19,
    "tags": [
     "overview"
    ],
@@ -1623,6 +1623,7 @@
     "ovLayout",
     "ovLayoutSave",
     "ovLayoutApply",
+    "ovTileAdd",
     "ovTileNote",
     "ovEditRowsHtml",
     "ovEye",
@@ -1792,7 +1793,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 13740,
+   "bytes": 13964,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -1999,7 +2000,7 @@
   },
   {
    "file": "src/runtime/segments/39-health.js",
-   "bytes": 21476,
+   "bytes": 21366,
    "statement_count": 19,
    "tags": [
     "android",
@@ -2046,7 +2047,7 @@
   },
   {
    "file": "src/runtime/segments/41-ov-apps.js",
-   "bytes": 2849,
+   "bytes": 2741,
    "statement_count": 4,
    "tags": [
     "android",
@@ -2098,7 +2099,7 @@
   },
   {
    "file": "src/runtime/segments/44-rewards.js",
-   "bytes": 12796,
+   "bytes": 12702,
    "statement_count": 21,
    "tags": [
     "economy",

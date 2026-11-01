@@ -22,9 +22,7 @@ function ovAppsRender(){
  if(need.length&&AS&&!ovAppsFetching){ovAppsFetching=true;AS.loadIcons(need).then(function(m){let ch=false;lmaLoad().apps.forEach(function(a){if(!a.icon&&m[a.pkg]){a.icon=m[a.pkg];ch=true}});if(ch){lmaSave();ovAppsRender()}}).catch(function(){}).then(function(){ovAppsFetching=false})}
 }
 (function ovAppsBoot(){
- const i=OV_TILES.findIndex(function(t){return t.id==='hero'})+1;
- OV_TILES.splice(i,0,{id:'apps',name:'App shortcuts',sub:'Your phone apps in one row',icon:'grid',col:'#a78bfa'});
- OV_DEFAULT.splice(i,0,'apps');
+ ovTileAdd({id:'apps',name:'App shortcuts',sub:'Your phone apps in one row',icon:'grid',col:'#a78bfa'});
  const nt=ovTileNote;ovTileNote=function(id){return id==='apps'&&!lmaNative()?'Appears in the Android app':nt.apply(this,arguments)};
  const ro=renderOverview;renderOverview=function(){const r=ro.apply(this,arguments);try{ovAppsRender()}catch(e){console.warn('[apps row]',e)}return r};
  setTimeout(function(){try{ovAppsRender()}catch(e){}},1500);
