@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.plan.domain
 
+import com.lifemax.rpg.core.designsystem.feedback.XpAward
 import kotlinx.coroutines.flow.StateFlow
 
 interface PlanRepository {
@@ -15,10 +16,13 @@ fun interface PlanCommands {
     fun toggle(requestId: String, set: SetRef, checked: Boolean)
 }
 
-data class XpGain(val attribute: String, val short: String, val xp: Int, val color: Long)
+/** An attribute's share of a [Celebration]: the shared celebration's type. */
+typealias XpGain = com.lifemax.rpg.core.designsystem.feedback.XpGain
 
-/** An award the page held back for the screen to draw (celebrateXP). */
-data class Celebration(val xp: Int, val gains: List<XpGain>)
+/**
+ * An award the page held back for the screen to draw (celebrateXP): the shared celebration's type.
+ */
+typealias Celebration = XpAward
 
 /**
  * The page's answer to a toggle. [changed] is false when the set was already as asked and nothing
