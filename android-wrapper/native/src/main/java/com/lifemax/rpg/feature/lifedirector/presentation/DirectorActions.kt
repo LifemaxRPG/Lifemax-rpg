@@ -8,6 +8,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.UpNextAction
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.HandleActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.GoalActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sections.SettingsActions
+import com.lifemax.rpg.feature.lifedirector.presentation.sections.TimeActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.FormSheetActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.MoveDisruptActions
 import com.lifemax.rpg.feature.lifedirector.presentation.sheets.SessionActions
@@ -37,6 +38,7 @@ class DirectorActions(
     val session: SessionActions = SessionActions(),
     val timerMeal: TimerMealActions = TimerMealActions(),
     val moves: MoveDisruptActions = MoveDisruptActions(),
+    val time: TimeActions = TimeActions(),
     val forms: FormSheetActions = FormSheetActions(),
 ) {
     constructor(
@@ -128,6 +130,18 @@ class DirectorActions(
                 },
             ),
         moves = MoveDisruptActions(vm::closeSheet, vm.moves::moveTo, vm.moves::answer),
+        time =
+            TimeActions(
+                sleep = vm.time::setSleep,
+                weekend = vm.time::setWeekend,
+                weekendTimes = vm.time::setWeekendTimes,
+                saveSleep = vm.time::saveSleep,
+                rule = vm.forms::openRule,
+                routine = vm.time::stepRoutine,
+                meals = vm.time::meals,
+                addGoal = vm.forms::openGoalType,
+                build = vm.time::build,
+            ),
         forms = FormSheetActions(vm.forms),
         flick = { dir ->
             val p = vm.projection.value

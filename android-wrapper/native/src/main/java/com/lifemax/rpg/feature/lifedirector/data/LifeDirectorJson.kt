@@ -106,20 +106,7 @@ internal fun JSONObject.today(): DirectorToday? {
 }
 
 private fun dial(d: JSONObject): DirectorDial {
-    val r = d.getJSONObject("radii")
-    val radii =
-        DialRadii(
-            r.float("C"),
-            r.float("RO"),
-            r.float("WO"),
-            r.float("RI"),
-            r.float("WI"),
-            r.float("T0"),
-            r.float("T1"),
-            r.float("RL"),
-        )
-    require(radii.centre == HALF_SIDE) { "The dial is a 360-unit square" }
-    require(radii.inner + radii.innerWidth / 2 < radii.outer - radii.outerWidth / 2)
+    val radii = dialRadii(d.getJSONObject("radii"))
     val arcs =
         d.getJSONArray("arcs").objects().map {
             val ring = it.getString("ring")
@@ -167,10 +154,7 @@ private fun dial(d: JSONObject): DirectorDial {
         start = d.getLong("startEpoch"),
         end = d.getLong("endEpoch"),
         radii = radii,
-        hourWords =
-            d.getJSONArray("hourWords").objects().map {
-                HourWord(it.getInt("h"), it.getString("word"))
-            },
+        hourWords = hourWords(d.getJSONArray("hourWords")),
         arcs = arcs,
         words = words,
         hand = hand,
@@ -191,6 +175,30 @@ private fun dial(d: JSONObject): DirectorDial {
         build = build(d)?.onDial(arcs),
     )
 }
+
+/**
+ * The page's DIAL: the dial's radii in its 360-unit square (also My time's and the first-run card's
+ * faces).
+ */
+internal fun dialRadii(r: JSONObject): DialRadii {
+    val radii =
+        DialRadii(
+            r.float("C"),
+            r.float("RO"),
+            r.float("WO"),
+            r.float("RI"),
+            r.float("WI"),
+            r.float("T0"),
+            r.float("T1"),
+            r.float("RL"),
+        )
+    require(radii.centre == HALF_SIDE) { "The dial is a 360-unit square" }
+    require(radii.inner + radii.innerWidth / 2 < radii.outer - radii.outerWidth / 2)
+    return radii
+}
+
+internal fun hourWords(a: JSONArray): List<HourWord> =
+    a.objects().map { HourWord(it.getInt("h"), it.getString("word")) }
 
 private fun centre(c: JSONObject): DialCentre {
     val kickKind = c.getString("kickKind")

@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.lifedirector.presentation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
 import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorNotice
@@ -13,9 +14,11 @@ import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
 import com.lifemax.rpg.feature.lifedirector.domain.SheetRowButton
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideHelp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * What the screen keeps for itself: the day it asked for, whether "Earlier today" is open, the
@@ -41,6 +44,16 @@ class LifeDirectorViewModel(
     /** the XP replies celebrate, and the sheet the glance asks for (DirectorFeedback.kt) */
     val feedback =
         DirectorFeedback(projection, { busy }) { k, id -> if (sheets.available) sheets.open(k, id) }
+    /** My time's writes and sheets (phase 4B, TimeController.kt) */
+    internal val time =
+        TimeController(
+            projection,
+            mutableUi,
+            ::change,
+            { !busy && ui.value.pendingChange == null },
+        ) { ms, run ->
+            viewModelScope.launch { delay(ms).also { run() } }.let { job -> { job.cancel() } }
+        }
     /** the ? button: this section's guide, or the one the page names, played in its section (4B) */
     val guideHelp =
         GuideHelp(projection, ::draws, ::showSection, { ui.value.pendingSection }, { startGuide() })
@@ -97,6 +110,7 @@ class LifeDirectorViewModel(
     fun projected() {
         guideStillShown()
         sheets.projected()
+        time.projected()
         guideHelp.projected()
     }
 
@@ -223,6 +237,7 @@ class LifeDirectorViewModel(
         changeRequest = null
         val name = ui.value.pendingChange
         mutableUi.update { it.copy(pendingChange = null) }
+        time.settled(name, reply.ok)
         when {
             !reply.ok -> {
                 show(reply.message.ifBlank { "Nothing was changed." })

@@ -60,7 +60,16 @@ data class Tap(val act: String, val id: String = "")
 
 data class DirectorHeader(val dot: StatusDot, val line: String)
 
-data class DirectorClock(val time: String, val day: String)
+/**
+ * The frame's clock. [h12] and [locale] are the page's clock style (4B), for a time the screen
+ * writes itself after a picker.
+ */
+data class DirectorClock(
+    val time: String,
+    val day: String,
+    val h12: Boolean = true,
+    val locale: String = "",
+)
 
 data class DirectorTab(val id: String, val label: String, val icon: String)
 
@@ -274,4 +283,8 @@ data class LifeDirectorProjection(
     val celebrationTarget: DirectorPoint? = null,
     /** a sheet the Overview's glance asked for (phase 4A), taken once by its id */
     val intent: GlanceIntent? = null,
+    /** My time (phase 4B), while it is the section on show and this screen draws it */
+    val time: DirectorTime? = null,
+    /** the first-run card (phase 4B), while Today or Week has no plan to show */
+    val firstRun: FirstRun? = null,
 )

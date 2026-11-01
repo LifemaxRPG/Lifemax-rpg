@@ -117,6 +117,7 @@
    "capabilities": [
     "director.today.v2",
     "director.sheets.v1",
+    "director.setup.v1",
     "shell.swipe.v1"
    ],
    "capabilityHistory": "director.today.v1: Today without the dial's handles and build (Native API 25); v2 adds them (handles, stops, dragWords, build, hint, reducedMotion, dialDrop, dialApply), which a v1 decoder does not read and a v2 decoder requires, so a page and an app of different phases do not open the screen and the page stays",
