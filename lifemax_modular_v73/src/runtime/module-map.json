@@ -1793,7 +1793,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 13964,
+   "bytes": 14077,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -3259,7 +3259,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 24576,
+   "bytes": 24603,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3293,7 +3293,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 22932,
+   "bytes": 22959,
    "statement_count": 1,
    "tags": [
     "android",

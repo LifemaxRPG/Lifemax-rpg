@@ -61,7 +61,7 @@ function lmaTopOverlay(){
  const hs=q('.hsheet');if(hs)return {close(){hs.remove()}};
  const as=all('.apps-sheet').pop();
  if(as)return {close(){const b=as.querySelector('[data-k="__close"],[data-act="close"]');b?b.click():as.remove()}};
- const ld=q('.ld-sheet.open:not([hidden])');
+ const ld=q('#view-life-director.active .ld-sheet.open:not([hidden])'); /* only on Life Director's own view: a sheet left open there is over no other page */
  if(ld)return {close(){const b=ld.querySelector('.ld-sheet-bg');b?b.click():0}};
  const so=all('.sheet-ov.show').pop();
  if(so)return {close(){so.click()}};

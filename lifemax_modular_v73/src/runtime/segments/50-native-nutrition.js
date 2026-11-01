@@ -343,7 +343,7 @@
   }
 
   /** what the page shows over Meals that the screen must not cover */
-  const COVERED = '.sheet-ov.show,.ld-sheet.open,.updpop,#onboarding.show';
+  const COVERED = '.sheet-ov.show,#view-life-director.active .ld-sheet.open,.updpop,#onboarding.show';
 
   async function open() {
     if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
