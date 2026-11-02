@@ -241,7 +241,7 @@
       landed answers "Already recorded."; ok only when the save stored it (a failed save stays in memory, as after the
       overlay's own button, and the next save stores it). XP the act earns is held for the screen to draw. */
   function command(c) {
-    const act = acts[c.act];
+    const act = Object.prototype.hasOwnProperty.call(acts, c.act) ? acts[c.act] : null;
     if (!act || !offered()) return { ok: false, message: "That is not something the guided workout does." };
     return once(c.op, () =>
       c.act !== "start" && !gwrCurrent()

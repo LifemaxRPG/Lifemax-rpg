@@ -231,7 +231,7 @@
       const d = validDay(c.date),
         it = d && d.items.find((x) => x.k === c.key);
       if (!has("plan.fields.v1")) return { ok: false, message: "Edit this on the page." };
-      if (!it || typeof c.text !== "string" || (kind === "value" && !(it.wt || it.min)))
+      if (!it || typeof c.text !== "string" || (kind === "value" && !(it.wt || it.min)) || (kind === "value" && c.text.length > 100))
         return { ok: false, message: "That field is not in your plan. Nothing was changed." };
       if (c.date > getToday()) return { ok: false, message: "Locked until the day arrives." };
       if (kind === "log" && c.text.length > PLAN_LOG_MAX)

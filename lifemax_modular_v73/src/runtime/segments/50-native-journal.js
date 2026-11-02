@@ -261,8 +261,9 @@
       if (locked()) return refuse();
       const kind = String(p.kind || "");
       const w = jcRec("welcome", getToday());
-      if (JC_GIFT[kind] && w.claimed && w.claimed[kind]) return { ok: true, changed: false, message: ALREADY };
-      if (!JC_GIFT[kind] || !jcOffered(kind)) return { ok: false, changed: false, message: JC_NOT_OFFERED };
+      const known = Object.prototype.hasOwnProperty.call(JC_GIFT, kind);
+      if (known && w.claimed && w.claimed[kind]) return { ok: true, changed: false, message: ALREADY };
+      if (!known || !jcOffered(kind)) return { ok: false, changed: false, message: JC_NOT_OFFERED };
       const reply = paying(() => ({ paid: jcClaim(kind) }));
       return reply.paid ? Object.assign(reply, { ok: true, changed: true }) : Object.assign(reply, { ok: false, changed: false, message: unsavedMessage() });
     },

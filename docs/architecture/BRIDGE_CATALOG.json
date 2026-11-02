@@ -490,13 +490,16 @@
    "webModule": "50-native-settings.js (NativeTabKit)",
    "inventory": "docs/architecture/SETTINGS_INVENTORY.md",
    "capabilities": [
-    "settings.projection.v1"
+    "settings.projection.v1",
+    "settings.fields.v1"
    ],
    "commands": {
     "toggle": "{id, on}: the page's checkbox with that id is set and its own change handler runs (the native tabs' setNativeXEnabled, setLightMode, lmaSetSwipe, qfxSet, hapSet, lmaSet, lmaSetBackup, lmaHealthSet, lmcSet off, lmaTabShow for bar rows ...); answers {ok, changed, message} with the page's toast as message, ok:false with the page's words when it refused (disabled, the bar's last two tabs), reveal:id for a switch that asks Android before turning on, saved:false when the handler's write failed (core save: unsavedMessage(), read-only or full)",
     "choose": "{id, value}: a select is set to one of its options and its change handler runs, or the haptic strength button with that value is clicked; same answers as toggle",
     "press": "{id}: a bound button is clicked (the bar's arrows and Reset to default, the haptic tries); same answers",
-    "category": "{id}: the chip's own setPickCat, which the page keeps (lma_set_cat)"
+    "category": "{id}: the chip's own setPickCat, which the page keeps (lma_set_cat)",
+    "setField": "{id, value} (settings.fields.v1, 50-native-settings-fields.js): one text, number, time or select field; an id the screen's form map names, the value checked against its kind and limits, refused with nothing changed otherwise; password fields never take part",
+    "saveForm": "{group, values} (settings.fields.v1): a group of fields saved together (saveCharacter, saveDecay, saveRules, lmaSet times) through the page's own setters; ids, types, maxLength and number ranges validated, values clamped; ok only when persist() succeeded"
    },
    "actions": {
     "reveal": "id of any control whose op is reveal: the screen closes, the page shows the card on its category with the control focused; back once the owner's next tap has done its work, unless a sheet, a picker, the import or a focused field keeps the page in front; an unknown id comes straight back",

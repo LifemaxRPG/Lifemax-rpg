@@ -3578,7 +3578,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-plan-runner.js",
-   "bytes": 12889,
+   "bytes": 12948,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3591,7 +3591,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-plan.js",
-   "bytes": 16949,
+   "bytes": 16994,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3626,7 +3626,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-journal.js",
-   "bytes": 20341,
+   "bytes": 20398,
    "statement_count": 1,
    "tags": [
     "native",
