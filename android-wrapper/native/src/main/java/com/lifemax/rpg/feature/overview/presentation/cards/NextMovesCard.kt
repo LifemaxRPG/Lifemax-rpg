@@ -120,7 +120,10 @@ private fun MoveRow(move: NextMove, onClick: () -> Unit) {
             else
                 Text(
                     if (move.done) "✓" else "›",
-                    Modifier.padding(horizontal = 4.dp).clearAndSetSemantics {},
+                    // the page's ✓ is read ("check mark") and says the move is done; its › is
+                    // only an arrow
+                    Modifier.padding(horizontal = 4.dp)
+                        .then(if (move.done) Modifier else Modifier.clearAndSetSemantics {}),
                     color = if (move.done) c.good else c.muted,
                     fontSize = 20.sp,
                     fontWeight = if (move.done) FontWeight.Black else FontWeight.Normal,

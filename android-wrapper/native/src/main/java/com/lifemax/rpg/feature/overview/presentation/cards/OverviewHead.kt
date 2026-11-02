@@ -19,9 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +46,12 @@ import com.lifemax.rpg.feature.overview.presentation.LocalOverviewColors
  * open ([editing]), as the page's .ov-editbtn.on.
  */
 @Composable
-internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit, editing: Boolean = false) {
+internal fun OverviewHeadRow(
+    head: OverviewHead,
+    onEdit: () -> Unit,
+    editing: Boolean = false,
+    focus: FocusRequester? = null,
+) {
     val c = LocalOverviewColors.current
     Row(
         Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 14.dp),
@@ -72,7 +81,7 @@ internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit, editing: Bo
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            EditButton(head, onEdit, editing)
+            EditButton(head, onEdit, editing, focus)
             if (head.classId.isNotEmpty())
                 CharacterClassCrest(head.classId, Modifier.size(54.dp).clearAndSetSemantics {})
         }
@@ -81,12 +90,32 @@ internal fun OverviewHeadRow(head: OverviewHead, onEdit: () -> Unit, editing: Bo
 
 /** .ov-editbtn: the grid icon and "Edit" in a pill; TalkBack says what it edits. */
 @Composable
-private fun EditButton(head: OverviewHead, onEdit: () -> Unit, on: Boolean) {
+private fun EditButton(
+    head: OverviewHead,
+    onEdit: () -> Unit,
+    on: Boolean,
+    focus: FocusRequester?,
+) {
     val c = LocalOverviewColors.current
     val shape = RoundedCornerShape(99.dp)
     val ink = if (on) c.text else c.muted
     Row(
-        Modifier.tapTarget(Role.Button, onClick = onEdit)
+        Modifier.then(if (focus == null) Modifier else Modifier.focusRequester(focus))
+            .tapTarget(Role.Button, onClick = onEdit)
+            // the page's aria-expanded: the editor opens in place under this button, and the
+            // screen reader says expanded or collapsed in its own words
+            .semantics {
+                if (on)
+                    collapse {
+                        onEdit()
+                        true
+                    }
+                else
+                    expand {
+                        onEdit()
+                        true
+                    }
+            }
             .clearAndSetSemantics { contentDescription = head.editA11y }
             .clip(shape)
             .heightIn(min = 32.dp)

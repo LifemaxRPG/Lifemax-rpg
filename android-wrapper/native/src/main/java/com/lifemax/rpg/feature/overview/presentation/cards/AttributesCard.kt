@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
@@ -102,6 +103,14 @@ private fun GemView(g: Gem, onClick: () -> Unit, modifier: Modifier) {
             .border(1.dp, c.lineSoft, GemShape)
             .drawBehind { drawRect(color, size = Size(3.dp.toPx(), size.height)) }
             .tapTarget(Role.Button, onClick = onClick)
+            // one description of its own: with words and a description both on the button, a screen
+            // reader may read only the description (the dot's title) and drop the name and level
+            .clearAndSetSemantics {
+                contentDescription =
+                    listOf(g.short, g.level, g.week, g.dot.text)
+                        .filter { it.isNotEmpty() }
+                        .joinToString(", ")
+            }
             .padding(start = 13.dp, top = 10.dp, end = 11.dp, bottom = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -120,7 +129,7 @@ private fun GemView(g: Gem, onClick: () -> Unit, modifier: Modifier) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            StatusDot(g.dot.kind, c, Modifier.semantics { contentDescription = g.dot.text })
+            StatusDot(g.dot.kind, c)
         }
         Row(
             Modifier.fillMaxWidth().padding(top = 7.dp, bottom = 6.dp),
