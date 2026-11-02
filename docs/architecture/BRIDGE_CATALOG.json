@@ -159,7 +159,7 @@
    "rollout": "opt-in under Settings, Appearance: Native Life Director (beta), off by default",
    "canonicalLayout": true,
    "buildAnimation": "played by the screen from today.dial.build, each id once per page session for the plugin's lifetime (ids rise with the clock, also across page reloads); the page plays none while the screen covers it (LifeDirector.native.coveredBy) and stops one already playing when the screen opens (cover, afterOpen); null with reduced motion, where the page plays none either. Native: BuildTimeline (runBuild's keyframes, easing, delays and fills at any moment), rememberBuildRun (a new id restarts, a hidden screen stops it for good, a tap skips, Android's Remove animations draws the end), the page's buzzes once the user has touched the screen",
-  "nativeDial": "DialGestures: a touch on a handle (target at least 48 dp) is the dial's from the down, so the list and any swipe leave it; it follows the finger past the touch slop over today.dial.stops with a 6 ms buzz per stop; let go elsewhere it sends dialDrop, shows the confirmation as a sheet (Keep, the scrim, close and Back are local), and Change it sends dialApply with the same payload; a projection update cannot move a held or pending handle; a touch that never passes the slop sends nothing; TalkBack: a slider node per handle whose increment, decrement and two custom actions send dialDrop with step 1 or -1"
+   "nativeDial": "DialGestures: a touch on a handle (target at least 48 dp) is the dial's from the down, so the list and any swipe leave it; it follows the finger past the touch slop over today.dial.stops with a 6 ms buzz per stop; let go elsewhere it sends dialDrop, shows the confirmation as a sheet (Keep, the scrim, close and Back are local), and Change it sends dialApply with the same payload; a projection update cannot move a held or pending handle; a touch that never passes the slop sends nothing; TalkBack: a slider node per handle whose increment, decrement and two custom actions send dialDrop with step 1 or -1"
   },
   {
    "feature": "recipes",
@@ -179,7 +179,7 @@
     "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
    },
    "actions": {
-    "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
+    "navigate": "the view 'meals' (Meals pill, \"\uff0b Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
     "link": "nothing is sent: the screen opens the projected https link itself (Android ACTION_VIEW)"
    },
    "writes": [],
@@ -208,31 +208,36 @@
    "inventory": "docs/architecture/LIBRARY_INVENTORY.md",
    "capabilities": [
     "library.media.projection.v1",
+    "library.media.write.v1",
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
-   "covers": "the Media pane only, and not while the add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
-   "commands": {},
-   "writes": [],
+   "covers": "the Media pane only, and not while the page's own add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
+   "commands": {
+    "upsert": "{op, id?, fields: {title, type, creator, status, link, notes}} (phase 3, library.media.write.v1): mediaUpsert; an add stores op on the item (addOp) in the same save, so the same op again answers the item it made (ok, changed:false); an edit is a plain set and keeps a stored type the form does not offer; refusals in the page's words name their field (title, link); an edit of an id gone is refused rather than re-added; answers {ok, changed, message, id, field}; ok only once saved, a failed save taken back; the page's toast says a stored item",
+    "setStatus": "{id, status} (phase 3): mediaSetStatus, the page's tick (toggleMediaFinished) on the same owner; the same status again changes and saves nothing; answers {ok, changed, message}, said by the page's toast",
+    "remove": "{id} (phase 3): mediaRemove, after the screen's own confirm in the page's words (MEDIA_ASK); an id already gone answers ok, changed:false",
+    "removeAudio": "{id} (phase 3): mediaRemoveAudio, after the screen's confirm; an item without audio answers ok, changed:false"
+   },
+   "writes": [
+    "state.mediaItems via upsert, setStatus, remove and removeAudio (the page's Media owners, web-owned rules and save)"
+   ],
    "delegatedInteractions": [
-    "showMediaForm() and showMediaForm(item): add and edit, saved by saveMediaItem through mediaUpsert",
-    "toggleMediaFinished(id, true) for finished, toggleMediaFinished(id, false) for unfinished",
-    "deleteMediaItem(id) with its confirm",
     "pickAudioForMedia through the row's own file button, shown, focused and named in a toast on the page (no programmatic picker)",
-    "removeMediaAudio(id) with its confirm",
     "playMediaAudio(id) and the whole audio player",
-    "the row's link: an anchor like the row's, http and https only",
     "dismissFeatureTip('media')",
-    "the Journal: lmaNavTo('history'), a web destination behind its lock"
+    "the Journal: lmaNavTo('history'), a web destination behind its lock",
+    "with a screen that lacks library.media.write.v1 (edit \"page\"): showMediaForm, toggleMediaFinished, deleteMediaItem and removeMediaAudio as before",
+    "the row's link opens in the browser natively (ACTION_VIEW), http and https only"
    ],
    "readContract": {
     "snapshotDto": "feature/library/domain/MediaProjection.kt",
     "decoder": "feature/library/data/WebMediaRepository.kt",
-    "fixtures": "native/src/test/resources/fixtures/media-full.json, media-search.json, media-empty.json, media-tip.json, and media-filter-parity.json (the rows the page shows for sample filters of media-full) (lifemax_modular_v73/tools/gen_native_fixtures.js)",
+    "fixtures": "native/src/test/resources/fixtures/media-full.json, media-search.json, media-empty.json, media-tip.json, media-sheets.json (edit \"native\" with the form), and media-filter-parity.json (the rows the page shows for sample filters of media-full) (lifemax_modular_v73/tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page sets its filter (typed on the page, a voice search); notice.id counts the page's toasts",
     "invalidation": "renderMedia, a page toast, host resume, foreground return, 15-second refresh while visible; the form, the audio player, a handed file button and a level-up close the screen, and it comes back when they are gone (MutationObservers on the form, the player, the body and the list, and a focusout); blocked() also reads audioCtx.loading"
    },
-   "mutationsGate": "no native writes: every change is the page's own handler, run after the screen has closed",
+   "mutationsGate": "phase 3 (library.media.write.v1): addOp stored on the item in the same save; status is a set; remove and remove audio are idempotent by id; ok only once saved; the screen keeps an add's operation id until a terminal reply and resends it after a lost reply; no durable receipt across process death for the screen's pending state (A14/A15 gap). Play and attach stay the page's own handlers, run after the screen has closed",
    "rollout": "opt-in under Settings, Appearance: Native Library (beta), off by default",
    "canonicalLayout": true
   },
@@ -494,11 +499,11 @@
    "refusals": {
     "off": "the swipe is not on: the switch or Swipe to switch tabs off, onboarding not done, the thumbnail pass running, or a view a swipe never starts from (Life Director)",
     "overlay": "a popup or sheet over the page (lmaTopOverlay), a body that must not scroll, or a lock cover",
-    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir ±1, on the bar as it is now",
+    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir \u00b11, on the bar as it is now",
     "kind": "Money (a stop), or a tab the page draws when the swipe does not carry reveal: true (an APK from phase 1)",
     "error": "the decision threw; nothing else is done"
    },
-   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05–0.35, breakAt knee + 0.10–0.70, heavy 0.05–1, hyst 0–0.15, popDamping 0.4–1, popStiffness 400–3000, wallMax 0–0.15, wallSlope 0–0.6, flingDp 500–3000, flingMin 0.05–0.35, backFlingDp 200–2000, commitK and cancelK 300–4000, slopFactor 1–2 (never under the platform's slop, where a child scroller claims), lockRatio 1–3, edgeDp 16–48, haptic threshold | tick | click | off",
+   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05\u20130.35, breakAt knee + 0.10\u20130.70, heavy 0.05\u20131, hyst 0\u20130.15, popDamping 0.4\u20131, popStiffness 400\u20133000, wallMax 0\u20130.15, wallSlope 0\u20130.6, flingDp 500\u20133000, flingMin 0.05\u20130.35, backFlingDp 200\u20132000, commitK and cancelK 300\u20134000, slopFactor 1\u20132 (never under the platform's slop, where a child scroller claims), lockRatio 1\u20133, edgeDp 16\u201348, haptic threshold | tick | click | off",
    "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
    "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
    "writes": []

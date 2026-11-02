@@ -305,8 +305,8 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 32135,
-   "statement_count": 78,
+   "bytes": 32802,
+   "statement_count": 82,
    "tags": [
     "training",
     "pet",
@@ -379,6 +379,10 @@
     "avatarPicked",
     "removeAvatar",
     "MEDIA_STATUS",
+    "MEDIA_FORM",
+    "MEDIA_REFUSE",
+    "MEDIA_ASK",
+    "mediaAsk",
     "showMediaForm",
     "hideMediaForm",
     "saveMediaItem",
@@ -3517,7 +3521,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 9865,
+   "bytes": 14516,
    "statement_count": 1,
    "tags": [
     "android",

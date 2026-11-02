@@ -24,6 +24,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -45,7 +46,9 @@ import com.lifemax.rpg.feature.library.domain.MediaItem
 /**
  * A row of the list (.media-item at phone width): the finished box, then the title, the type and
  * creator, the audiobook's progress, the status and link pills, the notes and the audio buttons,
- * and Edit and Remove in a column. Every row but the [last] has a divider under it.
+ * and Edit and Remove in a column. Every row but the [last] has a divider under it. A tick the
+ * screen has sent shows the state asked for ([finished]) at once, faded while [pending] the page's
+ * answer.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -54,6 +57,8 @@ internal fun MediaRow(
     buttons: MediaButtons,
     last: Boolean,
     onAction: (MediaAction) -> Unit,
+    finished: Boolean = item.finished,
+    pending: Boolean = false,
 ) {
     val c = LocalLibraryColors.current
     Column(Modifier.cardPiece(c).padding(horizontal = 16.dp)) {
@@ -61,7 +66,7 @@ internal fun MediaRow(
             Modifier.padding(vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(9.dp),
         ) {
-            FinishedBox(item) { onAction(MediaAction.SetFinished(item.id, it)) }
+            FinishedBox(item, finished, pending) { onAction(MediaAction.SetFinished(item.id, it)) }
             Column(Modifier.weight(1f)) {
                 Text(
                     item.title,
@@ -121,14 +126,20 @@ internal fun MediaRow(
  * box, so it keeps its size whatever the font size.
  */
 @Composable
-private fun FinishedBox(item: MediaItem, onChange: (Boolean) -> Unit) {
+private fun FinishedBox(
+    item: MediaItem,
+    finished: Boolean,
+    pending: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
     val c = LocalLibraryColors.current
     val shape = RoundedCornerShape(6.dp)
     Box(
         Modifier.padding(start = 4.dp, top = 2.dp, end = 3.dp)
             .size(22.dp)
+            .then(if (pending) Modifier.alpha(PENDING_ALPHA) else Modifier)
             .toggleable(
-                item.finished,
+                finished,
                 interactionSource = null,
                 indication = ripple(bounded = false, radius = 20.dp),
                 role = Role.Checkbox,
@@ -136,11 +147,11 @@ private fun FinishedBox(item: MediaItem, onChange: (Boolean) -> Unit) {
             )
             .semantics { contentDescription = "Mark ${item.title} finished" }
             .clip(shape)
-            .background(if (item.finished) c.good else c.bg)
-            .border(1.5.dp, if (item.finished) c.good else PageInk.BoxBorder, shape),
+            .background(if (finished) c.good else c.bg)
+            .border(1.5.dp, if (finished) c.good else PageInk.BoxBorder, shape),
         contentAlignment = Alignment.Center,
     ) {
-        if (item.finished)
+        if (finished)
             with(LocalDensity.current) {
                 Text(
                     "✓",

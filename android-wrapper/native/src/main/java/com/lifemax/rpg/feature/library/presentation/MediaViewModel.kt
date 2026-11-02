@@ -4,9 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.lifemax.rpg.feature.library.domain.MediaCommands
 import com.lifemax.rpg.feature.library.domain.MediaFilter
 import com.lifemax.rpg.feature.library.domain.MediaItem
 import com.lifemax.rpg.feature.library.domain.MediaProjection
+import com.lifemax.rpg.feature.library.domain.MediaReply
 import com.lifemax.rpg.feature.library.domain.MediaRepository
 import com.lifemax.rpg.feature.library.domain.PageNotice
 
@@ -20,7 +22,10 @@ import com.lifemax.rpg.feature.library.domain.PageNotice
  *
  * The state is snapshot state rather than a flow so that the search box sees each key at once.
  */
-class MediaViewModel(private val repository: MediaRepository) : ViewModel() {
+class MediaViewModel(
+    private val repository: MediaRepository,
+    commands: MediaCommands = MediaCommands.None,
+) : ViewModel() {
     var ui by mutableStateOf<MediaUi?>(null)
         private set
 
@@ -32,11 +37,18 @@ class MediaViewModel(private val repository: MediaRepository) : ViewModel() {
     private var noticed: Pair<String, Long>? = null
     private var handedOver = false
 
+    /** The Media sheets, while the page says the screen draws them (MediaSheetController). */
+    val sheets = MediaSheetController(commands)
+
     /** The screen opened (again): it takes taps. */
     fun opened() {
         handedOver = false
         notice = null
+        sheets.opened()
     }
+
+    /** The page's answer to a Media sheets command. */
+    fun onReply(reply: MediaReply) = sheets.onReply(reply)
 
     /** The repository has taken a projection. */
     fun onProjection() {
@@ -45,6 +57,7 @@ class MediaViewModel(private val repository: MediaRepository) : ViewModel() {
         val filter = ui?.filter?.takeIf { key == adopted } ?: p.filter
         adopted = key
         show(p, filter)
+        sheets.projected(p)
         p.notice?.let {
             val seen = p.session to it.id
             if (seen != noticed) {
