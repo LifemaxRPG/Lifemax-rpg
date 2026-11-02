@@ -1,0 +1,134 @@
+{
+ "luckRefusedStore": {
+  "command": "luck",
+  "requestId": "r1",
+  "ok": false,
+  "changed": false,
+  "message": "Could not save to this browser (storage full?)"
+ },
+ "benchmarkRefusedStore": {
+  "command": "benchmarkAdd",
+  "requestId": "r2",
+  "ok": false,
+  "changed": false,
+  "message": "Could not save to this browser (storage full?)"
+ },
+ "luckStale": {
+  "command": "luck",
+  "requestId": "r3",
+  "ok": false,
+  "changed": false,
+  "message": "The day changed. Open Luck again."
+ },
+ "luckFresh": {
+  "command": "luck",
+  "requestId": "r4",
+  "ok": true,
+  "changed": true,
+  "message": "Rolled 9,121. Legendary.",
+  "luck": {
+   "date": "2026-10-28",
+   "dice": [
+    3,
+    6,
+    1,
+    4
+   ],
+   "score": "9,121",
+   "tier": "Legendary",
+   "message": "Off the charts. Buy two tickets.",
+   "color": 4294967295
+  }
+ },
+ "luckRepeat": {
+  "command": "luck",
+  "requestId": "r5",
+  "ok": true,
+  "changed": false,
+  "message": "Already rolled today.",
+  "luck": {
+   "date": "2026-10-28",
+   "dice": [
+    3,
+    6,
+    1,
+    4
+   ],
+   "score": "9,121",
+   "tier": "Legendary",
+   "message": "Off the charts. Buy two tickets.",
+   "color": 4294967295
+  }
+ },
+ "benchmarkAdded": {
+  "command": "benchmarkAdd",
+  "requestId": "r6",
+  "ok": true,
+  "changed": true,
+  "message": ""
+ },
+ "benchmarkRepeat": {
+  "command": "benchmarkAdd",
+  "requestId": "r7",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ },
+ "benchmarkEmpty": {
+  "command": "benchmarkAdd",
+  "requestId": "r8",
+  "ok": false,
+  "changed": false,
+  "message": "Enter a name and result"
+ },
+ "benchmarkTooLong": {
+  "command": "benchmarkAdd",
+  "requestId": "r9",
+  "ok": false,
+  "changed": false,
+  "message": "The name can be up to 60 characters."
+ },
+ "benchmarkSet": {
+  "command": "benchmarkSet",
+  "requestId": "r10",
+  "ok": true,
+  "changed": true,
+  "message": ""
+ },
+ "benchmarkSetSame": {
+  "command": "benchmarkSet",
+  "requestId": "r11",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ },
+ "benchmarkChanged": {
+  "command": "benchmarkSet",
+  "requestId": "r12",
+  "ok": false,
+  "changed": false,
+  "message": "That benchmark changed. Nothing was changed."
+ },
+ "benchmarkRemoved": {
+  "command": "benchmarkRemove",
+  "requestId": "r13",
+  "ok": true,
+  "changed": true,
+  "message": ""
+ },
+ "logUnknown": {
+  "command": "log",
+  "requestId": "r14",
+  "ok": false,
+  "changed": false,
+  "message": "Something went wrong. Nothing was changed."
+ },
+ "logPrefilled": {
+  "command": "log",
+  "requestId": "r15",
+  "ok": true,
+  "changed": false,
+  "message": "",
+  "navigate": "log"
+ }
+}

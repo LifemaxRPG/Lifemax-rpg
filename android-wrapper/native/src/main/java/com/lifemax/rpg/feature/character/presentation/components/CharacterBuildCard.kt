@@ -203,7 +203,9 @@ internal fun CharacterBuildCard(
             }
         }
         Button(
-            onClick = { onAction("attribute", selected.id) },
+            // with the actions the page prefills the Log tab; without them its attribute sheet
+            // opens
+            onClick = { onAction(if (p.actions) "log" else "attribute", selected.id) },
             modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
             shape = RoundedCornerShape(10.dp),
         ) {

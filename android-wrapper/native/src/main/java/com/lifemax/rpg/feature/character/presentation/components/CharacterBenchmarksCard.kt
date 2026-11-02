@@ -31,6 +31,8 @@ internal fun CharacterBenchmarksCard(p: CharacterProjection, onAction: (String, 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp),
             )
-        TextButton(onClick = { onAction("benchmarks", "") }) { Text("Add or edit in Classic ›") }
+        TextButton(onClick = { onAction("benchmarks", "") }) {
+            Text(if (p.actions) "Add or edit ›" else "Add or edit in Classic ›")
+        }
     }
 }

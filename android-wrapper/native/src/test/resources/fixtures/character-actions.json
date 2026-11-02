@@ -1,0 +1,337 @@
+{
+ "protocol": 1,
+ "webSessionId": "character-web-1793188801121-qgapq0xg8p",
+ "sequence": 1,
+ "name": "Mara",
+ "avatar": "",
+ "classId": "athlete",
+ "title": "NOVICE · ATHLETE",
+ "level": 1,
+ "pct": 0,
+ "xp": "0 / 200 XP",
+ "nextLevel": "to level 2",
+ "nextTitle": "Next title: Apprentice at level 3 (2 to go)",
+ "streak": "0d",
+ "totalXP": "0",
+ "week": "+0",
+ "luck": "Roll",
+ "actions": true,
+ "today": "2026-10-28",
+ "luckRoll": null,
+ "benchmarkLimits": {
+  "name": 60,
+  "value": 40
+ },
+ "words": {
+  "luck": {
+   "heading": "Daily Luck",
+   "rolling": "Rolling…",
+   "retry": "Try again",
+   "close": "Close"
+  },
+  "benchmarks": {
+   "heading": "Real-world benchmarks",
+   "nameLabel": "Benchmark name",
+   "namePlaceholder": "e.g. 5K run time",
+   "valueLabel": "Current result",
+   "valuePlaceholder": "e.g. 28:30",
+   "add": "＋ Add benchmark",
+   "edit": "Edit",
+   "save": "Save",
+   "cancel": "Cancel",
+   "remove": "Remove",
+   "close": "Close"
+  }
+ },
+ "weight": "—",
+ "bmi": "—",
+ "cap": 8,
+ "archetype": "Newcomer",
+ "attributes": [
+  {
+   "id": "physique",
+   "name": "Strength & Physique",
+   "short": "Physique",
+   "color": 4294929239,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": true,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "endurance",
+   "name": "Endurance & Vitality",
+   "short": "Endurance",
+   "color": 4294921613,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": true,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "intelligence",
+   "name": "Intelligence & Knowledge",
+   "short": "Intelligence",
+   "color": 4284189951,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": false,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "business",
+   "name": "Wealth & Business",
+   "short": "Business",
+   "color": 4294296898,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": false,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "social",
+   "name": "Social & Communication",
+   "short": "Social",
+   "color": 4294942531,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": false,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "discipline",
+   "name": "Discipline & Execution",
+   "short": "Discipline",
+   "color": 4289170426,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": false,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "adventure",
+   "name": "Adventure & Practical Skills",
+   "short": "Adventure",
+   "color": 4282244228,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": false,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  },
+  {
+   "id": "wellbeing",
+   "name": "Wellbeing & Recovery",
+   "short": "Wellbeing",
+   "color": 4283289825,
+   "level": 1,
+   "into": 0,
+   "needed": 100,
+   "pct": 0,
+   "total": 0,
+   "week": 0,
+   "previous": 1,
+   "days": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "focus": true,
+   "status": "Not trained yet",
+   "last": "never",
+   "rank": 3
+  }
+ ],
+ "skills": [],
+ "benchmarks": [
+  {
+   "name": "5K run time",
+   "value": "28:30"
+  },
+  {
+   "name": "Bench press",
+   "value": "185 lb"
+  },
+  {
+   "name": "Pull-ups",
+   "value": "8"
+  }
+ ],
+ "tabs": [
+  {
+   "id": "dashboard",
+   "label": "Overview"
+  },
+  {
+   "id": "character",
+   "label": "Character"
+  },
+  {
+   "id": "food",
+   "label": "Food"
+  },
+  {
+   "id": "pet",
+   "label": "Cat"
+  },
+  {
+   "id": "log",
+   "label": "Log activity"
+  },
+  {
+   "id": "quests",
+   "label": "Quests"
+  },
+  {
+   "id": "plan",
+   "label": "Workout plan"
+  },
+  {
+   "id": "library",
+   "label": "Library"
+  },
+  {
+   "id": "money",
+   "label": "Money"
+  },
+  {
+   "id": "life-director",
+   "label": "Life Director"
+  }
+ ],
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

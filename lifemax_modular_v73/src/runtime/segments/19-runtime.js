@@ -90,10 +90,13 @@ function luckSkip(){if(!LK.rec||!LK.ov)return;LK.run++;luckShowFinal(LK.rec)}
 function luckSpeed(){LK.fast=!LK.fast;luckSetK();luckEl('#lkSpeed').textContent=LK.fast?'2×':'1×'}
 function luckReplay(){if(LK.rec)luckPlay(LK.rec)}
 function luckClose(){LK.run++;if(LK.ov)LK.ov.classList.remove('on');document.body.classList.remove('noscroll');renderLuckCard()}
-function openLuck(){var rec,L=luckToday();
+/* Today's roll: the one already made, or a new one, stored and saved. Shared by the dice overlay and the native Character screen; saved is false
+   when a new roll could not be stored. */
+function luckRollToday(){var rec,L=luckToday(),saved=true;
  if(L)rec=luckCompute(L.dice);
- else{var t=getToday(),dice=luckRollDice();rec=luckCompute(dice);state.luck={date:t,dice:dice,score:rec.score,ver:LUCK_VER};state.luckLog=state.luckLog||{};state.luckLog[t]=rec.score;save()}
- luckBuild();luckPlay(rec)}
+ else{var t=getToday(),dice=luckRollDice();rec=luckCompute(dice);state.luck={date:t,dice:dice,score:rec.score,ver:LUCK_VER};state.luckLog=state.luckLog||{};state.luckLog[t]=rec.score;saved=save()}
+ return {rec:rec,fresh:!L,saved:saved}}
+function openLuck(){var r=luckRollToday();luckBuild();luckPlay(r.rec)}
 
 devChatSeed('claude-luck-1','Claude',[
 'Daily Luck is in (version 2). One roll per day, stored in state.luck (date, dice, score, ver) with a history in state.luckLog. It is a standalone mechanic, not an XP attribute. Bump LUCK_VER if the formula ever changes so old stored rolls are ignored.',

@@ -324,8 +324,13 @@ function actById(id){
 }
 
 
-function addBenchmark(){const name=document.getElementById('benchName').value.trim(),value=document.getElementById('benchValue').value.trim();if(!name||!value){toast('Enter a name and result');return}state.benchmarks.push({name,value,date:new Date().toISOString()});document.getElementById('benchName').value='';document.getElementById('benchValue').value='';save();toast('Benchmark added')}
-function deleteBenchmark(i){state.benchmarks.splice(i,1);save();toast('Benchmark removed')}
+/* The benchmark rules, shared by the web form and the native Character screen (50-native-character.js). Each changes state.benchmarks only and
+   answers the page's refusal, or '' when it did the work; the caller saves. */
+function benchmarkPush(name,value,op){name=String(name||'').trim();value=String(value||'').trim();if(!name||!value)return 'Enter a name and result';const b={name,value,date:new Date().toISOString()};if(op)b.op=op;state.benchmarks.push(b);return ''}
+function benchmarkDrop(i){if(!state.benchmarks[i])return 'That benchmark is not there any more';state.benchmarks.splice(i,1);return ''}
+function benchmarkRevalue(i,value){value=String(value||'').trim();if(!state.benchmarks[i])return 'That benchmark is not there any more';if(!value)return 'Enter a result';state.benchmarks[i].value=value;state.benchmarks[i].date=new Date().toISOString();return ''}
+function addBenchmark(){const refused=benchmarkPush(document.getElementById('benchName').value,document.getElementById('benchValue').value);if(refused){toast(refused);return}document.getElementById('benchName').value='';document.getElementById('benchValue').value='';save();toast('Benchmark added')}
+function deleteBenchmark(i){benchmarkDrop(i);save();toast('Benchmark removed')}
 function saveRules(){Object.keys(rules).forEach(id=>{const el=document.getElementById('rule-'+id);if(el)rules[id].base=Math.min(200,Math.max(1,Number(el.value)||1))});save();toast('XP rules saved')}
 function resetRules(){rules=structuredClone(DEFAULT_RULES);save();toast('Default XP rules restored')}
 /* What a backup file holds. While the save is read-only that is the save as stored, not what is on screen; a stored save that cannot

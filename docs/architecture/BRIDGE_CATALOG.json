@@ -9,11 +9,22 @@
    "nativePlugin": "NativeCharacter",
    "capabilities": [
     "character.projection.v1",
+    "character.actions.v1",
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
    "owner": "web-core-gameplay",
-   "writes": [],
+   "commands": {
+    "luck": "{op, day}: luckRollToday() rolls and saves Daily Luck (the page's own function, also under the dice overlay); a roll already made today answers changed:false 'Already rolled today.'; a stale day is refused; a roll that could not be stored is taken back; the reply carries luck {date, dice, score, tier, message, color}; celebrations if the page held any (a roll pays none today)",
+    "benchmarkAdd": "{op, name, value}: benchmarkPush (the web form's rule: trimmed, both required) with the operation id stored on the entry, so a repeat answers 'Already recorded.'; limits come in the projection (benchmarkLimits)",
+    "benchmarkSet": "{index, name, value}: benchmarkRevalue; the name seen guards a list that changed; the same result answers changed:false",
+    "benchmarkRemove": "{index, name}: benchmarkDrop with the same guard",
+    "log": "{attribute}: fills the web Log form's own fields (the preset that trains the attribute, else a custom activity) and answers navigate:'log'; the native Log takes the prefill when it opens (beforeOpen)"
+   },
+   "writes": [
+    "benchmarkAdd/benchmarkSet/benchmarkRemove (state.benchmarks, saved by the page; a failed save is taken back out)",
+    "luck (state.luck, state.luckLog, saved by the page)"
+   ],
    "readContract": {
     "snapshotDto": "feature/character/domain/CharacterProjection.kt",
     "decoder": "feature/character/data/WebCharacterRepository.kt",
@@ -34,12 +45,10 @@
     "persistence": "no native product writes, no durable revision or epoch inserted"
    },
    "delegatedInteractions": [
-    "openAttr",
-    "openLuck",
-    "classic benchmark form"
+    "openAttr (an attribute card's catalog of activities; without character.actions.v1 also Log, Luck and the benchmark form, as before)"
    ],
-   "rollout": "Classic is default; Native Character preview is opt-in",
-   "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
+   "rollout": "Classic is default; Native Character preview is opt-in; the actions follow the same switch and the capability handshake",
+   "mutationsGate": "CONTRACT A14-A15; the page stays the only writer: commands answer {ok, changed, message}, ok only when persist() succeeded"
   },
   {
    "feature": "log",
