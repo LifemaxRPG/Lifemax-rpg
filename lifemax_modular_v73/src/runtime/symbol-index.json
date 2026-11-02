@@ -299,7 +299,22 @@
  "JC_ATTR_COL": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_CARE": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_CHIP_DO": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_COUNTER": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JC_DISTRESS": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_GIFT": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_NONE": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "JC_POOLS": [
@@ -1069,6 +1084,9 @@
  ],
  "attrXP": [
   "src/runtime/segments/04-runtime.js"
+ ],
+ "audioBusy": [
+  "src/runtime/segments/08-runtime.js"
  ],
  "audioCtx": [
   "src/runtime/segments/07-runtime.js"
@@ -2978,6 +2996,9 @@
  "histDrawn": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "histRev": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "histSel": [
   "src/runtime/segments/04-runtime.js"
  ],
@@ -3026,10 +3047,13 @@
  "jcCache": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcCanPay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcCare": [
   "src/runtime/segments/47-journal-coach.js"
  ],
- "jcCareNote": [
+ "jcCares": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcCat": [
@@ -3050,7 +3074,16 @@
  "jcCounter": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcCounterText": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcDay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDayData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcDecide": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcDow": [
@@ -3068,6 +3101,9 @@
  "jcHash": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcHeroData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcHeroHtml": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -3077,10 +3113,22 @@
  "jcInsight": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcKeepWords": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcListData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcListHtml": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcMean": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcMeter": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcOffered": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcOnReflect": [
@@ -3092,13 +3140,28 @@
  "jcPatterns": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcPay": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcPrompt": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcRange": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcRead": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcRec": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcReflectBox": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReflectData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReviewData": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcReviewHtml": [
@@ -3119,6 +3182,9 @@
  "jcSwap": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcSwapPrompt": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcTop": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -3128,7 +3194,16 @@
  "jcWeekStart": [
   "src/runtime/segments/47-journal-coach.js"
  ],
- "jcWelcome": [
+ "jcWelcomeData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWelcomeHtml": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWelcomeRecord": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcWrite": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jlApply": [
@@ -3141,6 +3216,15 @@
   "src/runtime/segments/48-journal-lock.js"
  ],
  "jlBlocksNative": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlError": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlGraceEnd": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlGraceTimer": [
   "src/runtime/segments/48-journal-lock.js"
  ],
  "jlLeftAt": [
@@ -3179,10 +3263,19 @@
  "jlSecure": [
   "src/runtime/segments/48-journal-lock.js"
  ],
+ "jlSetStatus": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
  "jlSettingsRender": [
   "src/runtime/segments/48-journal-lock.js"
  ],
+ "jlState": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
  "jlStatus": [
+  "src/runtime/segments/48-journal-lock.js"
+ ],
+ "jlStatusWatchers": [
   "src/runtime/segments/48-journal-lock.js"
  ],
  "jlUnlocked": [
@@ -3194,13 +3287,22 @@
  "jlWatchers": [
   "src/runtime/segments/48-journal-lock.js"
  ],
+ "journalBlank": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "journalDayData": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "journalDayLabel": [
   "src/runtime/segments/04-runtime.js"
  ],
- "journalDayTitle": [
+ "journalDays": [
   "src/runtime/segments/04-runtime.js"
  ],
- "journalDays": [
+ "journalListHtml": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "journalLocked": [
   "src/runtime/segments/04-runtime.js"
  ],
  "keepSafetyCopy": [
@@ -4464,6 +4566,15 @@
  ],
  "mediaMatching": [
   "src/runtime/segments/11-runtime.js"
+ ],
+ "mediaRemove": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "mediaRemoveAudio": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "mediaSetStatus": [
+  "src/runtime/segments/07-runtime.js"
  ],
  "mediaStats": [
   "src/runtime/segments/11-runtime.js"
@@ -6742,6 +6853,9 @@
  "renderJournalDay": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "renderJournalEntry": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "renderList": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -7038,6 +7152,9 @@
  "selectJournalDay": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "selectJournalEntry": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "selectMealFood": [
   "src/runtime/segments/08-runtime.js"
  ],
@@ -7065,9 +7182,6 @@
  "setMealsDay": [
   "src/runtime/segments/08-runtime.js",
   "src/runtime/segments/50-food.js"
- ],
- "setMediaStatus": [
-  "src/runtime/segments/07-runtime.js"
  ],
  "setOnboardingCarouselIndex": [
   "src/runtime/segments/12-runtime.js"

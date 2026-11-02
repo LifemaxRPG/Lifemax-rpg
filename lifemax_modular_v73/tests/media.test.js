@@ -1,6 +1,7 @@
 /* Media pane (Library) tests: the reading list seeded once, adding and editing through the form (mediaUpsert underneath), finishing
    and unfinishing, removing, the search and the two filters, a save that fails for each writer (attaching and replacing a file
-   included), and the audio progress words.
+   included), the owners a native screen calls (mediaSetStatus, mediaRemove, mediaRemoveAudio, and mediaUpsert's operation id), a
+   stored type the form does not offer, audioBusy(), and the audio progress words.
    Run:  NODE_PATH=$(npm root -g) node tests/media.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 700) : '')) } };
@@ -151,6 +152,85 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   ok('a read-only save is named as the reason for attaching and replacing, and no file is stored', attached.ro.every(m => m === 'Not saved: this version is read-only for your save'), attached.ro);
   const removed = await p.evaluate(async () => { await removeMediaAudio('a'); return { said: document.getElementById('toast').textContent, audio: mediaById('a').audio, file: await audioDbGet('a'), stored: JSON.parse(localStorage.getItem(STORE)).mediaItems.find(x => x.id === 'a').audio } });
   ok('a stored audio removal deletes the file and says so', removed.said === 'Audio removed' && removed.audio === undefined && removed.file === null && removed.stored === undefined, removed);
+
+  // the owners a native screen calls: each answers {ok, changed, message} in the page's words; a repeat changes nothing and saves nothing
+  const owners = await p.evaluate(async () => {
+    const real = Storage.prototype.setItem; let writes = 0;
+    state.mediaItems = [{ id: 'o1', title: 'One', type: 'Book', creator: '', status: 'unread', link: '', notes: '' }, { id: 'o2', title: 'Two', type: 'Audiobook', creator: '', status: 'progress', link: '', notes: '', audio: { name: 'two.m4b', size: 1, type: 'audio/mp4', position: 5, duration: 9 } }];
+    save(); await audioDbPut('o2', { blob: new Blob(['2']), name: 'two.m4b', type: 'audio/mp4', size: 1 });
+    Storage.prototype.setItem = function (k) { if (k === STORE) writes++; return real.apply(this, arguments) };
+    const run = async f => { const w = writes, r = await f(); return JSON.stringify(Object.assign({}, r, { writes: writes - w })) };
+    const out = {};
+    try {
+      for (const [k, f] of Object.entries({
+        finish: () => mediaSetStatus('o1', 'finished'), finishAgain: () => mediaSetStatus('o1', 'finished'), back: () => mediaSetStatus('o1', 'progress'),
+        unread: () => mediaSetStatus('o1', 'unread'), gone: () => mediaSetStatus('nope', 'finished'), bad: () => mediaSetStatus('o1', 'done'),
+        audio: () => mediaRemoveAudio('o2'), audioAgain: () => mediaRemoveAudio('o2'), remove: () => mediaRemove('o1'), removeAgain: () => mediaRemove('o1'),
+      })) out[k] = await run(f);
+    } finally { Storage.prototype.setItem = real }
+    out.file = await audioDbGet('o2'); out.items = JSON.stringify(state.mediaItems.map(x => [x.id, x.status, !!x.audio]));
+    return out;
+  });
+  const said = (ok, changed, message, writes) => JSON.stringify({ ok, changed, message, writes });
+  ok('mediaSetStatus sets a status once, in the page\'s words; the same status again saves nothing', owners.finish === said(true, true, 'Marked as finished', 1) && owners.finishAgain === said(true, false, 'Already finished', 0) && owners.back === said(true, true, 'Moved back to in progress', 1) && owners.unread === said(true, true, 'Status updated', 1), owners);
+  ok('mediaSetStatus refuses an item that is gone and a status the page does not have', owners.gone === said(false, false, 'That item is no longer in your library', 0) && owners.bad === said(false, false, 'Unknown status', 0), owners);
+  ok('mediaRemoveAudio and mediaRemove change once; again, they answer done and save nothing', owners.audio === said(true, true, 'Audio removed', 1) && owners.audioAgain === said(true, false, 'Audio removed', 0) && owners.remove === said(true, true, 'Removed from library', 1) && owners.removeAgain === said(true, false, 'Removed from library', 0) && owners.file === null && owners.items === '[["o2","progress",false]]', owners);
+  const ownersFail = await p.evaluate(async () => {
+    const real = Storage.prototype.setItem;
+    state.mediaItems = [{ id: 'f1', title: 'F', type: 'Audiobook', creator: '', status: 'progress', link: '', notes: '', audio: { name: 'f.m4b', size: 1, type: 'audio/mp4', position: 5, duration: 9 } }]; save();
+    const held = JSON.stringify(state.mediaItems), all = async () => JSON.stringify([mediaSetStatus('f1', 'finished'), mediaRemove('f1'), await mediaRemoveAudio('f1')]);
+    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    let full; try { full = await all() } finally { Storage.prototype.setItem = real }
+    saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
+    let ro; try { ro = await all() } finally { saveReadOnly = ''; saveReadOnlyTold = false }
+    return { full, ro, same: JSON.stringify(state.mediaItems) === held };
+  });
+  const thrice = m => JSON.stringify([0, 1, 2].map(() => ({ ok: false, changed: false, message: m })));
+  ok('each owner answers a failed and a read-only save with nothing changed', ownersFail.full === thrice('Could not save to this browser (storage full?)') && ownersFail.ro === thrice('Not saved: this version is read-only for your save') && ownersFail.same, ownersFail);
+
+  // an add carrying an operation id stores it on the item in the same save: the same add again answers that item, adding nothing
+  const receipt = await p.evaluate(() => {
+    const real = Storage.prototype.setItem; let writes = 0;
+    state.mediaItems = []; save();
+    Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
+    let lost; try { lost = mediaUpsert({ op: 'op-1', title: 'Dune' }) } finally { Storage.prototype.setItem = real }
+    const afterLost = state.mediaItems.length;
+    Storage.prototype.setItem = function (k) { if (k === STORE) writes++; return real.apply(this, arguments) };
+    let first, again, edit, other, w1, w2;
+    try {
+      first = mediaUpsert({ op: 'op-1', title: 'Dune' }); w1 = writes; again = mediaUpsert({ op: 'op-1', title: 'Dune' }); w2 = writes;
+      edit = mediaUpsert({ id: first.id, op: 'op-2', title: 'Dune Messiah', type: 'Book' }); other = mediaUpsert({ op: 'op-3', title: 'Dune' });
+    } finally { Storage.prototype.setItem = real }
+    return { lost, afterLost, first, again, w1, w2, edit, other, stored: JSON.parse(localStorage.getItem(STORE)).mediaItems.map(x => [x.title, x.addOp || null]) };
+  });
+  ok('a failed add stores no receipt, so its retry adds', !receipt.lost.ok && receipt.afterLost === 0 && receipt.first.ok && receipt.first.message === 'Added to your library' && receipt.w1 === 1, receipt);
+  ok('the same add again answers the item it made, with no second item and no save', receipt.again.ok && receipt.again.id === receipt.first.id && receipt.again.duplicate === true && receipt.again.message === 'Added to your library' && receipt.w2 === receipt.w1, receipt);
+  ok('an edit is a plain set that keeps the add\'s receipt, and another operation adds another item', receipt.edit.ok && receipt.edit.message === 'Media item updated' && receipt.other.ok && receipt.other.id !== receipt.first.id && JSON.stringify(receipt.stored) === '[["Dune","op-3"],["Dune Messiah","op-1"]]', receipt);
+
+  // a stored type the form does not offer: the form's list shows none, and saving the form keeps it until a type is chosen
+  const odd = await p.evaluate(() => {
+    state.mediaItems = [{ id: 'odd', title: 'Watchmen', type: 'Comic', creator: '', status: 'unread', link: '', notes: '' }]; save(); navigate('media');
+    showMediaForm(mediaById('odd')); const shown = document.getElementById('mediaType').value;
+    document.getElementById('mediaNotes').value = 'Graphic novel'; document.querySelector('#mediaForm button[type=submit]').click();
+    const viaForm = [mediaById('odd').type, mediaById('odd').notes];
+    mediaUpsert({ id: 'odd', title: 'Watchmen', status: 'unread', type: 'Book' });
+    return { shown, viaForm, chosen: mediaById('odd').type, stored: JSON.parse(localStorage.getItem(STORE)).mediaItems[0].type };
+  });
+  ok('an edit keeps a stored type the form does not offer, and a type chosen replaces it', odd.shown === '' && JSON.stringify(odd.viaForm) === '["Comic","Graphic novel"]' && odd.chosen === 'Book' && odd.stored === 'Book', odd);
+
+  // Remove asks with the title as it is
+  const quoted = await p.evaluate(() => { let q = ''; window.confirm = m => { q = m; return false }; state.mediaItems = [{ id: 'q', title: 'The "Big" Book', type: 'Book', creator: '', status: 'unread', link: '', notes: '' }]; deleteMediaItem('q'); return q });
+  ok('Remove asks with the title\'s quotes as they are, no backslash before them', quoted === 'Remove "The "Big" Book" from your media library?', quoted);
+
+  // audioBusy(): the player loading, loaded or showing (a native screen over the Library steps aside while it is)
+  const busy = await p.evaluate(() => {
+    closeAudioPlayer(true); const bar = document.getElementById('audioPlayer'), out = [audioBusy()];
+    audioCtx.loading = 'x'; out.push(audioBusy()); audioCtx.loading = null;
+    audioCtx.mediaId = 'x'; out.push(audioBusy()); audioCtx.mediaId = null;
+    bar.classList.add('show'); out.push(audioBusy()); bar.classList.remove('show'); out.push(audioBusy());
+    return out;
+  });
+  ok('audioBusy: free at rest, busy while a file loads, while one is loaded and while the player shows', JSON.stringify(busy) === '[false,true,true,true,false]', busy);
 
   // audio: the progress words and the meta line, drawn and updated live from one function
   const words = await p.evaluate(() => [mediaAudioProgress('progress', 0, 0), mediaAudioProgress('progress', 1800, 3600), mediaAudioProgress('progress', 3599, 3600), mediaAudioProgress('finished', 10, 3600), mediaAudioProgress('unread', 9999, 3600)].map(w => Object.assign(w, { pct: +w.pct.toFixed(2) })));

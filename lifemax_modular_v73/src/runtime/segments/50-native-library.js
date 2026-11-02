@@ -184,13 +184,11 @@
     // the page's toast goes to the screen, which hides it; the one pointing the owner to a file button is about the page
     notices: { quiet: (id) => id === hint },
     // until a native mini-player exists, a player that is loading, loaded or showing keeps the pane on the page, so its
-    // controls never vanish under the screen
+    // controls never vanish under the screen (audioBusy)
     blocked: () =>
       acting ||
       document.getElementById("mediaFormCard").style.display !== "none" ||
-      !!audioCtx.loading ||
-      !!audioCtx.mediaId ||
-      document.getElementById("audioPlayer").classList.contains("show") ||
+      audioBusy() ||
       !!document.activeElement?.matches(FILE_BUTTON) ||
       !!document.querySelector(".luov"),
     // The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player

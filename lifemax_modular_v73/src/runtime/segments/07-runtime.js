@@ -150,39 +150,52 @@ function saveMediaItem(e){
  if(!res.ok){toast(res.message);return}
  hideMediaForm();navigate('media');toast(res.message);
 }
-/* Add a media item, or change the one whose id is f.id, by the form's rules (a title, an http or https link, the form's lengths),
-   and save. Returns {ok, id, message}; it never touches the page. A save that fails is taken back out and reported. */
+/* The Media owners: mediaUpsert, mediaSetStatus, mediaRemove and mediaRemoveAudio. Each saves and answers in the page's words, and
+   none asks or toasts: the page's form, tick and buttons ask and say, and a native screen can call the owners as they are. A save that
+   fails is taken back and reported.
+   mediaUpsert adds an item, or changes the one whose id is f.id, by the form's rules (a title, an http or https link, the form's
+   lengths), and answers {ok, id, message}. An add given an operation id (f.op) stores it on the item in the same save, so the same add
+   again answers the item it made instead of adding another. An edit that names no type keeps the stored one (the form's list cannot
+   show a type it does not offer). */
 function mediaUpsert(f){
+ if(!Array.isArray(state.mediaItems))state.mediaItems=[];
+ const id=String(f.id||''),op=f.op&&!id?String(f.op):'';
+ const made=op&&state.mediaItems.find(x=>x.addOp===op);if(made)return {ok:true,id:made.id,message:'Added to your library',duplicate:true};
  const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,message:'Add a title first'};
  const link=String(f.link||'').trim().slice(0,500);
  if(link&&!/^https?:\/\//i.test(link))return {ok:false,message:'Use a valid http or https link'};
- if(!Array.isArray(state.mediaItems))state.mediaItems=[];
- const id=String(f.id||''),kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id);
- const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),title,type:String(f.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
- if(index>=0)state.mediaItems[index]={...kept[index],...item};else state.mediaItems.unshift(item);
+ const kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id),old=kept[index];
+ const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),...(op?{addOp:op}:{}),title,type:String(f.type||old&&old.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
+ if(old)state.mediaItems[index]={...old,...item};else state.mediaItems.unshift(item);
  if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,message:unsavedMessage()}}
- return {ok:true,id:item.id,message:index>=0?'Media item updated':'Added to your library'};
+ return {ok:true,id:item.id,message:old?'Media item updated':'Added to your library'};
 }
-function toggleMediaFinished(id,checked){
- const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
- const was=[item.status,item.updatedAt];
- item.status=checked?'finished':'progress';item.updatedAt=new Date().toISOString();
- if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
- toast(checked?'Marked as finished':'Moved back to in progress');
-}
-function setMediaStatus(id,status){ // no caller yet: the Library's phase 2 setStatus command (LIBRARY_INVENTORY.md)
- const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
+/* Sets an item's status (unread, progress or finished). Answers {ok, changed, message}; the status it already has changes nothing and
+   saves nothing. */
+function mediaSetStatus(id,status){
+ const item=mediaById(id);if(!item)return {ok:false,changed:false,message:'That item is no longer in your library'};
+ if(!MEDIA_STATUS[status])return {ok:false,changed:false,message:'Unknown status'};
+ if(item.status===status)return {ok:true,changed:false,message:'Already '+MEDIA_STATUS[status].toLowerCase()};
  const was=[item.status,item.updatedAt];
  item.status=status;item.updatedAt=new Date().toISOString();
- if(!save()){[item.status,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
- toast('Status updated');
+ if(!save()){[item.status,item.updatedAt]=was;renderMedia();return {ok:false,changed:false,message:unsavedMessage()}}
+ return {ok:true,changed:true,message:status==='finished'?'Marked as finished':was[0]==='finished'?'Moved back to in progress':'Status updated'};
+}
+function toggleMediaFinished(id,checked){toast(mediaSetStatus(id,checked?'finished':'progress').message)}
+/* Removes an item, then its audio file, and closes the player when it was playing it. An id already gone changes nothing. */
+function mediaRemove(id){
+ const kept=state.mediaItems||[];
+ if(!kept.some(x=>x.id===id))return {ok:true,changed:false,message:'Removed from library'};
+ state.mediaItems=kept.filter(x=>x.id!==id);
+ if(!save()){state.mediaItems=kept;renderMedia();return {ok:false,changed:false,message:unsavedMessage()}}
+ if(audioCtx.mediaId===id)closeAudioPlayer(true);
+ audioDbDelete(id);
+ return {ok:true,changed:true,message:'Removed from library'};
 }
 function deleteMediaItem(id){
- const item=(state.mediaItems||[]).find(x=>x.id===id);if(!item)return;
- if(!confirm('Remove "'+item.title.replace(/"/g,'\\"')+'" from your media library?'))return;
- const kept=state.mediaItems;state.mediaItems=kept.filter(x=>x.id!==id);
- if(!save()){state.mediaItems=kept;renderMedia();toast(unsavedMessage());return}
- if(audioCtx.mediaId===id)closeAudioPlayer(true);audioDbDelete(id);toast('Removed from library');
+ const item=mediaById(id);if(!item)return;
+ if(!confirm('Remove "'+item.title+'" from your media library?'))return;
+ toast(mediaRemove(id).message);
 }
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
@@ -283,15 +296,21 @@ async function attachAudioFile(id, file){
     toast('Could not store audio (storage full or blocked)');
   }
 }
-async function removeMediaAudio(id){
-  const item=mediaById(id);if(!item||!item.audio)return;
-  if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
+/* Removes an item's stored audio file and its playback position, and closes the player when it was playing it. An item without
+   audio (or gone) changes nothing. Answers {ok, changed, message} once the file is deleted. */
+async function mediaRemoveAudio(id){
+  const item=mediaById(id);if(!item||!item.audio)return {ok:true,changed:false,message:'Audio removed'};
   const was=[item.audio,item.updatedAt];
   delete item.audio;
   item.updatedAt=new Date().toISOString();
-  if(!save()){[item.audio,item.updatedAt]=was;renderMedia();toast(unsavedMessage());return}
+  if(!save()){[item.audio,item.updatedAt]=was;renderMedia();return {ok:false,changed:false,message:unsavedMessage()}}
   if(audioCtx.mediaId===id)closeAudioPlayer(true);
   await audioDbDelete(id);
-  toast('Audio removed');
+  return {ok:true,changed:true,message:'Audio removed'};
+}
+async function removeMediaAudio(id){
+  const item=mediaById(id);if(!item||!item.audio)return;
+  if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
+  toast((await mediaRemoveAudio(id)).message);
 }
 function r

@@ -49,8 +49,9 @@ function unsavedMessage(){return saveReadOnly?'Not saved: this version is read-o
    pays Sparks and records badges, and the save's redraw can fulfil a Daily Hand card that pays a quest of its own. The state is plain
    JSON by construction (it is stored that way), so the copy is exact. The message comes after the redraw, so the failed save's quest
    toast is not what the page is left showing, and its badges are not announced (checkBadges announces only a badge still held).
-   Log (recordActivity) and Life Director (LifeMaxHost.awardActivity) share it. */
-function takeBack(was){state=JSON.parse(was);renderAll();toast(unsavedMessage())}
+   said, when given, is what it says instead of unsavedMessage(): the Journal coach names the words it did keep. Log (recordActivity),
+   Life Director (LifeMaxHost.awardActivity) and the coach's rewards (jcPay) share it. */
+function takeBack(was,said){state=JSON.parse(was);renderAll();toast(said||unsavedMessage())}
 function xpForLevel(level){return 100+25*(level-1)}
 function levelData(total,fn){fn=fn||xpForLevel;let level=1,left=Math.max(0,total);while(left>=fn(level)&&level<1000){left-=fn(level);level++}return {level,into:left,needed:fn(level),pct:Math.min(100,left/fn(level)*100)}}
 function totalXP(){return Object.values(state.attrXP).reduce((a,b)=>a+b,0)}
@@ -91,32 +92,56 @@ function attrCard(a){const d=attrLevel(a.id);return `<div class="attr" role="but
 function renderAttrs(){document.getElementById('dashboardAttrs').innerHTML=ATTRS.map(attrCard).join('')}
 function renderActivities(){const recent=state.activities.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);const markup=recent.length?recent.map(a=>`<div class="activity"><div class="acticon">${iconHtml(a.icon,20)}</div><div class="actmain"><strong>${esc(a.name)}</strong><small>${new Date(a.date).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})} · ${a.duration||0} min</small></div><div class="actxp">+${a.xp} XP</div></div>`).join(''):`<div class="empty"><div>✦</div>No activities yet.<br><button class="btn small" style="margin-top:12px" onclick="navigate('log')">Log your first activity</button></div>`;document.getElementById('recentActivities').innerHTML=markup}
 function renderBenchmarks(){document.getElementById('benchmarks').innerHTML=state.benchmarks.length?state.benchmarks.map((b,i)=>`<div class="minirow"><span><strong>${esc(b.name)}</strong><br><small>${esc(b.value)}</small></span><button class="btn small secondary" onclick="deleteBenchmark(${i})">Remove</button></div>`).join(''):'<p class="muted" style="font-size:12px">No benchmarks yet. Add a measurable result you care about.</p>'}
+/* The Journal: the hero, the day list and the selected day or review, drawn from the data builders (jcHeroData, jcListData, jcDayData,
+   jcReviewData, journalDayData), which a native Journal projects as they are. Before drawing it decides the selected day's chip and
+   welcome record (jcDecide), stored without a save, so drawing never draws itself again. While the Journal is locked it decides the
+   same and draws nothing: the hero, the list and the entry are left empty (journalBlank). */
 function renderHistory(){
   if(!state.dayReflections)state.dayReflections={};
-  const days=journalDays();
-  if(window.LifeMaxCoach)LifeMaxCoach.reset();
+  histRev++;
+  const coach=!!window.LifeMaxCoach,days=journalDays();
+  if(coach)LifeMaxCoach.reset();
   if(!histSel||(!days.includes(histSel)&&!/^[WM]:/.test(histSel)))histSel=days[0]||getToday();
   const daysEl=document.getElementById('journalDays');
   const entryEl=document.getElementById('journalEntry');
   if(!daysEl||!entryEl)return;
-  const hero=document.getElementById('journalHero');if(hero&&window.LifeMaxCoach)hero.innerHTML=jcHeroHtml();
+  if(coach&&days.length)jcDecide(histSel);
+  if(journalLocked()){journalBlank();return}
+  const hero=document.getElementById('journalHero');
+  if(hero&&coach)hero.innerHTML=jcHeroHtml();
   if(!days.length){
     daysEl.innerHTML='';
     entryEl.innerHTML=`<div class="empty"><div>◷</div><strong>No journal entries yet</strong><br>Log an activity, complete a quest, or finish a plan session. Everything you enter will show up here by day.</div>`;
     return;
   }
-  daysEl.innerHTML=window.LifeMaxCoach?jcListHtml(days,histSel):days.map(d=>{
-    const acts=actsForDay(d);
+  daysEl.innerHTML=journalListHtml(days);
+  renderJournalEntry();
+}
+/* The day list: the coach's tiles, or plain buttons in the first start-up render, before the coach exists */
+function journalListHtml(days){
+  if(window.LifeMaxCoach)return jcListHtml(days,histSel);
+  return days.map(d=>{
     const hasRef=!!(state.dayReflections[d]||'').trim();
-    const label=journalDayLabel(d);
-    return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(label)}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
+    return `<button type="button" class="journal-day-btn ${d===histSel?'on':''}" onclick="selectJournalDay('${d}')">${esc(journalDayLabel(d))}<small>${actsForDay(d).length} logged${hasRef?' · reflection':''}</small></button>`;
   }).join('');
-  // text being typed in the entry stays as it is: the entry is drawn again once its box loses the focus
+}
+/* The selected day or review, into the entry (empty while the Journal is locked). Text being typed there stays as it is: the entry is
+   drawn again once its box loses the focus. */
+function renderJournalEntry(){
+  const entryEl=document.getElementById('journalEntry');if(!entryEl)return;
+  if(journalLocked()){entryEl.innerHTML='';histDrawn=null;histStale=false;return}
   if(histDrawn===histSel&&entryEl.contains(document.activeElement)&&document.activeElement.matches('textarea')){histStale=true;return}
   histDrawn=histSel;histStale=false;
   entryEl.innerHTML=/^[WM]:/.test(histSel)&&window.LifeMaxCoach?jcReviewHtml(histSel):renderJournalDay(histSel);
 }
-let histSel=null,histDrawn=null,histStale=false;
+/* histRev counts changes to what the hero and the day list show: every renderHistory, and the writes that do not draw them (a
+   reflection's soft redraw, a reset baseline). A native Journal memoises the hero and list on it. */
+let histSel=null,histDrawn=null,histStale=false,histRev=0;
+/* The Journal lock keeps the Journal's words out of the page while it is locked (48-journal-lock.js). The start-up drawing comes before
+   that module: a lock that is on is locked then, as every page load starts locked. */
+function journalLocked(){return window.LifeMaxJournalLock?LifeMaxJournalLock.blocksNative():!!(state.journalLock&&state.journalLock.on)}
+/* The locked Journal: its hero, day list and entry emptied. The lock also calls it when a drawing fails, so no words are left behind. */
+function journalBlank(){['journalHero','journalDays','journalEntry'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=''});histDrawn=null;histStale=false}
 document.getElementById('journalEntry')?.addEventListener('focusout',e=>{if(histStale&&e.target.matches('textarea'))setTimeout(renderHistory)});
 function journalDays(){
   const set=new Set();
@@ -143,30 +168,36 @@ function journalDayLabel(d){
     return dt.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   }catch(e){return d}
 }
-function journalDayTitle(d){
-  try{
-    const dt=new Date(d+'T12:00:00');
-    return dt.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  }catch(e){return d}
-}
 function selectJournalDay(d){histSel=d;renderHistory()}
+/* Selects a day or a review and draws only its entry, moving the tiles' highlight: what a native Journal's select asks of the page
+   underneath (the page's own tiles keep selectJournalDay, which draws the whole Journal). Like a drawing, it decides the day's chip and
+   welcome record first, stored without a save; a decision that resets the baseline changes the hero's and the tiles' numbers too, so
+   then the whole Journal is drawn. Answers false, changing nothing, for a key the Journal does not list. */
+function selectJournalEntry(key){
+  const coach=!!window.LifeMaxCoach,days=journalDays();
+  if(!days.includes(key)&&!(coach&&jcReviewList(days).some(r=>r.key===key)))return false;
+  histSel=key;
+  const rev=histRev;if(coach)jcDecide(key);
+  if(histRev!==rev){renderHistory();return true}
+  renderJournalEntry();
+  const tap=`selectJournalDay('${key}')`;
+  document.querySelectorAll('#journalDays button').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick')===tap));
+  return true;
+}
 function saveDayReflection(d,val){
   if(!state.dayReflections)state.dayReflections={};
   const t=val.trim();
   if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
+  histRev++;
   state.customRules=rules;
   if(!writeSave()){toast(unsavedMessage());return}
   try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
+  if(journalLocked())return; // saved by the relock's blur: the Journal is left empty
   // soft refresh day list badges without losing textarea focus
   const daysEl=document.getElementById('journalDays');
   if(daysEl){
     if(window.LifeMaxCoach)LifeMaxCoach.reset();
-    const days=journalDays();
-    daysEl.innerHTML=window.LifeMaxCoach?jcListHtml(days,histSel):days.map(day=>{
-      const acts=actsForDay(day);
-      const hasRef=!!(state.dayReflections[day]||'').trim();
-      return `<button type="button" class="journal-day-btn ${day===histSel?'on':''}" onclick="selectJournalDay('${day}')">${esc(journalDayLabel(day))}<small>${acts.length} logged${hasRef?' · reflection':''}</small></button>`;
-    }).join('');
+    daysEl.innerHTML=journalListHtml(journalDays());
   }
   const cnt=document.getElementById('jcCount');if(cnt&&window.LifeMaxCoach){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
 }
@@ -189,37 +220,32 @@ function planLogsForDay(d){
     return {key:k,label:labelOf(k),note,weight};
   }).filter(Boolean);
 }
+/* A day's page as data: the head, the counts, what was logged in time order (with the workout-plan notes under a plan session, or
+   on a card of their own), or the blank state. The coach's cards are jcDayData(d). */
+function journalDayData(d){
+  const acts=actsForDay(d),logs=planLogsForDay(d),dt=new Date(d+'T12:00:00');
+  const color=a=>window.LifeMaxCoach?jcAttrColor(a.primary):'var(--accent)';
+  return {
+    key:d,
+    head:{number:String(dt.getDate()),weekday:dt.toLocaleDateString(undefined,{weekday:'long'}),month:dt.toLocaleDateString(undefined,{month:'long',year:'numeric'}),xp:acts.reduce((s,a)=>s+(a.xp||0),0)},
+    meta:[acts.length+' entr'+(acts.length===1?'y':'ies')].concat(logs.length?[logs.length+' exercise note'+(logs.length===1?'':'s')]:[]),
+    timeline:acts.map(a=>({time:new Date(a.date).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),color:color(a),icon:a.icon,name:a.name,
+      attr:(ATTRS.find(x=>x.id===a.primary)||{}).short||null,minutes:a.duration?a.duration+' min':null,skill:a.skill&&a.skill!==a.name?a.skill:null,
+      xp:a.xp||0,notes:(a.notes||'').trim()||null,plan:a.type==='plan'&&logs.length?logs:null})),
+    workoutNotes:logs.length&&!acts.some(a=>a.type==='plan')?logs:null,
+    blank:acts.length||logs.length?null:d===getToday()?'Start with an activity, quest, or plan session and it will land here.':'A blank page is still a page.'
+  };
+}
 function renderJournalDay(d){
-  const acts=actsForDay(d);
-  const logs=planLogsForDay(d);
-  const ref=state.dayReflections&&state.dayReflections[d]||'';
-  const totalXP=acts.reduce((s,a)=>s+(a.xp||0),0);
-  const col=a=>window.LifeMaxCoach?jcAttrColor(a.primary):'var(--accent)';
+  const day=journalDayData(d),h=day.head,coach=!!window.LifeMaxCoach;
   const planBlock=l=>`<div class="j-plan-logs">${l.map(x=>`<div><b>${esc(x.label)}</b>${x.weight?' · '+esc(x.weight):''}${x.note?' — '+esc(x.note):''}</div>`).join('')}</div>`;
-  let body='';
-  if(!acts.length&&!logs.length){
-    body=`<div class="jx-empty"><div class="jx-empty-ico">✎</div><strong>Nothing logged this day yet</strong><span>${d===getToday()?'Start with an activity, quest, or plan session and it will land here.':'A blank page is still a page.'}</span></div>`;
-  }else{
-    body='<div class="jx-timeline">'+acts.map((a,i)=>{
-      const attr=(ATTRS.find(x=>x.id===a.primary)||{}).short||'';
-      const dt=new Date(a.date),time=dt.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
-      const notes=(a.notes||'').trim();
-      let extra='';
-      if(a.type==='plan'&&logs.length)extra=planBlock(logs);
-      return `<div class="jx-item" style="--c:${col(a)};--i:${i}"><div class="jx-time">${esc(time)}</div><div class="jx-node"></div><div class="jx-card"><div class="jx-card-top"><div class="acticon">${iconHtml(a.icon,18)}</div><div class="jx-card-main"><strong>${esc(a.name)}</strong><div class="jx-sub">${attr?`<span class="jx-pill" style="--c:${col(a)}">${esc(attr)}</span>`:''}${a.duration?`<span>${a.duration} min</span>`:''}${a.skill&&a.skill!==a.name?`<span>${esc(a.skill)}</span>`:''}</div></div><div class="jx-xpv">+${a.xp||0}<small>XP</small></div></div>${notes?`<div class="j-notes">${esc(notes)}</div>`:''}${extra}</div></div>`;
-    }).join('')+'</div>';
-    if(logs.length&&!acts.some(a=>a.type==='plan')){
-      body+=`<div class="jx-card jx-plan"><div class="jx-card-top"><div class="acticon">${px('dumbbell',18)}</div><div class="jx-card-main"><strong>Workout notes</strong></div></div>${planBlock(logs)}</div>`;
-    }
-  }
-  let dtHtml;
-  try{
-    const dt=new Date(d+'T12:00:00');
-    dtHtml=`<div class="jx-dayhead"><div class="jx-bignum">${dt.getDate()}</div><div class="jx-dayname"><b>${esc(dt.toLocaleDateString(undefined,{weekday:'long'}))}</b><span>${esc(dt.toLocaleDateString(undefined,{month:'long',year:'numeric'}))}</span></div><div class="jx-dayxp"><b>${totalXP}</b><small>XP today</small></div></div>`;
-  }catch(e){dtHtml=`<div class="journal-date">${esc(journalDayTitle(d))}</div>`}
-  const meta=`<div class="jx-meta"><span>${acts.length} entr${acts.length===1?'y':'ies'}</span>${logs.length?`<span>${logs.length} exercise note${logs.length===1?'':'s'}</span>`:''}</div>`;
-  return `${dtHtml}${meta}${window.LifeMaxCoach?jcTop(d):''}${body}${window.LifeMaxCoach?'':`<div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
-    <textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" onchange="saveDayReflection('${d}',this.value)">${esc(ref)}</textarea></div>`}`;
+  const item=(t,i)=>`<div class="jx-item" style="--c:${t.color};--i:${i}"><div class="jx-time">${esc(t.time)}</div><div class="jx-node"></div><div class="jx-card"><div class="jx-card-top"><div class="acticon">${iconHtml(t.icon,18)}</div><div class="jx-card-main"><strong>${esc(t.name)}</strong><div class="jx-sub">${t.attr?`<span class="jx-pill" style="--c:${t.color}">${esc(t.attr)}</span>`:''}${t.minutes?`<span>${esc(t.minutes)}</span>`:''}${t.skill?`<span>${esc(t.skill)}</span>`:''}</div></div><div class="jx-xpv">+${t.xp}<small>XP</small></div></div>${t.notes?`<div class="j-notes">${esc(t.notes)}</div>`:''}${t.plan?planBlock(t.plan):''}</div></div>`;
+  const body=day.blank?`<div class="jx-empty"><div class="jx-empty-ico">✎</div><strong>Nothing logged this day yet</strong><span>${esc(day.blank)}</span></div>`
+    :`<div class="jx-timeline">${day.timeline.map(item).join('')}</div>`+(day.workoutNotes?`<div class="jx-card jx-plan"><div class="jx-card-top"><div class="acticon">${px('dumbbell',18)}</div><div class="jx-card-main"><strong>Workout notes</strong></div></div>${planBlock(day.workoutNotes)}</div>`:'');
+  const head=`<div class="jx-dayhead"><div class="jx-bignum">${h.number}</div><div class="jx-dayname"><b>${esc(h.weekday)}</b><span>${esc(h.month)}</span></div><div class="jx-dayxp"><b>${h.xp}</b><small>XP today</small></div></div>`;
+  const meta=`<div class="jx-meta">${day.meta.map(m=>`<span>${esc(m)}</span>`).join('')}</div>`;
+  return `${head}${meta}${coach?jcTop(d):''}${body}${coach?'':`<div class="j-reflect"><label for="dayReflection">Reflection <span style="font-weight:400;color:var(--muted2)">(optional)</span></label>
+    <textarea id="dayReflection" maxlength="4000" placeholder="How did today feel? What mattered? What will you do differently?" onchange="saveDayReflection('${d}',this.value)">${esc(state.dayReflections&&state.dayReflections[d]||'')}</textarea></div>`}`;
 }
 function renderStats(){const lvl=characterLevel();document.getElementById('heroName').textContent=state.name||'The Life Architect';document.getElementById('heroLevel').textContent=lvl.level;document.getElementById('heroXP').textContent=totalXP().toLocaleString()+' XP';document.getElementById('heroBar').style.width=lvl.pct+'%';document.getElementById('heroProgress').textContent=`${lvl.into} / ${lvl.needed} XP to next level`;document.getElementById('heroPercent').textContent=Math.round(lvl.pct)+'%';document.getElementById('achievementCount').textContent=Object.keys(state.questDone).length;document.getElementById('totalActivities').textContent=state.activities.length;document.getElementById('todayXP').textContent=todayActivities().reduce((s,a)=>s+a.xp,0)+' XP earned';document.getElementById('totalXPStat').textContent=totalXP().toLocaleString();let strongest=ATTRS.slice().sort((a,b)=>attrXP(b.id)-attrXP(a.id))[0];document.getElementById('strongestStat').textContent=attrXP(strongest.id)>0?strongest.short:'—';document.getElementById('skillsStat').textContent=Object.values(state.skillXP).filter(v=>v>0).length;document.getElementById('questsStat').textContent=Object.keys(state.questDone).length;let tq=todayActivities().length;let qd=state.quests.filter(q=>q.cadence==='daily'&&isQuestDone(q)).length;document.getElementById('dailyMini').innerHTML=`<div class="minirow"><span>Activities logged</span><strong>${tq}</strong></div><div class="minirow"><span>Quests completed</span><strong>${qd}</strong></div><div class="minirow"><span>Active skills</span><strong>${Object.values(state.skillXP).filter(v=>v>0).length}</strong></div>`;document.getElementById('todayLabel').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase()}
 function renderRules(){document.getElementById('xpRules').innerHTML=Object.entries(rules).map(([id,r])=>`<div class="settingsline"><div style="flex:1"><strong>${iconHtml(r.icon)} ${esc(r.name)}</strong><div class="muted" style="font-size:11px">${esc(r.skill)} · base XP</div></div><input aria-label="${esc(r.name)} base XP" id="rule-${id}" type="number" min="1" max="200" value="${r.base}" style="width:78px;background:#0b1223;color:var(--text);border:1px solid var(--line);padding:8px;border-radius:9px"></div>`).join('')}

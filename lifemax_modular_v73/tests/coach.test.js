@@ -123,10 +123,171 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   }, d0x);
   ok('a failed reflection write is reported, naming a read-only save as the reason', unsaved.full === 'Could not save to this browser (storage full?)' && unsaved.readOnly === 'Not saved: this version is read-only for your save' && unsaved.stored === undefined, unsaved);
   ok('and no XP is paid for it', (await p.evaluate(() => state.activities.reduce((s, a) => s + a.xp, 0))) === xpW);
+  // drawing only reads: the builders and renderers create no coach record and write nothing. The page decides a day's chip and welcome
+  // record when it draws the day (jcDecide), stored with a plain write and never save(), so the Journal is not drawn again from inside
+  // its own drawing (it was: an undecided recent day ran renderHistory twice, nested)
+  await seed(night, true);
+  const counting = () => p.evaluate(() => {
+    const c = window.__calls = { renders: 0, depth: 0, nested: 0, saves: 0, writes: 0 }, r = window.renderHistory, s = window.save, w = window.writeSave;
+    window.renderHistory = function () { c.renders++; c.nested = Math.max(c.nested, ++c.depth); try { return r.apply(this, arguments) } finally { c.depth-- } };
+    window.save = function () { c.saves++; return s.apply(this, arguments) }; window.writeSave = function () { c.writes++; return w.apply(this, arguments) };
+    window.__uncount = () => { window.renderHistory = r; window.save = s; window.writeSave = w; return { renders: c.renders, nested: c.nested, saves: c.saves, writes: c.writes } };
+  });
+  const decided = d => p.evaluate(d => (JSON.parse(localStorage.getItem(STORE)).journalCoach.pats || {})[d] !== undefined, d);
+  await p.evaluate(() => { jcStore().pats = {}; jcStore().cooldown = {}; histSel = getToday(); renderHistory() });
+  const dTap = await dstr(1); await counting();
+  const tapped = await p.evaluate(d => { selectJournalDay(d); return __uncount() }, dTap);
+  ok('a tap on an undecided recent day draws the Journal once, never from inside its own drawing, and stores the chip without save()', tapped.renders === 1 && tapped.nested === 1 && tapped.saves === 0 && tapped.writes === 1 && await decided(dTap), tapped);
+  const dPick = await dstr(2); await counting();
+  const picked = await p.evaluate(d => {
+    if (typeof selectJournalEntry !== 'function') { __uncount(); return { missing: true } }
+    const answer = selectJournalEntry(d), first = __uncount();
+    return { answer, first, entryIs: document.getElementById('dayReflection').getAttribute('onchange').includes("'" + d + "'"), on: [...document.querySelectorAll('#journalDays .on')].map(b => b.getAttribute('onclick')) };
+  }, dPick);
+  ok('selectJournalEntry draws only the entry: no Journal render, no save(), one write for the new chip', picked.answer === true && picked.first.renders === 0 && picked.first.saves === 0 && picked.first.writes === 1 && await decided(dPick), picked);
+  ok('the entry shows the selected day and the highlight moves to its tile alone', picked.entryIs && JSON.stringify(picked.on) === JSON.stringify(["selectJournalDay('" + dPick + "')"]), picked);
+  await counting();
+  const again = await p.evaluate(d => { if (typeof selectJournalEntry !== 'function') { __uncount(); return { missing: true } } selectJournalEntry(d); return __uncount() }, dPick);
+  ok('selecting the same day again writes nothing and draws only the entry', again.writes === 0 && again.saves === 0 && again.renders === 0, again);
+  const odd = await p.evaluate(() => { if (typeof selectJournalEntry !== 'function') return { missing: true }; const was = histSel, coach = JSON.stringify(state.journalCoach), disk = localStorage.getItem(STORE); return { answer: selectJournalEntry('1999-01-01'), kept: histSel === was && JSON.stringify(state.journalCoach) === coach && localStorage.getItem(STORE) === disk } });
+  ok('a key the Journal does not list is refused and changes nothing', odd.answer === false && odd.kept, odd);
+  const revKey = await p.evaluate(() => LifeMaxCoach.reviewList(journalDays())[0].key);
+  ok('a review can be selected the same way', await p.evaluate(k => typeof selectJournalEntry === 'function' && selectJournalEntry(k) && !!document.querySelector('#journalEntry .jc-grid') && document.querySelector('#journalDays .jx-rev.on').getAttribute('onclick').includes(k), revKey));
+  const reads = await p.evaluate(k => {
+    histSel = getToday(); renderHistory();
+    const coach = JSON.stringify(state.journalCoach), all = JSON.stringify(state), disk = localStorage.getItem(STORE), days = journalDays(), old = days[days.length - 1];
+    const same = () => JSON.stringify(state.journalCoach) === coach;
+    renderJournalDay(old); const olderDay = same();
+    histSel = k; renderHistory(); renderHistory(); const review = same();
+    let builders = 'missing';
+    if (typeof jcHeroData === 'function') { jcHeroData(); jcListData(days); journalDayData(old); jcDayData(old); jcDayData(getToday()); jcReviewData(k); builders = JSON.stringify(state) === all && localStorage.getItem(STORE) === disk }
+    histSel = getToday(); renderHistory(); return { olderDay, review, builders };
+  }, revKey);
+  ok('drawing an older day creates no coach record', reads.olderDay, reads);
+  ok('a review opened twice leaves the coach records unchanged', reads.review, reads);
+  ok('the data builders change neither the state nor the stored save', reads.builders === true, reads);
+  const sameAsDrawing = await p.evaluate(() => {
+    if (typeof jcDecide !== 'function') return { missing: true };
+    const d = getToday(); state.journalCoach = {}; histSel = d; renderHistory(); const drawn = JSON.stringify(state.journalCoach);
+    state.journalCoach = {}; jcDecide(d); return { drawn, decided: JSON.stringify(state.journalCoach) };
+  });
+  ok('jcDecide stores exactly what drawing the day stores', sameAsDrawing.drawn === sameAsDrawing.decided && /PAT_/.test(sameAsDrawing.drawn), sameAsDrawing);
+  const rev = await p.evaluate(() => {
+    if (typeof histRev !== 'number') return { missing: true };
+    const r0 = histRev; renderHistory(); const r1 = histRev, days = journalDays(); let renders = 0;
+    const r = window.renderHistory; window.renderHistory = function () { renders++; return r.apply(this, arguments) };
+    try { saveDayReflection(days[days.length - 1], 'A short note on an older day') } finally { window.renderHistory = r }
+    return { drew: r1 > r0, stored: histRev > r1, renders };
+  });
+  ok('histRev rises with every Journal render, and with a reflection stored without one', rev.drew && rev.stored && rev.renders === 0, rev);
+  // a new reset baseline (tier 3 welcome) changes the hero's and the tiles' numbers, so selecting today then draws the whole Journal
+  await seed([[30, 100, 9, 'Study', 'intelligence'], [31, 100, 9, 'Study', 'intelligence'], [32, 100, 9, 'Study', 'intelligence'], [0, 60, 9, 'Back', 'discipline']], true);
+  const dOldest = await dstr(32);
+  await p.evaluate(d => { state.journalCoach = {}; selectJournalDay(d) }, dOldest); await counting();
+  const reset = await p.evaluate(() => { const r0 = typeof histRev === 'number' ? histRev : 0, answer = typeof selectJournalEntry === 'function' && selectJournalEntry(getToday()), c = __uncount(); return { answer, c, base: (jcStore().base || {}).value, raised: typeof histRev === 'number' && histRev > r0, welcome: !!document.querySelector('#journalEntry .jc-welcome') } });
+  ok('selecting today on a long comeback resets the baseline and draws the whole Journal once, without save()', reset.answer === true && reset.base === 120 && reset.raised && reset.c.renders === 1 && reset.c.saves === 0 && reset.welcome, reset);
+  // the coach's writers are honest. The words (a reflection, a review answer, the catch-up line) are stored first; the reward is paid in
+  // a save of its own and, when that save fails, only the reward is taken back, never the words, and the page says the words were saved
+  // but not the XP (a welcome chip, which has no words, says nothing was saved). A read-only save stores and pays nothing and keeps the
+  // words in memory and on screen.
+  // arm('reward'): storage is full for a write that adds a coach award (the words alone still fit); 'full': for every write; 'readOnly';
+  // 'none': nothing fails, toasts and awards are counted
+  const arm = mode => p.evaluate(mode => {
+    const toasts = [], show = window.toast, real = Storage.prototype.setItem, awards = s => s.activities.filter(a => a.type === 'coach').length, had = awards(state);
+    window.toast = m => { toasts.push(String(m)); return show(m) };
+    if (mode === 'readOnly') { saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true }
+    else if (mode !== 'none') Storage.prototype.setItem = function (k, v) { if (k === STORE && (mode === 'full' || awards(JSON.parse(v)) > had)) throw new Error('quota'); return real.apply(this, arguments) };
+    window.__disarm = () => { Storage.prototype.setItem = real; saveReadOnly = ''; saveReadOnlyTold = false; window.toast = show; return toasts };
+    window.__awards = () => ({ memory: awards(state) - had, stored: awards(JSON.parse(localStorage.getItem(STORE))) - had });
+  }, mode);
+  const FULL = 'Could not save to this browser (storage full?)', READ_ONLY = 'Not saved: this version is read-only for your save';
+  const KEPT = what => what + ' saved · XP not saved (storage full?)', PAID = /^\+\d+ XP/;
+  const honest = (r, said, last) => r.toasts.slice(-1)[0] === last && !r.toasts.some(t => said.test(t)) && r.awards.memory === 0 && r.awards.stored === 0;
+  // a reflection on yesterday, long enough to pay
+  await seed(wk, true); const dRef = await dstr(1), words = 'Kept every promise to myself today, even the small and boring ones.';
+  await p.evaluate(d => { histSel = d; renderHistory(); save() }, dRef);
+  const reflect = async (mode, w) => { await arm(mode); return p.evaluate(([d, w]) => {
+    const box = document.getElementById('dayReflection'); box.value = w; box.dispatchEvent(new Event('change'));
+    const toasts = __disarm(), disk = JSON.parse(localStorage.getItem(STORE));
+    return { toasts, awards: __awards(), memory: state.dayReflections[d], stored: (disk.dayReflections || {})[d], box: document.getElementById('dayReflection').value, paid: !!jcRec('days', d).xpAwarded };
+  }, [dRef, w]) };
+  let r1 = await reflect('reward', words);
+  ok('a reflection whose reward cannot be saved keeps its words stored, in memory and in the box, pays nothing and says so', honest(r1, PAID, KEPT('Reflection')) && r1.memory === words && r1.stored === words && r1.box === words && !r1.paid, r1);
+  r1 = await reflect('readOnly', words + ' Again.');
+  ok('with a read-only save the reflection stays in memory and in the box, unpaid', honest(r1, /Reflection saved/, READ_ONLY) && r1.memory === words + ' Again.' && r1.stored === words && r1.box === words + ' Again.' && !r1.paid, r1);
+  // a weekly review answer, long enough for the bonus
+  const wkH = (await p.evaluate(() => LifeMaxCoach.reviewList(journalDays()).filter(r => r.kind === 'W').map(r => r.key)))[2], said2 = 'Plan two short blocks a day instead of one long one, and protect them.';
+  await p.evaluate(k => { histSel = k; renderHistory() }, wkH);
+  const review = async (mode, w) => { await arm(mode); return p.evaluate(([k, w]) => {
+    const box = document.querySelector('#journalEntry textarea'); box.value = w; box.dispatchEvent(new Event('change'));
+    const toasts = __disarm(), disk = JSON.parse(localStorage.getItem(STORE)), rec = jcRec('reviews', k);
+    return { toasts, awards: __awards(), memory: rec.answer, stored: (((disk.journalCoach || {}).reviews || {})[k] || {}).answer, box: document.querySelector('#journalEntry textarea').value, paid: !!rec.paid };
+  }, [wkH, w]) };
+  let r2 = await review('reward', said2);
+  ok('a review answer whose bonus cannot be saved keeps its words stored, in memory and in the box, pays nothing and says so', honest(r2, PAID, KEPT('Review')) && r2.memory === said2 && r2.stored === said2 && r2.box === said2 && !r2.paid, r2);
+  r2 = await review('readOnly', said2 + ' Again.');
+  ok('with a read-only save the review answer stays in memory and in the box, unpaid', honest(r2, /Review saved/, READ_ONLY) && r2.memory === said2 + ' Again.' && r2.stored === said2 && r2.box === said2 + ' Again.' && !r2.paid, r2);
+  // the one-sentence catch-up (welcome tier 2)
+  await seed([[10, 100, 9, 'Study', 'intelligence'], [11, 100, 9, 'Study', 'intelligence'], [12, 100, 9, 'Study', 'intelligence']], true); await seed([[0, 60, 9, 'Back', 'discipline']]);
+  await p.evaluate(() => { state.journalCoach = {}; histSel = getToday(); renderHistory(); save() });
+  const catchUp = async (mode, line) => { await arm(mode); return p.evaluate(line => {
+    window.prompt = () => line; jcCatchUp();
+    const toasts = __disarm(), d = getToday(), disk = JSON.parse(localStorage.getItem(STORE));
+    return { toasts, awards: __awards(), memory: state.dayReflections[d], stored: (disk.dayReflections || {})[d], box: document.getElementById('dayReflection').value, claimed: !!(jcRec('welcome', d).claimed || {}).line };
+  }, line) };
+  const lineA = 'Moved house this week and finally unpacked.', lineB = 'Spent the weekend with my family by the lake.';
+  let r3 = await catchUp('readOnly', lineA);
+  ok('with a read-only save the catch-up line stays in memory and in the box, unclaimed', honest(r3, /Catch-up saved/, READ_ONLY) && r3.memory === lineA && r3.stored === undefined && r3.box === lineA && !r3.claimed, r3);
+  r3 = await catchUp('reward', lineB);
+  ok('a catch-up whose reward cannot be saved keeps its line stored, in memory and in the box, pays nothing and says so', honest(r3, PAID, KEPT('Catch-up')) && r3.memory === lineA + '\n' + lineB && r3.stored === r3.memory && r3.box === r3.memory && !r3.claimed, r3);
+  const retry = await p.evaluate(line => {
+    const toasts = [], show = window.toast; window.toast = m => { toasts.push(String(m)); return show(m) };
+    window.prompt = () => line; const before = state.activities.filter(a => a.type === 'coach').length; jcCatchUp(); window.toast = show;
+    return { toasts, memory: state.dayReflections[getToday()], claimed: !!jcRec('welcome', getToday()).claimed.line, paid: state.activities.filter(a => a.type === 'coach').length - before };
+  }, lineB);
+  ok('a retry after the failed reward pays once and does not add the line twice', retry.memory === lineA + '\n' + lineB && retry.claimed && retry.paid === 1 && retry.toasts.slice(-1)[0] === '+20 XP · Catch-up saved', retry);
+  // a welcome chip (tier 1: Claim +10 XP)
+  await seed([[5, 100, 9, 'Study', 'intelligence'], [6, 100, 9, 'Study', 'intelligence'], [7, 100, 9, 'Study', 'intelligence']], true); await seed([[0, 60, 9, 'Back', 'discipline']]);
+  await p.evaluate(() => { state.journalCoach = {}; histSel = getToday(); renderHistory(); save() });
+  const refused = await p.evaluate(() => {
+    const before = state.activities.filter(a => a.type === 'coach').length, asked = [], ask = window.prompt;
+    window.prompt = q => { asked.push(q); return 'Moved house this week and finally unpacked.' };
+    let fresh, director; try { fresh = jcClaim('fresh'); director = jcClaim('director'); jcCatchUp() } finally { window.prompt = ask }
+    return { tier: jcRec('welcome', getToday()).tier, fresh, director, asked, paid: state.activities.filter(a => a.type === 'coach').length - before, claimed: Object.keys(jcRec('welcome', getToday()).claimed || {}) };
+  });
+  ok('a tier-1 day pays only its own chip: Start fresh, the Director chip and the catch-up are refused', refused.tier === 1 && refused.fresh === false && refused.director === false && refused.asked.length === 0 && refused.paid === 0 && refused.claimed.length === 0, refused);
+  const claim = async mode => { await arm(mode); return p.evaluate(() => {
+    jcClaim('pet'); const toasts = __disarm(), chip = [...document.querySelectorAll('#journalEntry .jc-chip')].find(b => /\+10 XP/.test(b.textContent));
+    return { toasts, awards: __awards(), claimed: !!(jcRec('welcome', getToday()).claimed || {}).pet, open: !!chip && !chip.disabled };
+  }) };
+  let r4 = await claim('reward');
+  ok('a welcome reward that cannot be saved is taken back, the chip stays open and the page says so', honest(r4, /^\+10 XP/, FULL) && !r4.claimed && r4.open, r4);
+  r4 = await claim('readOnly');
+  ok('with a read-only save the welcome reward is not paid and the chip stays open', honest(r4, /^\+10 XP/, READ_ONLY) && !r4.claimed && r4.open, r4);
+  r4 = await claim('none');
+  ok('the claim then pays once, with its toast after the stored save', r4.claimed && !r4.open && r4.awards.memory === 1 && r4.awards.stored === 1 && r4.toasts.slice(-1)[0] === '+10 XP · Welcome back', r4);
+  // swapping the question: compare-and-set, stored with a plain write
+  await counting();
+  const swap = await p.evaluate(() => {
+    if (typeof jcSwapPrompt !== 'function') { __uncount(); return { missing: true } }
+    const d = getToday(), p0 = jcPrompt(d).id, first = jcSwapPrompt(d, p0), p1 = jcPrompt(d).id, again = jcSwapPrompt(d, p0), c = __uncount();
+    const shown = document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent, stored = ((JSON.parse(localStorage.getItem(STORE)).journalCoach.days || {})[d] || {}).promptId;
+    return { first, again, moved: p1 !== p0, once: jcPrompt(d).id === p1, stored: stored === p1, shown: shown === jcPrompt(d).text, c };
+  });
+  ok('a swap moves the question once and stores it without save(); the same swap again changes nothing', swap.first && swap.first.changed && swap.again && swap.again.ok && !swap.again.changed && swap.moved && swap.once && swap.stored && swap.shown && swap.c.saves === 0 && swap.c.writes === 1, swap);
+  await arm('full');
+  const swapFail = await p.evaluate(() => {
+    const d = getToday(), p1 = jcPrompt(d).id; jcSwap(d); const toasts = __disarm();
+    return { toasts, kept: jcPrompt(d).id === p1, shown: document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent === jcPrompt(d).text, stored: ((JSON.parse(localStorage.getItem(STORE)).journalCoach.days || {})[d] || {}).promptId === p1 };
+  });
+  ok('a swap that cannot be stored keeps the question shown and says nothing was saved', swapFail.kept && swapFail.shown && swapFail.stored && swapFail.toasts.slice(-1)[0] === FULL, swapFail);
   // care note
   await seed([[0, 100, 9, 'Study', 'intelligence']], true); const dd = await dstr(0);
   await p.evaluate(d => { saveDayReflection(d, 'I feel like there is no reason to live and I want to die'); histSel = d; renderHistory() }, dd);
   const care = await p.evaluate(() => (document.querySelector('.jc-care') || {}).textContent || ''); ok('distress words get a gentle note with a crisis line and no coach card', /988/.test(care) && !(await p.evaluate(() => document.querySelector('.jc-card'))), care.slice(0, 60));
+  ok('the care note is one page constant, word for word, and stands alone above a plain reflection box', await p.evaluate(t => typeof JC_CARE === 'object' && JC_CARE.lead === 'That sounds really heavy.' && JC_CARE.text === t && document.querySelector('.jc-care').textContent === JC_CARE.lead + ' ' + JC_CARE.text &&
+    !document.querySelector('#journalEntry .jc-welcome') && !document.querySelector('#journalEntry .jc-q') && /^Reflection \(optional\)$/.test(document.querySelector('#journalEntry label[for=dayReflection]').textContent),
+    'You do not have to carry it alone. If you might hurt yourself, please call or text 988 (in the US) or your local emergency number right now, or reach out to someone you trust. The coach stays quiet today.'));
   // loading the app with a saved history must not touch the coach before it exists (this once broke start-up)
   await seed(wk, true); await p.evaluate(() => save());
   const errs2 = []; const p2 = await (await b.newContext({ viewport: { width: 412, height: 860 } })).newPage(); p2.on('pageerror', e => errs2.push(String(e)));
