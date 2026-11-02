@@ -36,7 +36,14 @@ class NativeJournalPlugin : ComposeTabPlugin() {
     override val capabilities = listOf("library.journal.projection.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
-        container.repository.accept(snapshot, explicitOpen)
+        try {
+            container.repository.accept(snapshot, explicitOpen)
+        } catch (e: Exception) {
+            // org.json's messages name the offending value, which here could be a reflection:
+            // nothing
+            // of the cause goes on to Capacitor's log
+            throw IllegalArgumentException("Invalid journal projection")
+        }
         if (explicitOpen) viewModel.opened()
         viewModel.onProjection()
         secureFor(container.repository.state.value)

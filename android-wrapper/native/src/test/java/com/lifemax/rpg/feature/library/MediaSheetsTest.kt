@@ -166,6 +166,24 @@ class MediaSheetsTest {
     }
 
     @Test
+    fun aCancelledAddDoesNotLendItsOperationToTheNextAdd() {
+        val (_, vm, page) = setUp()
+        vm.sheets.handle(MediaAction.Add)
+        vm.sheets.change(MediaField.TITLE, "Dune")
+        vm.sheets.save() // sent; the reply never comes (the screen hid), and the player cancels
+        val first = vm.sheets.operation("new")
+        assertNotNull(first)
+        vm.opened() // the screen opened again: it stops waiting and keeps the sheet
+        vm.sheets.cancel()
+        assertNull(vm.sheets.operation("new"))
+        vm.sheets.handle(MediaAction.Add)
+        vm.sheets.change(MediaField.TITLE, "Emma")
+        vm.sheets.save()
+        assertNotEquals(first, vm.sheets.operation("new"))
+        assertEquals(2, page.sent.count { it.first == "upsert" })
+    }
+
+    @Test
     fun anAddKeepsItsOperationIdUntilATerminalReplyAndTheRetryReusesIt() {
         val (_, vm, page) = setUp()
         vm.sheets.add()

@@ -185,7 +185,18 @@
         toast("Reading the file…");
         const r = await fetch(String(p.url));
         if (!r.ok) throw Error("HTTP " + r.status);
+        // the picker may not know the size (-1): the response's length decides before the whole file is read into memory
+        const len = Number(r.headers.get("content-length"));
+        if (!(Number(p.size) > 0) && !(len > 0)) throw Error("size unknown");
+        if (len > AUDIO_MAX_BYTES) {
+          toast("File too large (max ~512 MB)");
+          return;
+        }
         const blob = await r.blob();
+        if (blob.size > AUDIO_MAX_BYTES) {
+          toast("File too large (max ~512 MB)");
+          return;
+        }
         await attachAudioFile(id, new File([blob], String(p.name || "audio"), { type: String(p.type || blob.type || "") }));
       } catch (err) {
         console.warn("NativeAudio attach", err);

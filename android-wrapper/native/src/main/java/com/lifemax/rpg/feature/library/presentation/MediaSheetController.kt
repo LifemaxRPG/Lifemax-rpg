@@ -128,6 +128,7 @@ class MediaSheetController(
 
     fun add() {
         val f = form ?: return
+        ops.remove(UPSERT to NEW) // a new add is a new operation, whatever became of an earlier one
         sheet = MediaSheetUi(null, f.emptyDraft(), typeOptions(f, ""))
     }
 
@@ -145,6 +146,7 @@ class MediaSheetController(
     /** Closes the sheet; its draft is gone, as the page's Cancel resets its form. */
     fun cancel() {
         if (sheet?.pending == true) return
+        sheet?.let { ops.remove(UPSERT to (it.id ?: NEW)) } // cancelled: that operation is over
         sheet = null
     }
 

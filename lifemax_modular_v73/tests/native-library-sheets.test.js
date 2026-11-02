@@ -101,11 +101,16 @@ const HELPERS = () => {
     const a = await command('upsert', { op: 'op-dune', fields });
     const disk = stored().filter(x => x.title === 'Dune');
     const b2 = await command('upsert', { op: 'op-dune', fields });
-    return { a: a.reply, notice: a.frame.notice, row: a.frame.items[0], disk, b: b2.reply, count: stored().filter(x => x.title === 'Dune').length, stayed: calls('close').length === closes };
+    const countAfterRepeat = stored().filter(x => x.title === 'Dune').length;
+    // the reply was lost and the sheet was edited before saving again (the same operation id): an edit of that item, not a dropped add
+    const b3 = await command('upsert', { op: 'op-dune', fields: Object.assign({}, fields, { title: 'Dune Messiah' }) });
+    const afterEdit = stored().filter(x => x.addOp === 'op-dune');
+    return { a: a.reply, notice: a.frame.notice, row: a.frame.items[0], disk, b: b2.reply, b3: b3.reply, afterEdit, count: countAfterRepeat, stayed: calls('close').length === closes };
   });
   ok('an add is stored with its operation id in the same save, and answered ok and changed', add.a.ok && add.a.changed && add.a.command === 'upsert' && add.disk.length === 1 && add.disk[0].addOp === 'op-dune' && add.a.id === add.disk[0].id && add.a.message === 'Added to your library', add);
   ok('the page\'s toast says it and comes with the reply\'s frame, which shows the item; the screen stays', add.notice && add.notice.text === 'Added to your library' && add.row.title === 'Dune' && add.row.creator === 'Frank Herbert' && add.stayed, add);
   ok('the same add again (a lost reply) answers the same item, unchanged, and adds nothing', add.b.ok && !add.b.changed && add.b.id === add.a.id && add.count === 1, add);
+  ok('the same operation with an edited form edits that item (one item, the new title), not a dropped add', add.b3.ok && add.b3.id === add.a.id && add.afterEdit.length === 1 && add.afterEdit[0].title === 'Dune Messiah', add);
 
   // refusals: in the page's words, by field, nothing saved, no toast (the sheet says it)
   const refused = await p.evaluate(async () => {

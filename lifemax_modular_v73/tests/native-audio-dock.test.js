@@ -165,6 +165,18 @@ const ITEMS = [
     await M.__emit('command', { command: 'attach', payload: { id: 'm_other', url: blobUrl, name: 'again.m4b', type: 'audio/mp4', size: 80044 }, requestId: 'b3' });
     await until(() => mediaById('m_other').audio && mediaById('m_other').audio.name === 'again.m4b', 6000);
     out.retryWorks = mediaById('m_other').audio.name === 'again.m4b';
+    // a size the picker could not tell (-1) is not a way round the limit: the response's own length decides before the file is read
+    await wait(400); // the earlier attach has finished reading (one at a time)
+    window.fetch = async () => new Response(new Blob([new Uint8Array(16)]), { headers: { 'content-length': String(AUDIO_MAX_BYTES + 1) } });
+    await M.__emit('command', { command: 'attach', payload: { id: 'm_other', url: 'x', name: 'unknown-big.m4b', type: 'audio/mp4', size: -1 }, requestId: 'u1' });
+    await until(() => /too large/.test(document.getElementById('toast').textContent), 3000);
+    out.unknownBig = /too large/.test(document.getElementById('toast').textContent) && mediaById('m_other').audio.name === 'again.m4b';
+    await wait(400);
+    window.fetch = async () => new Response(new Blob([new Uint8Array(16)]));
+    await M.__emit('command', { command: 'attach', payload: { id: 'm_other', url: 'x', name: 'unknown.m4b', type: 'audio/mp4', size: -1 }, requestId: 'u2' });
+    await until(() => /Could not read that file/.test(document.getElementById('toast').textContent), 3000);
+    out.unknownNoLength = /Could not read that file/.test(document.getElementById('toast').textContent) && mediaById('m_other').audio.name === 'again.m4b';
+    window.fetch = realFetch;
     await M.__emit('command', { command: 'attach', payload: { id: 'm_missing', url: blobUrl, name: 'z.m4b', type: '', size: 5 }, requestId: 'b4' }); await wait(200);
     out.goneItem = window.__calls.find(c => c[0] === 'media' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'b4')[2].reply.ok === false;
     await M.__emit('command', { command: 'attachRefused', payload: { name: 'notes.pdf' }, requestId: 'b5' }); await wait(200);
@@ -212,6 +224,7 @@ const ITEMS = [
   ok('the attached book starts in the dock', O.playsInDock, O);
   ok('a file over the page\'s limit is refused before any fetch, in the page\'s words', O.tooBig, O);
   ok('a failed read is reported and the next attach works', O.readFails && O.retryWorks, O);
+  ok('a file of unknown size is held to the limit by the response\'s length, and refused when that is unknown too', O.unknownBig && O.unknownNoLength, O);
   ok('attach for an item that is gone is refused; a refused file is named in the page\'s words', O.goneItem && O.refused, O);
   ok('the screen stayed open through all of it', O.screenStayedOpen, O);
   ok('switching the dock off tells the native side and gives the page its player back', O.off && O.busyAgain, O);

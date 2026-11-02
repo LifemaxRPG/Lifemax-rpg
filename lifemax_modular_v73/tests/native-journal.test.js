@@ -232,11 +232,15 @@ const HELPERS = () => {
     await command('select', { key: getToday() });
     const d = getToday(), from = latest().entry.reflect.prompt.id;
     const a = await command('swap', { d, from }), b2 = await command('swap', { d, from }), stored = JSON.parse(localStorage.getItem('lifemax_rpg_prototype_v1')).journalCoach.days[d].promptId;
+    // a tip whose dismissal cannot be stored answers so (ok only when stored), and the tip stays for the next try
+    const realWrite = writeSave; writeSave = () => false; let tipFail; try { tipFail = await command('tip', {}) } finally { writeSave = realWrite }
+    state.tipsSeen.history = false;
     const t1 = await command('tip', {}), t2 = await command('tip', {});
-    return { a: [a.ok, a.changed, a.frame.entry.reflect.prompt.id !== from], b: [b2.ok, b2.changed], stored: stored === a.frame.entry.reflect.prompt.id, page: document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent === a.frame.entry.reflect.prompt.text,
+    return { tipFail: [tipFail.ok, tipFail.changed], a: [a.ok, a.changed, a.frame.entry.reflect.prompt.id !== from], b: [b2.ok, b2.changed], stored: stored === a.frame.entry.reflect.prompt.id, page: document.querySelector('#journalEntry .jc-q span:nth-child(2)').textContent === a.frame.entry.reflect.prompt.text,
       t: [t1.ok, t1.changed, t1.frame.tip, t2.ok, t2.changed], seen: JSON.parse(localStorage.getItem('lifemax_rpg_prototype_v1')).tipsSeen.history };
   });
   ok('swap: moves the question once (compare-and-set), stored, and the page\'s entry follows', same(tipSwap.a, [true, true, true]) && same(tipSwap.b, [true, false]) && tipSwap.stored && tipSwap.page, tipSwap);
+  ok('tip: a dismissal that could not be stored answers ok:false, changed nothing', same(tipSwap.tipFail, [false, false]), tipSwap);
   ok('tip: dismissed and stored once; a repeat changes nothing', same(tipSwap.t, [true, true, null, true, false]) && tipSwap.seen === true, tipSwap);
 
   /* ---------- covering ---------- */

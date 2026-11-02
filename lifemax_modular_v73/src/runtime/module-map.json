@@ -305,7 +305,7 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 32836,
+   "bytes": 33154,
    "statement_count": 83,
    "tags": [
     "training",
@@ -3535,7 +3535,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-journal.js",
-   "bytes": 15917,
+   "bytes": 16001,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3547,7 +3547,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-audio.js",
-   "bytes": 9138,
+   "bytes": 9633,
    "statement_count": 1,
    "tags": [
     "native",

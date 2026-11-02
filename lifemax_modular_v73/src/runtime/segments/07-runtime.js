@@ -165,8 +165,14 @@ function saveMediaItem(e){
    show a type it does not offer). */
 function mediaUpsert(f){
  if(!Array.isArray(state.mediaItems))state.mediaItems=[];
- const id=String(f.id||''),op=f.op&&!id?String(f.op):'';
- const made=op&&state.mediaItems.find(x=>x.addOp===op);if(made)return {ok:true,id:made.id,message:'Added to your library',duplicate:true};
+ let id=String(f.id||''),op=f.op&&!id?String(f.op):'';
+ const made=op&&state.mediaItems.find(x=>x.addOp===op);
+ if(made){
+  /* the same add again (its reply was lost): the same item, nothing written; the form changed since (edited before saving again): an edit of that item */
+  const same=['title','type','creator','status','link','notes'].every(k=>String(f[k]||'').trim()===String(made[k]||'').trim());
+  if(same)return {ok:true,id:made.id,message:'Added to your library',duplicate:true};
+  id=made.id;op='';
+ }
  const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,field:'title',message:MEDIA_REFUSE.title};
  const link=String(f.link||'').trim().slice(0,500);
  if(link&&!/^https?:\/\//i.test(link))return {ok:false,field:'link',message:MEDIA_REFUSE.link};

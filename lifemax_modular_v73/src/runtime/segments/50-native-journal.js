@@ -246,8 +246,8 @@
     async tip() {
       if (locked()) return refuse();
       if ((state.tipsSeen || {}).history) return { ok: true, changed: false, message: ALREADY };
-      dismissFeatureTip("history"); // a failed write is ignored, as on the page
-      return { ok: true, changed: true };
+      // ok only once stored: a failed write answers so, and the tip stays
+      return dismissFeatureTip("history") ? { ok: true, changed: true } : { ok: false, changed: false, message: unsavedMessage() };
     },
   };
 
