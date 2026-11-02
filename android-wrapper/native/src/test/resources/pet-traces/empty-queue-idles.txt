@@ -1,0 +1,49 @@
+ 0.000 idle_sit   f0 ear=+0.00/+0.00 flat=0.00 tail=+0.00/+0.00 whisk=+0.00 breath=1.0000 look=+0.00,+0.00 rot=+0.000
+ 0.500 idle_sit   f1 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0119 look=+0.00,+0.00 rot=+0.000
+ 1.000 idle_sit   f6 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0037 look=+0.00,+0.00 rot=+0.000
+ 1.500 idle_sit   f0 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9893 look=+0.00,+0.00 rot=+0.000
+ 2.000 idle_sit   f1 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9929 look=+0.00,+0.00 rot=+0.000
+ 2.500 idle_sit   f6 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0085 look=+0.00,+0.00 rot=+0.000
+ 3.000 idle_sit   f0 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0097 look=+0.00,+0.00 rot=+0.000
+ 3.500 idle_sit   f2 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9946 look=+0.00,+0.00 rot=+0.000
+ 4.000 idle_sit   f7 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9886 look=+0.00,+0.00 rot=+0.000
+ 4.500 idle_sit   f0 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0019 look=+0.00,+0.00 rot=+0.000
+ 5.000 idle_sit   f2 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.20 whisk=+0.15 breath=1.0120 look=+0.00,+0.00 rot=+0.000
+ 5.500 idle_sit   f7 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.06 whisk=+0.15 breath=1.0019 look=+0.00,+0.00 rot=+0.000
+ 6.000 idle_sit   f3 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9886 look=+0.00,+0.00 rot=+0.000
+ 6.500 idle_sit   f1 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9946 look=+0.00,+0.00 rot=+0.000
+ 7.000 idle_sit   f2 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0097 look=+0.00,+0.00 rot=-0.000
+ 7.500 idle_sit   f7 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0085 look=+0.00,+0.00 rot=-0.000
+ 8.000 idle_sit   f1 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9929 look=+0.00,+0.00 rot=+0.000
+ 8.500 idle_sit   f6 ear=-0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9893 look=+0.00,+0.00 rot=+0.000
+ 9.000 idle_sit   f7 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0037 look=+0.00,+0.00 rot=-0.000
+ 9.500 idle_sit   f1 ear=-0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0119 look=+0.00,+0.00 rot=-0.000
+10.000 idle_sit   f6 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0000 look=+0.00,+0.00 rot=+0.000
+10.500 idle_sit   f0 ear=-0.00/+0.00 flat=0.00 tail=+0.20/+0.18 whisk=+0.15 breath=0.9881 look=+0.00,+0.00 rot=-0.000
+11.000 idle_sit   f1 ear=-0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9963 look=+0.00,+0.00 rot=-0.000
+11.500 idle_sit   f6 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0107 look=+0.00,+0.00 rot=+0.000
+12.000 idle_sit   f0 ear=+0.08/+0.08 flat=0.00 tail=+0.20/+0.05 whisk=+0.31 breath=1.0071 look=+0.40,-0.12 rot=-0.000
+12.500 idle_sit   f2 ear=+0.08/+0.08 flat=0.00 tail=+0.20/+0.05 whisk=+0.31 breath=0.9915 look=+0.40,-0.12 rot=-0.003
+13.000 idle_sit   f6 ear=+0.08/+0.08 flat=0.00 tail=+0.20/+0.05 whisk=+0.31 breath=0.9903 look=+0.40,-0.12 rot=-0.000
+13.500 idle_sit   f0 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0054 look=-0.00,+0.00 rot=+0.000
+14.000 idle_sit   f2 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0114 look=+0.00,-0.00 rot=+0.000
+14.500 idle_sit   f7 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9981 look=+0.00,-0.00 rot=-0.000
+15.000 idle_sit   f0 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9880 look=-0.00,+0.00 rot=-0.000
+15.500 idle_sit   f2 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9981 look=-0.00,+0.00 rot=+0.000
+16.000 idle_sit   f3 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0114 look=+0.00,-0.00 rot=+0.000
+16.500 idle_sit   f7 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0054 look=-0.00,+0.00 rot=-0.000
+17.000 idle_sit   f1 ear=+0.00/+0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9903 look=-0.00,+0.00 rot=+0.000
+17.500 idle_sit   f6 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.10 whisk=+0.15 breath=0.9915 look=+0.00,-0.00 rot=+0.000
+18.000 idle_sit   f7 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0071 look=-0.00,+0.00 rot=-0.000
+18.500 idle_sit   f1 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0107 look=-0.00,+0.00 rot=-0.000
+19.000 idle_sit   f6 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9963 look=-0.00,+0.00 rot=+0.000
+19.500 idle_sit   f0 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9881 look=-0.00,+0.00 rot=+0.000
+20.000 idle_sit   f1 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0000 look=-0.00,+0.00 rot=+0.000
+20.500 idle_sit   f6 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0119 look=-0.00,+0.00 rot=+0.000
+21.000 idle_sit   f0 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0037 look=-0.00,+0.00 rot=+0.007
+21.500 idle_sit   f2 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9893 look=-0.00,+0.00 rot=-0.000
+22.000 idle_sit   f6 ear=-0.00/-0.00 flat=0.00 tail=+0.20/-0.00 whisk=+0.15 breath=0.9929 look=-0.00,+0.00 rot=-0.000
+22.500 idle_sit   f0 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0085 look=-0.00,+0.00 rot=+0.000
+23.000 idle_sit   f2 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=1.0097 look=-0.00,+0.00 rot=+0.000
+23.500 idle_sit   f5 ear=+0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9946 look=-0.00,+0.00 rot=-0.000
+24.000 idle_sit   f7 ear=-0.00/-0.00 flat=0.00 tail=+0.20/+0.05 whisk=+0.15 breath=0.9886 look=-0.00,+0.00 rot=+0.000
