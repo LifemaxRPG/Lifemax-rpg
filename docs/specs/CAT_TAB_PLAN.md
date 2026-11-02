@@ -1,0 +1,221 @@
+# Native Cat tab: plan
+
+Status: plan, not started. Builds on `PET_ENGINE_PLAN.md` (P1 to P3c are shipped: `CatBody`, art, the live room on the Overview card) and `PET_AS_BUILT.md`. Citations are `segment:line` under `lifemax_modular_v73/src/runtime/segments/`. Phases here are named CT0..CT10 so they do not clash with the engine plan's P-numbers; CT3 is the engine plan's P4, CT4 to CT5 its P5, CT9 its P6, CT10 its P7.
+Sizes are lines of code, rough (+/-30 %). An agent-pass is one agent working one worktree to a green local build; screenshots recorded.
+
+## 0. Summary of the approach
+
+- The owner's rule holds: the page is the only writer of saves (CONTRACT A14/A15). Every phase below keeps `state.pet`, `pet2`, `petPair`, `petMemorial`, `careDay`, `toysBought`, `cattery` written by page functions only. Native draws and sends commands. The logic cutover is CT-L, last, and out of scope.
+- The Cat tab is a normal kit tab (`NativeTabKit.create`, id `pet`, plugin `NativePetPlugin` on `ComposeTabPlugin`) for its cards, plus one new thing no tab has had: a real-time stream between the page's brain (mind) and a native body. The Overview's live cat did not need a stream because its autopilot is local (`feature/pet/body/Autopilot.kt`, 286 lines).
+- Order, fastest safe route: shell + stats + buttons + big live room on autopilot (CT1) -> touch and care (CT2) -> brain drives body (CT3) -> toys (CT4) -> sleep/box/pair (CT5). Panels (DNA, likes, inner life, cattery, adoption) are a parallel track (CT6). Rig, look-at, 2.5D, retiring the page room follow (CT7 to CT10).
+- The first release (CT1+CT2) ships without the stream. The cat is on its local autopilot, so it is *not* the page's cat (different day schedule, no play, no pair). That is acceptable for a beta switch but must be said on the Settings row: "Native Cat (beta): the cat lives its own day here until the brain link phase".
+- Only the page can compose genetic coats (`dna_...`): keep the existing `coat {key, kind}` command (`50-pet-coat.js`, 113 lines) and `PageCoatSource` (145 lines).
+
+## 1. Inventory of the web Cat tab, and what each needs
+
+Legend: N = native screen in that phase; H = hand-over to the page's own Cat view (delegatedInteractions, recorded in `BRIDGE_CATALOG.json` and `MIGRATION.md`); P = stays in the page (no screen).
+
+| Element / interaction | Web source (lines) | Projection fields | Commands / cues | First release |
+|---|---|---|---|---|
+| Room canvas, 192x144 window, integer scale, camera follows cat | `17:103-111` petPaint, `17:82-98` petCamUpdate | cats[] look `{coat,stage,weak,name}` (exists in Overview) | none | CT1 N (RoomHost, shared with Overview) |
+| Full-screen room (overlay, Escape/Back close, landscape shows more house) | `17:112-152`, `34-navigation:59` | none | none | CT2 N (Back closes); CT1 shows a "View room" row that is H |
+| Eyebrow (KITTEN/COMPANION + bond name), title, hearts | `17:182-190`, `17:73`, `17:227-231` | name, kitten, level, hearts 0..5 | none | CT1 N |
+| Mood line (hungry text by stage) | `17:64-72` petMoodText | moodText | none | CT1 N |
+| Mind row (bond style chip, mood chip, text, "while you were away") | `26:801-811` | style{id,name,text}, mood{word,text}, away | none | CT6 N (CT1: H) |
+| Bond bar + text ("Fond 40 % to Devoted") | `17:190-193`, `15:57-60` | bondPct, bondText | none | CT1 N |
+| Growth status line (kitten day n) | `petGrowStatus` (16) | grow{day,of,show} | none | CT1 N |
+| Feed button: label ("Feed X", "Not hungry yet", "Vacation mode", "Feed both"), `is-wait` | `17:197-198`, `29-pair:466-468`, gate `15:83-95` | canFeed, feedLabel, wait | `feed` -> `petFeedClick` logic (`16:247-262`): replies `{ok, why, inHours, message}`; cue `fed{cat}` | CT1 N |
+| Feeding at the bowl (route, face, eat 7.5 s, groom 4.5 s, food in bowl, 14 s timeout) | `16:247-262`, `16:176` | props.bowlFood | cue `fed` (CT1/2 local plan); CT3 plan stream | CT1 local plan; CT3 page plan |
+| Play button (stage>=3 refuses) and toy tray ("Let X pick", locked toys "Unlocks ...", words Favorite/New/Loves it/Likes it/Not keen) | `16:263-266`, `25:198-221`, `25:130-141` petToyWord | toys[{id,name,icon,unlocked,word,lock}], canPlay | `offerToy {id|null}` -> `petOfferToy` (`25:129`); toast "sniffs ... loses interest" -> notice | CT1 H; CT4 N |
+| Toy shop / unlock by Sparks | `44:86,121-122`, `ecoBuy('toy')` | toysBought, price | `buyToy {id}` -> `ecoBuy` | CT4 N (button in tray); the shop sheet stays H |
+| Slow blink button (offer/return, 3 in 6 s squints, asleep toast) | `26:309-323` | none | `blink` -> `petBlinkClick`, reply message | CT1 N (local `react(SlowBlink)` + lookup act); CT3 page plan |
+| Pet (tap/hold) with trust levels: L0 flees with hiss, L1 flees after 2.6 s, L2 slow blink, L3+ purr, hearts every 0.85 s (L1 1.6 s), 3 counted a day, +2 bond | `16:201-246`, `15:96-99` | level, doze, sleeping, petsToday | `pet {heldMs}` -> `petPetDone` + `petLikesPetted` + save + `petLevelUp` | CT2 N |
+| Brain touch rules: tap saturation 0.12, hold 0.09/s, warn 0.65, max 0.85, belly trap, spam (4 taps in 3 s), "mrrp" from doze | `26:228-289` | touch{sat,warn,leave} (CT2 thin), full in CT3 | touch events -> `petBrainEvent`/`petAffect` | CT2 thin; CT3 full |
+| Follow finger (L>=2, floor, stage<3), 0.35 s rate | `16:219-227` | none | walk plan x-20, z from y (`24:174`) | CT2 N (local); CT3 plan |
+| Tap bowl = feed; tap ball = pounce chain; tap gift = present (+1 gifts, sparkle) | `16:204-209` | gift, toy | `feed`, `gift` -> page edits `p.gifts`, `petBrainEvent('gift')`, save | CT2 bowl; CT4 toy/gift |
+| Stats (last meal, meals today x/2, days together), vacation shows "Vacation / clock paused" | `17:194-196` | fedAgo, fedLabel, fedToday, days | none | CT1 N |
+| Favorite place / toy row | `25:223-226` | favSpot, favToy | none | CT1 N |
+| Hint line (L0, L1, stage>=2, L>=3 texts) | `17:199-201` | hint | none | CT1 N |
+| Care and settings: how it works text, Vacation switch, Rename (14 chars) | `17:233-241`, `15:116-122` | vacation, name | `vacation {on}` (`petSetVacation`), `rename {name}` | CT1 N |
+| Likes bars (places, toys, refreshed every 15 s, "new favourite" toast once) | `25:228-244` | likes{spots[],toys[]}, news | none; toast -> notice | CT6 N |
+| Inner-life panel (4 threads, quirks, memories, stats, comfort zone) | `26:812-826` | inner{threads[4],quirks[],memories[],stats[],comfort} | none | CT6 N |
+| DNA panel (sex, karyotype, coat, ~12 rows, carries, hidden, temperament bars, mutations, full genome table of the loci) | `32:500-567` petDnaPanelHtml, `32:568` | dna{rows[{label,genotype,note}],carries,hidden,persona[6],genome[{locus,chr,mom,dad}]} built by the page from its own code | none | CT6 N |
+| Together card (level, bar, text, away, counts, rank html, last), switcher tabs with sprite faces | `29-pair:388-472`, `29-rank:~60-93` | pair{on,focus,names,rel,level,text,counts,rank,last,away} | `focus {i}` -> `petPairFocus` | CT5/CT6 N |
+| Second cat adoption ("Meet", coat/name/trait chips, "Let them in") | `29-pair:388-415` | invite, canAdopt | `adopt2 {coat,name,trait}` -> `petPairAdopt` | CT6 N (before: H) |
+| Cattery / breeding lab (roster max `PET_CATTERY_MAX`, litter 2..6 kits, keep/drop/release/rename/home/stray, goal select, mom/dad pickers, previews) | `37:180-278`; `37:196-250` handlers | cattery{cats[],litter,goal,mom,dad,previews} | `breed*` commands call the page handlers; `confirm`/`prompt` become native dialogs | CT6 N (H until then) |
+| Intro / adoption when no cat (visitor card, 4 coats or a DNA litter of 4, name, 4 personalities, "Welcome home") | `17:210-226`, `32:505` petNewLitter, `15:65` | mode:'intro', litter[], names | `adopt {coat,name,trait}` -> `petAdopt` | CT1: tab `blocked()` so the page's intro shows (H); CT6 N |
+| Memorial (days together, trust stage, sleep_w frame, "Open the door again") | `17:247-262`, `15:109` | memorial{name,days,level,coat} | `adoptNew` -> `petAdoptNew` | CT1 H; CT6 N |
+| Passing / death (`petCheck` every 60 s and on visibility: 168 h) | `15:105-115`, `17:336-339` | mode flips to 'memorial' | toast "has passed away" -> notice | CT1: tab closes when mode leaves 'room'; page owns the check |
+| Erosion at 96 h, vacation clock shift | `15:105-122` | none | none | P |
+| Overview peek card, "next moves" hungry nudge, invite | `17:315-340`, `18:11-12`, `50-native-overview-cards:126-161` | unchanged | unchanged | P (already native) |
+| Cat care XP (feed+play+pet on one day -> one `catcare` activity), quests (`pet:feed|pet|play`), journal coach | `44:60-66,147-149`; `50-quests-hand:53-56,139`; `47-journal-coach:55-56` | none | the commands above call the same wrapped functions, so hooks fire; XP toast -> notice | P |
+| Deep link `lifemax://cats/feed`, voice intents | `50-deeplink:35-57`, `45-voice:218`, `46:341` | none | page handles; when the native tab shows, the result is a cue `fed{cat}` so the cat walks to the bowl | P + cue (CT1) |
+| Haptics (18 `haptic(` calls in pet segments): feed [8,30,8], hold 8, beats 6, level-up [10,40,10], bonk | `16:244,252,223,186`, `24:166` | none | native Compose haptics for touch beats (CT2); feed and level-up patterns come in the reply `buzz` | CT2 |
+| Sound (13 clips, per-cat pitch, chained purr, synthesized trill/chirp) | `16:272-330`, `26:394-416` | none | page keeps playing (WebAudio) from events `stepStart.snd`, `touched`; `mediaPlaybackRequiresUserGesture` is already false (Capacitor `Bridge.java:596`) but must be proved under a covered WebView (CT0) | P until CT10; native port optional |
+| Notifications | none by design (`17:239`) | none | none | none, stays none |
+| Dev panel (~25 buttons + `PET_DEV_TESTS`) | `17:263-288` | none | none | P (page only, reachable by H) |
+| Glass visit / lens fog / bonk (brain-owned approach drive, trust >= 65) | `24:236-242`, `26:478` | none | plan step `act sniff` at z 95 + `fx lens` | CT3 (native draws the fog, 24x16 px, 1.8 s) |
+| Parallax by drag and phone tilt (`k` eased, anchors 2/6/12/16 px) | `24:168-183` | none | none | CT2 N (drag), CT9 (tilt) |
+
+Not a Cat-tab element but affected: `petWantRun`/`petSync` (`17:74-75`) starts the page's frame loop only when `#petCanvas` is on screen and the native Overview cards are not covering; the same guard must learn "native Cat screen is showing" (CT1 stops the loop; CT3 replaces it with a headless mind tick).
+
+## 2. Architecture of the room on the Cat tab
+
+### 2.1 What is native, what stays
+
+- Native owns: touch, camera (`RoomCamera`/`CameraDirector`, shipped), step machine and animation (`CatBody`, shipped), toy and prop physics (CT4), box sink and wobble (CT5), particles and bubbles, full-screen mode, haptics, ground light.
+- Page owns: every decision (`petThink`, brain, pair director, likes), every save, every number the screen shows, sound (until CT10), toasts.
+- `CatBody` already has `replacePlan(id, steps)`, `extendPlan(id, steps)`, `routeTo`, `setAffect(ear, tail)`, `lookAt`, `react`, events `StepDone/Arrived/Interrupted` (`body/Plan.kt:19-35`, `CatBody.kt:122-172`). Missing and to be added in CT3..CT5: step kinds `mark`, `stalk`, `pounce`, `game`, `sync`, `meet`; act options; place/cut; `needPlan`; `stepStart`; touch reflex; props.
+
+### 2.2 Wire protocol (strict on both sides; the decoders reject unknown keys, like every tab)
+
+Two directions, because a projection is a full snapshot that the kit may drop or reorder, and body events are a stream:
+
+**Page to native: the `mind` block inside the tab projection** (capability `pet.mind.v1`, projection `sequence` from the kit; older sequence ignored as everywhere). It is state, not a delta, so a lost update self-heals.
+- `mind.seq`: integer, increases by one per page change of any plan; `mind.epoch`: increases whenever the page teleports a cat (place/cut).
+- `mind.cats[i]` (i = 0 first cat, 1 second): `{ plan: {id, from, steps[]}, place?: {epoch, x, z, surf, dir, cut}, affect: {ear, tail, pupil, v, a}, look: {x,z}|null, touch: {level, doze, sleeping, sat, warn, leave}, bubble?: 'bubble' }`.
+- `plan.id`: per-cat integer, strictly increasing; `from`: absolute index of `steps[0]` within that plan; `steps[]` is the *window* of the next steps (at most 6). Native applies it idempotently: same id -> append steps with index >= count known; greater id -> `replacePlan` (the body ends a cheap beat first, at most 120 ms, then starts; this exists); lower id or lower `epoch` -> dropped and counted.
+- A step is `{k, tag?, ...}`: `walk{x,z?,run?,nohes?}`, `hop{s,x,hh?,box?}`, `act{a,d,untilMs?,wiggle?,lock?,fpsMul?,depth?,belly?,snd?,bubble?,quiet?,flip?,fx?}`, `face{dir}`, `mark{}` (zero length; stands for every `fn` step in the web plans: the page runs its callback on the matching `stepDone`), and later `stalk{off}`, `pounce{}`, `game{kind,toy,rounds,love}`, `sync{key}`, `meet{cat,gap}`. Unknown `k` rejects the whole cat block (the cat keeps its last good plan) and reports `error`.
+- `mind.props`: `{bowlFood, toys[{id,x,z,h,state}], gift, items[<=3]}`; `mind.supports` is *not* here: native states its capabilities in the handshake and the page filters its options (below).
+- `untilMs` is the only wall-clock value the body reads, once per step boundary through an injected clock; tests inject it.
+
+**Native to page: a batched command `body`** (`{bodySeq, session, events[]}`, flushed at most every 250 ms, at once for `touched down/up` and `interrupted`). The reply is `{ok, ack: mindSeq, buzz?, message?}`; any new plan travels in the next projection (the kit sends one at once when the page changes anything, `50-native-tabkit.js` refresh/send).
+- Events: `stepStart{cat,plan,i,tag}` (so the page fires sound/bubble/stat hooks), `stepDone{cat,plan,i,tag,x,z,surf,dir,anim}` (also carries the old `arrived`), `interrupted{cat,plan,i}`, `touched{cat|null,kind:'down'|'move'|'up'|'tap',hit:'cat'|'bowl'|'toy'|'gift'|'item'|'room',x,y,heldMs}`, `needPlan{cat,plan,leftSteps,leftSec,reason:'low'|'empty'|'idle'}`, `pose{cat,x,z,surf,dir,anim,elev,sleepDepth}` at 1 Hz, `lifecycle{state:'hidden'|'shown'}`, `error{code}`.
+- Ordering: events of one cat are ordered by (plan, i); the page dedupes by `bodySeq`, drops events for plan ids it no longer holds, and runs a `tag` callback exactly once keyed `cat:plan:i` (the `fn` steps: `petLikesPlayed`, `petPlayDone`+save, `endBall`, `endBowl`).
+- The kit's rule "calls to a plugin arrive in the order made" gives order for free; the sim test (CT3) still injects reorder and duplication.
+
+**Latency tolerance and queue-ahead.**
+- Page keeps at least 2 steps and 4 s of planned time beyond the current step (web steps are 2 to 10 s: `15:238`, `16:129-139`). Native sends `needPlan` when <= 1 step or <= 2.5 s remain. Target page reaction: p95 <= 250 ms (to be measured in CT0); tolerated stall: 2 s with no visible effect.
+- Nothing queued and no `needPlan` answer: the current act keeps looping (rows are loops), then `CatBody` idle life (blinks, ear flicks, weight shift; already in `IdleLife.kt`). After 8 s with no plan native does not run the autopilot (the brain would not choose that); it stays in idle life and sends `needPlan{reason:'idle'}` every 5 s. After 60 s without any `ack` it shows the cat on its local autopilot and marks the screen `mindLost` (small chip) until the page answers again. The local autopilot is the same one the Overview card uses.
+- Interrupt latency: touch is a native reflex (below) so the owner never waits for the bridge; the page's answer arrives as plan id N+1 within about 300 ms.
+- Page hidden or WebView throttled: the page's mind pauses by itself (no timers); native keeps the 60 fps loop only while the screen is shown and the activity resumed (existing `rememberResumed`), frozen otherwise (A24). On `lifecycle shown` after a gap < 10 min the cat resumes where it was; after >= 10 min the page runs its existing greeting path (`petMaybeGreet` `16:38-57`, `PET_AWAY_MS` 30 min for the greeting, 10 min for re-placement) and sends `place{cut:true}` with a new epoch.
+
+**Touch reflex (why the protocol needs a native local layer).** The web decides touch in the frame (`16:201-246`, `26:228-323`) using the cat's live step. A bridge round trip is too slow for "finger down -> cat stops and looks". The projection therefore gives native a `touch` profile per cat (`level`, `doze`, `sleeping`, `keepSleep` rule, `sat`/`warn`/`leave`); native applies the reflex at once: finger down on cat -> cancel step, hold pose by level (`idle_sit` L1, `slowblink` L2, `purr` L3+, `_w` rows when hungry), hearts and haptic on the beat (0.85 s, L1 1.6 s), release -> `touched up{heldMs}` and a local settle (`slowblink` 2.4 s, or keep sleeping). The brain's accounting (saturation, respect reward, overstimulation, quirk counts, `petPetDone` at heldMs >= 1100) runs in the page on the events, and its verdict (`warn`: ears back; `leave`: retreat plan) returns in `touch` within one batch.
+
+**Which options the brain may pick: `supports`.** Native states in the handshake the step kinds and games it can run (`pet.steps: [walk,hop,act,face,mark]`, later `stalk,pounce,game,sync,meet`; `pet.props: [bowl]`, later toys, box). The page's adapter removes options whose plan needs more from the weights before the pick (the arbiter already re-weights by category: `26:418-451`, `PET_OPT_CAT`). So CT3 can ship before toys, box and pair exist without the cat ever starting something native cannot show.
+
+### 2.3 The page side: `NativeCatMind` (new segment, after `50-native-pet.js`)
+
+- It is a headless mind: the web body is no longer stepped (`petUpdate`/`petDraw` skipped), so everything the brain reads from the live cat (`rt.c.x/z/surf/dir/anim/step`, `petBrainFrame`, `petBrainStartStep`, `petBrainAct`, `petLikesTick`, `petDepthTick`) reads a **mirror** `rt.c` that the adapter updates from `stepStart/stepDone/pose` and from a *predictor* that applies queued steps virtually (walk -> x/z set, hop -> surf set, face -> dir). `petThink` runs when the predicted queue is shorter than the lookahead, from the predicted end position, and its output (`c.plan`) is cut to the window and sent.
+- Per-frame brain functions run on a 100 ms timer while the native screen shows (the web loop is rAF at about 30 fps, `17:76-81`), `dt` capped at 0.1 as today.
+- The `fn`-style closures become tags: the adapter keeps a registry `cat:plan:i -> function` and invokes it on `stepDone`; closures that read the *live* world (`petSwatPlan`'s `rt.playEscaped`, `27:42-58`) are replaced by `game` macro steps in CT4 so the reactive part runs where the toy is.
+- Two cats: `rt` per cat already exists (`PET_PAIR.rt1/rt2`, `29-pair`); every adapter call is wrapped in `petAs(i, fn)` (`29-pair:47-54`), the same global swap the web uses, so no brain code changes. The pair director (`petPairTick` `29-pair:190`, every 6 s, 45 % start) emits plans for both cats through the same adapter; `sync{key}` holds a cat until the other reaches the same key (timeout 3 s, then both go on), `meet{cat,gap}` is resolved natively against the *live* other cat (replaces `petPairWalkStart` offsets, `29-pair:108`). Single-occupancy spots (`PET_PAIR_SINGLE`) stay a page check on the predicted position.
+- Saved position (`p.bond`): `pose` and `stepDone` call the existing `petDepthStore` (`24:115-119`, throttled to 20 s, force on `lifecycle hidden` and on close) so `posX = (x-96)/250*100`, `posZ` one decimal, `elevationY` from `elev` are written exactly as today. The 10-minute rule (`bond.at`, `24:121-126`) is applied only when the page computes a `place` (`petPlaceForNow`, `16:111-128`); native never reads the save. Note the web restores only floor position; surfaces come from the day block's spot. Keep.
+- Offline catch-up: the page runs `petBrainSession` -> `petOfflineCatchup` (`26:630-657`, up to 12 steps of 30 min) -> `petPlaceForNow`/`petMaybeGreet` before the first frame; the screen shows the room after the first `place` (<= 400 ms; after 1 s it places the cat by autopilot start and the page's `place{cut}` replaces it). The "while you were away" text is in `mind`/projection (`away`).
+- The page must also keep `petSync`'s other duties: `petSfxStopAll` on hide, `lm_pet_seen` stamp (`16:29`) from `pose`.
+
+### 2.4 Specific interactions
+
+| Interaction | Native | Page |
+|---|---|---|
+| Tap (no hold < 0.45 s) | hit test: `petCatBox` (`16:187-192`, port), bowl rect (`f.x±10`, `top-4..top+14`), toy, gift, room; cat -> reflex, room -> parallax drag begins | brain tap rules on `touched` |
+| Hold-stroke | reflex + hearts + haptic; `touched up{heldMs}` | `pet` command at >= 1.1 s, bond, `petLevelUp` cue |
+| Drag (floor, L>=2) | local walk plans at <= 1 per 0.35 s to x-20 with z from y (`24:174`), clamped to `petZMinAt..petDepthMaxZ` (trust tiers 55/84/100) | none until CT3; then page may override with a plan |
+| Full-screen | same `RoomHost`, wider view, Back closes, landscape shows more house | none |
+| Wand | native dangle physics (`16:98-109`) driven by finger x | `game wand` result |
+| Toys / pounce / swat / chase / belly-up | `game` macro step; native toy entity with `petToyUpdate` physics (gravity 320, bounce 0.36, 0.62 spring, friction by toy, walls 32..156) | picks toy and rounds, handles `gameDone{toy,played,escaped}` -> `petLikesPlayed`, `petPlayDone` |
+| Feeding at the bowl | plan `walk(PET_EATX) face act eat act groom`; bowl food flag; native shows the bowl full | `petFeed` result; plan; `endBowl` after 14 s idle |
+| Sleeping spots | `act sleep` with `depth` and cover rules done in the page's choice of x/z (`30:20-60`, hidden <= 8 %) | picks spot; native only draws the draw order |
+| Box | `hop{box}` + sink clip + wobble 0.8 s (`28`), sink depth table `PET_BOX_FACE` copied as data | plan |
+| Pair | `sync`/`meet` + two bodies + shared draw order | director, rank, rel |
+
+## 3. Phases
+
+Each phase ships behind a switch (sub-switch under Settings, Appearance: "Native Cat (beta)", then "Native cat brain (beta)"; both off by default), each bumps `NativeApi.VALUE` (currently 48), adds a bridge-catalog entry/revision, a `MIGRATION.md` row and a hand-over simulation case. Effort is in agent-passes.
+
+### CT0. Groundwork and measurements (1 pass; design with the stronger model per CLAUDE.md)
+- Scope: (a) measure on the phone, with the native Overview live cat as the vehicle: page timer/rAF cadence while a native screen covers the page, bridge round trip (page->native projection and native->page command) p50/p95, WebAudio `resume()` without a page gesture; (b) a dev-only page recorder that logs, per day and cat, `(t, plan steps, events)` and the brain's `(state, event, now) -> (state, plans)` inputs; the golden file format; (c) fix the channel decision (the `mind` block through the kit, or a dedicated high-frequency listener).
+- Page: `50-pet-record.js` (~150 lines, dev mode only). Native: none. Tests: recorder round trip. Risk: if the page throttles under the cover, CT3 needs the bigger queue-ahead or the logic cutover sooner.
+- Decision gate: p95 page reaction <= 250 ms and no timer starvation, else widen the lookahead and re-plan CT3 with the owner.
+
+### CT1. Native Cat tab: shell, stats, buttons, large live room on autopilot (3 to 4 passes; 2600 lines)
+- Scope: everything marked "CT1 N" in section 1. The tab opens only for a living cat (`blocked()` true for intro and memorial, so the page shows them: H). Room is the Overview's `HouseStage` lifted into a shared `RoomHost` composable (150 lines moved out of `feature/overview/..`), drawn full width at an integer scale with the camera, in the upper part of the screen; stats and cards scroll below. Feed and slow blink are commands; the cat reacts with local plans (`routeTo` bowl, face, eat, groom; `react(SlowBlink)`); cue `fed{cat,id}` (id played once, like XP celebrations) covers deep link and voice feed. Play opens the page's Cat view with the tray (H). Both cats live in the room (`HouseLife`); the shared Feed button label for two cats is the projection's (`29-pair:466`).
+- Page changes (~450 lines): `50-native-pet.js` (`NativeTabKit.create`, `projection()`, `onAction()`, `blocked()`, `notices: true`); refactor `petRenderStatus` (`17:182-209`) into a pure `petStatusData(p)` used by both the DOM and the projection (about 40 lines moved); `petWantRun` guard (`17:74`); module map regenerated; settings toggle + `lmaLoad()` key; gen_native_fixtures entry for `pet`.
+- Native changes (~1500 main): `feature/pet/{domain,data}` (typed projection, strict decoder, repository, ~450), `presentation` (CatScreen, stats, bond bar, buttons, care card, view model, ~800), `NativePetPlugin`, `PetContainer`, `RoomHost` (~200), registration in `MainActivity.java`.
+- Tests (~700): strict decoder with malformed variants keeping the last good state; view model; screenshots (alive, hungry, very hungry/weak rows, vacation, kitten, two cats, genetic coat, large text, dark/light) at `maxPercentDifference = 0.001`; node projection test with generated fixtures (copy `native-character.test.js`); add `pet` to `native-handover-sim.test.js` fakes with a mutation shown failing; `RoomAllocationTest` extended to the Cat screen. Pixel fidelity: reuse `RoomFidelityTest` (unchanged; the refactor must not move a pixel of the Overview).
+- Risks: regression of the Overview card by the `RoomHost` lift (mitigated by its existing screenshot and fidelity tests); 60 fps on a large canvas (target < 4 ms CPU/frame, no per-frame allocation); the page loop must stop under the cover (else double CPU).
+
+### CT2. Touch and care commands, full-screen room (2 to 3 passes; 1800 lines)
+- Scope: hit test, tap, hold-stroke reflex by level, hearts and haptics, drag-follow, tap bowl, parallax drag, native full-screen, level-up celebration cue, `pet` and `gift` commands; introduces the `body` command with only `touched` and `pose` events and the `touch` profile for saturation/warn/leave (thin version of CT3's channel). Page plays the purr/meow from `touched`.
+- Page (~250): `body` command handler -> `petPetDone` + `petLikesPetted` + `petBrainEvent`/`petAffect` + `petDepthStore` (positions saved from `pose`); `touch` block in the projection; `petLevelUp` becomes a cue (particles native, toast as notice).
+- Native (~900): pure `TouchModel` (state machine on an injected clock), hit rects, full-screen route (Back closes), `Haptics` helper, local retreat plan.
+- Tests: `TouchModel` traces (tap, hold 0.2/0.5/1.2/3 s, L0..L5, sleeping L3 keeps sleep, spam, release after warn) as golden JSON; node test calling the real `petPetDone` (3 counted a day, +2 bond, level-up edge); hand-over sim: touch events during a close; screenshot with hearts; allocation test.
+- Risks: reflex diverges from the web rules (golden traces come from the CT0 recorder); haptic feel is phone-only.
+
+### CT3. The brain drives the body (5 to 6 passes; 2400 lines; the design-heavy phase: use the stronger model, CLAUDE.md "designing a new piece")
+- Scope: section 2.2 and 2.3 in full for walk/hop/act/face/mark; `place`, `needPlan`, `stepStart`, `lifecycle`, mirror and predictor, `supports` filter (toys, box, pair, gifts, glass fog and hunting items filtered until their phases), headless brain tick, offline catch-up and greeting, saved position, bowl wait with bubble and `beg`, sleep with `untilMs`, zoomies (`frap` is hops and runs, no props), body language `affect` -> `setAffect` (ears/tail targets exist in `Ears.kt`/`Tail.kt`). Sub-passes: 3a types, decoders and a Kotlin fake-page driver (parallel); 3b `NativeCatMind` (page); 3c body additions (`Plan.kt` step kinds, act options, place/cut, events; `CatBody.kt` +450); 3d integration, golden traces, latency sim.
+- Page (~900): `50-native-pet-mind.js`; gates in `17:74-81` (headless tick), `24:186` (`petDepthTick` reads mirror), `26` (`petBrainFrame` reads mirror step), `29-pair` (focus). Native (~1300): protocol types/decoders (~400), `MindLink` (~300), body (~450), room hooks.
+- Tests: (1) *plan equality*: run the real web brain headless against a fake body that completes steps instantly, for 3 traits x 14 days x 2 cats, and assert the picked option/spot stream equals the CT0 legacy recording (seed-for-seed, the plan's own acceptance test); (2) strict decoders, stale ids, duplicate and reordered batches, out-of-window steps; (3) latency simulation 0 to 3 s and a dropped `ack`: the cat never freezes, never teleports, `mindLost` appears after 60 s; (4) `CatBody` replay of a recorded plan stream with arrival times within 150 ms of the web's; (5) hand-over simulation with `needPlan` during open/close; (6) screenshots of bubble, begging, sleeping. No pixel fidelity needed beyond existing.
+- Risks (highest in the plan): drift between mirror and body (mitigated by `pose` 1 Hz as truth and `place` on mismatch > 24 px); brain code that reads fields the mirror lacks (found by running the equality test with a poisoned mirror); the page throttled (CT0 gate).
+- Rollout: sub-switch "Native cat brain (beta)"; off keeps CT1/CT2 behaviour.
+
+### CT4. Toys and play (4 passes; 1700 lines)
+- Scope: toy entity and physics (`16:9-27`, 40 lines + `16:98-109` dangle, 40 lines), `game` macro step covering pounce chain (`16:18-26`), floor swat (hit frame 3, hook 5), swat-and-chase, belly-up juggle (`27-pet-play.js`, 145 lines), wand, kick tracking (ball at `c.x + dir*18.2*sx`), yarn/spring/box art added to `tools/gen_pet_native_assets.js`, toy tray sheet with words and locks, `buyToy`, gifts and floor items (`b.items` max 3), sleep-with-toy carry (`30:61-125`) as props.
+- Page (~500): `game` plan builders replacing `petSwatPlan`/`petChasePlan`/`petHugPlan`/`petPounceChain` for native cats (the classic builders remain for the classic room); `gameDone` handler; `petOfferToy` refusal path ("sniffs and loses interest").
+- Native (~900): `ToyBody`, `GameRunner` (state machine; rounds, escape probability 0.2 seeded by the plan's `seed` field so replays are exact), tray UI.
+- Tests: toy physics golden traces recorded from the web (bounce, friction by toy, wall hits); game timeline vs recorded web timeline per kind (tolerance 1 frame); screenshots (tray, locked toys, each pose with toy); `PET_PLAY` constants copied as a data table with a test that fails if the web constant changes (grep-based fixture from the page).
+- Risk: game feel (phone-only) and the reactive parts that `fn` closures did; macro steps keep them native.
+
+### CT5. Sleep spots, box, pair (5 passes in two tasks: 5a sleep + box 2 passes, 5b pair 3 passes; 1900 lines)
+- 5a: sleeping cover rule is a page choice (`30-pet-sleep:20-60`), native needs the draw order for cushion/pouf/box and the **box sink**: cat clipped below the rim, sink depth per growth stage from `PET_BOX_FACE` (`28`), jump 0.66 s, out 0.56 s, apex 20, squash 0.17 s, wobble 0.8 s. Tests: sink depth equality per stage against the web table, hidden fraction <= 8 % for all coats/stages at the sleep spots, screenshots.
+- 5b: `sync`/`meet`, two-body interactions (greet nose touch/hiss/cheek rub, chase with stalk/pounce/run/tussle, groom, snuggle nap, standoff by rank), shared feed label, Together card, switcher with faces, focus by tapping a cat. Tests: pair golden traces from the recorder (rel gains, daily cap 0.16, stage timeout 26 s), no overlap (`HouseLifeTest` style), single-occupancy.
+- Risk: pair animations are staged by position today; a frame-accurate contact needs art checks per growth stage combination.
+
+### CT6. Panels and flows (parallel track, 2 agents, 8 to 9 passes total, 3000 lines, can start once CT1 is merged)
+- S-A (4 passes): likes bars, inner-life panel, Together card, DNA panel (the page turns `petDnaPanelHtml` into rows, `32:500-567`, keeping its text; native renders; full genome table), mind row, "while you were away". Hotspot: the projection's size (DNA genome ~40 rows: send only when the details are opened via an `expand` command, A25 budget).
+- S-B (4 to 5 passes): cattery (roster, litter, goal, pickers, previews via `PageCoatSource`), intro/adoption (4 coats or a DNA litter of 4 via `petDnaNewLitter` `32:505`), second-cat adoption, memorial (sleep_w frame), "Open the door again". `confirm()`/`prompt()` calls (`37:~230-240`) become native dialogs with the same refusal rules. Tab then opens for intro and memorial too (`blocked()` relaxed).
+- Tests: decoders per panel with malformed variants; page node tests drive the real handlers (`petBreedGo`, `petBreedKeep`, `petAdopt`, `petPairAdopt`); screenshots; coat previews pixel-compared with `petCoatPreviewDraw`.
+
+### CT7. Rig and secondary motion (4 passes; 1400 lines; independent until wired)
+- Facts (read from the data, since the P2 hand-back is not in the repo): `petRig.html` is JSON `v:2, W:72, H:48` with 14 kinds (`adult`, `st0..st5`, 28 rows each, `depth`, `dst0..dst5`, 4 rows each); 1,204 frames; per frame `y` (foot row), ears `e` (1,097 frames; pixel-run lists `r` as triples row,x0,x1, base `b`, tip `t`), whiskers `w`, tail `t` only in rows flagged `tl` (116 frames, polyline `a` + runs), leg stretch band `l`, torso band `x`, and a head anchor `h` in 1,001 of 1,204 frames (unused by `38-pet-rig.js`). The frames are hand-drawn and cut by `tools/rig_build.py` (`38:1-4`), which settles the contradiction recorded in `PET_AS_BUILT` section 10.
+- Scope: `tools/gen_pet_native_assets.js` emits a compact binary of the rig; Kotlin `RigFrame` decode, `RigCompose` (ears rotate/scale about the base, tail bent along its centre line, whiskers trimmed/extended, leg/torso nearest-neighbour stretch, outline repair, margins 76/76/44/8) with an LRU cache (600 frames); per-cat `morph` (six multipliers `em,ew,tl,lg,bl,wk`, clamp 0.35..2.8, `37:~62-73`) comes from the projection; `CatPose.ear/earFlat/tail/whisker` (already computed by the springs, unused by the renderer) now drive it; neutral cat = plain sheet.
+- Tests: pixel-exact equality with the plain frame when `morph = 1` and pose neutral; pixel-exact against web renders for a recorded set (extreme morph x 3 rows x 4 coats, `gen_pet_art_fixtures.js` pattern); allocation test (cache hits allocate nothing); spring settle tests exist (`SecondaryMotionTest`).
+- Benefit also lands on the Overview card (same renderer). Open question 3 covers the HD face layer.
+
+### CT8. Head and eye look-at (1 spike + 3 passes; 900 lines)
+- `Attention.kt` (91 lines) already produces look vector, lean and ear bias but "reports intent". Spike (1 pass): on `idle_sit`, `lookup`, `sleep` decide how to move a head: use the `h` anchor to pivot a head cut-out (needs a `rig_build.py` extension that also records a head mask) or fall back to whole-body lean plus eye-only look (`petHdEye` `50-hd:74` shows eyes are drawn live in the HD layer). The 203 frames without `h` are listed by the audit tool `tools/rig_audit.js`. Go/no-go with the owner on the spike screenshots, then CT8b builds it. Tests: golden pose traces for the look springs, screenshot sets of look left/right/up/down per row.
+
+### CT9. 2.5D (art 2 passes + engine 3 passes; 1500 lines + art)
+- As `PET_ENGINE_PLAN` section 5: cut the seven painted furniture bases (`PET_Z_BLOCK`, `24:51-57`) into layers with the wall rebuilt, a few pixels of side/top face that shift with the camera, four to six parallax planes (the web has anchors at z 0/45/75/95 = 2/6/12/16 px, `24:168-176`), phone-tilt via sensors (only drag exists today in native), soft contact shadows replacing the 2 px blob, window light cast on the floor, rim light. The cat passes behind a sofa arm: the "stay in front" rule (`petZMinAt`) is lifted only for cut furniture.
+- The art cut starts right after CT1 (independent files); engine work extends `RoomScene.kt` (345) and `RoomLight.kt` (143). A "Classic look" flag keeps the flat room for pixel comparison; `RoomFidelityTest` keeps guarding it.
+- Tests: golden screenshots per layer; occlusion test (cat behind arm at 3 positions); no-allocation test; fidelity test unchanged on the classic flag.
+
+### CT10. Retire the page room (2 passes)
+- `defaultOn: true` for the tab after the owner has used it (NATIVE_TAB_GUIDE "Making a tab the default"); the page's Cat view stays as Classic for one more release (A33), reachable by the switch; the page's room loop, canvases and the HD/rig compose become dead for native users but are *not* deleted yet because the page is still the mind (they are needed by Classic). Delete (about 1,900 lines of drawing: `16:337-372`, `17:1-100`, `50-pet-hd.js`, drawing parts of `24`, `38-pet-rig.js` compose) only after CT-L and a release as default.
+- Optional follow-ups: native sound (13 clips in `petSounds.html`, 420 KB, SoundPool; chained purr), home-screen widget/wallpaper (the body is headless-ready).
+
+### CT-L. Logic cutover (LATER, clearly outside this plan; the stronger model per CLAUDE.md)
+- Moves the brain and saves to Kotlin: care maths (`15:64-123`, 60 lines, first), day schedule/RNG (`15:141-170`; FNV-1a 32 offset 2166136261 multiplier 16777619; mulberry32 increment 0x6D2B79F5; seed strings in `PET_AS_BUILT` section 8; two date key formats), DNA (`32` 686 + `37` 278), likes (245), brain (898), pair (583+93). In-process, the protocol of 2.2 becomes an interface and the bridge disappears.
+- Golden-test strategy, precedent `tools/gen_economy_golden.js`: (1) differential: 200 synthetic cats x 14 days, `petBuildDay` blocks and the first 10,000 draws of each RNG identical between the page and Kotlin; (2) brain: the CT0 recorder's `(state, event, now) -> (state, plans)` traces (>= 50,000 events from real saves) replayed in Kotlin, floats compared after the brain's own 3-decimal quantization (`petR3`); (3) saves: page-write -> Kotlin-read -> Kotlin-write -> page-read identical for every fixture and generated save, `schema` unchanged; (4) DNA: phenotype/key equality over the 2,000 crosses of `petDevDnaStats`; (5) shadow mode behind a switch (both run, native compares, page stays authoritative) for a release before native writes (A14/A15 receipts).
+
+## 4. Parallelisation and conflict hotspots
+
+Independent agent tasks (one worktree each):
+- A. CT1 then CT2 (one agent, sequential; owns the tab shell and `RoomHost`).
+- B. CT3a: Kotlin protocol types, decoders, `CatBody` additions with a fake page driver; needs only the section 2.2 spec and CT0's decision. Can start with A and meets A at CT3d.
+- C. CT0 recorder, then the CT3 equality test harness (page-only, node).
+- D. CT7a: rig decode tool, binary format, Kotlin decoder and `RigCompose` fidelity tests (assets pipeline files only).
+- E. CT9 art cut-outs (assets only), then CT9 engine after A merges `RoomHost`.
+- F. CT6 S-A and S-B, after CT1 merges (they need the projection shape and screen scaffold; they share only the tab's projection builder, so each adds its own `projection` sub-builder file).
+- Sequential chain: CT1 -> CT2 -> CT3 integration -> CT4 -> CT5; CT7 wires into the renderer after CT3 (needs `CatPose` consumers stable); CT8 after CT7; CT10 last.
+
+Hotspots (give each a single owner per merge window; regenerate rather than hand-merge where noted):
+- `NativeApi.VALUE`: every phase bumps it. Reserve numbers up front (CT1 49, CT2 50, CT3 51, CT4 52, CT5 53, CT6 54 and 55, CT7 56).
+- `docs/architecture/BRIDGE_CATALOG.json` (one `pet` entry, many agents add capabilities) and `MIGRATION.md` ledger: one entry/row per phase appended in a fixed order; CI `check_bridge_catalog.py` enforces plugin names.
+- Module map and symbol index: always regenerate with `gen_module_map.py` after merging, never hand-merge; new web segments are inserted after `50-native-tabkit.js` in `index.template.html` (conflict magnet).
+- `native-handover-sim.test.js` (512 lines): fakes list. One agent (A) adds the `pet` fake in CT1; later phases add *modes* in a separate block at the end, not new fakes in the shared list.
+- `NativeTabKit` (`50-native-tabkit.js`, 454 lines), `ComposeTabPlugin.kt` (349), `MainActivity.java`: touched only if CT0 decides the stream needs a dedicated listener; if so, that change is its own early merge before CT3.
+- `CatBody.kt` (525), `Plan.kt`, `Tuning.kt` (321), `World.kt`: B owns them; CT4/CT5/CT7 add via new files (`ToyBody.kt`, `GameRunner.kt`, `BoxSink.kt`, `Rig*.kt`) and register through small hooks, to keep merges trivial.
+- `HouseStage.kt`/`RoomScene.kt`/`RoomHost` are shared with the Overview card: any change reruns `CatHouseScreenshotTest`, `RoomFidelityTest`, `RoomAllocationTest`.
+- `17-runtime.js` (`petWantRun`, `petFrame`): CT1 adds the minimal guard, CT3 adds the headless tick; no one else edits it.
+- `50-native-settings-fields.js` / `lmaLoad()` keys: one new key per phase; append only.
+- Per CLAUDE.md the owner is told in one line before: any merge where two sides changed `CatBody`/shell/`ComposeTabPlugin` logic, CT3 design, CT-L, and review of outside agents' work.
+
+## 5. Open questions for the owner (recommended default in brackets)
+
+1. First-release honesty: may CT1+CT2 ship as a beta where the cat is on its own autopilot (not the page's day, no play, no pair) until CT3? [Yes. It is off by default, labelled on the Settings row, and gives the owner the big smooth room within about 5 passes.]
+2. Sound and haptics: keep sound in the page (events) until the page room retires, and use native haptics for touch beats from CT2? [Yes. If the purr starts later than about 100 ms after the finger lands, port only the purr loop and the meow to native first.]
+3. The HD face layer (`50-pet-hd.js`, 3 MB, 2x face drawn live) and "one pixel density per cat" (plan section 8): drop HD in native and keep the plain/rig art, or port it? [Drop. Compare the Overview cat with the HD web cat on the phone first; port only if the face is missed, as part of CT8.]
+4. Layout of the larger room: full-width room pinned at the top (about 55 % of the screen) with stats scrolling under it, tap for full screen; or the web's card layout? [Pinned full-width room; the web's card order below it.]
+5. When there is no cat or the cat has passed: keep the page's intro and memorial until CT6, or build them first because they are the first thing a new player sees? [Keep the page's until CT6; the owner already has a cat.]
+6. Who is the Cat tab's default: make `defaultOn` after CT5 (play, sleep, box, pair all native), or already after CT3? [After CT5 is verified on the phone; CT3 alone loses toys, which is the thing owners poke most.]
