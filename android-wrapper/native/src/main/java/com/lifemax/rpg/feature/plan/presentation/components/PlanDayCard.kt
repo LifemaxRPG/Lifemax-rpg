@@ -55,6 +55,7 @@ import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanItem
 import com.lifemax.rpg.feature.plan.domain.PlanPageAction
 import com.lifemax.rpg.feature.plan.domain.SetRef
+import com.lifemax.rpg.feature.plan.presentation.FieldKind
 
 /**
  * The selected day: its title, progress tag and note, and each exercise with a box per set, the
@@ -68,6 +69,7 @@ internal fun PlanDayCard(
     pending: Map<SetRef, Boolean>,
     onToggle: (SetRef, Boolean, Offset) -> Unit,
     onPage: (PlanPageAction) -> Unit,
+    onField: ((PlanItem, FieldKind) -> Unit)? = null,
 ) {
     val c = LocalPlanColors.current
     PageCard {
@@ -109,7 +111,7 @@ internal fun PlanDayCard(
         if (day.locked && !day.rest) LockedNote()
         day.items.forEachIndexed { i, item ->
             if (i > 0) HorizontalDivider(color = c.lineSoft)
-            PlanItemRow(day, item, pending, onToggle, onPage)
+            PlanItemRow(day, item, pending, onToggle, onPage, onField)
         }
     }
 }
@@ -140,6 +142,7 @@ private fun PlanItemRow(
     pending: Map<SetRef, Boolean>,
     onToggle: (SetRef, Boolean, Offset) -> Unit,
     onPage: (PlanPageAction) -> Unit,
+    onField: ((PlanItem, FieldKind) -> Unit)?,
 ) {
     val c = LocalPlanColors.current
     Column(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
@@ -187,8 +190,10 @@ private fun PlanItemRow(
                     PaddingValues(horizontal = 11.dp, vertical = 8.dp),
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
+                    native = onField != null,
                 ) {
-                    onPage(PlanPageAction.EditValue(day.date, item.key))
+                    if (onField != null) onField(item, FieldKind.VALUE)
+                    else onPage(PlanPageAction.EditValue(day.date, item.key))
                 }
                 if (value.last.isNotEmpty())
                     Text(
@@ -220,8 +225,10 @@ private fun PlanItemRow(
             PaddingValues(horizontal = 11.dp, vertical = 9.dp),
             fontSize = 12.5.sp,
             lineHeight = 17.5.sp,
+            native = onField != null,
         ) {
-            onPage(PlanPageAction.EditLog(day.date, item.key))
+            if (onField != null) onField(item, FieldKind.LOG)
+            else onPage(PlanPageAction.EditLog(day.date, item.key))
         }
         if (item.log.previous.isNotEmpty())
             Text(
@@ -299,6 +306,7 @@ private fun Field(
     padding: PaddingValues,
     fontSize: TextUnit,
     lineHeight: TextUnit,
+    native: Boolean = false,
     onEdit: () -> Unit,
 ) {
     val c = LocalPlanColors.current
@@ -309,7 +317,7 @@ private fun Field(
             .clip(shape)
             .background(c.field)
             .border(1.dp, c.line, shape)
-            .clickable(enabled, "Edit on the page", Role.Button, onEdit)
+            .clickable(enabled, if (native) "Edit" else "Edit on the page", Role.Button, onEdit)
             .semantics { contentDescription = "$label: ${text.ifEmpty { "empty" }}" }
             .padding(padding),
         color = if (text.isEmpty()) c.muted else c.text,

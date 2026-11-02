@@ -10,7 +10,7 @@ Nothing else re-wraps `renderPlan`, `planToggle`, `selectDay` or `selectWeek`. T
 | State | When | What the page shows | Native phase 1 |
 |---|---|---|---|
 | No plan, Athlete or no class | `!state.plan` | the Athlete offer (inline in `renderPlan`): start date and "Sign up for this plan" | stays on the page (`blocked()`) |
-| No plan, Scholar, Entrepreneur or Explorer | `!state.plan` and a class with an offer | `scholarOfferHtml`, `entrepreneurOfferHtml` or `explorerOfferHtml` (14-runtime) | stays on the page |
+| No plan, Scholar, Entrepreneur or Explorer | `!state.plan` and a class with an offer | `scholarOfferHtml`, `entrepreneurOfferHtml` or `explorerOfferHtml` (14-runtime), all drawn by `planOfferHtml` from `planOfferFor` | drawn with `plan.offers.v1`; otherwise stays on the page |
 | Before the first day | `today < plan.from` | "Starts M/D/YYYY"; week 1 is marked current; future days are locked | drawn |
 | Running | the plan is in its eight weeks | "Week n of 8" | drawn |
 | Over | `today > start + 55 days` | "Program complete"; no week is current; the selection falls back to `plan.from` | drawn |
@@ -73,11 +73,11 @@ The XP is split 70/30 between the primary and secondary attribute. It is 0 when 
 | Select week | `selectWeek(w)` | `planSel` (page global, not saved) | `renderPlan` | native, local. Native selects the week's Monday as the page does. When the plan starts mid-week, it keeps a selected day of that week, as the page does, or else takes the week's first plan day, where the page falls back to today (a quirk). |
 | Select day | `selectDay(date)` | `planSel` | `renderPlan` | native, local. The page's own selection is followed when it changes (`selected.revision`). |
 | Tick or clear a set | `planToggle(date,key,i,checked)` | `plan.checks[date].s[key][i]`. When every required set is done and there is no `actId`, it adds activity `plan_<date>` (type `plan`, skill Training, `xpSplit`), adds attribute and Training XP, and sets `actId`. When the day is no longer done, `removeAct` takes the XP back and deletes `actId`. | `save()`: XP rebuilt, `checkBadges` (badge toast after 600 ms), `checkLevelUps` (`celebrateXP`, then the level-up overlay after 950 ms), storage write, `renderAll`. The save wrappers run `lmaSoon` (Android sync), the Food sync and `dhAutoVerify`, which can complete the daily-hand quest "Follow today's plan" (`toggleQuest`: quest XP and activity). Toast "X complete · +N XP" or "Session reopened · XP removed". It now returns `{saved, message}` and toasts success only after a save that worked. | kit command `toggle` |
-| Value | `planVal(date,key,v)` | `checks[date].v[key]` (trimmed) | `save()` | delegated: the page's field |
-| Session log | `planLog(date,key,v)` | `checks[date].log[key]` (deleted when empty) | `save()`. It is read by the Journal (`planLogsForDay`, 04-runtime) and its day list. | delegated: the page's field |
-| Guided workout | `gwrStart(date)`, `gwrResume()` | `state.guidedWorkout` (the session, its phase, timers, skips). Per logged set: `checks[date].setDetails[key][j]`, `v[key] = "<w> lb"`, then `planToggle(…, true)`. Also `checks.substitute[key]`. On finish, `state.workoutHistory` (newest first, at most 120). `gwrExitComplete` clears the session. | Overlay plus `body.noscroll`, a 250 ms tick while open, the FX canvas, WebAudio, haptics, the 3D gym | delegated |
-| Leave plan | `leavePlan()` | `confirm`, then `state.plan = null` and `planSel = null`. Earned XP and activities stay; a saved session no longer matches. | `save()`, toast "Plan ended" | delegated |
-| Sign up | `startPlan()` | `state.plan = {id: classPlanId(classId) or 'athlete_beginner8', classId, start: Monday of #planStart, from, checks: {}}` | `save()`, toast | page only (offers are not drawn) |
+| Value | `planVal(date,key,v)` | `checks[date].v[key]` (trimmed) | `save()` | native with `plan.fields.v1` (command `value`, set semantics); otherwise delegated: the page's field |
+| Session log | `planLog(date,key,v)` | `checks[date].log[key]` (deleted when empty) | `save()`. It is read by the Journal (`planLogsForDay`, 04-runtime) and its day list. | native with `plan.fields.v1` (command `log`, at most `PLAN_LOG_MAX` = 400 characters); otherwise delegated: the page's field |
+| Guided workout | `gwrStart(date)`, `gwrResume()` | `state.guidedWorkout` (the session, its phase, timers, skips). Per logged set: `checks[date].setDetails[key][j]`, `v[key] = "<w> lb"`, then `planToggle(…, true)`. Also `checks.substitute[key]`. On finish, `state.workoutHistory` (newest first, at most 120). `gwrExitComplete` clears the session. | Overlay plus `body.noscroll`, a 250 ms tick while open, the FX canvas, WebAudio, haptics, the 3D gym | native with `plan.runner.v1` (command `runner`, one act per button, no overlay and no scroll lock; see MIGRATION.md); the 3D gym and an APK or page without the capability: delegated |
+| Leave plan | `leavePlan()` | `confirm` (`LEAVE_PLAN_ASK`), then `state.plan = null` and `planSel = null`. Earned XP and activities stay; a saved session no longer matches. | `save()`, toast "Plan ended" | native with `plan.leave.v1` (the screen asks `leaveAsk`, command `leave` runs `leavePlan(true)`); otherwise delegated |
+| Sign up | `startPlan(start)` | `state.plan = {id: classPlanId(classId) or 'athlete_beginner8', classId, start: Monday of the start date, from, checks: {}}` | `save()`, toast | native with `plan.offers.v1` (the offer is drawn from `planOfferFor`, command `signUp`); otherwise the page's offer, the screen not covering |
 | General rules, swipe strips | `<details>`, scroll | none | none | native, local |
 
 ## Entry points
@@ -116,7 +116,7 @@ The `toggle` command calls `planToggle`:
 - The kit drops the refresh that the command's own renders asked for, because the projection sent with the reply already carries them: one projection per tick, not two.
 - A box waits for its answer for at most 5 seconds. If the answer is lost on the way (A14: the outcome is unknown), the next projection after that decides what the box shows, and the box takes taps again.
 
-Delegated (the screen closes, the page's handler runs, `revisit()` follows):
+Delegated when the APK or the page lacks the capability (`plan.runner.v1`, `plan.fields.v1`, `plan.leave.v1`; the screen closes, the page's handler runs, `revisit()` follows), and always for the 3D gym:
 - the guided workout (`gwrResume` or `gwrStart`);
 - editing a value or a session log (the page selects the day and focuses its field);
 - leaving the plan.

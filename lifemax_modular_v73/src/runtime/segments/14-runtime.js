@@ -58,9 +58,53 @@ function scholarPlanDay(date,p){
  s.ex.forEach(function(e,i){items.push({k:'E'+(i+1),l:esc(e[0]),d:esc((e[1]>1?e[1]+' sets × ':'')+e[2]+(e[5]?' — '+e[5]:'')),n:e[1],wt:e[4]==='weight',min:e[4]==='minutes'})});
  if(s.cool.length)items.push({k:'cool',l:'Cool-down',d:esc(s.cool.join(' · ')),n:1});
  return Object.assign({},base,{kind:kind,short:kind==='strength'?'Session '+s.id:s.title,cell:s.title,code:s.id,label:esc(s.title),icon:kind==='strength'?'dumbbell':kind==='cardio'?'heart':'moon',xp:xp,primary:'wellbeing',secondary:type==='recovery'?'':'discipline',items:items,note:esc('Week '+w+': '+P.progression[w-1]+' About '+s.min+' minutes.')})}
-function scholarOfferHtml(t){return `<div class="card"><div class="eyebrow">AVAILABLE PLAN</div><h2 style="margin:6px 0 4px;font-size:22px">Scholar · 8-Week Light Program</h2><p class="muted" style="margin:0 0 12px">Gentle movement for long study days · bodyweight, light dumbbells or bands, walking</p><div class="minirow"><span>Mon</span><small>Session A · postural strength</small></div><div class="minirow"><span>Tue · Sat</span><small>Aerobic focus reset (easy walk)</small></div><div class="minirow"><span>Thu</span><small>Session C · upper body and posture</small></div><div class="minirow"><span>Fri</span><small>Session D · mobility and decompression</small></div><div class="minirow"><span>Wed · Sun</span><small>Full rest</small></div><div class="note" style="margin:14px 0">Weeks 4 and 8 are lighter on purpose. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition.</div><div class="formgrid"><div class="field"><label>Start date</label><input id="planStart" type="date" value="${t}"></div></div><div style="margin-top:12px"><button class="btn" onclick="startPlan()">Sign up for this plan</button></div></div>`}
-function entrepreneurOfferHtml(t){return `<div class="card"><div class="eyebrow">AVAILABLE PLAN</div><h2 style="margin:6px 0 4px;font-size:22px">Entrepreneur · 8-Week Light Program</h2><p class="muted" style="margin:0 0 12px">Short sessions that protect your energy for work · bodyweight, light dumbbells or bands, walking</p><div class="minirow"><span>Mon</span><small>Session A · desk posture and core</small></div><div class="minirow"><span>Tue</span><small>Session B · aerobic reset (brisk walk)</small></div><div class="minirow"><span>Wed</span><small>Session E · tension release and mobility</small></div><div class="minirow"><span>Thu</span><small>Session C · full-body maintenance</small></div><div class="minirow"><span>Sat</span><small>Session D · weekend strategy walk</small></div><div class="minirow"><span>Fri · Sun</span><small>Full rest</small></div><div class="note" style="margin:14px 0">Weeks 4 and 8 are lighter on purpose. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition.</div><div class="formgrid"><div class="field"><label>Start date</label><input id="planStart" type="date" value="${t}"></div></div><div style="margin-top:12px"><button class="btn" onclick="startPlan()">Sign up for this plan</button></div></div>`}
-function explorerOfferHtml(t){return `<div class="card"><div class="eyebrow">AVAILABLE PLAN</div><h2 style="margin:6px 0 4px;font-size:22px">Explorer · 8-Week Outdoor Program</h2><p class="muted" style="margin:0 0 12px">Walking, light loads and balance that build the stamina for outings · no gym needed</p><div class="minirow"><span>Mon</span><small>Session A · trail legs and balance</small></div><div class="minirow"><span>Tue</span><small>Session B · loaded daypack walk</small></div><div class="minirow"><span>Thu</span><small>Session C · practical load and core</small></div><div class="minirow"><span>Fri</span><small>Session G · trail recovery stretches</small></div><div class="minirow"><span>Sat</span><small>Session E · weekend exploration</small></div><div class="minirow"><span>Wed · Sun</span><small>Full rest</small></div><div class="note" style="margin:14px 0">Later weeks add hill walks and longer outings. Weeks 4 and 8 are lighter on purpose. Check the weather, carry water and tell someone your route. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition.</div><div class="formgrid"><div class="field"><label>Start date</label><input id="planStart" type="date" value="${t}"></div></div><div style="margin-top:12px"><button class="btn" onclick="startPlan()">Sign up for this plan</button></div></div>`}
+/* The sign-up offers shown while there is no plan: one description per program, drawn by planOfferHtml here and by the native
+   screen from the same data (50-native-plan.js), so the words are written once. Text is HTML, as it was written inline. */
+function planOfferWords(){return {eyebrow:'AVAILABLE PLAN',start:'Start date',button:'Sign up for this plan'}}
+/* a function, not a constant: the first drawing of the Workout plan happens before this file has run */
+function planOfferFor(classId){const O={
+ athlete:{title:"Athlete · 8-Week Athletic Foundation Program",
+   blurb:"Three strength days, two aerobic sessions, mobility, recovery, and scheduled deload weeks",
+   rows:[
+    ["Mon · Wed · Fri", "Strength A / B / C (squat & press, hinge & pull, work capacity)"],
+    ["Tue · Sat", "Aerobic base and endurance conditioning"],
+    ["Thu", "Active mobility & structural recovery"],
+    ["Sun", "Full rest & tissue repair"],
+    ["Weeks 4 · 8", "Scheduled deload and restoration sessions"]],
+   note:"General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition."},
+ scholar:{title:"Scholar · 8-Week Light Program",
+   blurb:"Gentle movement for long study days · bodyweight, light dumbbells or bands, walking",
+   rows:[
+    ["Mon", "Session A · postural strength"],
+    ["Tue · Sat", "Aerobic focus reset (easy walk)"],
+    ["Thu", "Session C · upper body and posture"],
+    ["Fri", "Session D · mobility and decompression"],
+    ["Wed · Sun", "Full rest"]],
+   note:"Weeks 4 and 8 are lighter on purpose. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition."},
+ entrepreneur:{title:"Entrepreneur · 8-Week Light Program",
+   blurb:"Short sessions that protect your energy for work · bodyweight, light dumbbells or bands, walking",
+   rows:[
+    ["Mon", "Session A · desk posture and core"],
+    ["Tue", "Session B · aerobic reset (brisk walk)"],
+    ["Wed", "Session E · tension release and mobility"],
+    ["Thu", "Session C · full-body maintenance"],
+    ["Sat", "Session D · weekend strategy walk"],
+    ["Fri · Sun", "Full rest"]],
+   note:"Weeks 4 and 8 are lighter on purpose. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition."},
+ explorer:{title:"Explorer · 8-Week Outdoor Program",
+   blurb:"Walking, light loads and balance that build the stamina for outings · no gym needed",
+   rows:[
+    ["Mon", "Session A · trail legs and balance"],
+    ["Tue", "Session B · loaded daypack walk"],
+    ["Thu", "Session C · practical load and core"],
+    ["Fri", "Session G · trail recovery stretches"],
+    ["Sat", "Session E · weekend exploration"],
+    ["Wed · Sun", "Full rest"]],
+   note:"Later weeks add hill walks and longer outings. Weeks 4 and 8 are lighter on purpose. Check the weather, carry water and tell someone your route. General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you have a health condition."}};return O[classId]||O.athlete}
+function planOfferHtml(o,t){return `<div class="card"><div class="eyebrow">${planOfferWords().eyebrow}</div><h2 style="margin:6px 0 4px;font-size:22px">${o.title}</h2><p class="muted" style="margin:0 0 12px">${o.blurb}</p>${o.rows.map(([when,what])=>`<div class="minirow"><span>${when}</span><small>${what}</small></div>`).join('')}<div class="note" style="margin:14px 0">${o.note}</div><div class="formgrid"><div class="field"><label>${planOfferWords().start}</label><input id="planStart" type="date" value="${t}"></div></div><div style="margin-top:12px"><button class="btn" onclick="startPlan()">${planOfferWords().button}</button></div></div>`}
+function scholarOfferHtml(t){return planOfferHtml(planOfferFor('scholar'),t)}
+function entrepreneurOfferHtml(t){return planOfferHtml(planOfferFor('entrepreneur'),t)}
+function explorerOfferHtml(t){return planOfferHtml(planOfferFor('explorer'),t)}
 function scholarRulesHtml(){var P=CLASS_CONTENT[state.plan&&CLASS_PLAN_KEY[state.plan.id]||'scholar'].plan;return '<ul class="muted" style="line-height:1.7;font-size:13px">'+P.safety.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'<li><strong>Bad day?</strong> '+esc(P.minDay)+'</li>'+P.swaps.map(function(x){return '<li><strong>No equipment:</strong> '+esc(x[0])+' → '+esc(x[1])+'</li>'}).join('')+'</ul>'}
 function legacyAthleteRulesHtml(){return '<ul class="muted" style="line-height:1.7;font-size:13px"><li>Warm up 5–8 minutes before every strength workout.</li><li>Controlled movements, comfortable range of motion.</li><li>Never sacrifice technique to lift heavier, and avoid training to failure.</li><li>Take at least one full rest day per week.</li><li>If fatigue, soreness or performance worsens, repeat last week\'s workload or cut sets.</li><li>With a physically demanding job or lots of walking, reduce cardio and lower-body volume.</li><li>Record weights, reps, cardio time and recovery after each session.</li></ul>'}
 function athleteRulesHtml(){var P=CLASS_CONTENT.athlete.plan;return '<ul class="muted" style="line-height:1.7;font-size:13px">'+P.safety.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'<li><strong>Minimum day:</strong> '+esc(P.minDay)+'</li>'+P.swaps.map(function(x){return '<li><strong>No-gym swap:</strong> '+esc(x[0])+' → '+esc(x[1])+'</li>'}).join('')+'</ul><div class="muted" style="font-size:12px">Weekly progression: '+P.progression.map(function(x,i){return '<p><strong>Week '+(i+1)+':</strong> '+esc(x)+'</p>'}).join('')+'</div>'}

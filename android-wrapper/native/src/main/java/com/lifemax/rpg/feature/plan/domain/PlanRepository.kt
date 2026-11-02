@@ -5,6 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface PlanRepository {
     val state: StateFlow<PlanProjection?>
+
+    /** The offer the page makes while there is no plan; null while there is one. */
+    val offers: StateFlow<PlanOfferProjection?>
 }
 
 /** One set's box: a day, an exercise of that day and the set's index. */
@@ -36,6 +39,8 @@ data class PlanReply(
     val changed: Boolean,
     val message: String,
     val celebrations: List<Celebration>,
+    /** The command it answers (toggle, value, log, leave, signUp or runner). */
+    val command: String = "toggle",
 )
 
 /** Actions the page runs with its own handler, after the screen has stepped aside. */
@@ -47,4 +52,15 @@ sealed interface PlanPageAction {
     data class EditLog(val date: String, val item: String) : PlanPageAction
 
     data object Leave : PlanPageAction
+}
+
+/**
+ * A write the screen asks of the page beyond ticking a box (plan.fields.v1, plan.leave.v1,
+ * plan.offers.v1, plan.runner.v1): [command] and [target] name the operation, [args] go to the page
+ * with it. The page runs its own function and answers with a [PlanReply].
+ */
+data class PlanWrite(val command: String, val target: String, val args: Map<String, Any?>)
+
+fun interface PlanWrites {
+    fun send(requestId: String, operation: String, write: PlanWrite)
 }

@@ -82,30 +82,40 @@
    "inventory": "docs/architecture/PLAN_INVENTORY.md",
    "capabilities": [
     "plan.projection.v1",
+    "plan.runner.v1",
+    "plan.fields.v1",
+    "plan.leave.v1",
+    "plan.offers.v1",
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
+   "capabilityHistory": "plan.projection.v1 draws the plan and ticks sets; plan.runner.v1, plan.fields.v1, plan.leave.v1 and plan.offers.v1 each take over one hand-over. The page offers one only when the handshake lists it (projection.features), so an APK without it keeps handing that part over exactly as before, and a page without projection.features is read as offering none",
    "commands": {
-    "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
+    "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply",
+    "value": "{date, key, text} (plan.fields.v1): planVal with set semantics; refused for an exercise without a value box, a future day or a non-text value; a repeat answers 'Already recorded.' and saves nothing; a failed save answers ok:false, changed:true (the field stays in memory as after the page's own field)",
+    "log": "{date, key, text} (plan.fields.v1): planLog with set semantics, at most the page's PLAN_LOG_MAX (400) characters, an emptied log is removed",
+    "leave": "{op} (plan.leave.v1): leavePlan(true) after the screen's own confirm in the page's words (projection.leaveAsk); with no plan it is a repeat ('Already recorded.'); the XP earned stays",
+    "signUp": "{start, op} (plan.offers.v1): startPlan(start) for the offered plan from a valid date; refused when a plan with another start exists; a repeat answers 'Already recorded.'",
+    "runner": "{act, op, ...} (plan.runner.v1): the guided workout's acts, each the page's own function for the overlay's button of that name: start {date}, resume, date {date}, begin, go {amount?}, log {amount, weight}, stop, cancel, restart, back, rest, adjust {delta: +-15}, undo, skip, swap {name}, pause, exit, reopen. Refused as the page refuses (its toast words come back as message); ok only when the save stored it; an operation that landed is answered 'Already recorded.' and not done twice; the celebration of a day completed by log comes back as celebrations. While the screen hosts the session the page opens no overlay and sets no scroll lock; it keeps the session's clocks (gwrTick) and tells the screen when one runs out"
    },
    "writes": [
-    "planToggle via toggle (web-owned rules and save)"
+    "planToggle via toggle (web-owned rules and save)",
+    "planVal and planLog via value and log",
+    "leavePlan(true) via leave; startPlan(start) via signUp",
+    "state.guidedWorkout, the sets it logs (setDetails, v, planToggle), substitute, workoutHistory via runner"
    ],
    "delegatedInteractions": [
-    "gwrStart / gwrResume (guided workout)",
-    "planVal (value field on the page)",
-    "planLog (session log field on the page)",
-    "leavePlan",
-    "startPlan and the class offers (no plan: the page is not covered)"
+    "the 3D gym (Settings, lma_gwr3d) stays the page's: while it is wanted the page does not offer plan.runner.v1",
+    "every part above, when the APK or the page lacks its capability: gwrStart / gwrResume, the page's own fields, leavePlan and the offers with no plan"
    ],
    "readContract": {
     "snapshotDto": "feature/plan/domain/PlanProjection.kt",
     "decoder": "feature/plan/data/WebPlanRepository.kt",
-    "fixtures": "native/src/test/resources/fixtures/plan-midweek.json, plan-complete.json, plan-scholar.json (tools/gen_native_fixtures.js)",
+    "fixtures": "native/src/test/resources/fixtures/plan-midweek.json, plan-complete.json, plan-scholar.json (tools/gen_native_fixtures.js); plan-runner-*.json, plan-offer-*.json and plan-replies.json (tools/gen_plan_runner_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; selected.revision rises only when the page changes its selected day",
     "invalidation": "renderPlan, host resume, foreground return, 15-second refresh while visible; the page covering its view (body class and children, #planBody, plan fields) closes the screen and brings it back"
    },
-   "mutationsGate": "set semantics make a repeated toggle harmless; no durable receipt across process death (A14/A15 gap)",
+   "mutationsGate": "set semantics make a repeated toggle, value, log, leave and sign-up harmless; the runner's acts carry an operation id that the page remembers while it runs ('Already recorded.'), kept by the screen until the page answers; no durable receipt across process death (A14/A15 gap)",
    "rollout": "opt-in under Settings, Appearance: Native Workout plan (beta)",
    "canonicalLayout": true
   },

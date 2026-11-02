@@ -100,6 +100,14 @@ data class PlanProjection(
     val celebrationTarget: PagePoint,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /** What the page lets the screen take over; none from a page that does not say. */
+    val features: PlanFeatures = PlanFeatures(),
+    /** The guided workout, while the screen hosts it. */
+    val runner: PlanRunner? = null,
+    /** The question Leave plan asks, in the page's words. */
+    val leaveAsk: String = "",
+    /** The longest session log the page keeps (its field's maxlength). */
+    val logMax: Int = 400,
 ) {
     private val days = weeks.flatMap { it.days }.filterNotNull().associateBy { it.date }
 

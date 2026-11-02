@@ -6959,6 +6959,16 @@
   "x": 32,
   "y": 32.5
  },
+ "offer": null,
+ "features": {
+  "runner": false,
+  "fields": false,
+  "leave": false,
+  "offers": false
+ },
+ "runner": null,
+ "leaveAsk": "Leave this plan? Your checklist progress for the plan is removed. XP you already earned stays.",
+ "logMax": 400,
  "tokens": {
   "bg": 4278980114,
   "bg-elev": 4279309338,

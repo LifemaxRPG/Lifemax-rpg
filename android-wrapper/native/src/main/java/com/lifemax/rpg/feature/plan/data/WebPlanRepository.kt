@@ -9,6 +9,7 @@ import com.lifemax.rpg.feature.plan.domain.PlanItem
 import com.lifemax.rpg.feature.plan.domain.PlanKeyTag
 import com.lifemax.rpg.feature.plan.domain.PlanLauncher
 import com.lifemax.rpg.feature.plan.domain.PlanLog
+import com.lifemax.rpg.feature.plan.domain.PlanOfferProjection
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.PlanRepository
 import com.lifemax.rpg.feature.plan.domain.PlanRule
@@ -26,6 +27,8 @@ import org.json.JSONObject
 class WebPlanRepository : PlanRepository {
     private val mutable = MutableStateFlow<PlanProjection?>(null)
     override val state = mutable.asStateFlow()
+    private val offered = MutableStateFlow<PlanOfferProjection?>(null)
+    override val offers = offered.asStateFlow()
 
     fun accept(j: JSONObject, establishSession: Boolean = false) {
         require(j.getInt("protocol") == 1) { "Unsupported plan protocol" }
@@ -33,9 +36,17 @@ class WebPlanRepository : PlanRepository {
         val sequence = j.getLong("sequence")
         require(session.isNotBlank() && sequence > 0)
         val old = mutable.value
-        if (old != null && old.session != session && !establishSession) return
-        if (old?.session == session && sequence <= old.sequence) return
+        val oldOffer = offered.value
+        val oldSession = old?.session ?: oldOffer?.session
+        val oldSequence = old?.sequence ?: oldOffer?.sequence
+        if (oldSession != null && oldSession != session && !establishSession) return
+        if (oldSession == session && oldSequence != null && sequence <= oldSequence) return
 
+        // with no plan the page sends only its offer and the frame every projection has
+        if (!j.isNull("offer") && j.has("offer")) {
+            acceptOffer(j, session, sequence)
+            return
+        }
         val weeks = j.getJSONArray("weeks").objects().map(::week)
         require(weeks.size == 8) { "Expected the eight weeks" }
         val dates = weeks.flatMap { it.days }.mapNotNull { it?.date }
@@ -67,12 +78,36 @@ class WebPlanRepository : PlanRepository {
                 PagePoint(target.getDouble("x").toFloat(), target.getDouble("y").toFloat()),
                 colors.pageTokens(),
                 j.getBoolean("light"),
+                j.toFeatures(),
+                if (j.isNull("runner") || !j.has("runner")) null
+                else j.getJSONObject("runner").toRunner(),
+                if (j.has("leaveAsk")) j.getString("leaveAsk") else "",
+                if (j.has("logMax")) j.getInt("logMax") else 400,
             )
         require(projection.sessionsDone in 0..projection.sessionsTotal)
         require(projection.day(projection.selectedDate) != null) {
             "The selected day is not a plan day"
         }
+        offered.value = null
         mutable.value = projection
+    }
+
+    private fun acceptOffer(j: JSONObject, session: String, sequence: Long) {
+        val target = j.getJSONObject("celebrationTarget")
+        val projection =
+            PlanOfferProjection(
+                session,
+                sequence,
+                j.getJSONObject("offer").toOffer(),
+                j.toFeatures(),
+                j.getBoolean("reducedMotion"),
+                PagePoint(target.getDouble("x").toFloat(), target.getDouble("y").toFloat()),
+                j.getJSONObject("tokens").pageTokens(),
+                j.getBoolean("light"),
+            )
+        require(projection.features.offers) { "An offer the page did not mean the screen to draw" }
+        mutable.value = null
+        offered.value = projection
     }
 
     private fun week(w: JSONObject): PlanWeek {

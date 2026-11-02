@@ -1,5 +1,22 @@
 al=null,gwrRpe=null,gwrAnimationTimer=null;
 const GWR_VER=1;
+/* The native Workout plan screen can host the runner: while it shows and draws it (gwrHost.on()), the page keeps the session and its
+   rules and the screen draws every step, so nothing opens the overlay. gwrHost.changed() says the session moved on its own (a
+   timer ran out). gwrLastSave is what the latest gwrPersist's save answered, for a command to say whether it was stored. */
+var gwrHost=null,gwrLastSave=null;
+const GWR_PAUSED='Session paused. Your progress is saved.',GWR_START_ASK='Start another session? Your completed sets will remain in the plan, but the previous session will no longer be resumable.';
+/* The runner's fixed words, written once: the page's screens draw them (22-runtime.js) and the native runner is sent them. */
+const GWR_WORDS={pause:'Pause',close:'Close',itinerary:'See all exercises',itineraryTitle:'Workout itinerary',itineraryKicker:'FULL MISSION',itineraryReturn:'RETURN TO SESSION',skipped:'SKIPPED',
+ introDay:'Workout day',optional:'optional',exercises:'exercises',sets:'sets',xp:'XP',start:'Start workout',introNote:'Every set you log is saved to your plan.',
+ checkHero:'Complete as written',noWeight:'No weight logged yet. Pick a load you can control.',startTimer:'Start timer',startSet:'Start set',swap:'Swap exercise',skip:'Skip exercise',coach:'Coach tip',
+ timerLive:'Timer running',ringWork:'left in this interval',ringRest:'rest left',timerStop:'Stop and review',timerCancel:'Cancel timer',
+ intervalDone:'Interval finished',stoppedEarly:'Stopped early. Only the time you did gets logged.',log:'Log',restart:'Restart interval',
+ restTag:'Set saved. Rest up.',restLess:'Remove 15 seconds of rest',restLessShort:'−15 s',restMore:'Add 15 seconds of rest',restMoreShort:'+15 s',upNext:'Up next',nextSet:'Start next set',undo:'Undo last set',
+ live:'Set in progress',repsDone:'Reps done',weight:'Weight (lb)',weightHint:'Optional',logSet:'Log set',back:'Back',finishThenLog:'Finish the movement, then log it',
+ completeFull:'Workout complete',completePartial:'Progress saved',completeNoteFull:'Every required set is logged in your plan.',
+ completeNotePartial:'Your logged sets are saved. Unfinished required sets stay open in your plan.',time:'time',volume:'lb moved',backToPlan:'Back to plan',finishRemaining:'Finish remaining sets'};
+function gwrHosted(){return !!(gwrHost&&gwrHost.on())}
+function gwrHostChanged(){if(gwrHost)gwrHost.changed()}
 function gwrCurrent(){
   const g=state.guidedWorkout;
   if(!g||!state.plan||g.planId!==state.plan.id||g.planStart!==state.plan.start)return null;
@@ -7,7 +24,7 @@ function gwrCurrent(){
 }
 function gwrElapsed(g){return Math.max(0,Number(g.elapsedMs)||0)+(g.unpausedAt?Math.max(0,Date.now()-g.unpausedAt):0)}
 function gwrFmtDuration(ms){const sec=Math.floor(Math.max(0,ms)/1000),m=Math.floor(sec/60);return m>=60?`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`}
-function gwrPersist(){save();gwrFloatSync()}
+function gwrPersist(){gwrLastSave=save();gwrFloatSync()}
 function gwrStepEntries(g){
   const d=planDay(g.date);if(!d)return [];
   const c=state.plan.checks[g.date]||{},s=c.s||{},skip=g.skip||{};
@@ -63,7 +80,7 @@ function gwrStart(date){
   if(!gwrSeedForDay(date)){toast('Choose an available training day (not a future or rest day)');return}
   const running=gwrCurrent();
   if(running&&running.date===date){gwrResume();return}
-  if(running&&!confirm('Start another session? Your completed sets will remain in the plan, but the previous session will no longer be resumable.'))return;
+  if(running&&!confirm(GWR_START_ASK))return;
   state.guidedWorkout={version:GWR_VER,planId:state.plan.id,planStart:state.plan.start,date,phase:'intro',resumePhase:'intro',startedAt:Date.now(),elapsedMs:0,unpausedAt:null,restUntil:0,restLength:90,skip:{}};
   gwrPersist();gwrOpen();
 }
@@ -86,6 +103,7 @@ function gwrResume(){
  gwrPersist();gwrOpen();
 }
 function gwrOpen(){
+  if(gwrHosted()){gwrTickStart();gwrHost.opened();return}
   const root=document.getElementById('guidedWorkout');if(!root)return;
   root.classList.add('open');document.body.classList.add('noscroll');
   if(!fxReduced()){root.classList.remove('gx-opening');void root.offsetWidth;root.classList.add('gx-opening');setTimeout(()=>root.classList.remove('gx-opening'),800)}
@@ -97,7 +115,7 @@ function gwrTickStart(){
 }
 function gwrTick(){
  const g=gwrCurrent(),root=document.getElementById('guidedWorkout');
- if(!g||!root?.classList.contains('open')){if(gwrInterval)clearInterval(gwrInterval);gwrInterval=null;return}
+ if(!g||!(root?.classList.contains('open')||gwrHosted())){if(gwrInterval)clearInterval(gwrInterval);gwrInterval=null;return}
  const elapsed=root.querySelector('[data-gwr-elapsed]');if(elapsed)elapsed.textContent=gwrFmtDuration(gwrElapsed(g));
  if(g.phase==='timing'){
    const remaining=Math.max(0,g.timerUntil-Date.now());
@@ -126,7 +144,8 @@ function gwrPause(){
  document.body.classList.remove('noscroll');
  if(gwrInterval)clearInterval(gwrInterval);gwrInterval=null;
  gwrPersist();renderPlan();
- if(g.phase!=='complete')toast('Session paused. Your progress is saved.');
+ if(g.phase!=='complete')toast(GWR_PAUSED);
+ gwrHostChanged();
 }
 function gwrBegin(){
  const g=gwrCurrent();if(!g)return;
@@ -153,7 +172,7 @@ function gwrPickRpe(num){
     const selected=Number(b.dataset.rpe)===gwrRpe;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));
   });
 }
-function gwrGo(){
+function gwrGo(amount){
  const g=gwrCurrent();if(!g||g.phase!=='ready')return;
  const st=gwrStepNext(g);if(!st){gwrComplete();return}
  const info=gwrNumTarget(st.it);
@@ -162,7 +181,7 @@ function gwrGo(){
    // Some plans specify a timer category with no numeric target. Avoid silently
    // inventing a prescription: ask for the duration before the countdown begins.
    if(!Number.isFinite(amt)||amt<=0){
-     const entered=prompt('Set duration in '+(info.kind==='minutes'?'minutes':'seconds')+' before starting:',info.kind==='minutes'?'5':'30');
+     const entered=amount!==undefined?String(amount):prompt('Set duration in '+(info.kind==='minutes'?'minutes':'seconds')+' before starting:',info.kind==='minutes'?'5':'30');
      if(entered===null)return;
      const n=Number(entered);
      if(!Number.isFinite(n)||n<=0||n>(info.kind==='minutes'?120:7200)){toast('Enter a valid duration');return}
@@ -198,9 +217,9 @@ function gwrQuickReview(){
    const count=steps.filter(x=>x.it.k===it.k&&x.done).length;
    const skipped=!!g.skip?.[it.k];
    const current=active?.it.k===it.k;
-   return `<div class="gwr-v60-queue-row ${current?'is-current':''}"><b>${String(i+1).padStart(2,'0')}</b><span>${esc(it.l)}</span><small>${skipped?'SKIPPED':count+'/'+it.n}</small></div>`;
+   return `<div class="gwr-v60-queue-row ${current?'is-current':''}"><b>${String(i+1).padStart(2,'0')}</b><span>${esc(it.l)}</span><small>${skipped?GWR_WORDS.skipped:count+'/'+it.n}</small></div>`;
  }).join('');
- div.innerHTML=`<div class="gwr-v60-queue-panel" role="dialog" aria-modal="true" aria-label="Workout itinerary"><div class="gwr-v60-queue-top"><div><small>FULL MISSION</small><h3>${esc(d.label)}</h3></div><button type="button" onclick="document.getElementById('gwrV60Queue')?.remove()" aria-label="Close itinerary">×</button></div><div class="gwr-v60-queue-list">${rows}</div><button class="gwr-v60-btn main" onclick="document.getElementById('gwrV60Queue')?.remove()">RETURN TO SESSION</button></div>`;
+ div.innerHTML=`<div class="gwr-v60-queue-panel" role="dialog" aria-modal="true" aria-label="${GWR_WORDS.itineraryTitle}"><div class="gwr-v60-queue-top"><div><small>${GWR_WORDS.itineraryKicker}</small><h3>${esc(d.label)}</h3></div><button type="button" onclick="document.getElementById('gwrV60Queue')?.remove()" aria-label="Close itinerary">×</button></div><div class="gwr-v60-queue-list">${rows}</div><button class="gwr-v60-btn main" onclick="document.getElementById('gwrV60Queue')?.remove()">${GWR_WORDS.itineraryReturn}</button></div>`;
  div.addEventListener('click',e=>{if(e.target===div)div.remove()});root.appendChild(div);
 }
 let gwr63RewardTimer=null;
@@ -213,28 +232,32 @@ function gwr63Reward(kind,subtitle,st){
  if(fxReduced()){haptic(kind==='section'?[15,45,25]:[12]);return}
  if(kind==='section')gwrFxExerciseCleared(st);else gwrFxSetDone(st);
 }
-function gwrLogSet(){
- const g=gwrCurrent();if(!g||!['active','timer-done'].includes(g.phase))return;
- const st=gwrStepNext(g);if(!st){gwrComplete();return}
+/* entry ({amount, weight} as typed, or none to read the page's own boxes) is how the native runner hands over what the player
+   entered; a refusal toasts as it always did and answers {ok:false, message} */
+function gwrLogSet(entry){
+ const g=gwrCurrent();if(!g||!['active','timer-done'].includes(g.phase))return {ok:false,message:'There is no set to log.'};
+ const refuse=(message,field)=>{toast(message);field?.focus?.();return {ok:false,message}};
+ const st=gwrStepNext(g);if(!st){gwrComplete();return {ok:true}}
  const desc=gwrNumTarget(st.it),check=state.plan.checks[g.date]=state.plan.checks[g.date]||{s:{},v:{},log:{}};
  const vals={date:g.date,kind:desc.kind,at:new Date().toISOString(),effort:gwrRpe};
  const input=document.getElementById('gwrActualValue');
  if(desc.kind!=='check'){
    let amount;
+   const typed=entry?(entry.amount===undefined||entry.amount===null?'':String(entry.amount)):input?input.value:'';
    if(g.phase==='timer-done'&&(desc.kind==='minutes'||desc.kind==='seconds')){
      amount=desc.kind==='minutes'?Math.round((Number(g.timerActualMs)||0)/6000)/10:Math.round((Number(g.timerActualMs)||0)/1000);
    }else{
-     if(!input||input.value.trim()===''||!Number.isFinite(Number(input.value))||Number(input.value)<=0){toast('Enter what you actually completed');input?.focus();return}
-     amount=Number(input.value);
+     if((!entry&&!input)||typed.trim()===''||!Number.isFinite(Number(typed))||Number(typed)<=0)return refuse('Enter what you actually completed',input);
+     amount=Number(typed);
    }
-   if(!Number.isFinite(amount)||amount<=0||amount>(desc.kind==='reps'?500:desc.kind==='seconds'?7200:360)){toast('Please check the reps or time.');input?.focus();return}
+   if(!Number.isFinite(amount)||amount<=0||amount>(desc.kind==='reps'?500:desc.kind==='seconds'?7200:360))return refuse('Please check the reps or time.',input);
    vals[desc.kind]=amount;
  }
  if(st.it.wt){
-   const field=document.getElementById('gwrActualWeight');
-   if(field&&field.value.trim()!==''){
-     const weight=Number(field.value);
-     if(!Number.isFinite(weight)||weight<0||weight>2000){toast('Enter a valid weight in pounds');field.focus();return}
+   const field=document.getElementById('gwrActualWeight'),typedWeight=entry?(entry.weight===undefined||entry.weight===null?'':String(entry.weight)):field?field.value:'';
+   if(typedWeight.trim()!==''){
+     const weight=Number(typedWeight);
+     if(!Number.isFinite(weight)||weight<0||weight>2000)return refuse('Enter a valid weight in pounds',field);
      vals.weight=weight;check.v=check.v||{};check.v[st.it.k]=`${weight} lb`;
    }
  }
@@ -242,28 +265,32 @@ function gwrLogSet(){
  (check.setDetails[st.it.k]=check.setDetails[st.it.k]||[])[st.j]=vals;
  planToggle(g.date,st.it.k,st.j,true);renderPlan();gwrRpe=null;
  g.timerTargetMs=0;g.timerActualMs=0;g.timerUntil=0;
- if(!gwrStepNext(g)){gwrComplete();return}
+ if(!gwrStepNext(g)){gwrComplete();return {ok:true,done:true}}
  const sec=gwrRestLength(st.it,planDay(g.date));
  g.phase='rest';g.resumePhase='rest';g.restLength=sec;g.restUntil=Date.now()+sec*1000;
  gwrPersist();gwrRender();
  const justCleared=(state.plan.checks[g.date]?.s?.[st.it.k]||[]).filter(Boolean).length>=st.it.n;
  gwr63Reward(justCleared?'section':'set',justCleared?'ALL SETS LOGGED · NEXT EXERCISE UNLOCKED':`SET ${st.j+1} / ${st.it.n} · RECORDED`,st);
+ return {ok:true,cleared:justCleared};
 }
-function gwrSkipExercise(){
+/* the words of the skip question, for the page's confirm and for the native runner's own */
+function gwrSkipAsk(it){return `${it.opt?'Skip optional exercise':'Skip exercise'}: ${it.l}? Skipped required sets will not count toward full session XP.`}
+function gwrSkipExercise(sure){
   const g=gwrCurrent();if(!g||!['ready','active','timer-done'].includes(g.phase))return;
   const st=gwrStepNext(g);if(!st)return;
-  const action=st.it.opt?'Skip optional exercise':'Skip exercise';
-  if(!confirm(`${action}: ${st.it.l}? Skipped required sets will not count toward full session XP.`))return;
+  if(!sure&&!confirm(gwrSkipAsk(st.it)))return;
   g.skip[st.it.k]=true;
   if(!gwrStepNext(g))gwrComplete();else{gwrPersist();gwrRender()}
 }
-function gwrSubstituteExercise(){
+/* the question the substitution asks, and the name it starts from */
+const GWR_SUBSTITUTE_ASK='Machine unavailable? Enter the substitution you are actually performing. It will be recorded under the original planned movement:';
+function gwrSubstituteExercise(named){
   const g=gwrCurrent();if(!g||!['ready','active','timer-done'].includes(g.phase))return;
   const st=gwrStepNext(g);if(!st)return;
   const c=state.plan.checks[g.date]=state.plan.checks[g.date]||{s:{},v:{},log:{}};
   c.substitute=c.substitute||{};
   const prev=c.substitute[st.it.k]||st.it.l;
-  const label=prompt('Machine unavailable? Enter the substitution you are actually performing. It will be recorded under the original planned movement:',prev);
+  const label=named!==undefined?named:prompt(GWR_SUBSTITUTE_ASK,prev);
   if(label===null)return;
   const cleaned=label.trim().slice(0,85);if(!cleaned)return;
   c.substitute[st.it.k]=cleaned;
@@ -273,7 +300,7 @@ function gwrUndoLast(){
   const g=gwrCurrent();if(!g)return;
   const check=state.plan.checks[g.date]||{},details=check.setDetails||{};
   const done=gwrStepEntries(g).filter(x=>x.done&&((details[x.it.k]||[])[x.j]));
-  if(!done.length){toast('No guided set to undo');return}
+  if(!done.length){toast('No guided set to undo');return {ok:false,message:'No guided set to undo'}}
   const st=done.sort((a,b)=>Date.parse((details[b.it.k]||[])[b.j]?.at||0)-Date.parse((details[a.it.k]||[])[a.j]?.at||0))[0];
   // Uncheck first to correctly revoke plan completion XP if necessary.
   planToggle(g.date,st.it.k,st.j,false);
@@ -281,6 +308,7 @@ function gwrUndoLast(){
   if(g.phase==='complete')g.phase='active';
   g.restUntil=0;g.phase='ready';g.resumePhase='ready';
   gwrPersist();gwrRender();toast('Last guided set undone');
+  return {ok:true,message:'Last guided set undone'};
 }
 function gwrCaptureHistory(g){
   const c=state.plan.checks[g.date]||{},st=gwrStats(g),d=planDay(g.date);

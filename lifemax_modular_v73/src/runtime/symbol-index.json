@@ -269,7 +269,19 @@
  "GWR_DEMO": [
   "src/runtime/segments/22-runtime.js"
  ],
+ "GWR_PAUSED": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "GWR_START_ASK": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "GWR_SUBSTITUTE_ASK": [
+  "src/runtime/segments/21-runtime.js"
+ ],
  "GWR_VER": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "GWR_WORDS": [
   "src/runtime/segments/21-runtime.js"
  ],
  "GWX": [
@@ -331,6 +343,9 @@
  ],
  "JL": [
   "src/runtime/segments/48-journal-lock.js"
+ ],
+ "LEAVE_PLAN_ASK": [
+  "src/runtime/segments/06-runtime.js"
  ],
  "LINKS": [
   "src/runtime/segments/07-runtime.js"
@@ -872,8 +887,17 @@
  "PET_Z_GAP": [
   "src/runtime/segments/24-pet-depth.js"
  ],
+ "PLAN_ENDED": [
+  "src/runtime/segments/06-runtime.js"
+ ],
  "PLAN_LINK": [
   "src/runtime/segments/07-runtime.js"
+ ],
+ "PLAN_LOG_MAX": [
+  "src/runtime/segments/06-runtime.js"
+ ],
+ "PLAN_STARTED": [
+  "src/runtime/segments/06-runtime.js"
  ],
  "QART_B64": [
   "src/runtime/segments/50-quests-art.js"
@@ -2734,6 +2758,9 @@
  "gwrCurrent": [
   "src/runtime/segments/21-runtime.js"
  ],
+ "gwrDayLabel": [
+  "src/runtime/segments/22-runtime.js"
+ ],
  "gwrDemoArt": [
   "src/runtime/segments/22-runtime.js"
  ],
@@ -2751,6 +2778,9 @@
  ],
  "gwrEndEarly": [
   "src/runtime/segments/21-runtime.js"
+ ],
+ "gwrExText": [
+  "src/runtime/segments/22-runtime.js"
  ],
  "gwrExitComplete": [
   "src/runtime/segments/21-runtime.js"
@@ -2848,7 +2878,19 @@
  "gwrHeaderMarkup": [
   "src/runtime/segments/22-runtime.js"
  ],
+ "gwrHost": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "gwrHostChanged": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "gwrHosted": [
+  "src/runtime/segments/21-runtime.js"
+ ],
  "gwrInterval": [
+  "src/runtime/segments/21-runtime.js"
+ ],
+ "gwrLastSave": [
   "src/runtime/segments/21-runtime.js"
  ],
  "gwrLauncher": [
@@ -2858,6 +2900,9 @@
   "src/runtime/segments/21-runtime.js"
  ],
  "gwrNudge": [
+  "src/runtime/segments/22-runtime.js"
+ ],
+ "gwrNudged": [
   "src/runtime/segments/22-runtime.js"
  ],
  "gwrNumTarget": [
@@ -2920,6 +2965,15 @@
  "gwrSeedForDay": [
   "src/runtime/segments/21-runtime.js"
  ],
+ "gwrSetText": [
+  "src/runtime/segments/22-runtime.js"
+ ],
+ "gwrSettle": [
+  "src/runtime/segments/22-runtime.js"
+ ],
+ "gwrSkipAsk": [
+  "src/runtime/segments/21-runtime.js"
+ ],
  "gwrSkipExercise": [
   "src/runtime/segments/21-runtime.js"
  ],
@@ -2937,6 +2991,9 @@
  ],
  "gwrSubstituteExercise": [
   "src/runtime/segments/21-runtime.js"
+ ],
+ "gwrSuggestedWeight": [
+  "src/runtime/segments/22-runtime.js"
  ],
  "gwrTick": [
   "src/runtime/segments/21-runtime.js"
@@ -2969,6 +3026,9 @@
   "src/runtime/segments/22-runtime.js"
  ],
  "gwrVisualMarkup": [
+  "src/runtime/segments/22-runtime.js"
+ ],
+ "gwrWeekText": [
   "src/runtime/segments/22-runtime.js"
  ],
  "hapLevelKey": [
@@ -6663,6 +6723,15 @@
  "planLogsForDay": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "planOfferFor": [
+  "src/runtime/segments/14-runtime.js"
+ ],
+ "planOfferHtml": [
+  "src/runtime/segments/14-runtime.js"
+ ],
+ "planOfferWords": [
+  "src/runtime/segments/14-runtime.js"
+ ],
  "planSel": [
   "src/runtime/segments/05-runtime.js"
  ],
@@ -7482,6 +7551,9 @@
  ],
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.NativePlanRunner": [
+  "src/runtime/segments/50-native-plan-runner.js"
  ],
  "window.NativeSwipe": [
   "src/runtime/segments/50-native-swipe.js"

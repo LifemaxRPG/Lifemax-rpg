@@ -1,0 +1,136 @@
+{
+ "value": {
+  "command": "value",
+  "requestId": "f1",
+  "ok": true,
+  "changed": true
+ },
+ "valueRepeat": {
+  "command": "value",
+  "requestId": "f2",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ },
+ "logTooLong": {
+  "command": "log",
+  "requestId": "f3",
+  "ok": false,
+  "message": "A session log holds 400 characters at most. Nothing was changed."
+ },
+ "log": {
+  "command": "log",
+  "requestId": "f4",
+  "ok": true,
+  "changed": true
+ },
+ "valueLocked": {
+  "command": "value",
+  "requestId": "f5",
+  "ok": false,
+  "message": "Locked until the day arrives."
+ },
+ "start": {
+  "command": "runner",
+  "requestId": "f6",
+  "ok": true,
+  "changed": true
+ },
+ "logTimer": {
+  "command": "runner",
+  "requestId": "f10",
+  "ok": true,
+  "changed": true
+ },
+ "logRefused": {
+  "command": "runner",
+  "requestId": "f19",
+  "ok": false,
+  "changed": false,
+  "message": "Enter what you actually completed"
+ },
+ "logSet": {
+  "command": "runner",
+  "requestId": "f20",
+  "ok": true,
+  "changed": true
+ },
+ "logRepeat": {
+  "command": "runner",
+  "requestId": "f21",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ },
+ "reopen": {
+  "command": "runner",
+  "requestId": "f64",
+  "ok": true,
+  "changed": true
+ },
+ "logLast": {
+  "command": "runner",
+  "requestId": "f125",
+  "ok": true,
+  "changed": true,
+  "celebrations": [
+   {
+    "xp": 40,
+    "gains": [
+     {
+      "attribute": "physique",
+      "short": "Physique",
+      "xp": 28,
+      "color": 4294929239
+     },
+     {
+      "attribute": "discipline",
+      "short": "Discipline",
+      "xp": 12,
+      "color": 4289170426
+     }
+    ]
+   }
+  ]
+ },
+ "exit": {
+  "command": "runner",
+  "requestId": "f126",
+  "ok": true,
+  "changed": true
+ },
+ "leave": {
+  "command": "leave",
+  "requestId": "f127",
+  "ok": true,
+  "changed": true,
+  "message": "Plan ended"
+ },
+ "leaveRepeat": {
+  "command": "leave",
+  "requestId": "f128",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ },
+ "signUpRefused": {
+  "command": "signUp",
+  "requestId": "f129",
+  "ok": false,
+  "message": "Choose a start date."
+ },
+ "signUp": {
+  "command": "signUp",
+  "requestId": "f130",
+  "ok": true,
+  "changed": true,
+  "message": "Plan started · good luck!"
+ },
+ "signUpRepeat": {
+  "command": "signUp",
+  "requestId": "f131",
+  "ok": true,
+  "changed": false,
+  "message": "Already recorded."
+ }
+}
