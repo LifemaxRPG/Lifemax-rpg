@@ -265,6 +265,7 @@ internal object SaveCodec {
                     JournalCoach.Welcome(
                         w.obj().num("gap"),
                         w.obj()["claimed"].obj().filterValues(::truthy).keys,
+                        (w.obj()["tier"] as? Number)?.toInt() ?: 0,
                     )
                 },
         )

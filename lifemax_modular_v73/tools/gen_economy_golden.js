@@ -628,9 +628,12 @@ function uncapped() {
   J('reflect-once', 'COACH-1', {}, C('jcOnReflect', TODAY, 'x'.repeat(40)), C('jcOnReflect', TODAY, 'y'.repeat(60)));
   J('weekly-review', 'COACH-1', {}, C('jcSaveReview', 'W:2026-W43', 'w'.repeat(49)), C('jcSaveReview', 'W:2026-W43', 'w'.repeat(50)), C('jcSaveReview', 'W:2026-W43', 'w'.repeat(80)));
   J('monthly-chronicle', 'COACH-1', {}, C('jcSaveReview', 'M:2026-09', 'm'.repeat(60)));
-  const welcome = { journalCoach: { days: {}, reviews: {}, cooldown: {}, pats: {}, welcome: { [TODAY]: { gap: 12, claimed: {} } } } };
-  J('welcome-back', 'COACH-1', welcome, C('jcClaim', 'fresh'), C('jcClaim', 'fresh'), C('jcClaim', 'pet'));
-  J('welcome-catch-up', 'COACH-1', welcome, withEnv({ prompt: 'too short' }, C('jcCatchUp')), withEnv({ prompt: 'Moved house and started a new job.' }, C('jcCatchUp')));
+  /* a welcome record as the page decides it (jcWelcomeRecord): the last record gap + 1 days ago, so the quiet days counted now
+     match the gap, and the tier the gap gives (2 for 7-13 days, 3 for 14 or more); each tier offers one chip of its own */
+  const welcome = (tier, gap) => ({ activities: [rec('reading', 20, { day: dayKey(-gap - 1) })],
+    journalCoach: { days: {}, reviews: {}, cooldown: {}, pats: {}, welcome: { [TODAY]: { tier, gap, claimed: {} } } } });
+  J('welcome-back', 'COACH-1', welcome(3, 14), C('jcClaim', 'fresh'), C('jcClaim', 'fresh'), C('jcClaim', 'pet'));
+  J('welcome-catch-up', 'COACH-1', welcome(2, 12), withEnv({ prompt: 'too short' }, C('jcCatchUp')), withEnv({ prompt: 'Moved house and started a new job.' }, C('jcCatchUp')));
   J('no-welcome-no-claim', 'COACH-1', {}, C('jcClaim', 'fresh'));
 }
 
@@ -876,9 +879,9 @@ function pageRunner(fieldsAll) {
     rules = structuredClone(DEFAULT_RULES); state.customRules = rules;
   }
   /* The page is drawn once before a case begins, as it is after load(), so the defaults drawing fills in (money, meal settings) are
-     in place and do not show up as a change the case made. Drawing the journal saves (jcChip): that save is held back here, or it
-     would credit Sparks, mark records and migrate before the case begins. A malformed save (quests: null, the not-connected case)
-     cannot be drawn; the economy still runs. */
+     in place and do not show up as a change the case made. Any save() a drawing makes is held back here, or it would credit
+     Sparks, mark records and migrate before the case begins (the journal's drawing no longer saves: its decisions use a plain
+     write). A malformed save (quests: null, the not-connected case) cannot be drawn; the economy still runs. */
   function draw() {
     const real = save;
     save = () => true;

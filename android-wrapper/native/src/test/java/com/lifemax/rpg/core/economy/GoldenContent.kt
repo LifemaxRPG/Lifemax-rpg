@@ -209,14 +209,6 @@ internal object GoldenContent {
             "customRules" to emptyMap<String, Any?>(),
             "quests" to defaultQuests,
             "questDone" to emptyMap<String, Any?>(),
-            "journalCoach" to
-                linkedMapOf(
-                    "days" to emptyMap<String, Any?>(),
-                    "reviews" to emptyMap<String, Any?>(),
-                    "cooldown" to emptyMap<String, Any?>(),
-                    "pats" to emptyMap<String, Any?>(),
-                    "welcome" to emptyMap<String, Any?>(),
-                ),
             "dayReflections" to emptyMap<String, Any?>(),
         )
 }
