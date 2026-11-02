@@ -53,6 +53,7 @@ const c = {
   chCap: () => 8,
   chArchetype: () => ({ n: "Balanced" }),
   luckToday: () => null,
+  getToday: () => "2026-11-02",
   titleFor: () => "Explorer",
   streak: () => 8,
   totalXP: () => 9876,

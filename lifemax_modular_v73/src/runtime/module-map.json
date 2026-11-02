@@ -98,7 +98,11 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
+<<<<<<< HEAD
    "bytes": 44249,
+=======
+   "bytes": 43217,
+>>>>>>> track/h-character
    "statement_count": 91,
    "tags": [
     "training",
@@ -185,6 +189,9 @@
     "devActLevels",
     "getDevActs",
     "actById",
+    "benchmarkPush",
+    "benchmarkDrop",
+    "benchmarkRevalue",
     "addBenchmark",
     "deleteBenchmark",
     "saveRules",
@@ -1043,8 +1050,8 @@
   },
   {
    "file": "src/runtime/segments/19-runtime.js",
-   "bytes": 28124,
-   "statement_count": 46,
+   "bytes": 28418,
+   "statement_count": 47,
    "tags": [
     "luck",
     "devchat"
@@ -1070,6 +1077,7 @@
     "luckSpeed",
     "luckReplay",
     "luckClose",
+    "luckRollToday",
     "openLuck",
     "dcRoom"
    ]
@@ -3501,7 +3509,11 @@
   },
   {
    "file": "src/runtime/segments/50-native-character.js",
+<<<<<<< HEAD
    "bytes": 3609,
+=======
+   "bytes": 9469,
+>>>>>>> track/h-character
    "statement_count": 1,
    "tags": [
     "android",

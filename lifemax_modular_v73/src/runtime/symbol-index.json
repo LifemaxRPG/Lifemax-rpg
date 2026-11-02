@@ -1175,6 +1175,15 @@
  "baseXP": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "benchmarkDrop": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "benchmarkPush": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "benchmarkRevalue": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "buildReport": [
   "src/runtime/segments/05-runtime.js"
  ],
@@ -4491,6 +4500,9 @@
  ],
  "luckRollDice": [
   "src/runtime/segments/18-runtime.js"
+ ],
+ "luckRollToday": [
+  "src/runtime/segments/19-runtime.js"
  ],
  "luckSetK": [
   "src/runtime/segments/18-runtime.js"

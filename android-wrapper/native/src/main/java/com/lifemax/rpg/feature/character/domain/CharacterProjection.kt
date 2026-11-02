@@ -49,4 +49,16 @@ data class CharacterProjection(
     val tokens: Map<String, Long>,
     val light: Boolean,
     val classId: String = "",
+    /**
+     * The page and the app both speak the actions (Luck, benchmark sheets, Log): else every tap is
+     * handed over.
+     */
+    val actions: Boolean = false,
+    /**
+     * The page's date for Luck, which a roll names so a stale screen cannot roll for another day.
+     */
+    val today: String = "",
+    val luckRoll: LuckRoll? = null,
+    val limits: BenchmarkLimits = BenchmarkLimits(0, 0),
+    val words: CharacterWords = CharacterWords.NONE,
 )

@@ -63,6 +63,7 @@ class WebCharacterRepository : CharacterRepository {
         val s = j.getJSONArray("skills")
         val b = j.getJSONArray("benchmarks")
         val colors = j.getJSONObject("tokens")
+        val act = j.actionsPart()
         mutable.value =
             CharacterProjection(
                 session,
@@ -100,6 +101,11 @@ class WebCharacterRepository : CharacterRepository {
                 colors.pageTokens(),
                 j.getBoolean("light"),
                 j.optString("classId", ""),
+                act.actions,
+                act.today,
+                act.luckRoll,
+                act.limits,
+                act.words,
             )
     }
 }
