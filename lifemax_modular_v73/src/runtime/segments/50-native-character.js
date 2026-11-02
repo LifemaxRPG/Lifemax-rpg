@@ -99,6 +99,7 @@
     id: "character",
     plugin: "NativeCharacter",
     capability: "character.projection.v1",
+    prime: true, // composed ahead at idle as a swipe neighbour (NativePrime)
     setting: "nativeCharacter",
     toggle: "nativeCharacterToggle",
     projection,

@@ -131,6 +131,10 @@
    * asks one drawing at a time; the kit still cancels a pending close and marks the arrival, closes the screen when the page
    * leaves the view, and keeps its watcher, refresh and revisit(). The returned active(), opening() and coverable() are what the
    * owner registers.
+   * prime: true lets the native side compose the screen ahead of its first open, at idle, while this tab is the neighbour of the one
+   * the page is on (NativePrime, 50-native-prime.js; needs shell.prime.v1 and the swipe beta switch on). Only for a tab whose
+   * projection may be built while the page is on another view and holds nothing private (not the Journal, A35). prime() sends the
+   * projection an open would; it claims no toast and runs none of beforeOpen, arrive or afterOpen.
    * afterClose() runs after every close, the kit's own and the native side's (its closed event).
    * onFail(reason) runs, after the kit has closed, when the screen cannot draw: 'capability' (the handshake lacks cfg.capability),
    * 'open' (an open threw or was rejected) or 'update' (a refresh was rejected).
@@ -196,6 +200,14 @@
     }
     function snapshot() {
       return Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), cfg.notices && { notice: notice() }, { tokens: tokens(), light: light() });
+    }
+    /** the bar's label for this tab, which the screen names itself with for TalkBack (setAccessibilityPaneTitle) */
+    function tabTitle() {
+      try {
+        return document.querySelector('.navbtn[data-view="' + lmaTabKey(cfg.id) + '"]')?.textContent.trim() || "";
+      } catch (_) {
+        return "";
+      }
     }
     async function navScene() {
       if (!window.NativeOverviewSnapshot) throw Error("Overview chrome unavailable");
@@ -322,7 +334,7 @@
         const scene = await navScene();
         const chromeAt = now();
         // at the end of the page's own swipe the screen slides in (native tab swipe, phase 2): the side and the finger's speed
-        await plugin.open(Object.assign({ snapshot: data, navScene: scene }, window.NativeSwipe?.takeEnter(cfg.id)));
+        await plugin.open(Object.assign({ snapshot: data, navScene: scene, title: tabTitle() }, window.NativeSwipe?.takeEnter(cfg.id)));
         const nativeAt = now();
         window.__nativeTabPerf = { feature: cfg.id, handshakeMs: handshakeAt - openedAt, projectionMs: projectionAt - handshakeAt, chromeMs: chromeAt - projectionAt, nativeMs: nativeAt - chromeAt, totalMs: nativeAt - openedAt };
         if (mine !== generation) {
@@ -350,6 +362,31 @@
         opening = false;
         NativeTabs.flush(cfg.id);
         window.NativeSwipe?.entered(cfg.id, active); // the page's copy of the tab may show again once the screen is in place, or now
+      }
+    }
+
+    /** Compose the screen ahead of its first open (cfg.prime, A24's prime): true once the native side has it composed, hidden. The
+        projection is an open's, but nothing else of an open happens: no toast taken, no bars, no hook of the tab's. It asks again
+        later (false) when the screen is not wanted, is open or opening, the APK lacks shell.prime.v1, or native was busy. */
+    let primed = false, primeFails = 0;
+    async function prime() {
+      if (!cfg.prime || primed || primeFails >= 2 || active || opening || !enabled()) return false;
+      try {
+        plugin = available();
+        const h = handshake || (await ask());
+        if (h.protocol !== 1 || !h.capabilities.includes(cfg.capability) || !h.capabilities.includes("shell.prime.v1")) return false;
+        if (active || opening) return false; // the page went there while the handshake was in flight
+        const data = Object.assign({ protocol: 1, webSessionId: session, sequence: ++sequence }, cfg.projection(), { tokens: tokens(), light: light() });
+        const r = await plugin.prime({ snapshot: data });
+        if (r && r.primed) {
+          primed = true;
+          (window.__nativePrimePerf = window.__nativePrimePerf || {})[cfg.id] = { javaKb: r.javaKb, nativeKb: r.nativeKb, ms: r.ms };
+        } else if (r && r.reason === "composed") primed = true; // opened before: composed already, nothing to ask again
+        return primed;
+      } catch (e) {
+        primeFails++; // a projection native rejects is not sent again and again
+        console.warn(cfg.id + " prime", e);
+        return false;
       }
     }
 
@@ -408,7 +445,8 @@
     sync();
     setTimeout(sync, 700);
     setTimeout(warm, 0); // after the page has finished loading, so the plugin and the owner's switch are known
-    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, coverable, toasts: latestToast,
+    if (cfg.prime) window.NativePrime?.register(cfg.id, { prime, primed: () => primed || primeFails >= 2, forget: () => { primed = false; primeFails = 0; } });
+    return { open, close, send, schedule, sync, enabled, blocked, snapshot, runCommand, revisit, follow, has, coverable, toasts: latestToast, prime,
              active: () => active, opening: () => opening };
   }
 

@@ -81,7 +81,7 @@ Evidence: Node projection test, JVM selection/sequence/schema tests, Android Com
 | Library (Media) | Compose Media pane, hidden-but-alive, over the page while nothing it does not draw covers it | Web-owned | Opt-in beta, off by default | The add/edit form, finished checkbox, remove, attach/replace/remove audio, the player, link, tip, Journal |
 | Settings | Compose screen (head, category chips, the Classic Settings row, every card's rows and controls, the bottom-bar editor), hidden-but-alive, over the page while nothing it hands over keeps the page in front | Web-owned (every setting, its wording and its storage) | Opt-in beta, off by default | Text, number and time fields, file pickers, the rewards sheet, the update, backup-folder, health and calendar flows, the journal lock, Android device backup, developer mode and Data management (each a delegation to the page) |
 | Tab shell (bars) | Native drawing of a DOM capture | Web page state | Shared by every native tab (Cash draws its own) | DOM capture (see CONTRACT_REVISION_2_PROPOSAL.md, A22) |
-| Tab swipe | Native motion between native screens (`app/shell/swipe`), from the page's projection (`swipe` in every bar scene) | Web-owned decision (`NativeSwipe.request`), then the A23 hand-over | Opt-in beta, off by default (phases 1 and 2: every edge) | Money and the ends of the bar are walls; a tab the page draws is revealed under the veil, and the page's own swipe onto a native tab slides it in |
+| Tab swipe | Native motion between native screens (`app/shell/swipe`), from the page's projection (`swipe` in every bar scene) | Web-owned decision (`NativeSwipe.request`), then the A23 hand-over | Opt-in beta, off by default (phases 1 to 3: every edge, prime, chained swipes, one feel) | Money and the ends of the bar are walls; a tab the page draws is revealed under the veil, and the page's own swipe onto a native tab slides it in |
 
 Statements here are from reading the repository and the Settings wiring; device acceptance is not recorded.
 
@@ -227,6 +227,17 @@ Every tab boundary on the bar swipes, except Money (CONTRACT A34 item 7, plans/T
 - **Capability:** `shell.swipe.v2` in the kit's handshake, `swipe: 2` from Food.
 
 Evidence: `SwipeEdgesTest` and `ChromeHoldTest` (JUnit), `tests/native-swipe-edges.test.js`, and the hand-over simulation's swipes into Cat and Quests and web swipes onto native tabs, in all four Overview modes.
+
+## Native tab swipe, phase 3 of 4: polish and parity (next Native API)
+
+One feel everywhere and no first-visit stall (CONTRACT A34 item 8, A24 amendment, plans/TAB_SWIPE.md §6). Same switch, still off by default; with it off nothing changes.
+
+- **Prime** (`shell.prime.v1`): `ComposeTabPlugin.prime({snapshot})` composes a never-opened screen exactly as an open does and holds it hidden (no scene, no bars, no focus, no updates), answering the heap it cost (`PrimeCost`). The page side is `NativePrime` (`50-native-prime.js`): after 800 ms with no touch, the swipe on and nothing over the page, it asks the next never-primed native neighbour of the tab it is on, one at a time; tabs opt in with `prime: true` in `NativeTabKit.create` (Character, Log, Workout plan, Library; not the Journal, Life Director or Food).
+- **Chained swipes** (`SwipeCatch.kt`, `SwipeInput.Catch`, `SwipeArbiter.catchDown`, `TensionCurve.invertHold`, `Tension.holding`): a finger that lands on a screen still sliding takes hold of it where it stands, through the curve's inverse, with no jump. A cancel springing back, or a commit whose hand-over is done, can be caught; a commit still waiting for the page cannot.
+- **The web swipe's feel** (`50-native-swipe-feel.js`, called from 34-navigation): the native curve, catch with `lmaBuzz('tick')`, release rule and a spring-shaped cancel, behind the same switch.
+- **Accessibility:** a screen sets its pane title on open (the bar's label, which the page sends as `title`).
+
+Evidence: `SwipeCatchTest`, the new cases of `TensionCurveTest` and `SwipeArbiterTest` and catches in the random sessions (JUnit); `tests/native-swipe-prime.test.js`, `tests/native-swipe-feel.test.js`; the hand-over simulation's idle primes, shown failing under PMUT=open, update and chrome. Not measured off the phone: each screen's memory and the feel of a catch.
 
 ## Overview cards, phase 1: read and delegate (next Native API)
 

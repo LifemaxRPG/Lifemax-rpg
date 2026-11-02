@@ -1823,7 +1823,7 @@
   },
   {
    "file": "src/runtime/segments/34-navigation.js",
-   "bytes": 14633,
+   "bytes": 15226,
    "statement_count": 39,
    "tags": [
     "navigation",
@@ -3414,7 +3414,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 23334,
+   "bytes": 25943,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3423,6 +3423,7 @@
    ],
    "symbols": [
     "window.__nativeTabPerf",
+    "window.__nativePrimePerf",
     "window.NativeTabKit"
    ]
   },
@@ -3445,7 +3446,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-swipe.js",
-   "bytes": 18883,
+   "bytes": 19199,
    "statement_count": 2,
    "tags": [
     "native",
@@ -3460,8 +3461,33 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-prime.js",
+   "bytes": 4011,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "prime"
+   ],
+   "symbols": [
+    "window.NativePrime"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-swipe-feel.js",
+   "bytes": 6113,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "swipe",
+    "feel"
+   ],
+   "symbols": [
+    "window.SwipeFeel"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-character.js",
-   "bytes": 3531,
+   "bytes": 3609,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3472,7 +3498,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-log.js",
-   "bytes": 5650,
+   "bytes": 5728,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3498,7 +3524,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-plan.js",
-   "bytes": 12078,
+   "bytes": 12156,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3521,7 +3547,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 14516,
+   "bytes": 14594,
    "statement_count": 1,
    "tags": [
     "android",

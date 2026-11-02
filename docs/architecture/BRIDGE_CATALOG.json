@@ -10,7 +10,8 @@
    "capabilities": [
     "character.projection.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "owner": "web-core-gameplay",
    "writes": [],
@@ -39,7 +40,11 @@
     "classic benchmark form"
    ],
    "rollout": "Classic is default; Native Character preview is opt-in",
-   "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed"
+   "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed",
+   "memory": {
+    "screenComposedAhead": "not measured yet: the prime call reads the Java and native heap before and 700 ms after it composes the screen and the page keeps the answer (window.__nativePrimePerf[view] = {javaKb, nativeKb, ms}); read it on the phone with the screen primed from a cold start, then write the figure here. Compose and the JVM cannot give a meaningful figure off the device (CONTRACT A24)"
+   },
+   "prime": "primed at idle as a swipe neighbour (prime: true in its NativeTabKit.create); its projection holds nothing private"
   },
   {
    "feature": "log",
@@ -52,7 +57,8 @@
    "capabilities": [
     "log.projection.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "commands": {
     "preview": "keeps the draft on the page so the next projection previews it; never replaces what is being typed (draftRevision unchanged)",
@@ -69,7 +75,11 @@
    },
    "mutationsGate": "operation id per draft (idempotent submit); no durable receipt across process death yet (A14/A15 gap)",
    "rollout": "default since the owner's phone check of build 292 (NativeTabKit defaultOn: on unless turned off); Classic: turn off Settings, Appearance: Native Log activity",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "memory": {
+    "screenComposedAhead": "not measured yet: the prime call reads the Java and native heap before and 700 ms after it composes the screen and the page keeps the answer (window.__nativePrimePerf[view] = {javaKb, nativeKb, ms}); read it on the phone with the screen primed from a cold start, then write the figure here. Compose and the JVM cannot give a meaningful figure off the device (CONTRACT A24)"
+   },
+   "prime": "primed at idle as a swipe neighbour (prime: true in its NativeTabKit.create); its projection holds nothing private"
   },
   {
    "feature": "plan",
@@ -83,7 +93,8 @@
    "capabilities": [
     "plan.projection.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "commands": {
     "toggle": "planToggle(date, key, set, checked) with set semantics: the set ends as asked, a repeat answers changed:false and saves nothing; unknown sets, malformed dates and future days are refused; a failed save answers ok:false with the page's own message and, as after the page's checkbox, stays in memory with what the save set off (badges, the daily-hand quest) until the next save stores it; a completed day pays its XP once (actId); celebrateXP is held and returned as celebrations for the screen to draw, the page plays xpCue after the reply"
@@ -107,7 +118,11 @@
    },
    "mutationsGate": "set semantics make a repeated toggle harmless; no durable receipt across process death (A14/A15 gap)",
    "rollout": "opt-in under Settings, Appearance: Native Workout plan (beta)",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "memory": {
+    "screenComposedAhead": "not measured yet: the prime call reads the Java and native heap before and 700 ms after it composes the screen and the page keeps the answer (window.__nativePrimePerf[view] = {javaKb, nativeKb, ms}); read it on the phone with the screen primed from a cold start, then write the figure here. Compose and the JVM cannot give a meaningful figure off the device (CONTRACT A24)"
+   },
+   "prime": "primed at idle as a swipe neighbour (prime: true in its NativeTabKit.create); its projection holds nothing private"
   },
   {
    "feature": "life-director",
@@ -122,7 +137,8 @@
     "director.sheets.v1",
     "director.setup.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "capabilityHistory": "director.today.v1: Today without the dial's handles and build (Native API 25); v2 adds them (handles, stops, dragWords, build, hint, reducedMotion, dialDrop, dialApply), which a v1 decoder does not read and a v2 decoder requires, so a page and an app of different phases do not open the screen and the page stays",
    "covers": "only while LifeDirector.native.showing() is 'today': set up with a plan, Today on screen, no sheet open and no guide due or running; and not while an XP celebration plays on the page, from a tap on the screen or in the page's own sheet (Done, Finish and log, Log it for today)",
@@ -173,7 +189,8 @@
    "capabilities": [
     "recipes.projection.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "commands": {
     "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
@@ -210,7 +227,8 @@
     "library.media.projection.v1",
     "library.media.write.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "covers": "the Media pane only, and not while the page's own add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
    "commands": {
@@ -239,7 +257,11 @@
    },
    "mutationsGate": "phase 3 (library.media.write.v1): addOp stored on the item in the same save; status is a set; remove and remove audio are idempotent by id; ok only once saved; the screen keeps an add's operation id until a terminal reply and resends it after a lost reply; no durable receipt across process death for the screen's pending state (A14/A15 gap). Play and attach stay the page's own handlers, run after the screen has closed",
    "rollout": "opt-in under Settings, Appearance: Native Library (beta), off by default",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "memory": {
+    "screenComposedAhead": "not measured yet: the prime call reads the Java and native heap before and 700 ms after it composes the screen and the page keeps the answer (window.__nativePrimePerf[view] = {javaKb, nativeKb, ms}); read it on the phone with the screen primed from a cold start, then write the figure here. Compose and the JVM cannot give a meaningful figure off the device (CONTRACT A24)"
+   },
+   "prime": "primed at idle as a swipe neighbour (prime: true in its NativeTabKit.create); its projection holds nothing private"
   },
   {
    "feature": "journal",
@@ -253,7 +275,8 @@
    "capabilities": [
     "library.journal.projection.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "covers": "the Library's Journal pane, open or behind its lock card; not while the page's reflection or answer field has the focus, a hand-over (claim, catch-up, write) is running or coming back after its celebrations, a level-up plays, or a book is loaded or playing (audioBusy)",
    "privacy": "CONTRACT A35: while LifeMaxJournalLock.blocksNative() the page sends a withheld frame (panes, lock, status, notice, protocol fields only) and native draws the lock card from it; native drops every journal field whenever the screen stops being drawn (TabSwipe rest), locks a showing screen on app stop with the lock on and refuses that page session's open frames until its withheld frame arrives; SecureWindow holds FLAG_SECURE while a frame with the lock on is drawn",
@@ -285,7 +308,8 @@
    },
    "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0013",
    "rollout": "opt-in under Settings, Appearance: Native Journal (beta), off by default",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "prime": "never primed: its words are private (A35), so its kit does not ask"
   },
   {
    "feature": "food",
@@ -369,7 +393,8 @@
    "capabilities": [
     "overview.cards.v1",
     "shell.swipe.v1",
-    "shell.swipe.v2"
+    "shell.swipe.v2",
+    "shell.prime.v1"
    ],
    "covers": "the Overview's head and cards at phone width; steps aside for the page's sheets (attribute, Luck, shop, Health, app picker), the web editor, the voice HUD, level-ups and celebrations the page plays, the thumbnail pass and widths above 860 px",
    "commands": {
@@ -489,12 +514,12 @@
    "status": "native-opt-in-beta",
    "source": "app/shell/swipe/ (TabSwipe drives the pure SwipeModel; TabScreenView reads the gesture; SwipeVeil, SwipeHaptics)",
    "owner": "native draws the motion, the page decides (50-native-swipe.js)",
-   "purpose": "swipe from one tab to the next with a catch half way: native to native (phase 1); native to a tab the page draws, which the veil reveals, and the page's own swipe onto a native tab, which slides in (phase 2); walls at Money and the ends of the bar (with the Overview cards on, the Overview is a native neighbour; ADR 0012); a swipe moves pixels, never ownership",
+   "purpose": "swipe from one tab to the next with a catch half way: native to native (phase 1); native to a tab the page draws, which the veil reveals, and the page's own swipe onto a native tab, which slides in (phase 2); walls at Money and the ends of the bar (with the Overview cards on, the Overview is a native neighbour; ADR 0012); a swipe moves pixels, never ownership; phase 3: the neighbours are composed ahead at idle (prime), a finger can catch a screen still sliding (chained swipes), the web swipe uses the same feel behind the same switch, and a screen names itself for TalkBack when it opens",
    "decision": "CONTRACT A34 and A23 item 11, ADR 0011",
    "scene": "while the switch is on, every navScene (NativeTabKit) and chromeScene (Food) carries swipe {v: 1, on, motion, haptics: off | light | normal | strong | max, view, active (the bar key of view, or \"\"), tabs [{key, view, label, icon, kind: native | web | stop, source?}] in bar order, colors {bg, text, muted} as opaque ARGB numbers (NativeTabKit.color), tune: null or the owner's changed keys, reveal: true (phase 2)}; only a scene ChromeHost draws reaches the swipe, so it keeps the bars' sequence and stale rule. Switched off, the scenes carry none and native does nothing of the swipe. fixtures/swipe-state.json is the page's own (tools/gen_native_fixtures.js), read by SwipeStateTest",
    "plugins": {
-    "ComposeTabPlugin (NativeCharacter, NativeLog, NativePlan, NativeLifeDirector, NativeRecipes, NativeMedia)": "handshake capabilities shell.swipe.v1 and shell.swipe.v2 (the edges); event swipe {token, from, to, dir, sequence, via: drag | fling, reveal: true}, sent once on a release that commits (reveal: this build reveals a tab the page draws); method swipeSettle {token, outcome: native | web | refused, reason?}, answered by the page before it navigates (web only to a swipe with reveal: true; an APK from phase 1 reads it as refused); open takes optional enter: next | prev and velocity (CSS px/s) when the page's own swipe ends on the tab, and the screen slides in",
-    "NativeNutrition": "capabilities() answers swipe: 2 (1 was phase 1 only); the swipe event adds the screen session, and a swipeSettle naming another session is ignored; open takes enter and velocity as above"
+    "ComposeTabPlugin (NativeCharacter, NativeLog, NativePlan, NativeLifeDirector, NativeRecipes, NativeMedia)": "handshake capabilities shell.swipe.v1 and shell.swipe.v2 (the edges); event swipe {token, from, to, dir, sequence, via: drag | fling, reveal: true}, sent once on a release that commits (reveal: this build reveals a tab the page draws); method swipeSettle {token, outcome: native | web | refused, reason?}, answered by the page before it navigates (web only to a swipe with reveal: true; an APK from phase 1 reads it as refused); open takes optional enter: next | prev and velocity (CSS px/s) when the page's own swipe ends on the tab, and the screen slides in; phase 3: handshake capability shell.prime.v1; method prime {snapshot} composes the screen ahead of its first open and answers {primed, reason?: composed | busy, javaKb, nativeKb, ms} about 700 ms later (A24 amendment: hidden in every sense, no scene, no bars, no focus, no updates; the same accept and createView as open); open takes an optional title (the bar's label), which the screen sets as its accessibility pane title",
+    "NativeNutrition": "capabilities() answers swipe: 2 (1 was phase 1 only); the swipe event adds the screen session, and a swipeSettle naming another session is ignored; open takes enter and velocity as above; its screen takes the pane title \"Food\" on open; it has no prime (its snapshot is a session of its own)"
    },
    "refusals": {
     "off": "the swipe is not on: the switch or Swipe to switch tabs off, onboarding not done, the thumbnail pass running, or a view a swipe never starts from (Life Director)",
@@ -506,7 +531,13 @@
    "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05\u20130.35, breakAt knee + 0.10\u20130.70, heavy 0.05\u20131, hyst 0\u20130.15, popDamping 0.4\u20131, popStiffness 400\u20133000, wallMax 0\u20130.15, wallSlope 0\u20130.6, flingDp 500\u20133000, flingMin 0.05\u20130.35, backFlingDp 200\u20132000, commitK and cancelK 300\u20134000, slopFactor 1\u20132 (never under the platform's slop, where a child scroller claims), lockRatio 1\u20133, edgeDp 16\u201348, haptic threshold | tick | click | off",
    "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
    "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
-   "writes": []
+   "writes": [],
+   "prime": {
+    "caller": "NativePrime (50-native-prime.js): after 800 ms with no touch, the swipe on and nothing over the page, the first never-primed native neighbour of the current tab that has a kit with prime: true, then the next after another 800 ms; a busy answer is asked again up to 6 times per page load, a rejection never twice",
+    "refusals": "composed (the screen exists already: counted as primed), busy (a swipe or hand-over in flight)",
+    "tabs": "character, log, plan, library (media); not the Journal (private), Life Director (it covers only some of its view), Food (its own plugin) or Recipes (not a bar neighbour)"
+   },
+   "chained": "a finger that lands on a screen still sliding takes hold of it (SwipeInput.Catch): a cancel springing back, or a commit whose hand-over is done (the destination open and drawn, the source closed); never a commit still waiting for the page. The drag continues through the inverse of the curve (TensionCurve.invertHold, Tension.holding)"
   }
  ]
 }

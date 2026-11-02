@@ -56,6 +56,11 @@ execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'igno
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 /* a mutation the Journal's modes must catch (JMUT): the page built without the projection's lock branch or the lock subscription */
 const MUTATIONS = { projection: ['if (locked()) return withheldFrame(); // nothing below runs while locked', ''], onchange: ['lock()?.onChange(() => {', 'void (() => {'] };
+/* mutations the prime checks must catch (PMUT, phase 3): the page opening a neighbour in place of priming it, updating the primed
+   screen as if it were open, or handing the bars' scene to the screen it primes */
+const PRIME_CALL = 'const r = await plugin.prime({ snapshot: data });';
+const PRIME_MUTATIONS = { open: [PRIME_CALL, 'await plugin.open({ snapshot: data, navScene: await navScene() }); const r = { primed: true };'], update: [PRIME_CALL, 'const r = await plugin.prime({ snapshot: data }); await plugin.update({ snapshot: data, navScene: await navScene() });'], chrome: [PRIME_CALL, 'const r = await plugin.prime({ snapshot: data, navScene: await navScene() });'] };
+if (PRIME_MUTATIONS[process.env.PMUT]) { const [a, b2] = PRIME_MUTATIONS[process.env.PMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
 const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings', pet: '', quests: '' }; // '': the page draws it, no screen shows
@@ -109,7 +114,7 @@ async function run(b, mode) {
       plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});}
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__composed={};window.__primes={};window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
     /* every reply: one per command, to a command that ran, saying what its run did */
     window.__replied=r=>{if(!/^sim-/.test(r.requestId||''))return;window.__cmds.answered++;const run=window.__runs[r.requestId];if(window.__replies[r.requestId])fault('two replies to '+r.requestId);window.__replies[r.requestId]=true;
       if(!run)fault('a reply to '+r.requestId+', which never ran');else if(!!r.ok!==run.ok||(r.message||'')!==run.message)fault('the reply to '+r.requestId+' says ok='+r.ok+' ('+r.message+'), its run ok='+run.ok)};window.__onShow={};window.__t=()=>Math.round(performance.now());
@@ -144,13 +149,17 @@ async function run(b, mode) {
       open:a=>{const s=window.__swipe;if(a&&a.enter)window.__enters++;if(s&&!s.answered&&s.toVis===vis)fault(name+' was asked to open before the page answered '+s.token);take(a);
         if(vis==='overview'&&window.__wantOf('dashboard')==='cards')fault('the shell was opened while the cards were wanted');
         if(vis==='cards'){window.__cardHops.opens++;if(window.__cardsOpen)fault('the cards were asked to open twice with no close between (two owners of the dashboard)');window.__cardsOpen=true}
-        return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));if(fails){window.__log.push(window.__t()+' '+name+' open rejected');throw Error('decoder rejected')}window.__vis[vis]=true;if(vis==='cards')window.__cardHops.shown++;window.__z=window.__z.filter(k=>k!==vis).concat(vis);const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);if(model)await model.frame(a);window.__log.push(window.__t()+' '+name+' open<')})},
+        return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));if(fails){window.__log.push(window.__t()+' '+name+' open rejected');throw Error('decoder rejected')}window.__vis[vis]=true;window.__composed[vis]=true;if(vis==='cards')window.__cardHops.shown++;window.__z=window.__z.filter(k=>k!==vis).concat(vis);const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);if(model)await model.frame(a);window.__log.push(window.__t()+' '+name+' open<')})},
       update:async(a)=>{take(a);if(a&&a.reply)window.__replied(a.reply);if(!sessions)await inOrder(async()=>{if(!window.__vis[vis]){fault(name+' updated while hidden');return}if(fails)throw Error('decoder rejected');if(model)await model.frame(a)})},
+      /* prime (shell.prime.v1): composes the screen ahead, hidden. It takes only the projection (no bars), shows nothing and is not open;
+         a screen composed already (opened before) answers composed. A hidden screen takes no update (the fault above). */
+      prime:a=>{if(a&&(a.navScene||a.chromeScene))fault(name+' was primed with the bars\\' scene');
+        return inOrder(async()=>{if(window.__composed[vis])return {primed:false,reason:'composed'};await wait(window.__rnd(10,120));window.__composed[vis]=true;window.__primes[vis]=(window.__primes[vis]||0)+1;window.__log.push(window.__t()+' '+name+' primed');return {primed:true,javaKb:1,nativeKb:2,ms:3}})},
       swipeSettle:a=>{checkAnswer(a);return inOrder(async()=>{window.__log.push(window.__t()+' '+name+' swipeSettle '+(a&&a.token)+' '+(a&&a.outcome)+(a&&a.reason?' ('+a.reason+')':''))})},
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2']})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
        drawn must hold no open data */
     const jmodel={frame:async a=>{const s=a&&a.snapshot;if(!s)return;const json=JSON.stringify(s),canary=/Canary/.test(json);if(s.withheld&&canary)fault('a withheld Journal frame carries a canary');
@@ -189,6 +198,8 @@ async function run(b, mode) {
     for (const v of ['character', 'food', 'log', 'plan', 'library', 'life-director', 'recipes', 'pet', 'quests', 'settings', 'dashboard']) {
       await p.evaluate(v => lmaNavTo(v, { fast: true }), v); await settle(1500);
     }
+    // the visits only warmed the page: native's screens count as never composed, so the idle prime has screens to compose ahead
+    await p.evaluate(() => { window.__composed = {} });
   };
   await warmTabs();
   /* the Journal's modes: what every page load needs (no thumbnail pass; a fault whenever one of the Journal's open builders runs while
@@ -216,7 +227,7 @@ async function run(b, mode) {
   const failures = []; let hops = 0;
   const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(Number(process.env.SEED_BASE) || 12345);
   for (let seed = 1; seed <= SEEDS; seed++) {
-    await p.evaluate(s => { window.__seed = s; window.__log = []; window.__faults = []; window.__tapped = ''; window.__swipe = null; window.__accepted = ''; window.__sentNow = [] }, seed + (Number(process.env.SEED_BASE) || 0));
+    await p.evaluate(s => { window.__seed = s; window.__log = []; window.__faults = []; window.__tapped = ''; window.__swipe = null; window.__accepted = ''; window.__sentNow = []; window.__composed = {}; NativePrime.reset() /* every seed starts with nothing composed: the idle prime has its screens to compose */ }, seed + (Number(process.env.SEED_BASE) || 0));
     const n = 3 + Math.floor(rng() * 9), seq = [];
     const hops_ = hopsOf(mode);
     for (let i = 0; i < n; i++) seq.push({ to: hops_[Math.floor(rng() * hops_.length)], gap: Math.floor(rng() * 4) * 25 });
@@ -372,6 +383,8 @@ async function run(b, mode) {
   const answers = await p.evaluate(() => window.__answers), enters = await p.evaluate(() => window.__enters);
   const cmds = await p.evaluate(() => Object.assign({ applied: Object.values(window.__runs).filter(r => r.ok).length, shown: Object.values(window.__runs).filter(r => r.shown).length }, window.__cmds));
   console.log((failures.length ? 'FAIL' : 'PASS') + ' cards ' + mode + ': ' + SEEDS + ' seeded sequences (' + hops + ' hops, swipes taken ' + answers.native + ', revealed ' + answers.web + ', refused ' + answers.refused + ', web swipes slid in ' + enters + '; ' + cmds.sent + ' Life Director Change its mid-hop, each run once, ' + cmds.applied + ' applied and saved, ' + cmds.shown + ' ran on a showing screen, ' + cmds.answered + ' answered on it): the last tab alone is showing after each');
+  const primes = await p.evaluate(() => window.__primes);
+  console.log('     prime ' + mode + ': ' + Object.values(primes).reduce((a, n) => a + n, 0) + ' screens composed ahead (' + (Object.keys(primes).sort().join(', ') || 'none') + ')');
   const cards = await p.evaluate(() => Object.assign({ gaveUp: NativeOverviewCards.diagnostics().gaveUp }, window.__cardHops));
   console.log('     cards ' + mode + ': shown ' + cards.shown + ' times, ' + cards.taps + ' taps in them, ' + cards.toggles + ' switch taps, ' + cards.celebrations + ' celebrations' + (cards.gaveUp ? ', gave up' : ''));
   if (mode === 'failing' && !cards.gaveUp) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the failing cards never gave up'], log: [] });
