@@ -39,14 +39,19 @@ fun PlanRoute(
     vm: PlanViewModel,
     topInsetDp: Float,
     bottomInsetDp: Float,
+    visible: Boolean = true,
     onPage: (PlanPageAction) -> Unit,
 ) {
     val projection by vm.projection.collectAsState()
+    val offered by vm.offers.collectAsState()
     val ui by vm.ui.collectAsState()
-    val p = projection ?: return
-    LaunchedEffect(p.session, p.selectedRevision) { vm.adopt(p) }
     val actions = remember(vm, onPage) { PlanActions(vm, onPage) }
-    PlanScreen(p, ui, actions, topInsetDp, bottomInsetDp)
+    val p = projection
+    val o = offered
+    if (p != null) {
+        LaunchedEffect(p.session, p.selectedRevision) { vm.adopt(p) }
+        PlanScreen(p, ui, actions, topInsetDp, bottomInsetDp, live = visible)
+    } else if (o != null) PlanOfferScreen(o, ui, actions, topInsetDp, bottomInsetDp)
 }
 
 /** Everything the screen can ask for, so the screen itself holds no state. */
@@ -56,11 +61,16 @@ class PlanActions(
     val toggle: (SetRef, Boolean) -> Unit = { _, _ -> },
     val page: (PlanPageAction) -> Unit = {},
     val feedbackShown: (Long) -> Unit = {},
+    /**
+     * The writes the screen can make itself (fields, Leave plan, sign-up, runner); none, and each
+     * is the page's.
+     */
+    val writes: PlanWriteActions? = null,
 ) {
     constructor(
         vm: PlanViewModel,
         page: (PlanPageAction) -> Unit,
-    ) : this(vm::selectDay, vm::selectWeek, vm::toggle, page, vm::feedbackShown)
+    ) : this(vm::selectDay, vm::selectWeek, vm::toggle, page, vm::feedbackShown, vm.actions)
 }
 
 /**
@@ -77,8 +87,10 @@ fun PlanScreen(
     bottomInsetDp: Float = 72f,
     list: LazyListState = rememberLazyListState(),
     rulesOpen: Boolean = false,
+    live: Boolean = false,
 ) {
     val day = ui.day(p)
+    val writes = actions.writes
     // where the last box was tapped: the page's celebration starts there too
     var lastTap by remember { mutableStateOf(Offset.Unspecified) }
     PlanTheme(p.tokens, p.light) {
@@ -101,10 +113,17 @@ fun PlanScreen(
                         p.guidedSession ?: day.guided,
                         resume = p.guidedSession != null,
                     ) {
-                        actions.page(PlanPageAction.Guided(day.date))
+                        if (writes != null && p.features.runner)
+                            writes.launch(day.date, p.guidedSession != null)
+                        else actions.page(PlanPageAction.Guided(day.date))
                     }
                 }
-                item("program") { PlanProgramCard(p) { actions.page(PlanPageAction.Leave) } }
+                item("program") {
+                    PlanProgramCard(p) {
+                        if (writes != null && p.features.leave) writes.askLeave()
+                        else actions.page(PlanPageAction.Leave)
+                    }
+                }
                 item("calendar") { PlanCalendarCard(p, day, actions.selectWeek, actions.selectDay) }
                 item("day") {
                     PlanDayCard(
@@ -115,10 +134,15 @@ fun PlanScreen(
                             actions.toggle(set, checked)
                         },
                         onPage = actions.page,
+                        onField =
+                            if (writes != null && p.features.fields)
+                                { item, kind -> writes.editField(day, item, kind) }
+                            else null,
                     )
                 }
                 item("rules") { PlanRulesCard(p.rules, p.progression, rulesOpen) }
             }
+            if (writes != null) PlanOverlays(p, ui, writes, bottomInsetDp, topInsetDp, live)
             ui.feedback?.let {
                 PlanFeedbackLayer(
                     it,
@@ -143,7 +167,7 @@ internal fun PlanTheme(tokens: Map<String, Long>, light: Boolean, content: @Comp
 }
 
 @Composable
-private fun PlanHead() =
+internal fun PlanHead() =
     PageHead(
         "TRAINING",
         "Workout plan",

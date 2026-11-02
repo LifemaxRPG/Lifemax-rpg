@@ -13,11 +13,12 @@ fun SetRef.toToggleJson(checked: Boolean): JSONObject =
     JSONObject().put("date", date).put("key", item).put("set", index).put("checked", checked)
 
 /**
- * The page's reply to a command, or null when it answers something other than a toggle. A
+ * The page's reply to a command, or null when it answers something the screen did not send. A
  * celebration the screen cannot read is not drawn; the reply still settles its box.
  */
 fun JSONObject.toPlanReply(): PlanReply? {
-    if (optString("command") != "toggle") return null
+    val command = optString("command")
+    if (command != "toggle" && command !in WRITE_COMMANDS) return null
     val celebrations =
         runCatching {
                 optJSONArray("celebrations")?.objects()?.map { c ->
@@ -43,6 +44,7 @@ fun JSONObject.toPlanReply(): PlanReply? {
         optBoolean("changed"),
         optString("message"),
         celebrations,
+        command,
     )
 }
 

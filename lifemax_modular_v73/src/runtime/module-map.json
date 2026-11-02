@@ -258,8 +258,8 @@
   },
   {
    "file": "src/runtime/segments/06-runtime.js",
-   "bytes": 35011,
-   "statement_count": 41,
+   "bytes": 34035,
+   "statement_count": 43,
    "tags": [
     "training",
     "pet",
@@ -293,6 +293,10 @@
     "selectDay",
     "selectWeek",
     "startPlan",
+    "PLAN_STARTED",
+    "PLAN_ENDED",
+    "PLAN_LOG_MAX",
+    "LEAVE_PLAN_ASK",
     "leavePlan",
     "renderPlan",
     "ICONS",
@@ -687,8 +691,8 @@
   },
   {
    "file": "src/runtime/segments/14-runtime.js",
-   "bytes": 27352,
-   "statement_count": 39,
+   "bytes": 27464,
+   "statement_count": 42,
    "tags": [
     "nutrition",
     "training",
@@ -703,6 +707,9 @@
     "qosUpdateSummary",
     "renderQuests",
     "scholarPlanDay",
+    "planOfferWords",
+    "planOfferFor",
+    "planOfferHtml",
     "scholarOfferHtml",
     "entrepreneurOfferHtml",
     "explorerOfferHtml",
@@ -1095,8 +1102,8 @@
   },
   {
    "file": "src/runtime/segments/21-runtime.js",
-   "bytes": 26713,
-   "statement_count": 41,
+   "bytes": 30121,
+   "statement_count": 48,
    "tags": [
     "training",
     "interface"
@@ -1106,6 +1113,13 @@
     "gwrRpe",
     "gwrAnimationTimer",
     "GWR_VER",
+    "gwrHost",
+    "gwrLastSave",
+    "GWR_PAUSED",
+    "GWR_START_ASK",
+    "GWR_WORDS",
+    "gwrHosted",
+    "gwrHostChanged",
     "gwrCurrent",
     "gwrElapsed",
     "gwrFmtDuration",
@@ -1134,7 +1148,9 @@
     "gwr63RewardTimer",
     "gwr63Reward",
     "gwrLogSet",
+    "gwrSkipAsk",
     "gwrSkipExercise",
+    "GWR_SUBSTITUTE_ASK",
     "gwrSubstituteExercise",
     "gwrUndoLast",
     "gwrCaptureHistory",
@@ -1149,8 +1165,8 @@
   },
   {
    "file": "src/runtime/segments/22-runtime.js",
-   "bytes": 69864,
-   "statement_count": 49,
+   "bytes": 71254,
+   "statement_count": 56,
    "tags": [
     "interface"
    ],
@@ -1167,11 +1183,18 @@
     "gwrV60TimerRing",
     "gwrV60Lead",
     "gwrV60Scene",
+    "gwrSuggestedWeight",
+    "gwrNudged",
     "gwrNudge",
+    "gwrExText",
+    "gwrSetText",
+    "gwrWeekText",
+    "gwrDayLabel",
     "gwrV60Body",
     "gwrCancelTimedReview",
     "gwrV60BackToReady",
     "gwrV60Confetti",
+    "gwrSettle",
     "gwrRender",
     "gwrLauncher",
     "gwrFxLastEx",
@@ -3541,8 +3564,21 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-plan-runner.js",
+   "bytes": 12889,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "plan",
+    "runner"
+   ],
+   "symbols": [
+    "window.NativePlanRunner"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-plan.js",
-   "bytes": 12156,
+   "bytes": 16949,
    "statement_count": 1,
    "tags": [
     "android",

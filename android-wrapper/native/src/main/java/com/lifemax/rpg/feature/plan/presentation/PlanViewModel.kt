@@ -7,6 +7,7 @@ import com.lifemax.rpg.feature.plan.domain.PlanDay
 import com.lifemax.rpg.feature.plan.domain.PlanProjection
 import com.lifemax.rpg.feature.plan.domain.PlanReply
 import com.lifemax.rpg.feature.plan.domain.PlanRepository
+import com.lifemax.rpg.feature.plan.domain.PlanWrites
 import com.lifemax.rpg.feature.plan.domain.SetRef
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,10 +25,16 @@ class PlanViewModel(
     private val commands: PlanCommands,
     private val newRequestId: () -> String = { UUID.randomUUID().toString() },
     private val nowMs: () -> Long = { System.nanoTime() / 1_000_000 },
+    writes: PlanWrites = PlanWrites { _, _, _ -> },
+    newOperation: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
     val projection = repository.state
+    val offers = repository.offers
     private val mutable = MutableStateFlow(PlanUiState())
     val ui = mutable.asStateFlow()
+    private val writer = PlanWriteController(writes, mutable, ::say, newRequestId, newOperation)
+    /** Fields, Leave plan, the sign-up and the runner (plan.fields.v1 and the others). */
+    val actions = PlanWriteActions(writer, mutable, projection)
     private val requests = mutableMapOf<String, Request>()
     private var adopted: Pair<String, Long>? = null
     private var feedbacks = 0L
@@ -47,6 +54,7 @@ class PlanViewModel(
     fun onOpen() {
         requests.clear()
         mutable.update { it.copy(pending = emptyMap()) }
+        writer.reset()
     }
 
     /**
@@ -93,6 +101,10 @@ class PlanViewModel(
     }
 
     fun onReply(reply: PlanReply) {
+        if (reply.command != "toggle") {
+            writer.answered(reply)?.let { writer.settle(it, reply) }
+            return
+        }
         val set = requests.remove(reply.requestId)?.set
         val message =
             when {
@@ -108,6 +120,10 @@ class PlanViewModel(
                     else PlanFeedback(++feedbacks, message, reply.celebrations),
             )
         }
+    }
+
+    private fun say(message: String, awards: List<Celebration>) {
+        mutable.update { it.copy(feedback = PlanFeedback(++feedbacks, message, awards)) }
     }
 
     /** The screen has shown [id]'s message and celebration. */
@@ -131,6 +147,14 @@ data class PlanUiState(
     val selected: String? = null,
     val pending: Map<SetRef, Boolean> = emptyMap(),
     val feedback: PlanFeedback? = null,
+    /** A write is awaited from the page. */
+    val busy: Boolean = false,
+    val edit: FieldEdit? = null,
+    /** Leave plan's question is showing. */
+    val leaving: Boolean = false,
+    /** The date chosen for the sign-up, once the player changes it. */
+    val startDate: String? = null,
+    val runner: RunnerUi = RunnerUi(),
 ) {
     fun day(p: PlanProjection): PlanDay = selected?.let(p::day) ?: p.selectedDay
 }

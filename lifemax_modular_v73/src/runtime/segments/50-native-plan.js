@@ -1,7 +1,10 @@
 /* Workout plan projection v1. The page stays the owner of the plan, its XP and the save: the native screen draws this projection
    of every week and day, selects days and weeks itself, and ticks boxes through the page's own planToggle. Everything else (the
-   guided workout, editing a value or a session log, leaving the plan) closes the screen and runs the page's own handler; the
-   sign-up offers shown without a plan stay on the page. The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/PLAN_INVENTORY.md. */
+   guided workout, editing a value or a session log, leaving the plan) closes the screen and runs the page's own handler, unless
+   the screen says it draws it: the runner (plan.runner.v1, 50-native-plan-runner.js), the value and session-log fields
+   (plan.fields.v1), Leave plan (plan.leave.v1) and the sign-up offers shown without a plan (plan.offers.v1) are then commands
+   the page answers, with the page's own functions and refusals. The tab lifecycle is NativeTabKit's.
+   Inventory: docs/architecture/PLAN_INVENTORY.md. */
 (function () {
   const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   const KINDS = { strength: "STRENGTH", rest: "REST", recovery: "RECOVERY", cardio: "CARDIO" };
@@ -21,6 +24,10 @@
     short: new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }),
   };
   const scratch = document.createElement("template");
+  const Runner = window.NativePlanRunner;
+  let tab = null;
+  /** whether the screen says it draws a part of the view (the handshake; false until it has answered) */
+  const has = (capability) => !!tab && tab.has(capability);
   let selectedDate = "",
     selectedRevision = 0;
 
@@ -167,7 +174,28 @@
     };
   }
 
+  /** what the page offers with no plan, worded by the same data the page draws its offer from (planOfferFor) */
+  function offer() {
+    const o = planOfferFor(state.classId);
+    return {
+      eyebrow: planOfferWords().eyebrow,
+      title: plain(o.title),
+      blurb: plain(o.blurb),
+      rows: o.rows.map(([when, what]) => ({ when: plain(when), what: plain(what) })),
+      note: plain(o.note),
+      startLabel: planOfferWords().start,
+      start: getToday(),
+      button: planOfferWords().button,
+    };
+  }
+  /** which of the page's hand-overs the screen takes over: the page tells it what it may do itself */
+  function features() {
+    return { runner: Runner.offered(), fields: has("plan.fields.v1"), leave: has("plan.leave.v1"), offers: has("plan.offers.v1") };
+  }
+
   function projection() {
+    if (!state.plan)
+      return { offer: offer(), features: features(), reducedMotion: fxReduced(), celebrationTarget: NativeTabKit.celebrationTarget() };
     const p = state.plan,
       t = getToday(),
       over = t > addDays(p.start, 55),
@@ -188,10 +216,61 @@
       rules: rules(p),
       reducedMotion: fxReduced(),
       celebrationTarget: NativeTabKit.celebrationTarget(),
+      offer: null,
+      features: features(),
+      runner: Runner.projection(),
+      leaveAsk: LEAVE_PLAN_ASK,
+      logMax: PLAN_LOG_MAX,
+    };
+  }
+
+  /** a value or session-log field, set to what was typed: like the page's onchange (planVal, planLog, which trim and save), with
+      the page's refusals. The field ends as asked, so repeating the command changes nothing. */
+  function field(kind) {
+    return (c) => {
+      const d = validDay(c.date),
+        it = d && d.items.find((x) => x.k === c.key);
+      if (!has("plan.fields.v1")) return { ok: false, message: "Edit this on the page." };
+      if (!it || typeof c.text !== "string" || (kind === "value" && !(it.wt || it.min)))
+        return { ok: false, message: "That field is not in your plan. Nothing was changed." };
+      if (c.date > getToday()) return { ok: false, message: "Locked until the day arrives." };
+      if (kind === "log" && c.text.length > PLAN_LOG_MAX)
+        return { ok: false, message: "A session log holds " + PLAN_LOG_MAX + " characters at most. Nothing was changed." };
+      if (((pcheck(c.date)[kind === "value" ? "v" : "log"] || {})[c.key] || "") === c.text.trim())
+        return { ok: true, changed: false, message: "Already recorded." };
+      const saved = kind === "value" ? planVal(c.date, c.key, c.text) : planLog(c.date, c.key, c.text);
+      return saved ? { ok: true, changed: true } : { ok: false, changed: true, message: unsavedMessage() };
     };
   }
 
   const commands = {
+    value: field("value"),
+    log: field("log"),
+    /** the guided workout's step of the screen (50-native-plan-runner.js): act and its arguments */
+    runner: (c) => Runner.command(c),
+    /** Leave plan, after the screen's own confirm in the page's words (leaveAsk): the page's leavePlan, which removes the plan
+        and keeps the XP. With no plan left it is a repeat. */
+    leave(c) {
+      if (!has("plan.leave.v1")) return { ok: false, message: "Leave the plan on the page." };
+      return Runner.once(c.op, () => {
+        if (!state.plan) return { ok: true, changed: false, message: "Already recorded." };
+        Runner.ended();
+        return leavePlan(true) ? { ok: true, changed: true, message: PLAN_ENDED } : { ok: false, changed: true, message: unsavedMessage() };
+      });
+    },
+    /** Sign up for the offered plan from the start date chosen: the page's startPlan */
+    signUp(c) {
+      if (!has("plan.offers.v1")) return { ok: false, message: "Sign up on the page." };
+      const start = String(c.start || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || dstr(parseD(start)) !== start) return { ok: false, message: "Choose a start date." };
+      return Runner.once(c.op, () => {
+        if (state.plan) {
+          if (state.plan.from === start) return { ok: true, changed: false, message: "Already recorded." };
+          return { ok: false, message: "You already follow a plan. Nothing was changed." };
+        }
+        return startPlan(start) ? { ok: true, changed: true, message: PLAN_STARTED } : { ok: false, changed: true, message: unsavedMessage() };
+      });
+    },
     /** tick or clear one set, like the page's checkbox. The set ends as asked, so repeating the command changes nothing; a day
         completed by it pays its XP once (planToggle keeps the session's activity id). A failed save leaves the change in memory,
         as the page's own checkbox does, with what the save set off (badges, a daily-hand quest), for the next save that succeeds
@@ -236,7 +315,7 @@
     tab.revisit();
   }
 
-  const tab = NativeTabKit.create({
+  tab = NativeTabKit.create({
     id: "plan",
     plugin: "NativePlan",
     capability: "plan.projection.v1",
@@ -247,7 +326,10 @@
     onAction,
     commands,
     render: "renderPlan",
-    blocked: () => !state.plan || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov"),
+    // no plan: the page's offer shows unless the screen draws it; a field of the page being edited, a level-up: the page shows
+    blocked: () => (!state.plan && !has("plan.offers.v1")) || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov"),
+    warm: true, // whether the screen draws the offers has to be known before it is opened
+    afterClose: () => Runner.afterClose(),
     // The page covers its view now and then (the guided workout, a level-up, a sheet, a field being edited) and brings the plan
     // back (the runner closed, a plan started from an offer): the screen steps aside for it and comes back after.
     watch(observe) {
@@ -256,6 +338,7 @@
     globals: { open: "openNativePlan", enable: "setNativePlanEnabled", projection: "NativePlanTabProjection" },
   });
 
+  Runner.bind(tab);
   function leaveField(e) {
     if (e.target.matches?.(EDITING)) setTimeout(tab.follow); // once the page's own change handler has run and the focus has moved
   }

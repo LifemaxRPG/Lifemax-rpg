@@ -67,7 +67,7 @@ function gwrRenderComplete(g,d){
 function gwrV60TimerRing(type,remaining,max){
  const left=Math.max(0,remaining),total=Math.max(1,max),ratio=Math.min(1,left/total),dash=452.39;
  const attr=type==='work'?'data-gwr-timer-ring':'data-gwr-rest-progress';
- return `<div class="gx-ring ${type==='work'?'is-work':'is-rest'}"><svg viewBox="0 0 170 170" aria-hidden="true"><circle class="gx-ring-track" cx="85" cy="85" r="72" fill="none" stroke-width="9"/><circle class="gx-ring-fill" ${attr} cx="85" cy="85" r="72" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${dash*(type==='work'?ratio:1-ratio)}" transform="rotate(-90 85 85)"/></svg><div class="gx-ring-label"><strong ${type==='work'?'data-gwr-worktime':'data-gwr-rest'}>${gwrFmtDuration(left)}</strong><span>${type==='work'?'left in this interval':'rest left'}</span></div></div>`;
+ return `<div class="gx-ring ${type==='work'?'is-work':'is-rest'}"><svg viewBox="0 0 170 170" aria-hidden="true"><circle class="gx-ring-track" cx="85" cy="85" r="72" fill="none" stroke-width="9"/><circle class="gx-ring-fill" ${attr} cx="85" cy="85" r="72" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${dash*(type==='work'?ratio:1-ratio)}" transform="rotate(-90 85 85)"/></svg><div class="gx-ring-label"><strong ${type==='work'?'data-gwr-worktime':'data-gwr-rest'}>${gwrFmtDuration(left)}</strong><span>${type==='work'?GWR_WORDS.ringWork:GWR_WORDS.ringRest}</span></div></div>`;
 }
 function gwrV60Lead(g,d,st){
  const c=state.plan.checks[g.date]||{},s=gwrStats(g),live=g.phase!=='intro'&&g.phase!=='complete';
@@ -82,30 +82,42 @@ function gwrV60Scene(it,d,g){
  const c=state.plan?.checks?.[g?.date]||{},label=c.substitute?.[it?.k]||it?.l;
  return `<button type="button" class="gx-portrait" onclick="gwrDemoOpen()" aria-label="Show how to do ${esc(label||'this exercise')}">${gwrDemoArt({l:label},d.kind,fxReduced())}<span class="gx-portrait-play" aria-hidden="true"><svg viewBox="0 0 8 8"><path d="M2 1h1v1h1v1h1v1h1v1H5v1H4v1H3v1H2z" fill="currentColor"/></svg></span></button>`;
 }
+/* the weight a set starts from: the last set of this exercise today, else the number in last session's value */
+function gwrSuggestedWeight(g,st){
+ const c=state.plan.checks[g.date]||{},prev=lastVal(st.it.k,g.date)||'';
+ const prior=(c.setDetails?.[st.it.k]||[]).filter(Boolean).at(-1);
+ return prior?.weight??(prev?Number(String(prev).match(/[\d.]+/)?.[0])||'':'');
+}
+/* a stepper's arithmetic (gwrNudge): one step from v, never below min, to a tenth */
+function gwrNudged(v,delta,min){return Math.max(Number(min)||0,Math.round(((Number(v)||0)+delta)*10)/10)}
 function gwrNudge(id,delta,min){
  const el=document.getElementById(id);if(!el)return;
- const v=Number(el.value)||0,next=Math.max(Number(min)||0,Math.round((v+delta)*10)/10);
+ const next=gwrNudged(el.value,delta,min);
  el.value=String(next);
  if(!fxReduced()){haptic(6);GWX.sfx('tick',Math.round(next)%24);el.animate&&el.animate([{transform:'scale(1.14)',color:'var(--accent-strong)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.2,1.6,.4,1)'})}
 }
+/* the lines of a step that the page's screens and the native runner both write (the screens escape them; the runner takes plain text) */
+function gwrExText(st,d){return `Exercise ${st.ex+1} of ${d.items.length}${st.it.opt?' · '+GWR_WORDS.optional:''}`}
+function gwrSetText(st){return `Set ${st.j+1} of ${st.it.n}`}
+function gwrWeekText(d,date){return `Week ${d.week} · ${parseD(date).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}`}
+function gwrDayLabel(date,x){return `${parseD(date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} · ${x.short}${dayDone(date)?' (done)':''}`}
 function gwrV60Body(g,d,st){
  const all=gwrStats(g),phase=g.phase;
  const screen=(cls,body,dock)=>`<div class="gx-screen ${cls}"><div class="gx-body">${body}</div><div class="gx-dock">${dock}</div></div>`;
  if(phase==='intro'){
    const base=addDays(g.date,-((parseD(g.date).getDay()+6)%7));
-   const opts=Array.from({length:7},(_,i)=>{const date=addDays(base,i),x=planDay(date);if(!x||x.kind==='rest'||date>getToday())return '';return `<option value="${date}" ${date===g.date?'selected':''}>${esc(parseD(date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}))} · ${esc(x.short)}${dayDone(date)?' (done)':''}</option>`}).join('');
+   const opts=Array.from({length:7},(_,i)=>{const date=addDays(base,i),x=planDay(date);if(!x||x.kind==='rest'||date>getToday())return '';return `<option value="${date}" ${date===g.date?'selected':''}>${esc(gwrDayLabel(date,x))}</option>`}).join('');
    const c=state.plan.checks[g.date]||{};
-   const log=d.items.map((it,i)=>{const done=((c.s||{})[it.k]||[]).filter(Boolean).length;return `<li class="${done>=it.n?'is-done':''}" style="--i:${i}"><span class="gx-log-n">${done>=it.n?px('check',12):i+1}</span><span class="gx-log-name">${esc(c.substitute?.[it.k]||it.l)}${it.opt?' <em>optional</em>':''}</span><span class="gx-log-rx">${esc(it.d)}</span></li>`}).join('');
-   const when=parseD(g.date).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-   return screen('is-intro',`<p class="gx-step">Week ${d.week} · ${esc(when)}</p><h1 class="gx-title">${esc(d.label)}</h1><div class="gx-summary"><div><strong>${d.items.length}</strong><span>exercises</span></div><div><strong>${all.all.length}</strong><span>sets</span></div><div class="is-xp"><strong>+${d.xp}</strong><span>XP</span></div></div><label class="gx-select"><span>Workout day</span><select id="gwrSessionDate" onchange="gwrChangeDate(this.value)">${opts}</select></label><ol class="gx-log">${log}</ol>`,
-   `<button type="button" class="gx-btn primary" onclick="gwrBegin()">Start workout</button><p class="gx-dock-note">Every set you log is saved to your plan.</p>`);
+   const log=d.items.map((it,i)=>{const done=((c.s||{})[it.k]||[]).filter(Boolean).length;return `<li class="${done>=it.n?'is-done':''}" style="--i:${i}"><span class="gx-log-n">${done>=it.n?px('check',12):i+1}</span><span class="gx-log-name">${esc(c.substitute?.[it.k]||it.l)}${it.opt?` <em>${GWR_WORDS.optional}</em>`:''}</span><span class="gx-log-rx">${esc(it.d)}</span></li>`}).join('');
+      return screen('is-intro',`<p class="gx-step">${esc(gwrWeekText(d,g.date))}</p><h1 class="gx-title">${esc(d.label)}</h1><div class="gx-summary"><div><strong>${d.items.length}</strong><span>${GWR_WORDS.exercises}</span></div><div><strong>${all.all.length}</strong><span>${GWR_WORDS.sets}</span></div><div class="is-xp"><strong>+${d.xp}</strong><span>${GWR_WORDS.xp}</span></div></div><label class="gx-select"><span>${GWR_WORDS.introDay}</span><select id="gwrSessionDate" onchange="gwrChangeDate(this.value)">${opts}</select></label><ol class="gx-log">${log}</ol>`,
+   `<button type="button" class="gx-btn primary" onclick="gwrBegin()">${GWR_WORDS.start}</button><p class="gx-dock-note">${GWR_WORDS.introNote}</p>`);
  }
  if(phase==='complete'){
    const c=state.plan.checks[g.date]||{},act=c.actId&&state.activities.find(a=>a.id===c.actId),xp=act?.xp||0;
    const full=all.doneReq.length===all.needed.length;
    const trophy=`<svg class="gx-trophy-art" viewBox="0 0 64 64" shape-rendering="crispEdges" aria-hidden="true"><path fill="#a56c32" d="M11 12h8v7h-6v12h6v7h-7v-5H7V14h4zM45 12h8v7h-2v12h-6v7h7v-5h5V14h-4v-2z"/><path fill="#ffda8b" d="M17 10h30v22h-5v7h-6v7h11v6H17v-6h11v-7h-6v-7h-5z"/><path fill="#f6bf5c" d="M21 14h22v17h-5v5H26v-5h-5z"/><path fill="#fff4c5" d="M23 14h5v15h-5zM30 14h5v7h-5z"/><path fill="#946130" d="M24 46h16v4H24z"/></svg>`;
-   return screen('is-complete',`<div class="gx-trophy ${full?'':'is-partial'}">${full?trophy:px('shield',40)}</div><h1 class="gx-title">${full?'Workout complete':'Progress saved'}</h1><p class="gx-note">${full?'Every required set is logged in your plan.':'Your logged sets are saved. Unfinished required sets stay open in your plan.'}</p><div class="gx-xp"><strong>+${xp}</strong><span>XP</span></div><div class="gx-summary"><div><strong>${all.completed.length}</strong><span>sets</span></div><div><strong>${gwrFmtDuration(gwrElapsed(g))}</strong><span>time</span></div><div><strong>${all.volume.toLocaleString()}</strong><span>lb moved</span></div></div>`,
-   `<button type="button" class="gx-btn primary" onclick="gwrExitComplete()">Back to plan</button>${full?'':'<div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrReopenPartial()">Finish remaining sets</button></div>'}`);
+   return screen('is-complete',`<div class="gx-trophy ${full?'':'is-partial'}">${full?trophy:px('shield',40)}</div><h1 class="gx-title">${full?GWR_WORDS.completeFull:GWR_WORDS.completePartial}</h1><p class="gx-note">${full?GWR_WORDS.completeNoteFull:GWR_WORDS.completeNotePartial}</p><div class="gx-xp"><strong>+${xp}</strong><span>${GWR_WORDS.xp}</span></div><div class="gx-summary"><div><strong>${all.completed.length}</strong><span>${GWR_WORDS.sets}</span></div><div><strong>${gwrFmtDuration(gwrElapsed(g))}</strong><span>${GWR_WORDS.time}</span></div><div><strong>${all.volume.toLocaleString()}</strong><span>${GWR_WORDS.volume}</span></div></div>`,
+   `<button type="button" class="gx-btn primary" onclick="gwrExitComplete()">${GWR_WORDS.backToPlan}</button>${full?'':`<div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrReopenPartial()">${GWR_WORDS.finishRemaining}</button></div>`}`);
  }
  const info=gwrNumTarget(st.it),isTimed=info.kind==='seconds'||info.kind==='minutes';
  const c=state.plan.checks[g.date]||{},label=c.substitute?.[st.it.k]||st.it.l;
@@ -113,39 +125,38 @@ function gwrV60Body(g,d,st){
  const unit=info.kind==='reps'?'reps':info.kind==='seconds'?'seconds':info.kind==='minutes'?'minutes':'';
  const doneArr=(c.s||{})[st.it.k]||[];
  const pips=Array.from({length:st.it.n},(_,i)=>`<i class="${doneArr[i]?'is-done':i===st.j?'is-current':''}" style="--i:${i}"></i>`).join('');
- const head=(tag)=>`<div class="gx-ex"><div class="gx-ex-text"><p class="gx-step">Exercise ${st.ex+1} of ${d.items.length}${st.it.opt?' · optional':''}${tag||''}</p><h1 class="gx-ex-name">${esc(label)}</h1><p class="gx-ex-rx">${esc(st.it.d)}</p></div>${gwrV60Scene(st.it,d,g)}</div><div class="gx-sets"><div class="gx-pips" aria-hidden="true">${pips}</div><span>Set ${st.j+1} of ${st.it.n}</span></div>`;
- const cue=`<p class="gx-cue"><b>Coach tip</b>${esc(gwrCue(st.it,d))}</p>`;
+ const head=(tag)=>`<div class="gx-ex"><div class="gx-ex-text"><p class="gx-step">${esc(gwrExText(st,d))}${tag||''}</p><h1 class="gx-ex-name">${esc(label)}</h1><p class="gx-ex-rx">${esc(st.it.d)}</p></div>${gwrV60Scene(st.it,d,g)}</div><div class="gx-sets"><div class="gx-pips" aria-hidden="true">${pips}</div><span>${gwrSetText(st)}</span></div>`;
+ const cue=`<p class="gx-cue"><b>${GWR_WORDS.coach}</b>${esc(gwrCue(st.it,d))}</p>`;
  if(phase==='ready'){
-   const hero=info.suggest?`<div class="gx-hero"><strong>${esc(String(info.suggest))}</strong><span>${unit}</span></div>`:`<div class="gx-hero is-check"><strong>${px('check',30)}</strong><span>Complete as written</span></div>`;
-   const last=st.it.wt?`<p class="gx-last">${prev?'Last time: '+esc(prev):'No weight logged yet. Pick a load you can control.'}</p>`:'';
+   const hero=info.suggest?`<div class="gx-hero"><strong>${esc(String(info.suggest))}</strong><span>${unit}</span></div>`:`<div class="gx-hero is-check"><strong>${px('check',30)}</strong><span>${GWR_WORDS.checkHero}</span></div>`;
+   const last=st.it.wt?`<p class="gx-last">${prev?'Last time: '+esc(prev):GWR_WORDS.noWeight}</p>`:'';
    return screen('is-ready',`${head()}${hero}${last}${cue}`,
-   `<button type="button" class="gx-btn primary" onclick="gwrGo()">${isTimed?'Start timer':'Start set'}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrSubstituteExercise()">Swap exercise</button><button type="button" class="gx-link" onclick="gwrSkipExercise()">Skip exercise</button></div>`);
+   `<button type="button" class="gx-btn primary" onclick="gwrGo()">${isTimed?GWR_WORDS.startTimer:GWR_WORDS.startSet}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrSubstituteExercise()">${GWR_WORDS.swap}</button><button type="button" class="gx-link" onclick="gwrSkipExercise()">${GWR_WORDS.skip}</button></div>`);
  }
  if(phase==='timing'){
    const ms=Math.max(0,g.timerUntil-Date.now());
-   return screen('is-timing',`${head('<span class="gx-live">Timer running</span>')}<div class="gx-ringbox">${gwrV60TimerRing('work',ms,g.timerTargetMs)}</div>${cue}`,
-   `<button type="button" class="gx-btn primary" onclick="gwrTimerFinished(true)">Stop and review</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrCancelInterval()">Cancel timer</button></div>`);
+   return screen('is-timing',`${head(`<span class="gx-live">${GWR_WORDS.timerLive}</span>`)}<div class="gx-ringbox">${gwrV60TimerRing('work',ms,g.timerTargetMs)}</div>${cue}`,
+   `<button type="button" class="gx-btn primary" onclick="gwrTimerFinished(true)">${GWR_WORDS.timerStop}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrCancelInterval()">${GWR_WORDS.timerCancel}</button></div>`);
  }
  if(phase==='timer-done'){
    const secs=Math.max(1,Math.round((Number(g.timerActualMs)||0)/1000)),t=gwrFmtDuration(secs*1000),full=g.timerActualMs>=g.timerTargetMs;
-   return screen('is-timer-done',`${head()}<div class="gx-confirm"><span class="gx-confirm-mark">${px('check',24)}</span><strong>${t}</strong><span>${full?'Interval finished':'Stopped early. Only the time you did gets logged.'}</span></div>`,
-   `<button type="button" class="gx-btn primary" onclick="gwrLogSet()">Log ${t}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrCancelTimedReview()">Restart interval</button></div>`);
+   return screen('is-timer-done',`${head()}<div class="gx-confirm"><span class="gx-confirm-mark">${px('check',24)}</span><strong>${t}</strong><span>${full?GWR_WORDS.intervalDone:GWR_WORDS.stoppedEarly}</span></div>`,
+   `<button type="button" class="gx-btn primary" onclick="gwrLogSet()">${GWR_WORDS.log} ${t}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrCancelTimedReview()">${GWR_WORDS.restart}</button></div>`);
  }
  if(phase==='rest'){
    const left=Math.max(0,g.restUntil-Date.now());
-   return screen('is-rest',`<p class="gx-rest-tag">${px('flame',16)} Set saved. Rest up.</p><div class="gx-ringbox">${gwrV60TimerRing('rest',left,g.restLength*1000)}</div><div class="gx-adjust"><button type="button" onclick="gwrAdjustRest(-15)" aria-label="Remove 15 seconds of rest">−15 s</button><button type="button" onclick="gwrAdjustRest(15)" aria-label="Add 15 seconds of rest">+15 s</button></div><div class="gx-next">${gwrV60Scene(st.it,d,g)}<div><span>Up next</span><strong>${esc(label)}</strong><small>Set ${st.j+1} of ${st.it.n} · ${esc(st.it.d)}</small></div></div>`,
-   `<button type="button" class="gx-btn primary" onclick="gwrRestDone()">Start next set</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrUndoLast()">Undo last set</button></div>`);
+   return screen('is-rest',`<p class="gx-rest-tag">${px('flame',16)} ${GWR_WORDS.restTag}</p><div class="gx-ringbox">${gwrV60TimerRing('rest',left,g.restLength*1000)}</div><div class="gx-adjust"><button type="button" onclick="gwrAdjustRest(-15)" aria-label="${GWR_WORDS.restLess}">${GWR_WORDS.restLessShort}</button><button type="button" onclick="gwrAdjustRest(15)" aria-label="${GWR_WORDS.restMore}">${GWR_WORDS.restMoreShort}</button></div><div class="gx-next">${gwrV60Scene(st.it,d,g)}<div><span>${GWR_WORDS.upNext}</span><strong>${esc(label)}</strong><small>${gwrSetText(st)} · ${esc(st.it.d)}</small></div></div>`,
+   `<button type="button" class="gx-btn primary" onclick="gwrRestDone()">${GWR_WORDS.nextSet}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrUndoLast()">${GWR_WORDS.undo}</button></div>`);
  }
  // active: GO was pressed for a rep/check exercise; record what actually happened.
- const prior=(c.setDetails?.[st.it.k]||[]).filter(Boolean).at(-1);
- const suggestedWeight=prior?.weight??(prev?Number(String(prev).match(/[\d.]+/)?.[0])||'':'');
+ const suggestedWeight=gwrSuggestedWeight(g,st);
  const stepper=(id,lbl,val,attrs,delta,min,aria)=>`<div class="gx-stepper"><label for="${id}">${lbl}</label><div class="gx-stepper-row"><button type="button" onclick="gwrNudge('${id}',-${delta},${min})" aria-label="Decrease ${aria}">−</button><input id="${id}" type="number" ${attrs} value="${esc(String(val))}" aria-label="${aria}"><button type="button" onclick="gwrNudge('${id}',${delta},${min})" aria-label="Increase ${aria}">+</button></div></div>`;
  let fields='';
- if(info.kind!=='check')fields+=stepper('gwrActualValue',info.kind==='reps'?'Reps done':esc(info.label),info.suggest||'',`min="1" inputmode="decimal" step="${info.kind==='reps'?'1':'.5'}"`,info.kind==='seconds'?5:info.kind==='minutes'?.5:1,1,'Amount completed');
- if(st.it.wt)fields+=stepper('gwrActualWeight','Weight (lb)',suggestedWeight,`min="0" max="2000" step="2.5" inputmode="decimal" placeholder="Optional"`,5,0,'Weight in pounds');
- if(!fields)fields=`<div class="gx-hero is-check"><strong>${px('check',30)}</strong><span>Finish the movement, then log it</span></div>`;
- return screen('is-active',`${head('<span class="gx-live">Set in progress</span>')}<div class="gx-fields">${fields}</div>${st.it.wt&&prev?`<p class="gx-last">Last time: ${esc(prev)}</p>`:''}`,
- `<button type="button" class="gx-btn primary" onclick="gwrLogSet()">Log set</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrV60BackToReady()">Back</button></div>`);
+ if(info.kind!=='check')fields+=stepper('gwrActualValue',info.kind==='reps'?GWR_WORDS.repsDone:esc(info.label),info.suggest||'',`min="1" inputmode="decimal" step="${info.kind==='reps'?'1':'.5'}"`,info.kind==='seconds'?5:info.kind==='minutes'?.5:1,1,'Amount completed');
+ if(st.it.wt)fields+=stepper('gwrActualWeight',GWR_WORDS.weight,suggestedWeight,`min="0" max="2000" step="2.5" inputmode="decimal" placeholder="Optional"`,5,0,'Weight in pounds');
+ if(!fields)fields=`<div class="gx-hero is-check"><strong>${px('check',30)}</strong><span>${GWR_WORDS.finishThenLog}</span></div>`;
+ return screen('is-active',`${head(`<span class="gx-live">${GWR_WORDS.live}</span>`)}<div class="gx-fields">${fields}</div>${st.it.wt&&prev?`<p class="gx-last">Last time: ${esc(prev)}</p>`:''}`,
+ `<button type="button" class="gx-btn primary" onclick="gwrLogSet()">${GWR_WORDS.logSet}</button><div class="gx-dock-row"><button type="button" class="gx-link" onclick="gwrV60BackToReady()">${GWR_WORDS.back}</button></div>`);
 }
 function gwrCancelTimedReview(){const g=gwrCurrent();if(!g||g.phase!=='timer-done')return;g.timerActualMs=0;g.timerTargetMs=0;g.phase='ready';g.resumePhase='ready';gwrPersist();gwrRender()}
 function gwrV60BackToReady(){const g=gwrCurrent();if(!g||g.phase!=='active')return;g.phase='ready';g.resumePhase='ready';gwrPersist();gwrRender()}
@@ -157,16 +168,25 @@ function gwrV60Confetti(){
  if(!full||fxReduced()||gwrFxCelebrated===key){root.querySelector('.gx-screen')?.classList.add('gx-reveal');return}
  gwrFxCelebrated=key;gwrFxVictory(g,planDay(g.date));
 }
-function gwrRender(){
- const g=gwrCurrent(),root=document.getElementById('guidedWorkout');if(!g||!root)return;
- const d=planDay(g.date);if(!d){gwrPause();return}
+/* what the runner shows next, after the moves the session itself makes: a day that left the plan pauses it, and a session with no
+   set left is complete. Drawn by gwrRender and projected to the native runner from this, so both agree. */
+function gwrSettle(g){
+ const d=planDay(g.date);if(!d){gwrPause();return null}
  const st=gwrStepNext(g);
- if(g.phase==='rest'&&!st){gwrComplete();return}
- if(!st&&g.phase!=='intro'&&g.phase!=='complete'){gwrComplete();return}
+ if(g.phase==='rest'&&!st){gwrComplete();return null}
+ if(!st&&g.phase!=='intro'&&g.phase!=='complete'){gwrComplete();return null}
+ return {d,st};
+}
+function gwrRender(){
+ const g=gwrCurrent(),root=document.getElementById('guidedWorkout');if(!g)return;
+ if(gwrHosted()){if(gwrSettle(g))gwrHostChanged();return}
+ if(!root)return;
+ const settled=gwrSettle(g);if(!settled)return;
+ const {d,st}=settled;
  const done=g.phase==='complete';
  const leftBtn=done
-  ?`<button type="button" class="gx-top-btn" onclick="gwrExitComplete()" aria-label="Close workout"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Close</span></button>`
-  :`<button type="button" class="gx-top-btn" onclick="gwrPause()" aria-label="Pause and save workout"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z" fill="currentColor"/></svg><span>Pause</span></button>`;
+  ?`<button type="button" class="gx-top-btn" onclick="gwrExitComplete()" aria-label="Close workout"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>${GWR_WORDS.close}</span></button>`
+  :`<button type="button" class="gx-top-btn" onclick="gwrPause()" aria-label="Pause and save workout"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z" fill="currentColor"/></svg><span>${GWR_WORDS.pause}</span></button>`;
  const prevShell=root.querySelector('.gx-shell'),prevScreen=prevShell?.querySelector(':scope>.gx-screen:not(.gx-ghost)'),prevPhase=prevShell?.dataset.phase,prevTop=prevScreen?prevScreen.offsetTop:0,prevH=prevScreen?prevScreen.offsetHeight:0;
  root.innerHTML=`<div class="gx-shell" data-phase="${esc(g.phase)}"><header class="gx-top">${leftBtn}<div class="gx-top-title"><strong>${esc(d.short||d.label)}</strong><span data-gwr-elapsed>${gwrFmtDuration(gwrElapsed(g))}</span></div><button type="button" class="gx-top-btn is-icon" onclick="gwrQuickReview()" aria-label="See all exercises">${px('grid',16)}</button></header>${gwrV60Lead(g,d,st)}${gwrV60Body(g,d,st)}</div>`;
  const newScreen=root.querySelector('.gx-screen');
