@@ -26,7 +26,10 @@ class NativeSettingsPlugin : ComposeTabPlugin() {
         get() = ViewModelProvider(store, container.factory)[SettingsViewModel::class.java]
 
     override val tabId = "settings"
-    override val capabilities = listOf("settings.projection.v1")
+    // settings.fields.v1: the screen edits the text, number and time fields itself (a page without
+    // it
+    // hands them over, as before)
+    override val capabilities = listOf("settings.projection.v1", "settings.fields.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)

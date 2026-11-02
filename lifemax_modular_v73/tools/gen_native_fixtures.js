@@ -10,7 +10,7 @@
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json, director-replies-today.json and
    director-replies-time.json; phase 4B's in tools/gen_director_time_fixtures.js), fixtures/recipes-*.json,
-   fixtures/media-{full,search,empty,tip,sheets}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
+   fixtures/media-{full,search,empty,tip,sheets}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar,fields-phone,fields,fields-light}.json
    fixtures/swipe-{tune,state}.json, the Overview cards' fixtures/overview-*.json (tools/gen_overview_fixtures.js), and more states of Life Director's glance,
    fixtures/director-glance-*.json (tools/gen_director_glance_fixtures.js), and the native Journal's fixtures/journal-*.json
    (tools/gen_journal_fixtures.js) */
@@ -527,10 +527,10 @@ async function media(b) {
    light    the light theme, Look & feel
    bar      the bottom-bar editor after the screen moved Quests to second, hid Cat and Money and added Settings */
 async function settings(b) {
-  const visit = async (theme) => {
+  const visit = async (theme, settingsCaps) => {
     const p = await page(b);
     await p.clock.install({ time: new Date('2026-10-28T12:00:00Z') });
-    await p.addInitScript(settingsAndroid.script({ theme }));
+    await p.addInitScript(settingsAndroid.script({ theme, settingsCaps }));
     await p.goto('file://' + out); await p.waitForTimeout(3500);
     await p.evaluate(async () => {
       lmaThumbWarm = async () => { };
@@ -593,6 +593,20 @@ async function settings(b) {
   await command(p, [['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }], ['press', { id: 'tabs.quests.earlier' }],
     ['toggle', { id: 'tabs.pet.show', on: false }], ['toggle', { id: 'tabs.money.show', on: false }], ['toggle', { id: 'tabs.settings.show', on: true }]]);
   await shoot(p, 'bar');
+
+  /* the same Settings as a screen that edits the text, number and time fields itself sees them (settings.fields.v1): the profile,
+     the decay settings and the XP rules on Game, in both themes, and the Notifications times on Phone & sync with the check-in
+     switched on, so its time is enabled */
+  const FIELDS = ['settings.fields.v1'];
+  p = await visit(undefined, FIELDS);
+  await command(p, [['toggle', { id: 'reminders.checkin', on: true }], ['category', { id: 'phone' }]]);
+  await shoot(p, 'fields-phone');
+  p = await visit(undefined, FIELDS);
+  await command(p, [['category', { id: 'game' }]]);
+  await shoot(p, 'fields');
+  p = await visit('light', FIELDS);
+  await command(p, [['category', { id: 'game' }]]);
+  await shoot(p, 'fields-light');
 }
 
 /* the native Overview cards (overview.cards.v1): tools/gen_overview_fixtures.js */

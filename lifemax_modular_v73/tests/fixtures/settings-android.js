@@ -2,7 +2,7 @@
    the phone plugins the Settings cards read answer as on a set-up phone (reminders allowed, a widget on the home screen, this
    build the latest release, nothing staged), and every native tab is a fake that records what the page asks of it
    (window.__calls: [tab, 'open' | 'update' | 'close', argument]). A fake emits like the real plugin: P.__emit(event, data).
-   script(prefs) returns the init script; prefs: { save: the core save to start from, theme: 'light' | 'dark' }. */
+   script(prefs) returns the init script; prefs: { save: the core save to start from, theme: 'light' | 'dark', settingsCaps: more capabilities NativeSettings reports }. */
 const NATIVE = {
   NativeSettings: ['settings', ['settings.projection.v1']],
   NativeOverview: ['overview', []],
@@ -16,7 +16,7 @@ const NATIVE = {
   NativeNutrition: ['food', []],
 };
 
-function script({ save, theme } = {}) {
+function script({ save, theme, settingsCaps } = {}) {
   return `
     localStorage.setItem('lifemax_rpg_prototype_v1', ${JSON.stringify(JSON.stringify(save || { onboardingComplete: true, name: 'N', tutorialDone: true, tipsSeen: {}, classId: 'athlete' }))});
     ${theme ? `localStorage.setItem('lifeMaxTheme', ${JSON.stringify(theme)});` : ''}
@@ -46,7 +46,7 @@ function script({ save, theme } = {}) {
       HealthSync: {},
       PageThumb: { snap: async () => ({ img: 'data:image/jpeg;base64,' + 'A'.repeat(600) }) },
     };
-    for (const [name, [tab, caps]] of Object.entries(${JSON.stringify(NATIVE)})) plugins[name] = fake(tab, caps);
+    for (const [name, [tab, caps]] of Object.entries(${JSON.stringify(NATIVE)})) plugins[name] = fake(tab, name === 'NativeSettings' ? caps.concat(${JSON.stringify(settingsCaps || [])}) : caps);
     window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n in plugins, getPlatform: () => 'android', Plugins: plugins,
       registerPlugin: () => ({}), convertFileSrc: u => u };`;
 }

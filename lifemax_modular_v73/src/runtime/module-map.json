@@ -3664,8 +3664,21 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-settings-fields.js",
+   "bytes": 7015,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "settings",
+    "fields"
+   ],
+   "symbols": [
+    "window.NativeSettingsFields"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 29860,
+   "bytes": 30443,
    "statement_count": 1,
    "tags": [
     "native",

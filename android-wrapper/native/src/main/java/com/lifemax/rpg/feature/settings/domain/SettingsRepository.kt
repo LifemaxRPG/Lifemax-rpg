@@ -34,6 +34,21 @@ sealed interface SettingsCommand {
         override val name = "press"
     }
 
+    /**
+     * Set a time field to [value] ("HH:mm"): the page's own setter runs, as when a time is picked.
+     */
+    data class SetField(val id: String, val value: String) : SettingsCommand {
+        override val name = "setField"
+    }
+
+    /**
+     * Save a form: [values] are the text of each of its fields by input id, and the page puts them
+     * in its inputs and runs its own save, which clamps them.
+     */
+    data class SaveForm(val group: String, val values: Map<String, String>) : SettingsCommand {
+        override val name = "saveForm"
+    }
+
     /** Select a category chip, which the page keeps. */
     data class Category(val id: String) : SettingsCommand {
         override val name = "category"

@@ -74,6 +74,12 @@ interface ControlTaps {
     fun press(control: SettingsControl.Button)
 
     fun reveal(control: SettingsControl)
+
+    /** Text typed in a field the screen edits (a draft until its form is saved). */
+    fun type(control: SettingsControl.Field, text: String) {}
+
+    /** A time picked for a field the screen edits, in minutes after midnight. */
+    fun time(control: SettingsControl.Field, minutes: Int) {}
 }
 
 /** Whether the screen shows: a hidden screen closes any open list of choices. */
@@ -115,7 +121,9 @@ internal fun ControlView(
                 modifier,
                 pending = ui.pending(control),
             )
-        is SettingsControl.Field -> FieldBox(control, taps, place, modifier)
+        is SettingsControl.Field ->
+            if (control.op == ControlOp.Edit) EditFieldBox(control, ui, taps, place, modifier)
+            else FieldBox(control, taps, place, modifier)
         is SettingsControl.Avatar -> AvatarView(control, taps, modifier)
     }
 }
@@ -350,35 +358,21 @@ private fun FieldBox(
     modifier: Modifier,
 ) {
     val c = LocalPageColors.current
-    val ink = SettingsInk(c)
+    val look = fieldLook(control.input, place, c)
     val shown = if (control.input == FieldInput.Time) clock(control.value) else control.value
-    val rule = place == Place.Row && control.input == FieldInput.Number
-    val form = place == Place.Form
-    val (fill, radius) =
-        when {
-            form -> ink.formField to 8.dp
-            rule -> ink.ruleField to 9.dp
-            else -> ink.inField to 8.dp
-        }
-    val (horizontal, vertical) =
-        when {
-            form -> 12.dp to 10.dp
-            rule -> 8.dp to 8.dp
-            else -> 8.dp to 6.dp
-        }
     Box(
         modifier
-            .then(if (rule) Modifier.width(78.dp) else Modifier)
+            .then(if (look.rule) Modifier.width(78.dp) else Modifier)
             .alpha(if (control.enabled) 1f else .45f)
-            .inputSurface(c, fill, radius)
+            .inputSurface(c, look.fill, look.radius)
             .clickable(control.enabled, "Edit on the page", Role.Button) { taps.reveal(control) }
             .semantics { contentDescription = "${control.label}: ${shown.ifEmpty { "empty" }}" }
-            .padding(horizontal = horizontal + 1.dp, vertical = vertical + 1.dp)
+            .padding(horizontal = look.horizontal + 1.dp, vertical = look.vertical + 1.dp)
     ) {
         InputText(
             shown.ifEmpty { control.placeholder },
             if (shown.isEmpty()) Placeholder else c.text,
-            lineHeight = if (control.input == FieldInput.Time && !form) 23.sp else 21.sp,
+            lineHeight = if (control.input == FieldInput.Time && !look.form) 23.sp else 21.sp,
         )
     }
 }

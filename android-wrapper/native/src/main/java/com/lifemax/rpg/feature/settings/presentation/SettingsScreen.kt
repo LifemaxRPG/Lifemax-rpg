@@ -26,6 +26,8 @@ import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
+import com.lifemax.rpg.core.designsystem.form.PickerHost
+import com.lifemax.rpg.core.designsystem.form.PickerState
 import com.lifemax.rpg.feature.settings.domain.SettingsCard
 import com.lifemax.rpg.feature.settings.domain.SettingsControl
 import com.lifemax.rpg.feature.settings.domain.SettingsPageAction
@@ -71,6 +73,8 @@ class SettingsActions(
     private val onChoose: (SettingsControl, String) -> Unit = { _, _ -> },
     private val onPress: (SettingsControl.Button) -> Unit = {},
     private val onReveal: (SettingsControl) -> Unit = {},
+    private val onType: (SettingsControl.Field, String) -> Unit = { _, _ -> },
+    private val onTime: (SettingsControl.Field, Int) -> Unit = { _, _ -> },
 ) : ControlTaps {
     constructor(
         vm: SettingsViewModel
@@ -82,6 +86,8 @@ class SettingsActions(
         vm::choose,
         vm::press,
         vm::reveal,
+        vm::type,
+        vm::time,
     )
 
     override fun toggle(control: SettingsControl.Switch) = onToggle(control)
@@ -91,6 +97,10 @@ class SettingsActions(
     override fun press(control: SettingsControl.Button) = onPress(control)
 
     override fun reveal(control: SettingsControl) = onReveal(control)
+
+    override fun type(control: SettingsControl.Field, text: String) = onType(control, text)
+
+    override fun time(control: SettingsControl.Field, minutes: Int) = onTime(control, minutes)
 }
 
 /**
@@ -109,11 +119,12 @@ fun SettingsScreen(
     bottomInsetDp: Float = 72f,
     list: LazyListState = rememberLazyListState(),
     visible: Boolean = true,
+    pickers: PickerState = remember { PickerState() },
 ) {
     val colors = remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }
     PageTheme(colors) {
         CompositionLocalProvider(LocalScreenShown provides visible) {
-            Box(Modifier.fillMaxSize().background(colors.bg)) {
+            PickerHost(pickers, Modifier.fillMaxSize().background(colors.bg)) {
                 val category = ui.category(p)
                 LazyColumn(
                     Modifier.fillMaxSize(),

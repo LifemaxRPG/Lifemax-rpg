@@ -45,6 +45,10 @@ class SettingsViewModel(
     private var noticed: Pair<String, Long>? = null
     private var toasts = 0L
     private var left = false
+    private val fields =
+        FieldEdits(mutable, { projection.value }) { command, key, asked, carried ->
+            if (!left) send(command, key, asked, carried)
+        }
 
     /**
      * The page opened the screen afresh. Answers to commands sent before are not coming (the page
@@ -117,9 +121,20 @@ class SettingsViewModel(
         if (!takesTap(control)) return
         when (control.op) {
             ControlOp.Press -> send(SettingsCommand.Press(control.id), control.id, Asked.Press)
+            ControlOp.Save -> fields.save(control)
             ControlOp.Reveal -> leave(SettingsPageAction.Reveal(control.id))
             else -> {}
         }
+    }
+
+    /** [text] typed in a field the screen edits; kept as a draft until its form is saved. */
+    fun type(control: SettingsControl.Field, text: String) {
+        if (takesTap(control)) fields.type(control, text)
+    }
+
+    /** [minutes] after midnight picked for a time field: the page sets it at once. */
+    fun time(control: SettingsControl.Field, minutes: Int) {
+        if (takesTap(control)) fields.time(control, minutes)
     }
 
     /** A control the page shows for the owner to use: a field, the profile picture, a select. */
@@ -145,6 +160,7 @@ class SettingsViewModel(
 
     fun onReply(reply: SettingsReply) {
         val request = requests.remove(reply.requestId)
+        if (request != null) fields.answered(reply.ok, request.carried)
         mutable.update { ui ->
             ui.copy(
                 pending = if (request == null) ui.pending else ui.pending - request.key,
@@ -165,9 +181,14 @@ class SettingsViewModel(
     private fun takesTap(control: SettingsControl) =
         !left && control.enabled && control.id !in mutable.value.pending
 
-    private fun send(command: SettingsCommand, key: String, asked: Asked) {
+    private fun send(
+        command: SettingsCommand,
+        key: String,
+        asked: Asked,
+        carried: Map<String, String> = emptyMap(),
+    ) {
         val requestId = newRequestId()
-        requests[requestId] = Request(key, nowMs())
+        requests[requestId] = Request(key, nowMs(), carried)
         mutable.update { it.copy(pending = it.pending + (key to asked)) }
         commands.send(command, requestId)
     }
@@ -185,7 +206,12 @@ class SettingsViewModel(
         mutable.update { it.copy(toast = SettingsToast(++toasts, notice.text)) }
     }
 
-    private class Request(val key: String, val sentAt: Long)
+    private class Request(
+        val key: String,
+        val sentAt: Long,
+        /** The drafts the request carried; the page storing it makes them the page's. */
+        val carried: Map<String, String> = emptyMap(),
+    )
 
     private companion object {
         /** How long a control waits for its answer (the page takes well under a second). */
@@ -217,7 +243,16 @@ data class SettingsUi(
     val category: ChosenCategory? = null,
     val pending: Map<String, Asked> = emptyMap(),
     val toast: SettingsToast? = null,
+    /** What was typed in the fields the screen edits and not yet stored, by control id. */
+    val drafts: Map<String, String> = emptyMap(),
 ) {
+    /**
+     * The text a field shows: a time as picked while the page has not answered, else the draft,
+     * else the page's.
+     */
+    fun text(control: SettingsControl.Field): String =
+        (pending[control.id] as? Asked.Value)?.value ?: drafts[control.id] ?: control.value
+
     /** The chip to show selected: the one chosen here while it is a chip, or the page's. */
     fun category(p: SettingsProjection): String =
         category?.id?.takeIf { id -> p.categories.any { it.id == id } } ?: p.category

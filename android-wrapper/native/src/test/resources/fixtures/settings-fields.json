@@ -1,0 +1,2605 @@
+{
+ "protocol": 1,
+ "webSessionId": "settings-fixture",
+ "sequence": 1,
+ "head": {
+  "eyebrow": "RULES & DATA",
+  "title": "Settings & data",
+  "blurb": "Hard rules when you want them. Data stays in this browser unless you export it."
+ },
+ "categories": [
+  {
+   "id": "look",
+   "name": "Look & feel"
+  },
+  {
+   "id": "voice",
+   "name": "Voice & journal"
+  },
+  {
+   "id": "phone",
+   "name": "Phone & sync"
+  },
+  {
+   "id": "game",
+   "name": "Character & game"
+  },
+  {
+   "id": "data",
+   "name": "Data & advanced"
+  }
+ ],
+ "category": "game",
+ "classic": {
+  "label": "Classic Settings",
+  "hint": "The page this screen is drawn from. To stay there, turn off Native Settings (beta) under Look & feel, Appearance."
+ },
+ "cards": [
+  {
+   "id": "appearance",
+   "title": "Appearance",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Light mode",
+     "hint": "Switch between the dark and light appearance. This only changes how the app looks.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "lightMode",
+       "label": "Enable light mode",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Nutrition (Beta)",
+     "hint": "Opt-in native Food preview. Plan, Log and Shopping use your real data; unfinished actions open classic Food.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeNutrition",
+       "label": "Enable Native Nutrition beta",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Show tab timing (testing)",
+     "hint": "After each tab change on the native bar, shows how many milliseconds it took from the tap to the new screen being drawn.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "tabTiming",
+       "label": "Show tab timing",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Overview",
+     "hint": "Use the Android Overview screen. Turn off to return to the classic Overview.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeOverview",
+       "label": "Native Overview",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Overview cards (beta)",
+     "hint": "Draws the Overview's cards natively. The cat's room, Daily Luck, the shop and the health page still open on the page. Swiping between tabs on the Overview needs Native tab swipe (beta). Turn off for the live Overview.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeOverviewCards",
+       "label": "Native Overview cards (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Character preview",
+     "hint": "Native cards and charts. Logging and edits use their existing screens. Turn off for Classic Character.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeCharacter",
+       "label": "Native Character preview",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Log activity",
+     "hint": "The native Log screen. Saving uses the same rules and save as the classic form. The classic Log is one tap away: turn this off.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeLog",
+       "label": "Native Log activity",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Workout plan (beta)",
+     "hint": "The native Workout plan screen. Ticking a set uses the same rules and save as the classic plan; the guided workout and editing open the classic page. Turn off for the classic plan.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativePlan",
+       "label": "Native Workout plan (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Life Director (beta)",
+     "hint": "The native Today screen: the dial, the day strip and the running order. Sessions, sheets and the other sections open in the classic Life Director. Turn off for the classic screen.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeDirector",
+       "label": "Native Life Director (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Recipes (beta)",
+     "hint": "The native Recipes screen: search, categories and recipe cards. Logging a recipe opens the classic add-food sheet. Turn off for the classic page.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeRecipes",
+       "label": "Native Recipes (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Library (beta)",
+     "hint": "The native Media screen: your list with its search and filters. Adding, editing, removing, ticking an item finished and the audiobook player use the classic page. The Journal has its own switch. Turn off for the classic Library.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeLibrary",
+       "label": "Native Library (beta)",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Journal (beta)",
+     "hint": "The native Journal: your days, the coach and the reviews, behind the Journal lock. Writing a reflection or a review answer and the welcome-back chips use the classic page. Turn off for the classic Journal.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeJournal",
+       "label": "Native Journal (beta)",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native audiobook controls (beta)",
+     "hint": "A player dock above the bottom bar on every native screen and the Overview, so a loaded book keeps its controls wherever you go. The native Library and Journal then stay native while a book plays. Turn off for the page's own player.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeAudio",
+       "label": "Native audiobook controls (beta)",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native Settings (beta)",
+     "hint": "The native Settings screen: the categories, every switch and choice, and the bottom bar. Typing, times, files, the rewards and the data tools open the classic page. Turn off for the classic page.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeSettings",
+       "label": "Native Settings (beta)",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tabsCard",
+   "title": "Bottom bar",
+   "intro": "Pick which tabs show and what order they sit in (use the arrows). Hidden pages are still reachable from links inside the app. Keep at least two.",
+   "category": "look",
+   "rows": [
+    {
+     "type": "tab",
+     "view": "dashboard",
+     "label": "Overview",
+     "icon": "grid",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.dashboard.earlier",
+      "label": "◀",
+      "description": "Move Overview earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": false,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.dashboard.later",
+      "label": "▶",
+      "description": "Move Overview later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.dashboard.show",
+      "label": "Show Overview in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "character",
+     "label": "Character",
+     "icon": "person",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.character.earlier",
+      "label": "◀",
+      "description": "Move Character earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.character.later",
+      "label": "▶",
+      "description": "Move Character later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.character.show",
+      "label": "Show Character in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "food",
+     "label": "Food",
+     "icon": "heart",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.food.earlier",
+      "label": "◀",
+      "description": "Move Food earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.food.later",
+      "label": "▶",
+      "description": "Move Food later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.food.show",
+      "label": "Show Food in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "pet",
+     "label": "Cat",
+     "icon": "paw",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.pet.earlier",
+      "label": "◀",
+      "description": "Move Cat earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.pet.later",
+      "label": "▶",
+      "description": "Move Cat later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.pet.show",
+      "label": "Show Cat in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "log",
+     "label": "Log activity",
+     "icon": "plus",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.log.earlier",
+      "label": "◀",
+      "description": "Move Log activity earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.log.later",
+      "label": "▶",
+      "description": "Move Log activity later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.log.show",
+      "label": "Show Log activity in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "quests",
+     "label": "Quests",
+     "icon": "flag",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.quests.earlier",
+      "label": "◀",
+      "description": "Move Quests earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.quests.later",
+      "label": "▶",
+      "description": "Move Quests later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.quests.show",
+      "label": "Show Quests in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "plan",
+     "label": "Workout plan",
+     "icon": "list",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.plan.earlier",
+      "label": "◀",
+      "description": "Move Workout plan earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.plan.later",
+      "label": "▶",
+      "description": "Move Workout plan later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.plan.show",
+      "label": "Show Workout plan in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "library",
+     "label": "Library",
+     "icon": "book",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.library.earlier",
+      "label": "◀",
+      "description": "Move Library earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.library.later",
+      "label": "▶",
+      "description": "Move Library later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.library.show",
+      "label": "Show Library in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "money",
+     "label": "Money",
+     "icon": "coin",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.money.earlier",
+      "label": "◀",
+      "description": "Move Money earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.money.later",
+      "label": "▶",
+      "description": "Move Money later",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.money.show",
+      "label": "Show Money in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "life-director",
+     "label": "Life Director",
+     "icon": "dial",
+     "visible": true,
+     "earlier": {
+      "kind": "button",
+      "id": "tabs.life-director.earlier",
+      "label": "◀",
+      "description": "Move Life Director earlier",
+      "style": "primary",
+      "small": true,
+      "enabled": true,
+      "op": "press"
+     },
+     "later": {
+      "kind": "button",
+      "id": "tabs.life-director.later",
+      "label": "▶",
+      "description": "Move Life Director later",
+      "style": "primary",
+      "small": true,
+      "enabled": false,
+      "op": "press"
+     },
+     "show": {
+      "kind": "switch",
+      "id": "tabs.life-director.show",
+      "label": "Show Life Director in the bar",
+      "on": true,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "tab",
+     "view": "settings",
+     "label": "Settings",
+     "icon": "gear",
+     "visible": false,
+     "earlier": null,
+     "later": null,
+     "show": {
+      "kind": "switch",
+      "id": "tabs.settings.show",
+      "label": "Show Settings in the bar",
+      "on": false,
+      "enabled": true,
+      "op": "toggle"
+     }
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "tabs.reset",
+       "label": "Reset to default",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "press"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaNavCard",
+   "title": "Navigation",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Swipe to switch tabs",
+     "hint": "Swipe left or right with one finger to move between tabs. Ignored near the screen edges, on scrolling strips, sliders, the cat room and the Life Director.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "swipe",
+       "label": "Swipe to switch tabs",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Native tab swipe (beta)",
+     "hint": "Install the latest Android update to use this.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "nativeSwipe",
+       "label": "Native tab swipe (beta)",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Swipe animation",
+     "hint": "The page follows your finger as you swipe, then the next page slides in from the side. Turn this off for plain, instant tab switches.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "swipeAnimation",
+       "label": "Swipe animation",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Bar scrubbing speed",
+     "hint": "Slide a finger along the bottom bar to run through the tabs. Faster means a shorter slide gets you further.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "scrubSpeed",
+       "label": "Bar scrubbing speed",
+       "value": "fast",
+       "options": [
+        {
+         "value": "normal",
+         "label": "Normal"
+        },
+        {
+         "value": "fast",
+         "label": "Fast"
+        },
+        {
+         "value": "faster",
+         "label": "Faster"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "The Android Back button or gesture closes a popup, then returns to the previous tab. It never closes the app."
+    }
+   ]
+  },
+  {
+   "id": "qfxCard",
+   "title": "Quest effects",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Card effects",
+     "hint": "GPU sparkles, holographic foil and tilt on the quest cards. Turn off for plain cards if your phone gets warm or you want to save battery.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "cardEffects",
+       "label": "Card effects",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Quest and dice sounds",
+     "hint": "Card shuffles, deals and flips, coins when you fulfil a quest, and the Luck dice. Also needs Sound on in the main sound setting.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "questSounds",
+       "label": "Quest and dice sound volume",
+       "value": "0.7",
+       "options": [
+        {
+         "value": "0",
+         "label": "Off"
+        },
+        {
+         "value": "0.35",
+         "label": "Low"
+        },
+        {
+         "value": "0.7",
+         "label": "Medium"
+        },
+        {
+         "value": "1",
+         "label": "High"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Card deal",
+     "hint": "The first time you open the Quest Board each day. 3D table lays the cards on a candlelit wooden table in real 3D (skippable). Classic cinematic is the flat version of the same reading. Quick is a short shuffle. Instant just shows the cards.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "cardDeal",
+       "label": "Card deal",
+       "value": "table",
+       "options": [
+        {
+         "value": "table",
+         "label": "3D table"
+        },
+        {
+         "value": "cine",
+         "label": "Classic cinematic"
+        },
+        {
+         "value": "quick",
+         "label": "Quick"
+        },
+        {
+         "value": "off",
+         "label": "Instant"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Card art",
+     "hint": "Which painted deck your quest cards use. Automatic picks the seasonal deck when one is in season. Cards a deck has no art for use the Classic art.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "cardArt",
+       "label": "Card art",
+       "value": "auto",
+       "options": [
+        {
+         "value": "auto",
+         "label": "Automatic (by season)"
+        },
+        {
+         "value": "classic",
+         "label": "Classic"
+        },
+        {
+         "value": "halloween",
+         "label": "Halloween"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gwrCard",
+   "title": "Guided workout",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Workout screen",
+     "hint": "3D gym walks you from machine to machine with a trainer showing the pace of each rep. Classic is the plain screen. Reduced motion always uses classic.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "workoutScreen",
+       "label": "Workout screen",
+       "value": "on",
+       "options": [
+        {
+         "value": "on",
+         "label": "3D gym"
+        },
+        {
+         "value": "off",
+         "label": "Classic"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "3D diagnostics",
+     "hint": "Shows a small readout on the workout screen (frames per second, phase, which movement is playing, any error). Useful when something looks wrong.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "diagnostics3d",
+       "label": "3D diagnostics",
+       "value": "off",
+       "options": [
+        {
+         "value": "off",
+         "label": "Off"
+        },
+        {
+         "value": "on",
+         "label": "On"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Trainer pack",
+     "hint": "Optionally replace the built-in trainer with a character from a trainer pack file (made with tools/make_trainer.py). The file stays on this device only and nothing from it is part of the app. None loaded. The built-in trainer is used.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "gwrCard/0",
+       "label": "Load trainer pack",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hapCard",
+   "title": "Haptics",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Haptic feedback",
+     "hint": "Little buzzes when you earn XP, change tabs, pet the cat and so on.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "haptics",
+       "label": "Haptic feedback",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "choice",
+       "id": "haptics.strength",
+       "label": "Haptic strength",
+       "value": "normal",
+       "options": [
+        {
+         "value": "light",
+         "label": "Light"
+        },
+        {
+         "value": "normal",
+         "label": "Normal"
+        },
+        {
+         "value": "strong",
+         "label": "Strong"
+        },
+        {
+         "value": "max",
+         "label": "Max"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "haptics.try.tap",
+       "label": "Try: Tap",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "press"
+      },
+      {
+       "kind": "button",
+       "id": "haptics.try.double",
+       "label": "Try: Double tap",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "press"
+      },
+      {
+       "kind": "button",
+       "id": "haptics.try.success",
+       "label": "Try: XP gain",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "press"
+      },
+      {
+       "kind": "button",
+       "id": "haptics.try.big",
+       "label": "Try: Level up",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "press"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "Strength is set on the phone’s vibration motor, so Strong and Max are properly harder."
+    }
+   ]
+  },
+  {
+   "id": "lmaUpdCard",
+   "title": "App updates",
+   "intro": "New builds come from this app’s GitHub releases. Android asks you to confirm each install.",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Installed build 290",
+     "hint": "No newer compatible update was reported by the server.\nLatest release: 290 · Android API 28 / requires 28",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaUpdCard/0",
+       "label": "Check now",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmvCard",
+   "title": "Voice (beta)",
+   "intro": "",
+   "category": "voice",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Voice scheduling",
+     "hint": "Offline only. Speak or type a request and it goes into Life Director after you confirm.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmvCard/0",
+       "label": "Open",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Turn voice on",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "voice",
+       "label": "Turn voice on",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Export Voice Fallback Log",
+     "hint": "Nothing yet. Anything the voice engine does not understand, and every thumbs up or down you give an answer, is saved here.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmvCard/1",
+       "label": "Export",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": false,
+       "op": "reveal"
+      },
+      {
+       "kind": "button",
+       "id": "lmvCard/2",
+       "label": "Clear",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": false,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hdCard",
+   "title": "Cat graphics",
+   "intro": "",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "HD walking",
+     "hint": "Your cat walks with twice the pixel detail, a redrawn face and expressions. Other animations are still being redrawn one by one. Turn this off if anything looks wrong.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "hdCat",
+       "label": "HD walking",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "jlCard",
+   "title": "Journal privacy",
+   "intro": "",
+   "category": "voice",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Lock the Journal",
+     "hint": "Ask for your fingerprint or screen lock to open the Journal. It also hides the Journal from the app switcher and screenshots while it is open.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "#jlToggle",
+       "label": "Lock the Journal",
+       "on": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaThumbCard",
+   "title": "Tab previews",
+   "intro": "Small screenshots of each tab, blurred and shown while you scrub the bottom bar.",
+   "category": "look",
+   "rows": [
+    {
+     "type": "row",
+     "title": "1 of 10 tabs captured",
+     "hint": "These are the blurred pictures shown while you scrub the bottom bar. Each tab updates when you visit it.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaThumbCard/0",
+       "label": "Capture all",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaWidgetCard",
+   "title": "Home-screen widget",
+   "intro": "Your Life Director dial on the home screen: today’s plan, a moving hand for now, and what is on or next.",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "note",
+     "text": "Set up Life Director first, then the widget can show your day.",
+     "warn": false,
+     "controls": []
+    },
+    {
+     "type": "row",
+     "title": "1 on your home screen",
+     "hint": "The picture updates whenever you leave the app.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaWidgetCard/0",
+       "label": "Add widget",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Refresh the picture",
+     "hint": "Use after you change your plan. The hand moves on its own.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaWidgetCard/1",
+       "label": "Refresh",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaCalCard",
+   "title": "Calendar import",
+   "intro": "",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Import from my calendar",
+     "hint": "Events in your phone’s calendar become fixed blocks in your Life Director, and the rest of the day re-plans around them. Say “Hey Gemini, add dentist tomorrow at 3 PM to my calendar” and it shows up here. Read only.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "calendar",
+       "label": "Import from my calendar",
+       "on": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Last check",
+     "hint": "Not yet",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaCalCard/0",
+       "label": "Check now",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": false,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaHealthCard",
+   "title": "Health sync",
+   "intro": "Turns your Samsung Health activity into XP automatically, through Android’s Health Connect.",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Sync health data",
+     "hint": "Workouts, steps, sleep and weight become XP. Read on this phone only.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "health",
+       "label": "Sync health data",
+       "on": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Workouts",
+     "hint": "Each workout, by how long it lasted.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "health.workouts",
+       "label": "Workouts",
+       "on": true,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Daily steps",
+     "hint": "Once a day is over: 2,000+ steps counts, 3 XP per 1,000 up to 15,000.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "health.steps",
+       "label": "Daily steps",
+       "on": true,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Sleep",
+     "hint": "Each night of 3+ hours, more XP for 6 to 7+ hours.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "health.sleep",
+       "label": "Sleep",
+       "on": true,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Weight",
+     "hint": "Updates your character weight from your latest reading.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "health.weight",
+       "label": "Weight",
+       "on": true,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Daily steps goal",
+     "hint": "Fills the bar on the Overview.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "health.goal",
+       "label": "Daily steps goal",
+       "value": "8000",
+       "options": [
+        {
+         "value": "5000",
+         "label": "5,000"
+        },
+        {
+         "value": "7500",
+         "label": "7,500"
+        },
+        {
+         "value": "8000",
+         "label": "8,000"
+        },
+        {
+         "value": "10000",
+         "label": "10,000"
+        },
+        {
+         "value": "12000",
+         "label": "12,000"
+        },
+        {
+         "value": "15000",
+         "label": "15,000"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Last sync",
+     "hint": "never",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaHealthCard/0",
+       "label": "Sync now",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "Using Samsung Health? Open it, go to Settings → Health Connect, and let it write exercise, steps, sleep and weight. LifeMax then reads them from Health Connect. Each record is counted once."
+    }
+   ]
+  },
+  {
+   "id": "usdaCard",
+   "title": "Food database",
+   "intro": "",
+   "category": "data",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Branded foods (USDA)",
+     "hint": "An optional database of packaged foods, kept on this device only. Choose the compact USDA .jsonl.gz file once, then search it from Food, Add food.",
+     "danger": false,
+     "controls": []
+    },
+    {
+     "type": "row",
+     "title": "",
+     "hint": "Not imported yet · optional",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "usdaCard/0",
+       "label": "Import file",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      },
+      {
+       "kind": "button",
+       "id": "#usdaRemoveBtn",
+       "label": "Remove",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": false,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaBakCard",
+   "title": "Automatic backup",
+   "intro": "Your data is kept on this phone. Pick a folder, such as Drive or Downloads, and a backup file is written there automatically.",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "note",
+     "text": "No backup folder is chosen, so your progress exists only on this phone.",
+     "warn": true,
+     "controls": []
+    },
+    {
+     "type": "row",
+     "title": "Automatic backup",
+     "hint": "Saves a backup file into a folder you pick, when you leave the app and one is due. Each file is read back and checked before it counts.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "backup",
+       "label": "Automatic backup",
+       "on": false,
+       "enabled": false,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Folder",
+     "hint": "Nothing chosen yet.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaBakCard/0",
+       "label": "Choose folder",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "How often",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "backup.days",
+       "label": "How often",
+       "value": "1",
+       "options": [
+        {
+         "value": "1",
+         "label": "Daily"
+        },
+        {
+         "value": "3",
+         "label": "Every 3 days"
+        },
+        {
+         "value": "7",
+         "label": "Weekly"
+        }
+       ],
+       "enabled": false,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Keep the newest",
+     "hint": "Older automatic backups are deleted. Copies taken before an update, an import or a reset are kept apart, the 5 newest of each.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "backup.keep",
+       "label": "Keep the newest",
+       "value": "7",
+       "options": [
+        {
+         "value": "3",
+         "label": "3 files"
+        },
+        {
+         "value": "7",
+         "label": "7 files"
+        },
+        {
+         "value": "14",
+         "label": "14 files"
+        },
+        {
+         "value": "30",
+         "label": "30 files"
+        }
+       ],
+       "enabled": false,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Last verified backup",
+     "hint": "None yet",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaBakCard/1",
+       "label": "Back up now",
+       "description": "",
+       "style": "primary",
+       "small": true,
+       "enabled": false,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Android device backup",
+     "hint": "Let Android copy all of LifeMax, journal and health entries included, to your Google backup (needs a screen lock) and a new phone. When off, Android's copy of LifeMax is emptied at its next backup. The backup folder works either way.\nWith this off and no backup folder, this phone holds the only copy of LifeMax.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "#deviceBackupToggle",
+       "label": "Android device backup",
+       "on": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lmaNotifCard",
+   "title": "Notifications",
+   "intro": "Smart reminders for workouts and planned sessions. Everything is scheduled on this phone.",
+   "category": "phone",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Reminders",
+     "hint": "Master switch. Off cancels everything scheduled.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders",
+       "label": "Reminders",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Planned sessions",
+     "hint": "Life Director sessions, shortly before they start.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders.sessions",
+       "label": "Planned sessions",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Reminder lead time",
+     "hint": "How early to nudge you.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "select",
+       "id": "reminders.lead",
+       "label": "Reminder lead time",
+       "value": "15",
+       "options": [
+        {
+         "value": "0",
+         "label": "At start"
+        },
+        {
+         "value": "5",
+         "label": "5 min"
+        },
+        {
+         "value": "10",
+         "label": "10 min"
+        },
+        {
+         "value": "15",
+         "label": "15 min"
+        },
+        {
+         "value": "30",
+         "label": "30 min"
+        },
+        {
+         "value": "60",
+         "label": "60 min"
+        }
+       ],
+       "enabled": true,
+       "op": "choose"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Workout days",
+     "hint": "A reminder on days your workout plan has a session, until it is checked off. Skipped when Life Director already reminds you.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders.workout",
+       "label": "Workout days",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Workout time",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "reminders.workoutTime",
+       "label": "Workout time",
+       "value": "17:00",
+       "placeholder": "",
+       "input": "time",
+       "enabled": true,
+       "op": "edit",
+       "group": "",
+       "min": null,
+       "max": null,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Evening nudge",
+     "hint": "A second reminder at 8 PM if today’s workout is still open.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders.nudge",
+       "label": "Evening nudge",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Daily check-in",
+     "hint": "A nightly prompt to log your day (skipped once you have logged something).",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders.checkin",
+       "label": "Daily check-in",
+       "on": false,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Check-in time",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "reminders.checkinTime",
+       "label": "Check-in time",
+       "value": "20:30",
+       "placeholder": "",
+       "input": "time",
+       "enabled": false,
+       "op": "edit",
+       "group": "",
+       "min": null,
+       "max": null,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Quiet hours",
+     "hint": "No reminders in this window.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "reminders.quiet",
+       "label": "Quiet hours",
+       "on": true,
+       "enabled": true,
+       "op": "toggle"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Quiet from / to",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "reminders.quietFrom",
+       "label": "Quiet from / to",
+       "value": "22:00",
+       "placeholder": "",
+       "input": "time",
+       "enabled": true,
+       "op": "edit",
+       "group": "",
+       "min": null,
+       "max": null,
+       "step": null,
+       "maxLength": null
+      },
+      {
+       "kind": "field",
+       "id": "reminders.quietTo",
+       "label": "Quiet from / to",
+       "value": "07:00",
+       "placeholder": "",
+       "input": "time",
+       "enabled": true,
+       "op": "edit",
+       "group": "",
+       "min": null,
+       "max": null,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "lmaNotifCard/0",
+       "label": "Send a test reminder",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "text": "Reminders are rescheduled whenever you open the app, check something off or change your plan, and cover the next three days."
+    }
+   ]
+  },
+  {
+   "id": "character-profile",
+   "title": "Character profile",
+   "intro": "Name, build, and profile picture stay on this device.",
+   "category": "game",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Profile picture",
+     "hint": "Cropped to a square. Stays in this browser.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "avatar",
+       "id": "#charAvatar",
+       "label": "Change profile picture",
+       "image": "",
+       "initial": "N",
+       "enabled": true,
+       "op": "reveal"
+      },
+      {
+       "kind": "button",
+       "id": "character-profile/0",
+       "label": "Upload photo",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      },
+      {
+       "kind": "button",
+       "id": "character-profile/1",
+       "label": "Remove",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Character name",
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#characterName",
+       "label": "Character name",
+       "value": "N",
+       "placeholder": "The Life Architect",
+       "input": "text",
+       "enabled": true,
+       "op": "edit",
+       "group": "profile",
+       "min": null,
+       "max": null,
+       "step": null,
+       "maxLength": 40
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Current build",
+     "controls": [
+      {
+       "kind": "select",
+       "id": "#characterBuild",
+       "label": "Current build",
+       "value": "The Life Architect",
+       "options": [
+        {
+         "value": "The Life Architect",
+         "label": "The Life Architect"
+        },
+        {
+         "value": "Athlete",
+         "label": "Athlete"
+        },
+        {
+         "value": "Entrepreneur",
+         "label": "Entrepreneur"
+        },
+        {
+         "value": "Scholar",
+         "label": "Scholar"
+        },
+        {
+         "value": "Explorer",
+         "label": "Explorer"
+        },
+        {
+         "value": "Balanced Build",
+         "label": "Balanced Build"
+        },
+        {
+         "value": "Custom Build",
+         "label": "Custom Build"
+        }
+       ],
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Weight (lb)",
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#characterWeight",
+       "label": "Weight (lb)",
+       "value": "",
+       "placeholder": "e.g. 175",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "profile",
+       "min": 1,
+       "max": 1400,
+       "step": 0.1,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Height",
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#characterHeightFt",
+       "label": "Height feet",
+       "value": "",
+       "placeholder": "ft",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "profile",
+       "min": 1,
+       "max": 8,
+       "step": null,
+       "maxLength": null
+      },
+      {
+       "kind": "field",
+       "id": "#characterHeightIn",
+       "label": "Height inches",
+       "value": "",
+       "placeholder": "in",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "profile",
+       "min": 0,
+       "max": 11,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "save.profile",
+       "label": "Save character",
+       "description": "",
+       "style": "primary",
+       "small": false,
+       "enabled": true,
+       "op": "save",
+       "group": "profile"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "rewards",
+   "title": "Rewards",
+   "intro": "Sparks, perks, accent colours, cat toys, streak shields and attribute ascension.",
+   "category": "game",
+   "rows": [
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "rewards/0",
+       "label": "Open rewards",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "decay-system",
+   "title": "Decay system",
+   "intro": "After the grace period with no training, the attribute loses XP daily. Skill XP does not decay. Turn this off only if you want a softer game.",
+   "category": "game",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Enable decay",
+     "hint": "",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "#decayOn",
+       "label": "Enable decay",
+       "on": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Grace period (days, 1–14)",
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#decayGrace",
+       "label": "Grace period (days, 1–14)",
+       "value": "4",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "decay",
+       "min": 1,
+       "max": 14,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "field",
+     "label": "Daily loss (% of attribute XP, 1–10)",
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#decayRate",
+       "label": "Daily loss (% of attribute XP, 1–10)",
+       "value": "3",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "decay",
+       "min": 1,
+       "max": 10,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "save.decay",
+       "label": "Save decay settings",
+       "description": "",
+       "style": "primary",
+       "small": false,
+       "enabled": true,
+       "op": "save",
+       "group": "decay"
+      },
+      {
+       "kind": "button",
+       "id": "decay-system/0",
+       "label": "Show tips again",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "devModeCard",
+   "title": "Developer mode",
+   "intro": "Testing tools. When on, each attribute sheet gains a test activity that awards +2 levels for that attribute only.",
+   "category": "data",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Enable developer mode",
+     "hint": "Adds “Dev: +2 levels” under every attribute’s activity list, and test buttons for the cat (Cat → Developer).",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "switch",
+       "id": "#devModeOn",
+       "label": "Enable developer mode",
+       "on": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "xp-rules",
+   "title": "XP rules",
+   "intro": "Edit the base XP for each activity. Changes apply to future logs.",
+   "category": "game",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Focused reading / study",
+     "hint": "Knowledge · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-reading",
+       "label": "Focused reading / study base XP",
+       "value": "24",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Focused business work",
+     "hint": "Entrepreneurship · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-business",
+       "label": "Focused business work base XP",
+       "value": "25",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Strength workout",
+     "hint": "Lifting · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-strength",
+       "label": "Strength workout base XP",
+       "value": "28",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Run / cardio",
+     "hint": "Running · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-running",
+       "label": "Run / cardio base XP",
+       "value": "26",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Language practice",
+     "hint": "Spanish · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-language",
+       "label": "Language practice base XP",
+       "value": "24",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Sleep / recovery routine",
+     "hint": "Recovery Routine · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-recovery",
+       "label": "Sleep / recovery routine base XP",
+       "value": "16",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Practical skill practice",
+     "hint": "Practical Skills · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-practical",
+       "label": "Practical skill practice base XP",
+       "value": "24",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Difficult planned task",
+     "hint": "Execution · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-task",
+       "label": "Difficult planned task base XP",
+       "value": "20",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Custom activity",
+     "hint": "Custom Skill · base XP",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "field",
+       "id": "#rule-custom",
+       "label": "Custom activity base XP",
+       "value": "20",
+       "placeholder": "",
+       "input": "number",
+       "enabled": true,
+       "op": "edit",
+       "group": "rules",
+       "min": 1,
+       "max": 200,
+       "step": null,
+       "maxLength": null
+      }
+     ]
+    },
+    {
+     "type": "controls",
+     "controls": [
+      {
+       "kind": "button",
+       "id": "save.rules",
+       "label": "Save XP rules",
+       "description": "",
+       "style": "primary",
+       "small": false,
+       "enabled": true,
+       "op": "save",
+       "group": "rules"
+      },
+      {
+       "kind": "button",
+       "id": "xp-rules/0",
+       "label": "Reset defaults",
+       "description": "",
+       "style": "secondary",
+       "small": false,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data-management",
+   "title": "Data management",
+   "intro": "",
+   "category": "data",
+   "rows": [
+    {
+     "type": "row",
+     "title": "Export backup",
+     "hint": "Download all activities, stats, quests and settings.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "data-management/0",
+       "label": "Export JSON",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Export report",
+     "hint": "A readable summary of your character, stats and full history.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "data-management/1",
+       "label": "Word",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      },
+      {
+       "kind": "button",
+       "id": "data-management/2",
+       "label": "Text",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Import backup",
+     "hint": "Restore a previously exported Life Max file.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "data-management/3",
+       "label": "Import JSON",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Reset demo data",
+     "hint": "Restore the starter profile and sample quests.",
+     "danger": false,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "data-management/4",
+       "label": "Reset",
+       "description": "",
+       "style": "secondary",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "row",
+     "title": "Delete all local data",
+     "hint": "Permanently clear this browser's Life Max save.",
+     "danger": true,
+     "controls": [
+      {
+       "kind": "button",
+       "id": "data-management/5",
+       "label": "Delete",
+       "description": "",
+       "style": "danger",
+       "small": true,
+       "enabled": true,
+       "op": "reveal"
+      }
+     ]
+    },
+    {
+     "type": "note",
+     "text": "Prototype privacy: data is stored locally in this browser using localStorage. It is not a secure account system or cloud backup. Anyone using this browser profile may be able to access it. Export a backup before clearing browser data.",
+     "warn": false,
+     "controls": []
+    }
+   ]
+  }
+ ],
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}
