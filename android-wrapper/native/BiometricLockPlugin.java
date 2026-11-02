@@ -1,7 +1,6 @@
 package com.lifemax.rpg;
 
 import android.os.Build;
-import android.view.WindowManager;
 
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -12,6 +11,7 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.lifemax.rpg.app.shell.SecureWindow;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
@@ -82,8 +82,8 @@ public class BiometricLockPlugin extends Plugin {
         if (getActivity() == null) { call.resolve(); return; }
         getActivity().runOnUiThread(() -> {
             try {
-                if (on) getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-                else getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                // one holder of the window's flag among others: the native Journal keeps it while it draws a locked frame
+                SecureWindow.hold(getActivity(), this, on);
             } catch (Exception ignored) { /* ignore */ }
             call.resolve();
         });

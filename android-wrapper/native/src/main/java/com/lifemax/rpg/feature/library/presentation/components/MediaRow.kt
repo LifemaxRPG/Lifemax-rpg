@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
+import com.lifemax.rpg.core.designsystem.components.cardPiece
 import com.lifemax.rpg.feature.library.domain.AudioProgress
 import com.lifemax.rpg.feature.library.domain.MediaAction
 import com.lifemax.rpg.feature.library.domain.MediaButtons

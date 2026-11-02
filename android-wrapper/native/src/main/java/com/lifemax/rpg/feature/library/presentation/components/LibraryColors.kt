@@ -6,12 +6,11 @@ import androidx.compose.ui.graphics.Color
 import com.lifemax.rpg.core.designsystem.PageColors
 import com.lifemax.rpg.core.designsystem.PageInk
 import com.lifemax.rpg.core.designsystem.cssLinearGradient
-import com.lifemax.rpg.core.designsystem.mix
 
 /**
  * The Library's colours: the page's (PageColors), the mixes its styles make of them, and the few
  * colours its styles fix themselves (named here, in one place). The light theme's own rules for the
- * Library (its secondary buttons, its bar track and its tip) are applied here too.
+ * Library (its secondary buttons and its bar track) are applied here too.
  */
 @Immutable
 internal class LibraryColors(tokens: Map<String, Long>, light: Boolean) :
@@ -21,18 +20,12 @@ internal class LibraryColors(tokens: Map<String, Long>, light: Boolean) :
     /** --good-dim, which the page does not project. */
     val goodDim = if (light) GoodDimLight else GoodDimDark
 
-    val tipFill =
-        if (light) cssLinearGradient(135f, 0f to TipTopLight, 0.7f to Color.White)
-        else cssLinearGradient(135f, 0f to accent.mix(0.14f, panel), 0.7f to panel)
-    val tipBorder = if (light) TipBorderLight else accent.mix(0.35f, line)
     val completion = cssLinearGradient(90f, 0f to accent, 1f to good)
     val listened = cssLinearGradient(90f, 0f to accent, 1f to accentStrong)
 
     private companion object {
         val GoodDimDark = Color(0x223DD68C)
         val GoodDimLight = Color(0x180F9F6E)
-        val TipTopLight = Color(0xFFE8EEFF)
-        val TipBorderLight = Color(0xFFC5D0EA)
     }
 }
 

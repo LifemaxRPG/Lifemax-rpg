@@ -37,9 +37,16 @@ import org.json.JSONObject
  *   WebView (`postVisualStateCallback`) when the page under the veil has drawn.
  */
 internal object TabSwipe {
-    private class Screen(val view: TabScreenView, val send: (SwipeRequest) -> Unit) {
+    private class Screen(
+        val view: TabScreenView,
+        val send: (SwipeRequest) -> Unit,
+        val onRest: () -> Unit,
+    ) {
         /** Moving with no finger on it: a touch that starts on it is swallowed. */
         var shielded = false
+
+        /** The visibility last placed, for the rest rule. */
+        var placed: PaneVisibility? = null
     }
 
     private var model = SwipeModel()
@@ -82,11 +89,18 @@ internal object TabSwipe {
 
     /**
      * A plugin created [pane]'s screen as a child of android.R.id.content. [source] is its
-     * `swipeSource`; [send] delivers the `swipe` event on its plugin.
+     * `swipeSource`; [send] delivers the `swipe` event on its plugin; [onRest] is called when the
+     * screen, not open, stops being drawn ([rests]).
      */
-    fun register(pane: String, view: TabScreenView, source: Boolean, send: (SwipeRequest) -> Unit) {
+    fun register(
+        pane: String,
+        view: TabScreenView,
+        source: Boolean,
+        onRest: () -> Unit = {},
+        send: (SwipeRequest) -> Unit,
+    ) {
         root = view.parent as? ViewGroup ?: root
-        screens[pane] = Screen(view, send)
+        screens[pane] = Screen(view, send, onRest)
         step(SwipeInput.Register(pane, source))
     }
 
@@ -240,7 +254,9 @@ internal object TabSwipe {
 
     private fun draw(env: SwipeEnv) {
         val scene = model.scene(env)
-        for ((pane, screen) in screens) scene.panes[pane]?.let { screen.place(it, park = false) }
+        for ((pane, screen) in screens) scene.panes[pane]?.let {
+            screen.place(it, park = false, open = pane in model.open)
+        }
         showVeil(scene.veil)
         if (model.phase == SwipePhase.Idle) idleLater()
         if (model.needsFrame(env)) postFrame()
@@ -250,7 +266,7 @@ internal object TabSwipe {
      * Puts the screen where [stage] says. From GONE to parked needs a layout, which waits for an
      * idle moment unless [park].
      */
-    private fun Screen.place(stage: PaneStage, park: Boolean) {
+    private fun Screen.place(stage: PaneStage, park: Boolean, open: Boolean) {
         val visibility = stage.visibility.flag
         view.translationX = stage.tx.toFloat()
         if (park || view.visibility != View.GONE || visibility != View.INVISIBLE)
@@ -259,6 +275,9 @@ internal object TabSwipe {
             if (stage.a11yHidden) View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
             else View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
         shielded = stage.shielded
+        val before = placed
+        placed = stage.visibility
+        if (rests(before, stage.visibility, open)) onRest()
     }
 
     /** What differs from [stage], apart from a park still waiting for an idle moment. */
@@ -334,7 +353,7 @@ internal object TabSwipe {
         for ((pane, screen) in screens) {
             val stage = rest[pane] ?: continue
             screen.mismatch(stage)?.let { record("repair $pane: $it") }
-            screen.place(stage, park = true)
+            screen.place(stage, park = true, open = pane in model.open)
         }
     }
 

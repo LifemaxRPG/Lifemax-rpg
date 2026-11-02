@@ -73,6 +73,13 @@ abstract class ComposeTabPlugin : Plugin() {
     protected open fun onReply(reply: JSONObject) {}
 
     /**
+     * The screen stopped being drawn while it is not open (TabSwipe's rest rule), or it was
+     * removed. A tab whose data is private drops it here (A35); a closed screen still sliding out
+     * has not rested yet.
+     */
+    protected open fun onRested() {}
+
+    /**
      * Ask the page to run a command (a preview, a save) without closing the screen. The page
      * answers with an update whose reply names the same [requestId]. Commands run on the page one
      * at a time, in the order sent.
@@ -212,7 +219,7 @@ abstract class ComposeTabPlugin : Plugin() {
                     .findViewById<ViewGroup>(android.R.id.content)
                     .addView(it, FrameLayout.LayoutParams(-1, -1))
                 view = it
-                TabSwipe.register(tabId, it, swipeSource) { request ->
+                TabSwipe.register(tabId, it, swipeSource, ::onRested) { request ->
                     notifyListeners("swipe", JSObject.fromJSONObject(request.toJson()))
                 }
             }
@@ -256,6 +263,7 @@ abstract class ComposeTabPlugin : Plugin() {
             it.disposeComposition()
         }
         view = null
+        onRested()
         notifyListeners("closed", JSObject())
     }
 
