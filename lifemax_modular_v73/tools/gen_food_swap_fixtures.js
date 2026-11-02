@@ -36,7 +36,7 @@ module.exports = async function foodswap({ b, out, write }) {
     const f = RECIPE_FOODS[0];
     lmaLoad().nativeNutrition = true;
     if (!await B.seedPortion(f)) throw Error('the recipe sheet was not set up');
-    res.recipe = snap();
+    res.recipe = snap(); res.recipe.notice = null; res.recipe.answer = null; // the swap's message has long gone by then
     B.sheetAct('sheetClose');
     return res;
   });

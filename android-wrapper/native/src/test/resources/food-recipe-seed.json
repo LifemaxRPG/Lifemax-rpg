@@ -472,15 +472,6 @@
  },
  "swap": null,
  "sheetForms": true,
- "notice": {
-  "id": 1,
-  "text": "Swapped to Chicken, Rice & Broccoli",
-  "action": "Undo"
- },
- "answer": {
-  "op": "swap-2",
-  "ok": false,
-  "changed": false,
-  "message": ""
- }
+ "notice": null,
+ "answer": null
 }
