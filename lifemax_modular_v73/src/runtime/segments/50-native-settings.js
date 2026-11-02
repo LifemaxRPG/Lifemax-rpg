@@ -32,6 +32,7 @@
     ["nativeDirector", "#nativeDirectorToggle", PREFS],
     ["nativeRecipes", "#nativeRecipesToggle", PREFS],
     ["nativeLibrary", "#nativeLibraryToggle", PREFS],
+    ["nativeJournal", "#nativeJournalToggle", PREFS],
     ["nativeSettings", "#nativeSettingsToggle", PREFS],
     ["tabs.reset", "#tabsResetBtn", PREFS],
     ["swipe", "#lmaSwipeToggle", PREFS],

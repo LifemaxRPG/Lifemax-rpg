@@ -237,6 +237,52 @@
    "canonicalLayout": true
   },
   {
+   "feature": "journal",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeJournal",
+   "owner": "web-core-gameplay",
+   "pluginSource": "bridge/web/NativeJournalPlugin.kt (extends ComposeTabPlugin)",
+   "screenSource": "feature/journal/presentation/JournalScreen.kt",
+   "webModule": "50-native-journal.js (NativeTabKit, view history)",
+   "plan": "docs/architecture/plans/JOURNAL_AND_LIBRARY_SHEETS.md",
+   "capabilities": [
+    "library.journal.projection.v1",
+    "shell.swipe.v1",
+    "shell.swipe.v2"
+   ],
+   "covers": "the Library's Journal pane, open or behind its lock card; not while the page's reflection or answer field has the focus, a hand-over (claim, catch-up, write) is running or coming back after its celebrations, a level-up plays, or a book is loaded or playing (audioBusy)",
+   "privacy": "CONTRACT A35: while LifeMaxJournalLock.blocksNative() the page sends a withheld frame (panes, lock, status, notice, protocol fields only) and native draws the lock card from it; native drops every journal field whenever the screen stops being drawn (TabSwipe rest), locks a showing screen on app stop with the lock on and refuses that page session's open frames until its withheld frame arrives; SecureWindow holds FLAG_SECURE while a frame with the lock on is drawn",
+   "commands": {
+    "select": "{key}: selectJournalEntry(key); decisions stored by writeSave() only when new",
+    "write": "{key}: focuses the page's field for that day or review; the screen steps aside through blocked()",
+    "swap": "{d, from}: jcSwapPrompt compare-and-set",
+    "unlock": "{}: relock if the page thinks it is open, then LifeMaxJournalLock.prompt(); {ok: r === true}",
+    "backup": "{}: exportData(), not awaited; its toast arrives as a notice",
+    "tip": "{}: dismissFeatureTip('history')"
+   },
+   "writes": [
+    "journalCoach.days[d].promptId (swap, writeSave)",
+    "journalCoach chip and welcome decisions (select, writeSave)",
+    "tipsSeen.history (tip)"
+   ],
+   "delegatedInteractions": [
+    "claim {id: pet|fresh}: jcClaim(id), back after afterCelebrations",
+    "catchUp: jcCatchUp() with the page's prompt, back after afterCelebrations",
+    "writing a reflection or a review answer in the page's field (phase 1)",
+    "{view: media} and {view: life-director}: lmaNavTo, make-before-break"
+   ],
+   "readContract": {
+    "snapshotDto": "feature/journal/domain/JournalModels.kt, JournalFrame.kt",
+    "decoder": "feature/journal/data/JournalJson.kt, WebJournalRepository.kt",
+    "fixtures": "native/src/test/resources/fixtures/handmade/journal-a-*.json (hand-made from the plan, until gen_native_fixtures.js journal() writes fixtures/journal-*.json)",
+    "ordering": "webSessionId and increasing sequence; list.rev unchanged keeps the list; notice.id counts the page's toasts (one counter for every kit)",
+    "invalidation": "renderHistory, the lock's onChange and onStatus, a page toast, host resume, foreground return, 15-second refresh while visible"
+   },
+   "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0013",
+   "rollout": "opt-in under Settings, Appearance: Native Journal (beta), off by default",
+   "canonicalLayout": true
+  },
+  {
    "feature": "food",
    "status": "native-opt-in-beta",
    "nativePlugin": "NativeNutrition",
