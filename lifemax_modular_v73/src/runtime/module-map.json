@@ -3075,7 +3075,7 @@
   },
   {
    "file": "src/runtime/segments/50-food.js",
-   "bytes": 44127,
+   "bytes": 41312,
    "statement_count": 85,
    "tags": [
     "nutrition",
@@ -3166,6 +3166,37 @@
     "fv2SaveGoal",
     "fv2UsdaRender",
     "fv2UsdaClear"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-food-forms.js",
+   "bytes": 8251,
+   "statement_count": 20,
+   "tags": [
+    "food",
+    "forms"
+   ],
+   "symbols": [
+    "fv2HeadData",
+    "fv2SheetWords",
+    "fv2TabsData",
+    "fv2QuickData",
+    "fv2CreateData",
+    "fv2CreateFieldHtml",
+    "fv2CreateFood",
+    "FV2_PRESETS",
+    "fv2GoalData",
+    "fv2PresetGrams",
+    "fv2GoalStep",
+    "fv2GoalSum",
+    "fv2GoalSumHtml",
+    "fv2SetGoals",
+    "fv2EditEntry",
+    "fv2RemoveEntry",
+    "fv2LogAgain",
+    "fv2HeadFor",
+    "fv2GoalDraft",
+    "fv2GoalView"
    ]
   },
   {
@@ -3354,7 +3385,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 31713,
+   "bytes": 39207,
    "statement_count": 1,
    "tags": [
     "android",

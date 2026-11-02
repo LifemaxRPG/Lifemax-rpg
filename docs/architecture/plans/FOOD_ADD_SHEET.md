@@ -1,6 +1,6 @@
 # Food's add-food sheet: native build plan
 
-Status: phases 1a (web) and 1b (native: decoder, search, portion and quick views, notice snack, screenshots) are built and tested; the Native API bump to 33 happens at merge. Phase 1c (review fixes) and phase 2 are open. Written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Not yet reviewed by a second reader: before building, have it checked against the code (the way the other plans in this folder were).
+Status: phases 1a, 1b, 1c (review fixes) and 2 (create food, the daily targets, an entry's edit view with Remove, Log today and a native Undo) are built and tested; the Native API bump happens at merge. What was built, and how it answers, is in MIGRATION.md ("Food's add-food sheet") and BRIDGE_CATALOG.json (food, `sheet`). Written from reading `50-food.js` and `50-native-nutrition.js` at commit `8291c40`. Not yet reviewed by a second reader: before building, have it checked against the code (the way the other plans in this folder were).
 
 ## 1. What there is today
 
@@ -78,8 +78,8 @@ A Native API bump at merge.
 |---|---|---|
 | 1a, web (built) | the notice relay, the `sheet` projection, the commands, tests, fixtures, the simulation | 2 |
 | 1b, native (built) | decoder, search and portion and quick views, notice snack, screenshots, docs | 3 |
-| 1c | review fixes | 1 |
-| 2 | create food, the daily targets, edit / delete / again with a native Undo | 3 |
+| 1c (built) | review fixes: the page's words everywhere, strict numbers, Back from the scrim, the bottom bar and the keyboard, TalkBack, every Add and Targets and entry opening the native sheet, answered writes with operation ids | 1 |
+| 2 (built) | create food, the daily targets, edit / delete / again with a native Undo | 3 |
 
 Phase 1 is about **6 steps**; the whole sheet about 9. (The earlier estimate of 4 to 6 steps for "Food's add-food and swap
 sheets plus Character's sheets" was too low for this sheet alone.)
@@ -97,3 +97,17 @@ sheets plus Character's sheets" was too low for this sheet alone.)
   merges; build on current main.
 - Open: should "My foods" creation (phase 2) come before search, since an empty "My foods" tab is the first thing a new
   player sees? The plan says no, because search and Recent cover the common path.
+
+## 7. Phase 1c and 2 as built
+
+- **Writes are answered.** Food has no reply channel, so the answer rides on the update after the action: the projection's
+  `answer` {op, ok, changed, message}. Every write carries `op`; the page remembers the last 40 that landed and answers a
+  repeat "Already recorded." without doing it again (also when the sheet has closed since). The screen keeps one id per
+  (command, target) until its answer, so a second tap sends nothing and a tap after a lost answer resends the same id.
+- **The forms' rules stay on the page.** The targets' line under the macros and a preset's grams come back from the page
+  (`sheetGoalField`, `sheetGoalPreset`); Save sends the boxes as they are, so a box typed a moment before is not lost. Create
+  sends the boxes with Save, as the page reads its own boxes on Save, and stays filled in after a refusal.
+- **The keyboard (NAV-5):** the bars hide while it is up (ImeState) and the content is already lifted above it, so the sheet
+  covers the screen down to the bar and drops that room while typing; each view's main button stays in sight under its
+  scrolling body.
+- **Known difference:** the form kit's labels are sentence case (Life Director's), where the page's are small capitals.

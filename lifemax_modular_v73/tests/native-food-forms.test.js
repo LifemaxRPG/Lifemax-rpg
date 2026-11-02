@@ -8,8 +8,8 @@
    - phase 2's writes (create a food, save the targets, save / remove / log again an entry, Undo) do what the page's own buttons
      do, answer {op, ok, changed, message} with ok only when the save succeeded, answer a repeat of the same operation
      "Already recorded." without doing it twice, and refuse in the page's own words;
-   - phase 1c: the slot's + and the Targets button open the native sheet, Back from the scrim steps back, a serving that is not
-     offered is refused, a step outside the portion view does nothing.
+   - phase 1c: a serving that is not offered is refused, a step with no food on show does nothing, a write to a sheet that is
+     not open answers ok false, and a write from an older screen (no operation id) still works.
    A fake NativeNutrition plugin stands in for Android. Run: NODE_PATH=$(npm root -g) node tests/native-food-forms.test.js [built html] */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const file = require('./current-page')(process.argv[2]);
