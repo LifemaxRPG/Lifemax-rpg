@@ -131,14 +131,20 @@ function removeAvatar(){if(!state.avatar){toast('No picture to remove');return}d
 
 /* A media item's status as the page words it. */
 const MEDIA_STATUS={unread:'Want to read / watch',progress:'In progress',finished:'Finished'};
+/* The form's words that its markup does not hold (its heading and what a new item starts as), the owners' refusals and the two
+   confirms ({title} is the item's title), here once so the page and a native screen say the same. */
+const MEDIA_FORM={add:'Add to your library',edit:'Edit media item',type:'Book',status:'unread'};
+const MEDIA_REFUSE={title:'Add a title first',link:'Use a valid http or https link'};
+const MEDIA_ASK={remove:'Remove "{title}" from your media library?',removeAudio:'Remove the stored audio file for "{title}"? Playback position will be cleared.'};
+function mediaAsk(kind,title){return MEDIA_ASK[kind].split('{title}').join(title)}
 function showMediaForm(item){
  const card=document.getElementById('mediaFormCard');card.style.display='block';
- document.getElementById('mediaFormTitle').textContent=item?'Edit media item':'Add to your library';
+ document.getElementById('mediaFormTitle').textContent=item?MEDIA_FORM.edit:MEDIA_FORM.add;
  document.getElementById('mediaEditId').value=item?item.id:'';
  document.getElementById('mediaTitle').value=item?item.title:'';
- document.getElementById('mediaType').value=item?item.type:'Book';
+ document.getElementById('mediaType').value=item?item.type:MEDIA_FORM.type;
  document.getElementById('mediaCreator').value=item?item.creator||'':'';
- document.getElementById('mediaStatus').value=item?item.status:'unread';
+ document.getElementById('mediaStatus').value=item?item.status:MEDIA_FORM.status;
  document.getElementById('mediaLink').value=item?item.link||'':'';
  document.getElementById('mediaNotes').value=item?item.notes||'':'';
  card.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('mediaTitle').focus(),250);
@@ -154,16 +160,16 @@ function saveMediaItem(e){
    none asks or toasts: the page's form, tick and buttons ask and say, and a native screen can call the owners as they are. A save that
    fails is taken back and reported.
    mediaUpsert adds an item, or changes the one whose id is f.id, by the form's rules (a title, an http or https link, the form's
-   lengths), and answers {ok, id, message}. An add given an operation id (f.op) stores it on the item in the same save, so the same add
+   lengths), and answers {ok, id, message}; a refusal names the field it is about (field: title or link). An add given an operation id (f.op) stores it on the item in the same save, so the same add
    again answers the item it made instead of adding another. An edit that names no type keeps the stored one (the form's list cannot
    show a type it does not offer). */
 function mediaUpsert(f){
  if(!Array.isArray(state.mediaItems))state.mediaItems=[];
  const id=String(f.id||''),op=f.op&&!id?String(f.op):'';
  const made=op&&state.mediaItems.find(x=>x.addOp===op);if(made)return {ok:true,id:made.id,message:'Added to your library',duplicate:true};
- const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,message:'Add a title first'};
+ const title=String(f.title||'').trim().slice(0,160);if(!title)return {ok:false,field:'title',message:MEDIA_REFUSE.title};
  const link=String(f.link||'').trim().slice(0,500);
- if(link&&!/^https?:\/\//i.test(link))return {ok:false,message:'Use a valid http or https link'};
+ if(link&&!/^https?:\/\//i.test(link))return {ok:false,field:'link',message:MEDIA_REFUSE.link};
  const kept=state.mediaItems.slice(),index=kept.findIndex(x=>x.id===id),old=kept[index];
  const item={id:id||('media_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),...(op?{addOp:op}:{}),title,type:String(f.type||old&&old.type||''),creator:String(f.creator||'').trim().slice(0,120),status:String(f.status||''),link,notes:String(f.notes||'').trim().slice(0,1000),updatedAt:new Date().toISOString()};
  if(old)state.mediaItems[index]={...old,...item};else state.mediaItems.unshift(item);
@@ -194,7 +200,7 @@ function mediaRemove(id){
 }
 function deleteMediaItem(id){
  const item=mediaById(id);if(!item)return;
- if(!confirm('Remove "'+item.title+'" from your media library?'))return;
+ if(!confirm(mediaAsk('remove',item.title)))return;
  toast(mediaRemove(id).message);
 }
 
@@ -310,7 +316,7 @@ async function mediaRemoveAudio(id){
 }
 async function removeMediaAudio(id){
   const item=mediaById(id);if(!item||!item.audio)return;
-  if(!confirm('Remove the stored audio file for "'+item.title+'"? Playback position will be cleared.'))return;
+  if(!confirm(mediaAsk('removeAudio',item.title)))return;
   toast((await mediaRemoveAudio(id)).message);
 }
 function r

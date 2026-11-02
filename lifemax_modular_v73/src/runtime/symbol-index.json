@@ -494,6 +494,15 @@
  "MEAL_SLOT_TINT": [
   "src/runtime/segments/10-runtime.js"
  ],
+ "MEDIA_ASK": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "MEDIA_FORM": [
+  "src/runtime/segments/07-runtime.js"
+ ],
+ "MEDIA_REFUSE": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "MEDIA_STATUS": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -4551,6 +4560,9 @@
  ],
  "mealsShiftDay": [
   "src/runtime/segments/08-runtime.js"
+ ],
+ "mediaAsk": [
+  "src/runtime/segments/07-runtime.js"
  ],
  "mediaAudioButtons": [
   "src/runtime/segments/08-runtime.js"

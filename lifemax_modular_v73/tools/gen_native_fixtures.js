@@ -10,7 +10,7 @@
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json, director-replies-today.json and
    director-replies-time.json; phase 4B's in tools/gen_director_time_fixtures.js), fixtures/recipes-*.json,
-   fixtures/media-{full,search,empty,tip}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
+   fixtures/media-{full,search,empty,tip,sheets}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar}.json
    fixtures/swipe-{tune,state}.json, the Overview cards' fixtures/overview-*.json (tools/gen_overview_fixtures.js), and more states of Life Director's glance,
    fixtures/director-glance-*.json (tools/gen_director_glance_fixtures.js), and the native Journal's fixtures/journal-*.json
    (tools/gen_journal_fixtures.js) */
@@ -441,13 +441,18 @@ async function recipes(b) {
    search  the same list as a voice search leaves it ("Search my library for wealth")
    empty   every item removed, with the page's last "Removed from library" still showing
    tip     the first visit: the default books and the pane's feature tip
+   sheets  for a screen that draws the Media sheets (library.media.write.v1): the default books under an item of a type the form
+           no longer offers and one whose stored link is not http, with the form, its words and the confirms
    media-filter-parity.json holds the rows the page itself shows for sample filters of the full list, for the screen's own
    filter to match exactly. */
 async function media(b) {
   // the page names a new item media_<ms>_<random>: a fixed clock and a seeded Math.random give the same names on every run
-  const visit = async (tipsSeen) => {
+  const visit = async (tipsSeen, caps) => {
     const p = await page(b);
     await p.clock.setFixedTime(new Date('2026-10-28T12:00:00Z'));
+    // a screen that answers the handshake with caps, for the fields only such a screen gets
+    if (caps) await p.addInitScript(`window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>n==='NativeMedia',getPlatform:()=>'android',registerPlugin:()=>({}),convertFileSrc:u=>u,
+      Plugins:{NativeMedia:{addListener:async()=>({remove(){}}),handshake:async()=>({protocol:1,capabilities:${JSON.stringify(caps)}}),open:async()=>{},update:async()=>{},close:async()=>{}}}};`);
     await p.addInitScript(`let seed=1;Math.random=()=>{let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
       localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',tipsSeen:${JSON.stringify(tipsSeen)}}));`);
     await p.goto('file://' + out); await p.waitForTimeout(2500);
@@ -500,6 +505,17 @@ async function media(b) {
   await shoot(p, 'empty', true);
 
   await shoot(await visit({}), 'tip');
+
+  p = await visit({ media: true }, ['library.media.projection.v1', 'library.media.write.v1']);
+  await p.evaluate(async () => {
+    const add = (f) => { const r = mediaUpsert(f); if (!r.ok) throw Error(r.message); return r.id };
+    add({ title: 'Saga, volume one', type: 'Comic', creator: 'Brian K. Vaughan', status: 'progress', link: 'https://example.com/saga', notes: 'An old type the form no longer offers' });
+    const old = add({ title: 'Old bookmark', type: 'Article', status: 'unread' });
+    mediaById(old).link = 'ftp://example.com/old'; save(); // as an old save stored it, before the form checked links
+    navigate('media'); await new Promise((r) => setTimeout(r, 400)); // on the pane, so the screen opens and asks the handshake
+    await openNativeLibrary();
+  });
+  await shoot(p, 'sheets');
 }
 
 /* Settings as the native screen opens on it, on a phone (tests/fixtures/settings-android.js: reminders allowed, a widget on the

@@ -34,7 +34,7 @@ class MediaAudioPortTest {
 
     private fun run(port: Port?, vararg taps: MediaAction): List<String> {
         val page = mutableListOf<String>()
-        val actions = MediaActions(viewModel(), port) { page += it.toString() }
+        val actions = MediaActions(viewModel(), { page += it.toString() }, {}, port)
         taps.forEach { actions.page(it) }
         return page
     }

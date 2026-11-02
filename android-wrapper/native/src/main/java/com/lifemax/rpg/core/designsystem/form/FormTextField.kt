@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.sp
  * boxes with a placeholder, such as the goal's target). [error] is the page's words when it refused
  * the field: the edge turns red and TalkBack reads them. [decimal] asks for the number keyboard
  * with a point and keeps digits and one point (Food's label values, such as 12.5 g of protein).
+ * [lines] above one makes it the page's textarea: at least that many lines tall, growing with what
+ * is typed, its text from the top, and Enter a new line.
  */
 @Composable
 fun FormTextField(
@@ -54,6 +56,7 @@ fun FormTextField(
     number: Boolean = false,
     error: String? = null,
     decimal: Boolean = false,
+    lines: Int = 1,
 ) {
     val look = LocalFormKitLook.current
     val interaction = remember { MutableInteractionSource() }
@@ -113,15 +116,16 @@ fun FormTextField(
                             number -> KeyboardType.Number
                             else -> KeyboardType.Text
                         },
-                    imeAction = ImeAction.Done,
+                    imeAction = if (lines > 1) ImeAction.Default else ImeAction.Done,
                 ),
-            singleLine = true,
+            singleLine = lines == 1,
+            minLines = lines,
             interactionSource = interaction,
             cursorBrush = SolidColor(look.cursor),
             decorationBox = { inner ->
                 Box(
                     Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                    contentAlignment = Alignment.CenterStart,
+                    contentAlignment = if (lines > 1) Alignment.TopStart else Alignment.CenterStart,
                 ) {
                     if (value.isEmpty() && placeholder != null)
                         Text(
@@ -129,7 +133,7 @@ fun FormTextField(
                             style = look.text,
                             color = look.ink3,
                             fontSize = 15.2.sp,
-                            maxLines = 1,
+                            maxLines = lines,
                         )
                     inner()
                 }
