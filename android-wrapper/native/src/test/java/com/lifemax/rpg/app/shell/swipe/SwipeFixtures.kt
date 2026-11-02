@@ -41,9 +41,11 @@ object SwipeFixtures {
         motion: Boolean = true,
         haptics: Any = "normal",
         tune: JSONObject? = null,
+        reveal: Boolean = false,
     ): JSONObject =
         JSONObject()
             .put("v", 1)
+            .apply { if (reveal) put("reveal", true) }
             .put("on", on)
             .put("motion", motion)
             .put("haptics", haptics)
@@ -80,5 +82,7 @@ object SwipeFixtures {
         haptics: Any = "normal",
         sequence: Int = 1,
         tune: JSONObject? = null,
-    ): SwipeState = SwipeState.parse(swipeJson(view, bar, on, motion, haptics, tune), sequence)!!
+        reveal: Boolean = false,
+    ): SwipeState =
+        SwipeState.parse(swipeJson(view, bar, on, motion, haptics, tune, reveal), sequence)!!
 }

@@ -818,6 +818,10 @@ body.noscroll{overflow:hidden}
 html.native-cover .view.active>*{animation:none!important}
 /* the cold-start veil (50-native-overview-cards.js): the page's Overview stays hidden while the native cards are on their way */
 html.native-boot #view-dashboard{visibility:hidden}
+/* native tab swipe, phase 2 (50-native-swipe.js): a page Android's veil reveals is shown as it stays, with no fade-in or slide of
+   its cards; and the page's static copy of a tab whose native screen is sliding in is hidden until the screen is in place */
+html.swipe-reveal .view.active>*{animation:none!important}
+html.native-enter .view.active>*{visibility:hidden}
 html.lma-capture .sidebar,html.lma-capture .sidebar *,html.lma-capture .topbar,html.lma-capture .topbar *{transition:none!important;animation:none!important}
 .view.active>*:nth-child(2){animation-delay:0.030s}
 .view.active>*:nth-child(3){animation-delay:0.060s}

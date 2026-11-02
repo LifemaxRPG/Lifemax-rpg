@@ -578,7 +578,7 @@
       if (!window.NativeOverviewSnapshot) throw new Error('Shared Overview chrome unavailable');
       const chromeScene = await NativeOverviewSnapshot.snapshot();
       const chromeAt = performance.now();
-      await p.open({ session: id, snapshot: s, chromeScene });
+      await p.open(Object.assign({ session: id, snapshot: s, chromeScene }, window.NativeSwipe?.takeEnter('meals'))); // a swipe's slide-in
       const nativeAt = performance.now();
       window.__nativeTabPerf = {feature:'food',projectionMs:projectionAt-openedAt,capabilitiesMs:capabilitiesAt-projectionAt,chromeMs:chromeAt-capabilitiesAt,nativeMs:nativeAt-chromeAt,totalMs:nativeAt-openedAt,chromeCache:NativeOverviewSnapshot.diagnostics()};
       if (N.generation !== generation || N.session !== id || view() !== 'meals' || !enabled()) {
@@ -602,6 +602,7 @@
     } finally {
       if (N.generation === generation) N.opening = false;
       NativeTabs.flush('meals');
+      window.NativeSwipe?.entered('meals', N.open);
       if (again && view() === 'meals' && enabled()) queueMicrotask(open);
     }
   }

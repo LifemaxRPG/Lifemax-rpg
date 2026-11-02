@@ -280,7 +280,8 @@
         const projectionAt = now();
         const scene = await navScene();
         const chromeAt = now();
-        await plugin.open({ snapshot: data, navScene: scene });
+        // at the end of the page's own swipe the screen slides in (native tab swipe, phase 2): the side and the finger's speed
+        await plugin.open(Object.assign({ snapshot: data, navScene: scene }, window.NativeSwipe?.takeEnter(cfg.id)));
         const nativeAt = now();
         window.__nativeTabPerf = { feature: cfg.id, handshakeMs: handshakeAt - openedAt, projectionMs: projectionAt - handshakeAt, chromeMs: chromeAt - projectionAt, nativeMs: nativeAt - chromeAt, totalMs: nativeAt - openedAt };
         if (mine !== generation) {
@@ -307,6 +308,7 @@
       } finally {
         opening = false;
         NativeTabs.flush(cfg.id);
+        window.NativeSwipe?.entered(cfg.id, active); // the page's copy of the tab may show again once the screen is in place, or now
       }
     }
 

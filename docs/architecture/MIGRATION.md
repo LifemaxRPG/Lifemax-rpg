@@ -81,7 +81,7 @@ Evidence: Node projection test, JVM selection/sequence/schema tests, Android Com
 | Library (Media) | Compose Media pane, hidden-but-alive, over the page while nothing it does not draw covers it | Web-owned | Opt-in beta, off by default | The add/edit form, finished checkbox, remove, attach/replace/remove audio, the player, link, tip, Journal |
 | Settings | Compose screen (head, category chips, the Classic Settings row, every card's rows and controls, the bottom-bar editor), hidden-but-alive, over the page while nothing it hands over keeps the page in front | Web-owned (every setting, its wording and its storage) | Opt-in beta, off by default | Text, number and time fields, file pickers, the rewards sheet, the update, backup-folder, health and calendar flows, the journal lock, Android device backup, developer mode and Data management (each a delegation to the page) |
 | Tab shell (bars) | Native drawing of a DOM capture | Web page state | Shared by every native tab (Cash draws its own) | DOM capture (see CONTRACT_REVISION_2_PROPOSAL.md, A22) |
-| Tab swipe | Native motion between native screens (`app/shell/swipe`), from the page's projection (`swipe` in every bar scene) | Web-owned decision (`NativeSwipe.request`), then the A23 hand-over | Opt-in beta, off by default (phase 1: native to native) | Web tabs, the Overview while its live shell draws it (with the cards on it is a native neighbour, ADR 0012), Money and the ends of the bar are walls until phase 2 |
+| Tab swipe | Native motion between native screens (`app/shell/swipe`), from the page's projection (`swipe` in every bar scene) | Web-owned decision (`NativeSwipe.request`), then the A23 hand-over | Opt-in beta, off by default (phases 1 and 2: every edge) | Money and the ends of the bar are walls; a tab the page draws is revealed under the veil, and the page's own swipe onto a native tab slides it in |
 
 Statements here are from reading the repository and the Settings wiring; device acceptance is not recorded.
 
@@ -217,6 +217,16 @@ Native motion, web decision (CONTRACT A34, ADR 0011). On an open native screen t
 - **Remaining web dependency:** the decision, by design, and every edge that is not native to native (phase 2, BACKLOG.md).
 
 Evidence: JUnit for the pure core (every gate, the curve's golden values, the release table, the springs, random sequences checked against the rest invariant), the haptics table, the reset on a page load, before the screens go and with hosts that register during it (`NativeScreensTest`), and parity with the page's own `LMA_TABSWIPE` and `swipe` field through `fixtures/swipe-{tune,state}.json` (`tools/gen_native_fixtures.js swipe`); `SwipeVeilScreenshotTest` (dark, light, font scale 2.0, the bare filler), with every other reference unchanged, and Character's two screen references now drawn through `TabScreenView` as the app hosts them, unchanged too; `native-swipe.test.js`; and the A28 simulation with swipe hops from a possibly stale scene, shown failing on an answer sent after navigating and on a dropped `to` check. Not yet done: the owner's checks on the phone (the catch and its tuning, the haptics on One UI, the Back edges, diagonal scrolls, a second finger on the bars mid-drag or one resting on a bar, 120 Hz, a first swipe to a tab not opened yet, tab timing).
+
+## Native tab swipe, phase 2 of 4: every edge (next Native API)
+
+Every tab boundary on the bar swipes, except Money (CONTRACT A34 item 7, plans/TAB_SWIPE.md §5). Same switch, still off by default; with it off nothing changes.
+
+- **Native to a tab the page draws** (Food to Cat, Log to Cat or Quests, Character to the Overview's live shell, Library on the Journal pane, a native tab whose screen would not open now): the labelled veil slides in as the neighbour (`Neighbour.Reveal`, only while the scene says `reveal`); the page answers `web` (only to a swipe carrying `reveal: true`), sets `html.swipe-reveal` and goes there; the model's `Reveal` phase covers the screen until `postVisualStateCallback` (cap 400 ms), then fades the veil over 120 ms, holding the shared bars (`ChromeHost.hold`, its rule in the pure `ChromeHold`) until then. A `native` answer whose destination falls back to web swaps to the veil the same way.
+- **The page's own swipe onto a native tab** (from a web page or the Overview's web body): `lmaSwipeGo` calls `NativeSwipe.enter`, which sets `native-cover` and `html.native-enter` and goes there; the kit's and Food's `open` pass `enter` and `velocity`; the model's `Entering` phase slides the screen in from ±W from its first draw.
+- **Capability:** `shell.swipe.v2` in the kit's handshake, `swipe: 2` from Food.
+
+Evidence: `SwipeEdgesTest` and `ChromeHoldTest` (JUnit), `tests/native-swipe-edges.test.js`, and the hand-over simulation's swipes into Cat and Quests and web swipes onto native tabs, in all four Overview modes.
 
 ## Overview cards, phase 1: read and delegate (next Native API)
 

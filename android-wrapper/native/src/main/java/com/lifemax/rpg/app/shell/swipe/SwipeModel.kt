@@ -32,9 +32,16 @@ data class SwipeStep(val model: SwipeModel, val effects: List<SwipeEffect> = emp
  *   [SwipeInput.Tick] first, for as long as [needsFrame] holds.
  * - While [deadline] is set, post a [SwipeInput.Tick] for it.
  * - While [awaitingDraw] names a screen, send [SwipeInput.Drawn] after its first OnPreDraw.
+ * - While [holdsChrome] names a token, hold the shared bars (`ChromeHost.hold`); unhold it after.
+ * - When [awaitingWeb] names a token, ask the WebView (`postVisualStateCallback`) and send
+ *   [SwipeInput.WebDrawn] with it when it answers.
  * - After each input, a screen whose gesture the model no longer [tracking]s calls
  *   [SwipeArbiter.yieldGesture].
  * - Back at Idle, check the Views against [restScene] and repair any difference.
+ *
+ * Phase 2 (the edges; SwipeEdges.kt): a commit into a tab the page draws ends in
+ * [SwipePhase.Reveal], and a screen the page opens at the end of its own swipe slides in
+ * ([SwipePhase.Entering]).
  */
 data class SwipeModel(
     val phase: SwipePhase = SwipePhase.Idle,
@@ -57,17 +64,43 @@ data class SwipeModel(
 
     /**
      * When the watchdog fires, while a commit waits for the page's part (the destination's open and
-     * first draw, the source's close). Post a [SwipeInput.Tick] for it.
+     * first draw, the source's close); when a reveal stops waiting for the WebView; when an
+     * entering screen that never drew gives up. Post a [SwipeInput.Tick] for it.
      */
     val deadline: Long?
-        get() = phase.commit?.takeUnless { it.complete }?.let { it.at + WATCHDOG_NANOS }
+        get() =
+            when (val p = phase) {
+                is SwipePhase.Reveal -> if (p.fadeAt == null) p.since + REVEAL_CAP_NANOS else null
+                is SwipePhase.Entering -> if (p.spring == null) p.since + WATCHDOG_NANOS else null
+                else -> phase.commit?.takeUnless { it.complete }?.let { it.at + WATCHDOG_NANOS }
+            }
 
     /**
-     * The commit's destination while it has not drawn: a screen opened cold under the veil. It may
-     * not exist yet; watch it for its first OnPreDraw from its [SwipeInput.Register] on.
+     * The commit's destination while it has not drawn: a screen opened cold under the veil; or an
+     * entering screen before its first draw. It may not exist yet; watch it for its first OnPreDraw
+     * from its [SwipeInput.Register] on.
      */
     val awaitingDraw: String?
-        get() = phase.commit?.takeUnless { it.drawn }?.dest
+        get() =
+            (phase as? SwipePhase.Entering)?.takeIf { it.spring == null }?.pane
+                ?: phase.commit?.takeUnless { it.drawn || it.reveal }?.dest
+
+    /**
+     * The token of a commit the page draws, from the page's `web` answer (or the fallback) until
+     * the veil has faded: the shared bars must not leave meanwhile, or the veil (under them, over
+     * the WebView's own bars) would show where they were.
+     */
+    val holdsChrome: String?
+        get() =
+            when (val p = phase) {
+                is SwipePhase.Reveal -> p.token
+                is SwipePhase.Sliding -> p.commit?.takeIf { it.reveal }?.token
+                else -> null
+            }
+
+    /** The token of a reveal waiting for the WebView to draw the page under the veil. */
+    val awaitingWeb: String?
+        get() = (phase as? SwipePhase.Reveal)?.takeIf { it.fadeAt == null }?.token
 
     /** Whether [pane]'s gesture is still the model's; if not, [SwipeArbiter.yieldGesture]. */
     fun tracking(pane: String): Boolean =
@@ -79,6 +112,8 @@ data class SwipeModel(
             is SwipePhase.Dragging ->
                 p.gesture.motion && !p.drag.tension.isAtRest(env.now, env.epsilon)
             is SwipePhase.Settling -> true
+            is SwipePhase.Reveal -> p.fadeAt != null
+            is SwipePhase.Entering -> p.spring != null
             else -> false
         }
 
@@ -104,10 +139,11 @@ data class SwipeModel(
             when (input) {
                 is SwipeInput.Register ->
                     SwipeStep(copy(panes = panes + (input.pane to input.source)))
-                is SwipeInput.Opened -> opened(input.pane)
+                is SwipeInput.Opened -> opened(input.pane).thenEnter(input, env)
                 is SwipeInput.Closed -> closed(input.pane)
                 is SwipeInput.Removed -> removed(input.pane)
-                is SwipeInput.Drawn -> drawn(input.pane)
+                is SwipeInput.Drawn -> drawn(input.pane, env)
+                is SwipeInput.WebDrawn -> webDrawn(input.token, env)
                 SwipeInput.Drop -> SwipeStep(SwipeModel(panes = panes, serial = serial))
                 is SwipeInput.Scene -> scene(input.state, env)
                 is SwipeInput.Settle -> settle(input, env)
@@ -133,31 +169,51 @@ data class SwipeModel(
         val commit = phase.commit
         return when {
             phase == SwipePhase.Idle -> SwipeStep(m)
-            commit != null && pane == commit.dest -> SwipeStep(m.with(commit.copy(opened = true)))
+            // the destination's screen opened after all, even after a fallback: it takes the slot
+            commit != null && pane == commit.dest ->
+                SwipeStep(m.with(commit.copy(opened = true, reveal = false)))
             else -> m.abort("open $pane")
         }
     }
 
+    /**
+     * The source closing before the destination opened means the page draws the destination: it
+     * answered `web`, or its native screen fell back to web (Plan editing, the Library player),
+     * which then swaps to the veil and is revealed the same way.
+     */
     private fun closed(pane: String): SwipeStep {
         if (pane !in open) return SwipeStep(this)
         val m = copy(open = open - pane)
         val commit = phase.commit
+        val p = phase
         return when {
             phase == SwipePhase.Idle -> SwipeStep(m)
+            p is SwipePhase.Entering && pane != p.pane -> SwipeStep(m)
             commit != null && pane == phase.gesture?.source ->
-                if (commit.opened) SwipeStep(m.with(commit.copy(sourceClosed = true)))
-                else m.abort("cut: $pane closed before ${commit.dest} opened")
+                when {
+                    commit.opened || commit.reveal ->
+                        SwipeStep(m.with(commit.copy(sourceClosed = true)))
+                    else ->
+                        SwipeStep(
+                            m.with(commit.copy(reveal = true, sourceClosed = true)),
+                            listOf(SwipeEffect.Trace("fallback: ${commit.dest} drawn by the page")),
+                        )
+                }
             else -> m.abort("close $pane")
         }
     }
 
     private fun removed(pane: String): SwipeStep {
         val m = copy(panes = panes - pane, open = open - pane)
-        val involved = phase.gesture?.involved.orEmpty()
+        val involved =
+            (phase as? SwipePhase.Entering)?.let { setOf(it.pane) }
+                ?: phase.gesture?.involved.orEmpty()
         return if (pane in involved) m.abort("removed $pane") else SwipeStep(m)
     }
 
-    private fun drawn(pane: String): SwipeStep {
+    private fun drawn(pane: String, env: SwipeEnv): SwipeStep {
+        val p = phase
+        if (p is SwipePhase.Entering) return SwipeStep(entered(p, pane, env))
         val commit = phase.commit
         return if (commit != null && pane == commit.dest) SwipeStep(with(commit.copy(drawn = true)))
         else SwipeStep(this)
@@ -180,17 +236,28 @@ data class SwipeModel(
                 val elsewhere = next != null && next.view != gesture.source && next.view != dest
                 if (elsewhere) m.abort("scene for ${next?.view}") else SwipeStep(m)
             }
+            is SwipePhase.Reveal,
+            is SwipePhase.Entering,
             SwipePhase.Idle -> SwipeStep(m)
         }
     }
 
-    /** A native answer only confirms the wait; a refusal springs back from where the screen is. */
+    /**
+     * A native answer only confirms the wait; a web answer turns the commit into a reveal (the bars
+     * are held from now on, before the page's close of the source can release them); a refusal
+     * springs back from where the screen is.
+     */
     private fun settle(answer: SwipeInput.Settle, env: SwipeEnv): SwipeStep {
         val p = phase as? SwipePhase.Sliding ?: return SwipeStep(this)
         val commit = p.commit
         if (commit == null || answer.token != commit.token) return SwipeStep(this)
         if (answer.outcome == SettleOutcome.Native) return SwipeStep(this)
-        if (commit.opened) return abort("refused after ${commit.dest} opened")
+        if (answer.outcome == SettleOutcome.Web) {
+            return if (commit.opened) SwipeStep(this)
+            else SwipeStep(with(commit.copy(reveal = true)))
+        }
+        // too late to spring back: the destination took over, or the source has gone (a fallback)
+        if (commit.opened || commit.sourceClosed) return abort("refused after the page moved on")
         return SwipeStep(copy(phase = p.back(env)), p.gesture.haptic(HapticMoment.Refused))
     }
 
@@ -284,8 +351,16 @@ data class SwipeModel(
             )
         )
 
-    /** Time-driven moves: landing, the hand-over completing, the watchdog. */
+    /**
+     * Time-driven moves: landing, the hand-over completing (or the reveal starting), the watchdog,
+     * the reveal's fade and an entering screen's slide.
+     */
     private fun advance(env: SwipeEnv): SwipeStep {
+        when (val e = phase) {
+            is SwipePhase.Reveal -> return revealing(e, env)
+            is SwipePhase.Entering -> return entering(e, env)
+            else -> {}
+        }
         val p = phase as? SwipePhase.Sliding ?: return SwipeStep(this)
         val commit = p.commit
         val deadline = deadline
@@ -299,6 +374,10 @@ data class SwipeModel(
                 )
             }
             !p.slide.landed(env) -> SwipeStep(this)
+            commit != null && commit.reveal && commit.sourceClosed -> {
+                val tab = p.gesture.neighbours[p.slide.dir].tab
+                SwipeStep(copy(phase = SwipePhase.Reveal(p.gesture, commit.token, tab, env.now)))
+            }
             commit == null || commit.complete -> SwipeStep(copy(phase = SwipePhase.Idle))
             p is SwipePhase.Settling ->
                 SwipeStep(copy(phase = SwipePhase.AwaitPage(p.gesture, p.slide, commit)))
@@ -331,5 +410,11 @@ data class SwipeModel(
          * if the destination never opened; otherwise the wait ends and the open screens rest.
          */
         const val WATCHDOG_NANOS = 2_500_000_000L
+
+        /** How long a reveal waits for the WebView's answer before the veil fades anyway. */
+        const val REVEAL_CAP_NANOS = 400_000_000L
+
+        /** The veil's fade over the revealed page, in seconds of animation time. */
+        const val FADE_SECONDS = 0.12f
     }
 }

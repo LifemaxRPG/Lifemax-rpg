@@ -55,7 +55,9 @@ internal object ChromeHost {
     }
 
     private val handler = Handler(Looper.getMainLooper())
+    private val holds = ChromeHold()
     private val release = Runnable {
+        holds.cancel()
         shell?.close()
         shell = null
         listener = null
@@ -78,6 +80,7 @@ internal object ChromeHost {
         onAction: (String) -> Unit,
     ): LiveOverviewShell {
         handler.removeCallbacks(release)
+        holds.cancel()
         val existing = shell
         val sequence = scene.optInt("sequence")
         val now = SystemClock.uptimeMillis()
@@ -118,7 +121,21 @@ internal object ChromeHost {
     fun leave(by: Any) {
         if (owner !== by) return
         handler.removeCallbacks(release)
-        handler.postDelayed(release, 60)
+        if (holds.leave()) handler.postDelayed(release, 60)
+    }
+
+    /**
+     * A tab swipe's reveal (phase 2) needs the bars until it [unhold]s [token]: a [leave] meanwhile
+     * waits for it. [closeAll] and [closeNow] still release at once.
+     */
+    fun hold(token: String) = holds.hold(token)
+
+    /** The reveal is over: a release that waited for it runs now. */
+    fun unhold(token: String) {
+        if (holds.unhold(token)) {
+            handler.removeCallbacks(release)
+            release.run()
+        }
     }
 
     /** The Overview shell is taking over: no shared bars may stay on screen. */
