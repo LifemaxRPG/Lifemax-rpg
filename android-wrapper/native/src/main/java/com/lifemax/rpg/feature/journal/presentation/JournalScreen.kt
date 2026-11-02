@@ -22,7 +22,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.lifemax.rpg.app.shell.rememberImeUp
 import com.lifemax.rpg.core.designsystem.PageTheme
 import com.lifemax.rpg.core.designsystem.components.PageSegment
 import com.lifemax.rpg.core.designsystem.components.PageSegments
@@ -32,6 +34,7 @@ import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.feature.journal.domain.JournalAction
 import com.lifemax.rpg.feature.journal.domain.JournalChrome
 import com.lifemax.rpg.feature.journal.domain.JournalFrame
+import com.lifemax.rpg.feature.journal.presentation.body.EntryEditor
 import com.lifemax.rpg.feature.journal.presentation.body.JournalBodyColors
 import com.lifemax.rpg.feature.journal.presentation.body.LocalJournalBodyColors
 import com.lifemax.rpg.feature.journal.presentation.components.JournalColors
@@ -62,6 +65,14 @@ class JournalActions(
     val dismissTip: () -> Unit = {},
     val page: (JournalAction) -> Unit = {},
     val toastShown: (Long) -> Unit = {},
+    /** Phase 2: the screen writes for itself (library.journal.write.v1). */
+    val edit: (key: String, text: String) -> Unit = { _, _ -> },
+    val leaveField: () -> Unit = {},
+    val claim: (kind: String) -> Unit = {},
+    val openCatchUp: () -> Unit = {},
+    val catchUpSend: (String) -> Unit = {},
+    val catchUpCancel: () -> Unit = {},
+    val celebrated: (Long) -> Unit = {},
 ) {
     /** A hand-over goes to the page only while the view model allows one (one per opening). */
     constructor(
@@ -76,6 +87,13 @@ class JournalActions(
         vm::dismissTip,
         { if (vm.handOver(it)) page(it) },
         vm::toastShown,
+        vm::edit,
+        vm::leaveField,
+        vm::claim,
+        vm::openCatchUp,
+        vm::sendCatchUp,
+        vm::closeCatchUp,
+        vm::celebrated,
     )
 }
 
@@ -103,19 +121,23 @@ fun JournalScreen(
     val frame = ui.frame ?: return
     JournalTheme(frame.chrome) {
         val c = LocalJournalColors.current
-        Box(Modifier.fillMaxSize().background(c.bg)) {
+        val spot = remember { TapSpot() }
+        // a screen that writes: the bottom bar is gone while the keyboard is up, so it keeps no
+        // room
+        val keyboard = rememberImeUp() && ui.write != null
+        Box(Modifier.fillMaxSize().background(c.bg).pointerInput(spot) { recordTaps(spot) }) {
             val padding =
                 PaddingValues(
                     start = 12.dp,
                     end = 12.dp,
                     top = topInsetDp.dp + 16.dp,
-                    bottom = bottomInsetDp.dp + 24.dp,
+                    bottom = (if (keyboard) 0f else bottomInsetDp).dp + 24.dp,
                 )
             Crossfade(frame.kind, animationSpec = tween(CROSSFADE_MS), label = "journal") { kind ->
                 when (kind) {
                     Kind.Open ->
                         (ui.frame as? JournalFrame.Open)?.let {
-                            OpenJournalList(it, ui, actions, padding, list)
+                            OpenJournalList(it, ui, actions, padding, list, keyboard)
                         }
                     Kind.Locked ->
                         (ui.frame as? JournalFrame.Locked)?.let {
@@ -124,6 +146,16 @@ fun JournalScreen(
                     Kind.Resting -> RestingPage(frame.chrome, actions, padding)
                 }
             }
+            val celebration = ui.celebration
+            val open = frame as? JournalFrame.Open
+            if (visible && celebration != null && open != null)
+                JournalCelebrationLayer(
+                    celebration,
+                    spot,
+                    open.journal.write?.celebrationTarget,
+                    reduced = !open.journal.motion,
+                    onFinished = actions.celebrated,
+                )
             val toast = ui.toast
             if (visible && toast != null)
                 ToastLine(
@@ -145,8 +177,22 @@ private fun OpenJournalList(
     actions: JournalActions,
     padding: PaddingValues,
     list: LazyListState,
+    keyboardUp: Boolean,
 ) {
     val j = frame.journal
+    val editor =
+        j.write?.let {
+            EntryEditor(
+                ui.draft,
+                it.catchUp,
+                ui.catchUp,
+                keyboardUp,
+                actions.edit,
+                actions.leaveField,
+                actions.catchUpSend,
+                actions.catchUpCancel,
+            )
+        }
     LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = padding) {
         item("panes") { Switch(frame.chrome, actions) }
         j.tip?.let { tip ->
@@ -155,7 +201,7 @@ private fun OpenJournalList(
             }
         }
         item("hero") { JournalHero(j.hero, actions.backup) }
-        JournalBodySlot(j, ui.selection, actions)
+        JournalBodySlot(j, ui.selection, actions, editor)
     }
 }
 

@@ -46,6 +46,8 @@ internal class JournalBodyCallbacks(
     val onWrite: (key: String) -> Unit = {},
     val onSwap: (day: String, from: String) -> Unit = { _, _ -> },
     val onChip: (ChipTap) -> Unit = {},
+    /** Phase 2: the entry is written in the screen's own fields (null: the page's, phase 1). */
+    val editor: EntryEditor? = null,
 )
 
 /**
@@ -62,7 +64,7 @@ internal fun JournalEntryPage(
     JournalEntryCard(modifier.fillMaxWidth().heightIn(min = 280.dp)) {
         when {
             entry is DayEntry -> DayPage(entry, callbacks)
-            entry is ReviewEntry -> ReviewPage(entry, callbacks.onWrite)
+            entry is ReviewEntry -> ReviewPage(entry, callbacks.onWrite, callbacks.editor)
             empty != null -> EmptyJournal(empty)
         }
     }
@@ -94,7 +96,7 @@ internal fun ColumnScope.DayPage(day: DayEntry, callbacks: JournalBodyCallbacks)
     } else {
         day.welcome?.let {
             Spacer(Modifier.height(gap(14.dp)))
-            Arrive(at++) { WelcomeCard(it, callbacks.onChip) }
+            Arrive(at++) { WelcomeCard(it, callbacks.editor, callbacks.onChip) }
             below = 14.dp
         }
         day.insight?.let {
@@ -104,7 +106,9 @@ internal fun ColumnScope.DayPage(day: DayEntry, callbacks: JournalBodyCallbacks)
         }
     }
     Spacer(Modifier.height(gap(18.dp)))
-    Arrive(at++) { ReflectionBox(day.key, day.reflect, callbacks.onWrite, callbacks.onSwap) }
+    Arrive(at++) {
+        ReflectionBox(day.key, day.reflect, callbacks.onWrite, callbacks.onSwap, callbacks.editor)
+    }
     when {
         day.blank != null -> Arrive(at) { BlankDay(day.blank) }
         else -> {

@@ -179,7 +179,7 @@
     "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
    },
    "actions": {
-    "navigate": "the view 'meals' (Meals pill, \"\uff0b Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
+    "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
     "link": "nothing is sent: the screen opens the projected https link itself (Android ACTION_VIEW)"
    },
    "writes": [],
@@ -252,6 +252,7 @@
    "plan": "docs/architecture/plans/JOURNAL_AND_LIBRARY_SHEETS.md",
    "capabilities": [
     "library.journal.projection.v1",
+    "library.journal.write.v1",
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
@@ -263,18 +264,22 @@
     "swap": "{d, from}: jcSwapPrompt compare-and-set",
     "unlock": "{}: relock if the page thinks it is open, then LifeMaxJournalLock.prompt(); {ok: r === true}",
     "backup": "{}: exportData(), not awaited; its toast arrives as a notice",
-    "tip": "{}: dismissFeatureTip('history')"
+    "tip": "{}: dismissFeatureTip('history')",
+    "reflect": "{d, text, base, final}: journalSaveReflection; final:false stores the words only, final:true may pay +15 once (days[d].xpAwarded); conflict by base; reply {ok, changed, paid, message?, conflict?, stored?, celebrations}",
+    "answer": "{key, text, base, final}: journalSaveReview, the same; pays the review bonus once (reviews[key].paid)",
+    "claim": "{kind: pet|fresh}: jcClaim; welcome[today].claimed[kind] is the receipt",
+    "catchUp": "{text}: jcCatchUpWith; claimed.line is the receipt"
    },
    "writes": [
     "journalCoach.days[d].promptId (swap, writeSave)",
     "journalCoach chip and welcome decisions (select, writeSave)",
-    "tipsSeen.history (tip)"
+    "tipsSeen.history (tip)",
+    "dayReflections[d] and journalCoach.reviews[key].answer (reflect, answer: writeSave, words first)",
+    "coach XP activity with days[d].xpAwarded, reviews[key].paid, welcome[d].claimed[kind] in one save (final writes, claim, catchUp)"
    ],
    "delegatedInteractions": [
-    "claim {id: pet|fresh}: jcClaim(id), back after afterCelebrations",
-    "catchUp: jcCatchUp() with the page's prompt, back after afterCelebrations",
-    "writing a reflection or a review answer in the page's field (phase 1)",
-    "{view: media} and {view: life-director}: lmaNavTo, make-before-break"
+    "{view: media} and {view: life-director}: lmaNavTo, make-before-break",
+    "with edit:\"page\" (no write capability): claim, catchUp and writing in the page's field hand over as in phase 1"
    ],
    "readContract": {
     "snapshotDto": "feature/journal/domain/JournalModels.kt (the one model, body included), JournalFrame.kt",
@@ -283,7 +288,7 @@
     "ordering": "webSessionId and increasing sequence; list.rev unchanged keeps the list; notice.id counts the page's toasts (one counter for every kit)",
     "invalidation": "renderHistory, the lock's onChange and onStatus, a page toast, host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0013",
+   "mutationsGate": "ADR 0013: natural receipts (days[d].xpAwarded, welcome[d].claimed[kind], reviews[key].paid) stored in the same save as the award; text writes are a set with a base check (conflict refuses, changing nothing); autosave (final:false) never pays; ok only when the words are stored; a reward that cannot be stored is taken back alone; no native pending record, nothing replayed after a restart (A14/A15 gap). Decision-only phase 1 writes as before",
    "rollout": "opt-in under Settings, Appearance: Native Journal (beta), off by default",
    "canonicalLayout": true
   },
@@ -499,11 +504,11 @@
    "refusals": {
     "off": "the swipe is not on: the switch or Swipe to switch tabs off, onboarding not done, the thumbnail pass running, or a view a swipe never starts from (Life Director)",
     "overlay": "a popup or sheet over the page (lmaTopOverlay), a body that must not scroll, or a lock cover",
-    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir \u00b11, on the bar as it is now",
+    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir ±1, on the bar as it is now",
     "kind": "Money (a stop), or a tab the page draws when the swipe does not carry reveal: true (an APK from phase 1)",
     "error": "the decision threw; nothing else is done"
    },
-   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05\u20130.35, breakAt knee + 0.10\u20130.70, heavy 0.05\u20131, hyst 0\u20130.15, popDamping 0.4\u20131, popStiffness 400\u20133000, wallMax 0\u20130.15, wallSlope 0\u20130.6, flingDp 500\u20133000, flingMin 0.05\u20130.35, backFlingDp 200\u20132000, commitK and cancelK 300\u20134000, slopFactor 1\u20132 (never under the platform's slop, where a child scroller claims), lockRatio 1\u20133, edgeDp 16\u201348, haptic threshold | tick | click | off",
+   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05–0.35, breakAt knee + 0.10–0.70, heavy 0.05–1, hyst 0–0.15, popDamping 0.4–1, popStiffness 400–3000, wallMax 0–0.15, wallSlope 0–0.6, flingDp 500–3000, flingMin 0.05–0.35, backFlingDp 200–2000, commitK and cancelK 300–4000, slopFactor 1–2 (never under the platform's slop, where a child scroller claims), lockRatio 1–3, edgeDp 16–48, haptic threshold | tick | click | off",
    "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
    "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
    "writes": []

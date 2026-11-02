@@ -16,6 +16,7 @@ import com.lifemax.rpg.feature.journal.domain.JournalAction
 import com.lifemax.rpg.feature.journal.domain.OpenJournal
 import com.lifemax.rpg.feature.journal.presentation.body.ARRIVAL_TOTAL_MS
 import com.lifemax.rpg.feature.journal.presentation.body.ChipTap
+import com.lifemax.rpg.feature.journal.presentation.body.EntryEditor
 import com.lifemax.rpg.feature.journal.presentation.body.JournalBodyCallbacks
 import com.lifemax.rpg.feature.journal.presentation.body.JournalEntryPage
 import com.lifemax.rpg.feature.journal.presentation.body.JournalTiles
@@ -37,6 +38,7 @@ internal fun LazyListScope.JournalBodySlot(
     journal: OpenJournal,
     selection: String?,
     actions: JournalActions,
+    editor: EntryEditor? = null,
 ) {
     if (journal.list.items.isNotEmpty()) {
         item("tiles") {
@@ -61,11 +63,20 @@ internal fun LazyListScope.JournalBodySlot(
     item("entry") {
         val entry = journal.entry
         val callbacks =
-            remember(actions) {
+            remember(actions, editor) {
                 JournalBodyCallbacks(
                     onWrite = actions.write,
                     onSwap = actions.swap,
-                    onChip = { actions.page(it.toAction()) },
+                    onChip = { tap ->
+                        // a screen that writes sends the claim and opens the catch-up's field
+                        // itself; only a hand-over to another view goes to the page
+                        when {
+                            editor != null && tap is ChipTap.Claim -> actions.claim(tap.id)
+                            editor != null && tap == ChipTap.CatchUp -> actions.openCatchUp()
+                            else -> actions.page(tap.toAction())
+                        }
+                    },
+                    editor = editor,
                 )
             }
         // every new entry arrives, drawn at its start on the frame it is first seen; the first one

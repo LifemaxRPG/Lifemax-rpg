@@ -320,4 +320,6 @@ data class OpenJournal(
     val selection: String?,
     val empty: JournalEmpty?,
     val entry: JournalEntry?,
+    /** Phase 2: the catch-up's words and the XP's target, exactly when [edit] is "native". */
+    val write: JournalWrite? = null,
 )

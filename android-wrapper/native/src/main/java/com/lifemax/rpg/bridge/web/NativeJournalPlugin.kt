@@ -33,7 +33,7 @@ class NativeJournalPlugin : ComposeTabPlugin() {
         get() = ViewModelProvider(store, container.factory)[JournalViewModel::class.java]
 
     override val tabId = "history"
-    override val capabilities = listOf("library.journal.projection.v1")
+    override val capabilities = listOf("library.journal.projection.v1", "library.journal.write.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
@@ -52,8 +52,15 @@ class NativeJournalPlugin : ComposeTabPlugin() {
         SecureWindow.hold(activity, this, false)
     }
 
+    override fun onHidden() {
+        viewModel.hidden()
+    }
+
     override fun handleOnStop() {
-        // stop runs on the main thread, as every accept does; only a showing screen locks itself
+        // stop runs on the main thread, as every accept does; only a showing screen locks itself.
+        // The words in the field go to the page first, while the frame that says what they are
+        // owed is still held (phase 2)
+        if (visible) viewModel.hidden()
         if (visible && container.repository.stop()) viewModel.onProjection()
         super.handleOnStop()
     }

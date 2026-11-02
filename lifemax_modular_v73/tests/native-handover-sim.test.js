@@ -45,6 +45,13 @@
    lock branch, a fake native that drops data only when lock.on. JMUT=onchange (the page without its lock subscription) passes
    here: every relock also draws the Journal, and the kit's render hook sends the withheld frame within 100 ms; what only the
    subscription does (the lock turned off, which draws nothing) is checked by tests/native-journal.test.js.
+   Writing (phase 2, library.journal.write.v1, ADR 0013): the fake Journal lists the write capability, so the page says
+   edit:"native", and the Journal modes add the notebook field's hops: type (an autosave, final:false, into today's reflection,
+   with its base the text the page holds) and leave-field (the final write, which may pay). The fake native also flushes what it has
+   typed when the page closes its screen and when the app stops (as the screen does, even if the page has locked meanwhile).
+   Faults: an autosave that paid XP or came back with a celebration, XP paid for a text more than once a day, a write's reply to a
+   locked Journal carrying a private word, and a flush that did not store. JMUT=autosave runs a mutation that must fail: the
+   autosave paying like a final write.
    Needs Playwright (not part of the CI node tests).
    Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload by default) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -55,7 +62,8 @@ const root = path.resolve(__dirname, '..'), out = path.join(os.tmpdir(), 'lm_han
 execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 /* a mutation the Journal's modes must catch (JMUT): the page built without the projection's lock branch or the lock subscription */
-const MUTATIONS = { projection: ['if (locked()) return withheldFrame(); // nothing below runs while locked', ''], onchange: ['lock()?.onChange(() => {', 'void (() => {'] };
+const MUTATIONS = { projection: ['if (locked()) return withheldFrame(); // nothing below runs while locked', ''], onchange: ['lock()?.onChange(() => {', 'void (() => {'],
+  autosave: ['{ award: p.final === true, soft: false }', '{ award: true, soft: false }'] };
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
 const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings', pet: '', quests: '' }; // '': the page draws it, no screen shows
@@ -74,12 +82,12 @@ const MODES = (process.env.MODES || 'off,on,mixed,failing,lock,reload').split(',
 // the Journal's modes: Media's switch to the Journal and the Journal's back, and the lock's hops (the app stopped and started, the
 // lock switched in Settings, unlock from the lock card), plus page reloads in "reload"
 const JTAPS = { 'tap-journal': { plugin: 'NativeMedia', screen: 'media', from: 'media', to: 'history' }, 'tap-media': { plugin: 'NativeJournal', screen: 'journal', from: 'history', to: 'media' } };
-const JLOCK = { 'relock-vis': 1, 'lock-toggle': 1, 'unlock': 1 };
+const JLOCK = { 'relock-vis': 1, 'lock-toggle': 1, 'unlock': 1, 'type': 1, 'leave-field': 1 };
 const journalMode = mode => mode === 'lock' || mode === 'reload';
 // a mode's hops: the cards' taps where the cards can be wanted, an XP celebration in every mode, the cards' switch in mixed
 const hopsOf = mode => journalMode(mode)
   ? [...Object.keys(WANT), 'history', 'history', 'history', 'food', 'library', 'library', ...Object.keys(TAPS), ...Object.keys(JTAPS), ...Object.keys(JTAPS), ...Object.keys(SWIPES), 'celebrate',
-     'relock-vis', 'relock-vis', 'relock-vis', 'lock-toggle', 'unlock', 'unlock', ...(mode === 'reload' ? ['reload', 'reload'] : [])]
+     'relock-vis', 'relock-vis', 'relock-vis', 'lock-toggle', 'unlock', 'unlock', 'type', 'type', 'type', 'leave-field', 'leave-field', ...(mode === 'reload' ? ['reload', 'reload'] : [])]
   : HOPS.concat(mode === 'off' ? [] : Object.keys(CARDS), 'celebrate', mode === 'mixed' ? ['toggle-cards', 'toggle-cards'] : []);
 (async () => {
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -125,6 +133,17 @@ async function run(b, mode) {
     /* Overview and Food only hide on a close that names the session they currently hold (as the Kotlin plugins do); the close of Character,
        Log, Plan, Life Director, Recipes, Library and Settings (ComposeTabPlugin) is unconditional, and an update reaching one of those while hidden is a fault */
     const fault=window.__fault=m=>{window.__faults.push(m);window.__log.push(window.__t()+' !! '+m)};
+    /* the native Journal's notebook field (phase 2): what is typed waits in a draft and is sent as the screen would send it. An autosave
+       (final:false) may store the words and nothing more; a final write may pay, once for a text; a reply to a locked Journal names no word */
+    window.__draft=null;window.__writes={autosaves:0,finals:0,paid:0,flushes:0};
+    const nid=p=>p+(window.__rid=(window.__rid||0)+1);
+    window.__jsend=(final,d)=>{const id=nid(final?'jwf':'jwa');window.__wsent=window.__wsent||{};window.__wsent[id]={final,d:Object.assign({},d)};
+      Capacitor.Plugins.NativeJournal.__emit('command',{command:'reflect',payload:{d:d.d,text:d.text,base:d.base,final},requestId:id})};
+    window.__wreply=(r,snap)=>{const s=(window.__wsent||{})[r.requestId];if(!s)return;
+      if(!s.final&&(r.paid||(r.celebrations&&r.celebrations.length)))fault('an autosave paid XP or came back with a celebration');
+      if(snap&&snap.withheld&&/Canary/.test(JSON.stringify(r)))fault('a write reply to a locked Journal carried a private word');
+      if(r.ok){window.__writes[s.final?'finals':'autosaves']++;if(r.paid)window.__writes.paid++;if(window.__draft&&window.__draft.d===s.d.d&&!s.final)window.__draft.base=s.d.text}};
+    window.__flush=why=>{const d=window.__draft;if(!d)return;window.__log.push(window.__t()+' >> flush the typed words ('+why+')');window.__writes.flushes++;window.__jsend(true,d);window.__draft=null};
     /* A swipe's answer (swipeSettle) is checked the moment the page makes it, as it then goes to Android ahead of anything the page
        does next: the swipe it answers was not answered before; a swipe taken is answered before the page navigates, while the swipe
        is on, toward the tab next to the source on the bar as it is now; and the destination's open is not asked for before it. */
@@ -145,12 +164,12 @@ async function run(b, mode) {
         if(vis==='overview'&&window.__wantOf('dashboard')==='cards')fault('the shell was opened while the cards were wanted');
         if(vis==='cards'){window.__cardHops.opens++;if(window.__cardsOpen)fault('the cards were asked to open twice with no close between (two owners of the dashboard)');window.__cardsOpen=true}
         return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));if(fails){window.__log.push(window.__t()+' '+name+' open rejected');throw Error('decoder rejected')}window.__vis[vis]=true;if(vis==='cards')window.__cardHops.shown++;window.__z=window.__z.filter(k=>k!==vis).concat(vis);const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);if(model)await model.frame(a);window.__log.push(window.__t()+' '+name+' open<')})},
-      update:async(a)=>{take(a);if(a&&a.reply)window.__replied(a.reply);if(!sessions)await inOrder(async()=>{if(!window.__vis[vis]){fault(name+' updated while hidden');return}if(fails)throw Error('decoder rejected');if(model)await model.frame(a)})},
+      update:async(a)=>{take(a);if(a&&a.reply){window.__replied(a.reply);if(/^jw/.test(a.reply.requestId||''))window.__wreply(a.reply,a.snapshot)}if(!sessions)await inOrder(async()=>{if(!window.__vis[vis]){fault(name+' updated while hidden');return}if(fails)throw Error('decoder rejected');if(model)await model.frame(a)})},
       swipeSettle:a=>{checkAnswer(a);return inOrder(async()=>{window.__log.push(window.__t()+' '+name+' swipeSettle '+(a&&a.token)+' '+(a&&a.outcome)+(a&&a.reason?' ('+a.reason+')':''))})},
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
-        if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
+        if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2']})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
        drawn must hold no open data */
     const jmodel={frame:async a=>{const s=a&&a.snapshot;if(!s)return;const json=JSON.stringify(s),canary=/Canary/.test(json);if(s.withheld&&canary)fault('a withheld Journal frame carries a canary');
@@ -242,6 +261,7 @@ async function run(b, mode) {
           window.__tapped = '';
           if (v === 'relock-vis') {
             // the app stopped (native locks a showing lock.on screen itself) and started again; the page sees it hidden, or misses that
+            if (window.__draft) window.__flush('the app stopped');
             await window.__jnModel('stop');
             const missed = window.__rnd(0, 1) < 0.3;
             window.__log.push(window.__t() + ' >> app stopped and started' + (missed ? ' (the page missed hidden)' : ''));
@@ -252,6 +272,21 @@ async function run(b, mode) {
             if (lmaView() === 'history') return lmaView();
             const on = !jlOn(); window.__log.push(window.__t() + ' >> lock switched ' + (on ? 'on' : 'off') + ' in Settings');
             state.journalLock = { on }; if (on) jlUnlocked = true; save(); jlApply();
+          } else if (v === 'type' || v === 'leave-field') {
+            // the notebook field, on the open Journal only: typing is autosaved into today's reflection; leaving the field sends the final write
+            const st = await window.__jnModel('get');
+            if (!window.__vis.journal || lmaView() !== 'history' || st.state !== 'open' || !st.shown) return lmaView();
+            const d = getToday();
+            if (v === 'type') {
+              const base = (state.dayReflections || {})[d] || '', n = (window.__draft ? window.__draft.n : 0) + 1;
+              window.__draft = { d, base: window.__draft && window.__draft.d === d ? window.__draft.base : base, n, owed: true,
+                text: 'Canary typed ' + n + ': a long enough paragraph about how today went, with a good number of words in it.' };
+              window.__log.push(window.__t() + ' >> type (autosave ' + n + ')');
+              window.__jsend(false, window.__draft);
+            } else if (window.__draft) {
+              window.__log.push(window.__t() + ' >> leave the field (the final write)');
+              window.__flush('left the field');
+            }
           } else if (v === 'unlock') {
             if (!window.__vis.journal || lmaView() !== 'history') return lmaView();
             window.__log.push(window.__t() + ' >> unlock on the lock card');
@@ -353,6 +388,8 @@ async function run(b, mode) {
       if (st.shown && st.state === 'open' && locked) window.__fault('open Journal data shows once settled while the lock keeps it closed');
       if (st.shown && st.state === 'locked' && !jlOn() && lmaView() === 'history') window.__fault('the Journal is stuck on the lock card with the lock off');
       if (!window.__vis.journal && st.shown) window.__fault('the Journal model shows while its screen is hidden');
+      const paid = {}; state.activities.filter(a => a.type === 'coach' && a.name === 'Journal reflection').forEach(a => { paid[a.date.slice(0, 10)] = (paid[a.date.slice(0, 10)] || 0) + 1 });
+      if (Object.values(paid).some(n => n > 1)) window.__fault('a reflection was paid more than once for a day: ' + JSON.stringify(paid));
     });
     const r = await p.evaluate(() => {
       const vis = Object.keys(window.__vis).filter(k => window.__vis[k]);
@@ -382,6 +419,8 @@ async function run(b, mode) {
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
   if (journal) {
     const st = await p.evaluate(() => window.__jnModel('get'));
+    const wr = await p.evaluate(() => window.__writes);
+    console.log('     journal ' + mode + ' writing: ' + wr.autosaves + ' autosaves and ' + wr.finals + ' final writes answered ok, ' + wr.paid + ' paid, ' + wr.flushes + ' flushes');
     console.log('     journal ' + mode + ': ' + st.open + ' open and ' + st.withheld + ' withheld frames drawn, ' + st.stops + ' app stops locked the screen, ' + st.refused + ' open frames refused by the gate, ' + st.cleared + ' gates cleared by a new session or the lock off, ' + reloads + ' reloads' + (process.env.JMUT ? ' (mutation ' + process.env.JMUT + ')' : ''));
   }
   loads -= reloads; // the reload mode's own reloads; any other load is a tab switch that loaded the page
