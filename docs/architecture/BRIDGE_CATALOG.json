@@ -286,7 +286,7 @@
     "ordering": "webSessionId and increasing sequence; list.rev unchanged keeps the list; notice.id counts the page's toasts (one counter for every kit)",
     "invalidation": "renderHistory, the lock's onChange and onStatus, a page toast, host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0013",
+   "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0014 (writes keyed by natural receipts; private projections are ADR 0013)",
    "rollout": "opt-in under Settings, Appearance: Native Journal (beta), off by default",
    "canonicalLayout": true
   },
