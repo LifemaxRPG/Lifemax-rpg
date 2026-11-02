@@ -98,12 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-<<<<<<< HEAD
-   "bytes": 44249,
-=======
-   "bytes": 43217,
->>>>>>> track/h-character
-   "statement_count": 91,
+   "bytes": 45017,
+   "statement_count": 94,
    "tags": [
     "training",
     "quests",
@@ -3509,11 +3505,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-character.js",
-<<<<<<< HEAD
-   "bytes": 3609,
-=======
-   "bytes": 9469,
->>>>>>> track/h-character
+   "bytes": 9547,
    "statement_count": 1,
    "tags": [
     "android",

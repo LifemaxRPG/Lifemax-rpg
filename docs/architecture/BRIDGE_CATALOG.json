@@ -48,17 +48,12 @@
    "delegatedInteractions": [
     "openAttr (an attribute card's catalog of activities; without character.actions.v1 also Log, Luck and the benchmark form, as before)"
    ],
-<<<<<<< HEAD
-   "rollout": "Classic is default; Native Character preview is opt-in",
-   "mutationsGate": "CONTRACT A14-A15; no native gameplay mutation endpoint is exposed",
+   "rollout": "Classic is default; Native Character preview is opt-in; the actions follow the same switch and the capability handshake",
+   "mutationsGate": "CONTRACT A14-A15; the page stays the only writer: commands answer {ok, changed, message}, ok only when persist() succeeded",
    "memory": {
     "screenComposedAhead": "not measured yet: the prime call reads the Java and native heap before and 700 ms after it composes the screen and the page keeps the answer (window.__nativePrimePerf[view] = {javaKb, nativeKb, ms}); read it on the phone with the screen primed from a cold start, then write the figure here. Compose and the JVM cannot give a meaningful figure off the device (CONTRACT A24)"
    },
    "prime": "primed at idle as a swipe neighbour (prime: true in its NativeTabKit.create); its projection holds nothing private"
-=======
-   "rollout": "Classic is default; Native Character preview is opt-in; the actions follow the same switch and the capability handshake",
-   "mutationsGate": "CONTRACT A14-A15; the page stays the only writer: commands answer {ok, changed, message}, ok only when persist() succeeded"
->>>>>>> track/h-character
   },
   {
    "feature": "log",
