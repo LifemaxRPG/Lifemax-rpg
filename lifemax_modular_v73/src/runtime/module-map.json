@@ -3651,7 +3651,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 19847,
+   "bytes": 21406,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3660,6 +3660,7 @@
    ],
    "symbols": [
     "window.setNativeOverviewCardsEnabled",
+    "window.setNativeCatsEnabled",
     "window.NativeOverviewCards"
    ]
   },
@@ -3678,7 +3679,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 30443,
+   "bytes": 30491,
    "statement_count": 1,
    "tags": [
     "native",

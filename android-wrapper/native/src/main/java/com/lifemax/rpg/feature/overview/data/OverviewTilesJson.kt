@@ -18,6 +18,7 @@ import com.lifemax.rpg.feature.overview.domain.HeroRing
 import com.lifemax.rpg.feature.overview.domain.HeroStreak
 import com.lifemax.rpg.feature.overview.domain.HeroXp
 import com.lifemax.rpg.feature.overview.domain.LegendItem
+import com.lifemax.rpg.feature.overview.domain.LiveCat
 import com.lifemax.rpg.feature.overview.domain.LuckCard
 import com.lifemax.rpg.feature.overview.domain.MoveGo
 import com.lifemax.rpg.feature.overview.domain.MoveWarn
@@ -241,8 +242,27 @@ private fun cat(c: JSONObject): CatCard {
     else require(hearts in 0..5) { "A cat has five hearts" }
     val portrait = c.strOrNull("portrait")
     require(portrait == null || mode == CatMode.ALIVE) { "Only a living cat has a portrait" }
-    return CatCard(mode, c.str("eyebrow"), c.str("name"), hearts, portrait)
+    require(c.has("live")) { "Missing live" }
+    val live = if (c.isNull("live")) null else liveCat(c.getJSONObject("live"))
+    require(live == null || mode == CatMode.ALIVE) { "Only a living cat is drawn live" }
+    return CatCard(mode, c.str("eyebrow"), c.str("name"), hearts, portrait, live)
 }
+
+/**
+ * The live cat's look: exactly {coat, stage, weak}; anything else is a page this build is not for.
+ */
+internal fun liveCat(l: JSONObject): LiveCat {
+    val extra = l.keys().asSequence().filter { it !in LIVE_KEYS }.toList()
+    require(extra.isEmpty()) { "Unknown live cat keys $extra" }
+    val coat = l.str("coat")
+    require(coat.isNotEmpty() && coat.length <= LIVE_COAT_MAX) { "A coat is a short key" }
+    val stage = l.int("stage")
+    require(stage in LiveCat.ADULT..LiveCat.LAST_STAGE) { "A growth stage is -1 to 5" }
+    return LiveCat(coat, stage, l.bool("weak"))
+}
+
+private val LIVE_KEYS = setOf("coat", "stage", "weak")
+private const val LIVE_COAT_MAX = 64
 
 private fun luck(l: JSONObject): LuckCard {
     val rolled = l.bool("rolled")

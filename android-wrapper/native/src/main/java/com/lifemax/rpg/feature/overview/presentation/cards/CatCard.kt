@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -33,13 +35,23 @@ import com.lifemax.rpg.core.designsystem.mix
 import com.lifemax.rpg.feature.overview.domain.CatCard
 import com.lifemax.rpg.feature.overview.domain.CatMode
 import com.lifemax.rpg.feature.overview.domain.CatPortrait
+import com.lifemax.rpg.feature.pet.body.CatLife
+import com.lifemax.rpg.feature.pet.presentation.CatLiveView
+import com.lifemax.rpg.feature.pet.presentation.CatSprites
+import com.lifemax.rpg.feature.pet.presentation.CatStageColors
+import com.lifemax.rpg.feature.pet.presentation.rememberAnimationsOff
+import com.lifemax.rpg.feature.pet.presentation.rememberCatLife
+import com.lifemax.rpg.feature.pet.presentation.rememberCatSprites
 
 /**
  * The Cat card: a door to the live room, which stays on the page (ADR 0003), so [onOpen] is the
  * page's `{view:'pet'}`. A living cat (or two, "Miso & Pip") is the page's stage with the cat
  * sitting ([portrait], the page's petPortrait; a quiet paw while its art loads) over the name and
- * hearts; a cat that has passed is the page's own icon card (petPeekHtml, as the Overview's
- * `.ov-duo` lays it out: icon, words, arrow, one under the other).
+ * hearts. With Native cats (beta) on ([CatCard.live], one of the four coats native has art for),
+ * the stage shows the cat alive instead, drawn by native: it moves only while the card is [visible]
+ * and the app in front, and holds a still pose with [reducedMotion]; a cat that has passed is the
+ * page's own icon card (petPeekHtml, as the Overview's `.ov-duo` lays it out: icon, words, arrow,
+ * one under the other).
  */
 @Composable
 internal fun CatCardView(
@@ -47,10 +59,13 @@ internal fun CatCardView(
     portrait: CatPortrait?,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
+    visible: Boolean = true,
+    reducedMotion: Boolean = false,
+    preview: CatLivePreview? = null,
 ) {
     OverviewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
         when (tile.mode) {
-            CatMode.ALIVE -> Alive(tile, portrait)
+            CatMode.ALIVE -> Alive(tile, portrait, visible, reducedMotion, preview)
             CatMode.GONE -> Door(tile, "heart")
         }
     }
@@ -62,23 +77,47 @@ internal fun CatCardView(
  * hearts. The room itself stays on the page (ADR 0003): its dark stage stands in for it here.
  */
 @Composable
-private fun Alive(tile: CatCard, portrait: CatPortrait?) {
+private fun Alive(
+    tile: CatCard,
+    portrait: CatPortrait?,
+    visible: Boolean,
+    reducedMotion: Boolean,
+    preview: CatLivePreview?,
+) {
     val c = LocalPageColors.current
+    val live = tile.live?.takeIf { it.drawable }
+    val sprites = preview?.sprites ?: live?.let { rememberCatSprites(it.coat, it.stage) }
     BoxWithConstraints(
         Modifier.fillMaxWidth().aspectRatio(STAGE_ASPECT).background(Stage).drawBehind {
             val w = 1.dp.toPx()
             drawRect(c.lineSoft, Offset(0f, size.height - w), Size(size.width, w))
         }
     ) {
-        // the portrait is 96 x 64 room pixels, the window 192 wide: half the stage across, standing
-        // on the room's floor (about a sixth of the window up from its bottom)
-        PetPortrait(
-            portrait,
-            Modifier.align(Alignment.BottomCenter)
-                .padding(bottom = maxWidth * FLOOR)
-                .size(maxWidth / 2, maxWidth / 3),
-            placeholder = c.muted.copy(alpha = .5f),
-        )
+        if (live != null && sprites != null) {
+            // Native cats (beta): the cat itself, alive, in a strip of room drawn from the card's
+            // colours. Anything else (switch off, a genetic coat, art that did not load) is the
+            // page's still portrait below, exactly as before.
+            val life = preview?.life ?: rememberCatLife(tile.name, live.coat, live.weak)
+            val colors = remember(c) { CatStageColors(Stage, c.muted.mix(.1f, Stage), c.lineSoft) }
+            CatLiveView(
+                life,
+                sprites,
+                colors,
+                running = visible && preview == null,
+                still = reducedMotion || rememberAnimationsOff(),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            // the portrait is 96 x 64 room pixels, the window 192 wide: half the stage across,
+            // standing on the room's floor (about a sixth of the window up from its bottom)
+            PetPortrait(
+                portrait,
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(bottom = maxWidth * FLOOR)
+                    .size(maxWidth / 2, maxWidth / 3),
+                placeholder = c.muted.copy(alpha = .5f),
+            )
+        }
     }
     Row(
         Modifier.fillMaxWidth().padding(start = 16.dp, top = 11.dp, end = 16.dp, bottom = 12.dp),
@@ -96,6 +135,12 @@ private fun Alive(tile: CatCard, portrait: CatPortrait?) {
         Hearts(tile.hearts ?: 0)
     }
 }
+
+/**
+ * A frozen live cat for screenshots and tests: its sprites and a cat stepped to the moment to show.
+ * The clock does not run on it.
+ */
+internal class CatLivePreview(val sprites: CatSprites, val life: CatLife)
 
 /** `.pet-peek-in` in the Overview's column: the badge, the eyebrow and name, then the arrow. */
 @Composable

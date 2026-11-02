@@ -34,7 +34,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
         get() = ViewModelProvider(store, container.factory)[OverviewViewModel::class.java]
 
     override val tabId = "dashboard"
-    override val capabilities = listOf("overview.cards.v1")
+    override val capabilities = listOf("overview.cards.v1", "overview.cat.live.v1")
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)

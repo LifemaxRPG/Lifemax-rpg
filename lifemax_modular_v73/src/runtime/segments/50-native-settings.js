@@ -26,6 +26,7 @@
     ["tabTiming", "#tabTimingToggle", PREFS],
     ["nativeOverview", "#nativeOverviewToggle", PREFS],
     ["nativeOverviewCards", "#nativeOverviewCardsToggle", PREFS],
+    ["nativeCats", "#nativeCatsToggle", PREFS],
     ["nativeCharacter", "#nativeCharacterToggle", PREFS],
     ["nativeLog", "#nativeLogToggle", PREFS],
     ["nativePlan", "#nativePlanToggle", PREFS],

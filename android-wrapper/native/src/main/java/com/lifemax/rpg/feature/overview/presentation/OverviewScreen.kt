@@ -273,7 +273,13 @@ private fun Tile(
         OverviewTileIds.WEEK -> WeekCardView(t.week, weekDay, cards.haptics, actions.pickDay)
         OverviewTileIds.CAT ->
             t.cat?.let {
-                CatCardView(it, cards.catPortrait, onOpen = { actions.go(OverviewViews.PET) })
+                CatCardView(
+                    it,
+                    cards.catPortrait,
+                    onOpen = { actions.go(OverviewViews.PET) },
+                    visible = visible,
+                    reducedMotion = cards.reducedMotion,
+                )
             }
     }
 }

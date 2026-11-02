@@ -4,6 +4,8 @@
      overview-cards-{new,established,legacy,extras}.json   the four golden saves (Android: apps and health tiles present, health off)
      overview-cards-pet.json          a hungry cat; overview-cards-two-cats.json two cats; overview-cards-cat-gone.json in memory;
                                       overview-cards-no-cat.json no cat (tiles.cat null) with an avatar (images)
+     overview-cards-pet-live.json     a weak (hungry 30 h) cat with Native cats (beta) on: tiles.cat.live carries its coat, stage and weakness;
+                                      overview-cards-kitten-live.json a tuxedo kitten (stage 2). Every other fixture has live: null.
      overview-cards-health.json       health on, partway to the goal, with apps (one with its icon); overview-cards-health-goal.json
                                       the goal reached; overview-cards-browser.json outside the Android app (apps and health null)
      overview-cards-luck.json         luck rolled; overview-cards-over-pace.json today's XP over the pace; overview-cards-tip.json
@@ -26,6 +28,8 @@ const cat = (name, o) => `Object.assign({v:1,name:${JSON.stringify(name)},coat:'
 /* states on top of the established save, set up in the page (now is the fixed clock) */
 const STATES = {
   'pet': `state.pet=${cat('Miso', '{lastFed:now-20*36e5,bondPts:PET_BOND_AT[3]}')}`,
+  'pet-live': `state.pet=${cat('Miso', '{lastFed:now-30*36e5,bondPts:PET_BOND_AT[3]}')};lmaLoad().nativeCats=true`,
+  'kitten-live': `state.pet=${cat('Pip', '{coat:"tuxedo",born:now-12*864e5}')};lmaLoad().nativeCats=true`,
   'two-cats': `state.pet=${cat('Miso', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Pip', '{coat:"gray"}')}`,
   'cat-gone': `state.pet=${cat('Miso', '{alive:false,passed:now-3*864e5}')}`,
   'no-cat': `delete state.pet;delete state.pet2;state.avatar=${JSON.stringify(ICON)}`,
@@ -40,7 +44,7 @@ const STATES = {
 };
 const FAKE = `(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeOverviewCards', getPlatform: () => 'android',
   registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeOverviewCards: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-    handshake: async () => ({ protocol: 1, capabilities: ['overview.cards.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
+    handshake: async () => ({ protocol: 1, capabilities: ['overview.cards.v1', 'overview.cat.live.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
 
 module.exports = async function overview({ b, out, write, directorDay }) {
   const fs = require('fs'), path = require('path');

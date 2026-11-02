@@ -272,4 +272,41 @@ object Tuning {
         const val FADE_HEIGHT_PX = 40f
         const val FADE_SHARE = 0.5f
     }
+
+    /**
+     * What a cat does with an empty day (see [Autopilot]): relative weights, times and distances.
+     */
+    object Autopilot {
+        const val FIRST_PAUSE_MIN_S = 1.5f
+        const val REST_MIN_S = 1.5f
+        const val REST_MAX_S = 6f
+
+        const val W_REST = 2.5f
+        const val W_WANDER = 3f
+        const val W_TURN = 0.8f
+        const val W_GROOM = 2f
+        const val W_STRETCH = 1f
+        const val W_LOOK_UP = 1f
+        const val W_SLOW_BLINK = 0.8f
+        const val W_LOAF = 1.2f
+        const val W_NAP = 0.5f
+
+        /** After this long awake the pull toward a nap is at its full [NAP_GAIN]. */
+        const val SLEEPY_AFTER_S = 120f
+        const val NAP_GAIN = 3f
+
+        /** A hungry cat: how many times more it rests and the shorter way it walks. */
+        const val WEAK_LAZINESS = 2.2f
+        const val WEAK_NAP_FACTOR = 1.5f
+
+        const val WALK_MIN_PX = 24f
+        const val WALK_MAX_PX = 80f
+        const val WEAK_WALK_MAX_PX = 36f
+        const val WALK_TWICE_CHANCE = 0.35f
+        const val WALK_AGAINST_ROOM_CHANCE = 0.2f
+
+        const val GROOM_MIN_S = 3.5f
+        const val NAP_MIN_S = 14f
+        const val NAP_MAX_S = 28f
+    }
 }

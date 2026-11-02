@@ -10,6 +10,10 @@
    turning the switch off and on again tries once more. Plan: docs/architecture/plans/OVERVIEW_BODY.md, ADR 0012. */
 (function () {
   const PLUGIN = "NativeOverviewCards", CAPABILITY = "overview.cards.v1";
+  /* the cat card's live cat (beta, off by default): native draws the first cat itself from its own art and a local autopilot, when
+     the owner's switch is on and the screen says it can (the capability). The still portrait is always sent too, as the fallback. */
+  const CAT_LIVE = "overview.cat.live.v1", CAT_SETTING = "nativeCats";
+  const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for; any other (a dna_ coat) stays a still
   const CELEBRATION_KEEP_MS = 2000; // a celebration handed over stays in the projection this long; the screen plays each id once
   const WIDE = 860; // above this the page's sidebar is a side rail, not the bottom bar the shared bars are drawn from (02-layout.css)
   const GAVE_UP = "The native Overview cards could not open. The live Overview is showing.";
@@ -123,7 +127,15 @@
       try { url = petPortrait(state.pet, () => tab.schedule()); } catch (e) { console.warn("overview cards: portrait", e); }
     }
     if (url) images[keyOf(url)] = url;
-    return { mode: d.mode, eyebrow: d.eyebrow, name: d.name, hearts: d.mode === "alive" ? d.hearts : null, portrait: url ? keyOf(url) : null };
+    return { mode: d.mode, eyebrow: d.eyebrow, name: d.name, hearts: d.mode === "alive" ? d.hearts : null, portrait: url ? keyOf(url) : null,
+      live: d.mode === "alive" ? liveCat() : null };
+  }
+  /** what native needs to draw the first cat itself: its coat key, growth stage (-1 grown, 0..5 a kitten) and whether it is the
+      hungry, weak cat (the room's PET_WEAK rows); null with the switch off, an older screen, or a coat native has no art for */
+  function liveCat() {
+    const p = state.pet;
+    if (lmaLoad()[CAT_SETTING] !== true || !tab.has(CAT_LIVE) || !p || !p.alive || !LEGACY_COATS.includes(p.coat)) return null;
+    return { coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
   }
   function luck() {
     const d = ovLuckData();
@@ -360,6 +372,21 @@
   }
 
   const wanted = () => tab.enabled() && !gaveUp;
+
+  /* the live cat's switch: the screen is sent the cat again at once, so it comes to life (or back to the still) without waiting */
+  window.setNativeCatsEnabled = (on) => {
+    lmaLoad()[CAT_SETTING] = !!on;
+    lmaSave();
+    syncCats();
+    tab.schedule();
+  };
+  function syncCats() {
+    const input = document.getElementById("nativeCatsToggle");
+    if (input) input.checked = lmaLoad()[CAT_SETTING] === true;
+  }
+  document.addEventListener("DOMContentLoaded", syncCats);
+  syncCats();
+  setTimeout(syncCats, 700);
 
   /* the cold-start veil (see BOOT_VEIL_MS): set now, while the page is still loading, so the page's cards never paint first */
   function unveil() {

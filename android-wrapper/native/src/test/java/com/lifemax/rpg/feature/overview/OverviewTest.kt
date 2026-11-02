@@ -7,6 +7,7 @@ import com.lifemax.rpg.feature.overview.data.overviewReply
 import com.lifemax.rpg.feature.overview.domain.CatMode
 import com.lifemax.rpg.feature.overview.domain.DotKind
 import com.lifemax.rpg.feature.overview.domain.HealthCard
+import com.lifemax.rpg.feature.overview.domain.LiveCat
 import com.lifemax.rpg.feature.overview.domain.MoveGo
 import com.lifemax.rpg.feature.overview.domain.MoveWarn
 import com.lifemax.rpg.feature.overview.domain.OverviewCards
@@ -185,6 +186,55 @@ class OverviewTest {
         assertNull(browser.tiles.health)
         assertFalse("apps" in browser.shown || "health" in browser.shown)
         assertEquals("i380f6147", decode(fixture("no-cat")).tiles.hero.avatar)
+    }
+
+    @Test
+    fun theLiveCatIsExactlyCoatStageAndWeakness() {
+        // switch off: the page says live: null, and the still portrait is all there is
+        assertNull(decode(fixture("pet")).tiles.cat!!.live)
+        assertNull(decode(fixture("cat-gone")).tiles.cat!!.live)
+
+        val weak = decode(fixture("pet-live")).tiles.cat!!.live!!
+        assertEquals(LiveCat("ginger", LiveCat.ADULT, weak = true), weak)
+        assertTrue(weak.drawable)
+        val kitten = decode(fixture("kitten-live")).tiles.cat!!.live!!
+        assertEquals(LiveCat("tuxedo", 2, weak = false), kitten)
+        // the still portrait is still sent beside it, as the fallback
+        assertNotNull(decode(fixture("pet-live")).catPortrait)
+
+        // a genetic coat decodes but is not drawn live: the still stays
+        val dna = fixture("pet-live")
+        dna.at("tiles.cat.live").put("coat", "dna_a1b2")
+        assertFalse(decode(dna).tiles.cat!!.live!!.drawable)
+    }
+
+    @Test
+    fun theLiveCatDecoderIsStrict() {
+        fun live(change: JSONObject.() -> Unit): JSONObject =
+            fixture("pet-live").also { it.at("tiles.cat.live").change() }
+
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("extra", 1) }) }
+        assertThrows(Exception::class.java) { decode(live { remove("coat") }) }
+        assertThrows(Exception::class.java) { decode(live { remove("weak") }) }
+        assertThrows(Exception::class.java) { decode(live { put("coat", 3) }) }
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("coat", "") }) }
+        assertThrows(Exception::class.java) { decode(live { put("stage", "2") }) }
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("stage", 1.5) }) }
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("stage", 6) }) }
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("stage", -2) }) }
+        assertThrows(Exception::class.java) { decode(live { put("weak", 1) }) }
+        assertThrows(Exception::class.java) { decode(live { put("weak", "true") }) }
+
+        // the key must be there (null with the switch off), and only a living cat has one
+        val missing = fixture("pet-live").also { it.at("tiles.cat").remove("live") }
+        assertThrows(Exception::class.java) { decode(missing) }
+        val notObject = fixture("pet-live").also { it.at("tiles.cat").put("live", true) }
+        assertThrows(Exception::class.java) { decode(notObject) }
+        val gone = fixture("cat-gone")
+        gone
+            .at("tiles.cat")
+            .put("live", JSONObject("""{"coat":"ginger","stage":-1,"weak":false}"""))
+        assertThrows(IllegalArgumentException::class.java) { decode(gone) }
     }
 
     @Test

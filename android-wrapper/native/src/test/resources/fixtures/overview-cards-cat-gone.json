@@ -591,7 +591,8 @@
    "eyebrow": "IN MEMORY",
    "name": "Miso",
    "hearts": null,
-   "portrait": null
+   "portrait": null,
+   "live": null
   },
   "luck": {
    "eyebrow": "DAILY LUCK",

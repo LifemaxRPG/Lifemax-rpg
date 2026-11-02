@@ -591,7 +591,8 @@
    "eyebrow": "COMPANION",
    "name": "Miso",
    "hearts": 3,
-   "portrait": "i5247850a"
+   "portrait": "i5247850a",
+   "live": null
   },
   "luck": {
    "eyebrow": "DAILY LUCK",

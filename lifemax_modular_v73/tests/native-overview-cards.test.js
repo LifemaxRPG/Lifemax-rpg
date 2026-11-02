@@ -185,8 +185,31 @@ const HELPERS = `
       // the cat's portrait (petPortrait), once its art has loaded, by key, with the page's own picture in images
       await until(() => latest().tiles.cat.portrait, 8000);
       const c = latest(), pk = c.tiles.cat.portrait; out.portrait = !!pk && /^i[0-9a-f]+$/.test(pk) && c.images[pk] === petPortrait(state.pet);
+      // the live cat (beta): off by default, so the cat tile says live: null and the checkbox is off
+      out.liveOff = c.tiles.cat.live === null && lmaLoad().nativeCats === undefined && document.getElementById('nativeCatsToggle').checked === false;
+      // on, but the screen has not said it can draw one: still null. Once it has, the first cat's look and nothing else
+      const CAP = 'overview.cat.live.v1', live = async (f) => { f(); await wait(350); return latest().tiles.cat.live };
+      out.liveNoCap = (await live(() => setNativeCatsEnabled(true))) === null && lmaLoad().nativeCats === true && document.getElementById('nativeCatsToggle').checked;
+      __cards.caps.push(CAP); // the handshake the screen answered with is this array: it can now
+      const on = await live(() => setNativeCatsEnabled(true));
+      out.liveOn = !!on && JSON.stringify(Object.keys(on)) === '["coat","stage","weak"]' && on.coat === 'ginger' && on.stage === petGrowIdx(state.pet) && on.weak === (petStage(state.pet) >= 3);
+      state.pet.coat = 'dna_a1b2'; // a genetic coat has no native art: the still portrait stays
+      out.liveDna = (await live(() => renderOverview())) === null;
+      state.pet.coat = 'ginger';
+      state.pet.born = Date.now() - 6 * 864e5; // a kitten shows its growth stage
+      const kit = await live(() => renderOverview());
+      out.liveKitten = !!kit && kit.stage === 1 && kit.stage === petGrowIdx(state.pet);
+      state.pet.born = Date.now() - 40 * 864e5;
+      out.liveBack = (await live(() => setNativeCatsEnabled(false))) === null && lmaLoad().nativeCats === false;
+      __cards.caps.pop();
       return out;
     }, ICON);
+    ok('the live cat is off by default (null) and its switch unchecked', misc.liveOff, misc);
+    ok('switched on without the screen\'s capability, the cat tile still carries no live cat', misc.liveNoCap, misc);
+    ok('switched on with the capability, the tile carries the first cat\'s coat, stage and weakness only', misc.liveOn, misc);
+    ok('a genetic coat gets no live cat (the still portrait stays)', misc.liveDna, misc);
+    ok('a kitten carries its growth stage', misc.liveKitten, misc);
+    ok('switching it off takes the live cat away again', misc.liveBack, misc);
     ok('notices: the page\'s toast reaches the screen', misc.notice, misc);
     ok('an app icon arriving refreshes the open screen, by key', misc.icon, misc);
     ok('the cat card carries the page\'s portrait by image key', misc.portrait, misc);

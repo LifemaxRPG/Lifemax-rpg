@@ -354,7 +354,26 @@ data class CatCard(
     val name: String,
     val hearts: Int?,
     val portrait: String?,
+    val live: LiveCat?,
 )
+
+/**
+ * What native needs to draw the first cat itself (`overview.cat.live.v1`, the owner's "Native cats
+ * (beta)" switch): the coat key, the growth stage (-1 grown, 0 to 5 a kitten) and whether it is the
+ * hungry, weak cat. The page sends it only with the switch on; native draws it live only for the
+ * four coats it ships ([LiveCat.LEGACY_COATS]) and keeps the still portrait for any other.
+ */
+data class LiveCat(val coat: String, val stage: Int, val weak: Boolean) {
+    /** True when native has the art for this coat. */
+    val drawable: Boolean
+        get() = coat in LEGACY_COATS
+
+    companion object {
+        val LEGACY_COATS = setOf("ginger", "gray", "black", "tuxedo")
+        const val ADULT = -1
+        const val LAST_STAGE = 5
+    }
+}
 
 /** Daily luck: the score (monospace) in its tier's [color] once rolled. */
 data class LuckCard(

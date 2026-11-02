@@ -257,6 +257,10 @@ const HELPERS = `
     const cardsRow = card(latest(), 'appearance') && card(latest(), 'appearance').rows.find(x => x.title === 'Native Overview cards (beta)');
     out.cardsRow = !!cardsRow && cardsRow.controls[0].kind === 'switch' && cardsRow.controls[0].id === 'nativeOverviewCards' && cardsRow.controls[0].op === 'toggle'
       && cardsRow.controls[0].on === false && cardsRow.controls[0].enabled === true && lmaLoad().nativeOverviewCards === undefined;
+    // the live cat's switch (beta): a bound switch under Appearance, off by default
+    const catsRow = card(latest(), 'appearance') && card(latest(), 'appearance').rows.find(x => x.title === 'Native cats (beta)');
+    out.catsRow = !!catsRow && catsRow.controls[0].kind === 'switch' && catsRow.controls[0].id === 'nativeCats' && catsRow.controls[0].op === 'toggle'
+      && catsRow.controls[0].on === false && lmaLoad().nativeCats === undefined;
     await setNativeLogEnabled(false); // so every tab starts off (Overview since the start), and each switch below turns on, then off
     const TABS = { nativeCharacter: 'setNativeCharacterEnabled', nativeLog: 'setNativeLogEnabled', nativePlan: 'setNativePlanEnabled', nativeDirector: 'setNativeDirectorEnabled',
       nativeRecipes: 'setNativeRecipesEnabled', nativeLibrary: 'setNativeLibraryEnabled', nativeNutrition: 'setNativeNutritionEnabled', nativeOverview: 'setNativeOverviewEnabled',
@@ -280,6 +284,7 @@ const HELPERS = `
   }, HELPERS);
   ok('native Log\'s switch shows on from its default, with no key stored', t.logDefault, t);
   ok('the Overview cards\' switch (beta) is a bound switch, off by default and enabled', t.cardsRow, t);
+  ok('the live cat\'s switch (beta) is a bound switch, off by default', t.catsRow, t);
   ok('each native tab\'s switch runs the page\'s own setNativeXEnabled, on and off', t.setters && Object.values(t.results).every(Boolean), t);
   ok('no native tab opens over Settings, and Settings stays', t.noneOver, t);
 

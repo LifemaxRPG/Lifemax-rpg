@@ -421,6 +421,7 @@
    "plan": "docs/architecture/plans/OVERVIEW_BODY.md",
    "capabilities": [
     "overview.cards.v1",
+    "overview.cat.live.v1",
     "shell.swipe.v1",
     "shell.swipe.v2",
     "shell.prime.v1"
@@ -461,6 +462,7 @@
    "memoryCost": "to be measured on the phone (OVERVIEW_BODY.md phone check 13: dumpsys meminfo before the first open, after it and after 20 switches)",
    "tabTiming": "to be measured on the phone with Show tab timing (phone check 13: Character to Overview and back, warm)",
    "rollout": "opt-in under Settings, Appearance: Native Overview cards (beta), off by default",
+   "liveCat": "capability overview.cat.live.v1 (Native API 46): tiles.cat.live is null, or {coat, stage, weak} (exactly these keys; stage -1 grown or 0..5 a kitten) and only with Settings, Appearance: Native cats (beta) (nativeCats, off by default) on and the handshake listing the capability; native then draws the first cat itself (the four legacy coats only) on a local autopilot, and keeps the still portrait for any other coat, with the switch off or if the art does not load. The page sends the still portrait as well. No new command; nothing is written",
    "canonicalLayout": true
   },
   {
