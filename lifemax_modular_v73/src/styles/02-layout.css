@@ -816,6 +816,10 @@ body.noscroll{overflow:hidden}
 @keyframes viewIn{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
 .view.active>*{animation:viewIn .4s var(--ease-out) backwards}
 html.native-cover .view.active>*{animation:none!important}
+/* native tab swipe, phase 2 (50-native-swipe.js): a page Android's veil reveals is shown as it stays, with no fade-in or slide of
+   its cards; and the page's static copy of a tab whose native screen is sliding in is hidden until the screen is in place */
+html.swipe-reveal .view.active>*{animation:none!important}
+html.native-enter .view.active>*{visibility:hidden}
 html.lma-capture .sidebar,html.lma-capture .sidebar *,html.lma-capture .topbar,html.lma-capture .topbar *{transition:none!important;animation:none!important}
 .view.active>*:nth-child(2){animation-delay:0.030s}
 .view.active>*:nth-child(3){animation-delay:0.060s}

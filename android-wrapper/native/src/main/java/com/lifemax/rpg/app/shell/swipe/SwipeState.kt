@@ -61,8 +61,15 @@ sealed interface Neighbour {
     data class Veil(override val tab: SwipeTab) : Neighbour
 
     /**
-     * A web or stop tab, or an end of the bar: the screen gives a little over the label-less veil
-     * and springs back. Phase 1 never commits into a wall.
+     * Phase 2: a tab the page draws (a web page, or the Overview's live shell), from a page that
+     * takes such a swipe ([SwipeState.reveal]): the veil slides in with its icon and label, and a
+     * commit lets the page go there, then reveals it ([SwipePhase.Reveal]).
+     */
+    data class Reveal(override val tab: SwipeTab) : Neighbour
+
+    /**
+     * A stop tab (Money), an end of the bar, or a web tab on a page from phase 1: the screen gives
+     * a little over the label-less veil and springs back. Never committed into.
      */
     data class Wall(override val tab: SwipeTab?) : Neighbour
 }
@@ -92,12 +99,18 @@ data class SwipeState(
     val colors: SwipeColors?,
     val tune: SwipeTune,
     val sequence: Int,
+    /**
+     * The page takes a swipe into a tab it draws itself and answers it `web` (phase 2). Missing on
+     * a page from phase 1, where web tabs stay walls.
+     */
+    val reveal: Boolean = false,
 ) {
     /**
      * The sides of [pane], or null when this state cannot start a swipe from it: another view is
      * current, the active tab is not on the bar or resolves to another view, or it may not start a
      * swipe. A native neighbour is a [Neighbour.Pane] when its view is in [composed], otherwise a
-     * [Neighbour.Veil]; anything else is a [Neighbour.Wall].
+     * [Neighbour.Veil]; a web one is a [Neighbour.Reveal] when the page takes it ([reveal]);
+     * anything else is a [Neighbour.Wall].
      */
     fun neighbours(pane: String, composed: Set<String>): Neighbours? {
         if (view != pane) return null
@@ -107,6 +120,7 @@ data class SwipeState(
         fun side(j: Int): Neighbour {
             val tab = tabs.getOrNull(j) ?: return Neighbour.Wall(null)
             return when {
+                tab.kind == TabKind.Web && reveal -> Neighbour.Reveal(tab)
                 tab.kind != TabKind.Native -> Neighbour.Wall(tab)
                 tab.view in composed -> Neighbour.Pane(tab)
                 else -> Neighbour.Veil(tab)
@@ -142,6 +156,7 @@ data class SwipeState(
                 colors = swipe.optJSONObject("colors")?.toColors(),
                 tune = SwipeTune.parse(swipe.optJSONObject("tune")),
                 sequence = sequence,
+                reveal = swipe.optBoolean("reveal", false),
             )
         }
 

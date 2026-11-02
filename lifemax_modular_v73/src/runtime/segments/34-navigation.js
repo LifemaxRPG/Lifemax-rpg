@@ -84,6 +84,7 @@ window.lmaBack=lmaBack;
  navigate=function(v){
   /* a swipe turns the cards' fade-in off; any other way of changing page turns it back on (before the page changes, so nothing replays) */
   if(!lmaSwipeNav)delete document.documentElement.dataset.swipeDir;
+  if(window.NativeSwipe)NativeSwipe.navigated(); /* a native tab swipe's marks (swipe-reveal, native-enter) last only for its own arrival */
   const prev=lmaView(),r=_nav.apply(this,arguments),now=lmaView();
   lmaSyncActive();
   if(!lmaNavSkip&&prev&&now&&prev!==now){
@@ -167,8 +168,10 @@ document.addEventListener('touchmove',e=>{
  const dir=dx<0?1:-1,nx=lmaSw.cur+dir,edge=nx<0||nx>=lmaSw.n;
  lmaPgSet(edge?dx*.25:dx);
 },{passive:true});
-/* go to a tab because of a swipe: its cards slide in from the side you swiped toward */
-function lmaSwipeGo(v,dir){
+/* go to a tab because of a swipe: its cards slide in from the side you swiped toward. A tab a native screen draws slides in itself
+   instead, as fast as the finger left (speed in px per ms), with Native tab swipe on (50-native-swipe.js) */
+function lmaSwipeGo(v,dir,speed){
+ if(dir&&window.NativeSwipe&&NativeSwipe.enter(v,dir,(speed||0)*1000)){lmaSyncActive();return}
  lmaSwipeNav=true;
  try{if(dir&&!lmaMotionOff())document.documentElement.dataset.swipeDir=dir>0?'next':'prev';else delete document.documentElement.dataset.swipeDir;lmaNavTo(v,{fast:true})}finally{lmaSwipeNav=false}
  lmaSyncActive();
@@ -193,7 +196,7 @@ function lmaSwipeEnd(e){
  const target=tabs[next];
  lmaPgTween(off,ms,lmaEaseIn,()=>{
   lmaPgEnd();
-  lmaSwipeGo(target.dataset.view,dir);
+  lmaSwipeGo(target.dataset.view,dir,v);
   lmaSwipeHint(target,dir>0?-1:1);
  });
 }

@@ -79,7 +79,11 @@ data class Slide(val dir: Int, val spring: Spring1D) {
 
 /**
  * A commit in flight, sent as [token] at [at] toward the pane [dest]. It is complete once the
- * destination has opened (and, opened cold, drawn) and the source has closed.
+ * destination has opened (and, opened cold, drawn) and the source has closed. A [reveal] is a
+ * commit the page draws (it answered `web`, or answered `native` and then closed the source before
+ * any screen opened: the destination fell back to web): the veil takes the destination's place, the
+ * shared bars are held, and once the source has closed and the slide has landed the veil reveals
+ * the page ([SwipePhase.Reveal]).
  */
 data class Commit(
     val token: String,
@@ -88,16 +92,44 @@ data class Commit(
     val drawn: Boolean,
     val opened: Boolean = false,
     val sourceClosed: Boolean = false,
+    val reveal: Boolean = false,
 ) {
     val complete: Boolean
-        get() = opened && drawn && sourceClosed
+        get() = if (reveal) sourceClosed else opened && drawn && sourceClosed
 }
 
-/** Idle → Armed → Dragging → Settling(commit|cancel) → AwaitPage → Idle. */
+/**
+ * Idle → Armed → Dragging → Settling(commit|cancel) → AwaitPage → Idle, with Reveal after a commit
+ * the page draws, and Entering for a screen the page opened at the end of its own swipe.
+ */
 sealed interface SwipePhase {
     data object Idle : SwipePhase
 
-    /** Every phase but Idle belongs to one gesture. */
+    /**
+     * Phase 2, web → native: the page's own swipe went to [pane], and its screen slides in from
+     * [dir]'s side (+1 from the right) to 0, at [velocity] (fractions of W per second). The
+     * [spring] starts at the screen's first draw after the open (null until then: it waits at
+     * dir·W, so a screen composed cold does not lose its slide to the composing); [since] is the
+     * open.
+     */
+    data class Entering(
+        val pane: String,
+        val dir: Int,
+        val velocity: Float,
+        val since: Long,
+        val spring: Spring1D? = null,
+    ) : SwipePhase {
+        /** Where the screen stands, as a fraction of W from 0 toward its side. */
+        fun offset(env: SwipeEnv): Float =
+            if (spring == null) 1f else 1f - spring.position(env.now).coerceIn(0f, 1f)
+
+        fun landed(env: SwipeEnv): Boolean =
+            spring != null &&
+                (spring.isAtRest(env.now, env.epsilon) ||
+                    spring.time(env.now) >= SwipeTune.SETTLE_CAP_SECONDS)
+    }
+
+    /** Every phase but Idle and Entering belongs to one gesture. */
     sealed interface Active : SwipePhase {
         val gesture: Gesture
     }
@@ -126,6 +158,30 @@ sealed interface SwipePhase {
         override val slide: Slide,
         override val commit: Commit,
     ) : Sliding
+
+    /**
+     * A commit the page draws has landed and its source has gone: the veil, with [tab]'s icon and
+     * label, covers the screen while the WebView draws the page ([SwipeModel.awaitingWeb]), then
+     * fades from [fadeAt] (the WebView's answer, or [since] + [SwipeModel.REVEAL_CAP_NANOS]).
+     */
+    data class Reveal(
+        override val gesture: Gesture,
+        val token: String,
+        val tab: SwipeTab?,
+        val since: Long,
+        val fadeAt: Long? = null,
+    ) : Active {
+        /** The veil's alpha: 1 until the fade, then down to 0 over [SwipeModel.FADE_SECONDS]. */
+        fun alpha(env: SwipeEnv): Float {
+            val from = fadeAt ?: return 1f
+            val scale = gesture.scale(env)
+            if (scale <= 0f) return 0f
+            val t = (env.now - from).coerceAtLeast(0L) / 1e9f / scale
+            return (1f - t / SwipeModel.FADE_SECONDS).coerceIn(0f, 1f)
+        }
+
+        fun faded(env: SwipeEnv): Boolean = fadeAt != null && alpha(env) <= 0f
+    }
 }
 
 val SwipePhase.gesture: Gesture?

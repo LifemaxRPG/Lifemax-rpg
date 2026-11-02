@@ -14,6 +14,7 @@ import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
 import com.lifemax.rpg.app.shell.swipe.SettleOutcome
+import com.lifemax.rpg.app.shell.swipe.SwipeEnter
 import com.lifemax.rpg.app.shell.swipe.TabScreenView
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import com.lifemax.rpg.feature.food.presentation.NativeNutritionScreen
@@ -69,7 +70,10 @@ class NativeNutritionPlugin : Plugin() {
                 snapshot = JSONObject(data.toString())
                 // the screen stays composed while another tab is showing, so coming back is instant
                 val view = layer ?: createLayer()
-                TabSwipe.opened(PANE)
+                TabSwipe.opened(
+                    PANE,
+                    SwipeEnter.of(call.getString("enter"), call.getDouble("velocity")),
+                )
                 view.bringToFront()
                 shown = true
                 showChrome(call.getObject("chromeScene"), opening = true)
@@ -205,7 +209,7 @@ class NativeNutritionPlugin : Plugin() {
         /** The page view the screen draws, its pane in the tab swipe. */
         const val PANE = "meals"
 
-        /** The tab swipe protocol this build draws. */
-        const val SWIPE_VERSION = 1
+        /** The tab swipe protocol this build draws: 2, phase 1 and the edges (CONTRACT A34). */
+        const val SWIPE_VERSION = 2
     }
 }

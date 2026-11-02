@@ -5,8 +5,11 @@
    - a release that commits sends one 'swipe' event on the plugin of the screen it started on. request() answers it with
      swipeSettle, before anything else, then goes to the tab as a bar tap does, so the hand-over (CONTRACT A23) runs as always.
    A swipe moves pixels, never ownership: the page's open and close always win. Phase 1 swipes only from one native screen to
-   another; a web page, the Overview, Money (Cash) and the ends of the bar are walls. Off by default: Settings, Navigation, Native
-   tab swipe (beta). The feel can be tuned on the phone in Developer mode. */
+   another. Phase 2 adds the edges (plans/TAB_SWIPE.md §5): a swipe from a native screen into a tab the page draws (a web page, the
+   Overview's live shell) is answered "web" and Android's veil reveals the page once it has drawn (html.swipe-reveal keeps its
+   cards from fading in under the veil); and the page's own swipe ending on a native tab passes enter/velocity to its open, so the
+   screen slides in, while html.native-enter hides the page's static copy of it. Money (Cash) and the ends of the bar stay walls.
+   Off by default: Settings, Navigation, Native tab swipe (beta). The feel can be tuned on the phone in Developer mode. */
 
 /* How the swipe feels: native's defaults (SwipeTune.kt), mirrored here so the owner's changes are made against them; a fixture test
    keeps the two equal. Fractions are of the screen width. Native clamps every value the page sends. */
@@ -85,6 +88,7 @@ const LMA_TABSWIPE = Object.freeze({
         tabs: bar.map(tab),
         colors: colors(),
         tune: lmaLoad().swipeTune || null,
+        reveal: true, // phase 2: a swipe into a tab the page draws is taken (answered "web"); an APK from phase 1 ignores this
       };
     } catch (err) {
       console.warn("Native swipe state", err);
@@ -100,7 +104,9 @@ const LMA_TABSWIPE = Object.freeze({
     if (!current || e.from !== src || lmaView() !== src || !NativeTabs.isOpen(src)) return "stale";
     const bar = lmaTabList(), i = bar.findIndex((b) => b.dataset.view === lmaTabKey(src));
     if (i < 0 || (e.dir !== 1 && e.dir !== -1) || bar[i + e.dir]?.dataset.view !== e.to) return "stale";
-    if (kind(lmaResolve(e.to)) !== "native") return "kind"; // phase 1: from one native screen to another only
+    const k = kind(lmaResolve(e.to));
+    // a tab the page draws only for an APK that reveals it (it says so on the swipe); Money never
+    if (k === "stop" || (k === "web" && e.reveal !== true)) return "kind";
     return "";
   }
 
@@ -125,8 +131,42 @@ const LMA_TABSWIPE = Object.freeze({
       console.warn("Native swipe", err);
       reason = "error";
     }
-    settle(plugin, e, reason ? "refused" : "native", reason);
-    if (!reason) go(e.to);
+    if (reason) return settle(plugin, e, "refused", reason);
+    // the tab's kind was read just now in refusal(); a native screen that would not open now is "web" and revealed the same way
+    const web = kind(lmaResolve(e.to)) !== "native";
+    settle(plugin, e, web ? "web" : "native");
+    if (web) reveal(e.to);
+    else go(e.to);
+  }
+  /* Marks that hold only across one swipe's arrival. lmaNavTo runs every navigate wrapper, the one below too, so the page's own
+     navigate inside these says it is ours; any other navigate clears them (the owner has moved on). */
+  let ours = false, revealTimer = 0, enterTimer = 0, entering = null;
+  function arrive(to) {
+    ours = true;
+    try {
+      lmaNavTo(to, { fast: true });
+    } finally {
+      ours = false;
+    }
+  }
+  function unreveal() {
+    clearTimeout(revealTimer);
+    document.documentElement.classList.remove("swipe-reveal");
+  }
+  /** goes to a tab the page draws, which native reveals: no fade-in or slide of its cards under the veil, so the page the veil
+      lifts off is the page as it stays (cleared at the next navigate, or after 800 ms) */
+  function reveal(to) {
+    try {
+      const root = document.documentElement;
+      root.classList.add("swipe-reveal");
+      delete root.dataset.swipeDir;
+      clearTimeout(revealTimer);
+      revealTimer = setTimeout(unreveal, 800);
+      arrive(to);
+      lmaSyncActive();
+    } catch (err) {
+      console.warn("Native swipe", err); // answered already: native's watchdog puts the screens right
+    }
   }
   /** goes to the tab of a swipe taken, as a bar tap does: no View Transition, no slide of the web cards under the screen, recorded
       for Back, and every navigate wrapper runs, so the hand-over opens the destination and then closes the source */
@@ -143,9 +183,63 @@ const LMA_TABSWIPE = Object.freeze({
     }
   }
 
+  /** The page's own swipe (34-navigation's lmaSwipeGo) ending on a tab a native screen draws, from a web page or the Overview's web
+      body: the screen slides in from the side swiped toward, as fast as the finger left (speed in CSS px, about dp, per second).
+      Until it is in place html.native-enter hides the page's static copy of the tab, so it never flashes. Returns whether it went
+      there; false leaves the web swipe as before (the switch off, an APK from before phase 2, reduced motion, a web tab). */
+  function enter(to, dir, speed) {
+    try {
+      if (lmaLoad().nativeSwipe !== true || edges !== true || (dir !== 1 && dir !== -1) || lmaMotionOff()) return false;
+      const view = lmaResolve(to);
+      if (kind(view) !== "native") return false;
+      const root = document.documentElement;
+      entering = { view, enter: dir > 0 ? "next" : "prev", velocity: Math.min(20000, Math.round(Math.abs(speed) || 0)) };
+      root.classList.add("native-cover", "native-enter");
+      delete root.dataset.swipeDir;
+      clearTimeout(enterTimer);
+      enterTimer = setTimeout(unenter, ENTER_WAIT_MS);
+      arrive(to);
+      return true;
+    } catch (err) {
+      console.warn("Native swipe enter", err);
+      unenter();
+      return false;
+    }
+  }
+  /* the destination's open may take a moment (a first handshake); its own end clears the mark sooner (entered) */
+  const ENTER_WAIT_MS = 1500, SLID_MS = 450; // native's settle cap: the slide is over by then
+  function unenter() {
+    clearTimeout(enterTimer);
+    entering = null;
+    document.documentElement.classList.remove("native-enter");
+  }
+  /** what the open of view's screen passes for the slide, once: {enter, velocity}, or nothing for a plain open */
+  function takeEnter(view) {
+    const e = entering;
+    if (!e || e.view !== view || e.taken) return undefined;
+    entering = Object.assign({}, e, { taken: true });
+    return { enter: e.enter, velocity: e.velocity };
+  }
+  /** an open of view's screen is over: in place (the static copy may show once the slide is done) or not (it shows at once) */
+  function entered(view, opened) {
+    const e = entering;
+    if (!e || e.view !== view) return;
+    clearTimeout(enterTimer);
+    if (opened && e.taken) enterTimer = setTimeout(unenter, SLID_MS);
+    else unenter();
+  }
+  /** the page changes view (34-navigation's navigate wrapper asks): one not made by a swipe here ends that swipe's marks */
+  function navigated() {
+    if (ours) return;
+    unreveal();
+    unenter();
+  }
+
   /* Settings: the switch, enabled once the APK says it draws the swipe. Every native tab on ComposeTabPlugin shares one handshake,
      so the first tells for all of them; Food answers in its own capabilities. */
-  let capable = null, asked = null; // whether the APK draws the swipe; null until a plugin has answered
+  // whether the APK draws the swipe (null until a plugin has answered), and whether it draws the edges too (phase 2: it slides in
+  // a screen the page swiped to; its swipes say for themselves whether it reveals a web tab)
+  let capable = null, asked = null, edges = false;
   async function ask() {
     const C = window.Capacitor, has = (name) => {
       try {
@@ -155,16 +249,23 @@ const LMA_TABSWIPE = Object.freeze({
       }
     };
     try {
-      if (has("NativeCharacter")) return (await C.Plugins.NativeCharacter.handshake()).capabilities.includes("shell.swipe.v1");
-      if (has("NativeNutrition")) return (await C.Plugins.NativeNutrition.capabilities()).swipe === 1;
+      if (has("NativeCharacter")) {
+        const caps = (await C.Plugins.NativeCharacter.handshake()).capabilities;
+        return { swipe: caps.includes("shell.swipe.v1"), edges: caps.includes("shell.swipe.v2") };
+      }
+      if (has("NativeNutrition")) {
+        const caps = await C.Plugins.NativeNutrition.capabilities();
+        return { swipe: caps.swipe >= 1, edges: caps.swipe >= 2 }; // 2: it draws the edges too
+      }
     } catch (e) {
       console.warn("Native swipe capability", e);
     }
-    return false;
+    return { swipe: false, edges: false };
   }
   function sync() {
     asked = asked || ask().then((yes) => {
-      capable = yes;
+      capable = yes.swipe;
+      edges = yes.swipe && yes.edges;
       sync();
     });
     const input = document.getElementById("nativeSwipeToggle"), hint = document.getElementById("nativeSwipeHint");
@@ -233,6 +334,6 @@ const LMA_TABSWIPE = Object.freeze({
     toast("Swipe feel: back to the defaults");
   };
 
-  window.NativeSwipe = { state: swipeState, kind, request, sync };
+  window.NativeSwipe = { state: swipeState, kind, request, sync, enter, takeEnter, entered, navigated };
   setTimeout(sync, 700);
 })();

@@ -123,14 +123,21 @@ class SwipeModelTest {
     }
 
     @Test
-    fun theSourceClosingBeforeTheDestinationOpensCutsToTheWeb() {
+    fun theSourceClosingBeforeTheDestinationOpensSwapsToTheVeil() {
         val s = SwipeStage().home()
         val request = s.commitNext()
         s.send(Settle(request.token, SettleOutcome.Native)).wait(40)
-        // the destination fell back to web, so the page closed the source at once
+        // the destination fell back to web, so the page closed the source at once (phase 2: the
+        // veil takes Food's place and reveals the page; SwipeEdgesTest has the whole path)
         s.send(Closed("character"))
+        assertTrue(s.traces.single().startsWith("fallback"))
+        assertEquals(request.token, s.model.holdsChrome)
+        val swapped = s.scene()
+        assertEquals("Food", swapped.veil?.tab?.label)
+        assertTrue(swapped.panes.getValue("meals").visibility != Shown)
+        s.wait(1000)
         assertEquals(SwipePhase.Idle, s.model.phase)
-        assertTrue(s.traces.single().startsWith("abort: cut"))
+        assertNull(s.model.holdsChrome)
         assertTrue(s.scene().panes.values.all { it.visibility == Gone })
     }
 

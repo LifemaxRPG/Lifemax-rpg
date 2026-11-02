@@ -9,8 +9,10 @@ import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.core.view.OneShotPreDrawListener
+import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.TabTiming
 import org.json.JSONObject
 
@@ -31,6 +33,8 @@ import org.json.JSONObject
  * - The watchdog ([SwipeModel.deadline]) and a cold destination's first draw
  *   ([SwipeModel.awaitingDraw]) come back in as inputs.
  * - A page that starts loading ([pageStarted]) is forgotten, and the veil goes with it.
+ * - Phase 2: while a reveal needs the shared bars it holds them (ChromeHost.hold), and it asks the
+ *   WebView (`postVisualStateCallback`) when the page under the veil has drawn.
  */
 internal object TabSwipe {
     private class Screen(val view: TabScreenView, val send: (SwipeRequest) -> Unit) {
@@ -61,6 +65,11 @@ internal object TabSwipe {
     }
     private var drawWatch: View? = null
 
+    /** The reveal holding the shared bars, and the one the WebView was last asked about. */
+    private var chromeHeld: String? = null
+    private var webAsked: String? = null
+    private var webAsks = 0L
+
     /** The views above the screens (the bars' frames) with a touch in progress. */
     private val touchedAbove = HashSet<Any>()
 
@@ -81,8 +90,11 @@ internal object TabSwipe {
         step(SwipeInput.Register(pane, source))
     }
 
-    /** The page opened [pane]: in place of VISIBLE. The awaited destination keeps its slide. */
-    fun opened(pane: String) = step(SwipeInput.Opened(pane))
+    /**
+     * The page opened [pane]: in place of VISIBLE. The awaited destination keeps its slide; one the
+     * page reached by its own swipe ([enter], phase 2) slides in from that side.
+     */
+    fun opened(pane: String, enter: SwipeEnter? = null) = step(SwipeInput.Opened(pane, enter))
 
     /** The page closed [pane]: in place of GONE. A source sliding out stays until it is off. */
     fun closed(pane: String) = step(SwipeInput.Closed(pane))
@@ -166,9 +178,47 @@ internal object TabSwipe {
         val source = (next.phase.gesture ?: before)?.source
         effects.forEach { run(it, source) }
         screens.values.forEach { if (!next.tracking(it.view.pane)) it.view.yieldGesture() }
+        holdChrome(next.holdsChrome)
         if (drawNow) draw(env) else postFrame()
         schedule(env)
     }
+
+    /**
+     * The shared bars stay while a reveal needs them (phase 2); released when it no longer does.
+     */
+    private fun holdChrome(token: String?) {
+        if (token == chromeHeld) return
+        chromeHeld?.let(ChromeHost::unhold)
+        chromeHeld = token
+        token?.let(ChromeHost::hold)
+    }
+
+    /**
+     * Asks the WebView to say when it has drawn the page as it is now, the page the veil reveals.
+     * Without a WebView the reveal's cap fades the veil anyway.
+     */
+    private fun askWeb(token: String) {
+        val web = root?.let(::findWeb) ?: return
+        web.postVisualStateCallback(
+            ++webAsks,
+            object : WebView.VisualStateCallback() {
+                override fun onComplete(requestId: Long) {
+                    if (webAsked == token) step(SwipeInput.WebDrawn(token))
+                }
+            },
+        )
+    }
+
+    /** The WebView under the screens (in android.R.id.content's first child). */
+    private fun findWeb(view: View): WebView? =
+        when (view) {
+            is WebView -> view
+            is TabScreenView,
+            is SwipeVeil -> null
+            is ViewGroup ->
+                (0 until view.childCount).firstNotNullOfOrNull { findWeb(view.getChildAt(it)) }
+            else -> null
+        }
 
     private fun env(now: Long): SwipeEnv {
         val root = root ?: return SwipeEnv(now, 0, 1f)
@@ -236,6 +286,7 @@ internal object TabSwipe {
         val veil = veil() ?: return
         veil.show(stage.tab, model.state?.colors)
         veil.translationX = stage.tx.toFloat()
+        veil.alpha = stage.alpha
         veil.visibility = View.VISIBLE
     }
 
@@ -287,8 +338,16 @@ internal object TabSwipe {
         }
     }
 
-    /** The watchdog, while a commit waits for the page, and a cold destination's first draw. */
+    /**
+     * The watchdog (while a commit waits for the page, a reveal for the WebView, an entering screen
+     * for its first draw), the WebView's answer for a reveal, and a cold destination's first draw.
+     */
     private fun schedule(env: SwipeEnv) {
+        val web = model.awaitingWeb
+        if (web != webAsked) {
+            webAsked = web
+            web?.let(::askWeb)
+        }
         val deadline = model.deadline
         if (deadline != watchdogAt) {
             if (watchdogAt != null) handler.removeCallbacks(watchdog)
@@ -318,6 +377,8 @@ internal object TabSwipe {
         if (watchdogAt != null) handler.removeCallbacks(watchdog)
         watchdogAt = null
         drawWatch = null
+        webAsked = null
+        holdChrome(null)
     }
 
     private fun record(note: String) {

@@ -438,7 +438,7 @@ The kit and Nutrition pass `open({…, enter:"next"|"prev", velocity})`. `TabSwi
 - Owner gets: a smooth swipe with tension, a click at the catch and spring settles between Character↔Food and Workout plan↔Library in the default order. Optionally reorder (Settings → Bottom bar) to Character, Food, Log, Workout plan, Library to swipe along five native tabs. Tuning happens on the phone through Developer mode.
 - Land after track/integ merges. Rebase onto ld2 and settings.
 
-**Phase 2: every edge.**
+**Phase 2: every edge.** *Built (CONTRACT A34 item 7, MIGRATION). Differences from this text: `native-enter` stays until 450 ms after the screen's open (the slide's settle cap) rather than clearing as the open resolves, capped at 1.5 s, so the page's copy never shows beside a screen still sliding; an entering screen waits at ±W for its first draw before its spring starts, so a cold one keeps its slide; a destination that opens after a fallback takes the slot back from the veil; the page answers `web` only to a swipe carrying `reveal: true`.*
 - §5 in full: veil reveal with `postVisualStateCallback`; `ChromeHost.hold`/`unhold`; fallback swap; `enter` slide-in for web → native and Overview → native; `swipe-reveal` and `native-enter` CSS (02-layout.css).
 - Owner gets: every tab boundary on the bar swipes, except Money.
 

@@ -24,13 +24,22 @@ data class SwipeEnv(
         get() = 0.5f / width
 }
 
-/** The page's answer to a swipe (`swipeSettle`). Phase 1 knows two; anything else is a refusal. */
+/**
+ * The page's answer to a swipe (`swipeSettle`): a native screen will draw the tab, the page will
+ * draw it (phase 2: the veil reveals it), or no. Anything else is a refusal.
+ */
 enum class SettleOutcome {
     Native,
+    Web,
     Refused;
 
     companion object {
-        fun of(wire: String?): SettleOutcome = if (wire == "native") Native else Refused
+        fun of(wire: String?): SettleOutcome =
+            when (wire) {
+                "native" -> Native
+                "web" -> Web
+                else -> Refused
+            }
     }
 }
 
@@ -66,6 +75,8 @@ data class SwipeRequest(
             .put("dir", dir)
             .put("sequence", sequence)
             .put("via", via.wire)
+            // this build reveals a page the web draws (phase 2), so the page may answer "web"
+            .put("reveal", true)
 }
 
 /** Something TabSwipe does once, outside the scene: play, send, record. */
@@ -88,8 +99,11 @@ sealed interface SwipeInput {
     /** A pane's screen was created, so it is composed. [source] is the plugin's `swipeSource`. */
     data class Register(val pane: String, val source: Boolean = true) : SwipeInput
 
-    /** The page's `open` for [pane]. Always wins over a swipe, except the awaited destination's. */
-    data class Opened(val pane: String) : SwipeInput
+    /**
+     * The page's `open` for [pane]. Always wins over a swipe, except the awaited destination's.
+     * [enter] is set when the page went there by its own (web) swipe: the screen slides in.
+     */
+    data class Opened(val pane: String, val enter: SwipeEnter? = null) : SwipeInput
 
     /** The page's `close` for [pane]. The source's close is deferred until it is off screen. */
     data class Closed(val pane: String) : SwipeInput
@@ -102,6 +116,12 @@ sealed interface SwipeInput {
      * the veil may hand over to it.
      */
     data class Drawn(val pane: String) : SwipeInput
+
+    /**
+     * The WebView has drawn the page as it was when [SwipeModel.awaitingWeb] asked
+     * (`postVisualStateCallback`): the veil over it may fade.
+     */
+    data class WebDrawn(val token: String) : SwipeInput
 
     /** A page started loading (NativeScreens): forget the page, keep the screens' registry. */
     data object Drop : SwipeInput
@@ -132,4 +152,27 @@ sealed interface SwipeInput {
 
     /** Time passed: a frame, or the [SwipeModel.deadline] timer. */
     data object Tick : SwipeInput
+}
+
+/**
+ * The page's own swipe ended on a native tab (phase 2, web → native): the screen slides in from
+ * [dir]'s side (+1, the next tab, comes in from the right) at the finger's [velocityDp] (dp/s).
+ */
+data class SwipeEnter(val dir: Int, val velocityDp: Float) {
+    companion object {
+        /** The open call's `enter` ("next" or "prev") and `velocity`; null for a plain open. */
+        fun of(enter: String?, velocity: Double?): SwipeEnter? {
+            val dir =
+                when (enter) {
+                    "next" -> 1
+                    "prev" -> -1
+                    else -> return null
+                }
+            val v = velocity?.takeIf { it.isFinite() }?.toFloat() ?: 0f
+            return SwipeEnter(dir, v.coerceIn(0f, MAX_VELOCITY_DP))
+        }
+
+        /** Faster than this is a misreading on the page's side; the spring caps it anyway. */
+        const val MAX_VELOCITY_DP = 20_000f
+    }
 }

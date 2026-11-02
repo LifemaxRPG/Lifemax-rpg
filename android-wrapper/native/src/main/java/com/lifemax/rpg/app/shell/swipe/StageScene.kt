@@ -24,7 +24,7 @@ data class PaneStage(
 /**
  * The veil, VISIBLE at [tx]: the page colour, and the tab's icon and label unless [tab] is null.
  */
-data class VeilStage(val tx: Int, val tab: SwipeTab?)
+data class VeilStage(val tx: Int, val tab: SwipeTab?, val alpha: Float = 1f)
 
 /**
  * Everything TabSwipe writes to the Views in one frame: a stage for every registered pane, and the
@@ -36,12 +36,21 @@ data class StageScene(val panes: Map<String, PaneStage>, val veil: VeilStage?)
 /**
  * The scene at [env]'s time. While dragging it follows the finger (unless the page's motion is off,
  * when nothing moves until the release); while settling it follows the spring. At Idle and Armed it
- * is the rest scene ([restScene]).
+ * is the rest scene ([restScene]). A reveal is the rest scene under the veil at 0, fading; an
+ * entering screen slides from its side to 0 over the rest scene.
  */
 fun SwipeModel.scene(env: SwipeEnv): StageScene =
     when (val p = phase) {
         SwipePhase.Idle,
         is SwipePhase.Armed -> StageScene(restScene(env), null)
+        is SwipePhase.Reveal -> StageScene(restScene(env), VeilStage(0, p.tab, p.alpha(env)))
+        is SwipePhase.Entering -> {
+            val stages = restScene(env).toMutableMap()
+            val tx = (p.dir * p.offset(env) * env.width).roundToInt()
+            if (p.pane in panes)
+                stages[p.pane] = PaneStage(tx, PaneVisibility.Shown, shielded = true)
+            StageScene(stages, null)
+        }
         is SwipePhase.Dragging ->
             if (!p.gesture.motion) StageScene(restScene(env), null)
             else sliding(env, p.gesture, p.drag.dir, p.drag.offset(env, p.gesture), dragging = true)
@@ -87,7 +96,8 @@ private fun SwipeModel.parking(env: SwipeEnv): Map<String, Int> {
 /**
  * The source at −dir·o·W and whatever lies toward [dir] one width further: the neighbour's screen,
  * or the veil. The source stays on screen until it is off it, even after its close ([landed]); a
- * screen opened cold stays INVISIBLE under the veil until it has drawn. Only a dragging source
+ * screen opened cold stays INVISIBLE under the veil until it has drawn. A commit the page draws
+ * ([Commit.reveal]) has the labelled veil in the slot, whatever was there. Only a dragging source
  * takes touches.
  */
 private fun SwipeModel.sliding(
@@ -108,17 +118,23 @@ private fun SwipeModel.sliding(
     if (!(landed && commit?.sourceClosed == true)) {
         place(gesture.source, PaneVisibility.Shown, sourceTx, shielded = !dragging)
     }
+    val side = gesture.neighbours[dir]
+    if (commit?.reveal == true) return StageScene(stages, VeilStage(slotTx, side.tab))
     val veil =
-        when (val side = gesture.neighbours[dir]) {
+        when (side) {
             is Neighbour.Pane -> {
                 place(side.tab.view, PaneVisibility.Shown, slotTx, shielded = true)
                 if (side.tab.view in panes) null else VeilStage(slotTx, side.tab)
             }
-            is Neighbour.Veil -> {
-                val swapped = side.tab.view in panes && commit?.drawn == true
+            // a tab the page draws, which the page may yet answer native (it changed meanwhile):
+            // then its screen swaps in under the veil as a cold one does
+            is Neighbour.Veil,
+            is Neighbour.Reveal -> {
+                val tab = side.tab ?: return StageScene(stages, VeilStage(slotTx, null))
+                val swapped = tab.view in panes && commit?.drawn == true
                 val visibility = if (swapped) PaneVisibility.Shown else PaneVisibility.Parked
-                place(side.tab.view, visibility, slotTx, shielded = true)
-                if (swapped) null else VeilStage(slotTx, side.tab)
+                place(tab.view, visibility, slotTx, shielded = true)
+                if (swapped) null else VeilStage(slotTx, tab)
             }
             is Neighbour.Wall -> VeilStage(slotTx, null)
         }

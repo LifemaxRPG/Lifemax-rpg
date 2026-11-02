@@ -19,6 +19,7 @@ import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
 import com.lifemax.rpg.app.shell.swipe.SettleOutcome
+import com.lifemax.rpg.app.shell.swipe.SwipeEnter
 import com.lifemax.rpg.app.shell.swipe.TabScreenView
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import org.json.JSONObject
@@ -97,7 +98,9 @@ abstract class ComposeTabPlugin : Plugin() {
     @PluginMethod
     fun handshake(call: PluginCall) {
         call.resolve(
-            JSObject().put("protocol", 1).put("capabilities", JSArray(capabilities + SWIPE))
+            JSObject()
+                .put("protocol", 1)
+                .put("capabilities", JSArray(capabilities + SWIPE + SWIPE_EDGES))
         )
     }
 
@@ -109,7 +112,10 @@ abstract class ComposeTabPlugin : Plugin() {
             try {
                 accept(data, true)
                 val screen = view ?: createView()
-                TabSwipe.opened(tabId)
+                TabSwipe.opened(
+                    tabId,
+                    SwipeEnter.of(call.getString("enter"), call.getDouble("velocity")),
+                )
                 screen.bringToFront()
                 visible = true
                 showChrome(call.getObject("navScene"), opening = true)
@@ -258,5 +264,8 @@ abstract class ComposeTabPlugin : Plugin() {
 
         /** This build draws the native tab swipe (protocol v1). */
         const val SWIPE = "shell.swipe.v1"
+
+        /** It also reveals web tabs and slides in a screen the page swiped to (phase 2). */
+        const val SWIPE_EDGES = "shell.swipe.v2"
     }
 }
