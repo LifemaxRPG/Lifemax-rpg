@@ -102,7 +102,7 @@ private fun TimelineRow(item: TimelineItem) {
         ActivityCard(Modifier.weight(1f), edge = tint) {
             CardTop(item.icon, item.name, item.xp) { Sub(item) }
             item.notes?.let { Notes(it) }
-            item.plan?.let { PlanNotes(it) }
+            if (item.plan.isNotEmpty()) PlanNotes(item.plan)
         }
     }
 }
@@ -289,7 +289,7 @@ private fun PlanNotes(notes: List<PlanNote>) {
 internal fun WorkoutNotesCard(notes: WorkoutNotes, modifier: Modifier = Modifier) {
     ActivityCard(modifier.fillMaxWidth()) {
         CardTop("dumbbell", notes.title)
-        PlanNotes(notes.notes)
+        PlanNotes(notes.items)
     }
 }
 
@@ -324,7 +324,7 @@ internal fun BlankDay(blank: JournalBlank) {
             textAlign = TextAlign.Center,
         )
         Text(
-            blank.body,
+            blank.text,
             color = c.muted,
             fontSize = 13.sp,
             lineHeight = 19.5.sp,

@@ -26,14 +26,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Screen A of the native Journal: the strict decoder, the lock's states (withheld, at rest, on stop
- * with its session gate) and the view model's commands. The fixtures are hand-made from plan §3.3
- * (fixtures/handmade, tools: none) until gen_native_fixtures.js journal() lands; their private
- * strings all start with CANARY.
+ * The native Journal's decoder, the lock's states (withheld, at rest, on stop with its session
+ * gate) and the view model's commands, against the page's own frames (fixtures/journal-*.json, from
+ * tools/gen_journal_fixtures.js). The owner's private strings in them all start with Canary.
  */
 class JournalTest {
-    private fun fixture(name: String) =
-        JSONObject(javaClass.getResource("/fixtures/handmade/journal-a-$name.json")!!.readText())
+    /**
+     * A generated frame. "open" is today's page with the tip showing, the lock on and unlocked (the
+     * state the stop rule acts on), numbered 41 so the tests can send older and newer frames;
+     * "review" is the week's review.
+     */
+    private fun fixture(name: String): JSONObject =
+        when (name) {
+            "open" ->
+                GeneratedJournal.json("tip").also {
+                    it.getJSONObject("lock").put("on", true)
+                    it.put("sequence", 41)
+                }
+            "review" -> GeneratedJournal.json("week")
+            else -> GeneratedJournal.json(name)
+        }
 
     private class Recorder : JournalCommands {
         val sent = mutableListOf<Pair<JournalCommand, String>>()
@@ -60,6 +72,10 @@ class JournalTest {
     private fun reply(id: String, command: String, ok: Boolean = true, message: String = "") =
         JournalReply(command, id, ok, changed = ok, message = message)
 
+    private companion object {
+        const val PRIVATE = "Canary"
+    }
+
     /** Everything a frame holds, as text, for the canary checks. */
     private fun JournalFrame?.text() = toString()
 
@@ -76,21 +92,17 @@ class JournalTest {
         val j = open.journal
         assertEquals("page", j.edit)
         assertEquals("Journal", j.tip!!.title)
-        assertEquals(listOf("5", "26", "1,055", "2"), j.hero.stats.map { it.value })
+        assertEquals(listOf("18", "23", "1,371", "4"), j.hero.stats.map { it.value })
         assertEquals(28, j.hero.rhythm.cells.size)
         assertTrue(j.hero.rhythm.cells.last().today)
-        assertNull(j.hero.rhythm.cells[3].color)
-        assertEquals(
-            setOf("2026-10-28", "2026-10-27", "W:2026-W43", "2026-10-26", "2026-10-21"),
-            j.list.keys,
-        )
-        assertEquals(JournalListItem.Quiet("4 quiet days"), j.list.items[4])
+        assertTrue(j.list.keys.containsAll(listOf("2026-10-28", "W:2026-W43", "2026-10-26")))
+        assertTrue(j.list.items.any { it is JournalListItem.Quiet })
         val day = j.entry as DayEntry
         assertEquals("2026-10-28", j.selection)
         assertEquals("Steady Stride", day.insight!!.label)
-        assertEquals("PRM_C2", day.reflect.prompt!!.id)
-        assertEquals(listOf("Bench press"), day.timeline.single().plan.map { it.label })
-        assertNull(day.timeline.single().skill)
+        assertEquals("PRM_C4", day.reflect.prompt!!.id)
+        assertEquals("Sprinting", day.timeline.first().skill)
+        assertTrue(day.timeline.first().plan.isEmpty()) // the page sends plan:null off a plan
     }
 
     @Test
@@ -99,12 +111,13 @@ class JournalTest {
         val r = (f as JournalFrame.Open).journal.entry as ReviewEntry
         assertEquals("W43", r.head.badge)
         assertEquals(7, (r.chart as ReviewChart.Bars).bars.size)
-        assertEquals("Write 50+ characters for +40 XP", r.counterText)
+        assertEquals("+30 XP claimed", r.counter)
+        assertEquals(2, r.grid.size)
     }
 
     @Test
     fun decodesTheWithheldFrameAsTheCard() {
-        val f = WebJournalRepository().apply { accept(fixture("locked-error"), true) }.state.value
+        val f = WebJournalRepository().apply { accept(fixture("notice"), true) }.state.value
         val locked = f as JournalFrame.Locked
         assertEquals("Could not unlock. Try again.", locked.status.error)
         assertFalse(locked.status.prompting)
@@ -160,6 +173,15 @@ class JournalTest {
                             JSONObject().put("lead", "That sounds really heavy.").put("text", "…"),
                         )
                 },
+                { it.getJSONObject("entry").getJSONObject("reflect").put("counter", "a line") },
+                {
+                    it.getJSONObject("hero")
+                        .getJSONObject("rhythm")
+                        .getJSONArray("cells")
+                        .getJSONObject(0)
+                        .put("alpha", 3)
+                },
+                { it.getJSONObject("entry").remove("blank") },
                 { it.put("protocol", 2) },
                 { it.put("webSessionId", "") },
             )
@@ -199,10 +221,10 @@ class JournalTest {
     @Test
     fun aWithheldFrameDropsTheOpenJournal() {
         val repo = WebJournalRepository().apply { accept(fixture("open"), true) }
-        assertTrue(repo.state.value.text().contains("CANARY"))
+        assertTrue(repo.state.value.text().contains(PRIVATE))
         repo.accept(fixture("locked").next(50))
         assertTrue(repo.state.value is JournalFrame.Locked)
-        assertFalse(repo.state.value.text().contains("CANARY"))
+        assertFalse(repo.state.value.text().contains(PRIVATE))
     }
 
     @Test
@@ -214,7 +236,7 @@ class JournalTest {
             repo.rest()
             val f = repo.state.value
             assertTrue(f is JournalFrame.Resting)
-            assertFalse(f.text().contains("CANARY"))
+            assertFalse(f.text().contains(PRIVATE))
             assertEquals(lockOn, f!!.chrome.lock.on)
         }
     }
@@ -224,12 +246,12 @@ class JournalTest {
         val repo = WebJournalRepository().apply { accept(fixture("open"), true) }
         assertTrue(repo.stop())
         assertTrue(repo.state.value is JournalFrame.Locked)
-        assertFalse(repo.state.value.text().contains("CANARY"))
-        assertEquals("history-web-fixture", repo.relockFor)
+        assertFalse(repo.state.value.text().contains(PRIVATE))
+        assertEquals("journal-fixture", repo.relockFor)
         // an open frame built before the page's relock, landing late: refused, still the card
         repo.accept(fixture("open").next(42))
         assertTrue(repo.state.value is JournalFrame.Locked)
-        assertFalse(repo.state.value.text().contains("CANARY"))
+        assertFalse(repo.state.value.text().contains(PRIVATE))
         // even after a rest, a refused open frame shows the card, never a blank page or the text
         repo.rest()
         repo.accept(fixture("open").next(43), true)
@@ -239,6 +261,20 @@ class JournalTest {
         repo.accept(fixture("locked").next(44))
         assertNull(repo.relockFor)
         repo.accept(fixture("open").next(45))
+        assertTrue(repo.state.value is JournalFrame.Open)
+    }
+
+    @Test
+    fun anOpenFrameThatSaysTheLockIsOffClearsTheGate() {
+        val repo = WebJournalRepository().apply { accept(fixture("open"), true) }
+        repo.stop()
+        assertEquals("journal-fixture", repo.relockFor)
+        // the owner turned the lock off in Settings: no withheld frame will come, the open one is
+        // taken
+        val off = fixture("open").next(44)
+        off.getJSONObject("lock").put("on", false)
+        repo.accept(off)
+        assertNull(repo.relockFor)
         assertTrue(repo.state.value is JournalFrame.Open)
     }
 
@@ -290,13 +326,13 @@ class JournalTest {
 
     @Test
     fun theCounterChoosesAsThePage() {
-        val box =
+        val fresh =
             (WebJournalRepository().apply { accept(fixture("open"), true) }.state.value
                     as JournalFrame.Open)
                 .journal
                 .entry
                 .let { (it as DayEntry).reflect }
-        val fresh = box.copy(awarded = false)
+        val box = fresh.copy(awarded = true)
         assertEquals("+15 XP & +2 bond claimed", box.counterFor(3, typing = true))
         assertEquals("Write 40+ characters for +15 XP (12)", fresh.counterFor(12, typing = true))
         assertEquals("Write 40+ characters for +15 XP", fresh.counterFor(12, typing = false))
@@ -307,6 +343,24 @@ class JournalTest {
         )
         assertEquals(50f, fresh.meterFor(20))
         assertEquals(100f, box.meterFor(0))
+    }
+
+    /** journal-counter.json: every case the page's jcCounterText and jcMeter answered. */
+    @Test
+    fun theCounterMatchesEveryCaseThePageRecorded() {
+        val file = GeneratedJournal.counter()
+        val c = file.getJSONObject("counter")
+        val box = GeneratedJournal.day("today").reflect.copy(min = file.getInt("min"))
+        assertEquals(c.getString("short"), box.counter.short)
+        val cases = file.getJSONArray("cases")
+        assertTrue(cases.length() > 20)
+        for (i in 0 until cases.length()) {
+            val k = cases.getJSONObject(i)
+            val b = box.copy(awarded = k.getBoolean("awarded"), canPay = k.getBoolean("canPay"))
+            val n = k.getInt("n")
+            assertEquals("case $i", k.getString("text"), b.counterFor(n, k.getBoolean("typing")))
+            assertEquals("meter $i", k.getDouble("meter").toFloat(), b.meterFor(n), 0.001f)
+        }
     }
 
     // ----- the view model -----
@@ -417,35 +471,35 @@ class JournalTest {
 
     @Test
     fun theNoticeIsShownOnceEvenInWithheldFrames() {
-        val (repo, vm, _) = setUp("locked-error")
+        val (repo, vm, _) = setUp("notice")
         val toast = vm.ui.value.toast
         assertEquals("Backup saved", toast!!.text)
         vm.toastShown(toast.id)
-        repo.accept(fixture("locked-error").put("sequence", 60))
+        repo.accept(fixture("notice").put("sequence", 60))
         vm.onProjection()
         assertNull(vm.ui.value.toast)
     }
 
     @Test
     fun restingDropsTheHighlightAndTheToast() {
-        val (repo, vm, _) = setUp("locked-error")
+        val (repo, vm, _) = setUp("notice")
         repo.rest()
         vm.rested()
         assertTrue(vm.ui.value.frame is JournalFrame.Resting)
         assertNull(vm.ui.value.toast)
         assertNull(vm.ui.value.selection)
-        assertFalse(vm.ui.value.toString().contains("CANARY"))
+        assertFalse(vm.ui.value.toString().contains(PRIVATE))
     }
 
     @Test
     fun theViewModelHoldsNoPrivateTextOnceLocked() {
         val (repo, vm, _) = setUp()
         vm.select("2026-10-27")
-        assertTrue(vm.ui.value.toString().contains("CANARY"))
+        assertTrue(vm.ui.value.toString().contains(PRIVATE))
         repo.stop()
         vm.onProjection()
         assertNotNull(vm.ui.value.frame as? JournalFrame.Locked)
-        assertFalse(vm.ui.value.toString().contains("CANARY"))
+        assertFalse(vm.ui.value.toString().contains(PRIVATE))
         assertNull(vm.ui.value.selection)
     }
 }

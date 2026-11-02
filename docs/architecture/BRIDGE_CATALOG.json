@@ -272,9 +272,9 @@
     "{view: media} and {view: life-director}: lmaNavTo, make-before-break"
    ],
    "readContract": {
-    "snapshotDto": "feature/journal/domain/JournalModels.kt, JournalFrame.kt",
+    "snapshotDto": "feature/journal/domain/JournalModels.kt (the one model, body included), JournalFrame.kt",
     "decoder": "feature/journal/data/JournalJson.kt, WebJournalRepository.kt",
-    "fixtures": "native/src/test/resources/fixtures/handmade/journal-a-*.json (hand-made from the plan, until gen_native_fixtures.js journal() writes fixtures/journal-*.json)",
+    "fixtures": "native/src/test/resources/fixtures/journal-*.json (today, pastday, notes, blank, care, welcome1-3, week, month, empty, tip, longstrip; withheld: locked, locked-prompting, locked-error, notice), journal-counter.json and journal-replies.json (lifemax_modular_v73/tools/gen_journal_fixtures.js); every one is decoded by JournalFixturesTest",
     "ordering": "webSessionId and increasing sequence; list.rev unchanged keeps the list; notice.id counts the page's toasts (one counter for every kit)",
     "invalidation": "renderHistory, the lock's onChange and onStatus, a page toast, host resume, foreground return, 15-second refresh while visible"
    },

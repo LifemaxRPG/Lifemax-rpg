@@ -49,23 +49,27 @@ import com.lifemax.rpg.feature.journal.domain.ReviewGridItem
  */
 @Composable
 internal fun ColumnScope.ReviewPage(review: ReviewEntry, onWrite: (String) -> Unit) {
-    BigHead(review.head.badge, 46.sp, review.head.title, review.head.range)
-    when (val chart = review.chart) {
-        is ReviewChart.Bars -> Bars(chart.bars)
-        is ReviewChart.Heat -> Heat(chart)
+    Arrive(1) { BigHead(review.head.badge, 46.sp, review.head.title, review.head.range) }
+    Arrive(2) {
+        when (val chart = review.chart) {
+            is ReviewChart.Bars -> Bars(chart.bars)
+            is ReviewChart.Heat -> Heat(chart)
+        }
     }
     // the chart's bottom margin (8 or 6) meets the grid's 12, the grid's 12 the card's 14, and
     // the card's 14 the box's 18
-    Grid(review.grid, Modifier.padding(top = 12.dp))
-    CoachCard(
-        review.coach.badge,
-        JournalInk.Coach,
-        review.coach.text,
-        null,
-        Modifier.padding(top = 14.dp),
-    )
+    Arrive(3) { Grid(review.grid, Modifier.padding(top = 12.dp)) }
+    Arrive(4) {
+        CoachCard(
+            review.coach.badge,
+            JournalInk.Coach,
+            review.coach.text,
+            null,
+            Modifier.padding(top = 14.dp),
+        )
+    }
     Spacer(Modifier.height(18.dp))
-    ReviewAnswerBox(review, onWrite)
+    Arrive(5) { ReviewAnswerBox(review, onWrite) }
 }
 
 /**
@@ -187,9 +191,7 @@ private fun HeatSquare(cell: HeatCell, modifier: Modifier) {
             .aspectRatio(1f)
             .then(if (cell.off) Modifier else Modifier.glow(tint, 14.dp, 10.dp, spread = (-6).dp))
             .clip(shape)
-            .background(
-                if (cell.off) JournalInk.white(0x0A) else c.tint(tint, cell.alpha.toFloat())
-            )
+            .background(if (cell.off) JournalInk.white(0x0A) else c.tint(tint, cell.alpha))
             .clearAndSetSemantics { contentDescription = cell.label },
         contentAlignment = Alignment.Center,
     ) {

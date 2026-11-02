@@ -26,10 +26,10 @@ class JournalReviewsScreenshotTest {
     /** The coach's card and the answer box. */
     @Test fun weekAnswerDark() = page(JournalReviewFixtures.week, scrolledDp = 330)
 
-    /** Three days and four empty bars; answered and paid. */
-    @Test fun weekPaidDark() = page(JournalReviewFixtures.weekPaid)
+    /** Before it is answered: the empty box and the unpaid counter. */
+    @Test fun weekOpenDark() = page(JournalReviewFixtures.weekOpen)
 
-    @Test fun weekPaidAnswerDark() = page(JournalReviewFixtures.weekPaid, scrolledDp = 330)
+    @Test fun weekOpenAnswerDark() = page(JournalReviewFixtures.weekOpen, scrolledDp = 330)
 
     @Test fun monthDark() = page(JournalReviewFixtures.month)
 

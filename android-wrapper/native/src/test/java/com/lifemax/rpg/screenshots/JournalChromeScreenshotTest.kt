@@ -4,12 +4,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
+import com.lifemax.rpg.feature.journal.GeneratedJournal
 import com.lifemax.rpg.feature.journal.data.WebJournalRepository
 import com.lifemax.rpg.feature.journal.domain.JournalCommands
 import com.lifemax.rpg.feature.journal.presentation.JournalActions
 import com.lifemax.rpg.feature.journal.presentation.JournalScreen
 import com.lifemax.rpg.feature.journal.presentation.JournalViewModel
-import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 
@@ -17,8 +17,8 @@ import org.junit.Test
  * Screen A of the native Journal on a 411 dp wide phone like the owner's: the switch, the tip and
  * the hero of the open Journal, the lock card in its three states, and the resting page, each in
  * both themes, and larger text. Square screenfuls at the device's own resolution. The frames are
- * the hand-made fixtures (fixtures/handmade) until gen_native_fixtures.js journal() lands; Screen
- * B's body (the strip, the day, the reviews) has its own screenshots.
+ * the page's own (fixtures/journal-*.json); the body (the strip, the day, the reviews) has its own
+ * screenshots, and JournalScreenScreenshotTest the whole screen.
  */
 class JournalChromeScreenshotTest {
     @get:Rule
@@ -36,11 +36,7 @@ class JournalChromeScreenshotTest {
         val repo =
             WebJournalRepository().apply {
                 accept(
-                    JSONObject(
-                            javaClass
-                                .getResource("/fixtures/handmade/journal-a-$fixture.json")!!
-                                .readText()
-                        )
+                    GeneratedJournal.json(fixture)
                         .put("light", light)
                         .put("tokens", ScreenshotPalette.tokens(light)),
                     true,
@@ -70,17 +66,17 @@ class JournalChromeScreenshotTest {
     }
 
     /** The open Journal's top: the switch, the tip under it, the hero. */
-    @Test fun heroDark() = snap("open")
+    @Test fun heroDark() = snap("tip")
 
-    @Test fun heroLight() = snap("open", light = true)
+    @Test fun heroLight() = snap("tip", light = true)
 
     /** The whole hero from its top: the stats and the 28-day rhythm, today outlined. */
-    @Test fun rhythmDark() = snap("open", item = HERO)
+    @Test fun rhythmDark() = snap("tip", item = HERO)
 
-    @Test fun rhythmLight() = snap("open", light = true, item = HERO)
+    @Test fun rhythmLight() = snap("tip", light = true, item = HERO)
 
     /** The hero without the tip, as most visits show it. */
-    @Test fun heroNoTipDark() = snap("review")
+    @Test fun heroNoTipDark() = snap("week")
 
     @Test
     fun lockCardDark() {
@@ -128,15 +124,15 @@ class JournalChromeScreenshotTest {
     }
 
     /** A screen not on show: the switch on the page background. */
-    @Test fun restingDark() = snap("open", rest = true)
+    @Test fun restingDark() = snap("tip", rest = true)
 
-    @Test fun restingLight() = snap("open", light = true, rest = true)
+    @Test fun restingLight() = snap("tip", light = true, rest = true)
 
     /** Larger text (Settings, font size, at its largest). */
     @Test
     fun largeTextHero() {
         paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
-        snap("open")
+        snap("tip")
     }
 
     @Test
@@ -148,7 +144,7 @@ class JournalChromeScreenshotTest {
     @Test
     fun largeTextRhythm() {
         paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
-        snap("open", item = HERO)
+        snap("tip", item = HERO)
     }
 
     private companion object {

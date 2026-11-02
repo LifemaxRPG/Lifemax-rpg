@@ -75,42 +75,48 @@ internal fun JournalEntryPage(
  */
 @Composable
 internal fun ColumnScope.DayPage(day: DayEntry, callbacks: JournalBodyCallbacks) {
-    BigHead(day.head.number, 58.sp, day.head.weekday, day.head.month) {
-        DayXp(day.head.xp, day.head.xpLabel)
+    // each child of the card arrives in turn (EntryArrival.kt); `at` is the next one's place
+    var at = 1
+    Arrive(at++) {
+        BigHead(day.head.number, 58.sp, day.head.weekday, day.head.month) {
+            DayXp(day.head.xp, day.head.xpLabel)
+        }
     }
-    Meta(day.meta)
+    Arrive(at++) { Meta(day.meta) }
     // the meta's 4 dp under it, then each card's margin (welcome and insight 14, care 12) and the
     // box's 18 above it
     var below: Dp = 4.dp
     fun gap(above: Dp) = max(below, above)
     if (day.care != null) {
         Spacer(Modifier.height(gap(12.dp)))
-        CareNote(day.care)
+        Arrive(at++) { CareNote(day.care) }
         below = 12.dp
     } else {
         day.welcome?.let {
             Spacer(Modifier.height(gap(14.dp)))
-            WelcomeCard(it, callbacks.onChip)
+            Arrive(at++) { WelcomeCard(it, callbacks.onChip) }
             below = 14.dp
         }
         day.insight?.let {
             Spacer(Modifier.height(gap(14.dp)))
-            InsightCard(it)
+            Arrive(at++) { InsightCard(it) }
             below = 14.dp
         }
     }
     Spacer(Modifier.height(gap(18.dp)))
-    ReflectionBox(day.key, day.reflect, callbacks.onWrite, callbacks.onSwap)
+    Arrive(at++) { ReflectionBox(day.key, day.reflect, callbacks.onWrite, callbacks.onSwap) }
     when {
-        day.blank != null -> BlankDay(day.blank)
+        day.blank != null -> Arrive(at) { BlankDay(day.blank) }
         else -> {
-            if (day.timeline.isNotEmpty()) Timeline(day.timeline)
+            if (day.timeline.isNotEmpty()) Arrive(at++) { Timeline(day.timeline) }
             // after the last item's own 10 dp, or the empty timeline's 18
             day.workoutNotes?.let {
-                WorkoutNotesCard(
-                    it,
-                    Modifier.padding(top = if (day.timeline.isEmpty()) 18.dp else 0.dp),
-                )
+                Arrive(at) {
+                    WorkoutNotesCard(
+                        it,
+                        Modifier.padding(top = if (day.timeline.isEmpty()) 18.dp else 0.dp),
+                    )
+                }
             }
         }
     }

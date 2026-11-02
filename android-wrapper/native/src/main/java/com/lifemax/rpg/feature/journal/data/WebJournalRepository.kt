@@ -18,7 +18,8 @@ import org.json.JSONObject
  *   trip, and that page session's open frames are refused until its withheld frame (the page's own
  *   relock) has arrived. A refused open frame still shows the card, made from that frame's chrome,
  *   so a screen that rested meanwhile is never left blank. The gate is never set while the lock is
- *   off, and a new page session (a reload) clears it, so a reload cannot leave the card stuck.
+ *   off, and it is cleared by a new page session (a reload) or by an open frame that says the lock
+ *   is off (the owner turned it off), so the card cannot get stuck.
  * - **The strip.** An open frame whose list has the same rev as the one held keeps the held list
  *   object, so the strip is not rebuilt on a refresh.
  */
@@ -47,10 +48,14 @@ class WebJournalRepository : JournalRepository {
                     relockFor = null
                     JournalFrame.Locked(chrome, frame.status, frame.notice)
                 }
-                is DecodedFrame.Open ->
+                is DecodedFrame.Open -> {
+                    // an open frame that says the lock is off means the owner turned it off: the
+                    // wait for the page's relock is over, and nothing private is held back
+                    if (!chrome.lock.on) relockFor = null
                     if (relockFor == chrome.session)
                         JournalFrame.Locked(chrome, LockStatus.Idle, frame.notice)
                     else JournalFrame.Open(chrome, reuseList(frame), frame.notice)
+                }
             }
     }
 

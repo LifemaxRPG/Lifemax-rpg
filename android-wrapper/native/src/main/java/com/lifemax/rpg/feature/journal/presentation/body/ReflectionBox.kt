@@ -223,7 +223,7 @@ private fun NotebookField(text: String, placeholder: String, onClick: () -> Unit
 
 /** The meter under the reflection (.jx-meter): accent to green, [percent] of the way. */
 @Composable
-private fun Meter(percent: Double) {
+private fun Meter(percent: Float) {
     val c = LocalJournalBodyColors.current
     Box(
         Modifier.padding(top = 10.dp)

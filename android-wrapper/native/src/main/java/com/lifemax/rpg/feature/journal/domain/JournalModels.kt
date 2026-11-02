@@ -53,12 +53,13 @@ data class JournalTip(val icon: String, val title: String, val body: String, val
 data class HeroStat(val value: String, val label: String, val color: Long)
 
 /**
- * A day of the 28-day rhythm. An [off] day (nothing logged) has no colour or opacity; another has
- * its archetype's [color] at [alpha] (.35 to 1). [label] is the page's title ("Oct 1: 177 XP").
+ * A day of the 28-day rhythm. An [off] day (nothing logged) is sent with colour 0 and opacity 0;
+ * another has its archetype's [color] at [alpha] (.35 to 1). [label] is the page's title ("Oct 1:
+ * 177 XP").
  */
 data class RhythmCell(
-    val color: Long?,
-    val alpha: Float?,
+    val color: Long,
+    val alpha: Float,
     val off: Boolean,
     val today: Boolean,
     val label: String,
@@ -145,28 +146,44 @@ data class DayHead(
 )
 
 /** The care note (JC_CARE), word for word; it replaces the welcome, insight and question. */
-data class CareNote(val lead: String, val text: String)
+data class JournalCare(val lead: String, val text: String)
 
 /** A welcome chip: "pet", "fresh", "line" or "director"; a [done] chip is drawn faded. */
 data class WelcomeChip(val id: String, val label: String, val done: Boolean)
 
-data class WelcomeCard(val head: String, val body: String, val chips: List<WelcomeChip>)
+data class JournalWelcome(
+    /** Which welcome the page chose (1 to 3, by how long the owner was away). */
+    val tier: Int,
+    val head: String,
+    val body: String,
+    val chips: List<WelcomeChip>,
+)
 
 /** The coach's insight: its archetype's label and colour, its text and the pattern line. */
-data class Insight(val label: String, val color: Long, val text: String, val pattern: String?)
+data class JournalInsight(
+    val label: String,
+    val color: Long,
+    val text: String,
+    val pattern: String?,
+)
 
 /** The question over the box, with the ↻ swap's spoken name and the prompt id `swap` checks. */
-data class CoachPrompt(val kicker: String, val text: String, val id: String, val swap: String)
+data class ReflectPrompt(val kicker: String, val text: String, val id: String, val swap: String)
 
 /** The four counter lines of a day's box (JC_COUNTER). */
-data class CounterWords(val awarded: String, val ready: String, val short: String, val old: String)
+data class ReflectCounter(
+    val awarded: String,
+    val ready: String,
+    val short: String,
+    val old: String,
+)
 
 /**
  * A day's reflection box. Without a [prompt] the box has a [label] instead ("Reflection
  * (optional)"). [meter] is the meter's percent as the page drew it.
  */
-data class ReflectBox(
-    val prompt: CoachPrompt?,
+data class JournalReflect(
+    val prompt: ReflectPrompt?,
     val label: String?,
     val text: String,
     val placeholder: String,
@@ -175,7 +192,7 @@ data class ReflectBox(
     val canPay: Boolean,
     val awarded: Boolean,
     val meter: Float,
-    val counter: CounterWords,
+    val counter: ReflectCounter,
 ) {
     /**
      * The counter for [n] characters (trimmed), as jcCounterText chooses: claimed, then too old to
@@ -198,7 +215,7 @@ data class ReflectBox(
 }
 
 /** The attribute pill of a timeline item, in the item's colour. */
-data class AttrPill(val text: String, val color: Long)
+data class TimelineAttr(val text: String, val color: Long)
 
 /** A workout plan's note for an exercise: its label, and the weight and note, empty when none. */
 data class PlanNote(val label: String, val weight: String, val note: String)
@@ -212,7 +229,7 @@ data class TimelineItem(
     val color: Long,
     val icon: String,
     val name: String,
-    val attr: AttrPill?,
+    val attr: TimelineAttr?,
     val minutes: String?,
     val skill: String?,
     val xp: String,
@@ -220,23 +237,23 @@ data class TimelineItem(
     val plan: List<PlanNote>,
 )
 
-/** The workout-notes card of a day with plan notes but no plan session. */
-data class WorkoutNotes(val icon: String, val title: String, val notes: List<PlanNote>)
+/** The workout-notes card of a day with plan notes but no plan session; the page's `items`. */
+data class WorkoutNotes(val title: String, val icon: String, val items: List<PlanNote>)
 
 /** A day with nothing logged: its icon, heading and line. */
-data class BlankDay(val icon: String, val title: String, val text: String)
+data class JournalBlank(val icon: String, val title: String, val text: String)
 
 data class DayEntry(
     override val key: String,
     val head: DayHead,
     val meta: List<String>,
-    val care: CareNote?,
-    val welcome: WelcomeCard?,
-    val insight: Insight?,
-    val reflect: ReflectBox,
+    val care: JournalCare?,
+    val welcome: JournalWelcome?,
+    val insight: JournalInsight?,
+    val reflect: JournalReflect,
     val timeline: List<TimelineItem>,
     val workoutNotes: WorkoutNotes?,
-    val blank: BlankDay?,
+    val blank: JournalBlank?,
 ) : JournalEntry
 
 /** A review's head: its badge ("W43", "OCT"), headline and date range. */
@@ -268,19 +285,16 @@ sealed interface ReviewChart {
         ReviewChart
 }
 
-data class ReviewGridCell(val label: String, val value: String)
+data class ReviewGridItem(val label: String, val value: String)
 
 /** The coach's card on a review: its badge ("Coach") and synthesis. */
 data class ReviewCoach(val badge: String, val text: String)
-
-/** A review's counter lines: once paid, and before. */
-data class ReviewCounter(val paid: String, val short: String)
 
 data class ReviewEntry(
     override val key: String,
     val head: ReviewHead,
     val chart: ReviewChart,
-    val grid: List<ReviewGridCell>,
+    val grid: List<ReviewGridItem>,
     val coach: ReviewCoach,
     val question: String,
     val answer: String,
@@ -288,11 +302,9 @@ data class ReviewEntry(
     val max: Int,
     val min: Int,
     val paid: Boolean,
-    val counter: ReviewCounter,
-) : JournalEntry {
-    val counterText: String
-        get() = if (paid) counter.paid else counter.short
-}
+    /** The page's one line under the answer box, already chosen by [paid]. */
+    val counter: String,
+) : JournalEntry
 
 /**
  * Everything an open frame adds to the chrome. [motion] is the page's animation setting; [edit] is

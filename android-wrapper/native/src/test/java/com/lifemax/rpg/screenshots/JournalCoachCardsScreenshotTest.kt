@@ -40,7 +40,7 @@ class JournalCoachCardsScreenshotTest {
 
     @Test fun welcome2Light() = cards(JournalCoachFixtures.welcome2, light = true)
 
-    @Test fun welcome3ClaimedDark() = cards(JournalCoachFixtures.welcome3Claimed)
+    @Test fun welcome1ClaimedDark() = cards(JournalCoachFixtures.welcome1Claimed)
 
     @Test fun insightDark() = cards(JournalBodyFixtures.today)
 

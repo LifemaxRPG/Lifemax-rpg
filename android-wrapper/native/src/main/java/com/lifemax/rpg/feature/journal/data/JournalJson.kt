@@ -2,43 +2,42 @@ package com.lifemax.rpg.feature.journal.data
 
 import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.core.data.pageTokens
-import com.lifemax.rpg.feature.journal.domain.AttrPill
-import com.lifemax.rpg.feature.journal.domain.BlankDay
-import com.lifemax.rpg.feature.journal.domain.CareNote
-import com.lifemax.rpg.feature.journal.domain.CoachPrompt
-import com.lifemax.rpg.feature.journal.domain.CounterWords
 import com.lifemax.rpg.feature.journal.domain.DayEntry
 import com.lifemax.rpg.feature.journal.domain.DayHead
 import com.lifemax.rpg.feature.journal.domain.HeatCell
 import com.lifemax.rpg.feature.journal.domain.HeroBackup
 import com.lifemax.rpg.feature.journal.domain.HeroRhythm
 import com.lifemax.rpg.feature.journal.domain.HeroStat
-import com.lifemax.rpg.feature.journal.domain.Insight
+import com.lifemax.rpg.feature.journal.domain.JournalBlank
+import com.lifemax.rpg.feature.journal.domain.JournalCare
 import com.lifemax.rpg.feature.journal.domain.JournalChrome
 import com.lifemax.rpg.feature.journal.domain.JournalEmpty
 import com.lifemax.rpg.feature.journal.domain.JournalEntry
 import com.lifemax.rpg.feature.journal.domain.JournalHero
+import com.lifemax.rpg.feature.journal.domain.JournalInsight
 import com.lifemax.rpg.feature.journal.domain.JournalList
 import com.lifemax.rpg.feature.journal.domain.JournalListItem
 import com.lifemax.rpg.feature.journal.domain.JournalLock
 import com.lifemax.rpg.feature.journal.domain.JournalNotice
 import com.lifemax.rpg.feature.journal.domain.JournalPane
+import com.lifemax.rpg.feature.journal.domain.JournalReflect
 import com.lifemax.rpg.feature.journal.domain.JournalTip
+import com.lifemax.rpg.feature.journal.domain.JournalWelcome
 import com.lifemax.rpg.feature.journal.domain.LockCard
 import com.lifemax.rpg.feature.journal.domain.LockStatus
 import com.lifemax.rpg.feature.journal.domain.OpenJournal
 import com.lifemax.rpg.feature.journal.domain.PlanNote
-import com.lifemax.rpg.feature.journal.domain.ReflectBox
+import com.lifemax.rpg.feature.journal.domain.ReflectCounter
+import com.lifemax.rpg.feature.journal.domain.ReflectPrompt
 import com.lifemax.rpg.feature.journal.domain.ReviewBar
 import com.lifemax.rpg.feature.journal.domain.ReviewChart
 import com.lifemax.rpg.feature.journal.domain.ReviewCoach
-import com.lifemax.rpg.feature.journal.domain.ReviewCounter
 import com.lifemax.rpg.feature.journal.domain.ReviewEntry
-import com.lifemax.rpg.feature.journal.domain.ReviewGridCell
+import com.lifemax.rpg.feature.journal.domain.ReviewGridItem
 import com.lifemax.rpg.feature.journal.domain.ReviewHead
 import com.lifemax.rpg.feature.journal.domain.RhythmCell
+import com.lifemax.rpg.feature.journal.domain.TimelineAttr
 import com.lifemax.rpg.feature.journal.domain.TimelineItem
-import com.lifemax.rpg.feature.journal.domain.WelcomeCard
 import com.lifemax.rpg.feature.journal.domain.WelcomeChip
 import com.lifemax.rpg.feature.journal.domain.WorkoutNotes
 import org.json.JSONArray
@@ -170,11 +169,11 @@ private fun hero(h: JSONObject): JournalHero {
 
 private fun rhythmCell(c: JSONObject): RhythmCell {
     val off = c.getBoolean("off")
-    val color = c.longOrNull("color")
-    val alpha = c.floatOrNull("alpha")
-    require(off || (color != null && alpha != null && alpha in 0f..1f)) {
-        "A logged day without its colour"
-    }
+    // an off day carries colour 0 and opacity 0; a logged one a real colour and opacity
+    val color = c.getLong("color")
+    val alpha = c.getDouble("alpha").toFloat()
+    require(alpha in 0f..1f) { "An opacity out of range" }
+    require(off || (color != 0L && alpha > 0f)) { "A logged day without its colour" }
     return RhythmCell(color, alpha, off, c.getBoolean("today"), c.getString("label"))
 }
 
@@ -223,10 +222,11 @@ private fun entry(e: JSONObject): JournalEntry =
 
 private fun day(e: JSONObject): DayEntry {
     val h = e.getJSONObject("head")
-    val care = e.orNull("care") { CareNote(it.getString("lead"), it.getString("text")) }
+    val care = e.orNull("care") { JournalCare(it.getString("lead"), it.getString("text")) }
     val welcome =
         e.orNull("welcome") { w ->
-            WelcomeCard(
+            JournalWelcome(
+                w.getInt("tier").also { t -> require(t in 1..3) { "Unknown welcome tier $t" } },
                 w.getString("head"),
                 w.getString("body"),
                 w.getJSONArray("chips").objects().map {
@@ -236,7 +236,7 @@ private fun day(e: JSONObject): DayEntry {
         }
     val insight =
         e.orNull("insight") {
-            Insight(
+            JournalInsight(
                 it.getString("label"),
                 it.getLong("color"),
                 it.getString("text"),
@@ -266,22 +266,22 @@ private fun day(e: JSONObject): DayEntry {
         e.getJSONArray("timeline").objects().map(::timelineItem),
         e.orNull("workoutNotes") {
             WorkoutNotes(
-                it.getString("icon"),
                 it.getString("title"),
-                it.getJSONArray("notes").objects().map(::planNote),
+                it.getString("icon"),
+                it.getJSONArray("items").objects().map(::planNote),
             )
         },
         e.orNull("blank") {
-            BlankDay(it.getString("icon"), it.getString("title"), it.getString("text"))
+            JournalBlank(it.getString("icon"), it.getString("title"), it.getString("text"))
         },
     )
 }
 
-private fun reflect(r: JSONObject): ReflectBox {
+private fun reflect(r: JSONObject): JournalReflect {
     val c = r.getJSONObject("counter")
     val prompt =
         r.orNull("prompt") {
-            CoachPrompt(
+            ReflectPrompt(
                 it.getString("kicker"),
                 it.getString("text"),
                 it.getString("id"),
@@ -291,7 +291,7 @@ private fun reflect(r: JSONObject): ReflectBox {
     val label = r.stringOrNull("label")
     require((prompt == null) != (label == null)) { "A box has a question or a label" }
     val box =
-        ReflectBox(
+        JournalReflect(
             prompt,
             label,
             r.getString("text"),
@@ -301,7 +301,7 @@ private fun reflect(r: JSONObject): ReflectBox {
             r.getBoolean("canPay"),
             r.getBoolean("awarded"),
             r.getDouble("meter").toFloat(),
-            CounterWords(
+            ReflectCounter(
                 c.getString("awarded"),
                 c.getString("ready"),
                 c.getString("short"),
@@ -321,7 +321,7 @@ private fun timelineItem(t: JSONObject): TimelineItem =
         t.getLong("color"),
         t.getString("icon"),
         t.getString("name"),
-        t.orNull("attr") { AttrPill(it.getString("text"), it.getLong("color")) },
+        t.orNull("attr") { TimelineAttr(it.getString("text"), it.getLong("color")) },
         t.stringOrNull("minutes"),
         t.stringOrNull("skill"),
         t.getString("xp"),
@@ -339,14 +339,13 @@ private fun planNote(p: JSONObject) =
 private fun review(e: JSONObject): ReviewEntry {
     val h = e.getJSONObject("head")
     val coach = e.getJSONObject("coach")
-    val counter = e.getJSONObject("counter")
     val r =
         ReviewEntry(
             e.getString("key"),
             ReviewHead(h.getString("badge"), h.getString("title"), h.getString("range")),
             chart(e.getJSONObject("chart")),
             e.getJSONArray("grid").objects().map {
-                ReviewGridCell(it.getString("label"), it.getString("value"))
+                ReviewGridItem(it.getString("label"), it.getString("value"))
             },
             ReviewCoach(coach.getString("badge"), coach.getString("text")),
             e.getString("question"),
@@ -355,7 +354,7 @@ private fun review(e: JSONObject): ReviewEntry {
             e.getInt("max"),
             e.getInt("min"),
             e.getBoolean("paid"),
-            ReviewCounter(counter.getString("paid"), counter.getString("short")),
+            e.getString("counter"),
         )
     require(r.min > 0 && r.max >= r.min && r.answer.length <= r.max) { "An answer out of range" }
     return r
@@ -416,16 +415,6 @@ private fun JSONObject.stringOrNull(key: String): String? {
     val v = get(key)
     require(v is String) { "$key is not a string" }
     return v
-}
-
-private fun JSONObject.longOrNull(key: String): Long? {
-    require(has(key)) { "Missing $key" }
-    return if (isNull(key)) null else getLong(key)
-}
-
-private fun JSONObject.floatOrNull(key: String): Float? {
-    require(has(key)) { "Missing $key" }
-    return if (isNull(key)) null else getDouble(key).toFloat()
 }
 
 /** The strings of an array; an element that is not a string is malformed. */

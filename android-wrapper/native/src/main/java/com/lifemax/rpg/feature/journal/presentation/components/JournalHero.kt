@@ -220,7 +220,7 @@ private fun Rhythm(rhythm: HeroRhythm) {
 @Composable
 private fun RhythmCellBox(cell: RhythmCell, modifier: Modifier) {
     val c = LocalJournalColors.current
-    val tint = cell.color?.takeUnless { cell.off }?.let(::argb)
+    val tint = if (cell.off) null else argb(cell.color)
     Box(
         modifier
             .aspectRatio(1f)
@@ -230,9 +230,7 @@ private fun RhythmCellBox(cell: RhythmCell, modifier: Modifier) {
                 else Modifier.boxShadow(tint, 10.dp, CellShape, spread = (-3).dp, clipOutBox = true)
             )
             .clip(CellShape)
-            .background(
-                if (tint == null) c.cellOff else tint.copy(alpha = tint.alpha * (cell.alpha ?: 0f))
-            )
+            .background(if (tint == null) c.cellOff else tint.copy(alpha = tint.alpha * cell.alpha))
             .semantics { contentDescription = cell.label }
     )
 }

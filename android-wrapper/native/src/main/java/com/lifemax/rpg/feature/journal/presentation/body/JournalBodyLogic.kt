@@ -15,18 +15,10 @@ import com.lifemax.rpg.feature.journal.domain.WelcomeChip
  * old to pay, then long enough, then the short line. The phase 1 box is not typed in, so the short
  * line carries no live count.
  */
-fun counterLine(r: JournalReflect): String {
-    val n = r.text.trim().length
-    return when {
-        r.awarded -> r.counter.awarded
-        !r.canPay -> r.counter.old
-        n >= r.min -> r.counter.ready
-        else -> r.counter.short
-    }
-}
+fun counterLine(r: JournalReflect): String = r.counterFor(r.text.trim().length, typing = false)
 
 /** Whether the counter shows green (.jc-count.on): claimed, or long enough to pay. */
-fun counterOn(r: JournalReflect): Boolean = r.awarded || r.text.trim().length >= r.min
+fun counterOn(r: JournalReflect): Boolean = r.counterOn(r.text.trim().length)
 
 /** What a welcome chip asks for (§3.4's Phase 1 actions). */
 sealed interface ChipTap {

@@ -32,6 +32,8 @@ import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.feature.journal.domain.JournalAction
 import com.lifemax.rpg.feature.journal.domain.JournalChrome
 import com.lifemax.rpg.feature.journal.domain.JournalFrame
+import com.lifemax.rpg.feature.journal.presentation.body.JournalBodyColors
+import com.lifemax.rpg.feature.journal.presentation.body.LocalJournalBodyColors
 import com.lifemax.rpg.feature.journal.presentation.components.JournalColors
 import com.lifemax.rpg.feature.journal.presentation.components.JournalHero
 import com.lifemax.rpg.feature.journal.presentation.components.LocalJournalColors
@@ -204,8 +206,14 @@ private fun ToastLine(
 internal fun JournalTheme(chrome: JournalChrome, content: @Composable () -> Unit) {
     val colors =
         remember(chrome.tokens, chrome.light) { JournalColors(chrome.tokens, chrome.light) }
+    val body =
+        remember(chrome.tokens, chrome.light) { JournalBodyColors(chrome.tokens, chrome.light) }
     PageTheme(colors) {
-        CompositionLocalProvider(LocalJournalColors provides colors, content = content)
+        CompositionLocalProvider(
+            LocalJournalColors provides colors,
+            LocalJournalBodyColors provides body,
+            content = content,
+        )
     }
 }
 
