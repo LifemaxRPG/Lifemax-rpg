@@ -81,6 +81,8 @@
   let toasts = 0; // the page's toasts so far, so the screen tells a message from a repeat of the same words
   let answered = 0; // the toasts up to here were answered by a command's reply, so they are not sent again as a notice
 
+  // the screen edits the text, number and time fields itself once it says so (settings.fields.v1, 50-native-settings-fields.js)
+  const fieldsOn = () => tab.has(NativeSettingsFields.CAPABILITY);
   const view = () => document.getElementById("view-settings");
   const shown = (el) => !el.hidden && el.style.display !== "none" && !el.matches("input[type=file]");
   const slug = (s) =>
@@ -109,9 +111,9 @@
   /** the controls a command may operate, found on the page as it is now (a renderer may have replaced them since) */
   function bindings() {
     const out = [];
-    for (const [id, selector, key, asks] of BOUND) {
+    for (const [id, selector, key, asks, tag] of fieldsOn() ? BOUND.concat(NativeSettingsFields.bound()) : BOUND) {
       const el = document.querySelector(selector);
-      if (el) out.push({ id, el, key, asks: !!asks });
+      if (el) out.push({ id, el, key, asks: !!asks, tag });
     }
     document.querySelectorAll("#hapBody [data-try]").forEach((el) => out.push({ id: "haptics.try." + el.dataset.try, el, key: null }));
     document.querySelectorAll("#tabsEditBody .tabrow[data-view]").forEach((row) => {
@@ -188,6 +190,7 @@
         small: el.classList.contains("small") || el.classList.contains("tb"),
         enabled,
         op: b ? "press" : "reveal",
+        ...(fieldsOn() && NativeSettingsFields.saver(b)),
       };
     if (el.matches(".avatar")) {
       const image = /url\(["']?(.*?)["']?\)/.exec(el.style.backgroundImage || "");
@@ -195,7 +198,8 @@
     }
     // a text, number or time field: shown with what it holds, typed into on the page. The screen knows those three kinds, so any
     // other input is named as the nearest one (a slider holds a number, everything else is text); it is worked on the page either way
-    return { kind: "field", id, label: name, value: el.value, placeholder: el.placeholder || "", input: FIELD_INPUT[el.type] || "text", enabled, op: "reveal" };
+    const edit = fieldsOn() ? NativeSettingsFields.field(el, b) : null; // a password's text is never read
+    return { kind: "field", id, label: name, value: el.type === "password" ? "" : el.value, placeholder: el.placeholder || "", input: FIELD_INPUT[el.type] || "text", enabled, op: "reveal", ...edit };
   }
   const CONTROLS = "input, select, button, [role=group], .avatar";
   function controlsIn(el, ctx, label) {
@@ -409,7 +413,7 @@
     /** a button a command may press: {id} (the bottom bar's arrows and reset, the haptic tries) */
     async press({ id }) {
       const b = control(id, "button");
-      if (!b) return refuse("That button is not on the page. Nothing was changed.");
+      if (!b || (b.tag && b.tag.group)) return refuse("That button is not on the page. Nothing was changed.");
       if (b.el.disabled) return refuse("This button cannot be used right now.");
       return operate(b, () => b.el.click(), null);
     },
@@ -507,7 +511,7 @@
     toggle: "nativeSettingsToggle",
     projection,
     onAction,
-    commands: Object.fromEntries(Object.entries(commands).map(([name, run]) => [name, once(name, run)])),
+    commands: Object.fromEntries(Object.entries({ ...commands, ...NativeSettingsFields.commands({ operate, refuse, target, enabled: fieldsOn }) }).map(([name, run]) => [name, once(name, run)])),
     blocked,
     globals: { open: "openNativeSettings", enable: "setNativeSettingsEnabled", projection: "NativeSettingsTabProjection" },
   });

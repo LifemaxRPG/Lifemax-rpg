@@ -7483,6 +7483,9 @@
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
  ],
+ "window.NativeSettingsFields": [
+  "src/runtime/segments/50-native-settings-fields.js"
+ ],
  "window.NativeSwipe": [
   "src/runtime/segments/50-native-swipe.js"
  ],

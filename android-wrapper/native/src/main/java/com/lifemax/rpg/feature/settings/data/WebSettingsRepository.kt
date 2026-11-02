@@ -6,6 +6,7 @@ import com.lifemax.rpg.core.data.pageTokens
 import com.lifemax.rpg.feature.settings.domain.ButtonStyle
 import com.lifemax.rpg.feature.settings.domain.ClassicRow
 import com.lifemax.rpg.feature.settings.domain.ControlOp
+import com.lifemax.rpg.feature.settings.domain.FieldEdit
 import com.lifemax.rpg.feature.settings.domain.FieldInput
 import com.lifemax.rpg.feature.settings.domain.PageNotice
 import com.lifemax.rpg.feature.settings.domain.SettingsCard
@@ -63,6 +64,7 @@ class WebSettingsRepository : SettingsRepository {
         val ids = mutableSetOf<String>()
         val cards = j.getJSONArray("cards").objects().map { card(it, chips, ids) }
         require(cards.map { it.id }.distinct().size == cards.size) { "Two cards share an id" }
+        requireFormsComplete(cards)
         return SettingsProjection(
             session,
             sequence,
@@ -172,6 +174,8 @@ class WebSettingsRepository : SettingsRepository {
                 "choose" -> ControlOp.Choose
                 "press" -> ControlOp.Press
                 "reveal" -> ControlOp.Reveal
+                "edit" -> ControlOp.Edit
+                "save" -> ControlOp.Save
                 else -> throw IllegalArgumentException("Unknown op $name")
             }
         fun operated(vararg allowed: ControlOp) =
@@ -204,7 +208,11 @@ class WebSettingsRepository : SettingsRepository {
                 )
             }
             "button" -> {
-                operated(ControlOp.Press, ControlOp.Reveal)
+                operated(ControlOp.Press, ControlOp.Reveal, ControlOp.Save)
+                val group = if (op == ControlOp.Save) c.text("group") else ""
+                require(op != ControlOp.Save || group.isNotBlank()) {
+                    "A Save button needs its form"
+                }
                 val style =
                     when (val name = c.text("style")) {
                         "primary" -> ButtonStyle.Primary
@@ -220,10 +228,11 @@ class WebSettingsRepository : SettingsRepository {
                     c.text("description"),
                     style,
                     c.flag("small"),
+                    group,
                 )
             }
             "field" -> {
-                operated(ControlOp.Reveal)
+                operated(ControlOp.Reveal, ControlOp.Edit)
                 val input =
                     when (val name = c.text("input")) {
                         "text" -> FieldInput.Text
@@ -239,6 +248,7 @@ class WebSettingsRepository : SettingsRepository {
                     c.text("value"),
                     c.text("placeholder"),
                     input,
+                    if (op == ControlOp.Edit) fieldEdit(c, id, input) else null,
                 )
             }
             "avatar" -> {
@@ -250,6 +260,60 @@ class WebSettingsRepository : SettingsRepository {
                 SettingsControl.Avatar(id, enabled, op, c.text("label"), image, c.text("initial"))
             }
             else -> throw IllegalArgumentException("Unknown kind of control $kind")
+        }
+    }
+
+    /**
+     * What the page says about a field the screen edits. A time is set at once (no form); a text or
+     * number box is saved with its form, so it must name one. A limit the input does not have is
+     * null, never missing.
+     */
+    private fun fieldEdit(c: JSONObject, id: String, input: FieldInput): FieldEdit {
+        val group = c.text("group")
+        require((input == FieldInput.Time) == group.isEmpty()) {
+            "Field $id: a time is saved at once and a text or number with its form"
+        }
+        fun limit(name: String): Double? {
+            val v = c.get(name)
+            if (v == JSONObject.NULL) return null
+            require(v is Number) { "$name is not a number or null" }
+            return v.toDouble()
+        }
+        val maxLength = limit("maxLength")
+        require(maxLength == null || (maxLength >= 0 && maxLength % 1.0 == 0.0)) {
+            "maxLength is not a length"
+        }
+        return FieldEdit(group, limit("min"), limit("max"), limit("step"), maxLength?.toInt())
+    }
+
+    /**
+     * Every form a Save button names has fields, and every form's fields have their Save button.
+     */
+    private fun requireFormsComplete(cards: List<SettingsCard>) {
+        val controls =
+            cards
+                .flatMap { it.rows }
+                .flatMap { row ->
+                    when (row) {
+                        is SettingsRow.Line -> row.controls
+                        is SettingsRow.Field -> row.controls
+                        is SettingsRow.Controls -> row.controls
+                        is SettingsRow.Note -> row.controls
+                        else -> emptyList()
+                    }
+                }
+        val saved =
+            controls
+                .filterIsInstance<SettingsControl.Button>()
+                .map { it.group }
+                .filter(String::isNotEmpty)
+        val held =
+            controls
+                .filterIsInstance<SettingsControl.Field>()
+                .mapNotNull { it.edit?.group }
+                .filter(String::isNotEmpty)
+        require(saved.toSet() == held.toSet() && saved.distinct() == saved) {
+            "Each form has its fields and one Save button"
         }
     }
 

@@ -12,6 +12,9 @@ fun SettingsCommand.toJson(): JSONObject =
         is SettingsCommand.Choose -> JSONObject().put("id", id).put("value", value)
         is SettingsCommand.Press -> JSONObject().put("id", id)
         is SettingsCommand.Category -> JSONObject().put("id", id)
+        is SettingsCommand.SetField -> JSONObject().put("id", id).put("value", value)
+        is SettingsCommand.SaveForm ->
+            JSONObject().put("group", group).put("values", JSONObject(values))
     }
 
 /** The page's action name and id for what it does after the screen has closed (onAction). */

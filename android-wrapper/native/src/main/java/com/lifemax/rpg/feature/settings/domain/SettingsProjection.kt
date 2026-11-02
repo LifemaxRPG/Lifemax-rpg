@@ -93,6 +93,14 @@ enum class ControlOp {
     Press,
     /** The screen closes and the page shows the control, focused, for the owner to use. */
     Reveal,
+
+    /**
+     * A field the screen edits itself (settings.fields.v1): a time at once, the others as a form.
+     */
+    Edit,
+
+    /** A form's Save button: it sends the form's values, so it is not a plain press. */
+    Save,
 }
 
 /**
@@ -142,6 +150,8 @@ sealed interface SettingsControl {
         val description: String,
         val style: ButtonStyle,
         val small: Boolean,
+        /** For [ControlOp.Save]: the form whose values it sends; empty otherwise. */
+        val group: String = "",
     ) : SettingsControl
 
     /** A text, number or time field, typed into on the page. */
@@ -153,6 +163,8 @@ sealed interface SettingsControl {
         val value: String,
         val placeholder: String,
         val input: FieldInput,
+        /** For [ControlOp.Edit]: the page's limits and the form it belongs to; null otherwise. */
+        val edit: FieldEdit? = null,
     ) : SettingsControl
 
     /** The profile picture: [image] is a data URL or empty, [initial] shows without one. */
@@ -165,6 +177,19 @@ sealed interface SettingsControl {
         val initial: String,
     ) : SettingsControl
 }
+
+/**
+ * What the page says about a field the screen edits: [group] is the form it is saved with (empty:
+ * saved at once, a time), [min], [max], [step] and [maxLength] are the input's own attributes (null
+ * where it has none). The screen keeps the typing to them; the page clamps what it stores.
+ */
+data class FieldEdit(
+    val group: String,
+    val min: Double?,
+    val max: Double?,
+    val step: Double?,
+    val maxLength: Int?,
+)
 
 data class SettingsOption(val value: String, val label: String)
 
