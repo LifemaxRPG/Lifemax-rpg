@@ -2,41 +2,44 @@ package com.lifemax.rpg.feature.food.domain
 
 /**
  * The add-food sheet as the page describes it (NativeNutrition's `sheet` field): what to draw,
- * nothing to compute.
+ * nothing to compute. The forms of phase 2 (create, the daily targets, the edit view's entry) are
+ * in FoodSheetForms.kt.
  */
 internal data class FoodSheet(
     val view: SheetView,
+    /** the page's title for the view, and whether its head button steps back (else it closes) */
+    val title: String,
+    val back: Boolean,
     val slot: String,
     val slots: List<SheetSlot>,
     val query: String,
-    val tab: SheetTab,
+    val tab: String,
+    val tabs: List<SheetSlot>,
+    val words: SheetWords,
     val searching: Boolean,
     val rows: List<SheetRow>,
     val empty: SheetEmpty?,
+    /** the food at an amount: the portion view's, or the edit view's (with [SheetPortion.edit]) */
     val portion: SheetPortion?,
+    val quick: SheetQuick?,
+    val create: SheetCreate?,
+    val goal: SheetGoal?,
 )
 
 internal enum class SheetView(val wire: String) {
     Search("search"),
     Portion("portion"),
-    Quick("quick");
+    Quick("quick"),
+    Create("create"),
+    Goal("goal"),
+    Edit("edit");
 
     companion object {
         fun of(wire: String) = entries.firstOrNull { it.wire == wire }
     }
 }
 
-internal enum class SheetTab(val wire: String, val label: String) {
-    Recent("recent", "Recent"),
-    Favorites("fav", "Favorites"),
-    Mine("mine", "My foods");
-
-    companion object {
-        fun of(wire: String) = entries.firstOrNull { it.wire == wire }
-    }
-}
-
-/** A meal the food is logged to. */
+/** A meal the food is logged to, or a tab of the search: its id and the page's label. */
 internal data class SheetSlot(val id: String, val label: String)
 
 /**
@@ -74,6 +77,8 @@ internal data class SheetPortion(
     val multiples: List<SheetMultiple>,
     val impact: List<SheetImpact>,
     val logLabel: String,
+    /** the entry being changed, in the edit view; null in the portion view */
+    val edit: SheetEdit?,
 )
 
 internal data class SheetServing(

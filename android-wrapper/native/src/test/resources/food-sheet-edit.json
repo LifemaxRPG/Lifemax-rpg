@@ -1,19 +1,19 @@
 {
  "version": 1,
- "day": "2026-10-28",
+ "day": "2026-10-27",
  "today": "2026-10-28",
- "eyebrow": "TODAY",
- "dayLabel": "Wednesday, Oct 28",
+ "eyebrow": "VIEWING",
+ "dayLabel": "Tuesday, Oct 27",
  "pane": "log",
  "currentSlot": "lunch",
  "totals": {
-  "kcal": 1251,
-  "p": 113.4,
-  "c": 92.2,
-  "f": 46.4,
-  "fib": 0,
+  "kcal": 555,
+  "p": 11.4,
+  "c": 115.8,
+  "f": 5.2,
+  "fib": 6.3,
   "sug": 0,
-  "na": 84.2
+  "na": 0
  },
  "goals": {
   "cal": 2500,
@@ -22,7 +22,7 @@
   "f": 83,
   "water": 2000
  },
- "waterMl": 850,
+ "waterMl": 0,
  "light": false,
  "week": [
   {
@@ -42,7 +42,7 @@
    "kcal": 555,
    "frac": 0.222,
    "status": "under",
-   "selected": false,
+   "selected": true,
    "today": false
   },
   {
@@ -52,7 +52,7 @@
    "kcal": 1251,
    "frac": 0.5004,
    "status": "under",
-   "selected": true,
+   "selected": false,
    "today": true
   },
   {
@@ -161,59 +161,19 @@
  "copyYesterday": {
   "breakfast": false,
   "lunch": false,
-  "dinner": true,
+  "dinner": false,
   "snacks": false
  },
  "entries": [
   {
-   "id": "f1",
-   "slot": "breakfast",
-   "name": "Greek yogurt with berries",
-   "grams": 250,
-   "kcal": 210,
-   "p": 22,
-   "c": 24,
-   "f": 3
-  },
-  {
-   "id": "f2",
-   "slot": "breakfast",
-   "name": "Black coffee",
-   "grams": 240,
-   "kcal": 5,
-   "p": 0,
-   "c": 1,
-   "f": 0
-  },
-  {
-   "id": "f3",
-   "slot": "lunch",
-   "name": "Chicken burrito bowl",
-   "grams": 420,
-   "kcal": 640,
-   "p": 48,
-   "c": 62,
-   "f": 20
-  },
-  {
-   "id": "f4",
-   "slot": "snack",
-   "name": "Almonds",
-   "grams": 30,
-   "kcal": 174,
-   "p": 6,
-   "c": 6,
-   "f": 15
-  },
-  {
-   "id": "food_1793188807374_jl56",
+   "id": "f9",
    "slot": "dinner",
-   "name": "Chicken, breast, meat and skin, raw",
-   "grams": 175,
-   "kcal": 222,
-   "p": 37.4,
-   "c": -0.8,
-   "f": 8.4
+   "name": "Rice, black, unenriched, raw",
+   "grams": 150,
+   "kcal": 555,
+   "p": 11.4,
+   "c": 115.8,
+   "f": 5.2
   }
  ],
  "plan": null,
@@ -327,9 +287,9 @@
      "color": "#ff7a8a",
      "grams": 11.4,
      "goal": 188,
-     "before": 54.25531914893617,
+     "before": 0,
      "add": 6.063829787234043,
-     "label": "11 g · 60%"
+     "label": "11 g · 6%"
     },
     {
      "k": "c",
@@ -337,9 +297,9 @@
      "color": "#ffc15e",
      "grams": 115.8,
      "goal": 250,
-     "before": -9.439999999999998,
+     "before": 0,
      "add": 46.32,
-     "label": "116 g · 37%"
+     "label": "116 g · 46%"
     },
     {
      "k": "f",
@@ -347,9 +307,9 @@
      "color": "#4fd6c0",
      "grams": 5.2,
      "goal": 83,
-     "before": 49.63855421686746,
+     "before": 0,
      "add": 6.265060240963856,
-     "label": "5 g · 56%"
+     "label": "5 g · 6%"
     }
    ],
    "logLabel": "Save changes · 555 kcal",
@@ -364,11 +324,7 @@
   "goal": null
  },
  "sheetForms": true,
- "notice": {
-  "id": 1,
-  "text": "Chicken, breast, meat and… · 222 kcal",
-  "action": "Undo"
- },
+ "notice": null,
  "answer": {
   "op": "",
   "ok": true,

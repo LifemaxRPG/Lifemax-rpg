@@ -196,7 +196,7 @@
    "f": 15
   },
   {
-   "id": "food_1793188807374_jl56",
+   "id": "food_1793188806036_6sb1",
    "slot": "dinner",
    "name": "Chicken, breast, meat and skin, raw",
    "grams": 175,
@@ -326,11 +326,7 @@
   }
  },
  "sheetForms": true,
- "notice": {
-  "id": 1,
-  "text": "Chicken, breast, meat and… · 222 kcal",
-  "action": "Undo"
- },
+ "notice": null,
  "answer": {
   "op": "",
   "ok": true,

@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.feature.food.presentation.sheet.openAddFood
+import com.lifemax.rpg.feature.food.presentation.sheet.openEntry
+import com.lifemax.rpg.feature.food.presentation.sheet.openTargets
 import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
@@ -180,7 +183,7 @@ internal fun ColumnScope.FoodLogPane(c: FoodContext) {
                     // Center Readout
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { dispatch("goals", emptyMap()) },
+                        modifier = Modifier.clickable { openTargets() },
                     ) {
                         Text(
                             text = fmtNum(if (calGoal > 0) abs(left) else calLogged),
@@ -476,7 +479,7 @@ internal fun ColumnScope.FoodLogPane(c: FoodContext) {
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(selectedPanel)
                                     .border(1.dp, panelBorder, RoundedCornerShape(12.dp))
-                                    .clickable { dispatch("add", mapOf("slot" to slotId)) },
+                                    .clickable { openAddFood(slotId) },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
@@ -500,7 +503,7 @@ internal fun ColumnScope.FoodLogPane(c: FoodContext) {
                             light = light,
                             modifier = Modifier.weight(if (canCopyYesterday) 1.25f else 1f),
                         ) {
-                            dispatch("add", mapOf("slot" to slotId))
+                            openAddFood(slotId)
                         }
 
                         if (canCopyYesterday) {
@@ -532,7 +535,7 @@ internal fun ColumnScope.FoodLogPane(c: FoodContext) {
                                         .background(sunken)
                                         .clickable {
                                             if (entryId.isNotEmpty()) {
-                                                dispatch("entry", mapOf("id" to entryId))
+                                                openEntry(entryId)
                                             }
                                         }
                                         .padding(horizontal = 14.dp, vertical = 11.dp),

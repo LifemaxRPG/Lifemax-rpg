@@ -1,19 +1,19 @@
 {
  "version": 1,
- "day": "2026-10-28",
+ "day": "2026-10-27",
  "today": "2026-10-28",
- "eyebrow": "TODAY",
- "dayLabel": "Wednesday, Oct 28",
+ "eyebrow": "VIEWING",
+ "dayLabel": "Tuesday, Oct 27",
  "pane": "log",
  "currentSlot": "lunch",
  "totals": {
-  "kcal": 1251,
-  "p": 113.4,
-  "c": 92.2,
-  "f": 46.4,
+  "kcal": 0,
+  "p": 0,
+  "c": 0,
+  "f": 0,
   "fib": 0,
   "sug": 0,
-  "na": 84.2
+  "na": 0
  },
  "goals": {
   "cal": 2500,
@@ -22,7 +22,7 @@
   "f": 83,
   "water": 2000
  },
- "waterMl": 850,
+ "waterMl": 0,
  "light": false,
  "week": [
   {
@@ -42,7 +42,7 @@
    "kcal": 0,
    "frac": 0,
    "status": "under",
-   "selected": false,
+   "selected": true,
    "today": false
   },
   {
@@ -52,7 +52,7 @@
    "kcal": 1251,
    "frac": 0.5004,
    "status": "under",
-   "selected": true,
+   "selected": false,
    "today": true
   },
   {
@@ -154,58 +154,7 @@
   "dinner": false,
   "snacks": false
  },
- "entries": [
-  {
-   "id": "f1",
-   "slot": "breakfast",
-   "name": "Greek yogurt with berries",
-   "grams": 250,
-   "kcal": 210,
-   "p": 22,
-   "c": 24,
-   "f": 3
-  },
-  {
-   "id": "f2",
-   "slot": "breakfast",
-   "name": "Black coffee",
-   "grams": 240,
-   "kcal": 5,
-   "p": 0,
-   "c": 1,
-   "f": 0
-  },
-  {
-   "id": "f3",
-   "slot": "lunch",
-   "name": "Chicken burrito bowl",
-   "grams": 420,
-   "kcal": 640,
-   "p": 48,
-   "c": 62,
-   "f": 20
-  },
-  {
-   "id": "f4",
-   "slot": "snack",
-   "name": "Almonds",
-   "grams": 30,
-   "kcal": 174,
-   "p": 6,
-   "c": 6,
-   "f": 15
-  },
-  {
-   "id": "food_1793188807374_jl56",
-   "slot": "dinner",
-   "name": "Chicken, breast, meat and skin, raw",
-   "grams": 175,
-   "kcal": 222,
-   "p": 37.4,
-   "c": -0.8,
-   "f": 8.4
-  }
- ],
+ "entries": [],
  "plan": null,
  "shop": null,
  "sheet": null,
