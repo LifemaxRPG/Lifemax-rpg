@@ -100,6 +100,7 @@ class WebMediaRepository : MediaRepository {
                 j.objectOrNull("notice") { PageNotice(it.getLong("id"), it.getString("text")) },
                 colors.pageTokens(),
                 j.getBoolean("light"),
+                j.mediaForm(),
             )
     }
 

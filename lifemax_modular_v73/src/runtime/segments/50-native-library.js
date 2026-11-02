@@ -4,6 +4,9 @@
    nothing it does not draw is over the pane: the add/edit form, the audio player, a file button handed to the owner, a level-up.
    The page's toast, which the screen would hide, comes with the projection while it shows, for the screen to draw.
    The Journal stays on the page; the switch's Journal is a web destination, so the Journal lock works as before.
+   A screen that says it draws the Media sheets (library.media.write.v1, plan phase 3) gets edit "native" and the form's words, and
+   adds, edits, ticks and removes through commands on the page's own owners (mediaUpsert, mediaSetStatus, mediaRemove,
+   mediaRemoveAudio) without closing; play and attach stay hand-overs until the audio dock.
    The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/LIBRARY_INVENTORY.md. */
 (function () {
   // what the page writes in views/media.html and in its list (renderMedia, mediaAudioButtons), word for word
@@ -39,6 +42,7 @@
     },
   };
   const FILTERS = "#mediaSearch, #mediaFilter, #mediaTypeFilter";
+  const WRITE = "library.media.write.v1"; // the screen draws the add/edit sheet, the tick and the confirms itself
   const FILE_BUTTON = "#mediaList [data-media-file]"; // a row's Attach or Replace file
   let filterRevision = 1; // rises whenever the page's filter is set (typed on the page, or by a voice search), so the screen adopts it
   let acting = false; // a tap handed back to the page is still running: what it shows may come only after an await (the player)
@@ -116,9 +120,80 @@
       noMatch: WORDS.noMatch,
       buttons: WORDS.buttons,
       player: player(),
+      // the Media sheets: drawn by the screen when it says so, else every edit is the page's own form
+      edit: tab.has(WRITE) ? "native" : "page",
+      form: tab.has(WRITE) ? form(items) : null,
       // notice: the kit's (cfg.notices), the page's toast while it shows
     };
   }
+
+  /** a field of the page's form as the screen draws it: its label, placeholder and length, read from the form itself */
+  function field(id, extra) {
+    const el = document.getElementById(id);
+    return Object.assign({ label: document.querySelector("label[for=" + id + "]").textContent, placeholder: el.placeholder, maxLength: el.maxLength }, extra);
+  }
+  function select(id) {
+    return { label: document.querySelector("label[for=" + id + "]").textContent, options: options(id) };
+  }
+  /** the page's add/edit form and confirms, for a screen that draws them. links holds the stored link of an item whose link the
+      rows do not show (not http or https), so an edit starts from what the page's form would show and does not drop it. */
+  function form(items) {
+    const buttons = document.querySelectorAll("#mediaForm button");
+    const links = {};
+    items.forEach((x) => {
+      const stored = String(x.link || "");
+      if (stored !== webLink(stored)) links[String(x.id)] = stored;
+    });
+    return {
+      heading: { add: MEDIA_FORM.add, edit: MEDIA_FORM.edit },
+      save: buttons[0].textContent,
+      cancel: buttons[1].textContent,
+      fields: {
+        title: field("mediaTitle", { required: MEDIA_REFUSE.title }),
+        type: select("mediaType"),
+        creator: field("mediaCreator"),
+        status: select("mediaStatus"),
+        link: field("mediaLink"),
+        notes: field("mediaNotes"),
+      },
+      defaults: { type: MEDIA_FORM.type, status: MEDIA_FORM.status },
+      links,
+      confirms: {
+        remove: { text: MEDIA_ASK.remove, confirm: WORDS.buttons.remove },
+        removeAudio: { text: MEDIA_ASK.removeAudio, confirm: WORDS.buttons.removeAudio },
+        cancel: buttons[1].textContent,
+      },
+    };
+  }
+
+  const FIELDS = ["title", "type", "creator", "status", "link", "notes"];
+  const MALFORMED = { ok: false, changed: false, message: "Something went wrong. Nothing was changed." };
+  /** what an owner answered, as a reply; the page's toast says it, as the page's own tick and buttons do, unless [quiet] */
+  function said(r, quiet) {
+    if (!quiet) toast(r.message);
+    return { ok: !!r.ok, changed: !!r.changed, message: String(r.message || "") };
+  }
+  /* The Media sheets' writes (plan §3.4, phase 3), for a screen that draws them. Each is repeat-safe: an add carries the screen's
+     operation id, which mediaUpsert stores on the item in the same save, so the same add again answers the item it made; an edit
+     and a status are sets; remove and remove audio do nothing to an id already gone. ok only once the save has stored it. */
+  const COMMANDS = {
+    upsert(p) {
+      const f = p.fields, id = typeof p.id === "string" ? p.id : "", op = typeof p.op === "string" ? p.op : "";
+      if (!f || typeof f !== "object" || !FIELDS.every((k) => typeof f[k] === "string") || (!id && !op)) return MALFORMED;
+      // an edit of an item removed meanwhile would otherwise add it back under its old id
+      if (id && !mediaById(id)) return { ok: false, changed: false, message: "That item is no longer in your library" };
+      const r = mediaUpsert(Object.assign({ id, op }, ...FIELDS.map((k) => ({ [k]: f[k] }))));
+      // a refusal is drawn on the sheet, by its field; a stored item is said as the page's form says it
+      return Object.assign(said({ ok: r.ok, changed: r.ok && !r.duplicate, message: r.message }, !r.ok), { id: r.id || "", field: r.field || "" });
+    },
+    setStatus: (p) => said(mediaSetStatus(String(p.id || ""), String(p.status || ""))),
+    remove: (p) => said(mediaRemove(String(p.id || ""))),
+    removeAudio: async (p) => said(await mediaRemoveAudio(String(p.id || ""))),
+  };
+  /** a command runs only for a screen that draws the sheets: an older screen never sends one */
+  const commands = Object.fromEntries(
+    Object.entries(COMMANDS).map(([name, run]) => [name, (p) => (tab.has(WRITE) ? run(p) : { ok: false, changed: false, message: "Media cannot do that here." })]),
+  );
 
   /** the row's own file button, in view, focused and named in a toast for the owner to tap: a file picker opens only from a tap
       on the page. A page filter that hides the row is cleared quietly, so the screen keeps its own filter. */
@@ -180,6 +255,7 @@
     toggle: "nativeLibraryToggle",
     projection,
     onAction,
+    commands,
     render: "renderMedia",
     // the page's toast goes to the screen, which hides it; the one pointing the owner to a file button is about the page
     notices: { quiet: (id) => id === hint },

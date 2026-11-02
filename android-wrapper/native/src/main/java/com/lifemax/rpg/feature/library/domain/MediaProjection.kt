@@ -124,4 +124,6 @@ data class MediaProjection(
     val notice: PageNotice?,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /** The page's add/edit form when the screen draws the Media sheets; null when the page does. */
+    val form: MediaForm? = null,
 )
