@@ -50,6 +50,7 @@
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('./fixtures/director-day.js');
+const { serve } = require('./current-page.js');
 const root = path.resolve(__dirname, '..'), out = path.join(os.tmpdir(), 'lm_handover_sim_' + process.pid + '.html');
 execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' });
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
@@ -100,13 +101,13 @@ async function run(b, mode) {
       else { if (jn.relockFor) jn.cleared++; jn.relockFor = null; jn.state = 'open'; jn.lockOn = x.lockOn; jn.session = x.session }
     } else if (op === 'rest') { if (!(process.env.JMUT === 'fake' && !jn.lockOn)) jn.state = 'resting'; jn.shown = false }
     else if (op === 'stop') { if (jn.shown && jn.state === 'open' && jn.lockOn) { jn.state = 'locked'; jn.relockFor = jn.session; jn.stops++ } }
-    else if (op === 'reload') { jn.state = 'resting'; jn.shown = false } // a page load takes the screen away; the plugin (and its gate) stays
     return Object.assign({}, jn);
   });
-  await p.addInitScript(`
+  // the starting save, on the first load only in the Journal's modes, whose reloads keep what the page stored
+  await p.addInitScript(`if(!${journalMode(mode)}||!localStorage.getItem('lifemax_rpg_prototype_v1')){
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',
       plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
-    localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});
+    localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});}
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
     window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
     /* every reply: one per command, to a command that ran, saying what its run did */
@@ -160,7 +161,9 @@ async function run(b, mode) {
     window.__visState='visible';Object.defineProperty(document,'visibilityState',{get:()=>window.__visState,configurable:true});
     window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeOverviewCards:mk('cards','cards',false,window.__mode==='failing'),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false),NativeJournal:mk('journal','journal',false,false,jmodel),BiometricLock:bio},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
-  await p.goto('file://' + out);
+  // the Journal's modes reload the page: served over http, since a reloaded file:// page can lose what it stored (current-page.js)
+  const server = journalMode(mode) ? await serve(out) : null;
+  await p.goto(server ? server.url : 'file://' + out);
   let loads = 0; p.on('load', () => loads++);   /* on Android a page load takes every native screen away (NativeScreens), so no tab switch may load one */
   for (let i = 0; i < 40; i++) { await p.clock.runFor(500); await p.waitForTimeout(60); }
   if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
@@ -223,8 +226,8 @@ async function run(b, mode) {
         // a page load takes every screen away and starts a new page session; the native plugin, and its gate, stay
         const was = await p.evaluate(() => ({ faults: window.__faults, log: window.__log }));
         carried.faults.push(...was.faults); carried.log.push(...was.log, '>> reload');
-        await p.evaluate(() => window.__jnModel('reload'));
         await p.reload(); reloads++;
+        Object.assign(jn, { state: 'resting', shown: false }); // the old page's screens are gone (after anything it still sent); the gate stays
         await p.evaluate(s => { window.__seed = s }, seed * 977 + reloads);
         // a new page draws every bar scene cold, as at the start: each tab once, so a first capture cannot outlast the hand-over's net
         await afterLoad(); await settle(2500); await warmTabs();
@@ -385,5 +388,6 @@ async function run(b, mode) {
   console.log((loads ? 'FAIL' : 'PASS') + ' cards ' + mode + ': no tab switch loaded a page (' + loads + ' loads)');
   if (errs.length) console.log('FAIL cards ' + mode + ': script errors', errs.slice(0, 3));
   await p.context().close();
+  if (server) server.close();
   return !!(failures.length || errs.length || loads);
 }

@@ -316,9 +316,16 @@ const HELPERS = () => {
     release({ ok: true }); await until(() => !latest().withheld, 2000);
     out.openAgain = latest().withheld === false;
     // the lock turned off: no drawing follows (nothing to empty), so only the lock's onChange tells the screen, at once
+    // a relock reaches the screen through the lock's onChange itself, not only through the drawing it causes (the kit's render
+    // hook, 100 ms later): with the drawing taken out, the withheld frame still comes
     await wait(600); // the unlock's own frames have gone
-    const nOff = frames().length; state.journalLock = { on: false }; LifeMaxJournalLock.apply();
-    await until(() => frames().length > nOff && latest().lock.on === false, 1000); out.offFrame = latest().lock.on === false && latest().withheld === false; save();
+    const nRe = frames().length, draw = renderHistory; renderHistory = function () { };
+    try { LifeMaxJournalLock.relock() } finally { renderHistory = draw }
+    out.relockBySubscription = await until(() => frames().slice(nRe).some(f => f.withheld), 1000);
+    renderHistory();
+    // the lock turned off (in Settings): the frame says lock.on false
+    state.journalLock = { on: false }; save(); LifeMaxJournalLock.apply();
+    await until(() => latest().lock.on === false && latest().withheld === false, 1500); out.offFrame = latest().lock.on === false && latest().withheld === false;
     return out;
   }, seed.privates);
   ok('lock on and unlocked: the open frame says lock.on', lk.openOn, lk);
@@ -336,7 +343,8 @@ const HELPERS = () => {
   ok('and the next frame says the same', lk.nextSame, lk);
   ok('unlock relocks first when the page thinks it is open (its withheld frame goes out), then unlocks', lk.relockFirst[0] === true && lk.relockFirst[1] && lk.relockFirst[2] === false, lk.relockFirst);
   ok('unlock while a prompt is already up answers ok:false, never undefined', same(lk.ignored, [false, true]) && lk.openAgain, lk.ignored);
-  ok('the lock turned off reaches the screen at once (the lock\'s onChange, with no drawing to follow): lock.on false', lk.offFrame, lk);
+  ok('a relock reaches the screen through the lock\'s onChange subscription itself (no drawing needed)', lk.relockBySubscription === true, lk.relockBySubscription);
+  ok('the lock turned off: lock.on false', lk.offFrame, lk);
 
   /* ---------- write and the way back ---------- */
   const wr = await p.evaluate(async () => {
