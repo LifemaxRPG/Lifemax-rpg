@@ -33,6 +33,7 @@
     ["nativeRecipes", "#nativeRecipesToggle", PREFS],
     ["nativeLibrary", "#nativeLibraryToggle", PREFS],
     ["nativeJournal", "#nativeJournalToggle", PREFS],
+    ["nativeAudio", "#nativeAudioToggle", PREFS],
     ["nativeSettings", "#nativeSettingsToggle", PREFS],
     ["tabs.reset", "#tabsResetBtn", PREFS],
     ["swipe", "#lmaSwipeToggle", PREFS],

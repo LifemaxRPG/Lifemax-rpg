@@ -3,6 +3,7 @@
    and hands every tap to the page's own handler. The kit closes the screen, the handler runs, and the screen comes back once
    nothing it does not draw is over the pane: the add/edit form, the audio player, a file button handed to the owner, a level-up.
    The page's toast, which the screen would hide, comes with the projection while it shows, for the screen to draw.
+   With the native audio dock (50-native-audio.js) Play and a file chosen in Android's picker are commands, so the screen stays open.
    The switch's Journal is a destination of its own: the native Journal (50-native-journal.js, its own switch) or the page.
    The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/LIBRARY_INVENTORY.md. */
 (function () {
@@ -179,16 +180,30 @@
     toggle: "nativeLibraryToggle",
     projection,
     onAction,
+    commands: {
+      // with the dock, Play and the native picker's file are commands: the screen stays open and the book starts in the dock
+      play: async ({ id }) => {
+        if (!mediaById(String(id || ""))) return { ok: false, message: "That item is gone." };
+        await playMediaAudio(String(id));
+        return { ok: true };
+      },
+      // fire-and-forget: the reply is at once and the page's toasts report the rest, so a 300 MB read blocks no command
+      attach: async (p) => window.NativeAudioDock.attachPicked(p),
+      attachRefused: async (p) => {
+        window.NativeAudioDock.refused(String(p.name || ""));
+        return { ok: true };
+      },
+    },
     render: "renderMedia",
     // the page's toast goes to the screen, which hides it (the kit's shared notices); the one pointing the owner to a file
     // button is about the page, and claimed for none
     notices: true,
-    // until a native mini-player exists, a player that is loading, loaded or showing keeps the pane on the page, so its
-    // controls never vanish under the screen (audioBusy)
+    // a player that is loading, loaded or showing keeps the pane on the page, so its controls never vanish under the screen
+    // (audioBusy), unless the native dock is carrying it (50-native-audio.js)
     blocked: () =>
       acting ||
       document.getElementById("mediaFormCard").style.display !== "none" ||
-      audioBusy() ||
+      (audioBusy() && !window.NativeAudioDock?.ready()) ||
       !!document.activeElement?.matches(FILE_BUTTON) ||
       !!document.querySelector(".luov"),
     // The page covers the pane now and then (the form, the player, a level-up) and gives it back (the form closed, the player

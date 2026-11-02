@@ -200,6 +200,7 @@ function deleteMediaItem(id){
 
 /* —— Audiobook / audio file support (IndexedDB) —— */
 const AUDIO_DB='lifemax_audio_v1', AUDIO_STORE='files';
+const AUDIO_MAX_BYTES=512*1024*1024; // 512 MB soft limit on one file
 let audioCtx={mediaId:null, loading:null, objectUrl:null, seeking:false, saveTimer:null}; // loading: the id whose file is being read
 function audioDbOpen(){
   return new Promise((resolve,reject)=>{
@@ -260,8 +261,7 @@ function pickAudioForMedia(id){
 }
 async function attachAudioFile(id, file){
   const item=mediaById(id);if(!item)return;
-  const max=512*1024*1024; // 512 MB soft limit
-  if(file.size>max){toast('File too large (max ~512 MB)');return}
+  if(file.size>AUDIO_MAX_BYTES){toast('File too large (max ~512 MB)');return}
   if(saveReadOnly){toast(unsavedMessage());return} // the save cannot name the file, so the file is not stored either
   toast('Saving audio to this device…');
   try{

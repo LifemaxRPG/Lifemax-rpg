@@ -13,7 +13,9 @@ function closeAudioPlayer(reset){
   if(reset){/* stay closed */}
 }
 /* The player is in use: a file loading or loaded, or the player showing. A native screen over the Library steps aside while it is, so
-   the player's controls never vanish under it (until a native player exists). */
+   the player's controls never vanish under it (unless the native dock, 50-native-audio.js, is carrying them). */
+/* The player's state changed in a way its element does not announce (a file starting to load): the native dock (50-native-audio.js) listens */
+function audioAnnounce(){try{window.dispatchEvent(new Event('lma-audio'))}catch(e){}}
 function audioBusy(){return !!audioCtx.loading||!!audioCtx.mediaId||!!document.getElementById('audioPlayer')?.classList.contains('show')}
 function toggleMinimizeAudioPlayer(){
   const bar=document.getElementById('audioPlayer');
@@ -50,8 +52,8 @@ async function playMediaAudio(id, fromStart){
       return;
     }
     closeAudioPlayer(true);
-    audioCtx.loading=id;
-    const rec=await audioDbGet(id).finally(()=>{audioCtx.loading=null});
+    audioCtx.loading=id;audioAnnounce();
+    const rec=await audioDbGet(id).finally(()=>{audioCtx.loading=null;audioAnnounce()});
     if(!rec||!rec.blob){
       toast('Audio file missing — attach it again');
       delete item.audio;save();

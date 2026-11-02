@@ -299,6 +299,9 @@ body.noscroll{overflow:hidden}
 @media(max-width:860px){
   .audio-player{bottom:calc(var(--nav-h) + var(--safe-b) + 8px)}
 }
+/* the native dock (50-native-audio.js) carries the player: the page's own gives way and the body clears the dock's height */
+.audio-docked .audio-player{display:none!important}
+@media(max-width:860px){.audio-docked .app{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 16px + var(--audio-dock-h,0px))}}
 .audio-player-top{display:flex;align-items:center;gap:10px}
 .audio-player-title{flex:1;min-width:0;font-weight:650;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .audio-player-sub{font-size:11px;color:var(--muted);font-weight:400}

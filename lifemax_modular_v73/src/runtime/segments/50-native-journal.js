@@ -283,7 +283,7 @@
     onAction,
     render: "renderHistory",
     // a hand-back in progress, the page's field, a level-up, and (until a native player) a loaded book, as native Media
-    blocked: () => acting || returning || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov") || audioBusy(),
+    blocked: () => acting || returning || !!document.activeElement?.matches(EDITING) || !!document.querySelector(".luov") || (audioBusy() && !window.NativeAudioDock?.ready()),
     // the page gives the pane back: a level-up gone (the body watcher), the entry drawn again after a hand-back, the player closed
     watch(observe) {
       observe(document.getElementById("journalEntry"), { childList: true });
