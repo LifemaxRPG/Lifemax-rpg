@@ -191,11 +191,9 @@ internal object GoldenPaths {
                     .let { null }
             "jcAward" ->
                 num(arg(0)).also { run.save = Coach.award(s, it, text(arg(1)), text(arg(2)), ctx) }
-            "jcOnReflect" ->
-                run.apply(Coach.reflect(s, text(arg(0)), text(arg(1)), ctx)).let { null }
+            "jcOnReflect" -> run.apply(Coach.reflect(s, text(arg(0)), text(arg(1)), ctx))
             "jcClaim" ->
                 run.apply(Coach.claim(s, Coach.Claim.entries.first { it.key == text(arg(0)) }, ctx))
-                    .let { null }
             "jcCatchUp" -> run.apply(Coach.catchUp(s, text(env["prompt"]), ctx)).let { null }
             "jcSaveReview" ->
                 run.apply(Coach.saveReview(s, text(arg(0)), text(arg(1)), ctx)).let { null }

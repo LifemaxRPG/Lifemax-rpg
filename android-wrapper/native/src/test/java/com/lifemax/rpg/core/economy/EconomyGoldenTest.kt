@@ -128,15 +128,15 @@ class EconomyGoldenCountTest {
  */
 internal object LooseFields {
     /**
-     * `journalCoach`: the journal's redraw adds day and pattern memory of its own (`days` entries
-     * without `xpAwarded`, `pats`, `cooldown`); only the economy's once-only marks are compared
-     * (COACH-1, section 21).
+     * `journalCoach`: the journal's drawing stores day and pattern memory of its own (`days`
+     * entries without `xpAwarded`, `pats`, `cooldown`) with a plain write; only the economy's
+     * once-only marks are compared (COACH-1, section 21).
      */
     fun of(key: String, value: Any?): Any? = if (key == "journalCoach") coachMarks(value) else value
 
     /**
-     * Toasts: a failed save redraws the page and the redraw saves again, so the "not saved" message
-     * can repeat; a repeat right after itself counts once (section 21).
+     * Toasts: a failed save says "not saved" and its take-back says it again, so the message can
+     * repeat; a repeat right after itself counts once (section 21).
      */
     fun toasts(toasts: List<Any?>): List<Any?> =
         toasts.filterIndexed { i, t -> i == 0 || t != toasts[i - 1] || t !in UNSAVED }

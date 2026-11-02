@@ -61,8 +61,8 @@ Rules carry IDs (`CAP-2`, `AWARD-1` ...). Golden cases and Kotlin tests should c
 - **TIME-1** `now` is the device clock in epoch milliseconds (`Date.now()`).
 - **TIME-2** `localDate(t)`: the calendar date of instant `t` in the device time zone, as `YYYY-MM-DD`
   (`toLocaleDateString('en-CA')`).
-- **TIME-3** `today = localDate(now)` (`getToday`, `04-runtime.js:83`).
-- **TIME-4** `activityDate(a) = localDate(parse(a.date))` (`04-runtime.js:84`). `a.date` is an ISO-8601 UTC string
+- **TIME-3** `today = localDate(now)` (`getToday`, `04-runtime.js:84`).
+- **TIME-4** `activityDate(a) = localDate(parse(a.date))` (`04-runtime.js:85`). `a.date` is an ISO-8601 UTC string
   (`toISOString()`). A missing or unparseable date gives the string `Invalid Date`, which never equals a real key.
 - **TIME-5** Date keys compare as strings; for valid keys this is chronological order.
 - **TIME-6** `dayNum(key) = round(Date.UTC(y, m-1, d) / 86400000)`, days since 1970-01-01 (`05-runtime.js:44`);
@@ -71,7 +71,7 @@ Rules carry IDs (`CAP-2`, `AWARD-1` ...). Golden cases and Kotlin tests should c
   (`d = new Date(); d.setDate(d.getDate() - k)`), then `localDate`. Every "last 7 days" window in this area is
   `[daysAgo(6), today]`, inclusive, compared as strings.
 - **TIME-8** `weekMonday`: `now` moved back `(weekday + 6) mod 7` local days, weekday 0 = Sunday, then `localDate`
-  (`04-runtime.js:86`, `07-runtime.js:7`). Weeks start on Monday.
+  (`04-runtime.js:87`, `07-runtime.js:7`). Weeks start on Monday.
 
 ### 0.3 Strings
 
@@ -249,8 +249,8 @@ Constants written inline in the code (not in `ECO`):
 | 1.15 | Compound Habit perk | `43-economy.js:55` |
 | 0.05 per star, 3 stars max, level 20 to ascend | ascension | `44-rewards.js:10,20-21` |
 | 0.1 / 0.2, 2..5 per session, 15 per day | Life Director execution bonus | `logic.js:2516-2521` |
-| 100, 25 | attribute/skill level curve | `04-runtime.js:54` |
-| 1000 | level ceiling of the level loop | `04-runtime.js:55` |
+| 100, 25 | attribute/skill level curve | `04-runtime.js:55` |
+| 1000 | level ceiling of the level loop | `04-runtime.js:56` |
 | 4, 3 | decay grace days and rate (% of the level step per day) defaults | `05-runtime.js:43` |
 | 15 | decay ceiling per attribute per day | `05-runtime.js:48` |
 | +2 grace days | Iron Grace perk | `05-runtime.js:47` |
@@ -265,9 +265,9 @@ Constants written inline in the code (not in `ECO`):
 
 ## 4. Level curves
 
-- **CURVE-1** Attribute and skill level step (`xpForLevel`, `04-runtime.js:54`): `need(L) = 100 + 25 * (L - 1)`
+- **CURVE-1** Attribute and skill level step (`xpForLevel`, `04-runtime.js:55`): `need(L) = 100 + 25 * (L - 1)`
   (L1 100, L2 125, L10 325, L20 575).
-- **CURVE-2** `levelData(total, step = need)` (`04-runtime.js:55`): `level = 1; left = max(0, total)`;
+- **CURVE-2** `levelData(total, step = need)` (`04-runtime.js:56`): `level = 1; left = max(0, total)`;
   while `left >= step(level)` and `level < 1000`: `left -= step(level); level += 1`. Returns
   `{level, into: left, needed: step(level), pct: min(100, left / step(level) * 100)}`. Reaching a threshold exactly moves up
   (`levelData(100)` is level 2, into 0; `levelData(99)` is level 1, into 99). At level 1000 the loop stops, `into` may exceed
@@ -275,14 +275,14 @@ Constants written inline in the code (not in `ECO`):
 - **CURVE-3** Character level step (`charXpForLevel`, `43-economy.js:9`): `charNeed(L) = 200 + 75 * (L - 1)`.
 - **CURVE-4** `charCumXP(L) = 37.5*L*L + 87.5*L - 125` (`43-economy.js:10`): the XP needed to reach character level L,
   equal to the sum of `charNeed(1..L-1)` (L1 0, L2 200, L3 475, L5 1250, L10 4500). Used only by the migration (17.6).
-- **CURVE-5** Character level (`characterLevel`, `04-runtime.js:57`):
+- **CURVE-5** Character level (`characterLevel`, `04-runtime.js:58`):
   `levelData(totalXP + (legacyCharXPBonus || 0) + sum(values(ascended || {})), charNeed)`, where `totalXP` is DERIVE-3.
   Ascended XP keeps counting toward the character after the attribute restarts (section 14).
-- **CURVE-6** Attribute level (`attrLevel`, `04-runtime.js:82`): `levelData(attrXP(id))` with
-  `attrXP(id) = num(state.attrXP[id] || 0)` (`04-runtime.js:58`).
+- **CURVE-6** Attribute level (`attrLevel`, `04-runtime.js:83`): `levelData(attrXP(id))` with
+  `attrXP(id) = num(state.attrXP[id] || 0)` (`04-runtime.js:59`).
 - **CURVE-7** Skill level: `levelData(skillXP[name])` with CURVE-1; only skills with XP > 0 are listed, highest first
   (`15-runtime.js:48-52`, `50-native-character.js:34-37`).
-- **CURVE-8** Dev boost amount (`xpToGainLevels(total, n)`, `04-runtime.js:246-252`): `d = levelData(max(0, num0(total)))`;
+- **CURVE-8** Dev boost amount (`xpToGainLevels(total, n)`, `04-runtime.js:272-278`): `d = levelData(max(0, num0(total)))`;
   `need = max(0, d.needed - d.into)`; `lvl = d.level + 1`; repeat `n - 1` times: `need += need(lvl); lvl += 1`; return
   `max(1, need)`.
 - **CURVE-9** Quest stage lock (`13-runtime.js:272-273`): `stageLvl(s) = [0, 1, 3, 5, 8, 12][s] || 1`;
@@ -297,19 +297,19 @@ Constants written inline in the code (not in `ECO`):
 Attribute and skill XP are caches of the ledger. Every `save()` rebuilds them (17.1); `load()` rebuilds them when the ledger is
 non-empty (`04-runtime.js:25`).
 
-- **DERIVE-1** `rebuildAttrXP` (`04-runtime.js:59-72`):
+- **DERIVE-1** `rebuildAttrXP` (`04-runtime.js:60-73`):
   1. `next = {id: 0}` for each of the 8 ATTRS ids.
   2. For each activity in ledger order: `splits = a.xpSplit` if it is truthy and has a non-zero length, else
      `[{attr: a.primary, xp: a.xp || 0}]`. For each split `z`: if `z` is truthy and `z.attr` is one of the 8 ids,
-     `next[z.attr] += max(0, num0(z.xp))`; otherwise the split is ignored. (The second branch at `04-runtime.js:67` can
+     `next[z.attr] += max(0, num0(z.xp))`; otherwise the split is ignored. (The second branch at `04-runtime.js:68` can
      never run [D32].)
   3. For each id: `next[id] = max(0, next[id] - max(0, num0(decayTotal[id])) - max(0, num0(ascended[id])))`.
   4. `state.attrXP = next` (exactly the 8 ids, in ATTRS order).
-- **DERIVE-2** `rebuildSkillXP` (`04-runtime.js:73-80`): `next = {}`; for each activity, `sk = (a.skill || '').trim()`;
+- **DERIVE-2** `rebuildSkillXP` (`04-runtime.js:74-81`): `next = {}`; for each activity, `sk = (a.skill || '').trim()`;
   skip when empty; `next[sk] = (next[sk] || 0) + max(0, num0(a.xp))`. `state.skillXP = next` (keys in order of first
   appearance). A record's whole `xp` goes to its skill, including stars and the Life Director bonus; quest records go to
   `Quest Completion`.
-- **DERIVE-3** `totalXP = sum(values(state.attrXP))` (`04-runtime.js:56`).
+- **DERIVE-3** `totalXP = sum(values(state.attrXP))` (`04-runtime.js:57`).
 - **DERIVE-4** Award paths also add to `state.attrXP` and `state.skillXP` in memory before they call `save()`, and removals
   subtract; `save()` replaces both with DERIVE-1/2, so these in-memory edits never survive and need not be reproduced
   [D15]. `applyDecay` writes `attrXP` directly, but always together with a matching `decayTotal` increase, so the next
@@ -325,8 +325,8 @@ non-empty (`04-runtime.js:25`).
   defaults themselves never change): a shallow merge per type, so a stored entry replaces the default entry whole, and a stored
   key that is not a default type becomes a type of its own. With no save, `rules = copy(DEFAULT_RULES)` (`04-runtime.js:33`).
   `save()` writes `state.customRules = rules` (`04-runtime.js:44`). `saveRules` sets each type's
-  `base = min(200, max(1, num(v) || 1))` in place (`0` gives 1), saves and toasts `'XP rules saved'` (`04-runtime.js:303`);
-  `resetRules` restores a fresh copy of the defaults, saves and toasts `'Default XP rules restored'` (`04-runtime.js:304`); the
+  `base = min(200, max(1, num(v) || 1))` in place (`0` gives 1), saves and toasts `'XP rules saved'` (`04-runtime.js:329`);
+  `resetRules` restores a fresh copy of the defaults, saves and toasts `'Default XP rules restored'` (`04-runtime.js:330`); the
   migration may rewrite three fields (MIG-4).
   A rule is `{name, icon, base, skill, primary, secondary, desc}`.
 - **RULES-2** Defaults (`00-runtime.js:12-22`):
@@ -354,7 +354,7 @@ Icons: book, briefcase, dumbbell, heart, chat, moon, mountain, target, star (sam
 
 ### 6.3 Preview of a Log draft
 
-- **PREV-1** `activityPreview(d)` (`04-runtime.js:231`):
+- **PREV-1** `activityPreview(d)` (`04-runtime.js:257`):
   - `r = rules[d.type] || rules.custom`
   - `dur = max(0, num0(d.duration))`; `quality = num(d.quality) || 1`
   - `durFactor = ecoDur(dur)`; `q = dur < 20 ? min(1, quality) : quality`
@@ -474,7 +474,7 @@ Worked examples (verified in a sandbox against the page's own functions):
   `starXP(attr, xp) = round(xp * (1 + 0.05 * stars(attr)))` (`44-rewards.js:10`), the factor `1 + 0.05 * stars` computed
   first. Applied to each part after the split, and after the cap [D06]. Applied by Log, health, voice and Life Director
   `xpFor`; not by quests, nutrition, cat care, money, plan, catalog, coach or the Life Director bonus.
-- **LOGAWARD-1** `activityAward(d, peek)` (`04-runtime.js:233`), the Log award:
+- **LOGAWARD-1** `activityAward(d, peek)` (`04-runtime.js:259`), the Log award:
   1. `x = activityPreview(d)`. If `x.total` is falsy: `{xp: 0, split: [], msg: 'Log at least 5 minutes to earn XP'}`.
   2. `ec = ecoAward(d.type, x.total, num0(d.duration), {manual: true, peek})` (day = today). If `ec.xp <= 0`:
      `{xp: 0, split: [], msg: ec.msg}`.
@@ -496,7 +496,7 @@ Worked examples (verified in a sandbox against the page's own functions):
 ### 11.1 Log (`recordActivity`)
 
 - **LOG-1** The draft: `{type, customName, duration, quality, skill, primary, secondary, notes, opId?}`. The web form gives
-  strings (`activityDraftFromForm`, `04-runtime.js:230`). The native Log screen normalises first (`clean`,
+  strings (`activityDraftFromForm`, `04-runtime.js:256`). The native Log screen normalises first (`clean`,
   `50-native-log.js:33-48`): fields the draft lacks are first taken from the preset draft of its type (`draftFor`, the
   `reading` preset when the type is missing or not a rules key: name and notes `''`, duration `'30'`, quality `'1'`, the rule's
   skill, primary and secondary); then `type` must be a rules key, else `custom`; `customName` cut to 80 characters; `duration` becomes
@@ -509,7 +509,7 @@ Worked examples (verified in a sandbox against the page's own functions):
   `{ok: false, message: res.message}` (no toast of its own); otherwise it toasts `res.message` and returns
   `{ok: true, message: res.message, xp: res.xp, navigate: 'dashboard'}`, a replayed `opId` included (the `duplicate` flag is
   not passed on).
-- **LOG-2** `recordActivity(d)` (`04-runtime.js:237`), in order:
+- **LOG-2** `recordActivity(d)` (`04-runtime.js:263`), in order:
   1. If `d.opId` is truthy and a record with `a.opId === d.opId` exists: return
      `{ok: true, xp: that.xp, message: 'Activity saved · +' + that.xp + ' XP', duplicate: true}`. Nothing changes. The
      comparison is strict and records store `String(d.opId)`, so only a string `opId` (as the native Log sends) is ever matched.
@@ -525,14 +525,14 @@ Worked examples (verified in a sandbox against the page's own functions):
   6. Push it; update caches (DERIVE-4); `save()` (17.1, which credits Sparks and may auto-complete Daily Hand cards).
   7. If `save()` returned false: `takeBack(was)` (17.4) and return `{ok: false, message: unsavedMessage()}`.
   8. Return `{ok: true, xp: award.xp, message: 'Activity saved · +' + award.xp + ' XP'}`.
-- **LOG-3** The preview a Log screen shows is `activityAward(d, true)` (`04-runtime.js:234`, `50-native-log.js:50-54`): the
+- **LOG-3** The preview a Log screen shows is `activityAward(d, true)` (`04-runtime.js:260`, `50-native-log.js:50-54`): the
   same function, peeking, so it always equals what Save pays at that moment.
 
 ### 11.2 Quests
 
-- **QUEST-1** `questKey(q)` (`04-runtime.js:86`): daily `q.id + '_' + today`; weekly `q.id + '_' + weekMonday`; anything else
-  (epic) `q.id + '_once'`. `isQuestDone(q) = !!questDone[questKey(q)]` (`04-runtime.js:87`).
-- **QUEST-2** `toggleQuest(id, checked)` (`04-runtime.js:239`):
+- **QUEST-1** `questKey(q)` (`04-runtime.js:87`): daily `q.id + '_' + today`; weekly `q.id + '_' + weekMonday`; anything else
+  (epic) `q.id + '_once'`. `isQuestDone(q) = !!questDone[questKey(q)]` (`04-runtime.js:88`).
+- **QUEST-2** `toggleQuest(id, checked)` (`04-runtime.js:265`):
   1. `q` = the quest with that id; none: return (no save).
   2. `A = q.attribute || 'discipline'`.
   3. If `checked` and `questLocked(q)` (CURVE-9): toast `'Locked until you reach level ' + stageLvl(q.stage)`, then
@@ -565,7 +565,7 @@ Worked examples (verified in a sandbox against the page's own functions):
 
   Examples: daily quest of 50 with Compound Habit and a pool of 10: base `round(57.49999...) = 57`, peek 67, paid 67, pool 0.
   Epic of 75 with a pool of 100: 113, pool 62.
-- **QUEST-4** Quest XP values: custom quests `min(500, max(1, num(input) || 25))` (`04-runtime.js:242`), so an empty or `0`
+- **QUEST-4** Quest XP values: custom quests `min(500, max(1, num(input) || 25))` (`04-runtime.js:268`), so an empty or `0`
   input gives 25 and a negative or fractional one below 1 gives 1. `createQuest` refuses an empty (trimmed) name with
   `'Give your quest a name'`; otherwise it pushes `{id: 'custom_' + now, name, desc: 'Custom quest created by you.', cadence
   (the form's), xp, kind: 'custom'}`, saves and toasts `'Quest created'`. Daily Hand cards are daily quests worth 0/10/20/30 by
@@ -823,27 +823,47 @@ complete) and the day has no `actId`:
   toast `a.name + ' · +' + xp + ' XP'`.
 - `undoCat(id)` removes the entry's last record of today (none: nothing), saves and toasts `'Undone · XP removed'`.
 
-#### 11.7.3 Journal coach (`jcAward`, `47-journal-coach.js:133-139`)
+#### 11.7.3 Journal coach (`jcAward`, `47-journal-coach.js:159-164`)
 
 **COACH-1** `jcAward(xp, name, note)` pushes `{id: UUID, type: 'coach', name, icon: 'book', duration: 0, quality: 1,
 skill: 'Reflection', primary: 'wellbeing', secondary: '', xp, date: now, notes: note || '', xpSplit: [{wellbeing, xp}],
 src: 'coach'}` (passive for streak and decay) and returns `xp`; it does not save (its callers do). The once-only marks live in
-`state.journalCoach` (`days`, `reviews`, `welcome`, created empty when missing). Constants in `JC` (`47-journal-coach.js:6`).
+`state.journalCoach` (`days`, `reviews`, `welcome`); the writers create what they need (`jcStore`), and drawing the Journal
+reads them without creating any (`jcRead`, `jcRec`), so a fresh save has no `journalCoach` until something is written. Constants
+in `JC` (`47-journal-coach.js:6`).
 
-| Award | Condition and mark | Name, notes | Toast |
-|---|---|---|---|
-| Reflection 15 (`jcOnReflect(d, text)`, `47-journal-coach.js:140-146`) | trimmed text 40+ characters, `d` today or yesterday, `days[d].xpAwarded` unset, then set; so today's and yesterday's reflections can each pay once | `Journal reflection`, `''` | `'+15 XP · +2 bond · Reflection saved'` (and +2 bond to the cat) |
-| Welcome back 10 (`jcClaim('pet')`) | a `welcome[today]` record with `claimed.pet` unset, then set | `Welcome back`, `'Returned after ' + gap + ' days'` | `'+10 XP · Welcome back'`; with a cat it first calls `petPetDone()`, which can complete cat care (CARE-1) |
-| New chapter 25 (`jcClaim('fresh')`) | `welcome[today]`, `claimed.fresh` unset, then set | `New chapter`, same notes | `'+25 XP · New chapter'` |
-| Catch-up 20 (`jcCatchUp()`, `47-journal-coach.js:234-246`) | the typed sentence trimmed 12+ characters (else `'Write a full sentence (12+ characters)'`), `welcome[today]` with `claimed.line` unset, then set; the sentence is appended (new line) to `dayReflections[today]`, cut to 4,000 | `Catch-up note`, `''` | `'+20 XP · Catch-up saved'` |
-| Weekly review 30, monthly chronicle 50 (`jcSaveReview(key, text)`, `47-journal-coach.js:350-355`) | `reviews[key].answer` = trimmed text cut to 2,000 on every call; pays when `paid` is unset and the text has 50+ (key `W...`) or 60+ (`M...`) characters, then `paid = true` | `Weekly review` / `Monthly chronicle`, `''` | `'+30 XP · Review saved'` / `'+50 XP · Review saved'` |
+| Award | Condition and mark | Name, notes | Toast | Returns |
+|---|---|---|---|---|
+| Reflection 15 (`jcOnReflect(d, text)`, `47-journal-coach.js:184-188`) | trimmed text 40+ characters, `d` today or yesterday, `days[d].xpAwarded` unset, then set; so today's and yesterday's reflections can each pay once. A refused reflection changes nothing | `Journal reflection`, `''` | `'+15 XP · +2 bond · Reflection saved'` (and +2 bond to the cat) | `true` when paid, else `false` |
+| Welcome back 10 (`jcClaim('pet')`, `47-journal-coach.js:306-309`) | today's card offers `pet` (`jcOffered`, below: tier 1); `claimed.pet` then set | `Welcome back`, `'Returned after ' + gap + ' days'` (the stored gap) | `'+10 XP · Welcome back'`; with a cat it first calls `petPetDone()`, which can complete cat care (CARE-1) | `true` when paid, else `false` |
+| New chapter 25 (`jcClaim('fresh')`) | today's card offers `fresh` (tier 3); `claimed.fresh` then set | `New chapter`, same notes | `'+25 XP · New chapter'` | as above |
+| Catch-up 20 (`jcCatchUp()`, `47-journal-coach.js:313-322`) | today's card offers `line` (tier 2), checked before the prompt; the typed sentence trimmed 12+ characters (else `'Write a full sentence (12+ characters)'`); it is appended (new line) to `dayReflections[today]`, cut to 4,000, unless the reflection already is or ends with it (a retry); `claimed.line` then set | `Catch-up note`, `''` | `'+20 XP · Catch-up saved'` | nothing |
+| Weekly review 30, monthly chronicle 50 (`jcSaveReview(key, text)`, `47-journal-coach.js:451-456`) | `reviews[key].answer` = trimmed text cut to 2,000 on every call; pays when `paid` is unset and the text has 50+ (key `W...`) or 60+ (`M...`) characters, then `paid = true` | `Weekly review` / `Monthly chronicle`, `''` | `'+30 XP · Review saved'` / `'+50 XP · Review saved'` | nothing |
 
-Each caller saves after its award; a review also saves when it pays nothing (the answer is stored), the others return without
-saving when they pay nothing. `jcOnReflect` creates `days[d] = {}` before it checks, so a refused reflection still adds an empty
-mark (written by the next save). The claims, the catch-up and reviews redraw the journal, and that drawing may add `days` and
-`pats` entries of its own (the coach's day and pattern memory), which are outside the economy.
+Today's card offers a chip (`jcOffered(kind)`, `47-journal-coach.js:303`, through `jcWelcomeData`, `276-287`) only when
+`welcome[today]` has a `tier` and 3 or more quiet days lead to today now (`jcGap`, `47-journal-coach.js:62-65`: days in a row
+before today with no record other than coach and passive ones and no written reflection, counted only when some record came
+before them); tier 1 offers `pet`, tier 2 `line` (and a link to Life Director that pays nothing), tier 3 `fresh`, each until
+claimed. So a record without a tier, a chip of another tier, a repeat, or a day the owner has since logged (the gap is gone)
+pays nothing. The record itself is decided when today is first drawn after 3 or more quiet days (`jcWelcomeRecord`,
+`47-journal-coach.js:266-273`): `{tier: gap >= 14 ? 3 : gap >= 7 ? 2 : 1, gap, claimed: {}}`, stored with a plain write.
 
-#### 11.7.4 Dev boosts (`07-runtime.js:10,117`, `04-runtime.js:253-300`)
+The words come first (`jcKeepWords`, `47-journal-coach.js:168`): a reflection is stored by `saveDayReflection`
+(`04-runtime.js:187`) before `jcOnReflect` runs, and the catch-up sentence and a review's answer are stored by `jcWrite`
+(`47-journal-coach.js:23`: `state.customRules = rules`, then `writeSave()`, no rebuild, Sparks or Daily Hand). When the words
+cannot be stored the page toasts `unsavedMessage()`, keeps them in memory and on screen, and pays nothing. A review that pays
+nothing, and a refused catch-up, are only that write (and a redraw); they never run `save()`.
+
+The reward is then paid in a save of its own (`jcPay`, `47-journal-coach.js:173-179`): `was = JSON.stringify(state)` (after the
+words), the award, then `save()`. Stored: the reward's toast. Not stored: `takeBack(was, said)` (SAVE-4) puts the state back
+as it was after the words, so only the reward is taken back, and says `'Reflection saved · XP not saved (storage full?)'`,
+`'Catch-up saved · XP not saved (storage full?)'` or `'Review saved · XP not saved (storage full?)'` (the words were kept); a
+welcome chip, which has no words of its own, gets `unsavedMessage()`. The toasts of a failed reward are therefore `save()`'s
+`unsavedMessage()` (none while read-only) and then the take-back's line; the reward's own toast never appears. The claims, the
+catch-up and reviews redraw the journal; that drawing may store `days` and `pats` entries of its own (the coach's day and
+pattern memory) with a plain write, and they are outside the economy.
+
+#### 11.7.4 Dev boosts (`07-runtime.js:10,117`, `04-runtime.js:279-326`)
 
 **DEV-1** With developer mode on, an attribute sheet offers `+1` and `+2` levels: `xp = xpToGainLevels(attrXP(attr), n)` (CURVE-8),
 recorded as a catalog entry with no limits.
@@ -1000,10 +1020,15 @@ Passive records are defined in 2.4 (PASSIVE-1).
   for today; `plan` by `dayDone(today)`; `self` and `none` never (the owner claims those by hand). The Daily Hand step
   runs even when the core save failed.
 - **SAVE-3** `writeSave()` (`04-runtime.js:40-43`): refuses (false) while the save is read-only; false when storage throws.
-- **SAVE-4** `takeBack(was)` (`04-runtime.js:53`): `state = JSON.parse(was)`, redraw, toast `unsavedMessage()`
-  (`'Not saved: this version is read-only for your save'` or `'Could not save to this browser (storage full?)'`,
-  `04-runtime.js:46`). Everything the attempt changed is undone: the record, rested XP spent, Sparks credited, quests the Daily
-  Hand paid. Only Log (LOG-2) and Life Director (LD-3) use it [D13].
+- **SAVE-4** `takeBack(was, said)` (`04-runtime.js:54`): `state = JSON.parse(was)`, redraw, toast `said` when given, else
+  `unsavedMessage()` (`'Not saved: this version is read-only for your save'` or `'Could not save to this browser (storage
+  full?)'`, `04-runtime.js:46`). Everything the attempt changed is undone: the record, rested XP spent, Sparks credited, quests
+  the Daily Hand paid. Only Log (LOG-2), Life Director (LD-3) and the Journal coach's rewards (COACH-1, which pass `said` to name
+  the words they kept) use it [D13]. A failed save therefore toasts twice: `save()`'s `unsavedMessage()` (SAVE-1, none while
+  read-only), then the take-back's (golden cases `log/save-fails`, `director/award-save-fails`). A path that does not take back
+  shows `save()`'s message among its own: `'Quest complete · +15 XP'` then the message (`quest/save-fails-kept`), the message then
+  `'Activity saved · +26 XP'` (`voice/log-save-fails-kept`). The redraw no longer saves (the Journal stores its own decisions with
+  a plain write), so the message is not said a third time.
 - **SAVE-5** `load()` (`04-runtime.js:20-36`): merges the stored save over `freshState()`, rebuilds attribute and skill XP when
   the ledger is non-empty, merges rules, then `migrateSave()` (`ecoMigrate`, reading list, class content) and `writeSave()`.
   A save from a newer build, or one whose migration throws, is shown read-only instead and never written. With nothing stored:
@@ -1037,7 +1062,7 @@ Runs in `migrateSave()` at load and at the top of every `save()`; does nothing o
 
 | Action | Source | Reverses | Does not reverse |
 |---|---|---|---|
-| Delete an activity | `deleteActivity`, `04-runtime.js:243`: asks first (no: nothing), then saves and toasts `'Activity undone'` | the record; money transactions with that `actId`; the plan day's `actId`; `questDone` entries pointing at it (so the quest can be paid again) | Sparks, rested XP spent, decay, `peakBalance`, badges, `nutriDone`, `careDay.paid` |
+| Delete an activity | `deleteActivity`, `04-runtime.js:269`: asks first (no: nothing), then saves and toasts `'Activity undone'` | the record; money transactions with that `actId`; the plan day's `actId`; `questDone` entries pointing at it (so the quest can be paid again) | Sparks, rested XP spent, decay, `peakBalance`, badges, `nutriDone`, `careDay.paid` |
 | Remove an activity (plan, catalog undo, voice undo) | `removeAct`, `06-runtime.js:46`; `undoCat`, `07-runtime.js:120`; `50-voice-gen5.js:29` | the record | the same |
 | Uncheck a quest | QUEST-2 step 6 | the record and `questDone` | Sparks, rested XP |
 | Remove a money transaction | `removeMoneyTransaction(id)`, `05-runtime.js:179-181`: false for an unknown id, else saves and returns true (`deleteTx` asks first and toasts `'Transaction removed'`) | the transaction and its record | `peakBalance` (a re-deposit does not pay again), Sparks |
@@ -1096,13 +1121,13 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
   and the spent pool are written by the next unrelated save, and the day's bonus is gone.
 - **D05** A capped award that pays anything spends the whole rested bonus computed from the uncapped amount
   (`43-economy.js:47,60`): an award of `x` that the cap cuts to 1 XP still takes `round(x * 0.5)` from the pool.
-- **D06** Stars are applied after the cap, so a day can end above 240 XP (`04-runtime.js:233`, `39-health.js:24`,
+- **D06** Stars are applied after the cap, so a day can end above 240 XP (`04-runtime.js:259`, `39-health.js:24`,
   `49-voice-time.js:119`, `logic.js:2500`).
 - **D07** The Life Director execution bonus is added after the cap and computed from the starred XP (`logic.js:2516-2521`).
 - **D08** Plan, catalog, coach and dev awards are uncapped but count toward the cap total and the active-time total of later
   capped awards, so the order of logging changes what the day pays.
 - **D09** The weekly quest limit counts a rolling 7 days (`43-economy.js:57`) while a weekly quest's period is the calendar
-  week from Monday (`04-runtime.js:86`).
+  week from Monday (`04-runtime.js:87`).
 - **D10** A walking workout imported from Health Connect gets skill `Walking` (`39-health.js:54`) and so matches the passive
   test meant for step counts (`43-economy.js:12`): it pays XP but does not count for the streak, decay or shields.
 - **D11** `lmaHealthAward` adds the pre-star amount to the skill cache and returns it to the sync summary, while the record
@@ -1110,8 +1135,8 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
 - **D12** The health settings text (`39-health.js:124`) says steps pay "3 XP per 1,000 up to 15,000" from 2,000 steps, and
   sleep pays from 3 hours; the rules pay 1.5 XP per 1,000 effective steps above 2,000, nothing below 4,000 effective, at most
   15, and nothing for sleep under 5.5 hours.
-- **D13** Only Log and Life Director take a failed save back. Quests, voice, health, nutrition, cat care, money, plan, catalog,
-  coach, the shop and rest days leave the attempt in memory (records, rested XP spent, Sparks credited, quests the Daily Hand
+- **D13** Only Log, Life Director and the Journal coach's rewards take a failed save back. Quests, voice, health, nutrition, cat
+  care, money, plan, catalog, the shop and rest days leave the attempt in memory (records, rested XP spent, Sparks credited, quests the Daily Hand
   paid in the save wrapper), and the next successful save stores it.
 - **D14** Sparks are never revoked (SPARK-1). Checking and unchecking a quest, or deleting and re-logging an activity, pays new
   Sparks each time (and spends rested XP each time) while the XP nets out.
@@ -1148,7 +1173,7 @@ Each is today's behaviour, to be reproduced unless the owner decides otherwise.
   for the next save.
 - **D30** The decay watch display ignores Iron Grace (`05-runtime.js:57`).
 - **D31** Buying a toy id without a price would make Sparks NaN (`44-rewards.js:86`); the shop only lists priced toys.
-- **D32** `rebuildAttrXP` has an unreachable branch (`04-runtime.js:67`).
+- **D32** `rebuildAttrXP` has an unreachable branch (`04-runtime.js:68`).
 - **D33** The cap total does not clamp negative record XP (`43-economy.js:20`) while the rebuild does.
 - **D34** Health steps and sleep spend rested XP, so passive data can drain the pool meant for coming back to training.
 - **D35** Quests, nutrition, cat care and deposits count as training for decay through their primary and secondary attributes
@@ -1170,8 +1195,9 @@ format; the first case, `fresh/save`, holds the fresh save every other case's st
 that `tools/run_tests.sh` runs in CI) and fails when the page and the file disagree, or when a rule or defect ID here has no case
 and no stated reason. Pitfalls met while recording, besides
 the ones listed below: `dayNum('2026-10-28')` is 20754 (a day number written by hand is easily a year off); drawing the page
-saves once (the journal's chip, `jcChip`), which credits Sparks, marks records and migrates, so a case's state must be drawn with
-that save held back before the case begins; a health sync looks back only to `max(since, now - 3 days)` (HEALTH-2), so one sync
+must not save before the case begins (a save credits Sparks, marks records and migrates), so the generator holds back any save a
+drawing makes (the journal's drawing no longer saves: its chip and welcome decisions use a plain write); a welcome case must seed
+a record with a `tier` and a last record `gap + 1` days back, or `jcOffered` refuses every chip; a health sync looks back only to `max(since, now - 3 days)` (HEALTH-2), so one sync
 cannot exercise a week of sleep bands; a stage-3 quest needs character level 5, not 3 (CURVE-9).
 
 - Drive the real built page (`build.py`, `forge_features.py`) with a fixed clock and time zone, as
@@ -1183,8 +1209,8 @@ cannot exercise a week of sleep bands; a stage-3 quest needs character level 5, 
   auto-verify too: `save/daily-hand-pays-inside-save` seeds today's three cards so the draw is not involved).
 - Some recorded fields hold page state that is outside the economy and that a fresh implementation may ignore or compare
   loosely: the coach's `journalCoach.days` and `.pats` entries added when the journal is redrawn (COACH-1), `plan.checks[date].s`
-  ticks (PLAN-1, specified but outside), the money object's paycheck settings dated by the case's day, and a toast repeated when a
-  failed save redraws (the redraw saves again).
+  ticks (PLAN-1, specified but outside), the money object's paycheck settings dated by the case's day, and the "not saved" toast said
+  twice in a row by a failed save and its take-back (SAVE-4).
 - Life Director's host sync (LD-4) can complete quests after a Log; keep Life Director state empty in Log cases.
 - Record both the return value and the state delta (ledger tail, `attrXP`, `skillXP`, `restedXP`, `sparks`, `questDone`) and
   the messages.

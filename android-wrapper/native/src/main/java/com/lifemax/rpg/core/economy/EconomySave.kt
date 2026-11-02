@@ -189,7 +189,9 @@ data class JournalCoach(
     data class Review(val answer: String, val paid: Boolean = false)
 
     /**
-     * A welcome-back day: the gap in days, and the chips already claimed (`pet`, `fresh`, `line`).
+     * A welcome-back day: the gap in days, the chips already claimed (`pet`, `fresh`, `line`) and
+     * the tier decided with it (1 for 3-6 quiet days, 2 for 7-13, 3 for 14 or more; 0 for a record
+     * written before tiers, which offers no chip).
      */
-    data class Welcome(val gap: Double, val claimed: Set<String> = emptySet())
+    data class Welcome(val gap: Double, val claimed: Set<String> = emptySet(), val tier: Int = 0)
 }
