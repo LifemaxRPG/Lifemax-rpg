@@ -48,10 +48,16 @@ internal fun pixelScale(width: Float): Int =
     floor(width / CatLife.WINDOW_WIDTH).toInt().coerceAtLeast(1)
 
 private fun DrawScope.drawShadow(pose: CatPose, s: Int, left: Int, bottom: Float) {
+    drawShadowAt(pose, s, left + pose.shadowX * s, bottom - s * (ROOM_HEIGHT - pose.shadowY))
+}
+
+/**
+ * The room's two-row ground shadow of [pose] with its centre at device pixel ([x], [y]), [s] device
+ * pixels to a room pixel; its alpha, width and shrinking come from the pose.
+ */
+internal fun DrawScope.drawShadowAt(pose: CatPose, s: Int, x: Float, y: Float) {
     if (pose.shadowAlpha <= 0f) return
     val wide = pose.shadowHalfWidth * pose.shadowScale
-    val x = left + pose.shadowX * s
-    val y = bottom - s * (ROOM_HEIGHT - pose.shadowY)
     val color = SHADOW.copy(alpha = pose.shadowAlpha)
     // the room's own two-row ground shadow: a wide thin row and a shorter one under it
     drawRect(color, snap(x - wide * s, y - s), Size(snapLength(wide * 2f * s), s * 2f))
@@ -69,9 +75,23 @@ private fun DrawScope.drawSprite(
     left: Int,
     bottom: Float,
 ) {
-    val sheet = sprites.sheet(pose.clip) ?: return
     val footX = (left + pose.x * s).roundToInt().toFloat()
     val footY = (bottom - s * (ROOM_HEIGHT - pose.y) + pose.bob * s).roundToInt().toFloat()
+    drawSpriteAt(pose, sprites, s, footX, footY)
+}
+
+/**
+ * The cat of [pose] with its feet at device pixel ([footX], [footY]): the sheet frame of its clip,
+ * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says.
+ */
+internal fun DrawScope.drawSpriteAt(
+    pose: CatPose,
+    sprites: CatSprites,
+    s: Int,
+    footX: Float,
+    footY: Float,
+) {
+    val sheet = sprites.sheet(pose.clip) ?: return
     val flip = if (pose.flip) -1f else 1f
     val frameW = sprites.frameWidth
     val frameH = sprites.frameHeight

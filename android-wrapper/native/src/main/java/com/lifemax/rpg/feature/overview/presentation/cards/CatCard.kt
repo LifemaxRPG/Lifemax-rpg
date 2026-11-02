@@ -35,23 +35,33 @@ import com.lifemax.rpg.core.designsystem.mix
 import com.lifemax.rpg.feature.overview.domain.CatCard
 import com.lifemax.rpg.feature.overview.domain.CatMode
 import com.lifemax.rpg.feature.overview.domain.CatPortrait
+import com.lifemax.rpg.feature.overview.domain.LiveCat
 import com.lifemax.rpg.feature.pet.body.CatLife
 import com.lifemax.rpg.feature.pet.presentation.CatLiveView
 import com.lifemax.rpg.feature.pet.presentation.CatSprites
 import com.lifemax.rpg.feature.pet.presentation.CatStageColors
+import com.lifemax.rpg.feature.pet.presentation.HouseCatLook
+import com.lifemax.rpg.feature.pet.presentation.HouseLiveView
+import com.lifemax.rpg.feature.pet.presentation.HouseStage
+import com.lifemax.rpg.feature.pet.presentation.RoomKit
 import com.lifemax.rpg.feature.pet.presentation.rememberAnimationsOff
 import com.lifemax.rpg.feature.pet.presentation.rememberCatLife
 import com.lifemax.rpg.feature.pet.presentation.rememberCatSprites
+import com.lifemax.rpg.feature.pet.presentation.rememberHouseStage
+import com.lifemax.rpg.feature.pet.presentation.rememberRoomLoad
 
 /**
  * The Cat card: a door to the live room, which stays on the page (ADR 0003), so [onOpen] is the
  * page's `{view:'pet'}`. A living cat (or two, "Miso & Pip") is the page's stage with the cat
  * sitting ([portrait], the page's petPortrait; a quiet paw while its art loads) over the name and
- * hearts. With Native cats (beta) on ([CatCard.live], one of the four coats native has art for),
- * the stage shows the cat alive instead, drawn by native: it moves only while the card is [visible]
- * and the app in front, and holds a still pose with [reducedMotion]; a cat that has passed is the
- * page's own icon card (petPeekHtml, as the Overview's `.ov-duo` lays it out: icon, words, arrow,
- * one under the other).
+ * hearts. With Native cats (beta) on ([CatCard.live]), the stage is the room itself, drawn by
+ * native: the house with its three rooms and the light of the hour, and the card's one or two cats
+ * living in it. It moves only while the card is [visible] and the app in front, and holds a still
+ * pose with [reducedMotion]; a cat that has passed is the page's own icon card (petPeekHtml, as the
+ * Overview's `.ov-duo` lays it out: icon, words, arrow, one under the other).
+ *
+ * [preview] (the old strip, for the room art missing) and [house] (a prepared room) freeze the card
+ * for screenshots and tests.
  */
 @Composable
 internal fun CatCardView(
@@ -62,19 +72,21 @@ internal fun CatCardView(
     visible: Boolean = true,
     reducedMotion: Boolean = false,
     preview: CatLivePreview? = null,
+    house: CatHousePreview? = null,
 ) {
     OverviewCard(modifier, padding = PaddingValues(0.dp), onClick = onOpen) {
         when (tile.mode) {
-            CatMode.ALIVE -> Alive(tile, portrait, visible, reducedMotion, preview)
+            CatMode.ALIVE -> Alive(tile, portrait, visible, reducedMotion, preview, house)
             CatMode.GONE -> Door(tile, "heart")
         }
     }
 }
 
 /**
- * `.pet-peek-stage` over `.pet-peek-row`: the room's window (192 x 144 room pixels, scaled to the
- * card's width) with the cat sitting in it at about the room's scale, then its name and its five
- * hearts. The room itself stays on the page (ADR 0003): its dark stage stands in for it here.
+ * `.pet-peek-stage` over `.pet-peek-row`: the room's window (at least 192 x 144 room pixels, scaled
+ * by a whole number to the card's width) with the cats living in it, then the name and the five
+ * hearts. Without a live cat (switch off, an older page, art that did not load, a first cat native
+ * cannot draw) the stage is the page's still portrait on the card's dark stage.
  */
 @Composable
 private fun Alive(
@@ -83,25 +95,36 @@ private fun Alive(
     visible: Boolean,
     reducedMotion: Boolean,
     preview: CatLivePreview?,
+    house: CatHousePreview?,
 ) {
     val c = LocalPageColors.current
-    val live = tile.live?.takeIf { it.drawable }
-    val sprites = preview?.sprites ?: live?.let { rememberCatSprites(it.coat, it.stage) }
+    val cats = tile.live?.house.orEmpty()
+    val ownRoom = preview == null && house == null && cats.isNotEmpty()
+    val load = if (ownRoom) rememberRoomLoad().value else null
+    val stage = house?.stage ?: load?.kit?.let { liveStage(it, cats, tile.name) }
+    // the room art could not be loaded: the cat still lives, in the plain strip
+    val strip = cats.isNotEmpty() && (preview != null || (load != null && load.kit == null))
+    val stripSprites =
+        if (strip) preview?.sprites ?: rememberCatSprites(cats[0].coat, cats[0].stage) else null
     BoxWithConstraints(
         Modifier.fillMaxWidth().aspectRatio(STAGE_ASPECT).background(Stage).drawBehind {
             val w = 1.dp.toPx()
             drawRect(c.lineSoft, Offset(0f, size.height - w), Size(size.width, w))
         }
     ) {
-        if (live != null && sprites != null) {
-            // Native cats (beta): the cat itself, alive, in a strip of room drawn from the card's
-            // colours. Anything else (switch off, a genetic coat, art that did not load) is the
-            // page's still portrait below, exactly as before.
-            val life = preview?.life ?: rememberCatLife(tile.name, live.coat, live.weak)
+        if (stage != null) {
+            HouseLiveView(
+                stage,
+                running = visible && house == null,
+                still = reducedMotion || rememberAnimationsOff(),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else if (stripSprites != null) {
+            val life = preview?.life ?: rememberCatLife(tile.name, cats[0].coat, cats[0].weak)
             val colors = remember(c) { CatStageColors(Stage, c.muted.mix(.1f, Stage), c.lineSoft) }
             CatLiveView(
                 life,
-                sprites,
+                stripSprites,
                 colors,
                 running = visible && preview == null,
                 still = reducedMotion || rememberAnimationsOff(),
@@ -141,6 +164,20 @@ private fun Alive(
  * The clock does not run on it.
  */
 internal class CatLivePreview(val sprites: CatSprites, val life: CatLife)
+
+/** A prepared room for screenshots and tests: the clock does not run on it. */
+internal class CatHousePreview(val stage: HouseStage)
+
+/** The house for [cats] once the room art is in: null until the first cat's sprites are. */
+@Composable
+private fun liveStage(kit: RoomKit, cats: List<LiveCat>, cardName: String): HouseStage? {
+    val looks =
+        cats.mapIndexed { i, cat ->
+            val name = cat.name ?: if (i == 0) cardName else "$cardName, ${i + 1}"
+            HouseCatLook(name, cat.coat, cat.stage, cat.weak)
+        }
+    return rememberHouseStage(kit, looks)
+}
 
 /** `.pet-peek-in` in the Overview's column: the badge, the eyebrow and name, then the arrow. */
 @Composable

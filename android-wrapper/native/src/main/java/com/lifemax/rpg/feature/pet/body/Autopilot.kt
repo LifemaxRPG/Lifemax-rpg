@@ -17,12 +17,22 @@ package com.lifemax.rpg.feature.pet.body
  *
  * @param seed the cat's own: use [seedFor] so a cat keeps its character from one visit to the next.
  */
-class Autopilot(
+class Autopilot
+internal constructor(
     seed: Int,
     private val minX: Float,
     private val maxX: Float,
-    private val weak: Boolean = false,
+    private val weak: Boolean,
+    private val house: HouseLink?,
 ) {
+    /** A cat in a strip of floor, the Overview card's first autopilot. */
+    constructor(
+        seed: Int,
+        minX: Float,
+        maxX: Float,
+        weak: Boolean = false,
+    ) : this(seed, minX, maxX, weak, null)
+
     /** The things the autopilot does, in the order of [Move.ordinal]. */
     enum class Move {
         REST,
@@ -34,9 +44,31 @@ class Autopilot(
         SLOW_BLINK,
         LOAF,
         NAP,
+
+        /** House only: walk to another room. */
+        TRAVEL,
+
+        /** House only: eat at the bowls. */
+        EAT,
+
+        /** House only: sleep on the bed. */
+        BED,
+
+        /** House only: sit on the sofa. */
+        COUCH,
+
+        /** House only: climb the cat tree. */
+        TREE,
+
+        /** House only: watch from the window sill. */
+        SILL,
     }
 
     private val rng = Rng.derive(seed, SALT)
+    private val places = house?.let { HousePlans(rng, it.slot, weak) }
+
+    /** What this cat has set aside in the house (see [Claim]); only the house reads it. */
+    internal val claim = Claim()
     private val weights = FloatArray(Move.entries.size)
     private var planId = 0
     private var pause = rng.range(Tuning.Autopilot.FIRST_PAUSE_MIN_S, FIRST_PAUSE_MAX_S)
@@ -51,8 +83,18 @@ class Autopilot(
     val plans: Int
         get() = planId
 
-    /** Where this cat starts: near the middle of its range, a little off to one side. */
-    val startX: Float = (minX + maxX) / 2f + rng.range(-START_SPREAD, START_SPREAD)
+    /**
+     * Where this cat starts: near the middle of its range, a little off to one side; in the house
+     * the first cat starts in the living room or the bedroom, the second at the other end, so they
+     * start well apart.
+     */
+    val startX: Float =
+        if (house == null) (minX + maxX) / 2f + rng.range(-START_SPREAD, START_SPREAD)
+        else if (house.slot == 0) {
+            places!!.clearOfFurniture(rng.range(HOUSE_START_FIRST_LO, HOUSE_START_FIRST_HI))
+        } else {
+            places!!.clearOfFurniture(rng.range(HOUSE_START_SECOND_LO, HOUSE_START_SECOND_HI))
+        }
 
     /** Which way this cat starts out facing. */
     val startFacing: Int = if (rng.chance(HALF)) 1 else -1
@@ -64,6 +106,7 @@ class Autopilot(
     fun update(body: CatBody, dt: Float) {
         awake += dt
         if (!body.isIdle) return
+        if (house != null) claim.standAt(body.pose.surface, body.pose.x)
         pause -= dt
         if (pause > 0f) return
         begin(body, pick())
@@ -87,6 +130,7 @@ class Autopilot(
         weights[Move.SLOW_BLINK.ordinal] = Tuning.Autopilot.W_SLOW_BLINK
         weights[Move.LOAF.ordinal] = Tuning.Autopilot.W_LOAF * lazy
         weights[Move.NAP.ordinal] = (Tuning.Autopilot.W_NAP + sleepy) * lazy
+        if (house != null) houseWeights(sleepy, lazy)
         weights[last.ordinal] = 0f
         var total = 0f
         for (w in weights) total += w
@@ -96,6 +140,21 @@ class Autopilot(
             if (roll < 0f) return Move.entries[i]
         }
         return Move.REST
+    }
+
+    /**
+     * In the house the cat also travels, eats, and goes up on things; it naps on the bed instead.
+     */
+    private fun houseWeights(sleepy: Float, lazy: Float) {
+        weights[Move.WANDER.ordinal] *= HOUSE_WANDER_SHARE
+        weights[Move.NAP.ordinal] *= HOUSE_FLOOR_NAP_SHARE
+        weights[Move.TRAVEL.ordinal] = Tuning.Autopilot.W_TRAVEL / lazy
+        weights[Move.EAT.ordinal] =
+            if (weak) Tuning.Autopilot.W_EAT_HUNGRY else Tuning.Autopilot.W_EAT
+        weights[Move.BED.ordinal] = (Tuning.Autopilot.W_BED + sleepy) * lazy
+        weights[Move.COUCH.ordinal] = Tuning.Autopilot.W_COUCH
+        weights[Move.TREE.ordinal] = Tuning.Autopilot.W_TREE / lazy
+        weights[Move.SILL.ordinal] = Tuning.Autopilot.W_SILL / lazy
     }
 
     // ---------------------------------------------------------------- doing
@@ -122,7 +181,24 @@ class Autopilot(
             Move.SLOW_BLINK -> listOf(act("slowblink", SLOW_BLINK_S, SLOW_BLINK_S + 0.5f))
             Move.LOAF -> listOf(act("loaf", LOAF_MIN_S, LOAF_MAX_S))
             Move.NAP -> nap()
+            else -> excursion(body, move)
         }
+
+    /** One of the house's places (see [HousePlans]); nothing if there is no house or it is busy. */
+    private fun excursion(body: CatBody, move: Move): List<PlanStep> {
+        val p = places ?: return emptyList()
+        val x = body.pose.x
+        val mate = house?.mate?.claim
+        return when (move) {
+            Move.TRAVEL -> p.travel(x, mate, claim)
+            Move.EAT -> p.eat(x, mate, claim)
+            Move.BED -> p.bed(x, mate, claim).also { if (it.isNotEmpty()) awake = 0f }
+            Move.COUCH -> p.couch(x, mate, claim)
+            Move.TREE -> p.tree(x, mate, claim)
+            Move.SILL -> p.sill(x, mate, claim)
+            else -> emptyList()
+        }
+    }
 
     private fun act(anim: String, lo: Float, hi: Float) = PlanStep.Act(anim, rng.range(lo, hi))
 
@@ -130,6 +206,13 @@ class Autopilot(
 
     /** A few steps one way, sometimes a few back, then sit for a moment. */
     private fun wander(x: Float): List<PlanStep> {
+        var minX = this.minX
+        var maxX = this.maxX
+        if (places != null) {
+            places.freeSpan(x, house?.mate?.claim)
+            minX = places.spanLo
+            maxX = places.spanHi
+        }
         val reach = if (weak) Tuning.Autopilot.WEAK_WALK_MAX_PX else Tuning.Autopilot.WALK_MAX_PX
         val leftRoom = x - minX
         val rightRoom = maxX - x
@@ -140,14 +223,20 @@ class Autopilot(
             dir = -dir
             distance = minOf(distance, if (dir > 0f) rightRoom else leftRoom)
         }
-        val first = Mathx.clamp(x + dir * distance, minX, maxX)
+        var first = Mathx.clamp(x + dir * distance, minX, maxX)
+        if (places != null) first = Mathx.clamp(places.clearOfFurniture(first), minX, maxX)
         val steps = ArrayList<PlanStep>(3)
         steps.add(PlanStep.Walk(first))
+        var lastStop = first
         if (rng.chance(Tuning.Autopilot.WALK_TWICE_CHANCE)) {
-            val back = Mathx.clamp(first - dir * distance * HALF, minX, maxX)
-            steps.add(PlanStep.Walk(back))
+            lastStop = Mathx.clamp(first - dir * distance * HALF, minX, maxX)
+            if (places != null)
+                lastStop = Mathx.clamp(places.clearOfFurniture(lastStop), minX, maxX)
+            steps.add(PlanStep.Walk(lastStop))
         }
         steps.add(settle())
+        if (house != null)
+            claim.reserve(minOf(x, first, lastStop), maxOf(x, first, lastStop), SurfaceId.FLOOR, 0f)
         return steps
     }
 
@@ -179,8 +268,19 @@ class Autopilot(
         private const val NAP_LOAF_MAX_S = 3.5f
         private const val SETTLE_MIN_S = 1.2f
         private const val SETTLE_MAX_S = 2.6f
+        private const val HOUSE_START_FIRST_LO = -20f
+        private const val HOUSE_START_FIRST_HI = 60f
+        private const val HOUSE_START_SECOND_LO = 130f
+        private const val HOUSE_START_SECOND_HI = 230f
+        private const val HOUSE_WANDER_SHARE = 0.75f
+        private const val HOUSE_FLOOR_NAP_SHARE = 0.4f
 
         /** A seed for a cat: stable for the same name and coat, different between cats. */
         fun seedFor(name: String, coat: String): Int = Rng.hash("$name|$coat")
     }
+}
+
+/** The link between the two cats of a house: which one this is, and who the other is. */
+internal class HouseLink(val slot: Int) {
+    var mate: Autopilot? = null
 }

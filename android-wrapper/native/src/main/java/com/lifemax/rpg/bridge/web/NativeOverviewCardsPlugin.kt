@@ -38,7 +38,12 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
 
     override val tabId = "dashboard"
     override val capabilities =
-        listOf("overview.cards.v1", "overview.cat.live.v1", "overview.cat.coat.v1")
+        listOf(
+            "overview.cards.v1",
+            "overview.cat.live.v1",
+            "overview.cat.live.v2",
+            "overview.cat.coat.v1",
+        )
 
     init {
         // The live cat's genetic coat: the page composes it and answers `coat {key, kind}` with the

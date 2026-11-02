@@ -19,6 +19,7 @@ import com.lifemax.rpg.feature.overview.domain.HeroStreak
 import com.lifemax.rpg.feature.overview.domain.HeroXp
 import com.lifemax.rpg.feature.overview.domain.LegendItem
 import com.lifemax.rpg.feature.overview.domain.LiveCat
+import com.lifemax.rpg.feature.overview.domain.LiveCats
 import com.lifemax.rpg.feature.overview.domain.LuckCard
 import com.lifemax.rpg.feature.overview.domain.MoveGo
 import com.lifemax.rpg.feature.overview.domain.MoveWarn
@@ -243,26 +244,42 @@ private fun cat(c: JSONObject): CatCard {
     val portrait = c.strOrNull("portrait")
     require(portrait == null || mode == CatMode.ALIVE) { "Only a living cat has a portrait" }
     require(c.has("live")) { "Missing live" }
-    val live = if (c.isNull("live")) null else liveCat(c.getJSONObject("live"))
+    val live = if (c.isNull("live")) null else liveCats(c.getJSONObject("live"))
     require(live == null || mode == CatMode.ALIVE) { "Only a living cat is drawn live" }
     return CatCard(mode, c.str("eyebrow"), c.str("name"), hearts, portrait, live)
 }
 
 /**
- * The live cat's look: exactly {coat, stage, weak}; anything else is a page this build is not for.
+ * The live cats: either `overview.cat.live.v1`'s one cat, exactly {coat, stage, weak}, or
+ * `overview.cat.live.v2`'s {cats: [one or two of {coat, stage, weak, name?}]}. Anything else is a
+ * page this build is not for.
  */
-internal fun liveCat(l: JSONObject): LiveCat {
-    val extra = l.keys().asSequence().filter { it !in LIVE_KEYS }.toList()
+internal fun liveCats(l: JSONObject): LiveCats {
+    if (!l.has("cats")) return LiveCats(listOf(liveCat(l, named = false)))
+    val extra = l.keys().asSequence().filter { it != "cats" }.toList()
+    require(extra.isEmpty()) { "Unknown live keys $extra" }
+    val list = l.getJSONArray("cats")
+    require(list.length() in 1..LiveCats.MAX) { "A house has one or two live cats" }
+    return LiveCats(List(list.length()) { liveCat(list.getJSONObject(it), named = true) })
+}
+
+/** One live cat's look; the cats of the list shape ([named]) may carry a name. */
+internal fun liveCat(l: JSONObject, named: Boolean = false): LiveCat {
+    val allowed = if (named) LIVE_KEYS + "name" else LIVE_KEYS
+    val extra = l.keys().asSequence().filter { it !in allowed }.toList()
     require(extra.isEmpty()) { "Unknown live cat keys $extra" }
     val coat = l.str("coat")
     require(coat.isNotEmpty() && coat.length <= LIVE_COAT_MAX) { "A coat is a short key" }
     val stage = l.int("stage")
     require(stage in LiveCat.ADULT..LiveCat.LAST_STAGE) { "A growth stage is -1 to 5" }
-    return LiveCat(coat, stage, l.bool("weak"))
+    val name = if (l.has("name")) l.str("name") else null
+    require(name == null || name.length in 1..LIVE_NAME_MAX) { "A cat's name is short" }
+    return LiveCat(coat, stage, l.bool("weak"), name)
 }
 
 private val LIVE_KEYS = setOf("coat", "stage", "weak")
 private const val LIVE_COAT_MAX = 64
+private const val LIVE_NAME_MAX = 40
 
 private fun luck(l: JSONObject): LuckCard {
     val rolled = l.bool("rolled")

@@ -593,9 +593,14 @@
    "hearts": 0,
    "portrait": "ie1873b9b",
    "live": {
-    "coat": "tuxedo",
-    "stage": 2,
-    "weak": false
+    "cats": [
+     {
+      "coat": "tuxedo",
+      "stage": 2,
+      "weak": false,
+      "name": "Pip"
+     }
+    ]
    }
   },
   "luck": {

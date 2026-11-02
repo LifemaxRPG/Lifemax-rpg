@@ -593,9 +593,14 @@
    "hearts": 3,
    "portrait": "ic981e950",
    "live": {
-    "coat": "ginger",
-    "stage": -1,
-    "weak": true
+    "cats": [
+     {
+      "coat": "ginger",
+      "stage": -1,
+      "weak": true,
+      "name": "Miso"
+     }
+    ]
    }
   },
   "luck": {

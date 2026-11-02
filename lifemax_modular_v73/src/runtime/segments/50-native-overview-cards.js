@@ -10,9 +10,12 @@
    turning the switch off and on again tries once more. Plan: docs/architecture/plans/OVERVIEW_BODY.md, ADR 0012. */
 (function () {
   const PLUGIN = "NativeOverviewCards", CAPABILITY = "overview.cards.v1";
-  /* the cat card's live cat (beta, off by default): native draws the first cat itself from its own art and a local autopilot, when
-     the owner's switch is on and the screen says it can (the capability). The still portrait is always sent too, as the fallback. */
-  const CAT_LIVE = "overview.cat.live.v1", CAT_SETTING = "nativeCats";
+  /* the cat card's live cats (beta, off by default): native draws the cats itself from its own art, living in the whole house on a
+     local autopilot, when the owner's switch is on and the screen says it can (the capability). .v1 carries the first cat only,
+     {coat, stage, weak}; .v2 carries the list, {cats: [first, second?]}, each with its name. The still portrait is always sent too,
+     as the fallback. */
+  const CAT_LIVE = "overview.cat.live.v1", CAT_LIVE_LIST = "overview.cat.live.v2", CAT_SETTING = "nativeCats";
+  const CAT_NAME_MAX = 40; // the longest name the screen accepts
   /* a genetic (dna_) coat is composed by the page (petDnaCompose); a screen that can ask for its sheets (the `coat` command,
      50-pet-coat.js) draws it live too. Without the capability a dna_ coat stays a still. */
   const CAT_COAT = "overview.cat.coat.v1";
@@ -133,13 +136,30 @@
     return { mode: d.mode, eyebrow: d.eyebrow, name: d.name, hearts: d.mode === "alive" ? d.hearts : null, portrait: url ? keyOf(url) : null,
       live: d.mode === "alive" ? liveCat() : null };
   }
-  /** what native needs to draw the first cat itself: its coat key, growth stage (-1 grown, 0..5 a kitten) and whether it is the
-      hungry, weak cat (the room's PET_WEAK rows); null with the switch off, an older screen, or a coat native has no art for */
+  /** what native needs to draw the cats itself. null with the switch off, a screen that cannot draw them, or a first cat native
+      has no art for (the still portrait stays). A screen that lists .v2 gets {cats: [...]}: the first cat and, when it is alive and
+      native has art for it too, the second; an older screen gets the first cat's bare look. */
   function liveCat() {
-    const p = state.pet;
-    if (lmaLoad()[CAT_SETTING] !== true || !tab.has(CAT_LIVE) || !p || !p.alive) return null;
+    if (lmaLoad()[CAT_SETTING] !== true || !tab.has(CAT_LIVE)) return null;
+    const first = liveLook(state.pet);
+    if (!first) return null;
+    if (!tab.has(CAT_LIVE_LIST)) return first;
+    const cats = [named(first, state.pet)], second = liveLook(state.pet2);
+    if (second) cats.push(named(second, state.pet2));
+    return { cats };
+  }
+  /** one cat's look for native: its coat key, growth stage (-1 grown, 0..5 a kitten) and whether it is the hungry, weak cat (the
+      room's PET_WEAK rows); null for a cat that is gone or whose coat native cannot draw (a legacy coat, or a genetic one the page
+      holds and the screen can ask for) */
+  function liveLook(p) {
+    if (!p || !p.alive) return null;
     if (!LEGACY_COATS.includes(p.coat) && !(tab.has(CAT_COAT) && typeof petCoatKnown === "function" && petCoatKnown(p.coat))) return null;
     return { coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
+  }
+  /** the look with the cat's name (native seeds the cat's habits with it); a nameless cat keeps its bare look */
+  function named(look, p) {
+    const name = typeof p.name === "string" ? p.name.slice(0, CAT_NAME_MAX) : "";
+    return name ? Object.assign(look, { name }) : look;
   }
   function luck() {
     const d = ovLuckData();

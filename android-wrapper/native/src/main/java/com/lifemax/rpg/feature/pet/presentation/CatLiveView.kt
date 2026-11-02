@@ -67,7 +67,7 @@ internal fun CatLiveView(
 
 /** True while the window's lifecycle is at least resumed (the app is in front). */
 @Composable
-private fun rememberResumed(): Boolean {
+internal fun rememberResumed(): Boolean {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var resumed by remember(lifecycle) { mutableStateOf(lifecycle.currentState.isAtLeast(RESUMED)) }
     DisposableEffect(lifecycle) {
@@ -112,4 +112,4 @@ internal fun rememberAnimationsOff(): Boolean {
 }
 
 private val RESUMED = Lifecycle.State.RESUMED
-private const val NANOS_PER_SECOND = 1_000_000_000f
+internal const val NANOS_PER_SECOND = 1_000_000_000f

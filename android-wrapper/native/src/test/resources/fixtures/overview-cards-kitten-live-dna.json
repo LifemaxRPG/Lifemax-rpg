@@ -593,9 +593,14 @@
    "hearts": 0,
    "portrait": "ief33e6f7",
    "live": {
-    "coat": "dna_red_0_m_3_0_n_1_2",
-    "stage": 1,
-    "weak": false
+    "cats": [
+     {
+      "coat": "dna_red_0_m_3_0_n_1_2",
+      "stage": 1,
+      "weak": false,
+      "name": "Pip"
+     }
+    ]
    }
   },
   "luck": {

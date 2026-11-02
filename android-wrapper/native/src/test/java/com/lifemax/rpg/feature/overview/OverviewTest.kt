@@ -189,40 +189,80 @@ class OverviewTest {
     }
 
     @Test
-    fun theLiveCatIsExactlyCoatStageAndWeakness() {
+    fun theLiveCatsAreTheListOfTheirCoatStageWeaknessAndName() {
         // switch off: the page says live: null, and the still portrait is all there is
         assertNull(decode(fixture("pet")).tiles.cat!!.live)
         assertNull(decode(fixture("cat-gone")).tiles.cat!!.live)
 
         val weak = decode(fixture("pet-live")).tiles.cat!!.live!!
-        assertEquals(LiveCat("ginger", LiveCat.ADULT, weak = true), weak)
-        assertTrue(weak.drawable)
+        assertEquals(
+            listOf(LiveCat("ginger", LiveCat.ADULT, weak = true, name = "Miso")),
+            weak.cats,
+        )
+        assertTrue(weak.first.drawable)
         val kitten = decode(fixture("kitten-live")).tiles.cat!!.live!!
-        assertEquals(LiveCat("tuxedo", 2, weak = false), kitten)
+        assertEquals(LiveCat("tuxedo", 2, weak = false, name = "Pip"), kitten.first)
         // the still portrait is still sent beside it, as the fallback
         assertNotNull(decode(fixture("pet-live")).catPortrait)
 
         // a key that is neither a shipped coat nor a genetic one decodes but is not drawn live
         val odd = fixture("pet-live")
-        odd.at("tiles.cat.live").put("coat", "Dna A1B2")
-        assertFalse(decode(odd).tiles.cat!!.live!!.drawable)
+        odd.at("tiles.cat.live").getJSONArray("cats").getJSONObject(0).put("coat", "Dna A1B2")
+        val undrawable = decode(odd).tiles.cat!!.live!!
+        assertFalse(undrawable.first.drawable)
+        assertTrue(undrawable.house.isEmpty())
         // the page sends a genetic coat only to a screen that can ask for its sheets: drawable,
-        // with
-        // the stage it is at
-        val calico = decode(fixture("pet-live-dna")).tiles.cat!!.live!!
-        assertEquals(LiveCat("dna_black_1_n_2_0_n_0_3", LiveCat.ADULT, weak = false), calico)
+        // with the stage it is at
+        val calico = decode(fixture("pet-live-dna")).tiles.cat!!.live!!.first
+        assertEquals(
+            LiveCat("dna_black_1_n_2_0_n_0_3", LiveCat.ADULT, weak = false, name = "Miso"),
+            calico,
+        )
         assertTrue(calico.drawable)
-        assertTrue(decode(fixture("point-live-dna")).tiles.cat!!.live!!.drawable)
-        val pup = decode(fixture("kitten-live-dna")).tiles.cat!!.live!!
+        assertTrue(decode(fixture("point-live-dna")).tiles.cat!!.live!!.first.drawable)
+        val pup = decode(fixture("kitten-live-dna")).tiles.cat!!.live!!.first
         assertEquals(1, pup.stage)
         assertTrue(pup.drawable)
         assertNotNull(decode(fixture("pet-live-dna")).catPortrait)
     }
 
     @Test
+    fun twoCatsAreTwoLiveCatsAndTheSecondMayBeAGeneticCoat() {
+        val two = decode(fixture("two-cats-live")).tiles.cat!!
+        assertEquals("Ted & Lily", two.name)
+        assertEquals(
+            listOf(
+                LiveCat("ginger", LiveCat.ADULT, weak = false, name = "Ted"),
+                LiveCat("gray", LiveCat.ADULT, weak = false, name = "Lily"),
+            ),
+            two.live!!.house,
+        )
+        val dna = decode(fixture("two-cats-live-dna")).tiles.cat!!.live!!
+        assertEquals("dna_black_1_n_2_0_n_0_3", dna.cats[1].coat)
+        assertEquals(2, dna.house.size)
+        // a second cat that cannot be drawn is left out; a first that cannot be drawn takes both
+        val oddSecond = fixture("two-cats-live")
+        oddSecond.at("tiles.cat.live").getJSONArray("cats").getJSONObject(1).put("coat", "tabby")
+        assertEquals(listOf("Ted"), decode(oddSecond).tiles.cat!!.live!!.house.map { it.name })
+        val oddFirst = fixture("two-cats-live")
+        oddFirst.at("tiles.cat.live").getJSONArray("cats").getJSONObject(0).put("coat", "tabby")
+        assertTrue(decode(oddFirst).tiles.cat!!.live!!.house.isEmpty())
+    }
+
+    @Test
+    fun anOlderPageSendsTheFirstCatsBareLookAndItStillDecodes() {
+        val v1 = decode(fixture("pet-live-v1")).tiles.cat!!.live!!
+        assertEquals(listOf(LiveCat("ginger", LiveCat.ADULT, weak = true)), v1.cats)
+        assertNull(v1.first.name)
+        assertEquals(1, v1.house.size)
+    }
+
+    @Test
     fun theLiveCatDecoderIsStrict() {
         fun live(change: JSONObject.() -> Unit): JSONObject =
-            fixture("pet-live").also { it.at("tiles.cat.live").change() }
+            fixture("pet-live").also {
+                it.at("tiles.cat.live").getJSONArray("cats").getJSONObject(0).change()
+            }
 
         assertThrows(IllegalArgumentException::class.java) { decode(live { put("extra", 1) }) }
         assertThrows(Exception::class.java) { decode(live { remove("coat") }) }
@@ -235,6 +275,32 @@ class OverviewTest {
         assertThrows(IllegalArgumentException::class.java) { decode(live { put("stage", -2) }) }
         assertThrows(Exception::class.java) { decode(live { put("weak", 1) }) }
         assertThrows(Exception::class.java) { decode(live { put("weak", "true") }) }
+        assertThrows(Exception::class.java) { decode(live { put("name", 7) }) }
+        assertThrows(IllegalArgumentException::class.java) { decode(live { put("name", "") }) }
+        assertThrows(IllegalArgumentException::class.java) {
+            decode(live { put("name", "x".repeat(41)) })
+        }
+
+        // the list: one or two cats, nothing else beside it
+        fun list(change: JSONObject.() -> Unit): JSONObject =
+            fixture("two-cats-live").also { it.at("tiles.cat.live").change() }
+        assertThrows(IllegalArgumentException::class.java) { decode(list { put("extra", 1) }) }
+        assertThrows(IllegalArgumentException::class.java) {
+            decode(list { put("cats", JSONArray()) })
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            decode(list { put("cats", getJSONArray("cats").put(getJSONArray("cats").get(0))) })
+        }
+        assertThrows(Exception::class.java) { decode(list { put("cats", "ginger") }) }
+        assertThrows(Exception::class.java) {
+            decode(list { put("cats", JSONArray().put("ginger")) })
+        }
+
+        // the old shape is exactly {coat, stage, weak}: a name belongs to the list only
+        val v1 = fixture("pet-live-v1").also { it.at("tiles.cat.live").put("name", "Miso") }
+        assertThrows(IllegalArgumentException::class.java) { decode(v1) }
+        val v1Extra = fixture("pet-live-v1").also { it.at("tiles.cat.live").put("extra", 1) }
+        assertThrows(IllegalArgumentException::class.java) { decode(v1Extra) }
 
         // the key must be there (null with the switch off), and only a living cat has one
         val missing = fixture("pet-live").also { it.at("tiles.cat").remove("live") }

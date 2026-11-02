@@ -355,18 +355,19 @@ data class CatCard(
     val name: String,
     val hearts: Int?,
     val portrait: String?,
-    val live: LiveCat?,
+    val live: LiveCats?,
 )
 
 /**
- * What native needs to draw the first cat itself (`overview.cat.live.v1`, the owner's "Native cats
- * (beta)" switch): the coat key, the growth stage (-1 grown, 0 to 5 a kitten) and whether it is the
- * hungry, weak cat. The page sends it only with the switch on. Native draws the four coats it ships
- * ([LiveCat.LEGACY_COATS]) at once, and a genetic `dna_...` coat (which the page sends only to a
- * screen with `overview.cat.coat.v1`) once the page has handed over its sheets; until then, and for
- * any other key, the still portrait stays.
+ * What native needs to draw a cat itself (`overview.cat.live.v1` and `.v2`, the owner's "Native
+ * cats (beta)" switch): the coat key, the growth stage (-1 grown, 0 to 5 a kitten), whether it is
+ * the hungry, weak cat and, from the list shape, the cat's own name (it seeds the cat's habits, so
+ * a cat keeps its character from one visit to the next). The page sends it only with the switch on.
+ * Native draws the four coats it ships ([LEGACY_COATS]) at once, and a genetic `dna_...` coat
+ * (which the page sends only to a screen with `overview.cat.coat.v1`) once the page has handed over
+ * its sheets; until then, and for any other key, that cat is not drawn.
  */
-data class LiveCat(val coat: String, val stage: Int, val weak: Boolean) {
+data class LiveCat(val coat: String, val stage: Int, val weak: Boolean, val name: String? = null) {
     /** True when native can draw this coat: shipped, or a genetic coat the page can compose. */
     val drawable: Boolean
         get() = coat in LEGACY_COATS || PageCoatSource.isDnaKey(coat)
@@ -375,6 +376,31 @@ data class LiveCat(val coat: String, val stage: Int, val weak: Boolean) {
         val LEGACY_COATS = setOf("ginger", "gray", "black", "tuxedo")
         const val ADULT = -1
         const val LAST_STAGE = 5
+    }
+}
+
+/**
+ * The live cats of the card: the first cat and, when the page keeps two, the second (at most two).
+ * `overview.cat.live.v1` carries only the first cat; `.v2` carries the list.
+ */
+data class LiveCats(val cats: List<LiveCat>) {
+    init {
+        require(cats.size in 1..MAX) { "A house has one or two live cats" }
+    }
+
+    /** The first cat: if native cannot draw it the whole card stays the still portrait. */
+    val first: LiveCat
+        get() = cats[0]
+
+    /**
+     * The cats to draw: none if the first cannot be drawn, else the first and the second if that
+     * can be drawn too. A second cat that cannot be drawn is simply absent.
+     */
+    val house: List<LiveCat>
+        get() = if (first.drawable) cats.filter { it.drawable } else emptyList()
+
+    companion object {
+        const val MAX = 2
     }
 }
 

@@ -43,6 +43,14 @@ class CatBody(
     val isIdle: Boolean
         get() = mode == Mode.IDLE && !hasPending
 
+    /** True while the cat is walking or hopping somewhere: what a camera follows. */
+    val isTravelling: Boolean
+        get() = mode == Mode.WALK || mode == Mode.HOP
+
+    /** True while the cat gallops (the camera then leads further and follows faster). */
+    val isRunning: Boolean
+        get() = loco.gait == Gait.RUN
+
     private enum class Mode {
         IDLE,
         SETTLE,

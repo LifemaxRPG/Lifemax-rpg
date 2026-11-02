@@ -13,6 +13,21 @@ import java.util.zip.Inflater
  */
 class PngImage(val width: Int, val height: Int, val channels: Int, val data: ByteArray) {
 
+    /** An RGBA image as straight-alpha ARGB pixels. */
+    fun toArgb(): ArgbImage {
+        require(channels == 4) { "only an RGBA PNG has colour pixels" }
+        val d = data
+        val pixels =
+            IntArray(width * height) {
+                val i = it * 4
+                ((d[i + 3].toInt() and 255) shl 24) or
+                    ((d[i].toInt() and 255) shl 16) or
+                    ((d[i + 1].toInt() and 255) shl 8) or
+                    (d[i + 2].toInt() and 255)
+            }
+        return ArgbImage(width, height, pixels)
+    }
+
     companion object {
         private val SIGNATURE = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
         private const val GREY = 0

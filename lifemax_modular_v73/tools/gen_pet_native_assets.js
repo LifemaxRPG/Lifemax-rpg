@@ -9,7 +9,11 @@
      sheets/adult-<coat>.png, sheets/depth-<coat>.png, sheets/stage<i>-<coat>.png, sheets/dstage<i>-<coat>.png
                          grey-index sheets (8-bit grey, the index is the pixel value), re-encoded losslessly and smaller
      room/items.png      the room item atlas, RGBA, byte-for-byte pixels of the page's
-   Out of scope (later phases): HD art (petHd.html), the rig (petRig.html), the room backdrops, depth props and toys, DNA coats.
+     room/living.png, room/bedroom.png, room/kitchen.png
+                         the three painted backdrops, RGBA 192 x 144: the living room (house x 0), the bedroom (192), the kitchen (384)
+     room/props/<name>.png  the free-standing depth props the room draws between the backdrop and the cats: pouf, cushion, and the
+                         two halves of the box (box_back, box_front)
+   Out of scope (later phases): HD art (petHd.html), the rig (petRig.html), toys other than the box, DNA coats.
    Run:   node tools/gen_pet_native_assets.js           writes the files (deterministic; running it twice changes nothing)
           node tools/gen_pet_native_assets.js --check   fails if the committed files differ from what the page data gives (CI) */
 const fs = require('fs'), path = require('path');
@@ -18,6 +22,8 @@ const png = require('./pet_png.js');
 const root = path.resolve(__dirname, '..');
 const target = path.resolve(root, '../android-wrapper/native/src/main/resources/pet');
 const COATS = ['ginger', 'gray', 'black', 'tuxedo'];
+const ROOM_W = 192, ROOM_H = 144; /* each painted backdrop: three of them side by side make the 576 x 144 house */
+const PROPS = ['pouf', 'cushion', 'box_back', 'box_front'];
 const GROW_DAYS = 30; /* PET_GROW_DAYS in src/runtime/segments/16-runtime.js: a kitten is grown at 30 days; stage i covers days 5i..5i+4 */
 
 function embedded(name) {
@@ -77,6 +83,18 @@ function build() {
   if (items.channels !== 4) throw new Error('the room atlas is not RGBA');
   for (const [name, [x, y, w, h]] of Object.entries(A.room.meta)) if (x + w > items.width || y + h > items.height) throw new Error(name + ' lies outside the atlas');
   files.set('room/items.png', png.encode(items));
+  for (const [file, key] of [['living', 'living'], ['bedroom', 'bg'], ['kitchen', 'kitchen']]) {
+    const img = png.decode(dataUrl(A.room[key]));
+    if (img.channels !== 4 || img.width !== ROOM_W || img.height !== ROOM_H) throw new Error(`backdrop ${file}: ${img.width}x${img.height}x${img.channels}, expected ${ROOM_W}x${ROOM_H} RGBA`);
+    files.set(`room/${file}.png`, png.encode(img));
+  }
+  const props = Object.assign({}, D.props, { box_back: D.toys.box_back, box_front: D.toys.box_front });
+  for (const name of PROPS) {
+    const p = props[name]; if (!p) throw new Error('missing depth prop ' + name);
+    const img = png.decode(dataUrl(p.url));
+    if (img.channels !== 4 || img.width !== p.w || img.height !== p.h) throw new Error(`prop ${name}: ${img.width}x${img.height}, the page says ${p.w}x${p.h}`);
+    files.set(`room/props/${name}.png`, png.encode(img));
+  }
   return files;
 }
 

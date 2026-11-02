@@ -215,7 +215,45 @@ const HELPERS = `
       out.liveKitten = !!kit && kit.stage === 1 && kit.stage === petGrowIdx(state.pet);
       state.pet.born = Date.now() - 40 * 864e5;
       out.liveBack = (await live(() => setNativeCatsEnabled(false))) === null && lmaLoad().nativeCats === false;
-      __cards.caps.pop();
+      // the list shape (overview.cat.live.v2): the first cat and, when it is alive and drawable, the second, each with its name
+      const KEYS = (o) => JSON.stringify(Object.keys(o)), pet2 = (o) => Object.assign({}, state.pet, o);
+      __cards.caps.push('overview.cat.live.v2');
+      const one = await live(() => setNativeCatsEnabled(true));
+      out.listOne = !!one && KEYS(one) === '["cats"]' && one.cats.length === 1 && KEYS(one.cats[0]) === '["coat","stage","weak","name"]' && one.cats[0].name === state.pet.name && one.cats[0].coat === 'ginger';
+      state.pet2 = pet2({ name: 'Pip', coat: 'gray', born: Date.now() - 6 * 864e5 });
+      const two = await live(() => renderOverview());
+      out.listTwo = !!two && two.cats.length === 2 && two.cats[1].name === 'Pip' && two.cats[1].coat === 'gray' && two.cats[1].stage === petGrowIdx(state.pet2) && two.cats[1].stage >= 0
+        && KEYS(two.cats[1]) === '["coat","stage","weak","name"]' && two.cats[0].name === state.pet.name;
+      // a genetic second coat: carried only for a screen that can ask for its sheets, and only when the page holds it
+      petDnaRegister(dna); state.pet2.coat = dna;
+      const noCoat = await live(() => renderOverview());
+      out.listDnaNoCoatCap = !!noCoat && noCoat.cats.length === 1; // the second cat is left out, the first still lives
+      __cards.caps.push('overview.cat.coat.v1');
+      const withCoat = await live(() => renderOverview());
+      out.listDna = !!withCoat && withCoat.cats.length === 2 && withCoat.cats[1].coat === dna && withCoat.cats[1].name === 'Pip';
+      state.pet2.coat = 'dna_Black_0_n_0_0_n_0_3'; // not a key the page writes: never handed to native
+      out.listDnaUnheld = (await live(() => renderOverview())).cats.length === 1;
+      state.pet2.coat = 'gray'; petDnaUnregister(dna);
+      // a second cat that has passed is not drawn; a first cat native cannot draw takes the whole card back to the still
+      state.pet2.alive = false;
+      out.listSecondGone = (await live(() => renderOverview())).cats.length === 1;
+      state.pet2.alive = true; state.pet.coat = 'dna_a1b2';
+      out.listFirstUndrawable = (await live(() => renderOverview())) === null;
+      state.pet.coat = 'ginger';
+      // the name is the page's, kept to what the screen accepts
+      state.pet2.name = 'P'.repeat(60);
+      out.listNameCap = (await live(() => renderOverview())).cats[1].name.length === 40;
+      state.pet2.name = '';
+      out.listNoName = KEYS((await live(() => renderOverview())).cats[1]) === '["coat","stage","weak"]';
+      state.pet2.name = 'Pip';
+      // an older screen (v1 only) is sent the first cat's bare look, whatever the page keeps
+      const v2 = __cards.caps.splice(__cards.caps.indexOf('overview.cat.live.v2'), 1);
+      const old = await live(() => renderOverview());
+      out.listOldScreen = !!old && KEYS(old) === '["coat","stage","weak"]' && old.coat === 'ginger';
+      __cards.caps.push(...v2);
+      // the switch off takes both away again, and the still portrait is sent as ever
+      out.listBack = (await live(() => setNativeCatsEnabled(false))) === null && !!latest().tiles.cat.portrait;
+      delete state.pet2; __cards.caps.pop(); __cards.caps.pop(); __cards.caps.pop();
       return out;
     }, ICON);
     ok('the live cat is off by default (null) and its switch unchecked', misc.liveOff, misc);
@@ -228,6 +266,13 @@ const HELPERS = `
     ok('the coat command is in the cards\' command table and refuses a legacy coat', misc.coatCmd, misc);
     ok('a kitten carries its growth stage', misc.liveKitten, misc);
     ok('switching it off takes the live cat away again', misc.liveBack, misc);
+    ok('with overview.cat.live.v2 the tile carries {cats: [...]}: one cat, with its name', misc.listOne, misc);
+    ok('with two cats alive the list carries both, each with its coat, stage and name', misc.listTwo, misc);
+    ok('a genetic second coat rides the list only with overview.cat.coat.v1 and a coat the page holds', misc.listDnaNoCoatCap && misc.listDna && misc.listDnaUnheld, misc);
+    ok('a second cat that has passed is left out; a first cat native cannot draw gives no live cats at all', misc.listSecondGone && misc.listFirstUndrawable, misc);
+    ok('a cat\'s name is kept to 40 characters and left out when empty', misc.listNameCap && misc.listNoName, misc);
+    ok('a screen without overview.cat.live.v2 is sent the first cat\'s bare {coat, stage, weak}', misc.listOldScreen, misc);
+    ok('switching it off sends no live cats from the list shape either', misc.listBack, misc);
     ok('notices: the page\'s toast reaches the screen', misc.notice, misc);
     ok('an app icon arriving refreshes the open screen, by key', misc.icon, misc);
     ok('the cat card carries the page\'s portrait by image key', misc.portrait, misc);

@@ -64,7 +64,7 @@ class CatLiveScreenshotTest {
                 .put("light", light)
                 .put("tokens", ScreenshotPalette.tokens(light))
         val cards = WebOverviewRepository().apply { accept(j, true) }.state.value!!
-        val live = cards.tiles.cat!!.live!!
+        val live = cards.tiles.cat!!.live!!.first
         val sprites = CatArt.sprites(live.coat, live.stage)!!
         if (fontScale != 1f) paparazzi.unsafeUpdateConfig(phone(fontScale))
         paparazzi.snapshot(name) {

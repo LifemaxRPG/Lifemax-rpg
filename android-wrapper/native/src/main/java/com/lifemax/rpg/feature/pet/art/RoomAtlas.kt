@@ -37,15 +37,7 @@ class RoomAtlas(val image: ArgbImage, private val meta: Map<String, FrameRect>) 
         fun parse(png: ByteArray, metaJson: String): RoomAtlas {
             val decoded = PngImage.decode(png)
             require(decoded.channels == 4) { "the room atlas is an RGBA PNG" }
-            val d = decoded.data
-            val pixels =
-                IntArray(decoded.width * decoded.height) {
-                    val i = it * 4
-                    ((d[i + 3].toInt() and 255) shl 24) or
-                        ((d[i].toInt() and 255) shl 16) or
-                        ((d[i + 1].toInt() and 255) shl 8) or
-                        (d[i + 2].toInt() and 255)
-                }
+            val image = decoded.toArgb()
             val json = JSONObject(metaJson)
             val meta =
                 json.keys().asSequence().associateWith {
@@ -57,7 +49,7 @@ class RoomAtlas(val image: ArgbImage, private val meta: Map<String, FrameRect>) 
                     "$name lies outside the atlas"
                 }
             }
-            return RoomAtlas(ArgbImage(decoded.width, decoded.height, pixels), meta)
+            return RoomAtlas(image, meta)
         }
     }
 }

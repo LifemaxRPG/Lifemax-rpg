@@ -593,9 +593,14 @@
    "hearts": 0,
    "portrait": "ibf48eac5",
    "live": {
-    "coat": "dna_black_1_n_2_0_n_0_3",
-    "stage": -1,
-    "weak": false
+    "cats": [
+     {
+      "coat": "dna_black_1_n_2_0_n_0_3",
+      "stage": -1,
+      "weak": false,
+      "name": "Miso"
+     }
+    ]
    }
   },
   "luck": {

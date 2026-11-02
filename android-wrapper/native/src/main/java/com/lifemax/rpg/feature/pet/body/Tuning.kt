@@ -291,6 +291,15 @@ object Tuning {
         const val W_LOAF = 1.2f
         const val W_NAP = 0.5f
 
+        /** In the house: how keen a cat is on each of the house's places. */
+        const val W_TRAVEL = 1.4f
+        const val W_EAT = 0.6f
+        const val W_EAT_HUNGRY = 3f
+        const val W_BED = 0.6f
+        const val W_COUCH = 0.7f
+        const val W_TREE = 0.6f
+        const val W_SILL = 0.4f
+
         /** After this long awake the pull toward a nap is at its full [NAP_GAIN]. */
         const val SLEEPY_AFTER_S = 120f
         const val NAP_GAIN = 3f

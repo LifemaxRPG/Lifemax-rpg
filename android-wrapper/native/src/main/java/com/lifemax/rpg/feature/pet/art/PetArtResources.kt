@@ -1,5 +1,8 @@
 package com.lifemax.rpg.feature.pet.art
 
+import com.lifemax.rpg.feature.pet.room.RoomArt
+import com.lifemax.rpg.feature.pet.room.RoomImage
+
 /**
  * The thin loader: reads the shipped art from the app's Java resources
  * (`native/src/main/resources/pet/`, written by `tools/gen_pet_native_assets.js`). Resources are
@@ -26,6 +29,29 @@ object PetArtResources {
             shipped = palettes,
             shippedSheet = { coat, kind -> bytes("sheets/${fileKind(kind)}-$coat.png") },
             extra = extra,
+        )
+    }
+
+    /** Loads the room's backdrops, props and item atlas. Throws if a shipped file is missing. */
+    internal fun loadRoom(): RoomArt {
+        fun png(name: String) =
+            PngImage.decode(bytes("room/$name.png") ?: error("missing room/$name.png")).toArgb()
+        val atlas =
+            RoomAtlas.parse(
+                bytes("room/items.png") ?: error("missing room/items.png"),
+                text("room.json"),
+            )
+        return RoomArt(
+            atlas,
+            mapOf(
+                RoomImage.LIVING to png("living"),
+                RoomImage.BEDROOM to png("bedroom"),
+                RoomImage.KITCHEN to png("kitchen"),
+                RoomImage.POUF to png("props/pouf"),
+                RoomImage.CUSHION to png("props/cushion"),
+                RoomImage.BOX_BACK to png("props/box_back"),
+                RoomImage.BOX_FRONT to png("props/box_front"),
+            ),
         )
     }
 

@@ -4,10 +4,15 @@
      overview-cards-{new,established,legacy,extras}.json   the four golden saves (Android: apps and health tiles present, health off)
      overview-cards-pet.json          a hungry cat; overview-cards-two-cats.json two cats; overview-cards-cat-gone.json in memory;
                                       overview-cards-no-cat.json no cat (tiles.cat null) with an avatar (images)
-     overview-cards-pet-live.json     a weak (hungry 30 h) cat with Native cats (beta) on: tiles.cat.live carries its coat, stage and weakness;
-                                      overview-cards-kitten-live.json a tuxedo kitten (stage 2). Every other fixture has live: null, except
+     overview-cards-pet-live.json     a weak (hungry 30 h) cat with Native cats (beta) on: tiles.cat.live is {cats: [{coat, stage, weak,
+                                      name}]} (overview.cat.live.v2, the list shape); overview-cards-kitten-live.json a tuxedo kitten (stage 2).
+                                      Every other fixture has live: null, except
                                       overview-cards-{pet,point,kitten}-live-dna.json: a calico, a colour-point and a long-haired kitten (stage 1)
-                                      with genetic coats, sent live because the screen lists overview.cat.coat.v1.
+                                      with genetic coats, sent live because the screen lists overview.cat.coat.v1;
+                                      overview-cards-two-cats-live.json Ted (ginger) and Lily (gray), both alive: two cats in the list;
+                                      overview-cards-two-cats-live-dna.json Ted and Lily with a genetic calico coat;
+                                      overview-cards-pet-live-v1.json the same weak cat for a screen that lists only overview.cat.live.v1:
+                                      the first cat's bare {coat, stage, weak}.
      overview-cards-health.json       health on, partway to the goal, with apps (one with its icon); overview-cards-health-goal.json
                                       the goal reached; overview-cards-browser.json outside the Android app (apps and health null)
      overview-cards-luck.json         luck rolled; overview-cards-over-pace.json today's XP over the pace; overview-cards-tip.json
@@ -35,6 +40,8 @@ const STATES = {
   'pet-live-dna': `state.pet=${cat('Miso', '{coat:"dna_black_1_n_2_0_n_0_3"}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
   'point-live-dna': `state.pet=${cat('Miso', '{coat:"dna_black_0_n_0_0_cs_0_4"}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
   'kitten-live-dna': `state.pet=${cat('Pip', '{coat:"dna_red_0_m_3_0_n_1_2",born:now-6*864e5}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
+  'two-cats-live': `state.pet=${cat('Ted', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Lily', '{coat:"gray"}')};lmaLoad().nativeCats=true`,
+  'two-cats-live-dna': `state.pet=${cat('Ted', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Lily', '{coat:"dna_black_1_n_2_0_n_0_3"}')};petDnaRegister(state.pet2.coat);lmaLoad().nativeCats=true`,
   'two-cats': `state.pet=${cat('Miso', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Pip', '{coat:"gray"}')}`,
   'cat-gone': `state.pet=${cat('Miso', '{alive:false,passed:now-3*864e5}')}`,
   'no-cat': `delete state.pet;delete state.pet2;state.avatar=${JSON.stringify(ICON)}`,
@@ -47,21 +54,23 @@ const STATES = {
   'over-pace': `state.activities=state.activities.concat([Object.assign({},state.activities[state.activities.length-1],{id:'ov1',name:'Long ride',date:new Date(now-20e3).toISOString(),xp:620,duration:180})])`,
   'tip': `state.tipsSeen={}`,
 };
-const FAKE = `(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeOverviewCards', getPlatform: () => 'android',
+const CAPS = ['overview.cards.v1', 'overview.cat.live.v1', 'overview.cat.live.v2', 'overview.cat.coat.v1'];
+const CAPS_V1 = CAPS.filter((c) => c !== 'overview.cat.live.v2'); /* a screen of an older build */
+const fake = (caps) => `(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeOverviewCards', getPlatform: () => 'android',
   registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeOverviewCards: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-    handshake: async () => ({ protocol: 1, capabilities: ['overview.cards.v1', 'overview.cat.live.v1', 'overview.cat.coat.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
+    handshake: async () => ({ protocol: 1, capabilities: ${JSON.stringify(caps)} }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
 
 module.exports = async function overview({ b, out, write, directorDay }) {
   const fs = require('fs'), path = require('path');
   const golden = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tests', 'fixtures', 'saves', n + '.json'), 'utf8'));
-  const visit = async (base) => {
+  const visit = async (base, caps = CAPS) => {
     const g = golden(base.name), p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
     await p.clock.setFixedTime(new Date(base.clock));
     await p.addInitScript(([STORE, save, extras]) => {
       localStorage.setItem(STORE, save); for (const k in extras) localStorage.setItem(k, extras[k]);
       localStorage.setItem('lifemax_android_prefs_v1', JSON.stringify({ nativeOverviewCards: true, nativeOverview: false, apps: [] }));
     }, [STORE, JSON.stringify({ ...g.state, tutorialDone: true, tipsSeen: { ...(g.state.tipsSeen || {}), dashboard: true } }), g.extras || {}]);
-    await p.addInitScript(FAKE);
+    await p.addInitScript(fake(caps));
     await p.goto('file://' + out, { timeout: 120000 });
     await p.evaluate(() => { lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } if (window.AppsShortcuts) AppsShortcuts.loadIcons = () => Promise.resolve({}) });
     await p.waitForFunction(() => NativeOverviewCards.active(), null, { timeout: 30000 });
@@ -98,6 +107,12 @@ module.exports = async function overview({ b, out, write, directorDay }) {
           samples: [1, 4, 5, 6, 8, 10, 12, 18, 30, 60, 160, 400].map((ms) => ({ in: ms, out: hapScale(ms, L) })).concat([{ in: [8, 30, 8], out: hapScale([8, 30, 8], L) }, { in: [18, 30, 18], out: hapScale([18, 30, 18], L) }]) };
       })));
     }
+    await p.context().close();
+  }
+  {
+    // a screen of an older build lists only overview.cat.live.v1: it is sent the first cat's bare look
+    const p = await visit(BASES[1], CAPS_V1);
+    await shoot(p, 'pet-live-v1', STATES['pet-live']);
     await p.context().close();
   }
 

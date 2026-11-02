@@ -73,7 +73,7 @@ class CatLiveCoatScreenshotTest {
                 .put("light", light)
                 .put("tokens", ScreenshotPalette.tokens(light))
         val cards = WebOverviewRepository().apply { accept(j, true) }.state.value!!
-        val live = cards.tiles.cat!!.live!!
+        val live = cards.tiles.cat!!.live!!.first
         val sprites = sprites(live)
         paparazzi.snapshot {
             OverviewTheme(cards.tokens, cards.light) {
