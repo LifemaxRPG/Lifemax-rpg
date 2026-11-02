@@ -234,6 +234,7 @@ const LMA_TABSWIPE = Object.freeze({
   }
   /** the page changes view (34-navigation's navigate wrapper asks): one not made by a swipe here ends that swipe's marks */
   function navigated() {
+    window.NativePrime?.poke(); // a new tab has new neighbours
     if (ours) return;
     unreveal();
     unenter();
@@ -284,6 +285,7 @@ const LMA_TABSWIPE = Object.freeze({
     lmaLoad().nativeSwipe = !!on;
     lmaSave();
     sync();
+    if (on) window.NativePrime?.poke();
     toast(!on ? "Native tab swipe: off" : lmaSwipeEnabled() ? "Native tab swipe: on" : "Native tab swipe: on. It also needs Swipe to switch tabs.");
   };
 
@@ -338,6 +340,9 @@ const LMA_TABSWIPE = Object.freeze({
     toast("Swipe feel: back to the defaults");
   };
 
-  window.NativeSwipe = { state: swipeState, kind, request, sync, enter, takeEnter, entered, navigated };
+  /** the swipe is on and nothing covers the page: the moment native neighbours are worth composing ahead (NativePrime) */
+  const ready = () => lmaLoad().nativeSwipe === true && allowed() && !covered();
+
+  window.NativeSwipe = { state: swipeState, kind, request, sync, enter, takeEnter, entered, navigated, ready };
   setTimeout(sync, 700);
 })();

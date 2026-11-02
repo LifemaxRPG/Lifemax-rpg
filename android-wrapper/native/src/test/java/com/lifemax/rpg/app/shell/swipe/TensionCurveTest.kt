@@ -3,6 +3,8 @@ package com.lifemax.rpg.app.shell.swipe
 import kotlin.math.sin
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -186,6 +188,66 @@ class TensionCurveTest {
         assertEquals(false, turned.latched)
         assertEquals(-popped.residualAt(now), turned.residualAt(now), 1e-6f)
         assertEquals(-popped.residual!!.velocity(now), turned.residual!!.velocity(now), 1e-4f)
+    }
+
+    @Test
+    fun theInverseOfTheCurveIsTheCurvesInverse() {
+        for (i in 0..44) {
+            val u = i / 100f
+            assertEquals(
+                "u=$u",
+                u,
+                TensionCurve.invertHold(TensionCurve.hold(u, tune), tune),
+                2e-3f,
+            )
+        }
+        // beyond what the curve reaches before the catch it stops at the catch
+        assertEquals(tune.breakAt, TensionCurve.invertHold(0.9f, tune), 0f)
+        // and a tune with no tension (m = 1) is the identity
+        val free = tune.copy(heavy = 1f)
+        assertEquals(0.3f, TensionCurve.invertHold(0.3f, free), 1e-6f)
+    }
+
+    @Test
+    fun aHeldScreenStandsWhereItWasCaughtForEveryTuneAndOffset() {
+        val random = Random(11)
+        repeat(300) {
+            val t =
+                SwipeTune(
+                        knee = random.nextFloat() * 0.5f,
+                        breakAt = random.nextFloat(),
+                        heavy = random.nextFloat() * 1.2f,
+                        wallMax = random.nextFloat() * 0.2f,
+                    )
+                    .clamped()
+            val o = random.nextFloat()
+            val wall = random.nextInt(5) == 0
+            val held = Tension.holding(o, 0L, 1f, t, wall)
+            val shown = held.tension.offset(held.u, 0L, t, wall)
+            assertEquals("o=$o wall=$wall $t", o, shown, 2e-3f)
+        }
+    }
+
+    @Test
+    fun aScreenCaughtPastTheCatchIsLatchedAndFollowsTheFingerOneToOne() {
+        val held = Tension.holding(0.6f, 0L, 1f, tune, wall = false)
+        assertTrue(held.tension.latched)
+        assertEquals(0.6f, held.u, 0f)
+        // pulling back under the catch's hysteresis lets the tension return, as any latched drag
+        val back = held.tension.follow(tune.breakAt - tune.hyst - 0.01f, 0L, 1f, tune, wall = false)
+        assertEquals(Flip.Unlatch, back.flip)
+    }
+
+    @Test
+    fun aScreenCaughtBetweenTheCurveAndTheCatchSettlesOntoTheCurve() {
+        val between = (TensionCurve.hold(tune.breakAt, tune) + tune.breakAt) / 2f
+        val held = Tension.holding(between, 0L, 1f, tune, wall = false)
+        assertFalse(held.tension.latched)
+        assertNotNull("a residual takes up the gap", held.tension.residual)
+        assertEquals(between, held.tension.offset(held.u, 0L, tune, wall = false), 1e-3f)
+        // 300 ms later the residual is gone and the screen is on the curve under the finger
+        val later = held.tension.offset(held.u, 300 * ms, tune, wall = false)
+        assertEquals(TensionCurve.hold(held.u, tune), later, 2e-3f)
     }
 
     @Test

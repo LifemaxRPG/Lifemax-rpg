@@ -7519,6 +7519,9 @@
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
  ],
+ "window.NativePrime": [
+  "src/runtime/segments/50-native-prime.js"
+ ],
  "window.NativeSwipe": [
   "src/runtime/segments/50-native-swipe.js"
  ],
@@ -7527,6 +7530,9 @@
  ],
  "window.NativeTabs": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.SwipeFeel": [
+  "src/runtime/segments/50-native-swipe-feel.js"
  ],
  "window.VoiceFallbackLogger": [
   "src/runtime/segments/50-voice-fallback.js"
@@ -7545,6 +7551,9 @@
  ],
  "window.__nativeOverviewError": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.__nativePrimePerf": [
+  "src/runtime/segments/50-native-tabkit.js"
  ],
  "window.__nativeTabPerf": [
   "src/runtime/segments/50-native-tabkit.js",

@@ -138,6 +138,12 @@ sealed interface SwipeInput {
     /** The view claimed the drag: the screen stands at 0 with the finger at [anchorX]. */
     data class DragStart(val anchorX: Float, val dir: Int, val x: Float) : SwipeInput
 
+    /**
+     * A DOWN on the screen [SwipeModel.catching] names, while it still moves with no finger on it:
+     * the finger takes hold of it where it stands (chained swipes) at raw [x].
+     */
+    data class Catch(val pane: String, val x: Float) : SwipeInput
+
     /** The finger is at raw [x] px. */
     data class DragMove(val x: Float) : SwipeInput
 

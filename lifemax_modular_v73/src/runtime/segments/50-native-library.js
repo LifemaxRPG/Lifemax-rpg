@@ -266,6 +266,7 @@
     id: "media",
     plugin: "NativeMedia",
     capability: "library.media.projection.v1",
+    prime: true, // composed ahead at idle as a swipe neighbour (NativePrime)
     setting: "nativeLibrary",
     toggle: "nativeLibraryToggle",
     projection,

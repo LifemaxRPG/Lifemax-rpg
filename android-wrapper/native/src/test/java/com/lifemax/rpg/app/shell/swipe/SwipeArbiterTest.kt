@@ -263,6 +263,46 @@ class SwipeArbiterTest {
     }
 
     @Test
+    fun aCatchClaimsAtTheDownWithNoLockAndInterceptsAtOnce() {
+        val step = SwipeArbiter("character").catchDown(600f, facts, tune)
+        assertEquals(SwipeInput.Catch("character", 600f), step.input)
+        assertTrue("the children never see it", step.arbiter.consumes)
+        // the rest of the gesture is the drag's: moves feed it, the lift ends it
+        val moved = step.arbiter.move(560f, 1000f)
+        assertEquals(SwipeInput.DragMove(560f), moved.input)
+        assertEquals(SwipeInput.DragEnd(-900f), moved.arbiter.up(-900f).input)
+    }
+
+    @Test
+    fun aCatchStillKeepsThePlatformsGates() {
+        val gates =
+            listOf(
+                facts.copy(pointers = 2) to SwipeGate.Pointers,
+                facts.copy(tool = ToolKind.Mouse) to SwipeGate.Tool,
+                facts.copy(imeVisible = true) to SwipeGate.Ime,
+                facts.copy(touchExploration = true) to SwipeGate.TouchExploration,
+                facts.copy(windowFocused = false) to SwipeGate.NoFocus,
+            )
+        for ((f, gate) in gates) {
+            val step = SwipeArbiter("character").catchDown(600f, f, tune)
+            assertNull(gate.name, step.input)
+            assertEquals(Phase.Passive(gate), step.arbiter.phase)
+        }
+        // the Back gesture's edge belongs to the system, even for a screen that is moving
+        val edge = SwipeArbiter("character").catchDown(5f, facts, tune)
+        assertEquals(Phase.Passive(SwipeGate.Edge), edge.arbiter.phase)
+        assertFalse(edge.arbiter.consumes)
+    }
+
+    @Test
+    fun aCatchEndsAGestureThatNeverEnded() {
+        val dangling = SwipeArbiter("character").catchDown(600f, facts, tune).arbiter
+        val again = dangling.catchDown(600f, facts, tune)
+        assertEquals(SwipeInput.DragCancel, again.input)
+        assertEquals(Phase.Passive(), again.arbiter.phase)
+    }
+
+    @Test
     fun theArbitersInputsCarryTheModelThroughAWholeSwipe() {
         val env = SwipeEnv(0L, facts.widthPx, facts.density)
         var model = SwipeStage.homeOn("character")

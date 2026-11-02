@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelStore
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -114,8 +115,50 @@ abstract class ComposeTabPlugin : Plugin() {
         call.resolve(
             JSObject()
                 .put("protocol", 1)
-                .put("capabilities", JSArray(capabilities + SWIPE + SWIPE_EDGES))
+                .put("capabilities", JSArray(capabilities + SWIPE + SWIPE_EDGES + PRIME))
         )
+    }
+
+    /**
+     * Composes this tab's screen ahead of its first open, so a swipe to it meets a screen that is
+     * ready, not one that composes during the slide (`shell.prime.v1`, CONTRACT A24). The page
+     * calls it at idle for a neighbour of the tab it is on, one at a time, with the projection an
+     * open would send. The screen is created exactly as an open creates it (the same accept and
+     * createView) and then hidden as any closed screen is: not open, not visible, no bars, no
+     * focus, no updates. Answers `{primed, javaKb, nativeKb, ms}` once the screen has composed
+     * ([PrimeCost]); `primed:false` with a reason when it did nothing (already composed, a swipe or
+     * hand-over in progress). A rejected projection removes the screen again and rejects.
+     */
+    @PluginMethod
+    fun prime(call: PluginCall) {
+        val data = readSnapshot(call) ?: return
+        activity.runOnUiThread {
+            when {
+                view != null ->
+                    call.resolve(JSObject().put("primed", false).put("reason", "composed"))
+                !TabSwipe.idle() ->
+                    call.resolve(JSObject().put("primed", false).put("reason", "busy"))
+                else ->
+                    try {
+                        val cost = PrimeCost.start()
+                        accept(data, true)
+                        val screen = createView()
+                        // the window's, not the screen's: the answer comes even if the screen is
+                        // gone
+                        activity.window.decorView.postDelayed(
+                            {
+                                call.resolve(
+                                    cost.read().put("primed", view === screen).put("reason", "")
+                                )
+                            },
+                            PrimeCost.SETTLE_MS,
+                        )
+                    } catch (e: Exception) {
+                        remove()
+                        call.reject("$tabId could not be primed", e)
+                    }
+            }
+        }
     }
 
     @PluginMethod
@@ -126,6 +169,8 @@ abstract class ComposeTabPlugin : Plugin() {
             try {
                 accept(data, true)
                 val screen = view ?: createView()
+                // TalkBack announces the screen by name as it appears: the bar's label for the tab
+                ViewCompat.setAccessibilityPaneTitle(screen, paneTitle(call.getString("title")))
                 TabSwipe.opened(
                     tabId,
                     SwipeEnter.of(call.getString("enter"), call.getDouble("velocity")),
@@ -233,6 +278,10 @@ abstract class ComposeTabPlugin : Plugin() {
                 }
             }
 
+    /** The page's title for the tab, else the bar's label in the swipe state, else the tab id. */
+    private fun paneTitle(sent: String?): String =
+        sent?.trim()?.takeIf { it.isNotEmpty() } ?: TabSwipe.label(tabId) ?: tabId
+
     private fun emit(action: String, id: String) {
         val event = JSObject()
         if (action == "navigate") {
@@ -293,5 +342,8 @@ abstract class ComposeTabPlugin : Plugin() {
 
         /** It also reveals web tabs and slides in a screen the page swiped to (phase 2). */
         const val SWIPE_EDGES = "shell.swipe.v2"
+
+        /** It composes a screen ahead of its first open on the page's `prime` (phase 3). */
+        const val PRIME = "shell.prime.v1"
     }
 }

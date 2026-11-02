@@ -240,6 +240,7 @@
     id: "plan",
     plugin: "NativePlan",
     capability: "plan.projection.v1",
+    prime: true, // composed ahead at idle as a swipe neighbour (NativePrime)
     setting: "nativePlan",
     toggle: "nativePlanToggle",
     projection,

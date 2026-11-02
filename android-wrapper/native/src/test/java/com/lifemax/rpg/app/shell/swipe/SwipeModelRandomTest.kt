@@ -61,7 +61,7 @@ class SwipeModelRandomTest {
     ) {
         val pane = panes.random(random)
         val owner = model.owner
-        when (random.nextInt(22)) {
+        when (random.nextInt(24)) {
             0,
             1,
             2,
@@ -116,6 +116,14 @@ class SwipeModelRandomTest {
                         else -> SwipeInput.Disarm
                     }
                 )
+            20,
+            21 -> {
+                // a finger on a screen that moves: taken hold of when the model allows it, else
+                // nothing
+                val holder = model.catching(env())?.pane
+                if (holder != null) send(SwipeInput.Catch(holder, 540f))
+                else send(SwipeInput.Catch(pane, 540f))
+            }
             else -> wait(random.nextLong(0, 160))
         }
     }

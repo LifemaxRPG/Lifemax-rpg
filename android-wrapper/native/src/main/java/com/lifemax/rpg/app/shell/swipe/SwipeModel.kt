@@ -39,6 +39,9 @@ data class SwipeStep(val model: SwipeModel, val effects: List<SwipeEffect> = emp
  *   [SwipeArbiter.yieldGesture].
  * - Back at Idle, check the Views against [restScene] and repair any difference.
  *
+ * Phase 3 (chained swipes; SwipeCatch.kt): a finger that lands on a screen still sliding may take
+ * hold of it ([catching], [SwipeInput.Catch]) and the drag goes on from where it stands.
+ *
  * Phase 2 (the edges; SwipeEdges.kt): a commit into a tab the page draws ends in
  * [SwipePhase.Reveal], and a screen the page opens at the end of its own swipe slides in
  * ([SwipePhase.Entering]).
@@ -148,6 +151,7 @@ data class SwipeModel(
                 is SwipeInput.Scene -> scene(input.state, env)
                 is SwipeInput.Settle -> settle(input, env)
                 is SwipeInput.Arm -> arm(input.pane)
+                is SwipeInput.Catch -> catchGrab(input, env)
                 is SwipeInput.DragStart -> dragStart(input, env)
                 is SwipeInput.DragMove -> dragMove(input.x, env)
                 is SwipeInput.DragEnd -> release(input.velocityX, env)

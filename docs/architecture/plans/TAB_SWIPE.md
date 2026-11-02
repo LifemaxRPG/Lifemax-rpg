@@ -442,7 +442,7 @@ The kit and Nutrition pass `open({…, enter:"next"|"prev", velocity})`. `TabSwi
 - §5 in full: veil reveal with `postVisualStateCallback`; `ChromeHost.hold`/`unhold`; fallback swap; `enter` slide-in for web → native and Overview → native; `swipe-reveal` and `native-enter` CSS (02-layout.css).
 - Owner gets: every tab boundary on the bar swipes, except Money.
 
-**Phase 3: polish and parity.**
+**Phase 3: polish and parity.** *Built (CONTRACT A34 item 8, A24 amendment, MIGRATION). Differences from this text: the web swipe does not catch a settle in progress (the old tween just ends at a new touch); a catch is allowed on a cancel springing back and on a commit whose hand-over is done, never on a commit still waiting for the page; Food and Life Director are not primed, and the memory per screen is read on the phone (`PrimeCost`, `window.__nativePrimePerf`), not measured here.*
 - `prime({snapshot})` behind capability `"shell.prime.v1"`: the kit composes never-opened native neighbours at idle (no touch for 800 ms, one at a time). Needs an A24 amendment and memory measured per screen in BRIDGE_CATALOG. Removes the cold-open hitch.
 - Chained swipes: catch during a settle through the inverse curve.
 - The web swipe uses the same curve, release rule and `lmaBuzz('tick')` at the catch behind the beta flag (34-navigation `lmaPgSet` and `lmaSwipeEnd`).

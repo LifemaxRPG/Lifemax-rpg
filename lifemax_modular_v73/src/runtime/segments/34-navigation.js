@@ -166,6 +166,11 @@ document.addEventListener('touchmove',e=>{
  }
  /* the cards follow the finger; where there is no further tab they stretch a little and no more */
  const dir=dx<0?1:-1,nx=lmaSw.cur+dir,edge=nx<0||nx>=lmaSw.n;
+ if(window.SwipeFeel&&SwipeFeel.on()){ /* Native tab swipe (beta): the native curve, catch and haptic (50-native-swipe-feel.js) */
+  lmaSw.feel=lmaSw.feel||SwipeFeel.begin();
+  lmaPgSet(SwipeFeel.move(lmaSw.feel,dx,window.innerWidth,d=>{const n=lmaSw.cur+d;return n<0||n>=lmaSw.n},now));
+  return;
+ }
  lmaPgSet(edge?dx*.25:dx);
 },{passive:true});
 /* go to a tab because of a swipe: its cards slide in from the side you swiped toward. A tab a native screen draws slides in itself
@@ -186,11 +191,14 @@ function lmaSwipeEnd(e){
  const tabs=lmaTabList(),cur=tabs.findIndex(b=>b.dataset.view===lmaTabKey(lmaView())),next=cur+dir;
  let go=false;
  if(cur>=0&&next>=0&&next<tabs.length&&!lmaTopOverlay()){
-  if(s.drag)go=Math.abs(dx)>=Math.abs(dy)*1.2&&(Math.abs(dx)>=w*.22||(Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx)));
+  if(s.drag){
+   const F=window.SwipeFeel&&s.feel&&SwipeFeel.on(); /* the native release rule under Native tab swipe (beta) */
+   go=Math.abs(dx)>=Math.abs(dy)*1.2&&(F?SwipeFeel.commits(s.feel,v,w,d=>{const n=cur+d;return n<0||n>=tabs.length}):(Math.abs(dx)>=w*.22||(Math.abs(v)>.45&&Math.abs(dx)>=36&&Math.sign(v)===Math.sign(dx))));
+  }
   else go=dt<=LMA_SWIPE.maxMs&&Math.abs(dx)>=Math.max(LMA_SWIPE.minPx,w*LMA_SWIPE.minFrac)&&Math.abs(dx)>=Math.abs(dy)*LMA_SWIPE.ratio;   /* a quick swipe that never became a drag (animation off) */
  }
  if(!s.drag){if(go){lmaSwipeGo(tabs[next].dataset.view,dir);lmaSwipeHint(tabs[next],dir>0?-1:1)}return}
- if(!go){lmaPgTween(0,170,lmaEaseOut,lmaPgEnd);return}                      /* not far enough: the cards settle back */
+ if(!go){if(s.feel&&window.SwipeFeel&&SwipeFeel.on())lmaPgTween(0,SwipeFeel.CANCEL_MS,SwipeFeel.settle,lmaPgEnd);else lmaPgTween(0,170,lmaEaseOut,lmaPgEnd);return}   /* not far enough: the cards settle back */
  /* far enough: the cards carry on off the screen (faster if you flicked), then the next page takes over */
  const off=(dir>0?-1:1)*w,ms=Math.max(70,Math.min(150,Math.abs(off-lmaPgDx)/Math.max(.9,Math.abs(v)*1.3)));
  const target=tabs[next];
