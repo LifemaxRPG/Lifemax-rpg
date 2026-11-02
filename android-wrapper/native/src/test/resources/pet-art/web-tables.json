@@ -1,0 +1,2108 @@
+{
+ "W": 72,
+ "H": 48,
+ "cols": 8,
+ "anims": {
+  "idle_sit": {
+   "row": 0,
+   "n": 8,
+   "fps": 7,
+   "bottom": 47
+  },
+  "walk": {
+   "row": 1,
+   "n": 8,
+   "fps": 12,
+   "bottom": 46
+  },
+  "run": {
+   "row": 2,
+   "n": 6,
+   "fps": 16,
+   "bottom": 46
+  },
+  "sleep": {
+   "row": 3,
+   "n": 4,
+   "fps": 2,
+   "bottom": 47
+  },
+  "loaf": {
+   "row": 4,
+   "n": 4,
+   "fps": 2,
+   "bottom": 47
+  },
+  "groom": {
+   "row": 5,
+   "n": 8,
+   "fps": 5,
+   "bottom": 47
+  },
+  "eat": {
+   "row": 6,
+   "n": 6,
+   "fps": 5,
+   "bottom": 46
+  },
+  "play": {
+   "row": 7,
+   "n": 6,
+   "fps": 9,
+   "bottom": 47
+  },
+  "stretch": {
+   "row": 8,
+   "n": 7,
+   "fps": 4,
+   "bottom": 47
+  },
+  "lookup": {
+   "row": 9,
+   "n": 4,
+   "fps": 3,
+   "bottom": 47
+  },
+  "slowblink": {
+   "row": 10,
+   "n": 6,
+   "fps": 4,
+   "bottom": 47
+  },
+  "purr": {
+   "row": 11,
+   "n": 4,
+   "fps": 4,
+   "bottom": 47
+  },
+  "rub": {
+   "row": 12,
+   "n": 4,
+   "fps": 5,
+   "bottom": 46
+  },
+  "knead": {
+   "row": 13,
+   "n": 4,
+   "fps": 4,
+   "bottom": 47
+  },
+  "meow": {
+   "row": 14,
+   "n": 4,
+   "fps": 6,
+   "bottom": 47
+  },
+  "leap": {
+   "row": 15,
+   "n": 2,
+   "fps": 4,
+   "bottom": 46
+  },
+  "idle_sit_w": {
+   "row": 16,
+   "n": 8,
+   "fps": 5,
+   "bottom": 47
+  },
+  "walk_w": {
+   "row": 17,
+   "n": 8,
+   "fps": 8,
+   "bottom": 46
+  },
+  "loaf_w": {
+   "row": 18,
+   "n": 4,
+   "fps": 1.5,
+   "bottom": 47
+  },
+  "sleep_w": {
+   "row": 19,
+   "n": 4,
+   "fps": 1.5,
+   "bottom": 47
+  },
+  "crouch": {
+   "row": 20,
+   "n": 3,
+   "fps": 7,
+   "bottom": 47
+  },
+  "scratch": {
+   "row": 21,
+   "n": 8,
+   "fps": 7,
+   "bottom": 46
+  },
+  "scratch_in": {
+   "row": 22,
+   "n": 3,
+   "fps": 7,
+   "bottom": 47
+  },
+  "scratch_out": {
+   "row": 23,
+   "n": 3,
+   "fps": 7,
+   "bottom": 47
+  },
+  "roll": {
+   "row": 24,
+   "n": 8,
+   "fps": 8,
+   "bottom": 47
+  },
+  "kick": {
+   "row": 25,
+   "n": 6,
+   "fps": 12,
+   "bottom": 47
+  },
+  "bat": {
+   "row": 26,
+   "n": 8,
+   "fps": 9,
+   "bottom": 46
+  },
+  "swat": {
+   "row": 27,
+   "n": 6,
+   "fps": 9,
+   "bottom": 47
+  }
+ },
+ "animOrder": [
+  "idle_sit",
+  "walk",
+  "run",
+  "sleep",
+  "loaf",
+  "groom",
+  "eat",
+  "play",
+  "stretch",
+  "lookup",
+  "slowblink",
+  "purr",
+  "rub",
+  "knead",
+  "meow",
+  "leap",
+  "idle_sit_w",
+  "walk_w",
+  "loaf_w",
+  "sleep_w",
+  "crouch",
+  "scratch",
+  "scratch_in",
+  "scratch_out",
+  "roll",
+  "kick",
+  "bat",
+  "swat"
+ ],
+ "depth": {
+  "W": 72,
+  "H": 48,
+  "anims": {
+   "walk_front": {
+    "row": 0,
+    "n": 6,
+    "fps": 10,
+    "bottom": 46
+   },
+   "walk_back": {
+    "row": 1,
+    "n": 6,
+    "fps": 10,
+    "bottom": 46
+   },
+   "sniff": {
+    "row": 2,
+    "n": 4,
+    "fps": 10,
+    "bottom": 46
+   },
+   "bonk": {
+    "row": 3,
+    "n": 2,
+    "fps": 6,
+    "bottom": 46
+   }
+  },
+  "animOrder": [
+   "walk_front",
+   "walk_back",
+   "sniff",
+   "bonk"
+  ]
+ },
+ "pal": {
+  "ginger": {
+   "10": [
+    26,
+    16,
+    28
+   ],
+   "20": [
+    122,
+    50,
+    20
+   ],
+   "30": [
+    176,
+    84,
+    30
+   ],
+   "40": [
+    222,
+    128,
+    48
+   ],
+   "50": [
+    246,
+    176,
+    96
+   ],
+   "60": [
+    92,
+    34,
+    14
+   ],
+   "70": [
+    134,
+    46,
+    14
+   ],
+   "80": [
+    176,
+    84,
+    30
+   ],
+   "90": [
+    170,
+    150,
+    140
+   ],
+   "100": [
+    236,
+    222,
+    204
+   ],
+   "110": [
+    255,
+    248,
+    236
+   ],
+   "120": [
+    150,
+    70,
+    79
+   ],
+   "130": [
+    222,
+    120,
+    130
+   ],
+   "140": [
+    250,
+    176,
+    176
+   ],
+   "150": [
+    20,
+    14,
+    22
+   ],
+   "160": [
+    60,
+    130,
+    70
+   ],
+   "170": [
+    140,
+    210,
+    110
+   ],
+   "180": [
+    255,
+    255,
+    255
+   ],
+   "190": [
+    233,
+    228,
+    238
+   ],
+   "200": [
+    74,
+    34,
+    48
+   ],
+   "210": [
+    226,
+    86,
+    110
+   ]
+  },
+  "gray": {
+   "10": [
+    26,
+    16,
+    28
+   ],
+   "20": [
+    52,
+    58,
+    74
+   ],
+   "30": [
+    84,
+    92,
+    112
+   ],
+   "40": [
+    124,
+    134,
+    156
+   ],
+   "50": [
+    170,
+    180,
+    200
+   ],
+   "60": [
+    30,
+    34,
+    46
+   ],
+   "70": [
+    50,
+    56,
+    72
+   ],
+   "80": [
+    76,
+    84,
+    104
+   ],
+   "90": [
+    150,
+    156,
+    176
+   ],
+   "100": [
+    214,
+    220,
+    236
+   ],
+   "110": [
+    246,
+    248,
+    255
+   ],
+   "120": [
+    150,
+    70,
+    79
+   ],
+   "130": [
+    222,
+    120,
+    130
+   ],
+   "140": [
+    250,
+    176,
+    176
+   ],
+   "150": [
+    20,
+    14,
+    22
+   ],
+   "160": [
+    170,
+    110,
+    20
+   ],
+   "170": [
+    250,
+    200,
+    60
+   ],
+   "180": [
+    255,
+    255,
+    255
+   ],
+   "190": [
+    233,
+    228,
+    238
+   ],
+   "200": [
+    74,
+    34,
+    48
+   ],
+   "210": [
+    226,
+    86,
+    110
+   ]
+  },
+  "black": {
+   "10": [
+    26,
+    16,
+    28
+   ],
+   "20": [
+    10,
+    8,
+    16
+   ],
+   "30": [
+    26,
+    22,
+    44
+   ],
+   "40": [
+    46,
+    40,
+    68
+   ],
+   "50": [
+    90,
+    80,
+    128
+   ],
+   "60": [
+    14,
+    12,
+    20
+   ],
+   "70": [
+    30,
+    26,
+    42
+   ],
+   "80": [
+    52,
+    46,
+    72
+   ],
+   "90": [
+    150,
+    156,
+    176
+   ],
+   "100": [
+    214,
+    220,
+    236
+   ],
+   "110": [
+    246,
+    248,
+    255
+   ],
+   "120": [
+    150,
+    70,
+    79
+   ],
+   "130": [
+    222,
+    120,
+    130
+   ],
+   "140": [
+    250,
+    176,
+    176
+   ],
+   "150": [
+    20,
+    14,
+    22
+   ],
+   "160": [
+    200,
+    140,
+    20
+   ],
+   "170": [
+    255,
+    220,
+    70
+   ],
+   "180": [
+    255,
+    255,
+    255
+   ],
+   "190": [
+    233,
+    228,
+    238
+   ],
+   "200": [
+    74,
+    34,
+    48
+   ],
+   "210": [
+    226,
+    86,
+    110
+   ]
+  },
+  "tuxedo": {
+   "10": [
+    26,
+    16,
+    28
+   ],
+   "20": [
+    10,
+    8,
+    16
+   ],
+   "30": [
+    26,
+    22,
+    44
+   ],
+   "40": [
+    46,
+    40,
+    68
+   ],
+   "50": [
+    90,
+    80,
+    128
+   ],
+   "60": [
+    14,
+    12,
+    20
+   ],
+   "70": [
+    30,
+    26,
+    42
+   ],
+   "80": [
+    52,
+    46,
+    72
+   ],
+   "90": [
+    154,
+    160,
+    180
+   ],
+   "100": [
+    220,
+    226,
+    240
+   ],
+   "110": [
+    250,
+    252,
+    255
+   ],
+   "120": [
+    150,
+    70,
+    79
+   ],
+   "130": [
+    222,
+    120,
+    130
+   ],
+   "140": [
+    250,
+    176,
+    176
+   ],
+   "150": [
+    20,
+    14,
+    22
+   ],
+   "160": [
+    60,
+    140,
+    74
+   ],
+   "170": [
+    150,
+    224,
+    122
+   ],
+   "180": [
+    255,
+    255,
+    255
+   ],
+   "190": [
+    233,
+    228,
+    238
+   ],
+   "200": [
+    74,
+    34,
+    48
+   ],
+   "210": [
+    226,
+    86,
+    110
+   ]
+  }
+ },
+ "growth": {
+  "days": [
+   0,
+   5,
+   10,
+   15,
+   20,
+   25
+  ],
+  "stages": [
+   {
+    "a": 0,
+    "sx": 0.6,
+    "bottom": {
+     "idle_sit": 46,
+     "walk": 45,
+     "run": 45,
+     "sleep": 48,
+     "loaf": 46,
+     "groom": 46,
+     "eat": 45,
+     "play": 46,
+     "stretch": 48,
+     "lookup": 46,
+     "slowblink": 46,
+     "purr": 46,
+     "rub": 45,
+     "knead": 46,
+     "meow": 46,
+     "leap": 45,
+     "idle_sit_w": 46,
+     "walk_w": 45,
+     "loaf_w": 46,
+     "sleep_w": 48,
+     "crouch": 46,
+     "scratch_in": 46,
+     "scratch_out": 46,
+     "roll": 46,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   },
+   {
+    "a": 0.16666666666666666,
+    "sx": 0.6667,
+    "bottom": {
+     "idle_sit": 46,
+     "walk": 45,
+     "run": 45,
+     "sleep": 47,
+     "loaf": 46,
+     "groom": 46,
+     "eat": 45,
+     "play": 47,
+     "stretch": 48,
+     "lookup": 46,
+     "slowblink": 46,
+     "purr": 46,
+     "rub": 45,
+     "knead": 46,
+     "meow": 46,
+     "leap": 45,
+     "idle_sit_w": 46,
+     "walk_w": 45,
+     "loaf_w": 46,
+     "sleep_w": 48,
+     "crouch": 46,
+     "scratch_in": 46,
+     "scratch_out": 46,
+     "roll": 46,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   },
+   {
+    "a": 0.3333333333333333,
+    "sx": 0.7333,
+    "bottom": {
+     "idle_sit": 47,
+     "walk": 45,
+     "run": 45,
+     "sleep": 47,
+     "loaf": 47,
+     "groom": 46,
+     "eat": 45,
+     "play": 47,
+     "stretch": 48,
+     "lookup": 47,
+     "slowblink": 46,
+     "purr": 47,
+     "rub": 45,
+     "knead": 47,
+     "meow": 46,
+     "leap": 45,
+     "idle_sit_w": 47,
+     "walk_w": 45,
+     "loaf_w": 47,
+     "sleep_w": 48,
+     "crouch": 46,
+     "scratch_in": 46,
+     "scratch_out": 46,
+     "roll": 46,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   },
+   {
+    "a": 0.5,
+    "sx": 0.8,
+    "bottom": {
+     "idle_sit": 47,
+     "walk": 45,
+     "run": 45,
+     "sleep": 47,
+     "loaf": 47,
+     "groom": 47,
+     "eat": 45,
+     "play": 47,
+     "stretch": 48,
+     "lookup": 47,
+     "slowblink": 47,
+     "purr": 47,
+     "rub": 45,
+     "knead": 47,
+     "meow": 47,
+     "leap": 45,
+     "idle_sit_w": 47,
+     "walk_w": 45,
+     "loaf_w": 47,
+     "sleep_w": 47,
+     "crouch": 46,
+     "scratch_in": 46,
+     "scratch_out": 46,
+     "roll": 47,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   },
+   {
+    "a": 0.6666666666666666,
+    "sx": 0.8667,
+    "bottom": {
+     "idle_sit": 47,
+     "walk": 46,
+     "run": 46,
+     "sleep": 47,
+     "loaf": 47,
+     "groom": 47,
+     "eat": 46,
+     "play": 47,
+     "stretch": 47,
+     "lookup": 47,
+     "slowblink": 47,
+     "purr": 47,
+     "rub": 46,
+     "knead": 47,
+     "meow": 47,
+     "leap": 45,
+     "idle_sit_w": 47,
+     "walk_w": 46,
+     "loaf_w": 47,
+     "sleep_w": 47,
+     "crouch": 46,
+     "scratch_in": 46,
+     "scratch_out": 46,
+     "roll": 47,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   },
+   {
+    "a": 0.8333333333333334,
+    "sx": 0.9333,
+    "bottom": {
+     "idle_sit": 47,
+     "walk": 46,
+     "run": 46,
+     "sleep": 47,
+     "loaf": 47,
+     "groom": 47,
+     "eat": 46,
+     "play": 47,
+     "stretch": 47,
+     "lookup": 47,
+     "slowblink": 47,
+     "purr": 47,
+     "rub": 46,
+     "knead": 47,
+     "meow": 47,
+     "leap": 46,
+     "idle_sit_w": 47,
+     "walk_w": 46,
+     "loaf_w": 47,
+     "sleep_w": 47,
+     "crouch": 46,
+     "scratch_in": 47,
+     "scratch_out": 47,
+     "roll": 47,
+     "kick": 47,
+     "bat": 46,
+     "swat": 47
+    }
+   }
+  ]
+ },
+ "depthStageSx": [
+  0.6,
+  0.6667,
+  0.7333,
+  0.8,
+  0.8667,
+  0.9333
+ ],
+ "growDays": 30,
+ "roomMeta": {
+  "bed_back": [
+   0,
+   0,
+   56,
+   16
+  ],
+  "bed_front": [
+   57,
+   0,
+   56,
+   10
+  ],
+  "bowl_empty": [
+   114,
+   0,
+   18,
+   10
+  ],
+  "bowl_food": [
+   133,
+   0,
+   18,
+   10
+  ],
+  "bowl_water": [
+   152,
+   0,
+   18,
+   10
+  ],
+  "ball_a": [
+   171,
+   0,
+   9,
+   9
+  ],
+  "ball_b": [
+   181,
+   0,
+   9,
+   9
+  ],
+  "mouse": [
+   191,
+   0,
+   14,
+   8
+  ],
+  "feather": [
+   206,
+   0,
+   12,
+   7
+  ],
+  "heart": [
+   219,
+   0,
+   7,
+   6
+  ],
+  "heart_big": [
+   227,
+   0,
+   9,
+   8
+  ],
+  "zzz0": [
+   237,
+   0,
+   7,
+   7
+  ],
+  "zzz1": [
+   245,
+   0,
+   8,
+   8
+  ],
+  "zzz2": [
+   0,
+   17,
+   10,
+   10
+  ],
+  "exclaim": [
+   11,
+   17,
+   5,
+   10
+  ],
+  "note": [
+   17,
+   17,
+   7,
+   9
+  ],
+  "bubble": [
+   25,
+   17,
+   17,
+   12
+  ],
+  "sparkle": [
+   43,
+   17,
+   7,
+   7
+  ],
+  "sun": [
+   51,
+   17,
+   18,
+   18
+  ],
+  "moon": [
+   70,
+   17,
+   14,
+   14
+  ],
+  "cloud1": [
+   85,
+   17,
+   30,
+   12
+  ],
+  "cloud2": [
+   116,
+   17,
+   22,
+   9
+  ]
+ },
+ "ageIdx": [
+  [
+   0,
+   0
+  ],
+  [
+   0.5,
+   0
+  ],
+  [
+   4.99,
+   0
+  ],
+  [
+   5,
+   1
+  ],
+  [
+   9.99,
+   1
+  ],
+  [
+   10,
+   2
+  ],
+  [
+   14.9,
+   2
+  ],
+  [
+   15,
+   3
+  ],
+  [
+   19.99,
+   3
+  ],
+  [
+   20,
+   4
+  ],
+  [
+   24.99,
+   4
+  ],
+  [
+   25,
+   5
+  ],
+  [
+   29.99,
+   5
+  ],
+  [
+   30,
+   -1
+  ],
+  [
+   45,
+   -1
+  ]
+ ],
+ "stageRows": [
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 46
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 45
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 45
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 48
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 46
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 46
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 45
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 46
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 48
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 46
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 46
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 46
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 45
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 46
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 46
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 45
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 46
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 45
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 46
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 48
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 46
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  },
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 46
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 45
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 45
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 46
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 46
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 45
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 48
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 46
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 46
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 46
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 45
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 46
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 46
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 45
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 46
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 45
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 46
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 48
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 46
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  },
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 45
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 45
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 46
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 45
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 48
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 47
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 46
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 45
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 46
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 45
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 45
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 48
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 46
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  },
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 45
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 45
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 45
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 48
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 47
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 47
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 45
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 47
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 45
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 45
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 47
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  },
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 46
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 46
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 46
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 47
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 47
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 47
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 46
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 47
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 45
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 46
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 47
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  },
+  {
+   "idle_sit": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "walk": {
+    "row": 1,
+    "n": 8,
+    "fps": 12,
+    "bottom": 46
+   },
+   "run": {
+    "row": 2,
+    "n": 6,
+    "fps": 16,
+    "bottom": 46
+   },
+   "sleep": {
+    "row": 3,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "loaf": {
+    "row": 4,
+    "n": 4,
+    "fps": 2,
+    "bottom": 47
+   },
+   "groom": {
+    "row": 5,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "eat": {
+    "row": 6,
+    "n": 6,
+    "fps": 5,
+    "bottom": 46
+   },
+   "play": {
+    "row": 7,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   },
+   "stretch": {
+    "row": 8,
+    "n": 7,
+    "fps": 4,
+    "bottom": 47
+   },
+   "lookup": {
+    "row": 9,
+    "n": 4,
+    "fps": 3,
+    "bottom": 47
+   },
+   "slowblink": {
+    "row": 10,
+    "n": 6,
+    "fps": 4,
+    "bottom": 47
+   },
+   "purr": {
+    "row": 11,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "rub": {
+    "row": 12,
+    "n": 4,
+    "fps": 5,
+    "bottom": 46
+   },
+   "knead": {
+    "row": 13,
+    "n": 4,
+    "fps": 4,
+    "bottom": 47
+   },
+   "meow": {
+    "row": 14,
+    "n": 4,
+    "fps": 6,
+    "bottom": 47
+   },
+   "leap": {
+    "row": 15,
+    "n": 2,
+    "fps": 4,
+    "bottom": 46
+   },
+   "idle_sit_w": {
+    "row": 16,
+    "n": 8,
+    "fps": 5,
+    "bottom": 47
+   },
+   "walk_w": {
+    "row": 17,
+    "n": 8,
+    "fps": 8,
+    "bottom": 46
+   },
+   "loaf_w": {
+    "row": 18,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "sleep_w": {
+    "row": 19,
+    "n": 4,
+    "fps": 1.5,
+    "bottom": 47
+   },
+   "crouch": {
+    "row": 20,
+    "n": 3,
+    "fps": 7,
+    "bottom": 46
+   },
+   "scratch": {
+    "row": 0,
+    "n": 8,
+    "fps": 7,
+    "bottom": 47
+   },
+   "scratch_in": {
+    "row": 22,
+    "n": 3,
+    "fps": 7,
+    "bottom": 47
+   },
+   "scratch_out": {
+    "row": 23,
+    "n": 3,
+    "fps": 7,
+    "bottom": 47
+   },
+   "roll": {
+    "row": 24,
+    "n": 8,
+    "fps": 8,
+    "bottom": 47
+   },
+   "kick": {
+    "row": 25,
+    "n": 6,
+    "fps": 12,
+    "bottom": 47
+   },
+   "bat": {
+    "row": 26,
+    "n": 8,
+    "fps": 9,
+    "bottom": 46
+   },
+   "swat": {
+    "row": 27,
+    "n": 6,
+    "fps": 9,
+    "bottom": 47
+   }
+  }
+ ]
+}

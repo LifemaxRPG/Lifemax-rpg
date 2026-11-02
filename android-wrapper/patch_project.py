@@ -96,6 +96,19 @@ dependencies {
     p.write_text(s, encoding='utf-8')
 
 
+# Shipped art and data that is not code (the cat's sheets): native/src/main/resources, read through the class loader.
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'lifemax-authored-main-resources' not in s:
+    s += """
+// lifemax-authored-main-resources
+android.sourceSets {
+    main.resources.srcDir '../../native/src/main/resources'
+}
+"""
+    p.write_text(s, encoding='utf-8')
+
+
 # Compose: the projections' read-only types count as stable (native/compose-stability.conf).
 p = root / 'app' / 'build.gradle'
 s = p.read_text(encoding='utf-8')
