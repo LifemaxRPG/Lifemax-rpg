@@ -599,8 +599,23 @@
  "PET_CATTERY_MAX": [
   "src/runtime/segments/37-pet-morph.js"
  ],
+ "PET_COAT": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
  "PET_COATS": [
   "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_COAT_DB": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "PET_COAT_DE": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "PET_COAT_LB": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "PET_COAT_LE": [
+  "src/runtime/segments/50-pet-coat.js"
  ],
  "PET_CORE_TEXT": [
   "src/runtime/segments/26-pet-brain.js"
@@ -5382,6 +5397,30 @@
  ],
  "petClampX": [
   "src/runtime/segments/15-runtime.js"
+ ],
+ "petCoatAnswer": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatB64": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatCrc": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatDeflate": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatIndex": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatKnown": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatPalette": [
+  "src/runtime/segments/50-pet-coat.js"
+ ],
+ "petCoatPng": [
+  "src/runtime/segments/50-pet-coat.js"
  ],
  "petCoatPreviewDraw": [
   "src/runtime/segments/17-runtime.js"

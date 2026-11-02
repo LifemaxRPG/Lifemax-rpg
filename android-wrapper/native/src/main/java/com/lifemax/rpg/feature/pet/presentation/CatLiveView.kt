@@ -7,7 +7,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -88,11 +87,16 @@ private fun rememberResumed(): Boolean {
  */
 @Composable
 internal fun rememberCatSprites(coat: String, stage: Int): CatSprites? {
-    val sprites by
-        produceState<CatSprites?>(null, coat, stage) {
-            value = withContext(Dispatchers.Default) { CatArt.sprites(coat, stage) }
-        }
-    return sprites
+    // A page coat's sheets arrive one by one ([CatArt.revision] changes with each): the sprites are
+    // asked again, and the cat already on screen stays until better ones (with the depth rows)
+    // come.
+    val sprites = remember(coat, stage) { mutableStateOf<CatSprites?>(null) }
+    val revision = CatArt.revision
+    LaunchedEffect(coat, stage, revision) {
+        val found = withContext(Dispatchers.Default) { CatArt.sprites(coat, stage) }
+        if (found != null) sprites.value = found
+    }
+    return sprites.value
 }
 
 /** A cat's life for a card: the same cat for the same [name], [coat] and hunger. */

@@ -81,6 +81,7 @@ Each phase ends in something the owner can see on the phone, behind a new Settin
 | P1 | Pure `CatBody` + animation system + a recorded-simulation test harness; a debug room that plays every clip and transition | no bridge yet; screenshot and trace tests |
 | P2 | Asset pipeline (sheets, rig, palette) and coats rendering identical to the web; `CatCanvas` | pixel-compare against `petPortrait` for the four legacy coats and a DNA coat |
 | P3 | Overview card: live native cat on the card, driven by a local autopilot (idle life, no brain) | the quick visible win: smooth animated cat on the Overview. Built: capability `overview.cat.live.v1`, setting `nativeCats`; see OVERVIEW_INVENTORY.md, Live cat |
+| P3b | The live cat for any coat: genetic (`dna_...`) coats | the page stays the composer; native asks `coat {key, kind}` (capability `overview.cat.coat.v1`) for the grey-index sheet and palette, caches by key, shows the still until the adult sheet is in |
 | P4 | Page bridge: `scene`, `plan`, `affect`, events; the brain drives the native body | seed-for-seed the same day schedule as the page |
 | P5 | Pet tab and full screen native: touch, feeding, play, toys, sleep, box, pair (two cats) | parity checklist from the survey section 5 |
 | P6 | 2.5D layers, thickness, light, sway | needs the furniture cut-out art; can start in parallel after P2 |

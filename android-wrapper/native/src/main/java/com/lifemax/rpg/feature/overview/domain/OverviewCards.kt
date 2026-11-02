@@ -4,6 +4,7 @@ import com.lifemax.rpg.core.designsystem.feedback.HapticScale
 import com.lifemax.rpg.core.designsystem.feedback.HeldCelebration
 import com.lifemax.rpg.core.designsystem.feedback.PagePoint
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorGlance
+import com.lifemax.rpg.feature.pet.art.PageCoatSource
 
 /*
  * The whole projection `overview.cards.v1` (plan OVERVIEW_BODY §3.3): what the page's Overview
@@ -360,13 +361,15 @@ data class CatCard(
 /**
  * What native needs to draw the first cat itself (`overview.cat.live.v1`, the owner's "Native cats
  * (beta)" switch): the coat key, the growth stage (-1 grown, 0 to 5 a kitten) and whether it is the
- * hungry, weak cat. The page sends it only with the switch on; native draws it live only for the
- * four coats it ships ([LiveCat.LEGACY_COATS]) and keeps the still portrait for any other.
+ * hungry, weak cat. The page sends it only with the switch on. Native draws the four coats it ships
+ * ([LiveCat.LEGACY_COATS]) at once, and a genetic `dna_...` coat (which the page sends only to a
+ * screen with `overview.cat.coat.v1`) once the page has handed over its sheets; until then, and for
+ * any other key, the still portrait stays.
  */
 data class LiveCat(val coat: String, val stage: Int, val weak: Boolean) {
-    /** True when native has the art for this coat. */
+    /** True when native can draw this coat: shipped, or a genetic coat the page can compose. */
     val drawable: Boolean
-        get() = coat in LEGACY_COATS
+        get() = coat in LEGACY_COATS || PageCoatSource.isDnaKey(coat)
 
     companion object {
         val LEGACY_COATS = setOf("ginger", "gray", "black", "tuxedo")

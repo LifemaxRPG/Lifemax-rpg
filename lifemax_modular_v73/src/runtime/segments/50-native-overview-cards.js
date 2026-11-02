@@ -13,7 +13,10 @@
   /* the cat card's live cat (beta, off by default): native draws the first cat itself from its own art and a local autopilot, when
      the owner's switch is on and the screen says it can (the capability). The still portrait is always sent too, as the fallback. */
   const CAT_LIVE = "overview.cat.live.v1", CAT_SETTING = "nativeCats";
-  const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for; any other (a dna_ coat) stays a still
+  /* a genetic (dna_) coat is composed by the page (petDnaCompose); a screen that can ask for its sheets (the `coat` command,
+     50-pet-coat.js) draws it live too. Without the capability a dna_ coat stays a still. */
+  const CAT_COAT = "overview.cat.coat.v1";
+  const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for
   const CELEBRATION_KEEP_MS = 2000; // a celebration handed over stays in the projection this long; the screen plays each id once
   const WIDE = 860; // above this the page's sidebar is a side rail, not the bottom bar the shared bars are drawn from (02-layout.css)
   const GAVE_UP = "The native Overview cards could not open. The live Overview is showing.";
@@ -134,7 +137,8 @@
       hungry, weak cat (the room's PET_WEAK rows); null with the switch off, an older screen, or a coat native has no art for */
   function liveCat() {
     const p = state.pet;
-    if (lmaLoad()[CAT_SETTING] !== true || !tab.has(CAT_LIVE) || !p || !p.alive || !LEGACY_COATS.includes(p.coat)) return null;
+    if (lmaLoad()[CAT_SETTING] !== true || !tab.has(CAT_LIVE) || !p || !p.alive) return null;
+    if (!LEGACY_COATS.includes(p.coat) && !(tab.has(CAT_COAT) && typeof petCoatKnown === "function" && petCoatKnown(p.coat))) return null;
     return { coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
   }
   function luck() {
@@ -183,6 +187,12 @@
   const ok = (more) => Object.assign({ ok: true }, more);
   const no = (message) => ({ ok: false, message });
   const commands = {
+    /** the live cat's genetic coat: one sheet of it (kind) as the room composes it, a grey-index PNG and the palette, which native
+        caches by key (50-pet-coat.js). Refused for a coat or a sheet the page does not hold. */
+    async coat(p) {
+      if (typeof petCoatAnswer !== "function") return no("Coats are not available.");
+      return petCoatAnswer(p);
+    },
     /** a tap on the glance (a session, the timer, a meal, the link or the empty state): Life Director's Today and the tap there.
         It leaves the view, so the hand-over closes the cards once Life Director's screen shows; the reply never arrives. */
     plan(p) {

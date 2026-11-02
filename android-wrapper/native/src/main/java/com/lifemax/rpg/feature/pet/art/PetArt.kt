@@ -48,7 +48,7 @@ class PetArt(
             return it
         }
         val bytes = extra?.sheet(coat, kind) ?: return null
-        return SheetDecoder.decode(bytes).also { extraCache[key] = it }
+        return SheetDecoder.decode(bytes, CoatReply.MAX_PIXELS).also { extraCache[key] = it }
     }
 
     /**

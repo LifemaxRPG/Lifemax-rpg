@@ -202,10 +202,21 @@ class OverviewTest {
         // the still portrait is still sent beside it, as the fallback
         assertNotNull(decode(fixture("pet-live")).catPortrait)
 
-        // a genetic coat decodes but is not drawn live: the still stays
-        val dna = fixture("pet-live")
-        dna.at("tiles.cat.live").put("coat", "dna_a1b2")
-        assertFalse(decode(dna).tiles.cat!!.live!!.drawable)
+        // a key that is neither a shipped coat nor a genetic one decodes but is not drawn live
+        val odd = fixture("pet-live")
+        odd.at("tiles.cat.live").put("coat", "Dna A1B2")
+        assertFalse(decode(odd).tiles.cat!!.live!!.drawable)
+        // the page sends a genetic coat only to a screen that can ask for its sheets: drawable,
+        // with
+        // the stage it is at
+        val calico = decode(fixture("pet-live-dna")).tiles.cat!!.live!!
+        assertEquals(LiveCat("dna_black_1_n_2_0_n_0_3", LiveCat.ADULT, weak = false), calico)
+        assertTrue(calico.drawable)
+        assertTrue(decode(fixture("point-live-dna")).tiles.cat!!.live!!.drawable)
+        val pup = decode(fixture("kitten-live-dna")).tiles.cat!!.live!!
+        assertEquals(1, pup.stage)
+        assertTrue(pup.drawable)
+        assertNotNull(decode(fixture("pet-live-dna")).catPortrait)
     }
 
     @Test

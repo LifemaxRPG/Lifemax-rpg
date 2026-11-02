@@ -5,7 +5,9 @@
      overview-cards-pet.json          a hungry cat; overview-cards-two-cats.json two cats; overview-cards-cat-gone.json in memory;
                                       overview-cards-no-cat.json no cat (tiles.cat null) with an avatar (images)
      overview-cards-pet-live.json     a weak (hungry 30 h) cat with Native cats (beta) on: tiles.cat.live carries its coat, stage and weakness;
-                                      overview-cards-kitten-live.json a tuxedo kitten (stage 2). Every other fixture has live: null.
+                                      overview-cards-kitten-live.json a tuxedo kitten (stage 2). Every other fixture has live: null, except
+                                      overview-cards-{pet,point,kitten}-live-dna.json: a calico, a colour-point and a long-haired kitten (stage 1)
+                                      with genetic coats, sent live because the screen lists overview.cat.coat.v1.
      overview-cards-health.json       health on, partway to the goal, with apps (one with its icon); overview-cards-health-goal.json
                                       the goal reached; overview-cards-browser.json outside the Android app (apps and health null)
      overview-cards-luck.json         luck rolled; overview-cards-over-pace.json today's XP over the pace; overview-cards-tip.json
@@ -30,6 +32,9 @@ const STATES = {
   'pet': `state.pet=${cat('Miso', '{lastFed:now-20*36e5,bondPts:PET_BOND_AT[3]}')}`,
   'pet-live': `state.pet=${cat('Miso', '{lastFed:now-30*36e5,bondPts:PET_BOND_AT[3]}')};lmaLoad().nativeCats=true`,
   'kitten-live': `state.pet=${cat('Pip', '{coat:"tuxedo",born:now-12*864e5}')};lmaLoad().nativeCats=true`,
+  'pet-live-dna': `state.pet=${cat('Miso', '{coat:"dna_black_1_n_2_0_n_0_3"}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
+  'point-live-dna': `state.pet=${cat('Miso', '{coat:"dna_black_0_n_0_0_cs_0_4"}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
+  'kitten-live-dna': `state.pet=${cat('Pip', '{coat:"dna_red_0_m_3_0_n_1_2",born:now-6*864e5}')};petDnaRegister(state.pet.coat);lmaLoad().nativeCats=true`,
   'two-cats': `state.pet=${cat('Miso', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Pip', '{coat:"gray"}')}`,
   'cat-gone': `state.pet=${cat('Miso', '{alive:false,passed:now-3*864e5}')}`,
   'no-cat': `delete state.pet;delete state.pet2;state.avatar=${JSON.stringify(ICON)}`,
@@ -44,7 +49,7 @@ const STATES = {
 };
 const FAKE = `(() => { const ls = {}; window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativeOverviewCards', getPlatform: () => 'android',
   registerPlugin: () => ({}), convertFileSrc: u => u, Plugins: { NativeOverviewCards: { addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
-    handshake: async () => ({ protocol: 1, capabilities: ['overview.cards.v1', 'overview.cat.live.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
+    handshake: async () => ({ protocol: 1, capabilities: ['overview.cards.v1', 'overview.cat.live.v1', 'overview.cat.coat.v1'] }), open: async () => {}, update: async () => {}, close: async () => { (ls.closed || []).forEach(f => f({})) } } } } })()`;
 
 module.exports = async function overview({ b, out, write, directorDay }) {
   const fs = require('fs'), path = require('path');

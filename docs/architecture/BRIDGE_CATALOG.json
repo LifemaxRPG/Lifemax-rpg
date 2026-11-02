@@ -422,6 +422,7 @@
    "capabilities": [
     "overview.cards.v1",
     "overview.cat.live.v1",
+    "overview.cat.coat.v1",
     "shell.swipe.v1",
     "shell.swipe.v2",
     "shell.prime.v1"
@@ -439,7 +440,8 @@
     "tip": "{}: dismissFeatureTip('dashboard'); the screen stays; ok only once stored, else the page's unsavedMessage(); a repeat answers changed: false, \"Already recorded.\"",
     "edit": "{}: ovEditOpen() (phase 1: the page's editor, kept for an older app); steps aside",
     "layout": "{order, hidden}: the native editor's change, made whole by ovLayout(from) and stored by ovLayoutSave; the screen stays; ok only once stored, else ovLayoutSave's take-back and the page's unsavedMessage() (storage full's toast is quiet: the reply says it); the stored layout again answers changed: false, \"Already recorded.\"",
-    "layoutReset": "{}: the default layout (OV_DEFAULT, nothing hidden) through ovLayoutSave, answered as layout"
+    "layoutReset": "{}: the default layout (OV_DEFAULT, nothing hidden) through ovLayoutSave, answered as layout",
+    "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability overview.cat.coat.v1; 50-pet-coat.js petCoatAnswer): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds (a cat's, or registered), never a legacy coat; answered {ok, coat, kind, png (base64 of the 8-bit grey-index PNG petDnaCompose builds, at most 600,000 characters), palette ({\"index\": \"rrggbb\"})} or {ok: false, message}; the screen stays; nothing is written"
    },
    "writes": [
     "the day's luck roll via luck (the page's openLuck)",
@@ -462,7 +464,7 @@
    "memoryCost": "to be measured on the phone (OVERVIEW_BODY.md phone check 13: dumpsys meminfo before the first open, after it and after 20 switches)",
    "tabTiming": "to be measured on the phone with Show tab timing (phone check 13: Character to Overview and back, warm)",
    "rollout": "opt-in under Settings, Appearance: Native Overview cards (beta), off by default",
-   "liveCat": "capability overview.cat.live.v1 (Native API 46): tiles.cat.live is null, or {coat, stage, weak} (exactly these keys; stage -1 grown or 0..5 a kitten) and only with Settings, Appearance: Native cats (beta) (nativeCats, off by default) on and the handshake listing the capability; native then draws the first cat itself (the four legacy coats only) on a local autopilot, and keeps the still portrait for any other coat, with the switch off or if the art does not load. The page sends the still portrait as well. No new command; nothing is written",
+   "liveCat": "capability overview.cat.live.v1 (Native API 46): tiles.cat.live is null, or {coat, stage, weak} (exactly these keys; stage -1 grown or 0..5 a kitten) and only with Settings, Appearance: Native cats (beta) (nativeCats, off by default) on and the handshake listing the capability; native then draws the first cat itself on a local autopilot, and keeps the still portrait with the switch off or if the art does not load. The four legacy coats draw at once. A genetic dna_ coat draws only when the handshake also lists overview.cat.coat.v1 (Native API 47) and the page holds the coat: native asks the page for its sheets with the coat command (adult first, then the depth view; a kitten's stage sheets), caches them by key, shows the still portrait until the adult sheet is in, and keeps it for good if the page refuses. The page stays the only composer of coats. The page sends the still portrait as well. Nothing is written",
    "canonicalLayout": true
   },
   {

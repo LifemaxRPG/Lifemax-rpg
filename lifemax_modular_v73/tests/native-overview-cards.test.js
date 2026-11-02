@@ -193,8 +193,22 @@ const HELPERS = `
       __cards.caps.push(CAP); // the handshake the screen answered with is this array: it can now
       const on = await live(() => setNativeCatsEnabled(true));
       out.liveOn = !!on && JSON.stringify(Object.keys(on)) === '["coat","stage","weak"]' && on.coat === 'ginger' && on.stage === petGrowIdx(state.pet) && on.weak === (petStage(state.pet) >= 3);
-      state.pet.coat = 'dna_a1b2'; // a genetic coat has no native art: the still portrait stays
+      state.pet.coat = 'dna_a1b2'; // not a coat the page can compose (too few genes): the still portrait stays
       out.liveDna = (await live(() => renderOverview())) === null;
+      // a genetic coat the page holds: live only for a screen that can ask for its sheets (overview.cat.coat.v1)
+      const dna = 'dna_black_0_n_0_0_n_0_3';
+      petDnaRegister(dna); state.pet.coat = dna;
+      out.dnaNoCoatCap = (await live(() => renderOverview())) === null;
+      __cards.caps.push('overview.cat.coat.v1');
+      const dl = await live(() => renderOverview());
+      out.dnaLive = !!dl && JSON.stringify(Object.keys(dl)) === '["coat","stage","weak"]' && dl.coat === dna && dl.stage === -1;
+      state.pet.coat = 'dna_Black_0_n_0_0_n_0_3'; // not a key the page writes (upper case): never handed to native
+      out.dnaUnheld = (await live(() => renderOverview())) === null;
+      state.pet.coat = 'ginger'; petDnaUnregister(dna);
+      out.dnaLegacyStill = !!(await live(() => renderOverview())); // legacy coats never need the coat capability
+      __cards.caps.pop();
+      // the coat command is in the table the screen sends commands to, and refuses what the page does not hold
+      out.coatCmd = typeof NativeOverviewCardsProjection.commands.coat === 'function' && (await NativeOverviewCardsProjection.commands.coat({ key: 'ginger', kind: 'adult' })).ok === false;
       state.pet.coat = 'ginger';
       state.pet.born = Date.now() - 6 * 864e5; // a kitten shows its growth stage
       const kit = await live(() => renderOverview());
@@ -207,7 +221,11 @@ const HELPERS = `
     ok('the live cat is off by default (null) and its switch unchecked', misc.liveOff, misc);
     ok('switched on without the screen\'s capability, the cat tile still carries no live cat', misc.liveNoCap, misc);
     ok('switched on with the capability, the tile carries the first cat\'s coat, stage and weakness only', misc.liveOn, misc);
-    ok('a genetic coat gets no live cat (the still portrait stays)', misc.liveDna, misc);
+    ok('a coat the page cannot compose gets no live cat (the still portrait stays)', misc.liveDna, misc);
+    ok('a genetic coat gets no live cat for a screen without overview.cat.coat.v1', misc.dnaNoCoatCap, misc);
+    ok('with overview.cat.coat.v1 a genetic coat the page holds carries the same {coat, stage, weak}', misc.dnaLive, misc);
+    ok('a malformed genetic key stays a still; a legacy coat needs no coat capability', misc.dnaUnheld && misc.dnaLegacyStill, misc);
+    ok('the coat command is in the cards\' command table and refuses a legacy coat', misc.coatCmd, misc);
     ok('a kitten carries its growth stage', misc.liveKitten, misc);
     ok('switching it off takes the live cat away again', misc.liveBack, misc);
     ok('notices: the page\'s toast reaches the screen', misc.notice, misc);

@@ -2570,6 +2570,30 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-pet-coat.js",
+   "bytes": 7624,
+   "statement_count": 10,
+   "tags": [
+    "pet",
+    "coat"
+   ],
+   "symbols": [
+    "PET_COAT",
+    "petCoatKnown",
+    "petCoatCrc",
+    "PET_COAT_LB",
+    "PET_COAT_LE",
+    "PET_COAT_DB",
+    "PET_COAT_DE",
+    "petCoatDeflate",
+    "petCoatPng",
+    "petCoatB64",
+    "petCoatPalette",
+    "petCoatIndex",
+    "petCoatAnswer"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-voice-gen4.js",
    "bytes": 54048,
    "statement_count": 66,
@@ -3651,7 +3675,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 21406,
+   "bytes": 22107,
    "statement_count": 1,
    "tags": [
     "native",

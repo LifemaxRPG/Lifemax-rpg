@@ -20,9 +20,11 @@ class PngImage(val width: Int, val height: Int, val channels: Int, val data: Byt
 
         /**
          * Decodes [bytes], or throws [IllegalArgumentException] for anything but 8-bit grey/RGBA,
-         * non-interlaced.
+         * non-interlaced, or for an image of more than [maxPixels] pixels. The size in the header
+         * is checked before anything is inflated, and the inflated data may not exceed it, so a
+         * small file cannot claim or expand to a huge image.
          */
-        fun decode(bytes: ByteArray): PngImage {
+        fun decode(bytes: ByteArray, maxPixels: Long = Long.MAX_VALUE): PngImage {
             require(bytes.size > 8 && bytes.copyOfRange(0, 8).contentEquals(SIGNATURE)) {
                 "not a PNG"
             }
@@ -58,11 +60,16 @@ class PngImage(val width: Int, val height: Int, val channels: Int, val data: Byt
                 pos = body + length + 4
             }
             require(channels != 0) { "PNG has no IHDR" }
+            require(width > 0 && height > 0 && width.toLong() * height <= maxPixels) {
+                "PNG is ${width}x$height"
+            }
+            val limit = height.toLong() * (width.toLong() * channels + 1)
+            require(limit <= Int.MAX_VALUE) { "PNG is too large" }
             return PngImage(
                 width,
                 height,
                 channels,
-                unfilter(inflate(compressed.toByteArray()), width, height, channels),
+                unfilter(inflate(compressed.toByteArray(), limit.toInt()), width, height, channels),
             )
         }
 
@@ -72,7 +79,7 @@ class PngImage(val width: Int, val height: Int, val channels: Int, val data: Byt
                 ((b[at + 2].toInt() and 255) shl 8) or
                 (b[at + 3].toInt() and 255)
 
-        private fun inflate(packed: ByteArray): ByteArray {
+        private fun inflate(packed: ByteArray, limit: Int): ByteArray {
             val inflater = Inflater()
             inflater.setInput(packed)
             val out = ByteArrayOutputStream(packed.size * 4)
@@ -81,6 +88,7 @@ class PngImage(val width: Int, val height: Int, val channels: Int, val data: Byt
                 val n = inflater.inflate(buffer)
                 require(n > 0 || !inflater.needsInput()) { "truncated PNG data" }
                 out.write(buffer, 0, n)
+                require(out.size() <= limit) { "PNG data is longer than its size" }
             }
             inflater.end()
             return out.toByteArray()

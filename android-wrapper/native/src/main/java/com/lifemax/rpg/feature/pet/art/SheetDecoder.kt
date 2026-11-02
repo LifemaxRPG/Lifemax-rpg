@@ -18,9 +18,12 @@ class IndexSheet(val width: Int, val height: Int, val indices: IntArray) {
  */
 object SheetDecoder {
 
-    /** Decodes [png], or throws [IllegalArgumentException] if it is not an 8-bit grey PNG. */
-    fun decode(png: ByteArray): IndexSheet {
-        val image = PngImage.decode(png)
+    /**
+     * Decodes [png], or throws [IllegalArgumentException] if it is not an 8-bit grey PNG of at most
+     * [maxPixels] pixels.
+     */
+    fun decode(png: ByteArray, maxPixels: Long = Long.MAX_VALUE): IndexSheet {
+        val image = PngImage.decode(png, maxPixels)
         require(image.channels == 1) {
             "a cat sheet is an 8-bit grey PNG, not ${image.channels} channels"
         }

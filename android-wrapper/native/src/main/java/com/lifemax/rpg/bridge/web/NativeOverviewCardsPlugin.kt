@@ -11,6 +11,8 @@ import com.lifemax.rpg.feature.overview.data.OverviewCommandSender
 import com.lifemax.rpg.feature.overview.data.overviewReply
 import com.lifemax.rpg.feature.overview.presentation.OverviewRoute
 import com.lifemax.rpg.feature.overview.presentation.OverviewViewModel
+import com.lifemax.rpg.feature.pet.presentation.CatArt
+import java.util.concurrent.atomic.AtomicLong
 import org.json.JSONObject
 
 /**
@@ -24,6 +26,7 @@ import org.json.JSONObject
 @CapacitorPlugin(name = "NativeOverviewCards")
 class NativeOverviewCardsPlugin : ComposeTabPlugin() {
     private var nextRequest = 0L
+    private val nextCoatRequest = AtomicLong()
     private val container =
         OverviewContainer(
             OverviewCommandSender { command, payload ->
@@ -34,14 +37,31 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
         get() = ViewModelProvider(store, container.factory)[OverviewViewModel::class.java]
 
     override val tabId = "dashboard"
-    override val capabilities = listOf("overview.cards.v1", "overview.cat.live.v1")
+    override val capabilities =
+        listOf("overview.cards.v1", "overview.cat.live.v1", "overview.cat.coat.v1")
+
+    init {
+        // The live cat's genetic coat: the page composes it and answers `coat {key, kind}` with the
+        // sheet. Asked from the cat's worker thread, so the command is only queued, on the UI
+        // thread.
+        CatArt.coats.bind { coat, kind ->
+            "coat-${nextCoatRequest.incrementAndGet()}"
+                .also { id ->
+                    activity.runOnUiThread {
+                        sendCommand("coat", JSONObject().put("key", coat).put("kind", kind.key), id)
+                    }
+                }
+        }
+    }
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
         container.repository.accept(snapshot, explicitOpen)
         if (explicitOpen) viewModel.opened() else viewModel.projected()
     }
 
-    override fun onReply(reply: JSONObject) = viewModel.onReply(overviewReply(reply))
+    override fun onReply(reply: JSONObject) {
+        if (!CatArt.coats.onReply(reply)) viewModel.onReply(overviewReply(reply))
+    }
 
     @Composable
     override fun Content(
