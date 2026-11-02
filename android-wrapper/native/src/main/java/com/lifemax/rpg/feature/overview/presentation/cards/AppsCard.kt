@@ -151,7 +151,14 @@ private fun AddTile() {
         },
         contentAlignment = Alignment.Center,
     ) {
-        Text("+", color = c.muted, fontSize = 24.sp, lineHeight = 36.sp)
+        // the button's name is the page's aria-label; the plus only draws the dashed square
+        Text(
+            "+",
+            Modifier.clearAndSetSemantics {},
+            color = c.muted,
+            fontSize = 24.sp,
+            lineHeight = 36.sp,
+        )
     }
 }
 

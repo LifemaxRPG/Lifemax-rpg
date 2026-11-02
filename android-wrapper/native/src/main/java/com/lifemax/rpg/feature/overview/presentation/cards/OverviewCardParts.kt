@@ -119,14 +119,19 @@ internal fun CardNote(text: String) {
 /**
  * The head's link (.ov-link): accent words that go somewhere ("Shop ›"), at the page's size: a 48
  * dp target would make every card's head taller than the page's (a known difference, as on the
- * page, whose link is 23 px tall).
+ * page, whose link is 23 px tall). A card that is one button as a whole (Rewards) passes no
+ * [onClick]: the words are drawn and read as part of that button, so TalkBack does not stop twice
+ * for one destination, and a tap on them still reaches the card.
  */
 @Composable
-internal fun CardLink(text: String, onClick: () -> Unit) {
+internal fun CardLink(text: String, onClick: (() -> Unit)? = null) {
     Text(
         text,
         Modifier.clip(RoundedCornerShape(6.dp))
-            .clickable(role = Role.Button, onClick = onClick)
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.clickable(role = Role.Button, onClick = onClick)
+            )
             .padding(vertical = 2.dp),
         color = LocalOverviewColors.current.accent,
         fontSize = 12.5.sp,

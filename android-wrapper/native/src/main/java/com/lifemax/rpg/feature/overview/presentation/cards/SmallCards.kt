@@ -46,7 +46,8 @@ internal fun RewardsCardView(rewards: RewardsCard, onShop: () -> Unit) {
     OverviewCard(
         background = Modifier.background(c.panel).tapTarget(Role.Button, onClick = onShop)
     ) {
-        CardHead(rewards.title) { CardLink(rewards.link, onShop) }
+        // the whole card is the button, so the link is part of it, not a second stop
+        CardHead(rewards.title) { CardLink(rewards.link) }
         CardChips(rewards.chips)
     }
 }

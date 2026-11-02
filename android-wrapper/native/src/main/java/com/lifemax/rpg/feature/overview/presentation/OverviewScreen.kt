@@ -148,6 +148,7 @@ fun OverviewScreen(
     arrival: OverviewArrivalRun? = null,
 ) {
     val images = remember { OverviewImages() }
+    val editFocus = rememberEditFocus(editing.open, visible)
     OverviewTheme(cards.tokens, cards.light) {
         val c = LocalOverviewColors.current
         Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -163,7 +164,9 @@ fun OverviewScreen(
                     ),
             ) {
                 item("head", "head") {
-                    Rise(arrival, 0) { OverviewHeadRow(cards.head, actions.edit, editing.open) }
+                    Rise(arrival, 0) {
+                        OverviewHeadRow(cards.head, actions.edit, editing.open, editFocus)
+                    }
                 }
                 cards.tip?.let { tip ->
                     item("tip", "tip") {
