@@ -5,6 +5,7 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.ViewCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -70,6 +71,8 @@ class NativeNutritionPlugin : Plugin() {
                 snapshot = JSONObject(data.toString())
                 // the screen stays composed while another tab is showing, so coming back is instant
                 val view = layer ?: createLayer()
+                // TalkBack announces the screen by name as it appears
+                ViewCompat.setAccessibilityPaneTitle(view, TabSwipe.label(PANE) ?: "Food")
                 TabSwipe.opened(
                     PANE,
                     SwipeEnter.of(call.getString("enter"), call.getDouble("velocity")),

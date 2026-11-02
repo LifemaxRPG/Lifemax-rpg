@@ -56,7 +56,8 @@ fun SwipeModel.scene(env: SwipeEnv): StageScene =
             else sliding(env, p.gesture, p.drag.dir, p.drag.offset(env, p.gesture), dragging = true)
         is SwipePhase.Sliding -> {
             val landed = p.slide.landed(env)
-            sliding(env, p.gesture, p.slide.dir, p.slide.offset(env), p.commit, landed)
+            val catcher = catching(env)?.pane
+            sliding(env, p.gesture, p.slide.dir, p.slide.offset(env), p.commit, landed, catcher)
         }
     }
 
@@ -107,13 +108,16 @@ private fun SwipeModel.sliding(
     offset: Float,
     commit: Commit? = null,
     landed: Boolean = false,
+    catcher: String? = null,
     dragging: Boolean = false,
 ): StageScene {
     val sourceTx = (-dir * offset * env.width).roundToInt()
     val slotTx = sourceTx + dir * env.width
     val stages = restScene(env).toMutableMap()
     fun place(pane: String, visibility: PaneVisibility, tx: Int, shielded: Boolean) {
-        if (pane in panes) stages[pane] = PaneStage(tx, visibility, shielded, pane !in open)
+        // the screen a finger may catch is the one that takes touches
+        if (pane in panes)
+            stages[pane] = PaneStage(tx, visibility, shielded && pane != catcher, pane !in open)
     }
     if (!(landed && commit?.sourceClosed == true)) {
         place(gesture.source, PaneVisibility.Shown, sourceTx, shielded = !dragging)

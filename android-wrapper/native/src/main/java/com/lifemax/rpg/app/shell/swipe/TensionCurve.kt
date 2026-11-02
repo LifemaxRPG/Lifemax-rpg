@@ -1,7 +1,9 @@
 package com.lifemax.rpg.app.shell.swipe
 
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.min
+import kotlin.math.sqrt
 
 /**
  * The shape of the drag (ADR 0011, the feel). u is the finger's travel toward the neighbour as a
@@ -39,6 +41,23 @@ object TensionCurve {
             u <= b -> 1f - (1f - tune.heavy) * (u - a) / (b - a)
             else -> tune.heavy
         }
+    }
+
+    /**
+     * The inverse of [hold] up to the catch: the u whose hold(u) is [o] (a finger that catches a
+     * screen already standing at o holds it where the curve says it stands, not where the finger
+     * is). Beyond hold(b) the result is b: the caller carries the rest as a residual.
+     */
+    fun invertHold(o: Float, tune: SwipeTune): Float {
+        val a = tune.knee
+        val b = tune.breakAt
+        if (o <= a) return o
+        if (o >= hold(b, tune)) return b
+        val k = (1f - tune.heavy) / (2f * (b - a))
+        if (k <= 0f) return o
+        // o = a + t − k·t² with t = u − a; the smaller root is the one on the rising branch
+        val t = (1f - sqrt((1f - 4f * k * (o - a)).coerceAtLeast(0f))) / (2f * k)
+        return a + t
     }
 
     fun through(u: Float): Float = min(u, 1f)
@@ -154,4 +173,45 @@ data class Tension(val latched: Boolean = false, val residual: Spring1D? = null)
         )
 
     data class Followed(val tension: Tension, val flip: Flip?)
+
+    /** A finger that has caught a screen: the travel u it starts at, and the tension to follow. */
+    data class Held(val u: Float, val tension: Tension)
+
+    companion object {
+        /** Just under the catch, where a held screen standing between hold(b) and b is started. */
+        private const val UNDER_CATCH = 0.002f
+
+        /**
+         * The tension of a finger that catches a screen standing at [offset] (chained swipes: the
+         * inverse curve). Up to the catch the finger starts at the u the curve maps to [offset]; at
+         * or past it, latched at u = offset (1:1, as after the pop). Where the curve cannot reach
+         * [offset] (between hold(b) and b, or on a wall's rubber band) the finger starts at the
+         * nearest u and a critically damped residual carries the difference away, so the screen
+         * does not jump when it is caught.
+         */
+        fun holding(
+            offset: Float,
+            now: Long,
+            durationScale: Float,
+            tune: SwipeTune,
+            wall: Boolean,
+        ): Held {
+            val o = offset.coerceIn(0f, 1f)
+            if (!wall && o >= tune.breakAt) return Held(o, Tension(latched = true))
+            val reach = if (wall) 0f else TensionCurve.hold(tune.breakAt, tune)
+            val u =
+                when {
+                    wall || o <= 0f -> 0f
+                    o <= reach -> TensionCurve.invertHold(o, tune)
+                    else -> tune.breakAt - UNDER_CATCH
+                }
+            val tension = Tension()
+            val gap = o - tension.shape(u, tune, wall)
+            if (abs(gap) < RESIDUAL_EPSILON) return Held(u, tension)
+            val spring = Spring1D(gap, 0f, 0f, tune.popStiffness, 1f, now, durationScale)
+            return Held(u, tension.copy(residual = spring))
+        }
+
+        private const val RESIDUAL_EPSILON = 1e-4f
+    }
 }

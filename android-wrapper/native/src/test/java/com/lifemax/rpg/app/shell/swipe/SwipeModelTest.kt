@@ -87,7 +87,14 @@ class SwipeModelTest {
         s.wait(30)
         val before = s.scene()
         s.send(Settle(request.token, SettleOutcome.Refused))
-        assertEquals(before, s.scene())
+        // nothing jumps; the cancel that follows can be caught, so its source takes touches now
+        val after = s.scene()
+        assertEquals(
+            before.panes.mapValues { it.value.copy(shielded = false) },
+            after.panes.mapValues { it.value.copy(shielded = false) },
+        )
+        assertEquals(before.veil, after.veil)
+        assertFalse(after.panes.getValue("character").shielded)
         assertEquals(listOf(HapticMoment.Latch, HapticMoment.Refused), s.haptics)
         assertNull((s.model.phase as SwipePhase.Settling).commit)
         s.wait(500)

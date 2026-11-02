@@ -148,7 +148,27 @@ internal object TabSwipe {
 
     fun shields(pane: String): Boolean = screens[pane]?.shielded == true
 
+    /** Whether a finger landing on [pane] now takes hold of it, a screen still sliding (A34). */
+    fun catching(pane: String): Boolean = model.catching(env(System.nanoTime()))?.pane == pane
+
+    /**
+     * Where a touch that lands on [pane], a screen that is sliding, should go instead: the screen a
+     * finger may catch, when that is another one (a commit's destination slides in beside the
+     * source, which may be what the finger lands on). Null when [pane] keeps the touch itself.
+     */
+    fun catchHolder(pane: String): TabScreenView? {
+        val holder = model.catching(env(System.nanoTime()))?.pane
+        return if (holder == null || holder == pane) null else screens[holder]?.view
+    }
+
+    /** The label the page gives [pane]'s tab (its bar button), for the screen's pane title. */
+    fun label(pane: String): String? =
+        model.state?.tabs?.firstOrNull { it.view == pane }?.label?.takeIf { it.isNotBlank() }
+
     fun isOpen(pane: String): Boolean = pane in model.open
+
+    /** No swipe or hand-over is in flight: the moment to compose a screen ahead ([prime]). */
+    fun idle(): Boolean = model.phase == SwipePhase.Idle
 
     /** A screen's gesture input at [now] (event time, ns): drawn in this frame's animation pass. */
     fun gesture(input: SwipeInput, now: Long) = step(input, now, drawNow = false)

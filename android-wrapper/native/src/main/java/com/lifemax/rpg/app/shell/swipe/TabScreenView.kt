@@ -79,17 +79,29 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
     private var velocity: VelocityTracker? = null
     private var swallowing = false
 
+    /** The screen taking this gesture in this one's place (a chained swipe's catch), if any. */
+    private var passTo: TabScreenView? = null
+
     /** The content root's place on the screen at the DOWN: raw coordinates are taken from it. */
     private var originX = 0f
     private var originY = 0f
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val action = event.actionMasked
-        if (action == MotionEvent.ACTION_DOWN) swallowing = TabSwipe.shields(pane)
+        val ending = action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL
+        if (action == MotionEvent.ACTION_DOWN) {
+            // a screen sliding beside the one a finger may catch passes the touch to it (A34)
+            passTo = TabSwipe.catchHolder(pane)
+            swallowing = passTo == null && TabSwipe.shields(pane)
+        }
+        passTo?.let { holder ->
+            if (ending) passTo = null
+            holder.dispatchTouchEvent(event)
+            return true
+        }
         if (swallowing) {
             TabSwipe.stray(event)
-            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
-                swallowing = false
+            if (ending) swallowing = false
             return true
         }
         follow(event)
@@ -120,15 +132,19 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
                 originX = at[0].toFloat()
                 originY = at[1].toFloat()
                 release()
+                // a screen still sliding is caught where it stands; any other starts a lock
                 val step =
-                    arbiter.down(
-                        x(event),
-                        y(event),
-                        facts(event, root),
-                        TabSwipe.gate(pane),
-                        TabSwipe.tune,
-                    )
-                if (step.input is SwipeInput.Arm)
+                    if (TabSwipe.catching(pane))
+                        arbiter.catchDown(x(event), facts(event, root), TabSwipe.tune)
+                    else
+                        arbiter.down(
+                            x(event),
+                            y(event),
+                            facts(event, root),
+                            TabSwipe.gate(pane),
+                            TabSwipe.tune,
+                        )
+                if (step.input is SwipeInput.Arm || step.input is SwipeInput.Catch)
                     velocity = VelocityTracker.obtain().also { it.addRaw(event) }
                 take(step, now)
             }

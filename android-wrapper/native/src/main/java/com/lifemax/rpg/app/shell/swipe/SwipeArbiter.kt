@@ -108,7 +108,10 @@ data class SwipeArbiter(
         /** The candidate event has passed; the next MOVE claims. [sign] is dx's. */
         data class Candidate(val down: Point, val lock: Lock, val sign: Float) : Phase
 
-        /** Dragging. [dir] is +1 toward the next tab (the finger moves left). */
+        /**
+         * Dragging. [dir] is +1 toward the next tab (the finger moves left), or 0 for a catch,
+         * where the model picks the side.
+         */
         data class Claimed(val anchorX: Float, val dir: Int) : Phase
 
         /** Cancelled after the claim; consuming until every pointer is up. */
@@ -146,6 +149,25 @@ data class SwipeArbiter(
         if (gate != null) return to(Phase.Passive(gate))
         val lock = Lock(facts.touchSlopPx * tune.slopFactor, tune.lockRatio)
         return to(Phase.Pending(Point(x, y), lock), SwipeInput.Arm(pane))
+    }
+
+    /**
+     * ACTION_DOWN on the screen [SwipeModel.catching] names, still moving with no finger on it
+     * (chained swipes): the platform gates must hold, and the claim is at once, since the finger
+     * has taken hold of the screen itself, not started a drag in a list. There is no lock and no
+     * slop: the model starts the drag where the screen stands ([SwipeInput.Catch]).
+     */
+    fun catchDown(x: Float, facts: TouchFacts, tune: SwipeTune): ArbiterStep {
+        when (phase) {
+            is Phase.Claimed -> return to(Phase.Passive(), SwipeInput.DragCancel)
+            is Phase.Pending,
+            is Phase.Candidate -> return to(Phase.Passive(), SwipeInput.Disarm)
+            else -> Unit
+        }
+        platformGate(x, facts, tune)?.let {
+            return to(Phase.Passive(it))
+        }
+        return to(Phase.Claimed(x, 0), SwipeInput.Catch(pane, x), intercept = true)
     }
 
     /** ACTION_MOVE, with the primary pointer at raw ([x], [y]). */
