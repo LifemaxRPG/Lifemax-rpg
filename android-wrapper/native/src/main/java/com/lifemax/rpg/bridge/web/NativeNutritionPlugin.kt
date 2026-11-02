@@ -45,8 +45,14 @@ class NativeNutritionPlugin : Plugin() {
 
     @PluginMethod
     fun capabilities(call: PluginCall) {
+        // sheetSeed: the first frame may already carry the add-food sheet (Recipes' "Log this
+        // recipe")
         call.resolve(
-            JSObject().put("version", 1).put("authoritativeData", true).put("swipe", SWIPE_VERSION)
+            JSObject()
+                .put("version", 1)
+                .put("authoritativeData", true)
+                .put("swipe", SWIPE_VERSION)
+                .put("sheetSeed", true)
         )
     }
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.feature.food.data.decodeAnswer
 import com.lifemax.rpg.feature.food.data.decodeNotice
 import com.lifemax.rpg.feature.food.data.decodeSheet
+import com.lifemax.rpg.feature.food.data.decodeSwap
 import com.lifemax.rpg.feature.food.domain.FoodSheet
 import com.lifemax.rpg.feature.food.domain.SheetView
 import com.lifemax.rpg.feature.food.presentation.FoodContext
@@ -56,36 +58,77 @@ internal fun FoodContext.hasSheet(): Boolean = data.has("sheet")
 internal fun FoodSheetHost(c: FoodContext) {
     val decoded = remember(c.data) { runCatching { decodeSheet(c.data) } }
     val sheet = decoded.getOrNull()
+    val swapDecoded = remember(c.data) { runCatching { decodeSwap(c.data) } }
+    val swap = if (sheet == null) swapDecoded.getOrNull() else null
     val notice = remember(c.data) { runCatching { decodeNotice(c.data) }.getOrNull() }
     val answer = remember(c.data) { runCatching { decodeAnswer(c.data) }.getOrNull() }
     val actions = remember { FoodSheetController(c.dispatch) }
     actions.dispatch = c.dispatch
     LaunchedEffect(answer) { actions.answered(answer) }
-    LaunchedEffect(sheet == null) { if (sheet == null) actions.sheetClosed() }
+    LaunchedEffect(sheet == null && swap == null) {
+        if (sheet == null && swap == null) actions.sheetClosed()
+    }
     LaunchedEffect(decoded) {
         decoded.exceptionOrNull()?.let {
             Log.w("NativeNutrition", "Add-food sheet not drawn: ${it.message}")
             actions.send("sheetClose")
         }
     }
+    LaunchedEffect(swapDecoded) {
+        swapDecoded.exceptionOrNull()?.let {
+            Log.w("NativeNutrition", "Swap sheet not drawn: ${it.message}")
+            actions.send("swapClose")
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         if (sheet != null) SheetPanel(c, sheet, actions)
+        if (swap != null) SwapPanel(c, swap, actions)
         if (notice != null) {
-            val place = if (sheet != null) Alignment.TopCenter else Alignment.BottomCenter
-            FoodNoticeSnack(c, notice, actions, sheet != null, Modifier.align(place))
+            val over = sheet != null || swap != null
+            val place = if (over) Alignment.TopCenter else Alignment.BottomCenter
+            FoodNoticeSnack(c, notice, actions, over, Modifier.align(place))
         }
     }
 }
 
 @Composable
 private fun SheetPanel(c: FoodContext, sheet: FoodSheet, actions: FoodSheetController) {
-    // the dimmed Food around the sheet: a tap there steps back, as the page's own overlay does;
-    // TalkBack skips it (the head's button does the same)
+    SheetFrame(c, sheet.title, onScrim = { actions.send("sheetBack") }) {
+        SheetHeader(c, sheet, actions)
+        // each view scrolls its own body over its own foot (SheetScaffold)
+        val room = Modifier.weight(1f, fill = false)
+        // a view's own boxes start afresh each time it opens, as the page draws it anew
+        key(sheet.view, sheet.portion?.edit?.id) {
+            when (sheet.view) {
+                SheetView.Search -> SheetSearchView(c, sheet, focusOnOpen = true, actions, room)
+                SheetView.Portion,
+                SheetView.Edit ->
+                    sheet.portion?.let { SheetPortionView(c, sheet, it, actions, room) }
+                SheetView.Quick -> sheet.quick?.let { SheetQuickView(c, sheet, it, actions, room) }
+                SheetView.Create -> sheet.create?.let { SheetCreateView(c, it, actions, room) }
+                SheetView.Goal -> sheet.goal?.let { SheetGoalView(c, it, actions, room) }
+            }
+        }
+    }
+}
+
+/**
+ * The bottom sheet every Food sheet sits in, over the dimmed screen: a tap on the dimmed part is
+ * [onScrim] (a step back, as the page's own overlay does), and TalkBack skips it. The sheet keeps
+ * clear of the shared bottom bar, and drops that room while the keyboard is up (NAV-5).
+ */
+@Composable
+internal fun SheetFrame(
+    c: FoodContext,
+    title: String,
+    onScrim: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Box(
         Modifier.fillMaxSize()
             .background(Color.Black.copy(alpha = 0.55f))
             .clearAndSetSemantics {}
-            .pointerInput(Unit) { detectTapGestures { actions.send("sheetBack") } }
+            .pointerInput(Unit) { detectTapGestures { onScrim() } }
     )
     // the shared bottom bar lies over this screen's bottom edge; while the keyboard is up the bar
     // hides and the content is already lifted above the keyboard (NAV-5)
@@ -101,28 +144,12 @@ private fun SheetPanel(c: FoodContext, sheet: FoodSheet, actions: FoodSheetContr
                 .background(c.cardTop)
                 // a tap on the sheet itself stays on it, and is no button for TalkBack
                 .pointerInput(Unit) { detectTapGestures {} }
-                .semantics { paneTitle = sheet.title }
+                .semantics { paneTitle = title }
                 .padding(horizontal = 16.dp)
                 .padding(top = 12.dp, bottom = bottom),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            SheetHeader(c, sheet, actions)
-            // each view scrolls its own body over its own foot (SheetScaffold)
-            val room = Modifier.weight(1f, fill = false)
-            // a view's own boxes start afresh each time it opens, as the page draws it anew
-            key(sheet.view, sheet.portion?.edit?.id) {
-                when (sheet.view) {
-                    SheetView.Search -> SheetSearchView(c, sheet, focusOnOpen = true, actions, room)
-                    SheetView.Portion,
-                    SheetView.Edit ->
-                        sheet.portion?.let { SheetPortionView(c, sheet, it, actions, room) }
-                    SheetView.Quick ->
-                        sheet.quick?.let { SheetQuickView(c, sheet, it, actions, room) }
-                    SheetView.Create -> sheet.create?.let { SheetCreateView(c, it, actions, room) }
-                    SheetView.Goal -> sheet.goal?.let { SheetGoalView(c, it, actions, room) }
-                }
-            }
-        }
+            content = content,
+        )
     }
 }
 
@@ -143,7 +170,7 @@ private fun SheetHeader(c: FoodContext, sheet: FoodSheet, actions: FoodSheetCont
 }
 
 @Composable
-private fun HeaderButton(c: FoodContext, glyph: String, label: String, onClick: () -> Unit) {
+internal fun HeaderButton(c: FoodContext, glyph: String, label: String, onClick: () -> Unit) {
     Box(
         Modifier.size(48.dp)
             .semantics {

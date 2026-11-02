@@ -603,7 +603,9 @@ const glance = (b) => require('./gen_director_glance_fixtures.js')({ b, out, wri
 const journal = (b) => require('./gen_journal_fixtures.js')({ b, out, write });
 /* the Workout plan's guided workout, fields, Leave plan and offers (plan.runner.v1 and the rest): tools/gen_plan_runner_fixtures.js */
 const planrunner = (b) => require('./gen_plan_runner_fixtures.js')({ b, out, write });
-const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal, planrunner };
+/* Food's Smart Diet swap sheet and Recipes' "Log this recipe": tools/gen_food_swap_fixtures.js */
+const foodswap = (b) => require('./gen_food_swap_fixtures.js')({ b, out, write });
+const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal, planrunner, foodswap };
 (async () => {
   const only = process.argv.slice(2);
   for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.ProgressBar
+import com.lifemax.rpg.feature.food.presentation.sheet.openSwap
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -341,7 +342,7 @@ internal fun ColumnScope.FoodPlanPane(c: FoodContext) {
                         Box(
                             modifier =
                                 Modifier.weight(1f)
-                                    .clickable { dispatch("sdSwap", mapOf("index" to mealIndex)) }
+                                    .clickable { openSwap(mealIndex) }
                                     .padding(vertical = 6.dp),
                             contentAlignment = Alignment.Center,
                         ) {

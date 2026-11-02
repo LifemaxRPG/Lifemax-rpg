@@ -212,7 +212,7 @@
     "shell.prime.v1"
    ],
    "commands": {
-    "log": "{id}: the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens Food's add-food sheet in its portion view; the hand-over then closes the screen (native Food steps aside for the sheet), so the classic Recipes page never shows in between. Nothing is written. Answers ok:false for an id the page does not know, and the screen stays"
+    "log": "{id}: where native Food is on and says it can open on a sheet (NativeNutrition capabilities().sheetSeed), the page sets Food's add-food sheet up on the recipe's portion view (NativeNutritionBeta.seedPortion) and answers {ok:true, navigate:'meals'}: Food opens with the sheet in its first frame and logs through sheetLog (answered, Undo); classic Meals never shows. Otherwise (Food off, an older app) the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens the page's add-food sheet in its portion view; the hand-over then closes the screen. Nothing is written by the command itself. Answers ok:false for an id the page does not know, and the screen stays"
    },
    "actions": {
     "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
@@ -220,7 +220,7 @@
    },
    "writes": [],
    "delegatedInteractions": [
-    "addRecipeToMeal / fv2Open (the add-food sheet, portion view)"
+    "addRecipeToMeal / fv2Open (the add-food sheet, portion view; only where native Food cannot draw the sheet)"
    ],
    "readContract": {
     "snapshotDto": "feature/recipes/domain/RecipesProjection.kt",
@@ -229,7 +229,7 @@
     "ordering": "webSessionId and increasing sequence; filter.revision rises only when the page hands over a prefill",
     "invalidation": "renderRecipes (going to Recipes, a class change, the page's fields emptied; not every save: renderAll does not call it, so an import that changes the class shows at the next 15-second refresh), host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "no native writes; the only write path is the delegated add-food sheet (Food slice)",
+   "mutationsGate": "no native writes; the only write path is the add-food sheet (Food slice), native where Food draws it",
    "rollout": "opt-in under Settings, Appearance: Native Recipes (beta)",
    "canonicalLayout": true
   },
@@ -370,12 +370,14 @@
     "fv2SetGoals",
     "fv2EditEntry",
     "fv2RemoveEntry",
-    "fv2LogAgain"
+    "fv2LogAgain",
+    "sdSwapApply"
    ],
    "sheet": "the add-food sheet (docs/architecture/plans/FOOD_ADD_SHEET.md): the projection's sheet field (null when closed; view search | portion | quick | create | goal | edit, with the page's title, back, tabs, words, rows, portion (edit: {id, remove, again} for an entry), quick, create, goal), sheetForms: true, notice {id, text, action} and answer {op, ok, changed, message}. Moves: sheetOpen {slot, forms}, sheetEntry {id}, sheetGoal, sheetQuery {q}, sheetTab {tab}, sheetPick {index, id}, sheetStep {dir}, sheetGrams {grams}, sheetServing {grams} (an offered one only), sheetMult {x}, sheetSlot {slot}, sheetQuick, sheetCreate, sheetGoalField {key, value}, sheetGoalPreset {preset}, sheetBack, sheetClose. Writes, each with op: sheetLog, sheetRowAdd {index, id}, sheetQuickSave {kcal, name}, sheetFav, sheetCreateSave {name, brand, serving, kcal, p, c, f}, sheetGoalSave {cal, p, c, f, water}, sheetEditSave / sheetEditDelete / sheetEditAgain {id}, noticeAction {id} (the page's Undo); answered in the next update, ok only once saved, a repeat of an operation that landed answered ok, changed:false, 'Already recorded.'; the screen keeps an operation id per (command, target) until its answer",
+   "swap": "the Smart Diet swap sheet: the projection's swap field (null when closed, absent on an older page, which makes Swap hand over: sdSwap): {index, title, lead, name, tail, rows [{id, name, detail, kcal, unit}], none, reset, close}, all read from the page's sdSwapView (50-smartdiet-swap.js), the helper the page's own sheet draws from. Moves: swapOpen {index}, swapClose. Writes, each with op, answered like the add-food sheet's (ok only once saved, 'Already recorded.' on a repeat, a meal not on offer refused, the message and Undo in the notice): swapPick {index, id}, swapReset {index} (Back to the plan), made by sdSwapApply. Capabilities: sheetSeed (the first frame may carry the add-food sheet; Recipes' Log this recipe)",
    "delegatedInteractions": [
-    "fv2Open",
-    "sdOpenSwap"
+    "fv2Open (an older page or screen)",
+    "sdOpenSwap (an older page or screen)"
    ],
    "mutationsGate": "delegates to existing web handlers; the add-food sheet's writes carry operation ids and are answered (ok only once saved); the rest have no receipts yet (A14-A15 gap)",
    "rollout": "opt-in under Settings, Appearance",

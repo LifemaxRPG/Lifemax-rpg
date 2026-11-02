@@ -3285,7 +3285,7 @@
   },
   {
    "file": "src/runtime/segments/50-smartdiet.js",
-   "bytes": 34499,
+   "bytes": 33768,
    "statement_count": 49,
    "tags": [
     "nutrition",
@@ -3342,6 +3342,19 @@
     "sdDirectorMeal",
     "sdOpenDirectorMeal",
     "window.LifeMaxMeals"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-smartdiet-swap.js",
+   "bytes": 2843,
+   "statement_count": 2,
+   "tags": [
+    "smartdiet",
+    "swap"
+   ],
+   "symbols": [
+    "sdSwapView",
+    "sdSwapApply"
    ]
   },
   {
@@ -3470,7 +3483,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 39479,
+   "bytes": 43488,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3589,7 +3602,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-recipes.js",
-   "bytes": 2895,
+   "bytes": 3549,
    "statement_count": 1,
    "tags": [
     "android",

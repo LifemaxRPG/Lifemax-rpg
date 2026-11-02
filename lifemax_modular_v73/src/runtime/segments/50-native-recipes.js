@@ -1,7 +1,7 @@
 /* Recipes projection v1. The page stays the owner of the catalogue, the class rule and the wording: the native screen draws the
    recipes the page shows for the player's class, worded as the page words them, keeps its own search, category, open recipes
-   and selected ingredient, opens an ingredient's product link itself, goes to Meals by naming the view, and hands "Log this
-   recipe" to the page's add-food sheet (the command log). The tab lifecycle is NativeTabKit's.
+   and selected ingredient, opens an ingredient's product link itself, goes to Meals by naming the view, and logs "Log this
+   recipe" through Food's add-food sheet (the command log: native Food's sheet where the app has it, else the page's). The tab lifecycle is NativeTabKit's.
    Inventory: docs/architecture/RECIPES_INVENTORY.md. */
 (function () {
   const search = () => document.getElementById("recipeSearch");
@@ -41,10 +41,15 @@
     renderRecipes();
   }
 
-  /** "Log this recipe": the page opens its add-food sheet over Meals while the screen still covers it, and the hand-over then
-      closes the screen, so the classic Recipes page never shows in between. For a recipe the page does not know, nothing
-      happens and the screen stays. */
-  function log({ id }) {
+  /** "Log this recipe". Where native Food can draw the add-food sheet on its first frame (it says so: capabilities().sheetSeed), the
+      page sets that sheet up on the recipe's portion view and the reply sends the screen on to Meals, where native Food opens with
+      the sheet already up and logs as it logs any food (sheetLog: answered, Undo): classic Meals never shows. Otherwise (Food's
+      screen off, an older app, a page without the seam) the page opens its add-food sheet over Meals while this screen still
+      covers it, and the hand-over then closes the screen, as before. A recipe the page does not know does nothing and the screen
+      stays. */
+  async function log({ id }) {
+    const food = RECIPE_FOODS.find((f) => f.id === String(id));
+    if (food && window.NativeNutritionBeta?.seedPortion && (await NativeNutritionBeta.seedPortion(food))) return { ok: true, navigate: "meals" };
     addRecipeToMeal(String(id));
     return { ok: lmaView() === "meals" };
   }
