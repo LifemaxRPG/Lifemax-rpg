@@ -6,6 +6,8 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.webkit.WebView
+import com.lifemax.rpg.app.shell.audio.AudioDockHost
+import com.lifemax.rpg.app.shell.audio.insetsWithDock
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import org.json.JSONObject
 
@@ -19,6 +21,9 @@ internal object OverviewBars {
     fun hide() {
         shell?.root?.visibility = View.INVISIBLE
     }
+
+    /** The Overview's bars came or went: the audio dock follows them. */
+    fun changed(activity: Activity) = AudioDockHost.barsChanged(activity)
 }
 
 /**
@@ -62,6 +67,7 @@ internal object ChromeHost {
         shell = null
         listener = null
         owner = null
+        AudioDockHost.refresh() // no native bars: no dock either
     }
 
     /**
@@ -106,12 +112,30 @@ internal object ChromeHost {
         }
         if (paneChanged) current.followScroll(scrolled[pane] ?: 0f)
         OverviewBars.hide()
-        // a screen added after the bars must not cover them
-        val parent = current.root.parent as? android.view.ViewGroup
-        if (parent != null && parent.indexOfChild(current.root) != parent.childCount - 1)
-            current.root.bringToFront()
+        // the audio dock follows the bars (it sits above them), and a screen added after the bars
+        // or the dock must cover neither
+        AudioDockHost.barsChanged(activity)
+        AudioDockHost.arrange(current.root)
         return current
     }
+
+    /**
+     * The shared bars' bottom bar in px, or the Overview's own while it shows; -1 with no native
+     * bars up. The audio dock sits on top of it.
+     */
+    fun bottomBarPx(): Int =
+        shell?.navPx
+            ?: OverviewBars.shell?.takeIf { it.root.visibility == View.VISIBLE }?.navPx
+            ?: -1
+
+    /**
+     * What a native screen under the shared bars clears at its top and bottom (dp): the bars' own
+     * and, at the bottom, the audio dock while it shows. Null while no shared bars are up.
+     */
+    fun insetsDp(): Pair<Float, Float>? =
+        shell?.contentInsetsDp()?.let { (top, bottom) ->
+            insetsWithDock(top, bottom, AudioDockHost.heightDp)
+        }
 
     /**
      * A native screen went away. When it is moving to another native tab, that tab opened first and

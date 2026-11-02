@@ -10,6 +10,7 @@ import com.lifemax.rpg.app.shell.LiveOverviewShell
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.OverviewBars
 import com.lifemax.rpg.app.shell.TabTiming
+import com.lifemax.rpg.app.shell.audio.AudioDockHost
 import org.json.JSONObject
 
 @CapacitorPlugin(name = "NativeOverview")
@@ -55,6 +56,8 @@ class NativeOverviewPlugin : Plugin() {
                     }
                 shell?.show(scene!!) // assigned first, so a show that throws is closed below
                 OverviewBars.shell = shell
+                OverviewBars.changed(activity)
+                shell?.let { AudioDockHost.arrange(it.root) }
                 shell?.let { TabTiming.attached(it.root, "overview") }
                 call.resolve()
             } catch (e: Exception) {
@@ -114,5 +117,6 @@ class NativeOverviewPlugin : Plugin() {
         shell?.close()
         shell = null
         OverviewBars.shell = null
+        OverviewBars.changed(activity)
     }
 }

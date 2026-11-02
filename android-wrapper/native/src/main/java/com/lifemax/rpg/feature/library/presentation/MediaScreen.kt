@@ -27,6 +27,7 @@ import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.cardPiece
 import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.feature.library.domain.MediaAction
+import com.lifemax.rpg.feature.library.domain.MediaAudioPort
 import com.lifemax.rpg.feature.library.domain.MediaProjection
 import com.lifemax.rpg.feature.library.domain.PageNotice
 import com.lifemax.rpg.feature.library.presentation.components.FeatureTipCard
@@ -45,10 +46,11 @@ fun MediaRoute(
     visible: Boolean,
     topInsetDp: Float,
     bottomInsetDp: Float,
+    audio: MediaAudioPort? = null,
     onPage: (MediaAction) -> Unit,
 ) {
     val ui = vm.ui ?: return
-    val actions = remember(vm, onPage) { MediaActions(vm, onPage) }
+    val actions = remember(vm, onPage, audio) { MediaActions(vm, audio, onPage) }
     MediaScreen(ui, actions, visible, topInsetDp, bottomInsetDp, vm.notice)
 }
 
@@ -63,12 +65,21 @@ class MediaActions(
     /** A tap for the page goes only while the view model hands one over (one per opening). */
     constructor(
         vm: MediaViewModel,
+        audio: MediaAudioPort? = null,
         page: (MediaAction) -> Unit,
     ) : this(
         vm::search,
         vm::showStatus,
         vm::showType,
-        { if (vm.handOver()) page(it) },
+        { action ->
+            // with the dock, Play and Attach stay on this screen: commands, not hand-overs
+            when {
+                audio?.dock == true && action is MediaAction.Play -> audio.play(action.id)
+                audio?.canPick == true && action is MediaAction.Attach -> audio.pick(action.id)
+                audio?.canPick == true && action is MediaAction.Replace -> audio.pick(action.id)
+                vm.handOver() -> page(action)
+            }
+        },
         vm::noticeShown,
     )
 }

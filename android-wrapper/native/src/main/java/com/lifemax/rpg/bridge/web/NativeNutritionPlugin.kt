@@ -13,6 +13,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
 import com.lifemax.rpg.app.shell.TabTiming
+import com.lifemax.rpg.app.shell.audio.AudioDockHost
 import com.lifemax.rpg.app.shell.swipe.SettleOutcome
 import com.lifemax.rpg.app.shell.swipe.SwipeEnter
 import com.lifemax.rpg.app.shell.swipe.TabScreenView
@@ -164,10 +165,12 @@ class NativeNutritionPlugin : Plugin() {
 
     override fun load() {
         NativeScreens.add(this) { dismiss(false) }
+        AudioDockHost.listenInsets(dockInsets)
     }
 
     override fun handleOnDestroy() {
         NativeScreens.remove(this)
+        AudioDockHost.forgetInsets(dockInsets)
         dismiss(false)
         super.handleOnDestroy()
     }
@@ -178,10 +181,16 @@ class NativeNutritionPlugin : Plugin() {
             ChromeHost.show(this, activity, bridge.webView, scene, opening, PANE) { id ->
                 notifyListeners("nav-action", JSObject().put("id", id))
             }
-        val (top, bottom) = chrome.contentInsetsDp()
-        topInsetDp = top
-        bottomInsetDp = bottom
+        applyInsets(ChromeHost.insetsDp() ?: chrome.contentInsetsDp())
     }
+
+    private fun applyInsets(insets: Pair<Float, Float>) {
+        topInsetDp = insets.first
+        bottomInsetDp = insets.second
+    }
+
+    /** The audio dock came, went or changed height: the content clears it with no new snapshot. */
+    private val dockInsets: () -> Unit = { ChromeHost.insetsDp()?.let(::applyInsets) }
 
     /** Leaving the tab only hides the screen. Updates are ignored until it is opened again. */
     private fun hide() {

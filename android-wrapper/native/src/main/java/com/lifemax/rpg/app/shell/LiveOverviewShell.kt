@@ -174,6 +174,10 @@ internal class LiveOverviewShell(
         header.translationY = -px.coerceIn(0f, header.layoutParams.height.toFloat())
     }
 
+    /** The bottom bar's height in px (the audio dock sits on top of it). */
+    val navPx: Int
+        get() = nav.layoutParams.height
+
     fun contentInsetsDp(): Pair<Float, Float> {
         val density = web.resources.displayMetrics.density
         return Pair(header.layoutParams.height / density, nav.layoutParams.height / density)

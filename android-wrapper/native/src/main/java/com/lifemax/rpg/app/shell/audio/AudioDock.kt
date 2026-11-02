@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -32,11 +33,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.LocalPageColors
@@ -85,37 +88,57 @@ private const val TICK_MS = 1000L
 fun AudioDock(state: AudioDockState, nowMs: Long, actions: AudioDockActions) {
     if (!state.visible) return
     val colors = remember(state.tokens, state.light) { PageColors(state.tokens, state.light) }
-    PageTheme(colors) {
-        val c = LocalPageColors.current
-        val shape = RoundedCornerShape(14.dp)
-        Box(Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.TopCenter) {
-            Column(
-                Modifier.widthIn(max = if (state.minimized) 420.dp else 560.dp)
-                    .fillMaxWidth()
-                    .height(
-                        (if (state.minimized) AudioDockMetrics.MINIMIZED_DP
-                            else AudioDockMetrics.EXPANDED_DP)
-                            .dp
-                    )
-                    .clip(shape)
-                    .background(c.panel)
-                    .border(1.dp, c.line, shape)
-                    .semantics { contentDescription = "Audiobook player" }
-                    .padding(horizontal = 14.dp, vertical = if (state.minimized) 8.dp else 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+    // the dock is a fixed height (the screens clear it before it is drawn), so its text stops
+    // growing where it would not fit
+    val density = LocalDensity.current
+    val capped = Density(density.density, minOf(density.fontScale, MAX_FONT_SCALE))
+    CompositionLocalProvider(LocalDensity provides capped) {
+        PageTheme(colors) {
+            val c = LocalPageColors.current
+            val shape = RoundedCornerShape(14.dp)
+            Box(
+                Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                if (state.minimized) Minimized(state, actions) else Expanded(state, nowMs, actions)
+                Column(
+                    Modifier.widthIn(max = if (state.minimized) 420.dp else 560.dp)
+                        .fillMaxWidth()
+                        .height(
+                            (if (state.minimized) AudioDockMetrics.MINIMIZED_DP
+                                else AudioDockMetrics.EXPANDED_DP)
+                                .dp
+                        )
+                        .clip(shape)
+                        .background(c.panel)
+                        .border(1.dp, c.line, shape)
+                        .semantics { contentDescription = "Audiobook player" }
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = if (state.minimized) 8.dp else 12.dp,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (state.minimized) Minimized(state, actions)
+                    else Expanded(state, nowMs, actions)
+                }
             }
         }
     }
 }
 
+private const val MAX_FONT_SCALE = 1.3f
+
 @Composable
 private fun Expanded(state: AudioDockState, nowMs: Long, actions: AudioDockActions) {
-    Row(Modifier.height(40.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.height(44.dp), verticalAlignment = Alignment.CenterVertically) {
         TitleBlock(state, Modifier.weight(1f))
         DockButton("—", "Minimize player", Modifier.size(40.dp), onClick = actions.minimize)
-        DockButton("✕", "Close player", Modifier.padding(start = 6.dp).size(40.dp), onClick = actions.close)
+        DockButton(
+            "✕",
+            "Close player",
+            Modifier.padding(start = 6.dp).size(40.dp),
+            onClick = actions.close,
+        )
     }
     SeekRow(state, nowMs, actions.seek)
     Row(Modifier.height(40.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -153,7 +176,12 @@ private fun Minimized(state: AudioDockState, actions: AudioDockActions) {
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Text(if (state.playing) "❚❚" else "▶", color = c.onAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(
+                if (state.playing) "❚❚" else "▶",
+                color = c.onAccent,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
         Text(
             state.title,
@@ -181,11 +209,19 @@ private fun TitleBlock(state: AudioDockState, modifier: Modifier) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Text(state.sub, color = c.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            state.sub,
+            color = c.muted,
+            fontSize = 11.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
-/** Both times and the bar between them. A drag shows where the finger is and seeks when it lifts. */
+/**
+ * Both times and the bar between them. A drag shows where the finger is and seeks when it lifts.
+ */
 @Composable
 private fun SeekRow(state: AudioDockState, nowMs: Long, seek: (Float) -> Unit) {
     val c = LocalPageColors.current
@@ -195,11 +231,20 @@ private fun SeekRow(state: AudioDockState, nowMs: Long, seek: (Float) -> Unit) {
     val shown = if (drag != null) state.duration * fraction else state.positionAt(nowMs)
     Row(Modifier.height(24.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(audioClock(shown), color = c.muted, fontSize = 11.sp)
-        SeekBar(fraction, state.duration > 0, Modifier.weight(1f).padding(horizontal = 8.dp), { drag = it }) {
+        SeekBar(
+            fraction,
+            state.duration > 0,
+            Modifier.weight(1f).padding(horizontal = 8.dp),
+            { drag = it },
+        ) {
             drag = it
             seek(it)
         }
-        Text(if (state.duration > 0) audioClock(state.duration) else "—", color = c.muted, fontSize = 11.sp)
+        Text(
+            if (state.duration > 0) audioClock(state.duration) else "—",
+            color = c.muted,
+            fontSize = 11.sp,
+        )
     }
 }
 
@@ -219,9 +264,7 @@ private fun SeekBar(
             .fillMaxHeight()
             .onSizeChanged { width = it.width.coerceAtLeast(1) }
             .semantics { contentDescription = "Seek" }
-            .pointerInput(enabled) {
-                if (enabled) detectTapGestures { onSeek(at(it.x)) }
-            }
+            .pointerInput(enabled) { if (enabled) detectTapGestures { onSeek(at(it.x)) } }
             .pointerInput(enabled) {
                 if (enabled) {
                     var x = 0f

@@ -305,8 +305,8 @@
   },
   {
    "file": "src/runtime/segments/07-runtime.js",
-   "bytes": 32135,
-   "statement_count": 78,
+   "bytes": 32169,
+   "statement_count": 79,
    "tags": [
     "training",
     "pet",
@@ -389,6 +389,7 @@
     "deleteMediaItem",
     "AUDIO_DB",
     "AUDIO_STORE",
+    "AUDIO_MAX_BYTES",
     "audioCtx",
     "audioDbOpen",
     "audioDbPut",
@@ -405,8 +406,8 @@
   },
   {
    "file": "src/runtime/segments/08-runtime.js",
-   "bytes": 27238,
-   "statement_count": 59,
+   "bytes": 27532,
+   "statement_count": 60,
    "tags": [
     "nutrition",
     "pet",
@@ -418,6 +419,7 @@
    "symbols": [
     "revokeAudioUrl",
     "closeAudioPlayer",
+    "audioAnnounce",
     "audioBusy",
     "toggleMinimizeAudioPlayer",
     "expandAudioPlayer",
@@ -3517,7 +3519,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 9865,
+   "bytes": 10742,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3529,7 +3531,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-journal.js",
-   "bytes": 15879,
+   "bytes": 15917,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3537,6 +3539,19 @@
    ],
    "symbols": [
     "window.NativeJournalProjection"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-audio.js",
+   "bytes": 9236,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "audio"
+   ],
+   "symbols": [
+    "window.setNativeAudioEnabled",
+    "window.NativeAudioDock"
    ]
   },
   {
@@ -3555,7 +3570,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 29810,
+   "bytes": 29860,
    "statement_count": 1,
    "tags": [
     "native",

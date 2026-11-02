@@ -20,6 +20,9 @@
  "AUDIO_DB": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "AUDIO_MAX_BYTES": [
+  "src/runtime/segments/07-runtime.js"
+ ],
  "AUDIO_STORE": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -1084,6 +1087,9 @@
  ],
  "attrXP": [
   "src/runtime/segments/04-runtime.js"
+ ],
+ "audioAnnounce": [
+  "src/runtime/segments/08-runtime.js"
  ],
  "audioBusy": [
   "src/runtime/segments/08-runtime.js"
@@ -7438,6 +7444,9 @@
  "window.LifeMaxVoiceG5": [
   "src/runtime/segments/50-voice-gen5.js"
  ],
+ "window.NativeAudioDock": [
+  "src/runtime/segments/50-native-audio.js"
+ ],
  "window.NativeDirectorProjection": [
   "src/runtime/segments/50-native-director.js"
  ],
@@ -7554,6 +7563,9 @@
  ],
  "window.setDeviceBackupAllowed": [
   "src/runtime/segments/50-device-backup.js"
+ ],
+ "window.setNativeAudioEnabled": [
+  "src/runtime/segments/50-native-audio.js"
  ],
  "window.setNativeNutritionEnabled": [
   "src/runtime/segments/50-native-nutrition.js"

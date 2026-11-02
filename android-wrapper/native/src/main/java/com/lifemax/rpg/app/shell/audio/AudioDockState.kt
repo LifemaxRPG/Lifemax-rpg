@@ -28,7 +28,10 @@ data class AudioDockState(
     /** the clock reading ([positionAt]'s) when [position] was true */
     val atMs: Long = 0,
 ) {
-    /** Where the book is at [nowMs]: the page's position plus the time played since, never past the end. */
+    /**
+     * Where the book is at [nowMs]: the page's position plus the time played since, never past the
+     * end.
+     */
     fun positionAt(nowMs: Long): Double {
         val played = if (playing) (nowMs - atMs).coerceAtLeast(0) / 1000.0 * rate else 0.0
         val at = (position + played).coerceAtLeast(0.0)
@@ -95,7 +98,7 @@ data class AudioDockState(
  * screens' content must clear it the moment it shows.
  */
 object AudioDockMetrics {
-    const val EXPANDED_DP = 144f
+    const val EXPANDED_DP = 148f
     const val MINIMIZED_DP = 60f
 
     /** the gap above the bars, which the dock's height includes */
@@ -112,3 +115,14 @@ fun audioClock(seconds: Double): String {
     val r = s % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, r) else "%d:%02d".format(m, r)
 }
+
+/**
+ * Whether the dock is drawn: the owner switched it on, the page shows a player, native bars are up
+ * ([barsPx] is the bottom bar's height, or -1 with none) and the keyboard is not (the bar goes
+ * while it is up, and a dock left there would sit on the field being typed in).
+ */
+fun dockShows(enabled: Boolean, state: AudioDockState, barsPx: Int, keyboardUp: Boolean) =
+    enabled && state.visible && barsPx >= 0 && !keyboardUp
+
+/** What a screen under the bars clears (dp): the bars' own, and the dock's height at the bottom. */
+fun insetsWithDock(top: Float, bottom: Float, dockDp: Float) = top to bottom + dockDp

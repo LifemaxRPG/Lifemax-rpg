@@ -211,19 +211,23 @@
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
-   "covers": "the Media pane only, and not while the add/edit form is open, the audio player is loading, loaded or showing, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; the Journal stays on the page",
-   "commands": {},
+   "covers": "the Media pane only, and not while the add/edit form is open, a file button handed to the owner has the focus, a handed-back tap is running, or a level-up plays; a loaded or playing book (audioBusy) keeps the pane on the page only while no native audio dock carries the player; the Journal has its own plugin",
+   "commands": {
+    "play": "{id}: playMediaAudio(id); the screen stays open and the book starts in the audio dock (only sent while the dock is on)",
+    "attach": "{id, url, name, type, size}: fire-and-forget. Replies {ok:true, started:true} at once; the page fetches the url (Capacitor's /_capacitor_content_ address of the picked document) into a Blob and runs attachAudioFile (existing take-back and blob restore); its toasts arrive as notices; a file over the page's limit is refused before the fetch",
+    "attachRefused": "{name}: the picker let through a file the page's accept list does not take; toasts the page's words"
+   },
    "writes": [],
    "delegatedInteractions": [
     "showMediaForm() and showMediaForm(item): add and edit, saved by saveMediaItem through mediaUpsert",
     "toggleMediaFinished(id, true) for finished, toggleMediaFinished(id, false) for unfinished",
     "deleteMediaItem(id) with its confirm",
-    "pickAudioForMedia through the row's own file button, shown, focused and named in a toast on the page (no programmatic picker)",
+    "pickAudioForMedia through the row's own file button while the audio dock or the native picker is off (shown, focused and named in a toast on the page)",
     "removeMediaAudio(id) with its confirm",
-    "playMediaAudio(id) and the whole audio player",
     "the row's link: an anchor like the row's, http and https only",
     "dismissFeatureTip('media')",
-    "the Journal: lmaNavTo('history'), a web destination behind its lock"
+    "the Journal: lmaNavTo('history'), a web destination behind its lock",
+    "playMediaAudio(id) as an action (screen closes) while the audio dock is off, and the whole audio player then"
    ],
    "readContract": {
     "snapshotDto": "feature/library/domain/MediaProjection.kt",
@@ -250,7 +254,7 @@
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
-   "covers": "the Library's Journal pane, open or behind its lock card; not while the page's reflection or answer field has the focus, a hand-over (claim, catch-up, write) is running or coming back after its celebrations, a level-up plays, or a book is loaded or playing (audioBusy)",
+   "covers": "the Library's Journal pane, open or behind its lock card; not while the page's reflection or answer field has the focus, a hand-over (claim, catch-up, write) is running or coming back after its celebrations, a level-up plays, or a book is loaded or playing while no native audio dock carries the player (audioBusy)",
    "privacy": "CONTRACT A35: while LifeMaxJournalLock.blocksNative() the page sends a withheld frame (panes, lock, status, notice, protocol fields only) and native draws the lock card from it; native drops every journal field whenever the screen stops being drawn (TabSwipe rest), locks a showing screen on app stop with the lock on and refuses that page session's open frames until its withheld frame arrives; SecureWindow holds FLAG_SECURE while a frame with the lock on is drawn",
    "commands": {
     "select": "{key}: selectJournalEntry(key); decisions stored by writeSave() only when new",
@@ -502,6 +506,39 @@
    "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
    "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
    "writes": []
+  },
+  {
+   "feature": "audio",
+   "status": "native-opt-in-beta",
+   "nativePlugin": "NativeAudio",
+   "owner": "web-core-gameplay",
+   "pluginSource": "bridge/web/NativeAudioPlugin.kt (a plain Plugin, not a tab)",
+   "screenSource": "app/shell/audio/AudioDock.kt, AudioDockHost.kt (one view owned by the shell, above the bottom bar of whichever native screen shows)",
+   "webModule": "50-native-audio.js (setting nativeAudio, Native audiobook controls (beta), off by default)",
+   "plan": "docs/architecture/plans/JOURNAL_AND_LIBRARY_SHEETS.md (phase 4)",
+   "capabilities": [
+    "shell.audio.v1"
+   ],
+   "covers": "every native screen under the shared bars, and the Overview's own bars; not a view the page draws (there the page's own player stays); not while the keyboard is up; Cash has none",
+   "commands": {
+    "toggle": "audioTogglePlay()",
+    "skip": "{sec}: audioSkip(sec), |sec| <= 3600",
+    "seek": "{frac}: audioSeekChange(frac * 1000), frac clamped to 0..1",
+    "rate": "{value}: one of the page's #audioRate options; sets it and calls audioSetRate",
+    "minimize": "toggleMinimizeAudioPlayer()",
+    "close": "closeAudioPlayer(true)"
+   },
+   "writes": [],
+   "delegatedInteractions": [],
+   "readContract": {
+    "snapshotDto": "app/shell/audio/AudioDockState.kt",
+    "decoder": "AudioDockState.decode (strict: v must be 1, every key present and of its kind; the colours only while visible)",
+    "payload": "NativeAudio.state({v:1, visible, minimized, loading, mediaId, title, sub, playing, position, duration, rate, rates, tokens, light}); position and duration are seconds; native extrapolates between pushes and ticks once a second only while the seek bar is on screen and moving",
+    "events": "the page pushes on play, pause, seeked, ratechange, loadedmetadata, durationchange, ended, emptied, on the player's class changes and on lma-audio (a file starting to load), and every 10 s while playing; native tells the page {shown, height} (dock event) when the dock shows, goes or changes height",
+    "invalidation": "none beyond the pushes: the page stays the player; position persistence stays the page's (persistAudioPosition)"
+   },
+   "mutationsGate": "no native writes: every command runs the page's own player function; the position and the file stay the page's (IndexedDB)",
+   "rollout": "Classic is default; the dock is opt-in. With it on and the handshake carrying shell.audio.v1, native Media and the Journal no longer step aside for a loaded book"
   }
  ]
 }

@@ -45,8 +45,17 @@
    lock branch, a fake native that drops data only when lock.on. JMUT=onchange (the page without its lock subscription) passes
    here: every relock also draws the Journal, and the kit's render hook sends the withheld frame within 100 ms; what only the
    subscription does (the lock turned off, which draws nothing) is checked by tests/native-journal.test.js.
+   The audio dock (plans/JOURNAL_AND_LIBRARY_SHEETS.md phase 4) has a mode of its own, "dock" (the shell draws the Overview, as in
+   "off"): the native audiobook controls are on and two books are stored. Hops add the page playing a book (swapping the one
+   playing), a dock tap (toggle, skip, minimise, speed, close and seek, only while the dock shows) and Media's own Play command
+   (only while its screen shows). The fake NativeAudio models the shell honestly: ONE dock, shown while the owner's switch is on,
+   the page's player shows and some native screen is up, and told to the page ({shown, height}) whenever that changes. Faults, once
+   settled: the dock showing when it should not, or not when it should (the book's controls vanish), the page's player and the dock
+   both showing, the page's class or padding disagreeing with the dock, a push the strict decoder would reject, and the pushed state
+   disagreeing with the player. Media must show over a loaded book (no web wall). DMUT=blocked|undocked runs a mutation that must
+   fail: the Library kit blocking on a loaded book though the dock carries it, and the page ignoring the dock event.
    Needs Playwright (not part of the CI node tests).
-   Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload by default) */
+   Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload,dock by default) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('./fixtures/director-day.js');
@@ -56,6 +65,8 @@ execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'igno
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 /* a mutation the Journal's modes must catch (JMUT): the page built without the projection's lock branch or the lock subscription */
 const MUTATIONS = { projection: ['if (locked()) return withheldFrame(); // nothing below runs while locked', ''], onchange: ['lock()?.onChange(() => {', 'void (() => {'] };
+const DMUTATIONS = { blocked: ['(audioBusy() && !window.NativeAudioDock?.ready()) ||', 'audioBusy() ||'], undocked: ['root.classList.toggle("audio-docked", on);', ';'] };
+if (DMUTATIONS[process.env.DMUT]) { const [a, b2] = DMUTATIONS[process.env.DMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.DMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
 const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings', pet: '', quests: '' }; // '': the page draws it, no screen shows
@@ -70,7 +81,9 @@ const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'dir
 // the Overview cards' taps: the glance's plan command (to Life Director) and a move's {view} action (to Log)
 const CARDS = { 'tap-plan': { command: 'plan', payload: { act: '', id: '' }, to: 'life-director' }, 'tap-move': { action: { view: 'log' }, to: 'log' } };
 const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(SWIPES), ...Object.keys(WEB_SWIPES), ...Object.keys(BAR), ...Object.keys(COMMANDS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
-const MODES = (process.env.MODES || 'off,on,mixed,failing,lock,reload').split(',');
+const MODES = (process.env.MODES || 'off,on,mixed,failing,lock,reload,dock').split(',');
+// the dock mode's hops: the page plays a book, a tap in the dock, Media's own Play command
+const DOCKHOPS = { 'play': 1, 'dock-cmd': 1, 'tap-play': 1 };
 // the Journal's modes: Media's switch to the Journal and the Journal's back, and the lock's hops (the app stopped and started, the
 // lock switched in Settings, unlock from the lock card), plus page reloads in "reload"
 const JTAPS = { 'tap-journal': { plugin: 'NativeMedia', screen: 'media', from: 'media', to: 'history' }, 'tap-media': { plugin: 'NativeJournal', screen: 'journal', from: 'history', to: 'media' } };
@@ -80,9 +93,10 @@ const journalMode = mode => mode === 'lock' || mode === 'reload';
 const hopsOf = mode => journalMode(mode)
   ? [...Object.keys(WANT), 'history', 'history', 'history', 'food', 'library', 'library', ...Object.keys(TAPS), ...Object.keys(JTAPS), ...Object.keys(JTAPS), ...Object.keys(SWIPES), 'celebrate',
      'relock-vis', 'relock-vis', 'relock-vis', 'lock-toggle', 'unlock', 'unlock', ...(mode === 'reload' ? ['reload', 'reload'] : [])]
-  : HOPS.concat(mode === 'off' ? [] : Object.keys(CARDS), 'celebrate', mode === 'mixed' ? ['toggle-cards', 'toggle-cards'] : []);
+  : HOPS.concat(mode === 'off' || mode === 'dock' ? [] : Object.keys(CARDS), 'celebrate', mode === 'mixed' ? ['toggle-cards', 'toggle-cards'] : [],
+    mode === 'dock' ? ['play', 'play', 'dock-cmd', 'dock-cmd', 'dock-cmd', 'tap-play', 'library', 'library'] : []);
 (async () => {
-  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
   let failed = false;
   for (const mode of MODES) failed = (await run(b, mode)) || failed;
   await b.close(); fs.unlinkSync(out); process.exit(failed ? 1 : 0);
@@ -144,11 +158,11 @@ async function run(b, mode) {
       open:a=>{const s=window.__swipe;if(a&&a.enter)window.__enters++;if(s&&!s.answered&&s.toVis===vis)fault(name+' was asked to open before the page answered '+s.token);take(a);
         if(vis==='overview'&&window.__wantOf('dashboard')==='cards')fault('the shell was opened while the cards were wanted');
         if(vis==='cards'){window.__cardHops.opens++;if(window.__cardsOpen)fault('the cards were asked to open twice with no close between (two owners of the dashboard)');window.__cardsOpen=true}
-        return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));if(fails){window.__log.push(window.__t()+' '+name+' open rejected');throw Error('decoder rejected')}window.__vis[vis]=true;if(vis==='cards')window.__cardHops.shown++;window.__z=window.__z.filter(k=>k!==vis).concat(vis);const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);if(model)await model.frame(a);window.__log.push(window.__t()+' '+name+' open<')})},
+        return inOrder(async()=>{current=a&&a.session;window.__log.push(window.__t()+' '+name+' open>');await wait(window.__rnd(10,120));if(fails){window.__log.push(window.__t()+' '+name+' open rejected');throw Error('decoder rejected')}window.__vis[vis]=true;window.__dockRecompute&&window.__dockRecompute();if(vis==='cards')window.__cardHops.shown++;window.__z=window.__z.filter(k=>k!==vis).concat(vis);const shown=window.__onShow[vis];delete window.__onShow[vis];if(shown)setTimeout(shown,0);if(model)await model.frame(a);window.__log.push(window.__t()+' '+name+' open<')})},
       update:async(a)=>{take(a);if(a&&a.reply)window.__replied(a.reply);if(!sessions)await inOrder(async()=>{if(!window.__vis[vis]){fault(name+' updated while hidden');return}if(fails)throw Error('decoder rejected');if(model)await model.frame(a)})},
       swipeSettle:a=>{checkAnswer(a);return inOrder(async()=>{window.__log.push(window.__t()+' '+name+' swipeSettle '+(a&&a.token)+' '+(a&&a.outcome)+(a&&a.reason?' ('+a.reason+')':''))})},
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
-        if(!stale&&window.__vis[vis]){window.__vis[vis]=false;if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
+        if(!stale&&window.__vis[vis]){window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
       handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
@@ -158,8 +172,19 @@ async function run(b, mode) {
       rest:async()=>{const st=await window.__jnModel('rest');if(st.state==='open')fault('a hidden Journal screen holds open data')}};
     /* Android's prompt: ok or cancelled at random, after a moment */
     const bio={status:async()=>({available:true,kind:'ok'}),authenticate:async()=>{await wait(window.__rnd(30,300));const ok=window.__rnd(0,1)<0.6;window.__log.push(window.__t()+' prompt '+(ok?'ok':'cancelled'));return ok?{ok:true}:{ok:false,cancelled:true}},secure:async()=>{}};
+    /* the shell's dock as the plan has it: ONE dock, on while the owner's switch is on, the page's player shows and some native screen
+       is up; told to the page whenever that changes. Strict about what the page pushes. */
+    const dm=window.__dock={enabled:false,state:null,shown:false,height:0,pushes:0};const audioLs={};
+    window.__dockRecompute=()=>{const s=dm.state,up=Object.values(window.__vis).some(Boolean),shown=dm.enabled&&!!s&&s.visible&&up,height=shown?(s.minimized?68:152):0;
+      if(shown!==dm.shown||height!==dm.height){dm.shown=shown;dm.height=height;(audioLs.dock||[]).forEach(f=>{try{f({shown,height})}catch(x){}})}};
+    const audio={__emit:(e,d)=>Promise.all((audioLs[e]||[]).map(f=>f(d))),addListener:async(e,f)=>{(audioLs[e]=audioLs[e]||[]).push(f);return {remove(){}}},
+      handshake:async()=>({protocol:1,capabilities:['shell.audio.v1']}),
+      configure:async c=>{dm.enabled=!!c.enabled;if(!c.enabled)dm.state=null;window.__dockRecompute()},
+      state:async s=>{dm.pushes++;for(const k of ['v','visible','minimized','loading','mediaId','title','sub','playing','position','duration','rate','rates','light'])if(!(k in s))fault('NativeAudio.state without '+k);
+        if(s.v!==1)fault('NativeAudio.state v='+s.v);if(s.visible&&!(s.tokens&&s.tokens.accent))fault('a visible dock state without the palette');if(!(s.position>=0&&s.duration>=0&&s.rate>0))fault('a state out of range');
+        dm.state=s;window.__dockRecompute()}};
     window.__visState='visible';Object.defineProperty(document,'visibilityState',{get:()=>window.__visState,configurable:true});
-    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeOverviewCards:mk('cards','cards',false,window.__mode==='failing'),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false),NativeJournal:mk('journal','journal',false,false,jmodel),BiometricLock:bio},registerPlugin:()=>({}),convertFileSrc:u=>u};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeOverviewCards:mk('cards','cards',false,window.__mode==='failing'),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false),NativeJournal:mk('journal','journal',false,false,jmodel),NativeAudio:window.__mode==='dock'?audio:undefined,BiometricLock:bio},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   // the Journal's modes reload the page: served over http, since a reloaded file:// page can lose what it stored (current-page.js)
   const server = journalMode(mode) ? await serve(out) : null;
@@ -181,6 +206,20 @@ async function run(b, mode) {
     };
   });
   await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing'; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
+  if (mode === 'dock') {
+    // ten seconds of silence, twice, as the page stores a book (IndexedDB); the owner's switch for the dock turned on as in Settings
+    await p.evaluate(async () => {
+      const wav = () => { const n = 8000 * 10, buf = new ArrayBuffer(44 + n), v = new DataView(buf); const w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+        w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+        w(36, 'data'); v.setUint32(40, n, true); new Uint8Array(buf, 44).fill(128); return new Blob([buf], { type: 'audio/wav' }) };
+      for (const [id, title] of [['sim_book1', 'Book one'], ['sim_book2', 'Book two']]) {
+        await audioDbPut(id, { blob: wav(), name: id + '.m4b', type: 'audio/wav', size: 80044, updatedAt: '2026-01-01' });
+        state.mediaItems.push({ id, title, type: 'Audiobook', creator: '', status: 'progress', link: '', notes: '', audio: { name: id + '.m4b', size: 80044, type: 'audio/wav', position: 0, duration: 10 } });
+      }
+      state.mediaSeededV1 = true; writeSave();
+      await setNativeAudioEnabled(true);
+    });
+  }
   const settle = async (ms) => { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 400 === 0) await p.waitForTimeout(5) } await p.waitForTimeout(20) };
   await settle(4000);
   /* every tab once before the seeds: a bar scene's first capture rasterises its images in real time, which on the virtual clock can
@@ -236,8 +275,24 @@ async function run(b, mode) {
         hops++; continue;
       }
       // a tap is only possible on a screen that shows; the view after the hop is where it went (Food's screen ignores a tap it no longer owns)
-      view = await p.evaluate(async ([v, tap, cmd, dir, move, card, web, jl]) => {
+      view = await p.evaluate(async ([v, tap, cmd, dir, move, card, web, jl, dk]) => {
         window.__onShow = {}; // a command waiting for a screen that has not shown yet is dropped by any later hop
+        if (dk) {
+          window.__tapped = '';
+          const D = window.__dock, id = window.__rnd(0, 1) < 0.5 ? 'sim_book1' : 'sim_book2';
+          if (v === 'play') { window.__log.push(window.__t() + ' >> the page plays ' + id); playMediaAudio(id); }
+          else if (v === 'tap-play') {
+            if (!window.__vis.media || lmaView() !== 'media') return lmaView();
+            window.__log.push(window.__t() + ' >> tap Play on ' + id + ' in Media');
+            Capacitor.Plugins.NativeMedia.__emit('command', { command: 'play', payload: { id }, requestId: 'play' + (window.__rid = (window.__rid || 0) + 1) });
+          } else {
+            if (!D.shown) return lmaView(); // a tap needs a dock on screen
+            const all = [['toggle', {}], ['skip', { sec: -15 }], ['skip', { sec: 30 }], ['minimize', {}], ['rate', { value: 1.5 }], ['close', {}], ['seek', { frac: 0.5 }]], c = all[Math.floor(window.__rnd(0, all.length))];
+            window.__log.push(window.__t() + ' >> tap ' + c[0] + ' in the dock');
+            Capacitor.Plugins.NativeAudio.__emit('command', { command: c[0], payload: c[1] });
+          }
+          return lmaView();
+        }
         if (jl) {
           window.__tapped = '';
           if (v === 'relock-vis') {
@@ -342,7 +397,7 @@ async function run(b, mode) {
         if (commands) commands.forEach((payload) => P.__emit('command', { command: 'toggle', payload, requestId: 'sim' + (window.__rid = (window.__rid || 0) + 1) })); // each its own id, as the screen's
         else P.__emit('action', plugin === 'NativeNutrition' ? { session: P.__session(), command: to } : { view: to });
         return lmaView();
-      }, [step.to, TAPS[step.to] || JTAPS[step.to], COMMANDS[step.to], SWIPES[step.to], BAR[step.to], CARDS[step.to], WEB_SWIPES[step.to], JLOCK[step.to]]);
+      }, [step.to, TAPS[step.to] || JTAPS[step.to], COMMANDS[step.to], SWIPES[step.to], BAR[step.to], CARDS[step.to], WEB_SWIPES[step.to], JLOCK[step.to], DOCKHOPS[step.to]]);
       if (step.gap) await settle(step.gap);
       hops++;
     }
@@ -356,6 +411,17 @@ async function run(b, mode) {
     });
     const r = await p.evaluate(() => {
       const vis = Object.keys(window.__vis).filter(k => window.__vis[k]);
+      if (window.__mode === 'dock') {
+        const D = window.__dock, root = document.documentElement, bar = document.getElementById('audioPlayer'), up = vis.length > 0;
+        const playing = bar.classList.contains('show') || !!audioCtx.loading, pageShows = getComputedStyle(bar).display !== 'none';
+        if (D.shown !== (playing && up)) window.__fault('the dock ' + (D.shown ? 'shows' : 'is gone') + ' but should ' + (playing && up ? 'show' : 'not show') + ' (player ' + playing + ', native screens ' + vis.join('+') + ')');
+        if (playing && !D.shown && !pageShows) window.__fault('a loaded book has no controls anywhere: no dock and the page\'s player hidden');
+        if (D.shown && bar.classList.contains('show') && pageShows) window.__fault('the page\'s player and the dock both show');
+        if (root.classList.contains('audio-docked') !== D.shown) window.__fault('the page ' + (root.classList.contains('audio-docked') ? 'thinks' : 'does not think') + ' the dock shows, which disagrees with it');
+        if (D.shown && root.style.getPropertyValue('--audio-dock-h') !== D.height + 'px') window.__fault('the page pads ' + root.style.getPropertyValue('--audio-dock-h') + ' for a dock of ' + D.height);
+        if (D.state && D.state.visible !== playing) window.__fault('the last pushed player state says visible=' + D.state.visible + ', the player ' + playing);
+        if (D.state && D.state.minimized !== bar.classList.contains('minimized') && bar.classList.contains('show')) window.__fault('the pushed state disagrees about minimised');
+      }
       if (!vis.length && window.__wantOf(lmaView())) window.__fault('no screen shows once settled');
       if (window.__accepted && window.__accepted === lmaView() && window.__wantOf(window.__accepted) && !window.__vis[window.__wantOf(window.__accepted)]) window.__fault('the swipe taken to ' + window.__accepted + ' never showed its screen');
       for (const mark of ['swipe-reveal', 'native-enter']) if (document.documentElement.classList.contains(mark)) window.__fault(mark + ' is still on once settled');
@@ -380,6 +446,7 @@ async function run(b, mode) {
   if ((mode === 'off' || mode === 'failing') && cards.shown) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the cards showed in mode ' + mode], log: [] });
   if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
+  if (mode === 'dock') console.log('     dock ' + mode + ': ' + (await p.evaluate(() => window.__dock.pushes)) + ' states pushed' + (process.env.DMUT ? ' (mutation ' + process.env.DMUT + ')' : ''));
   if (journal) {
     const st = await p.evaluate(() => window.__jnModel('get'));
     console.log('     journal ' + mode + ': ' + st.open + ' open and ' + st.withheld + ' withheld frames drawn, ' + st.stops + ' app stops locked the screen, ' + st.refused + ' open frames refused by the gate, ' + st.cleared + ' gates cleared by a new session or the lock off, ' + reloads + ' reloads' + (process.env.JMUT ? ' (mutation ' + process.env.JMUT + ')' : ''));
