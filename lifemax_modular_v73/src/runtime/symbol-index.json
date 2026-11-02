@@ -128,6 +128,9 @@
  "FV2_MULTS": [
   "src/runtime/segments/50-food.js"
  ],
+ "FV2_PRESETS": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
  "FX": [
   "src/runtime/segments/07-runtime.js"
  ],
@@ -1786,6 +1789,15 @@
  "fv2Create": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2CreateData": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2CreateFieldHtml": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2CreateFood": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
  "fv2DayShift": [
   "src/runtime/segments/50-food.js"
  ],
@@ -1794,6 +1806,9 @@
  ],
  "fv2Dock": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2EditEntry": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2Entry": [
   "src/runtime/segments/50-food.js"
@@ -1813,8 +1828,26 @@
  "fv2Goal": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2GoalData": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2GoalDraft": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
  "fv2GoalLive": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2GoalStep": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2GoalSum": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2GoalSumHtml": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2GoalView": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2Goals": [
   "src/runtime/segments/50-food.js"
@@ -1824,6 +1857,12 @@
  ],
  "fv2Head": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2HeadData": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2HeadFor": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2ImpactData": [
   "src/runtime/segments/50-food.js"
@@ -1845,6 +1884,9 @@
  ],
  "fv2Log": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2LogAgain": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2LogLabel": [
   "src/runtime/segments/50-food.js"
@@ -1894,11 +1936,20 @@
  "fv2Preset": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2PresetGrams": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
+ "fv2QuickData": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
  "fv2QuickFood": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2Recents": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2RemoveEntry": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2RingSvg": [
   "src/runtime/segments/50-food.js"
@@ -1933,11 +1984,17 @@
  "fv2ServingsData": [
   "src/runtime/segments/50-food.js"
  ],
+ "fv2SetGoals": [
+  "src/runtime/segments/50-food-forms.js"
+ ],
  "fv2SheetClick": [
   "src/runtime/segments/50-food.js"
  ],
  "fv2SheetInput": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2SheetWords": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2Slot": [
   "src/runtime/segments/50-food.js"
@@ -1959,6 +2016,9 @@
  ],
  "fv2TabFoods": [
   "src/runtime/segments/50-food.js"
+ ],
+ "fv2TabsData": [
+  "src/runtime/segments/50-food-forms.js"
  ],
  "fv2ToggleFav": [
   "src/runtime/segments/50-food.js"

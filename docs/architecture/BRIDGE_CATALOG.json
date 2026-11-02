@@ -262,13 +262,20 @@
     "fv2AddWater",
     "fv2CopySlot",
     "sdLogMeal",
-    "setMealsDay"
+    "setMealsDay",
+    "fv2ToggleFav",
+    "fv2CreateFood",
+    "fv2SetGoals",
+    "fv2EditEntry",
+    "fv2RemoveEntry",
+    "fv2LogAgain"
    ],
+   "sheet": "the add-food sheet (docs/architecture/plans/FOOD_ADD_SHEET.md): the projection's sheet field (null when closed; view search | portion | quick | create | goal | edit, with the page's title, back, tabs, words, rows, portion (edit: {id, remove, again} for an entry), quick, create, goal), sheetForms: true, notice {id, text, action} and answer {op, ok, changed, message}. Moves: sheetOpen {slot, forms}, sheetEntry {id}, sheetGoal, sheetQuery {q}, sheetTab {tab}, sheetPick {index, id}, sheetStep {dir}, sheetGrams {grams}, sheetServing {grams} (an offered one only), sheetMult {x}, sheetSlot {slot}, sheetQuick, sheetCreate, sheetGoalField {key, value}, sheetGoalPreset {preset}, sheetBack, sheetClose. Writes, each with op: sheetLog, sheetRowAdd {index, id}, sheetQuickSave {kcal, name}, sheetFav, sheetCreateSave {name, brand, serving, kcal, p, c, f}, sheetGoalSave {cal, p, c, f, water}, sheetEditSave / sheetEditDelete / sheetEditAgain {id}, noticeAction {id} (the page's Undo); answered in the next update, ok only once saved, a repeat of an operation that landed answered ok, changed:false, 'Already recorded.'; the screen keeps an operation id per (command, target) until its answer",
    "delegatedInteractions": [
     "fv2Open",
     "sdOpenSwap"
    ],
-   "mutationsGate": "delegates to existing web handlers; no native receipts yet (A14-A15 gap)",
+   "mutationsGate": "delegates to existing web handlers; the add-food sheet's writes carry operation ids and are answered (ok only once saved); the rest have no receipts yet (A14-A15 gap)",
    "rollout": "opt-in under Settings, Appearance",
    "canonicalLayout": false
   },

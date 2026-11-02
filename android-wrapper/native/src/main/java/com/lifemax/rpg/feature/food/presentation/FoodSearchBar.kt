@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.feature.food.presentation.sheet.openAddFood
 
 /** The floating "Search foods, or log a meal" bar. */
 @Composable
@@ -33,7 +34,7 @@ internal fun BoxScope.FoodSearchBar(c: FoodContext) {
                         .clip(RoundedCornerShape(22.dp))
                         .background(Color(0xF5121621))
                         .border(1.dp, Color(0x18FFFFFF), RoundedCornerShape(22.dp))
-                        .clickable { openAddFood(c) }
+                        .clickable { c.openAddFood(c.data.optString("currentSlot", "snacks")) }
                         .padding(start = 16.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -70,11 +71,4 @@ internal fun BoxScope.FoodSearchBar(c: FoodContext) {
             }
         }
     }
-}
-
-/** Add food: the native sheet when the page offers one, else the page's own sheet. */
-private fun openAddFood(c: FoodContext) {
-    if (c.data.has("sheet"))
-        c.dispatch("sheetOpen", mapOf("slot" to c.data.optString("currentSlot", "snacks")))
-    else c.dispatch("add", emptyMap())
 }

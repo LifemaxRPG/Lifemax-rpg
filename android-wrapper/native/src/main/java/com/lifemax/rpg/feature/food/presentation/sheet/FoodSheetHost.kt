@@ -1,8 +1,9 @@
 package com.lifemax.rpg.feature.food.presentation.sheet
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,40 +11,35 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.feature.food.data.decodeAnswer
 import com.lifemax.rpg.feature.food.data.decodeNotice
 import com.lifemax.rpg.feature.food.data.decodeSheet
-import com.lifemax.rpg.feature.food.domain.FoodNotice
 import com.lifemax.rpg.feature.food.domain.FoodSheet
 import com.lifemax.rpg.feature.food.domain.SheetView
-import com.lifemax.rpg.feature.food.presentation.BlueAccent
 import com.lifemax.rpg.feature.food.presentation.FoodContext
-import kotlinx.coroutines.delay
-
-private const val NOTICE_MS = 4500L
 
 /**
  * Whether the page's projection carries the add-food sheet (an older page does not, and Add food
@@ -52,78 +48,96 @@ private const val NOTICE_MS = 4500L
 internal fun FoodContext.hasSheet(): Boolean = data.has("sheet")
 
 /**
- * The add-food sheet and the page's message, drawn over Food. A projection that does not decode is
- * not drawn (the page still owns the state and the next update replaces it).
+ * The add-food sheet and the page's message, drawn over Food. A sheet that does not decode is not
+ * drawn, and the page is told to close it, so the page never holds a sheet the player cannot see
+ * (Android Back would step through it invisibly).
  */
 @Composable
 internal fun FoodSheetHost(c: FoodContext) {
-    val sheet = remember(c.data) { runCatching { decodeSheet(c.data) }.getOrNull() }
+    val decoded = remember(c.data) { runCatching { decodeSheet(c.data) } }
+    val sheet = decoded.getOrNull()
     val notice = remember(c.data) { runCatching { decodeNotice(c.data) }.getOrNull() }
-    val send: (String, Map<String, Any>) -> Unit = { command, payload ->
-        c.dispatch(command, payload)
+    val answer = remember(c.data) { runCatching { decodeAnswer(c.data) }.getOrNull() }
+    val actions = remember { FoodSheetController(c.dispatch) }
+    actions.dispatch = c.dispatch
+    LaunchedEffect(answer) { actions.answered(answer) }
+    LaunchedEffect(decoded) {
+        decoded.exceptionOrNull()?.let {
+            Log.w("NativeNutrition", "Add-food sheet not drawn: ${it.message}")
+            actions.send("sheetClose")
+        }
     }
     Box(Modifier.fillMaxSize()) {
-        if (sheet != null) SheetPanel(c, sheet, send)
-        if (notice != null) NoticeSnack(c, notice, send, Modifier.align(Alignment.BottomCenter))
+        if (sheet != null) SheetPanel(c, sheet, actions)
+        if (notice != null) {
+            val place = if (sheet != null) Alignment.TopCenter else Alignment.BottomCenter
+            FoodNoticeSnack(c, notice, actions, sheet != null, Modifier.align(place))
+        }
     }
 }
 
 @Composable
-private fun SheetPanel(c: FoodContext, sheet: FoodSheet, send: (String, Map<String, Any>) -> Unit) {
-    val none = remember { MutableInteractionSource() }
+private fun SheetPanel(c: FoodContext, sheet: FoodSheet, actions: FoodSheetController) {
+    // the dimmed Food around the sheet: a tap there steps back, as the page's own overlay does;
+    // TalkBack skips it (the head's button does the same)
     Box(
-        Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)).clickable(none, null) {
-            send("sheetClose", emptyMap())
-        }
+        Modifier.fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.55f))
+            .clearAndSetSemantics {}
+            .pointerInput(Unit) { detectTapGestures { actions.send("sheetBack") } }
     )
-    Box(Modifier.fillMaxSize().imePadding(), Alignment.BottomCenter) {
+    // the shared bottom bar lies over this screen's bottom edge; while the keyboard is up the bar
+    // hides and the content is already lifted above the keyboard (NAV-5)
+    val bottom = if (rememberImeUp()) 16.dp else c.bottomInsetDp.dp + 16.dp
+    Box(Modifier.fillMaxSize(), Alignment.BottomCenter) {
         val shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         Column(
             Modifier.fillMaxWidth()
-                .heightIn(max = 640.dp)
+                // as tall as its view needs, at least the page's min-height, never over the header
+                .padding(top = c.topInsetDp.dp)
+                .heightIn(min = 560.dp)
                 .clip(shape)
                 .background(c.cardTop)
-                .clickable(none, null) {}
+                // a tap on the sheet itself stays on it, and is no button for TalkBack
+                .pointerInput(Unit) { detectTapGestures {} }
+                .semantics { paneTitle = sheet.title }
                 .padding(horizontal = 16.dp)
-                .padding(top = 12.dp, bottom = 16.dp),
+                .padding(top = 12.dp, bottom = bottom),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SheetHeader(c, sheet, send)
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            SheetHeader(c, sheet, actions)
+            // each view scrolls its own body over its own foot (SheetScaffold)
+            val room = Modifier.weight(1f, fill = false)
+            // a view's own boxes start afresh each time it opens, as the page draws it anew
+            key(sheet.view, sheet.portion?.edit?.id) {
                 when (sheet.view) {
-                    SheetView.Search -> SheetSearchView(c, sheet, focusOnOpen = true, send)
-                    SheetView.Portion -> sheet.portion?.let { SheetPortionView(c, sheet, it, send) }
-                    SheetView.Quick -> SheetQuickView(c, sheet, send)
+                    SheetView.Search -> SheetSearchView(c, sheet, focusOnOpen = true, actions, room)
+                    SheetView.Portion,
+                    SheetView.Edit ->
+                        sheet.portion?.let { SheetPortionView(c, sheet, it, actions, room) }
+                    SheetView.Quick ->
+                        sheet.quick?.let { SheetQuickView(c, sheet, it, actions, room) }
+                    SheetView.Create -> sheet.create?.let { SheetCreateView(c, it, actions, room) }
+                    SheetView.Goal -> sheet.goal?.let { SheetGoalView(c, it, actions, room) }
                 }
             }
         }
     }
 }
 
+/** The page's head: its title and one button, Back where the page steps back, else Close. */
 @Composable
-private fun SheetHeader(
-    c: FoodContext,
-    sheet: FoodSheet,
-    send: (String, Map<String, Any>) -> Unit,
-) {
-    val title =
-        when (sheet.view) {
-            SheetView.Search -> "Add food"
-            SheetView.Portion -> "Portion"
-            SheetView.Quick -> "Quick calories"
-        }
+private fun SheetHeader(c: FoodContext, sheet: FoodSheet, actions: FoodSheetController) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (sheet.view != SheetView.Search) {
-            HeaderButton(c, "‹", "Back") { send("sheetBack", emptyMap()) }
-        }
+        if (sheet.back) HeaderButton(c, "‹", sheet.words.back) { actions.send("sheetBack") }
         Text(
-            title,
+            sheet.title,
             color = c.fg,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f).padding(start = 4.dp),
+            modifier = Modifier.weight(1f).padding(start = 4.dp).semantics { heading() },
         )
-        HeaderButton(c, "✕", "Close") { send("sheetClose", emptyMap()) }
+        if (!sheet.back) HeaderButton(c, "✕", sheet.words.close) { actions.send("sheetClose") }
     }
 }
 
@@ -138,55 +152,6 @@ private fun HeaderButton(c: FoodContext, glyph: String, label: String, onClick: 
             .clickable(onClick = onClick),
         Alignment.Center,
     ) {
-        Text(glyph, color = c.muted, fontSize = 22.sp)
-    }
-}
-
-/**
- * The page's message ("Added … · 222 kcal", a failed save) with its Undo, gone after a few seconds.
- */
-@Composable
-private fun NoticeSnack(
-    c: FoodContext,
-    notice: FoodNotice,
-    send: (String, Map<String, Any>) -> Unit,
-    modifier: Modifier,
-) {
-    var shownId by remember { mutableIntStateOf(0) }
-    LaunchedEffect(notice.id) {
-        shownId = notice.id
-        delay(NOTICE_MS)
-        shownId = 0
-    }
-    if (shownId != notice.id) return
-    val shape = RoundedCornerShape(16.dp)
-    Row(
-        modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = c.bottomInsetDp.dp + 84.dp)
-            .clip(shape)
-            .background(c.selectedPanel)
-            .padding(start = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            notice.text,
-            color = c.fg,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f).padding(vertical = 12.dp),
-        )
-        if (notice.action.isNotEmpty()) {
-            Text(
-                notice.action,
-                color = BlueAccent,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier =
-                    Modifier.heightIn(min = 48.dp)
-                        .clickable { send("noticeAction", mapOf("id" to notice.id)) }
-                        .padding(horizontal = 16.dp),
-            )
-        }
+        Text(glyph, color = c.muted, fontSize = 22.sp, modifier = Modifier.clearAndSetSemantics {})
     }
 }

@@ -1,0 +1,336 @@
+{
+ "version": 1,
+ "day": "2026-10-28",
+ "today": "2026-10-28",
+ "eyebrow": "TODAY",
+ "dayLabel": "Wednesday, Oct 28",
+ "pane": "log",
+ "currentSlot": "lunch",
+ "totals": {
+  "kcal": 1251,
+  "p": 113.4,
+  "c": 92.2,
+  "f": 46.4,
+  "fib": 0,
+  "sug": 0,
+  "na": 84.2
+ },
+ "goals": {
+  "cal": 2500,
+  "p": 188,
+  "c": 250,
+  "f": 83,
+  "water": 2000
+ },
+ "waterMl": 850,
+ "light": false,
+ "week": [
+  {
+   "day": "2026-10-26",
+   "w": "M",
+   "dNum": 26,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-27",
+   "w": "T",
+   "dNum": 27,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-28",
+   "w": "W",
+   "dNum": 28,
+   "kcal": 1251,
+   "frac": 0.5004,
+   "status": "under",
+   "selected": true,
+   "today": true
+  },
+  {
+   "day": "2026-10-29",
+   "w": "T",
+   "dNum": 29,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-30",
+   "w": "F",
+   "dNum": 30,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-31",
+   "w": "S",
+   "dNum": 31,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-11-01",
+   "w": "S",
+   "dNum": 1,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  }
+ ],
+ "recents": [
+  {
+   "index": 0,
+   "id": "fdc2727569",
+   "name": "Chicken, breast, meat and skin, raw",
+   "grams": 175,
+   "kcal": 222,
+   "p": 37.4,
+   "c": -0.8,
+   "f": 8.4
+  },
+  {
+   "index": 1,
+   "id": "name:Greek yogurt with berries",
+   "name": "Greek yogurt with berries",
+   "grams": 250,
+   "kcal": 210,
+   "p": 22,
+   "c": 24,
+   "f": 3
+  },
+  {
+   "index": 2,
+   "id": "name:Black coffee",
+   "name": "Black coffee",
+   "grams": 240,
+   "kcal": 5,
+   "p": 0,
+   "c": 1,
+   "f": 0
+  },
+  {
+   "index": 3,
+   "id": "name:Chicken burrito bowl",
+   "name": "Chicken burrito bowl",
+   "grams": 420,
+   "kcal": 640,
+   "p": 48,
+   "c": 62,
+   "f": 20
+  },
+  {
+   "index": 4,
+   "id": "name:Almonds",
+   "name": "Almonds",
+   "grams": 30,
+   "kcal": 174,
+   "p": 6,
+   "c": 6,
+   "f": 15
+  }
+ ],
+ "copyYesterday": {
+  "breakfast": false,
+  "lunch": false,
+  "dinner": false,
+  "snacks": false
+ },
+ "entries": [
+  {
+   "id": "f1",
+   "slot": "breakfast",
+   "name": "Greek yogurt with berries",
+   "grams": 250,
+   "kcal": 210,
+   "p": 22,
+   "c": 24,
+   "f": 3
+  },
+  {
+   "id": "f2",
+   "slot": "breakfast",
+   "name": "Black coffee",
+   "grams": 240,
+   "kcal": 5,
+   "p": 0,
+   "c": 1,
+   "f": 0
+  },
+  {
+   "id": "f3",
+   "slot": "lunch",
+   "name": "Chicken burrito bowl",
+   "grams": 420,
+   "kcal": 640,
+   "p": 48,
+   "c": 62,
+   "f": 20
+  },
+  {
+   "id": "f4",
+   "slot": "snack",
+   "name": "Almonds",
+   "grams": 30,
+   "kcal": 174,
+   "p": 6,
+   "c": 6,
+   "f": 15
+  },
+  {
+   "id": "food_1793188806036_6sb1",
+   "slot": "dinner",
+   "name": "Chicken, breast, meat and skin, raw",
+   "grams": 175,
+   "kcal": 222,
+   "p": 37.4,
+   "c": -0.8,
+   "f": 8.4
+  }
+ ],
+ "plan": null,
+ "shop": null,
+ "sheet": {
+  "view": "goal",
+  "title": "Daily targets",
+  "back": false,
+  "slot": "lunch",
+  "slots": [
+   {
+    "id": "breakfast",
+    "label": "Breakfast"
+   },
+   {
+    "id": "lunch",
+    "label": "Lunch"
+   },
+   {
+    "id": "dinner",
+    "label": "Dinner"
+   },
+   {
+    "id": "snacks",
+    "label": "Snacks"
+   }
+  ],
+  "query": "",
+  "tab": "recent",
+  "tabs": [
+   {
+    "id": "recent",
+    "label": "Recent"
+   },
+   {
+    "id": "fav",
+    "label": "Favorites"
+   },
+   {
+    "id": "mine",
+    "label": "My foods"
+   }
+  ],
+  "words": {
+   "search": "Search chicken, rice, yogurt…",
+   "quick": "Quick calories",
+   "create": "Create food",
+   "searching": "Searching…",
+   "back": "Back",
+   "close": "Close",
+   "less": "Less",
+   "more": "More",
+   "grams": "grams",
+   "fav": "Favorite",
+   "kcal": "kcal"
+  },
+  "searching": false,
+  "rows": [],
+  "empty": null,
+  "portion": null,
+  "quick": null,
+  "create": null,
+  "goal": {
+   "cal": {
+    "label": "calories a day",
+    "value": "2500",
+    "step": 50,
+    "min": 0
+   },
+   "presets": [
+    {
+     "id": "bal",
+     "label": "Balanced",
+     "sub": "30 / 40 / 30"
+    },
+    {
+     "id": "hi",
+     "label": "High protein",
+     "sub": "40 / 35 / 25"
+    },
+    {
+     "id": "low",
+     "label": "Low carb",
+     "sub": "30 / 25 / 45"
+    }
+   ],
+   "fields": [
+    {
+     "key": "p",
+     "label": "Protein g",
+     "color": "#ff7a8a",
+     "value": "250"
+    },
+    {
+     "key": "c",
+     "label": "Carbs g",
+     "color": "#ffc15e",
+     "value": "219"
+    },
+    {
+     "key": "f",
+     "label": "Fat g",
+     "color": "#4fd6c0",
+     "value": "69"
+    }
+   ],
+   "water": {
+    "label": "Water goal",
+    "value": "2000",
+    "unit": "ml"
+   },
+   "sum": {
+    "lead": "Your macros add up to ",
+    "strong": "2,497 kcal",
+    "sep": " · ",
+    "note": "matches your target",
+    "bad": false
+   },
+   "save": "Save targets"
+  }
+ },
+ "sheetForms": true,
+ "notice": null,
+ "answer": {
+  "op": "",
+  "ok": true,
+  "changed": true,
+  "message": "Chicken, breast, meat and… · 222 kcal"
+ }
+}

@@ -102,6 +102,16 @@ async function food(b) {
     B.sheetAct('sheetPick', { index: row.index, id: row.id }); B.sheetAct('sheetGrams', { grams: 175 }); B.sheetAct('sheetSlot', { slot: 'dinner' }); res.portion = snap();
     B.sheetAct('sheetLog'); res.notice = snap();
     B.sheetAct('sheetOpen', { slot: 'lunch' }); B.sheetAct('sheetQuick'); res.quick = snap();
+    // phase 2: the create form, the daily targets after a preset, an entry of yesterday being edited, and a write's answer
+    B.sheetAct('sheetOpen', { slot: 'dinner', forms: true }); B.sheetAct('sheetCreate'); res.create = snap();
+    B.sheetAct('sheetGoal'); B.sheetAct('sheetGoalPreset', { preset: 'hi' }); res.goal = snap();
+    const yest = fv2DayShift(mealsDayKey(), -1), rice = fv2LocalFoods(fv2SearchTokens('rice'))[0];
+    state.foodLog.push(Object.assign({ id: 'f9', date: yest, slot: 'dinner', foodId: rice.id, name: rice.n, grams: 150 }, scaleFood(rice, 150)));
+    mealsDay = yest; // the entry is tapped on its own day, as the screen shows it
+    B.sheetAct('sheetEntry', { id: 'f9' }); res.edit = snap();
+    B.sheetAct('sheetEditDelete', { op: 'op-1', id: 'f9' }); res.answer = snap();
+    mealsDay = getToday();
+    for (const k of ['create', 'goal', 'edit']) res[k].notice = null; // the log's message has long gone by then
     B.sheetAct('sheetClose');
     return res;
   });

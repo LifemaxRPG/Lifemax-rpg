@@ -10,6 +10,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.core.designsystem.components.PaneSwitch
+import com.lifemax.rpg.feature.food.presentation.sheet.openTargets
 import java.util.Locale
 
 /** The Meals/Recipes switch, the day heading with its Targets and day arrows. */
@@ -47,9 +48,7 @@ internal fun ColumnScope.FoodDateHeader(c: FoodContext) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                HeaderButton(label = "Targets", width = null, light = light) {
-                    dispatch("goals", emptyMap())
-                }
+                HeaderButton(label = "Targets", width = null, light = light) { openTargets() }
                 HeaderButton(label = "‹", width = 42.dp, light = light) {
                     dispatch("previous", emptyMap())
                 }

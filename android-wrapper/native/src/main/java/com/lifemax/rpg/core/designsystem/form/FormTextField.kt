@@ -39,7 +39,8 @@ import androidx.compose.ui.unit.sp
  * :focus does. Typing stops at [maxLength] as the page's maxlength does; [placeholder] shows while
  * it is empty. [number] asks for the number keyboard and keeps digits only (the page's type=number
  * boxes with a placeholder, such as the goal's target). [error] is the page's words when it refused
- * the field: the edge turns red and TalkBack reads them.
+ * the field: the edge turns red and TalkBack reads them. [decimal] asks for the number keyboard
+ * with a point and keeps digits and one point (Food's label values, such as 12.5 g of protein).
  */
 @Composable
 fun FormTextField(
@@ -52,6 +53,7 @@ fun FormTextField(
     maxLength: Int? = null,
     number: Boolean = false,
     error: String? = null,
+    decimal: Boolean = false,
 ) {
     val look = LocalFormKitLook.current
     val interaction = remember { MutableInteractionSource() }
@@ -62,7 +64,12 @@ fun FormTextField(
         BasicTextField(
             value,
             { typed ->
-                val kept = if (number) typed.filter(Char::isDigit) else typed
+                val kept =
+                    when {
+                        decimal -> decimalOnly(typed)
+                        number -> typed.filter(Char::isDigit)
+                        else -> typed
+                    }
                 onChange(maxLength?.let { kept.take(it) } ?: kept)
             },
             Modifier.padding(top = 5.dp)
@@ -98,9 +105,14 @@ fun FormTextField(
             keyboardOptions =
                 KeyboardOptions(
                     capitalization =
-                        if (number) KeyboardCapitalization.None
+                        if (number || decimal) KeyboardCapitalization.None
                         else KeyboardCapitalization.Sentences,
-                    keyboardType = if (number) KeyboardType.Number else KeyboardType.Text,
+                    keyboardType =
+                        when {
+                            decimal -> KeyboardType.Decimal
+                            number -> KeyboardType.Number
+                            else -> KeyboardType.Text
+                        },
                     imeAction = ImeAction.Done,
                 ),
             singleLine = true,
@@ -124,4 +136,12 @@ fun FormTextField(
             },
         )
     }
+}
+
+/** What is typed, kept to digits and one point (the page's type=number inputmode=decimal boxes). */
+internal fun decimalOnly(typed: String): String {
+    val digits = typed.filter { it.isDigit() || it == '.' }
+    val point = digits.indexOf('.')
+    return if (point < 0) digits
+    else digits.substring(0, point + 1) + digits.substring(point + 1).replace(".", "")
 }
