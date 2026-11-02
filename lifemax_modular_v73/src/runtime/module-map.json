@@ -3547,7 +3547,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-audio.js",
-   "bytes": 9236,
+   "bytes": 9138,
    "statement_count": 1,
    "tags": [
     "native",

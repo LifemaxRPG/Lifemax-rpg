@@ -62,7 +62,8 @@ fun MediaRoute(
 ) {
     val ui = vm.ui ?: return
     val context = LocalContext.current
-    val actions = remember(vm, onPage, context, audio) { MediaActions(vm, onPage, context::openLink, audio) }
+    val actions =
+        remember(vm, onPage, context, audio) { MediaActions(vm, onPage, context::openLink, audio) }
     val s = vm.sheets
     val edits = MediaEdits(ui.projection.form, s.sheet, s.ask, s.ticks)
     MediaScreen(ui, actions, visible, topInsetDp, bottomInsetDp, vm.notice, edits = edits)
@@ -118,7 +119,6 @@ class MediaActions(
                 audio?.dock == true && action is MediaAction.Play -> audio.play(action.id)
                 audio?.canPick == true && action is MediaAction.Attach -> audio.pick(action.id)
                 audio?.canPick == true && action is MediaAction.Replace -> audio.pick(action.id)
-            when {
                 vm.sheets.handle(action) -> Unit
                 action is MediaAction.OpenLink ->
                     vm.ui

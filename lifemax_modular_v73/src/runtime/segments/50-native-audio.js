@@ -152,7 +152,6 @@
     if (on) return warm();
     announced = "";
     clearInterval(timer);
-    handshake = handshake && { ...handshake, capabilities: [] }; // carrying() is false from here
     docked(null);
     if (plugin) await plugin.configure({ enabled: false, accept: "", refuse: "" }).catch(() => {});
     window.NativeTabs?.heal();

@@ -114,7 +114,7 @@ fun AudioDock(state: AudioDockState, nowMs: Long, actions: AudioDockActions) {
                         .semantics { contentDescription = "Audiobook player" }
                         .padding(
                             horizontal = 14.dp,
-                            vertical = if (state.minimized) 8.dp else 12.dp,
+                            vertical = if (state.minimized) 8.dp else 8.dp,
                         ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -126,11 +126,11 @@ fun AudioDock(state: AudioDockState, nowMs: Long, actions: AudioDockActions) {
     }
 }
 
-private const val MAX_FONT_SCALE = 1.3f
+private const val MAX_FONT_SCALE = 1.15f
 
 @Composable
 private fun Expanded(state: AudioDockState, nowMs: Long, actions: AudioDockActions) {
-    Row(Modifier.height(44.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.height(52.dp), verticalAlignment = Alignment.CenterVertically) {
         TitleBlock(state, Modifier.weight(1f))
         DockButton("—", "Minimize player", Modifier.size(40.dp), onClick = actions.minimize)
         DockButton(

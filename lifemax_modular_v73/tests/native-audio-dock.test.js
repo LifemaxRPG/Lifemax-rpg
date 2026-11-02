@@ -178,6 +178,10 @@ const ITEMS = [
     out.off = lmaLoad().nativeAudio === false && lastConfigure.enabled === false && !window.NativeAudioDock.ready() && !root.classList.contains('audio-docked');
     const pausedBefore = document.getElementById('audioEl').paused; await cmd('close'); await wait(100);
     out.ignoredWhenOff = pausedBefore === false ? !!document.getElementById('audioEl').src : true;
+    // and on again: the same native side is asked to carry it once more
+    toggle.checked = true; toggle.dispatchEvent(new Event('change')); await until(() => window.__configure.length >= 3);
+    out.onAgain = window.NativeAudioDock.ready() && window.__configure[window.__configure.length - 1].enabled === true;
+    toggle.checked = false; toggle.dispatchEvent(new Event('change')); await until(() => window.__configure.length >= 4);
     out.busyAgain = audioBusy() && !NativeTabs.wouldOpen('history') && !NativeTabs.wouldOpen('media');
     return out;
   });
@@ -211,6 +215,7 @@ const ITEMS = [
   ok('attach for an item that is gone is refused; a refused file is named in the page\'s words', O.goneItem && O.refused, O);
   ok('the screen stayed open through all of it', O.screenStayedOpen, O);
   ok('switching the dock off tells the native side and gives the page its player back', O.off && O.busyAgain, O);
+  ok('switched on again it carries the player once more', O.onAgain, O);
   ok('no script errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

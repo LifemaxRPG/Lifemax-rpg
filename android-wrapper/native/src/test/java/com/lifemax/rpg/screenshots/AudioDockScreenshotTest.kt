@@ -131,7 +131,7 @@ class AudioDockScreenshotTest {
     fun loadingDark() =
         snap(playing(false).copy(playing = false, loading = true, sub = "Loading…", position = 0.0))
 
-    /** Larger text: the dock's text stops at 1.3x so its height, which the screens clear, holds. */
+    /** Larger text: the dock's text stops at 1.15x so its height, which the screens clear, holds. */
     @Test
     fun largeText() {
         paparazzi.unsafeUpdateConfig(phone(fontScale = 2f))
