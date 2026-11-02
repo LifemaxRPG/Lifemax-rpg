@@ -1,0 +1,460 @@
+{
+ "min": 40,
+ "counter": {
+  "awarded": "+15 XP & +2 bond claimed",
+  "ready": "Saves for +15 XP",
+  "short": "Write 40+ characters for +15 XP",
+  "old": "Reflections on older days earn no XP"
+ },
+ "note": "jcCounterText(awarded, canPay, n, typing) and jcMeter(awarded, n): the page's choice among counter's four lines",
+ "cases": [
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 0,
+   "typing": false,
+   "text": "Write 40+ characters for +15 XP",
+   "meter": 0
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 0,
+   "typing": true,
+   "text": "Write 40+ characters for +15 XP (0)",
+   "meter": 0
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 1,
+   "typing": false,
+   "text": "Write 40+ characters for +15 XP",
+   "meter": 2.5
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 1,
+   "typing": true,
+   "text": "Write 40+ characters for +15 XP (1)",
+   "meter": 2.5
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 23,
+   "typing": false,
+   "text": "Write 40+ characters for +15 XP",
+   "meter": 57.49999999999999
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 23,
+   "typing": true,
+   "text": "Write 40+ characters for +15 XP (23)",
+   "meter": 57.49999999999999
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 39,
+   "typing": false,
+   "text": "Write 40+ characters for +15 XP",
+   "meter": 97.5
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 39,
+   "typing": true,
+   "text": "Write 40+ characters for +15 XP (39)",
+   "meter": 97.5
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 40,
+   "typing": false,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 40,
+   "typing": true,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 41,
+   "typing": false,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 41,
+   "typing": true,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 120,
+   "typing": false,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": true,
+   "n": 120,
+   "typing": true,
+   "text": "Saves for +15 XP",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 0,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 0,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 1,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 1,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 23,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 23,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 39,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 39,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 40,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 40,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 41,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 41,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 120,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": true,
+   "n": 120,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 0,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 0
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 0,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 0
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 1,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 2.5
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 1,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 2.5
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 23,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 57.49999999999999
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 23,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 57.49999999999999
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 39,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 97.5
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 39,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 97.5
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 40,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 40,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 41,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 41,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 120,
+   "typing": false,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": false,
+   "canPay": false,
+   "n": 120,
+   "typing": true,
+   "text": "Reflections on older days earn no XP",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 0,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 0,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 1,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 1,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 23,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 23,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 39,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 39,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 40,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 40,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 41,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 41,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 120,
+   "typing": false,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  },
+  {
+   "awarded": true,
+   "canPay": false,
+   "n": 120,
+   "typing": true,
+   "text": "+15 XP & +2 bond claimed",
+   "meter": 100
+  }
+ ]
+}

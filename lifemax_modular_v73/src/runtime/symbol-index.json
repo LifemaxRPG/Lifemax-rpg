@@ -7444,6 +7444,9 @@
  "window.NativeFoodSheet": [
   "src/runtime/segments/50-native-nutrition.js"
  ],
+ "window.NativeJournalProjection": [
+  "src/runtime/segments/50-native-journal.js"
+ ],
  "window.NativeLogProjection": [
   "src/runtime/segments/50-native-log.js"
  ],

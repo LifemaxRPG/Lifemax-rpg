@@ -3410,7 +3410,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 21562,
+   "bytes": 23334,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3441,7 +3441,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-swipe.js",
-   "bytes": 18666,
+   "bytes": 18883,
    "statement_count": 2,
    "tags": [
     "native",
@@ -3517,7 +3517,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-library.js",
-   "bytes": 9893,
+   "bytes": 9865,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3526,6 +3526,18 @@
     "media"
    ],
    "symbols": []
+  },
+  {
+   "file": "src/runtime/segments/50-native-journal.js",
+   "bytes": 15879,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "journal"
+   ],
+   "symbols": [
+    "window.NativeJournalProjection"
+   ]
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
@@ -3543,7 +3555,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 29756,
+   "bytes": 29810,
    "statement_count": 1,
    "tags": [
     "native",

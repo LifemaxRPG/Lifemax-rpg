@@ -1,0 +1,257 @@
+{
+ "actions": {
+  "note": "actions close the screen; the page runs and the screen comes back once the celebrations have played (NativeTabKit action event)",
+  "claimPet": {
+   "action": "claim",
+   "id": "pet"
+  },
+  "claimFresh": {
+   "action": "claim",
+   "id": "fresh"
+  },
+  "catchUp": {
+   "action": "catchUp"
+  },
+  "toMedia": {
+   "view": "media"
+  },
+  "toDirector": {
+   "view": "life-director"
+  }
+ },
+ "select": {
+  "command": "select",
+  "payload": {
+   "key": "2026-10-26"
+  },
+  "reply": {
+   "command": "select",
+   "requestId": "req-select",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "selectAgain": {
+  "command": "select",
+  "payload": {
+   "key": "2026-10-26"
+  },
+  "reply": {
+   "command": "select",
+   "requestId": "req-selectAgain",
+   "ok": true,
+   "changed": false
+  }
+ },
+ "selectUnknown": {
+  "command": "select",
+  "payload": {
+   "key": "1999-01-01"
+  },
+  "reply": {
+   "command": "select",
+   "requestId": "req-selectUnknown",
+   "ok": false,
+   "changed": false,
+   "message": "That day is not in your Journal."
+  }
+ },
+ "selectReview": {
+  "command": "select",
+  "payload": {
+   "key": "W:2026-W43"
+  },
+  "reply": {
+   "command": "select",
+   "requestId": "req-selectReview",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "swap": {
+  "command": "swap",
+  "payload": {
+   "d": "2026-10-28",
+   "from": "PRM_C4"
+  },
+  "reply": {
+   "command": "swap",
+   "requestId": "req-swap",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "swapAgain": {
+  "command": "swap",
+  "payload": {
+   "d": "2026-10-28",
+   "from": "PRM_C4"
+  },
+  "reply": {
+   "command": "swap",
+   "requestId": "req-swapAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded."
+  }
+ },
+ "swapNoQuestion": {
+  "command": "swap",
+  "payload": {
+   "d": "1999-01-01",
+   "from": "PRM_C1"
+  },
+  "reply": {
+   "command": "swap",
+   "requestId": "req-swapNoQuestion",
+   "ok": false,
+   "changed": false,
+   "message": "That day has no question to swap."
+  }
+ },
+ "tip": {
+  "command": "tip",
+  "payload": {},
+  "reply": {
+   "command": "tip",
+   "requestId": "req-tip",
+   "ok": true,
+   "changed": true
+  }
+ },
+ "tipAgain": {
+  "command": "tip",
+  "payload": {},
+  "reply": {
+   "command": "tip",
+   "requestId": "req-tipAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded."
+  }
+ },
+ "backup": {
+  "command": "backup",
+  "payload": {},
+  "reply": {
+   "command": "backup",
+   "requestId": "req-backup",
+   "ok": true,
+   "changed": false
+  }
+ },
+ "write": {
+  "command": "write",
+  "payload": {
+   "key": "2026-10-28"
+  },
+  "reply": {
+   "command": "write",
+   "requestId": "req-write",
+   "ok": true,
+   "changed": false
+  }
+ },
+ "unlockLockOff": {
+  "command": "unlock",
+  "payload": {},
+  "reply": {
+   "command": "unlock",
+   "requestId": "req-unlockLockOff",
+   "ok": false,
+   "changed": false
+  }
+ },
+ "selectLocked": {
+  "command": "select",
+  "payload": {
+   "key": "2026-10-28"
+  },
+  "reply": {
+   "command": "select",
+   "requestId": "req-selectLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "writeLocked": {
+  "command": "write",
+  "payload": {
+   "key": "2026-10-28"
+  },
+  "reply": {
+   "command": "write",
+   "requestId": "req-writeLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "swapLocked": {
+  "command": "swap",
+  "payload": {
+   "d": "2026-10-28",
+   "from": "PRM_C4"
+  },
+  "reply": {
+   "command": "swap",
+   "requestId": "req-swapLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "backupLocked": {
+  "command": "backup",
+  "payload": {},
+  "reply": {
+   "command": "backup",
+   "requestId": "req-backupLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "tipLocked": {
+  "command": "tip",
+  "payload": {},
+  "reply": {
+   "command": "tip",
+   "requestId": "req-tipLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "unlockCancelled": {
+  "command": "unlock",
+  "payload": {},
+  "reply": {
+   "command": "unlock",
+   "requestId": "req-unlockCancelled",
+   "ok": false,
+   "changed": false
+  }
+ },
+ "unlockFailed": {
+  "command": "unlock",
+  "payload": {},
+  "reply": {
+   "command": "unlock",
+   "requestId": "req-unlockFailed",
+   "ok": false,
+   "changed": false
+  }
+ },
+ "unlock": {
+  "command": "unlock",
+  "payload": {},
+  "reply": {
+   "command": "unlock",
+   "requestId": "req-unlock",
+   "ok": true,
+   "changed": true
+  }
+ }
+}

@@ -1,0 +1,597 @@
+{
+ "protocol": 1,
+ "webSessionId": "journal-fixture",
+ "sequence": 1,
+ "withheld": false,
+ "panes": [
+  {
+   "id": "media",
+   "label": "Media",
+   "current": false
+  },
+  {
+   "id": "history",
+   "label": "Journal",
+   "current": true
+  }
+ ],
+ "lock": {
+  "on": false,
+  "card": {
+   "title": "Journal locked",
+   "body": "Your reflections are private. Unlock with your fingerprint or screen lock.",
+   "unlock": "Unlock"
+  }
+ },
+ "motion": true,
+ "edit": "page",
+ "tip": null,
+ "hero": {
+  "eyebrow": "YOUR CHRONICLE",
+  "title": "Journal",
+  "backup": {
+   "label": "Backup",
+   "spoken": "Export backup"
+  },
+  "stats": [
+   {
+    "value": "1",
+    "label": "day streak",
+    "color": 4294677052
+   },
+   {
+    "value": "17",
+    "label": "days this month",
+    "color": 4284524026
+   },
+   {
+    "value": "60",
+    "label": "XP this week",
+    "color": 4281652121
+   },
+   {
+    "value": "0",
+    "label": "reflections",
+    "color": 4294210230
+   }
+  ],
+  "rhythm": {
+   "title": "Last 4 weeks",
+   "legend": "brighter = bigger day",
+   "cells": [
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 1"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 2"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.69,
+     "off": false,
+     "today": false,
+     "label": "Oct 3: 125 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.66,
+     "off": false,
+     "today": false,
+     "label": "Oct 4: 114 XP"
+    },
+    {
+     "color": 4284773515,
+     "alpha": 0.63,
+     "off": false,
+     "today": false,
+     "label": "Oct 5: 103 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.68,
+     "off": false,
+     "today": false,
+     "label": "Oct 6: 92 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.8,
+     "off": false,
+     "today": false,
+     "label": "Oct 7: 121 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.75,
+     "off": false,
+     "today": false,
+     "label": "Oct 8: 110 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.71,
+     "off": false,
+     "today": false,
+     "label": "Oct 9: 99 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.83,
+     "off": false,
+     "today": false,
+     "label": "Oct 10: 128 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.77,
+     "off": false,
+     "today": false,
+     "label": "Oct 11: 117 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.73,
+     "off": false,
+     "today": false,
+     "label": "Oct 12: 106 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.69,
+     "off": false,
+     "today": false,
+     "label": "Oct 13: 95 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.81,
+     "off": false,
+     "today": false,
+     "label": "Oct 14: 124 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.76,
+     "off": false,
+     "today": false,
+     "label": "Oct 15: 113 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.72,
+     "off": false,
+     "today": false,
+     "label": "Oct 16: 102 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.68,
+     "off": false,
+     "today": false,
+     "label": "Oct 17: 91 XP"
+    },
+    {
+     "color": 4279548070,
+     "alpha": 0.8,
+     "off": false,
+     "today": false,
+     "label": "Oct 18: 120 XP"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 19"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 20"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 21"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 22"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 23"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 24"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 25"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 26"
+    },
+    {
+     "color": 0,
+     "alpha": 0,
+     "off": true,
+     "today": false,
+     "label": "Oct 27"
+    },
+    {
+     "color": 4294286859,
+     "alpha": 0.57,
+     "off": false,
+     "today": true,
+     "label": "Oct 28: 60 XP"
+    }
+   ]
+  }
+ },
+ "list": {
+  "rev": "4|2026-10-28|0",
+  "items": [
+   {
+    "kind": "day",
+    "key": "2026-10-28",
+    "weekday": "Today",
+    "date": "28",
+    "bar": 47,
+    "xp": "60",
+    "pen": false,
+    "color": 4294286859,
+    "today": true,
+    "spoken": "Today, 60 XP"
+   },
+   {
+    "kind": "review",
+    "key": "W:2026-W42",
+    "badge": "W",
+    "title": "Week 42",
+    "sub": "weekly review"
+   },
+   {
+    "kind": "quiet",
+    "text": "9 quiet days"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-18",
+    "weekday": "Sun",
+    "date": "18",
+    "bar": 94,
+    "xp": "120",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sun, Oct 18, 120 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-17",
+    "weekday": "Sat",
+    "date": "17",
+    "bar": 71,
+    "xp": "91",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sat, Oct 17, 91 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-16",
+    "weekday": "Fri",
+    "date": "16",
+    "bar": 80,
+    "xp": "102",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Fri, Oct 16, 102 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-15",
+    "weekday": "Thu",
+    "date": "15",
+    "bar": 88,
+    "xp": "113",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Thu, Oct 15, 113 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-14",
+    "weekday": "Wed",
+    "date": "14",
+    "bar": 97,
+    "xp": "124",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Wed, Oct 14, 124 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-13",
+    "weekday": "Tue",
+    "date": "13",
+    "bar": 74,
+    "xp": "95",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Tue, Oct 13, 95 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-12",
+    "weekday": "Mon",
+    "date": "12",
+    "bar": 83,
+    "xp": "106",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Mon, Oct 12, 106 XP"
+   },
+   {
+    "kind": "review",
+    "key": "W:2026-W41",
+    "badge": "W",
+    "title": "Week 41",
+    "sub": "weekly review"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-11",
+    "weekday": "Sun",
+    "date": "11",
+    "bar": 91,
+    "xp": "117",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sun, Oct 11, 117 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-10",
+    "weekday": "Sat",
+    "date": "10",
+    "bar": 100,
+    "xp": "128",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sat, Oct 10, 128 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-09",
+    "weekday": "Fri",
+    "date": "9",
+    "bar": 77,
+    "xp": "99",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Fri, Oct 9, 99 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-08",
+    "weekday": "Thu",
+    "date": "8",
+    "bar": 86,
+    "xp": "110",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Thu, Oct 8, 110 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-07",
+    "weekday": "Wed",
+    "date": "7",
+    "bar": 95,
+    "xp": "121",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Wed, Oct 7, 121 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-06",
+    "weekday": "Tue",
+    "date": "6",
+    "bar": 72,
+    "xp": "92",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Tue, Oct 6, 92 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-05",
+    "weekday": "Mon",
+    "date": "5",
+    "bar": 80,
+    "xp": "103",
+    "pen": false,
+    "color": 4284773515,
+    "today": false,
+    "spoken": "Mon, Oct 5, 103 XP"
+   },
+   {
+    "kind": "review",
+    "key": "W:2026-W40",
+    "badge": "W",
+    "title": "Week 40",
+    "sub": "weekly review"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-04",
+    "weekday": "Sun",
+    "date": "4",
+    "bar": 89,
+    "xp": "114",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sun, Oct 4, 114 XP"
+   },
+   {
+    "kind": "day",
+    "key": "2026-10-03",
+    "weekday": "Sat",
+    "date": "3",
+    "bar": 98,
+    "xp": "125",
+    "pen": false,
+    "color": 4279548070,
+    "today": false,
+    "spoken": "Sat, Oct 3, 125 XP"
+   }
+  ]
+ },
+ "selection": "2026-10-28",
+ "empty": null,
+ "entry": {
+  "kind": "day",
+  "key": "2026-10-28",
+  "head": {
+   "number": "28",
+   "weekday": "Wednesday",
+   "month": "October 2026",
+   "xp": "60",
+   "xpLabel": "XP today"
+  },
+  "meta": [
+   "1 entry"
+  ],
+  "care": null,
+  "welcome": {
+   "tier": 2,
+   "head": "Good to see you again.",
+   "body": "It has been 9 days since your last log. Life happens outside the screen. Do not try to make up for last week, just pick one small block on the Director dial today.",
+   "chips": [
+    {
+     "id": "line",
+     "label": "One-sentence catch-up · +20 XP",
+     "done": false
+    },
+    {
+     "id": "director",
+     "label": "Open Life Director",
+     "done": false
+    }
+   ]
+  },
+  "insight": {
+   "label": "Chapter Resumed",
+   "color": 4294286859,
+   "text": "You are back. That is the only thing that matters today.",
+   "pattern": "Pattern noticed: 100% of your XP over the last 2 weeks was logged between 5 AM and 11 AM. Put your hardest block there."
+  },
+  "reflect": {
+   "prompt": {
+    "kicker": "Reflect",
+    "text": "What made you open LifeMax again today?",
+    "id": "PRM_E4",
+    "swap": "Swap question"
+   },
+   "label": null,
+   "text": "",
+   "placeholder": "How did today feel? What mattered? What will you do differently?",
+   "max": 4000,
+   "min": 40,
+   "canPay": true,
+   "awarded": false,
+   "meter": 0,
+   "counter": {
+    "awarded": "+15 XP & +2 bond claimed",
+    "ready": "Saves for +15 XP",
+    "short": "Write 40+ characters for +15 XP",
+    "old": "Reflections on older days earn no XP"
+   }
+  },
+  "timeline": [
+   {
+    "time": "9:05 AM",
+    "color": 4289170426,
+    "icon": "book",
+    "name": "Back at it",
+    "attr": {
+     "text": "Discipline",
+     "color": 4289170426
+    },
+    "minutes": "30 min",
+    "skill": "Back",
+    "xp": "+60",
+    "notes": null,
+    "plan": null
+   }
+  ],
+  "workoutNotes": null,
+  "blank": null
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

@@ -43,9 +43,11 @@ const LMA_TABSWIPE = Object.freeze({
   function allowed() {
     return lmaLoad().nativeSwipe === true && lmaSwipeEnabled() && !!state.onboardingComplete && !lmaThumbWarmBusy && !OWN_GESTURES.includes(lmaView());
   }
-  /** something over the page: a popup or sheet, a body that must not scroll, a lock (otherwise refused as "overlay") */
+  /** something over the page: a popup or sheet, a body that must not scroll, a lock (otherwise refused as "overlay"). The native
+      Journal draws its own lock card, which holds none of the Journal's words, so a swipe may start from it. */
   function covered() {
-    return !!lmaTopOverlay() || document.body.classList.contains("noscroll") || !!document.querySelector(LOCKED);
+    const lockCover = !!document.querySelector(LOCKED) && !(lmaView() === "history" && NativeTabs.isOpen("history"));
+    return !!lmaTopOverlay() || document.body.classList.contains("noscroll") || lockCover;
   }
 
   /** what a swipe meets at a tab: "native" a screen would draw it now, "stop" it leaves the window (Cash), "web" the page draws it */

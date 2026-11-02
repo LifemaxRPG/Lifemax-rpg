@@ -47,6 +47,53 @@
     return held.map(([xp, gains]) => ({ xp, gains: gains.map(gainOf) }));
   }
 
+  /* The page's toasts, for every kit that draws them (cfg.notices): one watcher and one count for all, so a toast has one number
+     everywhere and goes to one screen only, the first whose frame is built while it shows. A toast native Media has shown is not
+     shown again by the Journal it hands over to; a toast raised while no screen showed (a hand-back to the page) goes with the
+     frame that brings a screen back. That screen keeps it in its later frames while it shows (the screen shows a number once).
+     claimNotice() gives the toast showing now to no screen: one that is about the page (tap the file button). A toast claimed by a
+     frame that is then not sent (the screen was leaving) is not shown by any screen. */
+  const notices = (function () {
+    let el = null, watch = null, count = 0, owned = 0, owner = "";
+    const listeners = [];
+    function listen(fn) {
+      if (!watch && (el = document.getElementById("toast"))) {
+        // each toast() writes the toast's text, which is how they are counted
+        watch = new MutationObserver((records) => {
+          count += records.length;
+          listeners.forEach((f) => f());
+        });
+        watch.observe(el, { childList: true });
+      }
+      if (fn) listeners.push(fn);
+    }
+    /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
+    function latest() {
+      if (watch) count += watch.takeRecords().length;
+      return count;
+    }
+    /** whether the latest toast is by (the first to ask for it takes it) */
+    function claim(by) {
+      const id = latest();
+      if (owned !== id) {
+        owned = id;
+        owner = by;
+      }
+      return owner === by;
+    }
+    /** the toast showing now for kit's frame, if it is kit's to show: {id, text}, or null */
+    function take(kit, quiet) {
+      const id = latest();
+      if (!el || !el.classList.contains("show")) return null;
+      if (quiet && quiet(id)) {
+        claim(""); // about the page: no screen shows it
+        return null;
+      }
+      return claim(kit) ? { id, text: el.textContent } : null;
+    }
+    return { listen, latest, take, claim: () => claim("") };
+  })();
+
   /**
    * cfg: id (the page view, e.g. "character"), plugin (Capacitor plugin name), capability, setting (the owner's switch, a key in
    * lmaLoad(): off until they turn it on, or, with defaultOn for a tab that has become the default, on until they turn it off),
@@ -89,7 +136,7 @@
    * 'open' (an open threw or was rejected) or 'update' (a refresh was rejected).
    * notices: true (or {quiet(id)}) counts the page's toasts and adds notice {id, text} to every projection while the toast shows,
    * for the screen to draw, since it hides the page's; quiet(id) leaves out a toast that is about the page (the returned toasts()
-   * is the latest toast's number).
+   * is the latest toast's number). The count is shared by every kit, and a toast goes to one screen only (see notices below).
    */
   function create(cfg) {
     const session = cfg.id + "-web-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -98,21 +145,12 @@
     let entered = true; // the page went to this view and no open has projected since
     const fail = (reason) => { try { cfg.onFail?.(reason); } catch (e) { console.warn(cfg.id + " onFail", e); } };
     const afterClose = () => { try { cfg.afterClose?.(); } catch (e) { console.warn(cfg.id + " afterClose", e); } };
-    /* the page's toasts (cfg.notices): each toast() writes the toast's text, which is how they are counted; one that comes while
-       the screen shows is sent at once */
-    const toastEl = cfg.notices ? document.getElementById("toast") : null;
-    let toasts = 0;
-    const toastWatch = toastEl ? new MutationObserver((records) => { toasts += records.length; schedule(); }) : null;
-    if (toastWatch) toastWatch.observe(toastEl, { childList: true });
-    /** the number of the page's latest toast, counting those of a handler that has just run, which the observer hears of later */
-    function latestToast() {
-      if (toastWatch) toasts += toastWatch.takeRecords().length;
-      return toasts;
-    }
-    /** the page's message while its toast shows */
+    /* the page's toasts (cfg.notices, shared by every kit): one that comes while the screen shows is sent at once */
+    if (cfg.notices) notices.listen(() => schedule());
+    const latestToast = notices.latest;
+    /** the page's message while its toast shows, unless another screen has taken it or it is about the page */
     function notice() {
-      const id = latestToast(), quiet = cfg.notices && cfg.notices.quiet;
-      return toastEl.classList.contains("show") && !(quiet && quiet(id)) ? { id, text: toastEl.textContent } : null;
+      return notices.take(cfg.id, cfg.notices && cfg.notices.quiet);
     }
 
     function available() {
@@ -374,5 +412,5 @@
              active: () => active, opening: () => opening };
   }
 
-  window.NativeTabKit = { create, color, tokens, light, celebrationTarget, celebrations };
+  window.NativeTabKit = { create, color, tokens, light, celebrationTarget, celebrations, claimNotice: notices.claim };
 })();

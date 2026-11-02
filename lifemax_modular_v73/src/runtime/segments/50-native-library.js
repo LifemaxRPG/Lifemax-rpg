@@ -3,7 +3,7 @@
    and hands every tap to the page's own handler. The kit closes the screen, the handler runs, and the screen comes back once
    nothing it does not draw is over the pane: the add/edit form, the audio player, a file button handed to the owner, a level-up.
    The page's toast, which the screen would hide, comes with the projection while it shows, for the screen to draw.
-   The Journal stays on the page; the switch's Journal is a web destination, so the Journal lock works as before.
+   The switch's Journal is a destination of its own: the native Journal (50-native-journal.js, its own switch) or the page.
    The tab lifecycle is NativeTabKit's. Inventory: docs/architecture/LIBRARY_INVENTORY.md. */
 (function () {
   // what the page writes in views/media.html and in its list (renderMedia, mediaAudioButtons), word for word
@@ -42,7 +42,6 @@
   const FILE_BUTTON = "#mediaList [data-media-file]"; // a row's Attach or Replace file
   let filterRevision = 1; // rises whenever the page's filter is set (typed on the page, or by a voice search), so the screen adopts it
   let acting = false; // a tap handed back to the page is still running: what it shows may come only after an await (the player)
-  let hint = 0; // the toast that points the owner to a file button: it is about the page, so the screen does not show it
 
   /** a link the screen may open: http and https only (the page draws any stored link; only its form checks the scheme) */
   function webLink(link) {
@@ -135,7 +134,7 @@
     b.scrollIntoView({ block: "center" });
     b.focus({ preventScroll: true });
     toast(`Tap "${b.textContent.trim()}" to choose the file`);
-    hint = tab.toasts();
+    NativeTabKit.claimNotice(); // it is about the page, so no screen shows it
   }
   /** open an item's link as its row's anchor does: a new window, no referrer */
   function openLink(link) {
@@ -181,8 +180,9 @@
     projection,
     onAction,
     render: "renderMedia",
-    // the page's toast goes to the screen, which hides it; the one pointing the owner to a file button is about the page
-    notices: { quiet: (id) => id === hint },
+    // the page's toast goes to the screen, which hides it (the kit's shared notices); the one pointing the owner to a file
+    // button is about the page, and claimed for none
+    notices: true,
     // until a native mini-player exists, a player that is loading, loaded or showing keeps the pane on the page, so its
     // controls never vanish under the screen (audioBusy)
     blocked: () =>
