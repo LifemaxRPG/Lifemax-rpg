@@ -81,6 +81,12 @@ abstract class ComposeTabPlugin : Plugin() {
     protected open fun onRested() {}
 
     /**
+     * The page closed the screen (the owner left the tab): it is still on its way out, and nothing
+     * else runs for it from now on (A24). A tab with words not yet sent flushes them here.
+     */
+    protected open fun onHidden() {}
+
+    /**
      * Ask the page to run a command (a preview, a save) without closing the screen. The page
      * answers with an update whose reply names the same [requestId]. Commands run on the page one
      * at a time, in the order sent.
@@ -259,6 +265,7 @@ abstract class ComposeTabPlugin : Plugin() {
 
     /** Leaving the tab only hides the screen; it stays composed so the next visit is instant. */
     private fun hide() {
+        if (visible) onHidden()
         visible = false
         TabSwipe.closed(tabId)
         ChromeHost.leave(this)

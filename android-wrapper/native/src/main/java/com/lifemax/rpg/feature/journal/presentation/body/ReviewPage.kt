@@ -48,7 +48,11 @@ import com.lifemax.rpg.feature.journal.domain.ReviewGridItem
  * two to a row, the coach's amber card and the answer box. [onWrite] is `write {key}`.
  */
 @Composable
-internal fun ColumnScope.ReviewPage(review: ReviewEntry, onWrite: (String) -> Unit) {
+internal fun ColumnScope.ReviewPage(
+    review: ReviewEntry,
+    onWrite: (String) -> Unit,
+    editor: EntryEditor? = null,
+) {
     Arrive(1) { BigHead(review.head.badge, 46.sp, review.head.title, review.head.range) }
     Arrive(2) {
         when (val chart = review.chart) {
@@ -69,7 +73,7 @@ internal fun ColumnScope.ReviewPage(review: ReviewEntry, onWrite: (String) -> Un
         )
     }
     Spacer(Modifier.height(18.dp))
-    Arrive(5) { ReviewAnswerBox(review, onWrite) }
+    Arrive(5) { ReviewAnswerBox(review, onWrite, editor) }
 }
 
 /**

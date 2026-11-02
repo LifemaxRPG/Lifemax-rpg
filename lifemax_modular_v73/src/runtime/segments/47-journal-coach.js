@@ -170,10 +170,11 @@ function jcKeepWords(){if(jcWrite())return true;toast(unsavedMessage());return f
    reward alone and never the words: takeBack restores the state and draws it, and the page says the words were kept but not the XP
    (kept names them, as 'Reflection saved'), or, for a reward with no words of its own (a welcome chip), that nothing was saved. The
    reward's toast (said) comes only after a stored save. Answers whether it was paid. */
+const JC_XP_UNSAVED=' · XP not saved (storage full?)';
 function jcPay(award,said,kept){
  const was=JSON.stringify(state);
  award();
- if(!save()){takeBack(was,kept&&kept+' · XP not saved (storage full?)');return false}
+ if(!save()){takeBack(was,kept&&kept+JC_XP_UNSAVED);return false}
  try{toast(said)}catch(e){}
  return true;
 }
@@ -181,8 +182,9 @@ function jcPay(award,said,kept){
 function jcCanPay(d){return d===getToday()||d===jcAdd(getToday(),-1)}
 /* The reflection's reward (40 or more characters, once a day), after saveDayReflection has stored the words. Answers whether it was
    paid. */
+function jcReflectOwed(d,text){return !jcRec('days',d).xpAwarded&&String(text||'').trim().length>=JC.reflectMin&&jcCanPay(d)}
 function jcOnReflect(d,text){
- if(jcRec('days',d).xpAwarded||String(text||'').trim().length<JC.reflectMin||!jcCanPay(d))return false;
+ if(!jcReflectOwed(d,text))return false;
  return jcPay(function(){const days=jcStore().days;(days[d]||(days[d]={})).xpAwarded=true;jcAward(JC.rewardReflect,'Journal reflection');jcCare(2)},
   '+'+JC.rewardReflect+' XP · +2 bond · Reflection saved','Reflection saved');
 }
@@ -313,12 +315,24 @@ function jcClaim(kind){
 function jcCatchUp(){
  if(!jcOffered('line'))return;
  const t=prompt('One sentence: what have you been up to?');if(t==null)return;
- const s=String(t).trim();if(s.length<12){try{toast('Write a full sentence (12+ characters)')}catch(e){}return}
- const d=getToday(),w=jcRec('welcome',d);if(!w.claimed||w.claimed.line)return;
+ jcCatchUpWith(t,true);
+}
+/* The catch-up with its sentence in hand (the page asked for it with prompt, a native screen with its own field). Answers
+   {ok, changed, paid, message?}: a sentence under 12 characters, a card that does not offer it, or one already claimed (a repeat
+   changes nothing) are refused in the page's words; ok means the sentence is stored. draw: the page redraws when its words could
+   not be stored (a native screen draws its own). */
+const JC_LINE_MIN=12,JC_LINE_SHORT='Write a full sentence (12+ characters)',JC_NOT_OFFERED='That is not offered today.',JC_ALREADY='Already recorded.';
+function jcCatchUpWith(t,draw){
+ const s=String(t==null?'':t).trim();
+ if(s.length<JC_LINE_MIN){try{toast(JC_LINE_SHORT)}catch(e){}return {ok:false,changed:false,message:JC_LINE_SHORT}}
+ const d=getToday(),w=jcRec('welcome',d);
+ if(w.claimed&&w.claimed.line)return {ok:true,changed:false,paid:false,message:JC_ALREADY};
+ if(!jcOffered('line')||!w.claimed)return {ok:false,changed:false,message:JC_NOT_OFFERED};
  const refs=state.dayReflections||(state.dayReflections={}),had=refs[d]||'';
  if(had!==s&&!had.endsWith('\n'+s))refs[d]=(had+(had?'\n':'')+s).slice(0,4000);
- if(jcKeepWords())jcPay(function(){jcAward(20,'Catch-up note');w.claimed.line=1},'+20 XP · Catch-up saved','Catch-up saved');
- else renderHistory();
+ if(!jcKeepWords()){if(draw)renderHistory();return {ok:false,changed:false,paid:false,message:unsavedMessage()}}
+ const paid=jcPay(function(){jcAward(20,'Catch-up note');w.claimed.line=1},'+20 XP · Catch-up saved','Catch-up saved');
+ return paid?{ok:true,changed:true,paid:true}:{ok:true,changed:true,paid:false,message:'Catch-up saved'+JC_XP_UNSAVED};
 }
 /* ----- the day view's top: welcome, insight, reflection box ----- */
 /* A day's coach cards as data. The care note stands alone when the day's own words call for it; otherwise the welcome card, the
@@ -448,11 +462,29 @@ function jcReviewHtml(key){
 }
 /* A review answer: the words are stored first, then the first answer long enough (50 characters for a week, 60 for a month) pays the
    review's bonus in its own save, which draws the Journal; otherwise the Journal is drawn here */
-function jcSaveReview(key,val){
- const t=String(val||'').trim(),W=key[0]==='W',bonus=W?JC.rewardWeekly:JC.rewardMonthly,reviews=jcStore().reviews,rec=reviews[key]||(reviews[key]={});
- rec.answer=t.slice(0,2000);
- if(jcKeepWords()&&!rec.paid&&t.length>=(W?JC.weeklyMin:JC.monthlyMin))jcPay(function(){rec.paid=true;jcAward(bonus,W?'Weekly review':'Monthly chronicle')},'+'+bonus+' XP · Review saved','Review saved');
- else renderHistory();
+function jcSaveReview(key,val){journalSaveReview(key,val,null,{award:true,always:true,draw:true})}
+/* The review answer's owner, as journalSaveReflection is the reflection's (04-runtime.js): base is the answer the caller last saw
+   (a conflict when the page holds neither it nor the new words), opt.award pays the review's bonus, opt.always writes every time,
+   opt.draw draws the Journal when no reward drew it. Answers {ok, changed, paid, message?, conflict?, stored?}. */
+const jrReviewUnsaved={};
+function journalSaveReview(key,val,base,opt){
+ opt=opt||{};
+ const t=String(val==null?'':val).trim(),W=key[0]==='W',bonus=W?JC.rewardWeekly:JC.rewardMonthly,reviews=jcStore().reviews,rec=reviews[key]||(reviews[key]={});
+ const a=t.slice(0,2000),had=rec.answer||'';
+ if(base!=null&&had!==base&&had!==a)return {ok:false,changed:false,conflict:true,stored:journalLocked()?'':had,message:JOURNAL_WORDS.conflict};
+ let changed=false;
+ if(opt.always||had!==a||jrReviewUnsaved[key]){
+  changed=had!==a;
+  rec.answer=a;
+  if(!jcKeepWords()){jrReviewUnsaved[key]=true;if(opt.draw)renderHistory();return {ok:false,changed,paid:false,message:unsavedMessage()}}
+  delete jrReviewUnsaved[key];
+ }
+ const owed=!!opt.award&&!rec.paid&&t.length>=(W?JC.weeklyMin:JC.monthlyMin);
+ const paid=owed&&jcPay(function(){rec.paid=true;jcAward(bonus,W?'Weekly review':'Monthly chronicle')},'+'+bonus+' XP · Review saved','Review saved');
+ if(!owed&&opt.draw)renderHistory();
+ const r={ok:true,changed,paid};
+ if(owed&&!paid)r.message='Review saved'+JC_XP_UNSAVED;
+ return r;
 }
 window.LifeMaxCoach=Object.freeze({day:jcDay,arch:jcArch,insight:jcInsight,prompt:jcPrompt,patterns:jcPatterns,gap:jcGap,reviewList:jcReviewList,reviewHtml:jcReviewHtml,reflect:jcOnReflect,store:jcStore,hash:jcHash,reset:function(){jcCache={sig:'',idx:null,day:{}}}});
 /* the Journal was first drawn during start-up, before this module existed: draw it again now */

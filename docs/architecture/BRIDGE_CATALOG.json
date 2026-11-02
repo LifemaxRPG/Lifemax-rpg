@@ -255,6 +255,7 @@
    "plan": "docs/architecture/plans/JOURNAL_AND_LIBRARY_SHEETS.md",
    "capabilities": [
     "library.journal.projection.v1",
+    "library.journal.write.v1",
     "shell.swipe.v1",
     "shell.swipe.v2"
    ],
@@ -266,18 +267,22 @@
     "swap": "{d, from}: jcSwapPrompt compare-and-set",
     "unlock": "{}: relock if the page thinks it is open, then LifeMaxJournalLock.prompt(); {ok: r === true}",
     "backup": "{}: exportData(), not awaited; its toast arrives as a notice",
-    "tip": "{}: dismissFeatureTip('history')"
+    "tip": "{}: dismissFeatureTip('history')",
+    "reflect": "{d, text, base, final}: journalSaveReflection; final:false stores the words only, final:true may pay +15 once (days[d].xpAwarded); conflict by base; reply {ok, changed, paid, message?, conflict?, stored?, celebrations}",
+    "answer": "{key, text, base, final}: journalSaveReview, the same; pays the review bonus once (reviews[key].paid)",
+    "claim": "{kind: pet|fresh}: jcClaim; welcome[today].claimed[kind] is the receipt",
+    "catchUp": "{text}: jcCatchUpWith; claimed.line is the receipt"
    },
    "writes": [
     "journalCoach.days[d].promptId (swap, writeSave)",
     "journalCoach chip and welcome decisions (select, writeSave)",
-    "tipsSeen.history (tip)"
+    "tipsSeen.history (tip)",
+    "dayReflections[d] and journalCoach.reviews[key].answer (reflect, answer: writeSave, words first)",
+    "coach XP activity with days[d].xpAwarded, reviews[key].paid, welcome[d].claimed[kind] in one save (final writes, claim, catchUp)"
    ],
    "delegatedInteractions": [
-    "claim {id: pet|fresh}: jcClaim(id), back after afterCelebrations",
-    "catchUp: jcCatchUp() with the page's prompt, back after afterCelebrations",
-    "writing a reflection or a review answer in the page's field (phase 1)",
-    "{view: media} and {view: life-director}: lmaNavTo, make-before-break"
+    "{view: media} and {view: life-director}: lmaNavTo, make-before-break",
+    "with edit:\"page\" (no write capability): claim, catchUp and writing in the page's field hand over as in phase 1"
    ],
    "readContract": {
     "snapshotDto": "feature/journal/domain/JournalModels.kt (the one model, body included), JournalFrame.kt",
@@ -286,7 +291,7 @@
     "ordering": "webSessionId and increasing sequence; list.rev unchanged keeps the list; notice.id counts the page's toasts (one counter for every kit)",
     "invalidation": "renderHistory, the lock's onChange and onStatus, a page toast, host resume, foreground return, 15-second refresh while visible"
    },
-   "mutationsGate": "phase 1 writes are decision-only fields with no XP (writeSave), compare-and-set (swap) or idempotent (tip); phase 2's paying commands wait for ADR 0013",
+   "mutationsGate": "ADR 0013: natural receipts (days[d].xpAwarded, welcome[d].claimed[kind], reviews[key].paid) stored in the same save as the award; text writes are a set with a base check (conflict refuses, changing nothing); autosave (final:false) never pays; ok only when the words are stored; a reward that cannot be stored is taken back alone; no native pending record, nothing replayed after a restart (A14/A15 gap). Decision-only phase 1 writes as before",
    "rollout": "opt-in under Settings, Appearance: Native Journal (beta), off by default",
    "canonicalLayout": true
   },

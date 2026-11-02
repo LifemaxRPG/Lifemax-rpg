@@ -147,7 +147,11 @@ private fun PatternLine(text: String, color: Color) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun WelcomeCard(welcome: JournalWelcome, onChip: (ChipTap) -> Unit) {
+internal fun WelcomeCard(
+    welcome: JournalWelcome,
+    editor: EntryEditor? = null,
+    onChip: (ChipTap) -> Unit,
+) {
     val c = LocalJournalBodyColors.current
     val shape = RoundedCornerShape(20.dp)
     Box(
@@ -197,6 +201,8 @@ internal fun WelcomeCard(welcome: JournalWelcome, onChip: (ChipTap) -> Unit) {
             ) {
                 welcome.chips.forEach { chip -> Chip(chip) { chipTap(chip)?.let(onChip) } }
             }
+            // phase 2: the catch-up's sentence is typed here, under the chips
+            if (editor != null && editor.catchUp.open) CatchUpPanel(editor)
         }
     }
 }

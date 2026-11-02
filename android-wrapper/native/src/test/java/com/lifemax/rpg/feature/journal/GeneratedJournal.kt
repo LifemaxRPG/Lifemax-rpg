@@ -55,6 +55,9 @@ internal object GeneratedJournal {
     /** journal-replies.json: each command's payload and the page's reply, by case name. */
     fun replies() = JSONObject(text("journal-replies.json"))
 
+    /** journal-write-replies.json (phase 2): each write command's payload and the page's reply. */
+    fun writeReplies() = JSONObject(text("journal-write-replies.json"))
+
     /** journal-counter.json: the page's choice among the counter's lines for each case. */
     fun counter() = JSONObject(text("journal-counter.json"))
 }

@@ -126,7 +126,7 @@ const HELPERS = () => {
     return r;
   });
   ok('Settings has "Native Journal (beta)" right after the Library row, off by default', row.label === 'Native Journal (beta)' && row.afterLibrary && !row.checked && !row.disabled && row.stored === undefined, row);
-  ok('its hint says what is native and what stays on the page', row.hint === 'The native Journal: your days, the coach and the reviews, behind the Journal lock. Writing a reflection or a review answer and the welcome-back chips use the classic page. Turn off for the classic Journal.', row.hint);
+  ok('its hint says what is native and what stays on the page', row.hint === 'The native Journal: your days, the coach and the reviews, behind the Journal lock. You write reflections and review answers in the native notebook field, and the welcome-back chips and the catch-up are native too. Turn off for the classic Journal.', row.hint);
   ok('the Library hint no longer says the Journal stays classic', /The Journal has its own switch\./.test(row.libHint) && !/Journal stays classic/.test(row.libHint), row.libHint);
   ok('switched off, the Journal stays the page', row.offStaysWeb && row.on, row);
 

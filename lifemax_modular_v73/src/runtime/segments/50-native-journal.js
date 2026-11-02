@@ -5,9 +5,13 @@
    frame: the switch, the lock card's words and the prompt's status, and nothing from the Journal; the builders do not even run
    (CONTRACT A35). Every command but unlock is refused then. A relock or an unlock reaches an open screen at once, and so does the
    prompt starting, failing or being cancelled.
-   Reading is native; writing is the page's (phase 1): write focuses the page's own field for the day while the screen still covers
-   it, then the screen steps aside, and it comes back once the field is left and the celebrations have played. The welcome chips and
-   the catch-up are hand-backs that come back the same way. The tab lifecycle is NativeTabKit's. */
+   Reading is native. Writing is the page's (phase 1): write focuses the page's own field for the day while the screen still covers
+   it, then the screen steps aside, and it comes back once the field is left and the celebrations have played; the welcome chips and
+   the catch-up are hand-backs that come back the same way. A screen that lists library.journal.write.v1 in its handshake writes
+   natively (phase 2, edit:"native"): it types in its own field and sends the words, and the page stores them through its own
+   owners (journalSaveReflection, journalSaveReview, jcCatchUpWith, jcClaim) and pays the reward as it always did, once. The screen
+   draws the XP celebration from the reply (celebrations). Nothing steps aside for a write any more. ADR 0013.
+   The tab lifecycle is NativeTabKit's. */
 (function () {
   // what the page writes in views/history.html, 48-journal-lock.js's card, 13-runtime.js's tip and 04/47's renderers, word for word
   const WORDS = {
@@ -32,7 +36,11 @@
     locked: "Unlock the Journal first.",
     unknown: "That day is not in your Journal.",
     noQuestion: "That day has no question to swap.",
+    // the catch-up's question is the page's own prompt() (jcCatchUp), asked in the screen's field instead; OK and Cancel are the
+    // system prompt's buttons
+    catchUp: { prompt: "One sentence: what have you been up to?", min: JC_LINE_MIN, max: 4000, ok: "OK", cancel: "Cancel" },
   };
+  const WRITE = "library.journal.write.v1"; // the screen types the words itself and sends them (phase 2)
   const EDITING = "#journalEntry textarea"; // the page's own field: a day's reflection or a review's answer
   const color = (css) => NativeTabKit.color(css);
   const lock = () => window.LifeMaxJournalLock;
@@ -174,7 +182,8 @@
       panes: panes(),
       lock: lockOf(),
       motion: !fxReduced(),
-      edit: "page", // phase 1: writing is the page's
+      edit: nativeWrite() ? "native" : "page", // the screen types the words itself when it says it can (the handshake), else the page's field
+      write: nativeWrite() ? { catchUp: WORDS.catchUp, celebrationTarget: NativeTabKit.celebrationTarget() } : null,
       tip: tip(),
       hero: m.hero,
       list: m.list,
@@ -192,6 +201,18 @@
 
   /* ---------- commands: the screen stays, the reply comes with the next projection ---------- */
   const refuse = () => ({ ok: false, changed: false, message: WORDS.locked });
+  const nativeWrite = () => tab.has(WRITE);
+  const DAY = /^\d{4}-\d\d-\d\d$/;
+  const unknown = () => ({ ok: false, changed: false, message: WORDS.unknown });
+  /** a write that may pay: its XP celebration goes to the screen in the reply (the page plays only the sound and buzz), unless no
+      screen is showing it (the Journal is locked, or the write is the flush of a screen that has just closed): then the page plays it. The reply is the owner's, plus celebrations. */
+  function paying(run) {
+    if (locked() || !tab.active()) return run(); // no screen showing (the app left, the tab closed): the page plays it
+    const { result, held } = holdCelebrations(run);
+    return Object.assign({}, result, { celebrations: NativeTabKit.celebrations(held) });
+  }
+  const text = (p) => String(p.text == null ? "" : p.text);
+  const base = (p) => (p.base == null ? null : String(p.base));
   const ALREADY = "Already recorded."; // a repeat the page recognises (the question already moved on, the tip already gone)
   function textarea() {
     return document.querySelector(EDITING);
@@ -208,6 +229,7 @@
         screen step aside once the reply has gone, and it comes back when the field is left (the focusout below) */
     async write(p) {
       if (locked()) return refuse();
+      if (nativeWrite()) return { ok: false, changed: false, message: WORDS.unknown }; // the screen has its own field
       const key = String(p.key || "");
       if (key !== histSel && !selectJournalEntry(key)) return { ok: false, changed: false, message: WORDS.unknown };
       if (histDrawn !== histSel) renderJournalEntry();
@@ -216,6 +238,38 @@
       ta.scrollIntoView({ block: "center" });
       ta.focus({ preventScroll: true });
       return { ok: true, changed: false, after: () => tab.follow() };
+    },
+    /** The words of a day's reflection, from the screen's own field. final:false (autosave, 1.5 s after the typing stops) stores the
+        words only; final:true (the field, the tab or the app was left) may also pay the reward, which the page pays once a day
+        (days[d].xpAwarded, stored in the same save as the coach activity). Words and reward are separate saves, so a reward that
+        cannot be stored never takes the words back. Refused as a conflict, with the stored words, when the page holds neither base
+        (what the screen last saw) nor text. Still stored while the Journal is locked (the app was left with the field open): the
+        owner's words are never dropped, and nothing private comes back in the reply. */
+    async reflect(p) {
+      const d = String(p.d || "");
+      if (!DAY.test(d) || d > getToday()) return unknown();
+      return paying(() => journalSaveReflection(d, text(p), base(p), { award: p.final === true, soft: false }));
+    },
+    /** A review's answer, the same way (the bonus is paid once per review: reviews[key].paid) */
+    async answer(p) {
+      const key = String(p.key || "");
+      if (!/^[WM]:/.test(key) || !jcReviewList(journalDays()).some((r) => r.key === key)) return unknown();
+      return paying(() => journalSaveReview(key, text(p), base(p), { award: p.final === true }));
+    },
+    /** A welcome chip that pays (pet or fresh). The page's card is the receipt: a claimed chip changes nothing. */
+    async claim(p) {
+      if (locked()) return refuse();
+      const kind = String(p.kind || "");
+      const w = jcRec("welcome", getToday());
+      if (JC_GIFT[kind] && w.claimed && w.claimed[kind]) return { ok: true, changed: false, message: ALREADY };
+      if (!JC_GIFT[kind] || !jcOffered(kind)) return { ok: false, changed: false, message: JC_NOT_OFFERED };
+      const reply = paying(() => ({ paid: jcClaim(kind) }));
+      return reply.paid ? Object.assign(reply, { ok: true, changed: true }) : Object.assign(reply, { ok: false, changed: false, message: unsavedMessage() });
+    },
+    /** The one-sentence catch-up, with its sentence: stored (joined to today's reflection), then +20 XP, once */
+    async catchUp(p) {
+      if (locked()) return refuse();
+      return paying(() => jcCatchUpWith(text(p)));
     },
     /** the day's question moved on, only while from is the question shown (a repeat changes nothing) */
     async swap(p) {

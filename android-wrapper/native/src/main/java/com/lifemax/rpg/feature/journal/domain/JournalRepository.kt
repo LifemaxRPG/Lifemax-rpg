@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.journal.domain
 
+import com.lifemax.rpg.core.designsystem.feedback.XpAward
 import kotlinx.coroutines.flow.StateFlow
 
 interface JournalRepository {
@@ -51,13 +52,22 @@ fun interface JournalCommands {
     fun send(command: JournalCommand, requestId: String)
 }
 
-/** The page's answer to a command (NativeTabKit adds the command and the request id). */
+/**
+ * The page's answer to a command (NativeTabKit adds the command and the request id). The write
+ * commands (phase 2) also say whether they [paid] a reward, carry the XP to [celebrations] draw,
+ * and, refused as a [conflict], the [stored] words the page holds (none while the Journal is
+ * locked).
+ */
 data class JournalReply(
     val command: String,
     val requestId: String,
     val ok: Boolean,
     val changed: Boolean,
     val message: String,
+    val paid: Boolean = false,
+    val conflict: Boolean = false,
+    val stored: String? = null,
+    val celebrations: List<XpAward> = emptyList(),
 )
 
 /**

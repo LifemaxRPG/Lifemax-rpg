@@ -25,6 +25,7 @@
  },
  "motion": true,
  "edit": "page",
+ "write": null,
  "tip": null,
  "hero": {
   "eyebrow": "YOUR CHRONICLE",

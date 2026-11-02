@@ -2,6 +2,8 @@ package com.lifemax.rpg.feature.journal.data
 
 import com.lifemax.rpg.core.data.objects
 import com.lifemax.rpg.core.data.pageTokens
+import com.lifemax.rpg.core.designsystem.feedback.PagePoint
+import com.lifemax.rpg.feature.journal.domain.CatchUpWords
 import com.lifemax.rpg.feature.journal.domain.DayEntry
 import com.lifemax.rpg.feature.journal.domain.DayHead
 import com.lifemax.rpg.feature.journal.domain.HeatCell
@@ -23,6 +25,7 @@ import com.lifemax.rpg.feature.journal.domain.JournalPane
 import com.lifemax.rpg.feature.journal.domain.JournalReflect
 import com.lifemax.rpg.feature.journal.domain.JournalTip
 import com.lifemax.rpg.feature.journal.domain.JournalWelcome
+import com.lifemax.rpg.feature.journal.domain.JournalWrite
 import com.lifemax.rpg.feature.journal.domain.LockCard
 import com.lifemax.rpg.feature.journal.domain.LockStatus
 import com.lifemax.rpg.feature.journal.domain.OpenJournal
@@ -123,6 +126,8 @@ private fun openJournal(j: JSONObject): OpenJournal {
             JournalEmpty(it.getString("icon"), it.getString("title"), it.getString("body"))
         }
     val entry = j.orNull("entry", ::entry)
+    val write = j.orNull("write", ::write)
+    require((edit == "native") == (write != null)) { "The write words belong to a native editor" }
     if (empty != null)
         require(entry == null && list.items.isEmpty()) { "An empty Journal with days" }
     else require(entry != null && entry.key == selection) { "The entry is not the selected one" }
@@ -145,7 +150,23 @@ private fun openJournal(j: JSONObject): OpenJournal {
         selection,
         empty,
         entry,
+        write,
     )
+}
+
+private fun write(w: JSONObject): JournalWrite {
+    val c = w.getJSONObject("catchUp")
+    val words =
+        CatchUpWords(
+            c.getString("prompt"),
+            c.getInt("min"),
+            c.getInt("max"),
+            c.getString("ok"),
+            c.getString("cancel"),
+        )
+    require(words.min in 1..words.max) { "The catch-up's length out of range" }
+    val t = w.getJSONObject("celebrationTarget")
+    return JournalWrite(words, PagePoint(t.getDouble("x").toFloat(), t.getDouble("y").toFloat()))
 }
 
 private fun hero(h: JSONObject): JournalHero {

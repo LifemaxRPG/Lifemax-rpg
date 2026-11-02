@@ -44,7 +44,8 @@ import com.lifemax.rpg.feature.journal.domain.ReviewEntry
 /*
  * The notebook boxes (.j-reflect.jx-reflect): the day's reflection with its question, meter and
  * counter, and a review's answer box. In phase 1 the field is not typed in here: a tap hands over
- * to the page's own field (`write {key}`), which the page focuses on that day.
+ * to the page's own field (`write {key}`), which the page focuses on that day. With an
+ * [EntryEditor] (phase 2) the field is typed in, and the meter and counter follow the words.
  */
 
 /**
@@ -57,6 +58,7 @@ internal fun ReflectionBox(
     reflect: JournalReflect,
     onWrite: (String) -> Unit,
     onSwap: (day: String, from: String) -> Unit,
+    editor: EntryEditor? = null,
 ) {
     val c = LocalJournalBodyColors.current
     NotebookBox {
@@ -81,18 +83,54 @@ internal fun ReflectionBox(
         } else if (reflect.label != null) {
             OptionalLabel(reflect.label)
         }
-        NotebookField(reflect.text, reflect.placeholder) { onWrite(day) }
-        Meter(reflect.meter)
-        Counter(counterLine(reflect), counterOn(reflect), top = 7.dp)
+        if (editor == null) {
+            NotebookField(reflect.text, reflect.placeholder) { onWrite(day) }
+            Meter(reflect.meter)
+            Counter(counterLine(reflect), counterOn(reflect), top = 7.dp)
+        } else {
+            // typing: the field, the meter and the counter follow the words as they are typed
+            val draft = editor.draftFor(day)
+            val text = draft?.text ?: reflect.text
+            val n = text.trim().length
+            Box(Modifier.padding(top = 6.dp)) {
+                EditableNotebook(
+                    day,
+                    text,
+                    draft?.rev ?: 0,
+                    reflect.placeholder,
+                    reflect.max,
+                    editor,
+                )
+            }
+            Meter(reflect.meterFor(n))
+            Counter(reflect.counterFor(n, draft?.typed == true), reflect.counterOn(n), top = 7.dp)
+        }
     }
 }
 
 /** A review's answer box: the question, the ruled field and the counter. */
 @Composable
-internal fun ReviewAnswerBox(review: ReviewEntry, onWrite: (String) -> Unit) {
+internal fun ReviewAnswerBox(
+    review: ReviewEntry,
+    onWrite: (String) -> Unit,
+    editor: EntryEditor? = null,
+) {
     NotebookBox {
         Question(review.question, Modifier.padding(bottom = 8.dp))
-        NotebookField(review.answer, review.placeholder) { onWrite(review.key) }
+        if (editor == null) NotebookField(review.answer, review.placeholder) { onWrite(review.key) }
+        else {
+            val draft = editor.draftFor(review.key)
+            Box(Modifier.padding(top = 6.dp)) {
+                EditableNotebook(
+                    review.key,
+                    draft?.text ?: review.answer,
+                    draft?.rev ?: 0,
+                    review.placeholder,
+                    review.max,
+                    editor,
+                )
+            }
+        }
         Counter(review.counter, review.paid, top = 7.dp)
     }
 }
