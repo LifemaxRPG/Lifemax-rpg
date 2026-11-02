@@ -61,6 +61,7 @@ internal fun FoodSheetHost(c: FoodContext) {
     val actions = remember { FoodSheetController(c.dispatch) }
     actions.dispatch = c.dispatch
     LaunchedEffect(answer) { actions.answered(answer) }
+    LaunchedEffect(sheet == null) { if (sheet == null) actions.sheetClosed() }
     LaunchedEffect(decoded) {
         decoded.exceptionOrNull()?.let {
             Log.w("NativeNutrition", "Add-food sheet not drawn: ${it.message}")

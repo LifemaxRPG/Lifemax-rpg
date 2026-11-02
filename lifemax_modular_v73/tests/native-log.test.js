@@ -62,20 +62,22 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     const n0 = state.activities.length, toasts = [], realToast = window.toast; window.toast = m => toasts.push(String(m));
     await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r2' }));
     const sub = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r2');
-    out.saved = state.activities.length === n0 + 1 && state.activities[state.activities.length - 1].opId === 'op-1' && JSON.parse(localStorage.getItem(STORE)).activities.some(a => a.opId === 'op-1');
+    // counted by operation id: the page may add an activity of its own as the day turns (just after midnight), so the newest is not always ours
+    const ours = (op) => state.activities.filter(a => a.opId === op).length;
+    out.saved = ours('op-1') === 1 && JSON.parse(localStorage.getItem(STORE)).activities.some(a => a.opId === 'op-1');
     out.reply = !!sub && sub[2].reply.ok === true && /Activity saved/.test(sub[2].reply.message) && sub[2].snapshot.draftRevision > rev0;
     out.toastAndNavigate = toasts.some(m => /Activity saved/.test(m)) && lmaView() === 'dashboard';
-    out.fxHeld = fx.length === 0; await wait(600); out.fxAfter = fx.length === 1 && fx[0] === 'dashboard';
+    out.fxHeld = fx.length === 0; await wait(600); out.fxAfter = fx.length >= 1 && fx.every(v => v === 'dashboard'); const fxSaved = fx.length; // the page's own entry as the day turns may celebrate too
     // the same operation again (a double tap that got through) records nothing new
     await openLog();
     await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-1' }, requestId: 'r3' }));
-    out.oncePerOperation = state.activities.length === n0 + 1;
+    out.oncePerOperation = ours('op-1') === 1;
     // a failed save comes back as a failure, nothing is added, and the screen stays
     await openLog();
     const realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return realSet.apply(this, arguments) };
     try { await Promise.all(L.__emit('command', { command: 'submit', payload: { draft: d60, operationId: 'op-2' }, requestId: 'r4' })) } finally { Storage.prototype.setItem = realSet }
     const bad = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r4');
-    out.failure = !!bad && bad[2].reply.ok === false && /Could not save/.test(bad[2].reply.message) && state.activities.length === n0 + 1 && lmaView() === 'log';
+    out.failure = !!bad && bad[2].reply.ok === false && /Could not save/.test(bad[2].reply.message) && ours('op-2') === 0 && lmaView() === 'log';
     // an unknown command is refused without closing anything
     await Promise.all(L.__emit('command', { command: 'nope', payload: {}, requestId: 'r5' }));
     const unk = [...window.__calls].reverse().find(c => c[0] === 'log' && c[1] === 'update' && c[2].reply && c[2].reply.requestId === 'r5');
@@ -83,7 +85,7 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
     // the page cleans a hostile draft: unknown preset, absurd duration, made-up attribute, oversized notes
     const cl = NativeLogProjection.clean({ type: 'hack', duration: '99999', quality: '7', primary: 'root', secondary: 'x', notes: 'n'.repeat(5000) });
     out.clean = cl.type === 'custom' && cl.duration === '1440' && cl.quality === '1' && cl.primary === 'adventure' && cl.secondary === '' && cl.notes.length === 2000;
-    window.toast = realToast; SFX.xp = realFx; showLevelUp = realLevelUp; out.fxNotOnFailure = fx.length === 1;
+    window.toast = realToast; SFX.xp = realFx; showLevelUp = realLevelUp; out.fxNotOnFailure = fx.length === fxSaved;
     // Back from a web page to Log brings the native screen back, as the default
     navigate('settings'); await wait(300);
     out.settingsOn = toggle.checked && lmaLoad().nativeLog === undefined;

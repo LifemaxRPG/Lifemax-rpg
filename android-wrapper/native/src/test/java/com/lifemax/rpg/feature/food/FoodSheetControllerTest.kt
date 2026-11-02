@@ -51,6 +51,27 @@ class FoodSheetControllerTest {
     }
 
     @Test
+    fun aWriteWhoseAnswerWasDroppedDoesNotLendItsIdToALaterSheet() {
+        // Log lands and closes the sheet, but Food closed before the answer went out
+        actions.write("sheetLog", "Banana")
+        actions.sheetClosed()
+        // a later sheet: the same food logged again is a new operation, not "Already recorded."
+        clock += 10_000
+        actions.write("sheetLog", "Banana")
+        assertEquals("op-2", lastOp())
+    }
+
+    @Test
+    fun anAnswerEndsItsOperationEvenAfterAnotherWriteTookOver() {
+        actions.write("sheetLog", "Banana")
+        clock += 5_000 // past WAIT_MS: another write may go
+        actions.write("sheetFav", "Rice")
+        actions.answered(FoodAnswer("op-1", ok = true, changed = true, message = ""))
+        assertNull(actions.operation("sheetLog", "Banana"))
+        assertTrue(actions.waiting) // the favourite still waits for its own answer
+    }
+
+    @Test
     fun aRefusalIsFinalToo() {
         actions.write("sheetCreateSave", "create")
         actions.answered(

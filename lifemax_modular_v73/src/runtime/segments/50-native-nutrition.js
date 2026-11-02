@@ -692,17 +692,19 @@
   const COVERED = '.sheet-ov.show,#view-life-director.active .ld-sheet.open,.updpop,#onboarding.show';
 
   async function open() {
+    // an open that does not go ahead lets a swipe that waited for this screen show the page's copy at once
+    const notNow = () => { NativeTabs.flush('meals'); window.NativeSwipe?.entered('meals', N.open); };
     if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
-      if (!N.opening) NativeTabs.flush('meals');
+      if (!N.opening) notNow();
       return;
     }
     if (document.querySelector(COVERED)) {
-      NativeTabs.flush('meals');
+      notNow();
       return;
     }
     const p = plugin();
     if (!p) {
-      NativeTabs.flush('meals');
+      notNow();
       return;
     }
     const openedAt = performance.now();
@@ -710,7 +712,7 @@
     const projectionAt = performance.now();
     if (!s) {
       console.warn('NativeNutrition: authoritative snapshot unavailable');
-      NativeTabs.flush('meals');
+      notNow();
       return;
     }
     const generation = ++N.generation;

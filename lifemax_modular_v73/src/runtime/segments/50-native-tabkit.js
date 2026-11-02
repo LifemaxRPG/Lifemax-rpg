@@ -241,7 +241,10 @@
     async function open(force) {
       plugin = available();
       if (!plugin || active || opening || blocked() || (!force && !wanted())) {
-        if (!opening) NativeTabs.flush(cfg.id);
+        if (!opening) {
+          NativeTabs.flush(cfg.id);
+          window.NativeSwipe?.entered(cfg.id, active); // a swipe that waited for this screen shows the page's copy now
+        }
         return false;
       }
       opening = true;

@@ -3,7 +3,7 @@
    and their handshake says it draws the edges (shell.swipe.v2). Checked:
    - native -> web: a swipe into a tab the page draws (Cat, the Overview's live shell, a native tab whose screen would not open
      now) is answered "web" at once, before the page navigates; the page goes there with html.swipe-reveal set, so no fade-in or
-     slide of its cards runs under the veil (getAnimations), and the mark goes at the next navigate or after 800 ms. Money stays a
+     slide of its cards runs under the veil (getAnimations), and the mark goes at the next navigate or after its 2.5 s cap. Money stays a
      wall, and a swipe from an APK that does not reveal (no reveal flag) is still refused "kind";
    - web -> native: the page's own swipe (lmaSwipeGo) ending on a native tab passes enter and velocity to that screen's open (the
      kit's and Food's), with html.native-enter hiding the page's copy until the screen is in place, and no web slide; from the
@@ -70,8 +70,8 @@ const fakes = ({ edges = true } = {}) => `
   ok('and Food was closed at once (a web tab: nothing takes over)', r.calls.some(c => c.p === 'NativeNutrition' && c.m === 'close'), r.calls);
   let anim = await p.evaluate(async () => { await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return { slides: __slides(), reveal: document.documentElement.classList.contains('swipe-reveal') } });
   ok('no fade-in or slide of Cat\'s cards runs under the veil', anim.slides === 0 && anim.reveal, anim);
-  anim = await p.evaluate(async () => { await wait(900); return document.documentElement.classList.contains('swipe-reveal') });
-  ok('swipe-reveal goes after 800 ms', anim === false);
+  anim = await p.evaluate(async () => { await wait(2600); return document.documentElement.classList.contains('swipe-reveal') });
+  ok('swipe-reveal goes after its 2.5 s cap', anim === false);
   anim = await p.evaluate(async () => { lmaNavTo('quests'); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return __slides() });
   ok('(control: an ordinary change of page does fade its cards in, so the check above can see one)', anim > 0, anim);
 

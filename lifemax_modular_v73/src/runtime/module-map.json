@@ -3372,7 +3372,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-tabkit.js",
-   "bytes": 21420,
+   "bytes": 21562,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3386,7 +3386,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 39336,
+   "bytes": 39479,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3403,7 +3403,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-swipe.js",
-   "bytes": 18446,
+   "bytes": 18666,
    "statement_count": 2,
    "tags": [
     "native",

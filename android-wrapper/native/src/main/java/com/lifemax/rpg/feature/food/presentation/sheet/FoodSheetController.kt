@@ -44,10 +44,21 @@ internal class FoodSheetController(
 
     /** A new projection: its answer, if it answers the awaited write, ends that operation. */
     fun answered(answer: FoodAnswer?) {
-        val key = pending ?: return
-        if (answer == null || answer.op != ops[key]) return
+        if (answer == null) return
+        // the operation it answers is over, whichever write still holds it (one that waited past
+        // WAIT_MS included), so a later write on the same target is a new operation
+        ops.values.removeAll { it == answer.op }
+        if (pending != null && ops[pending] == null) pending = null
+    }
+
+    /**
+     * The sheet is closed: its operations end with it. A write whose answer the page dropped on
+     * closing (it answers on the next frame) must not lend its id to a write in a later sheet, or
+     * the page would answer that one "Already recorded." and not do it.
+     */
+    fun sheetClosed() {
+        ops.clear()
         pending = null
-        ops.remove(key)
     }
 
     private companion object {

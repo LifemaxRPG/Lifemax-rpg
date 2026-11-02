@@ -161,7 +161,9 @@ const LMA_TABSWIPE = Object.freeze({
       root.classList.add("swipe-reveal");
       delete root.dataset.swipeDir;
       clearTimeout(revealTimer);
-      revealTimer = setTimeout(unreveal, 800);
+      // native's reveal is the slide, up to 400 ms for the page to draw, then a 120 ms fade, all scaled by the animator setting:
+      // the cap only stops a stuck mark; the next navigation ends it sooner (navigated)
+      revealTimer = setTimeout(unreveal, 2500);
       arrive(to);
       lmaSyncActive();
     } catch (err) {

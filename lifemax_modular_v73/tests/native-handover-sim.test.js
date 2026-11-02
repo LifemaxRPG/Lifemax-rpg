@@ -151,7 +151,7 @@ async function run(b, mode) {
         window.__onShow = {}; // a command waiting for a screen that has not shown yet is dropped by any later hop
         window.__endView = null; // where a tap made once its screen showed went (it went after this hop returned its view)
         const alone = s => !window.__busy && Object.keys(window.__vis).every(k => window.__vis[k] === (k === s)); // s alone shows, nothing in flight
-        if (v === 'celebrate') { window.__log.push(window.__t() + ' >> an XP celebration on ' + lmaView()); window.__cardHops.celebrations++; celebrateXP(12, [{ id: 'physique', xp: 12 }]); return lmaView() }
+        if (v === 'celebrate') { window.__log.push(window.__t() + ' >> an XP celebration on ' + lmaView()); window.__cardHops.celebrations++; window.__tapped = ''; /* the cards step aside for it and the hand-over may close what a tap left showing: no earlier tap to check */ celebrateXP(12, [{ id: 'physique', xp: 12 }]); return lmaView() }
         if (v === 'toggle-cards') {
           // the cards' switch exists only in Settings: native Settings' own toggle command, as a tap on its switch sends
           if (!window.__vis.settings || lmaView() !== 'settings') return lmaView();
@@ -205,7 +205,7 @@ async function run(b, mode) {
           const owner = window.__z.filter(k => window.__vis[k]).pop(), P = PLUGINS[owner] && Capacitor.Plugins[PLUGINS[owner]], scene = P && P.__scene(), sw = scene && scene.swipe;
           const tabs = sw ? sw.tabs : [], i = sw ? tabs.findIndex(t => t.key === sw.active) : -1, to = i < 0 ? null : tabs[i + dir];
           // a native tab, or (phase 2: the page takes it) one the page draws; never Money
-          if (!sw || sw.v !== 1 || !sw.on || window.__wantOf(sw.view) !== owner || i < 0 || tabs[i].source === false || !to || !(to.kind === 'native' || (to.kind === 'web' && sw.reveal))) { window.__log.push(window.__t() + ' >> no swipe ' + (dir > 0 ? 'next' : 'prev') + ' on ' + (owner || 'no screen')); return lmaView() }
+          if (!sw || sw.v !== 1 || !sw.on || window.__wantOf(sw.view) !== owner || i < 0 || tabs[i].source === false || !to || lmaResolve(to.key) === 'money' /* a stop on the phone (NativeCash), which the sim does not fake */ || !(to.kind === 'native' || (to.kind === 'web' && sw.reveal))) { window.__log.push(window.__t() + ' >> no swipe ' + (dir > 0 ? 'next' : 'prev') + ' on ' + (owner || 'no screen')); return lmaView() }
           const token = owner + '#' + (++window.__tokens);
           window.__log.push(window.__t() + ' >> swipe ' + token + ' from ' + sw.view + ' to ' + to.key + ' (scene ' + scene.sequence + ')');
           const settled = !window.__busy && lmaView() === sw.view && Object.keys(window.__vis).every(k => window.__vis[k] === (k === owner));
