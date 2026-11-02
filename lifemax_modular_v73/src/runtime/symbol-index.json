@@ -293,6 +293,9 @@
  "JC": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_ALREADY": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JC_ARCH": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -314,7 +317,16 @@
  "JC_GIFT": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_LINE_MIN": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_LINE_SHORT": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JC_NONE": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "JC_NOT_OFFERED": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "JC_POOLS": [
@@ -326,8 +338,14 @@
  "JC_TXT": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "JC_XP_UNSAVED": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "JL": [
   "src/runtime/segments/48-journal-lock.js"
+ ],
+ "JOURNAL_WORDS": [
+  "src/runtime/segments/04-runtime.js"
  ],
  "LINKS": [
   "src/runtime/segments/07-runtime.js"
@@ -3071,6 +3089,9 @@
  "jcCatchUp": [
   "src/runtime/segments/47-journal-coach.js"
  ],
+ "jcCatchUpWith": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
  "jcChip": [
   "src/runtime/segments/47-journal-coach.js"
  ],
@@ -3168,6 +3189,9 @@
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcReflectData": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jcReflectOwed": [
   "src/runtime/segments/47-journal-coach.js"
  ],
  "jcReviewData": [
@@ -3312,6 +3336,18 @@
   "src/runtime/segments/04-runtime.js"
  ],
  "journalLocked": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "journalSaveReflection": [
+  "src/runtime/segments/04-runtime.js"
+ ],
+ "journalSaveReview": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jrReviewUnsaved": [
+  "src/runtime/segments/47-journal-coach.js"
+ ],
+ "jrUnsaved": [
   "src/runtime/segments/04-runtime.js"
  ],
  "keepSafetyCopy": [

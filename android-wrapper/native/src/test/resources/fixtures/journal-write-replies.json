@@ -1,0 +1,363 @@
+{
+ "reflectAutosave": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Short",
+   "base": "",
+   "final": false
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectAutosave",
+   "ok": true,
+   "changed": true,
+   "paid": false,
+   "celebrations": []
+  }
+ },
+ "reflectLongAutosave": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "base": "Short",
+   "final": false
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectLongAutosave",
+   "ok": true,
+   "changed": true,
+   "paid": false,
+   "celebrations": []
+  }
+ },
+ "reflectFinalPays": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "base": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "final": true
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectFinalPays",
+   "ok": true,
+   "changed": false,
+   "paid": true,
+   "celebrations": [
+    {
+     "xp": 15,
+     "gains": [
+      {
+       "attribute": "wellbeing",
+       "short": "Wellbeing",
+       "xp": 15,
+       "color": 4283289825
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "reflectFinalAgain": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "base": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "final": true
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectFinalAgain",
+   "ok": true,
+   "changed": false,
+   "paid": false,
+   "celebrations": []
+  }
+ },
+ "reflectConflict": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Mine.",
+   "base": "stale",
+   "final": true
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectConflict",
+   "ok": false,
+   "changed": false,
+   "conflict": true,
+   "stored": "Reflecting on the whole day: the morning study block went well and I kept my phone away.",
+   "message": "This day was changed elsewhere. Your words are kept here; saving again will replace it.",
+   "celebrations": []
+  }
+ },
+ "reflectUnknownDay": {
+  "command": "reflect",
+  "payload": {
+   "d": "2099-01-01",
+   "text": "x",
+   "base": "",
+   "final": true
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectUnknownDay",
+   "ok": false,
+   "changed": false,
+   "message": "That day is not in your Journal."
+  }
+ },
+ "answerAutosave": {
+  "command": "answer",
+  "payload": {
+   "key": "M:2026-09",
+   "text": "A start.",
+   "base": "",
+   "final": false
+  },
+  "reply": {
+   "command": "answer",
+   "requestId": "req-answerAutosave",
+   "ok": true,
+   "changed": true,
+   "paid": false,
+   "celebrations": []
+  }
+ },
+ "answerFinalPays": {
+  "command": "answer",
+  "payload": {
+   "key": "M:2026-09",
+   "text": "Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.",
+   "base": "A start.",
+   "final": true
+  },
+  "reply": {
+   "command": "answer",
+   "requestId": "req-answerFinalPays",
+   "ok": true,
+   "changed": true,
+   "paid": true,
+   "celebrations": [
+    {
+     "xp": 50,
+     "gains": [
+      {
+       "attribute": "wellbeing",
+       "short": "Wellbeing",
+       "xp": 50,
+       "color": 4283289825
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "answerFinalAgain": {
+  "command": "answer",
+  "payload": {
+   "key": "M:2026-09",
+   "text": "Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.",
+   "base": "Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.",
+   "final": true
+  },
+  "reply": {
+   "command": "answer",
+   "requestId": "req-answerFinalAgain",
+   "ok": true,
+   "changed": false,
+   "paid": false,
+   "celebrations": []
+  }
+ },
+ "answerUnknown": {
+  "command": "answer",
+  "payload": {
+   "key": "M:1999-01",
+   "text": "x",
+   "base": "",
+   "final": true
+  },
+  "reply": {
+   "command": "answer",
+   "requestId": "req-answerUnknown",
+   "ok": false,
+   "changed": false,
+   "message": "That day is not in your Journal."
+  }
+ },
+ "claimPet": {
+  "command": "claim",
+  "payload": {
+   "kind": "pet"
+  },
+  "reply": {
+   "command": "claim",
+   "requestId": "req-claimPet",
+   "paid": true,
+   "celebrations": [
+    {
+     "xp": 10,
+     "gains": [
+      {
+       "attribute": "wellbeing",
+       "short": "Wellbeing",
+       "xp": 10,
+       "color": 4283289825
+      }
+     ]
+    }
+   ],
+   "ok": true,
+   "changed": true
+  }
+ },
+ "claimPetAgain": {
+  "command": "claim",
+  "payload": {
+   "kind": "pet"
+  },
+  "reply": {
+   "command": "claim",
+   "requestId": "req-claimPetAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded."
+  }
+ },
+ "claimNotOffered": {
+  "command": "claim",
+  "payload": {
+   "kind": "fresh"
+  },
+  "reply": {
+   "command": "claim",
+   "requestId": "req-claimNotOffered",
+   "ok": false,
+   "changed": false,
+   "message": "That is not offered today."
+  }
+ },
+ "catchUpShort": {
+  "command": "catchUp",
+  "payload": {
+   "text": "too short"
+  },
+  "reply": {
+   "command": "catchUp",
+   "requestId": "req-catchUpShort",
+   "ok": false,
+   "changed": false,
+   "message": "Write a full sentence (12+ characters)",
+   "celebrations": []
+  }
+ },
+ "catchUp": {
+  "command": "catchUp",
+  "payload": {
+   "text": "I was travelling for work all week long."
+  },
+  "reply": {
+   "command": "catchUp",
+   "requestId": "req-catchUp",
+   "ok": true,
+   "changed": true,
+   "paid": true,
+   "celebrations": [
+    {
+     "xp": 20,
+     "gains": [
+      {
+       "attribute": "wellbeing",
+       "short": "Wellbeing",
+       "xp": 20,
+       "color": 4283289825
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "catchUpAgain": {
+  "command": "catchUp",
+  "payload": {
+   "text": "I was travelling for work all week long."
+  },
+  "reply": {
+   "command": "catchUp",
+   "requestId": "req-catchUpAgain",
+   "ok": true,
+   "changed": false,
+   "paid": false,
+   "message": "Already recorded.",
+   "celebrations": []
+  }
+ },
+ "reflectLocked": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Typed as the app was left.",
+   "base": "I was travelling for work all week long.",
+   "final": false
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectLocked",
+   "ok": true,
+   "changed": true,
+   "paid": false
+  }
+ },
+ "reflectConflictLocked": {
+  "command": "reflect",
+  "payload": {
+   "d": "2026-10-28",
+   "text": "Mine.",
+   "base": "stale",
+   "final": false
+  },
+  "reply": {
+   "command": "reflect",
+   "requestId": "req-reflectConflictLocked",
+   "ok": false,
+   "changed": false,
+   "conflict": true,
+   "stored": "",
+   "message": "This day was changed elsewhere. Your words are kept here; saving again will replace it."
+  }
+ },
+ "claimLocked": {
+  "command": "claim",
+  "payload": {
+   "kind": "pet"
+  },
+  "reply": {
+   "command": "claim",
+   "requestId": "req-claimLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ },
+ "catchUpLocked": {
+  "command": "catchUp",
+  "payload": {
+   "text": "A sentence long enough to count."
+  },
+  "reply": {
+   "command": "catchUp",
+   "requestId": "req-catchUpLocked",
+   "ok": false,
+   "changed": false,
+   "message": "Unlock the Journal first."
+  }
+ }
+}

@@ -98,8 +98,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 42449,
-   "statement_count": 88,
+   "bytes": 44249,
+   "statement_count": 91,
    "tags": [
     "training",
     "quests",
@@ -154,6 +154,9 @@
     "journalDayLabel",
     "selectJournalDay",
     "selectJournalEntry",
+    "JOURNAL_WORDS",
+    "jrUnsaved",
+    "journalSaveReflection",
     "saveDayReflection",
     "planLogsForDay",
     "journalDayData",
@@ -2323,8 +2326,8 @@
   },
   {
    "file": "src/runtime/segments/47-journal-coach.js",
-   "bytes": 47415,
-   "statement_count": 73,
+   "bytes": 49665,
+   "statement_count": 79,
    "tags": [
     "journal",
     "coach"
@@ -2366,8 +2369,10 @@
     "jcAward",
     "jcCare",
     "jcKeepWords",
+    "JC_XP_UNSAVED",
     "jcPay",
     "jcCanPay",
+    "jcReflectOwed",
     "jcOnReflect",
     "JC_COUNTER",
     "jcCounterText",
@@ -2387,6 +2392,11 @@
     "JC_GIFT",
     "jcClaim",
     "jcCatchUp",
+    "JC_LINE_MIN",
+    "JC_LINE_SHORT",
+    "JC_NOT_OFFERED",
+    "JC_ALREADY",
+    "jcCatchUpWith",
     "jcDayData",
     "jcReflectData",
     "jcTop",
@@ -2401,6 +2411,8 @@
     "jcReviewData",
     "jcReviewHtml",
     "jcSaveReview",
+    "jrReviewUnsaved",
+    "journalSaveReview",
     "window.LifeMaxCoach"
    ]
   },
@@ -3533,7 +3545,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-journal.js",
-   "bytes": 15879,
+   "bytes": 20219,
    "statement_count": 1,
    "tags": [
     "native",

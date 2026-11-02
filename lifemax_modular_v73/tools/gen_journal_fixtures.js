@@ -11,19 +11,29 @@
      journal-notice.json       a withheld frame carrying the page's toast ("Backup saved")
      journal-counter.json      the page's counter line and meter for sample lengths (jcCounterText, jcMeter), for the screen's choice
      journal-replies.json      every command answered, in the envelope NativeTabKit sends a reply in, with its payload
+     journal-native-{today,week,welcome2}.json   the frames of a screen that lists library.journal.write.v1 (edit "native", write words)
+     journal-write-replies.json   phase 2: reflect, answer, claim and catchUp answered (autosave, the paying final write and its
+                                  celebration, repeat, conflict, unknown, locked), in the envelope NativeTabKit sends a reply in
    The generator fails if a withheld fixture holds any private string of the journal. A fake BiometricLock answers the prompts. */
 const { lived } = require('../tests/fixtures/journal-lived.js');
 const FAKES = `window.__bio={next:()=>({ok:false,cancelled:true})};
   const P={BiometricLock:{status:async()=>({available:true,kind:'ok'}),authenticate:async o=>window.__bio.next(o),secure:async()=>{}},FileSaver:{saveFile:()=>new Promise(()=>{})}};
-  window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>!!P[n],getPlatform:()=>'android',Plugins:P,registerPlugin:()=>({}),convertFileSrc:u=>u};`;
+  window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:n=>!!P[n],getPlatform:()=>'android',Plugins:P,registerPlugin:()=>({}),convertFileSrc:u=>u};
+  // a screen that writes natively: the plugin exists only where the generator asks (window.__screen), so a plain visit is the page's
+  if (window.__screen) { const none = async () => ({ remove() { } }); P.NativeJournal = { handshake: async () => ({ protocol: 1, capabilities: ['library.journal.projection.v1', 'library.journal.write.v1'] }),
+    addListener: none, open: async () => { window.__opened = true }, update: async () => { }, close: async () => { }, capabilities: async () => ({}) } }`;
 
 module.exports = async function journal({ b, out, write }) {
-  const visit = async (tipsSeen) => {
+  const visit = async (tipsSeen, screen) => {
     const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
     await p.clock.setFixedTime(new Date('2026-10-28T12:00:00Z'));
-    await p.addInitScript(`localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',tipsSeen:${JSON.stringify(tipsSeen)}}));` + FAKES);
+    await p.addInitScript(`localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',tipsSeen:${JSON.stringify(tipsSeen)}}));` + (screen ? 'window.__screen=true;' : '') + FAKES);
     await p.goto('file://' + out); await p.waitForFunction(() => window.NativeJournalProjection && window.LifeMaxCoach); await p.waitForTimeout(2500);
     await p.evaluate(() => { lmaThumbWarm = async () => { }; navigate('history') });
+    if (screen) { // the Journal on, opened: the handshake has answered, so the page knows the screen writes
+      await p.evaluate(() => { const S = lmaLoad(); S.nativeJournal = true; lmaSave(); navigate('dashboard'); navigate('history') });
+      await p.waitForFunction(() => window.__opened === true);
+    }
     return p;
   };
   // the page's toast comes and goes on its own timer, so a fixture carries it only when asked to
@@ -149,5 +159,77 @@ module.exports = async function journal({ b, out, write }) {
     save(); histSel = getToday(); renderHistory();
   });
   await shoot(p, 'longstrip');
+  await p.close();
+
+  // phase 2: a screen that writes natively. The frames (edit "native", the catch-up's words) and every write command answered.
+  p = await visit({ history: true }, true);
+  const seed2 = await p.evaluate(`(${lived})()`);
+  await shoot(p, 'native-today', Y(0));
+  await shoot(p, 'native-week', seed2.week);
+  const writes = await p.evaluate(async ({ month }) => {
+    const C = NativeJournalProjection.commands, outR = {};
+    const run = async (name, command, payload) => {
+      const r = Object.assign({ command, requestId: 'req-' + name }, await C[command](payload, { requestId: 'req-' + name }));
+      delete r.after; outR[name] = { command, payload, reply: r };
+    };
+    const d = getToday(), T = 'Reflecting on the whole day: the morning study block went well and I kept my phone away.';
+    delete state.dayReflections[d]; delete (state.journalCoach.days[d] || {}).xpAwarded; state.activities = state.activities.filter((a) => a.type !== 'coach'); save();
+    await run('reflectAutosave', 'reflect', { d, text: 'Short', base: '', final: false });
+    await run('reflectLongAutosave', 'reflect', { d, text: T, base: 'Short', final: false });
+    await run('reflectFinalPays', 'reflect', { d, text: T, base: T, final: true });
+    await run('reflectFinalAgain', 'reflect', { d, text: T, base: T, final: true });
+    await run('reflectConflict', 'reflect', { d, text: 'Mine.', base: 'stale', final: true });
+    await run('reflectUnknownDay', 'reflect', { d: '2099-01-01', text: 'x', base: '', final: true });
+    await run('answerAutosave', 'answer', { key: month, text: 'A start.', base: '', final: false });
+    await run('answerFinalPays', 'answer', { key: month, text: 'Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.', base: 'A start.', final: true });
+    await run('answerFinalAgain', 'answer', { key: month, text: 'Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.', base: 'Lights out by eleven, a walk after dinner, and no phone in the bedroom: the plan for the weeks ahead.', final: true });
+    await run('answerUnknown', 'answer', { key: 'M:1999-01', text: 'x', base: '', final: true });
+    return outR;
+  }, { month: seed2.month });
+  // the welcome card's chips and the catch-up on a page that has been away (tier 1, then tier 2)
+  const away = async (gap) => p.evaluate((gap) => {
+    const at = (o) => new Date(Date.UTC(2026, 9, 28 - o, 9, 5)).toISOString();
+    state.activities = []; state.dayReflections = {}; state.journalCoach = {}; state.plan = null;
+    for (let o = gap + 1; o <= gap + 16; o++) state.activities.push({ id: 'w' + o, type: 'custom', name: 'Study', icon: 'book', duration: 30, quality: 1, skill: 'Knowledge', primary: 'intelligence', secondary: '', xp: 100, date: at(o), notes: '', xpSplit: [{ attr: 'intelligence', xp: 100 }] });
+    state.activities.push({ id: 'w0', type: 'custom', name: 'Back at it', icon: 'book', duration: 30, quality: 1, skill: 'Back', primary: 'discipline', secondary: '', xp: 60, date: at(0), notes: '', xpSplit: [{ attr: 'discipline', xp: 60 }] });
+    save(); histSel = getToday(); renderHistory();
+  }, gap);
+  const welcomeWrites = async () => {
+    const out = {};
+    await away(4);
+    Object.assign(out, await p.evaluate(async () => {
+      const C = NativeJournalProjection.commands, outR = {};
+      const run = async (name, command, payload) => { const r = Object.assign({ command, requestId: 'req-' + name }, await C[command](payload, {})); delete r.after; outR[name] = { command, payload, reply: r } };
+      await run('claimPet', 'claim', { kind: 'pet' });
+      await run('claimPetAgain', 'claim', { kind: 'pet' });
+      await run('claimNotOffered', 'claim', { kind: 'fresh' });
+      return outR;
+    }));
+    await away(9);
+    await shoot(p, 'native-welcome2');
+    Object.assign(out, await p.evaluate(async () => {
+      const C = NativeJournalProjection.commands, outR = {};
+      const run = async (name, command, payload) => { const r = Object.assign({ command, requestId: 'req-' + name }, await C[command](payload, {})); delete r.after; outR[name] = { command, payload, reply: r } };
+      await run('catchUpShort', 'catchUp', { text: 'too short' });
+      await run('catchUp', 'catchUp', { text: 'I was travelling for work all week long.' });
+      await run('catchUpAgain', 'catchUp', { text: 'I was travelling for work all week long.' });
+      return outR;
+    }));
+    return out;
+  };
+  Object.assign(writes, await welcomeWrites());
+  // locked: the owner's words are still stored, and nothing private comes back
+  Object.assign(writes, await p.evaluate(async () => {
+    const C = NativeJournalProjection.commands, outR = {}, d = getToday();
+    const run = async (name, command, payload) => { const r = Object.assign({ command, requestId: 'req-' + name }, await C[command](payload, {})); delete r.after; outR[name] = { command, payload, reply: r } };
+    state.journalLock = { on: true }; save(); LifeMaxJournalLock.relock();
+    await run('reflectLocked', 'reflect', { d, text: 'Typed as the app was left.', base: state.dayReflections[d] || '', final: false });
+    await run('reflectConflictLocked', 'reflect', { d, text: 'Mine.', base: 'stale', final: false });
+    await run('claimLocked', 'claim', { kind: 'pet' });
+    await run('catchUpLocked', 'catchUp', { text: 'A sentence long enough to count.' });
+    state.journalLock = { on: false }; save();
+    return outR;
+  }));
+  write('fixtures/journal-write-replies.json', writes);
   await p.close();
 };

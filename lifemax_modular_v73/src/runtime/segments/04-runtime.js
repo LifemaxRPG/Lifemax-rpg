@@ -184,23 +184,46 @@ function selectJournalEntry(key){
   document.querySelectorAll('#journalDays button').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick')===tap));
   return true;
 }
-function saveDayReflection(d,val){
+/* The one owner of a day's reflection. The words are stored first with a plain write (on failure they stay in memory and in the box,
+   and the page says nothing was saved); then, with opt.award, the reward for them is paid by the coach (jcOnReflect, in a save of its
+   own, so a reward that cannot be stored never takes the words back). base, when given, is the text the caller last saw the page hold:
+   the write is refused as a conflict, changing nothing, when the page holds neither it nor the new words (the catch-up added a
+   sentence meanwhile); the refusal carries the stored text, except while the Journal is locked. A repeat of words already stored
+   writes nothing, unless their last write failed (jrUnsaved), when it writes them again. opt.always, for the page's own field,
+   writes every time; opt.soft false leaves the day list and counter alone (a native screen draws its own). Answers
+   {ok, changed, paid, message?, conflict?, stored?}; ok means the words are stored. */
+const JOURNAL_WORDS={conflict:'This day was changed elsewhere. Your words are kept here; saving again will replace it.'};
+let jrUnsaved={};
+function journalSaveReflection(d,val,base,opt){
+  opt=opt||{};
   if(!state.dayReflections)state.dayReflections={};
-  const t=val.trim();
-  if(t)state.dayReflections[d]=t;else delete state.dayReflections[d];
-  histRev++;
-  state.customRules=rules;
-  if(!writeSave()){toast(unsavedMessage());return}
-  try{if(window.LifeMaxCoach)jcOnReflect(d,t)}catch(e){console.warn('[coach]',e)}
-  if(journalLocked())return; // saved by the relock's blur: the Journal is left empty
-  // soft refresh day list badges without losing textarea focus
-  const daysEl=document.getElementById('journalDays');
-  if(daysEl){
-    if(window.LifeMaxCoach)LifeMaxCoach.reset();
-    daysEl.innerHTML=journalListHtml(journalDays());
+  const refs=state.dayReflections,had=refs[d]||'',t=String(val==null?'':val).trim().slice(0,4000);
+  if(base!=null&&had!==base&&had!==t)return {ok:false,changed:false,conflict:true,stored:journalLocked()?'':had,message:JOURNAL_WORDS.conflict};
+  let changed=false;
+  if(opt.always||had!==t||jrUnsaved[d]){
+    changed=had!==t;
+    if(t)refs[d]=t;else delete refs[d];
+    histRev++;
+    state.customRules=rules;
+    if(!writeSave()){jrUnsaved[d]=true;toast(unsavedMessage());return {ok:false,changed,paid:false,message:unsavedMessage()}}
+    delete jrUnsaved[d];
   }
-  const cnt=document.getElementById('jcCount');if(cnt&&window.LifeMaxCoach){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
+  let paid=false,owed=false;
+  try{if(opt.award&&window.LifeMaxCoach){owed=jcReflectOwed(d,t);if(owed)paid=jcOnReflect(d,t)}}catch(e){console.warn('[coach]',e)}
+  if(opt.soft!==false&&!journalLocked()){
+    // soft refresh day list badges without losing textarea focus
+    const daysEl=document.getElementById('journalDays');
+    if(daysEl){
+      if(window.LifeMaxCoach)LifeMaxCoach.reset();
+      daysEl.innerHTML=journalListHtml(journalDays());
+    }
+    const cnt=document.getElementById('jcCount');if(cnt&&window.LifeMaxCoach){const ta=document.getElementById('dayReflection');if(ta)jcCounter(ta,d)}
+  }
+  const r={ok:true,changed,paid};
+  if(owed&&!paid)r.message='Reflection saved'+JC_XP_UNSAVED;
+  return r;
 }
+function saveDayReflection(d,val){journalSaveReflection(d,val,null,{award:true,always:true})}
 function planLogsForDay(d){
   if(!state.plan||!state.plan.checks||!state.plan.checks[d])return [];
   const c=state.plan.checks[d];

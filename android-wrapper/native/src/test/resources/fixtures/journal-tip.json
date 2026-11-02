@@ -25,6 +25,7 @@
  },
  "motion": true,
  "edit": "page",
+ "write": null,
  "tip": {
   "icon": "◷",
   "title": "Journal",
