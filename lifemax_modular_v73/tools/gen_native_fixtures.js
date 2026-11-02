@@ -601,7 +601,9 @@ const overview = (b) => require('./gen_overview_fixtures.js')({ b, out, write, d
 const glance = (b) => require('./gen_director_glance_fixtures.js')({ b, out, write, directorDay });
 /* the native Journal (library.journal.projection.v1): tools/gen_journal_fixtures.js */
 const journal = (b) => require('./gen_journal_fixtures.js')({ b, out, write });
-const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal };
+/* Food's Smart Diet swap sheet and Recipes' "Log this recipe": tools/gen_food_swap_fixtures.js */
+const foodswap = (b) => require('./gen_food_swap_fixtures.js')({ b, out, write });
+const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal, foodswap };
 (async () => {
   const only = process.argv.slice(2);
   for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');

@@ -7149,8 +7149,14 @@
  "sdSolve": [
   "src/runtime/segments/50-smartdiet.js"
  ],
+ "sdSwapApply": [
+  "src/runtime/segments/50-smartdiet-swap.js"
+ ],
  "sdSwapOn": [
   "src/runtime/segments/50-smartdiet.js"
+ ],
+ "sdSwapView": [
+  "src/runtime/segments/50-smartdiet-swap.js"
  ],
  "sdTotals": [
   "src/runtime/segments/50-smartdiet.js"

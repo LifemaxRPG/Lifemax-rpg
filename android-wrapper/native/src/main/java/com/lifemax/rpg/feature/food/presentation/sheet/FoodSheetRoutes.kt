@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.food.presentation.sheet
 
+import com.lifemax.rpg.feature.food.data.hasSwap
 import com.lifemax.rpg.feature.food.presentation.FoodContext
 
 /*
@@ -20,6 +21,15 @@ internal fun FoodContext.openAddFood(slot: String) {
 /** The daily targets (Targets, and the dial's middle). */
 internal fun FoodContext.openTargets() {
     if (hasSheetForms()) dispatch("sheetGoal", emptyMap()) else dispatch("goals", emptyMap())
+}
+
+/**
+ * The Smart Diet swap sheet for the plan's meal [index]: the native sheet when the page offers it
+ * (its projection has a `swap` field), else the page's own (the screen steps aside).
+ */
+internal fun FoodContext.openSwap(index: Int) {
+    if (data.hasSwap()) dispatch("swapOpen", mapOf("index" to index))
+    else dispatch("sdSwap", mapOf("index" to index))
 }
 
 /** A logged entry, to change, remove or log again. */

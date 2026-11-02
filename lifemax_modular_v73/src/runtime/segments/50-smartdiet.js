@@ -197,15 +197,14 @@ function sdAct(b){const a=b.dataset.a,S=sdS(),U=sdUi(),day=mealsDayKey();
 /* swap a planned meal for another of the same kind */
 function sdOv(){let o=document.getElementById('sdOv');if(o)return o;o=document.createElement('div');o.id='sdOv';o.className='sheet-ov fv2-ov';o.innerHTML='<div class="sheet fv2-sheet" role="dialog" aria-modal="true"></div>';document.body.appendChild(o);
   o.addEventListener('click',function(ev){if(ev.target===o){sdCloseSwap();return}const b=ev.target.closest('[data-sw]');if(!b)return;
-   const S=sdS(),day=mealsDayKey(),i=+o.dataset.i;if(b.dataset.sw==='x'){sdCloseSwap();return}
-   S.over[day]=S.over[day]||{};if(b.dataset.sw==='reset')delete S.over[day][i];else S.over[day][i]=b.dataset.sw;save();sdCloseSwap();renderMeals();fv2Hap('tap')});return o}
+   const day=mealsDayKey(),i=+o.dataset.i;if(b.dataset.sw==='x'){sdCloseSwap();return}
+   sdSwapApply(day,i,b.dataset.sw==='reset'?null:b.dataset.sw);sdCloseSwap()});return o}
 function sdCloseSwap(){const o=document.getElementById('sdOv');if(!o)return;const p=o.querySelector('.sheet');p&&p.classList.remove('fv2-in');o.classList.remove('show');document.body.classList.remove('noscroll')}
 function sdOpenSwap(i){
-  const day=mealsDayKey(),d=sdDay(day);if(!d)return;const cur=d.items[i].meal,o=sdOv(),P=d.P,same=function(m){return m.slot===cur.slot||(['snack','pre_workout','post_workout'].indexOf(cur.slot)>=0&&['snack','pre_workout','post_workout'].indexOf(m.slot)>=0&&m.slot===cur.slot)};
-  const S=sdS(),list=Object.keys(P.meals).map(function(k){return P.meals[k]}).filter(same).filter(function(m){return m.id!==cur.id&&sdMealOk(m,S)});
-  const rows=list.map(function(m){const t=sdTotals(sdMealIngs(m,S),d.s);return '<button type="button" class="sd-sw" data-sw="'+esc(m.id)+'"><span><b>'+esc(m.name)+'</b><small>'+(m.active_min||0)+' min · P '+Math.round(t.p)+' C '+Math.round(t.c)+' F '+Math.round(t.f)+((m.tags||[]).indexOf('leftover')>=0?' · leftover':'')+'</small></span><em>'+fv2Fmt(t.kcal)+'<small>kcal</small></em></button>'}).join('');
-  o.dataset.i=i;o.querySelector('.sheet').innerHTML='<div class="fv2-sh"><button type="button" class="bk" data-sw="x" aria-label="Close">✕</button><h2>Swap '+esc(sdSlotName(cur.slot).toLowerCase())+'</h2><span></span></div><div class="fv2-list sd-swl"><p class="sd-swn">Instead of <b>'+esc(cur.name)+'</b>. The rest of the day rescales to keep your target.</p>'+(rows||'<div class="fv2-none"><b>No other options</b></div>')+'</div>'
-   +((sdS().over[day]&&sdS().over[day][i])?'<div class="fv2-foot"><button type="button" data-sw="reset">Back to the plan</button></div>':'');
+  const day=mealsDayKey(),v=sdSwapView(day,i);if(!v)return;const o=sdOv();
+  const rows=v.rows.map(function(r){return '<button type="button" class="sd-sw" data-sw="'+esc(r.id)+'"><span><b>'+esc(r.name)+'</b><small>'+r.detail+'</small></span><em>'+r.kcal+'<small>'+r.unit+'</small></em></button>'}).join('');
+  o.dataset.i=i;o.querySelector('.sheet').innerHTML='<div class="fv2-sh"><button type="button" class="bk" data-sw="x" aria-label="'+v.close+'">✕</button><h2>'+esc(v.title)+'</h2><span></span></div><div class="fv2-list sd-swl"><p class="sd-swn">'+v.lead+'<b>'+esc(v.name)+'</b>'+v.tail+'</p>'+(rows||'<div class="fv2-none"><b>'+v.none+'</b></div>')+'</div>'
+   +(v.reset?'<div class="fv2-foot"><button type="button" data-sw="reset">'+v.reset+'</button></div>':'');
   o.classList.add('show');document.body.classList.add('noscroll');requestAnimationFrame(function(){o.querySelector('.sheet').classList.add('fv2-in')});
 }
 

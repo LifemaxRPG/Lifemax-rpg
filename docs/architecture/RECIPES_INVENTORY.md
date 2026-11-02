@@ -319,6 +319,7 @@ Nothing in this pane is hard (no canvas, 3D, drag, background timers or embedded
 
 - **Phase 0 (owner decisions, section 8).** Questions 1 (what "Food" opens), 2 (Snack), 9 (toggle).
 - **Phase 1: presentation only, opt-in.** Native draws the pane from the projection; search, category, expansion and ingredient selection are native local state; "Log this recipe" delegates (close, run `addRecipeToMeal`); "Meals" and "Log a meal" are page commands that reply `navigate:'meals'`; the Walmart link opens by intent. Native Food's `recipes` command is changed to hand over without closing first.
+- **Done (Food slice): "Log this recipe" is native** through native Food's add-food sheet (see MIGRATION.md, "Food's swap sheet and Recipes' Log this recipe"), where native Food is on and its app says `sheetSeed`; otherwise the hand-over above still applies.
 - **Phase 2: one-tap logging behind A14/A15** (if the owner wants it): a `logRecipe {opId, recipeId, grams, slot, day}` command whose owner runs `fv2Log` with an operation id stored in the entry, reporting outcome-unknown honestly; or wait for a native Food portion sheet and reuse it.
 - **Phase 3: domain conversion** (after every tab's visuals): the catalog becomes a versioned native asset or Room table only when catalog authority moves; until then it stays web data delivered by projection, so OTA web updates keep working (A19).
 

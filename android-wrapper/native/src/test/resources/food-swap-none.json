@@ -1,0 +1,358 @@
+{
+ "version": 1,
+ "day": "2026-10-28",
+ "today": "2026-10-28",
+ "eyebrow": "TODAY",
+ "dayLabel": "Wednesday, Oct 28",
+ "pane": "plan",
+ "currentSlot": "lunch",
+ "totals": {
+  "kcal": 0,
+  "p": 0,
+  "c": 0,
+  "f": 0,
+  "fib": 0,
+  "sug": 0,
+  "na": 0
+ },
+ "goals": {
+  "cal": 2500,
+  "p": 188,
+  "c": 250,
+  "f": 83,
+  "water": 2000
+ },
+ "waterMl": 0,
+ "light": false,
+ "week": [
+  {
+   "day": "2026-10-26",
+   "w": "M",
+   "dNum": 26,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-27",
+   "w": "T",
+   "dNum": 27,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-28",
+   "w": "W",
+   "dNum": 28,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": true,
+   "today": true
+  },
+  {
+   "day": "2026-10-29",
+   "w": "T",
+   "dNum": 29,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-30",
+   "w": "F",
+   "dNum": 30,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-10-31",
+   "w": "S",
+   "dNum": 31,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  },
+  {
+   "day": "2026-11-01",
+   "w": "S",
+   "dNum": 1,
+   "kcal": 0,
+   "frac": 0,
+   "status": "under",
+   "selected": false,
+   "today": false
+  }
+ ],
+ "recents": [],
+ "copyYesterday": {
+  "breakfast": false,
+  "lunch": false,
+  "dinner": false,
+  "snacks": false
+ },
+ "entries": [],
+ "plan": {
+  "workoutHeading": "REST A · REST DAY",
+  "target": 2800,
+  "eaten": 0,
+  "left": 2800,
+  "eatenP": 0,
+  "planP": 190,
+  "nextIndex": 0,
+  "coachIcon": "›",
+  "coachText": "Peanut Butter Protein Oats is up next: 656 kcal, 43 g protein.",
+  "diet": "standard",
+  "level": "moderate",
+  "veg": false,
+  "df": false,
+  "items": [
+   {
+    "index": 0,
+    "id": "std_b03",
+    "name": "Peanut Butter Protein Oats",
+    "slot": "breakfast",
+    "slotName": "Breakfast",
+    "slotWhen": "Morning",
+    "slotColor": "#f2b84a",
+    "activeMin": 5,
+    "tagsLabel": "No cooking",
+    "kcal": 656,
+    "p": 43,
+    "c": 92,
+    "f": 15,
+    "fib": 13,
+    "topIngs": "Banana · Rolled oats · Whey protein · Peanut butter",
+    "ings": [
+     {
+      "name": "Rolled oats",
+      "grams": 88
+     },
+     {
+      "name": "Whey protein",
+      "grams": 33
+     },
+     {
+      "name": "Peanut butter",
+      "grams": 17
+     },
+     {
+      "name": "Banana",
+      "grams": 110
+     }
+    ],
+    "steps": [
+     "Cook the oats with water in the microwave for 2 to 3 minutes.",
+     "Stir in the protein powder and peanut butter while warm.",
+     "Top with sliced banana."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 1,
+    "id": "std_l01",
+    "name": "Chicken, Rice & Broccoli",
+    "slot": "lunch",
+    "slotName": "Lunch",
+    "slotWhen": "Midday",
+    "slotColor": "#5fd08a",
+    "activeMin": 15,
+    "tagsLabel": "No cooking",
+    "kcal": 755,
+    "p": 52,
+    "c": 95,
+    "f": 17,
+    "fib": 5,
+    "topIngs": "White rice · Chicken breast · Broccoli · Olive oil",
+    "ings": [
+     {
+      "name": "Chicken breast",
+      "grams": 177
+     },
+     {
+      "name": "White rice",
+      "grams": 303
+     },
+     {
+      "name": "Broccoli",
+      "grams": 150
+     },
+     {
+      "name": "Olive oil",
+      "grams": 11
+     }
+    ],
+    "steps": [
+     "Chop the chicken and cook it in the olive oil over medium-high heat until it hits 165°F inside.",
+     "Steam the broccoli until tender.",
+     "Serve the chicken and broccoli over the cooked rice."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 2,
+    "id": "std_s01",
+    "name": "Avocado Egg Toast & Yogurt",
+    "slot": "snack",
+    "slotName": "Snack",
+    "slotWhen": "Afternoon",
+    "slotColor": "#ef7a85",
+    "activeMin": 5,
+    "tagsLabel": "No cooking",
+    "kcal": 329,
+    "p": 25,
+    "c": 31,
+    "f": 12,
+    "fib": 6,
+    "topIngs": "Greek yogurt · Whole wheat bread · Eggs · Avocado",
+    "ings": [
+     {
+      "name": "Whole wheat bread",
+      "grams": 55
+     },
+     {
+      "name": "Eggs",
+      "grams": 50
+     },
+     {
+      "name": "Avocado",
+      "grams": 33
+     },
+     {
+      "name": "Greek yogurt",
+      "grams": 110
+     }
+    ],
+    "steps": [
+     "Fry the egg to your liking.",
+     "Mash the avocado on the toasted bread, and top with the egg.",
+     "Eat the Greek yogurt on the side."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 3,
+    "id": "std_s04",
+    "name": "Cottage Cheese & Almonds",
+    "slot": "snack",
+    "slotName": "Snack",
+    "slotWhen": "Afternoon",
+    "slotColor": "#ef7a85",
+    "activeMin": 2,
+    "tagsLabel": "No cooking",
+    "kcal": 318,
+    "p": 22,
+    "c": 33,
+    "f": 12,
+    "fib": 6,
+    "topIngs": "Cottage cheese · Apple · Almonds",
+    "ings": [
+     {
+      "name": "Cottage cheese",
+      "grams": 165
+     },
+     {
+      "name": "Almonds",
+      "grams": 17
+     },
+     {
+      "name": "Apple",
+      "grams": 165
+     }
+    ],
+    "steps": [
+     "Top the cottage cheese with the crushed almonds.",
+     "Eat the apple on the side."
+    ],
+    "logged": false,
+    "skipped": false
+   },
+   {
+    "index": 4,
+    "id": "std_d03",
+    "name": "Turkey & Sweet Potato Hash",
+    "slot": "dinner",
+    "slotName": "Dinner",
+    "slotWhen": "Evening",
+    "slotColor": "#6aa4f0",
+    "activeMin": 15,
+    "tagsLabel": "No cooking",
+    "kcal": 743,
+    "p": 47,
+    "c": 86,
+    "f": 24,
+    "fib": 17,
+    "topIngs": "Sweet potato · Ground turkey · Spinach · Black beans",
+    "ings": [
+     {
+      "name": "Ground turkey",
+      "grams": 165
+     },
+     {
+      "name": "Sweet potato",
+      "grams": 331
+     },
+     {
+      "name": "Spinach",
+      "grams": 100
+     },
+     {
+      "name": "Black beans",
+      "grams": 100
+     },
+     {
+      "name": "Olive oil",
+      "grams": 11
+     }
+    ],
+    "steps": [
+     "Microwave the sweet potato for 4 minutes to soften, then dice it.",
+     "Brown the turkey in a skillet with the oil until cooked through (165°F).",
+     "Add the diced sweet potato, drained black beans, and spinach to the skillet and cook until heated through."
+    ],
+    "logged": false,
+    "skipped": false
+   }
+  ]
+ },
+ "shop": null,
+ "sheet": null,
+ "swap": {
+  "index": 1,
+  "title": "Swap lunch",
+  "lead": "Instead of ",
+  "name": "Chicken, Rice & Broccoli",
+  "tail": ". The rest of the day rescales to keep your target.",
+  "rows": [],
+  "none": "No other options",
+  "reset": "Back to the plan",
+  "close": "Close"
+ },
+ "sheetForms": true,
+ "notice": {
+  "id": 1,
+  "text": "Swapped to Chicken, Rice & Broccoli",
+  "action": "Undo"
+ },
+ "answer": {
+  "op": "swap-2",
+  "ok": false,
+  "changed": false,
+  "message": ""
+ }
+}

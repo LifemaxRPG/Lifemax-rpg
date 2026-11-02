@@ -21,7 +21,7 @@
   };
   const ALREADY = 'Already recorded.';
   /** the sheet's writes: each carries an operation id (op) from the screen and is answered */
-  const WRITES = ['sheetLog', 'sheetRowAdd', 'sheetQuickSave', 'sheetFav', 'sheetCreateSave', 'sheetGoalSave', 'sheetEditSave', 'sheetEditDelete', 'sheetEditAgain', 'noticeAction'];
+  const WRITES = ['sheetLog', 'sheetRowAdd', 'sheetQuickSave', 'sheetFav', 'sheetCreateSave', 'sheetGoalSave', 'sheetEditSave', 'sheetEditDelete', 'sheetEditAgain', 'noticeAction', 'swapPick', 'swapReset'];
 
   /* The add-food sheet, drawn by the native screen from this state. The rules are the page's (fv2* in 50-food.js: the search, the
      steps, the macros, the logging); this holds only what the sheet is showing, since the page's own sheet is not open. */
@@ -29,6 +29,10 @@
     edit: null, // the entry the edit view changes
     goal: null, // the daily targets' boxes, as typed on the screen
     forms: false }; // the screen draws create, the targets and the edit view itself (else they hand over to the page's sheet)
+  /* The Smart Diet swap sheet, when the screen shows it: the plan's meal (its day and place in it). What it offers and what a swap
+     does are the page's (sdSwapView, sdSwapApply in 50-smartdiet-swap.js). */
+  const W = { open: false, day: '', index: -1 };
+  let seeded = false; // the sheet was opened for a screen that is still opening (Recipes' "Log this recipe"): see seedPortion
 
   function plugin() {
     try {
@@ -315,6 +319,7 @@
       plan: buildPlanSnapshot(day),
       shop: buildShopSnapshot(day),
       sheet: sheetData(),
+      swap: swapData(), // null while the swap sheet is closed; a page without this field hands Swap over (sdSwap)
       sheetForms: true, // this page runs create, the targets and the edit view inside the native sheet
       notice: N.notice ? { id: N.notice.id, text: N.notice.text, action: N.notice.action } : null,
       answer: N.answer
@@ -375,6 +380,8 @@
   }
 
   function sheetClose() {
+    seeded = false;
+    W.open = false;
     Q.open = false;
     Q.serial++;
     Q.searching = false;
@@ -416,6 +423,7 @@
 
   /** opens the sheet on a view with nothing picked */
   function sheetStart(view, slot) {
+    W.open = false;
     Q.open = true;
     Q.view = view;
     Q.slot = fv2Slots().some(function (x) { return x[0] === slot; }) ? slot : fv2Slot();
@@ -628,6 +636,36 @@
     return true;
   }
 
+  /** the swap sheet as the page's own sheet would draw it (sdSwapView), or null; a meal the day no longer has closes it */
+  function swapData() {
+    if (!W.open) return null;
+    const v = typeof sdSwapView === 'function' ? sdSwapView(W.day, W.index) : null;
+    if (!v) W.open = false;
+    return v;
+  }
+
+  /** an action of the swap sheet: open it on a plan meal, swap or go back to the plan (writes: answered, once per operation), close */
+  function onSwap(command, e) {
+    if (typeof sdSwapView !== 'function') return;
+    if (command === 'swapOpen') {
+      const day = mealsDayKey(), index = Number(e.index);
+      if (!Q.open && Number.isInteger(index) && sdSwapView(day, index)) {
+        W.open = true;
+        W.day = day;
+        W.index = index;
+      }
+    } else if (command === 'swapPick' || command === 'swapReset') {
+      write(e, function () {
+        if (!W.open || Number(e.index) !== W.index) return false;
+        if (!sdSwapApply(W.day, W.index, command === 'swapPick' ? String(e.id) : null, true)) return false;
+        W.open = false;
+        return true;
+      });
+    } else if (command === 'swapClose') {
+      W.open = false;
+    }
+  }
+
   /** the page said something to the player (a saved food, a refusal, Undo): the native screen shows it */
   window.__fv2Notice = function (text, action, fn) {
     if (!N.open && !N.seam) return;
@@ -693,7 +731,7 @@
 
   async function open() {
     // an open that does not go ahead lets a swipe that waited for this screen show the page's copy at once
-    const notNow = () => { NativeTabs.flush('meals'); window.NativeSwipe?.entered('meals', N.open); };
+    const notNow = () => { settleSeed(); NativeTabs.flush('meals'); window.NativeSwipe?.entered('meals', N.open); };
     if (N.open || N.opening || N.blocked || !enabled() || view() !== 'meals') {
       if (!N.opening) notNow();
       return;
@@ -744,6 +782,7 @@
         return;
       }
       N.open = true;
+      seeded = false; // the screen's first frame carried the sheet
       N.blocked = false;
       NativeTabs.flush('meals');
       setTimeout(scheduleSync, 160); /* settled bar, in case a scene from the previous tab got there late */
@@ -756,7 +795,41 @@
       NativeTabs.flush('meals');
       window.NativeSwipe?.entered('meals', N.open);
       if (again && view() === 'meals' && enabled()) queueMicrotask(open);
+      else if (!N.opening) settleSeed();
     }
+  }
+
+  /** Opens the add-food sheet on a food's portion view before the screen has opened (Recipes' "Log this recipe": the page goes to
+      Meals next and the screen's first frame carries the sheet), so the player never sees classic Meals. Only for a screen that
+      says it draws a sheet opened this way (capabilities().sheetSeed); true when the sheet is set up, else the caller hands over as
+      before. A screen that then does not open gives the page's own sheet (settleSeed). */
+  async function seedPortion(food) {
+    const p = plugin();
+    if (!p || !enabled() || !food || !state.onboardingComplete) return false;
+    try {
+      const caps = N.caps || (N.caps = await p.capabilities());
+      if (!caps || caps.version !== 1 || !caps.authoritativeData || caps.sheetSeed !== true) return false;
+    } catch (e) {
+      return false;
+    }
+    sheetStart('portion', fv2Slot());
+    Q.forms = true;
+    Q.pick = food;
+    Q.grams = fv2Unit(food).g;
+    seeded = true;
+    scheduleSync();
+    return true;
+  }
+
+  /** A seeded sheet whose screen did not open (disabled meanwhile, a page sheet came up, the page went elsewhere) is not left
+      invisible: on Meals the page's own sheet takes it over, else it is dropped. */
+  function settleSeed() {
+    if (!seeded || N.open || N.opening) return;
+    seeded = false;
+    if (!Q.open || !Q.pick) return;
+    const food = Q.pick, slot = Q.slot;
+    sheetClose();
+    if (view() === 'meals' && !document.querySelector(COVERED)) fv2Open(slot, 'portion', food);
   }
 
   function scheduleSync() {
@@ -826,6 +899,11 @@
           // the page's Undo says nothing when it lands, and "could not save" when it does not
           return !(N.noticeId !== said && N.notice && N.notice.text === unsavedMessage());
         });
+        scheduleSync();
+        return;
+      }
+      if (typeof command === 'string' && command.indexOf('swap') === 0) {
+        onSwap(command, e);
         scheduleSync();
         return;
       }
@@ -965,6 +1043,17 @@
     close: close,
     enabled: enabled,
     /** run an action of the add-food sheet as the native screen would (the fixtures and the tests drive it this way) */
+    /** see seedPortion */
+    seedPortion: seedPortion,
+    /** run an action of the swap sheet as the native screen would (the fixtures and the tests drive it this way) */
+    swapAct: function (command, payload) {
+      N.seam = true;
+      try {
+        onSwap(command, payload || {});
+      } finally {
+        N.seam = false;
+      }
+    },
     sheetAct: function (command, payload) {
       N.seam = true;
       try {
@@ -977,9 +1066,10 @@
 
   /** Android Back, from the page's lmaBack: a native sheet that is open takes it, one view at a time */
   window.NativeFoodSheet = {
-    open: function () { return N.open && Q.open; },
+    open: function () { return N.open && (Q.open || W.open); },
     back: function () {
-      onSheet('sheetBack', {});
+      if (W.open) W.open = false;
+      else onSheet('sheetBack', {});
       scheduleSync();
     }
   };
@@ -988,6 +1078,7 @@
   navigate = function (destination) {
     const result = nav.apply(this, arguments);
     if (destination !== 'meals' && (N.open || N.opening)) NativeTabs.leave('meals', destination, () => close());
+    else if (destination !== 'meals' && seeded) sheetClose();
     if (destination === 'meals') {
       NativeTabs.cancel('meals');
       N.blocked = false;
