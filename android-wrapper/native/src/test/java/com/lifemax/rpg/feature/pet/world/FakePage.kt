@@ -35,6 +35,8 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
         val acquired: MutableList<String> = mutableListOf(),
         val spotHours: MutableMap<String, Double> = sortedMapOf(),
         val toyCredit: MutableMap<String, Double> = sortedMapOf(),
+        /** The web brain the page reads for the import (petWorldLegacy); null: a fresh one. */
+        var legacy: JSONObject? = null,
     ) {
         val id: String
             get() = WorldContract.catId(born)
@@ -61,6 +63,9 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
      * While true every save is refused (storage full): commands answer not ok and change nothing.
      */
     var saveFails = false
+
+    /** Today is one of the owner's rest days (the block's `context.restDay`). */
+    var restDay = false
 
     /** Saves that reached storage. */
     var saves = 0
@@ -115,7 +120,7 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
                 .put("clockOffsetMs", 0)
                 .put("cats", list)
                 .put("pair", pairJson() ?: JSONObject.NULL)
-                .put("context", JSONObject().put("timer", false).put("restDay", false))
+                .put("context", JSONObject().put("timer", false).put("restDay", restDay))
                 .put("cue", JSONObject().put("fed", JSONArray()).put("cheer", JSONArray()))
                 .put(
                     "stored",
@@ -184,7 +189,13 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
             )
             .put("toys", JSONArray(WorldContract.TOYS.sorted()))
             .put("quirks", JSONObject().put("acq", JSONArray(c.acquired)))
-            .also { if (legacy) it.put("legacy", freshLegacy()) }
+            .also {
+                if (legacy)
+                    it.put(
+                        "legacy",
+                        c.legacy?.let { l -> JSONObject(l.toString()) } ?: freshLegacy(),
+                    )
+            }
     }
 
     private fun shares(m: Map<String, Double>): JSONObject {

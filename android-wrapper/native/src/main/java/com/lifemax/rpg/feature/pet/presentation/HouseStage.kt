@@ -9,6 +9,7 @@ import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.Petting
 import com.lifemax.rpg.feature.pet.body.TouchModel
 import com.lifemax.rpg.feature.pet.body.TouchSink
+import com.lifemax.rpg.feature.pet.body.ToyField
 import com.lifemax.rpg.feature.pet.body.Tuning
 import com.lifemax.rpg.feature.pet.host.CatWorldHost
 import com.lifemax.rpg.feature.pet.room.CameraDirector
@@ -154,16 +155,19 @@ internal class HouseStage(
      * the page's does ([BOWL_FULL_S]).
      */
     fun feed(cat: Int) {
-        house.serveMeal(cat)
+        if (world?.ownerAct("feed:$cat") != true) house.serveMeal(cat)
         bowlFullFor = BOWL_FULL_S
         scene.foodBowlFull = true
     }
 
     /** The owner tried to feed cat [cat] and it was full: it goes to its bowl and washes. */
-    fun visitBowl(cat: Int) = house.visitBowl(cat)
+    fun visitBowl(cat: Int) {
+        if (world?.ownerAct("bowl:$cat") != true) house.visitBowl(cat)
+    }
 
     /** The owner slow blinks at cat [cat]; true if the cat blinked back. */
-    fun slowBlink(cat: Int): Boolean = house.slowBlink(cat)
+    fun slowBlink(cat: Int): Boolean =
+        if (world?.ownerAct("blink:$cat") == true) house.blinkBack(cat) else house.slowBlink(cat)
 
     /**
      * The tilt of the phone, -1 to 1 (0 when there is no sensor), which the 2.5D room's camera
@@ -277,6 +281,10 @@ internal class HouseStage(
      */
     var world: CatWorldHost? = null
 
+    /** The house's toys, drawn with the cats (the world's); null draws none. */
+    var toys: ToyField? = null
+    private val toyPainter = ToyPainter(kit)
+
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
         val started = System.nanoTime()
@@ -344,8 +352,10 @@ internal class HouseStage(
         drawn = true
         val started = System.nanoTime()
         canvas.begin(target, s, originX, originY)
+        toyPainter.begin(toys, target, s, originX, originY)
         scene.paintBackdrop(canvas, hour, clock, topExtra)
         scene.paintScene(canvas, this)
+        toyPainter.rest()
         particles.paint(canvas)
         scene.paintOverlay(canvas, hour, topExtra)
         drawNanos = System.nanoTime() - started
@@ -369,6 +379,7 @@ internal class HouseStage(
     override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
         val k = visible[i]
         val pose = house.bodies[k].pose
+        toyPainter.before(pose.z, shift)
         val houseX = RoomLayout.HOUSE_X0.toFloat()
         val footX = (originX + (pose.x - houseX + shift) * scale).roundToInt().toFloat()
         val footY = (originY + (pose.y + pose.bob) * scale).roundToInt().toFloat()
@@ -398,11 +409,13 @@ internal class HouseStage(
             }
         }
         scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
+        toyPainter.held(house.bodies[k], shift)
     }
 
     override fun draw(i: Int) {
         val k = visible[i]
         val pose = house.bodies[k].pose
+        toyPainter.before(pose.z, 0)
         val houseX = RoomLayout.HOUSE_X0.toFloat()
         val footX = (originX + (pose.x - houseX) * scale).roundToInt().toFloat()
         val footY = (originY + (pose.y + pose.bob) * scale).roundToInt().toFloat()
@@ -410,6 +423,7 @@ internal class HouseStage(
         val shadowY = originY + pose.shadowY * scale
         scope.drawShadowAt(pose, scale, shadowX, shadowY)
         scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
+        toyPainter.held(house.bodies[k], 0)
     }
 
     private companion object {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.CatWorldSetup
 import com.lifemax.rpg.app.OverviewContainer
 import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.feature.overview.data.OverviewCommandSender
@@ -89,6 +90,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
         }
 
     init {
+        CatWorldSetup.install() // the native brain, once, for the process's cat world
         CatWorldHost.shared.registerPort("dashboard", worldPort)
     }
 

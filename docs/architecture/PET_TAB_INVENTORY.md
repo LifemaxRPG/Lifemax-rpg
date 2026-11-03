@@ -186,6 +186,15 @@ One cat world for the process (docs/specs/CAT_BRAIN_PLAN.md 2.3 to 2.8): `featur
 - **Tests.** `host/CatWorldHostTest`, `WorldSyncTest`, `WorldImportTest`, `PanelSourceTest`, `CatchUpAndFrameTest` (JVM, FakePage on a fake clock; the host's frame path allocates nothing); `native-cat-world.test.js` (the host's writes, the owner guard); the handover simulation's `world-write` hop (`PETMUT=noworld` fails it). No screenshot changed.
 - **Needs the phone.** The import on the owner's real save (export a backup first; never committed), and the shared camera between the Overview card and the Cat tab.
 
+## 15. The real brain in the shared world (CB1 + CB2 + CB4 part A integrated, Native API 61)
+
+- **Who moves the cats.** `app/CatWorldSetup` gives `CatWorldHost.shared` a live `CatWorld` (fallback `AutopilotBrain`). Once the page sends a good `world` block the host builds the house (`HouseLife` without its autopilot), hands its bodies to the brain (`bind`) and stops stepping them itself: the brain steps them on its own 1/120 s sub-steps. The Overview card and the Cat tab draw that one house through `SharedStages`.
+- **Persistence.** The blob's cats are the brain's minds (`brain/MindState.kt`): position, activity (`window_watch`: the blob's word has underscores), drives, mood, the trust thread, top places by page spot id, the day's wake and bed; what later phases own rides through. A cold start puts every cat back where it was, taking up what it did. The catch-up plays the gap's last hour in fast mode (about 5 to 30 ms on a desktop JVM; the fast copy shares the live cats' measured routes) and tells up to three lines.
+- **Owner acts.** Meal (the page's fed cue) `feed:<slot>`, full bowl `bowl:<slot>`, slow blink `blink:<slot>` (the body blinks back; the brain's answer is CB3), first view `open`, last view `close`; hunger, vacation and the rest day come with every block (`update`).
+- **Toys.** One `ToyField` per world house (`host/WorldToys.kt`): the stored world's toys where they lay, else two of the unlocked toys on the bedroom and living rugs; saved in the blob with their holder. `presentation/ToyPainter.kt` draws them in the shared stage only (classic and 2.5D): free toys before the first cat in front of them, the rest after the cats, a toy in a mouth just after its cat; atlas sprites turned and scaled as `ToyBody` says, yarn and spring as discs, yarn with its thread. No parallax shift for toys not next to a cat yet. The brain does not choose toys yet (CB4 part B).
+- **Tests.** `host/LiveBrainEndToEndTest`, `brain/BrainStateTest`; `host/TimetableBrain` is CB0's stand-in kept as the host tests' double.
+- **Needs the phone.** The import on the owner's real save (export a backup first), the catch-up's hitch on reopening after a long gap, and toys in the room.
+
 ## Photo album and scrapbook (S1, page side only)
 
 The page now keeps a per-cat album of memorable moments (state.pet.album, state.pet2.album, copied into state.petMemorial on passing) and the API for a later native phase to stage portraits and draw the scrapbook. Nothing is projected to native yet and no capability exists. See PET_SCRAPBOOK.md.

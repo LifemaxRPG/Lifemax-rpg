@@ -27,8 +27,11 @@ class Choice(
  * [BrainTuning.Select.ROUTE_CACHE_PX]) and the cat's capability, so a cat that sits still costs no
  * planning. "Fridge only via the counter" is the planner's geometry, not a rule here.
  */
-class Travel(private val exec: Executor) {
-    private val cache = HashMap<Long, FloatArray>()
+class Travel(
+    private val exec: Executor,
+    /** The measured ways, by place and start bucket; shared with the cat's catch-up copy. */
+    private val cache: HashMap<Long, FloatArray> = HashMap(),
+) {
 
     /** Seconds to [spot] (walking, run-ups, flights) and the hardest jump's effort, or null. */
     fun to(spot: Spot): FloatArray? {

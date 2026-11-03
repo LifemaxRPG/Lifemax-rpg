@@ -29,13 +29,14 @@ class CatMind(
     override val book: SpotBook,
     private val house: House,
     registry: ActivityRegistry,
+    routes: HashMap<Long, FloatArray> = HashMap(),
 ) : MindView {
     override val slot = profile.slot
     override val drives = Drives()
     override val persona = Persona(profile)
     override val schedule = Schedule()
     val mood = Mood()
-    val runner = ActivityRunner(this, exec, registry)
+    val runner = ActivityRunner(this, exec, registry, routes)
 
     /** The live body (null in fast mode). */
     val body: CatBody?
@@ -86,13 +87,22 @@ class CatMind(
         exec.weak = persona.weak
     }
 
-    /** Puts the cat at its first activity (the world's start). */
-    fun start(nowMs: Long, hour: Double, localDay: Long, dayKey: String) {
+    /**
+     * Puts the cat at its first activity (the world's start); with [pick] false only the day is set
+     * up, for a world whose state is restored next (the catch-up's copy).
+     */
+    fun start(nowMs: Long, hour: Double, localDay: Long, dayKey: String, pick: Boolean = true) {
         this.nowMs = nowMs
         this.hour = hour
         newDay(localDay, dayKey)
-        runner.startAt(runner.pick(rng), rng)
+        if (pick) runner.startAt(runner.pick(rng), rng)
     }
+
+    /**
+     * Takes up activity [id] (or a fresh pick) where the cat now stands; see
+     * [ActivityRunner.resume].
+     */
+    fun resume(id: String?) = runner.resume(id, rng)
 
     /** One 1/120 s sub-step: the body moves. */
     fun subStep() = exec.subStep()

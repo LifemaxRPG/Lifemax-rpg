@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.CatWorldSetup
 import com.lifemax.rpg.app.PetContainer
 import com.lifemax.rpg.feature.pet.data.PetCommandSender
 import com.lifemax.rpg.feature.pet.data.toPetReply
@@ -86,6 +87,7 @@ class NativePetPlugin : ComposeTabPlugin() {
         }
 
     init {
+        CatWorldSetup.install() // the native brain, once, for the process's cat world
         CatWorldHost.shared.registerPort("pet", worldPort)
     }
 

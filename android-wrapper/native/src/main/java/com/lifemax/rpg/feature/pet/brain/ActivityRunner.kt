@@ -15,9 +15,11 @@ class ActivityRunner(
     private val m: CatMind,
     private val exec: Executor,
     private val registry: ActivityRegistry,
+    /** The ways the cat has measured (see [Travel]); a fast copy of the cat reuses them. */
+    internal val routes: HashMap<Long, FloatArray> = HashMap(),
 ) {
     private val selector = Selector(registry)
-    private val travel = Travel(exec)
+    private val travel = Travel(exec, routes)
     private val coolUntilMs = LongArray(registry.all.size) { Long.MIN_VALUE }
     private val recent = IntArray(BrainTuning.Select.NOVELTY.size) { -1 }
     private val loaf = requireNotNull(registry.find(Catalogue.LOAF)) { "the registry needs loaf" }
@@ -65,6 +67,21 @@ class ActivityRunner(
             m.book.place(m.slot, spot, spot.x)
         }
         begin(choice, rng, cut = true)
+    }
+
+    /**
+     * Takes the world up again where the cat now stands (a restored world, a catch-up's end, the
+     * house's bodies handed over): [id] when the catalogue has it, at the place the cat is at, else
+     * a fresh pick, with its way there walked from here. Never a cut: the cat is already placed.
+     */
+    fun resume(id: String?, rng: Rng) {
+        waiting = null
+        suspended = null
+        val here = m.here
+        m.book.release(m.slot)
+        if (here != null) m.book.place(m.slot, here, exec.x)
+        val a = id?.let(registry::find)
+        begin(if (a != null) Choice(a, here, 0.0, RESUME) else pick(rng), rng)
     }
 
     /** One think quantum: progress, the end of the activity, and what follows. */

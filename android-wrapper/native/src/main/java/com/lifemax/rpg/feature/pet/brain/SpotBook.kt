@@ -107,6 +107,13 @@ class SpotBook(private val cats: Int) {
         if (gone) staySpot[slot] = NONE
     }
 
+    /** Cat [slot] holds and is going to nothing (it was moved: a restore, a catch-up). */
+    fun release(slot: Int) {
+        claimSpot[slot] = NONE
+        staySpot[slot] = NONE
+        passMask[slot] = 0
+    }
+
     /** Places cat [slot] at [spot] at once (the world's start, a test). */
     fun place(slot: Int, spot: Spot, x: Float) {
         claim(slot, spot, x, 0)

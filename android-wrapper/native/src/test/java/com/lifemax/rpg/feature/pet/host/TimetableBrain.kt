@@ -14,7 +14,8 @@ import com.lifemax.rpg.feature.pet.world.WorldClock
  * feeds. Its catch-up is a pure function of the clock and the gap, so the host's catch-up and frame
  * tests can assert exact places and lines. It thinks only on think quanta.
  */
-open class TimetableBrain(protected val clock: WorldClock, override val names: List<String>) : Brain {
+open class TimetableBrain(protected val clock: WorldClock, override val names: List<String>) :
+    Brain {
     private val doing = Array(names.size) { Doing("sleep", "bed", 0.0, "bed hours") }
     private var fedAt = Long.MIN_VALUE
 

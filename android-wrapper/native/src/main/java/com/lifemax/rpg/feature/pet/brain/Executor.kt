@@ -110,15 +110,25 @@ interface Executor {
     /** One think quantum (the fast executor's clock). */
     fun think()
 
-    /** Puts the cat down at once (the world's start: a declared cut). */
-    fun place(surface: SurfaceId, x: Float, z: Float)
+    /** Puts the cat down at once, facing [dir] (the world's start: a declared cut). */
+    fun place(surface: SurfaceId, x: Float, z: Float, dir: Int = 1)
+
+    /** Which way the cat faces, -1 or 1. */
+    val facing: Int
 
     /** The mood made visible: ear and tail states and the continuous tone. */
     fun affect(ear: EarState, tail: TailState, valence: Double, arousal: Double)
 }
 
-/** Plays scripts on a [CatBody], which the host draws. */
-class BodyExecutor(val body: CatBody) : Executor {
+/**
+ * Plays scripts on a [CatBody], which the host draws: the brain's own body, or one of the house's
+ * handed over with [adopt].
+ */
+class BodyExecutor(body: CatBody) : Executor {
+    /** The body being played; [adopt] changes it. */
+    var body: CatBody = body
+        private set
+
     private var planId = 0
     private var script: Script? = null
     private var doneIndex = -1
@@ -147,12 +157,35 @@ class BodyExecutor(val body: CatBody) : Executor {
     override val capability: JumpCapability
         get() = body.capability
 
+    override val facing: Int
+        get() = if (body.pose.facing < 0) -1 else 1
+
     override fun route(surface: SurfaceId, x: Float): Route? = body.parkourRoute(surface, x)
+
+    /**
+     * Plays on [next] from now on (the house's body, which the screens draw): it takes this body's
+     * proportions and hunger and is put where this one stands, a declared cut. The script playing
+     * is dropped; the mind resumes after.
+     */
+    fun adopt(next: CatBody) {
+        if (next === body) return
+        val was = body
+        next.growthScale = was.growthScale
+        next.bodyLength = was.bodyLength
+        next.legLength = was.legLength
+        next.weak = was.weak
+        val p = was.pose
+        next.placeAt(p.x, p.z, p.surface, facing)
+        script = null
+        body = next
+    }
 
     override fun start(script: Script) {
         this.script = script
         doneIndex = -1
-        body.replacePlan(++planId, script.steps)
+        // ids rise past any plan someone else gave this body (a touch's reflex on a shared house)
+        planId = maxOf(planId, body.planId) + 1
+        body.replacePlan(planId, script.steps)
         play(script.cueAt(0))
     }
 
@@ -168,9 +201,9 @@ class BodyExecutor(val body: CatBody) : Executor {
 
     override fun think() = Unit
 
-    override fun place(surface: SurfaceId, x: Float, z: Float) {
+    override fun place(surface: SurfaceId, x: Float, z: Float, dir: Int) {
         script = null
-        body.placeAt(x, z, surface, 1)
+        body.placeAt(x, z, surface, dir)
     }
 
     override fun affect(ear: EarState, tail: TailState, valence: Double, arousal: Double) {
@@ -249,10 +282,14 @@ class FastExecutor(
         }
     }
 
-    override fun place(surface: SurfaceId, x: Float, z: Float) {
+    override var facing = 1
+        private set
+
+    override fun place(surface: SurfaceId, x: Float, z: Float, dir: Int) {
         this.surface = surface
         this.x = x
         this.z = z
+        facing = if (dir < 0) -1 else 1
         steps = emptyList()
         index = 0
     }
@@ -270,6 +307,18 @@ class FastExecutor(
             is PlanStep.Hop -> LEAP_S
             is PlanStep.Act -> s.seconds.toDouble()
             is PlanStep.Face -> FACE_S
+            is PlanStep.Carry -> {
+                val dz = s.z?.let { Math.abs(it - z) / Tuning.Walk.Z_SPEED } ?: 0f
+                (Math.abs(s.x - x) / Tuning.Walk.WALK_SPEED + dz).toDouble()
+            }
+            is PlanStep.Kick -> s.juggleSeconds.toDouble()
+            is PlanStep.Chase -> s.seconds.toDouble()
+            // the toy beats without a time of their own: a mouthful, a swat, a spring
+            is PlanStep.PickUp,
+            is PlanStep.Toss,
+            is PlanStep.Bat,
+            is PlanStep.Pounce,
+            PlanStep.SetDown -> TOY_BEAT_S
         }
 
     private fun finish(s: PlanStep) {
@@ -282,6 +331,12 @@ class FastExecutor(
             }
             is PlanStep.Leap -> land(s.surface, s.x)
             is PlanStep.Hop -> land(s.surface, s.x)
+            is PlanStep.Carry -> {
+                x =
+                    if (surface == SurfaceId.FLOOR) World.clampHouse(s.x)
+                    else World.clampTo(surface, s.x)
+                if (surface == SurfaceId.FLOOR && s.z != null) z = s.z
+            }
             else -> Unit
         }
     }
@@ -295,6 +350,7 @@ class FastExecutor(
     private companion object {
         const val LEAP_S = 1.1
         const val FACE_S = 0.3
+        const val TOY_BEAT_S = 0.8
     }
 }
 

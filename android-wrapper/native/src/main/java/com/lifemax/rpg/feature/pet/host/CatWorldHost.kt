@@ -4,11 +4,13 @@ import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.ToyField
 import com.lifemax.rpg.feature.pet.body.World
 import com.lifemax.rpg.feature.pet.brain.Brain
 import com.lifemax.rpg.feature.pet.brain.BrainFactory
 import com.lifemax.rpg.feature.pet.brain.BrainState
 import com.lifemax.rpg.feature.pet.brain.CatchPlace
+import com.lifemax.rpg.feature.pet.brain.OwnerAct
 import com.lifemax.rpg.feature.pet.world.Away
 import com.lifemax.rpg.feature.pet.world.BlobCat
 import com.lifemax.rpg.feature.pet.world.BlobPos
@@ -110,6 +112,31 @@ class CatWorldHost(
     var house: HouseLife? = null
         private set
 
+    /** The house's toys, shared by its cats and drawn with them; null while [active] is false. */
+    @Volatile
+    var toys: ToyField? = null
+        private set
+
+    /**
+     * Whether the brain moves the bodies of [house] itself (the native brain, not the autopilot).
+     */
+    val brainDrives: Boolean
+        get() = synchronized(lock) { active && brain?.drivesBodies == true }
+
+    /**
+     * The owner did [kind] to the cats (`feed:<slot>`, `blink:<slot>`, `bowl:<slot>`; see the
+     * brain's owner acts): handed to the brain. True when the brain moves the bodies and so answers
+     * it itself; false leaves it to the caller's own reflex (the shipped autopilot's).
+     */
+    fun ownerAct(kind: String): Boolean {
+        synchronized(lock) {
+            val b = brain ?: return false
+            if (!active) return false
+            b.owner(OwnerAct(clock?.simMs ?: 0L, kind))
+            return b.drivesBodies
+        }
+    }
+
     /** The living cats of the world as the page last described them. */
     @Volatile
     var cats: List<WorldCat> = emptyList()
@@ -187,6 +214,7 @@ class CatWorldHost(
             if (views.isEmpty()) needAnchor = true
             views += view
             take()
+            if (views.size == 1) ownerAct(OWNER_OPEN)
         }
         return view
     }
@@ -195,6 +223,7 @@ class CatWorldHost(
     fun detach(view: WorldView) {
         synchronized(lock) {
             if (views.remove(view) && views.isEmpty()) {
+                ownerAct(OWNER_CLOSE)
                 markIfChanged(true)
                 pump(true)
             }
@@ -240,7 +269,8 @@ class CatWorldHost(
             c.advanceTo(frameNanos, WorldClock.MAX_LIVE_STEPS, subStep)
             val dt = ((frameNanos - lastBodyNanos) / NANOS_PER_SECOND).toFloat()
             lastBodyNanos = frameNanos
-            h.step(dt.coerceAtMost(HostTuning.MAX_STEP_S))
+            // a brain that moves the bodies steps them on its own sub-steps (above)
+            if (brain?.drivesBodies != true) h.step(dt.coerceAtMost(HostTuning.MAX_STEP_S))
             val wall = time.epochMs()
             if (wall - lastCheckAt >= HostTuning.CHANGE_CHECK_MS) {
                 lastCheckAt = wall
@@ -332,14 +362,17 @@ class CatWorldHost(
                 b.cats.map { HouseCat(Rng.hash(it.id), it.hunger.stage >= WEAK_FROM) },
                 autopilot = !made.drivesBodies,
             )
+        val field = WorldToys.field(b, blob)
+        WorldToys.attach(life, field, b.cats)
         if (made.drivesBodies) made.bind(life.bodies.toList())
-        b.cats.forEachIndexed { i, cat -> blob.cats[cat.id]?.pos?.let { place(life, i, it) } }
+        else b.cats.forEachIndexed { i, cat -> blob.cats[cat.id]?.pos?.let { place(life, i, it) } }
         clock = c
         brain = made
         current = blob
         block = b
         cats = b.cats
         house = life
+        toys = field
         away = blob.away
         sync.reset(b.epoch, stored?.rev ?: 0L, blob.outbox)
         needAnchor = true
@@ -349,6 +382,7 @@ class CatWorldHost(
         active = true
         generation++
         listeners.forEach { it.run() }
+        if (views.isNotEmpty()) made.owner(OwnerAct(c.simMs, OWNER_OPEN))
         val gap = if (blob.at > 0L) c.epochMs() - blob.at else 0L
         if (gap >= HostTuning.CATCH_UP_MIN_MS) catchUp(gap)
         lastWriteableHash = fingerprint(snapshot(0))
@@ -361,6 +395,7 @@ class CatWorldHost(
         pump(true)
         active = false
         house = null
+        toys = null
         clock = null
         brain = null
         current = null
@@ -384,7 +419,9 @@ class CatWorldHost(
         val c = clock ?: return
         val covered = gapMs.coerceAtMost(HostTuning.CATCH_UP_MAX_MS)
         val result = b.catchUp(covered)
-        result.places.forEach { p -> if (p.slot in 0 until h.count) placeAt(h, p) }
+        // a brain that moves the bodies has put them where its story ends; else the host does
+        if (!b.drivesBodies)
+            result.places.forEach { p -> if (p.slot in 0 until h.count) placeAt(h, p) }
         val lines =
             result.lines
                 .map { it.trim().take(HostTuning.AWAY_LINE_MAX) }
@@ -413,7 +450,7 @@ class CatWorldHost(
             base.copy(
                 cats = placed,
                 pair = state.pair,
-                toys = state.toys,
+                toys = toys?.let { WorldToys.export(it, h, cats) } ?: state.toys,
                 gift = state.gift,
                 away = away,
                 at = c.epochMs(),
@@ -502,6 +539,10 @@ class CatWorldHost(
     }
 
     companion object {
+        /** The owner's acts the views make: one is on screen, none is. */
+        private const val OWNER_OPEN = "open"
+        private const val OWNER_CLOSE = "close"
+
         /** The request ids the host uses start with this, so a plugin can tell its answers. */
         const val REQUEST_PREFIX = "cwh-"
 

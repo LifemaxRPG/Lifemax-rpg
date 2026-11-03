@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lifemax.rpg.feature.pet.body.HouseLife
+import com.lifemax.rpg.feature.pet.body.ReactionKind
 import com.lifemax.rpg.feature.pet.host.CatWorldHost
 import com.lifemax.rpg.feature.pet.room.RoomStyle
 import java.lang.ref.WeakReference
@@ -61,10 +62,22 @@ internal object SharedStages {
             held?.get()?.takeIf { it.kit === kit && it.house === world.house }
                 ?: HouseStage(kit, world.house, style).also {
                     it.world = world.host
+                    it.toys = world.host.toys
                     it.asyncWarm = true
                     held = WeakReference(it)
                 }
         stage.setFedHouse(fedHouse)
         return stage
     }
+}
+
+/**
+ * The owner's slow blink at cat [cat] of a house the native brain moves: the blink back only (a
+ * sleeping cat is left alone), never a plan of the autopilot's over the brain's. True if it
+ * blinked.
+ */
+internal fun HouseLife.blinkBack(cat: Int): Boolean {
+    if (cat !in 0 until count || isAsleep(cat)) return false
+    bodies[cat].react(ReactionKind.SLOW_BLINK)
+    return true
 }
