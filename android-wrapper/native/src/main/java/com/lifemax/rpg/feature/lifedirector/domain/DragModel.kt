@@ -17,13 +17,12 @@ enum class DragSource {
 
 /**
  * A session lifted off the day: the row it is (a segment on the dial lifts the row of the same
- * session), where the finger is and where in the card it took hold ([grab]), whether the finger is
- * over the trash ([armed]), and where it was lifted from ([source]).
+ * session), where the finger is, whether the finger is over the trash ([armed]), and where it was
+ * lifted from ([source]).
  */
 data class Lifted(
     val row: OrderRow,
     val finger: DragPoint,
-    val grab: DragPoint,
     val armed: Boolean = false,
     val source: DragSource = DragSource.ROW,
 )
@@ -104,15 +103,13 @@ object DragModel {
         return eased * SCROLL_DP_S * density
     }
 
-    /** Lifts [row] with the finger at [finger], having taken hold [grab] into it. */
-    fun lift(
-        row: OrderRow,
-        finger: DragPoint,
-        grab: DragPoint,
-        source: DragSource = DragSource.ROW,
-    ) = Lifted(row, finger, grab, source = source)
+    /** Lifts [row] with the finger at [finger]. */
+    fun lift(row: OrderRow, finger: DragPoint, source: DragSource = DragSource.ROW) =
+        Lifted(row, finger, source = source)
 
-    /** The finger moved: the card follows it, and the trash is armed by [hovers]. */
+    /**
+     * The finger moved: the chip follows it (see [DragChip]), and the trash is armed by [hovers].
+     */
     fun move(lifted: Lifted, finger: DragPoint, target: DragTarget, density: Float) =
         lifted.copy(finger = finger, armed = hovers(lifted.armed, finger, target, density))
 

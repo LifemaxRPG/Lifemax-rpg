@@ -21,8 +21,9 @@ Session, timer, meal, Move and "Something came up" sheets, Done, Skip, Pin, Re-p
 
 ### Taking a session off a day (`director.remove.v1`, Native API 50)
 
-Hold a session in the running order (about 350 ms, with a short buzz) and it lifts: it follows the finger as a card, a little
-larger with a shadow, the list closes the gap, and a trash ("Drop to remove") slides up above the bars. Over it the trash grows,
+Hold a session in the running order (about 350 ms, with a short buzz) and it lifts: it follows the finger as a small chip (the
+session's colour dot, name on one line and time, at most 60% of the list's width, growing with the text size), a little larger
+with a shadow, the list closes the gap, and a trash ("Drop to remove") slides up above the bars. Over it the trash grows,
 turns red and ticks; letting go there removes the session, letting go elsewhere (or Back, or a second finger) springs it back
 with no change. The list scrolls when the finger nears its top or bottom edge, not while it is over the trash. No confirm sheet:
 the drag is the deliberate act and Undo is the way back. Reduced motion: no slide, scale or spring.
@@ -49,6 +50,12 @@ segments; a row scrolling out of view does not end a row lift. Code: `presentati
 `DialGhost`) and the pure `domain/DragModel`. On the phone only: the feel of the 350 ms hold and the buzzes, the spring, auto-scroll
 speed on a long day, that a hold on a small segment is easy to land and the tab swipe and list never steal it after the lift, and how
 TalkBack speaks the action and the trash.
+
+The lifted chip (`LiftedChip`, placed by the pure `domain/DragChip`) is centred on the finger and 36 dp above it so the finger does not
+cover it (below the finger when there is no room above), kept inside the list's sides, and placed from the finger alone: where the
+finger took hold no longer matters and hover for the trash is still the finger's position, never the chip's. Dropped on the trash the
+chip shrinks into it; let go elsewhere it springs to the middle of its row's slot (or its dial segment) and fades as the row
+closes back up; from the dial it grows out of and shrinks back into the segment. Native API 52.
 
 ## Week (3A, `director.week.v1`)
 

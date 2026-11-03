@@ -30,16 +30,8 @@ enum class DragPhase {
     RETURNING,
 }
 
-/**
- * The session that is lifted: its row, where in its card the finger took hold, its phase and where
- * it was lifted from.
- */
-data class Held(
-    val row: OrderRow,
-    val grab: DragPoint,
-    val phase: DragPhase,
-    val source: DragSource = DragSource.ROW,
-)
+/** The session that is lifted: its row, its phase and where it was lifted from. */
+data class Held(val row: OrderRow, val phase: DragPhase, val source: DragSource = DragSource.ROW)
 
 /** What a finger that has stayed on a row should do. */
 sealed interface Press {
@@ -88,7 +80,6 @@ internal constructor(
 
     private var lifted: Lifted? = null
     private var density = 1f
-    private var width = 0f
     private var scrollTop = 0f
     private var scrollBottom = 0f
     private var serial = 0
@@ -104,12 +95,11 @@ internal constructor(
     )
 
     /**
-     * Where the lifted row's card, the trash and the scrolling edges are, once the screen is
+     * Where the lifted session's chip, the trash and the scrolling edges are, once the screen is
      * measured.
      */
     fun layout(width: Float, height: Float, topInset: Float, bottomInset: Float, density: Float) {
         this.density = density
-        this.width = width
         val trash = DragModel.target(width, height, bottomInset, density)
         mutableTarget.value = trash
         scrollTop = topInset
@@ -149,24 +139,13 @@ internal constructor(
     /** A session that cannot be taken off: why, in the page's words. */
     fun refuse(reason: String) = show(reason)
 
-    /** [row] is lifted by a finger at [finger], having taken hold [grab] into it. */
-    fun lift(
-        row: OrderRow,
-        finger: DragPoint,
-        grab: DragPoint,
-        source: DragSource = DragSource.ROW,
-    ) {
-        lifted = DragModel.lift(row, finger, grab, source)
+    /** [row] is lifted by a finger at [finger]. */
+    fun lift(row: OrderRow, finger: DragPoint, source: DragSource = DragSource.ROW) {
+        lifted = DragModel.lift(row, finger, source)
         mutableFinger.value = finger
         mutableArmed.value = false
-        mutableHeld.value = Held(row, grab, DragPhase.HELD, source)
+        mutableHeld.value = Held(row, DragPhase.HELD, source)
     }
-
-    /**
-     * Where a card lifted from the dial is held: by its middle, a little below its top edge, since
-     * the dial's segment is small and the card appears under the finger at its full width.
-     */
-    fun dialGrab() = DragPoint((width - 2 * LIST_SIDE.value * density) / 2, DIAL_GRAB_DP * density)
 
     /** The finger moved to [to]; true when that armed or disarmed the trash. */
     fun move(to: DragPoint): Boolean {
@@ -220,7 +199,7 @@ internal constructor(
     }
 
     /**
-     * The card has finished its way back or into the trash: the row is in the list again, or gone.
+     * The chip has finished its way back or into the trash: the row is in the list again, or gone.
      */
     fun settled() {
         if (mutableHeld.value?.phase == DragPhase.RETURNING) mutableHeld.value = null
@@ -322,7 +301,6 @@ internal constructor(
     }
 
     private companion object {
-        const val DIAL_GRAB_DP = 30f
         const val NOT_SAVED = "Not saved"
         const val NOTHING_CHANGED = "Nothing was changed."
     }

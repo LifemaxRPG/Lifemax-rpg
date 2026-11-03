@@ -72,12 +72,7 @@ internal suspend fun AwaitPointerEventScope.holdOnSegment(
             lift.view?.parent?.requestDisallowInterceptTouchEvent(true)
             buzz?.buzz(LIFT_BUZZ)
             val anchor = drag.anchor
-            drag.lift(
-                end.row,
-                anchor.frame(down.position).toPoint(),
-                drag.dialGrab(),
-                DragSource.DIAL,
-            )
+            drag.lift(end.row, anchor.frame(down.position).toPoint(), DragSource.DIAL)
             carry(drag, down, buzz, anchor::frame)
             HoldEnd.Spent
         }

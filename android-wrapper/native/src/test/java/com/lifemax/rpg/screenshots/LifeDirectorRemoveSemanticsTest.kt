@@ -59,7 +59,6 @@ class LifeDirectorRemoveSemanticsTest {
             drag.lift(
                 p.today!!.ahead.first { it.title == "Resistance Training" },
                 DragPoint(540f, 2000f),
-                DragPoint(508f, 60f),
             )
         val probe = SemanticsProbe()
         paparazzi.snapshot {
