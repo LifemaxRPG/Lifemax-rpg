@@ -76,6 +76,8 @@ class RigComposeFidelityTest {
             val rig = RigTestSupport.library.kind(kind.key)!!
             for (anim in (if (depth) art.anims.depth else art.anims.adult)) {
                 val index = rig.indexOf(anim.name)
+                // the art lab's native-only rows have no rig: the screen draws them as painted
+                if (index < 0) continue
                 for (f in 0 until anim.frames) {
                     val src =
                         Recolour.region(
