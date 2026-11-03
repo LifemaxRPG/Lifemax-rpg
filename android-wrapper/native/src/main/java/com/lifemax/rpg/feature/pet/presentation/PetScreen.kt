@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -68,11 +70,15 @@ object PetHandOver {
 }
 
 /**
- * The Cat tab as the page lays it out, with the room pinned above the cards: the live room at the
- * top, full width (at a whole number of device pixels per room pixel), and under it, scrolling, the
- * cat's card (name, hearts, mood, bond, buttons, stats, favourites, hint), the care card and the
- * way to the rest of the Cat page. The room is [room], given the modifier that sizes it, so a test
- * can fix it. The page's message shows as its toast over the bottom.
+ * The Cat tab as the page lays it out: one scrolling list whose first item is the live room, full
+ * width (at a whole number of device pixels per room pixel) with its View room chip, then the cat's
+ * card (name, hearts, mood, bond, buttons, stats, favourites, hint), the care card and the way to
+ * the rest of the Cat page. The room scrolls away with the cards. The room is [room], given the
+ * modifier that sizes it, so a test can fix it; the cats and the camera belong to the room state
+ * its caller keeps (see rememberRoomState), so an item that leaves the list and comes back finds
+ * them where they were, and a room scrolled completely off screen is not composed, so its clock
+ * does not run. [listState] lets a test start part-way down. The page's message shows as its toast
+ * over the bottom.
  */
 @Composable
 fun PetScreen(
@@ -82,6 +88,7 @@ fun PetScreen(
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
     careOpen: Boolean = false,
+    listState: LazyListState = rememberLazyListState(),
     room: @Composable (Modifier) -> Unit,
 ) {
     PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
@@ -90,31 +97,44 @@ fun PetScreen(
             Column(Modifier.fillMaxSize()) {
                 Spacer(Modifier.height(topInsetDp.dp))
                 HorizontalDivider(color = c.line)
-                Box(Modifier.fillMaxWidth().background(Stage)) {
-                    room(Modifier.fillMaxWidth().aspectRatio(ROOM_ASPECT))
-                    ViewRoomChip(
-                        p.words.room,
-                        { actions.handOver(PetHandOver.ROOM) },
-                        Modifier.align(Alignment.BottomEnd),
-                    )
-                }
-                HorizontalDivider(color = c.lineSoft)
                 LazyColumn(
                     Modifier.weight(1f),
-                    contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    state = listState,
+                    contentPadding = PaddingValues(bottom = 12.dp),
                 ) {
-                    item("card") { CatCard(p, ui, actions) }
+                    // the room is the first thing in the list, so it scrolls away with the cards;
+                    // its cats and camera live in the caller's room state, not in this item
+                    item("room") {
+                        Column(Modifier.fillMaxWidth()) {
+                            Box(Modifier.fillMaxWidth().background(Stage)) {
+                                room(Modifier.fillMaxWidth().aspectRatio(ROOM_ASPECT))
+                                ViewRoomChip(
+                                    p.words.room,
+                                    { actions.handOver(PetHandOver.ROOM) },
+                                    Modifier.align(Alignment.BottomEnd),
+                                )
+                            }
+                            HorizontalDivider(color = c.lineSoft)
+                        }
+                    }
+                    item("card") {
+                        CatCard(p, ui, actions, Modifier.padding(12.dp, 12.dp, 12.dp, 0.dp))
+                    }
                     item("care") {
                         PetCareCard(
                             p,
                             ui.waiting,
                             actions.vacation,
                             actions.rename,
+                            Modifier.padding(12.dp, 14.dp, 12.dp, 0.dp),
                             startOpen = careOpen,
                         )
                     }
-                    item("more") { MoreRow(p) { actions.handOver(PetHandOver.MORE) } }
+                    item("more") {
+                        MoreRow(p, Modifier.padding(12.dp, 14.dp, 12.dp, 0.dp)) {
+                            actions.handOver(PetHandOver.MORE)
+                        }
+                    }
                 }
                 HorizontalDivider(color = c.line)
                 Spacer(Modifier.height(bottomInsetDp.dp))
@@ -137,9 +157,9 @@ fun PetScreen(
  * `.pet-card`: the head, the mood, the bond, the buttons, the stats, the favourites and the hint.
  */
 @Composable
-private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions) {
+private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions, modifier: Modifier) {
     val c = LocalPageColors.current
-    PageCard(Modifier.fillMaxWidth(), padding = 14.dp) {
+    PageCard(modifier.fillMaxWidth(), padding = 14.dp) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -224,9 +244,9 @@ private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
 
 /** The way to everything the Cat page has that this screen does not: the page's own Cat view. */
 @Composable
-private fun MoreRow(p: PetProjection, onClick: () -> Unit) {
+private fun MoreRow(p: PetProjection, modifier: Modifier, onClick: () -> Unit) {
     val c = LocalPageColors.current
-    PageCard(Modifier.fillMaxWidth().tapTarget(Role.Button, onClick = onClick), padding = 15.dp) {
+    PageCard(modifier.fillMaxWidth().tapTarget(Role.Button, onClick = onClick), padding = 15.dp) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).padding(end = 10.dp)) {
                 Text(
