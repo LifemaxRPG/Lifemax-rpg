@@ -232,6 +232,68 @@ const STATES = {
     ok('no page errors', p.errors.length === 0, p.errors);
     await p.context().close();
 
+    /* 6. what the cat world host sends (CB2): its operation ids, its outbox riding inside the blob, a lost reply sent again, a refused
+       save sent again once storage works, and the epoch and revision it adopts after a backup restore */
+    p = await start(b);
+    await toPet(p);
+    r = await p.evaluate(async () => {
+      const o = {}, epoch = petWorldBlock(Date.now()).epoch, id = petAlbumCatId(state.pet);
+      const moment = (n) => ({ op: id + ':first_glass' + n, cmd: 'moment', args: { op: id + ':first_glass' + n, cat: id, kind: 'first_glass', at: Date.now() } });
+      const full = (rev, extra) => world(blobFor(Object.assign({ outbox: Array.from({ length: 16 }, (_, i) => moment(i)) }, extra)), { epoch, rev, op: 'world:' + epoch + ':' + rev });
+      o.first = await command('NativePet', 'world', full(1));
+      o.size = JSON.stringify(state.petWorld.blob).length;
+      o.again = await command('NativePet', 'world', full(1)); // the reply was lost, native sends the same operation again
+      o.revAfterAgain = state.petWorld.rev;
+      const put = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw Error('full') };
+      try { o.unsaved = await command('NativePet', 'world', full(2)) } finally { Storage.prototype.setItem = put }
+      o.retry = await command('NativePet', 'world', full(2)); // the same operation once storage works: stored, not "Already recorded."
+      o.again2 = await command('NativePet', 'world', full(2)); // the same operation again
+      o.stale = await command('NativePet', 'world', Object.assign(full(2), { op: 'world:' + epoch + ':2:b' })); // another operation for a revision already stored
+      o.skip = await command('NativePet', 'world', full(5)); // a gap in revisions is fine: it only has to be newer
+      o.ops = state.petWorld.op;
+      o.block = petWorldBlock(Date.now()).stored;
+      return o;
+    });
+    ok('host writes: a blob with a full outbox of 16 commands is stored, well under 8 KB', r.first.ok && r.first.changed && r.size < 8192 && r.first.rev === 1, [r.first, r.size]);
+    ok('host writes: a lost reply sent again with the same operation is "Already recorded." and the revision stays', r.again.ok && !r.again.changed && r.again.message === 'Already recorded.' && r.revAfterAgain === 1, r.again);
+    ok('host writes: a save the browser refuses is not remembered as landed, so the same operation is stored when it is sent again',
+      !r.unsaved.ok && r.unsaved.why === 'unsaved' && r.retry.ok && r.retry.changed && r.retry.rev === 2, [r.unsaved, r.retry]);
+    ok('host writes: the operation that landed is "Already recorded."; another operation for a revision already stored is stale, and the reply names the stored revision',
+      r.again2.ok && !r.again2.changed && !r.stale.ok && r.stale.why === 'stale' && r.stale.rev === 2, [r.again2, r.stale]);
+    ok('host writes: a gap in revisions is stored (it only has to be newer), and the block shows the stored revision and operation', r.skip.ok && r.skip.rev === 5 && r.block.rev === 5 && r.ops === 'world:0:5', [r.skip, r.block && r.block.rev, r.ops]);
+    r = await p.evaluate(async () => {
+      window.confirm = () => true; window.toast = () => { };
+      const backup = JSON.parse(backupJson()), id = petAlbumCatId(state.pet);
+      await applyBackup(backup);
+      const b2 = petWorldBlock(Date.now()), rev = b2.stored.rev, epoch = b2.epoch;
+      const o = { epoch, rev, old: await command('NativePet', 'world', world(blobFor(), { epoch: epoch - 1, rev: rev + 1 })) };
+      o.sameRev = await command('NativePet', 'world', world(blobFor(), { epoch, rev }));
+      o.next = await command('NativePet', 'world', world(blobFor(), { epoch, rev: rev + 1 }));
+      return o;
+    });
+    ok('after a restore the block carries the backed-up world under the new epoch; native writes on from its revision', r.epoch === 1 && r.rev === 5 && !r.old.ok && r.old.why === 'stale' && !r.sameRev.ok && r.next.ok && r.next.rev === 6 && r.next.epoch === 1, r);
+    await p.context().close();
+
+    /* 7. who runs the cats of a view: the web room loop never runs under a view the native brain owns */
+    p = await start(b);
+    r = await p.evaluate(async () => {
+      const o = { before: NativeCatWorld.owner('pet') };
+      navigate('pet'); await until(() => showing('NativePet'), 6000);
+      o.pet = NativeCatWorld.owner('pet'); o.petRun = petWantRun(); o.dash = NativeCatWorld.owner('dashboard'); o.other = NativeCatWorld.owner('plan');
+      return o;
+    });
+    ok('owner: the web brain until the Cat screen shows with pet.world.v1, then the native one, and the web room loop stays off', r.before === 'web' && r.pet === 'native' && r.petRun === false && r.dash === 'web' && r.other === 'web', r);
+    await p.context().close();
+    p = await start(b, { petCaps: PET_CAPS });
+    r = await p.evaluate(async () => { navigate('pet'); await until(() => showing('NativePet'), 6000); return { pet: NativeCatWorld.owner('pet') } });
+    ok('owner: a Cat screen without pet.world.v1 leaves the cats to the web brain', r.pet === 'web', r);
+    await p.context().close();
+    p = await start(b, { cards: true });
+    r = await p.evaluate(async () => { const o = {}; navigate('dashboard'); await until(() => showing('NativeOverviewCards'), 6000);
+      o.cards = NativeCatWorld.owner('dashboard'); o.peek = petWantRun(); return o });
+    ok('owner: the Overview cards own the dashboard cats while they show, and the web peek loop stays off', r.cards === 'native' && r.peek === false, r);
+    await p.context().close();
+
     /* the goldens the native decoders read */
     const text = JSON.stringify(out, null, 1) + '\n';
     if (process.env.RECORD) { fs.writeFileSync(GOLDEN, text); console.log('wrote ' + GOLDEN) }

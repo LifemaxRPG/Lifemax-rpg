@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.feature.pet.domain.PetProjection
+import com.lifemax.rpg.feature.pet.host.CatWorldHost
 
 /*
  * Where the Cat tab's panels (`pet.panels.v1`) go in the screen's list, in the page's order: the
@@ -27,7 +28,10 @@ internal fun LazyListScope.petTogetherItem(p: PetProjection, ui: PetUi, actions:
 internal fun LazyListScope.petPanelItems(p: PetProjection, ui: PetUi, actions: PetActions) {
     val panels = p.panels ?: return
     panels.likes?.let { item("likes") { PetSlot { PetLikesCard(it, panels.words) } } }
-    panels.inner?.let { item("inner") { PetSlot { PetInnerCard(it, panels.words) } } }
+    // the cat world's own state when there is one (CAT_BRAIN_PLAN 2.8), else the page's
+    PanelSource.inner(panels.inner, p.focus, CatWorldHost.shared)?.let {
+        item("inner") { PetSlot { PetInnerCard(it, panels.words) } }
+    }
     panels.dna?.let {
         item("dna") { PetSlot { PetDnaCard(it, panels.words, actions.expandGenome) } }
     }

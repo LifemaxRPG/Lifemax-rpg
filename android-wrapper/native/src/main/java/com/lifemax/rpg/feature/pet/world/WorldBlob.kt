@@ -12,6 +12,8 @@ package com.lifemax.rpg.feature.pet.world
  * @property toys the toys lying about the house (at most [WorldContract.MAX_TOYS_ON_FLOOR]).
  * @property outbox commands not yet answered by the page, re-sent after a restart.
  * @property away the "while you were away" story of the last catch-up.
+ * @property at when the world was last written (epoch ms; 0 when unknown, as in a blob of an older
+ *   build), which a reopen measures its gap from.
  */
 data class WorldBlob(
     val v: Int,
@@ -22,6 +24,7 @@ data class WorldBlob(
     val gift: BlobGift?,
     val outbox: List<OutboxEntry>,
     val away: Away?,
+    val at: Long = 0L,
 ) {
     companion object {
         val IMPORTED = setOf("legacy1", "fresh")

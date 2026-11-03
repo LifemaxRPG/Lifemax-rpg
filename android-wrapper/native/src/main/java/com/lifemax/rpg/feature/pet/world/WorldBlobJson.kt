@@ -61,7 +61,7 @@ object WorldBlobJson {
 
     private fun top(j: JSONObject, strict: Boolean): Read {
         ensure(jsonBytes(j) <= WorldContract.BLOB_MAX_BYTES, "size") { "blob over its size" }
-        j.exactKeys(TOP_KEYS, "blob")
+        j.exactKeys(TOP_KEYS, "blob", optional = setOf("at"))
         ensure(j.int("v", 1, Int.MAX_VALUE) <= WorldContract.BLOB_VERSION, "version") {
             "a newer blob"
         }
@@ -100,6 +100,7 @@ object WorldBlobJson {
                     },
                 away =
                     if (j.isNullAt("away")) null else away(j.child("away", setOf("from", "lines"))),
+                at = if (j.has("at")) j.whole("at", 0, TIME_MAX) else 0L,
             )
         ensure(blob.outbox.map { it.op }.toSet().size == blob.outbox.size, "shape") {
             "an op twice in the outbox"
@@ -271,6 +272,7 @@ object WorldBlobJson {
         b.cats.forEach { (id, c) -> cats.put(id, cat(c)) }
         return JSONObject()
             .put("v", b.v)
+            .put("at", b.at)
             .put("imported", b.imported)
             .put("cats", cats)
             .put("pair", b.pair?.let(::pair) ?: JSONObject.NULL)

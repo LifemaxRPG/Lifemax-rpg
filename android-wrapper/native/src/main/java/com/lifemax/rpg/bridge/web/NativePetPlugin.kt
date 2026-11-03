@@ -4,9 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelProvider
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.CatWorldSetup
 import com.lifemax.rpg.app.PetContainer
 import com.lifemax.rpg.feature.pet.data.PetCommandSender
 import com.lifemax.rpg.feature.pet.data.toPetReply
+import com.lifemax.rpg.feature.pet.host.CatWorldHost
+import com.lifemax.rpg.feature.pet.host.WorldPort
 import com.lifemax.rpg.feature.pet.presentation.CatArt
 import com.lifemax.rpg.feature.pet.presentation.PetRoute
 import com.lifemax.rpg.feature.pet.presentation.PetViewModel
@@ -67,16 +70,48 @@ class NativePetPlugin : ComposeTabPlugin() {
         }
     }
 
+    /**
+     * This screen's way to the page for the cat world's commands: heard only while it shows (the
+     * page's answer reaches a showing screen), so the world writes while a screen is in front and
+     * flushes once as it goes.
+     */
+    private val worldPort =
+        object : WorldPort {
+            override val visible: Boolean
+                get() = this@NativePetPlugin.visible
+
+            override fun send(command: String, payload: JSONObject, requestId: String): Boolean {
+                sendCommand(command, payload, requestId)
+                return true
+            }
+        }
+
+    init {
+        CatWorldSetup.install() // the native brain, once, for the process's cat world
+        CatWorldHost.shared.registerPort("pet", worldPort)
+    }
+
+    override fun handleOnStop() {
+        CatWorldHost.shared.onStop() // the app stopped: the world is saved at once
+        super.handleOnStop()
+    }
+
+    override fun handleOnDestroy() {
+        CatWorldHost.shared.unregisterPort("pet")
+        super.handleOnDestroy()
+    }
+
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
-        WorldFeed.shared.offerFrom(
-            snapshot
-        ) // pet.world.v1: kept for the cat brain, drawn by nothing yet
+        // pet.world.v1: the cats' world, one for the process (CatWorldHost)
+        val accepted = WorldFeed.shared.offerFrom(snapshot)
+        CatWorldHost.shared.onProjection(snapshot.has(WorldFeed.KEY), accepted)
         if (explicitOpen) bindCoats()
         container.repository.accept(snapshot, explicitOpen)
         if (explicitOpen) petVm.opened() else petVm.projected()
     }
 
     override fun onReply(reply: JSONObject) {
+        if (CatWorldHost.shared.onReply(reply)) return
         if (!CatArt.coats.onReply(reply)) reply.toPetReply()?.let(petVm::onReply)
     }
 

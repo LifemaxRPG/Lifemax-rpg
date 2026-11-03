@@ -32,6 +32,46 @@ sealed class PlanStep {
 
     /** Turn to face [dir] (+1 right, -1 left). */
     data class Face(val dir: Int) : PlanStep()
+
+    /**
+     * Walk up to toy [toyId], notice it, reach down and take it in the mouth (see [ToyDirector]).
+     */
+    data class PickUp(val toyId: Int) : PlanStep()
+
+    /** Walk to [x] (and depth [z]) with the toy in the mouth: the carry row, the head up. */
+    data class Carry(val x: Float, val z: Float? = null) : PlanStep()
+
+    /**
+     * Toss the carried toy toward [dir] with a head flick of [power] (0..1). With a [surface] the
+     * toss is aimed to land on it at [x].
+     */
+    data class Toss(
+        val dir: Int,
+        val power: Float = 0.6f,
+        val surface: SurfaceId? = null,
+        val x: Float = 0f,
+    ) : PlanStep()
+
+    /** Lower the head and set the carried toy down in front, on the surface the cat stands on. */
+    data object SetDown : PlanStep()
+
+    /**
+     * Paw-swat toy [toyId] (lying on the side) with an impulse of [power] (0 soft pat, 1 hard
+     * knock).
+     */
+    data class Bat(val toyId: Int, val power: Float = 0.3f) : PlanStep()
+
+    /** Belly-up: hug toy [toyId] for [juggleSeconds], then kick it away with [power]. */
+    data class Kick(val toyId: Int, val power: Float = 0.6f, val juggleSeconds: Float = 2f) :
+        PlanStep()
+
+    /** Stalk, crouch, wiggle and pounce on toy [toyId]. */
+    data class Pounce(val toyId: Int) : PlanStep()
+
+    /**
+     * Follow toy [toyId] while it rolls, for at most [seconds]; ends when it is still and reached.
+     */
+    data class Chase(val toyId: Int, val seconds: Float = 6f) : PlanStep()
 }
 
 /** What the body reports back to whoever sent the plan. */
@@ -44,6 +84,15 @@ enum class CatEventType {
 
     /** The plan was replaced while it still had work left. */
     Interrupted,
+
+    /** The cat took a toy into its mouth. */
+    ToyGrabbed,
+
+    /** The cat let a toy go (tossed or set down). */
+    ToyReleased,
+
+    /** A paw or foot hit a toy (bat, kick, pounce). */
+    ToyHit,
 }
 
 /**
