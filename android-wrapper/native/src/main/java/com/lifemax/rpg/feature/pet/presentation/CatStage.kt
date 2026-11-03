@@ -92,9 +92,9 @@ private fun DrawScope.drawSprite(
 /**
  * The cat of [pose] with its feet at device pixel ([footX], [footY]): the sheet frame of its clip,
  * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says. With
- * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so). With
- * a rig the frame is the composed one (ears, tail, whiskers, proportions) unless the cat is the art
- * as drawn; [motion] false keeps the parts as drawn (reduced motion).
+ * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so).
+ * With a rig the frame is the composed one (ears, tail, whiskers, proportions) unless the cat is
+ * the art as drawn; [motion] false keeps the parts as drawn (reduced motion).
  */
 internal fun DrawScope.drawSpriteAt(
     pose: CatPose,
