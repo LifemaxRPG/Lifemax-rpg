@@ -11,49 +11,48 @@ class DepthMathTest {
     // ------------------------------------------------------------------ parallax
 
     @Test
-    fun nearerPlanesMoveMoreAndTheSkyNotAtAll() {
-        val gains =
-            listOf(Plane.SKY, Plane.WALL, Plane.BACK, Plane.MID, Plane.FRONT).map(Parallax::gain)
-        assertEquals(0f, gains[0], 0f)
-        for (i in 1 until gains.size) assertTrue("plane $i", gains[i] > gains[i - 1])
-        // four to six planes, one to six art pixels
-        assertTrue(gains.last() <= 6f)
-        assertEquals(1f, gains[1], 0f)
-    }
-
-    @Test
-    fun theWholeRangeIsOneToSixPixels() {
-        for (plane in listOf(Plane.WALL, Plane.BACK, Plane.MID, Plane.FRONT)) {
-            val reach = Parallax.shift(1f, plane)
-            assertTrue("$plane reaches $reach", reach in 1..6)
-            assertEquals(-reach, Parallax.shift(-1f, plane))
-        }
-        assertEquals(6, Parallax.shiftAtZ(1f, World.MAX_Z))
-    }
-
-    @Test
-    fun aCatAtTheArtDepthMovesWithTheMiddlePlane() {
-        for (sway in floatArrayOf(-1f, -0.6f, -0.2f, 0f, 0.3f, 0.7f, 1f)) {
-            assertEquals(Parallax.shift(sway, Plane.MID), Parallax.shiftAtZ(sway, World.ART_Z))
+    fun theWallMovesByItsGainAndEveryRowInFrontOfItMoreTheNearerItIs() {
+        for (level in DepthLevel.entries) {
+            assertEquals(level.wallGain, Parallax.gainAtRow(Parallax.WALL_ROW, level), 0f)
+            // behind the wall (a picture on it, the bookcase's sort row) is the wall
+            assertEquals(level.wallGain, Parallax.gainAtRow(100f, level), 0f)
+            var last = 0f
+            var row = Parallax.WALL_ROW
+            while (row <= 160f) {
+                val g = Parallax.gainAtRow(row, level)
+                assertTrue("$level row $row", g >= last)
+                last = g
+                row += 1f
+            }
+            // eleven rows (the sofa's depth) are eleven times the depth gain
+            val sofa = Parallax.gainAtRow(128f, level) - Parallax.gainAtRow(117f, level)
+            assertEquals(11 * level.depthGain, sofa, 1e-5f)
         }
     }
 
     @Test
-    fun theShiftGrowsWithDepthAndIsContinuousAtTheArtDepth() {
-        var last = 0f
-        var z = 0f
-        while (z <= World.MAX_Z) {
-            val g = Parallax.gainAtZ(z)
-            assertTrue("gain at $z", g >= last)
-            last = g
-            z += 5f
+    fun aCatMovesWithTheFloorRowItStandsOn() {
+        for (level in DepthLevel.entries) for (z in floatArrayOf(0f, 20f, 35f, 60f, 100f)) {
+            for (sway in floatArrayOf(-1f, -0.4f, 0f, 0.3f, 1f)) {
+                assertEquals(
+                    Parallax.shiftAtRow(sway, World.floorY(z), level),
+                    Parallax.shiftAtZ(sway, z, level),
+                )
+            }
         }
-        assertEquals(ParallaxTuning.WALL, Parallax.gainAtZ(0f), 1e-6f)
-        assertEquals(ParallaxTuning.MID, Parallax.gainAtZ(World.ART_Z), 1e-6f)
-        assertEquals(ParallaxTuning.NEAREST, Parallax.gainAtZ(World.MAX_Z), 1e-6f)
-        val before = Parallax.gainAtZ(World.ART_Z - 0.01f)
-        val after = Parallax.gainAtZ(World.ART_Z + 0.01f)
-        assertTrue(abs(after - before) < 0.01f)
+        // at the back wall a cat moves with the wall
+        assertEquals(
+            Parallax.wallShift(1f, DepthLevel.RICH),
+            Parallax.shiftAtZ(1f, 0f, DepthLevel.RICH),
+        )
+    }
+
+    @Test
+    fun theSkyMarginCoversTheWallsReach() {
+        for (level in DepthLevel.entries) {
+            assertTrue(Parallax.wallShift(1f, level) <= Parallax.maxWallShift)
+            assertTrue(-Parallax.wallShift(-1f, level) <= Parallax.maxWallShift)
+        }
     }
 
     @Test

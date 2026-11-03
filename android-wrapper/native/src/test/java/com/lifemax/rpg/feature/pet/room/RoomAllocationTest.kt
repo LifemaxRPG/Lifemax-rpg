@@ -98,6 +98,20 @@ class RoomAllocationTest {
         override fun overlay(mask: ArgbImage, version: Int, x: Int, y: Int) {
             calls++
         }
+
+        override fun sheet(
+            image: ArgbImage,
+            slot: Int,
+            version: Int,
+            sx: Int,
+            sy: Int,
+            sw: Int,
+            sh: Int,
+            dx: Int,
+            dy: Int,
+        ) {
+            calls++
+        }
     }
 
     private class TwoCats(private val bodies: Array<CatBody>) : CatLayer {
@@ -200,9 +214,10 @@ class RoomAllocationTest {
     }
 
     /**
-     * The 2.5D room costs nothing per frame either: the sway stepped, the layers sorted with two
-     * cats between them, shifted, shadowed and given their side faces, at night with every effect
-     * on.
+     * The 2.5D room costs nothing per frame either: the sway stepped across the camera steps, the
+     * solid pieces' cached bands sorted with two cats between them, shifted and shadowed, the floor
+     * sheared row by row, at night with every effect on. (The first frames make each camera step's
+     * pictures once; the warm-up covers them.)
      */
     @Test
     fun aFrameOfTheDepthRoomAllocatesNothing() {

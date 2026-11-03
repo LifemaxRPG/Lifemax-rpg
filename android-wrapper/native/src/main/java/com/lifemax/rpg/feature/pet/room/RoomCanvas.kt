@@ -58,6 +58,29 @@ internal interface RoomCanvas {
      * canvas that caches a copy of the pixels keeps it for as long as the version stays the same.
      */
     fun overlay(mask: ArgbImage, version: Int, x: Int, y: Int)
+
+    /**
+     * Draw the [sw] x [sh] part of [image] at ([sx], [sy]) with its top left at ([dx], [dy]),
+     * unscaled: a picture the room renders while it runs (one camera step of the solid furniture,
+     * [VolumeSheets]). A canvas that caches a bitmap of it keeps one per [slot] (0 until
+     * [MAX_SHEETS]) for as long as that slot's [version] stays the same.
+     */
+    fun sheet(
+        image: ArgbImage,
+        slot: Int,
+        version: Int,
+        sx: Int,
+        sy: Int,
+        sw: Int,
+        sh: Int,
+        dx: Int,
+        dy: Int,
+    )
+
+    companion object {
+        /** How many [sheet] pictures a canvas keeps at once: one per camera step. */
+        const val MAX_SHEETS = 2 * SheetTuning.MAX_STEPS_PER_SIDE + 1
+    }
 }
 
 /**

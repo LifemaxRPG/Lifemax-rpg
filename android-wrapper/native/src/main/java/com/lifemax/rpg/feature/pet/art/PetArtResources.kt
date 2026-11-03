@@ -62,9 +62,7 @@ object PetArtResources {
                 RoomImage.BOX_BACK to png("props/box_back"),
                 RoomImage.BOX_FRONT to png("props/box_front"),
             ),
-            RoomLayerArt.parse(text("room/layers.json")) {
-                png("layers/${it.removeSuffix(".png")}")
-            },
+            RoomLayerArt.parse(text("room/layers.json")) { png(it.removeSuffix(".png")) },
         )
     }
 

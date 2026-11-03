@@ -137,6 +137,20 @@ internal class SoftCanvas(private val art: RoomArt, private val topExtra: Int = 
         for (j in 0 until mask.height) for (i in 0 until mask.width) put(x + i, y + j, mask[i, j])
     }
 
+    override fun sheet(
+        image: ArgbImage,
+        slot: Int,
+        version: Int,
+        sx: Int,
+        sy: Int,
+        sw: Int,
+        sh: Int,
+        dx: Int,
+        dy: Int,
+    ) {
+        for (j in 0 until sh) for (i in 0 until sw) put(dx + i, dy + j, image[sx + i, sy + j])
+    }
+
     /** The product of two 8-bit values as the page's canvas rounds it: `(a * b + 255) / 256`. */
     private fun mul(a: Int, b: Int) = (a * b + 255) shr 8
 

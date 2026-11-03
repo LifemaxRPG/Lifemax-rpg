@@ -14,6 +14,7 @@
 
    Which pixels are which piece, and how the wall and floor are rebuilt, is data: pet_room_cut_spec.js. */
 const { ROOMS, ROOM_W, ROOM_H } = require('./pet_room_cut_spec.js');
+const { volumeMaps, encodeMap, volumeEntry } = require('./pet_room_volume.js');
 
 const key = (d, o) => (d[o] << 16 | d[o + 1] << 8 | d[o + 2]).toString(16).padStart(6, '0');
 const inRect = (r, x, y) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
@@ -128,8 +129,8 @@ function cutRoom(img, room) {
       if (owner[at] === i) out.set(data.subarray(at * 4, at * 4 + 4), o);
       else if (whole[at] === -2 - i) out.set(colour.subarray(at * 4, at * 4 + 4), o);
     }
-    return { name: p.name, x: x0, y: y0, width: w, height: h, data: out, plane: p.plane, base: p.base, occludes: p.occludes,
-      thick: p.thick, surfaces: p.surfaces };
+    return { name: p.name, x: x0, y: y0, width: w, height: h, data: out, base: p.base, occludes: p.occludes,
+      surfaces: p.surfaces };
   });
   return { base, pieces };
 }
@@ -150,8 +151,9 @@ const HORIZON_Y = 98, FLOOR_Y_ART = 132, SCALE_AT_Z_MIN_PCT = 55, SCALE_Z_RANGE_
 const zFromY = (y) => Math.max(0, Math.min(100, ((y - HORIZON_Y) / (FLOOR_Y_ART - HORIZON_Y) * 100 - SCALE_AT_Z_MIN_PCT) * 100 / SCALE_Z_RANGE_PCT));
 const ROOM_ORDER = ['living', 'bedroom', 'kitchen'];
 
-/* The files of one build: room/layers/<room>_base.png, room/layers/<piece>.png and room/layers.json (the manifest: every piece in
-   draw order with its place, depth and flags). backdrops: { living, bedroom, kitchen } decoded RGBA images; png: pet_png.js.
+/* The files of one build: room/layers/<room>_base.png, room/layers/<piece>.png, room/volume/<piece>.png (the depth map of each
+   standing piece, pet_room_volume.js) and room/layers.json (the manifest: every piece in draw order with its place, depth, flags and
+   volume). backdrops: { living, bedroom, kitchen } decoded RGBA images; png: pet_png.js.
    Throws if a room does not reassemble exactly (the promise at the top of this file). */
 function layerFiles(backdrops, png) {
   const files = new Map(), rooms = {}, pieces = [];
@@ -161,10 +163,13 @@ function layerFiles(backdrops, png) {
     if (!back.data.equals(Buffer.from(img.data))) throw new Error(name + ': the pieces over the base are not the backdrop');
     files.set(`room/layers/${name}_base.png`, png.encode({ width: base.width, height: base.height, channels: 4, data: Buffer.from(base.data) }));
     rooms[name] = { base: `${name}_base.png`, houseX: index * ROOM_W };
+    const maps = volumeMaps(cut);
     for (const p of cut) {
       files.set(`room/layers/${p.name}.png`, png.encode({ width: p.width, height: p.height, channels: 4, data: Buffer.from(p.data) }));
-      pieces.push({ name: p.name, room: name, file: p.name + '.png', x: p.x, y: p.y, w: p.width, h: p.height, plane: p.plane,
-        baseY: p.base, z: p.base == null ? null : Math.round(zFromY(p.base) * 100) / 100, occludes: p.occludes, thick: p.thick, surfaces: p.surfaces });
+      if (maps.has(p.name)) files.set(`room/volume/${p.name}.png`, png.encode(encodeMap(p, maps.get(p.name))));
+      pieces.push({ name: p.name, room: name, file: p.name + '.png', x: p.x, y: p.y, w: p.width, h: p.height,
+        baseY: p.base, z: p.base == null ? null : Math.round(zFromY(p.base) * 100) / 100, occludes: p.occludes, surfaces: p.surfaces,
+        volume: volumeEntry(p.name) });
     }
   });
   const rows = pieces.map((p) => ' ' + JSON.stringify(p)).join(',\n');

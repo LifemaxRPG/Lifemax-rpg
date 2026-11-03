@@ -52,19 +52,29 @@ internal object ContactShadow {
 
     /**
      * Paint the shadow centred at house pixel ([cx], [cy]) with half width [halfW] and half height
-     * [halfH], [strength] 0 to 1 (0 draws nothing).
+     * [halfH], [strength] 0 to 1 (0 draws nothing; up to [MAX_STRENGTH] for a [colour] lighter than
+     * the ink), in [colour] (`0xRRGGBB`: the art's ink by default, the floor's own darkest colour
+     * under a piece of furniture).
      */
-    fun paint(c: RoomCanvas, cx: Int, cy: Int, halfW: Int, halfH: Int, strength: Float) {
+    fun paint(
+        c: RoomCanvas,
+        cx: Int,
+        cy: Int,
+        halfW: Int,
+        halfH: Int,
+        strength: Float,
+        colour: Int = ShadowTuning.COLOUR,
+    ) {
         if (strength <= 0f || halfW < 1) return
-        val s = strength.coerceAtMost(1f)
+        val s = strength.coerceAtMost(if (colour == ShadowTuning.COLOUR) 1f else MAX_STRENGTH)
         for (dy in -halfH..halfH) {
             val y = cy + dy
             val outer = span(halfW, halfH, dy, 1f)
             val ring = span(halfW, halfH, dy, ShadowTuning.RING_SCALE)
             val core = span(halfW, halfH, dy, ShadowTuning.CORE_SCALE)
-            fringe(c, cx, y, ring, outer, argb(ShadowTuning.FRINGE * s * 2f))
-            if (ring > 0) c.fill(cx - ring, y, 2 * ring, 1, argb(ShadowTuning.RING * s))
-            if (core > 0) c.fill(cx - core, y, 2 * core, 1, argb(ShadowTuning.CORE * s))
+            fringe(c, cx, y, ring, outer, argb(ShadowTuning.FRINGE * s * 2f, colour))
+            if (ring > 0) c.fill(cx - ring, y, 2 * ring, 1, argb(ShadowTuning.RING * s, colour))
+            if (core > 0) c.fill(cx - core, y, 2 * core, 1, argb(ShadowTuning.CORE * s, colour))
         }
     }
 
@@ -79,6 +89,11 @@ internal object ContactShadow {
         }
     }
 
-    private fun argb(alpha: Float): Int =
-        (Math.round(alpha.coerceIn(0f, 1f) * 255f) shl 24) or ShadowTuning.COLOUR
+    private fun argb(alpha: Float, colour: Int): Int =
+        (Math.round(alpha.coerceIn(0f, 1f) * 255f) shl 24) or colour
+
+    /**
+     * The most strength a tinted shadow takes: its fringe, the strongest step, stays translucent.
+     */
+    const val MAX_STRENGTH = 3f
 }

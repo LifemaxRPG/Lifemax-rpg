@@ -2,7 +2,7 @@ package com.lifemax.rpg.feature.pet.room
 
 /**
  * How the room is drawn: the classic flat room the web paints, or the 2.5D room (CT9) with its
- * furniture as layers, a little parallax, thickness, soft shadows and light.
+ * furniture as small solids, a camera that sways a little, soft shadows and light.
  *
  * This is the one switch the room has. [CLASSIC] draws exactly what the room always drew (the
  * fidelity test and every existing screenshot are taken with it); [DEPTH25] turns everything on.
@@ -10,22 +10,24 @@ package com.lifemax.rpg.feature.pet.room
  * room is handed one ([RoomScene]'s `style`; the stage and the host pass it down) and nothing else
  * decides.
  *
- * @property layers draw the furniture as sprites between the backdrop and the cats (the base of
- *   each room has the furniture removed). Everything below needs it.
- * @property parallax shift each depth plane by the camera sway, 1 to 6 art pixels.
- * @property thickness give the pieces marked thick a darker side face that shifts with the sway.
+ * @property layers draw the furniture as pieces between the backdrop and the cats (the base of each
+ *   room has the furniture removed). Everything below needs it.
+ * @property parallax move everything with the camera sway by its depth: the wall a little, the
+ *   floor more the nearer its row, each piece and cat by the depth it stands at.
+ * @property volume render each standing piece as a small solid ([VolumeRaster]): the sway shows its
+ *   sides and top, shaded from its own colours. Off, the pieces stay their flat painted sprites.
  * @property softShadows soft elliptical contact shadows under the cats and the furniture.
  * @property floorLight the windows' light lying on the floor, and the dark seam where wall meets
  *   floor.
  * @property rimLight a warm (day) or cool (night) edge on the cats' window side.
  * @property level how strong the depth is ([DepthLevel]): every effect scales with it.
- * @property reducedMotion no sway at all: the layers keep their rest positions (the owner's "reduce
- *   motion" setting).
+ * @property reducedMotion no sway at all: the room stays at rest (the owner's "reduce motion"
+ *   setting), and only the rest picture of each piece is ever rendered.
  */
 internal data class RoomStyle(
     val layers: Boolean = false,
     val parallax: Boolean = false,
-    val thickness: Boolean = false,
+    val volume: Boolean = false,
     val softShadows: Boolean = false,
     val floorLight: Boolean = false,
     val rimLight: Boolean = false,
@@ -45,7 +47,7 @@ internal data class RoomStyle(
             RoomStyle(
                 layers = true,
                 parallax = true,
-                thickness = true,
+                volume = true,
                 softShadows = true,
                 floorLight = true,
                 rimLight = true,

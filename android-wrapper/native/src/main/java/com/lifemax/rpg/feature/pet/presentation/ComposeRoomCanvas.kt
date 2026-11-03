@@ -44,6 +44,8 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
     private val path = Path()
     private var overlay: ImageBitmap? = null
     private var overlayVersion = Int.MIN_VALUE
+    private val sheets = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_SHEETS)
+    private val sheetVersions = IntArray(RoomCanvas.MAX_SHEETS)
 
     /** Draw the next frame into [scope] with the house at ([originX], [originY]), [scale] times. */
     fun begin(scope: DrawScope, scale: Int, originX: Int, originY: Int) {
@@ -132,6 +134,31 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
             overlay!!,
             dstOffset = IntOffset(px(x), py(y)),
             dstSize = IntSize(mask.width * scale, mask.height * scale),
+            filterQuality = FilterQuality.None,
+        )
+    }
+
+    override fun sheet(
+        image: ArgbImage,
+        slot: Int,
+        version: Int,
+        sx: Int,
+        sy: Int,
+        sw: Int,
+        sh: Int,
+        dx: Int,
+        dy: Int,
+    ) {
+        if (sheets[slot] == null || sheetVersions[slot] != version) {
+            sheets[slot] = bitmap(image)
+            sheetVersions[slot] = version
+        }
+        scope.drawImage(
+            sheets[slot]!!,
+            srcOffset = IntOffset(sx, sy),
+            srcSize = IntSize(sw, sh),
+            dstOffset = IntOffset(px(dx), py(dy)),
+            dstSize = IntSize(sw * scale, sh * scale),
             filterQuality = FilterQuality.None,
         )
     }

@@ -105,8 +105,9 @@ class DepthSceneTest {
         val front = paint(style, BoxCats(intArrayOf(40), floatArrayOf(30f), intArrayOf(122)), 18.0)
         val whole = 12 * 20
         assertEquals("in front: all of the cat shows", whole, front.cat(34, 45, 102, 121))
-        // behind: the arm covers it (the arm is opaque over x 30..46 for rows 96..123)
-        assertEquals("behind: the arm hides it", 0, behind.cat(34, 45, 102, 121))
+        // behind: the arm covers it (the arm is house x 30..44; at x 45 the seat's top, deeper
+        // than the cat, lets it show, as a solid sofa would)
+        assertEquals("behind: the arm hides it", 0, behind.cat(34, 44, 102, 121))
     }
 
     @Test
@@ -146,8 +147,9 @@ class DepthSceneTest {
         val x = 192 + 150
         val behind = paint(style, BoxCats(intArrayOf(x), floatArrayOf(40f), intArrayOf(80)), 18.0)
         val front = paint(style, BoxCats(intArrayOf(x), floatArrayOf(50f), intArrayOf(80)), 18.0)
-        // the platform is rows 64..75; the cat's top two rows stand above it
-        assertEquals(0, behind.cat(x - 6, x + 5, 64, 75))
+        // the platform's front face is rows 72..75 (its top, seen from above, is rows 64..71, and
+        // the back of the top is farther than the cat behind: a flat cat covers that part)
+        assertEquals(0, behind.cat(x - 6, x + 5, 72, 75))
         assertEquals(12 * 12, front.cat(x - 6, x + 5, 64, 75))
     }
 
@@ -192,15 +194,15 @@ class DepthSceneTest {
     // ------------------------------------------------------------------ parallax and the effects
 
     @Test
-    fun aPieceMovesByItsPlanesParallaxAndTheSkyDoesNot() {
+    fun aPieceMovesByTheRowItStandsOnAndTheSkyDoesNot() {
         val style = RoomStyle(layers = true, parallax = true)
         val still = paint(style, null, 12.0, 0f)
         val swayed = paint(style, null, 12.0, 0.5f)
-        // the sofa's left arm outline (1e162d) at row 110: house x 30 at rest, the MID plane's
-        // shift after
+        // the sofa's left arm outline (1e162d) at row 110: house x 30 at rest, then moved as its
+        // front row (128) moves
         fun leftmost(c: SoftCanvas) = (20..80).first { c.at(it, 110) == SOFA_OUTLINE }
         assertEquals(30, leftmost(still))
-        assertEquals(30 + Parallax.shift(0.5f, Plane.MID), leftmost(swayed))
+        assertEquals(30 + Parallax.shiftAtRow(0.5f, 128f, style.level), leftmost(swayed))
         // the sky inside the glass of the living room is the same picture with and without sway
         for (x in 70..85) assertEquals(still.at(x, 40), swayed.at(x, 40))
     }
@@ -224,23 +226,27 @@ class DepthSceneTest {
     }
 
     @Test
-    fun theSideFaceAppearsBesideAThickPieceAndOnlyWhenThicknessIsOn() {
-        val plain = paint(RoomStyle(layers = true), null, 12.0)
-        val thick = paint(RoomStyle(layers = true, thickness = true), null, 12.0)
-        // the tree's mid platform: bedroom x 122..181 (house 314..373), rows 100..108. At rest the
-        // face
-        // is two pixels to the right: the first column beside it is the platform's last column,
-        // shaded.
-        val edge = 192 + 181
-        assertEquals(Thickness.shade(plain.at(edge, 104)), thick.at(edge + 1, 104))
-        assertTrue(
-            "a face pixel beside the platform",
-            thick.at(edge + 1, 104) != plain.at(edge + 1, 104),
-        )
+    fun theSofasSideShowsOnlyWhenTheCameraSwaysAndTheRoomIsSolid() {
+        val flat = RoomStyle(layers = true, parallax = true, level = DepthLevel.RICH)
+        val solid = flat.copy(volume = true)
+        // at rest the solid room is the flat one exactly
         assertEquals(
-            "nothing more than the face's two pixels",
-            plain.at(edge + 4, 104),
-            thick.at(edge + 4, 104),
+            paint(flat, null, 12.0).pixels.toList(),
+            paint(solid, null, 12.0).pixels.toList(),
+        )
+        // swayed fully right the camera has moved left: the sofa's left arm shows its left side,
+        // in the sofa's own blues, left of where the flat arm's outline is
+        val shift = Parallax.shiftAtRow(1f, 128f, DepthLevel.RICH)
+        val swayed = paint(solid, null, 12.0, 1f)
+        val plain = paint(flat, null, 12.0, 1f)
+        val edge = 30 + shift
+        assertEquals(SOFA_OUTLINE, plain.at(edge, 110))
+        val side = (edge - 4 until edge).count { swayed.at(it, 110) in SOFA_COLOURS }
+        assertTrue("the side shows $side pixels", side >= 3)
+        assertEquals(
+            "the flat room has no side there",
+            0,
+            (edge - 4 until edge).count { plain.at(it, 110) in SOFA_COLOURS },
         )
     }
 
@@ -273,5 +279,7 @@ class DepthSceneTest {
     private companion object {
         const val CAT = 0xFFFF00FF.toInt()
         const val SOFA_OUTLINE = 0xFF1E162D.toInt()
+        val SOFA_COLOURS =
+            setOf(SOFA_OUTLINE, 0xFF486298.toInt(), 0xFF6280BA.toInt(), 0xFF324470.toInt())
     }
 }
