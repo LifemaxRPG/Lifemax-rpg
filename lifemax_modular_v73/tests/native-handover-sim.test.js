@@ -248,7 +248,7 @@ async function run(b, mode) {
       return r;
     };
   });
-  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativePet = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing'; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
+  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativePet = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing' || window.__mode === 'mixed' /* mixed starts with the cards on only to warm them: see below */; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
   if (mode === 'dock') {
     // ten seconds of silence, twice, as the page stores a book (IndexedDB); the owner's switch for the dock turned on as in Settings
     await p.evaluate(async () => {
@@ -274,7 +274,21 @@ async function run(b, mode) {
     // the visits only warmed the page: native's screens count as never composed, so the idle prime has screens to compose ahead
     await p.evaluate(() => { window.__composed = {} });
   };
+  let probeFailed = false, mixedWarmFailed = false;
   await warmTabs();
+  if (mode === 'mixed') {
+    /* mixed starts with the cards off, but their first drawing is as cold as any tab's (the first projection builds every tile's images):
+       a seed that switched them on and went to the Overview could wait seconds for it, and the sim's clock runs in real time meanwhile, so
+       the hand-over's 2.5 s net (NativeTabs) closed the screen being left before the cards showed (seed 36, under load). So they are drawn once
+       now, with the switch on, then switched off from native Settings as a person would, and the shell draws the Overview, warm too. */
+    await p.evaluate(() => lmaNavTo('settings', { fast: true }));
+    for (let t = 0; t < 20000 && !(await p.evaluate(() => window.__vis.settings)); t += 50) await settle(50);
+    await p.evaluate(() => Capacitor.Plugins.NativeSettings.__emit('command', { command: 'toggle', payload: { id: 'nativeOverviewCards', on: false }, requestId: 'sim-warm' }));
+    await settle(1500);
+    await p.evaluate(() => lmaNavTo('dashboard', { fast: true })); await settle(3000);
+    if (await p.evaluate(() => lmaLoad().nativeOverviewCards)) { console.log('FAIL the mixed mode could not switch the cards off after warming them'); mixedWarmFailed = true }
+    await p.evaluate(() => { window.__composed = {}; window.__cardHops = { taps: 0, toggles: 0, celebrations: 0, shown: 0, opens: 0 } });
+  }
   /* the Journal's modes: what every page load needs (no thumbnail pass; a fault whenever one of the Journal's open builders runs while
      the lock keeps the Journal closed), then the switch on, a journal with canaries and the lock on */
   const journal = journalMode(mode);
@@ -297,7 +311,6 @@ async function run(b, mode) {
     });
     await settle(1000);
   }
-  let probeFailed = false;
   if (mode === 'on') {
     /* the closing race, made to happen on every run (it was the flaky seed 31): an XP celebration closes the Life Director screen, whose fake
        stays up for its 5-40 ms close, and a Change it tapped in that window. The kit has gone inactive, so the page drops the reply by design
@@ -556,7 +569,7 @@ async function run(b, mode) {
   // given up, the cards are not tried again for the session (no retry on a body change, a celebration's end or a hop)
   if (mode === 'failing' && cards.opens !== 1) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the failing cards were asked to open ' + cards.opens + ' times, not once'], log: [] });
   if ((mode === 'off' || mode === 'failing') && cards.shown) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the cards showed in mode ' + mode], log: [] });
-  if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
+  if (process.env.TRACE || process.env.TRACE_FAIL) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
   if (mode === 'dock') console.log('     dock ' + mode + ': ' + (await p.evaluate(() => window.__dock.pushes)) + ' states pushed' + (process.env.DMUT ? ' (mutation ' + process.env.DMUT + ')' : ''));
   if (journal) {
@@ -570,5 +583,5 @@ async function run(b, mode) {
   if (errs.length) console.log('FAIL cards ' + mode + ': script errors', errs.slice(0, 3));
   await p.context().close();
   if (server) server.close();
-  return !!(failures.length || errs.length || loads || probeFailed);
+  return !!(failures.length || errs.length || loads || probeFailed || mixedWarmFailed);
 }
