@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.lifemax.rpg.feature.pet.room.RoomStyle
 
 /**
  * Where the room stands: its art and the first cat's sprites are still loading ([Loading]), the art
@@ -23,16 +24,21 @@ internal sealed interface RoomState {
  * shows its still picture meanwhile); a later cat whose sprites do not come is simply not drawn.
  * With a [prepared] stage (screenshots and tests) nothing is loaded and the room is ready at once;
  * with [wanted] false and none prepared, nothing is loaded either and the room stays loading.
+ *
+ * [style] is how the room is drawn ([RoomStyle]): the classic flat room by default. This is where
+ * the 2.5D room gets switched on for a screen (`style = RoomStyle.DEPTH25`, or `DEPTH25_STILL` for
+ * reduced motion); no screen does yet.
  */
 @Composable
 internal fun rememberRoomState(
     looks: List<HouseCatLook>,
     prepared: HouseStage? = null,
     wanted: Boolean = true,
+    style: RoomStyle = RoomStyle.CLASSIC,
 ): RoomState {
     val load = if (prepared == null && wanted) rememberRoomLoad().value else null
     val kit = load?.kit
-    val stage = if (kit != null) rememberHouseStage(kit, looks) else null
+    val stage = if (kit != null) rememberHouseStage(kit, looks, style) else null
     return when {
         prepared != null -> RoomState.Ready(prepared)
         stage != null -> RoomState.Ready(stage)

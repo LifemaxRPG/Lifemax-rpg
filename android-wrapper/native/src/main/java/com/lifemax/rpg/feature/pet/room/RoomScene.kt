@@ -20,9 +20,14 @@ import kotlin.math.sin
  * The room is pure data and arithmetic: it keeps no clock. The caller says what [hour] it is and
  * how many seconds the room has run (the clouds drift and the stars twinkle with it).
  *
+ * With a [style] that asks for it ([RoomStyle.DEPTH25]) the same three calls draw the 2.5D room
+ * instead ([DepthScene]): the furniture as layers between the backdrop and the cats, a little
+ * parallax, thickness, soft shadows and light. The default style draws exactly what is above.
+ *
  * @param art the shipped pictures.
+ * @param style how to draw the room; [RoomStyle.CLASSIC] by default.
  */
-internal class RoomScene(private val art: RoomArt) {
+internal class RoomScene(private val art: RoomArt, val style: RoomStyle = RoomStyle.CLASSIC) {
     private val sky = IntArray(2)
     private val order = IntArray(MAX_CATS)
     private val atlas = art.atlas
@@ -37,6 +42,19 @@ internal class RoomScene(private val art: RoomArt) {
     private val bowlWater = art.item("bowl_water")
     private val glow = LampGlow()
 
+    /**
+     * The 2.5D painter, when the style wants it and the art has the layers; null for the classic
+     * room.
+     */
+    val depth: DepthScene? =
+        if (style.depth && art.layers != null) DepthScene(art, style, this) else null
+
+    /**
+     * Shift every furniture sprite drawn from here on by this many pixels (the parallax); 0 in the
+     * classic room.
+     */
+    internal var shiftX = 0
+
     /** Whether the food bowl is full (a fed cat) or empty. */
     var foodBowlFull = false
 
@@ -48,6 +66,7 @@ internal class RoomScene(private val art: RoomArt) {
      * itself.
      */
     fun paintBackdrop(c: RoomCanvas, hour: Double, clock: Double, topExtra: Int) {
+        if (depth != null) return depth.paintBackdrop(c, hour, clock, topExtra)
         RoomLight.skyAt(hour, sky)
         for (wx in RoomLayout.windows) paintSky(c, wx, hour, clock)
         paintRoom(c, RoomImage.LIVING, 0, topExtra)
@@ -63,24 +82,19 @@ internal class RoomScene(private val art: RoomArt) {
     }
 
     /** One window's sky, clipped to its glass. [wx] is the window's offset in world pixels. */
-    private fun paintSky(c: RoomCanvas, wx: Int, hour: Double, clock: Double) {
+    internal fun paintSky(c: RoomCanvas, wx: Int, hour: Double, clock: Double, grow: Int = 0) {
         val night = RoomLight.isNight(hour)
         val left = wx - RoomLayout.HOUSE_X0 // house x of the window's own origin
-        val glassX = left + RoomLayout.GLASS_X
-        c.clip(glassX, RoomLayout.GLASS_Y, RoomLayout.GLASS_W, RoomLayout.GLASS_H)
+        val glassX = left + RoomLayout.GLASS_X - grow
+        val glassW = RoomLayout.GLASS_W + 2 * grow
+        c.clip(glassX, RoomLayout.GLASS_Y, glassW, RoomLayout.GLASS_H)
         // six bands of the sky, each the run of rows the web gives the same colour
         var start = 0
         for (row in 1..RoomLayout.GLASS_H) {
             if (row < RoomLayout.GLASS_H && skyBandOf(row) == skyBandOf(start)) continue
             val colour =
                 RoomLight.skyBand(sky[RoomLight.TOP], sky[RoomLight.BOTTOM], skyBandOf(start))
-            c.fill(
-                glassX,
-                RoomLayout.GLASS_Y + start,
-                RoomLayout.GLASS_W,
-                row - start,
-                OPAQUE or colour,
-            )
+            c.fill(glassX, RoomLayout.GLASS_Y + start, glassW, row - start, OPAQUE or colour)
             start = row
         }
         if (night || hour < STARS_UNTIL || hour >= STARS_FROM) paintStars(c, left, night, clock)
@@ -97,6 +111,9 @@ internal class RoomScene(private val art: RoomArt) {
         }
         c.unclip()
     }
+
+    /** Pick the sky colours of [hour] for the painters that follow. */
+    internal fun skyFor(hour: Double) = RoomLight.skyAt(hour, sky)
 
     /** Which of the six bands of the glass the row [row] (0 at the top) is in. */
     private fun skyBandOf(row: Int): Int =
@@ -115,7 +132,7 @@ internal class RoomScene(private val art: RoomArt) {
     }
 
     /** The window's light lying on the floor of the living room and the bedroom. */
-    private fun paintWindowLight(c: RoomCanvas, hour: Double) {
+    internal fun paintWindowLight(c: RoomCanvas, hour: Double) {
         val colour =
             when {
                 hour >= 7.5 && hour < 17.5 -> DAY_LIGHT
@@ -136,6 +153,7 @@ internal class RoomScene(private val art: RoomArt) {
      * their feet.
      */
     fun paintScene(c: RoomCanvas, cats: CatLayer) {
+        if (depth != null) return depth.paintScene(c, cats)
         val n = cats.count.coerceAtMost(MAX_CATS)
         for (i in 0 until n) order[i] = i
         // at most two cats: a swap sorts them
@@ -158,6 +176,16 @@ internal class RoomScene(private val art: RoomArt) {
         val zb = cats.depth(b)
         return za < zb || (za == zb && cats.feet(a) < cats.feet(b))
     }
+
+    /** The depth the web sorts each piece of atlas furniture at, in drawing order. */
+    internal val furnitureZ: FloatArray
+        get() = FURNITURE_Z
+
+    /**
+     * Draw the atlas furniture number [k] (its place in [FURNITURE_Z]); the 2.5D room sorts them
+     * itself.
+     */
+    internal fun paintFurnitureAt(c: RoomCanvas, k: Int) = paintFurniture(c, FURNITURE[k])
 
     private fun paintFurniture(c: RoomCanvas, piece: Furniture) {
         val bedX = (RoomLayout.BED_X - HOUSE_X0).toDouble()
@@ -189,7 +217,7 @@ internal class RoomScene(private val art: RoomArt) {
         val h = src.height * (pct / 100.0)
         val floorY =
             World.HORIZON_Y + (World.FLOOR_Y_ART - World.HORIZON_Y).toDouble() * pct / 100.0
-        val dx = RoomLight.jsRound(x - w / 2) - RoomLayout.HOUSE_X0
+        val dx = RoomLight.jsRound(x - w / 2) - RoomLayout.HOUSE_X0 + shiftX
         val dy = RoomLight.jsRound(floorY - h + 1)
         c.image(
             image,
@@ -212,7 +240,7 @@ internal class RoomScene(private val art: RoomArt) {
             r.y,
             r.width,
             r.height,
-            RoomLight.jsRound(x),
+            RoomLight.jsRound(x) + shiftX,
             RoomLight.jsRound(y),
             r.width,
             r.height,
@@ -284,7 +312,7 @@ internal class RoomScene(private val art: RoomArt) {
         const val POUF_Z = 45f
         const val CUSHION_X = -120
         const val CUSHION_Z = 66f
-        val FURNITURE_Z =
+        val FURNITURE_Z: FloatArray =
             floatArrayOf(
                 RoomLayout.Z_BED_BACK,
                 RoomLayout.Z_BOWLS,

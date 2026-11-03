@@ -2,7 +2,9 @@ package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -82,7 +84,8 @@ private fun DrawScope.drawSprite(
 
 /**
  * The cat of [pose] with its feet at device pixel ([footX], [footY]): the sheet frame of its clip,
- * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says.
+ * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says. With
+ * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so).
  */
 internal fun DrawScope.drawSpriteAt(
     pose: CatPose,
@@ -90,6 +93,7 @@ internal fun DrawScope.drawSpriteAt(
     s: Int,
     footX: Float,
     footY: Float,
+    tint: Color? = null,
 ) {
     val sheet = sprites.sheet(pose.clip) ?: return
     val flip = if (pose.flip) -1f else 1f
@@ -108,6 +112,7 @@ internal fun DrawScope.drawSpriteAt(
             srcSize = IntSize(frameW, frameH),
             dstOffset = IntOffset(-(frameW / 2) * s, (1 - feet) * s),
             dstSize = IntSize(frameW * s, frameH * s),
+            colorFilter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn),
             filterQuality = FilterQuality.None,
         )
     }

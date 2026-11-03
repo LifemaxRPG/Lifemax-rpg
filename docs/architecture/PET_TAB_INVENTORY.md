@@ -66,6 +66,7 @@ What the owner's care does in the room (`HouseStage.feed`, `visitBowl`, `slowBli
 A genetic coat's sheets are asked of the page: `CatArt.coats` is one source for every screen with a room, so the screen that opens (`accept` with an explicit open) binds its own requester; replies to `coat` are handled by whichever plugin receives them.
 
 The cat's sheets carry twelve extra animation rows after the page's 28 (jump_up, jump_air, jump_land, turn, pickup, carry, toss, yawn, shake, bump, groom_other, nose_touch; Native API 52), made by the art lab (`docs/specs/PET_ART_LAB.md`). The room draws them like any row (`CatArt` resolves every clip by name); the autopilot does not choose them yet (CT4/CT5). Their mouth anchors and pair offsets are in `LabTable` (`lab.json`).
+The room has one more switch, `RoomStyle` (CT9, off): `rememberRoomState(looks, style = ...)` and `HouseStage(kit, house, style)` take it, and the default `RoomStyle.CLASSIC` draws the room as above; `RoomStyle.DEPTH25` draws the 2.5D room (furniture as layers, parallax, thickness, soft shadows, window light, rim light; `PET_ENGINE_PLAN.md` section 5.1). No screen passes it yet.
 
 ## 6. Tests
 

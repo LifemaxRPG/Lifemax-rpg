@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import com.lifemax.rpg.feature.pet.body.Autopilot
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
+import com.lifemax.rpg.feature.pet.room.RoomStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -84,14 +85,21 @@ internal fun rememberRoomLoad(): State<RoomLoad?> =
  * The house of the cats on a card, made once for the same [looks]: a [HouseLife] seeded by each
  * cat's name and coat, in a [HouseStage] that is given each cat's sprites as they arrive. Null
  * until the first cat's sprites are here (the card shows its still portrait meanwhile); a later cat
- * whose sprites do not come is simply not drawn.
+ * whose sprites do not come is simply not drawn. The room is drawn in [style]: the classic flat
+ * room by default, or the 2.5D room (the integration point for CT9; see [RoomStyle]).
  */
 @Composable
-internal fun rememberHouseStage(kit: RoomKit, looks: List<HouseCatLook>): HouseStage? {
+internal fun rememberHouseStage(
+    kit: RoomKit,
+    looks: List<HouseCatLook>,
+    style: RoomStyle = RoomStyle.CLASSIC,
+): HouseStage? {
     val stage =
-        remember(kit, looks) {
+        remember(kit, looks, style) {
             val cats = looks.map { HouseCat(Autopilot.seedFor(it.name, it.coat), it.weak) }
-            HouseStage(kit, HouseLife(cats)).also { st -> st.setFedHouse(looks.none { it.weak }) }
+            HouseStage(kit, HouseLife(cats), style).also { st ->
+                st.setFedHouse(looks.none { it.weak })
+            }
         }
     val sprites = looks.map { rememberCatSprites(it.coat, it.stage) }
     SideEffect { sprites.forEachIndexed { i, s -> stage.setSprites(i, s) } }

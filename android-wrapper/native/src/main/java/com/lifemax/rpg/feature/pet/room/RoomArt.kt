@@ -15,6 +15,17 @@ internal enum class RoomImage {
     CUSHION,
     BOX_BACK,
     BOX_FRONT,
+
+    /** The furniture cut out of the backdrops, packed into one picture (2.5D room). */
+    LAYERS,
+
+    /** [LAYERS] with every pixel shaded: the sides of thick pieces are copies of it. */
+    LAYERS_DARK,
+
+    /** The living room's backdrop with the furniture removed and the wall and floor rebuilt. */
+    LIVING_BASE,
+    BEDROOM_BASE,
+    KITCHEN_BASE,
 }
 
 /**
@@ -22,7 +33,12 @@ internal enum class RoomImage {
  * and the free-standing props. Written by `tools/gen_pet_native_assets.js` from the page's own
  * data.
  */
-internal class RoomArt(val atlas: RoomAtlas, private val images: Map<RoomImage, ArgbImage>) {
+internal class RoomArt(
+    val atlas: RoomAtlas,
+    private val images: Map<RoomImage, ArgbImage>,
+    /** The furniture layers of the 2.5D room; null in a test that does not need them. */
+    val layers: RoomLayerArt? = null,
+) {
     init {
         for (backdrop in listOf(RoomImage.LIVING, RoomImage.BEDROOM, RoomImage.KITCHEN)) {
             val img = image(backdrop)
@@ -34,11 +50,23 @@ internal class RoomArt(val atlas: RoomAtlas, private val images: Map<RoomImage, 
 
     /** The pixels of [image]. */
     fun image(image: RoomImage): ArgbImage =
-        if (image == RoomImage.ATLAS) atlas.image
-        else images[image] ?: error("room art is missing $image")
+        when (image) {
+            RoomImage.ATLAS -> atlas.image
+            RoomImage.LAYERS -> layers?.atlas ?: NOTHING
+            RoomImage.LAYERS_DARK -> layers?.dark ?: NOTHING
+            RoomImage.LIVING_BASE -> layers?.base(0) ?: NOTHING
+            RoomImage.BEDROOM_BASE -> layers?.base(1) ?: NOTHING
+            RoomImage.KITCHEN_BASE -> layers?.base(2) ?: NOTHING
+            else -> images[image] ?: error("room art is missing $image")
+        }
 
     /** Where the atlas sprite [name] is; the room's own names (`bed_back`, `sun`, ...). */
     fun item(name: String): FrameRect = atlas.rect(name) ?: error("the room atlas has no $name")
+
+    private companion object {
+        /** What a picture stands for when the art has no layers: one clear pixel. */
+        val NOTHING = ArgbImage(1, 1, IntArray(1))
+    }
 }
 
 /**

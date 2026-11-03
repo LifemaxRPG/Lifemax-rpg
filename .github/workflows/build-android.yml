@@ -239,6 +239,8 @@ jobs:
 
       - name: Cat lab animation rows current with their pose specs; the page's own frames untouched
         run: node lifemax_modular_v73/tools/pet_art/build.js --check
+      - name: Native cat room layers current and reassemble the backdrops exactly
+        run: node lifemax_modular_v73/tools/gen_pet_room_layers.js --check
 
       - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt), part ${{ matrix.part }}
         if: matrix.part != 'sim'

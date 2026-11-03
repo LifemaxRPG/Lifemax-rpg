@@ -76,6 +76,20 @@ internal interface CatLayer {
 
     /** Draw cat [i] and its shadow. */
     fun draw(i: Int)
+
+    /**
+     * The key of the surface cat [i] stands on (`floor`, `couch`, `mid`, `top`, ...; the body's
+     * [com.lifemax.rpg.feature.pet.body.SurfaceId] keys), or null when it does not say. The 2.5D
+     * room draws a cat that stands on a piece of furniture just after that piece.
+     */
+    fun surface(i: Int): String? = null
+
+    /**
+     * Draw cat [i] in the 2.5D room: moved [shift] art pixels sideways by the parallax, with the
+     * soft contact shadow and rim light the [style] asks for, painted through [canvas]. A layer
+     * that cannot do this (the classic room) draws as [draw] does.
+     */
+    fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) = draw(i)
 }
 
 /** An empty room: the fidelity test and the room without cats. */
