@@ -12,6 +12,8 @@ import com.lifemax.rpg.feature.overview.data.overviewReply
 import com.lifemax.rpg.feature.overview.presentation.OverviewRoute
 import com.lifemax.rpg.feature.overview.presentation.OverviewViewModel
 import com.lifemax.rpg.feature.pet.presentation.CatArt
+import com.lifemax.rpg.feature.pet.world.WorldContract
+import com.lifemax.rpg.feature.pet.world.WorldFeed
 import java.util.concurrent.atomic.AtomicLong
 import org.json.JSONObject
 
@@ -44,6 +46,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
             "overview.cat.live.v2",
             "overview.cat.coat.v1",
             "overview.cat.rig.v1",
+            WorldContract.CAPABILITY,
         )
 
     init {
@@ -68,6 +71,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
     }
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
+        WorldFeed.shared.offerFrom(snapshot) // pet.world.v1: the same cats' world as the Cat tab's
         if (explicitOpen) bindCoats()
         container.repository.accept(snapshot, explicitOpen)
         if (explicitOpen) viewModel.opened() else viewModel.projected()

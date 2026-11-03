@@ -193,7 +193,7 @@
   function projection() {
     const images = {}, now = Date.now();
     held = held.filter((c) => now - c.at < CELEBRATION_KEEP_MS);
-    return {
+    const out = {
       head: ovHeadData(),
       tip: tip(),
       layout: ovLayout(),
@@ -207,6 +207,7 @@
       haptics: haptics(),
       arrival,
     };
+    return window.NativeCatWorld ? NativeCatWorld.extend(out, tab) : out; // the cats' world block, for a screen with pet.world.v1
   }
 
   /* ---- commands: what the screen's taps run on the page, without closing it first ---- */
@@ -454,5 +455,6 @@
     diagnostics: () => ({ enabled: tab.enabled(), wanted: wanted(), gaveUp, failReason, active: tab.active(), opening: tab.opening(),
       blocked: tab.blocked(), veiled, arrival, petLoop: typeof petWantRun === "function" ? petWantRun() : false, celebrations: held.length }),
   };
+  if (window.NativeCatWorld) commands.world = NativeCatWorld.command((c) => tab.has(c)); // the cats' world blob (pet.world.v1)
   window.NativeOverviewCardsProjection.commands = commands;
 })();

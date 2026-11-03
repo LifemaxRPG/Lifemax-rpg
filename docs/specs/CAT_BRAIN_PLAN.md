@@ -1,6 +1,6 @@
 # Native cat brain: plan
 
-Status: design, not started. Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
+Status: CB0 (contract and harness) built, Native API 58: `pet.world.v1`, the `world` block, blob and command, the strict decoders, FakePage, WorldClock, the headless check and the day viewer skeleton; nothing behaves differently yet. Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
 live `mind` stream that lets the page's brain steer the native body), the page halves of CT4 and CT5 (game plan builders, pair director
 through the stream) and the behaviour part of CT-L. The page keeps the cat's **identity and care economics**; **behaviour** (what a
 cat does minute by minute) moves to a new, smaller brain in pure Kotlin, built for the new body. Citations are `segment:line` under
@@ -259,9 +259,9 @@ petWorld = { v:1, epoch, rev, at, imported:"legacy1"|"fresh",
 ```
 
 - **Page side** (`50-native-cat-world.js`, new, after `50-native-pet.js`): accepts when `v` is a known integer, `epoch` equals the
-  page's `state.petWorldEpoch`, `rev` > stored `rev`, the JSON is ≤ 8 KB and its `cats` keys are the living cats' ids. Otherwise
+  page's world epoch, `rev` > stored `rev`, the JSON is ≤ 8 KB and its `cats` keys are the living cats' ids. Otherwise
   `{ok:false, why:'stale'|'size'|'shape'}`. It never reads inside the blob. Writes with `writeSave()` (no re-render, as the web brain's
-  `26:100`). Backups carry it automatically (it is in `state`); restore bumps `petWorldEpoch`.
+  `26:100`). Backups carry it automatically (it is in `state`); restore bumps the epoch, which CB0 keeps in localStorage `lifemax_pet_world_epoch_v1` beside the save so a backup still comes back exactly as made.
 - **Native side**: writes when an activity changes (at most every 60 s), at once after a moment or a pair event, and on `ON_STOP`.
   `rev` strictly increases. A failed write keeps the world dirty and retries in 30 s; nothing waits on it. Over 8 KB: drop spot scores
   below the top 4, then toys not on screen, then `away`.

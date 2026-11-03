@@ -147,7 +147,8 @@
       words: WORDS,
       cue: { fed: fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) },
     }, touch);
-    return window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
+    const full = window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
+    return window.NativeCatWorld ? NativeCatWorld.extend(full, tab) : full; // the world block, for a screen with pet.world.v1
   }
 
   /** Runs change() and says whether every write it made reached storage (the answers of writeSave; true when it made none). */
@@ -406,5 +407,6 @@
   });
 
   /* the page's room loop stops while the screen covers the view (petWantRun), so the cat is not drawn twice */
-  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands, has: (c) => tab.has(c), toasts: () => tab.toasts(), claimToast: toastSince };
+  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands, has: (c) => tab.has(c), toasts: () => tab.toasts(), claimToast: toastSince,
+    fedCues: (now) => fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) }; // for the world block
 })();

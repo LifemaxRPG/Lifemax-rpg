@@ -1,0 +1,1231 @@
+{
+ "blocks": {
+  "kitten": {
+   "v": 1,
+   "seq": 1793361600000,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmvdrwqo0",
+     "slot": 0,
+     "name": "Pip",
+     "born": 1792324800000,
+     "sex": "m",
+     "coat": "tuxedo",
+     "stage": 2,
+     "grownAt": 1794916800000,
+     "ps": {
+      "sk": 0.35,
+      "ou": 0.789,
+      "dm": 0.83,
+      "sp": 0.361,
+      "fr": 0.145,
+      "vo": 0.58
+     },
+     "morph": {
+      "lg": 0.79,
+      "bl": 0.94
+     },
+     "bond": {
+      "lvl": 1,
+      "pct": 0
+     },
+     "zMax": 55,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793343600000,
+      "vacation": false,
+      "nextStageAt": 1793372400000
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793358000000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.189,
+       "tru": 0.236,
+       "sec": 0.234,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "greeble_spotter",
+        "dramatic_flopper"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 0.921,
+      "toys": [],
+      "pos": null
+     }
+    }
+   ],
+   "pair": null,
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  },
+  "bonded": {
+   "v": 1,
+   "seq": 1793361600001,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmu9rkw00",
+     "slot": 0,
+     "name": "Ted",
+     "born": 1789905600000,
+     "sex": "m",
+     "coat": "ginger",
+     "stage": -1,
+     "grownAt": 1792497600000,
+     "ps": {
+      "sk": 0.606,
+      "ou": 0.643,
+      "dm": 0.523,
+      "sp": 0.596,
+      "fr": 0.216,
+      "vo": 0.316
+     },
+     "morph": {
+      "lg": 1.13,
+      "bl": 0.96
+     },
+     "bond": {
+      "lvl": 5,
+      "pct": 100
+     },
+     "zMax": 100,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793354400000,
+      "vacation": false,
+      "nextStageAt": 1793383200000
+     },
+     "care": {
+      "fedToday": 1,
+      "petsToday": 2,
+      "playsToday": 2,
+      "feedAt": 1793368800000,
+      "canPlay": false,
+      "giftOk": true
+     },
+     "likes": {
+      "spots": {
+       "bed": 100,
+       "couch": 42,
+       "box": 13
+      },
+      "toys": {
+       "feather": 100,
+       "ball_a": 25
+      },
+      "favSpot": "bed",
+      "favToy": "feather"
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": [
+       "lap_barnacle"
+      ]
+     },
+     "legacy": {
+      "src": "brain",
+      "mood": {
+       "v": 0.42,
+       "a": -0.2
+      },
+      "trust": {
+       "fam": 0.8,
+       "tru": 0.74,
+       "sec": 0.6,
+       "aut": 0.55
+      },
+      "energy": 0.71,
+      "spots": {
+       "bed": 21,
+       "couch": 16,
+       "tree": 12,
+       "sill": 8,
+       "box": 7,
+       "pouf": 5
+      },
+      "glass": 16,
+      "fx": [
+       "first_blink",
+       "first_glass"
+      ],
+      "qk": {
+       "inn": [
+        "dramatic_flopper",
+        "chirp_greeter"
+       ],
+       "c": {
+        "n": 3,
+        "t": 7,
+        "g": 21,
+        "k": 2
+       }
+      },
+      "rhythm": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       20,
+       70,
+       60,
+       10,
+       0,
+       0,
+       30,
+       20,
+       0,
+       0,
+       0,
+       10,
+       50,
+       80,
+       90,
+       60,
+       30,
+       10
+      ],
+      "voice": 1.043,
+      "toys": [
+       {
+        "id": "ball_a",
+        "x": 140,
+        "z": 62.3
+       },
+       {
+        "id": "mouse",
+        "x": 346,
+        "z": 100
+       }
+      ],
+      "pos": {
+       "x": 126,
+       "z": 61.5,
+       "elev": 0
+      }
+     }
+    }
+   ],
+   "pair": null,
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  },
+  "hungry": {
+   "v": 1,
+   "seq": 1793361600002,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmu9rkw00",
+     "slot": 0,
+     "name": "Miso",
+     "born": 1789905600000,
+     "sex": "m",
+     "coat": "ginger",
+     "stage": -1,
+     "grownAt": 1792497600000,
+     "ps": {
+      "sk": 0.606,
+      "ou": 0.643,
+      "dm": 0.523,
+      "sp": 0.596,
+      "fr": 0.216,
+      "vo": 0.316
+     },
+     "morph": {
+      "lg": 1.13,
+      "bl": 0.96
+     },
+     "bond": {
+      "lvl": 3,
+      "pct": 0
+     },
+     "zMax": 84,
+     "hunger": {
+      "stage": 2,
+      "lastFed": 1793289600000,
+      "vacation": false,
+      "nextStageAt": 1793383200000
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793304000000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.409,
+       "tru": 0.441,
+       "sec": 0.424,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "paw_tuck_sleeper",
+        "gravity_tester"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 1.069,
+      "toys": [],
+      "pos": null
+     }
+    }
+   ],
+   "pair": null,
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  },
+  "vacation": {
+   "v": 1,
+   "seq": 1793361600003,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmu9rkw00",
+     "slot": 0,
+     "name": "Miso",
+     "born": 1789905600000,
+     "sex": "m",
+     "coat": "ginger",
+     "stage": -1,
+     "grownAt": 1792497600000,
+     "ps": {
+      "sk": 0.606,
+      "ou": 0.643,
+      "dm": 0.523,
+      "sp": 0.596,
+      "fr": 0.216,
+      "vo": 0.316
+     },
+     "morph": {
+      "lg": 1.13,
+      "bl": 0.96
+     },
+     "bond": {
+      "lvl": 3,
+      "pct": 0
+     },
+     "zMax": 84,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793329200000,
+      "vacation": true,
+      "nextStageAt": null
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793343600000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.409,
+       "tru": 0.441,
+       "sec": 0.424,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "paw_tuck_sleeper",
+        "gravity_tester"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 1.069,
+      "toys": [],
+      "pos": null
+     }
+    }
+   ],
+   "pair": null,
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  },
+  "dna": {
+   "v": 1,
+   "seq": 1793361600004,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmu9rkw00",
+     "slot": 0,
+     "name": "Miso",
+     "born": 1789905600000,
+     "sex": "m",
+     "coat": "dna_black_1_n_2_0_n_0_3",
+     "stage": -1,
+     "grownAt": 1792497600000,
+     "ps": {
+      "sk": 0.3,
+      "ou": 0.842,
+      "dm": 0.604,
+      "sp": 0.544,
+      "fr": 0.591,
+      "vo": 0.788
+     },
+     "morph": {
+      "lg": 1.02,
+      "bl": 0.9
+     },
+     "bond": {
+      "lvl": 3,
+      "pct": 0
+     },
+     "zMax": 84,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793343600000,
+      "vacation": false,
+      "nextStageAt": 1793372400000
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793358000000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.409,
+       "tru": 0.441,
+       "sec": 0.424,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "paw_tuck_sleeper",
+        "gravity_tester"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 1.069,
+      "toys": [],
+      "pos": null
+     }
+    }
+   ],
+   "pair": null,
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  },
+  "twoCats": {
+   "v": 1,
+   "seq": 1793361600007,
+   "epoch": 0,
+   "clockOffsetMs": 0,
+   "cats": [
+    {
+     "id": "cmu9rkw00",
+     "slot": 0,
+     "name": "Ted",
+     "born": 1789905600000,
+     "sex": "m",
+     "coat": "ginger",
+     "stage": -1,
+     "grownAt": 1792497600000,
+     "ps": {
+      "sk": 0.606,
+      "ou": 0.643,
+      "dm": 0.523,
+      "sp": 0.596,
+      "fr": 0.216,
+      "vo": 0.316
+     },
+     "morph": {
+      "lg": 1.13,
+      "bl": 0.96
+     },
+     "bond": {
+      "lvl": 3,
+      "pct": 0
+     },
+     "zMax": 84,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793343600000,
+      "vacation": false,
+      "nextStageAt": 1793372400000
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793358000000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.409,
+       "tru": 0.441,
+       "sec": 0.424,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "paw_tuck_sleeper",
+        "gravity_tester"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 1.069,
+      "toys": [],
+      "pos": null
+     }
+    },
+    {
+     "id": "cmv2cdxc0",
+     "slot": 1,
+     "name": "Lily",
+     "born": 1791633600000,
+     "sex": "m",
+     "coat": "gray",
+     "stage": 4,
+     "grownAt": 1794225600000,
+     "ps": {
+      "sk": 0.081,
+      "ou": 0.73,
+      "dm": 0.423,
+      "sp": 0.529,
+      "fr": 0.252,
+      "vo": 0.931
+     },
+     "morph": {
+      "lg": 0.9,
+      "bl": 0.98
+     },
+     "bond": {
+      "lvl": 3,
+      "pct": 0
+     },
+     "zMax": 84,
+     "hunger": {
+      "stage": 0,
+      "lastFed": 1793343600000,
+      "vacation": false,
+      "nextStageAt": 1793372400000
+     },
+     "care": {
+      "fedToday": 0,
+      "petsToday": 0,
+      "playsToday": 0,
+      "feedAt": 1793358000000,
+      "canPlay": true,
+      "giftOk": false
+     },
+     "likes": {
+      "spots": {},
+      "toys": {},
+      "favSpot": null,
+      "favToy": null
+     },
+     "toys": [
+      "ball_a",
+      "mouse",
+      "feather",
+      "ball_b",
+      "yarn",
+      "spring",
+      "wand"
+     ],
+     "quirks": {
+      "acq": []
+     },
+     "legacy": {
+      "src": "fresh",
+      "mood": {
+       "v": 0.2,
+       "a": -0.1
+      },
+      "trust": {
+       "fam": 0.409,
+       "tru": 0.441,
+       "sec": 0.424,
+       "aut": 0.7
+      },
+      "energy": 0.5,
+      "spots": {},
+      "glass": 0,
+      "fx": [],
+      "qk": {
+       "inn": [
+        "chirp_greeter",
+        "gravity_tester"
+       ],
+       "c": {
+        "n": 0,
+        "t": 0,
+        "g": 0,
+        "k": 0
+       }
+      },
+      "rhythm": [
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5,
+       5
+      ],
+      "voice": 1.079,
+      "toys": [],
+      "pos": null
+     }
+    }
+   ],
+   "pair": {
+    "rel": 0.62,
+    "level": 3,
+    "lead": 0,
+    "settled": true,
+    "gainLeft": 0.11
+   },
+   "context": {
+    "timer": false,
+    "restDay": false
+   },
+   "cue": {
+    "fed": [],
+    "cheer": []
+   },
+   "stored": null
+  }
+ },
+ "legacy": {
+  "rich": {
+   "src": "brain",
+   "mood": {
+    "v": 0.42,
+    "a": -0.2
+   },
+   "trust": {
+    "fam": 0.8,
+    "tru": 0.74,
+    "sec": 0.6,
+    "aut": 0.55
+   },
+   "energy": 0.71,
+   "spots": {
+    "bed": 21,
+    "couch": 16,
+    "tree": 12,
+    "sill": 8,
+    "box": 7,
+    "pouf": 5
+   },
+   "glass": 16,
+   "fx": [
+    "first_blink",
+    "first_glass"
+   ],
+   "qk": {
+    "inn": [
+     "dramatic_flopper",
+     "chirp_greeter"
+    ],
+    "c": {
+     "n": 3,
+     "t": 7,
+     "g": 21,
+     "k": 2
+    }
+   },
+   "rhythm": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    20,
+    70,
+    60,
+    10,
+    0,
+    0,
+    30,
+    20,
+    0,
+    0,
+    0,
+    10,
+    50,
+    80,
+    90,
+    60,
+    30,
+    10
+   ],
+   "voice": 1.043,
+   "toys": [
+    {
+     "id": "ball_a",
+     "x": 140,
+     "z": 62.3
+    },
+    {
+     "id": "mouse",
+     "x": 346,
+     "z": 100
+    }
+   ],
+   "pos": {
+    "x": -29,
+    "z": 44,
+    "elev": 3
+   }
+  },
+  "damaged": {
+   "src": "brain",
+   "mood": {
+    "v": 0.2,
+    "a": -0.1
+   },
+   "trust": {
+    "fam": 1,
+    "tru": 0,
+    "sec": 0.424,
+    "aut": 0.7
+   },
+   "energy": 0.5,
+   "spots": {},
+   "glass": 0,
+   "fx": [],
+   "qk": {
+    "inn": [
+     "paw_tuck_sleeper",
+     "gravity_tester"
+    ],
+    "c": {
+     "n": 0,
+     "t": 0,
+     "g": 0,
+     "k": 0
+    }
+   },
+   "rhythm": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+   ],
+   "voice": 1.069,
+   "toys": [],
+   "pos": null
+  },
+  "v77": {
+   "src": "fresh",
+   "mood": {
+    "v": 0.2,
+    "a": -0.1
+   },
+   "trust": {
+    "fam": 0.538,
+    "tru": 0.562,
+    "sec": 0.536,
+    "aut": 0.7
+   },
+   "energy": 0.5,
+   "spots": {
+    "tree": 100,
+    "sill": 50
+   },
+   "glass": 0,
+   "fx": [],
+   "qk": {
+    "inn": [
+     "paw_tuck_sleeper",
+     "gravity_tester"
+    ],
+    "c": {
+     "n": 0,
+     "t": 0,
+     "g": 0,
+     "k": 0
+    }
+   },
+   "rhythm": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+   ],
+   "voice": 1.069,
+   "toys": [],
+   "pos": null
+  },
+  "fresh": {
+   "src": "fresh",
+   "mood": {
+    "v": 0.1,
+    "a": -0.1
+   },
+   "trust": {
+    "fam": 0.15,
+    "tru": 0.2,
+    "sec": 0.2,
+    "aut": 0.75
+   },
+   "energy": 0.5,
+   "spots": {},
+   "glass": 0,
+   "fx": [],
+   "qk": {
+    "inn": [
+     "shadow_chaser",
+     "dramatic_flopper"
+    ],
+    "c": {
+     "n": 0,
+     "t": 0,
+     "g": 0,
+     "k": 0
+    }
+   },
+   "rhythm": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+   ],
+   "voice": 1.008,
+   "toys": [],
+   "pos": null
+  }
+ }
+}
