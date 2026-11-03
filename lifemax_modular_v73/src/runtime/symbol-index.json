@@ -443,9 +443,6 @@
  "LMA_TAB_LAST": [
   "src/runtime/segments/50-tabs-edit.js"
  ],
- "LMA_TAB_OLD_DEFAULT": [
-  "src/runtime/segments/50-tabs-edit.js"
- ],
  "LMA_THUMB_KEY": [
   "src/runtime/segments/42-scrubnav.js"
  ],

@@ -5,25 +5,23 @@ var LMA_TAB_DEFAULT=null;
 function lmaTabsBar(){return document.querySelector('.sidebar')}
 function lmaTabsButtons(){const sb=lmaTabsBar();return sb?[].slice.call(sb.querySelectorAll('.navbtn[data-view]')):[]}
 function lmaTabsCfg(){const t=lmaLoad().tabs;return {order:t&&Array.isArray(t.order)?t.order:[],hidden:t&&Array.isArray(t.hidden)?t.hidden:[],extra:t&&Array.isArray(t.extra)?t.extra:[]}}
-function lmaTabsStore(c){c.qEnd=1;lmaLoad().tabs=c;lmaSave()}      /* an order the owner saved is theirs: it is never carried to a new default again */
+function lmaTabsStore(c){c.qEnd=1;c.qLast=1;lmaLoad().tabs=c;lmaSave()}      /* an order the owner saved is theirs: nothing moves a tab in it again */
 /* The default order ends with Quests (the tabs a feature adds, such as Life Director, come before it); it used to sit between Log activity and
-   Workout plan. A tab that is not in the saved order goes after the saved ones, Quests last of them. A saved order that is exactly the old
-   default (the owner never moved a tab, the editor having stored the list as it was) follows the new default; any other saved order is the
-   owner's own and stays as it is. Tabs added to the bar (Settings) keep their place after the others. Checked once per saved order. */
+   Workout plan. A tab that is not in the saved order goes after the saved ones, Quests last of them. An order saved before this change keeps
+   every tab where the owner put it except Quests, which moves to the end of the tabs ONCE (the owner asked for it at the very end, and an
+   order they had moved around would otherwise never get there); Settings, if added to the bar, stays after it. After that the saved order is
+   theirs: any edit sets both markers, and nothing moves a tab again. */
 var LMA_TAB_LAST='quests';
-var LMA_TAB_OLD_DEFAULT=['dashboard','character','food','pet','log','quests','plan','library','money'];
 function lmaTabsCarried(order){
- const extra=function(v){return LMA_TAB_EXTRA.some(function(x){return x.view===v})},core=order.filter(function(v){return !extra(v)}),old=LMA_TAB_OLD_DEFAULT;
- const same=function(list){return core.length===list.length&&core.every(function(v,i){return v===list[i]})};
- const withDirector=same(old.concat('life-director'));
- if(!same(old)&&!withDirector)return order;
+ const extra=function(v){return LMA_TAB_EXTRA.some(function(x){return x.view===v})};
+ if(order.indexOf(LMA_TAB_LAST)<0)return order;
  const out=order.filter(function(v){return v!==LMA_TAB_LAST});
- if(withDirector)out.splice(out.map(extra).lastIndexOf(false)+1,0,LMA_TAB_LAST);       /* an order saved before Life Director had a tab leaves Quests out: it then falls last by itself */
+ out.splice(out.map(extra).lastIndexOf(false)+1,0,LMA_TAB_LAST);
  return out;
 }
 function lmaTabsMigrate(){
- const t=lmaLoad().tabs;if(!t||t.qEnd)return;
- t.qEnd=1;if(Array.isArray(t.order))t.order=lmaTabsCarried(t.order);lmaSave();
+ const t=lmaLoad().tabs;if(!t||t.qLast)return;
+ t.qLast=1;t.qEnd=1;if(Array.isArray(t.order))t.order=lmaTabsCarried(t.order);lmaSave();
 }
 function lmaTabsApply(){
  const sb=lmaTabsBar();if(!sb)return;lmaTabsMigrate();const c=lmaTabsCfg();

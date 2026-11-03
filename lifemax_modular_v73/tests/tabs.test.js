@@ -34,20 +34,20 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   await p.evaluate(() => { lmaTabMove('pet', 1); lmaTabShow('plan', false); lmaTabsReset() }); const o4 = await order();
   ok('Reset restores the original order and shows every tab', o4.join() === o0.join() && (await shown()).length === o0.length, o4);
   ok('Bottom bar editor sits in Settings, Look & feel', await p.evaluate(() => { setPickCat('look'); const c = document.getElementById('tabsCard'); return !!c && !c.classList.contains('set-hide') }));
-  // the old default order follows the new default (Quests last); an order the owner made is never touched
+  // Quests moves to the very end of a saved order once (the owner asked for it last); every other tab stays where they put it
   const OLD = ['dashboard', 'character', 'food', 'pet', 'log', 'quests', 'plan', 'library', 'money'], LD = 'life-director';
   const carried = o => p.evaluate(x => lmaTabsCarried(x), o);
   const without = (l, v) => l.filter(x => x !== v);
   const NEW = without(OLD, 'quests').concat(LD, 'quests');
   ok('a saved old default (every tab, Life Director last) moves Quests to the very end', (await carried(OLD.concat(LD))).join() === NEW.join());
-  ok('one saved before Life Director had a tab leaves Quests out, so it falls last by itself', (await carried(OLD)).join() === without(OLD, 'quests').join());
+  ok('one saved before Life Director had a tab moves Quests to the end of what it has', (await carried(OLD)).join() === without(OLD, 'quests').concat('quests').join());
   ok('the added Settings tab keeps its place after the others', (await carried(OLD.concat(LD, 'settings'))).join() === NEW.concat('settings').join());
   const mine = OLD.concat(LD); mine.splice(0, 0, mine.splice(3, 1)[0]);
-  ok('an order the owner changed is left as it is', (await carried(mine)).join() === mine.join());
-  ok('so is an order that already has Quests last, and a partial one', (await carried(NEW)).join() === NEW.join() && (await carried(['quests', 'dashboard'])).join() === 'quests,dashboard');
+  ok('an order the owner changed keeps every other tab in place and moves only Quests to the end', (await carried(mine)).join() === without(mine, 'quests').concat('quests').join() && (await carried(mine)).indexOf('quests') === mine.length - 1);
+  ok('an order that already has Quests last stays, a partial one gets it last, and one without it is untouched', (await carried(NEW)).join() === NEW.join() && (await carried(['quests', 'dashboard'])).join() === 'dashboard,quests' && (await carried(['dashboard', 'food'])).join() === 'dashboard,food');
   await p.evaluate(x => { lmaLoad().tabs = { order: x.concat('settings'), hidden: ['money'], extra: ['settings'] }; lmaSave() }, OLD.concat(LD)); await p.reload(); await p.waitForTimeout(800);
-  const o5 = await order(); ok('a stored old-default order is migrated on load, keeping hidden tabs and extras', o5.join() === NEW.concat('settings').join() && !(await shown()).includes('money') && await p.evaluate(() => lmaLoad().tabs.qEnd === 1), o5);
-  await p.evaluate(x => { lmaLoad().tabs = { order: x, hidden: [], extra: [], qEnd: 1 }; lmaSave() }, OLD.concat(LD)); await p.reload(); await p.waitForTimeout(800);
+  const o5 = await order(); ok('a stored old-default order is migrated on load, keeping hidden tabs and extras', o5.join() === NEW.concat('settings').join() && !(await shown()).includes('money') && await p.evaluate(() => lmaLoad().tabs.qEnd === 1 && lmaLoad().tabs.qLast === 1), o5);
+  await p.evaluate(x => { lmaLoad().tabs = { order: x, hidden: [], extra: [], qEnd: 1, qLast: 1 }; lmaSave() }, OLD.concat(LD)); await p.reload(); await p.waitForTimeout(800);
   ok('an order stored after the change is not migrated again', (await order()).join() === OLD.concat(LD).join());
   ok('no page errors', errs.length === 0, errs);
   console.log(pass + ' passed, ' + fail + ' failed'); await b.close(); site.close(); process.exit(fail ? 1 : 0);

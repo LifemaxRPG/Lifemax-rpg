@@ -3247,8 +3247,8 @@
   },
   {
    "file": "src/runtime/segments/50-tabs-edit.js",
-   "bytes": 6578,
-   "statement_count": 16,
+   "bytes": 6209,
+   "statement_count": 15,
    "tags": [
     "navigation"
    ],
@@ -3260,7 +3260,6 @@
     "lmaTabsCfg",
     "lmaTabsStore",
     "LMA_TAB_LAST",
-    "LMA_TAB_OLD_DEFAULT",
     "lmaTabsCarried",
     "lmaTabsMigrate",
     "lmaTabsApply",
