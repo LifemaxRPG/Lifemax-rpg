@@ -7822,6 +7822,9 @@
  "window.NativeAudioDock": [
   "src/runtime/segments/50-native-audio.js"
  ],
+ "window.NativeCatWorld": [
+  "src/runtime/segments/50-native-cat-world.js"
+ ],
  "window.NativeDirectorProjection": [
   "src/runtime/segments/50-native-director.js"
  ],
@@ -7936,6 +7939,9 @@
  "window.__sdData": [
   "src/runtime/segments/50-smartdiet.js"
  ],
+ "window.applyBackup": [
+  "src/runtime/segments/50-native-cat-world.js"
+ ],
  "window.closePacman": [
   "src/runtime/segments/20-runtime.js"
  ],
@@ -7977,6 +7983,12 @@
  ],
  "window.petFeed": [
   "src/runtime/segments/50-native-pet.js"
+ ],
+ "window.petWorldBlock": [
+  "src/runtime/segments/50-native-cat-world.js"
+ ],
+ "window.petWorldLegacy": [
+  "src/runtime/segments/50-native-cat-world.js"
  ],
  "window.setDeviceBackupAllowed": [
   "src/runtime/segments/50-device-backup.js"

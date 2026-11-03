@@ -64,13 +64,14 @@
    "pluginSource": "bridge/web/NativePetPlugin.kt (extends ComposeTabPlugin, tabId pet)",
    "screenSource": "feature/pet/presentation/PetScreen.kt (PetRoute, PetViewModel; the room is RoomHost, shared with the Overview's cat card)",
    "webModule": "50-native-pet.js (NativeTabKit, id pet)",
-   "plan": "docs/specs/CAT_TAB_PLAN.md (phases CT1, CT2 and CT6 part A); docs/architecture/PET_TAB_INVENTORY.md",
+   "plan": "docs/specs/CAT_TAB_PLAN.md (phases CT1, CT2 and CT6 part A); docs/architecture/PET_TAB_INVENTORY.md; docs/specs/CAT_BRAIN_PLAN.md (the native cat brain, CB0 contract)",
    "capabilities": [
     "pet.projection.v1",
     "pet.coat.v1",
     "pet.panels.v1",
     "pet.touch.v1",
     "pet.rig.v1",
+    "pet.world.v1",
     "shell.swipe.v1",
     "shell.swipe.v2",
     "shell.prime.v1"
@@ -85,14 +86,16 @@
     "buyToy": "{id} (pet.panels.v1): unlock a toy early with Sparks by the Rewards shop's own rule (ecoBuy('toy', id): price ECO_TOY_PRICE, balance, the save); only toys with a price are for sale; ok only once the save stored it, else Sparks and toysBought are taken back and the reply says the page's unsavedMessage(); a toy already bought answers changed:false 'Already recorded.' and costs nothing; too few Sparks is the shop's own refusal ('Not enough Sparks'); the shop's toast is the reply's message, taken so no screen shows it twice",
     "expand": "{open} (pet.panels.v1): the full genome table (about forty rows) is in the projection only while open (30 minutes at most); a value that is not a boolean is refused; nothing is written",
     "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability pet.coat.v1; the same petCoatAnswer as the Overview cards' coat command, 50-pet-coat.js): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds, never a legacy coat; answered {ok, coat, kind, png, palette} or {ok:false, message}; nothing is written",
-    "touch": "(capability pet.touch.v1) two kinds, each with {cat}: `stroke {op, cat, heldMs, left:''|'over'|'shy', ignored, spam, keepSleep}` is a touch that ended, which the page judges by its own rules: the brain's saturation (PET_BRAIN.SAT_TAP on landing, SAT_HOLD a second held, less for a trusting cat and a sleeping one, worn off by the clock), its events (startle for a stranger, spam, pet_beat, overstim), and a pet counted by petPetDone when the finger stayed 1.1 s and the cat did not leave (three a day, +2 bond); the reply is {ok, changed (a pet counted), message (the page's level-up words), levelUp (the level reached, 0 for none)}, ok only once stored, else the cats are taken back; a repeat of an operation answers changed:false 'Already recorded.'; a field of the wrong kind, an unknown cat or no operation is refused. `purr {cat, on, level}` starts or stops the page's purr sound (the page feeds its purr loop on a 100 ms timer while the screen covers the room loop, and stops it when the screen closes); writes nothing. petLikesPetted is not called (it needs the cat's spot, which the page does not know until CT3)"
+    "touch": "(capability pet.touch.v1) two kinds, each with {cat}: `stroke {op, cat, heldMs, left:''|'over'|'shy', ignored, spam, keepSleep}` is a touch that ended, which the page judges by its own rules: the brain's saturation (PET_BRAIN.SAT_TAP on landing, SAT_HOLD a second held, less for a trusting cat and a sleeping one, worn off by the clock), its events (startle for a stranger, spam, pet_beat, overstim), and a pet counted by petPetDone when the finger stayed 1.1 s and the cat did not leave (three a day, +2 bond); the reply is {ok, changed (a pet counted), message (the page's level-up words), levelUp (the level reached, 0 for none)}, ok only once stored, else the cats are taken back; a repeat of an operation answers changed:false 'Already recorded.'; a field of the wrong kind, an unknown cat or no operation is refused. `purr {cat, on, level}` starts or stops the page's purr sound (the page feeds its purr loop on a 100 ms timer while the screen covers the room loop, and stops it when the screen closes); writes nothing. petLikesPetted is not called (it needs the cat's spot, which the page does not know until CT3)",
+    "world": "(capability pet.world.v1, CB0) {op, epoch, rev, blob}: stores native's opaque cat world blob as state.petWorld = {epoch, rev, at, op, blob} with writeSave() (50-native-cat-world.js); checks, in order: the shape (exactly these keys, an op of 1 to 80 [A-Za-z0-9:._-], whole numbers, rev >= 1, blob an object with an integer v from 1 to 1 and cats keyed by exactly the living cats' ids c<born base36>), the size (the blob's JSON at most 8 KB), then staleness (epoch equal to the page's world epoch, rev above the stored one). Never reads inside the blob. Reply {ok, changed, message, why: ''|'shape'|'size'|'stale'|'unsaved', epoch (the page's), rev (the stored one, 0 for none)}; ok only once stored, a refused save is taken back; a repeat of a landed op (kept in memory and with the stored world) answers ok, changed:false, 'Already recorded.'; refused as 'shape' for a screen without pet.world.v1. A backup restore (applyBackup) raises the world epoch, kept in localStorage lifemax_pet_world_epoch_v1 beside the save (not in backups, so a backup comes back exactly as made)"
    },
    "writes": [
     "feed (state.pet and state.pet2: lastFed, meals, fedToday, bondPts, care and the brain's feed memory, through the page's petFeedClick; the page's cat-care XP follows its own rule)",
     "vacation (the cats' vacation record and, when it ends, lastFed shifted by the time away)",
     "rename (the cat's name)",
     "buyToy (state.toysBought and state.sparks, through the Rewards shop's ecoBuy; the save decides)",
-    "touch stroke (state.pet / state.pet2: petsToday and bondPts through petPetDone, the brain's saturation, affect, gentle-stroke quirk count and respect timer, saved with the page's save)"
+    "touch stroke (state.pet / state.pet2: petsToday and bondPts through petPetDone, the brain's saturation, affect, gentle-stroke quirk count and respect timer, saved with the page's save)",
+    "world (state.petWorld: native's opaque world blob in the page's envelope, through writeSave; CB0)"
    ],
    "readContract": {
     "snapshotDto": "feature/pet/domain/PetProjection.kt",
@@ -113,7 +116,8 @@
    "mutationsGate": "CONTRACT A14-A15; the page stays the only writer: commands answer {ok, changed, message, why, inHours, reaction}, ok only when the save stored it",
    "rollout": "opt-in under Settings, Appearance: Native Cat (beta), off by default; the row says that in this first release the cats live their own day here until the brain link (CT3). Needs pet.projection.v1 (Native API 49); the panels need pet.panels.v1 (Native API 52); touch and the full-screen room need pet.touch.v1 (Native API 53); a genetic coat also needs pet.coat.v1; a cat's proportions need pet.rig.v1 (Native API 55, CT7): each cat of cats may carry rig {em, ew, tl, lg, bl, wk, bob} (ear length and width, tail, legs, body and whisker multipliers 0.35 to 2.8 from the cat's genes at its age, bob a bobtail; 38-pet-rig.js petRigWire; left out for a cat the art fits as drawn), and native draws ears, tail and whiskers through the rig on the body's springs",
    "roomHost": "feature/pet/presentation/RoomHost.kt: the Overview cat card and this screen draw the same room (HouseStage); the card's screenshots and RoomFidelityTest are unchanged by it. The page's own room loop stops while this screen covers the view (petWantRun asks NativePet.covering()). The full-screen room (PetFullRoom.kt) is a Dialog window over the whole app with the system bars hidden, drawing the same HouseStage at a larger whole-number scale (fullScale); the inline room holds still while it runs",
-   "touch": "body/TouchModel.kt (the page's saturation rules as a state machine on dt), body/Petting.kt (the reflexes of the body: hold clip, purr, ears and tail, hearts, leaving), body/TouchHit.kt (the cat boxes and the bowl), presentation/RoomTouch.kt (pointer input), TouchParticles.kt (hearts and marks over the cats), PetTouchSink.kt (haptics at the owner's strength, and the commands to the page)"
+   "touch": "body/TouchModel.kt (the page's saturation rules as a state machine on dt), body/Petting.kt (the reflexes of the body: hold clip, purr, ears and tail, hearts, leaving), body/TouchHit.kt (the cat boxes and the bowl), presentation/RoomTouch.kt (pointer input), TouchParticles.kt (hearts and marks over the cats), PetTouchSink.kt (haptics at the owner's strength, and the commands to the page)",
+   "catWorld": "pet.world.v1 (Native API 58, CAT_BRAIN_PLAN.md CB0): for a screen that advertised it, the projection carries `world` = petWorldBlock(): {v:1, seq (rises with any change, with the clock), epoch (the world epoch on this phone, raised by a backup restore), clockOffsetMs (petNow's shift), cats:[{id 'c<born base36>', slot 0|1, name, born, sex 'm'|'f', coat, stage -1..5, grownAt, ps {sk,ou,dm,sp,fr,vo} 0..1, morph {lg,bl}, bond {lvl 0..5, pct}, zMax (petDepthMaxZ), hunger {stage 0..5, lastFed, vacation, nextStageAt|null}, care {fedToday, petsToday, playsToday (a new day reads 0), feedAt (lastFed + 4 h), canPlay, giftOk}, likes {spots {id:0..100}, toys {id:0..100} (shares of the leader), favSpot|null, favToy|null}, toys [unlocked ids], quirks {acq [ids]}, legacy? (petWorldLegacy, while the stored world lacks the cat)}], pair {rel, level 0..4, lead -1|0|1, settled, gainLeft}|null, context {timer (a guided workout running), restDay}, cue {fed [{cat, id, ago}], cheer [] (CB6)}, stored {epoch, rev, blob}|null}; reads only, writes nothing. Decoded strictly into feature/pet/world (WorldBlockJson, WorldFeed.shared keeps the newest good block; a malformed one is counted and the last good kept) and drawn by nothing yet. Native-to-page shapes for the later phases (WorldCommands.kt, read strictly by WorldCommandJson, played by the FakePage test driver): world (above), pet {op, cat, heldMs}, play {op, cat, toy, played}, gift {op, cat}, moment {op, cat, kind, at, quirk?}, social {op, kind, cats:[id,id], winner? (standoff only), at}, dwell {op, cat, day, spots {id:s}, toys {id:s}}; cats named by world id; replies {ok, changed, message, why, epoch?, rev?, levelUp?}. Only `world` is answered by the page in CB0"
   },
   {
    "feature": "log",
@@ -487,6 +491,7 @@
     "overview.cat.live.v2",
     "overview.cat.coat.v1",
     "overview.cat.rig.v1",
+    "pet.world.v1",
     "shell.swipe.v1",
     "shell.swipe.v2",
     "shell.prime.v1"
@@ -505,12 +510,14 @@
     "edit": "{}: ovEditOpen() (phase 1: the page's editor, kept for an older app); steps aside",
     "layout": "{order, hidden}: the native editor's change, made whole by ovLayout(from) and stored by ovLayoutSave; the screen stays; ok only once stored, else ovLayoutSave's take-back and the page's unsavedMessage() (storage full's toast is quiet: the reply says it); the stored layout again answers changed: false, \"Already recorded.\"",
     "layoutReset": "{}: the default layout (OV_DEFAULT, nothing hidden) through ovLayoutSave, answered as layout",
-    "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability overview.cat.coat.v1; 50-pet-coat.js petCoatAnswer): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds (a cat's, or registered), never a legacy coat; answered {ok, coat, kind, png (base64 of the 8-bit grey-index PNG petDnaCompose builds, at most 600,000 characters), palette ({\"index\": \"rrggbb\"})} or {ok: false, message}; the screen stays; nothing is written"
+    "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability overview.cat.coat.v1; 50-pet-coat.js petCoatAnswer): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds (a cat's, or registered), never a legacy coat; answered {ok, coat, kind, png (base64 of the 8-bit grey-index PNG petDnaCompose builds, at most 600,000 characters), palette ({\"index\": \"rrggbb\"})} or {ok: false, message}; the screen stays; nothing is written",
+    "world": "(capability pet.world.v1) the cat world blob, exactly as the Cat tab's world command (50-native-cat-world.js; see NativePet commands.world)"
    },
    "writes": [
     "the day's luck roll via luck (the page's openLuck)",
     "tipsSeen.dashboard via tip",
-    "state.ovLayout via layout and layoutReset (the page's ovLayoutSave)"
+    "state.ovLayout via layout and layoutReset (the page's ovLayoutSave)",
+    "state.petWorld via world (pet.world.v1, CB0; see NativePet)"
    ],
    "delegatedInteractions": [
     "navigate actions ({view}): character (hero, Attributes' Details), history (Recent's History), settings (Health off), pet (the cat card), and a Next move's view (log, quests, plan)"
@@ -523,14 +530,15 @@
     "ordering": "webSessionId and increasing sequence; tiles in layout.order, never the JSON's; notice.id counts the page's toasts; celebrations play once per id",
     "invalidation": "renderOverview, ovAppsRender, command replies, the celebration sink, host resume and the 15-second refresh while visible"
    },
-   "mutationsGate": "no native writes: every change is the page's own handler",
+   "mutationsGate": "the page's own handlers; the one native write is the cat world blob (world, pet.world.v1), ok only once stored",
    "payload": "10.7 KB (a new save) to 13.8 KB (health on, apps) per projection in the fixtures, 18 KB with the cat portrait; every image is sent by key with each projection, so a real avatar and app icons add their data URLs",
    "memoryCost": "to be measured on the phone (OVERVIEW_BODY.md phone check 13: dumpsys meminfo before the first open, after it and after 20 switches)",
    "tabTiming": "to be measured on the phone with Show tab timing (phone check 13: Character to Overview and back, warm)",
    "rollout": "opt-in under Settings, Appearance: Native Overview cards (beta), off by default",
    "liveCatRig": "capability overview.cat.rig.v1 (Native API 55, CT7): a live cat of tiles.cat.live may carry rig {em, ew, tl, lg, bl, wk, bob}, exactly these keys, numbers 0.35 to 2.8 and a boolean (38-pet-rig.js petRigWire: the cat's ear length and width, tail, leg, body and whisker multipliers from its genes at its age, rounded to 0.01; bob is a bobtail), sent only to a screen whose handshake lists the capability and only for a cat the art does not fit as drawn; a malformed rig refuses the projection. Native composes the cat's frames from the rig (feature/pet/art/RigCompose.kt, a port of petRigCompose) and moves its ears, tail and whiskers on the body's springs (feature/pet/presentation/RigPainter.kt). Nothing is written",
    "liveCat": "capability overview.cat.live.v1 (Native API 46) and overview.cat.live.v2 (Native API 48): tiles.cat.live is null, or the live cats, only with Settings, Appearance: Native cats (beta) (nativeCats, off by default) on and the handshake listing the capability. v2 (the list shape, preferred when the handshake lists it): {cats: [one or two of {coat, stage, weak, name?}]} (exactly the key cats; each cat exactly coat, stage (-1 grown or 0..5 a kitten), weak and an optional name of 1..40 characters; the first is state.pet, the second state.pet2 when it is alive and native has art for it). v1 (the page's shape for a screen that does not list v2): {coat, stage, weak} for the first cat only (exactly these keys). Native then draws the room itself: the house (the three painted rooms, the sky behind each window by the device's local hour, window light, the bed, bowls, props, the time-of-day tint and the lamp's glow) with the cats living in it on local autopilots that walk between the rooms, eat, sleep on the bed, sit on the sofa, climb the cat tree and watch from the window sill, keep a polite distance, and are followed by an easing camera; it keeps the still portrait with the switch off, if the first cat cannot go live (no art, a genetic coat the page refuses) or if the art does not load. A second cat that cannot go live is simply not drawn. The four legacy coats draw at once. A genetic dna_ coat draws only when the handshake also lists overview.cat.coat.v1 (Native API 47) and the page holds the coat (either cat's): native asks the page for its sheets with the coat command (adult first, then the depth view; a kitten's stage sheets), caches them by key, shows the still portrait until the first cat's adult sheet is in, and keeps it for good if the page refuses. The page stays the only composer of coats. The page sends the still portrait as well. Nothing is written",
-   "canonicalLayout": true
+   "canonicalLayout": true,
+   "catWorld": "pet.world.v1 (Native API 58): the same `world` block as the Cat tab's (see NativePet catWorld), at the top level of the cards' projection, for a screen that advertised it; both screens feed one WorldFeed"
   },
   {
    "feature": "cash",

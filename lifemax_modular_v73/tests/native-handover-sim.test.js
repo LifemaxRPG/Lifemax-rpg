@@ -66,6 +66,8 @@
    mutation that must fail: the Cat tab's screen never allowed to cover the view.
    The fake lists pet.panels.v1 too, so the panels (CT6) are built for every Cat screen the hops open; their commands (focus, buyToy, expand)
    are put among hops, a closing screen and a level-up by tests/native-pet-panels.test.js (PANELMUT=twice|focus must fail).
+   It lists pet.world.v1 (CAT_BRAIN_PLAN.md CB0) as well, so the cats' world block rides every Cat and Overview cards projection of
+   every hop; its command is tested by tests/native-cat-world.test.js (no hop: CB0 sends nothing from native).
    Touch (CT2, pet.touch.v1) adds a hop, "touch-cat": a stroke
    of 1.5 s on the first cat (and the purr's sound) sent to the Cat screen only while it shows, whose run against the page is checked
    (once per operation id, counted exactly when ok and changed, answered unless the screen was closed since). PETMUT=twice runs a mutation
@@ -215,7 +217,7 @@ async function run(b, mode) {
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;window.__closing[vis]=(window.__closing[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<');window.__closing[vis]--}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','pet.panels.v1','pet.touch.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','pet.panels.v1','pet.touch.v1','pet.world.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
        drawn must hold no open data */
     const jmodel={frame:async a=>{const s=a&&a.snapshot;if(!s)return;const json=JSON.stringify(s),canary=/Canary/.test(json);if(s.withheld&&canary)fault('a withheld Journal frame carries a canary');
