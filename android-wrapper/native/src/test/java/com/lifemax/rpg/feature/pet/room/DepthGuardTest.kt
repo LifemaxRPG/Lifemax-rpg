@@ -165,6 +165,29 @@ class DepthGuardTest {
         assertEquals(DepthLevel.MEDIUM, g.level)
     }
 
+    /**
+     * The room-shake check (PET_TAB_INVENTORY.md): every change of level redraws the room at other
+     * gains, a visible jump, so a phone on the edge (too slow at MEDIUM, fast enough at SUBTLE)
+     * must not make the room flick between levels. In half an hour it tries MEDIUM again three
+     * times, each time after a longer calm, and no two changes are closer than the hold.
+     */
+    @Test
+    fun aPhoneOnTheEdgeSettlesInsteadOfFlickeringBetweenLevels() {
+        val g = guard()
+        var last = Long.MIN_VALUE
+        var closest = Long.MAX_VALUE
+        repeat(HOUR_FRAMES / 2) {
+            val before = g.level
+            g.feed(1, if (g.level == DepthLevel.MEDIUM) 0.9f else 0.2f)
+            if (g.level != before) {
+                if (last != Long.MIN_VALUE) closest = minOf(closest, now - last)
+                last = now
+            }
+        }
+        assertTrue("changes in half an hour: ${g.changes}", g.changes in 1..7)
+        assertTrue("closest changes $closest ms apart", closest >= GuardTuning.HOLD_MS)
+    }
+
     @Test
     fun itNeverRisesAboveTheBestLevel() {
         val g = guard(DepthLevel.SUBTLE)

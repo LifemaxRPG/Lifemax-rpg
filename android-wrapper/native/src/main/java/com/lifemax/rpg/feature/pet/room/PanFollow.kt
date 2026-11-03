@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.room
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
 
 /**
@@ -125,12 +126,23 @@ internal class PanFollow {
      * The yaw a piece standing at world x [pieceX] gets from where it sits against the screen's
      * middle: a piece left of the middle shows its right side (negative), and the reverse.
      */
-    fun perspective(pieceX: Float): Float =
-        -PanTuning.PERSPECTIVE_GAIN * clamp((viewX - pieceX) / PanTuning.PERSPECTIVE_RANGE_PX)
+    fun perspective(pieceX: Float): Float = perspectiveAt(viewX, pieceX)
+
+    /**
+     * How fast what the pan drives is moving, in sway units per second: the pan spring, and the
+     * view as the perspective of a piece sees it. Near 0 the camera is at rest ([DepthSway.shown]).
+     */
+    fun restSpeed(): Float =
+        abs(panVelocity) + abs(speed) * PanTuning.PERSPECTIVE_GAIN / PanTuning.PERSPECTIVE_RANGE_PX
 
     private fun clamp(v: Float) = v.coerceIn(-1f, 1f)
 
-    private companion object {
-        const val SPEED_UNIT_PX_S = 100f
+    internal companion object {
+        private const val SPEED_UNIT_PX_S = 100f
+
+        /** [perspective] for a view whose middle is at world x [viewX]. */
+        fun perspectiveAt(viewX: Float, pieceX: Float): Float =
+            -PanTuning.PERSPECTIVE_GAIN *
+                ((viewX - pieceX) / PanTuning.PERSPECTIVE_RANGE_PX).coerceIn(-1f, 1f)
     }
 }

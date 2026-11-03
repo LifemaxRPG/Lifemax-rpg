@@ -33,6 +33,13 @@ internal class LiveLook(val name: String, val coat: String, val stage: Int, val 
 
 /** The scripted live room of [LiveDepthCardScreenshotTest] and [LiveDepthTabScreenshotTest]. */
 internal object LiveDepthShots {
+    /**
+     * The live style at MEDIUM as these images were recorded: with the idle drift, which the live
+     * rooms have since dropped (the "room shake" fix, PET_TAB_INVENTORY.md). Kept so the recorded
+     * images stay byte-identical; the images taken with `hold` show the live room exactly.
+     */
+    private val RECORDED_STYLE = RoomStyle.live(DepthLevel.MEDIUM).copy(idleDrift = true)
+
     fun sprites(look: LiveLook): CatSprites {
         val label = CoatFixtures.coats.entries.firstOrNull { it.value == look.coat }?.key
         if (label == null) return CatArt.sprites(look.coat, look.stage)!!
@@ -74,7 +81,7 @@ internal object LiveDepthShots {
             house.bodies[it].placeAt(s.x, s.z, s.surface, s.facing)
             if (s.plan.isNotEmpty()) house.bodies[it].replacePlan(1, s.plan)
         }
-        val stage = HouseStage(CatArt.room()!!, house, RoomStyle.live(DepthLevel.MEDIUM)) { hour }
+        val stage = HouseStage(CatArt.room()!!, house, RECORDED_STYLE) { hour }
         looks.forEachIndexed { i, look -> stage.setSprites(i, sprites(look)) }
         stage.setFedHouse(looks.none { it.weak })
         stage.advance(seconds)

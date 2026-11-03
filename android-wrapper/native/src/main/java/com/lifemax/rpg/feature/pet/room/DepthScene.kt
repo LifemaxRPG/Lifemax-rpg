@@ -52,8 +52,11 @@ internal class DepthScene(
     private val layers = art.layers ?: error("the 2.5D room needs the layers")
     private val level = style.level
 
-    /** The camera's sway; set its tilt from a sensor, read its position to see where it is. */
-    val sway = DepthSway(style.reducedMotion, level.idleAmplitude)
+    /**
+     * The camera's sway; set its tilt from a sensor, read its position to see where it is. The live
+     * rooms have no idle drift ([RoomStyle.idleDrift]): their camera moves only when it pans.
+     */
+    val sway = DepthSway(style.reducedMotion, if (style.idleDrift) level.idleAmplitude else 0f)
 
     private val solids = layers.pieces.filter { it.volume != null }
     private val sways = style.parallax && style.volume && !style.reducedMotion
@@ -162,9 +165,9 @@ internal class DepthScene(
         if (!asyncWarm) sheets.warmOne()
     }
 
-    /** The sway the room moves with: 0 when parallax is off. */
+    /** The sway the room moves with ([DepthSway.shown], held at rest): 0 when parallax is off. */
     private val swing: Float
-        get() = if (style.parallax) sway.position else 0f
+        get() = if (style.parallax) sway.shown else 0f
 
     /** The shift of a floor object (a cat, a prop) at depth [z], for the cat's own layer. */
     fun shiftAtZ(z: Float): Int = Parallax.shiftAtZ(swing, z, level)
@@ -322,7 +325,7 @@ internal class DepthScene(
             val want =
                 if (follows) {
                     sheets.indexOf(
-                        (sway.idle + sway.perspective(pieceX[p])).coerceIn(-1f, 1f),
+                        (sway.shownIdle + sway.shownPerspective(pieceX[p])).coerceIn(-1f, 1f),
                         pieceStep[p],
                     )
                 } else {

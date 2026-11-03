@@ -165,14 +165,43 @@ function petDepthBonk(rt){
   if(p&&state.devMode)rt.bonks=(rt.bonks||0)+1;
 }
 /* ---------- parallax: a horizontal drag, or tilting the phone ---------- */
-var PET_TILT=null;
-window.addEventListener('deviceorientation',function(e){if(e&&e.gamma!=null)PET_TILT=petClampN(e.gamma/25,-1,1)});
+/* The tilt is cleaned before it moves anything (the "room shake" fix, PET_TAB_INVENTORY.md): a phone in a hand never sends
+   a still gamma (sensor noise, the hand's tremor), and near upright gamma is unstable altogether. Fed straight in and rounded
+   to whole pixels, that made every layer jump a pixel back and forth while the camera stood still. Now gamma is smoothed,
+   ignored while the phone is near upright, measured from the way the phone is being held (that drifts after it, so a steady
+   phone is no tilt and the room comes to rest where it is painted), and a dead zone swallows what is left of the noise. */
+var PET_TILT_TUNE={
+  SMOOTH_S:0.25,      /* the low-pass on gamma: time constant, s */
+  HOLD_S:2.5,         /* how fast the way the phone is held becomes the new middle, s */
+  DEAD_DEG:2,         /* a tilt this small from the held angle is no tilt (noise and tremor) */
+  RANGE_DEG:25,       /* a tilt this far from the held angle is the full parallax */
+  UPRIGHT_BETA:70,    /* past this front-back angle gamma is unreliable: it is held, not followed */
+  ROUND_HYST_PX:0.3   /* a layer's whole-pixel offset only changes once it is this far past the half pixel */
+};
+var PET_TILT=null,PET_TILT_RAW=null,PET_TILT_F=null;
+window.addEventListener('deviceorientation',function(e){if(e&&e.gamma!=null)PET_TILT_RAW={g:e.gamma,b:e.beta}});
+/* once a frame: the cleaned tilt, -1 to 1 (null when the phone sends none) */
+function petTiltTick(dt){
+  const r=PET_TILT_RAW,T=PET_TILT_TUNE;if(!r){PET_TILT=null;return}
+  let f=PET_TILT_F;if(!f)f=PET_TILT_F={g:r.g,held:r.g};
+  if(r.b==null||Math.abs(r.b)<T.UPRIGHT_BETA)f.g+=(r.g-f.g)*(1-Math.exp(-dt/T.SMOOTH_S));
+  f.held+=(f.g-f.held)*(1-Math.exp(-dt/T.HOLD_S));
+  const d=f.g-f.held,m=Math.abs(d)-T.DEAD_DEG;
+  PET_TILT=m>0?petClampN(Math.sign(d)*m/(T.RANGE_DEG-T.DEAD_DEG),-1,1):0;
+}
 function petParPx(z){
   const D=PET_DEPTH,A=[[0,D.PARALLAX_PLANE_0_PX],[45,D.PARALLAX_PLANE_1_PX],[75,D.PARALLAX_PLANE_2_PX],[95,D.PARALLAX_PLANE_3_PX]];
   if(z<=A[0][0])return A[0][1];for(let i=0;i<A.length-1;i++)if(z<=A[i+1][0]){const u=(z-A[i][0])/(A[i+1][0]-A[i][0]);return A[i][1]+(A[i+1][1]-A[i][1])*u}
   return Math.min(D.PARALLAX_MAX_OFFSET_PX,A[A.length-1][1]);
 }
-function petParOff(rt,z){const k=rt.par?rt.par.k:0;return k?Math.round(-k*petParPx(z)):0}
+/* a layer's whole-pixel offset, with hysteresis: it keeps its pixel until the exact offset is clearly past the half pixel,
+   so an offset that hovers near a half pixel cannot flip every frame (one memory per whole posZ) */
+function petParOff(rt,z){
+  const P=rt.par,k=P?P.k:0;if(!k){if(P&&P.q)P.q=null;return 0}
+  const raw=-k*petParPx(z),i=Math.round(petClampN(z,0,100)),q=P.q||(P.q=[]),v=q[i];
+  if(v==null||Math.abs(raw-v)>0.5+PET_TILT_TUNE.ROUND_HYST_PX)q[i]=Math.round(raw);
+  return q[i];
+}
 function petParBg(rt){return petParOff(rt,0)}
 function petDepthPointer(rt,type,x,hit){
   rt.par=rt.par||{k:0,target:0};
@@ -186,7 +215,7 @@ function petDepthViewOpen(){const v=document.getElementById('view-pet'),f=docume
 function petDepthTick(rt,dt){
   const c=rt.c,D=PET_DEPTH,now=Date.now();
   petLikesTick(rt);petBrainFrame(rt,dt);
-  rt.par=rt.par||{k:0,target:0};const tgt=rt.par.x0!=null?rt.par.target:(PET_TILT!=null?PET_TILT:0);rt.par.k+=(tgt-rt.par.k)*(1-Math.exp(-8*dt));if(Math.abs(rt.par.k)<0.01&&!tgt)rt.par.k=0;
+  petTiltTick(dt);rt.par=rt.par||{k:0,target:0};const tgt=rt.par.x0!=null?rt.par.target:(PET_TILT!=null?PET_TILT:0);rt.par.k+=(tgt-rt.par.k)*(1-Math.exp(-8*dt));if(Math.abs(rt.par.k)<0.01&&!tgt)rt.par.k=0;
   if(rt.fog&&performance.now()-rt.fog.t0>D.LENS_FOG_DURATION_MS)rt.fog=null;
   const p=petData();if(p&&c){p.bond=p.bond||{};p.bond.posX=petPosXOf(c.x);p.bond.posZ=Math.round(c.z*10)/10;p.bond.elevationY=petElevOf(c)}
   /* left alone with the room open: a trusting cat comes to sniff the glass */

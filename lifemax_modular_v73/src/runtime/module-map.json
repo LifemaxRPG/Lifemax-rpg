@@ -1263,8 +1263,8 @@
   },
   {
    "file": "src/runtime/segments/24-pet-depth.js",
-   "bytes": 23210,
-   "statement_count": 57,
+   "bytes": 25355,
+   "statement_count": 59,
    "tags": [
     "pet",
     "interface"
@@ -1310,7 +1310,11 @@
     "petDepthGreet",
     "petDepthFog",
     "petDepthBonk",
+    "PET_TILT_TUNE",
     "PET_TILT",
+    "PET_TILT_RAW",
+    "PET_TILT_F",
+    "petTiltTick",
     "petParPx",
     "petParOff",
     "petParBg",

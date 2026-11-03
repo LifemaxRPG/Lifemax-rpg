@@ -172,7 +172,7 @@ class SurfaceWalkTest {
         )
         // drawn where the piece is: the front moves with the floor, the surface lags by the
         // piece's own yaw; a cat never drifts from the seat by more than that
-        val swing = w.depth.sway.position
+        val swing = w.depth.sway.shown
         val front = Parallax.shiftAtRow(swing, volume.parallaxFront, level)
         val lag = abs(w.cats.shifts[0] - front)
         val limit = Math.ceil(volume.surfaces[id.key]!! * level.depthGain * 2.0).toInt() + 1

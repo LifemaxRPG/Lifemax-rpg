@@ -920,6 +920,15 @@
  "PET_TILT": [
   "src/runtime/segments/24-pet-depth.js"
  ],
+ "PET_TILT_F": [
+  "src/runtime/segments/24-pet-depth.js"
+ ],
+ "PET_TILT_RAW": [
+  "src/runtime/segments/24-pet-depth.js"
+ ],
+ "PET_TILT_TUNE": [
+  "src/runtime/segments/24-pet-depth.js"
+ ],
  "PET_TOYS": [
   "src/runtime/segments/25-pet-likes.js"
  ],
@@ -6904,6 +6913,9 @@
  ],
  "petThreadWord": [
   "src/runtime/segments/26-pet-brain.js"
+ ],
+ "petTiltTick": [
+  "src/runtime/segments/24-pet-depth.js"
  ],
  "petTint": [
   "src/runtime/segments/16-runtime.js"

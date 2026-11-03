@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.room
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.sin
 
 /** The numbers behind the camera sway: how big, how slow, how soft. */
@@ -23,6 +24,17 @@ internal object SwayTuning {
     const val NATURAL_HZ = 0.7f
     const val DAMPING_RATIO = 0.95f
 
+    /**
+     * The drawn sway holds still while what moves it is this close to it (sway units; 0.01 is 0.09
+     * px on the nearest floor row at MEDIUM) and nothing is moving faster than [REST_SPEED], so a
+     * camera at rest draws the same frame every frame however its last digits wander
+     * ([DepthSway.shown]).
+     */
+    const val REST_HOLD = 0.01f
+
+    /** Sway units per second under which the camera counts as at rest for [REST_HOLD]. */
+    const val REST_SPEED = 0.05f
+
     /** The spring is stepped in fixed slices so the result does not depend on the frame rate. */
     const val SUBSTEP_S = 1f / 240f
 
@@ -40,6 +52,11 @@ internal object SwayTuning {
  * nothing allocated. The spring is stepped in fixed [SwayTuning.SUBSTEP_S] slices, so a second
  * stepped as sixty frames and as thirty give the same position to a few millionths. With
  * [reducedMotion] it never leaves 0, whatever the tilt.
+ *
+ * The room is drawn from [shown], [shownIdle] and [shownPerspective], not from the exact values: a
+ * snapshot that follows them exactly while the camera moves and holds still once it is at rest
+ * (within [SwayTuning.REST_HOLD], slower than [SwayTuning.REST_SPEED]), so a camera that stands
+ * still draws bit-identical frames and a value resting on a pixel's edge cannot flip it each frame.
  *
  * @param reducedMotion the owner's "reduce motion" setting: no sway.
  */
@@ -59,6 +76,16 @@ internal class DepthSway(
     val position: Float
         get() = (idle + pan).coerceIn(-1f, 1f)
 
+    /** The [position] the room is drawn at: it holds still while the camera is at rest. */
+    var shown = 0f
+        private set
+
+    /** The [idle] the room is drawn at, held with [shown]. */
+    var shownIdle = 0f
+        private set
+
+    private var shownView = 0f
+
     /** How fast it is moving, in sway units per second. */
     var velocity = 0f
         private set
@@ -77,6 +104,7 @@ internal class DepthSway(
                 idle = 0f
                 velocity = 0f
                 panFollow.reset()
+                show()
             }
         }
 
@@ -90,6 +118,10 @@ internal class DepthSway(
 
     /** The yaw a piece at world x [pieceX] gets from where it sits on the screen. */
     fun perspective(pieceX: Float): Float = if (following) panFollow.perspective(pieceX) else 0f
+
+    /** [perspective] as the room is drawn: from the view x held with [shown]. */
+    fun shownPerspective(pieceX: Float): Float =
+        if (following) PanFollow.perspectiveAt(shownView, pieceX) else 0f
 
     /**
      * Follow the room camera: [screenX] is the world x at the middle of the screen. Call it each
@@ -112,6 +144,7 @@ internal class DepthSway(
         if (reducedMotion) return
         idle = at.coerceIn(-1f, 1f)
         velocity = 0f
+        show()
     }
 
     /** Advance by [dt] seconds. */
@@ -122,6 +155,27 @@ internal class DepthSway(
             pending -= SwayTuning.SUBSTEP_S
             slice()
         }
+        if (moving() || strayed()) show()
+    }
+
+    /** Whether the camera has moved [SwayTuning.REST_HOLD] from where the room is drawn. */
+    private fun strayed(): Boolean {
+        val view = abs(panFollow.viewX - shownView) * PanTuning.PERSPECTIVE_GAIN
+        val yaw = if (following) view / PanTuning.PERSPECTIVE_RANGE_PX else 0f
+        return abs(position - shown) >= SwayTuning.REST_HOLD || yaw >= SwayTuning.REST_HOLD
+    }
+
+    /** Whether the camera is moving: the idle spring, the pan spring or the view. */
+    private fun moving(): Boolean {
+        val view = if (following) panFollow.restSpeed() else 0f
+        return abs(velocity) + view >= SwayTuning.REST_SPEED
+    }
+
+    /** Draw from where the camera is now. */
+    private fun show() {
+        shown = position
+        shownIdle = idle
+        shownView = panFollow.viewX
     }
 
     private fun slice() {
