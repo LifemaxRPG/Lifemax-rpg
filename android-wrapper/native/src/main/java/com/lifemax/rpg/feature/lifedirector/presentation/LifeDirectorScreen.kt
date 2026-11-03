@@ -313,6 +313,7 @@ fun LifeDirectorScreen(
                                     run,
                                     anchors,
                                     dialTour(p, guideRun),
+                                    removal,
                                 )
                         }
                     }
@@ -415,6 +416,7 @@ private fun TodayTop(
     run: BuildRun?,
     anchors: GuideAnchors,
     tour: DialTourRun?,
+    removal: DragRemoveController?,
 ) {
     DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
     Spacer(Modifier.height(8.dp))
@@ -431,6 +433,7 @@ private fun TodayTop(
         run = run,
         tour = tour,
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
+        removal = removal,
     )
     DialHint(today.hint)
     DayMix(today.mix)

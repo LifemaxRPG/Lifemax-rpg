@@ -86,32 +86,41 @@ private suspend fun AwaitPointerEventScope.stillHeld(
     }
 }
 
-/** The lifted session follows the finger until it lets go or the touch is cancelled. */
-private suspend fun AwaitPointerEventScope.carry(
+/**
+ * The lifted session follows the finger until it lets go or the touch is cancelled. [frame] turns a
+ * position of this gesture's own node into the screen's pixels the controller works in (the list's
+ * gesture needs no turning; the dial's does). If the gesture itself is cancelled by its node
+ * leaving the screen, the session goes back.
+ */
+internal suspend fun AwaitPointerEventScope.carry(
     drag: DragRemoveController,
     down: PointerInputChange,
     buzz: DirectorBuzz?,
+    frame: (Offset) -> Offset = { it },
 ) {
     var cancelled = true
-    follow(down) { change ->
-        if (!drag.isHeld) return@follow false // Back or the screen cancelled it
-        if (!change.pressed) {
-            cancelled = change.isConsumed // a cancel arrives as a release already consumed
-            false
-        } else {
-            if (drag.move(change.position.toPoint()))
-                buzz?.buzz(if (drag.armed.value) ARM_BUZZ else TICK_BUZZ)
-            true
+    try {
+        follow(down) { change ->
+            if (!drag.isHeld) return@follow false // Back or the screen cancelled it
+            if (!change.pressed) {
+                cancelled = change.isConsumed // a cancel arrives as a release already consumed
+                false
+            } else {
+                if (drag.move(frame(change.position).toPoint()))
+                    buzz?.buzz(if (drag.armed.value) ARM_BUZZ else TICK_BUZZ)
+                true
+            }
         }
+    } finally {
+        if (cancelled) drag.cancel() else drag.release()
     }
-    if (cancelled) drag.cancel() else drag.release()
 }
 
 /**
  * Takes this finger's events (and any other's, which are ignored but not left for the rows) until
  * [each] says to stop. A second finger down ends it. Everything is consumed.
  */
-private suspend fun AwaitPointerEventScope.follow(
+internal suspend fun AwaitPointerEventScope.follow(
     down: PointerInputChange,
     each: (PointerInputChange) -> Boolean,
 ) {
@@ -129,10 +138,10 @@ private suspend fun AwaitPointerEventScope.follow(
 private fun LazyListState.itemAt(y: Float): LazyListItemInfo? =
     layoutInfo.visibleItemsInfo.firstOrNull { y >= it.offset && y < it.offset + it.size }
 
-private fun Offset.toPoint() = DragPoint(x, y)
+internal fun Offset.toPoint() = DragPoint(x, y)
 
 /** The vibrator's patterns, as navigator.vibrate takes them. */
-private const val LIFT_BUZZ = 14L
-private const val TICK_BUZZ = 5L
-private const val ARM_BUZZ = 9L
-private val NOT_NOW = longArrayOf(30L, 40L, 30L)
+internal const val LIFT_BUZZ = 14L
+internal const val TICK_BUZZ = 5L
+internal const val ARM_BUZZ = 9L
+internal val NOT_NOW = longArrayOf(30L, 40L, 30L)

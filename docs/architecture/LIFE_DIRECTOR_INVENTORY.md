@@ -32,13 +32,23 @@ the drag is the deliberate act and Undo is the way back. Reduced motion: no slid
 | Whether a session can be removed | `today.rows[].remove {ok, reason}` on session rows only, and only for a screen that says `director.remove.v1` and `director.sheets.v1` | planned and no timer running: ok; done, part done, off the plan, running timer: not, with the page's reason, shown as the "not now" buzz and a message |
 | Remove | `today skip {id, op}` (the existing Skip) | the engine's SKIPPED trigger, miss consequence and re-plan, for that occurrence only; no XP; answers `changed: true` and `undo` (the page's words) |
 | Undo | `today unskip {id, op}` | plan and ledger back exactly as before that skip, while nothing else has changed the plan (and within two minutes); the message bar with Undo shows for seven seconds |
-| TalkBack | custom action "Remove from today" on each removable row; the trash is a live region while a session is held | same commands, no drag |
+| TalkBack | custom action "Remove from today" on each removable row and each removable dial segment; the trash is a live region while a session is held | same commands, no drag |
 
-The drag is on session rows of the running order (and the earlier-today fold), not on the dial: a segment there is small, shares its
-touches with the handles and the tap, and the row beside the dial is the same session. The gesture belongs to the list (initial
-pass), not to a row, so a row scrolling out of view does not end it. Code: `presentation/drag` (`DragRemoveController`, the gesture,
-`RemoveOverlay`, `RemoveTarget`, `RemovableRow`, `UndoBar`) and the pure `domain/DragModel`. On the phone only: the feel of the
-350 ms hold and the buzzes, the spring, auto-scroll speed on a long day, and how TalkBack speaks the action and the trash.
+The same hold works on the dial: a session's arc segment lifts exactly like its row (same 350 ms hold, "lift" buzz, card, trash, `skip`
+with an op id, Undo, and the same refusals read from that session's `remove` flag; no page change, the segment is matched to its row
+by session id). The segment stays as a ghost while its card is up, and the card shrinks back into it on a put-back; the list does not
+auto-scroll for a dial lift. Gesture arbitration on the dial (`presentation/drag/DialTouch`, pure): a finger that lands on a drag
+handle drags the handle; a finger on a session segment the page answers for waits: released first it is a tap (the session sheet, as
+before), still for 350 ms it lifts (or refuses), and moving past the touch slop, a second finger or a touch another part took before
+then cancels the wait and the dial's plain touch (arc scrolling) carries on. Meals, appointments, bands and sessions without a
+`remove` flag neither lift nor buzz. The segment under the finger is found by `DialGeometry.arcAt`, the tap's own hit test. The row
+and the segment share one controller and one `DragModel` (`DragSource.ROW` / `DIAL`). TalkBack: each removable session's segment (a
+48 dp node) offers "Remove from today" like its row. The gesture belongs to the list (initial pass) for rows, to the dial for
+segments; a row scrolling out of view does not end a row lift. Code: `presentation/drag` (`DragRemoveController`, the gesture,
+`RemoveOverlay`, `RemoveTarget`, `RemovableRow`, `UndoBar`, `DialTouch`, `DialAnchor`), `presentation/dial` (`DialLiftGesture`,
+`DialGhost`) and the pure `domain/DragModel`. On the phone only: the feel of the 350 ms hold and the buzzes, the spring, auto-scroll
+speed on a long day, that a hold on a small segment is easy to land and the tab swipe and list never steal it after the lift, and how
+TalkBack speaks the action and the trash.
 
 ## Week (3A, `director.week.v1`)
 

@@ -23,8 +23,11 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -46,6 +49,8 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPale
 import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalDirectorBuzz
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberPulse
 import com.lifemax.rpg.feature.lifedirector.presentation.components.spoken
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.removeFromToday
 import kotlin.math.abs
 
 /**
@@ -59,7 +64,9 @@ import kotlin.math.abs
  * handles wait), [run] a build playing. [animate] is false while the screen is hidden. [tour] is a
  * step of Today's guide: its layers dim, its name tags pin on and, on the handles step, the handles
  * pulse (TourMode); [centreAnchor] names the middle for the guide's spotlight. [intro] is the
- * glance's arrival playing (DialIntro): the rings, sessions and hand fade in.
+ * glance's arrival playing (DialIntro): the rings, sessions and hand fade in. With a [removal]
+ * controller, holding a session's segment lifts it off the day, as holding its row does; the
+ * segment stays as a ghost until the card has settled or the page has taken the session off.
  */
 @Composable
 fun ChronoDial(
@@ -76,6 +83,7 @@ fun ChronoDial(
     tour: DialTourRun? = null,
     centreAnchor: Modifier = Modifier,
     intro: DialIntroRun? = null,
+    removal: DragRemoveController? = null,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -90,14 +98,23 @@ fun ChronoDial(
     val look = rememberTourLook(tour)
     val pulse = rememberTourPulse(look, tour, animate)
     val buzz = LocalDirectorBuzz.current
+    val view = LocalView.current
+    val lift = remember(removal, view) { removal?.let { DialLift(it, view) } }
+    val ghost = rememberGhost(removal)
     val input by
         rememberUpdatedState(
-            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc)
+            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift)
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
         Box(
-            Modifier.size(side).pointerInput(animate) { DialGestures(this, { input }, buzz).run() }
+            Modifier.size(side)
+                .onGloballyPositioned {
+                    removal
+                        ?.anchor
+                        ?.dialAt(it, segmentCentres({ input.dial }, it.size.width.toFloat()))
+                }
+                .pointerInput(animate) { DialGestures(this, { input }, buzz).run() }
         ) {
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
@@ -123,7 +140,7 @@ fun ChronoDial(
                             art.drawPlan(this, plan, t)
                         } else if (held != null) plan.draw(this, OUTER_HELD, WORDS_HELD, INNER_HELD)
                         else if (intro != null) drawIntro(plan, introOrder, intro.ms)
-                        else plan.draw(this, look.outer, look.words, look.inner)
+                        else plan.draw(this, look.outer, look.words, look.inner, ghost)
                     }
                 }
                 Canvas(
@@ -176,7 +193,7 @@ fun ChronoDial(
                     }
                 tour?.let { TourTags(it.step.tags, it.still, animate) }
             }
-            ArcTargets(dial.arcs, dial.radii, onArc)
+            ArcTargets(dial.arcs, dial.radii, onArc, removal)
             HandleTargets(dial, hold, asking || run != null, handles)
             val centreBox = Modifier.align(Alignment.Center).then(centreAnchor)
             when {
@@ -258,10 +275,16 @@ private fun Hand(angle: Float, animate: Boolean, run: BuildRun?, intro: DialIntr
 
 /**
  * One 48 dp node per arc, at its middle, carrying its label and a session's state for TalkBack;
- * pressing one does what tapping the arc does. Touches pass through them to the dial.
+ * pressing one does what tapping the arc does, and a session that can be taken off the day offers
+ * "Remove from today" as its row does. Touches pass through them to the dial.
  */
 @Composable
-private fun ArcTargets(arcs: List<DialArc>, radii: DialRadii, onArc: (DialArc) -> Unit) {
+private fun ArcTargets(
+    arcs: List<DialArc>,
+    radii: DialRadii,
+    onArc: (DialArc) -> Unit,
+    removal: DragRemoveController?,
+) {
     Layout(
         content = {
             arcs.forEach { arc ->
@@ -277,6 +300,9 @@ private fun ArcTargets(arcs: List<DialArc>, radii: DialRadii, onArc: (DialArc) -
                                 true
                             }
                         }
+                        // a session the page lets be taken off the day, as its row offers
+                        if (removal != null && arc.removable(removal))
+                            customActions = listOf(removeFromToday { removal.remove(arc) })
                     }
                 )
             }

@@ -9,15 +9,23 @@ data class DragPoint(val x: Float, val y: Float)
 /** The trash target's circle: where it is and how big, in the same pixels. */
 data class DragTarget(val centre: DragPoint, val radius: Float)
 
+/** Where a session was lifted from: a row of the running order, or its segment on the dial. */
+enum class DragSource {
+    ROW,
+    DIAL,
+}
+
 /**
- * A session lifted off the running order: the row it was, where the finger is and where in the row
- * it took hold ([grab]), and whether the finger is over the trash ([armed]).
+ * A session lifted off the day: the row it is (a segment on the dial lifts the row of the same
+ * session), where the finger is and where in the card it took hold ([grab]), whether the finger is
+ * over the trash ([armed]), and where it was lifted from ([source]).
  */
 data class Lifted(
     val row: OrderRow,
     val finger: DragPoint,
     val grab: DragPoint,
     val armed: Boolean = false,
+    val source: DragSource = DragSource.ROW,
 )
 
 /** What letting go means. */
@@ -97,7 +105,12 @@ object DragModel {
     }
 
     /** Lifts [row] with the finger at [finger], having taken hold [grab] into it. */
-    fun lift(row: OrderRow, finger: DragPoint, grab: DragPoint) = Lifted(row, finger, grab)
+    fun lift(
+        row: OrderRow,
+        finger: DragPoint,
+        grab: DragPoint,
+        source: DragSource = DragSource.ROW,
+    ) = Lifted(row, finger, grab, source = source)
 
     /** The finger moved: the card follows it, and the trash is armed by [hovers]. */
     fun move(lifted: Lifted, finger: DragPoint, target: DragTarget, density: Float) =

@@ -90,7 +90,14 @@ internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextM
  * One arc's drawing, with its glow, edges and icon, so a build can move, fade or light it alone.
  */
 internal class ArcArt(val arc: DialArc, radii: DialRadii) :
-    DialLayer(buildList<Step> { arc(arc, radii) })
+    DialLayer(buildList<Step> { arc(arc, radii) }) {
+    /** Drawn as a ghost (a session lifted off the dial) when it is the session [ghost]. */
+    fun draw(scope: DrawScope, ghost: String?) {
+        if (ghost != null && arc.tap?.id == ghost)
+            scope.faded(GHOST_ALPHA) { this@ArcArt.draw(this) }
+        else draw(scope)
+    }
+}
 
 /**
  * The day's arcs and the words written along them, in three groups drawn in this order: the outer
@@ -118,10 +125,11 @@ internal class DialPlan(dial: DirectorDial, text: TextMeasurer) {
         outerAlpha: Float = 1f,
         wordsAlpha: Float = 1f,
         innerAlpha: Float = 1f,
+        ghost: String? = null,
     ) {
-        scope.faded(outerAlpha) { for (i in outer.indices) outer[i].draw(this) }
+        scope.faded(outerAlpha) { for (i in outer.indices) outer[i].draw(this, ghost) }
         scope.faded(wordsAlpha) { words.draw(this) }
-        scope.faded(innerAlpha) { for (i in inner.indices) inner[i].draw(this) }
+        scope.faded(innerAlpha) { for (i in inner.indices) inner[i].draw(this, ghost) }
     }
 }
 

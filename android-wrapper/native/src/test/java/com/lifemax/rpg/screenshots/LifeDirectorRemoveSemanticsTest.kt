@@ -78,19 +78,42 @@ class LifeDirectorRemoveSemanticsTest {
         return probe.nodes
     }
 
+    private companion object {
+        const val SEGMENT_DP = 48f
+    }
+
     private fun List<A11yNode>.row(title: String) =
         firstOrNull { it.text.contains(title) } ?: error("no row \"$title\"")
 
     @Test
     fun eachRemovableSessionOffersRemoveFromTodayAndNothingElseDoes() {
         val nodes = read(hold = false)
-        val offering = nodes.filter { "Remove from today" in it.actions }
+        // the running order's rows (a dial segment is a 48 dp square; see the next test)
+        val offering =
+            nodes.filter { "Remove from today" in it.actions && it.heightDp != SEGMENT_DP }
         assertTrue(offering.all { it.actions == listOf("Remove from today") })
         // the sessions the page says can be removed, and no other row (a session that cannot be,
         // a meal, work, the dentist) and not the up-next card
         assertEquals(2, offering.size)
         assertTrue(offering[0].text.contains("Resistance Training"))
         assertTrue(offering[1].text.contains("Focused Reading"))
+    }
+
+    /**
+     * The dial's segments are individually focusable (48 dp nodes with the session's name and
+     * state), so each session the page says can be removed offers the same action as its row, and
+     * no other segment (a session that cannot be, a meal, work, sleep) does.
+     */
+    @Test
+    fun eachRemovableSessionsSegmentOnTheDialOffersRemoveFromTodayToo() {
+        val segments =
+            read(hold = false).filter { it.heightDp == SEGMENT_DP && it.text.isNotEmpty() }
+        val offering = segments.filter { "Remove from today" in it.actions }
+        assertEquals(2, offering.size)
+        assertTrue(offering[0].text.contains("Resistance Training"))
+        assertTrue(offering[1].text.contains("Focused Reading"))
+        assertTrue(offering.all { it.actions == listOf("Remove from today") && it.clickable })
+        assertTrue(segments.size > offering.size)
     }
 
     @Test

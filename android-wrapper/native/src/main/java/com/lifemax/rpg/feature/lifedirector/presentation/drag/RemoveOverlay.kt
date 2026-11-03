@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.lifedirector.presentation.drag
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.AnimationVector2D
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -35,10 +38,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.core.designsystem.boxShadow
 import com.lifemax.rpg.feature.lifedirector.domain.DragPoint
+import com.lifemax.rpg.feature.lifedirector.domain.DragSource
 import com.lifemax.rpg.feature.lifedirector.domain.OrderRow
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * Everything drawn over the list while a session is lifted: the trash sliding up from the bottom
@@ -58,15 +64,17 @@ internal fun RemoveOverlay(
     val density = LocalDensity.current
     val held by drag.held.collectAsState()
     Box(
-        Modifier.fillMaxSize().onSizeChanged {
-            drag.layout(
-                it.width.toFloat(),
-                it.height.toFloat(),
-                with(density) { topInsetDp.dp.toPx() },
-                with(density) { bottomInsetDp.dp.toPx() },
-                density.density,
-            )
-        }
+        Modifier.fillMaxSize()
+            .onGloballyPositioned { drag.anchor.overlayAt(it) }
+            .onSizeChanged {
+                drag.layout(
+                    it.width.toFloat(),
+                    it.height.toFloat(),
+                    with(density) { topInsetDp.dp.toPx() },
+                    with(density) { bottomInsetDp.dp.toPx() },
+                    density.density,
+                )
+            }
     ) {
         val h = held ?: return@Box
         TrashSlide(drag, h, reduced)
@@ -145,7 +153,11 @@ private fun FlyingCard(
             DragPhase.HELD -> {
                 shown.snapTo(1f)
                 if (reduced) scale.snapTo(1f)
-                else scale.animateTo(LIFT_SCALE, spring(Spring.DampingRatioMediumBouncy))
+                else {
+                    // a card lifted from the dial grows from the size of its segment
+                    if (held.source == DragSource.DIAL) scale.snapTo(FROM_SEGMENT_SCALE)
+                    scale.animateTo(LIFT_SCALE, spring(Spring.DampingRatioMediumBouncy))
+                }
             }
             DragPhase.DROPPING -> {
                 if (from == DragPhase.HELD) placed.snapTo(here)
@@ -167,17 +179,28 @@ private fun FlyingCard(
             DragPhase.RETURNING -> {
                 if (from == DragPhase.HELD) placed.snapTo(here)
                 shown.snapTo(1f)
-                val slot =
-                    Offset(inset, slotTop(list, held.row, size.value.height, drag.finger.value))
-                if (reduced) {
-                    placed.snapTo(slot)
-                    scale.snapTo(1f)
-                } else {
-                    scale.animateTo(1f, tween(SETTLE_MS))
-                    placed.animateTo(
-                        slot,
-                        spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMedium),
+                if (held.source == DragSource.DIAL)
+                    intoSegment(
+                        drag.anchor.home(held.row.tap?.id.orEmpty()),
+                        size.value,
+                        placed,
+                        scale,
+                        shown,
+                        reduced,
                     )
+                else {
+                    val slot =
+                        Offset(inset, slotTop(list, held.row, size.value.height, drag.finger.value))
+                    if (reduced) {
+                        placed.snapTo(slot)
+                        scale.snapTo(1f)
+                    } else {
+                        scale.animateTo(1f, tween(SETTLE_MS))
+                        placed.animateTo(
+                            slot,
+                            spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMedium),
+                        )
+                    }
                 }
                 drag.settled()
             }
@@ -199,6 +222,30 @@ private fun FlyingCard(
             }
     ) {
         LiftedCard(held.row)
+    }
+}
+
+/**
+ * A card lifted from the dial goes back into its segment: it shrinks and fades as it settles there
+ * with a spring, [home] being the segment's place on the screen. With reduced motion, or with the
+ * dial gone from the screen, it is simply gone.
+ */
+private suspend fun intoSegment(
+    home: Offset?,
+    card: IntSize,
+    placed: Animatable<Offset, AnimationVector2D>,
+    scale: Animatable<Float, AnimationVector1D>,
+    shown: Animatable<Float, AnimationVector1D>,
+    reduced: Boolean,
+) {
+    if (reduced || home == null) return shown.snapTo(0f)
+    coroutineScope {
+        launch { scale.animateTo(FROM_SEGMENT_SCALE, tween(SETTLE_MS)) }
+        launch { shown.animateTo(0f, tween(SETTLE_MS)) }
+        placed.animateTo(
+            Offset(home.x - card.width / 2f, home.y - card.height / 2f),
+            spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMedium),
+        )
     }
 }
 
@@ -249,6 +296,9 @@ private fun AutoScroll(drag: DragRemoveController, list: LazyListState) {
 private val CARD_SHAPE = RoundedCornerShape(16.dp)
 /** How much larger a lifted card is than the row it was. */
 internal const val LIFT_SCALE = 1.04f
+
+/** How small a card is next to a dial segment it grows from or shrinks back into. */
+private const val FROM_SEGMENT_SCALE = .3f
 private const val SLIDE_MS = 200
 private const val SLIDE_FROM_DP = 120
 private const val DROP_MS = 170

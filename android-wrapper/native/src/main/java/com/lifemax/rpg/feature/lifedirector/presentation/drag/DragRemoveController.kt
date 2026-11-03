@@ -1,9 +1,12 @@
 package com.lifemax.rpg.feature.lifedirector.presentation.drag
 
+import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
+import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorReply
 import com.lifemax.rpg.feature.lifedirector.domain.DragEnd
 import com.lifemax.rpg.feature.lifedirector.domain.DragModel
 import com.lifemax.rpg.feature.lifedirector.domain.DragPoint
+import com.lifemax.rpg.feature.lifedirector.domain.DragSource
 import com.lifemax.rpg.feature.lifedirector.domain.DragTarget
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
@@ -27,8 +30,16 @@ enum class DragPhase {
     RETURNING,
 }
 
-/** The session that is lifted: its row, where in the row the finger took hold, and its phase. */
-data class Held(val row: OrderRow, val grab: DragPoint, val phase: DragPhase)
+/**
+ * The session that is lifted: its row, where in its card the finger took hold, its phase and where
+ * it was lifted from.
+ */
+data class Held(
+    val row: OrderRow,
+    val grab: DragPoint,
+    val phase: DragPhase,
+    val source: DragSource = DragSource.ROW,
+)
 
 /** What a finger that has stayed on a row should do. */
 sealed interface Press {
@@ -42,12 +53,13 @@ sealed interface Press {
 }
 
 /**
- * Taking a session off the day (director.remove.v1): the lifted row on its way to the trash, the
- * removal itself and Undo. A removal is the page's own Skip, sent as Today's `skip` with an
- * operation id; Undo is `unskip`. Both are repeat-safe on the page (a repeat answers ok,
- * unchanged), and an operation id is kept until a terminal reply, so a request whose answer was
- * lost goes again with the same id. One request at a time. The page decides everything: what may be
- * removed comes on the row ([OrderRow.removal]), and what removing does is its reply.
+ * Taking a session off the day (director.remove.v1): the lifted session, from its row in the
+ * running order or its segment on the dial, on its way to the trash, the removal itself and Undo. A
+ * removal is the page's own Skip, sent as Today's `skip` with an operation id; Undo is `unskip`.
+ * Both are repeat-safe on the page (a repeat answers ok, unchanged), and an operation id is kept
+ * until a terminal reply, so a request whose answer was lost goes again with the same id. One
+ * request at a time. The page decides everything: what may be removed comes on the row
+ * ([OrderRow.removal]), and what removing does is its reply.
  *
  * The finger's position and the trash being armed change many times a second, so they are flows of
  * their own; [held] changes only when a session is lifted, dropped or put back.
@@ -71,8 +83,12 @@ internal constructor(
     private val mutableTarget = MutableStateFlow<DragTarget?>(null)
     val target = mutableTarget.asStateFlow()
 
+    /** Where the dial is, for a session lifted from it. */
+    internal val anchor = DialAnchor()
+
     private var lifted: Lifted? = null
     private var density = 1f
+    private var width = 0f
     private var scrollTop = 0f
     private var scrollBottom = 0f
     private var serial = 0
@@ -93,6 +109,7 @@ internal constructor(
      */
     fun layout(width: Float, height: Float, topInset: Float, bottomInset: Float, density: Float) {
         this.density = density
+        this.width = width
         val trash = DragModel.target(width, height, bottomInset, density)
         mutableTarget.value = trash
         scrollTop = topInset
@@ -100,15 +117,31 @@ internal constructor(
     }
 
     /** The row with this list [key], from the page's latest Today. */
-    fun row(key: Any?): OrderRow? {
-        val today = projection.value?.today ?: return null
-        return (today.ahead + today.earlier?.rows.orEmpty()).firstOrNull { it.key == key }
-    }
+    fun row(key: Any?): OrderRow? = rows().firstOrNull { it.key == key }
+
+    /** The row of the session with this [id]: what a segment of the dial lifts. */
+    fun session(id: String): OrderRow? =
+        if (id.isEmpty()) null else rows().firstOrNull { it.tap?.id == id }
+
+    private fun rows(): List<OrderRow> =
+        projection.value?.today?.let { it.ahead + it.earlier?.rows.orEmpty() }.orEmpty()
 
     /** What a finger that has stayed on the row with this list [key] means. */
-    fun press(key: Any?): Press {
-        val row = row(key) ?: return Press.Ignore
-        val removal = row.removal ?: return Press.Ignore
+    fun press(key: Any?): Press = press(row(key))
+
+    /**
+     * What a finger that has stayed on the dial's [arc] means: only a session's segment lifts, and
+     * only when the page has said, on that session's row, whether it can be removed. Any other arc
+     * (a meal, a band, an appointment) is not the lift's business.
+     */
+    fun press(arc: DialArc): Press {
+        val id = arc.tap?.id.orEmpty()
+        return if (arc.style == ArcStyle.SESSION && id.isNotEmpty()) press(session(id))
+        else Press.Ignore
+    }
+
+    private fun press(row: OrderRow?): Press {
+        val removal = row?.removal ?: return Press.Ignore
         if (!free() || pending != null || mutableHeld.value != null) return Press.Ignore
         return if (removal.ok) Press.Lift(row) else Press.Refuse(removal.reason)
     }
@@ -117,13 +150,23 @@ internal constructor(
     fun refuse(reason: String) = show(reason)
 
     /** [row] is lifted by a finger at [finger], having taken hold [grab] into it. */
-    fun lift(row: OrderRow, finger: DragPoint, grab: DragPoint) {
-        val l = DragModel.lift(row, finger, grab)
-        lifted = l
+    fun lift(
+        row: OrderRow,
+        finger: DragPoint,
+        grab: DragPoint,
+        source: DragSource = DragSource.ROW,
+    ) {
+        lifted = DragModel.lift(row, finger, grab, source)
         mutableFinger.value = finger
         mutableArmed.value = false
-        mutableHeld.value = Held(row, grab, DragPhase.HELD)
+        mutableHeld.value = Held(row, grab, DragPhase.HELD, source)
     }
+
+    /**
+     * Where a card lifted from the dial is held: by its middle, a little below its top edge, since
+     * the dial's segment is small and the card appears under the finger at its full width.
+     */
+    fun dialGrab() = DragPoint((width - 2 * LIST_SIDE.value * density) / 2, DIAL_GRAB_DP * density)
 
     /** The finger moved to [to]; true when that armed or disarmed the trash. */
     fun move(to: DragPoint): Boolean {
@@ -139,7 +182,10 @@ internal constructor(
 
     /** How far the list should scroll per second now, in pixels. */
     fun scrollSpeed(): Float =
-        lifted?.let { DragModel.scroll(it.finger.y, scrollTop, scrollBottom, it.armed, density) }
+        lifted
+            // the dial sits at the top of the list, and the trash is in reach without scrolling
+            ?.takeIf { it.source == DragSource.ROW }
+            ?.let { DragModel.scroll(it.finger.y, scrollTop, scrollBottom, it.armed, density) }
             ?: 0f
 
     /** Whether a finger still holds a session. */
@@ -178,6 +224,11 @@ internal constructor(
      */
     fun settled() {
         if (mutableHeld.value?.phase == DragPhase.RETURNING) mutableHeld.value = null
+    }
+
+    /** TalkBack's "Remove from today" on a dial segment: the removal of its session. */
+    fun remove(arc: DialArc) {
+        session(arc.tap?.id.orEmpty())?.let(::remove)
     }
 
     /** TalkBack's "Remove from today": the same removal, with no drag. */
@@ -271,6 +322,7 @@ internal constructor(
     }
 
     private companion object {
+        const val DIAL_GRAB_DP = 30f
         const val NOT_SAVED = "Not saved"
         const val NOTHING_CHANGED = "Nothing was changed."
     }

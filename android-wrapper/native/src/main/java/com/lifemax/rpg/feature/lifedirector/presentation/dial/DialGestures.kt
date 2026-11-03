@@ -27,6 +27,9 @@ import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
 import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorBuzz
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.DialTouch
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.Press
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.Start
 
 /**
  * What the dial's gestures read when a touch comes: the latest [dial], the handle held, whether the
@@ -39,6 +42,8 @@ internal class DialInput(
     val run: BuildRun?,
     val actions: HandleActions,
     val onArc: (DialArc) -> Unit,
+    /** lifts a session off the day when its segment is held; null where the dial cannot */
+    val lift: DialLift? = null,
 )
 
 /**
@@ -51,6 +56,11 @@ internal class DialInput(
  * tap only when it stays put, so the list scrolls from anywhere else on the dial; a tap within 400
  * ms of a drag ending is ignored, as on the page. While a build plays, a touch skips it and is
  * swallowed, so the tap never opens a session.
+ *
+ * A touch that lands on a session's segment, which the page has an answer about for taking it off
+ * the day (director.remove.v1), is also a hold in waiting ([DialTouch], [holdOnSegment]): still for
+ * the length of a row's hold it lifts the session, and in every other case (a tap, a move past the
+ * slop, a second finger) it is the plain touch above. A handle under the finger always wins.
  */
 internal class DialGestures(
     private val scope: PointerInputScope,
@@ -82,7 +92,10 @@ internal class DialGestures(
                     down.position / unit,
                     radius,
                 )
-        if (handle != null) {
+        val arc = DialGeometry.arcAt(now.dial.arcs, now.dial.radii, down.position / unit)
+        val press = now.lift?.let { l -> arc?.let(l.drag::press) } ?: Press.Ignore
+        val start = DialTouch.start(handle != null, press)
+        if (handle != null && start == Start.Handle) {
             down.consume()
             drag(now, handle, down, unit)
             return
@@ -91,7 +104,14 @@ internal class DialGestures(
             down.consume()
             return
         }
-        val up = waitForUpOrCancellation() ?: return
+        val up =
+            if (start == Start.Hold && now.lift != null && arc != null)
+                when (val end = holdOnSegment(now.lift, arc, down, buzz)) {
+                    HoldEnd.Spent -> return
+                    is HoldEnd.Tapped -> end.up
+                    HoldEnd.Yielded -> waitForUpOrCancellation() ?: return
+                }
+            else waitForUpOrCancellation() ?: return
         val dial = input().dial
         DialGeometry.arcAt(dial.arcs, dial.radii, up.position / unit)?.let {
             up.consume()

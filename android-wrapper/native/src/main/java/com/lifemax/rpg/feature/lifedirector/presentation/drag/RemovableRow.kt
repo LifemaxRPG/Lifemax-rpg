@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import com.lifemax.rpg.feature.lifedirector.domain.DragSource
 import com.lifemax.rpg.feature.lifedirector.domain.OrderRow
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
@@ -32,7 +33,10 @@ internal fun RemovableRow(
 ) {
     if (drag == null) return OrderRowView(row, onTap)
     val held by drag.held.collectAsState()
-    val lifted = held?.let { it.row.key == row.key && it.phase != DragPhase.RETURNING } == true
+    val lifted =
+        held?.let {
+            it.source == DragSource.ROW && it.row.key == row.key && it.phase != DragPhase.RETURNING
+        } == true
     val open by
         animateFloatAsState(
             if (lifted) 0f else 1f,
@@ -40,14 +44,7 @@ internal fun RemovableRow(
             label = "row slot",
         )
     val actions =
-        if (row.removal?.ok == true)
-            listOf(
-                CustomAccessibilityAction(REMOVE_ACTION) {
-                    drag.remove(row)
-                    true
-                }
-            )
-        else emptyList()
+        if (row.removal?.ok == true) listOf(removeFromToday { drag.remove(row) }) else emptyList()
     Box(
         Modifier.layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
@@ -64,5 +61,12 @@ internal fun RemovableRow(
 
 /** TalkBack's name for taking a session off the day. */
 internal const val REMOVE_ACTION = "Remove from today"
+
+/** TalkBack's "Remove from today", which does [remove] (a row's, or a dial segment's). */
+internal fun removeFromToday(remove: () -> Unit) =
+    CustomAccessibilityAction(REMOVE_ACTION) {
+        remove()
+        true
+    }
 
 private const val SLOT_MS = 180
