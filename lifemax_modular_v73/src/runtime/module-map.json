@@ -743,7 +743,7 @@
   },
   {
    "file": "src/runtime/segments/15-runtime.js",
-   "bytes": 32612,
+   "bytes": 32680,
    "statement_count": 73,
    "tags": [
     "nutrition",
@@ -2612,6 +2612,68 @@
     "petCoatPalette",
     "petCoatIndex",
     "petCoatAnswer"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-pet-moments.js",
+   "bytes": 7426,
+   "statement_count": 12,
+   "tags": [
+    "pet",
+    "moments"
+   ],
+   "symbols": [
+    "PET_POSES",
+    "PET_STAGE_NAMES",
+    "PET_BIRTHDAY_DAYS",
+    "PET_DAY_MILESTONES",
+    "petMomentFx",
+    "petMomentCore",
+    "PET_MOMENTS",
+    "PET_MOMENT_EVENTS",
+    "petMomentOf",
+    "petMomentPose",
+    "petMomentFill",
+    "petMomentCaption"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-pet-album.js",
+   "bytes": 19542,
+   "statement_count": 29,
+   "tags": [
+    "pet",
+    "album"
+   ],
+   "symbols": [
+    "PET_ALBUM",
+    "petAlbumCatId",
+    "petAlbumCats",
+    "petAlbumShapeOk",
+    "petAlbumCleanEntry",
+    "petAlbumRepair",
+    "petAlbumContext",
+    "petAlbumStageIdx",
+    "petAlbumOf",
+    "petAlbumFacts",
+    "petAlbumRoom",
+    "petAlbumTrim",
+    "petAlbumPut",
+    "petAlbumScanCat",
+    "petAlbumScan",
+    "petAlbumEvent",
+    "petAlbumSummary",
+    "petAlbumMemorial",
+    "petAlbumCompactMemorials",
+    "petAlbumView",
+    "petAlbumSorted",
+    "petAlbumList",
+    "petAlbumLook",
+    "petAlbumPending",
+    "PET_ALBUM_ALREADY",
+    "petAlbumPhotoTaken",
+    "petScrapbookData",
+    "window.PetAlbum"
    ]
   },
   {
