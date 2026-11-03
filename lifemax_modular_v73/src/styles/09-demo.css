@@ -1,0 +1,9 @@
+/* ===== Demo mode (docs/architecture/DEMO_MODE.md): the chip that says so on every page screen ===== */
+.lm-demo-chip{position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:50%;transform:translateX(-50%);z-index:4500;display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:99px;border:1px solid #b97a12;background:#f5a524;color:#1a1204;font:800 11px/1.4 inherit;letter-spacing:.08em;cursor:pointer;box-shadow:0 2px 10px #0006}
+.lm-demo-chip small{font:600 10px/1 inherit;letter-spacing:0;opacity:.8}
+.lm-demo-chip:focus-visible{outline:2px solid #fff;outline-offset:2px}
+body.lm-demo .topbar .pill{background:#f5a524;color:#1a1204;border-color:#b97a12}
+.lm-demo-ask .updpop-card h3{margin-top:0}
+.lm-demo-ask .updpop-card p{margin:0 0 10px}
+.lm-demo-ask ul{margin:0 0 14px;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.45}
+.card[hidden]{display:none!important}

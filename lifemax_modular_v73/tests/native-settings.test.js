@@ -56,7 +56,7 @@ const HELPERS = `
     out.head = JSON.stringify([s.head.eyebrow, s.head.title, s.head.blurb]) === JSON.stringify([...view.querySelectorAll('.pagehead .eyebrow, .pagehead h2, .pagehead p')].map(text));
     out.categories = JSON.stringify(s.categories) === JSON.stringify(SET_CATS.map(c => ({ id: c.id, name: c.name }))) && s.category === setCat
       && JSON.stringify([...document.querySelectorAll('#setCatBar button')].map(text)) === JSON.stringify(s.categories.map(c => c.name));
-    const pageCards = [...view.querySelectorAll('.card')].filter(c => !c.parentElement.closest('.card'));
+    const pageCards = [...view.querySelectorAll('.card')].filter(c => !c.parentElement.closest('.card') && !c.hidden);
     out.cards = pageCards.length === s.cards.length && pageCards.every((c, i) => text(c.querySelector(':scope > h3')) === s.cards[i].title && (setCatOf(c) || '') === s.cards[i].category);
     out.cardCount = [pageCards.length, s.cards.length];
     // every row the page shows, by its title and hint, in its card; the hidden ones (dev tools while off) are left out
@@ -414,7 +414,7 @@ const HELPERS = `
     return { disabled: t.disabled && !t.checked, notes: notif.rows.length === 1 && notif.rows[0].type === 'note' && /Android app/.test(notif.rows[0].text), cards: s.cards.length, broken, forced };
   });
   ok('a category the chips do not have: the page shows its first chip, and the projection always names a chip', w.broken && w.forced === 'look', w);
-  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 23, w);
+  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 24, w);
 
   ok('no script errors', errs.length === 0, errs.slice(0, 5));
   await b.close();
