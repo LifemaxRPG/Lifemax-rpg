@@ -1,5 +1,6 @@
 package com.lifemax.rpg.screenshots
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
@@ -29,12 +30,12 @@ import org.junit.Test
 
 /**
  * The Cat tab as the phone draws it (Native Cat, beta), from the projections the page made
- * (`tools/gen_pet_fixtures.js`): the live room pinned at the top with the cat or cats in it, and
- * under it the card, the buttons, the stats and the care card. Every moment of the room is scripted
- * (cats placed and given plans, the stage stepped a fixed time, the hour fixed), so each image is
- * the same every time; the clock does not run on it. Content, hungry, very hungry (the weak rows),
- * weak, on vacation, a kitten, two cats, a genetic coat, large text, the care card open, dark and
- * light.
+ * (`tools/gen_pet_fixtures.js`): the live room first in the scrolling list, with the cat or cats in
+ * it, and under it the card, the buttons, the stats and the care card. Every moment of the room is
+ * scripted (cats placed and given plans, the stage stepped a fixed time, the hour fixed), so each
+ * image is the same every time; the clock does not run on it. Content, hungry, very hungry (the
+ * weak rows), weak, on vacation, a kitten, two cats, a genetic coat, large text, the care card
+ * open, dark and light.
  */
 class PetScreenshotTest {
     @get:Rule val paparazzi = Paparazzi(deviceConfig = phone(), maxPercentDifference = 0.001)
@@ -124,6 +125,7 @@ class PetScreenshotTest {
         careOpen: Boolean = false,
         ui: PetUi = PetUi(),
         label: String? = null,
+        pastTheRoom: Boolean = false,
     ) {
         val p = projection(name, light)
         val stage = stage(p, spots, hour, seconds)
@@ -131,11 +133,15 @@ class PetScreenshotTest {
             when {
                 fontScale > 1f -> TALL_LARGE_TEXT
                 careOpen -> TALL_CARE_OPEN
+                pastTheRoom -> SHORT
                 else -> TALL
             }
         if (tall != TALL) paparazzi.unsafeUpdateConfig(phone(fontScale, tall))
         paparazzi.snapshot(label) {
-            PetScreen(p, ui, PetActions(), careOpen = careOpen) { modifier ->
+            // the room is the list's first item: starting at the second, it is scrolled away
+            val list =
+                rememberLazyListState(initialFirstVisibleItemIndex = if (pastTheRoom) 1 else 0)
+            PetScreen(p, ui, PetActions(), careOpen = careOpen, listState = list) { modifier ->
                 RoomHost(RoomState.Ready(stage), running = false, still = true, modifier)
             }
         }
@@ -183,11 +189,19 @@ class PetScreenshotTest {
     fun theCareCardOpenOnVacationLight() =
         shoot("vacation", listOf(onSofa(-118f)), careOpen = true, light = true)
 
+    /**
+     * The list scrolled past the room: the cards under the header, the room gone with the scroll.
+     */
+    @Test fun scrolledPastTheRoom() = shoot("alive", listOf(onSofa(-118f)), pastTheRoom = true)
+
     @Test
     fun feedWaitingForThePage() =
         shoot("alive", listOf(onSofa(-118f)), ui = PetUi(waiting = "feed"))
 
     private companion object {
+        /** A phone's own height, where the list has to scroll. */
+        const val SHORT = 2340
+
         /** Tall enough to show the whole screen in one image. */
         const val TALL = 3000
 

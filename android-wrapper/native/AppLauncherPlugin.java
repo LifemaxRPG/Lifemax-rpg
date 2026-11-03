@@ -117,10 +117,14 @@ public class AppLauncherPlugin extends Plugin {
         call.resolve();
     }
 
-    /** colour: "#rrggbb" behind the status and navigation bars; light: dark icons on a light bar. */
+    /**
+     * colour: "#rrggbb" behind the status and navigation bars; light: dark icons on a light bar; bottom (optional): the colour of
+     * the page's bottom bar, which then also fills the gesture area below the page so the bar reaches the screen's edge.
+     */
     @PluginMethod
     public void setSystemBars(final PluginCall call) {
         final String color = call.getString("color", "#000000");
+        final String bottom = call.getString("bottom", color);
         final boolean light = Boolean.TRUE.equals(call.getBoolean("light", false));
         getActivity().runOnUiThread(() -> {
             try {
@@ -129,7 +133,7 @@ public class AppLauncherPlugin extends Plugin {
                 int c = Color.parseColor(color);
                 decor.setBackgroundColor(c);
                 View content = decor.findViewById(android.R.id.content);
-                if (content != null) content.setBackgroundColor(c);
+                if (content != null) content.setBackground(new BarBleedDrawable(c, Color.parseColor(bottom)));
                 WindowInsetsControllerCompat ctl = new WindowInsetsControllerCompat(w, decor);
                 ctl.setAppearanceLightStatusBars(light);
                 ctl.setAppearanceLightNavigationBars(light);

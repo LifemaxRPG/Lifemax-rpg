@@ -1,6 +1,10 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.feature.pet.domain.PetProjection
 
 /*
@@ -14,16 +18,31 @@ import com.lifemax.rpg.feature.pet.domain.PetProjection
 internal fun LazyListScope.petTogetherItem(p: PetProjection, ui: PetUi, actions: PetActions) {
     val panels = p.panels ?: return
     val pair = panels.pair ?: return
-    item("together") { PetTogetherCard(pair, panels.words, ui.waiting == "focus", actions.focus) }
+    item("together") {
+        PetSlot { PetTogetherCard(pair, panels.words, ui.waiting == "focus", actions.focus) }
+    }
 }
 
 /** The collapsible cards that follow Care and settings. */
 internal fun LazyListScope.petPanelItems(p: PetProjection, ui: PetUi, actions: PetActions) {
     val panels = p.panels ?: return
-    panels.likes?.let { item("likes") { PetLikesCard(it, panels.words) } }
-    panels.inner?.let { item("inner") { PetInnerCard(it, panels.words) } }
-    panels.dna?.let { item("dna") { PetDnaCard(it, panels.words, actions.expandGenome) } }
-    panels.toys?.let {
-        item("toys") { PetToysCard(it, panels.words, ui.waiting == "buyToy", actions.buyToy) }
+    panels.likes?.let { item("likes") { PetSlot { PetLikesCard(it, panels.words) } } }
+    panels.inner?.let { item("inner") { PetSlot { PetInnerCard(it, panels.words) } } }
+    panels.dna?.let {
+        item("dna") { PetSlot { PetDnaCard(it, panels.words, actions.expandGenome) } }
     }
+    panels.toys?.let {
+        item("toys") {
+            PetSlot { PetToysCard(it, panels.words, ui.waiting == "buyToy", actions.buyToy) }
+        }
+    }
+}
+
+/**
+ * The gutter and gap a card had from the list's content padding, now that the list pads only its
+ * end.
+ */
+@androidx.compose.runtime.Composable
+private fun PetSlot(content: @androidx.compose.runtime.Composable () -> Unit) {
+    Box(Modifier.padding(12.dp, 14.dp, 12.dp, 0.dp)) { content() }
 }

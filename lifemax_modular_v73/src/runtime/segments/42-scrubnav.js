@@ -6,7 +6,8 @@
 const LMA_SCRUB={slop:5,settle:100,gain:.92,fast:.16};
 /* how far a finger has to travel along the bar: 1 is the old pace (the bar's full width reaches the end tab), higher means the same movement gets you through more tabs */
 const LMA_SCRUB_GAINS={normal:1,fast:1.8,faster:2.6};
-function lmaScrubGain(){const k=lmaLoad().scrubSpeed;return LMA_SCRUB_GAINS[k]||LMA_SCRUB_GAINS.fast}
+function lmaScrubSpeedKey(){const k=lmaLoad().scrubSpeed;return LMA_SCRUB_GAINS[k]?k:'fast'}      /* the owner's scrub speed; native scrubs the bar with the same names (ScrubSpeed) */
+function lmaScrubGain(){return LMA_SCRUB_GAINS[lmaScrubSpeedKey()]}
 function lmaSetScrubSpeed(k){lmaLoad().scrubSpeed=LMA_SCRUB_GAINS[k]?k:'fast';lmaSave();toast('Bar scrubbing: '+lmaLoad().scrubSpeed)}
 const lmaScrub={sb:null,items:[],drag:null,sel:-1,timer:0,block:0,cost:{},veil:null,veilOn:false};
 const lmaScrubOn=()=>!!(window.matchMedia&&matchMedia('(max-width:860px)').matches);

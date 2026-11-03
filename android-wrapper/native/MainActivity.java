@@ -121,12 +121,14 @@ public class MainActivity extends BridgeActivity {
         ctl.setAppearanceLightStatusBars(false);
         ctl.setAppearanceLightNavigationBars(false);
         final View content = findViewById(android.R.id.content);
-        content.setBackgroundColor(bg);
+        content.setBackground(new BarBleedDrawable(bg, bg));
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
             Insets bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
             v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            BarBleedDrawable.inset(ime.bottom > bars.bottom ? 0 : bars.bottom); // the gesture area below the page takes the bottom bar's colour
+            v.invalidate();
             com.lifemax.rpg.app.shell.ImeState.set(ime.bottom > bars.bottom); // NAV-5: the shared bottom bar hides under the keyboard
             return WindowInsetsCompat.CONSUMED;
         });
