@@ -46,6 +46,13 @@ class CatBody(
     var fatigue = 0f
     var mood = 0f
 
+    /** The toy in the mouth (being lifted into it, or carried), or null. */
+    val heldToy: ToyBody?
+        get() = toyRig.held
+
+    private val carrying
+        get() = toyRig.held?.state == ToyState.HELD
+
     /** What this cat can jump right now (see [JumpCapability]). */
     val capability: JumpCapability
         get() = JumpCapability.of(growthScale, weak, bodyLength, legLength, fatigue, mood)
@@ -74,6 +81,7 @@ class CatBody(
         LEAP,
         ACT,
         FACE,
+        TOY,
     }
 
     private val kin = Kinematics()
@@ -87,20 +95,30 @@ class CatBody(
     private val tail = Tail(Rng.derive(seed, SALT_TAIL))
     private val breathing = Breathing()
     private val attention = Attention()
-    private val leap =
-        LeapDirector(
-            kin,
-            turn,
-            loco,
-            player,
-            springs,
-            attention,
-            object : LeapHost {
-                override fun play(clip: Clip, phase: Float) = playClip(clip, phase)
+    private val host: ToyHost =
+        object : ToyHost {
+            override fun play(clip: Clip, phase: Float) = playClip(clip, phase)
 
-                override fun stride(dt: Float): Boolean = animateStride(dt)
-            },
-        )
+            override fun stride(dt: Float): Boolean = animateStride(dt)
+
+            override fun hop(x: Float) {
+                jump.begin(SurfaceId.FLOOR, x)
+                mode = Mode.HOP
+            }
+
+            override fun emit(type: CatEventType): Unit =
+                pose.events.add(type, queue.planId, queue.currentIndex, queue.isOnLast)
+
+            override val bodyRotation: Float
+                get() = jump.arcRotation + leap.arcRotation
+
+            override val hopLanded: Boolean
+                get() = jump.landedNow
+        }
+    private val leap: LeapDirector = LeapDirector(kin, turn, loco, player, springs, attention, host)
+    private val toyRig = ToyRig(kin, turn, loco, player, springs, host, seed)
+    private val toyDir = ToyDirector(toyRig, player, springs, host)
+    private var toyTicks = 0L
     private val reactions = Reactions(springs, ears, tail, whiskers, attention)
     private val idleLife = IdleLife(Rng.derive(seed, SALT_IDLE), springs, ears, attention)
     private val queue = PlanQueue()
@@ -117,9 +135,7 @@ class CatBody(
     private var skidLeft = 0f
     private var earState = EarState.FORWARD
     private var tailState = TailState.NEUTRAL
-    private val earlyPlans = IntArray(EARLY_CAPACITY)
-    private val earlyIndexes = IntArray(EARLY_CAPACITY)
-    private var earlyCount = 0
+    private val early = EarlyInterrupts()
 
     init {
         placeAt(startX, startZ, startSurface, 1)
@@ -127,6 +143,13 @@ class CatBody(
     }
 
     // ---------------------------------------------------------------- public API
+
+    /** Share the house's [toys] (or none) and give the cat its mouth [anchors] for toy steps. */
+    fun attachToys(toys: ToyField?, anchors: MouthAnchors) {
+        toyRig.field = toys
+        toyRig.mouths = anchors
+        toyTicks = toys?.ticks ?: 0L
+    }
 
     /** Put the cat down at ([x], [z]) on [surface] facing [facing], dropping any plan. */
     fun placeAt(x: Float, z: Float, surface: SurfaceId, facing: Int = 1) {
@@ -143,6 +166,7 @@ class CatBody(
         hasPending = false
         mode = Mode.IDLE
         player.play(if (weak) Clips.IDLE_SIT_W else Clips.IDLE_SIT)
+        toyRig.snapAnchor(null)
         compose()
     }
 
@@ -229,19 +253,9 @@ class CatBody(
     /**
      * Interrupts happen between steps; they are held here and reported at the start of the next.
      */
-    private fun noteInterrupt(plan: Int, index: Int) {
-        if (earlyCount == EARLY_CAPACITY) return
-        earlyPlans[earlyCount] = plan
-        earlyIndexes[earlyCount] = index
-        earlyCount++
-    }
+    private fun noteInterrupt(plan: Int, index: Int) = early.note(plan, index)
 
-    private fun flushInterrupts() {
-        for (i in 0 until earlyCount) {
-            pose.events.add(CatEventType.Interrupted, earlyPlans[i], earlyIndexes[i], false)
-        }
-        earlyCount = 0
-    }
+    private fun flushInterrupts() = early.flush(pose.events)
 
     // ---------------------------------------------------------------- one sub-step
 
@@ -255,10 +269,16 @@ class CatBody(
             Mode.LEAP -> leapTick(dt)
             Mode.ACT -> actTick(dt)
             Mode.FACE -> faceTick(dt)
+            Mode.TOY -> {
+                settleOnGround()
+                if (toyDir.update(dt)) finishStep()
+            }
         }
         turn.update(dt)
         if (turn.flippedNow) tail.swing(turn.dir)
         updateBodyAndSecondary(dt)
+        toyDir.afterTick(dt)
+        toyRig.field?.stepTo(++toyTicks)
     }
 
     private fun idleTick(dt: Float) {
@@ -314,7 +334,10 @@ class CatBody(
         val done = jump.update(dt, facingOk)
         animateJump(dt)
         if (!jump.airborne) kin.y = kin.groundY
-        if (done) finishStep()
+        if (done && toyDir.active) {
+            toyDir.hopEnded()
+            mode = Mode.TOY
+        } else if (done) finishStep()
     }
 
     private fun leapTick(dt: Float) {
@@ -332,16 +355,19 @@ class CatBody(
         when {
             step == null -> mode = Mode.IDLE
             step is PlanStep.Walk -> startWalk(step)
+            step is PlanStep.Carry -> startWalkTo(step.x, step.z, false)
             loco.moving -> mode = Mode.SETTLE
             else -> startStaticStep(step)
         }
     }
 
-    private fun startWalk(step: PlanStep.Walk) {
+    private fun startWalk(step: PlanStep.Walk) = startWalkTo(step.x, step.z, step.run)
+
+    private fun startWalkTo(goalX: Float, goalZ: Float?, run: Boolean) {
         val onFloor = kin.surface == SurfaceId.FLOOR
-        val x = if (onFloor) World.clampHouse(step.x) else World.clampTo(kin.surface, step.x)
-        val z = if (onFloor && step.z != null) Mathx.clamp(step.z, 0f, World.MAX_Z) else kin.z
-        loco.setGoal(x, z, step.run)
+        val x = if (onFloor) World.clampHouse(goalX) else World.clampTo(kin.surface, goalX)
+        val z = if (onFloor && goalZ != null) Mathx.clamp(goalZ, 0f, World.MAX_Z) else kin.z
+        loco.setGoal(x, z, run && !carrying)
         mode = Mode.WALK
     }
 
@@ -358,7 +384,12 @@ class CatBody(
             is PlanStep.Act -> startAct(step)
             is PlanStep.Face -> mode = Mode.FACE
             is PlanStep.Walk -> startWalk(step)
+            is PlanStep.Carry -> startWalkTo(step.x, step.z, false)
             null -> mode = Mode.IDLE
+            else -> {
+                toyDir.begin(step)
+                mode = Mode.TOY
+            }
         }
     }
 
@@ -387,6 +418,7 @@ class CatBody(
     private fun applyPending() {
         if (mode == Mode.HOP) jump.cancel()
         if (mode == Mode.LEAP) leap.cancel()
+        if (toyDir.active) toyDir.cancel()
         queue.load(pendingId, pending)
         hasPending = false
         pending.clear()
@@ -411,6 +443,7 @@ class CatBody(
             Mode.WALK -> player.footfall || loco.gait == Gait.STAND
             Mode.HOP -> jump.canCancel
             Mode.LEAP -> leap.canCancel
+            Mode.TOY -> toyDir.canCut
         }
 
     // ---------------------------------------------------------------- animation
@@ -426,24 +459,16 @@ class CatBody(
             if (player.clip.isLocomotion) playClip(restingClip())
             return false
         }
-        val clip = strideClip(gait)
+        val clip = strideClipFor(gait, weak, carrying)
         if (player.clip !== clip) playClip(clip)
         player.advance(dt, loco.speed / clip.stridePx)
-        if (player.footfall)
-            springs.footfall(
-                Mathx.clamp(loco.speed / Tuning.Walk.RUN_SPEED, FOOTFALL_MIN_SHARE, 1f)
-            )
+        if (player.footfall) {
+            val share = Mathx.clamp(loco.speed / Tuning.Walk.RUN_SPEED, FOOTFALL_MIN_SHARE, 1f)
+            springs.footfall(share)
+            toyRig.footfall(share)
+        }
         return true
     }
-
-    private fun strideClip(gait: Gait): Clip =
-        when {
-            weak -> Clips.WALK_W
-            gait == Gait.RUN -> Clips.RUN
-            gait == Gait.FRONT -> Clips.WALK_FRONT
-            gait == Gait.BACK -> Clips.WALK_BACK
-            else -> Clips.WALK
-        }
 
     private fun restingClip(): Clip = if (weak) Clips.IDLE_SIT_W else Clips.IDLE_SIT
 
@@ -502,8 +527,8 @@ class CatBody(
         val speedShare = Mathx.clamp(loco.speed / Tuning.Walk.RUN_SPEED, 0f, 1f)
         attention.update(dt, kin.x, kin.z, turn.dir)
         reactions.update(dt)
-        val ear = reactions.earOverride ?: earState
-        val tailPose = reactions.tailOverride ?: tailState
+        val ear = reactions.earOverride ?: toyRig.ear ?: earState
+        val tailPose = reactions.tailOverride ?: toyRig.tail ?: tailState
         ears.update(dt, ear, attention.x, speedShare)
         whiskers.update(dt, ears.flat, speedShare, Mathx.clamp(attention.x, 0f, 1f))
         tail.update(dt, tailPose, kin.ax * turn.dir * Tuning.Walk.TAIL_INERTIA)
@@ -556,17 +581,8 @@ class CatBody(
     }
 
     private fun composeShadow(p: CatPose) {
-        val lift = maxOf(jump.height, leap.height)
-        val units = lift * Tuning.Shadow.UNITS_PER_PX
-        p.shadowX = kin.x
-        p.shadowY =
-            if (jump.active) jump.shadowY else if (leap.active) leap.shadowY else kin.groundY
-        p.shadowScale =
-            maxOf(Tuning.Shadow.MIN_SCALE, p.depthScale - units * Tuning.Shadow.SCALE_LOSS_PER_UNIT)
-        val fade =
-            Mathx.clamp(lift / Tuning.Shadow.FADE_HEIGHT_PX, 0f, 1f) * Tuning.Shadow.FADE_SHARE
-        p.shadowAlpha = Tuning.Shadow.ALPHA * (1f - fade)
-        p.shadowHalfWidth = player.clip.shadowHalfWidth
+        val row = if (jump.active) jump.shadowY else if (leap.active) leap.shadowY else kin.groundY
+        p.setShadow(kin.x, row, maxOf(jump.height, leap.height), player.clip.shadowHalfWidth)
     }
 
     private companion object {
@@ -577,6 +593,5 @@ class CatBody(
         const val SALT_IDLE = 0x1D1E
         const val FOOTFALL_MIN_SHARE = 0.4f
         const val FALLING_PHASE = 0.75f
-        const val EARLY_CAPACITY = 4
     }
 }

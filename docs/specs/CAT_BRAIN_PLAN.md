@@ -1,6 +1,6 @@
 # Native cat brain: plan
 
-Status: CB0 (contract and harness) built, Native API 58: `pet.world.v1`, the `world` block, blob and command, the strict decoders, FakePage, WorldClock, the headless check and the day viewer skeleton; nothing behaves differently yet. Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
+Status: CB4 part A (the standalone toy body: pickup, carry, toss, bat, kick, pounce, chase, set down; `body/Toy*.kt`, `Carry.kt`, `PlayActs.kt`, `MouthAnchors.kt`, see `PET_ENGINE_PLAN.md` 4.2) built, Native API 60; the brain wiring, the stage drawing and the page side (`play`, `gift`, `dwell`) are CB4 part B. CB0 (contract and harness) built, Native API 58: `pet.world.v1`, the `world` block, blob and command, the strict decoders, FakePage, WorldClock, the headless check and the day viewer skeleton; nothing behaves differently yet. Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
 live `mind` stream that lets the page's brain steer the native body), the page halves of CT4 and CT5 (game plan builders, pair director
 through the stream) and the behaviour part of CT-L. The page keeps the cat's **identity and care economics**; **behaviour** (what a
 cat does minute by minute) moves to a new, smaller brain in pure Kotlin, built for the new body. Citations are `segment:line` under
