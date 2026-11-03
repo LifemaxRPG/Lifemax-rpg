@@ -43,6 +43,8 @@ internal class HouseStage(
     private val visible = IntArray(HouseLife.MAX_CATS)
     private var visibleCount = 0
     private var clock = 0.0
+    private var fedHouse = false
+    private var bowlFullFor = 0f
     private var sinceHour = 0f
     private var hour = hourNow()
     private lateinit var scope: DrawScope
@@ -61,13 +63,34 @@ internal class HouseStage(
 
     /** Whether the food bowl shows food: a fed house. */
     fun setFedHouse(fed: Boolean) {
-        scene.foodBowlFull = fed
+        fedHouse = fed
+        scene.foodBowlFull = fed || bowlFullFor > 0f
     }
+
+    /**
+     * The owner fed cat [cat]: it goes to its bowl and eats, and the bowl shows food for as long as
+     * the page's does ([BOWL_FULL_S]).
+     */
+    fun feed(cat: Int) {
+        house.serveMeal(cat)
+        bowlFullFor = BOWL_FULL_S
+        scene.foodBowlFull = true
+    }
+
+    /** The owner tried to feed cat [cat] and it was full: it goes to its bowl and washes. */
+    fun visitBowl(cat: Int) = house.visitBowl(cat)
+
+    /** The owner slow blinks at cat [cat]; true if the cat blinked back. */
+    fun slowBlink(cat: Int): Boolean = house.slowBlink(cat)
 
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
         house.step(dt)
         followCats(dt)
+        if (bowlFullFor > 0f) {
+            bowlFullFor -= dt
+            if (bowlFullFor <= 0f) scene.foodBowlFull = fedHouse
+        }
         clock += dt
         sinceHour += dt
         if (sinceHour >= HOUR_REFRESH_S) {
@@ -139,6 +162,9 @@ internal class HouseStage(
 
     private companion object {
         const val HOUR_REFRESH_S = 1f
+
+        /** How long the bowl shows food after a meal (the page empties it after 14 s). */
+        const val BOWL_FULL_S = 14f
     }
 }
 

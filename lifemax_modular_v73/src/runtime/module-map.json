@@ -838,8 +838,8 @@
   },
   {
    "file": "src/runtime/segments/16-runtime.js",
-   "bytes": 31134,
-   "statement_count": 47,
+   "bytes": 31653,
+   "statement_count": 49,
    "tags": [
     "training",
     "pet",
@@ -864,6 +864,7 @@
     "petGrowIdx",
     "petLoadStage",
     "petStageSheet",
+    "petGrowData",
     "petGrowStatus",
     "petSx",
     "petPlayPlan",
@@ -879,6 +880,7 @@
     "petHit",
     "petPointer",
     "petUpdateHold",
+    "petFeedRefusal",
     "petFeedClick",
     "petPlayClick",
     "PET_SFX_VOL",
@@ -900,8 +902,8 @@
   },
   {
    "file": "src/runtime/segments/17-runtime.js",
-   "bytes": 37483,
-   "statement_count": 70,
+   "bytes": 38461,
+   "statement_count": 72,
    "tags": [
     "pet",
     "interface"
@@ -928,6 +930,8 @@
     "petPaintPeek",
     "petBindCanvas",
     "petSet",
+    "petStatusData",
+    "PET_CARE_TEXT",
     "petRenderStatus",
     "petCoatPreviewDraw",
     "petPickCoat",
@@ -1310,8 +1314,8 @@
   },
   {
    "file": "src/runtime/segments/25-pet-likes.js",
-   "bytes": 21028,
-   "statement_count": 43,
+   "bytes": 21321,
+   "statement_count": 44,
    "tags": [
     "pet",
     "interface",
@@ -1359,6 +1363,7 @@
     "petToyTray",
     "petToyIcon",
     "petToyTrayRender",
+    "petFavsData",
     "petLikesRender",
     "petLikesTick",
     "petDevLikes"
@@ -1532,8 +1537,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 45871,
-   "statement_count": 98,
+   "bytes": 46162,
+   "statement_count": 99,
    "tags": [
     "pet",
     "interface",
@@ -1608,6 +1613,7 @@
     "petPairCardHtml",
     "petPairInviteHtml",
     "petPairDecorate",
+    "petPairFeedData",
     "petPairStatus",
     "petPairWrap",
     "petPairUser",
@@ -3506,6 +3512,20 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-pet.js",
+   "bytes": 11440,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet"
+   ],
+   "symbols": [
+    "window.petFeed",
+    "window.writeSave",
+    "window.NativePet"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-nutrition.js",
    "bytes": 43488,
    "statement_count": 1,
@@ -3703,7 +3723,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 30491,
+   "bytes": 30537,
    "statement_count": 1,
    "tags": [
     "native",

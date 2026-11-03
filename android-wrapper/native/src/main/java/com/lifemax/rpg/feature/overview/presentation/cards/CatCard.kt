@@ -41,14 +41,13 @@ import com.lifemax.rpg.feature.pet.presentation.CatLiveView
 import com.lifemax.rpg.feature.pet.presentation.CatSprites
 import com.lifemax.rpg.feature.pet.presentation.CatStageColors
 import com.lifemax.rpg.feature.pet.presentation.HouseCatLook
-import com.lifemax.rpg.feature.pet.presentation.HouseLiveView
 import com.lifemax.rpg.feature.pet.presentation.HouseStage
-import com.lifemax.rpg.feature.pet.presentation.RoomKit
+import com.lifemax.rpg.feature.pet.presentation.RoomHost
+import com.lifemax.rpg.feature.pet.presentation.RoomState
 import com.lifemax.rpg.feature.pet.presentation.rememberAnimationsOff
 import com.lifemax.rpg.feature.pet.presentation.rememberCatLife
 import com.lifemax.rpg.feature.pet.presentation.rememberCatSprites
-import com.lifemax.rpg.feature.pet.presentation.rememberHouseStage
-import com.lifemax.rpg.feature.pet.presentation.rememberRoomLoad
+import com.lifemax.rpg.feature.pet.presentation.rememberRoomState
 
 /**
  * The Cat card: a door to the live room, which stays on the page (ADR 0003), so [onOpen] is the
@@ -100,10 +99,9 @@ private fun Alive(
     val c = LocalPageColors.current
     val cats = tile.live?.house.orEmpty()
     val ownRoom = preview == null && house == null && cats.isNotEmpty()
-    val load = if (ownRoom) rememberRoomLoad().value else null
-    val stage = house?.stage ?: load?.kit?.let { liveStage(it, cats, tile.name) }
+    val room = rememberRoomState(looksOf(cats, tile.name), house?.stage, wanted = ownRoom)
     // the room art could not be loaded: the cat still lives, in the plain strip
-    val strip = cats.isNotEmpty() && (preview != null || (load != null && load.kit == null))
+    val strip = cats.isNotEmpty() && (preview != null || room is RoomState.Unavailable)
     val stripSprites =
         if (strip) preview?.sprites ?: rememberCatSprites(cats[0].coat, cats[0].stage) else null
     BoxWithConstraints(
@@ -112,9 +110,9 @@ private fun Alive(
             drawRect(c.lineSoft, Offset(0f, size.height - w), Size(size.width, w))
         }
     ) {
-        if (stage != null) {
-            HouseLiveView(
-                stage,
+        if (room is RoomState.Ready) {
+            RoomHost(
+                room,
                 running = visible && house == null,
                 still = reducedMotion || rememberAnimationsOff(),
                 modifier = Modifier.fillMaxSize(),
@@ -168,16 +166,12 @@ internal class CatLivePreview(val sprites: CatSprites, val life: CatLife)
 /** A prepared room for screenshots and tests: the clock does not run on it. */
 internal class CatHousePreview(val stage: HouseStage)
 
-/** The house for [cats] once the room art is in: null until the first cat's sprites are. */
-@Composable
-private fun liveStage(kit: RoomKit, cats: List<LiveCat>, cardName: String): HouseStage? {
-    val looks =
-        cats.mapIndexed { i, cat ->
-            val name = cat.name ?: if (i == 0) cardName else "$cardName, ${i + 1}"
-            HouseCatLook(name, cat.coat, cat.stage, cat.weak)
-        }
-    return rememberHouseStage(kit, looks)
-}
+/** What the room needs to know of the card's cats; a nameless cat is named after the card. */
+private fun looksOf(cats: List<LiveCat>, cardName: String): List<HouseCatLook> =
+    cats.mapIndexed { i, cat ->
+        val name = cat.name ?: if (i == 0) cardName else "$cardName, ${i + 1}"
+        HouseCatLook(name, cat.coat, cat.stage, cat.weak)
+    }
 
 /** `.pet-peek-in` in the Overview's column: the badge, the eyebrow and name, then the arrow. */
 @Composable

@@ -112,6 +112,27 @@ internal constructor(
         begin(body, pick())
     }
 
+    /**
+     * Hand the body a plan that is not the autopilot's own (the owner fed the cat): it takes the
+     * place of what the cat was doing, the floor from where it stands to [reachX] is reserved for
+     * it so a mate keeps clear, and the pilot rests for a while after the plan before it chooses
+     * again. Draws nothing from the pilot's random stream, so a house that is never directed
+     * replays exactly as before.
+     */
+    internal fun direct(body: CatBody, steps: List<PlanStep>, reachX: Float) {
+        if (steps.isEmpty()) return
+        if (house != null)
+            claim.reserve(
+                minOf(body.pose.x, reachX),
+                maxOf(body.pose.x, reachX),
+                SurfaceId.FLOOR,
+                0f,
+            )
+        pause = Tuning.Autopilot.REST_MIN_S
+        planId++
+        body.replacePlan(planId, steps)
+    }
+
     // ---------------------------------------------------------------- choosing
 
     private fun pick(): Move {

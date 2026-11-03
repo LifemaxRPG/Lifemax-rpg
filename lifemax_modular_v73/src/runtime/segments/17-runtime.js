@@ -71,7 +71,7 @@ function petMoodText(rt,p){
 }
 function petAgo(ms){const h=ms/PET_H;if(h<1)return Math.max(1,Math.round(h*60))+' min ago';if(h<48)return (Math.round(h*10)/10)+' h ago';return Math.round(h/24)+' days ago'}
 function petHeartsHtml(L){let r='';for(let i=1;i<=5;i++)r+='<span class="'+(i<=L?'on':'')+'">'+px('heart',16)+'</span>';return r}
-function petWantRun(){const p=petData();if(!p||!p.alive||document.hidden)return false;const v=document.getElementById('view-pet'),d=document.getElementById('view-dashboard');return !!((v&&v.classList.contains('active')&&document.getElementById('petCanvas'))||(d&&d.classList.contains('active')&&document.getElementById('petPeekCanvas')&&!(window.NativeOverviewCards&&NativeOverviewCards.covering())))}
+function petWantRun(){const p=petData();if(!p||!p.alive||document.hidden)return false;const v=document.getElementById('view-pet'),d=document.getElementById('view-dashboard');return !!((v&&v.classList.contains('active')&&document.getElementById('petCanvas')&&!(window.NativePet&&NativePet.covering()))||(d&&d.classList.contains('active')&&document.getElementById('petPeekCanvas')&&!(window.NativeOverviewCards&&NativeOverviewCards.covering())))}
 function petSync(){const want=petWantRun();if(want&&!PET_LOOP.raf){petInit().then(function(rt){PET_LOOP.last=performance.now();if(petWantRun()&&!PET_LOOP.raf){petMaybeGreet(rt);petBrainSession(rt);PET_LOOP.raf=requestAnimationFrame(petFrame)}})}else if(!want&&PET_LOOP.raf){cancelAnimationFrame(PET_LOOP.raf);PET_LOOP.raf=0;petSfxStopAll()}}
 function petFrame(now){
   PET_LOOP.raf=0;if(!petWantRun())return;PET_LOOP.raf=requestAnimationFrame(petFrame);
@@ -179,24 +179,49 @@ function petBindCanvas(cv){
 }
 /* ---------- status panel text (updates in place, no rebuild) ---------- */
 function petSet(id,t){const e=document.getElementById(id);if(e&&e.textContent!==t)e.textContent=t}
+/* The Cat screen's facts about one cat as plain data, read by the DOM below and by the native Cat tab (50-native-pet.js), so the
+   words, the bond maths and the Feed button's gate are one function and cannot drift apart. It reads the cat and the clock and
+   writes nothing (not even the day roll: a new day shows 0 meals). */
+function petStatusData(p,now){
+  now=now||Date.now();
+  const L=petLevel(p),next=L<5?PET_LEVELS[L+1]:null,vac=!!p.vacation.on,can=petCanFeed(p,now)&&!vac,pct=L>=5?100:petLevelPct(p);
+  let hint='';
+  if(L===0)hint='Strays take a few days to trust you. Regular meals are how a cat learns you are safe.';
+  else if(L===1)hint='Hold a finger on '+p.name+' to pet. Short and gentle at first.';
+  else if(petStage(p)>=2&&!vac)hint='A meal about twice a day is all '+p.name+' needs.';
+  else if(L>=3)hint='Try dragging your finger across the floor. '+p.name+' may follow.';
+  return {
+    mood:petMoodText(null,p),
+    eyebrow:(petGrowIdx(p)>=0?'KITTEN · ':'COMPANION · ')+PET_LEVELS[L].toUpperCase(),
+    level:L,bondPct:pct,
+    bondText:L>=5?'Devoted. '+p.name+' trusts you completely.':PET_LEVELS[L]+' · '+pct+'% to '+next,
+    lastMeal:{value:vac?'Vacation':petAgo(now-p.lastFed).replace(' ago',''),label:vac?'clock paused':'last meal'},
+    mealsToday:Math.min(p.day===petDay()?p.fedToday:0,9)+' / 2',
+    days:String(Math.max(1,Math.round((now-p.born)/864e5))),
+    feed:{label:vac?'Vacation mode':can?'Feed '+p.name:'Not hungry yet',wait:!can},
+    hint:hint
+  };
+}
+/* the "Care and settings" words, shared by the page's card and the native one */
+var PET_CARE_TEXT={how:'How it works. Feed about twice a day, at least four hours apart. A hungry cat tells you with its behavior, never with a notification. A cat that goes a very long time with no food will get weak, and about a week without food can be fatal.',
+  bond:'Bond. It grows from regular meals, gentle petting (3 a day count) and play (2 a day count). Strays are shy at first. Close friends greet you, follow your finger, rub against you and sometimes bring gifts.',
+  vacation:'Pauses hunger while you are away. Turn it off when you are back.'};
 function petRenderStatus(force){
   const p=petData();if(!p||!p.alive)return;const rt=PET_RT,now=Date.now();petRollDay(p);
-  const mood=petMoodText(rt,p);petSet('petMood',mood);
-  const L=petLevel(p),next=L<5?PET_LEVELS[L+1]:null;
-  petSet('petEyebrow',(petGrowIdx(p)>=0?'KITTEN · ':'COMPANION · ')+PET_LEVELS[L].toUpperCase());
+  const d=petStatusData(p,now);petSet('petMood',d.mood);
+  petSet('petEyebrow',d.eyebrow);
   petGrowStatus(p,rt);
-  petSet('petBondText',L>=5?'Devoted. '+p.name+' trusts you completely.':PET_LEVELS[L]+' · '+petLevelPct(p)+'% to '+next);
-  const bar=document.getElementById('petBondBar');if(bar){const w=(L>=5?100:petLevelPct(p))+'%';if(bar.style.width!==w)bar.style.width=w}
-  const hh=document.getElementById('petHearts');const key=String(L);if(hh&&hh.dataset.l!==key){hh.innerHTML=petHeartsHtml(L);hh.dataset.l=key}
-  const fed=p.vacation.on?'paused':petAgo(now-p.lastFed);petSet('petStatFed',p.vacation.on?'Vacation':fed.replace(' ago',''));
-  petSet('petStatFedL',p.vacation.on?'clock paused':'last meal');
-  petSet('petStatToday',Math.min(p.fedToday,9)+' / 2');
-  petSet('petStatDays',String(Math.max(1,Math.round((now-p.born)/864e5)+0)));
+  petSet('petBondText',d.bondText);
+  const bar=document.getElementById('petBondBar');if(bar){const w=d.bondPct+'%';if(bar.style.width!==w)bar.style.width=w}
+  const hh=document.getElementById('petHearts');const key=String(d.level);if(hh&&hh.dataset.l!==key){hh.innerHTML=petHeartsHtml(d.level);hh.dataset.l=key}
+  petSet('petStatFed',d.lastMeal.value);petSet('petStatFedL',d.lastMeal.label);
+  petSet('petStatToday',d.mealsToday);
+  petSet('petStatDays',d.days);
   const fb=document.getElementById('petFeedBtn');
-  if(fb){const can=petCanFeed(p,now)&&!p.vacation.on;const lab=p.vacation.on?'Vacation mode':can?'Feed '+p.name:'Not hungry yet';if(fb.textContent!==lab)fb.textContent=lab;fb.classList.toggle('is-wait',!can)}
+  if(fb){if(fb.textContent!==d.feed.label)fb.textContent=d.feed.label;fb.classList.toggle('is-wait',d.feed.wait)}
   const hint=document.getElementById('petHint');
-  if(hint){let t='';if(L===0)t='Strays take a few days to trust you. Regular meals are how a cat learns you are safe.';else if(L===1)t='Hold a finger on '+p.name+' to pet. Short and gentle at first.';else if(petStage(p)>=2&&!p.vacation.on)t='A meal about twice a day is all '+p.name+' needs.';else if(L>=3)t='Try dragging your finger across the floor. '+p.name+' may follow.';if(hint.textContent!==t)hint.textContent=t}
-  petRenderPeekText(p,mood);
+  if(hint&&hint.textContent!==d.hint)hint.textContent=d.hint;
+  petRenderPeekText(p,d.mood);
   petLikesRender(force);
   petBrainRender(force);
 }
@@ -236,9 +261,8 @@ function petRoomHtml(p){
    +'<div class="pet-favs" id="petFavs"></div>'
    +'<p class="pet-hint" id="petHint"></p></div>'
    +'<details class="card pet-more"><summary>Care and settings</summary>'
-   +'<div class="pet-care"><p><b>How it works.</b> Feed about twice a day, at least four hours apart. A hungry cat tells you with its behavior, never with a notification. A cat that goes a very long time with no food will get weak, and about a week without food can be fatal.</p>'
-   +'<p><b>Bond.</b> It grows from regular meals, gentle petting (3 a day count) and play (2 a day count). Strays are shy at first. Close friends greet you, follow your finger, rub against you and sometimes bring gifts.</p></div>'
-   +'<div class="settingsline"><div style="flex:1"><strong>Vacation mode</strong><div class="muted" style="font-size:12px">Pauses hunger while you are away. Turn it off when you are back.</div></div><input type="checkbox" class="check" id="petVac" '+(p.vacation.on?'checked':'')+' onchange="petSetVacation(this.checked);petRenderStatus(true)"></div>'
+   +'<div class="pet-care">'+['how','bond'].map(function(k){const t=PET_CARE_TEXT[k],i=t.indexOf('. ')+1;return '<p><b>'+t.slice(0,i)+'</b>'+t.slice(i)+'</p>'}).join('')+'</div>'
+   +'<div class="settingsline"><div style="flex:1"><strong>Vacation mode</strong><div class="muted" style="font-size:12px">'+PET_CARE_TEXT.vacation+'</div></div><input type="checkbox" class="check" id="petVac" '+(p.vacation.on?'checked':'')+' onchange="petSetVacation(this.checked);petRenderStatus(true)"></div>'
    +'<div class="settingsline" style="margin-top:10px"><div style="flex:1"><label class="pet-lab" for="petRenameIn" style="margin:0 0 6px">Name</label><input id="petRenameIn" class="pet-in" maxlength="14" value="'+esc(p.name)+'" onchange="petRename(this.value);renderPetView(true)"></div></div>'
    +'<div class="pet-care" id="petLikes"></div>'
    +'<div class="pet-care pet-inner" id="petInner"></div>'

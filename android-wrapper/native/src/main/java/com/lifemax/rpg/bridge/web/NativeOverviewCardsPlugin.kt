@@ -46,9 +46,16 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
         )
 
     init {
-        // The live cat's genetic coat: the page composes it and answers `coat {key, kind}` with the
-        // sheet. Asked from the cat's worker thread, so the command is only queued, on the UI
-        // thread.
+        bindCoats()
+    }
+
+    /**
+     * The live cat's genetic coat: the page composes it and answers `coat {key, kind}` with the
+     * sheet. Asked from the cat's worker thread, so the command is only queued, on the UI thread.
+     * One source serves every screen with a room (the Cat tab's too), so the screen that opens
+     * takes the questions.
+     */
+    private fun bindCoats() {
         CatArt.coats.bind { coat, kind ->
             "coat-${nextCoatRequest.incrementAndGet()}"
                 .also { id ->
@@ -60,6 +67,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
     }
 
     override fun accept(snapshot: JSONObject, explicitOpen: Boolean) {
+        if (explicitOpen) bindCoats()
         container.repository.accept(snapshot, explicitOpen)
         if (explicitOpen) viewModel.opened() else viewModel.projected()
     }

@@ -461,11 +461,16 @@ function petPairDecorate(force){
   else if(inv&&(two||P.adopting))inv.remove();
 }
 /* per-frame bits: the shared Feed button and the Together card */
+/* the one Feed button of a house with two living cats, as data (the Cat screen and the native Cat tab share it); null with one cat */
+function petPairFeedData(now){
+  const cats=[state.pet,state.pet2];if(!cats.every(function(p){return p&&p.alive}))return null;
+  const vac=cats.every(function(p){return p.vacation.on}),can=cats.filter(function(p){return !p.vacation.on&&petCanFeed(p,now)});
+  return {label:vac?'Vacation mode':can.length===2?'Feed both':can.length?'Feed '+can[0].name:'Not hungry yet',wait:!can.length};
+}
 function petPairStatus(force){
-  if(!petPairOn())return;const now=Date.now(),cats=[state.pet,state.pet2];
+  if(!petPairOn())return;const now=Date.now();
   const fb=document.getElementById('petFeedBtn');
-  if(fb){const vac=cats.every(function(p){return p.vacation.on}),can=cats.filter(function(p){return !p.vacation.on&&petCanFeed(p,now)});
-    const lab=vac?'Vacation mode':can.length===2?'Feed both':can.length?'Feed '+can[0].name:'Not hungry yet';if(fb.textContent!==lab)fb.textContent=lab;fb.classList.toggle('is-wait',!can.length)}
+  if(fb){const f=petPairFeedData(now);if(fb.textContent!==f.label)fb.textContent=f.label;fb.classList.toggle('is-wait',f.wait)}
   const pc=document.getElementById('petPair');
   if(pc&&!PET_PAIR.adopting&&(force||now-(+pc.dataset.t||0)>2000)){pc.dataset.t=now;const h=petPairCardHtml();if(pc.__h!==h){pc.innerHTML=h;pc.__h=h}}
 }

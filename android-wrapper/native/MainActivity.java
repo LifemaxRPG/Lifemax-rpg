@@ -84,6 +84,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NativeCashPlugin.class);
         registerPlugin(NativeOverviewPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeCharacterPlugin.class);
+        registerPlugin(com.lifemax.rpg.bridge.web.NativePetPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLogPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativePlanPlugin.class);
         registerPlugin(com.lifemax.rpg.bridge.web.NativeLifeDirectorPlugin.class);

@@ -264,7 +264,7 @@ const HELPERS = `
     await setNativeLogEnabled(false); // so every tab starts off (Overview since the start), and each switch below turns on, then off
     const TABS = { nativeCharacter: 'setNativeCharacterEnabled', nativeLog: 'setNativeLogEnabled', nativePlan: 'setNativePlanEnabled', nativeDirector: 'setNativeDirectorEnabled',
       nativeRecipes: 'setNativeRecipesEnabled', nativeLibrary: 'setNativeLibraryEnabled', nativeNutrition: 'setNativeNutritionEnabled', nativeOverview: 'setNativeOverviewEnabled',
-      nativeOverviewCards: 'setNativeOverviewCardsEnabled' };
+      nativeOverviewCards: 'setNativeOverviewCardsEnabled', nativePet: 'setNativePetEnabled' };
     for (const [id, fn] of Object.entries(TABS)) { const real = window[fn]; window[fn] = function (on) { spied.push(id + '=' + on); return real.apply(this, arguments) } }
     const others = () => ['overview', 'cards', 'character', 'log', 'plan', 'director', 'recipes', 'media', 'food'].filter(x => showing(x) || window.__calls.slice(from).some(c => c[0] === x && c[1] === 'open'));
     const results = {};

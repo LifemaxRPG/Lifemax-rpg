@@ -61,6 +61,9 @@
    Faults: an autosave that paid XP or came back with a celebration, XP paid for a text more than once a day, a write's reply to a
    locked Journal carrying a private word, and a flush that did not store. JMUT=autosave runs a mutation that must fail: the
    autosave paying like a final write.
+   The Cat tab (docs/specs/CAT_TAB_PLAN.md, CT1) is a native screen like the others (NativePet, pet.projection.v1): the starting save holds a
+   living cat, since its intro and its memorial are the page's, and every mode's hops include it, in the swipes too. PETMUT=blocked runs a
+   mutation that must fail: the Cat tab's screen never allowed to cover the view.
    Needs Playwright (not part of the CI node tests).
    Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload,dock by default) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -80,9 +83,13 @@ if (DMUTATIONS[process.env.DMUT]) { const [a, b2] = DMUTATIONS[process.env.DMUT]
 const PRIME_CALL = 'const r = await plugin.prime({ snapshot: data });';
 const PRIME_MUTATIONS = { open: [PRIME_CALL, 'await plugin.open({ snapshot: data, navScene: await navScene() }); const r = { primed: true };'], update: [PRIME_CALL, 'const r = await plugin.prime({ snapshot: data }); await plugin.update({ snapshot: data, navScene: await navScene() });'], chrome: [PRIME_CALL, 'const r = await plugin.prime({ snapshot: data, navScene: await navScene() });'] };
 if (PRIME_MUTATIONS[process.env.PMUT]) { const [a, b2] = PRIME_MUTATIONS[process.env.PMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
+/* a mutation the Cat tab's hops must catch (PETMUT=blocked): the page keeping its screen from ever covering the view, as a tab that
+   thought the cat's intro was showing would, so the last tab's screen is missing once everything has settled */
+const PET_MUTATIONS = { blocked: ['blocked: () => handedOver ||', 'blocked: () => true || handedOver ||'] };
+if (PET_MUTATIONS[process.env.PETMUT]) { const [a, b2] = PET_MUTATIONS[process.env.PETMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PETMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
-const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings', pet: '', quests: '' }; // '': the page draws it, no screen shows
+const WANT = { dashboard: 'overview', character: 'character', meals: 'food', log: 'log', recipes: 'recipes', plan: 'plan', 'life-director': 'director', media: 'media', settings: 'settings', pet: 'pet', quests: '' }; // '': the page draws it, no screen shows
 // taps in a native screen: its plugin and screen, the view it shows and the view the tap goes to
 const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 'recipes', to: 'meals' }, 'tap-recipes': { plugin: 'NativeNutrition', screen: 'food', from: 'meals', to: 'recipes' },
   'tap-gear': { plugin: 'NativeCharacter', screen: 'character', from: 'character', to: 'settings' },
@@ -133,10 +140,11 @@ async function run(b, mode) {
   // the starting save, on the first load only in the Journal's modes, whose reloads keep what the page stored
   await p.addInitScript(`if(!${journalMode(mode)}||!localStorage.getItem('lifemax_rpg_prototype_v1')){
     localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete',
-      plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}}}));
+      plan:{id:'athlete_foundation8',classId:'athlete',start:'2026-10-26',from:'2026-10-26',checks:{}},
+      pet:{v:1,name:'Miso',coat:'ginger',trait:'curious',born:Date.now()-40*864e5,lastFed:Date.now()-5*36e5,meals:[],day:'',fedToday:0,petsToday:0,playsToday:0,bondPts:200,care:0,vacation:{on:false,since:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0}}));
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});}
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__composed={};window.__primes={};window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,pet:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__composed={};window.__primes={};window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
     /* every reply: one per command, to a command that ran, saying what its run did */
     window.__replied=r=>{if(!/^sim-/.test(r.requestId||''))return;window.__cmds.answered++;const run=window.__runs[r.requestId];if(window.__replies[r.requestId])fault('two replies to '+r.requestId);window.__replies[r.requestId]=true;
       if(!run)fault('a reply to '+r.requestId+', which never ran');else if(!!r.ok!==run.ok||(r.message||'')!==run.message)fault('the reply to '+r.requestId+' says ok='+r.ok+' ('+r.message+'), its run ok='+run.ok)};window.__onShow={};window.__t=()=>Math.round(performance.now());
@@ -192,7 +200,7 @@ async function run(b, mode) {
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
        drawn must hold no open data */
     const jmodel={frame:async a=>{const s=a&&a.snapshot;if(!s)return;const json=JSON.stringify(s),canary=/Canary/.test(json);if(s.withheld&&canary)fault('a withheld Journal frame carries a canary');
@@ -212,7 +220,7 @@ async function run(b, mode) {
         if(s.v!==1)fault('NativeAudio.state v='+s.v);if(s.visible&&!(s.tokens&&s.tokens.accent))fault('a visible dock state without the palette');if(!(s.position>=0&&s.duration>=0&&s.rate>0))fault('a state out of range');
         dm.state=s;window.__dockRecompute()}};
     window.__visState='visible';Object.defineProperty(document,'visibilityState',{get:()=>window.__visState,configurable:true});
-    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeOverviewCards:mk('cards','cards',false,window.__mode==='failing'),NativeCharacter:mk('character','character',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false),NativeJournal:mk('journal','journal',false,false,jmodel),NativeAudio:window.__mode==='dock'?audio:undefined,BiometricLock:bio},registerPlugin:()=>({}),convertFileSrc:u=>u};
+    window.Capacitor={isNativePlatform:()=>true,isPluginAvailable:()=>true,getPlatform:()=>'android',Plugins:{NativeOverview:mk('overview','overview',true),NativeOverviewCards:mk('cards','cards',false,window.__mode==='failing'),NativeCharacter:mk('character','character',false),NativePet:mk('pet','pet',false),NativeNutrition:mk('food','food',true),NativeLog:mk('log','log',false),NativePlan:mk('plan','plan',false),NativeLifeDirector:mk('director','director',false),NativeRecipes:mk('recipes','recipes',false),NativeMedia:mk('media','media',false),NativeSettings:mk('settings','settings',false),NativeJournal:mk('journal','journal',false,false,jmodel),NativeAudio:window.__mode==='dock'?audio:undefined,BiometricLock:bio},registerPlugin:()=>({}),convertFileSrc:u=>u};
   `);
   // the Journal's modes reload the page: served over http, since a reloaded file:// page can lose what it stored (current-page.js)
   const server = journalMode(mode) ? await serve(out) : null;
@@ -233,7 +241,7 @@ async function run(b, mode) {
       return r;
     };
   });
-  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing'; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
+  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativePet = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing'; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
   if (mode === 'dock') {
     // ten seconds of silence, twice, as the page stores a book (IndexedDB); the owner's switch for the dock turned on as in Settings
     await p.evaluate(async () => {
@@ -412,7 +420,7 @@ async function run(b, mode) {
         }
         if (dir) {
           // the screen on top is under the finger, and swipes only where native would, by the last scene it took
-          const PLUGINS = { cards: 'NativeOverviewCards', character: 'NativeCharacter', food: 'NativeNutrition', log: 'NativeLog', recipes: 'NativeRecipes', plan: 'NativePlan', director: 'NativeLifeDirector', media: 'NativeMedia', journal: 'NativeJournal' };
+          const PLUGINS = { cards: 'NativeOverviewCards', character: 'NativeCharacter', pet: 'NativePet', food: 'NativeNutrition', log: 'NativeLog', recipes: 'NativeRecipes', plan: 'NativePlan', director: 'NativeLifeDirector', media: 'NativeMedia', journal: 'NativeJournal' };
           const owner = window.__z.filter(k => window.__vis[k]).pop(), P = PLUGINS[owner] && Capacitor.Plugins[PLUGINS[owner]], scene = P && P.__scene(), sw = scene && scene.swipe;
           const tabs = sw ? sw.tabs : [], i = sw ? tabs.findIndex(t => t.key === sw.active) : -1, to = i < 0 ? null : tabs[i + dir];
           // a native tab, or (phase 2: the page takes it) one the page draws; never Money

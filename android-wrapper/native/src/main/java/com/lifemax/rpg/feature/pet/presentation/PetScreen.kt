@@ -1,0 +1,294 @@
+package com.lifemax.rpg.feature.pet.presentation
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.core.designsystem.LocalPageColors
+import com.lifemax.rpg.core.designsystem.PageColors
+import com.lifemax.rpg.core.designsystem.PageTheme
+import com.lifemax.rpg.core.designsystem.components.PageButton
+import com.lifemax.rpg.core.designsystem.components.PageCard
+import com.lifemax.rpg.core.designsystem.components.PageEyebrow
+import com.lifemax.rpg.core.designsystem.components.PageToast
+import com.lifemax.rpg.core.designsystem.components.playToast
+import com.lifemax.rpg.core.designsystem.components.tapTarget
+import com.lifemax.rpg.feature.pet.domain.PetNotice
+import com.lifemax.rpg.feature.pet.domain.PetProjection
+
+/**
+ * What the screen is showing on top of the page's projection: the command being answered and a
+ * message.
+ */
+class PetUi(val waiting: String? = null, val notice: PetNotice? = null)
+
+/** Everything the screen can ask for, so the screen itself holds no state of the page's. */
+class PetActions(
+    val feed: () -> Unit = {},
+    val blink: () -> Unit = {},
+    val vacation: (Boolean) -> Unit = {},
+    val rename: (String) -> Unit = {},
+    /** The Play button, the full-screen room and the rest of the Cat page: the page's own view. */
+    val handOver: (action: String) -> Unit = {},
+    val noticeShown: (PetNotice) -> Unit = {},
+)
+
+/** The page's actions that stay on the page in this release, as the screen names them to it. */
+object PetHandOver {
+    const val ROOM = "room"
+    const val PLAY = "play"
+    const val MORE = "page"
+}
+
+/**
+ * The Cat tab as the page lays it out, with the room pinned above the cards: the live room at the
+ * top, full width (at a whole number of device pixels per room pixel), and under it, scrolling, the
+ * cat's card (name, hearts, mood, bond, buttons, stats, favourites, hint), the care card and the
+ * way to the rest of the Cat page. The room is [room], given the modifier that sizes it, so a test
+ * can fix it. The page's message shows as its toast over the bottom.
+ */
+@Composable
+fun PetScreen(
+    p: PetProjection,
+    ui: PetUi,
+    actions: PetActions,
+    topInsetDp: Float = 64f,
+    bottomInsetDp: Float = 72f,
+    careOpen: Boolean = false,
+    room: @Composable (Modifier) -> Unit,
+) {
+    PageTheme(remember(p.tokens, p.light) { PageColors(p.tokens, p.light) }) {
+        val c = LocalPageColors.current
+        Box(Modifier.fillMaxSize().background(c.bg)) {
+            Column(Modifier.fillMaxSize()) {
+                Spacer(Modifier.height(topInsetDp.dp))
+                HorizontalDivider(color = c.line)
+                Box(Modifier.fillMaxWidth().background(Stage)) {
+                    room(Modifier.fillMaxWidth().aspectRatio(ROOM_ASPECT))
+                    ViewRoomChip(
+                        p.words.room,
+                        { actions.handOver(PetHandOver.ROOM) },
+                        Modifier.align(Alignment.BottomEnd),
+                    )
+                }
+                HorizontalDivider(color = c.lineSoft)
+                LazyColumn(
+                    Modifier.weight(1f),
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    item("card") { CatCard(p, ui, actions) }
+                    item("care") {
+                        PetCareCard(
+                            p,
+                            ui.waiting,
+                            actions.vacation,
+                            actions.rename,
+                            startOpen = careOpen,
+                        )
+                    }
+                    item("more") { MoreRow(p) { actions.handOver(PetHandOver.MORE) } }
+                }
+                HorizontalDivider(color = c.line)
+                Spacer(Modifier.height(bottomInsetDp.dp))
+            }
+            ui.notice?.let { notice ->
+                NoticeToast(
+                    notice,
+                    p,
+                    actions.noticeShown,
+                    Modifier.align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = bottomInsetDp.dp + 12.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * `.pet-card`: the head, the mood, the bond, the buttons, the stats, the favourites and the hint.
+ */
+@Composable
+private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions) {
+    val c = LocalPageColors.current
+    PageCard(Modifier.fillMaxWidth(), padding = 14.dp) {
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(Modifier.weight(1f).padding(end = 10.dp)) {
+                PageEyebrow(p.eyebrow)
+                Text(
+                    p.name,
+                    Modifier.padding(top = 2.dp).semantics { heading() },
+                    color = c.text,
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight(650),
+                    letterSpacing = (-0.75).sp,
+                    lineHeight = 30.sp,
+                )
+            }
+            PetHearts(p.hearts, Modifier.padding(top = 7.dp))
+        }
+        if (p.mood.isNotEmpty())
+            Text(
+                p.mood,
+                Modifier.padding(start = 2.dp, top = 1.dp, end = 2.dp, bottom = 2.dp),
+                color = c.text,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight(650),
+                lineHeight = 21.75.sp,
+            )
+        PetBondBar(p.bond.pct, p.bond.text, Modifier.padding(start = 2.dp, top = 11.dp, end = 2.dp))
+        p.growth?.let { PetGrowthLine(it, Modifier.padding(top = 12.dp)) }
+        Buttons(p, ui, actions)
+        PetStats(
+            listOf(
+                p.lastMeal.value to p.lastMeal.label,
+                p.mealsToday to "meals today",
+                p.daysTogether to "days together",
+            ),
+            Modifier.padding(top = 14.dp),
+        )
+        PetFavourites(
+            listOf("Favorite place" to p.favourites.place, "Favorite toy" to p.favourites.toy),
+            Modifier.padding(top = 8.dp),
+        )
+        if (p.hint.isNotEmpty())
+            PetNote(p.hint, Modifier.padding(start = 2.dp, top = 13.dp, end = 2.dp))
+    }
+}
+
+/**
+ * `.pet-actions`: Feed (fainter while the cat is not due a meal) beside Play, and Slow blink under
+ * them.
+ */
+@Composable
+private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
+    Column(
+        Modifier.fillMaxWidth().padding(top = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PageButton(
+                p.feed.label,
+                p.feed.label,
+                actions.feed,
+                Modifier.weight(1.5f)
+                    .alpha(if (p.feed.wait || ui.waiting == "feed") WAIT_ALPHA else 1f),
+            )
+            PetSecondaryButton(
+                p.words.play,
+                p.words.play,
+                { actions.handOver(PetHandOver.PLAY) },
+                Modifier.weight(1f),
+            )
+        }
+        PetSecondaryButton(
+            p.words.blink,
+            p.words.blinkHint,
+            actions.blink,
+            Modifier.fillMaxWidth(),
+            small = true,
+        )
+    }
+}
+
+/** The way to everything the Cat page has that this screen does not: the page's own Cat view. */
+@Composable
+private fun MoreRow(p: PetProjection, onClick: () -> Unit) {
+    val c = LocalPageColors.current
+    PageCard(Modifier.fillMaxWidth().tapTarget(Role.Button, onClick = onClick), padding = 15.dp) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f).padding(end = 10.dp)) {
+                Text(
+                    p.words.moreTitle,
+                    color = c.text,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (p.together.isNotEmpty())
+                    PetNote(p.together, Modifier.padding(top = 4.dp), size = 12.sp)
+                PetNote(p.words.moreText, Modifier.padding(top = 4.dp), size = 12.sp)
+            }
+            Text("→", color = c.muted, fontSize = 20.sp)
+        }
+    }
+}
+
+/** `.pet-expand-hint`: the corner chip that opens the page's full-screen room. */
+@Composable
+private fun ViewRoomChip(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .padding(9.dp)
+            .clip(ChipShape)
+            .background(ChipFill)
+            .tapTarget(Role.Button, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 7.dp)
+    ) {
+        Text(
+            "⛶ $text",
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 14.4.sp,
+        )
+    }
+}
+
+/**
+ * The page's message as its toast shows it: it rises in, stays as long as the page's, and fades
+ * away.
+ */
+@Composable
+private fun NoticeToast(
+    notice: PetNotice,
+    p: PetProjection,
+    onShown: (PetNotice) -> Unit,
+    modifier: Modifier,
+) {
+    val shown = remember(notice) { Animatable(0f) }
+    LaunchedEffect(notice) {
+        shown.playToast()
+        onShown(notice)
+    }
+    PageToast(notice.text, p.tokens, p.light, modifier, shown = { shown.value })
+}
+
+/** `.pet-stage`'s fixed dark and the room window's 192 x 144 room pixels. */
+private val Stage = Color(0xFF10131C)
+private const val ROOM_ASPECT = 192f / 144f
+private val ChipFill = Color(0xCC10131C)
+private val ChipShape = RoundedCornerShape(9.dp)
+
+/** `#petFeedBtn.is-wait`: the Feed button at 60 % while the cat is not due a meal. */
+private const val WAIT_ALPHA = .6f

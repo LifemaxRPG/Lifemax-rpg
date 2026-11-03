@@ -214,10 +214,16 @@ function petToyTrayRender(){
   g.innerHTML=h;
 }
 /* ---------- what he likes, on the Cat screen ---------- */
+/* the Favorite place / Favorite toy row as words, for the page's row and the native Cat tab; reads only (a cat with no likes record yet
+   is not given one) */
+function petFavsData(p){
+  const lk=p.likes&&p.likes.v===1?p.likes:null,sp=lk&&lk.favSpot?PET_SPOTS[lk.favSpot].name:null,ty=lk&&lk.favToy?PET_TOYS[lk.favToy].name:null;
+  return {place:sp?sp.charAt(0).toUpperCase()+sp.slice(1):'Still deciding',toy:ty||'Still deciding'};
+}
 function petLikesRender(force){
   const p=petData();if(!p)return;const lk=petLikes(p),el=document.getElementById('petFavs');
-  if(el){const sp=lk.favSpot?PET_SPOTS[lk.favSpot].name:null,ty=lk.favToy?PET_TOYS[lk.favToy].name:null;
-    const html='<div><small>Favorite place</small><b>'+(sp?sp.charAt(0).toUpperCase()+sp.slice(1):'Still deciding')+'</b></div><div><small>Favorite toy</small><b>'+(ty||'Still deciding')+'</b></div>';
+  if(el){const f=petFavsData(p);
+    const html='<div><small>Favorite place</small><b>'+f.place+'</b></div><div><small>Favorite toy</small><b>'+f.toy+'</b></div>';
     if(el.innerHTML!==html)el.innerHTML=html}
   const d=document.getElementById('petLikes');
   if(d&&(force||!d.dataset.t||Date.now()-d.dataset.t>15000)){d.dataset.t=Date.now();

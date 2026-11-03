@@ -596,6 +596,9 @@
  "PET_BREED": [
   "src/runtime/segments/37-pet-morph.js"
  ],
+ "PET_CARE_TEXT": [
+  "src/runtime/segments/17-runtime.js"
+ ],
  "PET_CATTERY_MAX": [
   "src/runtime/segments/37-pet-morph.js"
  ],
@@ -5794,10 +5797,16 @@
  "petElevOf": [
   "src/runtime/segments/24-pet-depth.js"
  ],
+ "petFavsData": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
  "petFeed": [
   "src/runtime/segments/15-runtime.js"
  ],
  "petFeedClick": [
+  "src/runtime/segments/16-runtime.js"
+ ],
+ "petFeedRefusal": [
   "src/runtime/segments/16-runtime.js"
  ],
  "petFloorY": [
@@ -5822,6 +5831,9 @@
   "src/runtime/segments/26-pet-brain.js"
  ],
  "petGreetPlan": [
+  "src/runtime/segments/16-runtime.js"
+ ],
+ "petGrowData": [
   "src/runtime/segments/16-runtime.js"
  ],
  "petGrowIdx": [
@@ -6150,6 +6162,9 @@
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairFeed": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
+ "petPairFeedData": [
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairFeel": [
@@ -6688,6 +6703,9 @@
  ],
  "petStartStep": [
   "src/runtime/segments/16-runtime.js"
+ ],
+ "petStatusData": [
+  "src/runtime/segments/17-runtime.js"
  ],
  "petSurfY": [
   "src/runtime/segments/24-pet-depth.js"
@@ -7645,6 +7663,9 @@
  "window.NativeOverviewSnapshot": [
   "src/runtime/segments/50-native-overview.js"
  ],
+ "window.NativePet": [
+  "src/runtime/segments/50-native-pet.js"
+ ],
  "window.NativePlanRunner": [
   "src/runtime/segments/50-native-plan-runner.js"
  ],
@@ -7750,6 +7771,9 @@
  "window.openPacman": [
   "src/runtime/segments/20-runtime.js"
  ],
+ "window.petFeed": [
+  "src/runtime/segments/50-native-pet.js"
+ ],
  "window.setDeviceBackupAllowed": [
   "src/runtime/segments/50-device-backup.js"
  ],
@@ -7776,6 +7800,9 @@
  ],
  "window.syncNativeOverviewSetting": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.writeSave": [
+  "src/runtime/segments/50-native-pet.js"
  ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"

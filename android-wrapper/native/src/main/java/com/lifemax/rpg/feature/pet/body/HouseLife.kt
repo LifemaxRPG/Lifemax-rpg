@@ -73,6 +73,39 @@ class HouseLife(cats: List<HouseCat>, private val autopilot: Boolean = true) {
         }
     }
 
+    /**
+     * The owner fed cat [i]: it leaves what it was doing, walks to its bowl, eats and washes (the
+     * page's feed, petFeedClick). A cat that does not exist is ignored.
+     */
+    fun serveMeal(i: Int) {
+        if (i !in bodies.indices) return
+        pilots[i].direct(bodies[i], Feeding.meal(bodies[i], i), Feeding.bowlX(i))
+    }
+
+    /**
+     * The owner tried to feed cat [i] and it was not hungry: it goes to its bowl, sits and washes,
+     * as the page's does.
+     */
+    fun visitBowl(i: Int) {
+        if (i !in bodies.indices) return
+        pilots[i].direct(bodies[i], Feeding.visit(bodies[i], i), Feeding.bowlX(i))
+    }
+
+    /**
+     * The owner slow blinks at cat [i]: the cat blinks back and, if it was doing nothing, looks up
+     * at the owner for a moment. A sleeping cat is left alone (the page says it is asleep). True if
+     * the cat blinked.
+     */
+    fun slowBlink(i: Int): Boolean {
+        if (i !in bodies.indices) return false
+        val body = bodies[i]
+        if (Clips.all[body.pose.clip].name.startsWith(ASLEEP)) return false
+        body.react(ReactionKind.SLOW_BLINK)
+        if (body.isIdle)
+            pilots[i].direct(body, listOf(PlanStep.Act("lookup", LOOK_UP_S)), body.pose.x)
+        return true
+    }
+
     /** Step [seconds] at [hz] frames per second, as a host would; for tests and previews. */
     fun advance(seconds: Float, hz: Int = 60) {
         val dt = 1f / hz
@@ -81,5 +114,7 @@ class HouseLife(cats: List<HouseCat>, private val autopilot: Boolean = true) {
 
     companion object {
         const val MAX_CATS = 2
+        private const val ASLEEP = "sleep"
+        private const val LOOK_UP_S = 2.2f
     }
 }

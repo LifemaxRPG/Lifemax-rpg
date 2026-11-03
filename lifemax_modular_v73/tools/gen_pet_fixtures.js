@@ -1,0 +1,121 @@
+/* The native Cat tab's fixtures (pet.projection.v1), the pet job of tools/gen_native_fixtures.js: what the page projects for a screen
+   that draws the Cat tab (NativePetProjection.snapshot()), on the established golden save at a fixed clock, one cat state at a time,
+   and what the page answers each of the screen's commands:
+     pet-alive.json          Miso, a ginger cat, Friendly (3 hearts), last fed 5 h ago: the Feed button is open
+     pet-content.json        fed 1 h ago: "Not hungry yet", the button waiting
+     pet-hungry.json         20 h without a meal (stage 2): the hungry mood line, the cat not yet weak
+     pet-very-hungry.json    30 h (stage 3): very hungry, the weak rows in the room
+     pet-weak.json           70 h (stage 4): weak and tired
+     pet-vacation.json       Vacation mode on: "Vacation", "clock paused", "Vacation mode" on the button
+     pet-kitten.json         Pip, a tuxedo kitten 12 days old: KITTEN eyebrow and the growth line
+     pet-stray.json          a new stray (Stray, 0 hearts): the first hint
+     pet-two-cats.json       Ted and Lily, both alive: both in the room, "Feed both", the line about sharing the house
+     pet-dna.json            a genetic (calico) coat the screen asks the page for (pet.coat.v1)
+     pet-fed.json            after Feed through the command: the fed cue the room plays once
+     pet-replies.json        every command answered, in the envelope NativeTabKit sends a reply in
+   A fake NativePet plugin lets the tab open; its handshake lists both capabilities. Regenerate only when the projection or a reply
+   changes:  NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js pet */
+const STORE = 'lifemax_rpg_prototype_v1';
+const CLOCK = '2026-10-30T12:00:00Z';
+const CAPS = ['pet.projection.v1', 'pet.coat.v1'];
+const cat = (name, o) => `Object.assign({v:1,name:${JSON.stringify(name)},coat:'ginger',trait:'curious',born:now-40*864e5,lastFed:now-5*36e5,meals:[],day:getToday(),fedToday:0,petsToday:0,playsToday:0,bondPts:PET_BOND_AT[3],care:0,vacation:{on:false,since:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0},${o})`;
+/* the cat states, set up in the page before the tab opens (now is the fixed clock) */
+const STATES = {
+  alive: `state.pet=${cat('Miso', '{}')}`,
+  content: `state.pet=${cat('Miso', '{lastFed:now-36e5,fedToday:1}')}`,
+  hungry: `state.pet=${cat('Miso', '{lastFed:now-20*36e5}')}`,
+  'very-hungry': `state.pet=${cat('Miso', '{lastFed:now-30*36e5}')}`,
+  weak: `state.pet=${cat('Miso', '{lastFed:now-70*36e5}')}`,
+  vacation: `state.pet=${cat('Miso', '{vacation:{on:true,since:now-3*36e5}}')}`,
+  kitten: `state.pet=${cat('Pip', '{coat:"tuxedo",born:now-12*864e5,bondPts:PET_BOND_AT[1]}')}`,
+  stray: `state.pet=${cat('Miso', '{born:now-864e5,bondPts:0}')}`,
+  'two-cats': `state.pet=${cat('Ted', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Lily', '{coat:"gray"}')}`,
+  dna: `state.pet=${cat('Miso', '{coat:"dna_black_1_n_2_0_n_0_3"}')};petDnaRegister(state.pet.coat)`,
+};
+const fake = (caps) => `(() => { const ls = {}; window.__calls = [];
+  const plugin = { __emit: (e, d) => Promise.all((ls[e] || []).map(f => f(d))), addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
+    handshake: async () => ({ protocol: 1, capabilities: ${JSON.stringify(caps)} }), open: async a => { window.__calls.push(['open', a]) },
+    update: async a => { window.__calls.push(['update', a]) }, close: async () => { (ls.closed || []).forEach(f => f({})) } };
+  window.Capacitor = { isNativePlatform: () => true, isPluginAvailable: n => n === 'NativePet', getPlatform: () => 'android', registerPlugin: () => ({}),
+    convertFileSrc: u => u, Plugins: { NativePet: plugin } } })()`;
+
+module.exports = async function pet({ b, out, write }) {
+  const fs = require('fs'), path = require('path');
+  const golden = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tests', 'fixtures', 'saves', 'established.json'), 'utf8'));
+  const visit = async (setup) => {
+    const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
+    await p.clock.setFixedTime(new Date(CLOCK));
+    const save = { ...golden.state, tutorialDone: true, tipsSeen: { ...(golden.state.tipsSeen || {}), dashboard: true } };
+    await p.addInitScript(([STORE, save, extras]) => {
+      localStorage.setItem(STORE, save); for (const k in extras) localStorage.setItem(k, extras[k]);
+      localStorage.setItem('lifemax_android_prefs_v1', JSON.stringify({ nativePet: true, nativeOverview: false, nativeOverviewCards: false, apps: [] }));
+    }, [STORE, JSON.stringify(save), golden.extras || {}]);
+    await p.addInitScript(fake(CAPS));
+    await p.goto('file://' + out, { timeout: 120000 });
+    await p.evaluate(() => { lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } });
+    await p.evaluate(async (setup) => {
+      (0, eval)('(function(){const now=Date.now();' + setup + '})()');
+      NativeOverviewSnapshot.snapshot = async () => ({ width: 320, header: { nodes: [], hits: [], height: 64, width: 320 }, nav: { nodes: [], hits: [], height: 64, width: 320 } });
+      save(); renderPetView(true);
+      await petInit();
+    }, setup);
+    return p;
+  };
+  /* the projection a screen is opened with, as the page builds it now; the session and sequence are fixed so a regeneration is stable */
+  const open = (p) => p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    await openNativePet();
+    for (let t = 0; t < 6000 && !__calls.some((c) => c[0] === 'open'); t += 50) await wait(50);
+    const o = __calls.find((c) => c[0] === 'open');
+    if (!o) throw Error('the Cat tab did not open: ' + JSON.stringify({ blocked: NativePet && false, view: lmaView() }));
+    return JSON.parse(JSON.stringify(Object.assign(o[1].snapshot, { webSessionId: 'pet-fixture', sequence: 1 })));
+  });
+
+  for (const [name, setup] of Object.entries(STATES)) {
+    const p = await visit(setup);
+    await p.evaluate(() => navigate('pet'));
+    write('fixtures/pet-' + name + '.json', await open(p));
+    await p.context().close();
+  }
+
+  /* the commands, in the envelope NativeTabKit sends a reply in ({command, requestId, ok, ...}) */
+  const p = await visit(STATES.alive);
+  await p.evaluate(() => navigate('pet'));
+  await open(p);
+  const run = (key, command, payload, before) => p.evaluate(async ([key, command, payload, before]) => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (before) (0, eval)('(function(){const now=Date.now();' + before + '})()');
+    const n = __calls.length, id = 'req-' + key;
+    await Capacitor.Plugins.NativePet.__emit('command', { command, payload, requestId: id });
+    for (let t = 0; t < 4000 && !__calls.slice(n).some((c) => c[0] === 'update' && c[1].reply && c[1].reply.requestId === id); t += 25) await wait(25);
+    const u = __calls.slice(n).find((c) => c[0] === 'update' && c[1].reply && c[1].reply.requestId === id);
+    if (!u) throw Error('no reply for ' + key);
+    return { command, payload, reply: JSON.parse(JSON.stringify(u[1].reply)), snapshot: JSON.parse(JSON.stringify(u[1].snapshot)) };
+  }, [key, command, payload, before]);
+  const replies = {};
+  const keep = async (key, command, payload, before) => (replies[key] = await run(key, command, payload, before));
+  await keep('feedRefusedFull', 'feed', { op: 'op-0' }, 'state.pet.lastFed=now-36e5;state.pet.fedToday=1');
+  await keep('feedRefusedVacation', 'feed', { op: 'op-1' }, 'state.pet.lastFed=now-6*36e5;petSetVacation(true)');
+  await keep('vacationOff', 'vacation', { on: false });
+  await keep('vacationAgain', 'vacation', { on: false });
+  const fed = await keep('feed', 'feed', { op: 'op-2' }, 'state.pet.lastFed=now-9*36e5;state.pet.fedToday=0');
+  await keep('feedAgain', 'feed', { op: 'op-2' });
+  write('fixtures/pet-fed.json', Object.assign(fed.snapshot, { webSessionId: 'pet-fixture', sequence: 2 }));
+  await keep('blink', 'blink', {});
+  await keep('blinkSecond', 'blink', {});
+  await keep('blinkSquint', 'blink', {}); // the third in six seconds is refused
+  await keep('vacationOn', 'vacation', { on: true });
+  await keep('vacationOffAgain', 'vacation', { on: false });
+  await keep('rename', 'rename', { name: 'Mochi' });
+  await keep('renameSame', 'rename', { name: 'Mochi' });
+  await keep('renameEmpty', 'rename', { name: '  ' });
+  await keep('renameLong', 'rename', { name: 'A name that is far too long' });
+  // a save the browser refuses (storage full): nothing is changed and the reply says why
+  await p.evaluate(() => { window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === 'lifemax_rpg_prototype_v1') throw new Error('QuotaExceededError'); return window.__realSet.apply(this, arguments) } });
+  await keep('vacationUnsaved', 'vacation', { on: true });
+  await keep('feedUnsaved', 'feed', { op: 'op-3' }, 'state.pet.lastFed=now-9*36e5');
+  await p.evaluate(() => { Storage.prototype.setItem = window.__realSet });
+  await keep('unknown', 'dance', {});
+  write('fixtures/pet-replies.json', Object.fromEntries(Object.entries(replies).map(([k, v]) => [k, { command: v.command, payload: v.payload, reply: v.reply }])));
+  await p.context().close();
+};

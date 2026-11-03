@@ -1,0 +1,278 @@
+{
+ "feedRefusedFull": {
+  "command": "feed",
+  "payload": {
+   "op": "op-0"
+  },
+  "reply": {
+   "command": "feed",
+   "requestId": "req-feedRefusedFull",
+   "ok": false,
+   "changed": false,
+   "message": "Miso is not hungry yet. A meal in about 3 h is just right.",
+   "why": "full",
+   "inHours": 3,
+   "reaction": "bowl"
+  }
+ },
+ "feedRefusedVacation": {
+  "command": "feed",
+  "payload": {
+   "op": "op-1"
+  },
+  "reply": {
+   "command": "feed",
+   "requestId": "req-feedRefusedVacation",
+   "ok": false,
+   "changed": false,
+   "message": "Vacation mode is on. Turn it off to feed Miso.",
+   "why": "vacation",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "vacationOff": {
+  "command": "vacation",
+  "payload": {
+   "on": false
+  },
+  "reply": {
+   "command": "vacation",
+   "requestId": "req-vacationOff",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "vacationAgain": {
+  "command": "vacation",
+  "payload": {
+   "on": false
+  },
+  "reply": {
+   "command": "vacation",
+   "requestId": "req-vacationAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "feed": {
+  "command": "feed",
+  "payload": {
+   "op": "op-2"
+  },
+  "reply": {
+   "command": "feed",
+   "requestId": "req-feed",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "feedAgain": {
+  "command": "feed",
+  "payload": {
+   "op": "op-2"
+  },
+  "reply": {
+   "command": "feed",
+   "requestId": "req-feedAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "blink": {
+  "command": "blink",
+  "payload": {},
+  "reply": {
+   "command": "blink",
+   "requestId": "req-blink",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": "blink"
+  }
+ },
+ "blinkSecond": {
+  "command": "blink",
+  "payload": {},
+  "reply": {
+   "command": "blink",
+   "requestId": "req-blinkSecond",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": "blink"
+  }
+ },
+ "blinkSquint": {
+  "command": "blink",
+  "payload": {},
+  "reply": {
+   "command": "blink",
+   "requestId": "req-blinkSquint",
+   "ok": true,
+   "changed": false,
+   "message": "Miso squints at you. Slow blinks work best one at a time.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "vacationOn": {
+  "command": "vacation",
+  "payload": {
+   "on": true
+  },
+  "reply": {
+   "command": "vacation",
+   "requestId": "req-vacationOn",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "vacationOffAgain": {
+  "command": "vacation",
+  "payload": {
+   "on": false
+  },
+  "reply": {
+   "command": "vacation",
+   "requestId": "req-vacationOffAgain",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "rename": {
+  "command": "rename",
+  "payload": {
+   "name": "Mochi"
+  },
+  "reply": {
+   "command": "rename",
+   "requestId": "req-rename",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "renameSame": {
+  "command": "rename",
+  "payload": {
+   "name": "Mochi"
+  },
+  "reply": {
+   "command": "rename",
+   "requestId": "req-renameSame",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "renameEmpty": {
+  "command": "rename",
+  "payload": {
+   "name": "  "
+  },
+  "reply": {
+   "command": "rename",
+   "requestId": "req-renameEmpty",
+   "ok": false,
+   "changed": false,
+   "message": "A name needs 1 to 14 characters.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "renameLong": {
+  "command": "rename",
+  "payload": {
+   "name": "A name that is far too long"
+  },
+  "reply": {
+   "command": "rename",
+   "requestId": "req-renameLong",
+   "ok": false,
+   "changed": false,
+   "message": "A name needs 1 to 14 characters.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "vacationUnsaved": {
+  "command": "vacation",
+  "payload": {
+   "on": true
+  },
+  "reply": {
+   "command": "vacation",
+   "requestId": "req-vacationUnsaved",
+   "ok": false,
+   "changed": false,
+   "message": "Could not save to this browser (storage full?)",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "feedUnsaved": {
+  "command": "feed",
+  "payload": {
+   "op": "op-3"
+  },
+  "reply": {
+   "command": "feed",
+   "requestId": "req-feedUnsaved",
+   "ok": false,
+   "changed": false,
+   "message": "Could not save to this browser (storage full?)",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "unknown": {
+  "command": "dance",
+  "payload": {},
+  "reply": {
+   "command": "dance",
+   "requestId": "req-unknown",
+   "ok": false,
+   "message": "Unknown command"
+  }
+ }
+}

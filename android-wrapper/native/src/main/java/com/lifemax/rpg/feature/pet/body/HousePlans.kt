@@ -174,7 +174,7 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
 
     /** Walk to the bowls, face them, eat, and sit a moment. */
     fun eat(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
-        val at = if (slot == 0) EAT_X_FIRST else EAT_X_SECOND
+        val at = eatX(slot)
         begin(x)
         reach(at)
         if (!commit(claim, mate, SurfaceId.FLOOR, 0f)) return emptyList()
@@ -303,6 +303,10 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         /** The web room's eating spots: the first cat at x 87 facing right, the second at 121. */
         private const val EAT_X_FIRST = 87f
         private const val EAT_X_SECOND = 121f
+
+        /** Where cat [slot] eats: the first cat at the left bowl, the second at the right. */
+        internal fun eatX(slot: Int): Float = if (slot == 0) EAT_X_FIRST else EAT_X_SECOND
+
         private const val EAT_MIN_S = 4f
         private const val EAT_MAX_S = 7f
 

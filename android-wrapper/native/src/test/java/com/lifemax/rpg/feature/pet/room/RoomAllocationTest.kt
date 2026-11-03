@@ -6,6 +6,8 @@ import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.PlanStep
+import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.World
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -144,7 +146,57 @@ class RoomAllocationTest {
         hour = 12.0
     }
 
+    /**
+     * The Cat tab's screen is the same room at a larger size, plus the owner's care: a meal sends a
+     * cat to its bowl (and the bowl shows food), a slow blink is returned. Asking for either plans,
+     * which allocates and belongs to the moment of the tap; the frames while the cats walk to their
+     * bowls, eat, wash and blink back must cost nothing, the bowl full and the room at the Cat
+     * screen's scale.
+     */
+    @Test
+    fun aFrameOfTheCatScreenWithTheOwnersCareAllocatesNothing() {
+        assumeTrue("thread allocation counting needs a HotSpot JVM", supported())
+        val scene = RoomScene(PetArtResources.loadRoom())
+        val canvas = CountingCanvas()
+        val house = HouseLife(listOf(HouseCat(3, false), HouseCat(8, false)), autopilot = false)
+        val cats = TwoCats(house.bodies)
+        val director = CameraDirector()
+        house.bodies[0].placeAt(-100f, World.ART_Z, SurfaceId.FLOOR, 1)
+        house.bodies[1].placeAt(300f, World.ART_Z, SurfaceId.FLOOR, -1)
+        val dt = 1f / 60f
+        fun frame() {
+            house.step(dt)
+            director.update(house.bodies[0], house.bodies[1], dt)
+            scene.foodBowlFull = true
+            scene.paintBackdrop(canvas, 12.0, 12.0, 6)
+            scene.paintScene(canvas, cats)
+            scene.paintOverlay(canvas, 12.0, 6)
+        }
+        // warm up with a meal and a blink of their own: class loading, JIT, the first plans
+        repeat(600) { frame() }
+        house.serveMeal(0)
+        house.serveMeal(1)
+        house.slowBlink(0)
+        repeat(MEAL_FRAMES) { frame() }
+        house.bodies[0].placeAt(-100f, World.ART_Z, SurfaceId.FLOOR, 1)
+        house.bodies[1].placeAt(300f, World.ART_Z, SurfaceId.FLOOR, -1)
+        house.serveMeal(0)
+        house.serveMeal(1)
+        house.slowBlink(0)
+        val before = allocatedBytes()
+        repeat(MEAL_FRAMES) { frame() }
+        val used = allocatedBytes() - before
+        assertTrue(
+            "allocated $used bytes over $MEAL_FRAMES frames of a meal",
+            used <= TOLERANCE_BYTES,
+        )
+        assertTrue("the cats did not eat", house.bodies.all { it.pose.x in 80f..130f })
+    }
+
     private companion object {
         const val TOLERANCE_BYTES = 4_096L
+
+        /** Fifteen seconds: the walk to the bowls, the meal and part of the wash. */
+        const val MEAL_FRAMES = 900
     }
 }

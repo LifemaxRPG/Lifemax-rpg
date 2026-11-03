@@ -27,6 +27,7 @@
     ["nativeOverview", "#nativeOverviewToggle", PREFS],
     ["nativeOverviewCards", "#nativeOverviewCardsToggle", PREFS],
     ["nativeCats", "#nativeCatsToggle", PREFS],
+    ["nativePet", "#nativePetToggle", PREFS],
     ["nativeCharacter", "#nativeCharacterToggle", PREFS],
     ["nativeLog", "#nativeLogToggle", PREFS],
     ["nativePlan", "#nativePlanToggle", PREFS],

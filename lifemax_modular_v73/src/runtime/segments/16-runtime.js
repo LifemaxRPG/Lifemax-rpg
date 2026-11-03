@@ -67,6 +67,13 @@ async function petLoadStage(rt,idx){
   delete rt.gsBusy[key];
 }
 function petStageSheet(rt,p,idx){const g=rt.gs&&rt.gs[idx+'|'+p.coat];if(g){rt.gsLast=g;return g}petLoadStage(rt,idx);return (rt.gsLast&&rt.gsLast.coat===p.coat)?rt.gsLast:null}
+/* the kitten's growth line as data (null for a grown cat), for the page's card and the native Cat tab; reads only */
+function petGrowData(p){
+  if(petGrowIdx(p)<0)return null;
+  const d=Math.floor(petAgeDays(p)),left=Math.max(1,PET_GROW_DAYS-d);
+  return {label:d<10?'NEW KITTEN':d<21?'GROWING KITTEN':'ALMOST GROWN',day:'DAY '+(d+1)+' OF '+PET_GROW_DAYS,pct:Math.round(petGrowth(p)*100),
+    text:'Grown up in '+left+(left===1?' day':' days')+'. Kittens play more, nap more and have higher little voices.'};
+}
 function petGrowStatus(p,rt){
   const gi=petGrowIdx(p),mark=gi<0?6:gi,el=document.getElementById('petGrow');
   if(p.growSeen==null){p.growSeen=mark;save()}
@@ -76,8 +83,8 @@ function petGrowStatus(p,rt){
     toast(mark>=6?p.name+' is all grown up!':p.name+' is growing up. A little bigger today.');haptic(12);
   }
   if(el){
-    let h='';
-    if(gi>=0){const d=Math.floor(petAgeDays(p)),left=Math.max(1,PET_GROW_DAYS-d);h='<div class="pet-grow-row"><span>'+(d<10?'NEW KITTEN':d<21?'GROWING KITTEN':'ALMOST GROWN')+'</span><span>DAY '+(d+1)+' OF '+PET_GROW_DAYS+'</span></div><div class="pet-grow-bar"><i style="width:'+Math.round(petGrowth(p)*100)+'%"></i></div><small>Grown up in '+left+(left===1?' day':' days')+'. Kittens play more, nap more and have higher little voices.</small>'}
+    let h='';const g=petGrowData(p);
+    if(g)h='<div class="pet-grow-row"><span>'+g.label+'</span><span>'+g.day+'</span></div><div class="pet-grow-bar"><i style="width:'+g.pct+'%"></i></div><small>'+g.text+'</small>';
     if(el.__h!==h){el.innerHTML=h;el.__h=h;el.style.display=h?'':'none'}
   }
 }
@@ -244,13 +251,19 @@ function petUpdateHold(rt,dt){
   for(let i=rt.parts.length-1;i>=0;i--){const q=rt.parts[i];q.age+=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;if(q.age>=q.life)rt.parts.splice(i,1)}
 }
 /* ---------- care actions called from the UI ---------- */
+/* what a refused feed (petFeed's {ok:false, why, inHours}) says; the toast below and the native Cat tab's reply use these words */
+function petFeedRefusal(p,r){
+  if(r.why==='vacation')return 'Vacation mode is on. Turn it off to feed '+p.name+'.';
+  const h=Math.ceil(r.inHours*10)/10;
+  return p.name+' is not hungry yet. A meal in about '+(h<1?Math.max(1,Math.round(h*60))+' min':(Math.round(h*10)/10)+' h')+' is just right.';
+}
 function petFeedClick(){
   const rt=PET_RT,p=petData();if(!p||!rt||!rt.ready)return;
   if(!p.alive)return;
   const r=petFeed();
   if(!r.ok){
-    if(r.why==='vacation')toast('Vacation mode is on. Turn it off to feed '+p.name+'.');
-    else{const eating=rt.c.step&&rt.c.step.k==='act'&&rt.c.step.a==='eat';const h=Math.ceil(r.inHours*10)/10;toast(p.name+' is not hungry yet. A meal in about '+(h<1?Math.max(1,Math.round(h*60))+' min':(Math.round(h*10)/10)+' h')+' is just right.');
+    if(r.why==='vacation')toast(petFeedRefusal(p,r));
+    else{const eating=rt.c.step&&rt.c.step.k==='act'&&rt.c.step.a==='eat';toast(petFeedRefusal(p,r));
       if(!eating&&!rt.bowl.food)petInterrupt(rt,petRoute(rt.c,'floor',PET_EATX).concat([{k:'face',dir:PET_EATDIR},petAct('idle_sit',1.6),petAct('groom',3)]))}
     petRenderStatus();return}
   rt.bowl.food=true;haptic([8,30,8]);petBrainEvent('feed');

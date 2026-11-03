@@ -8,6 +8,7 @@ const NATIVE = {
   NativeOverview: ['overview', []],
   NativeOverviewCards: ['cards', ['overview.cards.v1']],
   NativeCharacter: ['character', ['character.projection.v1']],
+  NativePet: ['pet', ['pet.projection.v1']],
   NativeLog: ['log', ['log.projection.v1']],
   NativePlan: ['plan', ['plan.projection.v1']],
   NativeLifeDirector: ['director', ['director.today.v1']],
