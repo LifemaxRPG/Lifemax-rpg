@@ -32,8 +32,9 @@ internal object SwayTuning {
 
 /**
  * The camera's sway: a damped spring that follows a target made of a slow idle drift and, if the
- * phone gives one, a tilt. Its [position] runs from -1 (full left) to 1 (full right); the planes of
- * the room turn it into pixels ([Parallax]).
+ * phone gives one, a tilt, plus the pan of the room camera when it follows a cat ([PanFollow],
+ * [follow]). Its [position] runs from -1 (full left) to 1 (full right); the planes of the room turn
+ * it into pixels ([Parallax]).
  *
  * Plain arithmetic on a few floats, no clock of its own (the caller says how long a frame took),
  * nothing allocated. The spring is stepped in fixed [SwayTuning.SUBSTEP_S] slices, so a second
@@ -46,9 +47,17 @@ internal class DepthSway(
     reducedMotion: Boolean = false,
     private val idleAmplitude: Float = SwayTuning.IDLE_AMPLITUDE,
 ) {
-    /** Where the camera is, -1 to 1. */
-    var position = 0f
+    /** The idle drift and the tilt alone (the spring), -1 to 1. */
+    var idle = 0f
         private set
+
+    /** The pan of the room camera ([PanFollow.pan]) added to the spring; 0 unless [follow]ing. */
+    val pan: Float
+        get() = if (following) panFollow.pan else 0f
+
+    /** Where the camera is, -1 to 1: the idle drift and tilt plus the pan. */
+    val position: Float
+        get() = (idle + pan).coerceIn(-1f, 1f)
 
     /** How fast it is moving, in sway units per second. */
     var velocity = 0f
@@ -65,10 +74,32 @@ internal class DepthSway(
         set(value) {
             field = value
             if (value) {
-                position = 0f
+                idle = 0f
                 velocity = 0f
+                panFollow.reset()
             }
         }
+
+    private val panFollow = PanFollow()
+    private var following = false
+    private var screenX = 0f
+
+    /** The eased x of the middle of the screen, world px (the perspective of the pieces). */
+    val viewX: Float
+        get() = panFollow.viewX
+
+    /** The yaw a piece at world x [pieceX] gets from where it sits on the screen. */
+    fun perspective(pieceX: Float): Float = if (following) panFollow.perspective(pieceX) else 0f
+
+    /**
+     * Follow the room camera: [screenX] is the world x at the middle of the screen. Call it each
+     * frame before [step]; the first call puts the view there at once. A no-op with reduced motion.
+     */
+    fun follow(screenX: Float) {
+        if (reducedMotion) return
+        following = true
+        this.screenX = screenX
+    }
 
     private var time = 0f
     private var pending = 0f
@@ -79,7 +110,7 @@ internal class DepthSway(
      */
     fun restAt(at: Float) {
         if (reducedMotion) return
-        position = at.coerceIn(-1f, 1f)
+        idle = at.coerceIn(-1f, 1f)
         velocity = 0f
     }
 
@@ -98,9 +129,10 @@ internal class DepthSway(
         time += h
         val w = (2.0 * PI * SwayTuning.NATURAL_HZ).toFloat()
         val acceleration =
-            w * w * (target(time) - position) - 2f * SwayTuning.DAMPING_RATIO * w * velocity
+            w * w * (target(time) - idle) - 2f * SwayTuning.DAMPING_RATIO * w * velocity
         velocity += acceleration * h
-        position = (position + velocity * h).coerceIn(-1f, 1f)
+        idle = (idle + velocity * h).coerceIn(-1f, 1f)
+        if (following) panFollow.advance(screenX, h)
     }
 
     /** The point the spring is pulled toward at [t] seconds: the idle drift plus the tilt. */

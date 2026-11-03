@@ -47,6 +47,14 @@ internal class ComposeRoomCanvas(private val bitmaps: RoomBitmaps) : RoomCanvas 
     private val sheets = arrayOfNulls<ImageBitmap>(RoomCanvas.MAX_SHEETS)
     private val sheetVersions = IntArray(RoomCanvas.MAX_SHEETS)
 
+    /**
+     * Let go of the bitmaps of the solid pieces' camera steps (the room left the screen); the next
+     * frame that needs one makes it again.
+     */
+    fun releaseSheets() {
+        sheets.fill(null)
+    }
+
     /** Draw the next frame into [scope] with the house at ([originX], [originY]), [scale] times. */
     fun begin(scope: DrawScope, scale: Int, originX: Int, originY: Int) {
         this.scope = scope

@@ -25,20 +25,24 @@ internal sealed interface RoomState {
  * With a [prepared] stage (screenshots and tests) nothing is loaded and the room is ready at once;
  * with [wanted] false and none prepared, nothing is loaded either and the room stays loading.
  *
- * [style] is how the room is drawn ([RoomStyle]): the classic flat room by default. This is where
- * the 2.5D room gets switched on for a screen (`style = RoomStyle.DEPTH25`, or `DEPTH25_STILL` for
- * reduced motion); no screen does yet.
+ * [style] is how the room is drawn ([RoomStyle]). By default it is the live style ([LiveDepth]):
+ * the 2.5D room at MEDIUM with the camera-follow parallax, stepped down by the performance guard
+ * when a phone is slow, or the rest picture only with [reducedMotion]. A caller (a test) may pass
+ * any style, the classic flat room among them. The depth is applied in place: the cats and the
+ * camera carry on when the style changes.
  */
 @Composable
 internal fun rememberRoomState(
     looks: List<HouseCatLook>,
     prepared: HouseStage? = null,
     wanted: Boolean = true,
-    style: RoomStyle = RoomStyle.CLASSIC,
+    reducedMotion: Boolean = false,
+    style: RoomStyle? = null,
 ): RoomState {
     val load = if (prepared == null && wanted) rememberRoomLoad().value else null
     val kit = load?.kit
-    val stage = if (kit != null) rememberHouseStage(kit, looks, style) else null
+    val live = rememberLiveStyle(reducedMotion)
+    val stage = if (kit != null) rememberHouseStage(kit, looks, style ?: live) else null
     return when {
         prepared != null -> RoomState.Ready(prepared)
         stage != null -> RoomState.Ready(stage)

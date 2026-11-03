@@ -25,6 +25,8 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The live room on the Overview card: the house, one or two cats living in it, a camera that
@@ -46,12 +48,31 @@ import kotlin.math.roundToInt
  *   while the clock runs, so a test can fix the hour.
  */
 internal class HouseStage(
-    kit: RoomKit,
+    private val kit: RoomKit,
     val house: HouseLife,
     style: RoomStyle = RoomStyle.CLASSIC,
     private val hourNow: () -> Double = ::localHour,
 ) : CatLayer {
-    private val scene = RoomScene(kit.art, style)
+    private var scene = RoomScene(kit.art, style)
+
+    /** How the room is drawn now ([useStyle] changes it). */
+    var style = style
+        private set
+
+    /**
+     * Whether the 2.5D room's camera steps are made by a background thread ([warmDepth]) and a
+     * frame never waits for one. Off for screenshots and tests, which make what they need.
+     */
+    var asyncWarm = false
+        set(value) {
+            field = value
+            scene.depth?.asyncWarm = value
+        }
+
+    /** Whether the room can be drawn without a hitch: the 2.5D room's rest picture is made. */
+    val depthReady: Boolean
+        get() = scene.depth?.ready ?: true
+
     private val canvas = ComposeRoomCanvas(kit.bitmaps)
     private val director = CameraDirector()
     private val sprites = arrayOfNulls<CatSprites>(HouseLife.MAX_CATS)
@@ -73,6 +94,12 @@ internal class HouseStage(
 
     private var originX = 0
     private var originY = 0
+
+    /**
+     * The world x at the middle of the screen as last drawn (the camera's, kept inside the house).
+     */
+    private var screenCentre = 0f
+    private var drawn = false
     private val rim = RimSpec()
     private val particles = TouchParticles(kit.art)
 
@@ -151,6 +178,80 @@ internal class HouseStage(
     }
 
     /**
+     * Draw the room in [next] from now on (the performance guard stepped the depth down, or the
+     * phone's motion setting changed): the cats and the camera carry on. The new room's rest
+     * picture is made off the main thread first, so the swap is not a hitch.
+     */
+    suspend fun useStyle(next: RoomStyle) {
+        if (next == style) return
+        val made =
+            withContext(Dispatchers.Default) {
+                RoomScene(kit.art, next).also { it.depth?.prepare() }
+            }
+        made.foodBowlFull = scene.foodBowlFull
+        made.depth?.asyncWarm = asyncWarm
+        scene = made
+        style = next
+        canvas.releaseSheets()
+    }
+
+    /** Make the 2.5D room's rest picture (a background thread, before the room is first shown). */
+    fun prepareDepth() {
+        scene.depth?.prepare()
+    }
+
+    /**
+     * Make every camera step's pictures of the 2.5D room (rest first). Run on a background thread
+     * when the room comes on screen; [cancelled] is asked between steps.
+     */
+    fun warmDepth(cancelled: () -> Boolean = { false }) {
+        scene.depth?.warm(cancelled)
+    }
+
+    /**
+     * Let go of the cached camera steps and their bitmaps (the room left the screen or the app
+     * stopped); [warmDepth] makes them again when it returns.
+     */
+    fun trimDepth() {
+        scene.depth?.release()
+        canvas.releaseSheets()
+    }
+
+    /**
+     * One view of this stage (the inline room, the full-screen room): whether it is [animating]
+     * now. Two views may share a stage, and one going quiet must not take the other's pictures.
+     */
+    class View {
+        var animating = false
+    }
+
+    private val views = ArrayList<View>()
+
+    /** A view of this stage appeared. */
+    fun attach(view: View) {
+        views.add(view)
+    }
+
+    /** A view of this stage is gone: let go of the pictures if no other view is running. */
+    fun detach(view: View) {
+        views.remove(view)
+        trimWhenIdle()
+    }
+
+    /** [trimDepth] unless a view of this stage is animating. */
+    fun trimWhenIdle() {
+        for (i in views.indices) if (views[i].animating) return
+        trimDepth()
+    }
+
+    /** The milliseconds the last frame's step and drawing took on this thread. */
+    var workMs = 0f
+        private set
+
+    private var stepNanos = 0L
+    private var drawNanos = 0L
+
+    /**
      * Put the camera on world x [x] at once (screenshots and tests; the director follows the cats).
      */
     fun lookAt(x: Float) = director.camera.cutTo(x)
@@ -170,11 +271,15 @@ internal class HouseStage(
 
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
+        val started = System.nanoTime()
         house.step(dt)
-        scene.depth?.step(dt)
         petting.step(dt)
         particles.step(dt)
         followCats(dt)
+        scene.depth?.let {
+            it.follow(if (drawn) screenCentre else director.camera.cx)
+            it.step(dt)
+        }
         if (bowlFullFor > 0f) {
             bowlFullFor -= dt
             if (bowlFullFor <= 0f) scene.foodBowlFull = fedHouse
@@ -185,6 +290,8 @@ internal class HouseStage(
             sinceHour = 0f
             hour = hourNow()
         }
+        stepNanos = System.nanoTime() - started
+        workMs = (stepNanos + drawNanos) / NANOS_PER_MS
     }
 
     /** Step [seconds] at [hz] frames per second, as the screen does; for tests and previews. */
@@ -225,11 +332,15 @@ internal class HouseStage(
             if (fullScreen) ((target.size.height - RoomLayout.HEIGHT * s) / 2f).roundToInt()
             else (target.size.height - RoomLayout.HEIGHT * s).roundToInt()
         val topExtra = if (fullScreen) 0 else ceil(originY.toFloat() / s).toInt().coerceAtLeast(0)
+        screenCentre = director.camera.left(view) + view / 2f
+        drawn = true
+        val started = System.nanoTime()
         canvas.begin(target, s, originX, originY)
         scene.paintBackdrop(canvas, hour, clock, topExtra)
         scene.paintScene(canvas, this)
         particles.paint(canvas)
         scene.paintOverlay(canvas, hour, topExtra)
+        drawNanos = System.nanoTime() - started
     }
 
     // ------------------------------------------------------------------ the cats, for the painter
@@ -294,6 +405,7 @@ internal class HouseStage(
     }
 
     private companion object {
+        const val NANOS_PER_MS = 1_000_000f
         const val HOUR_REFRESH_S = 1f
         const val OPAQUE = 0xFF000000.toInt()
 

@@ -1,6 +1,5 @@
 package com.lifemax.rpg.feature.pet.room
 
-import com.lifemax.rpg.feature.pet.art.ArgbImage
 import com.lifemax.rpg.feature.pet.art.PetArtResources
 import com.lifemax.rpg.feature.pet.body.Beat
 import com.lifemax.rpg.feature.pet.body.Burst
@@ -45,73 +44,6 @@ class RoomAllocationTest {
         val type = Class.forName("com.sun.management.ThreadMXBean")
         val method = type.getMethod("getThreadAllocatedBytes", Long::class.javaPrimitiveType)
         return method.invoke(bean, Thread.currentThread().id) as Long
-    }
-
-    /** A canvas that draws nothing and counts what it was asked for. */
-    private class CountingCanvas : RoomCanvas {
-        var calls = 0
-
-        override fun clip(x: Int, y: Int, w: Int, h: Int) {
-            calls++
-        }
-
-        override fun unclip() {
-            calls++
-        }
-
-        override fun fill(x: Int, y: Int, w: Int, h: Int, argb: Int) {
-            calls++
-        }
-
-        override fun image(
-            image: RoomImage,
-            sx: Int,
-            sy: Int,
-            sw: Int,
-            sh: Int,
-            dx: Int,
-            dy: Int,
-            dw: Int,
-            dh: Int,
-        ) {
-            calls++
-        }
-
-        override fun quad(
-            x0: Float,
-            y0: Float,
-            x1: Float,
-            y1: Float,
-            x2: Float,
-            y2: Float,
-            x3: Float,
-            y3: Float,
-            argb: Int,
-        ) {
-            calls++
-        }
-
-        override fun multiply(rgb: Int, x: Int, y: Int, w: Int, h: Int) {
-            calls++
-        }
-
-        override fun overlay(mask: ArgbImage, version: Int, x: Int, y: Int) {
-            calls++
-        }
-
-        override fun sheet(
-            image: ArgbImage,
-            slot: Int,
-            version: Int,
-            sx: Int,
-            sy: Int,
-            sw: Int,
-            sh: Int,
-            dx: Int,
-            dy: Int,
-        ) {
-            calls++
-        }
     }
 
     private class TwoCats(private val bodies: Array<CatBody>) : CatLayer {
@@ -253,6 +185,59 @@ class RoomAllocationTest {
         val used = allocatedBytes() - before
         assertTrue("allocated $used bytes over 20000 frames", used <= TOLERANCE_BYTES)
         assertTrue("nothing was drawn", canvas.calls > 20_000 && cats.drawn >= 40_000)
+    }
+
+    /**
+     * The live room as the screens draw it: the 2.5D room at MEDIUM with the camera-follow
+     * parallax, its camera steps made by another thread (so a frame never makes one), one cat
+     * walking the length of the house so the camera pans across it and the pieces change step under
+     * it, the other waiting. Stepping, the pan, choosing each piece's step, remaking the mix when
+     * one changes and drawing cost nothing per frame.
+     */
+    @Test
+    fun aFrameOfTheLiveRoomWithDepthAndAPanningCameraAllocatesNothing() {
+        assumeTrue("thread allocation counting needs a HotSpot JVM", supported())
+        val scene = RoomScene(PetArtResources.loadRoom(), RoomStyle.live(DepthLevel.MEDIUM))
+        val depth = scene.depth!!
+        depth.asyncWarm = true
+        depth.warm() // what the background thread does before the room is shown
+        val canvas = CountingCanvas()
+        val house = HouseLife(listOf(HouseCat(3, false), HouseCat(8, false)), autopilot = false)
+        val cats = TwoCats(house.bodies)
+        val director = CameraDirector()
+        val steps = ArrayList<PlanStep>()
+        repeat(60) {
+            steps.add(PlanStep.Walk(-140f))
+            steps.add(PlanStep.Act("loaf", 1f))
+            steps.add(PlanStep.Walk(330f))
+            steps.add(PlanStep.Act("groom", 1f))
+        }
+        house.bodies[0].placeAt(-140f, World.ART_Z, SurfaceId.FLOOR, 1)
+        house.bodies[0].replacePlan(1, steps)
+        house.bodies[1].placeAt(90f, World.ART_Z, SurfaceId.FLOOR, 1)
+        val dt = 1f / 60f
+        var changes = 0
+        var last = depth.stepOf("sofa")
+        fun frame() {
+            house.step(dt)
+            director.update(house.bodies[0], house.bodies[1], dt)
+            depth.follow(director.camera.cx)
+            depth.step(dt)
+            scene.paintBackdrop(canvas, 20.0, 12.0, 6)
+            scene.paintScene(canvas, cats)
+            scene.paintOverlay(canvas, 20.0, 6)
+            if (depth.stepOf("sofa") != last) {
+                changes++
+                last = depth.stepOf("sofa")
+            }
+        }
+        repeat(2_000) { frame() }
+        val before = allocatedBytes()
+        repeat(20_000) { frame() }
+        val used = allocatedBytes() - before
+        assertTrue("allocated $used bytes over 20000 frames", used <= TOLERANCE_BYTES)
+        assertTrue("nothing was drawn", canvas.calls > 20_000 && cats.drawn >= 40_000)
+        assertTrue("the pieces changed step while panning ($changes)", changes > 2)
     }
 
     /**

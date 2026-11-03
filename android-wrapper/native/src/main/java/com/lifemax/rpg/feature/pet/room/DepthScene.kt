@@ -74,13 +74,38 @@ internal class DepthScene(
         private set
 
     private val drawOrder = DepthOrder(sheets.capacity)
+    private val mix = StepMix(sheets, furnitureKey)
+    private val pieceStep = IntArray(solids.size) { sheets.rest }
+    private val pieceX =
+        FloatArray(solids.size) {
+            (solids[it].houseX + solids[it].width / 2f) + RoomLayout.HOUSE_X0
+        }
+    private val follows = style.cameraFollow && sways
+    private val catShift = IntArray(DepthOrder.MAX_CATS)
     private val catKey = FloatArray(DepthOrder.MAX_CATS)
-    private val catRow = FloatArray(DepthOrder.MAX_CATS)
     private val catFeet = FloatArray(DepthOrder.MAX_CATS)
     private val catAnchor = IntArray(DepthOrder.MAX_CATS)
     private val catCover = IntArray(DepthOrder.MAX_CATS)
     private val shadowed = BooleanArray(solids.size)
     private val shadowColour = IntArray(3) { floorShadowColour(layers.base(it)) }
+
+    /** The camera step piece [name] was cut from in the last [paintScene] (tests and tuning). */
+    fun stepOf(name: String): Int {
+        for (p in solids.indices) if (solids[p].name == name) return pieceStep[p]
+        error("no solid piece $name")
+    }
+
+    /** The piece (an index among the solids) and the floor row of drawing-order band [code]. */
+    fun bandPiece(code: Int): Int = mix.piece[code]
+
+    fun bandKey(code: Int): Float = mix.key[code]
+
+    /** The solid pieces in manifest order. */
+    val pieces: List<LayerPiece>
+        get() = solids
+
+    /** The solid piece [name] as the scene sees it. */
+    fun solid(name: String): LayerPiece = solids.first { it.name == name }
 
     /** The order of the last [paintScene]. */
     val order: DepthOrder
@@ -90,10 +115,51 @@ internal class DepthScene(
     private fun light(argb: Int): Int =
         (Math.round((argb ushr 24) * level.lightStrength) shl 24) or (argb and 0xFFFFFF)
 
+    /**
+     * Whether the camera steps are made by a background thread ([warm]): then a frame never makes
+     * one itself but draws the nearest made step until the warmer is done. Off (the default: tests,
+     * screenshots), [step] makes one more step each frame and a frame makes what it needs.
+     */
+    var asyncWarm = false
+
+    /** Whether the rest picture is made, so the room can be drawn without a hitch. */
+    val ready: Boolean
+        get() = sheets.ready(sheets.rest)
+
+    /** Make the rest picture (on the calling thread), so the room can be drawn without a hitch. */
+    fun prepare() {
+        sheets.step(sheets.rest)
+    }
+
+    /**
+     * Make every camera step's pictures (rest first), on the calling thread; [cancelled] is asked
+     * between steps. The live room calls it from a background thread, on entering the screen.
+     */
+    fun warm(cancelled: () -> Boolean = { false }) = sheets.warmAll(cancelled)
+
+    /**
+     * Let go of the cached camera steps but the rest one (the room left the screen); [warm] makes
+     * them again.
+     */
+    fun release() {
+        sheets.release()
+        mix.clear()
+        pieceStep.fill(sheets.rest)
+        stepIndex = sheets.rest
+    }
+
+    /**
+     * Follow the room camera: [screenX] is the world x at the middle of the screen. Call it before
+     * [step] each frame; a no-op unless the style asks for [RoomStyle.cameraFollow].
+     */
+    fun follow(screenX: Float) {
+        if (follows) sway.follow(screenX)
+    }
+
     /** Advance the sway by [dt] seconds, and make one more step's pictures if any are missing. */
     fun step(dt: Float) {
         sway.step(dt)
-        sheets.warmOne()
+        if (!asyncWarm) sheets.warmOne()
     }
 
     /** The sway the room moves with: 0 when parallax is off. */
@@ -221,11 +287,10 @@ internal class DepthScene(
 
     /** The solid pieces, the atlas furniture and the cats, back to front. */
     fun paintScene(c: RoomCanvas, cats: CatLayer) {
-        stepIndex = sheets.indexOf(swing, stepIndex)
-        val step = sheets.step(stepIndex)
+        chooseSteps()
         val n = cats.count.coerceAtMost(DepthOrder.MAX_CATS)
         for (i in 0 until n) placeCat(cats, i)
-        drawOrder.build(step, furnitureKey, n, catKey, catFeet, catAnchor, catCover)
+        drawOrder.build(mix, furnitureKey, n, catKey, catFeet, catAnchor, catCover)
         val order = drawOrder.order
         shadowed.fill(false)
         for (k in 0 until drawOrder.size) {
@@ -233,7 +298,7 @@ internal class DepthScene(
             when {
                 code >= DepthOrder.CAT -> {
                     val cat = code - DepthOrder.CAT
-                    cats.draw(cat, rowShift(catRow[cat]), style, c)
+                    cats.draw(cat, catShift[cat], style, c)
                 }
                 code >= VolumeStep.FURNITURE -> {
                     val item = code - VolumeStep.FURNITURE
@@ -241,9 +306,40 @@ internal class DepthScene(
                     scene.paintFurnitureAt(c, item)
                     scene.shiftX = 0
                 }
-                else -> paintBand(c, step, code)
+                else -> paintBand(c, code)
             }
         }
+    }
+
+    /**
+     * The camera step each piece is cut from. Without the camera-follow parallax every piece takes
+     * the step of the sway; with it each takes the step of its own yaw: the idle drift and tilt
+     * plus where it sits against the middle of the screen ([PanFollow.perspective]).
+     */
+    private fun chooseSteps() {
+        stepIndex = sheets.indexOf(swing, stepIndex)
+        for (p in solids.indices) {
+            val want =
+                if (follows) {
+                    sheets.indexOf(
+                        (sway.idle + sway.perspective(pieceX[p])).coerceIn(-1f, 1f),
+                        pieceStep[p],
+                    )
+                } else {
+                    stepIndex
+                }
+            pieceStep[p] = usable(want)
+        }
+        mix.update(pieceStep)
+    }
+
+    /** [want] if its pictures are made, else (with a background warmer) the nearest that are. */
+    private fun usable(want: Int): Int {
+        if (!asyncWarm || sheets.ready(want)) return want
+        val near = sheets.nearestReady(want)
+        if (near >= 0) return near
+        sheets.step(sheets.rest) // nothing made yet: the rest picture, once, whoever is late
+        return sheets.rest
     }
 
     /** Where cat [i] stands: on a piece's surface (at the surface's depth) or on the floor. */
@@ -260,13 +356,24 @@ internal class DepthScene(
                 catAnchor[i] = p
                 catCover[i] = coverOf(volume, surface)
                 catKey[i] = volume.sortFront - depth
-                catRow[i] = volume.parallaxFront - depth
+                catShift[i] = onPiece(p, volume.parallaxFront - depth, depth)
                 return
             }
             p--
         }
         catKey[i] = World.floorY(cats.depth(i))
-        catRow[i] = catKey[i]
+        catShift[i] = rowShift(catKey[i])
+    }
+
+    /**
+     * The shift of a cat standing [depth] rows inside piece [p], on floor row [row]: the piece's
+     * front moves with the floor (the sway), and the surface behind it lags by the piece's own yaw,
+     * the step the piece is drawn at, so the cat does not slide on the seat.
+     */
+    private fun onPiece(p: Int, row: Float, depth: Float): Int {
+        val own = sheets.swayOf(pieceStep[p])
+        val inside = (swing - own) * level.depthGain * depth
+        return Parallax.shift(1f, swing * Parallax.gainAtRow(row, level) + inside)
     }
 
     /** The index among the solids of the piece covering a cat on [surface] of [volume], or -1. */
@@ -279,8 +386,8 @@ internal class DepthScene(
     /**
      * One strip of a band of a piece: the piece's contact shadow first if it is its first drawn.
      */
-    private fun paintBand(c: RoomCanvas, step: VolumeStep, b: Int) {
-        val p = step.piece[b]
+    private fun paintBand(c: RoomCanvas, b: Int) {
+        val p = mix.piece[b]
         val piece = solids[p]
         val volume = piece.volume!!
         val shift = rowShift(volume.parallaxFront)
@@ -298,15 +405,15 @@ internal class DepthScene(
             )
         }
         c.sheet(
-            step.image,
-            stepIndex,
-            sheets.version + stepIndex,
-            step.sx[b],
-            step.sy[b],
-            step.w[b],
-            step.h[b],
-            piece.houseX + shift + step.dx[b],
-            piece.y + step.dy[b],
+            mix.image(b),
+            mix.slot[b],
+            sheets.version + mix.slot[b],
+            mix.sx(b),
+            mix.sy(b),
+            mix.w(b),
+            mix.h(b),
+            piece.houseX + shift + mix.dx(b),
+            piece.y + mix.dy(b),
         )
     }
 

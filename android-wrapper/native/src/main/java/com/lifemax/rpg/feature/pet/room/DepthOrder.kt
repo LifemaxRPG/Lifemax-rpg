@@ -38,7 +38,7 @@ internal class DepthOrder(capacity: Int) {
      * under the piece [catCover] (drawn wholly after the cat; -1 for none).
      */
     fun build(
-        step: VolumeStep,
+        step: BandSet,
         furnitureKey: FloatArray,
         count: Int,
         catKey: FloatArray,
@@ -60,7 +60,8 @@ internal class DepthOrder(capacity: Int) {
         catDone.fill(false)
         drawn.fill(false, 0, step.count)
         size = 0
-        for (code in step.order) {
+        for (o in 0 until step.orderSize) {
+            val code = step.order[o]
             val key =
                 if (code >= VolumeStep.FURNITURE) furnitureKey[code - VolumeStep.FURNITURE]
                 else step.key[code]
@@ -82,7 +83,7 @@ internal class DepthOrder(capacity: Int) {
     }
 
     /** Cat [cat], after the nearer bands of the piece it stands on. */
-    private fun emitCat(step: VolumeStep, cat: Int, catKey: FloatArray, catAnchor: IntArray) {
+    private fun emitCat(step: BandSet, cat: Int, catKey: FloatArray, catAnchor: IntArray) {
         val anchor = catAnchor[cat]
         if (anchor >= 0) {
             for (b in step.first[anchor] until step.end[anchor]) {
