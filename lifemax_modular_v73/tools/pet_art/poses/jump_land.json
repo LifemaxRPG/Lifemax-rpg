@@ -1,0 +1,8 @@
+{ "name": "jump_land", "fps": 12, "loop": false, "contacts": [0, 1, 2],
+  "chain": { "from": ["jump_air"], "to": ["idle_sit", "walk", "stretch"] },
+  "about": "front paws touch down, the landing squash (legs three rows shorter), the settle.",
+  "frames": [
+    { "src": "leap:0", "ops": [{ "rotate": 5, "pivot": "frontPaw" }] },
+    { "src": "stretch:0", "ops": [{ "legs": 3 }] },
+    { "src": "stretch:0", "ops": [{ "legs": 1 }] }
+  ] }

@@ -1,0 +1,12 @@
+{
+ "about": "The lab rows in sheet order (appended after the page's 28 rows; never reorder, only append) and the pair poses. Each row's pose spec is poses/<name>.json.",
+ "rows": ["jump_up", "jump_air", "jump_land", "turn", "pickup", "carry", "toss", "yawn", "shake", "bump", "groom_other", "nose_touch"],
+ "pairs": {
+  "snuggle": { "a": "sleep", "b": "sleep", "mirrorB": false, "fit": "spoon", "lead": 0.45, "behind": 2, "bFront": false,
+   "about": "two cats curled up together on the sleep row (its four frames are the breathing; play B half a cycle out of phase): B lies just behind A, the same way round, a little further back (higher on screen) and drawn first" },
+  "groom": { "a": "groom_other", "b": "purr", "mirrorB": true, "fit": "mouthToHead", "contactFrame": 1, "bFront": false,
+   "about": "A licks B's head (A's contact frames 1 and 3); B sits facing A, eyes closed, purring" },
+  "greet": { "a": "nose_touch", "b": "nose_touch", "mirrorB": true, "fit": "noseToNose", "contactFrame": 2, "bFront": false,
+   "about": "two standing cats lean in and touch noses on frame 2" }
+ }
+}

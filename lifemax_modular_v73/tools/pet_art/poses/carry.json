@@ -1,0 +1,13 @@
+{ "name": "carry", "fps": 12, "loop": true, "contacts": [0, 4], "stride": "walk",
+  "chain": { "from": ["pickup", "walk"], "to": ["toss", "walk"] },
+  "about": "the walk cycle with the head carried a little higher (turned up 8 degrees, one pixel up) so a toy can hang from the mouth anchor; phase-matched with walk, frame for frame.",
+  "frames": [
+    { "src": "walk:0", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:1", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:2", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:3", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:4", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:5", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:6", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] },
+    { "src": "walk:7", "ops": [{ "part": "head", "rotate": -8, "shift": [0, -1] }] }
+  ] }

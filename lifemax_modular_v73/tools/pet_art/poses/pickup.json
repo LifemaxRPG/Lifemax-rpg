@@ -1,0 +1,11 @@
+{ "name": "pickup", "fps": 8, "loop": false, "contacts": [0, 1, 2, 3, 4, 5], "bite": 4,
+  "chain": { "from": ["walk", "stretch", "eat"], "to": ["carry"] },
+  "about": "reach and bite a toy on the floor: the head dips to the floor in front of the paws (the mouth anchor ends at the toy), bites on frame 4 (the toy squashes and is held from here), lifts on frame 5.",
+  "frames": [
+    { "src": "eat:0", "ops": [] },
+    { "src": "eat:1", "ops": [] },
+    { "src": "eat:2", "ops": [{ "part": "head", "rotate": 6, "shift": [1, 1] }] },
+    { "src": "eat:2", "ops": [{ "part": "head", "rotate": 10, "shift": [2, 2] }] },
+    { "src": "eat:3", "ops": [{ "part": "head", "rotate": 12, "shift": [2, 3] }] },
+    { "src": "eat:1", "ops": [{ "part": "head", "rotate": -4, "shift": [1, 0] }] }
+  ] }

@@ -1,0 +1,11 @@
+{ "name": "groom_other", "fps": 5, "loop": true, "contacts": [1, 3],
+  "chain": { "from": ["idle_sit"], "to": ["idle_sit", "purr"] },
+  "about": "grooming the other cat (pair 'groom'): sitting, the head reaches forward and down with the tongue out on frames 1 and 3 (the licks), up between them.",
+  "frames": [
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": 8, "shift": [2, 1] }] },
+    { "src": "meow:2", "ops": [{ "part": "head", "rotate": 14, "shift": [3, 2] }] },
+    { "src": "meow:2", "ops": [{ "part": "head", "rotate": 4, "shift": [3, 0] }] },
+    { "src": "meow:2", "ops": [{ "part": "head", "rotate": 14, "shift": [3, 2] }] },
+    { "src": "meow:2", "ops": [{ "part": "head", "rotate": 4, "shift": [3, 0] }] },
+    { "src": "slowblink:2", "ops": [{ "part": "head", "rotate": 8, "shift": [2, 1] }] }
+  ] }

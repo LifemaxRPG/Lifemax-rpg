@@ -1,7 +1,7 @@
 /* A small PNG codec for the pet art tools (gen_pet_native_assets.js, gen_pet_art_fixtures.js): 8-bit grey (colour type 0) and
    8-bit RGBA (colour type 6), not interlaced, which is all the cat's sheets and the room atlas use.
      decode(buf) -> { width, height, channels, data }   data: Buffer of height * width * channels bytes
-     encode({ width, height, channels, data }) -> Buffer
+     encode({ width, height, channels, data }, { filter }?) -> Buffer
    encode is deterministic: one filter per row chosen by the smallest sum of absolute residuals (ties go to the lower filter
    number), zlib level 9, no ancillary chunks. */
 const zlib = require('zlib');
@@ -55,11 +55,13 @@ function decode(buf) {
   return { width, height, channels, data };
 }
 
-function encode({ width, height, channels, data }) {
+function encode({ width, height, channels, data }, opts = {}) {
   const stride = width * channels, rows = [];
+  /* opts.filter fixes one filter for every row: 0 (None) packs palette-index sheets about a quarter smaller than the heuristic */
+  const types = opts.filter != null ? [opts.filter] : [0, 1, 2, 3, 4];
   for (let y = 0; y < height; y++) {
     let best = null, bestCost = Infinity;
-    for (let type = 0; type < 5; type++) {
+    for (const type of types) {
       const out = Buffer.alloc(stride + 1); out[0] = type; let cost = 0;
       for (let i = 0; i < stride; i++) {
         const at = y * stride + i, left = i >= channels ? data[at - channels] : 0, up = y ? data[at - stride] : 0;

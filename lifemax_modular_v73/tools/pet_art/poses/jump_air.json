@@ -1,0 +1,7 @@
+{ "name": "jump_air", "fps": 8, "loop": false, "contacts": [],
+  "chain": { "from": ["jump_up"], "to": ["jump_land"] },
+  "about": "in the air: frame 0 is the rise and the apex (hold it while the arc climbs), frame 1 the descent with the front paws reaching down (show it once the arc turns down). Air frames are placed by the arc, not by the floor: frame 1 is drawn two pixels lower in its cell so the raised tail fits.",
+  "frames": [
+    { "src": "run:3", "ops": [] },
+    { "src": "leap:0", "ops": [{ "rotate": 12, "pivot": "centre" }, { "shift": [0, 2] }] }
+  ] }

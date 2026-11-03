@@ -1,0 +1,12 @@
+{ "name": "yawn", "fps": 6, "loop": false, "contacts": [],
+  "chain": { "from": ["idle_sit", "loaf", "sleep"], "to": ["idle_sit", "stretch"] },
+  "about": "waking yawn while sitting: eyes close, the head tips back, the jaw opens wide (two pixels past the meow mouth), closes, a sleepy blink.",
+  "frames": [
+    { "src": "idle_sit:0", "ops": [] },
+    { "src": "slowblink:2", "ops": [{ "part": "head", "rotate": -4 }] },
+    { "src": "meow:2", "ops": [{ "part": "head", "rotate": -8 }] },
+    { "src": "meow:2", "ops": [{ "face": "jaw", "by": 1 }, { "part": "head", "rotate": -10 }] },
+    { "src": "meow:2", "ops": [{ "face": "jaw", "by": 2 }, { "part": "head", "rotate": -12 }] },
+    { "src": "meow:2", "ops": [{ "face": "jaw", "by": 1 }, { "part": "head", "rotate": -8 }] },
+    { "src": "slowblink:2", "ops": [] }
+  ] }

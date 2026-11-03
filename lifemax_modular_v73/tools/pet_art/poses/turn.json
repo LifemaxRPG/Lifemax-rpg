@@ -1,0 +1,9 @@
+{ "name": "turn", "fps": 10, "loop": false, "contacts": [0, 1, 2, 3], "flipAtEnd": true,
+  "chain": { "from": ["idle_sit", "walk", "stretch"], "to": ["walk", "stretch", "idle_sit"] },
+  "about": "a standing turn with a body dip: side, foreshortened three-quarter (shorter torso, lower), the front view, the three-quarter facing the other way. Drawn with the OLD facing for all four frames (frame 3 is already mirrored in the sheet); when it ends the body takes the new facing.",
+  "frames": [
+    { "src": "stretch:0", "ops": [{ "legs": 1 }] },
+    { "src": "stretch:0", "ops": [{ "torso": 6 }, { "legs": 2 }] },
+    { "src": "depth/walk_front:0", "ops": [{ "floor": true }, { "legs": 3, "band": [12, 3] }] },
+    { "src": "stretch:0", "mirror": true, "ops": [{ "torso": 6 }, { "legs": 2 }] }
+  ] }

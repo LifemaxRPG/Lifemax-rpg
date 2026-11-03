@@ -1,0 +1,10 @@
+{ "name": "shake", "fps": 14, "loop": false, "contacts": [],
+  "chain": { "from": ["yawn", "idle_sit"], "to": ["idle_sit", "groom"] },
+  "about": "a sitting head shake after waking: the head swings side to side, dying out. A whole-body fur shake is NOT here (see PET_ART_LAB.md, not done).",
+  "frames": [
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": -10 }] },
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": 10, "shift": [0, 1] }] },
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": -8 }] },
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": 6, "shift": [0, 1] }] },
+    { "src": "idle_sit:0", "ops": [{ "part": "head", "rotate": -3 }] }
+  ] }

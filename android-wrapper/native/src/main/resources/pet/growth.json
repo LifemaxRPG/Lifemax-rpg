@@ -33,7 +33,19 @@
     "roll": 46,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 48,
+    "jump_air": 45,
+    "jump_land": 45,
+    "turn": 48,
+    "pickup": 45,
+    "carry": 45,
+    "toss": 45,
+    "yawn": 46,
+    "shake": 46,
+    "bump": 46,
+    "groom_other": 46,
+    "nose_touch": 45
    }
   },
   {
@@ -68,7 +80,19 @@
     "roll": 46,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 48,
+    "jump_air": 45,
+    "jump_land": 45,
+    "turn": 48,
+    "pickup": 45,
+    "carry": 45,
+    "toss": 45,
+    "yawn": 46,
+    "shake": 46,
+    "bump": 46,
+    "groom_other": 46,
+    "nose_touch": 45
    }
   },
   {
@@ -103,7 +127,19 @@
     "roll": 46,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 48,
+    "jump_air": 45,
+    "jump_land": 45,
+    "turn": 48,
+    "pickup": 45,
+    "carry": 45,
+    "toss": 45,
+    "yawn": 47,
+    "shake": 47,
+    "bump": 47,
+    "groom_other": 47,
+    "nose_touch": 45
    }
   },
   {
@@ -138,7 +174,19 @@
     "roll": 47,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 48,
+    "jump_air": 45,
+    "jump_land": 45,
+    "turn": 48,
+    "pickup": 45,
+    "carry": 45,
+    "toss": 45,
+    "yawn": 47,
+    "shake": 47,
+    "bump": 47,
+    "groom_other": 47,
+    "nose_touch": 45
    }
   },
   {
@@ -173,7 +221,19 @@
     "roll": 47,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 47,
+    "jump_air": 46,
+    "jump_land": 45,
+    "turn": 47,
+    "pickup": 46,
+    "carry": 46,
+    "toss": 46,
+    "yawn": 47,
+    "shake": 47,
+    "bump": 47,
+    "groom_other": 47,
+    "nose_touch": 46
    }
   },
   {
@@ -208,7 +268,19 @@
     "roll": 47,
     "kick": 47,
     "bat": 46,
-    "swat": 47
+    "swat": 47,
+    "jump_up": 47,
+    "jump_air": 46,
+    "jump_land": 46,
+    "turn": 47,
+    "pickup": 46,
+    "carry": 46,
+    "toss": 46,
+    "yawn": 47,
+    "shake": 47,
+    "bump": 47,
+    "groom_other": 47,
+    "nose_touch": 46
    }
   }
  ]

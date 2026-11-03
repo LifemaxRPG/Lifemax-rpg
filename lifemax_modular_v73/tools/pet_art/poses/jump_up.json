@@ -1,0 +1,9 @@
+{ "name": "jump_up", "fps": 12, "loop": false, "contacts": [0, 1, 2],
+  "chain": { "from": ["idle_sit", "walk", "stretch"], "to": ["jump_air"] },
+  "about": "anticipation and launch: sink, butt down (the wiggle), push off the hind paws, airborne stretch. The body starts the arc on frame 3.",
+  "frames": [
+    { "src": "stretch:0", "ops": [{ "legs": 2 }] },
+    { "src": "stretch:0", "ops": [{ "legs": 3 }, { "rotate": -3, "pivot": "frontPaw" }] },
+    { "src": "leap:1", "ops": [{ "rotate": -7, "pivot": "rearPaw" }] },
+    { "src": "run:3", "ops": [{ "rotate": -8, "pivot": "centre" }] }
+  ] }

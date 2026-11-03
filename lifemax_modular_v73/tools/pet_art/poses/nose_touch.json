@@ -1,0 +1,9 @@
+{ "name": "nose_touch", "fps": 6, "loop": false, "contacts": [0, 1, 2, 3], "touch": 2,
+  "chain": { "from": ["walk", "stretch"], "to": ["stretch", "rub", "walk"] },
+  "about": "standing greeting (pair 'greet'): the neck stretches and the head leans in to touch noses on frame 2, then draws back.",
+  "frames": [
+    { "src": "eat:0", "ops": [] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": 4, "shift": [2, 0] }] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": 6, "shift": [3, 1] }] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": 2, "shift": [1, 0] }] }
+  ] }

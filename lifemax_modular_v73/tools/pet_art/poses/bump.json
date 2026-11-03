@@ -1,0 +1,9 @@
+{ "name": "bump", "fps": 6, "loop": false, "contacts": [], "touch": 2,
+  "chain": { "from": ["idle_sit", "purr"], "to": ["purr", "idle_sit"] },
+  "about": "a sitting head-bump toward a finger in front of the face: eyes close, the head pushes forward and up (frame 2 is the contact), back.",
+  "frames": [
+    { "src": "idle_sit:0", "ops": [] },
+    { "src": "purr:0", "ops": [{ "part": "head", "rotate": -6, "shift": [2, -1] }] },
+    { "src": "purr:1", "ops": [{ "part": "head", "rotate": -8, "shift": [3, -1] }] },
+    { "src": "purr:0", "ops": [{ "part": "head", "rotate": -4, "shift": [1, 0] }] }
+  ] }

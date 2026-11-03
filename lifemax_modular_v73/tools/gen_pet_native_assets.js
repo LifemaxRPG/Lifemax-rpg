@@ -2,8 +2,13 @@
    draws the same pixels the web room does. Nothing here is drawn or recoloured: the sheets stay palette-index images, the
    palettes and tables are copied across, and the Kotlin side (feature/pet/art) recolours them exactly as petInit does.
    Written to android-wrapper/native/src/main/resources/pet/:
-     anims.json          the 28 adult rows and the 4 depth rows: name, sheet row, frame count, fps, foot row (bottom); frame size, columns
-     growth.json         the six kitten stages: first day, age fraction, scale sx, the bottom table of each (a stage has no 'scratch' row)
+     anims.json          the adult rows (the page's 28 from petAssets.anims, then the lab rows from petAssets.lab.anims, which
+                         tools/pet_art/build.js appends to the same sheets) and the 4 depth rows: name,
+                         sheet row, frame count, fps, foot row (bottom); frame size, columns
+     lab.json            petAssets.lab: per lab row loop, contacts, chain, mouth anchors per kind, and the pair poses' offsets
+                         (docs/specs/PET_ART_LAB.md)
+     growth.json         the six kitten stages: first day, age fraction, scale sx, the bottom table of each (a stage has no 'scratch' row;
+                         the lab rows' foot rows come from petAssets.lab.stageBottom)
      palettes.json       index -> RGB per legacy coat (ginger, gray, black, tuxedo); index 0 and any index not listed is transparent
      room.json           the room item atlas: name -> [x, y, w, h]
      sheets/adult-<coat>.png, sheets/depth-<coat>.png, sheets/stage<i>-<coat>.png, sheets/dstage<i>-<coat>.png
@@ -47,7 +52,8 @@ function build() {
   const A = embedded('petAssets'), G = embedded('petGrowth'), files = new Map();
   const { W, H, cols } = A, D = A.depth;
   const rowsOf = (anims) => Object.entries(anims).map(([name, a]) => ({ name, row: a.row, frames: a.n, fps: a.fps, bottom: a.bottom }));
-  const adult = rowsOf(A.anims), depth = rowsOf(D.anims);
+  if (!A.lab || !A.lab.anims) throw new Error('petAssets has no lab block (run node tools/pet_art/build.js)');
+  const adult = rowsOf(A.anims).concat(rowsOf(A.lab.anims)), depth = rowsOf(D.anims);
   const adultRows = adult.length, depthRows = depth.length, depthCols = Math.round(D.cols || 6);
   adult.forEach((a, i) => { if (a.row !== i) throw new Error('adult rows are not 0..n in order at ' + a.name) });
   depth.forEach((a, i) => { if (a.row !== i) throw new Error('depth rows are not 0..n in order at ' + a.name) });
@@ -66,10 +72,12 @@ function build() {
   const stages = G.stages.map((s, i) => {
     if (G.days[i] !== i * 5 || Math.abs(s.a - G.days[i] / GROW_DAYS) > 1e-9) throw new Error('stage ' + i + ' is not at day 5i');
     if (D.stages[i].sx !== s.sx) throw new Error('stage ' + i + ': depth sx differs from the adult one');
-    return { index: i, fromDay: G.days[i], age: s.a, scale: s.sx, bottom: s.bottom };
+    return { index: i, fromDay: G.days[i], age: s.a, scale: s.sx, bottom: Object.assign({}, s.bottom, A.lab.stageBottom[i]) };
   });
   files.set('growth.json', json({ growDays: GROW_DAYS, stages }));
   files.set('room.json', json(A.room.meta));
+  for (const name of Object.keys(A.lab.rows)) if (!A.lab.anims[name]) throw new Error('lab row ' + name + ' has no table entry');
+  files.set('lab.json', json({ v: A.lab.v, rows: A.lab.rows, pairs: A.lab.pairs }));
 
   const dims = { adult: [W * cols, H * adultRows], depth: [D.W * depthCols, H * depthRows] };
   for (const coat of COATS) {

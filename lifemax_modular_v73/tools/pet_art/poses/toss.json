@@ -1,0 +1,9 @@
+{ "name": "toss", "fps": 10, "loop": false, "contacts": [0, 1, 2, 3], "release": 1,
+  "chain": { "from": ["carry", "pickup"], "to": ["stretch", "walk", "idle_sit"] },
+  "about": "a head flick: wind-up (head down), the flick up (the toy leaves the mouth on frame 1 with the head's velocity), follow-through, settle.",
+  "frames": [
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": 8, "shift": [0, 1] }] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": -18, "shift": [1, -1] }] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": -12, "shift": [0, -1] }] },
+    { "src": "eat:0", "ops": [{ "part": "head", "rotate": -4 }] }
+  ] }
