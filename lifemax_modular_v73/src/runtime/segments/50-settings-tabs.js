@@ -1,10 +1,10 @@
 /* ===== Settings categories: one group of cards at a time instead of one long list ===== */
 var SET_CATS=[
- {id:'look',name:'Look & feel',cards:['Appearance','Bottom bar','Navigation','Tab previews','Cat graphics','Haptics','Quest effects','Guided workout']},
+ {id:'look',name:'Look & feel',cards:['Demo mode','Appearance','Bottom bar','Navigation','Tab previews','Cat graphics','Haptics','Quest effects','Guided workout']},
  {id:'voice',name:'Voice & journal',cards:['Voice (beta)','Journal privacy']},
  {id:'phone',name:'Phone & sync',cards:['App updates','Home-screen widget','Health sync','Calendar import','Automatic backup','Notifications']},
  {id:'game',name:'Character & game',cards:['Character profile','Rewards','Decay system','XP rules']},
- {id:'data',name:'Data & advanced',cards:['Food database','Data management','Developer mode']}
+ {id:'data',name:'Data & advanced',cards:['Food database','Data management','Run a demo','Developer mode']}
 ];
 var setCat=(function(){let id=null;try{id=localStorage.getItem('lma_set_cat')}catch(e){}return SET_CATS.some(function(c){return c.id===id})?id:SET_CATS[0].id})(); // a stale or broken value would hide every card
 function setCatOf(card){const h=card.querySelector(':scope>h3');if(!h)return null;const t=h.textContent.trim();const c=SET_CATS.find(function(x){return x.cards.indexOf(t)>=0});return c?c.id:null}

@@ -135,7 +135,7 @@
   /* ---------- the projection: the page's own Settings, read card by card ---------- */
 
   function cards() {
-    return [...view().querySelectorAll(".card")].filter((c) => !c.parentElement.closest(".card"));
+    return [...view().querySelectorAll(".card")].filter((c) => !c.parentElement.closest(".card") && !c.hidden); // a card the page hides (demo mode) is not drawn
   }
   function cardId(card) {
     const h = card.querySelector(":scope > h3");

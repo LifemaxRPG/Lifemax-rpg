@@ -2,8 +2,10 @@
    backup and to a new phone. Off by default. The choice lives on the Android side (DeviceBackupChoice), because Android's
    backup agent reads it there; this shows it, what Android last did, and changes it from Settings. */
 (function () {
+  const demo = () => !!(window.LM_DEMO && window.LM_DEMO.on); // a demo never touches the owner's Android backup choice
   function plugin() {
     try {
+      if (demo()) return null;
       return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("DeviceBackup") ? Capacitor.Plugins.DeviceBackup : null;
     } catch (e) {
       return null;
@@ -13,6 +15,7 @@
   const ago = (t) => (typeof lmaAgo === "function" ? lmaAgo(t) : new Date(t).toLocaleString());
   /** the line under the switch: why it cannot be used, what Android last did, and when this phone is the only copy */
   function note(info) {
+    if (demo()) return "Off in the demo.";
     if (!info) return plugin() ? "Could not read this setting." : "";
     const lines = [];
     if (info.allowed && info.tooBig) lines.push("Too large for Android backup (" + mb(info.tooBig.bytes) + " of " + mb(info.tooBig.quota) + "), so Android copied nothing.");

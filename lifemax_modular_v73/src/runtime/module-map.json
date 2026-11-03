@@ -2,6 +2,19 @@
  "note": "Ordered script fragments, NOT ES modules. Preserve sequence and single <script> wrapper.",
  "segments": [
   {
+   "file": "src/runtime/segments/00-demo-storage.js",
+   "bytes": 6356,
+   "statement_count": 1,
+   "tags": [
+    "demo",
+    "storage"
+   ],
+   "symbols": [
+    "LM_DEMO",
+    "window.LM_DEMO"
+   ]
+  },
+  {
    "file": "src/runtime/segments/00-runtime.js",
    "bytes": 46685,
    "statement_count": 4,
@@ -3230,7 +3243,7 @@
   },
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
-   "bytes": 2577,
+   "bytes": 2602,
    "statement_count": 6,
    "tags": [
     "settings"
@@ -3815,7 +3828,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 30537,
+   "bytes": 30600,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3827,7 +3840,7 @@
   },
   {
    "file": "src/runtime/segments/50-device-backup.js",
-   "bytes": 3146,
+   "bytes": 3340,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3835,6 +3848,20 @@
    ],
    "symbols": [
     "window.setDeviceBackupAllowed"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-demo-mode.js",
+   "bytes": 9144,
+   "statement_count": 1,
+   "tags": [
+    "demo",
+    "mode"
+   ],
+   "symbols": [
+    "window.lmDemoAskStart",
+    "window.lmDemoAskReturn",
+    "window.confirm"
    ]
   },
   {

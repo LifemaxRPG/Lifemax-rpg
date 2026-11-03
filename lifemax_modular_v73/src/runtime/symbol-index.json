@@ -497,6 +497,9 @@
  "LMV_WORDS": [
   "src/runtime/segments/45-voice.js"
  ],
+ "LM_DEMO": [
+  "src/runtime/segments/00-demo-storage.js"
+ ],
  "LM_DL": [
   "src/runtime/segments/50-deeplink.js"
  ],
@@ -7762,6 +7765,9 @@
  "weekStart": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "window.LM_DEMO": [
+  "src/runtime/segments/00-demo-storage.js"
+ ],
  "window.LifeMaxCalendar": [
   "src/runtime/segments/50-calsync.js"
  ],
@@ -7915,11 +7921,20 @@
  "window.closePacman": [
   "src/runtime/segments/20-runtime.js"
  ],
+ "window.confirm": [
+  "src/runtime/segments/50-demo-mode.js"
+ ],
  "window.dhRest": [
   "src/runtime/segments/50-quests-table.js"
  ],
  "window.haptic": [
   "src/runtime/segments/50-native-pet.js"
+ ],
+ "window.lmDemoAskReturn": [
+  "src/runtime/segments/50-demo-mode.js"
+ ],
+ "window.lmDemoAskStart": [
+  "src/runtime/segments/50-demo-mode.js"
  ],
  "window.lmaBack": [
   "src/runtime/segments/34-navigation.js"
