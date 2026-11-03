@@ -127,3 +127,15 @@ Everything below is native and exists behind one flag, `RoomStyle` (`feature/pet
 - **Order** (`LayerStack`): everything sorted by depth (the page's `petZFromY` of the piece's base row), a cat behind a piece when it is deeper than that row (so it can walk behind the sofa and show its ears over the back) and in front otherwise; a cat on a surface a piece carries is drawn right after that piece (on the sofa: over the seat, behind the cushions; on the tree's middle platform: in front of the trunk and cubby and behind the platform above, that is inside the tree). The "stay in front" rule (`petZMinAt`) is unchanged here; lifting it for the cut pieces is the wiring phase.
 - **Tests.** `RoomLayersTest` (exact reassembly, manifest against `PET_Z_BLOCK`, surfaces), `DepthMathTest` (planes, rounding, depth of a row, spring damping, frame-rate independence, clamped tilt, reduced motion), `ThicknessTest` (face against a brute-force sweep, at most 6 px, drawn face equals the mask), `DepthSceneTest` (the layered room with every effect off equals the classic room pixel for pixel at four hours and with cats in front; a cat behind the sofa's arm is hidden by it and in front is not; on the sofa; inside the tree), `RoomAllocationTest` (a depth frame allocates nothing). `Depth25ScreenshotTest` records 17 new images to judge the look: each room at rest and swayed left and right, by day and night, with and without cats.
 - **What needs the phone.** The feel of the idle drift and of the tilt (there is no tilt sensor read yet: `HouseStage.setTilt` takes the value), the cost of a frame with every effect on (none of it allocates), and whether the face and the rim read well on a real screen at its pixel scale.
+- **Depth levels** (`DepthLevel`, `RoomStyle.level`, `RoomStyle.depth25(level)`): the owner asked for a little more depth, so strength is one named level that scales everything together. SUBTLE is what was first built; MEDIUM and RICH push the same effects (the art is only moved and darkened, never scaled or skewed).
+
+| | SUBTLE | MEDIUM | RICH |
+|---|---|---|---|
+| parallax px per unit of sway: wall/floor, back, mid, front, nearest cat | 1, 2, 3, 5, 6 | 2, 3, 5, 7, 9 | 3, 5, 7, 10, 12 |
+| idle drift amplitude (share of full sway) | 0.45 | 0.55 | 0.65 |
+| side face: at most px, top at rest, side at rest, extra side per unit of sway | 6, 1, 2, 3 | 9, 2, 3, 5 | 12, 2, 4, 7 |
+| contact shadow size, darkness | x1, x1 | x1.25, x1.1 | x1.5, x1.2 |
+| window light, rim light, seam shade | x1, x1, x1 | x1.3, x1.25, x1.25 | x1.6, x1.5, x1.5 |
+
+`Depth25LevelsScreenshotTest` records the cat-tree bedroom, the living room with both cats and a cat behind the sofa arm at each level, at rest and swayed right (18 images); `DepthLevelTest` checks that SUBTLE equals the first build, every number grows with the level, and the face and parallax stay in each level's limits.
+

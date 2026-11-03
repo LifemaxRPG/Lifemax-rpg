@@ -189,14 +189,15 @@ internal class HouseStage(
         val footX = (originX + (pose.x - houseX + shift) * scale).roundToInt().toFloat()
         val footY = (originY + (pose.y + pose.bob) * scale).roundToInt().toFloat()
         if (style.softShadows) {
-            val halfW = (pose.shadowHalfWidth * pose.shadowScale).roundToInt()
+            val halfW =
+                (pose.shadowHalfWidth * pose.shadowScale * style.level.shadowSize).roundToInt()
             ContactShadow.paint(
                 canvas,
                 (pose.shadowX - houseX + shift).roundToInt(),
                 pose.shadowY.roundToInt(),
                 halfW,
                 ContactShadow.halfHeightFor(halfW),
-                pose.shadowAlpha / Tuning.Shadow.ALPHA,
+                pose.shadowAlpha / Tuning.Shadow.ALPHA * style.level.shadowStrength,
             )
         } else {
             val shadowX = originX + (pose.shadowX - houseX + shift) * scale
@@ -205,7 +206,9 @@ internal class HouseStage(
         if (style.rimLight) {
             RimLight.of(hour, pose.x, rim)
             if (rim.side != 0) {
-                val tint = Color(rim.colour or OPAQUE).copy(alpha = rim.strength)
+                val tint =
+                    Color(rim.colour or OPAQUE)
+                        .copy(alpha = (rim.strength * style.level.rimStrength).coerceAtMost(1f))
                 scope.drawSpriteAt(pose, sprites[k]!!, scale, footX + rim.side * scale, footY, tint)
             }
         }

@@ -36,13 +36,19 @@ internal class DepthScene(
     private val layers = art.layers ?: error("the 2.5D room needs the layers")
 
     /** The camera's sway; set its tilt from a sensor, read its position to see where it is. */
-    val sway = DepthSway(style.reducedMotion)
+    val sway = DepthSway(style.reducedMotion, style.level.idleAmplitude)
 
     /** The drawing order of the last [paintScene]. */
     val stack = LayerStack(layers.pieces, scene.furnitureZ)
 
+    private val level = style.level
     private val vector = IntArray(2)
-    private val steps = IntArray(2 * FaceTuning.MAX_PX)
+
+    /** [argb] with its alpha scaled by the level's light strength. */
+    private fun light(argb: Int): Int =
+        (Math.round((argb ushr 24) * level.lightStrength) shl 24) or (argb and 0xFFFFFF)
+
+    private val steps = IntArray(2 * DepthLevel.RICH.maxFacePx)
 
     /** Advance the sway by [dt] seconds. */
     fun step(dt: Float) = sway.step(dt)
@@ -52,18 +58,18 @@ internal class DepthScene(
         get() = if (style.parallax) sway.position else 0f
 
     /** The shift of a floor object (a cat, a prop) at depth [z], for the cat's own layer. */
-    fun shiftAtZ(z: Float): Int = Parallax.shiftAtZ(swing, z)
+    fun shiftAtZ(z: Float): Int = Parallax.shiftAtZ(swing, z, level)
 
     // ------------------------------------------------------------------ 1. behind the furniture
 
     /** The sky, the bases, the seam, the window light and the rugs. */
     fun paintBackdrop(c: RoomCanvas, hour: Double, clock: Double, topExtra: Int) {
         scene.skyFor(hour)
-        val wall = Parallax.shift(swing, Plane.WALL)
+        val wall = Parallax.shift(swing, Plane.WALL, level)
         for (wx in RoomLayout.windows) scene.paintSky(c, wx, hour, clock, Parallax.maxShift)
         paintBases(c, wall, topExtra)
         if (style.floorLight) {
-            SeamShade.paint(c, wall, RoomLayout.HOUSE_WIDTH)
+            SeamShade.paint(c, wall, RoomLayout.HOUSE_WIDTH, level.seamStrength)
             paintFloorLight(c, wall, hour)
         } else {
             scene.paintWindowLight(c, hour)
@@ -97,8 +103,8 @@ internal class DepthScene(
     private fun paintFloorLight(c: RoomCanvas, shift: Int, hour: Double) {
         val colour =
             when {
-                hour >= 7.5 && hour < 17.5 -> DAY_LIGHT
-                RoomLight.isNight(hour) -> NIGHT_LIGHT
+                hour >= 7.5 && hour < 17.5 -> light(DAY_LIGHT)
+                RoomLight.isNight(hour) -> light(NIGHT_LIGHT)
                 else -> return
             }
         for (i in 0..1) {
@@ -122,17 +128,17 @@ internal class DepthScene(
             when {
                 code >= LayerStack.CAT -> {
                     val cat = code - LayerStack.CAT
-                    cats.draw(cat, Parallax.shiftAtZ(swing, cats.depth(cat)), style, c)
+                    cats.draw(cat, Parallax.shiftAtZ(swing, cats.depth(cat), level), style, c)
                 }
                 code >= LayerStack.FURNITURE -> {
                     val item = code - LayerStack.FURNITURE
-                    scene.shiftX = Parallax.shiftAtZ(swing, scene.furnitureZ[item])
+                    scene.shiftX = Parallax.shiftAtZ(swing, scene.furnitureZ[item], level)
                     scene.paintFurnitureAt(c, item)
                     scene.shiftX = 0
                 }
                 else -> {
                     val piece = layers.pieces[code - LayerStack.PIECE]
-                    if (!piece.flat) paintPiece(c, piece, Parallax.shift(swing, piece.plane))
+                    if (!piece.flat) paintPiece(c, piece, Parallax.shift(swing, piece.plane, level))
                 }
             }
         }
@@ -147,12 +153,12 @@ internal class DepthScene(
                 x + piece.width / 2,
                 piece.baseY!!,
                 piece.width / 2 + DepthTuning.PIECE_SHADOW_MARGIN,
-                DepthTuning.PIECE_SHADOW_HALF_HEIGHT,
-                DepthTuning.PIECE_SHADOW_STRENGTH,
+                Math.round(DepthTuning.PIECE_SHADOW_HALF_HEIGHT * level.shadowSize),
+                DepthTuning.PIECE_SHADOW_STRENGTH * level.shadowStrength,
             )
         }
         if (style.thickness && piece.thick) {
-            Thickness.vector(swing, vector)
+            Thickness.vector(swing, vector, level)
             val n = Thickness.offsets(vector[0], vector[1], steps)
             for (i in 0 until n) {
                 c.image(

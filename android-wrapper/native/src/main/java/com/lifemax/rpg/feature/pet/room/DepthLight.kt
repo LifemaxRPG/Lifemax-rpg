@@ -122,17 +122,18 @@ internal object FloorLight {
  */
 internal object SeamShade {
     /** Paint the seam over [width] pixels from house x [x]. */
-    fun paint(c: RoomCanvas, x: Int, width: Int) {
+    fun paint(c: RoomCanvas, x: Int, width: Int, strength: Float = 1f) {
         val seam = LightTuning.SEAM_ROW
         for (i in LightTuning.SEAM_FLOOR.indices) {
-            c.fill(x, seam + 1 + i, width, 1, shade(LightTuning.SEAM_FLOOR[i]))
+            c.fill(x, seam + 1 + i, width, 1, shade(LightTuning.SEAM_FLOOR[i] * strength))
         }
         for (i in LightTuning.SEAM_WALL.indices) {
-            c.fill(x, seam - i, width, 1, shade(LightTuning.SEAM_WALL[i]))
+            c.fill(x, seam - i, width, 1, shade(LightTuning.SEAM_WALL[i] * strength))
         }
     }
 
-    private fun shade(alpha: Float): Int = (Math.round(alpha * 255f) shl 24) or ShadowTuning.COLOUR
+    private fun shade(alpha: Float): Int =
+        (Math.round(alpha.coerceAtMost(1f) * 255f) shl 24) or ShadowTuning.COLOUR
 }
 
 /** How a cat is lit from its window: which side, how much, what colour. Filled by [RimLight.of]. */

@@ -60,13 +60,13 @@ internal object ParallaxTuning {
  */
 internal object Parallax {
     /** The gain of [plane], in pixels per unit of sway. */
-    fun gain(plane: Plane): Float =
+    fun gain(plane: Plane, level: DepthLevel = DepthLevel.SUBTLE): Float =
         when (plane) {
             Plane.SKY -> ParallaxTuning.SKY
-            Plane.WALL -> ParallaxTuning.WALL
-            Plane.BACK -> ParallaxTuning.BACK
-            Plane.MID -> ParallaxTuning.MID
-            Plane.FRONT -> ParallaxTuning.FRONT
+            Plane.WALL -> level.wall
+            Plane.BACK -> level.back
+            Plane.MID -> level.mid
+            Plane.FRONT -> level.front
         }
 
     /**
@@ -74,14 +74,13 @@ internal object Parallax {
      * the wall's at the back, the middle plane's at the art depth where the furniture stands, the
      * nearest at the glass.
      */
-    fun gainAtZ(z: Float): Float {
+    fun gainAtZ(z: Float, level: DepthLevel = DepthLevel.SUBTLE): Float {
         val d = z.coerceIn(0f, World.MAX_Z)
         return if (d <= World.ART_Z) {
-            ParallaxTuning.WALL + (ParallaxTuning.MID - ParallaxTuning.WALL) * d / World.ART_Z
+            level.wall + (level.mid - level.wall) * d / World.ART_Z
         } else {
-            ParallaxTuning.MID +
-                (ParallaxTuning.NEAREST - ParallaxTuning.MID) * (d - World.ART_Z) /
-                    (World.MAX_Z - World.ART_Z)
+            level.mid +
+                (level.nearest - level.mid) * (d - World.ART_Z) / (World.MAX_Z - World.ART_Z)
         }
     }
 
@@ -89,14 +88,16 @@ internal object Parallax {
     fun shift(sway: Float, gain: Float): Int = floor(sway * gain + 0.5f).toInt()
 
     /** Whole pixels of shift of [plane] for [sway]. */
-    fun shift(sway: Float, plane: Plane): Int = shift(sway, gain(plane))
+    fun shift(sway: Float, plane: Plane, level: DepthLevel = DepthLevel.SUBTLE): Int =
+        shift(sway, gain(plane, level))
 
     /** Whole pixels of shift of a floor object at depth [z] for [sway]. */
-    fun shiftAtZ(sway: Float, z: Float): Int = shift(sway, gainAtZ(z))
+    fun shiftAtZ(sway: Float, z: Float, level: DepthLevel = DepthLevel.SUBTLE): Int =
+        shift(sway, gainAtZ(z, level))
 
     /** The most any plane or cat can shift, in pixels: the margin the sky and the edges keep. */
     val maxShift: Int
-        get() = Math.ceil(ParallaxTuning.NEAREST.toDouble()).toInt()
+        get() = DepthLevel.RICH.maxShift
 }
 
 /**

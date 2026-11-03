@@ -18,6 +18,7 @@ package com.lifemax.rpg.feature.pet.room
  * @property floorLight the windows' light lying on the floor, and the dark seam where wall meets
  *   floor.
  * @property rimLight a warm (day) or cool (night) edge on the cats' window side.
+ * @property level how strong the depth is ([DepthLevel]): every effect scales with it.
  * @property reducedMotion no sway at all: the layers keep their rest positions (the owner's "reduce
  *   motion" setting).
  */
@@ -29,6 +30,7 @@ internal data class RoomStyle(
     val floorLight: Boolean = false,
     val rimLight: Boolean = false,
     val reducedMotion: Boolean = false,
+    val level: DepthLevel = DepthLevel.SUBTLE,
 ) {
     /** True for any 2.5D effect: the room needs its layer art. */
     val depth: Boolean
@@ -51,5 +53,8 @@ internal data class RoomStyle(
 
         /** [DEPTH25] without sway, for a phone that asks for reduced motion. */
         val DEPTH25_STILL = DEPTH25.copy(reducedMotion = true)
+
+        /** [DEPTH25] at [level]. */
+        fun depth25(level: DepthLevel) = DEPTH25.copy(level = level)
     }
 }

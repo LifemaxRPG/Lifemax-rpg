@@ -42,7 +42,10 @@ internal object SwayTuning {
  *
  * @param reducedMotion the owner's "reduce motion" setting: no sway.
  */
-internal class DepthSway(reducedMotion: Boolean = false) {
+internal class DepthSway(
+    reducedMotion: Boolean = false,
+    private val idleAmplitude: Float = SwayTuning.IDLE_AMPLITUDE,
+) {
     /** Where the camera is, -1 to 1. */
     var position = 0f
         private set
@@ -104,8 +107,7 @@ internal class DepthSway(reducedMotion: Boolean = false) {
     fun target(t: Float): Float {
         val a = sin(TURN * (t / SwayTuning.IDLE_PERIOD_A_S))
         val b = sin(TURN * (t / SwayTuning.IDLE_PERIOD_B_S + SwayTuning.IDLE_PHASE_B))
-        val idle =
-            SwayTuning.IDLE_AMPLITUDE * (a * (1f - SwayTuning.IDLE_MIX) + b * SwayTuning.IDLE_MIX)
+        val idle = idleAmplitude * (a * (1f - SwayTuning.IDLE_MIX) + b * SwayTuning.IDLE_MIX)
         return (idle + tilt * SwayTuning.TILT_RANGE).coerceIn(-1f, 1f)
     }
 

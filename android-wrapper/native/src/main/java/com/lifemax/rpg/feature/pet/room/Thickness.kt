@@ -42,10 +42,10 @@ internal object Thickness {
      * moves less than a front one, so the face slides the other way), clamped to
      * [FaceTuning.MAX_PX].
      */
-    fun vector(sway: Float, out: IntArray) {
-        val vx = FaceTuning.SIDE_REST_PX - floor(sway * FaceTuning.SIDE_SWAY_PX + 0.5f).toInt()
-        out[0] = vx.coerceIn(-FaceTuning.MAX_PX, FaceTuning.MAX_PX)
-        out[1] = -FaceTuning.TOP_PX
+    fun vector(sway: Float, out: IntArray, level: DepthLevel = DepthLevel.SUBTLE) {
+        val vx = level.faceSideRestPx - floor(sway * level.faceSwayPx + 0.5f).toInt()
+        out[0] = vx.coerceIn(-level.maxFacePx, level.maxFacePx)
+        out[1] = -level.faceTopPx
     }
 
     /**
