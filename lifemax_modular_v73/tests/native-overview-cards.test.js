@@ -251,6 +251,18 @@ const HELPERS = `
       const old = await live(() => renderOverview());
       out.listOldScreen = !!old && KEYS(old) === '["coat","stage","weak"]' && old.coat === 'ginger';
       __cards.caps.push(...v2);
+      // each cat's proportions (overview.cat.rig.v1): only for a screen that said it can use them, and only for a cat the art does not fit as drawn
+      const pheno = petPheno, longEars = { morph: { em: 2.2, ew: 1.5, tl: 1.8, lg: 1.4, bl: 1.5, wk: 1.8 } };
+      try {
+        petPheno = (p) => p === state.pet ? longEars : { morph: { em: 1, ew: 1, tl: 1, lg: 1, bl: 1, wk: 1 } };
+        const noRig = await live(() => renderOverview());
+        out.rigNoCap = !('rig' in noRig.cats[0]);
+        __cards.caps.push('overview.cat.rig.v1');
+        const withRig = await live(() => renderOverview());
+        out.rigSent = KEYS(withRig.cats[0]) === '["coat","stage","weak","rig","name"]' && JSON.stringify(withRig.cats[0].rig) === '{"em":2.2,"ew":1.5,"tl":1.8,"lg":1.4,"bl":1.5,"wk":1.8,"bob":false}';
+        out.rigPlainLeftOut = !('rig' in withRig.cats[1]);
+        __cards.caps.pop();
+      } finally { petPheno = pheno }
       // the switch off takes both away again, and the still portrait is sent as ever
       out.listBack = (await live(() => setNativeCatsEnabled(false))) === null && !!latest().tiles.cat.portrait;
       delete state.pet2; __cards.caps.pop(); __cards.caps.pop(); __cards.caps.pop();
@@ -269,6 +281,7 @@ const HELPERS = `
     ok('with overview.cat.live.v2 the tile carries {cats: [...]}: one cat, with its name', misc.listOne, misc);
     ok('with two cats alive the list carries both, each with its coat, stage and name', misc.listTwo, misc);
     ok('a genetic second coat rides the list only with overview.cat.coat.v1 and a coat the page holds', misc.listDnaNoCoatCap && misc.listDna && misc.listDnaUnheld, misc);
+    ok('a cat\'s proportions travel only to a screen with overview.cat.rig.v1, and only when the art does not fit it as drawn', misc.rigNoCap && misc.rigSent && misc.rigPlainLeftOut, misc);
     ok('a second cat that has passed is left out; a first cat native cannot draw gives no live cats at all', misc.listSecondGone && misc.listFirstUndrawable, misc);
     ok('a cat\'s name is kept to 40 characters and left out when empty', misc.listNameCap && misc.listNoName, misc);
     ok('a screen without overview.cat.live.v2 is sent the first cat\'s bare {coat, stage, weak}', misc.listOldScreen, misc);

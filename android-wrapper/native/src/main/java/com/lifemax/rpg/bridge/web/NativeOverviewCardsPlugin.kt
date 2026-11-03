@@ -43,6 +43,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
             "overview.cat.live.v1",
             "overview.cat.live.v2",
             "overview.cat.coat.v1",
+            "overview.cat.rig.v1",
         )
 
     init {

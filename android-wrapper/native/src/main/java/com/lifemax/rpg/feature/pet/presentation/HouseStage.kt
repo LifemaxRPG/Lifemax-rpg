@@ -64,6 +64,13 @@ internal class HouseStage(
     private var hour = hourNow()
     private lateinit var scope: DrawScope
     private var scale = 1
+
+    /**
+     * Whether ears, tail and whiskers follow the springs; false (reduced motion) keeps them as
+     * drawn. A cat's proportions, from its genes, are not motion and always apply.
+     */
+    var secondaryMotion = true
+
     private var originX = 0
     private var originY = 0
     private val rim = RimSpec()
@@ -267,10 +274,11 @@ internal class HouseStage(
                 val tint =
                     Color(rim.colour or OPAQUE)
                         .copy(alpha = (rim.strength * style.level.rimStrength).coerceAtMost(1f))
-                scope.drawSpriteAt(pose, sprites[k]!!, scale, footX + rim.side * scale, footY, tint)
+                val x = footX + rim.side * scale
+                scope.drawSpriteAt(pose, sprites[k]!!, scale, x, footY, tint, secondaryMotion)
             }
         }
-        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY)
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
     }
 
     override fun draw(i: Int) {
@@ -282,7 +290,7 @@ internal class HouseStage(
         val shadowX = originX + (pose.shadowX - houseX) * scale
         val shadowY = originY + pose.shadowY * scale
         scope.drawShadowAt(pose, scale, shadowX, shadowY)
-        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY)
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, motion = secondaryMotion)
     }
 
     private companion object {

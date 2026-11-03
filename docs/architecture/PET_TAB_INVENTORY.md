@@ -125,6 +125,16 @@ Tests: `TouchModelTest` (thresholds, saturation, overstimulation, the shy cat, t
 
 On the phone: the feel of the hold and of the haptics, the purr starting later than about 100 ms after the finger lands or not at all (WebAudio resumes without a web gesture only if the WebView allows autoplay; if it does not, port only the purr loop to native, plan question 2), a stroke across the room not starting a tab swipe, the system bars hiding in the full-screen room and Back closing it, the inline room's clock stopping while it is open.
 
+## 10. The rig and secondary motion (CT7, Native API 54)
+
+The live cat, on the Overview card and in this screen's room, is drawn through the cat's rig: its ears, tail and whiskers follow the body's springs and its proportions follow its genes. Files: `feature/pet/art/RigFrame.kt` (the data: parts, `RigMorph`, `RigPose`), `RigReader.kt` (the packed rig, `resources/pet/rig/<kind>.bin`), `RigCompose.kt` (the port of the page's `petRigCompose`), `RigGrid.kt` (the pose grid), `RigCache.kt`, `RigSet.kt` (a cat's rig and `RigFrames`, the composer with its cache), `RigWire.kt` (the projection's `rig`); `presentation/RigPainter.kt` (`RigMotion`: springs to grid; `RigPainter`: bitmaps per cache slot); `CatSprites.rig`, `CatArt.sprites(coat, stage, morph)`, `drawSpriteAt(..., motion)`.
+
+- **Pose grid.** Ears 4 degrees (+/- 44), ears flat in quarters, tail turn 3 degrees (+/- 24), tail curl at the tip 4 degrees (+/- 40), whisker length 10 % (60 to 140 %). A pose at the middle of every axis on a cat with plain proportions draws the sheet as it is.
+- **Reading the springs.** Ears: `CatPose.ear[0..1]` in degrees as they are, `earFlat` as the flat blend. Tail: segment 0 minus the neutral base, times 0.5, is the turn; the sum of the other segments minus the neutral curl, times 0.8, is the curl. Whiskers: the sweep's deviation from rest, times 0.35, is the length factor. All the gains are in `RigMotion`.
+- **Reduced motion** (`still`): parts stay as drawn; proportions apply. **Kittens**: ears as drawn.
+- **Projection.** `cats[i].rig {em, ew, tl, lg, bl, wk, bob}` with capability `pet.rig.v1`, left out for a cat the art fits as drawn; the Overview's live cats carry the same under `overview.cat.rig.v1`.
+- **Needs the phone.** The feel of the swing (the gains), the cost of a miss on a mid-range phone (composing a frame was not timed on a phone; the cache is 96 frames of 90 KB), and the look of the long-eared and bobtail cats at the card's scale.
+
 ## Photo album and scrapbook (S1, page side only)
 
 The page now keeps a per-cat album of memorable moments (state.pet.album, state.pet2.album, copied into state.petMemorial on passing) and the API for a later native phase to stage portraits and draw the scrapbook. Nothing is projected to native yet and no capability exists. See PET_SCRAPBOOK.md.

@@ -22,12 +22,15 @@
                          (place, depth, flags). The pieces drawn over the base give the backdrop back exactly; the build checks it.
      room/props/<name>.png  the free-standing depth props the room draws between the backdrop and the cats: pouf, cushion, and the
                          two halves of the box (box_back, box_front)
-   Out of scope (later phases): HD art (petHd.html), the rig (petRig.html), toys other than the box, DNA coats.
+     rig/<kind>.bin      the rig (petRig.html) packed for native: per frame the ears, whiskers, tail and the leg/torso stretch bands;
+                         kind = adult, st0..st5, depth, dst0..dst5 (layout in tools/rig_pack.js)
+   Out of scope (later phases): HD art (petHd.html), toys other than the box.
    Run:   node tools/gen_pet_native_assets.js           writes the files (deterministic; running it twice changes nothing)
           node tools/gen_pet_native_assets.js --check   fails if the committed files differ from what the page data gives (CI) */
 const fs = require('fs'), path = require('path');
 const png = require('./pet_png.js');
 const { layerFiles } = require('./pet_room_cut.js');
+const rigPack = require('./rig_pack.js');
 
 const root = path.resolve(__dirname, '..');
 const target = path.resolve(root, '../android-wrapper/native/src/main/resources/pet');
@@ -91,6 +94,13 @@ function build() {
     files.set(`sheets/depth-${coat}.png`, checkedSheet('depth ' + coat, D.coats[coat], ...dims.depth, pal));
     G.stages.forEach((s, i) => files.set(`sheets/stage${i}-${coat}.png`, checkedSheet(`stage${i} ${coat}`, s.coats[coat], ...dims.adult, pal)));
     D.stages.forEach((s, i) => files.set(`sheets/dstage${i}-${coat}.png`, checkedSheet(`dstage${i} ${coat}`, s.coats[coat], ...dims.depth, pal)));
+  }
+  const rig = embedded('petRig');
+  if (rig.v !== 2 || rig.W !== W || rig.H !== H) throw new Error('the rig is not v2 at ' + W + 'x' + H);
+  const counts = (anims) => Object.fromEntries(Object.entries(anims).map(([name, a]) => [name, a.n]));
+  for (const kind of ['adult', 'depth', ...[0, 1, 2, 3, 4, 5].flatMap((i) => ['st' + i, 'dst' + i])]) {
+    if (!rig[kind]) throw new Error('the rig has no section ' + kind);
+    files.set(`rig/${kind}.bin`, rigPack.packKind(kind, rig[kind], W, H, counts(kind.startsWith('d') ? D.anims : A.anims)));
   }
   const items = png.decode(dataUrl(A.room.items));
   if (items.channels !== 4) throw new Error('the room atlas is not RGBA');

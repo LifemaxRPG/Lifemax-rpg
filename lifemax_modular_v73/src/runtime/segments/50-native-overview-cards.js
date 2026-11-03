@@ -19,6 +19,9 @@
   /* a genetic (dna_) coat is composed by the page (petDnaCompose); a screen that can ask for its sheets (the `coat` command,
      50-pet-coat.js) draws it live too. Without the capability a dna_ coat stays a still. */
   const CAT_COAT = "overview.cat.coat.v1";
+  /* each live cat's proportions (rig: ear, tail, leg, body and whisker multipliers from its genes, 38-pet-rig.js petRigWire), for a
+     screen that re-assembles the cat's frames from the rig; left out for a cat the art fits as drawn */
+  const CAT_RIG = "overview.cat.rig.v1";
   const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for
   const CELEBRATION_KEEP_MS = 2000; // a celebration handed over stays in the projection this long; the screen plays each id once
   const WIDE = 860; // above this the page's sidebar is a side rail, not the bottom bar the shared bars are drawn from (02-layout.css)
@@ -154,7 +157,10 @@
   function liveLook(p) {
     if (!p || !p.alive) return null;
     if (!LEGACY_COATS.includes(p.coat) && !(tab.has(CAT_COAT) && typeof petCoatKnown === "function" && petCoatKnown(p.coat))) return null;
-    return { coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
+    const o = { coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
+    const rig = tab.has(CAT_RIG) && typeof petRigWire === "function" ? petRigWire(p) : null;
+    if (rig) o.rig = rig;
+    return o;
   }
   /** the look with the cat's name (native seeds the cat's habits with it); a nameless cat keeps its bare look */
   function named(look, p) {

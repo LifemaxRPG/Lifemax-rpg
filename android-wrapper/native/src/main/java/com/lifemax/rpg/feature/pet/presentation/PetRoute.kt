@@ -46,7 +46,9 @@ fun PetRoute(
             )
         }
     val looks =
-        remember(p.cats) { p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak) } }
+        remember(p.cats) {
+            p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak, it.rig) }
+        }
     val room = rememberRoomState(looks)
     val buzz = LocalPageBuzz.current
     if (room is RoomState.Ready) {

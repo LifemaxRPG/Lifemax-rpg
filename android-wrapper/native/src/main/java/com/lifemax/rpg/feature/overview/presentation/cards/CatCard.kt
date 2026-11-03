@@ -103,7 +103,8 @@ private fun Alive(
     // the room art could not be loaded: the cat still lives, in the plain strip
     val strip = cats.isNotEmpty() && (preview != null || room is RoomState.Unavailable)
     val stripSprites =
-        if (strip) preview?.sprites ?: rememberCatSprites(cats[0].coat, cats[0].stage) else null
+        if (strip) preview?.sprites ?: rememberCatSprites(cats[0].coat, cats[0].stage, cats[0].rig)
+        else null
     BoxWithConstraints(
         Modifier.fillMaxWidth().aspectRatio(STAGE_ASPECT).background(Stage).drawBehind {
             val w = 1.dp.toPx()
@@ -170,7 +171,7 @@ internal class CatHousePreview(val stage: HouseStage)
 private fun looksOf(cats: List<LiveCat>, cardName: String): List<HouseCatLook> =
     cats.mapIndexed { i, cat ->
         val name = cat.name ?: if (i == 0) cardName else "$cardName, ${i + 1}"
-        HouseCatLook(name, cat.coat, cat.stage, cat.weak)
+        HouseCatLook(name, cat.coat, cat.stage, cat.weak, cat.rig)
     }
 
 /** `.pet-peek-in` in the Overview's column: the badge, the eyebrow and name, then the arrow. */

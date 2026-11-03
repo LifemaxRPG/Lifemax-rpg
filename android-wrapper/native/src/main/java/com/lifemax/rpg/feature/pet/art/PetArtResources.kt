@@ -39,6 +39,9 @@ object PetArtResources {
      */
     fun loadLab(): LabTable = LabTable.parse(text("lab.json"))
 
+    /** The rig of every sheet kind (`rig/<kind>.bin`), read when a kind is first asked for. */
+    fun loadRig(): RigLibrary = RigLibrary { bytes("rig/$it.bin") }
+
     /** Loads the room's backdrops, props and item atlas. Throws if a shipped file is missing. */
     internal fun loadRoom(): RoomArt {
         fun png(name: String) =

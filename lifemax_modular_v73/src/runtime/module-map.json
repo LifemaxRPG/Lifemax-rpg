@@ -2056,8 +2056,8 @@
   },
   {
    "file": "src/runtime/segments/38-pet-rig.js",
-   "bytes": 12877,
-   "statement_count": 14,
+   "bytes": 13679,
+   "statement_count": 15,
    "tags": [
     "pet",
     "rig"
@@ -2078,6 +2078,7 @@
     "petRigPoseKey",
     "petRigCompose",
     "petRigFrame",
+    "petRigWire",
     "petRigGrown",
     "petRigPick"
    ]
@@ -3590,7 +3591,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 20797,
+   "bytes": 21188,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3787,7 +3788,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 23343,
+   "bytes": 23758,
    "statement_count": 1,
    "tags": [
     "native",

@@ -235,6 +235,36 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
     ok('a level-up over the view steps the screen aside and it comes back after', r.gone && r.back, r);
     ok('no page errors', p.errors.length === 0, p.errors);
     await p.context().close();
+
+    /* 9. the rig: each cat's proportions, for a screen with pet.rig.v1 (a cat the art fits as drawn sends none) */
+    const RIG_CAPS = ['pet.projection.v1', 'pet.coat.v1', 'pet.rig.v1'];
+    p = await start(b, { caps: RIG_CAPS });
+    r = await p.evaluate(async () => {
+      const out = {}, pheno = petPheno, long = { morph: { em: 2.2, ew: 1.5, tl: 1.8, lg: 1.4, bl: 1.5, wk: 1.8 } };
+      try {
+        petPheno = () => long; await setCats('state.pet.born=now-40*864e5'); navigate('pet'); await until(() => showing(), 5000);
+        out.grown = latest().cats[0].rig; out.keys = Object.keys(latest().cats[0]).join();
+        petPheno = () => ({ morph: { em: 1, ew: 1, tl: 1, lg: 1, bl: 1, wk: 1.03 } }); renderPetView(true); await wait(400);
+        out.plain = 'rig' in latest().cats[0];
+        petPheno = () => ({ morph: { em: 3.5, ew: 0.1, tl: 1, lg: 1, bl: 1, wk: 1 } }); renderPetView(true); await wait(400);
+        out.clamped = latest().cats[0].rig;
+        petPheno = () => ({ morph: { em: 1.5, ew: 1, tl: 1.2, lg: 1, bl: 1, wk: 1, bob: 1 } }); renderPetView(true); await wait(400);
+        out.bob = latest().cats[0].rig;
+        petPheno = () => null; renderPetView(true); await wait(400); out.none = 'rig' in latest().cats[0];
+        petPheno = () => long; await setCats('state.pet.born=now-5*864e5'); await wait(400); out.kitten = latest().cats[0].rig;
+      } finally { petPheno = pheno }
+      return out });
+    ok('a cat with long ears sends its proportions: {em, ew, tl, lg, bl, wk, bob}, rounded', JSON.stringify(r.grown) === '{"em":2.2,"ew":1.5,"tl":1.8,"lg":1.4,"bl":1.5,"wk":1.8,"bob":false}' && r.keys === 'name,coat,stage,weak,rig', r);
+    ok('a cat the art fits as drawn sends no rig, nor one without genes', r.plain === false && r.none === false, r);
+    ok('multipliers stay inside the genes\' range (0.35 to 2.8)', r.clamped && r.clamped.em === 2.8 && r.clamped.ew === 0.35, r.clamped);
+    ok('a bobtail says so, and its tail is the shortened one', r.bob && r.bob.bob === true && r.bob.tl === 1.2, r.bob);
+    ok('a kitten shows its proportions at half strength on day 5, as the web draws them', r.kitten && r.kitten.em > 1.1 && r.kitten.em < 2.2 && r.kitten.lg < 1.4, r.kitten);
+    ok('no page errors', p.errors.length === 0, p.errors);
+    await p.context().close();
+    p = await start(b);
+    r = await p.evaluate(async () => { const pheno = petPheno; try { petPheno = () => ({ morph: { em: 2.2, ew: 1.5, tl: 1.8, lg: 1.4, bl: 1.5, wk: 1.8 } }); navigate('pet'); await until(() => showing(), 5000); renderPetView(true); await wait(400); return 'rig' in latest().cats[0] } finally { petPheno = pheno } });
+    ok('a screen without pet.rig.v1 is sent no rig (an older app keeps the shape it knows)', r === false, r);
+    await p.context().close();
   } finally { await b.close() }
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })();

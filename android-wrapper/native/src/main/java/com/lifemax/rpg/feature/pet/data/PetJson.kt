@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.pet.data
 
 import com.lifemax.rpg.core.data.pageTokens
+import com.lifemax.rpg.feature.pet.art.RigMorph
+import com.lifemax.rpg.feature.pet.art.RigWire
 import com.lifemax.rpg.feature.pet.domain.PetBond
 import com.lifemax.rpg.feature.pet.domain.PetCare
 import com.lifemax.rpg.feature.pet.domain.PetCatLook
@@ -48,6 +50,8 @@ private val TOP_KEYS =
         "words",
         "cue",
     )
+
+private val CAT_KEYS = setOf("name", "coat", "stage", "weak")
 
 /** What a coat key may look like: the four shipped names and the page's `dna_...` keys. */
 private val COAT = Regex("[a-z][a-z0-9_]{0,59}")
@@ -106,8 +110,15 @@ internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProje
     val looks =
         (0 until cats.length()).map {
             val c = cats.get(it) as? JSONObject ?: throw IllegalArgumentException("cat")
-            c.exactly(setOf("name", "coat", "stage", "weak"), "cat")
-            PetCatLook(c.name("name"), c.coat(), c.int("stage").also(::stage), c.bool("weak"))
+            // `rig` rides on the screen's pet.rig.v1: absent from a page that has not been told
+            c.exactly(if (c.has("rig")) CAT_KEYS + "rig" else CAT_KEYS, "cat")
+            PetCatLook(
+                c.name("name"),
+                c.coat(),
+                c.int("stage").also(::stage),
+                c.bool("weak"),
+                if (c.has("rig")) RigWire.decode(c.getJSONObject("rig")) else RigMorph.NEUTRAL,
+            )
         }
     val focus = j.int("focus")
     require(focus in looks.indices) { "focus names no cat" }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import com.lifemax.rpg.feature.pet.art.RigMorph
 import com.lifemax.rpg.feature.pet.body.Autopilot
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
@@ -27,6 +28,7 @@ internal data class HouseCatLook(
     val coat: String,
     val stage: Int,
     val weak: Boolean,
+    val rig: RigMorph = RigMorph.NEUTRAL,
 )
 
 /** The outcome of loading the room's art: [kit] is null if it could not be loaded, for good. */
@@ -58,6 +60,7 @@ internal fun HouseLiveView(
     val resumed = rememberResumed()
     val frame = remember { mutableLongStateOf(0L) }
     val animate = running && resumed && !still
+    SideEffect { stage.secondaryMotion = !still }
     LaunchedEffect(stage, animate) {
         if (!animate) return@LaunchedEffect
         var last = withFrameNanos { it }
@@ -105,7 +108,7 @@ internal fun rememberHouseStage(
                 st.setFedHouse(looks.none { it.weak })
             }
         }
-    val sprites = looks.map { rememberCatSprites(it.coat, it.stage) }
+    val sprites = looks.map { rememberCatSprites(it.coat, it.stage, it.rig) }
     SideEffect { sprites.forEachIndexed { i, s -> stage.setSprites(i, s) } }
     return if (sprites[0] != null) stage else null
 }

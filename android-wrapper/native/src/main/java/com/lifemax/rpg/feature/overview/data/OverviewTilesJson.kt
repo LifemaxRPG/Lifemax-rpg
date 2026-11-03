@@ -36,6 +36,8 @@ import com.lifemax.rpg.feature.overview.domain.WeekPace
 import com.lifemax.rpg.feature.overview.domain.WeekSeg
 import com.lifemax.rpg.feature.overview.domain.WeekTip
 import com.lifemax.rpg.feature.overview.domain.WeekTop
+import com.lifemax.rpg.feature.pet.art.RigMorph
+import com.lifemax.rpg.feature.pet.art.RigWire
 import org.json.JSONObject
 
 /*
@@ -265,7 +267,7 @@ internal fun liveCats(l: JSONObject): LiveCats {
 
 /** One live cat's look; the cats of the list shape ([named]) may carry a name. */
 internal fun liveCat(l: JSONObject, named: Boolean = false): LiveCat {
-    val allowed = if (named) LIVE_KEYS + "name" else LIVE_KEYS
+    val allowed = (if (named) LIVE_KEYS + "name" else LIVE_KEYS) + "rig"
     val extra = l.keys().asSequence().filter { it !in allowed }.toList()
     require(extra.isEmpty()) { "Unknown live cat keys $extra" }
     val coat = l.str("coat")
@@ -274,7 +276,8 @@ internal fun liveCat(l: JSONObject, named: Boolean = false): LiveCat {
     require(stage in LiveCat.ADULT..LiveCat.LAST_STAGE) { "A growth stage is -1 to 5" }
     val name = if (l.has("name")) l.str("name") else null
     require(name == null || name.length in 1..LIVE_NAME_MAX) { "A cat's name is short" }
-    return LiveCat(coat, stage, l.bool("weak"), name)
+    val rig = if (l.has("rig")) RigWire.decode(l.getJSONObject("rig")) else RigMorph.NEUTRAL
+    return LiveCat(coat, stage, l.bool("weak"), name, rig)
 }
 
 private val LIVE_KEYS = setOf("coat", "stage", "weak")

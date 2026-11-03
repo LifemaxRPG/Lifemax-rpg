@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import com.lifemax.rpg.feature.pet.art.RigCompose
 import com.lifemax.rpg.feature.pet.body.CatLife
 import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.World
@@ -26,14 +27,19 @@ internal class CatStageColors(val wall: Color, val floor: Color, val baseboard: 
  * of the stage.
  *
  * What of the pose is used: position, flip, clip and frame, squash and stretch, rotation about the
- * feet, bob and breath, and the ground shadow. The ears, tail, whiskers and look offsets in the
- * pose are not drawn yet: they need the rig, which is not ported (the plain sheet frames already
- * carry the art's own ear and tail poses).
+ * feet, bob and breath, and the ground shadow. A cat with a rig ([CatSprites.rig]) also has its
+ * ears, tail and whiskers drawn where the springs have them, and its proportions (see
+ * [RigPainter]); the look offsets are not drawn yet.
  *
  * Nothing here allocates: offsets and sizes are value classes, the sheet is looked up by index and
  * the transform is applied in place.
  */
-internal fun DrawScope.drawCatStage(pose: CatPose, sprites: CatSprites, colors: CatStageColors) {
+internal fun DrawScope.drawCatStage(
+    pose: CatPose,
+    sprites: CatSprites,
+    colors: CatStageColors,
+    motion: Boolean = true,
+) {
     val s = pixelScale(size.width)
     val left = ((size.width - CatLife.WINDOW_WIDTH * s) / 2f).roundToInt()
     val bottom = size.height
@@ -42,7 +48,7 @@ internal fun DrawScope.drawCatStage(pose: CatPose, sprites: CatSprites, colors: 
     drawRect(colors.floor, Offset(0f, horizon), Size(size.width, bottom - horizon))
     drawRect(colors.baseboard, Offset(0f, horizon), Size(size.width, s.toFloat().coerceAtLeast(1f)))
     drawShadow(pose, s, left, bottom)
-    drawSprite(pose, sprites, s, left, bottom)
+    drawSprite(pose, sprites, s, left, bottom, motion)
 }
 
 /** Device pixels per room pixel: a whole number, at least 1, so the pixel art stays crisp. */
@@ -76,16 +82,19 @@ private fun DrawScope.drawSprite(
     s: Int,
     left: Int,
     bottom: Float,
+    motion: Boolean,
 ) {
     val footX = (left + pose.x * s).roundToInt().toFloat()
     val footY = (bottom - s * (ROOM_HEIGHT - pose.y) + pose.bob * s).roundToInt().toFloat()
-    drawSpriteAt(pose, sprites, s, footX, footY)
+    drawSpriteAt(pose, sprites, s, footX, footY, motion = motion)
 }
 
 /**
  * The cat of [pose] with its feet at device pixel ([footX], [footY]): the sheet frame of its clip,
  * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says. With
- * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so).
+ * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so). With
+ * a rig the frame is the composed one (ears, tail, whiskers, proportions) unless the cat is the art
+ * as drawn; [motion] false keeps the parts as drawn (reduced motion).
  */
 internal fun DrawScope.drawSpriteAt(
     pose: CatPose,
@@ -94,6 +103,7 @@ internal fun DrawScope.drawSpriteAt(
     footX: Float,
     footY: Float,
     tint: Color? = null,
+    motion: Boolean = true,
 ) {
     val sheet = sprites.sheet(pose.clip) ?: return
     val flip = if (pose.flip) -1f else 1f
@@ -105,6 +115,21 @@ internal fun DrawScope.drawSpriteAt(
         rotate(Math.toDegrees(pose.rotation.toDouble()).toFloat(), Offset.Zero)
         scale(pose.scaleX * flip, pose.scaleY * pose.breath, Offset.Zero)
     }) {
+        val rigged = sprites.rig?.let { RigPainter.picture(it, pose, motion) }
+        if (rigged != null) {
+            drawImage(
+                rigged,
+                dstOffset =
+                    IntOffset(
+                        -(frameW / 2 + RigCompose.MARGIN_LEFT) * s,
+                        (1 - feet - RigCompose.MARGIN_TOP) * s,
+                    ),
+                dstSize = IntSize(RigPainter.width * s, RigPainter.height * s),
+                colorFilter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn),
+                filterQuality = FilterQuality.None,
+            )
+            return@withTransform
+        }
         drawImage(
             sheet,
             srcOffset =
