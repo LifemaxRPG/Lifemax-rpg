@@ -107,7 +107,7 @@ function petCheck(now){
   if(p.vacation.on)return null;
   const h=petHours(p,now);
   if(h>=168){p.alive=false;p.passed=now;
-    state.petMemorial=state.petMemorial||[];state.petMemorial.push({name:p.name,coat:p.coat,days:Math.max(1,Math.round((now-p.born)/864e5)),passed:now,bond:petLevel(p)});
+    state.petMemorial=state.petMemorial||[];state.petMemorial.push({name:p.name,coat:p.coat,days:Math.max(1,Math.round((now-p.born)/864e5)),passed:now,bond:petLevel(p),album:typeof petAlbumMemorial==='function'?petAlbumMemorial(p):null});
     save();return 'passed'}
   if(h>=96){const d=Math.floor((h-96)/24);if((p.erodedDays||0)<d){p.bondPts=Math.max(0,p.bondPts-8*(d-(p.erodedDays||0)));p.erodedDays=d}}
   else p.erodedDays=0;

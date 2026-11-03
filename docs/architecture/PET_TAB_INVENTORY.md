@@ -75,3 +75,7 @@ A genetic coat's sheets are asked of the page: `CatArt.coats` is one source for 
 Off by default, "(beta)". `NativeApi.VALUE` 49. Not the default: that is after CT5 (plan, open question 6). On the phone: the feel of the room at 60 fps on a large canvas (target under 4 ms of CPU a frame), the page's loop really stopped under the screen (`petWantRun` through `diagnostics`), the haptic of Feed (the page's own buzz), a deep-link feed playing its cue, the coat command with a real genetic cat, and TalkBack over the room and the buttons.
 
 Not done in CT1, by plan: touch and the full-screen room (CT2), the brain driving the cats (CT3), toys and play (CT4), sleep spots, the box and the pair (CT5), the panels, the cattery, the intro and the memorial (CT6).
+
+## Photo album and scrapbook (S1, page side only)
+
+The page now keeps a per-cat album of memorable moments (state.pet.album, state.pet2.album, copied into state.petMemorial on passing) and the API for a later native phase to stage portraits and draw the scrapbook. Nothing is projected to native yet and no capability exists. See PET_SCRAPBOOK.md.

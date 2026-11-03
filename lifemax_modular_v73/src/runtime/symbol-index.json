@@ -566,8 +566,17 @@
  "PAY_FREQ": [
   "src/runtime/segments/36-money-pay.js"
  ],
+ "PET_ALBUM": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "PET_ALBUM_ALREADY": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
  "PET_AWAY_MS": [
   "src/runtime/segments/16-runtime.js"
+ ],
+ "PET_BIRTHDAY_DAYS": [
+  "src/runtime/segments/50-pet-moments.js"
  ],
  "PET_BLINK": [
   "src/runtime/segments/26-pet-brain.js"
@@ -625,6 +634,9 @@
  ],
  "PET_CTX": [
   "src/runtime/segments/15-runtime.js"
+ ],
+ "PET_DAY_MILESTONES": [
+  "src/runtime/segments/50-pet-moments.js"
  ],
  "PET_DEPTH": [
   "src/runtime/segments/24-pet-depth.js"
@@ -740,6 +752,12 @@
  "PET_MASTER": [
   "src/runtime/segments/16-runtime.js"
  ],
+ "PET_MOMENTS": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "PET_MOMENT_EVENTS": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
  "PET_MORPH": [
   "src/runtime/segments/37-pet-morph.js"
  ],
@@ -806,6 +824,9 @@
  "PET_PORTRAIT": [
   "src/runtime/segments/50-pet-portrait.js"
  ],
+ "PET_POSES": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
  "PET_PRON": [
   "src/runtime/segments/32-pet-dna.js"
  ],
@@ -862,6 +883,9 @@
  ],
  "PET_SPOT_X": [
   "src/runtime/segments/25-pet-likes.js"
+ ],
+ "PET_STAGE_NAMES": [
+  "src/runtime/segments/50-pet-moments.js"
  ],
  "PET_SURF": [
   "src/runtime/segments/15-runtime.js"
@@ -5085,6 +5109,78 @@
  "petAgoShort": [
   "src/runtime/segments/26-pet-brain.js"
  ],
+ "petAlbumCatId": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumCats": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumCleanEntry": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumCompactMemorials": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumContext": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumEvent": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumFacts": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumList": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumLook": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumMemorial": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumOf": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumPending": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumPhotoTaken": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumPut": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumRepair": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumRoom": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumScan": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumScanCat": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumShapeOk": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumSorted": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumStageIdx": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumSummary": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumTrim": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
+ "petAlbumView": [
+  "src/runtime/segments/50-pet-album.js"
+ ],
  "petAnimName": [
   "src/runtime/segments/15-runtime.js"
  ],
@@ -6044,6 +6140,24 @@
  "petMix": [
   "src/runtime/segments/32-pet-dna.js"
  ],
+ "petMomentCaption": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "petMomentCore": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "petMomentFill": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "petMomentFx": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "petMomentOf": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
+ "petMomentPose": [
+  "src/runtime/segments/50-pet-moments.js"
+ ],
  "petMoodOf": [
   "src/runtime/segments/26-pet-brain.js"
  ],
@@ -6607,6 +6721,9 @@
  ],
  "petSchedule": [
   "src/runtime/segments/15-runtime.js"
+ ],
+ "petScrapbookData": [
+  "src/runtime/segments/50-pet-album.js"
  ],
  "petSeenNow": [
   "src/runtime/segments/16-runtime.js"
@@ -7683,6 +7800,9 @@
  ],
  "window.NativeTabs": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.PetAlbum": [
+  "src/runtime/segments/50-pet-album.js"
  ],
  "window.SwipeFeel": [
   "src/runtime/segments/50-native-swipe-feel.js"
