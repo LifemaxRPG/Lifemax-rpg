@@ -55,6 +55,9 @@ class PetActions(
     val blink: () -> Unit = {},
     val vacation: (Boolean) -> Unit = {},
     val rename: (String) -> Unit = {},
+    val focus: (Int) -> Unit = {},
+    val buyToy: (String) -> Unit = {},
+    val expandGenome: (Boolean) -> Unit = {},
     /** The Play button, the full-screen room and the rest of the Cat page: the page's own view. */
     val handOver: (action: String) -> Unit = {},
     val noticeShown: (PetNotice) -> Unit = {},
@@ -105,6 +108,7 @@ fun PetScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     item("card") { CatCard(p, ui, actions) }
+                    petTogetherItem(p, ui, actions)
                     item("care") {
                         PetCareCard(
                             p,
@@ -114,6 +118,7 @@ fun PetScreen(
                             startOpen = careOpen,
                         )
                     }
+                    petPanelItems(p, ui, actions)
                     item("more") { MoreRow(p) { actions.handOver(PetHandOver.MORE) } }
                 }
                 HorizontalDivider(color = c.line)
@@ -167,6 +172,7 @@ private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions) {
                 fontWeight = FontWeight(650),
                 lineHeight = 21.75.sp,
             )
+        p.panels?.mind?.let { PetMindRow(it, Modifier.padding(top = 10.dp)) }
         PetBondBar(p.bond.pct, p.bond.text, Modifier.padding(start = 2.dp, top = 11.dp, end = 2.dp))
         p.growth?.let { PetGrowthLine(it, Modifier.padding(top = 12.dp)) }
         Buttons(p, ui, actions)

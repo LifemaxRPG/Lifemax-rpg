@@ -430,18 +430,29 @@ function petPairSwitchHtml(){
   return '<div class="pet-switch" id="petSwitch" role="tablist" aria-label="Which cat">'+[0,1].map(function(i){const p=petPairP(i);
     return '<button type="button" role="tab" aria-selected="'+(P.focus===i)+'" class="'+(P.focus===i?'on':'')+'" onclick="petPairFocus('+i+')"><canvas data-i="'+i+'" width="32" height="32" aria-hidden="true"></canvas><span>'+esc(p.name)+'</span></button>'}).join('')+'</div>';
 }
-function petPairCardHtml(){
-  const d=petPairData();if(!d)return '';const L=petPairLevel(d.rel),a=state.pet.name,b=state.pet2.name,n=d.n,now=Date.now();
+/* the Together card as data (the page's card and the native Cat tab share it, in the page's words): the two names, the friendship
+   level and how far along it is, what they are like together, the "while you were away" line while it is fresh, the counts of what
+   they have done, the pecking order and the last thing they did; null with fewer than two cats */
+function petPairCardData(now){
+  const d=petPairData();if(!d)return null;const L=petPairLevel(d.rel),a=state.pet.name,b=state.pet2.name,n=d.n;now=now||Date.now();
   const bits=[];if(n.greet)bits.push(n.greet+' nose touch'+(n.greet>1?'es':''));if(n.hiss)bits.push(n.hiss+' hiss'+(n.hiss>1?'es':''));if(n.chase)bits.push(n.chase+' chase'+(n.chase>1?'s':''));if(n.groom)bits.push(n.groom+' grooming'+(n.groom>1?'s':''));if(n.nap)bits.push(n.nap+' nap'+(n.nap>1?'s':'')+' together');if(n.standoff)bits.push(n.standoff+' standoff'+(n.standoff>1?'s':''));
-  let h='<div class="pet-pair-head"><div><div class="eyebrow">TOGETHER</div><h3>'+esc(a)+' &amp; '+esc(b)+'</h3></div><span class="pet-pair-lvl">'+L[1]+'</span></div>'
-   +'<div class="pet-bondbar pet-pair-bar"><i style="width:'+Math.round(d.rel*100)+'%"></i></div>'
-   +'<p class="pet-pair-text">'+(d.met?L[2]:esc(b)+' is new here. They have not properly met yet.')+'</p>';
-  if(d.away&&now-d.away.at<15*60000)h+='<p class="pet-away"><b>While you were away</b>'+esc(d.away.t)+'</p>';
-  if(bits.length)h+='<p class="muted pet-pair-counts">'+bits.join(' · ')+'</p>';
-  try{h+=petRankHtml()}catch(e){}
-  if(d.last)h+='<p class="muted pet-pair-counts">Last: '+esc(d.last.t)+', '+petAgo(now-d.last.at)+'.</p>';
+  let rank=null;try{rank=petRankCardData()}catch(e){}
+  return {title:'TOGETHER',a:a,b:b,level:L[1],pct:Math.round(d.rel*100),text:d.met?L[2]:b+' is new here. They have not properly met yet.',
+    awayTitle:'While you were away',away:d.away&&now-d.away.at<15*60000?d.away.t:'',counts:bits.join(' · '),rank:rank,
+    last:d.last?'Last: '+d.last.t+', '+petAgo(now-d.last.at)+'.':''};
+}
+function petPairCardHtmlOf(c){
+  if(!c)return '';
+  let h='<div class="pet-pair-head"><div><div class="eyebrow">'+c.title+'</div><h3>'+esc(c.a)+' &amp; '+esc(c.b)+'</h3></div><span class="pet-pair-lvl">'+c.level+'</span></div>'
+   +'<div class="pet-bondbar pet-pair-bar"><i style="width:'+c.pct+'%"></i></div>'
+   +'<p class="pet-pair-text">'+esc(c.text)+'</p>';
+  if(c.away)h+='<p class="pet-away"><b>'+c.awayTitle+'</b>'+esc(c.away)+'</p>';
+  if(c.counts)h+='<p class="muted pet-pair-counts">'+c.counts+'</p>';
+  h+=petRankHtmlOf(c.rank);
+  if(c.last)h+='<p class="muted pet-pair-counts">'+esc(c.last)+'</p>';
   return h;
 }
+function petPairCardHtml(){return petPairCardHtmlOf(petPairCardData())}
 function petPairInviteHtml(){
   return '<div style="flex:1"><strong>A second cat</strong><div class="muted" style="font-size:12px">Another stray has been seen by the kitchen window. Two cats keep each other company: they meet, play chase, groom each other and nap together.</div></div><button type="button" class="btn secondary small" onclick="petPairAdoptOpen()">Meet</button>';
 }

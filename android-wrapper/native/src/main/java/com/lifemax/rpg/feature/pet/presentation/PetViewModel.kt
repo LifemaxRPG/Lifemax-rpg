@@ -127,6 +127,24 @@ class PetViewModel(
         send(PET_RENAME) { commands.rename(name) }
     }
 
+    /** The Together card's switcher: show cat [index]'s card. */
+    fun focus(index: Int) {
+        if (waiting != null) return
+        send(PET_FOCUS) { commands.focus(index) }
+    }
+
+    /** Unlock a toy early with Sparks; the page's reply says whether it could. */
+    fun buyToy(id: String) {
+        if (waiting != null) return
+        send(PET_BUY_TOY) { commands.buyToy(id) }
+    }
+
+    /** The genome table opened or closed: the page sends its rows only while it is open. */
+    fun expandGenome(open: Boolean) {
+        if (waiting != null) return
+        send(PET_EXPAND) { commands.expandGenome(open) }
+    }
+
     fun onReply(reply: PetReply) {
         if (reply.requestId != requestId) return
         waiting = null
@@ -182,6 +200,9 @@ class PetViewModel(
         const val PET_BLINK = "blink"
         const val PET_VACATION = "vacation"
         const val PET_RENAME = "rename"
+        const val PET_FOCUS = "focus"
+        const val PET_BUY_TOY = "buyToy"
+        const val PET_EXPAND = "expand"
 
         /** A meal this recent, found in the first projection, is the reason the owner is here. */
         const val FRESH_MEAL_MS = 4_000L

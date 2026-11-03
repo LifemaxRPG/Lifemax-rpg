@@ -5668,6 +5668,9 @@
  "petDnaHidden": [
   "src/runtime/segments/32-pet-dna.js"
  ],
+ "petDnaHtml": [
+  "src/runtime/segments/32-pet-dna.js"
+ ],
  "petDnaId": [
   "src/runtime/segments/32-pet-dna.js"
  ],
@@ -5705,6 +5708,9 @@
   "src/runtime/segments/32-pet-dna.js"
  ],
  "petDnaPalette": [
+  "src/runtime/segments/32-pet-dna.js"
+ ],
+ "petDnaPanelData": [
   "src/runtime/segments/32-pet-dna.js"
  ],
  "petDnaPanelHtml": [
@@ -5929,6 +5935,12 @@
  "petInit": [
   "src/runtime/segments/15-runtime.js"
  ],
+ "petInnerData": [
+  "src/runtime/segments/26-pet-brain.js"
+ ],
+ "petInnerHtml": [
+  "src/runtime/segments/26-pet-brain.js"
+ ],
  "petInterrupt": [
   "src/runtime/segments/16-runtime.js"
  ],
@@ -5971,10 +5983,16 @@
  "petLikesDaily": [
   "src/runtime/segments/25-pet-likes.js"
  ],
+ "petLikesData": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
  "petLikesEvaluate": [
   "src/runtime/segments/25-pet-likes.js"
  ],
  "petLikesGiftItem": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
+ "petLikesHtml": [
   "src/runtime/segments/25-pet-likes.js"
  ],
  "petLikesOptions": [
@@ -6038,6 +6056,12 @@
  "petMidnight": [
   "src/runtime/segments/25-pet-likes.js"
  ],
+ "petMindData": [
+  "src/runtime/segments/26-pet-brain.js"
+ ],
+ "petMindHtml": [
+  "src/runtime/segments/26-pet-brain.js"
+ ],
  "petMinuteRng": [
   "src/runtime/segments/15-runtime.js"
  ],
@@ -6056,7 +6080,13 @@
  "petMorphFill": [
   "src/runtime/segments/37-pet-morph.js"
  ],
+ "petMorphHtml": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
  "petMorphIds": [
+  "src/runtime/segments/37-pet-morph.js"
+ ],
+ "petMorphPanelData": [
   "src/runtime/segments/37-pet-morph.js"
  ],
  "petMorphPanelHtml": [
@@ -6122,7 +6152,13 @@
  "petPairAdoptOpen": [
   "src/runtime/segments/29-pet-pair.js"
  ],
+ "petPairCardData": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
  "petPairCardHtml": [
+  "src/runtime/segments/29-pet-pair.js"
+ ],
+ "petPairCardHtmlOf": [
   "src/runtime/segments/29-pet-pair.js"
  ],
  "petPairChaseGo": [
@@ -6491,6 +6527,9 @@
  "petRankBias": [
   "src/runtime/segments/29-pet-rank.js"
  ],
+ "petRankCardData": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
  "petRankChallenger": [
   "src/runtime/segments/29-pet-rank.js"
  ],
@@ -6504,6 +6543,9 @@
   "src/runtime/segments/29-pet-rank.js"
  ],
  "petRankHtml": [
+  "src/runtime/segments/29-pet-rank.js"
+ ],
+ "petRankHtmlOf": [
   "src/runtime/segments/29-pet-rank.js"
  ],
  "petRankLabel": [
@@ -6765,6 +6807,9 @@
   "src/runtime/segments/16-runtime.js"
  ],
  "petToyWord": [
+  "src/runtime/segments/25-pet-likes.js"
+ ],
+ "petToysData": [
   "src/runtime/segments/25-pet-likes.js"
  ],
  "petTrust": [
@@ -7666,6 +7711,9 @@
  "window.NativePet": [
   "src/runtime/segments/50-native-pet.js"
  ],
+ "window.NativePetPanels": [
+  "src/runtime/segments/50-native-pet-panels.js"
+ ],
  "window.NativePlanRunner": [
   "src/runtime/segments/50-native-plan-runner.js"
  ],
@@ -7802,7 +7850,8 @@
   "src/runtime/segments/50-native-overview.js"
  ],
  "window.writeSave": [
-  "src/runtime/segments/50-native-pet.js"
+  "src/runtime/segments/50-native-pet.js",
+  "src/runtime/segments/50-native-pet-panels.js"
  ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"

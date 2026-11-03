@@ -1,0 +1,397 @@
+{
+ "protocol": 1,
+ "webSessionId": "pet-fixture",
+ "sequence": 1,
+ "cats": [
+  {
+   "name": "Miso",
+   "coat": "ginger",
+   "stage": 0,
+   "weak": false
+  }
+ ],
+ "focus": 0,
+ "name": "Miso",
+ "eyebrow": "KITTEN · STRAY",
+ "hearts": 0,
+ "mood": "",
+ "bond": {
+  "pct": 0,
+  "text": "Stray · 0% to Wary"
+ },
+ "grow": {
+  "label": "NEW KITTEN",
+  "day": "DAY 2 OF 30",
+  "pct": 3,
+  "text": "Grown up in 29 days. Kittens play more, nap more and have higher little voices."
+ },
+ "lastMeal": {
+  "value": "5 h",
+  "label": "last meal"
+ },
+ "mealsToday": "0 / 2",
+ "days": "1",
+ "favs": {
+  "place": "Still deciding",
+  "toy": "Still deciding"
+ },
+ "hint": "Strays take a few days to trust you. Regular meals are how a cat learns you are safe.",
+ "feed": {
+  "label": "Feed Miso",
+  "wait": false
+ },
+ "care": {
+  "how": "How it works. Feed about twice a day, at least four hours apart. A hungry cat tells you with its behavior, never with a notification. A cat that goes a very long time with no food will get weak, and about a week without food can be fatal.",
+  "bond": "Bond. It grows from regular meals, gentle petting (3 a day count) and play (2 a day count). Strays are shy at first. Close friends greet you, follow your finger, rub against you and sometimes bring gifts.",
+  "vacationHint": "Pauses hunger while you are away. Turn it off when you are back.",
+  "vacation": false,
+  "name": "Miso",
+  "nameMax": 14
+ },
+ "together": "",
+ "words": {
+  "room": "View room",
+  "play": "Play",
+  "blink": "Slow blink",
+  "blinkHint": "A slow blink is how cats say they feel safe",
+  "careTitle": "Care and settings",
+  "vacationTitle": "Vacation mode",
+  "nameLabel": "Name",
+  "rename": "Rename",
+  "moreTitle": "More on the Cat page",
+  "moreText": "The toy tray, the cattery and adopting another cat open on the page."
+ },
+ "cue": {
+  "fed": []
+ },
+ "panels": {
+  "words": {
+   "together": "Together",
+   "switcher": "Which cat",
+   "likes": "Likes",
+   "inner": "Inner life",
+   "dna": "Genetics",
+   "toys": "Cat toys",
+   "toysSub": "unlock early",
+   "sparks": "Sparks",
+   "buy": "Unlock",
+   "bought": "Unlocked",
+   "genomeShow": "Show full genome",
+   "genomeHide": "Hide full genome",
+   "moreText": "The toy tray, the cattery and adopting another cat open on the page."
+  },
+  "mind": {
+   "style": {
+    "id": "newcomer",
+    "name": "Cautious newcomer"
+   },
+   "mood": "calm",
+   "awayTitle": "While you were away",
+   "text": "Miso is calm. Still working out whether you are safe. Let him come to you.",
+   "away": ""
+  },
+  "likes": {
+   "lead": "What Miso likes.",
+   "body": " Cats pick their own spots. Time spent somewhere, and good moments there, slowly make a favorite. Toys you choose for him count a little more.",
+   "places": [],
+   "toys": [],
+   "placesTitle": "Places",
+   "toysTitle": "Toys",
+   "noPlaces": "No favorite places yet. Give it a day or two."
+  },
+  "inner": {
+   "lead": "Miso’s inner world.",
+   "body": " How he feels about you is more than one number. Respecting his signals (ears back, a twitching tail) builds trust. Letting him come to you builds confidence.",
+   "quirksTitle": "Quirks",
+   "memoriesTitle": "Moments he remembers",
+   "threads": [
+    {
+     "label": "Familiarity",
+     "pct": 16,
+     "word": "Still learning your scent"
+    },
+    {
+     "label": "Trust",
+     "pct": 20,
+     "word": "Unsure of your hands"
+    },
+    {
+     "label": "Safety",
+     "pct": 20,
+     "word": "Startles easily around you"
+    },
+    {
+     "label": "Confidence",
+     "pct": 70,
+     "word": "Confident and self-directed"
+    }
+   ],
+   "quirks": [
+    {
+     "name": "Shadow chaser",
+     "source": "Born with it",
+     "text": "He pounces on his own shadow."
+    },
+    {
+     "name": "Dramatic flopper",
+     "source": "Born with it",
+     "text": "He flops over sideways instead of sitting when he is very happy."
+    }
+   ],
+   "memories": [],
+   "stats": "",
+   "comfort": ""
+  },
+  "dna": {
+   "morph": {
+    "title": "Body shape",
+    "intro": "Proportions come from several genes each, so they vary smoothly and are passed on strongly. Breed two long-eared cats and their kittens tend to have long ears too. (Shown for the grown cat.)",
+    "rows": [
+     {
+      "label": "Ear length · rather tiny",
+      "pct": 34,
+      "note": "0.75× the standard art · 3 of 10 lengthening alleles"
+     },
+     {
+      "label": "Ear width · average",
+      "pct": 62,
+      "note": "1.11× the standard art · 3 of 6 lengthening alleles"
+     },
+     {
+      "label": "Tail length · average",
+      "pct": 55,
+      "note": "1.09× the standard art · 5 of 10 lengthening alleles"
+     },
+     {
+      "label": "Leg length · average",
+      "pct": 49,
+      "note": "0.99× the standard art · 5 of 10 lengthening alleles"
+     },
+     {
+      "label": "Body length · average",
+      "pct": 57,
+      "note": "1.05× the standard art · 4 of 8 lengthening alleles"
+     },
+     {
+      "label": "Whisker length · rather short",
+      "pct": 29,
+      "note": "0.75× the standard art · 1 of 4 lengthening alleles"
+     }
+    ],
+    "tail": {
+     "label": "Tail · HES7",
+     "gt": "T/T",
+     "text": "Full tail."
+    }
+   },
+   "title": "Genetics",
+   "female": false,
+   "sex": "♂ Male",
+   "karyotype": "38,XY",
+   "coat": "Ginger mackerel tabby with a white locket",
+   "sterile": "",
+   "sub": "Green eyes · about 5 kg as an adult (still growing).",
+   "rows": [
+    {
+     "label": "Sex",
+     "gt": "X Y",
+     "text": "The Y chromosome (SRY) makes a male."
+    },
+    {
+     "label": "Orange · ARHGAP36 · X",
+     "gt": "O (X·Y)",
+     "text": "Orange on his only X. Males need just one copy, so most ginger cats are male."
+    },
+    {
+     "label": "Colour · TYRP1 · D4",
+     "gt": "B/B",
+     "text": "Hidden under red."
+    },
+    {
+     "label": "Dilute · MLPH · C1",
+     "gt": "D/D",
+     "text": "Dense colour."
+    },
+    {
+     "label": "Agouti · ASIP · A3",
+     "gt": "A/a",
+     "text": "Banded hairs: the tabby pattern shows."
+    },
+    {
+     "label": "Tabby · TAQPEP · A1",
+     "gt": "mc/Mc · ta/ta",
+     "text": "Mackerel (narrow stripes)."
+    },
+    {
+     "label": "Colourpoint · TYR · D1",
+     "gt": "C/C",
+     "text": "Full colour."
+    },
+    {
+     "label": "White · KIT · B1",
+     "gt": "ws/w · grade 2/6",
+     "text": "A small white locket. The spotting grade comes from several modifier genes."
+    },
+    {
+     "label": "Hair · FGF5 · B1",
+     "gt": "l/L",
+     "text": "Short hair, carries long."
+    },
+    {
+     "label": "Silver",
+     "gt": "I: i/i",
+     "text": "No silver."
+    }
+   ],
+   "carries": {
+    "bold": "Carries",
+    "rest": " (hidden, can be passed on): solid colour, classic tabby, long hair."
+   },
+   "hidden": {
+    "bold": "Hidden by other genes:",
+    "rest": " Red hides the black/brown gene and whether the cat is agouti: red cats always show tabby markings."
+   },
+   "temperament": {
+    "title": "Temperament",
+    "intro": "About half of each comes from his genes, the rest from how he developed before you met. He reads as ",
+    "reads": "curious"
+   },
+   "persona": [
+    {
+     "label": "Skittish",
+     "pct": 49,
+     "word": "Startles easily, likes high and hidden places"
+    },
+    {
+     "label": "Outgoing",
+     "pct": 54,
+     "word": "Explores, watches the window, wanders"
+    },
+    {
+     "label": "Dominant",
+     "pct": 66,
+     "word": "Bossy with other cats, scratches to mark"
+    },
+    {
+     "label": "Spontaneous",
+     "pct": 36,
+     "word": "Sudden zoomies and games"
+    },
+    {
+     "label": "Friendly",
+     "pct": 31,
+     "word": "Rubs, slow blinks, comes to the glass"
+    },
+    {
+     "label": "Vocal",
+     "pct": 46,
+     "word": "Talks a lot"
+    }
+   ],
+   "mutations": null,
+   "genome": {
+    "title": "Full genome (63 loci)",
+    "head": [
+     "Locus",
+     "Chr",
+     "From mother",
+     "From father"
+    ],
+    "count": 63,
+    "note": "Pigment genes are real feline genes with their known effects; positions are approximate. Loci with + / − alleles are modelled quantitative loci for traits that real cats inherit through many small genes.",
+    "loci": []
+   },
+   "genomeOpen": false
+  },
+  "pair": null,
+  "toys": {
+   "sparks": 1000,
+   "items": [
+    {
+     "id": "ball_a",
+     "name": "Jingle ball",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 0,
+     "affordable": true
+    },
+    {
+     "id": "mouse",
+     "name": "Toy mouse",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 0,
+     "affordable": true
+    },
+    {
+     "id": "feather",
+     "name": "Feather",
+     "unlocked": true,
+     "word": "New",
+     "bought": true,
+     "price": 200,
+     "affordable": true
+    },
+    {
+     "id": "ball_b",
+     "name": "Crinkle ball",
+     "unlocked": false,
+     "word": "Unlocks day 3",
+     "bought": false,
+     "price": 150,
+     "affordable": true
+    },
+    {
+     "id": "yarn",
+     "name": "Yarn ball",
+     "unlocked": false,
+     "word": "Unlocks day 4",
+     "bought": false,
+     "price": 150,
+     "affordable": true
+    },
+    {
+     "id": "spring",
+     "name": "Spring",
+     "unlocked": false,
+     "word": "Unlocks at Curious",
+     "bought": false,
+     "price": 300,
+     "affordable": true
+    },
+    {
+     "id": "wand",
+     "name": "Feather wand",
+     "unlocked": false,
+     "word": "Unlocks at Friendly",
+     "bought": false,
+     "price": 450,
+     "affordable": true
+    }
+   ]
+  }
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

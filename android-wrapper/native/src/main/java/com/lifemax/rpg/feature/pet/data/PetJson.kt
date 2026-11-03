@@ -91,7 +91,7 @@ internal fun JSONObject.exactly(keys: Set<String>, what: String = "projection") 
 }
 
 internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProjection {
-    j.exactly(TOP_KEYS)
+    j.exactly(if (j.has("panels")) TOP_KEYS + "panels" else TOP_KEYS)
     val cats = j.getJSONArray("cats")
     require(cats.length() in 1..MAX_CATS) { "A house has one or two cats" }
     val looks =
@@ -151,6 +151,12 @@ internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProje
             },
         tokens = j.getJSONObject("tokens").pageTokens(),
         light = j.bool("light"),
+        panels =
+            if (j.has("panels"))
+                decodePanels(
+                    j.get("panels") as? JSONObject ?: throw IllegalArgumentException("panels")
+                )
+            else null,
     )
 }
 

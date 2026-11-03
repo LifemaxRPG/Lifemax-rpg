@@ -33,6 +33,12 @@ class PetViewModelTest {
         override fun vacation(on: Boolean) = ask("vacation:$on")
 
         override fun rename(name: String) = ask("rename:$name")
+
+        override fun focus(index: Int) = ask("focus:$index")
+
+        override fun buyToy(id: String) = ask("buyToy:$id")
+
+        override fun expandGenome(open: Boolean) = ask("expand:$open")
     }
 
     private val repository = WebPetRepository()

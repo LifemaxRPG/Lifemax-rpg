@@ -1314,8 +1314,8 @@
   },
   {
    "file": "src/runtime/segments/25-pet-likes.js",
-   "bytes": 21321,
-   "statement_count": 44,
+   "bytes": 22284,
+   "statement_count": 47,
    "tags": [
     "pet",
     "interface",
@@ -1362,8 +1362,11 @@
     "petLikesOptions",
     "petToyTray",
     "petToyIcon",
+    "petToysData",
     "petToyTrayRender",
     "petFavsData",
+    "petLikesData",
+    "petLikesHtml",
     "petLikesRender",
     "petLikesTick",
     "petDevLikes"
@@ -1371,8 +1374,8 @@
   },
   {
    "file": "src/runtime/segments/26-pet-brain.js",
-   "bytes": 72031,
-   "statement_count": 98,
+   "bytes": 73231,
+   "statement_count": 102,
    "tags": [
     "pet",
     "interface",
@@ -1464,6 +1467,10 @@
     "petBrainTick",
     "petBrainReadout",
     "petAgoShort",
+    "petMindData",
+    "petMindHtml",
+    "petInnerData",
+    "petInnerHtml",
     "petBrainRender",
     "PET_BLINK",
     "petBlinkGap",
@@ -1537,8 +1544,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-pair.js",
-   "bytes": 46162,
-   "statement_count": 99,
+   "bytes": 46895,
+   "statement_count": 101,
    "tags": [
     "pet",
     "interface",
@@ -1610,6 +1617,8 @@
     "petPairFocus",
     "petPairDrawPortraits",
     "petPairSwitchHtml",
+    "petPairCardData",
+    "petPairCardHtmlOf",
     "petPairCardHtml",
     "petPairInviteHtml",
     "petPairDecorate",
@@ -1626,8 +1635,8 @@
   },
   {
    "file": "src/runtime/segments/29-pet-rank.js",
-   "bytes": 6881,
-   "statement_count": 19,
+   "bytes": 7397,
+   "statement_count": 21,
    "tags": [
     "pet",
     "rank"
@@ -1650,6 +1659,8 @@
     "petPairStandoffEnd",
     "PET_PAIR_PLAYS.standoff",
     "petRankLabel",
+    "petRankCardData",
+    "petRankHtmlOf",
     "petRankHtml"
    ]
   },
@@ -1706,8 +1717,8 @@
   },
   {
    "file": "src/runtime/segments/32-pet-dna.js",
-   "bytes": 57298,
-   "statement_count": 104,
+   "bytes": 58848,
+   "statement_count": 106,
    "tags": [
     "pet",
     "genetics"
@@ -1802,6 +1813,8 @@
     "petDnaRow",
     "petDnaCarries",
     "petDnaHidden",
+    "petDnaPanelData",
+    "petDnaHtml",
     "petDnaPanelHtml",
     "petDnaRender",
     "petDevDnaReroll",
@@ -1987,8 +2000,8 @@
   },
   {
    "file": "src/runtime/segments/37-pet-morph.js",
-   "bytes": 22723,
-   "statement_count": 55,
+   "bytes": 22992,
+   "statement_count": 57,
    "tags": [
     "pet",
     "dna",
@@ -2003,6 +2016,8 @@
     "petMorphVal",
     "petMorphAttach",
     "petMorphWord",
+    "petMorphPanelData",
+    "petMorphHtml",
     "petMorphPanelHtml",
     "PET_BREED",
     "PET_CATTERY_MAX",
@@ -3513,7 +3528,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 11440,
+   "bytes": 11605,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3523,6 +3538,20 @@
     "window.petFeed",
     "window.writeSave",
     "window.NativePet"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-panels.js",
+   "bytes": 7742,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "panels"
+   ],
+   "symbols": [
+    "window.writeSave",
+    "window.NativePetPanels"
    ]
   },
   {

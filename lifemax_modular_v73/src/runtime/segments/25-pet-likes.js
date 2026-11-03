@@ -206,11 +206,17 @@ function petToyIcon(rt,k){
   else{const im=petPropImg(rt,k);if(!im||!im.img.complete)return '';x.drawImage(im.img,Math.round((16-im.w)/2)*S,Math.round((16-im.h)/2)*S,im.w*S,im.h*S)}
   return rt.icon[k]=cv.toDataURL();
 }
+/* the toys as data, for the tray below and the native Cat tab's toy card: whether each is open to this cat (bond level, days together,
+   or bought early with Sparks), and the word the tray shows ("Favorite", "New", "Loves it"...) or what it waits for ("Unlocks at Friend") */
+function petToysData(p){
+  return Object.keys(PET_TOYS).map(function(id){const t=PET_TOYS[id],ok=petToyUnlocked(p,id);
+    return {id:id,name:t.name,icon:t.icon||id,unlocked:ok,word:ok?petToyWord(p,id):'Unlocks '+petToyLock(p,id)}});
+}
 function petToyTrayRender(){
   const g=document.getElementById('petToyGrid'),p=petData(),rt=PET_RT;if(!g||!p||!rt||!rt.ready)return;
   let h='<button type="button" class="pet-toy pet-toy-any" onclick="petOfferToy(null)"><span class="pet-toy-ico pet-toy-q">?</span><b>Let '+esc(p.name)+' pick</b><small>His choice</small></button>';
-  for(const id of Object.keys(PET_TOYS)){const t=PET_TOYS[id],ok=petToyUnlocked(p,id),ic=petToyIcon(rt,t.icon||id),w=ok?petToyWord(p,id):'Unlocks '+petToyLock(p,id);
-    h+='<button type="button" class="pet-toy'+(ok?'':' locked')+(w==='Favorite'?' fav':'')+'" '+(ok?'onclick="petOfferToy(\''+id+'\')"':'disabled')+'><span class="pet-toy-ico">'+(ic?'<img src="'+ic+'" alt="">':'')+'</span><b>'+t.name+'</b><small>'+w+'</small></button>'}
+  for(const t of petToysData(p)){const ic=petToyIcon(rt,t.icon),w=t.word;
+    h+='<button type="button" class="pet-toy'+(t.unlocked?'':' locked')+(w==='Favorite'?' fav':'')+'" '+(t.unlocked?'onclick="petOfferToy(\''+t.id+'\')"':'disabled')+'><span class="pet-toy-ico">'+(ic?'<img src="'+ic+'" alt="">':'')+'</span><b>'+t.name+'</b><small>'+w+'</small></button>'}
   g.innerHTML=h;
 }
 /* ---------- what he likes, on the Cat screen ---------- */
@@ -220,6 +226,22 @@ function petFavsData(p){
   const lk=p.likes&&p.likes.v===1?p.likes:null,sp=lk&&lk.favSpot?PET_SPOTS[lk.favSpot].name:null,ty=lk&&lk.favToy?PET_TOYS[lk.favToy].name:null;
   return {place:sp?sp.charAt(0).toUpperCase()+sp.slice(1):'Still deciding',toy:ty||'Still deciding'};
 }
+/* the "What he likes" bars as data (the page's card and the native Cat tab share it): the top five places and four toys, each as a
+   share of the leader, the favourite marked */
+function petLikesData(p){
+  const lk=petLikes(p),sp=petTop(lk.spots).slice(0,5),ty=petTop(lk.toys).slice(0,4),mx=Math.max(1,sp.length?sp[0][1]:1),mt=Math.max(1,ty.length?ty[0][1]:1);
+  return {lead:'What '+p.name+' likes.',body:' Cats pick their own spots. Time spent somewhere, and good moments there, slowly make a favorite. Toys you choose for him count a little more.',
+    places:sp.map(function(e){const n=PET_SPOTS[e[0]].name;return {name:n.charAt(0).toUpperCase()+n.slice(1),pct:Math.round(e[1]/mx*100),fav:lk.favSpot===e[0]}}),
+    toys:ty.map(function(e){return {name:PET_TOYS[e[0]].name,pct:Math.round(e[1]/mt*100),fav:lk.favToy===e[0]}}),
+    placesTitle:'Places',toysTitle:'Toys',noPlaces:'No favorite places yet. Give it a day or two.'};
+}
+function petLikesHtml(d){
+  const row=function(r){return '<div class="pet-like"><span>'+r.name+(r.fav?' ♥':'')+'</span><i><em style="width:'+r.pct+'%"></em></i></div>'};
+  let h='<p><b>'+esc(d.lead)+'</b>'+d.body+'</p>';
+  h+=d.places.length?'<div class="pet-likes-h">'+d.placesTitle+'</div>'+d.places.map(row).join(''):'<p class="muted">'+d.noPlaces+'</p>';
+  h+=d.toys.length?'<div class="pet-likes-h">'+d.toysTitle+'</div>'+d.toys.map(row).join(''):'';
+  return h;
+}
 function petLikesRender(force){
   const p=petData();if(!p)return;const lk=petLikes(p),el=document.getElementById('petFavs');
   if(el){const f=petFavsData(p);
@@ -227,12 +249,7 @@ function petLikesRender(force){
     if(el.innerHTML!==html)el.innerHTML=html}
   const d=document.getElementById('petLikes');
   if(d&&(force||!d.dataset.t||Date.now()-d.dataset.t>15000)){d.dataset.t=Date.now();
-    const sp=petTop(lk.spots).slice(0,5),ty=petTop(lk.toys).slice(0,4),mx=Math.max(1,sp.length?sp[0][1]:1),mt=Math.max(1,ty.length?ty[0][1]:1);
-    const row=function(n,v,m,fav){return '<div class="pet-like"><span>'+n+(fav?' ♥':'')+'</span><i><em style="width:'+Math.round(v/m*100)+'%"></em></i></div>'};
-    let h='<p><b>What '+esc(p.name)+' likes.</b> Cats pick their own spots. Time spent somewhere, and good moments there, slowly make a favorite. Toys you choose for him count a little more.</p>';
-    h+=sp.length?'<div class="pet-likes-h">Places</div>'+sp.map(function(e){const n=PET_SPOTS[e[0]].name;return row(n.charAt(0).toUpperCase()+n.slice(1),e[1],mx,lk.favSpot===e[0])}).join(''):'<p class="muted">No favorite places yet. Give it a day or two.</p>';
-    h+=ty.length?'<div class="pet-likes-h">Toys</div>'+ty.map(function(e){return row(PET_TOYS[e[0]].name,e[1],mt,lk.favToy===e[0])}).join(''):'';
-    d.innerHTML=h}
+    d.innerHTML=petLikesHtml(petLikesData(p))}
   /* announce a new favourite once, when the Cat screen is showing */
   if(lk.news&&lk.news.length&&petDepthViewOpen()){const n=lk.news.shift();
     toast(n.k==='spot'?p.name+' has a favorite place now: '+PET_SPOTS[n.id].name+'.':p.name+'\u2019s favorite toy: the '+PET_TOYS[n.id].name.toLowerCase()+'.');save()}
