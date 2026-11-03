@@ -233,6 +233,186 @@
    "reaction": ""
   }
  },
+ "strokeTap": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 200,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-1"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokeTap",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": "",
+   "levelUp": 0
+  }
+ },
+ "strokePet": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 1500,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-2"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokePet",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": "",
+   "levelUp": 0
+  }
+ },
+ "strokePetAgain": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 1500,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-2"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokePetAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "strokeLeft": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 2500,
+   "left": "over",
+   "ignored": true,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-3"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokeLeft",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": "",
+   "levelUp": 0
+  }
+ },
+ "strokeRefused": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 1500,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": ""
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokeRefused",
+   "ok": false,
+   "changed": false,
+   "message": "Something went wrong. Nothing was changed.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "strokeLevelUp": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 1500,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-4"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokeLevelUp",
+   "ok": true,
+   "changed": true,
+   "message": "Mochi trusts you more now: Fond",
+   "why": "",
+   "inHours": 0,
+   "reaction": "",
+   "levelUp": 4
+  }
+ },
+ "purrOn": {
+  "command": "touch",
+  "payload": {
+   "kind": "purr",
+   "cat": 0,
+   "on": true,
+   "level": 0.75
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-purrOn",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "purrOff": {
+  "command": "touch",
+  "payload": {
+   "kind": "purr",
+   "cat": 0,
+   "on": false,
+   "level": 0
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-purrOff",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
  "vacationUnsaved": {
   "command": "vacation",
   "payload": {
@@ -257,6 +437,29 @@
   "reply": {
    "command": "feed",
    "requestId": "req-feedUnsaved",
+   "ok": false,
+   "changed": false,
+   "message": "Could not save to this browser (storage full?)",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "strokeUnsaved": {
+  "command": "touch",
+  "payload": {
+   "kind": "stroke",
+   "cat": 0,
+   "heldMs": 1500,
+   "left": "",
+   "ignored": false,
+   "spam": false,
+   "keepSleep": false,
+   "op": "s-5"
+  },
+  "reply": {
+   "command": "touch",
+   "requestId": "req-strokeUnsaved",
    "ok": false,
    "changed": false,
    "message": "Could not save to this browser (storage full?)",

@@ -362,3 +362,23 @@ Native presentation, web authority (`docs/specs/CAT_TAB_PLAN.md` CT6 part A, `do
 - **Not here:** the toy tray and play (CT4: Play is still handed to the page), pair behaviour (CT5), the cattery, adoption and the memorial (CT6 part B). The page's Cat tab shows no memorial list for a living cat (only "In memory" on the intro), so there is nothing to draw.
 
 Evidence: `native-pet-panels.test.js` (golden HTML for nine states, the projection against the DOM for the same states, the capability gate, nothing written, `focus`, `buyToy` with a failed save taken back, `expand`, and a seeded hand-over simulation of the commands among hops, a closing screen and a level-up; `PANELMUT=twice` and `PANELMUT=focus` must fail it), `native-handover-sim.test.js` (the fake lists the capability), `PetPanelsTest` (every fixture, 36 malformed variants refused with the last good state kept), `PetPanelCommandsTest`, screenshots `PetPanelsScreenshotTest` (new images for each card). On the phone: TalkBack over the cards, large text on a real device, the early unlock against a real Sparks balance.
+
+## Cat tab, phase CT2: touch, care and the full-screen room (Native API 53)
+
+Native presentation, web authority (`docs/specs/CAT_TAB_PLAN.md`, `docs/architecture/PET_TAB_INVENTORY.md`). New capability `pet.touch.v1` on `NativePet`: the cats in the Cat tab's room answer the owner's finger by themselves, as a reflex, and the page (the only writer) judges what the touch counted for.
+
+| Piece | Where | Rule |
+|---|---|---|
+| Hit test | `body/TouchHit.kt` | the page's `petCatBox` (52 x 41 room pixels, scaled by depth); of two cats the deeper one (drawn last) is touched; the food bowl is `petHit`'s rectangle |
+| Touch model | `body/TouchModel.kt` | the page's rules on explicit `dt`: tap under 0.45 s, a pet from 1.1 s, saturation +0.12 on landing and +0.09 a second (calmed by trust, 0.6 asleep), ears back at 0.65, the cat leaves past 0.85, a level-1 cat leaves after 2.6 s, hearts every 0.85 s (1.6 shy) from 0.5 s, purr by trust, spam (4 in 3 s) |
+| Reflex | `body/Petting.kt` | hold clip by trust, purr reaction, ears and tail, hearts and notes, leaving plans, the sleeper who stays asleep (3 and up) or wakes with a stretch, the stranger's start and run, release (sit or slow blink) |
+| Page | `50-native-pet.js` | `touch` command: `stroke` applies the saturation, the brain's events and `petPetDone` (3 counted a day, +2 bond) once per operation id, taken back if the save fails; `purr` feeds the page's purr loop on a timer while the room loop is stopped |
+| Projection | `touch`, `counts`, `haptics`, `touchWords` | only to a screen that said `pet.touch.v1`; read all together or not at all |
+| Full-screen room | `presentation/PetFullRoom.kt` | the same `HouseStage` in a Dialog window above the app's bars, system bars hidden, whole-number scale (`fullScale`), Back or the close chip closes, the inline room stands still meanwhile |
+| Haptics | `PetTouchSink.kt` | the page's patterns (landing 8, heart 6, level-up 10-40-10) at the owner's strength; nothing with haptics off |
+
+- **Rollout.** Still behind Settings, Appearance, "Native Cat (beta)" (off by default). An older app (no `pet.touch.v1`) is sent no touch fields and keeps handing the room to the page's full-screen; a newer app on an older page has no touch (the room is not touchable) and keeps the page's full-screen. The touch fields and the panels (`pet.panels.v1`) are independent: each block goes only to a screen that listed its capability, and the app lists both.
+- **Not in this phase (by plan).** The brain does not drive the cats (CT3): the cats' saturation is the page's number, but a sleeper's depth and the belly trap need the page's cat (CT3 and CT5); `petLikesPetted` is not called (it needs the cat's spot); follow-the-finger, parallax drag, the toy and gift taps (CT4) are not here. The purr and hiss sounds stay in the page.
+- **Rollback.** The same switch.
+
+Evidence: `native-pet-touch.test.js` (25 checks), `native-pet.test.js` (44, unchanged), `native-handover-sim.test.js` with the `touch-cat` hop in every mode (`PETMUT=twice` fails it); unit tests `TouchModelTest`, `PettingTest`, `PetTouchTest`, `PetTouchViewModelTest`, `RoomAllocationTest` (a hand on a cat allocates nothing); screenshots `PetTouchScreenshotTest` (9 new images). On the phone: the feel of the hold, the purr starting without a web gesture (WebAudio resume), the haptics, a stroke across the room under the tab swipe.

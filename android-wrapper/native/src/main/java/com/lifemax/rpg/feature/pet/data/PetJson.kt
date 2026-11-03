@@ -84,14 +84,23 @@ internal fun JSONObject.objOrNull(key: String, keys: Set<String>): JSONObject? {
     return if (isNull(key)) null else obj(key, keys)
 }
 
-/** Throws unless this object has exactly [keys]: a key missing or one more is malformed. */
-internal fun JSONObject.exactly(keys: Set<String>, what: String = "projection") {
+/**
+ * Throws unless this object has every one of [keys] and no key but those and [optional]: a key
+ * missing or one more is malformed.
+ */
+internal fun JSONObject.exactly(
+    keys: Set<String>,
+    what: String = "projection",
+    optional: Set<String> = emptySet(),
+) {
     val have = keys().asSequence().toSet()
-    require(have == keys) { "$what keys differ: unknown ${have - keys}, missing ${keys - have}" }
+    require(have.containsAll(keys) && (keys + optional).containsAll(have)) {
+        "$what keys differ: unknown ${have - keys - optional}, missing ${keys - have}"
+    }
 }
 
 internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProjection {
-    j.exactly(if (j.has("panels")) TOP_KEYS + "panels" else TOP_KEYS)
+    j.exactly(TOP_KEYS, optional = TOUCH_KEYS + "panels")
     val cats = j.getJSONArray("cats")
     require(cats.length() in 1..MAX_CATS) { "A house has one or two cats" }
     val looks =
@@ -157,6 +166,7 @@ internal fun decodePet(j: JSONObject, session: String, sequence: Long): PetProje
                     j.get("panels") as? JSONObject ?: throw IllegalArgumentException("panels")
                 )
             else null,
+        touch = decodeTouch(j, looks.size),
     )
 }
 

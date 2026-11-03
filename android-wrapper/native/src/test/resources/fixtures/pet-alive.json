@@ -59,6 +59,31 @@
  "cue": {
   "fed": []
  },
+ "touch": [
+  {
+   "level": 3,
+   "satMul": 1,
+   "trust": 0.441,
+   "sat": 0
+  }
+ ],
+ "counts": {
+  "pets": 0,
+  "petsMax": 3,
+  "plays": 0,
+  "playsMax": 2
+ },
+ "haptics": {
+  "dm": 1,
+  "add": 0,
+  "amp": 150,
+  "min": 5,
+  "max": 260
+ },
+ "touchWords": {
+  "closeRoom": "Close room",
+  "countsLine": ""
+ },
  "notice": null,
  "tokens": {
   "bg": 4278980114,

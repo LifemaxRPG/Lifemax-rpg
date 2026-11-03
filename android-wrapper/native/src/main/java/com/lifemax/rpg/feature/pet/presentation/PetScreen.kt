@@ -61,6 +61,8 @@ class PetActions(
     /** The Play button, the full-screen room and the rest of the Cat page: the page's own view. */
     val handOver: (action: String) -> Unit = {},
     val noticeShown: (PetNotice) -> Unit = {},
+    /** The full-screen room, the screen's own with a page that has touch. */
+    val openRoom: () -> Unit = {},
 )
 
 /** The page's actions that stay on the page in this release, as the screen names them to it. */
@@ -97,7 +99,10 @@ fun PetScreen(
                     room(Modifier.fillMaxWidth().aspectRatio(ROOM_ASPECT))
                     ViewRoomChip(
                         p.words.room,
-                        { actions.handOver(PetHandOver.ROOM) },
+                        {
+                            if (p.touch != null) actions.openRoom()
+                            else actions.handOver(PetHandOver.ROOM)
+                        },
                         Modifier.align(Alignment.BottomEnd),
                     )
                 }
@@ -190,6 +195,11 @@ private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions) {
         )
         if (p.hint.isNotEmpty())
             PetNote(p.hint, Modifier.padding(start = 2.dp, top = 13.dp, end = 2.dp))
+        p.touch
+            ?.words
+            ?.countsLine
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { PetNote(it, Modifier.padding(start = 2.dp, top = 8.dp, end = 2.dp)) }
     }
 }
 

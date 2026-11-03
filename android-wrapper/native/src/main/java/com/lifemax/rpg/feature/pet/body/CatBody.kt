@@ -171,6 +171,9 @@ class CatBody(
     /** Layer a short reaction on top of whatever the cat is doing. */
     fun react(kind: ReactionKind, seconds: Float = 0f) = reactions.trigger(kind, seconds)
 
+    /** End a reaction early (the purr stops when the hand lifts). */
+    fun endReaction(kind: ReactionKind) = reactions.cancel(kind)
+
     /**
      * Advance by [dt] seconds of host time. Events from this call are in `pose.events` afterwards
      * and stay there until the next call.

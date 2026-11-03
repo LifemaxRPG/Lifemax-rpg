@@ -2,8 +2,13 @@ package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import com.lifemax.rpg.feature.pet.body.Beat
+import com.lifemax.rpg.feature.pet.body.Burst
 import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.HouseLife
+import com.lifemax.rpg.feature.pet.body.Petting
+import com.lifemax.rpg.feature.pet.body.TouchModel
+import com.lifemax.rpg.feature.pet.body.TouchSink
 import com.lifemax.rpg.feature.pet.body.Tuning
 import com.lifemax.rpg.feature.pet.room.CameraDirector
 import com.lifemax.rpg.feature.pet.room.CatLayer
@@ -17,6 +22,8 @@ import com.lifemax.rpg.feature.pet.room.RoomScene
 import com.lifemax.rpg.feature.pet.room.RoomStyle
 import java.util.TimeZone
 import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -60,6 +67,37 @@ internal class HouseStage(
     private var originX = 0
     private var originY = 0
     private val rim = RimSpec()
+    private val particles = TouchParticles(kit.art)
+
+    /** Where a touch's page-side effects go: the buzz, the purr's sound, the page's books. */
+    var touchSink: TouchSink? = null
+
+    /**
+     * Fill the whole of a window of any shape (the full-screen room): a larger scale, the house
+     * centred upright with the dark around it. Off, the room is the card's.
+     */
+    var fullScreen = false
+
+    /** The cats' reflexes to a finger; the room's pointer feeds it ([pointerDown]). */
+    val petting =
+        Petting(
+            house,
+            object : TouchSink {
+                override fun burst(kind: Burst, x: Float, y: Float) = particles.spawn(kind, x, y)
+
+                override fun buzz(beat: Beat) {
+                    touchSink?.buzz(beat)
+                }
+
+                override fun purr(cat: Int, level: Float) {
+                    touchSink?.purr(cat, level)
+                }
+
+                override fun stroke(cat: Int, outcome: TouchModel.Outcome) {
+                    touchSink?.stroke(cat, outcome)
+                }
+            },
+        )
 
     /** Hand over the sprites for cat [i] (null while they load or if they cannot be had). */
     fun setSprites(i: Int, value: CatSprites?) {
@@ -110,10 +148,25 @@ internal class HouseStage(
      */
     fun lookAt(x: Float) = director.camera.cutTo(x)
 
+    /** A finger landed at device pixel ([px], [py]) of the last drawing; what it landed on. */
+    fun pointerDown(px: Float, py: Float): Int = petting.down(roomX(px), roomY(py))
+
+    /** The finger moved to device pixel ([px], [py]). */
+    fun pointerMove(px: Float, py: Float) = petting.move(roomX(px), roomY(py))
+
+    /** The finger lifted, or the touch was taken away. */
+    fun pointerUp() = petting.up()
+
+    private fun roomX(px: Float): Float = (px - originX) / scale + RoomLayout.HOUSE_X0
+
+    private fun roomY(py: Float): Float = (py - originY) / scale
+
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
         house.step(dt)
         scene.depth?.step(dt)
+        petting.step(dt)
+        particles.step(dt)
         followCats(dt)
         if (bowlFullFor > 0f) {
             bowlFullFor -= dt
@@ -154,16 +207,21 @@ internal class HouseStage(
      */
     fun draw(target: DrawScope) {
         scope = target
-        val s = pixelScale(target.size.width)
+        val s =
+            if (fullScreen) fullScale(target.size.width, target.size.height)
+            else pixelScale(target.size.width)
         scale = s
         val view = (target.size.width / s).coerceAtMost(RoomLayout.HOUSE_WIDTH.toFloat())
         val left = director.camera.left(view) - RoomLayout.HOUSE_X0
         originX = -(left * s).roundToInt()
-        originY = (target.size.height - RoomLayout.HEIGHT * s).roundToInt()
-        val topExtra = ceil(originY.toFloat() / s).toInt().coerceAtLeast(0)
+        originY =
+            if (fullScreen) ((target.size.height - RoomLayout.HEIGHT * s) / 2f).roundToInt()
+            else (target.size.height - RoomLayout.HEIGHT * s).roundToInt()
+        val topExtra = if (fullScreen) 0 else ceil(originY.toFloat() / s).toInt().coerceAtLeast(0)
         canvas.begin(target, s, originX, originY)
         scene.paintBackdrop(canvas, hour, clock, topExtra)
         scene.paintScene(canvas, this)
+        particles.paint(canvas)
         scene.paintOverlay(canvas, hour, topExtra)
     }
 
@@ -241,3 +299,14 @@ internal fun localHour(): Double {
     val now = System.currentTimeMillis()
     return RoomLight.hourOf(now + TimeZone.getDefault().getOffset(now))
 }
+
+/**
+ * Device pixels per room pixel for the full-screen room: a whole number that shows at least
+ * [FULL_VIEW_MIN] room pixels of the house across and the whole height of the house up and down. A
+ * wide window (landscape) is limited by its height, so it shows more of the house.
+ */
+internal fun fullScale(width: Float, height: Float): Int =
+    min(floor(width / FULL_VIEW_MIN), floor(height / RoomLayout.HEIGHT)).toInt().coerceAtLeast(1)
+
+/** The narrowest slice of the house the full-screen room shows, in room pixels. */
+private const val FULL_VIEW_MIN = 120f

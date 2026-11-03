@@ -11,6 +11,7 @@ import com.lifemax.rpg.feature.pet.domain.PetNotice
 import com.lifemax.rpg.feature.pet.domain.PetProjection
 import com.lifemax.rpg.feature.pet.domain.PetReply
 import com.lifemax.rpg.feature.pet.domain.PetRepository
+import com.lifemax.rpg.feature.pet.domain.PetStroke
 import java.util.UUID
 
 /** What a cat in the room does because of something the owner or the page did. */
@@ -23,6 +24,9 @@ sealed interface PetReaction {
 
     /** The owner slow blinked: cat [cat] blinks back. */
     data class Blink(val cat: Int) : PetReaction
+
+    /** Petting won cat [cat]'s trust: it reached trust [level] and the room shows its joy. */
+    data class LevelUp(val cat: Int, val level: Int) : PetReaction
 }
 
 /**
@@ -39,6 +43,10 @@ sealed interface PetReaction {
  * - Each meal the page served ([PetFedCue]) is played once. The first projection after the screen
  *   opens plays only a meal that has just happened (a deep link that opened the Cat tab), not an
  *   old one.
+ * - Touch never waits: the cats answer a finger by themselves, and what the page must hear (a touch
+ *   that ended, the purr's sound) is sent on the side, each stroke with an operation id of its own,
+ *   without holding up Feed or the others. A level the page says a stroke won comes back as a
+ *   reaction; its words as a message. The full-screen room is the screen's own ([fullRoom]).
  */
 class PetViewModel(
     private val repository: PetRepository,
@@ -59,7 +67,12 @@ class PetViewModel(
     var reactionVersion by mutableIntStateOf(0)
         private set
 
+    /** Whether the full-screen room is open. */
+    var fullRoom by mutableStateOf(false)
+        private set
+
     private val reactions = ArrayDeque<PetReaction>()
+    private val strokes = HashMap<String, Int>()
     private var showing = false
     private var noticed: Pair<String, Long>? = null
     private var said = 0L
@@ -74,6 +87,8 @@ class PetViewModel(
         showing = true
         notice = null
         waiting = null
+        fullRoom = false
+        strokes.clear()
         cuesBaselined = false
         projected()
     }
@@ -83,7 +98,34 @@ class PetViewModel(
         showing = false
         notice = null
         waiting = null
+        fullRoom = false
+        strokes.clear()
         reactions.clear()
+    }
+
+    /** Open the full-screen room (the screen's own; Back or the close chip ends it). */
+    fun openRoom() {
+        if (showing) fullRoom = true
+    }
+
+    fun closeRoom() {
+        fullRoom = false
+    }
+
+    /**
+     * A touch on cat [cat] ended: tell the page, which applies its petting rules and counts a pet.
+     * Nothing is sent from a hidden screen, nor more than [MAX_STROKES_IN_FLIGHT] while the page is
+     * behind.
+     */
+    fun stroke(cat: Int, stroke: PetStroke) {
+        if (!showing || strokes.size >= MAX_STROKES_IN_FLIGHT) return
+        val id = commands.stroke(newId(), stroke)
+        if (id.isNotEmpty()) strokes[id] = cat
+    }
+
+    /** Cat [cat] purrs at [level] (0 stops it): the page plays the sound. */
+    fun purr(cat: Int, level: Float) {
+        if (showing) commands.purr(cat, level)
     }
 
     /** The repository has taken a projection. */
@@ -146,6 +188,8 @@ class PetViewModel(
     }
 
     fun onReply(reply: PetReply) {
+        val stroked = strokes.remove(reply.requestId)
+        if (stroked != null) return strokeAnswered(stroked, reply)
         if (reply.requestId != requestId) return
         waiting = null
         // a meal that landed or was refused is final; one the page could not store may be sent
@@ -162,6 +206,12 @@ class PetViewModel(
     /** The message has shown to the end. */
     fun noticeShown(shown: PetNotice) {
         if (notice == shown) notice = null
+    }
+
+    /** The page counted a stroke: its words show, and a level it won is celebrated in the room. */
+    private fun strokeAnswered(cat: Int, reply: PetReply) {
+        if (reply.message.isNotEmpty()) say(reply.message)
+        if (reply.ok && reply.levelUp > 0) queue(PetReaction.LevelUp(cat, reply.levelUp))
     }
 
     private fun send(command: String, request: () -> String) {
@@ -203,6 +253,9 @@ class PetViewModel(
         const val PET_FOCUS = "focus"
         const val PET_BUY_TOY = "buyToy"
         const val PET_EXPAND = "expand"
+
+        /** Strokes sent and not yet answered; a page that is far behind hears no more of them. */
+        const val MAX_STROKES_IN_FLIGHT = 12
 
         /** A meal this recent, found in the first projection, is the reason the owner is here. */
         const val FRESH_MEAL_MS = 4_000L

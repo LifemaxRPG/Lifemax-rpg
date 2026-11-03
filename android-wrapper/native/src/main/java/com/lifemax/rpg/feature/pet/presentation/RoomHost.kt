@@ -52,7 +52,7 @@ internal fun rememberRoomState(
  * it, drawn at whole device pixels per room pixel (see [HouseStage]). The Overview's cat card and
  * the Cat tab both draw it here. It moves only while [running] and the app is in front, and holds a
  * still pose with [still]. While the room is loading nothing is drawn, and when its art could not
- * be loaded [unavailable] is.
+ * be loaded [unavailable] is. With [touch] the cats answer a finger on the room (the Cat tab).
  */
 @Composable
 internal fun RoomHost(
@@ -60,10 +60,11 @@ internal fun RoomHost(
     running: Boolean,
     still: Boolean,
     modifier: Modifier = Modifier,
+    touch: RoomTouch? = null,
     unavailable: @Composable () -> Unit = {},
 ) {
     when (state) {
-        is RoomState.Ready -> HouseLiveView(state.stage, running, still, modifier)
+        is RoomState.Ready -> HouseLiveView(state.stage, running, still, modifier, touch)
         RoomState.Unavailable -> unavailable()
         RoomState.Loading -> Unit
     }

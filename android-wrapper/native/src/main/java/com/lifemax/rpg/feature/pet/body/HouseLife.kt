@@ -99,11 +99,23 @@ class HouseLife(cats: List<HouseCat>, private val autopilot: Boolean = true) {
     fun slowBlink(i: Int): Boolean {
         if (i !in bodies.indices) return false
         val body = bodies[i]
-        if (Clips.all[body.pose.clip].name.startsWith(ASLEEP)) return false
+        if (isAsleep(i)) return false
         body.react(ReactionKind.SLOW_BLINK)
         if (body.isIdle)
             pilots[i].direct(body, listOf(PlanStep.Act("lookup", LOOK_UP_S)), body.pose.x)
         return true
+    }
+
+    /** Whether cat [i] is asleep (its clip is a sleeping one). */
+    fun isAsleep(i: Int): Boolean =
+        i in bodies.indices && Clips.all[bodies[i].pose.clip].name.startsWith(ASLEEP)
+
+    /**
+     * Give cat [i] a plan of the owner's making (a touch's reflex): it replaces what the cat was
+     * doing and the pilot rests after it. [reachX] is the far end of the floor it will cross.
+     */
+    internal fun direct(i: Int, steps: List<PlanStep>, reachX: Float) {
+        if (i in bodies.indices) pilots[i].direct(bodies[i], steps, reachX)
     }
 
     /** Step [seconds] at [hz] frames per second, as a host would; for tests and previews. */

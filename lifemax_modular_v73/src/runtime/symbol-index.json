@@ -7918,6 +7918,9 @@
  "window.dhRest": [
   "src/runtime/segments/50-quests-table.js"
  ],
+ "window.haptic": [
+  "src/runtime/segments/50-native-pet.js"
+ ],
  "window.lmaBack": [
   "src/runtime/segments/34-navigation.js"
  ],
