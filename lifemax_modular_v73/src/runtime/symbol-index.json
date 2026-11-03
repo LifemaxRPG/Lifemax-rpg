@@ -7861,6 +7861,9 @@
  "window.NativeSettingsFields": [
   "src/runtime/segments/50-native-settings-fields.js"
  ],
+ "window.NativeShopping": [
+  "src/runtime/segments/50-native-shopping.js"
+ ],
  "window.NativeSwipe": [
   "src/runtime/segments/50-native-swipe.js"
  ],

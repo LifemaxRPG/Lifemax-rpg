@@ -20,6 +20,7 @@ import com.lifemax.rpg.app.shell.swipe.SwipeEnter
 import com.lifemax.rpg.app.shell.swipe.TabScreenView
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import com.lifemax.rpg.feature.food.presentation.NativeNutritionScreen
+import com.lifemax.rpg.feature.shopping.domain.ShoppingProjection
 import org.json.JSONObject
 
 /**
@@ -53,6 +54,9 @@ class NativeNutritionPlugin : Plugin() {
                 .put("authoritativeData", true)
                 .put("swipe", SWIPE_VERSION)
                 .put("sheetSeed", true)
+                // the Shopping pane with the Walmart cart: the page then adds `shopping` to the
+                // projection and answers shopPrefSet / shopPrefClear
+                .put("shopping", ShoppingProjection.CAPABILITY)
         )
     }
 

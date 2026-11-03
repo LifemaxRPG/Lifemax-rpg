@@ -190,6 +190,16 @@
     }
   }
 
+  /** the Walmart shopping projection (50-native-shopping.js), only for a screen that says it draws it (capabilities().shopping) */
+  function shoppingFor(shop) {
+    try {
+      if (!shop || !window.NativeShopping || !N.caps || N.caps.shopping !== NativeShopping.capability) return undefined;
+      return NativeShopping.projection(shop, N.answer);
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   function buildShopSnapshot(day) {
     try {
       if (typeof sdShopList !== 'function' || typeof sdMonday !== 'function') return null;
@@ -212,6 +222,7 @@
             unit: String(x.unit || 'pack'),
             meals: Number(x.meals) || 1,
             perish: !!x.perish,
+            packG: Math.max(0, Number(x.pg) || 0), // grams in one pack (the Walmart quantity is worked out from it)
             home: !!x.home,
             checked: !!chk[x.id]
           };
@@ -266,6 +277,7 @@
       ? 'TODAY'
       : (yestKey && day === yestKey ? 'YESTERDAY' : 'VIEWING');
 
+    const shopSnap = buildShopSnapshot(day);
     const data = {
       version: 1,
       day: day,
@@ -317,7 +329,8 @@
         };
       }),
       plan: buildPlanSnapshot(day),
-      shop: buildShopSnapshot(day),
+      shop: shopSnap,
+      shopping: shoppingFor(shopSnap), // undefined unless the screen advertised food.shopping.v1
       sheet: sheetData(),
       swap: swapData(), // null while the swap sheet is closed; a page without this field hands Swap over (sdSwap)
       sheetForms: true, // this page runs create, the targets and the edit view inside the native sheet
@@ -403,8 +416,10 @@
       return;
     }
     const said = N.noticeId;
-    const saved = !!fn();
-    N.answer = { op: op, ok: saved, changed: saved, message: N.noticeId !== said && N.notice ? N.notice.text : '' };
+    const result = fn();
+    const saved = !!result;
+    // 'same' = it already held: answered ok, nothing changed (shopping's matches)
+    N.answer = { op: op, ok: saved, changed: saved && result !== 'same', message: N.noticeId !== said && N.notice ? N.notice.text : '' };
     if (saved && op) {
       N.done.push(op);
       if (N.done.length > 40) N.done.shift();
@@ -762,6 +777,7 @@
       const caps = N.caps || (N.caps = await p.capabilities());
       const capabilitiesAt = performance.now();
       if (!caps || caps.version !== 1 || !caps.authoritativeData) return;
+      if (!s.shopping) s.shopping = shoppingFor(s.shop) || undefined; // the capabilities arrived after the projection was built
       if (view() !== 'meals' || !enabled()) return;
       const id = 'nutrition_' + Date.now();
       N.session = id;
@@ -899,6 +915,11 @@
           // the page's Undo says nothing when it lands, and "could not save" when it does not
           return !(N.noticeId !== said && N.notice && N.notice.text === unsavedMessage());
         });
+        scheduleSync();
+        return;
+      }
+      if ((command === 'shopPrefSet' || command === 'shopPrefClear') && window.NativeShopping && N.caps && N.caps.shopping === NativeShopping.capability) {
+        write(e, function () { return NativeShopping.command(command, e); }); // strict, repeat-safe, ok only once saved
         scheduleSync();
         return;
       }

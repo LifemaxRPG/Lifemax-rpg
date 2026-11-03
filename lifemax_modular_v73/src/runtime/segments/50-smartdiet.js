@@ -156,7 +156,7 @@ function sdShopList(start){
   for(let n=0;n<7;n++){const day=fv2DayShift(start,n),d=sdDay(day,true);if(!d)continue;
     d.items.forEach(function(it){it.ings.forEach(function(i){const g=i.g*sdFactor(i,d.s),a=agg[i.ing]||(agg[i.ing]={g:0,days:[]});a.g+=g;if(a.days.indexOf(n)<0)a.days.push(n)})})}
   return Object.keys(agg).map(function(id){const c=D.cat[id],a=agg[id],u=Math.max(1,c.s.unit_g),packs=Math.max(1,Math.ceil(a.g/u-0.04)),span=Math.max.apply(null,a.days)-Math.min.apply(null,a.days);
-    return {id:id,n:c.n,g:Math.round(a.g),packs:packs,unit:c.s.unit,aisle:c.s.aisle,home:!!c.s.pantry,twice:c.s.keeps_days<=3&&span>=3&&a.days.length>=2}})
+    return {id:id,n:c.n,g:Math.round(a.g),packs:packs,unit:c.s.unit,aisle:c.s.aisle,home:!!c.s.pantry,pg:Math.max(0,+c.s.unit_g||0),twice:c.s.keeps_days<=3&&span>=3&&a.days.length>=2}})
 }
 function sdAisleName(a){return {produce:'Produce',meat_seafood:'Meat & seafood',dairy_eggs:'Dairy & eggs',frozen:'Frozen',canned_jarred:'Cans & jars',bakery_grains:'Bread, grains & pasta',snacks:'Nuts & snacks',pantry:'Pantry',condiments_spices:'Sauces & spices'}[a]||a}
 function sdShopHtml(){
