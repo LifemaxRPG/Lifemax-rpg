@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.lifemax.rpg.feature.food.presentation.sheet.FoodSheetHost
+import com.lifemax.rpg.feature.shopping.presentation.ShoppingPane
+import com.lifemax.rpg.feature.shopping.presentation.rememberShoppingState
 import org.json.JSONObject
 
 /**
@@ -28,6 +30,9 @@ internal fun NativeNutritionScreen(
     // which steps to the previous tab
     // and closes this screen through the hand-over, exactly as for every other tab.
     val c = rememberFoodContext(data, topInsetDp, bottomInsetDp, dispatch)
+    // Walmart shopping (food.shopping.v1): drawn only when the page sent a good projection of it,
+    // so an older page or a malformed one leaves the classic Shopping pane as it was.
+    val shopping = rememberShoppingState(data.optJSONObject("shopping"), dispatch)
     FoodRingTorch(c)
 
     with(c) {
@@ -46,7 +51,9 @@ internal fun NativeNutritionScreen(
                 when (activePane) {
                     "plan" -> FoodPlanPane(c)
                     "log" -> FoodLogPane(c)
-                    "shop" -> FoodShopPane(c)
+                    "shop" ->
+                        if (shopping.ready) ShoppingPane(shopping, shopping.weekStart, light)
+                        else FoodShopPane(c)
                 }
             }
             FoodSearchBar(c)

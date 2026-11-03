@@ -436,3 +436,22 @@ Differences from the sketch in 7.8: going to Meals is the `navigate` action rath
 Known gaps, not phase 1 work: the screen does not step aside for a level-up or badge toast set off by a background save while it shows (backlog "Web-only feedback surfaces", shared with the other tabs); native Food normally does not come back after the add-food sheet closes (5.5 item 4, a Food matter; `NativeTabs.heal` may reopen it if the sheet closes within about 2 s); the search field over the keyboard depends on the IME inset decision (backlog NAV-5).
 
 Tests: `tests/native-recipes.test.js` (projection against the page's own cards for a Scholar, an Entrepreneur and a Disciple, filter parity, covering, prefill and an open that fails, no update after a close, the log command, Meals with native Food off and on, Food's switch with native Recipes on and off, the Food tab landing); the hand-over checks fail on the code they replace. `tests/native-handover-sim.test.js` includes Recipes and the Food tab, and taps in both screens (the Meals pill in Recipes, the Recipes pill in Food) under its seeded delays; it fails on the close-then-navigate code it replaces. Fixtures: `tools/gen_native_fixtures.js` writes `fixtures/recipes-{scholar,entrepreneur,disciple,prefill}.json` and `fixtures/recipes-filters.json`.
+
+
+---
+
+## 10. Shopping (Walmart grocery cart), `food.shopping.v1`
+
+What the Shopping pane has and what the native slice adds. Source of truth: `50-smartdiet.js` (`sdShopList`, `sdShopHtml`, `sdShopText`, the `sd-chk`, `sd-clear` and `sd-copy` actions) and `RECIPES` (`03-runtime.js`, `recipeHits` in `08-runtime.js`).
+
+| Fact or action | Classic page | Native (with the capability) |
+|---|---|---|
+| Week's list: ingredient, grams, packs of a unit, aisle, "Probably at home" | `sdShopList(start)`, this or next week | the same rows (`shopping.items`), plus the pack size in grams |
+| Tick an item into the basket, Clear ticks | `sd-chk`, `sd-clear` (saved in `mealsMeta.sd.shop`) | classic ticks stay on the classic pane; the new pane has quantity, "Already own" and Remove (screen state, not saved) |
+| Copy list | `sd-copy` (clipboard) | Copy list and Share list (Android share sheet) from the screen |
+| Recipes | Recipes page, one Walmart link for one ingredient (`RECIPE_LINKS`) | recipes can be added to the list by servings; their ingredient lines (`1/2 cup rolled oats (40g)`) are parsed, scaled, converted and consolidated; lines with no readable amount are kept for review |
+| Walmart product for an ingredient | none | pasted product link or item number, validated; preferred match saved in `mealsMeta.walmart.prefs` through `shopPrefSet` / `shopPrefClear`; never guessed from a name |
+| Walmart search | none | a plain `walmart.com/search?q=` link per ingredient |
+| Walmart cart | none | "Add All to Walmart Cart": one link, or several ("Cart 1 of N") |
+
+Unverified assumptions and limits are listed in `docs/specs/WALMART_CART_TEST_CHECKLIST.md`.

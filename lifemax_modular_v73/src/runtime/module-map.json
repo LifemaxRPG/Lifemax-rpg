@@ -3392,7 +3392,7 @@
   },
   {
    "file": "src/runtime/segments/50-smartdiet.js",
-   "bytes": 33768,
+   "bytes": 33798,
    "statement_count": 49,
    "tags": [
     "nutrition",
@@ -3618,8 +3618,20 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-shopping.js",
+   "bytes": 5332,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "shopping"
+   ],
+   "symbols": [
+    "window.NativeShopping"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-nutrition.js",
-   "bytes": 43488,
+   "bytes": 44722,
    "statement_count": 1,
    "tags": [
     "android",
