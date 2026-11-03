@@ -10,6 +10,7 @@ import com.lifemax.rpg.feature.pet.body.Petting
 import com.lifemax.rpg.feature.pet.body.TouchModel
 import com.lifemax.rpg.feature.pet.body.TouchSink
 import com.lifemax.rpg.feature.pet.body.Tuning
+import com.lifemax.rpg.feature.pet.host.CatWorldHost
 import com.lifemax.rpg.feature.pet.room.CameraDirector
 import com.lifemax.rpg.feature.pet.room.CatLayer
 import com.lifemax.rpg.feature.pet.room.ContactShadow
@@ -48,7 +49,7 @@ import kotlinx.coroutines.withContext
  *   while the clock runs, so a test can fix the hour.
  */
 internal class HouseStage(
-    private val kit: RoomKit,
+    val kit: RoomKit,
     val house: HouseLife,
     style: RoomStyle = RoomStyle.CLASSIC,
     private val hourNow: () -> Double = ::localHour,
@@ -269,10 +270,17 @@ internal class HouseStage(
 
     private fun roomY(py: Float): Float = (py - originY) / scale
 
+    /**
+     * The process-wide cat world this stage shows, when its [house] is the world's (see
+     * [CatWorldHost]): the world steps the bodies itself, once per frame time, however many views
+     * report the frame, so the stage leaves them alone. Null for a room of its own.
+     */
+    var world: CatWorldHost? = null
+
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
         val started = System.nanoTime()
-        house.step(dt)
+        if (world == null) house.step(dt)
         petting.step(dt)
         particles.step(dt)
         followCats(dt)

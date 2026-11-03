@@ -6230,6 +6230,9 @@
  "petMorphWord": [
   "src/runtime/segments/37-pet-morph.js"
  ],
+ "petNativeOwns": [
+  "src/runtime/segments/17-runtime.js"
+ ],
  "petNewLitter": [
   "src/runtime/segments/32-pet-dna.js"
  ],

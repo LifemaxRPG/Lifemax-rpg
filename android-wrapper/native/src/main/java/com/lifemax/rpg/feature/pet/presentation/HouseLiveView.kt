@@ -90,12 +90,19 @@ internal fun HouseLiveView(
             stage.trimWhenIdle()
         }
     }
+    // the cat world of the process runs while any of its views animates (see CatWorldHost)
+    DisposableEffect(stage, animate) {
+        val world = stage.world
+        val handle = if (animate && world != null) world.attach() else null
+        onDispose { if (handle != null) world?.detach(handle) }
+    }
     LaunchedEffect(stage, animate) {
         if (!animate) return@LaunchedEffect
         LiveDepth.resume()
         var last = withFrameNanos { it }
         while (true) {
             withFrameNanos { now ->
+                stage.world?.advance(now)
                 val dt = (now - last) / NANOS_PER_SECOND
                 stage.step(dt)
                 LiveDepth.record(stage.workMs, dt * MS_PER_SECOND, budgetMs)
@@ -135,12 +142,17 @@ internal fun rememberHouseStage(
     looks: List<HouseCatLook>,
     style: RoomStyle = RoomStyle.CLASSIC,
 ): HouseStage? {
+    // with a cat world (CatWorldHost) every screen draws the one house; else the room is its own
+    val world = rememberWorld(looks)
     val stage =
-        remember(kit, looks) {
-            val cats = looks.map { HouseCat(Autopilot.seedFor(it.name, it.coat), it.weak) }
-            HouseStage(kit, HouseLife(cats), style).also { st ->
-                st.asyncWarm = true
-                st.setFedHouse(looks.none { it.weak })
+        remember(kit, looks, world?.generation) {
+            if (world != null) SharedStages.stageFor(kit, world, style, looks.none { it.weak })
+            else {
+                val cats = looks.map { HouseCat(Autopilot.seedFor(it.name, it.coat), it.weak) }
+                HouseStage(kit, HouseLife(cats), style).also { st ->
+                    st.asyncWarm = true
+                    st.setFedHouse(looks.none { it.weak })
+                }
             }
         }
     LaunchedEffect(stage, style) { stage.useStyle(style) }

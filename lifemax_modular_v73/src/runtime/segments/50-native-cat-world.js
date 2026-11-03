@@ -10,7 +10,8 @@
      revision, size, the living cats' ids) and stores state.petWorld with writeSave(). ok only once stored, repeat-safe by op.
      A backup restore raises the world epoch (kept beside the save on this phone, so a backup still comes back exactly as made),
      so a world native still holds from before the restore is refused as stale.
-   Nothing here changes what any screen shows yet: the current screens decode the block and ignore it.
+   - owns(view)/owner(view): which brain runs the cats of a view; the web room loop never runs under a view the native brain owns.
+   Nothing here changes what the web room shows: the native screens draw the block through the cat world host (CB2).
    Loaded after 50-native-pet.js (NativePet takes the command) and before 50-native-overview-cards.js. */
 (function () {
   const CAP = "pet.world.v1";
@@ -244,6 +245,17 @@
     return out;
   }
 
+  /** Who runs the cats of a view (plan 2.7): the native brain while the native screen of that view shows with pet.world.v1 (the Cat
+      tab for "pet", the Overview cards for "dashboard"), else the web brain. petWantRun never starts the web room loop for a view the
+      native brain owns; with the switch off, an older app or a visit handed to the page (play) the web room stays as it always was. */
+  function owns(view) {
+    const t = view === "pet" ? window.NativePet : view === "dashboard" ? window.NativeOverviewCards : null;
+    return !!(t && typeof t.has === "function" && t.active() && t.has(CAP));
+  }
+  function owner(view) {
+    return owns(view) ? "native" : "web";
+  }
+
   /* a backup restore replaces the world: a new epoch, so a world native held from before is refused as stale */
   const applyOnce = window.applyBackup;
   if (typeof applyOnce === "function") {
@@ -262,6 +274,6 @@
 
   window.petWorldBlock = petWorldBlock;
   window.petWorldLegacy = petWorldLegacy;
-  window.NativeCatWorld = { capability: CAP, extend, command, block: petWorldBlock, legacy: petWorldLegacy };
+  window.NativeCatWorld = { capability: CAP, extend, command, block: petWorldBlock, legacy: petWorldLegacy, owns, owner };
   if (window.NativePet) NativePet.commands.world = command((c) => NativePet.has(c));
 })();
