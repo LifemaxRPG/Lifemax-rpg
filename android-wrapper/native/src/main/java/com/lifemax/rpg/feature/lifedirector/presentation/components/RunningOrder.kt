@@ -29,8 +29,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -104,10 +106,16 @@ fun Modifier.earlierCard(slice: Slice) = cardSlice(slice, 14.dp, SolidColor(P.fa
 /**
  * One block of the running order (the web's roHtml): its time and length, a rail in its colour, its
  * title with state, quests, goal and XP, and a note. A session is a card; a block already gone is
- * dimmed. Tapping a session or a meal opens it on the page.
+ * dimmed. Tapping a session or a meal opens it on the page. [actions] are TalkBack's extra actions
+ * on the row.
  */
 @Composable
-fun OrderRowView(row: OrderRow, onTap: (Tap) -> Unit, modifier: Modifier = Modifier) {
+fun OrderRowView(
+    row: OrderRow,
+    onTap: (Tap) -> Unit,
+    modifier: Modifier = Modifier,
+    actions: List<CustomAccessibilityAction> = emptyList(),
+) {
     val session = row.state != SessionState.NONE
     val shape = RoundedCornerShape(12.dp)
     val color = P.of(row.kind)
@@ -126,7 +134,10 @@ fun OrderRowView(row: OrderRow, onTap: (Tap) -> Unit, modifier: Modifier = Modif
             .padding(vertical = if (session) 4.dp else 0.dp)
             .then(if (session) Modifier.sessionCard(row.state, shape) else Modifier)
             .clip(shape)
-            .semantics(mergeDescendants = true) { contentDescription = row.description() }
+            .semantics(mergeDescendants = true) {
+                contentDescription = row.description()
+                customActions = actions
+            }
             .then(
                 row.tap?.let { tap ->
                     Modifier.heightIn(min = 48.dp).clickable(role = Role.Button) { onTap(tap) }

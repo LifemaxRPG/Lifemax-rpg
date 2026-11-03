@@ -19,6 +19,27 @@ over: it closes and the page's own handler runs.
 Strip (`day` command), dial and its handles (`dialDrop`, `dialApply`), centre, mix, up next, reminders, running order: native.
 Session, timer, meal, Move and "Something came up" sheets, Done, Skip, Pin, Re-plan: page until 4A.
 
+### Taking a session off a day (`director.remove.v1`, Native API 50)
+
+Hold a session in the running order (about 350 ms, with a short buzz) and it lifts: it follows the finger as a card, a little
+larger with a shadow, the list closes the gap, and a trash ("Drop to remove") slides up above the bars. Over it the trash grows,
+turns red and ticks; letting go there removes the session, letting go elsewhere (or Back, or a second finger) springs it back
+with no change. The list scrolls when the finger nears its top or bottom edge, not while it is over the trash. No confirm sheet:
+the drag is the deliberate act and Undo is the way back. Reduced motion: no slide, scale or spring.
+
+| Fact or action | Projection / command | Notes |
+|---|---|---|
+| Whether a session can be removed | `today.rows[].remove {ok, reason}` on session rows only, and only for a screen that says `director.remove.v1` and `director.sheets.v1` | planned and no timer running: ok; done, part done, off the plan, running timer: not, with the page's reason, shown as the "not now" buzz and a message |
+| Remove | `today skip {id, op}` (the existing Skip) | the engine's SKIPPED trigger, miss consequence and re-plan, for that occurrence only; no XP; answers `changed: true` and `undo` (the page's words) |
+| Undo | `today unskip {id, op}` | plan and ledger back exactly as before that skip, while nothing else has changed the plan (and within two minutes); the message bar with Undo shows for seven seconds |
+| TalkBack | custom action "Remove from today" on each removable row; the trash is a live region while a session is held | same commands, no drag |
+
+The drag is on session rows of the running order (and the earlier-today fold), not on the dial: a segment there is small, shares its
+touches with the handles and the tap, and the row beside the dial is the same session. The gesture belongs to the list (initial
+pass), not to a row, so a row scrolling out of view does not end it. Code: `presentation/drag` (`DragRemoveController`, the gesture,
+`RemoveOverlay`, `RemoveTarget`, `RemovableRow`, `UndoBar`) and the pure `domain/DragModel`. On the phone only: the feel of the
+350 ms hold and the buzzes, the spring, auto-scroll speed on a long day, and how TalkBack speaks the action and the trash.
+
 ## Week (3A, `director.week.v1`)
 
 | Fact or action | Projection | Notes |

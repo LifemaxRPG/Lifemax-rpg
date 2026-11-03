@@ -1,0 +1,50 @@
+{
+ "skip": {
+  "command": "today",
+  "requestId": "director-36",
+  "ok": true,
+  "message": "",
+  "changed": true,
+  "undo": "Skipped · 1 re-placed"
+ },
+ "skipAgain": {
+  "command": "today",
+  "requestId": "director-37",
+  "ok": true,
+  "changed": false,
+  "message": "Already skipped.",
+  "undo": "Skipped · 1 re-placed"
+ },
+ "unskip": {
+  "command": "today",
+  "requestId": "director-38",
+  "ok": true,
+  "message": "",
+  "changed": true
+ },
+ "unskipAgain": {
+  "command": "today",
+  "requestId": "director-39",
+  "ok": true,
+  "changed": false,
+  "message": "Already back on the plan."
+ },
+ "unskipNothing": {
+  "command": "today",
+  "requestId": "director-40",
+  "ok": false,
+  "message": "That can no longer be taken back."
+ },
+ "skipDone": {
+  "command": "today",
+  "requestId": "director-41",
+  "ok": false,
+  "message": "That is no longer on the plan."
+ },
+ "skipRunning": {
+  "command": "today",
+  "requestId": "director-43",
+  "ok": false,
+  "message": "Its timer is running. Stop the timer first."
+ }
+}

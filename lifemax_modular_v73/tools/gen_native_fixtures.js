@@ -375,6 +375,23 @@ async function director(b) {
   if (!glanced.intent || glanced.intent.sheet !== 'session') throw Error('the glance asked for no sheet');
   write('fixtures/director-intent.json', glanced);
 
+  /* taking a session off a day (director.remove.v1): director-remove.json, Today as a screen that says it can gets it (every session
+     row says whether it can be removed, with the reason where it cannot: a session done, and the one whose timer runs), and
+     director-replies-remove.json, what the page answers the removal and its take-back (a repeat, a refusal, too late) */
+  p = await covered(['director.today.v2', 'director.week.v1', 'director.goals.v1', 'director.sheets.v1', 'director.remove.v1']);
+  await shoot(p, 'remove');
+  const removed = {}, tomorrowIds = await p.evaluate(() => LifeDirector.native.today(1, { removal: true }).rows.ahead.filter((r) => r.act === 'inst').map((r) => r.id));
+  removed.skip = await cmd(p, 'today', { name: 'skip', id: tomorrowIds[0], op: 'fixture-skip' });
+  removed.skipAgain = await cmd(p, 'today', { name: 'skip', id: tomorrowIds[0], op: 'fixture-skip' });
+  removed.unskip = await cmd(p, 'today', { name: 'unskip', id: tomorrowIds[0], op: 'fixture-unskip' });
+  removed.unskipAgain = await cmd(p, 'today', { name: 'unskip', id: tomorrowIds[0], op: 'fixture-unskip' });
+  removed.unskipNothing = await cmd(p, 'today', { name: 'unskip', id: 'nowhere', op: 'fixture-nothing' });
+  removed.skipDone = await cmd(p, 'today', { name: 'skip', id: ids.past, op: 'fixture-done' });
+  const running = await p.evaluate(() => LifeDirector.native.today(0).upNext.actions.find((a) => a.act === 'focusStart').id);
+  await cmd(p, 'today', { name: 'timer', act: 'start', id: running });
+  removed.skipRunning = await cmd(p, 'today', { name: 'skip', id: running, op: 'fixture-running' });
+  write('fixtures/director-replies-remove.json', removed);
+
   p = await live(true);
   await act(p, 'inst', await upNext(p));
   await p.evaluate(() => document.querySelector('#view-life-director .ld-sheet.open [data-act=skip]').click());

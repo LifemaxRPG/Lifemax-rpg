@@ -211,7 +211,16 @@ data class UpNext(
     val actions: List<UpNextAction>,
 )
 
-/** A row of the running order; [key] is stable and unique within its list. */
+/**
+ * Whether a session can be taken off the day (director.remove.v1): [ok], or why not in the page's
+ * words ([reason], never empty when it cannot).
+ */
+data class Removal(val ok: Boolean, val reason: String)
+
+/**
+ * A row of the running order; [key] is stable and unique within its list. [removal] is on a
+ * session's row from a page that lets sessions be removed, and absent otherwise.
+ */
 data class OrderRow(
     val key: String,
     val start: Long,
@@ -228,6 +237,7 @@ data class OrderRow(
     val sub: String,
     val chips: List<Chip>,
     val tap: Tap?,
+    val removal: Removal? = null,
 )
 
 data class EarlierToday(val summary: String, val rows: List<OrderRow>)

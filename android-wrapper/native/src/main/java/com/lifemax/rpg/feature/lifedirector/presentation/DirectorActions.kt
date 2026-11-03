@@ -40,6 +40,8 @@ class DirectorActions(
     val moves: MoveDisruptActions = MoveDisruptActions(),
     val time: TimeActions = TimeActions(),
     val forms: FormSheetActions = FormSheetActions(),
+    /** Undo on the message after a session is taken off the day (director.remove.v1) */
+    val undo: () -> Unit = {},
 ) {
     constructor(
         vm: LifeDirectorViewModel,
@@ -143,6 +145,7 @@ class DirectorActions(
                 build = vm.time::build,
             ),
         forms = FormSheetActions(vm.forms),
+        undo = vm.removal::undo,
         flick = { dir ->
             val p = vm.projection.value
             val to =

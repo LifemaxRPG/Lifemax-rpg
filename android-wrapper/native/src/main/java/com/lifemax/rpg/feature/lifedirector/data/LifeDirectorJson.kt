@@ -304,6 +304,7 @@ private fun rows(list: JSONArray, prefix: String): List<OrderRow> {
             sub = it.getString("sub"),
             chips = chips(it.getJSONArray("chips")),
             tap = tap(it),
+            removal = it.removal(),
         )
     }
 }

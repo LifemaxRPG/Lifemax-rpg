@@ -20,6 +20,10 @@
                   setup: "director.setup.v1", "first-run": "director.setup.v1" };
   /** phase 4A: the screen draws Today's sheets and runs Today's actions itself */
   const SHEETS = "director.sheets.v1";
+  /** the screen lets a session be dragged off the day (or removed by a TalkBack action): every session row says whether it can be
+      (remove), and unskip takes the last removal back. Needs the sheets' writes, which it runs through. */
+  const REMOVE = "director.remove.v1";
+  const removes = () => tab.has(SHEETS) && tab.has(REMOVE);
   /** phase 4B: My time's sheets, which are forms (Today's are the rest) */
   const SETUP = "director.setup.v1";
   const FORMS = new Set(["rule", "goalType", "goalForm"]);
@@ -46,7 +50,7 @@
     const part = (k, f) => (t === k && c.includes(k) ? f() : null);
     return Object.assign(ld.frame(), {
       covers: c,
-      today: part("today", () => ld.today()),
+      today: part("today", () => ld.today(undefined, { removal: removes() })),
       week: part("week", () => ld.week()),
       quests: part("quests", () => ld.quests()),
       goals: part("goals", () => ld.goals()),
@@ -77,12 +81,14 @@
       return { ok: true };
     },
     /** Today's writes (phase 4A): done, logToday, skip, pin, moveTo, timer, and Something came up's disrupt, energy, replan, regroup
-        and dismissBanner. Those that can pay XP run with the page's celebration held: the reply carries it for a screen that draws
+        and dismissBanner; with director.remove.v1 also unskip {id, op}, which takes the last skip back (a skip that can be taken back
+        answers undo: the page's words for it). Those that can pay XP run with the page's celebration held: the reply carries it for a screen that draws
         it (director.celebrations.v1), else it plays on the page once the reply has reached the screen, which steps aside for it;
         a repeat of one that landed answers "Already recorded." (or "Already added", "Already skipped.") */
     today: (p) => {
       if (!tab.has(SHEETS)) return { ok: false, message: "Life Director cannot do that." };
       const name = String(p.name || "");
+      if (name === "unskip" && !removes()) return { ok: false, message: "Life Director cannot do that." };
       const { result, held } = holdCelebrations(() => director().todayRun(name, p));
       return withCelebrations(result, held);
     },

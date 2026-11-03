@@ -13,6 +13,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetKinds
 import com.lifemax.rpg.feature.lifedirector.domain.SheetRowButton
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideHelp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +55,10 @@ class LifeDirectorViewModel(
         ) { ms, run ->
             viewModelScope.launch { delay(ms).also { run() } }.let { job -> { job.cancel() } }
         }
+    /**
+     * a session lifted to the trash, or removed by TalkBack's action, and Undo (director.remove.v1)
+     */
+    val removal = DragRemoveController(commands, projection, mutableUi, { !busy }, ::show)
     /** the ? button: this section's guide, or the one the page names, played in its section (4B) */
     val guideHelp =
         GuideHelp(projection, ::draws, ::showSection, { ui.value.pendingSection }, { startGuide() })
@@ -82,6 +87,7 @@ class LifeDirectorViewModel(
         sectionRequest = null
         changeRequest = null
         letGo()
+        removal.hidden()
         sheets.reset()
         guideHelp.reset()
         forms.reset()
@@ -94,6 +100,7 @@ class LifeDirectorViewModel(
      */
     fun hidden() {
         letGo()
+        removal.hidden()
         // closed, not seen: it may start by itself again when the screen comes back (A24); the page
         // starts none of its own
         ui.value.guide?.let { autoGuides.remove(it.key) }
@@ -109,6 +116,7 @@ class LifeDirectorViewModel(
     /** A new projection arrived: a guide whose section has gone ends. */
     fun projected() {
         guideStillShown()
+        removal.projected()
         sheets.projected()
         time.projected()
         guideHelp.projected()
@@ -318,6 +326,7 @@ class LifeDirectorViewModel(
      */
     fun onReply(reply: DirectorReply) {
         feedback.onReply(reply)
+        if (removal.onReply(reply)) return
         if (sheets.onReply(reply) || forms.onReply(reply)) return
         when (reply.command) {
             "day" ->
@@ -534,7 +543,7 @@ class LifeDirectorViewModel(
         val key = session to notice.id
         if (key == shownNotice) return
         shownNotice = key
-        show(notice.text)
+        if (!removal.says(notice.text)) show(notice.text)
     }
 
     /** What fixed time says when tapped; nothing goes to the page. */

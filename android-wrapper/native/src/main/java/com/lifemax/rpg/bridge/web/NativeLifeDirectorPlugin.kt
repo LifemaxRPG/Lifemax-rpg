@@ -63,6 +63,8 @@ class NativeLifeDirectorPlugin : ComposeTabPlugin() {
             "director.goals.v1",
             "director.sheets.v1",
             "director.celebrations.v1",
+            // a session lifted off the running order and dropped on the trash, with Undo
+            "director.remove.v1",
             // My time and the first-run card (phase 4B)
             "director.setup.v1",
         )

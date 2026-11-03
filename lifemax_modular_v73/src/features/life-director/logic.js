@@ -2910,7 +2910,7 @@ const LifeDirectorApp = (function () {
       reducedMotion: reduced(),
     };
   }
-  function nativeToday(dayIdx) {
+  function nativeToday(dayIdx, opts) {
     if (!ST) boot();
     if (!ST.setupComplete || !ST.schedule) return null;
     const s = ST.schedule, z = tz(), days = horizonDays(s, z), now = nowEpoch();
@@ -2964,7 +2964,7 @@ const LifeDirectorApp = (function () {
       upNext: isToday ? nativeUpNext(day, days, now) : null,
       reminders: isToday ? (s.passiveReminders || []).map(r => r.title) : [],
       sessions: blocks.filter(b => b.inst).length,
-      rows: nativeRows(blocks, isToday, now),
+      rows: nativeRows(blocks, isToday, now, !!(opts && opts.removal)),
     };
   }
   /* The dial's handles for a native screen, with everything a drag shows, decided here: stops (every place a handle can land on
@@ -3054,7 +3054,7 @@ const LifeDirectorApp = (function () {
       chips: (quests.length ? [{ kind: 'quest', text: quests.join(', ') }] : []).concat(x ? [{ kind: 'xp', text: '+' + x.xp + ' XP · ' + attrName(x.rule.primary) }] : []),
       actions: [{ label: 'Start', act: 'focusStart', id: next.instanceId, primary: true }, { label: 'Done', act: 'doneQuick', id: next.instanceId }, { label: 'Details', act: 'inst', id: next.instanceId, ghost: true }] };
   }
-  function nativeRows(blocks, isToday, now) {
+  function nativeRows(blocks, isToday, now, withRemoval) {
     const row = b => {
       const k = blockClass(b), m = Math.round((b.endEpoch - b.startEpoch) / 60), st = b.inst ? b.inst.lifecycleState : '';
       if (k === 'free' && m < 15) return null;
@@ -3068,7 +3068,8 @@ const LifeDirectorApp = (function () {
       const tap = b.inst ? { act: 'inst', id: b.inst.instanceId } : k === 'meal' ? mealTap(b) : { act: '', id: '' };
       return Object.assign({ s: b.startEpoch, e: b.endEpoch, time: fTime(b.startEpoch, tz()), length: mins(m), kind: k, title: b.title || '', icon: b.inst ? tagIcon(b.inst.tag) : (k === 'meal' ? 'meal' : KIND_ICON[k] || 'star'),
         state: b.inst ? sesState(st) : '', stateLabel: st && STATE_LABEL[st] ? STATE_LABEL[st] : '', now: isToday && b.startEpoch <= now && b.endEpoch > now, past: isToday && b.endEpoch <= now,
-        sub: meal ? meal.name + ' · ' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : meal.kcal + ' kcal') + ' · View meal ›' : !b.inst && k === 'rest' ? 'Kept clear. Nothing gets booked here.' : '', chips }, tap);
+        sub: meal ? meal.name + ' · ' + (meal.logged ? 'Logged' : meal.skipped ? 'Skipped' : meal.kcal + ' kcal') + ' · View meal ›' : !b.inst && k === 'rest' ? 'Kept clear. Nothing gets booked here.' : '', chips },
+        tap, withRemoval && b.inst ? { remove: nativeRemoval(b.inst) } : null);
     };
     const past = isToday ? blocks.filter(b => b.endEpoch <= now) : [];
     const ahead = past.length >= 2 ? blocks.filter(b => b.endEpoch > now) : blocks;
@@ -3248,6 +3249,21 @@ const LifeDirectorApp = (function () {
     if (kind === 'disrupt') return Object.assign({ kind }, DISRUPT, { sections: disruptParts() });
     return null;
   }
+  /* ── Taking a session off a day (the screen's drag to the trash, and TalkBack's "Remove from today") ──
+     Removing is the page's own Skip (Today.skip below: the engine's SKIPPED trigger, its miss consequence and the re-plan, nothing
+     new), and the occurrence only: the recurring rule is never touched. A session can be taken off while it is planned and no timer
+     runs on it; every row says so (director.remove.v1), with the reason where it cannot, so the screen decides nothing.
+     Undo (Today.unskip) puts the plan and the ledger back as they were before that Skip, for as long as nothing else has changed the
+     plan: the page keeps the one skip last made, with the plan as it was left, in memory only. */
+  const REMOVE_WHY = { running: 'Its timer is running. Stop the timer first.', done: 'It is already done, so it stays.', part: 'It is already part done, so it stays.', off: 'It is already off the plan.' };
+  function nativeRemoval(inst) {
+    if (ST.ui.focus && ST.ui.focus.id === inst.instanceId) return { ok: false, reason: REMOVE_WHY.running };
+    const st = sesState(inst.lifecycleState);
+    return st === 'plan' ? { ok: true, reason: '' } : { ok: false, reason: REMOVE_WHY[st] };
+  }
+  const TAKE_BACK_MS = 120000; // how long after a Skip it can be taken back
+  let takeBack = null, takenBackOp = null; // {id, text, at, before: {schedule, ledger}, left: the plan as the Skip left it (JSON)}
+  const planJson = () => JSON.stringify(ST.schedule);
   /* a session still on the plan (findInst also finds resolved ones, which no action may touch) */
   const plannedInst = (id) => ST.schedule && ST.schedule.scheduledInstances.find(i => i.instanceId === String(id));
   /* A session already resolved by an earlier, identical request: its history entry */
@@ -3286,13 +3302,34 @@ const LifeDirectorApp = (function () {
     },
     skip({ id }) {
       const inst = plannedInst(id);
-      if (!inst) return resolved(id) && /SKIPPED/.test(resolved(id).lifecycleState) ? recorded('Already skipped.') : gone;
+      if (!inst) {
+        if (!(resolved(id) && /SKIPPED/.test(resolved(id).lifecycleState))) return gone;
+        const r = recorded('Already skipped.'); // a repeat: the take-back it earned is still on offer
+        return takeBack && takeBack.id === String(id) && r.ok ? Object.assign(r, { undo: takeBack.text }) : r;
+      }
       if (inst.lifecycleState !== 'PLANNED') return gone;
+      if (!nativeRemoval(inst).ok) return { ok: false, message: nativeRemoval(inst).reason };
+      const before = { schedule: JSON.parse(planJson()), ledger: JSON.parse(JSON.stringify(ST.ledger)) };
       const c = E.applyMissConsequence(ST.ledger, inst, ST.prefs, nowEpoch(), 'SKIP'); ST.ledger = c.ledger;
       const r = reschedule({ type: 'SKIPPED', instanceId: id });
       persist(); render();
-      say('Skipped' + (c.consequence && c.consequence.type === 'REST_TOKEN_SPENT' ? ' · used a rest token' : '') + (r ? ' · ' + summarize(r) : ''));
-      return saved('');
+      const text = 'Skipped' + (c.consequence && c.consequence.type === 'REST_TOKEN_SPENT' ? ' · used a rest token' : '') + (r ? ' · ' + summarize(r) : '');
+      say(text);
+      takeBack = { id: String(id), text, at: Date.now(), before, left: planJson() };
+      return Object.assign(saved(''), { changed: true, undo: text });
+    },
+    /* Undo of the last Skip: the plan and the ledger as they were, only while the plan is as the Skip left it (anything since, a
+       move, a pin, a re-plan, a session done, makes it too late: the answer says so and changes nothing). The same request again
+       finds the session back on the plan and only makes sure it is saved. */
+    unskip({ id, op }) {
+      if (op && op === takenBackOp) return recorded('Already back on the plan.');
+      const t = takeBack;
+      if (!t || t.id !== String(id)) return plannedInst(id) ? recorded('Already back on the plan.') : { ok: false, message: 'That can no longer be taken back.' };
+      if (Date.now() - t.at > TAKE_BACK_MS || planJson() !== t.left) return { ok: false, message: 'The plan has changed since, so that cannot be taken back.' };
+      ST.schedule = t.before.schedule; ST.ledger = t.before.ledger; takeBack = null; takenBackOp = op || null;
+      ST.changeLog.push({ at: nowEpoch(), label: 'Skip taken back' });
+      persist(); render(); say('Back on the plan');
+      return applied();
     },
     pin({ id, on }) {
       const inst = plannedInst(id);
@@ -3518,7 +3555,7 @@ const LifeDirectorApp = (function () {
   /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
      and cover() stops one already playing (the screen has just come over it) */
   let nativeCovers = () => false;
-  const nativeApi = Object.freeze({ frame: nativeFrame, today: i => nativeToday(i === undefined ? ui.dayIdx : i), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: (i, o) => nativeToday(i === undefined ? ui.dayIdx : i, o), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
     week: nativeWeek, quests: nativeQuests, section: nativeSection, day: i => nativeDay(i, false), gotoDay: i => nativeDay(i, true),
     dayIndex: () => ui.dayIdx,
     /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */

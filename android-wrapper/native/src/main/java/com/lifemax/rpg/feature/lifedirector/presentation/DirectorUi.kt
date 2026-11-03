@@ -15,6 +15,12 @@ projections (a pending request, a held handle, an open sheet, a draft). */
 data class DirectorToast(val serial: Int, val text: String)
 
 /**
+ * Undo for the session [id] just taken off the day: the page's [text] for it; [serial] tells offers
+ * apart.
+ */
+data class UndoOffer(val serial: Int, val id: String, val text: String)
+
+/**
  * A handle a finger holds ([held]), or has let go on stop [stop] while the page answers. It keeps
  * the handle, stops and words it was taken with, so an update cannot move it.
  */
@@ -71,6 +77,8 @@ data class DirectorUi(
     val copyText: String? = null,
     val earlierOpen: Boolean = false,
     val toast: DirectorToast? = null,
+    /** a session just taken off the day, with Undo on offer (it stands in for the toast) */
+    val undo: UndoOffer? = null,
     val hold: DialHold? = null,
     val ask: DialAsk? = null,
     /** Today's sheet the screen asked for (phase 4A), shown once the page sends its model */

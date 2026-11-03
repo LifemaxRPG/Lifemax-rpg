@@ -78,6 +78,10 @@ data class DirectorReply(
     val text: String = "",
     /** the page has said [message] already (its notice or banner): the screen does not repeat it */
     val said: Boolean = false,
+    /**
+     * the page's words for a skip that can be taken back (director.remove.v1); empty when it cannot
+     */
+    val undo: String = "",
     /** the XP a write paid, for a screen that draws its celebration (director.celebrations.v1) */
     val celebrations: List<com.lifemax.rpg.core.designsystem.feedback.XpAward> = emptyList(),
 )

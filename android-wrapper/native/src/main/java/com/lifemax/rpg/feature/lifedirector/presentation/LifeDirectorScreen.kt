@@ -70,7 +70,6 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorTopL
 import com.lifemax.rpg.feature.lifedirector.presentation.components.EarlierFold
 import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalDirectorBuzz
 import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderHeading
-import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
 import com.lifemax.rpg.feature.lifedirector.presentation.components.RemindersCard
 import com.lifemax.rpg.feature.lifedirector.presentation.components.RestoreSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.SectionTabs
@@ -86,6 +85,12 @@ import com.lifemax.rpg.feature.lifedirector.presentation.dial.ChronoDial
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.DialTourRun
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.dialTour
 import com.lifemax.rpg.feature.lifedirector.presentation.dial.rememberBuildRun
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.LIST_SIDE
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.RemovableRow
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.RemoveOverlay
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.UndoBar
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.dragToRemove
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.CoachMarks
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.GuideAnchors
 import com.lifemax.rpg.feature.lifedirector.presentation.guide.guideAnchor
@@ -119,10 +124,19 @@ fun LifeDirectorRoute(
             vm.dismiss(toast.serial)
         }
     }
+    ui.undo?.let { offer ->
+        LaunchedEffect(offer.serial) {
+            delay(UNDO_MS)
+            vm.removal.dismissUndo(offer.serial)
+        }
+    }
     BackHandler(enabled = visible && ui.ask?.confirm != null) { vm.keep() }
     BackHandler(enabled = visible && ui.confirm != null) { vm.cancelChange() }
     BackHandler(enabled = visible && ui.restoring) { vm.closeRestore() }
     BackHandler(enabled = visible && ui.sheet != null) { vm.closeSheet() }
+    // a session held over the trash goes back
+    val lifted by vm.removal.held.collectAsState()
+    BackHandler(enabled = visible && lifted != null) { vm.removal.cancel() }
     // a goal form steps back to its grid, a question before Remove closes first (4B)
     BackHandler(enabled = visible && vm.forms.stepsBack(ui.sheet, ui.forms)) { vm.forms.back() }
     // the backup the page answered with goes on the phone's clipboard, as the page's Copy backup
@@ -171,7 +185,7 @@ fun LifeDirectorRoute(
                 emit("tour", "")
         }
         WithDirectorFeedback(vm.feedback, p, visible, vm::handOver, emit, free = run == null) {
-            LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run)
+            LifeDirectorScreen(p, ui, actions, visible, topInsetDp, bottomInsetDp, run, vm.removal)
         }
     }
 }
@@ -190,6 +204,7 @@ fun LifeDirectorScreen(
     topInsetDp: Float = 64f,
     bottomInsetDp: Float = 72f,
     run: BuildRun? = null,
+    removal: DragRemoveController? = null,
 ) {
     val confirm = ui.ask?.confirm
     DirectorTheme(p) {
@@ -260,6 +275,7 @@ fun LifeDirectorScreen(
                 }
             LazyColumn(
                 Modifier.fillMaxSize()
+                    .dragToRemove(removal, list)
                     .pointerInput(actions) { detectSectionFlick(actions.flick) }
                     .then(
                         // behind a confirmation the screen is blurred as .ld-sheet-bg blurs the
@@ -271,8 +287,8 @@ fun LifeDirectorScreen(
                 state = list,
                 contentPadding =
                     PaddingValues(
-                        start = 12.dp,
-                        end = 12.dp,
+                        start = LIST_SIDE,
+                        end = LIST_SIDE,
                         top = topInsetDp.dp + 12.dp,
                         bottom = bottomInsetDp.dp + 16.dp,
                     ),
@@ -301,7 +317,8 @@ fun LifeDirectorScreen(
                         }
                     }
                 }
-                if (today != null) todayBelow(today, ui, actions, animate, anchors)
+                if (today != null)
+                    todayBelow(today, ui, actions, animate, anchors, removal, p.reducedMotion)
                 if (week != null) weekBody(week, ui, actions, anchors, body)
                 if (quests != null) questsBody(quests, actions, body)
                 if (goals != null) goalsBody(goals, ui, actions, body)
@@ -319,6 +336,8 @@ fun LifeDirectorScreen(
                     )
                 if (firstRun != null) firstRunBody(firstRun, actions, body)
             }
+            if (removal != null)
+                RemoveOverlay(removal, list, topInsetDp, bottomInsetDp, p.reducedMotion || !animate)
             if (confirm != null)
                 DialConfirmSheet(confirm, bottomInsetDp.dp, actions.change, actions.keep)
             ui.confirm?.let { c ->
@@ -359,14 +378,14 @@ fun LifeDirectorScreen(
                     actions.guideBack,
                     actions.guideSkip,
                 )
-            ui.toast?.let {
-                DirectorToastView(
-                    it.text,
-                    Modifier.align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = bottomInsetDp.dp + 16.dp),
-                )
-            }
+            val toastAt =
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = bottomInsetDp.dp + 16.dp)
+            // a session just taken off the day: its message, with Undo, in the toast's place
+            val undo = ui.undo
+            if (undo != null) UndoBar(undo.text, actions.undo, toastAt)
+            else ui.toast?.let { DirectorToastView(it.text, toastAt) }
         }
     }
 }
@@ -462,6 +481,8 @@ private fun LazyListScope.todayBelow(
     actions: DirectorActions,
     animate: Boolean,
     anchors: GuideAnchors,
+    removal: DragRemoveController?,
+    reduced: Boolean,
 ) {
     today.upNext?.let { up ->
         item("up-next") {
@@ -496,13 +517,13 @@ private fun LazyListScope.todayBelow(
                             .earlierCard(if (last) Slice.BOTTOM else Slice.MIDDLE)
                             .padding(end = 10.dp, bottom = if (last) 8.dp else 0.dp)
                     ) {
-                        OrderRowView(row, actions.tap)
+                        RemovableRow(row, actions.tap, removal, reduced)
                     }
                 }
             }
     }
     items(today.ahead, key = { it.key }) { row ->
-        Panel(Slice.MIDDLE) { OrderRowView(row, actions.tap) }
+        Panel(Slice.MIDDLE) { RemovableRow(row, actions.tap, removal, reduced) }
     }
     item("footer") {
         Panel(Slice.BOTTOM) {
@@ -541,6 +562,9 @@ private val PANEL_WASHES =
     )
 
 private const val TOAST_MS = 4000L
+
+/** How long Undo stays on offer after a session is taken off the day. */
+private const val UNDO_MS = 7000L
 
 /**
  * The blur of .ld-sheet-bg's backdrop-filter: blur(2px), a deviation of 2 px: the deviation a CSS

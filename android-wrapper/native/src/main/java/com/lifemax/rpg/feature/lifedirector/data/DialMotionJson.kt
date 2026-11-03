@@ -176,6 +176,7 @@ fun directorReply(r: JSONObject): DirectorReply =
         confirm = r.optJSONObject("confirm")?.let { runCatching { confirm(it) }.getOrNull() },
         text = r.optString("text"),
         said = r.optBoolean("said"),
+        undo = r.optString("undo"),
         celebrations = r.celebrations(),
     )
 
