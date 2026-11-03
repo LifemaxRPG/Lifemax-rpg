@@ -20,6 +20,9 @@ package com.lifemax.rpg.feature.pet.room
  * @property floorLight the windows' light lying on the floor, and the dark seam where wall meets
  *   floor.
  * @property rimLight a warm (day) or cool (night) edge on the cats' window side.
+ * @property cameraFollow the room camera's pan feeds the sway: nearby furniture shifts a little
+ *   against the far wall as the camera follows a cat, and each piece shows the side that faces the
+ *   middle of the screen ([PanFollow]). Off, only the idle drift and the tilt move the camera.
  * @property level how strong the depth is ([DepthLevel]): every effect scales with it.
  * @property reducedMotion no sway at all: the room stays at rest (the owner's "reduce motion"
  *   setting), and only the rest picture of each piece is ever rendered.
@@ -32,6 +35,7 @@ internal data class RoomStyle(
     val floorLight: Boolean = false,
     val rimLight: Boolean = false,
     val reducedMotion: Boolean = false,
+    val cameraFollow: Boolean = false,
     val level: DepthLevel = DepthLevel.SUBTLE,
 ) {
     /** True for any 2.5D effect: the room needs its layer art. */
@@ -58,5 +62,18 @@ internal data class RoomStyle(
 
         /** [DEPTH25] at [level]. */
         fun depth25(level: DepthLevel) = DEPTH25.copy(level = level)
+
+        /**
+         * The style of the live rooms (the Overview card and the Cat tab): [DEPTH25] at [level]
+         * with the camera's pan feeding the sway, or the rest picture only ([DEPTH25_STILL]) with
+         * [reducedMotion]. A null [level] is the classic flat room (the performance guard's last
+         * step).
+         */
+        fun live(level: DepthLevel?, reducedMotion: Boolean = false): RoomStyle =
+            when {
+                level == null -> CLASSIC
+                reducedMotion -> depth25(level).copy(reducedMotion = true)
+                else -> depth25(level).copy(cameraFollow = true)
+            }
     }
 }

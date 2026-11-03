@@ -49,7 +49,8 @@ fun PetRoute(
         remember(p.cats) {
             p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak, it.rig) }
         }
-    val room = rememberRoomState(looks)
+    val still = rememberAnimationsOff()
+    val room = rememberRoomState(looks, reducedMotion = still)
     val buzz = LocalPageBuzz.current
     if (room is RoomState.Ready) {
         val stage = room.stage
@@ -72,14 +73,14 @@ fun PetRoute(
     val touchable = p.touch != null
     val touch = if (touchable) RoomTouch(onBowl = vm::feed) else null
     PetScreen(p, PetUi(vm.waiting, vm.notice), actions, topInsetDp, bottomInsetDp) { modifier ->
-        PetRoom(p, room, visible && !vm.fullRoom, modifier, touch)
+        PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
     }
     if (touchable && vm.fullRoom && room is RoomState.Ready) {
         PetFullRoom(
             p,
             room,
             running = visible,
-            still = rememberAnimationsOff(),
+            still = still,
             onBowl = vm::feed,
             onClose = vm::closeRoom,
         )
@@ -97,12 +98,13 @@ internal fun PetRoom(
     visible: Boolean,
     modifier: Modifier,
     touch: RoomTouch? = null,
+    still: Boolean = rememberAnimationsOff(),
 ) {
     val names = p.cats.joinToString(" and ") { it.name }
     RoomHost(
         room,
         running = visible,
-        still = rememberAnimationsOff(),
+        still = still,
         modifier = modifier.semantics { contentDescription = "$names in the room" },
         touch = touch,
     )

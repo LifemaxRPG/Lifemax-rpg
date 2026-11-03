@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.pet.room
 
 import com.lifemax.rpg.feature.pet.art.ArgbImage
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReferenceArray
 import kotlin.math.abs
 import kotlin.math.ceil
 
@@ -27,6 +28,36 @@ internal object SheetTuning {
 }
 
 /**
+ * What [DepthOrder] needs to know of the bands of a frame: how many there are, the piece and the
+ * floor row of each, where each piece's bands start and end, and the drawing order of the bands and
+ * the atlas furniture without the cats ([VolumeStep.FURNITURE] plus an index for the furniture, the
+ * band's number otherwise). A [VolumeStep] is one (the whole room at one camera step); a [StepMix]
+ * is another (each piece at its own step).
+ */
+internal interface BandSet {
+    /** How many bands. */
+    val count: Int
+
+    /** The piece each band belongs to. */
+    val piece: IntArray
+
+    /** The floor row each band stands on. */
+    val key: FloatArray
+
+    /** Where each piece's bands start. */
+    val first: IntArray
+
+    /** Where each piece's bands end (exclusive). */
+    val end: IntArray
+
+    /** The drawing order: the first [orderSize] entries. */
+    val order: IntArray
+
+    /** How many entries of [order] are valid. */
+    val orderSize: Int
+}
+
+/**
  * The pictures of every solid piece for one camera step, each cut into bands of one floor row of
  * depth (so a cat can be drawn between the bands nearer and farther than it: a z-buffer at the
  * resolution of a floor row) and packed into one [image].
@@ -41,8 +72,8 @@ internal object SheetTuning {
  */
 internal class VolumeStep(
     val image: ArgbImage,
-    val count: Int,
-    val piece: IntArray,
+    override val count: Int,
+    override val piece: IntArray,
     val band: IntArray,
     val sx: IntArray,
     val sy: IntArray,
@@ -50,11 +81,14 @@ internal class VolumeStep(
     val h: IntArray,
     val dx: IntArray,
     val dy: IntArray,
-    val key: FloatArray,
-    val first: IntArray,
-    val end: IntArray,
-    val order: IntArray,
-) {
+    override val key: FloatArray,
+    override val first: IntArray,
+    override val end: IntArray,
+    override val order: IntArray,
+) : BandSet {
+    override val orderSize: Int
+        get() = order.size
+
     companion object {
         /** The code of atlas furniture `k` in [order] is `FURNITURE + k`. */
         const val FURNITURE = 1000
@@ -82,7 +116,13 @@ internal class VolumeSheets(
     private val level: DepthLevel,
     val stepsPerSide: Int,
 ) {
-    private val steps = arrayOfNulls<VolumeStep>(2 * stepsPerSide + 1)
+    /**
+     * The made steps. A background warmer ([warmAll]) and the frame may both ask for a step: making
+     * one holds [lock] (it uses the scratch below), reading one never does.
+     */
+    private val steps = AtomicReferenceArray<VolumeStep?>(2 * stepsPerSide + 1)
+
+    private val lock = Any()
     private val frame =
         VolumeFrame(
             pieces.maxOf {
@@ -105,7 +145,7 @@ internal class VolumeSheets(
 
     /** How many steps there are. */
     val count: Int
-        get() = steps.size
+        get() = steps.length()
 
     /** The step of rest. */
     val rest: Int
@@ -122,30 +162,43 @@ internal class VolumeSheets(
     fun indexOf(sway: Float, current: Int): Int {
         if (stepsPerSide == 0) return 0
         val at = sway * stepsPerSide + stepsPerSide
-        if (current in steps.indices && abs(at - current) < 0.5f + SheetTuning.HYSTERESIS) {
+        if (
+            current in 0 until steps.length() && abs(at - current) < 0.5f + SheetTuning.HYSTERESIS
+        ) {
             return current
         }
-        return Math.round(at).coerceIn(0, steps.size - 1)
+        return Math.round(at).coerceIn(0, steps.length() - 1)
     }
 
     /** Whether step [i]'s pictures are made. */
-    fun ready(i: Int): Boolean = steps[i] != null
+    fun ready(i: Int): Boolean = steps.get(i) != null
 
-    /** The pictures of step [i], made now if they are not yet. */
+    /** The pictures of step [i] if they are made, else null. */
+    fun stepOrNull(i: Int): VolumeStep? = steps.get(i)
+
+    /** The pictures of step [i], made now (on this thread) if they are not yet. */
     fun step(i: Int): VolumeStep =
-        steps[i]
-            ?: build(i).also {
-                steps[i] = it
-                made++
-            }
+        steps.get(i) ?: synchronized(lock) { steps.get(i) ?: build(i).also { steps.set(i, it) } }
+
+    /**
+     * The made step nearest to [i] (itself when made), or -1 when none is made. A frame that must
+     * not wait for a step a background warmer is still making draws this one instead.
+     */
+    fun nearestReady(i: Int): Int {
+        if (steps.get(i) != null) return i
+        for (k in 1 until steps.length()) {
+            if (i - k >= 0 && steps.get(i - k) != null) return i - k
+            if (i + k < steps.length() && steps.get(i + k) != null) return i + k
+        }
+        return -1
+    }
 
     /** Make the pictures of one more step, nearest rest first; false when all are made. */
     fun warmOne(): Boolean {
-        if (made == steps.size) return false
         for (k in 0..stepsPerSide) {
             for (side in 0..1) {
                 val i = if (side == 0) stepsPerSide - k else stepsPerSide + k
-                if (steps[i] == null) {
+                if (steps.get(i) == null) {
                     step(i)
                     return true
                 }
@@ -154,8 +207,30 @@ internal class VolumeSheets(
         return false
     }
 
+    /**
+     * Make every step's pictures, rest first (the thing a background thread does before the room is
+     * shown, and again when it comes back on screen). Stops between steps when [cancelled] says so.
+     */
+    fun warmAll(cancelled: () -> Boolean = { false }) {
+        while (!cancelled() && warmOne()) Unit
+    }
+
     /** How many steps' pictures are made. */
-    private var made = 0
+    val made: Int
+        get() {
+            var n = 0
+            for (i in 0 until steps.length()) if (steps.get(i) != null) n++
+            return n
+        }
+
+    /**
+     * Let go of every step but the rest one (a room that left the screen): the camera steps are
+     * made again, off the main thread, when it returns. The rest picture stays so a first frame is
+     * never empty.
+     */
+    fun release() {
+        for (i in 0 until steps.length()) if (i != stepsPerSide) steps.set(i, null)
+    }
 
     /** Render, band and pack step [i]: a few milliseconds, once. */
     private fun build(i: Int): VolumeStep {

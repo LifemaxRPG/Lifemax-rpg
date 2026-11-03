@@ -99,7 +99,14 @@ private fun Alive(
     val c = LocalPageColors.current
     val cats = tile.live?.house.orEmpty()
     val ownRoom = preview == null && house == null && cats.isNotEmpty()
-    val room = rememberRoomState(looksOf(cats, tile.name), house?.stage, wanted = ownRoom)
+    val still = reducedMotion || rememberAnimationsOff()
+    val room =
+        rememberRoomState(
+            looksOf(cats, tile.name),
+            house?.stage,
+            wanted = ownRoom,
+            reducedMotion = still,
+        )
     // the room art could not be loaded: the cat still lives, in the plain strip
     val strip = cats.isNotEmpty() && (preview != null || room is RoomState.Unavailable)
     val stripSprites =
@@ -115,7 +122,7 @@ private fun Alive(
             RoomHost(
                 room,
                 running = visible && house == null,
-                still = reducedMotion || rememberAnimationsOff(),
+                still = still,
                 modifier = Modifier.fillMaxSize(),
             )
         } else if (stripSprites != null) {
@@ -126,7 +133,7 @@ private fun Alive(
                 stripSprites,
                 colors,
                 running = visible && preview == null,
-                still = reducedMotion || rememberAnimationsOff(),
+                still = still,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
