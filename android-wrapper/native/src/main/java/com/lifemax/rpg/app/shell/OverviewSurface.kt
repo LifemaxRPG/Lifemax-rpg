@@ -10,6 +10,7 @@ import androidx.core.graphics.PathParser
 import androidx.core.view.ViewCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.customview.widget.ExploreByTouchHelper
+import com.lifemax.rpg.app.shell.bar.ScrubPill
 import kotlin.math.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -112,6 +113,22 @@ internal class OverviewSurface(
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private var draws = 0
 
+    /**
+     * The pill a scrub shows on the tab under the finger, ahead of the page's (bottom bar only).
+     */
+    var scrubPill: ScrubPill? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    /** The hit id of the tab the page is on, which TalkBack reads as selected (bottom bar only). */
+    var selectedId: String? = null
+        set(value) {
+            field = value
+            helper.invalidateRoot()
+        }
+
     internal fun diagnostics() =
         JSONObject()
             .put("width", width)
@@ -139,6 +156,10 @@ internal class OverviewSurface(
                     if (target?.optString("id").isNullOrBlank()) "android.widget.TextView"
                     else "android.widget.Button"
                 node.isClickable = !target?.optString("id").isNullOrBlank()
+                if (horizontal && node.isClickable) {
+                    node.roleDescription = "Tab"
+                    node.isSelected = target?.optString("id") == selectedId
+                }
                 if (node.isClickable) node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
                 val r = target?.rect() ?: RectF(0f, 0f, 1f, 1f)
                 node.setBoundsInParent(
@@ -244,6 +265,7 @@ internal class OverviewSurface(
         val data = layer ?: return
         canvas.save()
         canvas.scale(scale, scale)
+        var pillDrawn = false
         for (node in data.nodes) {
             val kind = node.optString("kind")
             if (kind == "clip") {
@@ -266,6 +288,18 @@ internal class OverviewSurface(
             }
             val r = node.rect()
             if (r.width() <= 0 || r.height() <= 0) continue
+            val pill = scrubPill
+            if (pill != null) {
+                if (!pillDrawn && pill.reaches(r.left, r.width())) {
+                    pill.draw(canvas)
+                    pillDrawn = true
+                }
+                if (
+                    kind == "box" &&
+                        pill.hides(r.left, r.top, r.width(), r.height(), node.argb("color"))
+                )
+                    continue
+            }
             paint.reset()
             paint.isAntiAlias = true
             paint.alpha = (255 * node.f("opacity", 1f)).roundToInt().coerceIn(0, 255)

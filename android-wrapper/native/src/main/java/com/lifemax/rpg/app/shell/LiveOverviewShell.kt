@@ -12,7 +12,10 @@ import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.webkit.WebView
 import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
+import com.lifemax.rpg.app.shell.bar.BarScrubScene
+import com.lifemax.rpg.app.shell.bar.BarTab
+import com.lifemax.rpg.app.shell.bar.ScrubBar
+import com.lifemax.rpg.app.shell.bar.ScrubPill
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import kotlin.math.roundToInt
 import org.json.JSONObject
@@ -46,7 +49,15 @@ internal class LiveOverviewShell(
             TabTiming.tap(id)
             activate(id)
         }
-    private val nav = HorizontalScrollView(activity).apply { isHorizontalScrollBarEnabled = false }
+    private val nav =
+        ScrubBar(
+            activity,
+            onOpen = { id ->
+                TabTiming.tap(id)
+                activate(id)
+            },
+            onHighlight = ::showPill,
+        )
     private val scroll =
         ViewTreeObserver.OnScrollChangedListener { header.translationY = -web.scrollY.toFloat() }
     var sequence = 0
@@ -63,7 +74,21 @@ internal class LiveOverviewShell(
      */
     private val keyboard: (Boolean) -> Unit = { up ->
         nav.visibility = if (up) View.GONE else View.VISIBLE
+        applyBleed()
     }
+
+    private val bleedWatch =
+        View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> applyBleed() }
+
+    /**
+     * The bottom bar's own height in px, without the strip of the same colour under it that reaches
+     * the screen's bottom edge through the gesture area ([bleed]).
+     */
+    private var barPx = 1
+    private var bleed = 0
+
+    /** The tab a scrub shows as selected ahead of the page, by its key. */
+    private var pillKey: String? = null
 
     /** The page's bar scroll last followed (px), and the glide toward it. */
     private var navScroll = 0
@@ -92,6 +117,10 @@ internal class LiveOverviewShell(
         frame.addView(header, FrameLayout.LayoutParams(-1, 1))
         frame.addView(nav, FrameLayout.LayoutParams(-1, 1, Gravity.BOTTOM))
         parent.addView(frame, FrameLayout.LayoutParams(-1, -1))
+        // the bar's colour runs on under the gesture area to the very bottom of the screen
+        parent.clipToPadding = false
+        parent.addOnLayoutChangeListener(bleedWatch)
+        applyBleed()
         if (!chromeOnly) web.viewTreeObserver.addOnScrollChangedListener(scroll)
         ImeState.listen(keyboard)
         keyboard(ImeState.up)
@@ -121,14 +150,19 @@ internal class LiveOverviewShell(
             scene.optLong("background").toInt(),
             true,
         )
-        nav.layoutParams =
-            FrameLayout.LayoutParams(
-                -1,
-                (n.getDouble("height") * web.resources.displayMetrics.density)
-                    .roundToInt()
-                    .coerceAtLeast(1),
-                Gravity.BOTTOM,
-            )
+        barPx =
+            (n.getDouble("height") * web.resources.displayMetrics.density)
+                .roundToInt()
+                .coerceAtLeast(1)
+        val scrub = BarScrubScene.parse(scene.optJSONObject("scrub"), n.optJSONArray("hits"))
+        nav.scene = scrub
+        nav.setBackgroundColor(
+            scrub?.surface?.takeIf { Color.alpha(it) > 0 } ?: scene.optLong("background").toInt()
+        )
+        bar.selectedId = scrub?.tabs?.firstOrNull { it.key == scrub.active }?.id
+        applyBleed()
+        showPill(pillKey?.let { key -> scrub?.tabs?.firstOrNull { it.key == key } })
+        nav.sceneArrived(scrub?.active.orEmpty())
         if (!chromeOnly) header.translationY = -web.scrollY.toFloat()
         follow(scene)
     }
@@ -146,6 +180,7 @@ internal class LiveOverviewShell(
         val swipe = scene.optJSONObject("swipe")
         when {
             first -> nav.post { nav.scrollTo(to, 0) }
+            nav.scrubbing -> Unit // the finger is moving the strip
             swipe == null || to == navScroll -> return
             swipe.optBoolean("motion", true) -> nav.post { glideTo(to) }
             else -> nav.post { nav.scrollTo(to, 0) }
@@ -176,15 +211,47 @@ internal class LiveOverviewShell(
 
     /** The bottom bar's height in px (the audio dock sits on top of it). */
     val navPx: Int
-        get() = nav.layoutParams.height
+        get() = barPx
 
     fun contentInsetsDp(): Pair<Float, Float> {
         val density = web.resources.displayMetrics.density
-        return Pair(header.layoutParams.height / density, nav.layoutParams.height / density)
+        return Pair(header.layoutParams.height / density, barPx / density)
+    }
+
+    /**
+     * The screen's gesture area below the content: the bar reaches down through it to the bottom
+     * edge, with its tabs still above it, so the content's own insets (which stop at the gesture
+     * area) stay as they are.
+     */
+    private fun applyBleed() {
+        val inset = if (ImeState.up) 0 else parent.paddingBottom
+        val lp = frame.layoutParams as FrameLayout.LayoutParams
+        if (bleed != inset || lp.bottomMargin != -inset) {
+            bleed = inset
+            lp.bottomMargin = -inset
+            frame.layoutParams = lp
+        }
+        nav.fit(barPx, inset)
+    }
+
+    /** A scrub shows the tab under the finger as selected before the page has switched to it. */
+    private fun showPill(tab: BarTab?) {
+        pillKey = tab?.key
+        val scrub = nav.scene
+        bar.scrubPill =
+            if (tab == null || scrub == null) null
+            else
+                ScrubPill(
+                    tab,
+                    scrub.tabs.firstOrNull { it.key == scrub.active },
+                    scrub.pillColor,
+                    scrub.pillRadius,
+                )
     }
 
     fun close() {
         ImeState.forget(keyboard)
+        parent.removeOnLayoutChangeListener(bleedWatch)
         glide?.cancel()
         if (!chromeOnly && web.viewTreeObserver.isAlive)
             web.viewTreeObserver.removeOnScrollChangedListener(scroll)

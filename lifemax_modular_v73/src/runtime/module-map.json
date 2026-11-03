@@ -1830,7 +1830,7 @@
   },
   {
    "file": "src/runtime/segments/33-android.js",
-   "bytes": 14101,
+   "bytes": 14575,
    "statement_count": 30,
    "tags": [
     "android",
@@ -2148,8 +2148,8 @@
   },
   {
    "file": "src/runtime/segments/42-scrubnav.js",
-   "bytes": 14864,
-   "statement_count": 27,
+   "bytes": 15014,
+   "statement_count": 28,
    "tags": [
     "navigation",
     "android"
@@ -2157,6 +2157,7 @@
    "symbols": [
     "LMA_SCRUB",
     "LMA_SCRUB_GAINS",
+    "lmaScrubSpeedKey",
     "lmaScrubGain",
     "lmaSetScrubSpeed",
     "lmaScrub",
@@ -3245,8 +3246,8 @@
   },
   {
    "file": "src/runtime/segments/50-tabs-edit.js",
-   "bytes": 4738,
-   "statement_count": 12,
+   "bytes": 6578,
+   "statement_count": 16,
    "tags": [
     "navigation"
    ],
@@ -3257,6 +3258,10 @@
     "lmaTabsButtons",
     "lmaTabsCfg",
     "lmaTabsStore",
+    "LMA_TAB_LAST",
+    "LMA_TAB_OLD_DEFAULT",
+    "lmaTabsCarried",
+    "lmaTabsMigrate",
     "lmaTabsApply",
     "lmaTabsRender",
     "lmaTabMove",
@@ -3554,7 +3559,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 26879,
+   "bytes": 28463,
    "statement_count": 1,
    "tags": [
     "android",

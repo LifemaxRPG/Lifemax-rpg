@@ -70,6 +70,10 @@
    of 1.5 s on the first cat (and the purr's sound) sent to the Cat screen only while it shows, whose run against the page is checked
    (once per operation id, counted exactly when ok and changed, answered unless the screen was closed since). PETMUT=twice runs a mutation
    that must fail: a stroke counted twice.
+   A Change it tapped on a screen that was already sent its close (an XP celebration closed it a moment before) is not owed a reply: the kit is
+   inactive and drops it, and native forgets the awaited reply (SheetController.reset). The "on" mode makes that race happen on every run
+   (the closing race probe) and checks a plain Change it is answered; JMUT=reply (the kit never sending a reply) must fail it.
+   ONLY_SEED=n replays one seed's sequence (the others' draws are still taken). MODES=on picks modes.
    Needs Playwright (not part of the CI node tests).
    Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload,dock by default) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -81,7 +85,9 @@ execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'igno
 execFileSync('python3', [path.join(root, 'forge_features.py'), path.join(root, 'dist', 'Life_Max_RPG_v73_modular_build.html'), out], { cwd: root, stdio: 'ignore' });
 /* a mutation the Journal's modes must catch (JMUT): the page built without the projection's lock branch or the lock subscription */
 const MUTATIONS = { projection: ['if (locked()) return withheldFrame(); // nothing below runs while locked', ''], onchange: ['lock()?.onChange(() => {', 'void (() => {'] ,
-    autosave: ['{ award: p.final === true, soft: false }', '{ award: true, soft: false }'] };
+    autosave: ['{ award: p.final === true, soft: false }', '{ award: true, soft: false }'],
+    /* a Change it whose reply the kit never sends: the screen waits for ever (the closing race probe and the Change it hops must catch it) */
+    reply: ['await update(reply);', 'await update();'] };
 const DMUTATIONS = { blocked: ['(audioBusy() && !window.NativeAudioDock?.ready()) ||', 'audioBusy() ||'], undocked: ['root.classList.toggle("audio-docked", on);', ';'] };
 if (DMUTATIONS[process.env.DMUT]) { const [a, b2] = DMUTATIONS[process.env.DMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.DMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 /* mutations the prime checks must catch (PMUT, phase 3): the page opening a neighbour in place of priming it, updating the primed
@@ -109,6 +115,7 @@ const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'dir
 // the Overview cards' taps: the glance's plan command (to Life Director) and a move's {view} action (to Log)
 const CARDS = { 'tap-plan': { command: 'plan', payload: { act: '', id: '' }, to: 'life-director' }, 'tap-move': { action: { view: 'log' }, to: 'log' } };
 const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(SWIPES), ...Object.keys(WEB_SWIPES), ...Object.keys(BAR), ...Object.keys(COMMANDS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
+const ONLY_SEED = Number(process.env.ONLY_SEED) || 0;
 const MODES = (process.env.MODES || 'off,on,mixed,failing,lock,reload,dock').split(',');
 // the dock mode's hops: the page plays a book, a tap in the dock, Media's own Play command
 const DOCKHOPS = { 'play': 1, 'dock-cmd': 1, 'tap-play': 1 };
@@ -152,7 +159,7 @@ async function run(b, mode) {
       pet:{v:1,name:'Miso',coat:'ginger',trait:'curious',born:Date.now()-40*864e5,lastFed:Date.now()-5*36e5,meals:[],day:'',fedToday:0,petsToday:0,playsToday:0,bondPts:200,care:0,vacation:{on:false,since:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0}}));
     localStorage.setItem('lifemax_director_state_v1', ${JSON.stringify(JSON.stringify(directorDay.state()))});}
     window.__seed=1;const rnd=()=>{let t=window.__seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};
-    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,pet:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__composed={};window.__primes={};window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};
+    window.__rnd=(a,b)=>a+rnd()*(b-a);window.__mode=${JSON.stringify(mode)};window.__vis={overview:false,cards:false,character:false,pet:false,food:false,log:false,recipes:false,plan:false,director:false,media:false,settings:false,journal:false};window.__busy=0;window.__composed={};window.__primes={};window.__log=[];window.__faults=[];window.__tapped='';window.__cmds={sent:0,answered:0};window.__cardHops={taps:0,toggles:0,celebrations:0,shown:0,opens:0};window.__runs={};window.__replies={};window.__closes={};window.__closing={};
     /* every reply: one per command, to a command that ran, saying what its run did */
     window.__replied=r=>{if(!/^sim-/.test(r.requestId||''))return;window.__cmds.answered++;const run=window.__runs[r.requestId];if(window.__replies[r.requestId])fault('two replies to '+r.requestId);window.__replies[r.requestId]=true;
       if(!run)fault('a reply to '+r.requestId+', which never ran');else if(!!r.ok!==run.ok||(r.message||'')!==run.message)fault('the reply to '+r.requestId+' says ok='+r.ok+' ('+r.message+'), its run ok='+run.ok)};window.__onShow={};window.__t=()=>Math.round(performance.now());
@@ -205,8 +212,8 @@ async function run(b, mode) {
       prime:a=>{if(a&&(a.navScene||a.chromeScene))fault(name+' was primed with the bars\\' scene');
         return inOrder(async()=>{if(window.__composed[vis])return {primed:false,reason:'composed'};await wait(window.__rnd(10,120));window.__composed[vis]=true;window.__primes[vis]=(window.__primes[vis]||0)+1;window.__log.push(window.__t()+' '+name+' primed');return {primed:true,javaKb:1,nativeKb:2,ms:3}})},
       swipeSettle:a=>{checkAnswer(a);return inOrder(async()=>{window.__log.push(window.__t()+' '+name+' swipeSettle '+(a&&a.token)+' '+(a&&a.outcome)+(a&&a.reason?' ('+a.reason+')':''))})},
-      close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
-        if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
+      close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;window.__closing[vis]=(window.__closing[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
+        if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<');window.__closing[vis]--}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
       handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','pet.panels.v1','pet.touch.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
@@ -245,7 +252,7 @@ async function run(b, mode) {
       const id = x && x.sim, before = bed(), r = apply.apply(this, arguments), after = bed();
       if (!id) return r;
       if (window.__runs[id]) window.__faults.push('Change it ' + id + ' ran twice');
-      window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.director, closes: window.__closes.director || 0 };
+      window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.director && !window.__closing.director, closes: window.__closes.director || 0 };
       if (r.ok ? !(r.changed && after === x.minute && before !== after) : after !== before) window.__faults.push('Change it ' + id + ' to ' + x.minute + ': ok=' + r.ok + ', saved bedtime ' + before + ' -> ' + after);
       return r;
     };
@@ -262,7 +269,7 @@ async function run(b, mode) {
       return r;
     };
   });
-  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativePet = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing'; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
+  await p.evaluate(() => { try { lmaThumbWarmBusy = false } catch (e) { } const L = lmaLoad(); L.nativeOverview = true; L.nativeCharacter = true; L.nativePet = true; L.nativeNutrition = true; L.nativePlan = true; L.nativeDirector = true; L.nativeRecipes = true; L.nativeLibrary = true; L.nativeSettings = true; L.nativeSwipe = true; L.nativeOverviewCards = window.__mode === 'on' || window.__mode === 'failing' || window.__mode === 'mixed' /* mixed starts with the cards on only to warm them: see below */; lmaSave(); navigate('dashboard') }); // Log runs on its default (on)
   if (mode === 'dock') {
     // ten seconds of silence, twice, as the page stores a book (IndexedDB); the owner's switch for the dock turned on as in Settings
     await p.evaluate(async () => {
@@ -288,7 +295,21 @@ async function run(b, mode) {
     // the visits only warmed the page: native's screens count as never composed, so the idle prime has screens to compose ahead
     await p.evaluate(() => { window.__composed = {} });
   };
+  let probeFailed = false, mixedWarmFailed = false;
   await warmTabs();
+  if (mode === 'mixed') {
+    /* mixed starts with the cards off, but their first drawing is as cold as any tab's (the first projection builds every tile's images):
+       a seed that switched them on and went to the Overview could wait seconds for it, and the sim's clock runs in real time meanwhile, so
+       the hand-over's 2.5 s net (NativeTabs) closed the screen being left before the cards showed (seed 36, under load). So they are drawn once
+       now, with the switch on, then switched off from native Settings as a person would, and the shell draws the Overview, warm too. */
+    await p.evaluate(() => lmaNavTo('settings', { fast: true }));
+    for (let t = 0; t < 20000 && !(await p.evaluate(() => window.__vis.settings)); t += 50) await settle(50);
+    await p.evaluate(() => Capacitor.Plugins.NativeSettings.__emit('command', { command: 'toggle', payload: { id: 'nativeOverviewCards', on: false }, requestId: 'sim-warm' }));
+    await settle(1500);
+    await p.evaluate(() => lmaNavTo('dashboard', { fast: true })); await settle(3000);
+    if (await p.evaluate(() => lmaLoad().nativeOverviewCards)) { console.log('FAIL the mixed mode could not switch the cards off after warming them'); mixedWarmFailed = true }
+    await p.evaluate(() => { window.__composed = {}; window.__cardHops = { taps: 0, toggles: 0, celebrations: 0, shown: 0, opens: 0 } });
+  }
   /* the Journal's modes: what every page load needs (no thumbnail pass; a fault whenever one of the Journal's open builders runs while
      the lock keeps the Journal closed), then the switch on, a journal with canaries and the lock on */
   const journal = journalMode(mode);
@@ -311,6 +332,47 @@ async function run(b, mode) {
     });
     await settle(1000);
   }
+  if (mode === 'on') {
+    /* the closing race, made to happen on every run (it was the flaky seed 31): an XP celebration closes the Life Director screen, whose fake
+       stays up for its 5-40 ms close, and a Change it tapped in that window. The kit has gone inactive, so the page drops the reply by design
+       (native forgets the awaited reply when its screen goes behind the page); the sim must not count that command as owed one. */
+    await p.evaluate(() => { window.__log = []; window.__faults = []; window.__tapped = ''; window.__sentNow = []; lmaNavTo('life-director', { fast: true }) });
+    for (let t = 0; t < 20000 && !(await p.evaluate(() => window.__vis.director && !window.__busy)); t += 50) await settle(50);
+    // first the plain case, which must be answered (so that the check below still catches a reply the page loses)
+    await p.evaluate(() => {
+      const bed = LifeDirector.native.today(0).dial.handles.find(h => h.rule === 'sleep' && h.end === 'start'), id = 'sim-probe-open';
+      window.__sentNow.push(id); window.__cmds.sent++;
+      Capacitor.Plugins.NativeLifeDirector.__emit('command', { command: 'dialApply', payload: { key: bed.key, minute: bed.minute === 1350 ? 1380 : 1350, sim: id }, requestId: id });
+    });
+    for (let t = 0; t < 10000 && !(await p.evaluate(() => window.__replies['sim-probe-open'])); t += 50) await settle(50);
+    const lost = await p.evaluate(() => { const run = window.__runs['sim-probe-open']; return !run ? 'it never ran' : !run.shown ? 'it ran on a screen not showing' : window.__replies['sim-probe-open'] ? '' : 'no reply to it on an open screen' });
+    if (lost) { console.log('FAIL the closing race probe, plain Change it: ' + lost); probeFailed = true }
+    // then the celebration closes the screen, and the tap arrives with the close: sent from inside the plugin's close, when the fake's screen
+    // still shows (its 5-40 ms close has not run) and the kit has gone inactive. (The sim's clock runs in real time, so a tap sent from the
+    // outside could miss that window on a slow machine; this one cannot.)
+    await p.evaluate(() => {
+      const P = Capacitor.Plugins.NativeLifeDirector, close = P.close;
+      P.close = function () {
+        const r = close.apply(this, arguments); P.close = close;
+        if (window.__vis.director && window.__closing.director) {
+          const bed = LifeDirector.native.today(0).dial.handles.find(h => h.rule === 'sleep' && h.end === 'start'), id = 'sim-probe';
+          window.__sentNow.push(id); window.__cmds.sent++; window.__probeSent = true;
+          P.__emit('command', { command: 'dialApply', payload: { key: bed.key, minute: bed.minute === 1350 ? 1380 : 1350, sim: id }, requestId: id });
+        }
+        return r;
+      };
+      celebrateXP(12, [{ id: 'physique', xp: 12 }]);
+    });
+    for (let t = 0; t < 8000 && !(await p.evaluate(() => window.__probeSent)); t += 50) await settle(50);
+    const raced = await p.evaluate(() => !!window.__probeSent);
+    await settle(3000);
+    const pr = await p.evaluate(() => window.__sentNow.filter(id => { const run = window.__runs[id]; return run && run.shown && !window.__replies[id] && (window.__closes.director || 0) === run.closes }).map(id => 'no reply to ' + id).concat(window.__faults));
+    if (!raced) { console.log('FAIL the closing race probe never found the screen closing: ' + JSON.stringify(await p.evaluate(() => ({ view: lmaView(), vis: window.__vis, closes: window.__closes, busy: window.__busy, log: window.__log.slice(-12) })))); probeFailed = true }
+    else if (pr.length || !(await p.evaluate(() => window.__runs['sim-probe']))) { console.log('FAIL the closing race probe: ' + JSON.stringify(pr)); probeFailed = true }
+    else console.log('PASS closing race: a Change it tapped on a screen already sent its close ran, and owes no reply');
+    await p.evaluate(() => { window.__log = []; window.__faults = []; window.__sentNow = []; window.__probeSent = false; window.__cmds = { sent: 0, answered: 0 }; window.__runs = {}; window.__replies = {}; lmaNavTo('dashboard', { fast: true }) });
+    await settle(3000);
+  }
   const failures = []; let hops = 0;
   const rng = (s => () => { let t = s += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 })(Number(process.env.SEED_BASE) || 12345);
   for (let seed = 1; seed <= SEEDS; seed++) {
@@ -318,6 +380,7 @@ async function run(b, mode) {
     const n = 3 + Math.floor(rng() * 9), seq = [];
     const hops_ = hopsOf(mode);
     for (let i = 0; i < n; i++) seq.push({ to: hops_[Math.floor(rng() * hops_.length)], gap: Math.floor(rng() * 4) * 25 });
+    if (ONLY_SEED && seed !== ONLY_SEED) continue; // ONLY_SEED=31 replays one sequence (the others' draws are still taken, so it is the same sequence)
     let view = '', carried = { faults: [], log: [] };
     for (const step of seq) {
       if (step.to === 'reload') {
@@ -513,7 +576,11 @@ async function run(b, mode) {
       for (const mark of ['swipe-reveal', 'native-enter']) if (document.documentElement.classList.contains(mark)) window.__fault(mark + ' is still on once settled');
       return { vis: vis.join('+'), want: window.__wantOf(lmaView()), busy: window.__busy, view: lmaView(), log: window.__log,
         faults: window.__faults.concat(window.__sentNow.filter(id => !window.__runs[id]).map(id => 'command ' + id + ' never ran'),
-          /* a Change it that ran while its screen showed is answered, unless the screen was sent a close since (the kit replies to an open screen only) */
+          /* a Change it that ran while its screen showed is answered, unless the screen was sent a close since (the kit replies to an open screen only).
+             "Showing" means showing and not already closing: the fake's screen stays up for its 5-40 ms close, and a tap in that window (an XP
+             celebration closed the screen a moment earlier, or a hop left it) reaches a page whose kit has gone inactive, which drops the
+             reply by design (native forgets the awaited reply when its screen goes behind the page: SheetController.reset). Counting such a
+             command as owed a reply made seed 31 fail about half the runs, whatever the tab order: it is a race in the sim's timing, not a lost reply. */
           window.__sentNow.filter(id => { const run = window.__runs[id]; return run && run.shown && !window.__replies[id] && (window.__closes[run.screen || 'director'] || 0) === run.closes; })
             .map(id => 'no reply to ' + id + ', which ran while its screen showed, and the screen was never closed')) };
     });
@@ -532,7 +599,7 @@ async function run(b, mode) {
   // given up, the cards are not tried again for the session (no retry on a body change, a celebration's end or a hop)
   if (mode === 'failing' && cards.opens !== 1) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the failing cards were asked to open ' + cards.opens + ' times, not once'], log: [] });
   if ((mode === 'off' || mode === 'failing') && cards.shown) failures.push({ seed: 0, seq: '', showing: '', want: '', view: '', faults: ['the cards showed in mode ' + mode], log: [] });
-  if (process.env.TRACE) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
+  if (process.env.TRACE || process.env.TRACE_FAIL) failures.slice(0, 2).forEach(f => console.log('  trace seed ' + f.seed + ':\n    ' + f.log.join('\n    ')));
   failures.slice(0, 6).forEach(f => console.log('  seed ' + f.seed + ': ' + f.seq + ' -> showing ' + f.showing + ', wanted ' + f.want + (f.busy ? ' (busy ' + f.busy + ')' : '') + ' view=' + f.view + (f.faults.length ? ' faults: ' + f.faults.join('; ') : '')));
   if (mode === 'dock') console.log('     dock ' + mode + ': ' + (await p.evaluate(() => window.__dock.pushes)) + ' states pushed' + (process.env.DMUT ? ' (mutation ' + process.env.DMUT + ')' : ''));
   if (journal) {
@@ -546,5 +613,5 @@ async function run(b, mode) {
   if (errs.length) console.log('FAIL cards ' + mode + ': script errors', errs.slice(0, 3));
   await p.context().close();
   if (server) server.close();
-  return !!(failures.length || errs.length || loads);
+  return !!(failures.length || errs.length || loads || probeFailed || mixedWarmFailed);
 }

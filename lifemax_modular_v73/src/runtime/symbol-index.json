@@ -440,6 +440,12 @@
  "LMA_TAB_ICONS": [
   "src/runtime/segments/42-scrubnav.js"
  ],
+ "LMA_TAB_LAST": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "LMA_TAB_OLD_DEFAULT": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
  "LMA_THUMB_KEY": [
   "src/runtime/segments/42-scrubnav.js"
  ],
@@ -3806,6 +3812,9 @@
  "lmaScrubReveal": [
   "src/runtime/segments/42-scrubnav.js"
  ],
+ "lmaScrubSpeedKey": [
+  "src/runtime/segments/42-scrubnav.js"
+ ],
  "lmaScrubSync": [
   "src/runtime/segments/42-scrubnav.js"
  ],
@@ -3890,7 +3899,13 @@
  "lmaTabsButtons": [
   "src/runtime/segments/50-tabs-edit.js"
  ],
+ "lmaTabsCarried": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
  "lmaTabsCfg": [
+  "src/runtime/segments/50-tabs-edit.js"
+ ],
+ "lmaTabsMigrate": [
   "src/runtime/segments/50-tabs-edit.js"
  ],
  "lmaTabsRender": [

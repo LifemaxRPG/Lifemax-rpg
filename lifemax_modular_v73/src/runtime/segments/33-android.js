@@ -115,7 +115,10 @@ function lmaApplyBars(){
   if(!c||c==='rgba(0, 0, 0, 0)'||c==='transparent')c=getComputedStyle(document.documentElement).backgroundColor;
   const m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c)||[0,12,14,18],r=+m[1],g=+m[2],b=+m[3];
   const hex='#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''),lum=(0.299*r+0.587*g+0.114*b)/255;
-  P.setSystemBars({color:hex,light:lum>0.55}).catch(()=>{});
+  /* the page's bottom bar reaches the screen's bottom edge: the strip below the page (the gesture area) takes its colour */
+  let bottom=hex;const bar=document.querySelector('.sidebar'),bs=bar&&innerWidth<=860?getComputedStyle(bar):null,bm=bs&&bs.display!=='none'&&/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(bs.backgroundColor);
+  if(bm&&(bm[4]===undefined||+bm[4]>0.95))bottom='#'+[bm[1],bm[2],bm[3]].map(v=>(+v).toString(16).padStart(2,'0')).join('');
+  P.setSystemBars({color:hex,light:lum>0.55,bottom}).catch(()=>{});
  }catch(e){}
 }
 /* ---------- Settings → Notifications card ---------- */

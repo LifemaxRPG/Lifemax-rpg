@@ -45,6 +45,8 @@ const fakes = ({ prime = true, native = true } = {}) => `
       lmaThumbWarm = async () => { }; // the first-install thumbnail pass would walk the page through every tab
       NativePrime.config.idleMs = 150; // 800 ms in the app
       Object.assign(lmaLoad(), { nativeCharacter: true, nativeNutrition: true, nativeLog: true, nativePlan: true, nativeLibrary: true, nativeRecipes: true, nativeDirector: true }); lmaSave();
+      // the bar in its old order (an owner's own saved order), so Workout plan sits between Quests (a page) and Library as these checks were written for
+      lmaLoad().tabs = { order: ['dashboard', 'character', 'food', 'pet', 'log', 'quests', 'plan', 'library', 'money', 'life-director'], hidden: [], extra: [], qEnd: 1 }; lmaSave(); lmaTabsApply();
     });
     return p;
   };
