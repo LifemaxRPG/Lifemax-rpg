@@ -594,6 +594,7 @@
    "source": "app/shell/ChromeHost.kt",
    "owner": "native",
    "purpose": "shared top/bottom bars and make-before-break hand-over between native tabs (A23, ADR 0002)",
+   "scene": "every bar scene carries scrub {v: 1, tabs [{key, id}] in bar order (hidden tabs left out; id is the hit id of the tab's button), active (the bar key of the view the page is on, or \"\"), speed: normal | fast | faster (the owner's Scrub speed; unknown is fast), haptics, pill {color, radius} (the selected pill's look, as opaque-or-alpha ARGB and px), surface (the bar's own colour, ARGB)}. native/app/shell/bar scrubs the strip from it: a slide along the bar picks a tab with the page's mapping (ScrubMap), shows the pill on it at once, scrolls the strip to keep it in view and asks the page to open it (the bar's `activate` for that id) when the finger slows and when it lifts. A scene without scrub leaves the bar a plain scroller. The bar's surface colour also fills the strip below it through the gesture area, to the screen's bottom edge",
    "writes": []
   },
   {

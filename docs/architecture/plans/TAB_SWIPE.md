@@ -387,7 +387,7 @@ Everything is wrapped in try/catch, which answers `refused`.
 | Text fields (Library and Recipes search, Log notes) | `Modifier.noTabSwipe()`; and no swipe while the IME shows. Parity with the web's INPUT/TEXTAREA rule. |
 | DropdownMenus, dialogs, selection handles | Separate windows, plus the window-focus gate. |
 | Tap-only controls (PaneSwitch, LibrarySwitch, FoodPaneSwitcher, Food week strip, radar, Life Director dial taps) | Below slop nothing happens. A claim sends `ACTION_CANCEL`, so no tap fires. |
-| Shared bars | The header consumes; the bottom bar's HorizontalScrollView scrolls. Both sit above the screens. Scrubbing stays web-only. |
+| Shared bars | The header consumes; the bottom bar's HorizontalScrollView scrolls. Both sit above the screens. The bar scrubs natively (`app/shell/bar`, CONTRACT A22), so a slide along it is a scrub through the tabs, not a scroll. |
 | System Back edges (gesture navigation) | Starts inside max(inset, 24 dp) are ignored. No exclusion rects. A system `ACTION_CANCEL` (pilfer) springs back. Back stays `lmaBack`. |
 | Second pointer | Before the claim: dead. After: cancel and spring back, consuming until every pointer is up. |
 | Life Director (a bar tab after Money; web section swipe; .wt/ld2 dial handles) | Never a source: `swipeSource=false` and the page sets `on:false` there. It can be a destination. |

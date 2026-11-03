@@ -116,8 +116,27 @@
   for(const root of roots)if(root)await walk(root);return{nodes,hits,height:maxY,width:nav?roots[0].scrollWidth:viewportWidth()};
  }
  function mask(on){for(const el of [document.querySelector('.topbar'),document.querySelector('.sidebar')])if(el){if(on){if(!el.dataset.nativeOverviewMasked){el.dataset.nativeOverviewOpacity=el.style.opacity;el.dataset.nativeOverviewMasked='1';el.style.opacity='0'}}else if(el.dataset.nativeOverviewMasked){el.style.opacity=el.dataset.nativeOverviewOpacity||'';delete el.dataset.nativeOverviewMasked;delete el.dataset.nativeOverviewOpacity}}}
- function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0].join('|')}
- function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0,swipe:window.NativeSwipe?.state()}}
+ function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0,[...(bar?.querySelectorAll('.navbtn[data-view]')||[])].map(b=>b.dataset.view+(b.offsetWidth?'':'-')).join('/')].join('|')}
+ /* What native needs to let a finger scrub along the bar (scene.scrub, v1): the tabs in the order the bar shows them with the id of each
+   button, the tab the page is on, the owner's scrub speed and haptics switch, and the look of the selected pill and of the bar itself
+   (read while the capture holds the transitions, so it is the final colour). The bar is native's drawing of the page's; it moves the pill
+   to the tab under the finger at once and asks the page to open the tab when the finger slows, as the page's own scrub does. */
+ function barLook(bar){
+  try{
+   const probe=document.createElement('button');probe.className='navbtn active';probe.style.display='none';bar.appendChild(probe);
+   const cs=getComputedStyle(probe),pill={color:color(cs.backgroundColor),radius:num(cs.borderTopLeftRadius)};probe.remove();
+   return{pill,surface:color(getComputedStyle(bar).backgroundColor)};
+  }catch(e){return undefined}
+ }
+ function scrubState(look,actions){
+  try{
+   const bar=document.querySelector('.sidebar');if(!bar||!look)return undefined;
+   const tabs=[];for(const[id,el]of actions)if(el.matches&&el.matches('.sidebar > .navbtn[data-view]'))tabs.push({key:el.dataset.view,id});
+   const on=bar.querySelector('.navbtn.active');
+   return{v:1,tabs,active:on?.dataset.view||'',speed:lmaScrubSpeedKey(),haptics:!!fxOpt().haptics,pill:look.pill,surface:look.surface};
+  }catch(e){return undefined}
+ }
+ function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0,swipe:window.NativeSwipe?.state(),scrub:scrubState(scene.look,actions)}}
  function snapshot(){
   try{lmaSyncActive()}catch(e){}
   const key=chromeKey(),cached=chromeCache.get(key);
@@ -134,7 +153,7 @@
     const header=await capture([document.querySelector('.topbar')]);
     const sidebar=document.querySelector('.sidebar'),nav=await capture([sidebar],true);
     const actions=N.buildActions;
-    const scene={version:2,width:viewportWidth(),header,nav,background:color(getComputedStyle(document.body).backgroundColor)};
+    const scene={version:2,width:viewportWidth(),header,nav,background:color(getComputedStyle(document.body).backgroundColor),look:barLook(sidebar)};
     N.lastCaptureMs=performance.now()-captureAt;chromeCache.set(currentKey,{scene,actions});while(chromeCache.size>6)chromeCache.delete(chromeCache.keys().next().value);
     return publishChrome(scene,actions);
    }finally{N.buildActions=null;document.documentElement?.classList?.remove('lma-capture')}
