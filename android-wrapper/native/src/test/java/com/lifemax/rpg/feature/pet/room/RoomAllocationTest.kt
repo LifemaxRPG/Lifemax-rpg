@@ -2,12 +2,18 @@ package com.lifemax.rpg.feature.pet.room
 
 import com.lifemax.rpg.feature.pet.art.ArgbImage
 import com.lifemax.rpg.feature.pet.art.PetArtResources
+import com.lifemax.rpg.feature.pet.body.Beat
+import com.lifemax.rpg.feature.pet.body.Burst
 import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
+import com.lifemax.rpg.feature.pet.body.Petting
 import com.lifemax.rpg.feature.pet.body.PlanStep
 import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.TouchModel
+import com.lifemax.rpg.feature.pet.body.TouchSink
 import com.lifemax.rpg.feature.pet.body.World
+import com.lifemax.rpg.feature.pet.presentation.TouchParticles
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -193,8 +199,68 @@ class RoomAllocationTest {
         assertTrue("the cats did not eat", house.bodies.all { it.pose.x in 80f..130f })
     }
 
+    /**
+     * The owner's hand on a cat: the model steps, hearts and notes spawn and rise and are painted
+     * over the cats, the cat purrs and its ears move. Putting the hand down plans (a reflex, at the
+     * moment of the touch); the frames while it rests, and the room's pictures rising, cost
+     * nothing.
+     */
+    @Test
+    fun aFrameWithAHandOnTheCatAllocatesNothing() {
+        assumeTrue("thread allocation counting needs a HotSpot JVM", supported())
+        val art = PetArtResources.loadRoom()
+        val scene = RoomScene(art)
+        val canvas = CountingCanvas()
+        val particles = TouchParticles(art)
+        val house = HouseLife(listOf(HouseCat(3, false), HouseCat(8, false)), autopilot = false)
+        val cats = TwoCats(house.bodies)
+        val director = CameraDirector()
+        val petting =
+            Petting(
+                house,
+                object : TouchSink {
+                    override fun burst(kind: Burst, x: Float, y: Float) =
+                        particles.spawn(kind, x, y)
+
+                    override fun buzz(beat: Beat) = Unit
+
+                    override fun purr(cat: Int, level: Float) = Unit
+
+                    override fun stroke(cat: Int, outcome: TouchModel.Outcome) = Unit
+                },
+            )
+        house.bodies[0].placeAt(-100f, World.ART_Z, SurfaceId.FLOOR, 1)
+        house.bodies[1].placeAt(300f, World.ART_Z, SurfaceId.FLOOR, -1)
+        // a calm cat that trusts the hand, so it does not leave within the fifteen seconds
+        petting.profile(0, 5, 0.5f, 1f, 0f)
+        val dt = 1f / 60f
+        fun frame() {
+            house.step(dt)
+            petting.step(dt)
+            particles.step(dt)
+            director.update(house.bodies[0], house.bodies[1], dt)
+            scene.paintBackdrop(canvas, 12.0, 12.0, 6)
+            scene.paintScene(canvas, cats)
+            particles.paint(canvas)
+            scene.paintOverlay(canvas, 12.0, 6)
+        }
+        repeat(600) { frame() }
+        val pose = house.bodies[0].pose
+        petting.down(pose.x, pose.y - 10f)
+        repeat(300) { frame() } // warm up with the hand down: the purr, the first hearts
+        val before = allocatedBytes()
+        repeat(HOLD_FRAMES) { frame() }
+        val used = allocatedBytes() - before
+        assertTrue("allocated $used bytes over $HOLD_FRAMES frames", used <= TOLERANCE_BYTES)
+        assertTrue("hearts were drawn", particles.count > 0 || canvas.calls > 0)
+        assertTrue(petting.touching == 0)
+    }
+
     private companion object {
         const val TOLERANCE_BYTES = 4_096L
+
+        /** Twelve seconds of a hand resting on a cat. */
+        const val HOLD_FRAMES = 720
 
         /** Fifteen seconds: the walk to the bowls, the meal and part of the wash. */
         const val MEAL_FRAMES = 900

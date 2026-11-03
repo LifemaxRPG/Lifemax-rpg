@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.pet.domain
 
+import com.lifemax.rpg.core.designsystem.feedback.HapticScale
+
 /*
  * The Cat tab's projection `pet.projection.v1` (50-native-pet.js): what the page's Cat card shows
  * for the cat whose card it is, with the cats native draws in the room. Every word is the page's
@@ -91,4 +93,50 @@ data class PetProjection(
     val notice: PetNotice?,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /** How the cats take touch, from a page that said `pet.touch.v1`; null from an older page. */
+    val touch: PetTouch? = null,
+)
+
+/**
+ * How a cat takes touch, in the page's numbers: [level] is the trust level (0 to 5), [satMul] its
+ * trait's share of petting saturation, [trust] (0 to 1) how much it trusts the owner's hand, and
+ * [sat] the saturation it holds now (0 to 1.2: ears go back at 0.65, the cat leaves past 0.85).
+ */
+data class PetTouchProfile(val level: Int, val satMul: Double, val trust: Double, val sat: Double)
+
+/** The day's petting and playing counts (the page counts three pets and two plays a day). */
+data class PetCounts(val pets: Int, val petsMax: Int, val plays: Int, val playsMax: Int)
+
+/**
+ * What a screen with `pet.touch.v1` is told to let the cats answer a finger: how each cat of
+ * [PetProjection.cats] takes touch, the day's counts, and the owner's haptic strength (null with
+ * haptics off: the buzzes play nothing).
+ */
+data class PetTouch(
+    val profiles: List<PetTouchProfile>,
+    val counts: PetCounts,
+    val haptics: HapticScale?,
+    val words: PetTouchWords,
+)
+
+/**
+ * The page's words for the touch parts of the screen: the full-screen room's [closeRoom] chip, and
+ * [countsLine] under the card ("Petted 2 of 3 · Played 1 of 2 today"; empty before the day's
+ * first).
+ */
+data class PetTouchWords(val closeRoom: String, val countsLine: String)
+
+/**
+ * What a finished touch tells the page (the `touch` command's `stroke`): cat [cat] was held for
+ * [heldMs]; [left] says whether it got up and went on its own (`over`: had enough, `shy`: a wary
+ * cat) or stayed (empty); [ignored]: the owner kept on well after the ears went back; [spam]: this
+ * was the fourth touch in three seconds; [keepSleep]: the cat slept through it.
+ */
+data class PetStroke(
+    val cat: Int,
+    val heldMs: Long,
+    val left: String,
+    val ignored: Boolean,
+    val spam: Boolean,
+    val keepSleep: Boolean,
 )

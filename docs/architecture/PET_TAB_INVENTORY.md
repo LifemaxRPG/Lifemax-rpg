@@ -1,12 +1,12 @@
 # Cat tab (Native Cat, beta) native slice inventory
 
-Baseline: phase CT1 of `docs/specs/CAT_TAB_PLAN.md` (Native API 49). Read against the code. Paths: web under `lifemax_modular_v73/src/runtime/segments/`, Kotlin under `android-wrapper/native/src/main/java/com/lifemax/rpg/`. The engine's own record is `docs/specs/PET_AS_BUILT.md`; the plan this phase follows is `docs/specs/CAT_TAB_PLAN.md` (section 1 is the full inventory of the web tab, this file is what CT1 drew).
+Baseline: phases CT1 and CT2 of `docs/specs/CAT_TAB_PLAN.md` (Native API 49 and 52). Read against the code. Paths: web under `lifemax_modular_v73/src/runtime/segments/`, Kotlin under `android-wrapper/native/src/main/java/com/lifemax/rpg/`. The engine's own record is `docs/specs/PET_AS_BUILT.md`; the plan this phase follows is `docs/specs/CAT_TAB_PLAN.md` (section 1 is the full inventory of the web tab, this file is what CT1 drew).
 
 ## 1. What it is
 
-The Cat tab's room and buttons drawn by a Compose screen (`NativePet`, tab `pet`, capability `pet.projection.v1`, `pet.coat.v1` for a genetic coat) behind Settings, Appearance, "Native Cat (beta)" (`nativePet`), **off by default**. The page is the only writer of the cat (`state.pet`, `pet2`, `petPair`, `careDay`, ...): the screen draws a projection and sends commands, which run the page's own functions and answer `ok` only once the save stored the change.
+The Cat tab's room and buttons drawn by a Compose screen (`NativePet`, tab `pet`, capability `pet.projection.v1`, `pet.coat.v1` for a genetic coat, `pet.touch.v1` for touch and the full-screen room) behind Settings, Appearance, "Native Cat (beta)" (`nativePet`), **off by default**. The page is the only writer of the cat (`state.pet`, `pet2`, `petPair`, `careDay`, ...): the screen draws a projection and sends commands, which run the page's own functions and answer `ok` only once the save stored the change.
 
-**In this first release the cats in the room are not the page's cats.** Each lives a day of its own on the phone (the Overview card's autopilot, `HouseLife`), so they do not follow the page's day schedule, do not play, do not answer touch and do not pair up. That ends with the brain link (CT3) and is said on the Settings row. What the owner does for them is real: a meal is the page's meal, and the room's cat walks to its bowl and eats when it is served.
+**In this release the cats in the room are not the page's cats.** Each lives a day of its own on the phone (the Overview card's autopilot, `HouseLife`), so they do not follow the page's day schedule, do not play and do not pair up. They do answer touch (section 8). That ends with the brain link (CT3) and is said on the Settings row. What the owner does for them is real: a meal is the page's meal, and the room's cat walks to its bowl and eats when it is served.
 
 The tab opens only for a living cat whose coat native can draw. The intro (no cat yet) and the memorial (a cat that has passed, which also happens while the screen shows) are the page's (`blocked()`), as is everything marked H below.
 
@@ -44,7 +44,7 @@ One source for the words: `petStatusData(p, now)` (17-runtime.js) is what `petRe
 | Rename | command `rename {name}` | `petRename` for the cat whose card shows, 1 to 14 characters | stored or taken back | same |
 | A genetic coat's sheet | command `coat {key, kind}` | `petCoatAnswer` (50-pet-coat.js, the Overview cards' command too) | the room draws the coat | `native-pet.test.js`, `CoatReplyTest` |
 | Play | action `play` | `petPlayClick` (opens the page's toy tray) | H: the screen steps aside (`handedOver`) and comes back on the next visit to the tab | `native-pet.test.js` |
-| "View room" (corner chip) | action `room` | `petRoomFullscreenOpen` | H: the screen comes back when the full-screen room closes (`pet-full-open`, `watch`) | same |
+| "View room" (corner chip) | with `pet.touch.v1`: none, the screen opens its own full-screen room (section 8); older screen: action `room` | older screen: `petRoomFullscreenOpen` | older screen: H, the screen comes back when the page's full-screen room closes (`pet-full-open`, `watch`) | same, `native-pet-touch.test.js`, `PetTouchViewModelTest` |
 | "More on the Cat page" | action `page` | none (the page's own Cat view is under the screen) | H: back on the next visit | same |
 
 Operation ids: Feed's id is kept by the view model until the page's answer is final (landed or refused) and sent again after an answer that never arrived (the screen closed while the page answered); the page remembers the last 40 that landed and answers "Already recorded." without a second meal. A reply reaches only a showing screen.
@@ -74,4 +74,33 @@ A genetic coat's sheets are asked of the page: `CatArt.coats` is one source for 
 
 Off by default, "(beta)". `NativeApi.VALUE` 49. Not the default: that is after CT5 (plan, open question 6). On the phone: the feel of the room at 60 fps on a large canvas (target under 4 ms of CPU a frame), the page's loop really stopped under the screen (`petWantRun` through `diagnostics`), the haptic of Feed (the page's own buzz), a deep-link feed playing its cue, the coat command with a real genetic cat, and TalkBack over the room and the buttons.
 
-Not done in CT1, by plan: touch and the full-screen room (CT2), the brain driving the cats (CT3), toys and play (CT4), sleep spots, the box and the pair (CT5), the panels, the cattery, the intro and the memorial (CT6).
+Not done by CT2 either: follow-the-finger and the parallax drag, the toy and gift taps (CT4), belly-up traps and a sleeper's depth (CT5), `petLikesPetted` (it needs the cat's spot, CT3). Not done in CT1, by plan: the brain driving the cats (CT3), toys and play (CT4), sleep spots, the box and the pair (CT5), the panels, the cattery, the intro and the memorial (CT6).
+
+## 8. Touch, care and the full-screen room (CT2, `pet.touch.v1`, Native API 52)
+
+The cats answer the owner's finger **by themselves** (a native reflex, no round trip) and the page judges what the touch counted for. A page that did not say `pet.touch.v1` is sent none of the touch fields, and an older app keeps the page's full-screen room.
+
+| Interaction | Native (reflex) | Page (rules and books) | Test |
+|---|---|---|---|
+| Which cat | `TouchHit`: the page's `petCatBox` scaled by depth; the deeper (front) cat where two overlap; the food bowl; a drag from the floor onto a cat pets it | none | `PettingTest` |
+| Tap (under 0.45 s) | the cat stops, looks at the finger, ears and tail by trust, sits a moment; a buzz | `stroke`: saturation +0.12 (trait), nothing counted | `TouchModelTest`, `native-pet-touch.test.js` |
+| Hold-stroke | clip by trust (level 1 sits, 2 blinks slowly, 3 and up purr), purr reaction from 0.45 s (0.5, 0.75, 0.95; 0.3 asleep, 0.25 warned), hearts from 0.5 s a beat apart (big hearts and notes from level 4), a buzz per heart; a hungry cat does not purr | `stroke` at the end: saturation by the page's formula, `pet_beat` events, `petPetDone` when held 1.1 s (3 a day, +2 bond) | same |
+| Too much | ears back at 0.65; past 0.85 the cat leaves (30 to 50 px, washes, sits); a shy cat (level 1) leaves after 2.6 s; a stranger (level 0) startles and runs | `overstim` (ignored when the finger stayed 1.5 s after the warning), `startle` and its hiss, nothing counted | same |
+| Sleeping cat | trust 3 and up: stays asleep, purrs softly, back to sleep on release; lighter: wakes with a stretch, a mew, a slow blink | `keepSleep` takes 0.6 of the hold's saturation | `PettingTest` |
+| Spam | ears back and tail lash on the fourth touch in three seconds | `spam` event, once in twenty seconds | `TouchModelTest` |
+| Level-up | five big hearts and the level-up buzz when the page's reply names a level | `levelUp` in the reply and the page's words as the message (the screen shows them once) | `PetTouchViewModelTest` |
+| Tap the bowl | feeds (the same Feed command and operation id as the button) | `petFeedClick` | `RoomTouch.kt`, `PetViewModelTest` |
+| Sound | none: the purr and the hiss stay in the page (plan, question 2). `purr {cat, on, level}` asks the page to start or stop the purr; the page feeds its own purr loop on a 100 ms timer, since its room loop is stopped under the screen, and stops it with the screen | `petPurr`, `petPurrTick` | `native-pet-touch.test.js` |
+| Counts | one line under the card: "Petted 2 of 3 · Played 1 of 2 today", only after the day's first | `touchWords.countsLine`, `counts` | `PetTouchScreenshotTest` |
+| Full-screen room | a Dialog window above the app's bars with the system bars hidden (a swipe from the edge shows them), the same `HouseStage` at `fullScale` (a whole number that shows at least 120 room pixels across and the whole height; landscape shows more of the house), the house centred upright on the room's dark, a close chip clear of the cutout (`safeDrawing`), Back closes; the inline room holds still while it runs, so there is one clock; touch works there too; `still` (remove animations) draws it once | none | `PetFullRoomContent` screenshots, `PetTouchViewModelTest` |
+| Haptics | the page's patterns (landing 8, heart 6, level-up 10-40-10) through `PageBuzz` at the owner's strength (`haptics` in the projection, null when off) | none | `PetTouchTest` |
+
+Where it lives: `body/TouchModel.kt` (the rules), `body/Petting.kt` (the body's reflex and the `TouchSink` it talks to), `body/TouchHit.kt`, `presentation/RoomTouch.kt` (pointer input: consumed moves, so a stroke across the room is not a tab swipe or a scroll), `TouchParticles.kt` (a pool of 24 hearts, notes and marks from the room atlas, allocation free), `PetTouchSink.kt`, `PetFullRoom.kt`, `data/PetTouchJson.kt` (the strict touch decoder), `50-native-pet.js` (`touch` command: `stroke`, `purr`).
+
+Operation ids and takebacks: every stroke carries its own operation id; the page remembers the last 40 that landed (shared with Feed) and answers a repeat "Already recorded."; a save the browser refuses takes back the count, the bond and the brain. The screen never waits for a stroke: Feed and the others are not held up by it, at most 12 strokes are in flight, and a reply reaches only a showing screen (a stroke whose reply was lost simply is not repeated).
+
+The saturation lives on the page: the projection carries each cat's `sat` (the brain's number less what has worn off since the screen was last used, since the page's own loop that decays it is stopped under the screen); the screen seeds its reflex model from it (not within 3 s of a touch, when the page's number is behind) and the page recomputes the same formula from the stroke's duration, so the two cannot drift for long.
+
+Tests: `TouchModelTest` (thresholds, saturation, overstimulation, the shy cat, the sleeper, spam, timing identical at 60 and 120 Hz within one frame), `PettingTest` (hit-testing between two cats, the reflex of the body, leaving, startling, sleeping, drag-through, the bowl), `PetTouchTest` (the touch decoder with 22 malformed variants, the replies, the payloads), `PetTouchViewModelTest` (a fake page), `RoomAllocationTest` (a hand resting on a cat allocates nothing), `native-pet-touch.test.js` (25 checks through the real page: petting rules, the daily cap, refusals, repeat by operation id, a failed save taken back, a level-up, the second cat, the purr timer, the full-screen room), the hand-over simulation's `touch-cat` hop (`PETMUT=twice` fails it), screenshots `PetTouchScreenshotTest`.
+
+On the phone: the feel of the hold and of the haptics, the purr starting later than about 100 ms after the finger lands or not at all (WebAudio resumes without a web gesture only if the WebView allows autoplay; if it does not, port only the purr loop to native, plan question 2), a stroke across the room not starting a tab swipe, the system bars hiding in the full-screen room and Back closing it, the inline room's clock stopping while it is open.

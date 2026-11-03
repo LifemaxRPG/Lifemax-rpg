@@ -80,6 +80,11 @@ internal class Reactions(
         }
     }
 
+    /** Stop [kind] now (a purr when the finger lifts); the others are left to run out. */
+    fun cancel(kind: ReactionKind) {
+        age[kind.ordinal] = INACTIVE
+    }
+
     fun reset() {
         for (i in kinds.indices) age[i] = INACTIVE
         eyeClose = 0f

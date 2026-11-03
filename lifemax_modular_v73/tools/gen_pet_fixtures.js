@@ -12,12 +12,16 @@
      pet-two-cats.json       Ted and Lily, both alive: both in the room, "Feed both", the line about sharing the house
      pet-dna.json            a genetic (calico) coat the screen asks the page for (pet.coat.v1)
      pet-fed.json            after Feed through the command: the fed cue the room plays once
+     pet-touched.json        a shy cat petted twice and played with once today: the touch fields (pet.touch.v1) and the counts line
+     pet-petted.json         after a pet through the touch command: the day's count and the brain's saturation
+     pet-no-touch.json       the first release's app (no pet.touch.v1): none of the touch fields
      pet-replies.json        every command answered, in the envelope NativeTabKit sends a reply in
    A fake NativePet plugin lets the tab open; its handshake lists both capabilities. Regenerate only when the projection or a reply
    changes:  NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js pet */
 const STORE = 'lifemax_rpg_prototype_v1';
 const CLOCK = '2026-10-30T12:00:00Z';
-const CAPS = ['pet.projection.v1', 'pet.coat.v1'];
+const CAPS = ['pet.projection.v1', 'pet.coat.v1', 'pet.touch.v1'];
+const CAPS_CT1 = ['pet.projection.v1', 'pet.coat.v1']; // an app of the first release: the projection has none of the touch fields
 const cat = (name, o) => `Object.assign({v:1,name:${JSON.stringify(name)},coat:'ginger',trait:'curious',born:now-40*864e5,lastFed:now-5*36e5,meals:[],day:getToday(),fedToday:0,petsToday:0,playsToday:0,bondPts:PET_BOND_AT[3],care:0,vacation:{on:false,since:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0},${o})`;
 /* the cat states, set up in the page before the tab opens (now is the fixed clock) */
 const STATES = {
@@ -31,6 +35,7 @@ const STATES = {
   stray: `state.pet=${cat('Miso', '{born:now-864e5,bondPts:0}')}`,
   'two-cats': `state.pet=${cat('Ted', '{bondPts:PET_BOND_AT[2]}')};state.pet2=${cat('Lily', '{coat:"gray"}')}`,
   dna: `state.pet=${cat('Miso', '{coat:"dna_black_1_n_2_0_n_0_3"}')};petDnaRegister(state.pet.coat)`,
+  touched: `state.pet=${cat('Miso', '{trait:"shy",petsToday:2,playsToday:1,bondPts:PET_BOND_AT[4]}')}`,
 };
 const fake = (caps) => `(() => { const ls = {}; window.__calls = [];
   const plugin = { __emit: (e, d) => Promise.all((ls[e] || []).map(f => f(d))), addListener: async (e, f) => { (ls[e] = ls[e] || []).push(f); return { remove() {} } },
@@ -42,7 +47,7 @@ const fake = (caps) => `(() => { const ls = {}; window.__calls = [];
 module.exports = async function pet({ b, out, write }) {
   const fs = require('fs'), path = require('path');
   const golden = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tests', 'fixtures', 'saves', 'established.json'), 'utf8'));
-  const visit = async (setup) => {
+  const visit = async (setup, caps = CAPS) => {
     const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
     await p.clock.setFixedTime(new Date(CLOCK));
     const save = { ...golden.state, tutorialDone: true, tipsSeen: { ...(golden.state.tipsSeen || {}), dashboard: true } };
@@ -50,7 +55,7 @@ module.exports = async function pet({ b, out, write }) {
       localStorage.setItem(STORE, save); for (const k in extras) localStorage.setItem(k, extras[k]);
       localStorage.setItem('lifemax_android_prefs_v1', JSON.stringify({ nativePet: true, nativeOverview: false, nativeOverviewCards: false, apps: [] }));
     }, [STORE, JSON.stringify(save), golden.extras || {}]);
-    await p.addInitScript(fake(CAPS));
+    await p.addInitScript(fake(caps));
     await p.goto('file://' + out, { timeout: 120000 });
     await p.evaluate(() => { lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } });
     await p.evaluate(async (setup) => {
@@ -75,6 +80,12 @@ module.exports = async function pet({ b, out, write }) {
     const p = await visit(setup);
     await p.evaluate(() => navigate('pet'));
     write('fixtures/pet-' + name + '.json', await open(p));
+    await p.context().close();
+  }
+  { // the first release's app (no pet.touch.v1): the projection without any touch field
+    const p = await visit(STATES.alive, CAPS_CT1);
+    await p.evaluate(() => navigate('pet'));
+    write('fixtures/pet-no-touch.json', await open(p));
     await p.context().close();
   }
 
@@ -110,10 +121,22 @@ module.exports = async function pet({ b, out, write }) {
   await keep('renameSame', 'rename', { name: 'Mochi' });
   await keep('renameEmpty', 'rename', { name: '  ' });
   await keep('renameLong', 'rename', { name: 'A name that is far too long' });
+  // touch (pet.touch.v1): a tap, a pet, the same pet again, a cat that left, a refusal, a level-up, the purr's sound
+  const stroke = (o) => Object.assign({ kind: 'stroke', cat: 0, heldMs: 1500, left: '', ignored: false, spam: false, keepSleep: false }, o);
+  await keep('strokeTap', 'touch', stroke({ op: 's-1', heldMs: 200 }));
+  await keep('strokePet', 'touch', stroke({ op: 's-2' }));
+  await keep('strokePetAgain', 'touch', stroke({ op: 's-2' }));
+  await keep('strokeLeft', 'touch', stroke({ op: 's-3', heldMs: 2500, left: 'over', ignored: true }));
+  await keep('strokeRefused', 'touch', stroke({ op: '' }));
+  await keep('strokeLevelUp', 'touch', stroke({ op: 's-4' }), 'state.pet.petsToday=0;state.pet.bondPts=PET_BOND_AT[4]-1');
+  await keep('purrOn', 'touch', { kind: 'purr', cat: 0, on: true, level: 0.75 });
+  await keep('purrOff', 'touch', { kind: 'purr', cat: 0, on: false, level: 0 });
+  write('fixtures/pet-petted.json', Object.assign(replies.strokePet.snapshot, { webSessionId: 'pet-fixture', sequence: 3 }));
   // a save the browser refuses (storage full): nothing is changed and the reply says why
   await p.evaluate(() => { window.__realSet = Storage.prototype.setItem; Storage.prototype.setItem = function (k) { if (k === 'lifemax_rpg_prototype_v1') throw new Error('QuotaExceededError'); return window.__realSet.apply(this, arguments) } });
   await keep('vacationUnsaved', 'vacation', { on: true });
   await keep('feedUnsaved', 'feed', { op: 'op-3' }, 'state.pet.lastFed=now-9*36e5');
+  await keep('strokeUnsaved', 'touch', stroke({ op: 's-5' }), 'state.pet.petsToday=0');
   await p.evaluate(() => { Storage.prototype.setItem = window.__realSet });
   await keep('unknown', 'dance', {});
   write('fixtures/pet-replies.json', Object.fromEntries(Object.entries(replies).map(([k, v]) => [k, { command: v.command, payload: v.payload, reply: v.reply }])));

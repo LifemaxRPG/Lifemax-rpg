@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.pet.data
 
 import com.lifemax.rpg.feature.pet.domain.PetCommands
 import com.lifemax.rpg.feature.pet.domain.PetReply
+import com.lifemax.rpg.feature.pet.domain.PetStroke
 import org.json.JSONObject
 
 /**
@@ -18,17 +19,46 @@ class PetCommandSender(private val send: (command: String, payload: JSONObject) 
 
     override fun rename(name: String) = send(RENAME, JSONObject().put("name", name))
 
+    override fun stroke(op: String, stroke: PetStroke) =
+        send(
+            TOUCH,
+            JSONObject()
+                .put("kind", "stroke")
+                .put("op", op)
+                .put("cat", stroke.cat)
+                .put("heldMs", stroke.heldMs)
+                .put("left", stroke.left)
+                .put("ignored", stroke.ignored)
+                .put("spam", stroke.spam)
+                .put("keepSleep", stroke.keepSleep),
+        )
+
+    override fun purr(cat: Int, level: Float) =
+        send(
+            TOUCH,
+            JSONObject()
+                .put("kind", "purr")
+                .put("cat", cat)
+                .put("on", level > 0f)
+                .put("level", level.toDouble()),
+        )
+
     companion object {
         const val FEED = "feed"
         const val BLINK = "blink"
         const val VACATION = "vacation"
         const val RENAME = "rename"
-        val ALL = setOf(FEED, BLINK, VACATION, RENAME)
+        const val TOUCH = "touch"
+        val ALL = setOf(FEED, BLINK, VACATION, RENAME, TOUCH)
     }
 }
 
 private val REPLY_KEYS =
     setOf("command", "requestId", "ok", "changed", "message", "why", "inHours", "reaction")
+
+/** A reply to a stroke also names the level the cat reached, when it reached one. */
+private val OPTIONAL_REPLY_KEYS = setOf("levelUp")
+private const val MAX_LEVEL = 5
 private val WHY = setOf("", "vacation", "full")
 private val REACTION = setOf("", "blink", "bowl")
 
@@ -42,12 +72,14 @@ fun JSONObject.toPetReply(): PetReply? =
         val command = str("command")
         if (command !in PetCommandSender.ALL) null
         else {
-            exactly(REPLY_KEYS, "reply")
+            exactly(REPLY_KEYS, "reply", OPTIONAL_REPLY_KEYS)
             val why = str("why")
             val reaction = str("reaction")
             val inHours =
                 (get("inHours") as? Number)?.toDouble() ?: throw IllegalArgumentException("inHours")
+            val levelUp = if (has("levelUp")) int("levelUp") else 0
             require(why in WHY && reaction in REACTION && inHours >= 0.0 && inHours.isFinite())
+            require(levelUp in 0..MAX_LEVEL) { "levelUp is not a trust level" }
             PetReply(
                 command,
                 str("requestId"),
@@ -57,6 +89,7 @@ fun JSONObject.toPetReply(): PetReply? =
                 why,
                 inHours,
                 reaction,
+                levelUp,
             )
         }
     } catch (e: IllegalArgumentException) {

@@ -33,5 +33,7 @@ internal object PetFixtures {
             "two-cats",
             "dna",
             "fed",
+            "touched",
+            "petted",
         )
 }

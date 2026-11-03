@@ -64,46 +64,50 @@
    "pluginSource": "bridge/web/NativePetPlugin.kt (extends ComposeTabPlugin, tabId pet)",
    "screenSource": "feature/pet/presentation/PetScreen.kt (PetRoute, PetViewModel; the room is RoomHost, shared with the Overview's cat card)",
    "webModule": "50-native-pet.js (NativeTabKit, id pet)",
-   "plan": "docs/specs/CAT_TAB_PLAN.md (phase CT1); docs/architecture/PET_TAB_INVENTORY.md",
+   "plan": "docs/specs/CAT_TAB_PLAN.md (phases CT1 and CT2); docs/architecture/PET_TAB_INVENTORY.md",
    "capabilities": [
     "pet.projection.v1",
     "pet.coat.v1",
+    "pet.touch.v1",
     "shell.swipe.v1",
     "shell.swipe.v2",
     "shell.prime.v1"
    ],
-   "covers": "the Cat tab for a living cat: a large live room pinned at the top (both cats, on the phone's own autopilot), the cat's card (name, hearts, mood, bond, a kitten's growth line, last meal, meals today, days together, favourite place and toy, the hint), Feed and Slow blink, and the Care and settings card (Vacation mode, Rename). Steps aside for the intro (no cat yet), the memorial (a cat that has passed), the page's full-screen room, a level-up and a visit the owner handed to the page. The cats are not the page's cats in this release: no play, touch or pair until the brain link (CT3)",
+   "covers": "the Cat tab for a living cat: a large live room pinned at the top (both cats, on the phone's own autopilot), the cat's card (name, hearts, mood, bond, a kitten's growth line, last meal, meals today, days together, favourite place and toy, the hint), Feed and Slow blink, and the Care and settings card (Vacation mode, Rename). With pet.touch.v1 (CT2) the cats answer a finger by themselves (tap, hold-stroke and drag-through petting, with hearts, purr, ears and haptics), a tap on the bowl feeds, and the room opens full screen on the screen's own. Steps aside for the intro (no cat yet), the memorial (a cat that has passed), the page's full-screen room (an older screen only), a level-up and a visit the owner handed to the page. The cats are not the page's cats in this release: no play or pair until the brain link (CT3)",
    "commands": {
     "feed": "{op}: the page's own petFeedClick (one cat, or whoever is hungry of two, with the second cat's runtime made first) once the page's gate says a meal is due; ok only when every write reached storage (the save's answer), else the cats are taken back and the reply says the page's unsavedMessage(); a repeat of an operation that landed answers changed:false 'Already recorded.' (kept for the session, 40 operations); a refusal answers {ok:false, why:'full'|'vacation', inHours, message} in the page's words (petFeedRefusal) and, when full, reaction 'bowl' (the cat goes to its bowl to wash, as the page's does); the meal arrives as the fed cue of the next projection, one per cat fed, which the room plays once",
     "blink": "{}: the page's petBlinkClick for the cat whose card shows; the page's refusal (asleep, or a third blink in six seconds) arrives as the message from its toast, taken so no screen shows it twice; else reaction 'blink' and the screen's cat blinks back. Writes nothing",
     "vacation": "{on}: petSetVacation for both cats as the page's switch does; the state asked for again answers changed:false 'Already recorded.'; a value that is not a boolean is refused; ok only once stored, else taken back",
     "rename": "{name}: petRename for the cat whose card shows; 1 to 14 characters after trimming (a name that is not text, empty or longer is refused); the same name answers changed:false 'Already recorded.'; ok only once stored, else taken back",
-    "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability pet.coat.v1; the same petCoatAnswer as the Overview cards' coat command, 50-pet-coat.js): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds, never a legacy coat; answered {ok, coat, kind, png, palette} or {ok:false, message}; nothing is written"
+    "coat": "{key, kind}: one sheet of a genetic coat for the live cat (capability pet.coat.v1; the same petCoatAnswer as the Overview cards' coat command, 50-pet-coat.js): kind is adult, depth, st0..st5 or dst0..dst5; key must be a dna_ coat the page holds, never a legacy coat; answered {ok, coat, kind, png, palette} or {ok:false, message}; nothing is written",
+    "touch": "(capability pet.touch.v1) two kinds, each with {cat}: `stroke {op, cat, heldMs, left:''|'over'|'shy', ignored, spam, keepSleep}` is a touch that ended, which the page judges by its own rules: the brain's saturation (PET_BRAIN.SAT_TAP on landing, SAT_HOLD a second held, less for a trusting cat and a sleeping one, worn off by the clock), its events (startle for a stranger, spam, pet_beat, overstim), and a pet counted by petPetDone when the finger stayed 1.1 s and the cat did not leave (three a day, +2 bond); the reply is {ok, changed (a pet counted), message (the page's level-up words), levelUp (the level reached, 0 for none)}, ok only once stored, else the cats are taken back; a repeat of an operation answers changed:false 'Already recorded.'; a field of the wrong kind, an unknown cat or no operation is refused. `purr {cat, on, level}` starts or stops the page's purr sound (the page feeds its purr loop on a 100 ms timer while the screen covers the room loop, and stops it when the screen closes); writes nothing. petLikesPetted is not called (it needs the cat's spot, which the page does not know until CT3)"
    },
    "writes": [
     "feed (state.pet and state.pet2: lastFed, meals, fedToday, bondPts, care and the brain's feed memory, through the page's petFeedClick; the page's cat-care XP follows its own rule)",
     "vacation (the cats' vacation record and, when it ends, lastFed shifted by the time away)",
-    "rename (the cat's name)"
+    "rename (the cat's name)",
+    "touch stroke (state.pet / state.pet2: petsToday and bondPts through petPetDone, the brain's saturation, affect, gentle-stroke quirk count and respect timer, saved with the page's save)"
    ],
    "readContract": {
     "snapshotDto": "feature/pet/domain/PetProjection.kt",
-    "decoder": "feature/pet/data/WebPetRepository.kt (PetJson.kt): strict: a key it does not know, a key missing, a value of the wrong kind or one out of its range is refused, and the repository keeps the last good state",
-    "replyDecoder": "feature/pet/data/PetCommandSender.kt (toPetReply): strict, anything else is dropped",
-    "fixtures": "native/src/test/resources/fixtures/pet-{alive,content,hungry,very-hungry,weak,vacation,kitten,stray,two-cats,dna,fed}.json and pet-replies.json, written by tools/gen_pet_fixtures.js from the page (the pet job of tools/gen_native_fixtures.js)",
+    "decoder": "feature/pet/data/WebPetRepository.kt (PetJson.kt, PetTouchJson.kt): strict: a key it does not know, a key missing, a value of the wrong kind or one out of its range is refused, and the repository keeps the last good state. The touch fields (touch, counts, haptics, touchWords) come together or not at all: a page without pet.touch.v1 sends none",
+    "replyDecoder": "feature/pet/data/PetCommandSender.kt (toPetReply): strict, anything else is dropped; a stroke's reply may also carry levelUp (0 to 5)",
+    "fixtures": "native/src/test/resources/fixtures/pet-{alive,content,hungry,very-hungry,weak,vacation,kitten,stray,two-cats,dna,fed,touched,petted,no-touch}.json and pet-replies.json, written by tools/gen_pet_fixtures.js from the page (the pet job of tools/gen_native_fixtures.js)",
     "ordering": "webSessionId and increasing sequence; a new session may bind only through explicit open; notice.id counts the page's toasts; each fed cue id plays once, and the first projection after the screen opens plays only a meal under four seconds old",
     "invalidation": "renderPetView, command replies, a toast, host resume and the 15-second refresh while visible",
     "persistence": "no native product writes, no durable revision or epoch inserted"
    },
    "delegatedInteractions": [
     "Play and the toy tray (petPlayClick, then the page's own Cat view)",
-    "View room (petRoomFullscreenOpen: the page's full-screen room; the screen comes back when it closes)",
+    "View room with an older screen (no pet.touch.v1): petRoomFullscreenOpen, the page's full-screen room; the screen comes back when it closes",
     "More on the Cat page: the mind row, likes, inner life, DNA, the Together card and switching cats, a second cat's adoption, the cattery, the intro and the memorial, the developer panel (the page's own Cat view; the screen comes back on the next visit to the tab)",
-    "touching, petting and feeding by tapping the bowl in the room: the cats here are the phone's own, not the page's (CT2 and CT3)"
+    "the cats' being the page's cats (its day, play, the pair, belly-up traps, a sleeper's depth): CT3 to CT5"
    ],
    "swipe": "a native neighbour while a living cat is showing; a wall for the page's intro and memorial. Not primed (the room's art is large)",
    "mutationsGate": "CONTRACT A14-A15; the page stays the only writer: commands answer {ok, changed, message, why, inHours, reaction}, ok only when the save stored it",
-   "rollout": "opt-in under Settings, Appearance: Native Cat (beta), off by default; the row says that in this first release the cats live their own day here until the brain link (CT3). Needs pet.projection.v1 (Native API 49); a genetic coat also needs pet.coat.v1",
-   "roomHost": "feature/pet/presentation/RoomHost.kt: the Overview cat card and this screen draw the same room (HouseStage); the card's screenshots and RoomFidelityTest are unchanged by it. The page's own room loop stops while this screen covers the view (petWantRun asks NativePet.covering())"
+   "rollout": "opt-in under Settings, Appearance: Native Cat (beta), off by default; the row says that in this first release the cats live their own day here until the brain link (CT3). Needs pet.projection.v1 (Native API 49); touch and the full-screen room need pet.touch.v1 (Native API 52); a genetic coat also needs pet.coat.v1",
+   "roomHost": "feature/pet/presentation/RoomHost.kt: the Overview cat card and this screen draw the same room (HouseStage); the card's screenshots and RoomFidelityTest are unchanged by it. The page's own room loop stops while this screen covers the view (petWantRun asks NativePet.covering()). The full-screen room (PetFullRoom.kt) is a Dialog window over the whole app with the system bars hidden, drawing the same HouseStage at a larger whole-number scale (fullScale); the inline room holds still while it runs",
+   "touch": "body/TouchModel.kt (the page's saturation rules as a state machine on dt), body/Petting.kt (the reflexes of the body: hold clip, purr, ears and tail, hearts, leaving), body/TouchHit.kt (the cat boxes and the bowl), presentation/RoomTouch.kt (pointer input), TouchParticles.kt (hearts and marks over the cats), PetTouchSink.kt (haptics at the owner's strength, and the commands to the page)"
   },
   {
    "feature": "log",

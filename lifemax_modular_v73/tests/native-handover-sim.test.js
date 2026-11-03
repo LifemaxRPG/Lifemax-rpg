@@ -63,7 +63,10 @@
    autosave paying like a final write.
    The Cat tab (docs/specs/CAT_TAB_PLAN.md, CT1) is a native screen like the others (NativePet, pet.projection.v1): the starting save holds a
    living cat, since its intro and its memorial are the page's, and every mode's hops include it, in the swipes too. PETMUT=blocked runs a
-   mutation that must fail: the Cat tab's screen never allowed to cover the view.
+   mutation that must fail: the Cat tab's screen never allowed to cover the view. Touch (CT2, pet.touch.v1) adds a hop, "touch-cat": a stroke
+   of 1.5 s on the first cat (and the purr's sound) sent to the Cat screen only while it shows, whose run against the page is checked
+   (once per operation id, counted exactly when ok and changed, answered unless the screen was closed since). PETMUT=twice runs a mutation
+   that must fail: a stroke counted twice.
    Needs Playwright (not part of the CI node tests).
    Run: NODE_PATH=$(npm root -g) node tests/native-handover-sim.test.js [seeds=80]   (MODES=off,on,mixed,failing,lock,reload,dock by default) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
@@ -85,7 +88,9 @@ const PRIME_MUTATIONS = { open: [PRIME_CALL, 'await plugin.open({ snapshot: data
 if (PRIME_MUTATIONS[process.env.PMUT]) { const [a, b2] = PRIME_MUTATIONS[process.env.PMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 /* a mutation the Cat tab's hops must catch (PETMUT=blocked): the page keeping its screen from ever covering the view, as a tab that
    thought the cat's intro was showing would, so the last tab's screen is missing once everything has settled */
-const PET_MUTATIONS = { blocked: ['blocked: () => handedOver ||', 'blocked: () => true || handedOver ||'] };
+const PET_MUTATIONS = { blocked: ['blocked: () => handedOver ||', 'blocked: () => true || handedOver ||'],
+  /* PETMUT=twice: a stroke the page counts two pets for (its day's count moves by two) */
+  twice: ['const r = petPetDone();', 'const r = (petPetDone(), petPetDone());'] };
 if (PET_MUTATIONS[process.env.PETMUT]) { const [a, b2] = PET_MUTATIONS[process.env.PETMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PETMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
@@ -97,7 +102,7 @@ const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 
 // a native tab swipe toward the next or previous tab, and the tab you are on moved one place along the bar
 const SWIPES = { 'swipe-next': 1, 'swipe-prev': -1 }, BAR = { 'bar-earlier': -1, 'bar-later': 1 }, WEB_SWIPES = { 'web-swipe-next': 1, 'web-swipe-prev': -1 };
 // commands sent from a native screen, which never leave its view: Life Director's bedtime moved between 10:30 and 11 PM
-const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'director', view: 'life-director' } };
+const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'director', view: 'life-director' }, 'touch-cat': { plugin: 'NativePet', screen: 'pet', view: 'pet', command: 'touch' } };
 // the Overview cards' taps: the glance's plan command (to Life Director) and a move's {view} action (to Log)
 const CARDS = { 'tap-plan': { command: 'plan', payload: { act: '', id: '' }, to: 'life-director' }, 'tap-move': { action: { view: 'log' }, to: 'log' } };
 const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(SWIPES), ...Object.keys(WEB_SWIPES), ...Object.keys(BAR), ...Object.keys(COMMANDS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
@@ -200,7 +205,7 @@ async function run(b, mode) {
       close:a=>{window.__closes[vis]=(window.__closes[vis]||0)+1;if(vis==='cards')window.__cardsOpen=false;return inOrder(async()=>{const stale=sessions&&(!a||a.session!==current);window.__log.push(window.__t()+' '+name+' close>'+(stale?' (stale session, ignored)':''));await wait(window.__rnd(5,40));
         if(!stale&&window.__vis[vis]){if(name==='journal'&&window.__flush)window.__flush('the screen closed');window.__vis[vis]=false;window.__dockRecompute&&window.__dockRecompute();if(model)await model.rest();if(vis===window.__tapped&&!Object.values(window.__vis).some(Boolean))fault(name+' closed before the tab its tap went to showed')}window.__log.push(window.__t()+' '+name+' close<')}).then(()=>emit('closed',{session:a&&a.session}))},
       capabilities:async()=>({liveWeb:true,version:1,authoritativeData:true,swipe:2}),
-      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
+      handshake:async()=>({protocol:1,capabilities:['character.projection.v1','pet.projection.v1','pet.coat.v1','pet.touch.v1','log.projection.v1','plan.projection.v1','director.today.v2','recipes.projection.v1','library.media.projection.v1','library.journal.projection.v1','library.journal.write.v1','settings.projection.v1','overview.cards.v1','shell.swipe.v1','shell.swipe.v2','shell.prime.v1']})}};
     /* the native Journal's frames go to the model (in Node): a withheld frame may carry no canary, and a screen that stops being
        drawn must hold no open data */
     const jmodel={frame:async a=>{const s=a&&a.snapshot;if(!s)return;const json=JSON.stringify(s),canary=/Canary/.test(json);if(s.withheld&&canary)fault('a withheld Journal frame carries a canary');
@@ -230,7 +235,8 @@ async function run(b, mode) {
   if (process.env.TRACE) await p.evaluate(() => { const T = window.NativeTabs, L = m => window.__log.push(window.__t() + ' ' + m); for (const k of ['leave', 'cancel', 'flush']) { const f = T[k]; T[k] = function () { const a = [...arguments].filter(x => typeof x !== 'function'); L('   NT.' + k + '(' + a.join(',') + ')' + (k === 'leave' ? ' covered=' + T.covered(a[1]) : '')); return f.apply(this, arguments) } } });
   /* every Change it the page runs, against the save: applied, the saved bedtime is the time asked for and it moved; refused, the save is
      untouched; and whether its screen showed as it ran, and how many closes the screen had been sent, so a lost reply is caught */
-  await p.evaluate(() => {
+  await p.evaluate(async () => {
+    try { await petInit() } catch (e) { } // the cat's room built once, as on the phone after its first visit: a stroke does not wait for art in the command queue
     const C = NativeDirectorProjection.commands, apply = C.dialApply, bed = () => JSON.parse(localStorage.getItem('lifemax_director_state_v1')).availability.rules.find(r => r.id === 'sleep').startMin;
     C.dialApply = function (x) {
       const id = x && x.sim, before = bed(), r = apply.apply(this, arguments), after = bed();
@@ -238,6 +244,18 @@ async function run(b, mode) {
       if (window.__runs[id]) window.__faults.push('Change it ' + id + ' ran twice');
       window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.director, closes: window.__closes.director || 0 };
       if (r.ok ? !(r.changed && after === x.minute && before !== after) : after !== before) window.__faults.push('Change it ' + id + ' to ' + x.minute + ': ok=' + r.ok + ', saved bedtime ' + before + ' -> ' + after);
+      return r;
+    };
+    /* every stroke the Cat tab's screen reports, against the day's count: ok and changed it counted exactly one pet, refused or not changed it
+       counted none (three a day, so the fourth is ok and not changed), and whether the screen showed as it ran */
+    const T = NativePet.commands, touch = T.touch;
+    T.touch = async function (x) {
+      const id = x && x.sim, before = state.pet.petsToday, day = state.pet.day, r = await touch.apply(this, arguments);
+      if (!id) return r;
+      if (window.__runs[id]) window.__faults.push('the stroke ' + id + ' ran twice');
+      window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.pet, closes: window.__closes.pet || 0, screen: 'pet' };
+      const was = day === state.pet.day ? before : 0, delta = state.pet.petsToday - was;
+      if (delta !== (r.ok && r.changed ? 1 : 0)) window.__faults.push('the stroke ' + id + ': ok=' + r.ok + ' changed=' + r.changed + ', the day\'s count moved by ' + delta);
       return r;
     };
   });
@@ -407,6 +425,15 @@ async function run(b, mode) {
         if (cmd) {
           const send = () => {
             if (!window.__vis[cmd.screen] || lmaView() !== cmd.view) return;
+            if (cmd.command === 'touch') {
+              // the cat petted for a second and a half (a pet the page counts), then its purr started: the page's rules run once, whatever the hand-over does
+              const id = 'sim-' + (++window.__cmds.sent);
+              window.__log.push(window.__t() + ' >> touch command in ' + cmd.screen + ' ' + id);
+              window.__sentNow.push(id);
+              Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'touch', payload: { kind: 'stroke', op: id, cat: 0, heldMs: 1500, left: '', ignored: false, spam: false, keepSleep: false, sim: id }, requestId: id });
+              Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'touch', payload: { kind: 'purr', cat: 0, on: Math.random() < 0.5, level: 0.5 }, requestId: 'purr' + (window.__rid = (window.__rid || 0) + 1) });
+              return;
+            }
             const bed = LifeDirector.native.today(0).dial.handles.find(h => h.rule === 'sleep' && h.end === 'start');
             window.__log.push(window.__t() + ' >> command dialApply in ' + cmd.screen + (bed ? ' ' + bed.key : ' (no handle)'));
             if (!bed) return;
@@ -482,9 +509,9 @@ async function run(b, mode) {
       if (window.__accepted && window.__accepted === lmaView() && window.__wantOf(window.__accepted) && !window.__vis[window.__wantOf(window.__accepted)]) window.__fault('the swipe taken to ' + window.__accepted + ' never showed its screen');
       for (const mark of ['swipe-reveal', 'native-enter']) if (document.documentElement.classList.contains(mark)) window.__fault(mark + ' is still on once settled');
       return { vis: vis.join('+'), want: window.__wantOf(lmaView()), busy: window.__busy, view: lmaView(), log: window.__log,
-        faults: window.__faults.concat(window.__sentNow.filter(id => !window.__runs[id]).map(id => 'Change it ' + id + ' never ran'),
+        faults: window.__faults.concat(window.__sentNow.filter(id => !window.__runs[id]).map(id => 'command ' + id + ' never ran'),
           /* a Change it that ran while its screen showed is answered, unless the screen was sent a close since (the kit replies to an open screen only) */
-          window.__sentNow.filter(id => { const run = window.__runs[id]; return run && run.shown && !window.__replies[id] && (window.__closes.director || 0) === run.closes; })
+          window.__sentNow.filter(id => { const run = window.__runs[id]; return run && run.shown && !window.__replies[id] && (window.__closes[run.screen || 'director'] || 0) === run.closes; })
             .map(id => 'no reply to ' + id + ', which ran while its screen showed, and the screen was never closed')) };
     });
     const want = r.want;
@@ -493,7 +520,7 @@ async function run(b, mode) {
   }
   const answers = await p.evaluate(() => window.__answers), enters = await p.evaluate(() => window.__enters);
   const cmds = await p.evaluate(() => Object.assign({ applied: Object.values(window.__runs).filter(r => r.ok).length, shown: Object.values(window.__runs).filter(r => r.shown).length }, window.__cmds));
-  console.log((failures.length ? 'FAIL' : 'PASS') + ' cards ' + mode + ': ' + SEEDS + ' seeded sequences (' + hops + ' hops, swipes taken ' + answers.native + ', revealed ' + answers.web + ', refused ' + answers.refused + ', web swipes slid in ' + enters + '; ' + cmds.sent + ' Life Director Change its mid-hop, each run once, ' + cmds.applied + ' applied and saved, ' + cmds.shown + ' ran on a showing screen, ' + cmds.answered + ' answered on it): the last tab alone is showing after each');
+  console.log((failures.length ? 'FAIL' : 'PASS') + ' cards ' + mode + ': ' + SEEDS + ' seeded sequences (' + hops + ' hops, swipes taken ' + answers.native + ', revealed ' + answers.web + ', refused ' + answers.refused + ', web swipes slid in ' + enters + '; ' + cmds.sent + ' commands mid-hop (Life Director Change its and Cat strokes), each run once, ' + cmds.applied + ' applied and saved, ' + cmds.shown + ' ran on a showing screen, ' + cmds.answered + ' answered on it): the last tab alone is showing after each');
   const primes = await p.evaluate(() => window.__primes);
   console.log('     prime ' + mode + ': ' + Object.values(primes).reduce((a, n) => a + n, 0) + ' screens composed ahead (' + (Object.keys(primes).sort().join(', ') || 'none') + ')');
   const cards = await p.evaluate(() => Object.assign({ gaveUp: NativeOverviewCards.diagnostics().gaveUp }, window.__cardHops));

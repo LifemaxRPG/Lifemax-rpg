@@ -2,10 +2,12 @@ package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
 import com.lifemax.rpg.feature.pet.domain.PetProjection
 
 /**
@@ -13,6 +15,10 @@ import com.lifemax.rpg.feature.pet.domain.PetProjection
  * a tap to the page ([PetHandOver]); everything else is a command the view model sends. The room
  * moves only while the screen is [visible] (a screen behind the page runs nothing, A24) and holds a
  * still pose when the phone asks for no animations.
+ *
+ * With a page that said `pet.touch.v1` the cats answer a finger on the room, tapping the bowl
+ * feeds, and the room opens full screen on the screen's own ([PetFullRoom]); the inline room then
+ * stands still while the full-screen one runs, so there is one clock at a time.
  */
 @Composable
 fun PetRoute(
@@ -33,33 +39,67 @@ fun PetRoute(
                 rename = vm::rename,
                 handOver = { onAction(it, "") },
                 noticeShown = vm::noticeShown,
+                openRoom = vm::openRoom,
             )
         }
     val looks =
         remember(p.cats) { p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak) } }
     val room = rememberRoomState(looks)
+    val buzz = LocalPageBuzz.current
     if (room is RoomState.Ready) {
+        val stage = room.stage
         // the owner's care reaches the cats in the room as it arrives
-        LaunchedEffect(vm.reactionVersion, room) {
-            vm.drainReactions().forEach { room.stage.react(it) }
+        LaunchedEffect(vm.reactionVersion, room) { vm.drainReactions().forEach { stage.react(it) } }
+        SideEffect { stage.touchSink = PetTouchSink(vm, buzz) { vm.pet?.touch?.haptics } }
+        // how each cat takes touch is the page's: its trust, its trait, its saturation now
+        LaunchedEffect(p.touch, stage) {
+            p.touch?.profiles?.forEachIndexed { i, t ->
+                stage.petting.profile(
+                    i,
+                    t.level,
+                    t.satMul.toFloat(),
+                    t.trust.toFloat(),
+                    t.sat.toFloat(),
+                )
+            }
         }
     }
+    val touchable = p.touch != null
+    val touch = if (touchable) RoomTouch(onBowl = vm::feed) else null
     PetScreen(p, PetUi(vm.waiting, vm.notice), actions, topInsetDp, bottomInsetDp) { modifier ->
-        PetRoom(p, room, visible, modifier)
+        PetRoom(p, room, visible && !vm.fullRoom, modifier, touch)
+    }
+    if (touchable && vm.fullRoom && room is RoomState.Ready) {
+        PetFullRoom(
+            p,
+            room,
+            running = visible,
+            still = rememberAnimationsOff(),
+            onBowl = vm::feed,
+            onClose = vm::closeRoom,
+        )
     }
 }
 
 /**
  * The room in its frame: live while [visible], described for TalkBack, empty if its art is lost.
+ * With [touch] the cats answer a finger on it.
  */
 @Composable
-internal fun PetRoom(p: PetProjection, room: RoomState, visible: Boolean, modifier: Modifier) {
+internal fun PetRoom(
+    p: PetProjection,
+    room: RoomState,
+    visible: Boolean,
+    modifier: Modifier,
+    touch: RoomTouch? = null,
+) {
     val names = p.cats.joinToString(" and ") { it.name }
     RoomHost(
         room,
         running = visible,
         still = rememberAnimationsOff(),
         modifier = modifier.semantics { contentDescription = "$names in the room" },
+        touch = touch,
     )
 }
 
@@ -69,5 +109,6 @@ internal fun HouseStage.react(reaction: PetReaction) {
         is PetReaction.Fed -> feed(reaction.cat)
         is PetReaction.Bowl -> visitBowl(reaction.cat)
         is PetReaction.Blink -> slowBlink(reaction.cat)
+        is PetReaction.LevelUp -> petting.levelUp(reaction.cat)
     }
 }

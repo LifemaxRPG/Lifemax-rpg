@@ -17,9 +17,10 @@ import org.json.JSONObject
  * The Cat tab (Native Cat, beta): the page decides and words everything and stays the only writer;
  * the screen draws its projection (`pet.projection.v1`) with a live room in which the cats live a
  * day of their own, and asks the page to feed, to blink, to pause the clock and to rename with
- * commands. Play, the full-screen room and the rest of the Cat page are handed to the page. A
- * genetic coat's sheets are asked of the page with `coat` (`pet.coat.v1`). Everything that is not
- * specific to it lives in [ComposeTabPlugin].
+ * commands. The cats answer a finger on the room themselves and tell the page what a touch came to
+ * (`touch`, `pet.touch.v1`), and the room opens full screen on the screen's own. Play and the rest
+ * of the Cat page are handed to the page. A genetic coat's sheets are asked of the page with `coat`
+ * (`pet.coat.v1`). Everything that is not specific to it lives in [ComposeTabPlugin].
  */
 @CapacitorPlugin(name = "NativePet")
 class NativePetPlugin : ComposeTabPlugin() {
@@ -35,7 +36,7 @@ class NativePetPlugin : ComposeTabPlugin() {
         get() = ViewModelProvider(store, container.factory)[PetViewModel::class.java]
 
     override val tabId = "pet"
-    override val capabilities = listOf("pet.projection.v1", "pet.coat.v1")
+    override val capabilities = listOf("pet.projection.v1", "pet.coat.v1", "pet.touch.v1")
 
     /**
      * The live cats' genetic coats: the page composes them and answers `coat {key, kind}` with the

@@ -52,6 +52,7 @@ internal fun HouseLiveView(
     running: Boolean,
     still: Boolean,
     modifier: Modifier = Modifier,
+    touch: RoomTouch? = null,
 ) {
     val resumed = rememberResumed()
     val frame = remember { mutableLongStateOf(0L) }
@@ -67,8 +68,11 @@ internal fun HouseLiveView(
             }
         }
     }
-    Canvas(modifier) {
+    val touchable = if (touch != null) Modifier.petTouch(stage, touch.onBowl) else Modifier
+    val fullScreen = touch?.fullScreen == true
+    Canvas(modifier.then(touchable)) {
         frame.longValue // redraw on every step of the clock
+        stage.fullScreen = fullScreen // the room is drawn to fit this canvas, wherever it was last
         stage.draw(this)
     }
 }
