@@ -4,11 +4,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import com.lifemax.rpg.feature.pet.art.Anim
 import com.lifemax.rpg.feature.pet.art.IndexSheet
 import com.lifemax.rpg.feature.pet.art.PageCoatSource
 import com.lifemax.rpg.feature.pet.art.PetArt
 import com.lifemax.rpg.feature.pet.art.PetArtResources
 import com.lifemax.rpg.feature.pet.art.Recolour
+import com.lifemax.rpg.feature.pet.art.RigLayer
+import com.lifemax.rpg.feature.pet.art.RigLibrary
+import com.lifemax.rpg.feature.pet.art.RigMorph
+import com.lifemax.rpg.feature.pet.art.RigSet
 import com.lifemax.rpg.feature.pet.art.SheetKind
 import com.lifemax.rpg.feature.pet.body.Clips
 import com.lifemax.rpg.feature.pet.room.RoomArt
@@ -44,6 +49,8 @@ internal object CatArt {
     private val bump = Any()
     private var art: Result<PetArt>? = null
     private var room: Result<RoomKit>? = null
+    private var rigs: RigLibrary? = null
+    private var nextRigSet = 0
 
     /** The cats on screen, least recently used first; the oldest goes when there are too many. */
     private val entries =
@@ -66,6 +73,9 @@ internal object CatArt {
         var side: ImageBitmap? = null
         var depth: ImageBitmap? = null
         var built: CatSprites? = null
+        var rigged: CatSprites? = null
+        var riggedMorph: RigMorph? = null
+        var riggedWithDepth = false
     }
 
     /** Where every clip's frames are, for a growth stage (the same for any coat). */
@@ -76,6 +86,7 @@ internal object CatArt {
         val frames: IntArray,
         val feet: IntArray,
         val onDepth: BooleanArray,
+        val anims: Array<Anim>,
     ) {
         /** True if every clip on this kind of sheet lies inside [sheet]. */
         fun fits(sheet: IndexSheet, depthRows: Boolean): Boolean =
@@ -89,15 +100,21 @@ internal object CatArt {
     /**
      * The sprites of [coat] at kitten [stage] (-1 grown), or null if native cannot draw it (yet). A
      * null is never remembered: ask again when [revision] has changed.
+     *
+     * With a [morph] the sprites carry a rig: the cat's ears, tail and whiskers move with its body
+     * springs, and its proportions follow its genes (see [RigSet]). Without one, or when the rig's
+     * files cannot be read, they draw the sheet as it is.
      */
     @Synchronized
-    fun sprites(coat: String, stage: Int): CatSprites? {
+    fun sprites(coat: String, stage: Int, morph: RigMorph? = null): CatSprites? {
         val loaded =
             (art ?: runCatching { PetArtResources.load(coats) }.also { art = it }).getOrNull()
                 ?: return null
         val entry = entries.getOrPut(coat to stage) { Entry() }
         return try {
-            assemble(entry, loaded, coat, stage)
+            val built = assemble(entry, loaded, coat, stage)
+            if (built != null && morph != null) rigged(entry, built, loaded, coat, stage, morph)
+            else built
         } catch (e: RuntimeException) {
             // a sheet that does not decode: for a page coat that is a refusal, for good
             coats.reject(coat, SheetKind.of(stage, false))
@@ -151,20 +168,72 @@ internal object CatArt {
                 .also { entry.built = it }
     }
 
+    /** [built] with the rig of this cat; [built] itself if the rig cannot be had. */
+    private fun rigged(
+        entry: Entry,
+        built: CatSprites,
+        art: PetArt,
+        coat: String,
+        stage: Int,
+        morph: RigMorph,
+    ): CatSprites {
+        val withDepth = entry.depth != null
+        val kept = entry.rigged
+        if (kept != null && entry.riggedMorph == morph && entry.riggedWithDepth == withDepth) {
+            return kept
+        }
+        val library = rigs ?: PetArtResources.loadRig().also { rigs = it }
+        val palette = art.palette(coat) ?: return built
+        fun layer(depth: Boolean): RigLayer? {
+            val kind = SheetKind.of(stage, depth)
+            return RigLayer(
+                library.kind(kind.key) ?: return null,
+                art.sheet(coat, kind) ?: return null,
+                palette,
+            )
+        }
+        val side = layer(depth = false) ?: return built
+        val set =
+            RigSet(
+                nextRigSet++,
+                morph,
+                stage >= 0,
+                art.anims,
+                entry.tables!!.anims,
+                side,
+                if (withDepth) layer(depth = true) else null,
+            )
+        return built.withRig(set).also {
+            entry.rigged = it
+            entry.riggedMorph = morph
+            entry.riggedWithDepth = withDepth
+        }
+    }
+
     private fun tablesFor(art: PetArt, stage: Int): Tables? {
         val clips = Clips.all
         val rows = IntArray(clips.size)
         val frames = IntArray(clips.size)
         val feet = IntArray(clips.size)
         val onDepth = BooleanArray(clips.size)
+        val anims = ArrayList<Anim>(clips.size)
         for (clip in clips) {
             val anim = art.growth.resolve(stage, clip.name, art.anims) ?: return null
+            anims.add(anim)
             rows[clip.id] = anim.row
             frames[clip.id] = anim.frames
             feet[clip.id] = anim.bottom
             onDepth[clip.id] = anim.depth
         }
-        return Tables(art.anims.frameWidth, art.anims.frameHeight, rows, frames, feet, onDepth)
+        return Tables(
+            art.anims.frameWidth,
+            art.anims.frameHeight,
+            rows,
+            frames,
+            feet,
+            onDepth,
+            anims.toTypedArray(),
+        )
     }
 
     private const val MAX_CATS = 4

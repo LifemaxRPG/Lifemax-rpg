@@ -36,7 +36,9 @@ fun PetRoute(
             )
         }
     val looks =
-        remember(p.cats) { p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak) } }
+        remember(p.cats) {
+            p.cats.map { HouseCatLook(it.name, it.coat, it.stage, it.weak, it.rig) }
+        }
     val room = rememberRoomState(looks)
     if (room is RoomState.Ready) {
         // the owner's care reaches the cats in the room as it arrives

@@ -1,5 +1,7 @@
 package com.lifemax.rpg.feature.pet.domain
 
+import com.lifemax.rpg.feature.pet.art.RigMorph
+
 /*
  * The Cat tab's projection `pet.projection.v1` (50-native-pet.js): what the page's Cat card shows
  * for the cat whose card it is, with the cats native draws in the room. Every word is the page's
@@ -11,7 +13,14 @@ package com.lifemax.rpg.feature.pet.domain
  * One cat of the house as the room needs it: its [name] and [coat] seed its habits, [stage] is its
  * growth stage (-1 grown, 0 to 5 a kitten) and [weak] its hunger (the weak rows).
  */
-data class PetCatLook(val name: String, val coat: String, val stage: Int, val weak: Boolean)
+data class PetCatLook(
+    val name: String,
+    val coat: String,
+    val stage: Int,
+    val weak: Boolean,
+    /** The cat's proportions; the art as drawn when the page sends none (`pet.rig.v1`). */
+    val rig: RigMorph = RigMorph.NEUTRAL,
+)
 
 /** The bond bar: how far to the next level in percent, and its words ("Fond · 40% to Devoted"). */
 data class PetBond(val pct: Int, val text: String)

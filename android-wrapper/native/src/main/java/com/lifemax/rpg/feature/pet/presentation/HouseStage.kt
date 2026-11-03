@@ -49,6 +49,13 @@ internal class HouseStage(
     private var hour = hourNow()
     private lateinit var scope: DrawScope
     private var scale = 1
+
+    /**
+     * Whether ears, tail and whiskers follow the springs; false (reduced motion) keeps them as
+     * drawn. A cat's proportions, from its genes, are not motion and always apply.
+     */
+    var secondaryMotion = true
+
     private var originX = 0
     private var originY = 0
 
@@ -157,7 +164,7 @@ internal class HouseStage(
         val shadowX = originX + (pose.shadowX - houseX) * scale
         val shadowY = originY + pose.shadowY * scale
         scope.drawShadowAt(pose, scale, shadowX, shadowY)
-        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY)
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY, secondaryMotion)
     }
 
     private companion object {

@@ -154,6 +154,17 @@ function petRigFrame(rt,sh,kind,anim,f,morph,pose,meta){
     if(C.size>600)C.delete(C.keys().next().value);C.set(key,hit);return hit;
   }catch(e){console.warn('[pet rig]',e);return null}
 }
+/* native (pet.rig.v1, overview.cat.rig.v1): the cat's proportions as the rig draws them today, at its age, for a screen that draws the
+   cats itself and re-assembles their frames from the same parts. null for a cat the art fits as drawn (no genes, or every multiplier
+   within petRigNeutral's tolerance): the screen then draws the sheet untouched. Rounded to 0.01 and held inside the genes' range. */
+function petRigWire(p){
+  try{
+    const ph=petPheno(p);if(!ph||!ph.morph)return null;
+    const m=petRigGrown(ph.morph,petGrowIdx(p)<0?1:petGrowth(p));if(petRigNeutral(m))return null;
+    const r=function(v){return Math.round(Math.max(0.35,Math.min(2.8,v==null?1:v))*100)/100};
+    return {em:r(m.em),ew:r(m.ew),tl:r(m.tl),lg:r(m.lg),bl:r(m.bl),wk:r(m.wk),bob:!!m.bob};
+  }catch(e){return null}
+}
 /* a kitten shows its proportions from the start, half strength on day 0 and full strength on day 30 */
 function petRigGrown(m,g){
   if(g>=1)return m;g=0.5+0.5*g;const o={bob:m.bob},one=function(v){return 1+((v==null?1:v)-1)*g};

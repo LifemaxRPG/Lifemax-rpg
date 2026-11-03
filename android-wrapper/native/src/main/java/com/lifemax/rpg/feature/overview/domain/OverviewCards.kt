@@ -5,6 +5,7 @@ import com.lifemax.rpg.core.designsystem.feedback.HeldCelebration
 import com.lifemax.rpg.core.designsystem.feedback.PagePoint
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorGlance
 import com.lifemax.rpg.feature.pet.art.PageCoatSource
+import com.lifemax.rpg.feature.pet.art.RigMorph
 
 /*
  * The whole projection `overview.cards.v1` (plan OVERVIEW_BODY §3.3): what the page's Overview
@@ -367,7 +368,14 @@ data class CatCard(
  * (which the page sends only to a screen with `overview.cat.coat.v1`) once the page has handed over
  * its sheets; until then, and for any other key, that cat is not drawn.
  */
-data class LiveCat(val coat: String, val stage: Int, val weak: Boolean, val name: String? = null) {
+data class LiveCat(
+    val coat: String,
+    val stage: Int,
+    val weak: Boolean,
+    val name: String? = null,
+    /** The cat's proportions; the art as drawn when the page sends none (`overview.cat.rig.v1`). */
+    val rig: RigMorph = RigMorph.NEUTRAL,
+) {
     /** True when native can draw this coat: shipped, or a genetic coat the page can compose. */
     val drawable: Boolean
         get() = coat in LEGACY_COATS || PageCoatSource.isDnaKey(coat)

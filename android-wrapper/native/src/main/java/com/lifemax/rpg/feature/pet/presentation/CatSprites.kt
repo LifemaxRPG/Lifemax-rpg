@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.presentation
 
 import androidx.compose.ui.graphics.ImageBitmap
+import com.lifemax.rpg.feature.pet.art.RigSet
 
 /**
  * One cat's sprite sheets, recoloured once and ready to draw: the side-view sheet and the depth
@@ -16,7 +17,13 @@ internal class CatSprites(
     private val frames: IntArray,
     private val feet: IntArray,
     private val onDepthSheet: BooleanArray,
+    /** The rig that moves this cat's ears, tail and whiskers, or null: draw the sheet as it is. */
+    val rig: RigSet? = null,
 ) {
+    /** The same sprites with [rig] (or none): sheets and tables are shared. */
+    fun withRig(rig: RigSet?) =
+        CatSprites(frameWidth, frameHeight, side, depth, rows, frames, feet, onDepthSheet, rig)
+
     /** The sheet [clip] is on, or null when this cat has no such sheet (draw nothing). */
     fun sheet(clip: Int): ImageBitmap? = if (onDepthSheet[clip]) depth else side
 

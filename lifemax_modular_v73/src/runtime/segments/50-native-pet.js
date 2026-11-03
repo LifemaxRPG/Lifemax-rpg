@@ -6,6 +6,7 @@
    (a cat that has passed) are the page's: blocked() keeps the screen away from them. The tab lifecycle is NativeTabKit's. */
 (function () {
   const COAT = "pet.coat.v1"; // a genetic (dna_) coat's sheets, asked of the page with the `coat` command
+  const RIG = "pet.rig.v1"; // each cat's proportions (ear, tail, leg, body, whisker multipliers), so native re-assembles the art as the page does
   const LEGACY_COATS = ["ginger", "gray", "black", "tuxedo"]; // the coats native ships art for
   const NAME_MAX = 14; // what petRename keeps
   const CUES = 2; // fed cues sent with a projection: one button can feed both cats in the same moment
@@ -49,9 +50,13 @@
     if (!p || !p.alive) return false;
     return LEGACY_COATS.includes(p.coat) || (!!tab && tab.has(COAT) && typeof petCoatKnown === "function" && petCoatKnown(p.coat));
   }
-  /** one cat as the room needs it: its coat, growth stage (-1 grown, 0..5 a kitten) and hunger (the weak rows), and its name, which seeds its habits */
+  /** one cat as the room needs it: its coat, growth stage (-1 grown, 0..5 a kitten) and hunger (the weak rows), and its name, which seeds its habits;
+      for a screen with pet.rig.v1 also its proportions (rig), left out for a cat the art fits as drawn */
   function look(p) {
-    return { name: String(p.name).slice(0, NAME_MAX), coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
+    const o = { name: String(p.name).slice(0, NAME_MAX), coat: p.coat, stage: petGrowIdx(p), weak: petStage(p) >= 3 };
+    const rig = tab && tab.has(RIG) && typeof petRigWire === "function" ? petRigWire(p) : null;
+    if (rig) o.rig = rig;
+    return o;
   }
   /** the cats of the house native draws: the first, and the second when it is alive and drawable too */
   function house() {

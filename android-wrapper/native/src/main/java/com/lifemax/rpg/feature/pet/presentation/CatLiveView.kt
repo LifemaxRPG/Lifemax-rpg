@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.lifemax.rpg.feature.lifedirector.presentation.components.animatorScale
+import com.lifemax.rpg.feature.pet.art.RigMorph
 import com.lifemax.rpg.feature.pet.body.Autopilot
 import com.lifemax.rpg.feature.pet.body.CatLife
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +62,7 @@ internal fun CatLiveView(
     }
     Canvas(modifier) {
         frame.longValue // redraw on every step of the clock
-        drawCatStage(life.pose, sprites, colors)
+        drawCatStage(life.pose, sprites, colors, motion = !still)
     }
 }
 
@@ -86,14 +87,18 @@ internal fun rememberResumed(): Boolean {
  * the cat's [name] and coat, so it keeps its own character from visit to visit.
  */
 @Composable
-internal fun rememberCatSprites(coat: String, stage: Int): CatSprites? {
+internal fun rememberCatSprites(
+    coat: String,
+    stage: Int,
+    rig: RigMorph = RigMorph.NEUTRAL,
+): CatSprites? {
     // A page coat's sheets arrive one by one ([CatArt.revision] changes with each): the sprites are
     // asked again, and the cat already on screen stays until better ones (with the depth rows)
     // come.
-    val sprites = remember(coat, stage) { mutableStateOf<CatSprites?>(null) }
+    val sprites = remember(coat, stage, rig) { mutableStateOf<CatSprites?>(null) }
     val revision = CatArt.revision
-    LaunchedEffect(coat, stage, revision) {
-        val found = withContext(Dispatchers.Default) { CatArt.sprites(coat, stage) }
+    LaunchedEffect(coat, stage, rig, revision) {
+        val found = withContext(Dispatchers.Default) { CatArt.sprites(coat, stage, rig) }
         if (found != null) sprites.value = found
     }
     return sprites.value
