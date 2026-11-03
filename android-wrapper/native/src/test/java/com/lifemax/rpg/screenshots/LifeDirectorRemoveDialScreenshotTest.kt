@@ -21,8 +21,8 @@ import org.junit.Test
 /**
  * A session lifted off the day from its segment on the dial (director.remove.v1), from the
  * projection the web app produced for a screen that offers removal (director-remove.json):
- * Resistance Training's segment left as a ghost where it was, its card under the finger, and the
- * trash idle and armed, in the dark and light themes and with larger text. Reduced-motion looks
+ * Resistance Training's segment left as a ghost where it was, its chip just above the finger, and
+ * the trash idle and armed, in the dark and light themes and with larger text. Reduced-motion looks
  * (nothing slides, grows or springs), as in the running order's images.
  */
 class LifeDirectorRemoveDialScreenshotTest {
@@ -68,7 +68,7 @@ class LifeDirectorRemoveDialScreenshotTest {
             )
         drag.layout(1080f, 3600f, 64f * DENSITY, 72f * DENSITY, DENSITY)
         val row = p.today!!.ahead.first { it.title == "Resistance Training" }
-        drag.lift(row, DragPoint(540f, y), drag.dialGrab(), DragSource.DIAL)
+        drag.lift(row, DragPoint(540f, y), DragSource.DIAL)
         if (armed) drag.move(drag.target.value!!.centre)
         paparazzi.snapshot(name) {
             CompositionLocalProvider(LocalWallClock provides { p.today!!.now * 1000 }) {
@@ -91,8 +91,11 @@ class LifeDirectorRemoveDialScreenshotTest {
 
     @Test fun dialArmedLight() = lifted("light", light = true, armed = true, y = 3250f)
 
-    /** Larger text: the card, the trash and its label grow with it; the dial keeps its size. */
+    /** Larger text: the chip, the trash and its label grow with it; the dial keeps its size. */
     @Test fun dialLargeText() = lifted("large", armed = true, fontScale = 1.3f, y = 3150f)
+
+    /** The largest text the system offers: the chip grows but stays small. */
+    @Test fun dialChipLargestText() = lifted("chip-2x", fontScale = 2f)
 
     private companion object {
         const val DENSITY = 2.625f

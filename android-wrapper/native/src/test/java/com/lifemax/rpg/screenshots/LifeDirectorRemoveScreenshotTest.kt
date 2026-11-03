@@ -27,7 +27,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPale
 import com.lifemax.rpg.feature.lifedirector.presentation.components.LocalWallClock
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.LIFT_SCALE
-import com.lifemax.rpg.feature.lifedirector.presentation.drag.LiftedCard
+import com.lifemax.rpg.feature.lifedirector.presentation.drag.LiftedChip
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.RemoveTarget
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.UndoBar
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,10 +39,11 @@ import org.junit.Test
  * Taking a session off the day (director.remove.v1), from the projection the web app produced for a
  * screen that says it can (director-remove.json): a session lifted off the running order and held
  * on its way to the trash, the trash idle and armed, in the dark and light themes and with larger
- * text, the lifted card as it looks with motion (a little larger, with a shadow), and the message
- * with Undo. The whole phone is shown (1080 by 3600 px) so the closed-up row, the card and the
- * trash can be seen together. Everything here is the reduced-motion look (nothing slides, grows or
- * springs) except [cardWithMotion].
+ * text, the lifted chip (the session's dot, name and time, small and just above the finger) as it
+ * looks with motion (a little larger, with a shadow), and the message with Undo. The whole phone is
+ * shown (1080 by 3600 px) so the closed-up row, the chip and the trash can be seen together.
+ * Everything here is the reduced-motion look (nothing slides, grows or springs) except
+ * [cardWithMotion].
  */
 class LifeDirectorRemoveScreenshotTest {
     @get:Rule
@@ -67,8 +68,8 @@ class LifeDirectorRemoveScreenshotTest {
         }
 
     /**
-     * The screen with Resistance Training lifted under a finger at ([x], [y]) px, holding it by its
-     * middle, and the finger over the trash when [armed].
+     * The screen with Resistance Training (named [title] when given) lifted by a finger [y] px
+     * down, and the finger over the trash when [armed].
      */
     private fun lifted(
         name: String,
@@ -76,6 +77,7 @@ class LifeDirectorRemoveScreenshotTest {
         armed: Boolean = false,
         fontScale: Float = 1f,
         y: Float = 2000f,
+        title: String? = null,
     ) {
         paparazzi.unsafeUpdateConfig(phone(fontScale))
         val repo = repository(light)
@@ -89,8 +91,12 @@ class LifeDirectorRemoveScreenshotTest {
                 {},
             )
         drag.layout(1080f, 3600f, 64f * DENSITY, 72f * DENSITY, DENSITY)
-        val row = p.today!!.ahead.first { it.title == "Resistance Training" }
-        drag.lift(row, DragPoint(540f, y), DragPoint(508f, 60f))
+        val row =
+            p.today!!
+                .ahead
+                .first { it.title == "Resistance Training" }
+                .let { if (title == null) it else it.copy(title = title) }
+        drag.lift(row, DragPoint(540f, y))
         if (armed) drag.move(drag.target.value!!.centre)
         paparazzi.snapshot(name) {
             CompositionLocalProvider(LocalWallClock provides { p.today!!.now * 1000 }) {
@@ -114,9 +120,20 @@ class LifeDirectorRemoveScreenshotTest {
     @Test fun armedLight() = lifted("light", light = true, armed = true, y = 3250f)
 
     /**
-     * Larger text: the card, the trash and its label grow with it, the closed-up list stays whole.
+     * Larger text: the chip, the trash and its label grow with it, the closed-up list stays whole.
      */
     @Test fun largeText() = lifted("large", armed = true, fontScale = 1.3f, y = 3150f)
+
+    /** The largest text the system offers: the chip grows but stays far smaller than the row. */
+    @Test fun chipLargestText() = lifted("chip-2x", fontScale = 2f)
+
+    /** A long session name is cut on one line, the chip stops at 60% of the list's width. */
+    @Test
+    fun chipLongName() =
+        lifted(
+            "chip-long",
+            title = "Deep Focus Block: Quarterly Planning and Writing Review With The Whole Team",
+        )
 
     /** The trash on its own, idle and armed. */
     @Test
@@ -143,7 +160,7 @@ class LifeDirectorRemoveScreenshotTest {
         }
     }
 
-    /** The lifted card with motion: a little larger, with its shadow, over the running order. */
+    /** The lifted chip with motion: a little larger, with its shadow, over the running order. */
     @Test
     fun cardWithMotion() {
         val repo = repository(light = false)
@@ -153,9 +170,9 @@ class LifeDirectorRemoveScreenshotTest {
             CompositionLocalProvider(LocalWallClock provides { p.today!!.now * 1000 }) {
                 Box(Modifier.fillMaxSize()) {
                     LifeDirectorScreen(p, DirectorUi(), DirectorActions(), animate = false)
-                    LiftedCard(
+                    LiftedChip(
                         row,
-                        Modifier.padding(horizontal = 12.dp).offset(y = 640.dp).graphicsLayer {
+                        Modifier.offset(x = 130.dp, y = 600.dp).graphicsLayer {
                             scaleX = LIFT_SCALE
                             scaleY = LIFT_SCALE
                         },

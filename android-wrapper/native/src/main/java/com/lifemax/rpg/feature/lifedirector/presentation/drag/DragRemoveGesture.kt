@@ -60,12 +60,7 @@ internal fun Modifier.dragToRemove(drag: DragRemoveController?, list: LazyListSt
                 is Press.Lift -> {
                     view.parent?.requestDisallowInterceptTouchEvent(true)
                     buzz?.buzz(LIFT_BUZZ)
-                    val inset = LIST_SIDE.toPx()
-                    drag.lift(
-                        press.row,
-                        down.position.toPoint(),
-                        DragPoint(down.position.x - inset, down.position.y - item.offset),
-                    )
+                    drag.lift(press.row, down.position.toPoint())
                     carry(drag, down, buzz)
                 }
             }

@@ -4,7 +4,9 @@ import androidx.compose.ui.geometry.Offset
 import com.lifemax.rpg.feature.lifedirector.data.WebLifeDirectorRepository
 import com.lifemax.rpg.feature.lifedirector.data.directorReply
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
+import com.lifemax.rpg.feature.lifedirector.domain.ChipSize
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
+import com.lifemax.rpg.feature.lifedirector.domain.DragChip
 import com.lifemax.rpg.feature.lifedirector.domain.DragModel
 import com.lifemax.rpg.feature.lifedirector.domain.DragPoint
 import com.lifemax.rpg.feature.lifedirector.domain.DragSource
@@ -290,14 +292,18 @@ class DialLiftTest {
     // The shared controller, lifting from the dial
 
     private fun Screen.lift(title: String = "Resistance Training") =
-        drag.lift(session(title), DragPoint(300f, 600f), drag.dialGrab(), DragSource.DIAL)
+        drag.lift(session(title), DragPoint(300f, 600f), DragSource.DIAL)
 
     @Test
-    fun theCardIsHeldByItsMiddleUnderTheFinger() {
+    fun aChipLiftedFromTheDialSitsAboveTheFingerWhateverSegmentHeldIt() {
         val s = screen()
-        // the card is the list's width less its 12 dp sides: 1000 - 2 * 30 px
-        assertEquals(470f, s.drag.dialGrab().x, 0f)
-        assertTrue(s.drag.dialGrab().y > 0f)
+        s.lift()
+        val finger = s.drag.finger.value
+        val chip = ChipSize(300f, 120f)
+        val at = DragChip.origin(finger, chip, 1000f, 2.5f)
+        assertEquals(finger.x - 150f, at.x, 0f)
+        assertEquals(finger.y - DragChip.GAP_DP * 2.5f - 120f, at.y, 0f)
+        assertTrue("the finger is clear of the chip", finger.y > at.y + chip.height)
     }
 
     @Test
@@ -319,7 +325,7 @@ class DialLiftTest {
     @Test
     fun aSessionLiftedFromARowStillSaysItCameFromARow() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         assertEquals(DragSource.ROW, s.drag.held.value!!.source)
     }
 

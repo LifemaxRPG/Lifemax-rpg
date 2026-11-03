@@ -7,16 +7,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,31 +23,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.lifemax.rpg.core.designsystem.boxShadow
+import com.lifemax.rpg.feature.lifedirector.domain.ChipSize
+import com.lifemax.rpg.feature.lifedirector.domain.DragChip
 import com.lifemax.rpg.feature.lifedirector.domain.DragPoint
 import com.lifemax.rpg.feature.lifedirector.domain.DragSource
 import com.lifemax.rpg.feature.lifedirector.domain.OrderRow
-import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette as P
-import com.lifemax.rpg.feature.lifedirector.presentation.components.OrderRowView
 import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /**
  * Everything drawn over the list while a session is lifted: the trash sliding up from the bottom
- * above the bars, the session as a card under the finger, and the list scrolling when the finger
- * nears its top or bottom edge. It takes no touches (the list's gesture has them). With [reduced]
- * motion nothing slides, springs or grows: the trash is there, the card follows the finger, and
- * letting go is instant.
+ * above the bars, the session as a small chip above the finger, and the list scrolling when the
+ * finger nears its top or bottom edge. It takes no touches (the list's gesture has them). With
+ * [reduced] motion nothing slides, springs or grows: the trash is there, the chip follows the
+ * finger, and letting go is instant.
  */
 @Composable
 internal fun RemoveOverlay(
@@ -78,7 +71,7 @@ internal fun RemoveOverlay(
     ) {
         val h = held ?: return@Box
         TrashSlide(drag, h, reduced)
-        FlyingCard(drag, list, h, reduced)
+        FlyingChip(drag, list, h, reduced)
         if (h.phase == DragPhase.HELD) AutoScroll(drag, list)
     }
 }
@@ -119,12 +112,14 @@ private fun TrashSlide(drag: DragRemoveController, held: Held, reduced: Boolean)
 }
 
 /**
- * The lifted session as a card: under the finger while held (a little larger, with a shadow); into
- * the trash, shrinking, when dropped there; and back to its place with a spring when let go
- * elsewhere, placed it settles into the row that has opened for it.
+ * The lifted session as a small chip ([LiftedChip]): just above the finger while held (a little
+ * larger, with a shadow), into the trash, shrinking, when dropped there, and, when let go
+ * elsewhere, back to its row's place with a spring, fading as it settles into the row that has
+ * opened for it. A chip lifted from the dial grows from the size of its segment and shrinks back
+ * into it.
  */
 @Composable
-private fun FlyingCard(
+private fun FlyingChip(
     drag: DragRemoveController,
     list: LazyListState,
     held: Held,
@@ -138,9 +133,12 @@ private fun FlyingCard(
     val scale = remember(held.row.key) { Animatable(1f) }
     val shown = remember(held.row.key) { Animatable(1f) }
     var from by remember(held.row.key) { mutableStateOf(DragPhase.HELD) }
-    val grab = held.grab
-    val inset = with(density) { LIST_SIDE.toPx() }
-    val size = remember { mutableStateOf(IntSize.Zero) }
+    val listWidth = list.layoutInfo.viewportSize.width.toFloat()
+    val size = remember { mutableStateOf(ChipSize.Zero) }
+
+    /** Where the chip is held for a finger at [at]: centred just above it. */
+    fun heldAt(at: DragPoint) =
+        DragChip.origin(at, size.value, listWidth, density.density).toOffset()
 
     LaunchedEffect(held.row.key) {
         view.announceForAccessibility(
@@ -148,27 +146,21 @@ private fun FlyingCard(
         )
     }
     LaunchedEffect(held.row.key, held.phase) {
-        val here = Offset(drag.finger.value.x - grab.x, drag.finger.value.y - grab.y)
+        val here = heldAt(drag.finger.value)
         when (held.phase) {
             DragPhase.HELD -> {
                 shown.snapTo(1f)
                 if (reduced) scale.snapTo(1f)
                 else {
-                    // a card lifted from the dial grows from the size of its segment
+                    // a chip lifted from the dial grows from the size of its segment
                     if (held.source == DragSource.DIAL) scale.snapTo(FROM_SEGMENT_SCALE)
                     scale.animateTo(LIFT_SCALE, spring(Spring.DampingRatioMediumBouncy))
                 }
             }
             DragPhase.DROPPING -> {
                 if (from == DragPhase.HELD) placed.snapTo(here)
-                val t = target
                 val to =
-                    if (t == null) here
-                    else
-                        Offset(
-                            t.centre.x - size.value.width / 2f,
-                            t.centre.y - size.value.height / 2f,
-                        )
+                    target?.let { DragChip.centredOn(it.centre, size.value).toOffset() } ?: here
                 if (reduced) shown.snapTo(0f)
                 else {
                     placed.animateTo(to, tween(DROP_MS))
@@ -179,101 +171,86 @@ private fun FlyingCard(
             DragPhase.RETURNING -> {
                 if (from == DragPhase.HELD) placed.snapTo(here)
                 shown.snapTo(1f)
-                if (held.source == DragSource.DIAL)
-                    intoSegment(
-                        drag.anchor.home(held.row.tap?.id.orEmpty()),
-                        size.value,
-                        placed,
-                        scale,
-                        shown,
-                        reduced,
-                    )
-                else {
-                    val slot =
-                        Offset(inset, slotTop(list, held.row, size.value.height, drag.finger.value))
-                    if (reduced) {
-                        placed.snapTo(slot)
-                        scale.snapTo(1f)
-                    } else {
-                        scale.animateTo(1f, tween(SETTLE_MS))
-                        placed.animateTo(
-                            slot,
-                            spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMedium),
-                        )
-                    }
-                }
+                val home =
+                    if (held.source == DragSource.DIAL)
+                        drag.anchor.home(held.row.tap?.id.orEmpty())?.toPoint()
+                    else slotMiddle(list, held.row, size.value.height, drag.finger.value, listWidth)
+                comeHome(home, size.value, placed, scale, shown, reduced, held.source)
                 drag.settled()
             }
         }
         from = held.phase
     }
-    Box(
-        Modifier.width(with(density) { (list.layoutInfo.viewportSize.width - 2 * inset).toDp() })
-            .onSizeChanged { size.value = it }
+    // the chip is not drawn until it has been measured, so it never shows at a wrong place
+    val measured = size.value != ChipSize.Zero
+    LiftedChip(
+        held.row,
+        Modifier.widthIn(max = with(density) { DragChip.maxWidth(listWidth).toDp() })
+            .onSizeChanged { size.value = ChipSize(it.width.toFloat(), it.height.toFloat()) }
             .graphicsLayer {
-                val at =
-                    if (held.phase == DragPhase.HELD) Offset(finger.x - grab.x, finger.y - grab.y)
-                    else placed.value
+                val at = if (held.phase == DragPhase.HELD) heldAt(finger) else placed.value
                 translationX = at.x
                 translationY = at.y
                 scaleX = scale.value
                 scaleY = scale.value
-                alpha = shown.value
-            }
-    ) {
-        LiftedCard(held.row)
-    }
+                alpha = if (measured) shown.value else 0f
+            },
+    )
 }
 
+private fun DragPoint.toOffset() = Offset(x, y)
+
 /**
- * A card lifted from the dial goes back into its segment: it shrinks and fades as it settles there
- * with a spring, [home] being the segment's place on the screen. With reduced motion, or with the
- * dial gone from the screen, it is simply gone.
+ * A chip let go away from the trash goes back to [home], the middle of its row's slot or of its
+ * dial segment (null when the dial is off the screen), and fades as it settles there with a spring.
+ * A chip from the dial also shrinks to the size of its segment. With reduced motion it is simply
+ * gone.
  */
-private suspend fun intoSegment(
-    home: Offset?,
-    card: IntSize,
+private suspend fun comeHome(
+    home: DragPoint?,
+    chip: ChipSize,
     placed: Animatable<Offset, AnimationVector2D>,
     scale: Animatable<Float, AnimationVector1D>,
     shown: Animatable<Float, AnimationVector1D>,
     reduced: Boolean,
+    source: DragSource,
 ) {
     if (reduced || home == null) return shown.snapTo(0f)
     coroutineScope {
-        launch { scale.animateTo(FROM_SEGMENT_SCALE, tween(SETTLE_MS)) }
+        launch {
+            scale.animateTo(
+                if (source == DragSource.DIAL) FROM_SEGMENT_SCALE else 1f,
+                tween(SETTLE_MS),
+            )
+        }
         launch { shown.animateTo(0f, tween(SETTLE_MS)) }
         placed.animateTo(
-            Offset(home.x - card.width / 2f, home.y - card.height / 2f),
+            DragChip.centredOn(home, chip).toOffset(),
             spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMedium),
         )
     }
 }
 
 /**
- * The session as a card: its row on the panel's colour with an edge and a shadow, nothing to tap.
+ * The middle of the row's slot in the list now, or just off the edge the finger last was nearer (a
+ * chip's [height] beyond it) when the row has scrolled out of sight.
  */
-@Composable
-internal fun LiftedCard(row: OrderRow, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .boxShadow(Color.Black.copy(alpha = .6f), 26.dp, CARD_SHAPE, dy = 10.dp)
-            .background(P.bg0, CARD_SHAPE)
-            .border(1.dp, P.line2, CARD_SHAPE)
-            .padding(horizontal = 14.dp)
-    ) {
-        OrderRowView(row.copy(tap = null), {})
-    }
-}
-
-/** Where the row's slot is in the list now, or just off the edge the finger last was nearer. */
-private fun slotTop(list: LazyListState, row: OrderRow, height: Int, finger: DragPoint): Float {
+private fun slotMiddle(
+    list: LazyListState,
+    row: OrderRow,
+    height: Float,
+    finger: DragPoint,
+    listWidth: Float,
+): DragPoint {
     val info = list.layoutInfo
     val item = info.visibleItemsInfo.firstOrNull { it.key == row.key }
-    return when {
-        item != null -> item.offset.toFloat()
-        finger.y < info.viewportSize.height / 2f -> -height.toFloat()
-        else -> info.viewportSize.height.toFloat()
-    }
+    val y =
+        when {
+            item != null -> item.offset + item.size / 2f
+            finger.y < info.viewportSize.height / 2f -> -height
+            else -> info.viewportSize.height + height
+        }
+    return DragPoint(listWidth / 2, y)
 }
 
 /**
@@ -293,12 +270,11 @@ private fun AutoScroll(drag: DragRemoveController, list: LazyListState) {
     }
 }
 
-private val CARD_SHAPE = RoundedCornerShape(16.dp)
-/** How much larger a lifted card is than the row it was. */
+/** How much larger a lifted chip is than it is at rest. */
 internal const val LIFT_SCALE = 1.04f
 
-/** How small a card is next to a dial segment it grows from or shrinks back into. */
-private const val FROM_SEGMENT_SCALE = .3f
+/** How big a chip is next to a dial segment it grows from or shrinks back into. */
+private const val FROM_SEGMENT_SCALE = .5f
 private const val SLIDE_MS = 200
 private const val SLIDE_FROM_DP = 120
 private const val DROP_MS = 170

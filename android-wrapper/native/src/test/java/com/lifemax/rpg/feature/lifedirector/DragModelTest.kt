@@ -1,6 +1,8 @@
 package com.lifemax.rpg.feature.lifedirector
 
 import com.lifemax.rpg.feature.lifedirector.domain.BlockKind
+import com.lifemax.rpg.feature.lifedirector.domain.ChipSize
+import com.lifemax.rpg.feature.lifedirector.domain.DragChip
 import com.lifemax.rpg.feature.lifedirector.domain.DragEnd
 import com.lifemax.rpg.feature.lifedirector.domain.DragModel
 import com.lifemax.rpg.feature.lifedirector.domain.DragPoint
@@ -83,14 +85,83 @@ class DragModelTest {
 
     @Test
     fun movingArmsAndDisarmsAndTheCardFollows() {
-        val lifted = DragModel.lift(row, DragPoint(300f, 900f), DragPoint(40f, 30f))
+        val lifted = DragModel.lift(row, DragPoint(300f, 900f))
         assertFalse(lifted.armed)
         val over = DragModel.move(lifted, at(10f), trash, density)
         assertTrue(over.armed)
         assertEquals(at(10f), over.finger)
-        assertEquals(DragPoint(40f, 30f), over.grab)
         val away = DragModel.move(over, DragPoint(100f, 300f), trash, density)
         assertFalse(away.armed)
+    }
+
+    // The chip that stands for the lifted session
+
+    private val chip = ChipSize(300f, 120f)
+    private val list = 1000f
+
+    private fun chipAt(finger: DragPoint, size: ChipSize = chip) =
+        DragChip.origin(finger, size, list, density)
+
+    @Test
+    fun theChipIsCentredOnTheFingerAndAboveItSoTheFingerDoesNotCoverIt() {
+        val at = chipAt(DragPoint(500f, 900f))
+        assertEquals(350f, at.x, 0f)
+        // its bottom edge is the gap above the finger
+        assertEquals(900f - DragChip.GAP_DP * density, at.y + chip.height, 0f)
+    }
+
+    @Test
+    fun theChipFollowsTheFingerAndIgnoresWhereItTookHold() {
+        val a = chipAt(DragPoint(500f, 900f))
+        val b = chipAt(DragPoint(560f, 1000f))
+        assertEquals(60f, b.x - a.x, 0f)
+        assertEquals(100f, b.y - a.y, 0f)
+    }
+
+    @Test
+    fun theChipStaysWithinTheListsSides() {
+        val side = DragChip.SIDE_DP * density
+        assertEquals(side, chipAt(DragPoint(0f, 900f)).x, 0f)
+        assertEquals(list - side - chip.width, chipAt(DragPoint(list, 900f)).x, 0f)
+    }
+
+    @Test
+    fun aChipWiderThanTheListIsHeldAtTheLeftSideRatherThanThrownOffIt() {
+        val wide = ChipSize(list, 120f)
+        assertEquals(DragChip.SIDE_DP * density, chipAt(DragPoint(500f, 900f), wide).x, 0f)
+    }
+
+    @Test
+    fun withNoRoomAboveTheFingerTheChipGoesBelowIt() {
+        val at = chipAt(DragPoint(500f, 150f))
+        assertEquals(150f + DragChip.GAP_DP * density, at.y, 0f)
+        // just enough room above keeps it above
+        val fits = DragChip.GAP_DP * density + chip.height
+        assertEquals(0f, chipAt(DragPoint(500f, fits)).y, 0f)
+    }
+
+    @Test
+    fun theChipIsAtMostSixtyPercentOfTheListWide() {
+        assertEquals(600f, DragChip.maxWidth(list), 0f)
+    }
+
+    @Test
+    fun aChipDroppedOnTheTrashIsCentredOnIt() {
+        val at = DragChip.centredOn(trash.centre, chip)
+        assertEquals(trash.centre.x, at.x + chip.width / 2, 0f)
+        assertEquals(trash.centre.y, at.y + chip.height / 2, 0f)
+    }
+
+    @Test
+    fun theTrashIsArmedByTheFingerEvenWhenTheChipIsAwayFromIt() {
+        // the chip sits above the finger: the finger over the trash arms it, the chip's place does
+        // not
+        val finger = at(0f)
+        assertTrue(DragModel.hovers(false, finger, trash, density))
+        val chipAbove = chipAt(finger)
+        assertTrue(chipAbove.y + chip.height < finger.y)
+        val onlyTheChip = DragPoint(chipAbove.x + chip.width / 2, chipAbove.y + chip.height / 2)
+        assertFalse(DragModel.hovers(false, onlyTheChip, trash, density))
     }
 
     // Auto-scroll
@@ -133,7 +204,7 @@ class DragModelTest {
 
     @Test
     fun letGoOverTheTrashRemovesTheSessionAndAnywhereElsePutsItBack() {
-        val lifted = DragModel.lift(row, DragPoint(300f, 900f), DragPoint(40f, 30f))
+        val lifted = DragModel.lift(row, DragPoint(300f, 900f))
         assertEquals(DragEnd.PutBack, DragModel.release(lifted))
         val armed = DragModel.move(lifted, at(0f), trash, density)
         assertEquals(DragEnd.Remove("i_1"), DragModel.release(armed))

@@ -63,7 +63,7 @@ class LifeDirectorRemovalTest {
         /** Presses, lifts and drops [title] on the trash; the page has been asked to remove it. */
         fun dropOnTrash(title: String): OrderRow {
             val row = session(title)
-            drag.lift(row, DragPoint(300f, 900f), DragPoint(40f, 30f))
+            drag.lift(row, DragPoint(300f, 900f))
             drag.move(onTrash)
             drag.release()
             return row
@@ -161,7 +161,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun onlyOneSessionIsLiftedAtATime() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         assertEquals(Press.Ignore, s.drag.press(s.session("Focused Reading").key))
     }
 
@@ -171,7 +171,7 @@ class LifeDirectorRemovalTest {
     fun liftingHoldsTheCardAndMovingOverTheTrashArmsIt() {
         val s = screen()
         val row = s.session("Resistance Training")
-        s.drag.lift(row, DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(row, DragPoint(300f, 900f))
         assertEquals(DragPhase.HELD, s.drag.held.value!!.phase)
         assertEquals(row, s.drag.held.value!!.row)
         assertFalse(s.drag.armed.value)
@@ -187,7 +187,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun letGoAwayFromTheTrashPutsItBackAndSendsNothing() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         s.drag.move(DragPoint(200f, 700f))
         s.drag.release()
         assertEquals(DragPhase.RETURNING, s.drag.held.value!!.phase)
@@ -200,7 +200,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun cancellingOverTheTrashStillPutsItBack() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         s.drag.move(s.onTrash)
         s.drag.cancel()
         assertEquals(DragPhase.RETURNING, s.drag.held.value!!.phase)
@@ -213,7 +213,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun theScrollSpeedFollowsTheFingerAndStopsOverTheTrash() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         assertEquals(0f, s.drag.scrollSpeed(), 0f)
         s.drag.move(DragPoint(300f, 160f))
         assertTrue(s.drag.scrollSpeed() < 0f)
@@ -442,7 +442,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun aLiftedSessionWhoseRowHasGoneFromThePageGoesBack() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         val gone = fixture("remove")
         val ahead = gone.getJSONObject("today").getJSONObject("rows").getJSONArray("ahead")
         val kept = org.json.JSONArray()
@@ -460,7 +460,7 @@ class LifeDirectorRemovalTest {
     @Test
     fun theScreenHidingDropsALiftAndKeepsNothingInFlight() {
         val s = screen()
-        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f), DragPoint(40f, 30f))
+        s.drag.lift(s.session("Resistance Training"), DragPoint(300f, 900f))
         s.vm.hidden()
         assertNull(s.drag.held.value)
         assertFalse(s.drag.isHeld)
