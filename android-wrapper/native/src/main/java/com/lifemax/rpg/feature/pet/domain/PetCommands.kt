@@ -33,6 +33,15 @@ interface PetCommands {
     fun vacation(on: Boolean): String
 
     fun rename(name: String): String
+
+    /** Show the card of cat [index] (0 or 1) of a house of two (`pet.panels.v1`). */
+    fun focus(index: Int): String
+
+    /** Unlock toy [id] early with Sparks, by the Rewards shop's own rule (`pet.panels.v1`). */
+    fun buyToy(id: String): String
+
+    /** Open ([open]) or close the full genome table, which the page sends only while open. */
+    fun expandGenome(open: Boolean): String
 }
 
 /** For a view model that never sends (tests of the read-only parts): every call answers no id. */
@@ -44,4 +53,10 @@ object NoPetCommands : PetCommands {
     override fun vacation(on: Boolean) = ""
 
     override fun rename(name: String) = ""
+
+    override fun focus(index: Int) = ""
+
+    override fun buyToy(id: String) = ""
+
+    override fun expandGenome(open: Boolean) = ""
 }

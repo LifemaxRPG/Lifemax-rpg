@@ -798,31 +798,56 @@ function petBrainReadout(rt,p,b,br){
 }
 /* ---------- the Cat screen: who he is becoming ---------- */
 function petAgoShort(min){const d=Date.now()/60000-min;if(d<60)return 'just now';if(d<24*60)return 'today';if(d<48*60)return 'yesterday';return Math.round(d/1440)+' days ago'}
+/* The mind row under the mood line as data (the page's DOM below and the native Cat tab share it): the bond style, the mood word, the
+   sentence about how the cat feels, and what it did while the owner was away when that is fresh. */
+function petMindData(p,b,rt,now){
+  const st=petBondStyle(p,b),md=petMoodOf(b.af),hungry=petStage(p)>=2,br=rt&&rt.br;let away='';
+  if(br&&br.awayFresh&&now-br.awayFresh<15*60000&&b.off.acts&&b.off.acts.length){
+    const L=b.off.acts;away=p.name+' '+(L.length>1?L.slice(0,-1).join(', ')+' and '+L[L.length-1]:L[0])+'.'}
+  return {style:{id:st.id,name:st.name},mood:md[0],awayTitle:'While you were away',text:(hungry?'':p.name+' '+md[1]+'. ')+st.text,away:away};
+}
+function petMindHtml(d){
+  let h='<div class="pet-mind-row"><span class="pet-style" data-style="'+d.style.id+'">'+esc(d.style.name)+'</span><span class="pet-mood-chip" data-m="'+d.mood+'">'+d.mood+'</span></div>';
+  h+='<p class="pet-mind-text">'+esc(d.text)+'</p>';
+  if(d.away)h+='<p class="pet-away"><b>'+d.awayTitle+'</b> '+esc(d.away)+'</p>';
+  return h;
+}
+/* The inner-life panel as data: the four attachment threads with their words, the quirks, the moments the cat remembers, the small
+   print and the comfort zone. */
+function petInnerData(p,b){
+  const A=b.at,thread=function(label,k){return {label:label,pct:Math.round(A[k]*100),word:petThreadWord(k,A[k])}};
+  const Q=b.qk.inn.map(function(q){return [q,'Born with it']}).concat(b.qk.acq.map(function(q){return [q,'Learned with you']}));
+  const stats=[];if(b.gz.n)stats.push(b.gz.n+' slow blink'+(b.gz.n>1?'s':'')+' shared');if(b.hu.gifts)stats.push(b.hu.gifts+' troph'+(b.hu.gifts>1?'ies':'y')+' brought to you');if(b.co.min>=1)stats.push(Math.round(b.co.min)+' quiet minutes side by side');
+  const top=petComfortZone(p,b);
+  return {lead:p.name+'’s inner world.',body:' How he feels about you is more than one number. Respecting his signals (ears back, a twitching tail) builds trust. Letting him come to you builds confidence.',
+    quirksTitle:'Quirks',memoriesTitle:'Moments he remembers',
+    threads:[thread('Familiarity','fam'),thread('Trust','tru'),thread('Safety','sec'),thread('Confidence','aut')],
+    quirks:Q.map(function(q){const d=PET_QUIRKS[q[0]];return {name:d.name,source:q[1],text:'He '+d.text+'.'}}),
+    memories:b.mem.core.slice().reverse().map(function(m){const t=m[1].indexOf('quirk:')===0?'Picked up a habit: '+PET_QUIRKS[m[3]||m[1].slice(6)].name.toLowerCase():PET_CORE_TEXT[m[1]]||m[1];
+      return {text:t,zone:m[2]?petZoneName(m[2]):'',ago:petAgoShort(m[0])}}),
+    stats:stats.join(' · '),
+    comfort:top&&b.mem.w[top]>0.12?'When he needs comfort he goes to '+petZoneName(top)+'.':''};
+}
+function petInnerHtml(d){
+  const row=function(t){return '<div class="pet-thread"><span>'+t.label+'</span><i><em style="width:'+t.pct+'%"></em></i><small>'+t.word+'</small></div>'};
+  let h='<p><b>'+esc(d.lead)+'</b>'+d.body+'</p>'+d.threads.map(row).join('');
+  h+='<div class="pet-likes-h">'+d.quirksTitle+'</div>'+d.quirks.map(function(q){return '<div class="pet-quirk"><b>'+q.name+'</b> <small>'+q.source+'</small><span>'+q.text+'</span></div>'}).join('');
+  if(d.memories.length)h+='<div class="pet-likes-h">'+d.memoriesTitle+'</div>'+d.memories.map(function(m){
+    return '<div class="pet-memory"><span>'+esc(m.text)+(m.zone?' <em>'+esc(m.zone)+'</em>':'')+'</span><small>'+m.ago+'</small></div>'}).join('');
+  if(d.stats)h+='<p class="muted pet-brain-stats">'+d.stats+'</p>';
+  if(d.comfort)h+='<p class="muted pet-brain-stats">'+esc(d.comfort)+'</p>';
+  return h;
+}
 function petBrainRender(force){
   try{
     const p=petData(),rt=PET_RT;if(!p||!p.alive)return;const b=petBrain(p),now=Date.now();
     const el=document.getElementById('petMind');
     if(el&&(force||now-(+el.dataset.t||0)>1000)){el.dataset.t=now;
-      const st=petBondStyle(p,b),md=petMoodOf(b.af),hungry=petStage(p)>=2;
-      let h='<div class="pet-mind-row"><span class="pet-style" data-style="'+st.id+'">'+esc(st.name)+'</span><span class="pet-mood-chip" data-m="'+md[0]+'">'+md[0]+'</span></div>';
-      h+='<p class="pet-mind-text">'+(hungry?'':esc(p.name)+' '+md[1]+'. ')+esc(st.text)+'</p>';
-      const br=rt&&rt.br;if(br&&br.awayFresh&&now-br.awayFresh<15*60000&&b.off.acts&&b.off.acts.length){
-        const L=b.off.acts;h+='<p class="pet-away"><b>While you were away</b> '+esc(p.name)+' '+esc(L.length>1?L.slice(0,-1).join(', ')+' and '+L[L.length-1]:L[0])+'.</p>'}
+      const h=petMindHtml(petMindData(p,b,rt,now));
       if(el.innerHTML!==h)el.innerHTML=h}
     const inn=document.getElementById('petInner');
     if(inn&&(force||now-(+inn.dataset.t||0)>15000)){inn.dataset.t=now;
-      const A=b.at,row=function(lab,k){return '<div class="pet-thread"><span>'+lab+'</span><i><em style="width:'+Math.round(A[k]*100)+'%"></em></i><small>'+petThreadWord(k,A[k])+'</small></div>'};
-      let h='<p><b>'+esc(p.name)+'\u2019s inner world.</b> How he feels about you is more than one number. Respecting his signals (ears back, a twitching tail) builds trust. Letting him come to you builds confidence.</p>';
-      h+=row('Familiarity','fam')+row('Trust','tru')+row('Safety','sec')+row('Confidence','aut');
-      const Q=b.qk.inn.map(function(q){return [q,'Born with it']}).concat(b.qk.acq.map(function(q){return [q,'Learned with you']}));
-      h+='<div class="pet-likes-h">Quirks</div>'+Q.map(function(q){const d=PET_QUIRKS[q[0]];return '<div class="pet-quirk"><b>'+d.name+'</b> <small>'+q[1]+'</small><span>He '+d.text+'.</span></div>'}).join('');
-      const C=b.mem.core.slice().reverse();
-      if(C.length)h+='<div class="pet-likes-h">Moments he remembers</div>'+C.map(function(m){const t=m[1].indexOf('quirk:')===0?'Picked up a habit: '+PET_QUIRKS[m[3]||m[1].slice(6)].name.toLowerCase():PET_CORE_TEXT[m[1]]||m[1];
-        return '<div class="pet-memory"><span>'+esc(t)+(m[2]?' <em>'+esc(petZoneName(m[2]))+'</em>':'')+'</span><small>'+petAgoShort(m[0])+'</small></div>'}).join('');
-      const stats=[];if(b.gz.n)stats.push(b.gz.n+' slow blink'+(b.gz.n>1?'s':'')+' shared');if(b.hu.gifts)stats.push(b.hu.gifts+' troph'+(b.hu.gifts>1?'ies':'y')+' brought to you');if(b.co.min>=1)stats.push(Math.round(b.co.min)+' quiet minutes side by side');
-      if(stats.length)h+='<p class="muted pet-brain-stats">'+stats.join(' · ')+'</p>';
-      const top=petComfortZone(p,b);if(top&&b.mem.w[top]>0.12)h+='<p class="muted pet-brain-stats">When he needs comfort he goes to '+esc(petZoneName(top))+'.</p>';
-      inn.innerHTML=h}
+      inn.innerHTML=petInnerHtml(petInnerData(p,b))}
   }catch(e){petBrainErr('render',e)}
 }
 /* ---------- v78.1: natural blinking ----------

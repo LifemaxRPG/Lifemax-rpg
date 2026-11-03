@@ -83,11 +83,18 @@ function petPairStandoffEnd(I){
 PET_PAIR_PLAYS.standoff=[petPairGreetMeet,petPairStandoffStare,petPairStandoffEnd];
 /* ----- the Together card ----- */
 function petRankLabel(v){return v<0.33?'Timid':v<0.55?'Steady':v<0.75?'Confident':'Bold'}
-function petRankHtml(){
-  const r=petRankData(),d=petPairData();if(!r||!d||!d.met)return '';const nm=[state.pet.name,state.pet2.name],lead=petRankLead();
-  const line=r.settled&&lead>=0?'<b>'+esc(nm[lead])+'</b> is the confident one; '+esc(nm[1-lead])+' defers.'
-    :lead>=0?esc(nm[lead])+' is a little ahead, but it is not settled yet.':'They are still working out who is in charge.';
-  const row=function(i){return '<div class="pet-thread pet-dna-p"><span>'+esc(nm[i])+'</span><i><em style="width:'+Math.round(r.cf[i]*100)+'%"></em></i><small>'+petRankLabel(r.cf[i])+'</small></div>'};
-  return '<div class="pet-rank"><div class="eyebrow" style="margin-top:12px">PECKING ORDER</div><p class="pet-pair-text" style="margin:6px 0 8px">'+line+'</p>'+row(0)+row(1)+'</div>';
+/* the pecking order as data (the Together card and the native Cat tab share it): who leads, in one line, and each cat's confidence;
+   null until the two have met */
+function petRankCardData(){
+  const r=petRankData(),d=petPairData();if(!r||!d||!d.met)return null;const nm=[state.pet.name,state.pet2.name],lead=petRankLead();
+  const line=r.settled&&lead>=0?{bold:nm[lead],rest:' is the confident one; '+nm[1-lead]+' defers.'}
+    :lead>=0?{bold:'',rest:nm[lead]+' is a little ahead, but it is not settled yet.'}:{bold:'',rest:'They are still working out who is in charge.'};
+  return {title:'PECKING ORDER',line:line,lead:lead,settled:!!r.settled,rows:[0,1].map(function(i){return {name:nm[i],pct:Math.round(r.cf[i]*100),word:petRankLabel(r.cf[i])}})};
 }
+function petRankHtmlOf(c){
+  if(!c)return '';
+  const row=function(t){return '<div class="pet-thread pet-dna-p"><span>'+esc(t.name)+'</span><i><em style="width:'+t.pct+'%"></em></i><small>'+t.word+'</small></div>'};
+  return '<div class="pet-rank"><div class="eyebrow" style="margin-top:12px">'+c.title+'</div><p class="pet-pair-text" style="margin:6px 0 8px">'+(c.line.bold?'<b>'+esc(c.line.bold)+'</b>':'')+esc(c.line.rest)+'</p>'+c.rows.map(row).join('')+'</div>';
+}
+function petRankHtml(){return petRankHtmlOf(petRankCardData())}
 petDevTest('Two cats: standoff',function(){petDevPair('standoff')},'v190');

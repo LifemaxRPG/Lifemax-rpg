@@ -1,0 +1,146 @@
+{
+ "focusSecond": {
+  "command": "focus",
+  "payload": {
+   "i": 1
+  },
+  "reply": {
+   "command": "focus",
+   "requestId": "req-focusSecond",
+   "ok": true,
+   "changed": true,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "focusAgain": {
+  "command": "focus",
+  "payload": {
+   "i": 1
+  },
+  "reply": {
+   "command": "focus",
+   "requestId": "req-focusAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "focusNoSuchCat": {
+  "command": "focus",
+  "payload": {
+   "i": 2
+  },
+  "reply": {
+   "command": "focus",
+   "requestId": "req-focusNoSuchCat",
+   "ok": false,
+   "changed": false,
+   "message": "There is no such cat.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "buyToy": {
+  "command": "buyToy",
+  "payload": {
+   "id": "feather"
+  },
+  "reply": {
+   "command": "buyToy",
+   "requestId": "req-buyToy",
+   "ok": true,
+   "changed": true,
+   "message": "Toy unlocked for your cat",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "buyToyAgain": {
+  "command": "buyToy",
+  "payload": {
+   "id": "feather"
+  },
+  "reply": {
+   "command": "buyToy",
+   "requestId": "req-buyToyAgain",
+   "ok": true,
+   "changed": false,
+   "message": "Already recorded.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "buyToyNotForSale": {
+  "command": "buyToy",
+  "payload": {
+   "id": "ball_a"
+  },
+  "reply": {
+   "command": "buyToy",
+   "requestId": "req-buyToyNotForSale",
+   "ok": false,
+   "changed": false,
+   "message": "That toy is not for sale.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "buyToyPoor": {
+  "command": "buyToy",
+  "payload": {
+   "id": "spring"
+  },
+  "reply": {
+   "command": "buyToy",
+   "requestId": "req-buyToyPoor",
+   "ok": false,
+   "changed": false,
+   "message": "Not enough Sparks",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "expandOpen": {
+  "command": "expand",
+  "payload": {
+   "open": true
+  },
+  "reply": {
+   "command": "expand",
+   "requestId": "req-expandOpen",
+   "ok": true,
+   "changed": false,
+   "message": "",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ },
+ "expandBad": {
+  "command": "expand",
+  "payload": {
+   "open": "yes"
+  },
+  "reply": {
+   "command": "expand",
+   "requestId": "req-expandBad",
+   "ok": false,
+   "changed": false,
+   "message": "Something went wrong. Nothing was changed.",
+   "why": "",
+   "inHours": 0,
+   "reaction": ""
+  }
+ }
+}

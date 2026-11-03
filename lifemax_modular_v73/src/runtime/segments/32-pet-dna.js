@@ -529,41 +529,67 @@ function petDnaHidden(ph){
   if(ph.pattern==='ticked'&&ph.rec.tab)o.push('Ticking hides mackerel/classic');
   return o;
 }
-function petDnaPanelHtml(p){
-  const d=petDnaOf(p),ph=petDnaPheno(d);if(!ph)return '';
+/* The genetics panel as data (the page's panel below and the native Cat tab share it, in the page's words): sex, karyotype and coat,
+   the gene rows, what the cat carries and what is hidden, the temperament bars, and the full genome table (left out when
+   withGenome is false: it is about forty rows, sent to the native screen only while that table is open). The morph part (body
+   shape) is added by 37-pet-morph.js. Reads only. */
+function petDnaPanelData(p,withGenome){
+  const d=petDnaOf(p),ph=petDnaPheno(d);if(!ph)return null;
   const f=ph.sex==='f',He=f?'She':'He',his=f?'her':'his',S=ph.ps,kid=petGrowIdx(p)>=0;
-  const xl=(d.g.O||[]);let ot;
+  let ot;
   if(ph.tortie)ot='One X carries orange, the other does not. Each patch of fur follows whichever X stayed switched on there, which is why tortoiseshells are '+(f?'female.':'female, or rare XXY males like him.');
   else if(ph.red)ot=(f?'Orange on both X chromosomes.':'Orange on '+his+' only X. Males need just one copy, so most ginger cats are male.');
   else ot=f?'No orange on either X.':'No orange on '+his+' X.';
   const gene=function(id){const L=petDnaLocus(id);return L.gene+(L.chr?' · '+L.chr:'')};
-  let h='<div class="pet-likes-h">Genetics</div>';
-  h+='<div class="pet-dna-top"><span class="pet-sex-chip '+(f?'f':'m')+'">'+(f?'♀ Female':'♂ Male')+'</span><span class="pet-dna-k">'+esc(ph.karyo)+'</span><span class="pet-dna-coat">'+esc(ph.coat)+'</span></div>';
-  if(ph.sterile)h+='<p class="pet-dna-note">'+esc(p.name)+' has an extra X chromosome (XXY). That is why a male can be '+(ph.tortie?'tortoiseshell':'carrying two X genes')+'. XXY males are sterile.</p>';
-  h+='<p class="muted pet-dna-sub">'+esc(ph.eyeName)+' eyes'+(ph.deaf?' · deaf (common in white cats)':'')+' · about '+ph.kg+' kg as an adult'+(kid?' (still growing)':'')+'.</p>';
-  h+='<div class="pet-genes">'
-   +petDnaRow('Sex',d.sex.split('').join(' '),f?'Two X chromosomes: female.':'The Y chromosome (SRY) makes a male.')
-   +petDnaRow('Orange · '+gene('O'),petDnaGt(d,'O'),ot)
-   +petDnaRow('Colour · '+gene('B'),petDnaGt(d,'B'),ph.red&&!ph.tortie?'Hidden under red.':{black:'Black',blue:'Black',chocolate:'Chocolate',lilac:'Chocolate',cinnamon:'Cinnamon',fawn:'Cinnamon'}[ph.eu]+' pigment.')
-   +petDnaRow('Dilute · '+gene('D'),petDnaGt(d,'D'),ph.dilute?'Two dilute copies: '+(ph.red?'red becomes cream.':ph.eu+' instead of '+{blue:'black',lilac:'chocolate',fawn:'cinnamon'}[ph.eu]+'.'):'Dense colour'+(petDnaHas(d,'D','d')?', carries dilute.':'.'))
-   +petDnaRow('Agouti · '+gene('A'),petDnaGt(d,'A'),ph.agouti?'Banded hairs: the tabby pattern shows.':'Solid'+(ph.red?' (but red still shows stripes).':'.'))
-   +petDnaRow('Tabby · '+gene('Mc'),petDnaGt(d,'Mc')+' · '+petDnaGt(d,'Ta'),ph.rec.tab?{mackerel:'Mackerel (narrow stripes).',classic:'Classic (bold swirls), two recessive copies.',ticked:'Ticked: the dominant DKK4 allele fades the stripes.'}[ph.pattern]:'Pattern genes are present but hidden.')
-   +petDnaRow('Colourpoint · '+gene('C'),petDnaGt(d,'C'),{null:'Full colour.',cs:'Siamese points: pigment only where the body is cooler (ears, face, legs, tail). Blue eyes.',mk:'Mink: one Burmese and one Siamese copy, both showing.',sp:'Sepia: Burmese, slightly paler body.',al:'Albino: no pigment at all.'}[ph.point])
-   +petDnaRow('White · '+gene('W'),petDnaGt(d,'W')+' · grade '+petDnaCount(d,['Sm1','Sm2','Sm3'])+'/6',ph.white==='W'?'Dominant white: covers everything else.':ph.white?['','A small white locket.','Patches of white.','Bicolor: about half white.','Mostly white (van).'][ph.white]+' The spotting grade comes from several modifier genes.':'No white.')
-   +petDnaRow('Hair · '+gene('L'),petDnaGt(d,'L'),ph.long?'Long hair (two recessive copies). Grooms more.':'Short hair'+(petDnaHas(d,'L','l')?', carries long.':'.'))
-   +petDnaRow('Silver','I: '+petDnaGt(d,'I'),ph.silver?(ph.rec.tab?'Silver: pale hair bases behind dark stripes.':'Smoke: a pale undercoat.'):'No silver.')
-   +'</div>';
-  const car=petDnaCarries(d,ph),hid=petDnaHidden(ph);
-  if(car.length)h+='<p class="muted pet-dna-sub"><b>Carries</b> (hidden, can be passed on): '+car.join(', ')+'.</p>';
-  if(hid.length)h+='<p class="muted pet-dna-sub"><b>Hidden by other genes:</b> '+hid.join('; ')+'.</p>';
-  h+='<div class="pet-likes-h">Temperament</div><p class="muted pet-dna-sub">About half of each comes from '+his+' genes, the rest from how '+(f?'she':'he')+' developed before you met. '+He+' reads as <b>'+esc(PET_TRAITS[ph.trait].toLowerCase())+'</b>.</p>';
-  h+=PET_PERSONA.map(function(k){const t=PET_PERSONA_TXT[k];return '<div class="pet-thread pet-dna-p"><span>'+t[0]+'</span><i><em style="width:'+Math.round(S[k]*100)+'%"></em></i><small>'+t[1]+'</small></div>'}).join('');
-  if(d.mut&&d.mut.length)h+='<p class="muted pet-dna-sub">New mutation'+(d.mut.length>1?'s':'')+' (not from either parent): '+esc(d.mut.join(', '))+'.</p>';
-  h+='<details class="pet-genome"><summary>Full genome ('+petDnaAllLoci().length+' loci)</summary><div class="pet-genome-t"><div class="pet-gen-h"><span>Locus</span><span>Chr</span><span>From mother</span><span>From father</span></div>'
-   +petDnaAllLoci().slice().sort(function(a,b){return PET_DNA_CHROMS.indexOf(a.chr)-PET_DNA_CHROMS.indexOf(b.chr)||a.pos-b.pos}).map(function(l){const v=d.g[l.id]||[];
-     return '<div><span>'+esc(l.id)+(l.q?'':' <small>'+esc(petDnaLocus(l.id).gene)+'</small>')+'</span><span>'+(l.chr||'?')+(l.pos?' <small>~'+l.pos+' Mb</small>':'')+'</span><span>'+esc(v[0]||'')+'</span><span>'+esc(v.length>1?v[1]:(l.chr==='X'?'Y':''))+'</span></div>'}).join('')
-   +'</div><p class="muted" style="font-size:11px">Pigment genes are real feline genes with their known effects; positions are approximate. Loci with + / − alleles are modelled quantitative loci for traits that real cats inherit through many small genes.</p></details>';
+  const row=function(label,gt,text){return {label:label,gt:gt,text:text}};
+  const rows=[
+    row('Sex',d.sex.split('').join(' '),f?'Two X chromosomes: female.':'The Y chromosome (SRY) makes a male.'),
+    row('Orange · '+gene('O'),petDnaGt(d,'O'),ot),
+    row('Colour · '+gene('B'),petDnaGt(d,'B'),ph.red&&!ph.tortie?'Hidden under red.':{black:'Black',blue:'Black',chocolate:'Chocolate',lilac:'Chocolate',cinnamon:'Cinnamon',fawn:'Cinnamon'}[ph.eu]+' pigment.'),
+    row('Dilute · '+gene('D'),petDnaGt(d,'D'),ph.dilute?'Two dilute copies: '+(ph.red?'red becomes cream.':ph.eu+' instead of '+{blue:'black',lilac:'chocolate',fawn:'cinnamon'}[ph.eu]+'.'):'Dense colour'+(petDnaHas(d,'D','d')?', carries dilute.':'.')),
+    row('Agouti · '+gene('A'),petDnaGt(d,'A'),ph.agouti?'Banded hairs: the tabby pattern shows.':'Solid'+(ph.red?' (but red still shows stripes).':'.')),
+    row('Tabby · '+gene('Mc'),petDnaGt(d,'Mc')+' · '+petDnaGt(d,'Ta'),ph.rec.tab?{mackerel:'Mackerel (narrow stripes).',classic:'Classic (bold swirls), two recessive copies.',ticked:'Ticked: the dominant DKK4 allele fades the stripes.'}[ph.pattern]:'Pattern genes are present but hidden.'),
+    row('Colourpoint · '+gene('C'),petDnaGt(d,'C'),{null:'Full colour.',cs:'Siamese points: pigment only where the body is cooler (ears, face, legs, tail). Blue eyes.',mk:'Mink: one Burmese and one Siamese copy, both showing.',sp:'Sepia: Burmese, slightly paler body.',al:'Albino: no pigment at all.'}[ph.point]),
+    row('White · '+gene('W'),petDnaGt(d,'W')+' · grade '+petDnaCount(d,['Sm1','Sm2','Sm3'])+'/6',ph.white==='W'?'Dominant white: covers everything else.':ph.white?['','A small white locket.','Patches of white.','Bicolor: about half white.','Mostly white (van).'][ph.white]+' The spotting grade comes from several modifier genes.':'No white.'),
+    row('Hair · '+gene('L'),petDnaGt(d,'L'),ph.long?'Long hair (two recessive copies). Grooms more.':'Short hair'+(petDnaHas(d,'L','l')?', carries long.':'.')),
+    row('Silver','I: '+petDnaGt(d,'I'),ph.silver?(ph.rec.tab?'Silver: pale hair bases behind dark stripes.':'Smoke: a pale undercoat.'):'No silver.')
+  ];
+  const loci=petDnaAllLoci(),car=petDnaCarries(d,ph),hid=petDnaHidden(ph);
+  return {
+    title:'Genetics',female:f,sex:f?'♀ Female':'♂ Male',karyotype:ph.karyo,coat:ph.coat,
+    sterile:ph.sterile?p.name+' has an extra X chromosome (XXY). That is why a male can be '+(ph.tortie?'tortoiseshell':'carrying two X genes')+'. XXY males are sterile.':'',
+    sub:ph.eyeName+' eyes'+(ph.deaf?' · deaf (common in white cats)':'')+' · about '+ph.kg+' kg as an adult'+(kid?' (still growing)':'')+'.',
+    rows:rows,carries:car.length?{bold:'Carries',rest:' (hidden, can be passed on): '+car.join(', ')+'.'}:null,
+    hidden:hid.length?{bold:'Hidden by other genes:',rest:' '+hid.join('; ')+'.'}:null,
+    temperament:{title:'Temperament',intro:'About half of each comes from '+his+' genes, the rest from how '+(f?'she':'he')+' developed before you met. '+He+' reads as ',reads:PET_TRAITS[ph.trait].toLowerCase()},
+    persona:PET_PERSONA.map(function(k){const t=PET_PERSONA_TXT[k];return {label:t[0],pct:Math.round(S[k]*100),word:t[1]}}),
+    mutations:d.mut&&d.mut.length?{lead:'New mutation'+(d.mut.length>1?'s':'')+' (not from either parent): ',list:d.mut.join(', ')}:null,
+    genome:{title:'Full genome ('+loci.length+' loci)',head:['Locus','Chr','From mother','From father'],count:loci.length,
+      note:'Pigment genes are real feline genes with their known effects; positions are approximate. Loci with + / − alleles are modelled quantitative loci for traits that real cats inherit through many small genes.',
+      loci:withGenome===false?[]:loci.slice().sort(function(a,b){return PET_DNA_CHROMS.indexOf(a.chr)-PET_DNA_CHROMS.indexOf(b.chr)||a.pos-b.pos}).map(function(l){const v=d.g[l.id]||[];
+        return {locus:l.id,q:!!l.q,gene:l.q?'':petDnaLocus(l.id).gene,chr:l.chr||'?',pos:l.pos||0,mom:v[0]||'',dad:v.length>1?v[1]:(l.chr==='X'?'Y':'')}})}
+  };
+}
+function petDnaHtml(d){
+  let h='<div class="pet-likes-h">'+d.title+'</div>';
+  h+='<div class="pet-dna-top"><span class="pet-sex-chip '+(d.female?'f':'m')+'">'+d.sex+'</span><span class="pet-dna-k">'+esc(d.karyotype)+'</span><span class="pet-dna-coat">'+esc(d.coat)+'</span></div>';
+  if(d.sterile)h+='<p class="pet-dna-note">'+esc(d.sterile)+'</p>';
+  h+='<p class="muted pet-dna-sub">'+esc(d.sub)+'</p>';
+  h+='<div class="pet-genes">'+d.rows.map(function(r){return petDnaRow(r.label,r.gt,r.text)}).join('')+'</div>';
+  [d.carries,d.hidden].forEach(function(n){if(n)h+='<p class="muted pet-dna-sub"><b>'+n.bold+'</b>'+n.rest+'</p>'});
+  if(d.morph&&typeof petMorphHtml==='function')h+=petMorphHtml(d.morph);
+  h+='<div class="pet-likes-h">'+d.temperament.title+'</div><p class="muted pet-dna-sub">'+d.temperament.intro+'<b>'+esc(d.temperament.reads)+'</b>.</p>';
+  h+=d.persona.map(function(t){return '<div class="pet-thread pet-dna-p"><span>'+t.label+'</span><i><em style="width:'+t.pct+'%"></em></i><small>'+t.word+'</small></div>'}).join('');
+  if(d.mutations)h+='<p class="muted pet-dna-sub">'+d.mutations.lead+esc(d.mutations.list)+'.</p>';
+  h+='<details class="pet-genome"><summary>'+d.genome.title+'</summary><div class="pet-genome-t"><div class="pet-gen-h">'+d.genome.head.map(function(w){return '<span>'+w+'</span>'}).join('')+'</div>'
+   +d.genome.loci.map(function(l){
+     return '<div><span>'+esc(l.locus)+(l.q?'':' <small>'+esc(l.gene)+'</small>')+'</span><span>'+l.chr+(l.pos?' <small>~'+l.pos+' Mb</small>':'')+'</span><span>'+esc(l.mom)+'</span><span>'+esc(l.dad)+'</span></div>'}).join('')
+   +'</div><p class="muted" style="font-size:11px">'+d.genome.note+'</p></details>';
   return h;
+}
+function petDnaPanelHtml(p){
+  const d=petDnaPanelData(p);
+  return d?petDnaHtml(d):'';
 }
 function petDnaRender(force){
   const p=petData();if(!p||!p.alive)return;const el=document.getElementById('petDna');if(!el)return;

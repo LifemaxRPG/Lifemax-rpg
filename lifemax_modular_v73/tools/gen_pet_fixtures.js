@@ -13,11 +13,19 @@
      pet-dna.json            a genetic (calico) coat the screen asks the page for (pet.coat.v1)
      pet-fed.json            after Feed through the command: the fed cue the room plays once
      pet-replies.json        every command answered, in the envelope NativeTabKit sends a reply in
+   pet-panels-<state>.json the same projection for a screen that also draws the panels (pet.panels.v1): the mind row, likes,
+                           inner life, genetics, Together card and toys for the cat states of tests/native-pet-panels.scenarios.js
+                           (kitten, stray, bonded, hungry, vacation, twoCats, geneticMale, geneticFemale, geneticSterile), the
+                           genome table open (geneticFemaleGenome), the second cat in focus (twoCatsSecond), and the toy shop's
+                           early unlock bought (strayBought)
+   pet-panels-replies.json focus, buyToy and expand answered, in the same envelope
    A fake NativePet plugin lets the tab open; its handshake lists both capabilities. Regenerate only when the projection or a reply
    changes:  NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js pet */
 const STORE = 'lifemax_rpg_prototype_v1';
 const CLOCK = '2026-10-30T12:00:00Z';
 const CAPS = ['pet.projection.v1', 'pet.coat.v1'];
+const PANEL_CAPS = [...CAPS, 'pet.panels.v1'];
+const { SCENARIOS } = require('../tests/native-pet-panels.scenarios');
 const cat = (name, o) => `Object.assign({v:1,name:${JSON.stringify(name)},coat:'ginger',trait:'curious',born:now-40*864e5,lastFed:now-5*36e5,meals:[],day:getToday(),fedToday:0,petsToday:0,playsToday:0,bondPts:PET_BOND_AT[3],care:0,vacation:{on:false,since:0},gifts:0,lastGiftDay:'',alive:true,passed:0,seen:{},greeted:0},${o})`;
 /* the cat states, set up in the page before the tab opens (now is the fixed clock) */
 const STATES = {
@@ -42,7 +50,7 @@ const fake = (caps) => `(() => { const ls = {}; window.__calls = [];
 module.exports = async function pet({ b, out, write }) {
   const fs = require('fs'), path = require('path');
   const golden = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tests', 'fixtures', 'saves', 'established.json'), 'utf8'));
-  const visit = async (setup) => {
+  const visit = async (setup, caps = CAPS) => {
     const p = await (await b.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-US', timezoneId: 'UTC' })).newPage();
     await p.clock.setFixedTime(new Date(CLOCK));
     const save = { ...golden.state, tutorialDone: true, tipsSeen: { ...(golden.state.tipsSeen || {}), dashboard: true } };
@@ -50,14 +58,15 @@ module.exports = async function pet({ b, out, write }) {
       localStorage.setItem(STORE, save); for (const k in extras) localStorage.setItem(k, extras[k]);
       localStorage.setItem('lifemax_android_prefs_v1', JSON.stringify({ nativePet: true, nativeOverview: false, nativeOverviewCards: false, apps: [] }));
     }, [STORE, JSON.stringify(save), golden.extras || {}]);
-    await p.addInitScript(fake(CAPS));
+    await p.addInitScript(fake(caps));
     await p.goto('file://' + out, { timeout: 120000 });
     await p.evaluate(() => { lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } });
     await p.evaluate(async (setup) => {
       (0, eval)('(function(){const now=Date.now();' + setup + '})()');
       NativeOverviewSnapshot.snapshot = async () => ({ width: 320, header: { nodes: [], hits: [], height: 64, width: 320 }, nav: { nodes: [], hits: [], height: 64, width: 320 } });
       save(); renderPetView(true);
-      await petInit();
+      const rt = await petInit();
+      if (state.pet2) { petPairEnsure(rt); for (let t = 0; t < 5000 && !petPairOn(); t += 25) await new Promise((r) => setTimeout(r, 25)) }
     }, setup);
     return p;
   };
@@ -75,6 +84,52 @@ module.exports = async function pet({ b, out, write }) {
     const p = await visit(setup);
     await p.evaluate(() => navigate('pet'));
     write('fixtures/pet-' + name + '.json', await open(p));
+    await p.context().close();
+  }
+
+  /* the panels (pet.panels.v1) for each cat state, then the same screen's commands */
+  const panelStates = { ...SCENARIOS, geneticFemaleGenome: SCENARIOS.geneticFemale, twoCatsSecond: SCENARIOS.twoCats, strayBought: SCENARIOS.stray };
+  for (const [name, setup] of Object.entries(panelStates)) {
+    const p = await visit(setup + (name === 'strayBought' ? ';state.sparks=1000;state.toysBought={feather:1}' : ''), PANEL_CAPS);
+    // the cats that were out of sight a moment ago have a fresh "while you were away" line
+    if (['bonded', 'twoCats', 'geneticFemale', 'geneticFemaleGenome'].includes(name)) await p.evaluate(() => { petBR(PET_RT).awayFresh = Date.now() });
+    await p.evaluate(() => navigate('pet'));
+    if (name === 'geneticFemaleGenome') {
+      await open(p);
+      await p.evaluate(async () => { await Capacitor.Plugins.NativePet.__emit('command', { command: 'expand', payload: { open: true }, requestId: 'x' }); await new Promise((r) => setTimeout(r, 300)) });
+      write('fixtures/pet-panels-' + name + '.json', await p.evaluate(() => JSON.parse(JSON.stringify(Object.assign(__calls.filter((c) => c[0] === 'update').pop()[1].snapshot, { webSessionId: 'pet-fixture', sequence: 1 })))));
+    } else if (name === 'twoCatsSecond') {
+      await open(p);
+      await p.evaluate(async () => { await Capacitor.Plugins.NativePet.__emit('command', { command: 'focus', payload: { i: 1 }, requestId: 'x' }); await new Promise((r) => setTimeout(r, 300)) });
+      write('fixtures/pet-panels-' + name + '.json', await p.evaluate(() => JSON.parse(JSON.stringify(Object.assign(__calls.filter((c) => c[0] === 'update').pop()[1].snapshot, { webSessionId: 'pet-fixture', sequence: 1 })))));
+    } else write('fixtures/pet-panels-' + name + '.json', await open(p));
+    await p.context().close();
+  }
+  {
+    const p = await visit(SCENARIOS.twoCats + ';state.sparks=1000;state.toysBought={}', PANEL_CAPS);
+    await p.evaluate(() => navigate('pet'));
+    await open(p);
+    const answer = (key, command, payload, before) => p.evaluate(async ([key, command, payload, before]) => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      if (before) (0, eval)('(function(){const now=Date.now();' + before + '})()');
+      const n = __calls.length, id = 'req-' + key;
+      await Capacitor.Plugins.NativePet.__emit('command', { command, payload, requestId: id });
+      for (let t = 0; t < 4000 && !__calls.slice(n).some((c) => c[0] === 'update' && c[1].reply && c[1].reply.requestId === id); t += 25) await wait(25);
+      const u = __calls.slice(n).find((c) => c[0] === 'update' && c[1].reply && c[1].reply.requestId === id);
+      if (!u) throw Error('no reply for ' + key);
+      return { command, payload, reply: JSON.parse(JSON.stringify(u[1].reply)) };
+    }, [key, command, payload, before]);
+    const panelReplies = {};
+    panelReplies.focusSecond = await answer('focusSecond', 'focus', { i: 1 });
+    panelReplies.focusAgain = await answer('focusAgain', 'focus', { i: 1 });
+    panelReplies.focusNoSuchCat = await answer('focusNoSuchCat', 'focus', { i: 2 });
+    panelReplies.buyToy = await answer('buyToy', 'buyToy', { id: 'feather' }, 'state.pet.bondPts=0');
+    panelReplies.buyToyAgain = await answer('buyToyAgain', 'buyToy', { id: 'feather' });
+    panelReplies.buyToyNotForSale = await answer('buyToyNotForSale', 'buyToy', { id: 'ball_a' });
+    panelReplies.buyToyPoor = await answer('buyToyPoor', 'buyToy', { id: 'spring' }, 'state.sparks=10');
+    panelReplies.expandOpen = await answer('expandOpen', 'expand', { open: true });
+    panelReplies.expandBad = await answer('expandBad', 'expand', { open: 'yes' });
+    write('fixtures/pet-panels-replies.json', panelReplies);
     await p.context().close();
   }
 

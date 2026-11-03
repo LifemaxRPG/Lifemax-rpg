@@ -78,3 +78,20 @@ The room has one more switch, `RoomStyle` (CT9, off): `rememberRoomState(looks, 
 Off by default, "(beta)". `NativeApi.VALUE` 49. Not the default: that is after CT5 (plan, open question 6). On the phone: the feel of the room at 60 fps on a large canvas (target under 4 ms of CPU a frame), the page's loop really stopped under the screen (`petWantRun` through `diagnostics`), the haptic of Feed (the page's own buzz), a deep-link feed playing its cue, the coat command with a real genetic cat, and TalkBack over the room and the buttons.
 
 Not done in CT1, by plan: touch and the full-screen room (CT2), the brain driving the cats (CT3), toys and play (CT4), sleep spots, the box and the pair (CT5), the panels, the cattery, the intro and the memorial (CT6).
+
+## 8. The panels (CT6 part A, capability `pet.panels.v1`, Native API 52)
+
+Read-mostly cards for the cat whose card shows, from the `panels` block of the projection (`50-native-pet-panels.js`); older pairings lack the block and the screen is as in sections 1 to 7. Every word is the page's: the DOM renderers were split into data functions (shared by the DOM and the projection) and HTML functions, and the DOM is byte-identical to before (golden file `tests/fixtures/pet-panels-golden.json`).
+
+| Card | Where | Projection | Page source (data function) | Kotlin | Notes |
+|---|---|---|---|---|---|
+| Mind row: bond style chip, mood chip, the sentence, "While you were away" | inside the cat's card, under the mood line | `panels.mind` | `petMindData` (26) | `PetMindCards.kt` (`PetMindRow`) | the away note only while fresh (15 min) |
+| Together: switcher between two cats, level, bar, text, away note, counts, pecking order, last | a card right under the cat's card | `panels.pair {card, focus, cats}` | `petPairCardData`, `petRankCardData` (29) | `PetTogetherCard.kt` | only with two living cats; `focus {i}` runs `petPairFocus`; the pair's behaviour is CT5 |
+| What the cat likes: places and toys as bars, the favourite marked | collapsible, after Care and settings | `panels.likes` | `petLikesData` (25) | `PetMindCards.kt` (`PetLikesCard`) | |
+| Inner life: four threads, quirks, memories, small print, comfort zone | collapsible | `panels.inner` | `petInnerData` (26) | `PetMindCards.kt` (`PetInnerCard`) | |
+| Genetics: sex, karyotype, coat, ten gene rows, carries, hidden, body shape, temperament bars, mutations, full genome | collapsible | `panels.dna` | `petDnaPanelData` (32), `petMorphPanelData` (37) | `PetDnaCard.kt` | read only; the genome rows (about forty) are sent only while the table is open (`expand {open}`, 30 minutes at most) |
+| Toys: every toy with the tray's word or what it waits for ("Unlocks at Friend"), early unlock for Sparks | collapsible | `panels.toys` | `petToysData` (25), `ECO_TOY_PRICE` (44) | `PetToysCard.kt` | `buyToy {id}` is the Rewards shop's `ecoBuy`; Play and the tray stay on the page (CT4) |
+
+The projection builds the panels from a copy of the cat (`Object.assign({}, cat)`) under `petAs(focus)`, so it writes nothing and makes no brain, genes or likes record; a female cat's texts get "she" as the page's DOM fixer gives them; a part that fails to build is null and its card is left out. Strict decoder: `data/PetPanelsJson.kt`. Commands: `focus`, `buyToy`, `expand` (BRIDGE_CATALOG.json). Not shown: the memorial list (the web's Cat tab shows past cats only as "In memory" on the intro), the switcher's sprite faces (names only), the second-cat invitation and adoption (CT6 part B).
+
+Tests: `native-pet-panels.test.js` (golden HTML, DOM equality for nine states, capability gate, nothing written, commands, a seeded hand-over simulation with `PANELMUT=twice|focus` mutations that must fail it); Kotlin `PetPanelsTest`, `PetPanelCommandsTest`; screenshots `PetPanelsScreenshotTest`; fixtures `pet-panels-*.json` from `tools/gen_pet_fixtures.js`.

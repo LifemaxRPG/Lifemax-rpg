@@ -8,7 +8,7 @@
    time anything reads them, so nothing about their look changes until the rig draws shapes (38/39).
    The breeding lab (state.cattery) keeps extra cats as genomes only, pairs any mother with any father,
    rolls a litter and lets you keep, release or bring home the kittens. A goal (a trait and a direction)
-   shows how close the roster is. Hooks: wraps petDnaPheno, petDnaGamete, petDnaConceive, petDnaPanelHtml,
+   shows how close the roster is. Hooks: wraps petDnaPheno, petDnaGamete, petDnaConceive, petDnaPanelData,
    petRoomHtml and petBrainRender. */
 var PET_MORPH={
   em:{name:'Ear length',R:1.35,h2:0.8,lo:'tiny',hi:'enormous',n:'ears'},
@@ -70,22 +70,28 @@ function petMorphWord(k,v){
   const cv=petDnaConceive;petDnaConceive=function(mom,dad,r){petMorphFill(mom);petMorphFill(dad);const k=cv.apply(this,arguments);if(k)k.gen=1+Math.max(mom.gen||0,dad.gen||0);return k};
   const carries=petDnaCarries;petDnaCarries=function(d,ph){const c=carries.apply(this,arguments);if(petDnaHas(d,'Tb','tb')&&!ph.morph.bob)c.push('bobtail');return c};
 })();
-/* ---- the Body shape section of the genetics panel ---- */
-function petMorphPanelHtml(p){
+/* ---- the Body shape section of the genetics panel: as data (the page's panel and the native Cat tab share it), then as HTML ---- */
+function petMorphPanelData(p){
   const d=petDnaOf(p),ph=petDnaPheno(d),m=ph.morph;
-  let h='<div class="pet-likes-h">Body shape</div><p class="muted pet-dna-sub">Proportions come from several genes each, so they vary smoothly and are passed on strongly. Breed two long-eared cats and their kittens tend to have long ears too.'+(petGrowIdx(p)>=0?' (Shown for the grown cat.)':'')+'</p>';
-  PET_MORPH_KEYS.forEach(function(k){
-    const c=ph.mc[k],pct=Math.round((ph.mz[k]+1)/2*100),v=k==='tl'&&m.bob?m.tl:m[k];
-    h+='<div class="pet-thread pet-dna-p"><span>'+PET_MORPH[k].name+' · '+petMorphWord(k,v)+'</span><i><em style="width:'+pct+'%"></em></i><small>'+v.toFixed(2)+'× the standard art · '+c[0]+' of '+c[1]+' lengthening alleles</small></div>';
-  });
-  h+=petDnaRow('Tail · '+petDnaLocus('Tb').gene,petDnaGt(d,'Tb'),m.bob?'Bobtail: two recessive copies shorten the tail to a stub.':'Full tail'+(petDnaHas(d,'Tb','tb')?', carries bobtail.':'.'));
-  return h;
+  return {
+    title:'Body shape',intro:'Proportions come from several genes each, so they vary smoothly and are passed on strongly. Breed two long-eared cats and their kittens tend to have long ears too.'+(petGrowIdx(p)>=0?' (Shown for the grown cat.)':''),
+    rows:PET_MORPH_KEYS.map(function(k){
+      const c=ph.mc[k],v=k==='tl'&&m.bob?m.tl:m[k];
+      return {label:PET_MORPH[k].name+' · '+petMorphWord(k,v),pct:Math.round((ph.mz[k]+1)/2*100),note:v.toFixed(2)+'× the standard art · '+c[0]+' of '+c[1]+' lengthening alleles'};
+    }),
+    tail:{label:'Tail · '+petDnaLocus('Tb').gene,gt:petDnaGt(d,'Tb'),text:m.bob?'Bobtail: two recessive copies shorten the tail to a stub.':'Full tail'+(petDnaHas(d,'Tb','tb')?', carries bobtail.':'.')}
+  };
 }
+function petMorphHtml(m){
+  let h='<div class="pet-likes-h">'+m.title+'</div><p class="muted pet-dna-sub">'+m.intro+'</p>';
+  m.rows.forEach(function(r){h+='<div class="pet-thread pet-dna-p"><span>'+r.label+'</span><i><em style="width:'+r.pct+'%"></em></i><small>'+r.note+'</small></div>'});
+  return h+petDnaRow(m.tail.label,m.tail.gt,m.tail.text);
+}
+function petMorphPanelHtml(p){return petMorphHtml(petMorphPanelData(p))}
 (function(){
-  const pn=petDnaPanelHtml;
-  petDnaPanelHtml=function(p){const h=pn.apply(this,arguments),mark='<div class="pet-likes-h">Temperament</div>';return h.indexOf(mark)>=0?h.replace(mark,petMorphPanelHtml(p)+mark):h+petMorphPanelHtml(p)};
+  const pn=petDnaPanelData;
+  petDnaPanelData=function(p){const d=pn.apply(this,arguments);if(d)d.morph=petMorphPanelData(p);return d};
 })();
-
 /* ===== The breeding lab ===== */
 var PET_BREED={mom:'',dad:'',busy:false,cv:{}};
 var PET_CATTERY_MAX=16;

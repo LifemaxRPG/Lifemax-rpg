@@ -19,6 +19,34 @@ internal object PetFixtures {
             .getJSONObject(key)
             .getJSONObject("reply")
 
+    /**
+     * What the page answered to a panels command (`focusSecond`, `buyToy`, `buyToyPoor`,
+     * `expandOpen`, ...), in the kit's envelope.
+     */
+    fun panelReply(key: String): JSONObject =
+        JSONObject(
+                PetFixtures::class
+                    .java
+                    .getResource("/fixtures/pet-panels-replies.json")!!
+                    .readText()
+            )
+            .getJSONObject(key)
+            .getJSONObject("reply")
+
+    /** The cat states the panels fixtures (`pet-panels-<state>.json`, `pet.panels.v1`) cover. */
+    val PANEL_STATES =
+        listOf(
+            "kitten",
+            "stray",
+            "bonded",
+            "hungry",
+            "vacation",
+            "twoCats",
+            "geneticMale",
+            "geneticFemale",
+            "geneticSterile",
+        )
+
     /** The fixture states of a cat. */
     val STATES =
         listOf(

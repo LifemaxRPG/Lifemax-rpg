@@ -1,0 +1,413 @@
+{
+ "protocol": 1,
+ "webSessionId": "pet-fixture",
+ "sequence": 1,
+ "cats": [
+  {
+   "name": "Nori",
+   "coat": "dna_black_1_m_0_0_n_0_1",
+   "stage": -1,
+   "weak": false
+  }
+ ],
+ "focus": 0,
+ "name": "Nori",
+ "eyebrow": "COMPANION · FOND",
+ "hearts": 4,
+ "mood": "",
+ "bond": {
+  "pct": 0,
+  "text": "Fond · 0% to Devoted"
+ },
+ "grow": null,
+ "lastMeal": {
+  "value": "5 h",
+  "label": "last meal"
+ },
+ "mealsToday": "0 / 2",
+ "days": "40",
+ "favs": {
+  "place": "Still deciding",
+  "toy": "Still deciding"
+ },
+ "hint": "Try dragging your finger across the floor. Nori may follow.",
+ "feed": {
+  "label": "Feed Nori",
+  "wait": false
+ },
+ "care": {
+  "how": "How it works. Feed about twice a day, at least four hours apart. A hungry cat tells you with its behavior, never with a notification. A cat that goes a very long time with no food will get weak, and about a week without food can be fatal.",
+  "bond": "Bond. It grows from regular meals, gentle petting (3 a day count) and play (2 a day count). Strays are shy at first. Close friends greet you, follow your finger, rub against you and sometimes bring gifts.",
+  "vacationHint": "Pauses hunger while you are away. Turn it off when you are back.",
+  "vacation": false,
+  "name": "Nori",
+  "nameMax": 14
+ },
+ "together": "",
+ "words": {
+  "room": "View room",
+  "play": "Play",
+  "blink": "Slow blink",
+  "blinkHint": "A slow blink is how cats say they feel safe",
+  "careTitle": "Care and settings",
+  "vacationTitle": "Vacation mode",
+  "nameLabel": "Name",
+  "rename": "Rename",
+  "moreTitle": "More on the Cat page",
+  "moreText": "The toy tray, the cattery and adopting another cat open on the page."
+ },
+ "cue": {
+  "fed": []
+ },
+ "panels": {
+  "words": {
+   "together": "Together",
+   "switcher": "Which cat",
+   "likes": "Likes",
+   "inner": "Inner life",
+   "dna": "Genetics",
+   "toys": "Cat toys",
+   "toysSub": "unlock early",
+   "sparks": "Sparks",
+   "buy": "Unlock",
+   "bought": "Unlocked",
+   "genomeShow": "Show full genome",
+   "genomeHide": "Hide full genome",
+   "moreText": "The toy tray, the cattery and adopting another cat open on the page."
+  },
+  "mind": {
+   "style": {
+    "id": "shadow",
+    "name": "Gentle shadow"
+   },
+   "mood": "content",
+   "awayTitle": "While you were away",
+   "text": "Nori is content and cosy. Sees you as a safe harbor. Quiet company and slow blinks mean the most to her.",
+   "away": "Nori dozed on the sofa and watched the window."
+  },
+  "likes": {
+   "lead": "What Nori likes.",
+   "body": " Cats pick their own spots. Time spent somewhere, and good moments there, slowly make a favorite. Toys you choose for her count a little more.",
+   "places": [],
+   "toys": [],
+   "placesTitle": "Places",
+   "toysTitle": "Toys",
+   "noPlaces": "No favorite places yet. Give it a day or two."
+  },
+  "inner": {
+   "lead": "Nori’s inner world.",
+   "body": " How she feels about you is more than one number. Respecting her signals (ears back, a twitching tail) builds trust. Letting her come to you builds confidence.",
+   "quirksTitle": "Quirks",
+   "memoriesTitle": "Moments she remembers",
+   "threads": [
+    {
+     "label": "Familiarity",
+     "pct": 73,
+     "word": "You are part of her world"
+    },
+    {
+     "label": "Trust",
+     "pct": 81,
+     "word": "Utterly trusting"
+    },
+    {
+     "label": "Safety",
+     "pct": 58,
+     "word": "Feels safe with you nearby"
+    },
+    {
+     "label": "Confidence",
+     "pct": 66,
+     "word": "Comfortable doing her own thing"
+    }
+   ],
+   "quirks": [
+    {
+     "name": "Dramatic flopper",
+     "source": "Born with it",
+     "text": "She flops over sideways instead of sitting when she is very happy."
+    },
+    {
+     "name": "Chirp greeter",
+     "source": "Born with it",
+     "text": "She greets you with a little triple chirp."
+    },
+    {
+     "name": "Lap barnacle",
+     "source": "Learned with you",
+     "text": "She stays close to the glass whenever you are here."
+    }
+   ],
+   "memories": [
+    {
+     "text": "Grew a new quirk",
+     "zone": "",
+     "ago": "today"
+    },
+    {
+     "text": "Brought you her first trophy",
+     "zone": "",
+     "ago": "just now"
+    },
+    {
+     "text": "First slow blink shared",
+     "zone": "the front of the living room",
+     "ago": "3 days ago"
+    }
+   ],
+   "stats": "3 slow blinks shared · 2 trophies brought to you · 14 quiet minutes side by side",
+   "comfort": "When she needs comfort she goes to the cat bed."
+  },
+  "dna": {
+   "morph": {
+    "title": "Body shape",
+    "intro": "Proportions come from several genes each, so they vary smoothly and are passed on strongly. Breed two long-eared cats and their kittens tend to have long ears too.",
+    "rows": [
+     {
+      "label": "Ear length · rather tiny",
+      "pct": 27,
+      "note": "0.65× the standard art · 2 of 10 lengthening alleles"
+     },
+     {
+      "label": "Ear width · average",
+      "pct": 45,
+      "note": "0.96× the standard art · 3 of 6 lengthening alleles"
+     },
+     {
+      "label": "Tail length · average",
+      "pct": 43,
+      "note": "0.89× the standard art · 4 of 10 lengthening alleles"
+     },
+     {
+      "label": "Leg length · average",
+      "pct": 37,
+      "note": "0.87× the standard art · 4 of 10 lengthening alleles"
+     },
+     {
+      "label": "Body length · rather cobby",
+      "pct": 22,
+      "note": "0.82× the standard art · 2 of 8 lengthening alleles"
+     },
+     {
+      "label": "Whisker length · rather long",
+      "pct": 78,
+      "note": "1.47× the standard art · 3 of 4 lengthening alleles"
+     }
+    ],
+    "tail": {
+     "label": "Tail · HES7",
+     "gt": "T/T",
+     "text": "Full tail."
+    }
+   },
+   "title": "Genetics",
+   "female": true,
+   "sex": "♀ Female",
+   "karyotype": "38,XX",
+   "coat": "Torbie",
+   "sterile": "",
+   "sub": "Green eyes · about 4.3 kg as an adult.",
+   "rows": [
+    {
+     "label": "Sex",
+     "gt": "X X",
+     "text": "Two X chromosomes: female."
+    },
+    {
+     "label": "Orange · ARHGAP36 · X",
+     "gt": "O/o",
+     "text": "One X carries orange, the other does not. Each patch of fur follows whichever X stayed switched on there, which is why tortoiseshells are female."
+    },
+    {
+     "label": "Colour · TYRP1 · D4",
+     "gt": "B/B",
+     "text": "Black pigment."
+    },
+    {
+     "label": "Dilute · MLPH · C1",
+     "gt": "D/D",
+     "text": "Dense colour."
+    },
+    {
+     "label": "Agouti · ASIP · A3",
+     "gt": "a/A",
+     "text": "Banded hairs: the tabby pattern shows."
+    },
+    {
+     "label": "Tabby · TAQPEP · A1",
+     "gt": "mc/Mc · ta/ta",
+     "text": "Mackerel (narrow stripes)."
+    },
+    {
+     "label": "Colourpoint · TYR · D1",
+     "gt": "C/C",
+     "text": "Full colour."
+    },
+    {
+     "label": "White · KIT · B1",
+     "gt": "w/w · grade 1/6",
+     "text": "No white."
+    },
+    {
+     "label": "Hair · FGF5 · B1",
+     "gt": "l/L",
+     "text": "Short hair, carries long."
+    },
+    {
+     "label": "Silver",
+     "gt": "I: i/i",
+     "text": "No silver."
+    }
+   ],
+   "carries": {
+    "bold": "Carries",
+    "rest": " (hidden, can be passed on): solid colour, classic tabby, long hair."
+   },
+   "hidden": null,
+   "temperament": {
+    "title": "Temperament",
+    "intro": "About half of each comes from her genes, the rest from how she developed before you met. She reads as ",
+    "reads": "shy"
+   },
+   "persona": [
+    {
+     "label": "Skittish",
+     "pct": 89,
+     "word": "Startles easily, likes high and hidden places"
+    },
+    {
+     "label": "Outgoing",
+     "pct": 72,
+     "word": "Explores, watches the window, wanders"
+    },
+    {
+     "label": "Dominant",
+     "pct": 81,
+     "word": "Bossy with other cats, scratches to mark"
+    },
+    {
+     "label": "Spontaneous",
+     "pct": 49,
+     "word": "Sudden zoomies and games"
+    },
+    {
+     "label": "Friendly",
+     "pct": 62,
+     "word": "Rubs, slow blinks, comes to the glass"
+    },
+    {
+     "label": "Vocal",
+     "pct": 69,
+     "word": "Talks a lot"
+    }
+   ],
+   "mutations": {
+    "lead": "New mutation (not from either parent): ",
+    "list": "Mc"
+   },
+   "genome": {
+    "title": "Full genome (63 loci)",
+    "head": [
+     "Locus",
+     "Chr",
+     "From mother",
+     "From father"
+    ],
+    "count": 63,
+    "note": "Pigment genes are real feline genes with their known effects; positions are approximate. Loci with + / − alleles are modelled quantitative loci for traits that real cats inherit through many small genes.",
+    "loci": []
+   },
+   "genomeOpen": false
+  },
+  "pair": null,
+  "toys": {
+   "sparks": 14896,
+   "items": [
+    {
+     "id": "ball_a",
+     "name": "Jingle ball",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 0,
+     "affordable": true
+    },
+    {
+     "id": "mouse",
+     "name": "Toy mouse",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 0,
+     "affordable": true
+    },
+    {
+     "id": "feather",
+     "name": "Feather",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 200,
+     "affordable": true
+    },
+    {
+     "id": "ball_b",
+     "name": "Crinkle ball",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 150,
+     "affordable": true
+    },
+    {
+     "id": "yarn",
+     "name": "Yarn ball",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 150,
+     "affordable": true
+    },
+    {
+     "id": "spring",
+     "name": "Spring",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 300,
+     "affordable": true
+    },
+    {
+     "id": "wand",
+     "name": "Feather wand",
+     "unlocked": true,
+     "word": "New",
+     "bought": false,
+     "price": 450,
+     "affordable": true
+    }
+   ]
+  }
+ },
+ "notice": null,
+ "tokens": {
+  "bg": 4278980114,
+  "bg-elev": 4279309338,
+  "panel": 4279638562,
+  "panel2": 4280033579,
+  "panel3": 4280494387,
+  "text": 4293849590,
+  "text-dim": 4291087062,
+  "muted": 4287337379,
+  "muted2": 4285232004,
+  "accent": 4286356735,
+  "accent-dim": 578854655,
+  "accent-strong": 4288394495,
+  "line": 4281086784,
+  "line-soft": 4280560181,
+  "good": 4282242700,
+  "gold": 4293441610,
+  "bad": 4293947768
+ },
+ "light": false
+}

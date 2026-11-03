@@ -64,7 +64,7 @@
     // whose card the screen shows: the cat the page's switcher has focused, as the page's own commands act on it
     const f = cats.length > 1 && petPairOn() ? PET_PAIR.focus : 0, cat = cats[f], d = petStatusData(cat, now);
     const both = petPairFeedData(now);
-    return {
+    const out = {
       cats: cats.map(look),
       focus: f,
       name: cat.name,
@@ -84,6 +84,7 @@
       words: WORDS,
       cue: { fed: fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) },
     };
+    return window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
   }
 
   /** Runs change() and says whether every write it made reached storage (the answers of writeSave; true when it made none). */
@@ -228,5 +229,5 @@
   });
 
   /* the page's room loop stops while the screen covers the view (petWantRun), so the cat is not drawn twice */
-  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands };
+  window.NativePet = { covering: () => tab.active(), active: () => tab.active(), commands, has: (c) => tab.has(c), toasts: () => tab.toasts(), claimToast: toastSince };
 })();

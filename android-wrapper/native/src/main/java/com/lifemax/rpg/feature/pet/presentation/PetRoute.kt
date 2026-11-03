@@ -31,6 +31,9 @@ fun PetRoute(
                 blink = vm::blink,
                 vacation = vm::vacation,
                 rename = vm::rename,
+                focus = vm::focus,
+                buyToy = vm::buyToy,
+                expandGenome = vm::expandGenome,
                 handOver = { onAction(it, "") },
                 noticeShown = vm::noticeShown,
             )

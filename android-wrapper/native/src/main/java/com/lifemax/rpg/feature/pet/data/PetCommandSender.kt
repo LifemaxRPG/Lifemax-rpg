@@ -18,12 +18,21 @@ class PetCommandSender(private val send: (command: String, payload: JSONObject) 
 
     override fun rename(name: String) = send(RENAME, JSONObject().put("name", name))
 
+    override fun focus(index: Int) = send(FOCUS, JSONObject().put("i", index))
+
+    override fun buyToy(id: String) = send(BUY_TOY, JSONObject().put("id", id))
+
+    override fun expandGenome(open: Boolean) = send(EXPAND, JSONObject().put("open", open))
+
     companion object {
         const val FEED = "feed"
         const val BLINK = "blink"
         const val VACATION = "vacation"
         const val RENAME = "rename"
-        val ALL = setOf(FEED, BLINK, VACATION, RENAME)
+        const val FOCUS = "focus"
+        const val BUY_TOY = "buyToy"
+        const val EXPAND = "expand"
+        val ALL = setOf(FEED, BLINK, VACATION, RENAME, FOCUS, BUY_TOY, EXPAND)
     }
 }
 

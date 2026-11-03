@@ -91,4 +91,8 @@ data class PetProjection(
     val notice: PetNotice?,
     val tokens: Map<String, Long>,
     val light: Boolean,
+    /**
+     * The panels (`pet.panels.v1`): present only when the page sends them to a screen that asked.
+     */
+    val panels: PetPanels? = null,
 )
