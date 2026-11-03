@@ -46,7 +46,7 @@ function report(name, img, base, pieces) {
   let rebuilt = 0;
   for (let i = 0; i < img.data.length; i += 4) if (img.data[i] !== base.data[i] || img.data[i + 1] !== base.data[i + 1] || img.data[i + 2] !== base.data[i + 2]) rebuilt++;
   console.log(`${name}: ${rebuilt} pixels differ between the backdrop and its base`);
-  for (const p of pieces) console.log(`  ${p.name.padEnd(22)} ${p.width}x${p.height} at ${p.x},${p.y}  plane ${p.plane}  base ${p.base}`);
+  for (const p of pieces) console.log(`  ${p.name.padEnd(22)} ${p.width}x${p.height} at ${p.x},${p.y}  base ${p.base}`);
 }
 
 const imgs = backdrops(), files = layerFiles(imgs, png), arg = process.argv[2];

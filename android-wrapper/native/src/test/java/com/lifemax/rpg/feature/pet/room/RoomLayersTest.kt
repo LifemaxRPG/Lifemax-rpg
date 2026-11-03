@@ -143,12 +143,13 @@ class RoomLayersTest {
     }
 
     @Test
-    fun everyPieceLiesInsideItsRoomAndInItsPlane() {
+    fun everyPieceLiesInsideItsRoomAndEveryStandingPieceIsASolid() {
         for (p in layers.pieces) {
             assertTrue(p.name, p.x >= 0 && p.y >= 0)
             assertTrue(p.name, p.x + p.width <= RoomLayout.BACKDROP_WIDTH)
             assertTrue(p.name, p.y + p.height <= RoomLayout.HEIGHT)
-            assertNotNull(p.plane)
+            assertEquals(p.name, p.flat, p.volume == null)
+            if (!p.flat) assertNotNull(p.volume!!.model)
         }
     }
 

@@ -9,10 +9,9 @@
      cat tree over the bookcase) leaves a hole in this piece; the hole inside the box is filled so the piece is whole.
    - base: the row of the piece's lowest pixel as the page keeps it (PET_Z_BLOCK in src/runtime/segments/24-pet-depth.js,
      the same number the cat's "stay in front" rule uses); null for a flat floor piece (a rug), which no cat is ever behind.
-   - plane: how far from the camera the piece stands, for parallax: floor, wall, back, mid, front.
    - occludes: whether a cat can walk behind it (it is tall enough to hide one).
    - surfaces: the cat's standable surfaces (SurfaceId keys of feature/pet/body/World.kt) that lie on this piece.
-   - thick: whether the engine may give it a slight side/top face (the cat tree, the sofa, the fridge, the counter).
+   - how deep each piece is (the native room renders every standing piece as a small solid) is pet_room_volume_spec.js.
    fills: how the wall and floor behind a removed piece are rebuilt (see rebuildBase in pet_room_cut.js). */
 
 const hex = (s) => s.trim().split(/\s+/);
@@ -37,17 +36,17 @@ const ROOMS = {
   living: {
     source: 'living',
     pieces: [
-      { name: 'rug_living', plane: 'floor', base: null, occludes: false, thick: false, surfaces: [],
+      { name: 'rug_living', base: null, occludes: false, surfaces: [],
         entries: [{ rect: [36, 128, 156, 141], only: hex('468084 609c9c 28464e ecdec4') }] },
-      { name: 'sofa', plane: 'mid', base: 128, occludes: true, thick: true, surfaces: ['couch'],
+      { name: 'sofa', base: 128, occludes: true, surfaces: ['couch'],
         entries: [{ rect: [30, 85, 162, 128], not: LIVING_BG }], box: [30, 86, 161, 123] },
-      { name: 'sofa_cushion_yellow', plane: 'mid', base: 128, occludes: false, thick: false, surfaces: [],
+      { name: 'sofa_cushion_yellow', base: 128, occludes: false, surfaces: [],
         entries: [{ rect: [52, 98, 65, 107] }] },
-      { name: 'sofa_cushion_pink', plane: 'mid', base: 128, occludes: false, thick: false, surfaces: [],
+      { name: 'sofa_cushion_pink', base: 128, occludes: false, surfaces: [],
         entries: [{ rect: [124, 100, 139, 123] }] },
-      { name: 'floor_lamp', plane: 'front', base: 129, occludes: false, thick: false, surfaces: [],
+      { name: 'floor_lamp', base: 129, occludes: false, surfaces: [],
         entries: [{ rect: [9, 24, 29, 129], only: hex('6e5a3c f6e2b0 dcbe82 ceb078 544028') }] },
-      { name: 'side_table_plant', plane: 'front', base: 126, occludes: false, thick: false, surfaces: [],
+      { name: 'side_table_plant', base: 126, occludes: false, surfaces: [],
         entries: [{ rect: [164, 66, 186, 128], only: [...PLANT_GREENS, ...PLANT_POT, ...TABLE_WOOD] }, { rect: [167, 105, 180, 106], only: ['946238'] }] },
     ],
     fills: [
@@ -62,22 +61,22 @@ const ROOMS = {
   bedroom: {
     source: 'bedroom',
     pieces: [
-      { name: 'rug_bedroom', plane: 'floor', base: null, occludes: false, thick: false, surfaces: [],
+      { name: 'rug_bedroom', base: null, occludes: false, surfaces: [],
         entries: [{ rect: [40, 126, 150, 142], only: hex('e9a3a0 c7566b f6dcb8') }], box: [40, 126, 150, 142] },
-      { name: 'bookcase_plant', plane: 'back', base: 112, occludes: false, thick: false, surfaces: [],
+      { name: 'bookcase_plant', base: 112, occludes: false, surfaces: [],
         entries: [{ rect: [106, 32, 137, 111] }, { rect: [109, 0, 133, 31], only: hex('4fa36a 2f7a4a 8fd28a c8683a 8f4325 d89575') }],
         box: [106, 32, 137, 111] },
-      { name: 'cat_tree_post', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: [],
+      { name: 'cat_tree_post', base: 137, occludes: true, surfaces: [],
         entries: [{ rect: [155, 76, 164, 128], only: SISAL }, { rect: [174, 106, 179, 128], only: SISAL },
           { rect: [146, 76, 153, 91], only: hex('e8e0d0 e9c46a fff3c4') }],
         box: [155, 76, 164, 128], holes: 'column' },
-      { name: 'cat_tree_cubby', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: [],
+      { name: 'cat_tree_cubby', base: 137, occludes: true, surfaces: [],
         entries: [{ rect: [164, 80, 183, 99], only: [...PURPLE, '382852', '1e162d'] }] },
-      { name: 'cat_tree_slab_base', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: [],
+      { name: 'cat_tree_slab_base', base: 137, occludes: true, surfaces: [],
         entries: [{ rect: [136, 128, 181, 136], only: PURPLE }] },
-      { name: 'cat_tree_slab_mid', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: ['mid'],
+      { name: 'cat_tree_slab_mid', base: 137, occludes: true, surfaces: ['mid'],
         entries: [{ rect: [122, 100, 181, 108], only: PURPLE }] },
-      { name: 'cat_tree_slab_top', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: ['top'],
+      { name: 'cat_tree_slab_top', base: 137, occludes: true, surfaces: ['top'],
         entries: [{ rect: [122, 64, 187, 75], only: PURPLE }] },
     ],
     fills: [
@@ -90,11 +89,11 @@ const ROOMS = {
   kitchen: {
     source: 'kitchen',
     pieces: [
-      { name: 'counter', plane: 'mid', base: 128, occludes: true, thick: true, surfaces: ['counter'],
+      { name: 'counter', base: 128, occludes: true, surfaces: ['counter'],
         entries: [{ rect: [58, 90, 186, 128], not: [...KITCHEN_BG, ...TILE_WALL] },
           { rect: [66, 76, 182, 89], only: hex('d65252 1e162d dc3c3c faaa3c 8cc85a bec4c8 aab2b4 788084 969ca0') },
           { rect: [164, 84, 177, 89], only: ['ece2ce'] }] },
-      { name: 'fridge', plane: 'back', base: 128, occludes: true, thick: true, surfaces: [],
+      { name: 'fridge', base: 128, occludes: true, surfaces: [],
         entries: [{ rect: [14, 30, 53, 127], not: KITCHEN_BG }] },
     ],
     fills: [

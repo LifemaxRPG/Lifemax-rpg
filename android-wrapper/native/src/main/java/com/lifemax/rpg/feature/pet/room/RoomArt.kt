@@ -19,9 +19,6 @@ internal enum class RoomImage {
     /** The furniture cut out of the backdrops, packed into one picture (2.5D room). */
     LAYERS,
 
-    /** [LAYERS] with every pixel shaded: the sides of thick pieces are copies of it. */
-    LAYERS_DARK,
-
     /** The living room's backdrop with the furniture removed and the wall and floor rebuilt. */
     LIVING_BASE,
     BEDROOM_BASE,
@@ -53,7 +50,6 @@ internal class RoomArt(
         when (image) {
             RoomImage.ATLAS -> atlas.image
             RoomImage.LAYERS -> layers?.atlas ?: NOTHING
-            RoomImage.LAYERS_DARK -> layers?.dark ?: NOTHING
             RoomImage.LIVING_BASE -> layers?.base(0) ?: NOTHING
             RoomImage.BEDROOM_BASE -> layers?.base(1) ?: NOTHING
             RoomImage.KITCHEN_BASE -> layers?.base(2) ?: NOTHING

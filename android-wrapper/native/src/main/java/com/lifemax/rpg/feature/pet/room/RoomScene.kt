@@ -22,7 +22,7 @@ import kotlin.math.sin
  *
  * With a [style] that asks for it ([RoomStyle.DEPTH25]) the same three calls draw the 2.5D room
  * instead ([DepthScene]): the furniture as layers between the backdrop and the cats, a little
- * parallax, thickness, soft shadows and light. The default style draws exactly what is above.
+ * parallax, solid furniture, soft shadows and light. The default style draws exactly what is above.
  *
  * @param art the shipped pictures.
  * @param style how to draw the room; [RoomStyle.CLASSIC] by default.

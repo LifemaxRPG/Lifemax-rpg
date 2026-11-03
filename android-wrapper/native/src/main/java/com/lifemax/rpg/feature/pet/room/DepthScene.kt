@@ -1,32 +1,48 @@
 package com.lifemax.rpg.feature.pet.room
 
+import com.lifemax.rpg.feature.pet.art.ArgbImage
+import com.lifemax.rpg.feature.pet.body.World
+
 /** Numbers of the 2.5D painter that are about the picture, not the light or the sway. */
 internal object DepthTuning {
-    /** A piece's contact shadow is this many art pixels tall (half height) and this strong. */
+    /** A piece's contact shadow is this many art pixels tall (half height). */
     const val PIECE_SHADOW_HALF_HEIGHT = 3
-    const val PIECE_SHADOW_STRENGTH = 0.8f
+
+    /**
+     * How strong a piece's shadow is. It is the floor's own darkest colour, not the art's ink, so
+     * it needs more strength to read: a deeper floor colour, never a black smear.
+     */
+    const val PIECE_SHADOW_STRENGTH = 2.4f
 
     /** A piece's shadow is this many pixels wider than the piece, each side. */
     const val PIECE_SHADOW_MARGIN = 1
 
     /** A piece stands on the floor when its bottom row is within this many rows of its base. */
     const val FLOOR_REACH = 2
+
+    /** The row the window light on the floor moves with (the middle of its patches). */
+    const val FLOOR_LIGHT_ROW = LightTuning.LIGHT_MID
 }
 
 /**
  * Paints the 2.5D room, in the same three steps as [RoomScene] (it is what [RoomScene] calls when
  * its style asks for the layers):
  * 1. [paintBackdrop]: the sky (a little wider than the glass, so a shifting wall never shows a
- *    gap), each room's base (the backdrop with the furniture removed), the seam where wall meets
- *    floor, the window light on the floor, and the rugs.
- * 2. [paintScene]: the standing furniture, the atlas furniture and the cats, back to front by
- *    [LayerStack]. Each thing is shifted by its plane's parallax; a thick piece gets its side face
- *    first; a piece that stands on the floor gets its contact shadow first; a cat is drawn by its
- *    own layer (it knows its shadow and its rim).
+ *    gap), each room's base (the backdrop with the furniture removed: the wall moves as one, the
+ *    floor row by row, so it shears like a floor and nothing standing on it slides), the seam where
+ *    wall meets floor, the window light on the floor, and the rugs (row by row, like the floor they
+ *    lie on).
+ * 2. [paintScene]: the solid pieces, the atlas furniture and the cats, back to front by
+ *    [DepthOrder]. Each standing piece is drawn as its cached pictures for the camera's step
+ *    ([VolumeSheets]): its painted front and the sides and top the sway shows, in bands of depth so
+ *    a cat passes behind, in front of and inside it; a piece that stands on the floor gets its
+ *    contact shadow, in the floor's own colour, first.
  * 3. the classic overlay, [RoomScene.paintOverlay]: the time of day over everything.
  *
  * The camera sways with [sway]; step it with [step] once a frame. With [RoomStyle.parallax] off (or
- * reduced motion on) every shift is 0 and the room is still.
+ * reduced motion on) nothing moves and every piece is its painted sprite; with [RoomStyle.volume]
+ * off the pieces move but stay flat. A frame draws only cached pictures: a step's pictures are
+ * rendered the first time it is needed, and [step] renders one more each frame until all are made.
  */
 internal class DepthScene(
     private val art: RoomArt,
@@ -34,79 +50,140 @@ internal class DepthScene(
     private val scene: RoomScene,
 ) {
     private val layers = art.layers ?: error("the 2.5D room needs the layers")
+    private val level = style.level
 
     /** The camera's sway; set its tilt from a sensor, read its position to see where it is. */
-    val sway = DepthSway(style.reducedMotion, style.level.idleAmplitude)
+    val sway = DepthSway(style.reducedMotion, level.idleAmplitude)
 
-    /** The drawing order of the last [paintScene]. */
-    val stack = LayerStack(layers.pieces, scene.furnitureZ)
+    private val solids = layers.pieces.filter { it.volume != null }
+    private val sways = style.parallax && style.volume && !style.reducedMotion
+    private val furnitureKey =
+        FloatArray(scene.furnitureZ.size) { World.floorY(scene.furnitureZ[it]) }
 
-    private val level = style.level
-    private val vector = IntArray(2)
+    /** The solid pieces' pictures for every camera step. */
+    val sheets =
+        VolumeSheets(
+            solids,
+            furnitureKey,
+            level,
+            if (sways) VolumeSheets.stepsFor(solids, level) else 0,
+        )
+
+    /** The step shown now. */
+    var stepIndex = sheets.rest
+        private set
+
+    private val drawOrder = DepthOrder(sheets.capacity)
+    private val catKey = FloatArray(DepthOrder.MAX_CATS)
+    private val catRow = FloatArray(DepthOrder.MAX_CATS)
+    private val catFeet = FloatArray(DepthOrder.MAX_CATS)
+    private val catAnchor = IntArray(DepthOrder.MAX_CATS)
+    private val catCover = IntArray(DepthOrder.MAX_CATS)
+    private val shadowed = BooleanArray(solids.size)
+    private val shadowColour = IntArray(3) { floorShadowColour(layers.base(it)) }
+
+    /** The order of the last [paintScene]. */
+    val order: DepthOrder
+        get() = drawOrder
 
     /** [argb] with its alpha scaled by the level's light strength. */
     private fun light(argb: Int): Int =
         (Math.round((argb ushr 24) * level.lightStrength) shl 24) or (argb and 0xFFFFFF)
 
-    private val steps = IntArray(2 * DepthLevel.RICH.maxFacePx)
+    /** Advance the sway by [dt] seconds, and make one more step's pictures if any are missing. */
+    fun step(dt: Float) {
+        sway.step(dt)
+        sheets.warmOne()
+    }
 
-    /** Advance the sway by [dt] seconds. */
-    fun step(dt: Float) = sway.step(dt)
-
-    /** The sway the planes use: 0 when parallax is off. */
+    /** The sway the room moves with: 0 when parallax is off. */
     private val swing: Float
         get() = if (style.parallax) sway.position else 0f
 
     /** The shift of a floor object (a cat, a prop) at depth [z], for the cat's own layer. */
     fun shiftAtZ(z: Float): Int = Parallax.shiftAtZ(swing, z, level)
 
+    private fun rowShift(row: Float) = Parallax.shiftAtRow(swing, row, level)
+
     // ------------------------------------------------------------------ 1. behind the furniture
 
     /** The sky, the bases, the seam, the window light and the rugs. */
     fun paintBackdrop(c: RoomCanvas, hour: Double, clock: Double, topExtra: Int) {
         scene.skyFor(hour)
-        val wall = Parallax.shift(swing, Plane.WALL, level)
-        for (wx in RoomLayout.windows) scene.paintSky(c, wx, hour, clock, Parallax.maxShift)
+        val wall = Parallax.wallShift(swing, level)
+        for (wx in RoomLayout.windows) scene.paintSky(c, wx, hour, clock, Parallax.maxWallShift)
         paintBases(c, wall, topExtra)
         if (style.floorLight) {
             SeamShade.paint(c, wall, RoomLayout.HOUSE_WIDTH, level.seamStrength)
-            paintFloorLight(c, wall, hour)
+            paintFloorLight(c, hour)
         } else {
             scene.paintWindowLight(c, hour)
         }
         for (i in 0 until layers.pieces.size) { // an index loop: no iterator per frame
             val piece = layers.pieces[i]
-            if (piece.flat) paintPiece(c, piece, wall)
+            if (piece.flat) paintRug(c, piece)
         }
     }
 
-    private fun paintBases(c: RoomCanvas, shift: Int, topExtra: Int) {
+    private fun paintBases(c: RoomCanvas, wall: Int, topExtra: Int) {
+        val seam = Parallax.WALL_ROW.toInt()
+        strip(c, 0, seam, wall)
+        if (topExtra > 0) {
+            for (room in 0..2) {
+                val x = room * RoomLayout.BACKDROP_WIDTH + wall
+                c.image(
+                    BASES[room],
+                    0,
+                    0,
+                    RoomLayout.BACKDROP_WIDTH,
+                    1,
+                    x,
+                    -topExtra,
+                    RoomLayout.BACKDROP_WIDTH,
+                    topExtra,
+                )
+            }
+            edges(c, 0, 1, -topExtra, topExtra, wall)
+        }
+        // the floor, in runs of rows that move by the same whole pixels
+        var from = seam
+        while (from < RoomLayout.HEIGHT) {
+            val shift = rowShift(from.toFloat())
+            var to = from + 1
+            while (to < RoomLayout.HEIGHT && rowShift(to.toFloat()) == shift) to++
+            strip(c, from, to - from, shift)
+            from = to
+        }
+    }
+
+    /** Rows [y] to `y + h` of the three bases, [shift] pixels over, the house's edges filled. */
+    private fun strip(c: RoomCanvas, y: Int, h: Int, shift: Int) {
         val w = RoomLayout.BACKDROP_WIDTH
-        val h = RoomLayout.HEIGHT
-        for (room in 0..2) {
-            val x = room * w + shift
-            val image = BASES[room]
-            c.image(image, 0, 0, w, h, x, 0, w, h)
-            if (topExtra > 0) c.image(image, 0, 0, w, 1, x, -topExtra, w, topExtra)
-        }
-        // the house's two outer edges: stretch the edge column over the gap a shift opens
+        for (room in 0..2) c.image(BASES[room], 0, y, w, h, room * w + shift, y, w, h)
+        edges(c, y, h, y, h, shift)
+    }
+
+    /**
+     * Stretch the house's outer edge columns, rows [sy] to `sy + sh`, over the gap a [shift] opens
+     * at rows [dy] to `dy + dh`.
+     */
+    private fun edges(c: RoomCanvas, sy: Int, sh: Int, dy: Int, dh: Int, shift: Int) {
+        val w = RoomLayout.BACKDROP_WIDTH
         if (shift > 0) {
-            c.image(BASES[0], 0, 0, 1, h, 0, 0, shift, h)
-            if (topExtra > 0) c.image(BASES[0], 0, 0, 1, 1, 0, -topExtra, shift, topExtra)
+            c.image(BASES[0], 0, sy, 1, sh, 0, dy, shift, dh)
         } else if (shift < 0) {
-            val end = RoomLayout.HOUSE_WIDTH + shift
-            c.image(BASES[2], w - 1, 0, 1, h, end, 0, -shift, h)
-            if (topExtra > 0) c.image(BASES[2], w - 1, 0, 1, 1, end, -topExtra, -shift, topExtra)
+            c.image(BASES[2], w - 1, sy, 1, sh, RoomLayout.HOUSE_WIDTH + shift, dy, -shift, dh)
         }
     }
 
-    private fun paintFloorLight(c: RoomCanvas, shift: Int, hour: Double) {
+    private fun paintFloorLight(c: RoomCanvas, hour: Double) {
         val colour =
             when {
                 hour >= 7.5 && hour < 17.5 -> light(DAY_LIGHT)
                 RoomLight.isNight(hour) -> light(NIGHT_LIGHT)
                 else -> return
             }
+        val shift = rowShift(DepthTuning.FLOOR_LIGHT_ROW)
         for (i in 0..1) {
             FloorLight.paint(
                 c,
@@ -117,73 +194,119 @@ internal class DepthScene(
         }
     }
 
+    /** A rug, lying on the floor: row by row, each row moving with the floor under it. */
+    private fun paintRug(c: RoomCanvas, piece: LayerPiece) {
+        var from = 0
+        while (from < piece.height) {
+            val shift = rowShift((piece.y + from).toFloat())
+            var to = from + 1
+            while (to < piece.height && rowShift((piece.y + to).toFloat()) == shift) to++
+            val h = to - from
+            c.image(
+                RoomImage.LAYERS,
+                piece.atlasX,
+                piece.atlasY + from,
+                piece.width,
+                h,
+                piece.houseX + shift,
+                piece.y + from,
+                piece.width,
+                h,
+            )
+            from = to
+        }
+    }
+
     // ------------------------------------------------------------------ 2. furniture and cats
 
-    /** The standing furniture, the atlas furniture and the cats, back to front. */
+    /** The solid pieces, the atlas furniture and the cats, back to front. */
     fun paintScene(c: RoomCanvas, cats: CatLayer) {
-        stack.build(cats)
-        val order = stack.order
-        for (k in 0 until stack.size) {
+        stepIndex = sheets.indexOf(swing, stepIndex)
+        val step = sheets.step(stepIndex)
+        val n = cats.count.coerceAtMost(DepthOrder.MAX_CATS)
+        for (i in 0 until n) placeCat(cats, i)
+        drawOrder.build(step, furnitureKey, n, catKey, catFeet, catAnchor, catCover)
+        val order = drawOrder.order
+        shadowed.fill(false)
+        for (k in 0 until drawOrder.size) {
             val code = order[k]
             when {
-                code >= LayerStack.CAT -> {
-                    val cat = code - LayerStack.CAT
-                    cats.draw(cat, Parallax.shiftAtZ(swing, cats.depth(cat), level), style, c)
+                code >= DepthOrder.CAT -> {
+                    val cat = code - DepthOrder.CAT
+                    cats.draw(cat, rowShift(catRow[cat]), style, c)
                 }
-                code >= LayerStack.FURNITURE -> {
-                    val item = code - LayerStack.FURNITURE
+                code >= VolumeStep.FURNITURE -> {
+                    val item = code - VolumeStep.FURNITURE
                     scene.shiftX = Parallax.shiftAtZ(swing, scene.furnitureZ[item], level)
                     scene.paintFurnitureAt(c, item)
                     scene.shiftX = 0
                 }
-                else -> {
-                    val piece = layers.pieces[code - LayerStack.PIECE]
-                    if (!piece.flat) paintPiece(c, piece, Parallax.shift(swing, piece.plane, level))
-                }
+                else -> paintBand(c, step, code)
             }
         }
     }
 
-    /** One piece: its floor shadow, its side face, then the piece, [shift] pixels over. */
-    private fun paintPiece(c: RoomCanvas, piece: LayerPiece, shift: Int) {
-        val x = piece.houseX + shift
-        if (style.softShadows && piece.onFloor) {
+    /** Where cat [i] stands: on a piece's surface (at the surface's depth) or on the floor. */
+    private fun placeCat(cats: CatLayer, i: Int) {
+        catFeet[i] = cats.feet(i)
+        catAnchor[i] = -1
+        catCover[i] = -1
+        val surface = cats.surface(i)
+        var p = if (surface == null) -1 else solids.size - 1
+        while (p >= 0) { // the last piece that has the surface; no iterator per frame
+            val volume = solids[p].volume!!
+            val depth = volume.surfaces[surface ?: break]
+            if (depth != null) {
+                catAnchor[i] = p
+                catCover[i] = coverOf(volume, surface)
+                catKey[i] = volume.sortFront - depth
+                catRow[i] = volume.parallaxFront - depth
+                return
+            }
+            p--
+        }
+        catKey[i] = World.floorY(cats.depth(i))
+        catRow[i] = catKey[i]
+    }
+
+    /** The index among the solids of the piece covering a cat on [surface] of [volume], or -1. */
+    private fun coverOf(volume: PieceVolume, surface: String): Int {
+        val name = volume.covered[surface] ?: return -1
+        for (k in solids.indices) if (solids[k].name == name) return k
+        return -1
+    }
+
+    /**
+     * One strip of a band of a piece: the piece's contact shadow first if it is its first drawn.
+     */
+    private fun paintBand(c: RoomCanvas, step: VolumeStep, b: Int) {
+        val p = step.piece[b]
+        val piece = solids[p]
+        val volume = piece.volume!!
+        val shift = rowShift(volume.parallaxFront)
+        val first = !shadowed[p]
+        shadowed[p] = true
+        if (first && style.softShadows && piece.onFloor) {
             ContactShadow.paint(
                 c,
-                x + piece.width / 2,
+                piece.houseX + shift + piece.width / 2,
                 piece.baseY!!,
                 piece.width / 2 + DepthTuning.PIECE_SHADOW_MARGIN,
                 Math.round(DepthTuning.PIECE_SHADOW_HALF_HEIGHT * level.shadowSize),
                 DepthTuning.PIECE_SHADOW_STRENGTH * level.shadowStrength,
+                shadowColour[piece.room],
             )
         }
-        if (style.thickness && piece.thick) {
-            Thickness.vector(swing, vector, level)
-            val n = Thickness.offsets(vector[0], vector[1], steps)
-            for (i in 0 until n) {
-                c.image(
-                    RoomImage.LAYERS_DARK,
-                    piece.atlasX,
-                    piece.atlasY,
-                    piece.width,
-                    piece.height,
-                    x + steps[2 * i],
-                    piece.y + steps[2 * i + 1],
-                    piece.width,
-                    piece.height,
-                )
-            }
-        }
-        c.image(
-            RoomImage.LAYERS,
-            piece.atlasX,
-            piece.atlasY,
-            piece.width,
-            piece.height,
-            x,
-            piece.y,
-            piece.width,
-            piece.height,
+        c.sheet(
+            step.image,
+            stepIndex,
+            sheets.version + stepIndex,
+            step.sx[b],
+            step.sy[b],
+            step.w[b],
+            step.h[b],
+            piece.houseX + shift + step.dx[b],
+            piece.y + step.dy[b],
         )
     }
 
@@ -198,5 +321,21 @@ internal class DepthScene(
         const val DAY_LIGHT = (41 shl 24) or 0xFFECA0
         const val NIGHT_LIGHT = (31 shl 24) or 0x96AAFF
         val BASES = arrayOf(RoomImage.LIVING_BASE, RoomImage.BEDROOM_BASE, RoomImage.KITCHEN_BASE)
+
+        /** The darkest colour of a room's floor: the colour its furniture's shadows are. */
+        fun floorShadowColour(base: ArgbImage): Int {
+            var best = 0
+            var lum = Int.MAX_VALUE
+            for (y in Parallax.WALL_ROW.toInt() + 1 until base.height) for (x in
+                0 until base.width) {
+                val p = base[x, y]
+                val l = Palette.luminanceOf(p)
+                if (p ushr 24 == 0xFF && l < lum) {
+                    lum = l
+                    best = p
+                }
+            }
+            return best and 0xFFFFFF
+        }
     }
 }
