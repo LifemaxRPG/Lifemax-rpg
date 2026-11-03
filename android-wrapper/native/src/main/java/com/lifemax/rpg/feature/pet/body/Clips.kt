@@ -92,6 +92,8 @@ object Clips {
     private const val NARROW_SHADOW = 11f
     private const val NORMAL_SHADOW = 15f
     private const val WIDE_SHADOW = 22f
+    /** The first lab row of the main sheet: right after the page's 28 rows. */
+    private const val LAB_ROW0 = 28
     private val NONE = IntArray(0)
     private val SIT_OPEN = intArrayOf(0, 1, 2, 6, 7)
     private val SIT_BLINK = intArrayOf(3, 4, 5)
@@ -245,6 +247,51 @@ object Clips {
             contacts = halfCycle(6),
             shadow = NARROW_SHADOW,
             depth = true,
+        )
+
+    // The lab rows (tools/pet_art, docs/specs/PET_ART_LAB.md): new frames on the main sheet after
+    // the page's 28 rows. Appended after the depth clips so every older clip keeps its id. Their
+    // loop flags, planted frames, mouth anchors and pair offsets are in art/LabTable (lab.json);
+    // the clip table repeats only what the body needs to play them.
+    val JUMP_UP = once("jump_up", LAB_ROW0, 4, 12f, 46, 0.85f)
+    val JUMP_AIR = add("jump_air", LAB_ROW0 + 1, 2, 8f, 46, Posture.AIR, 1.1f, loop = false)
+    val JUMP_LAND = once("jump_land", LAB_ROW0 + 2, 3, 12f, 46, 0.85f)
+    val TURN = once("turn", LAB_ROW0 + 3, 4, 10f, 46, 0.9f)
+    val PICKUP = once("pickup", LAB_ROW0 + 4, 6, 8f, 46, 0.85f)
+    val CARRY =
+        add(
+            "carry",
+            LAB_ROW0 + 5,
+            8,
+            12f,
+            46,
+            Posture.LOCOMOTION,
+            1f,
+            speed = WALK_SPEED,
+            contacts = halfCycle(8),
+        )
+    val TOSS = once("toss", LAB_ROW0 + 6, 4, 10f, 46, 1f)
+    val YAWN = once("yawn", LAB_ROW0 + 7, 7, 6f, 47, 1f)
+    val SHAKE = once("shake", LAB_ROW0 + 8, 5, 14f, 47, 1f)
+    val BUMP = once("bump", LAB_ROW0 + 9, 4, 6f, 47, 1f)
+    val GROOM_OTHER = action("groom_other", LAB_ROW0 + 10, 6, 5f, 47, 0.95f)
+    val NOSE_TOUCH = once("nose_touch", LAB_ROW0 + 11, 4, 6f, 46, 0.95f)
+
+    /** The lab clips, in sheet order. */
+    val lab: List<Clip> =
+        listOf(
+            JUMP_UP,
+            JUMP_AIR,
+            JUMP_LAND,
+            TURN,
+            PICKUP,
+            CARRY,
+            TOSS,
+            YAWN,
+            SHAKE,
+            BUMP,
+            GROOM_OTHER,
+            NOSE_TOUCH,
         )
 
     /** All clips in id order. */

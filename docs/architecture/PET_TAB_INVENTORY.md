@@ -65,6 +65,8 @@ What the owner's care does in the room (`HouseStage.feed`, `visitBowl`, `slowBli
 
 A genetic coat's sheets are asked of the page: `CatArt.coats` is one source for every screen with a room, so the screen that opens (`accept` with an explicit open) binds its own requester; replies to `coat` are handled by whichever plugin receives them.
 
+The cat's sheets carry twelve extra animation rows after the page's 28 (jump_up, jump_air, jump_land, turn, pickup, carry, toss, yawn, shake, bump, groom_other, nose_touch; Native API 52), made by the art lab (`docs/specs/PET_ART_LAB.md`). The room draws them like any row (`CatArt` resolves every clip by name); the autopilot does not choose them yet (CT4/CT5). Their mouth anchors and pair offsets are in `LabTable` (`lab.json`).
+
 ## 6. Tests
 
 - Web: `tests/native-pet.test.js` (44 checks: the switch and its words, the intro and the memorial, the projection against the page's card for ten states and writing nothing, the stopped loop, every command with its refusals, repeats and failed saves, two cats, the voice's feed cue, the coat command and the capabilities, Play, the room, more, a level-up); `native-handover-sim.test.js` (the Cat tab is a fake `NativePet` in every mode, with a living cat in the starting save; `PETMUT=blocked` fails it); `native-settings.test.js` (the switch runs `setNativePetEnabled`); fixtures `tools/gen_pet_fixtures.js`.

@@ -44,8 +44,9 @@ class GrowthTest {
             assertEquals(want.getDouble("sx"), got.scale, 0.0)
             assertEquals(want.getDouble("sx"), web.getJSONArray("depthStageSx").getDouble(i), 0.0)
             val bottom = want.getJSONObject("bottom")
-            assertEquals(bottom.length(), got.bottom.size)
-            for (name in got.bottom.keys) assertEquals(
+            // the page's foot rows, plus one per lab row (the lab's own table: LabArtTest)
+            assertEquals(bottom.length() + LAB_ROWS, got.bottom.size)
+            for (name in bottom.keys()) assertEquals(
                 "stage $i $name",
                 bottom.getInt(name),
                 got.bottom.getValue(name),
@@ -60,7 +61,8 @@ class GrowthTest {
         val rows = web.getJSONArray("stageRows")
         for (stage in 0 until 6) {
             val byName = rows.getJSONObject(stage)
-            for (name in art.anims.adult.map { it.name }) {
+            // the page's own rows (the lab rows are not in the page's tables: LabArtTest)
+            for (name in byName.keys().asSequence().toList()) {
                 val want = byName.getJSONObject(name)
                 val got = growth.resolve(stage, name, art.anims)!!
                 val label = "stage $stage $name"
@@ -96,5 +98,9 @@ class GrowthTest {
     fun resolvingWithoutAnIdleSitIsNullNotACrash() {
         val bare = AnimTable(72, 48, 8, 6, emptyList(), emptyList())
         assertNull(growth.resolve(0, "walk", bare))
+    }
+
+    private companion object {
+        const val LAB_ROWS = 12
     }
 }

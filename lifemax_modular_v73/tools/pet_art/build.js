@@ -53,6 +53,8 @@ function check() {
   if (strip(A) !== strip(D.A)) bad.push('petAssets tables (anims / lab) differ from a rebuild');
   if (strip(G) !== strip(D.G)) bad.push('petGrowth bottom tables differ from a rebuild');
   for (const kn of SIDE_KINDS) if (sheetDiffers(D.kinds[kn].sheet, L.sheets[kn])) bad.push(kn + ' sheets differ from a rebuild');
+  const ref = fs.existsSync(hashes.LAB_REFERENCE) ? fs.readFileSync(hashes.LAB_REFERENCE, 'utf8') : '';
+  if (ref !== hashes.labReference(L, D.A.pal)) bad.push('the native test reference pet-lab/lab-frames.json is out of date');
   if (bad.length) { console.error('FAIL: the cat lab rows are out of date:\n  ' + bad.join('\n  ') + '\n  run: node lifemax_modular_v73/tools/pet_art/build.js'); process.exit(1) }
   console.log(`ok: ${LAB_NAMES.length} lab rows current for ${SIDE_KINDS.length} kinds; ${Object.keys(L.lab.pairs).length} pair poses; page frames untouched`);
 }
@@ -65,6 +67,7 @@ function write() {
   G.stages.forEach((s, i) => { s.coats = data.unpackSheet(L.sheets['st' + i]) });
   data.writeBlock(D.assets, A);
   data.writeBlock(D.growth, G);
+  fs.writeFileSync(hashes.LAB_REFERENCE, hashes.labReference(L, D.A.pal));
   console.log(`wrote ${LAB_NAMES.length} lab rows (${LAB_NAMES.join(', ')}) for ${SIDE_KINDS.length} kinds`);
   qaReport(true);
 }

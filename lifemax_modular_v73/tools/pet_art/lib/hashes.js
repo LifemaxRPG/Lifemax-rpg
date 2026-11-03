@@ -46,4 +46,27 @@ function compareRecord(kinds) {
   return bad;
 }
 
-module.exports = { frameHash, baseHashes, writeRecord, compareRecord, RECORD, W, H };
+/* The toolchain's reference for the lab frames, for the native recolour to be checked against (LabArtTest): per kind and lab
+   row, per frame, SHA-256 over the frame recoloured in ginger, gray, black and tuxedo in that order, each as R, G, B, A bytes per
+   pixel row by row (a clear pixel, or an index the coat has no colour for, is 0, 0, 0, 0), first 16 hex digits. */
+const LAB_REFERENCE = path.resolve(ROOT, '../android-wrapper/native/src/test/resources/pet-lab/lab-frames.json');
+const COAT_NAMES = ['ginger', 'gray', 'black', 'tuxedo'];
+
+function rgbaHash(fr, pal) {
+  const h = crypto.createHash('sha256');
+  COAT_NAMES.forEach((name, c) => {
+    const idx = fr.coat(c), out = Buffer.alloc(idx.length * 4), p = pal[name];
+    for (let i = 0; i < idx.length; i++) { const col = idx[i] && p[String(idx[i])]; if (col) { out[i * 4] = col[0]; out[i * 4 + 1] = col[1]; out[i * 4 + 2] = col[2]; out[i * 4 + 3] = 255 } }
+    h.update(out);
+  });
+  return h.digest('hex').slice(0, 16);
+}
+
+/** the reference text for a build (lab.js buildLab output) and the page palettes */
+function labReference(L, pal) {
+  const kinds = Object.keys(L.frames);
+  return '{\n' + kinds.map((k) => ' ' + JSON.stringify(k) + ': {\n' + Object.entries(L.frames[k]).map(([r, fr]) =>
+    '  ' + JSON.stringify(r) + ': ' + JSON.stringify(fr.map((b) => rgbaHash(b.plate, pal)))).join(',\n') + '\n }').join(',\n') + '\n}\n';
+}
+
+module.exports = { frameHash, baseHashes, writeRecord, compareRecord, labReference, RECORD, LAB_REFERENCE, W, H };

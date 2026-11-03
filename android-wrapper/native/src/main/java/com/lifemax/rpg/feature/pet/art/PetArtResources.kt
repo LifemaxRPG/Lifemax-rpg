@@ -32,6 +32,12 @@ object PetArtResources {
         )
     }
 
+    /**
+     * Loads the lab rows' metadata (mouth anchors, planted frames, pair offsets; `lab.json`).
+     * Throws if the file is missing.
+     */
+    fun loadLab(): LabTable = LabTable.parse(text("lab.json"))
+
     /** Loads the room's backdrops, props and item atlas. Throws if a shipped file is missing. */
     internal fun loadRoom(): RoomArt {
         fun png(name: String) =

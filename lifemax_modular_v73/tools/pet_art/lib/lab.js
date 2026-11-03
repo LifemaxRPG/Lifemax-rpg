@@ -4,8 +4,9 @@
      fps, loop, contacts (frames with paws planted), chain {from, to} (rows it hands over from / to), flipAtEnd (turn), bite
      (pickup: the frame the toy is taken), release (toss: the frame it leaves), touch (bump, nose_touch: the contact frame),
      mouth {kind: [[x, y] per frame]} (the toy / mouth anchor in frame pixels, side view facing +x; null where no face point)
-   The foot row of a lab row is the bottom of its first frame's source row, per kind (adult: petAssets.anims, stages: the
-   stage's bottom table), so a lab row stands where the row it comes from stands. */
+   The foot row (bottom) of a lab row is one below the lowest pixel of its first frame, per kind: the rule walk and idle_sit
+   follow (walk: paws on row 45, bottom 46), so a lab row stands exactly where walk and idle_sit stand. A few page rows break it
+   (stretch has bottom 47 with paws on 45; the kitten tables vary more), which is why the lab does not copy their bottoms. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const { W, H, BASE_ROWS, baseSheet, assemble, frameOf } = require('./data.js');
@@ -78,7 +79,8 @@ function buildLab(D) {
   for (const kn of SIDE_KINDS) {
     const k = kinds[kn], built = {}, labRows = [], bottoms = {};
     for (const spec of rows) {
-      const floor = lowestRow(source(spec.frames[0].src, kn, kinds).plate);
+      /* an airborne row names a grounded frame to measure its floor from ("standsOn"), so it keeps the height it is drawn at */
+      const floor = lowestRow(source(spec.standsOn || spec.frames[0].src, kn, kinds).plate);
       const frames = spec.frames.map((fs_, i) => {
         let b;
         try { b = buildFrame(fs_, { kindName: kn, kinds, sx: k.sx, floor }) } catch (e) { throw new Error(`${spec.name}#${i} (${kn}): ${e.message}`) }
@@ -87,7 +89,7 @@ function buildLab(D) {
       });
       built[spec.name] = frames;
       labRows.push({ name: spec.name, frames: frames.map((f) => f.plate) });
-      bottoms[spec.name] = source(spec.frames[0].src, kn, kinds).bottom;
+      bottoms[spec.name] = floor + 1; /* walk and idle_sit stand on the row under their lowest pixel; so does every lab row */
     }
     out.frames[kn] = built;
     out.sheets[kn] = assemble(baseSheet(k), labRows);

@@ -29,7 +29,8 @@ class AnimTableTest {
     fun adultRowsAreTheWebsInOrderWithSameFramesFpsAndFeet() {
         val rows = webRows(web.getJSONObject("anims"), web.getJSONArray("animOrder"))
         assertEquals(28, rows.size)
-        assertEquals(rows.map { it.first }, table.adult.map { it.name })
+        // the page's 28 rows first and unchanged; the lab rows (LabArtTest) follow them
+        assertEquals(rows.map { it.first }, table.adult.take(rows.size).map { it.name })
         for ((i, pair) in rows.withIndex()) {
             val (name, a) = pair
             val got = table.adult[i]
@@ -75,7 +76,8 @@ class AnimTableTest {
 
     @Test
     fun namesAreUniqueAndLookedUpByName() {
-        assertEquals(32, table.names.size)
+        // the page's 28 rows, the 12 lab rows (LabArtTest) and the 4 depth rows
+        assertEquals(44, table.names.size)
         assertEquals(table.names.toSet().size, table.names.size)
         assertEquals(7.0, table["idle_sit"]!!.fps, 0.0)
         assertTrue(table.isDepth("sniff"))

@@ -1,6 +1,7 @@
 # Cat engine: native 2.5D rewrite (plan)
 
 Status: plan, not started. Owner decisions in this document are marked **Decided**; the rest are proposals to confirm.
+Art lab (built, `PET_ART_LAB.md`): a toolchain (`tools/pet_art`) that makes new frames from the cat's own frames, and twelve new rows for every coat and kitten stage: a three-part jump (section 4.4), a turn with a body dip and the front view (4.3), the toy pickup set (reach and bite, carry walk with a mouth anchor per frame, head-flick toss), the waking yawn and head shake, a head-bump, grooming another cat and a nose touch, plus three pair poses (snuggle, groom, greet) as two coordinated singles with an offset table. Native ships them (`Clips`, `LabTable`); engine use is CT4/CT5.
 Source of facts about today's system: the as-built survey (kept beside this plan as `PET_AS_BUILT.md`).
 
 ## 1. What the owner asked for
