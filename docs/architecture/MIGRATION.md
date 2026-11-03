@@ -407,6 +407,20 @@ Native presentation, web authority for data and for the one saved field. The Sho
 - **Rollout.** Behind Food's existing native switch; with it off, or on an older app or page, nothing changes. Rollback is the same switch.
 - **Hybrid dependency.** Saving stays on the page until a logic-phase cutover; the screen's quantities, "already own" choices, removed rows and picked recipes are this screen's own and not saved.
 - **Evidence.** `native-shopping.test.js` (29 checks), `native-handover-sim.test.js 10`, unit tests `WalmartCartLinkBuilderTest`, `WalmartProductMatchingTest`, `GroceryListBuilderTest`, `WalmartCartLauncherTest`, `ShoppingProjectionDecoderTest`, `ShoppingStateTest`, screenshots `ShoppingScreenshotTest` and `ShoppingLargeTextScreenshotTest` (new images only). On the phone: `docs/specs/WALMART_CART_TEST_CHECKLIST.md`.
+## Cat brain, phase CB1: the brain core (Native API 60)
+
+Web authority, nothing new on screen. The native cat brain's core (docs/specs/CAT_BRAIN_PLAN.md section 1) in `feature/pet/brain`, pure Kotlin and headless, behind the CB0 `Brain` interface: drives, mood, persona, scheduler, selector, runner, place book, explain ring and the activities sleep, waking routine, loaf, groom, wander, window watch, parkour visit, eat, beg, scratch and knead, plus `CatBody.tone(v, a)` (neutral leaves the body bitwise as it was). It runs in the day viewer and the tests only; CB2 connects it to the screens and the page. No bridge shape, page code, setting or saved field changes.
+
+| Part | Where | What |
+|---|---|---|
+| Brain | `feature/pet/brain` | `CatWorld` (the `Brain`), `CatMind`, `ActivityRunner`, `Selector`, `Drives`, `Mood`, `Persona`, `Schedule`, `Spots`/`SpotBook`, `ExplainRing`, `Executor` (live body or fast), `BrainTuning`, the activity files and `ActivityRegistry` |
+| Body | `feature/pet/body/BodyTone.kt`, `CatBody.tone`, `Locomotion.pace` | the mood as ear lean, tail lift, walk pace and breath depth on the existing springs |
+| Days | `docs/specs/CAT_BRAIN_DAYS.md` | six simulated days (lazy, playful, shy, kitten, weak, two cats) and the assessment and knobs |
+
+- **Rollout.** Nothing to switch: no screen creates the world yet.
+- **Evidence.** Unit tests `BrainCoreTest`, `BrainDayTest`, `BrainReplayTest`, `PersonaMixTest`, `BrainSoakTest`, `BrainGoldenTest` (three new traces under `pet-traces/brain-*`), `CatDayViewerTest`, `BodyToneTest`; `HeadlessCheckTest` and every body golden unchanged. No screenshot changed.
+- **Rollback.** Nothing to roll back on screen; the package can be left unused.
+
 ## Cat brain, phase CB0: the world contract and its harness (Native API 58)
 
 Web authority, nothing new on screen. The contract the native cat brain (docs/specs/CAT_BRAIN_PLAN.md) is built on: the page keeps the cats' identity and care economics and stays the only writer of the save; native will own behaviour and hand the page an opaque, versioned world blob to store.

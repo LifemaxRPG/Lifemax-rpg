@@ -104,6 +104,7 @@ class CatBody(
     private val reactions = Reactions(springs, ears, tail, whiskers, attention)
     private val idleLife = IdleLife(Rng.derive(seed, SALT_IDLE), springs, ears, attention)
     private val queue = PlanQueue()
+    private val tone = BodyTone()
 
     private var mode = Mode.IDLE
     private var clock = 0.0
@@ -197,6 +198,15 @@ class CatBody(
     fun setAffect(ear: EarState, tail: TailState) {
         earState = ear
         tailState = tail
+    }
+
+    /**
+     * The brain's mood as a continuous tone on the springs (see [BodyTone]): [valence] and
+     * [arousal] in -1..1. Neutral (0, 0) leaves the body exactly as it was.
+     */
+    fun tone(valence: Float, arousal: Float) {
+        tone.set(valence, arousal)
+        loco.pace = tone.pace
     }
 
     /** Look at room position ([x], [z]); the head, eyes and ears follow after a short delay. */
@@ -504,9 +514,9 @@ class CatBody(
         reactions.update(dt)
         val ear = reactions.earOverride ?: earState
         val tailPose = reactions.tailOverride ?: tailState
-        ears.update(dt, ear, attention.x, speedShare)
+        ears.update(dt, ear, tone.ear(attention.x), speedShare)
         whiskers.update(dt, ears.flat, speedShare, Mathx.clamp(attention.x, 0f, 1f))
-        tail.update(dt, tailPose, kin.ax * turn.dir * Tuning.Walk.TAIL_INERTIA)
+        tail.update(dt, tailPose, tone.tail(kin.ax * turn.dir * Tuning.Walk.TAIL_INERTIA))
         breathing.update(dt, player.clip.posture == Posture.LIE)
         idleLife.update(dt, isCalm(), player.clip.posture == Posture.LIE)
     }
@@ -545,7 +555,7 @@ class CatBody(
         p.earFlat = ears.flat
         for (i in 0 until Tail.SEGMENTS) p.tail[i] = tail.bend(i)
         p.whisker = whiskers.offset
-        p.breath = breathing.scale
+        p.breath = tone.breath(breathing.scale)
         p.lookX = attention.x
         p.lookY = attention.y
         p.lean = attention.leanRadians
