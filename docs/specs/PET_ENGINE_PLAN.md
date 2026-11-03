@@ -62,6 +62,31 @@ Everything below is native, time-based, deterministic.
 7. **Reactions.** Startle, curiosity, slow blink, hungry begging, purr vibration: short reaction clips layered on top of whatever the cat is doing.
 8. **Idle life.** Between plans a cat is never frozen: weight shifts, ear flicks, glances. Seeded so two cats differ.
 
+### 4.1 Parkour (built, Native API 53)
+
+The owner: "he should have to jump up on the counter first and then onto the refrigerator; they all need a little bit different depth." The hand-wired surface graph (`RoutePlanner`, a port of `petRoute`) is gone. Cats now jump by **capability**; every route, every jump and the table below come from geometry plus a cat's `JumpCapability`.
+
+- **Capability** (`body/JumpCapability.kt`, numbers in `Tuning.Parkour`): ballistics with gravity 520 px/s^2. A standing adult reaches an apex 68 px above the take-off feet (rise 64 after the 4 px clearance) at up to 60 px/s sideways; a run-up adds apex +3 and speed up to +86 (ground speed after `sqrt(2*220*d)`, capped 96); furthest flight 56 px, furthest safe drop 84 px. Kitten stage 0..5 scales apex and drop by `Growth.scale` (0.6..0.93) and reach by its root; a weak (hungry) cat has 60 percent of everything and no run-up; the rig's `bl`/`lg` morphs, tiredness and mood are hooks (`CatBody.bodyLength/legLength/fatigue/mood`, `HouseCat`). The room's rungs fit it: sill 58 up (fits), counter 41, tree top 68 from the floor (does not fit; mid 32 then top 36), fridge top 101 from the floor (does not fit) but 60 from the counter (fits, at 90 percent of the cat's best).
+- **Surfaces**: the web's twelve plus `fridge` (row 31, x 214..238), `bookcase` (row 33, x 108..136) and `sidetable` (row 105, x -22..-12; a lamp and the rugs are not surfaces). Their pieces carry the new keys in the room manifest (`tools/pet_room_cut_spec.js`, the only change there). Solids a flight must clear (`Solids.kt`: sofa, side table, bookcase, tree slabs and post, fridge, counter) are the manifest's piece boxes; a leap to or from a surface the piece carries ignores it. No flight crosses a room wall (x -4, 196). That is why the living-room sill is reached over the sofa and the kitchen sill over the counter.
+- **Planner** (`body/ParkourPlanner.kt`): every pair of surfaces is a possible hop; it is an edge when a flight within the limits links a take-off and a landing point and clears the solids. Edge kinds: WALK (same surface), STEP (a few px, no crouch), LEAP (up or across a gap), DROP (controlled fall); a route is a CLIMB-CHAIN of them, Dijkstra over the surfaces with cost = walk + run-up + flight + settle + 0.7 s per hop + 3 s x effort^2 (x3 for a weak cat), a walk between two leaps costing 4x so chains land where the next run-up starts, and a seeded 0.0007 jitter as tie-break. `CatBody.routeTo` returns the steps (empty if the cat cannot get there; `parkourRoute` tells the cases apart).
+- **Choreography** (`body/LeapDirector.kt`, step `PlanStep.Leap`; the page's `Hop` and old `Jump` are untouched): `turn` row when the cat must face the target; for a hard jump (effort >= 0.55) a pause with a look up (head glance), and near the limit (>= 0.85) a measuring wiggle; run-up if planned (no crouch, push at speed), else `jump_up` crouch; the arc is exact ballistics (`y = y0 - v0 t + g t^2/2`, flight time and apex from the plan, ends exactly on the target), `jump_air` rising then falling frame, `jump_land` squash. Back to back, the landing is cut to 0.1 s and the next leap starts from it (planner-made chains: floor, counter, fridge). Failed jumps cannot happen: only feasible jumps are planned.
+- **House**: new autopilot moves FRIDGE, BOOKCASE and WINDOW with dwell (sit, loaf, wash, watch) on top, coming back the way they went. Two cats never land on the same single-occupancy surface, at the top or on the way (`Claim.passes`; the sofa keeps its 40 px rule).
+
+Reachability (`ParkourReport`, recorded as `pet-traces/parkour-reach.txt`; floor to goal, `>` between hops):
+
+| cat | apex / reach | fridge | counter | sill | tree top | bookcase | living sill | kitchen sill |
+|---|---|---|---|---|---|---|---|---|
+| adult | 68 / 60 | counter, fridge | counter | direct | mid, top | sill, bookcase | couch, lsill | counter, ksill |
+| kitten 0 | 40.8 / 46 | cannot | box, counter | mid, top, bookcase, sill | mid, top | mid, top, bookcase | couch, lsill | box, counter, ksill |
+| kitten 1..3 | 45..54 | cannot | counter | mid, top, bookcase, sill | mid, top | mid, top, bookcase | couch, lsill | counter, ksill |
+| kitten 4 | 58.9 / 56 | cannot | counter | bed, sill | mid, top | bed, sill, bookcase | couch, lsill | counter, ksill |
+| kitten 5 | 63.5 / 58 | counter, fridge | counter | direct | mid, top | sill, bookcase | couch, lsill | counter, ksill |
+| weak adult | 40.8 / 36 | cannot | cannot | cannot | mid, top | mid, top, bookcase | couch, lsill | cannot |
+
+All direct edges for an adult (rise in px, effort = share of its best): floor to bed 4, mid 32, couch 23, counter 41, sill 58 (0.87), box, pouf, cushion, side table; bed to sill 54; sill to bookcase 41 (run-up); mid to top 36; top to bookcase 31; couch to lsill 36 and side table; counter to ksill 17 and fridge 60 (0.90, run-up 10); box to counter 38; drops: counter to floor 41, fridge to counter 60, top to floor 68, bookcase to sill 41 and top 31, sill to floor 58, couch, mid, lsill to their stand-ins. Not there: floor to fridge, top, lsill, ksill or bookcase; fridge or bookcase to the floor (101 and 99 px, over the safe drop). The full per-cat edge list (about 45 edges each) is the golden.
+
+Gaps in the art (not invented): a wall-kick or scramble frame for the near-limit jumps (the cat just flies), a stretch-reach from a crouch for the fridge edge, a paws-on-edge pull-up, a land-and-skid for drops.
+
 ## 5. 2.5D (depth with restraint)
 
 The camera stays fixed. Depth comes from layers, light and a tiny sway, not from a 3D model.

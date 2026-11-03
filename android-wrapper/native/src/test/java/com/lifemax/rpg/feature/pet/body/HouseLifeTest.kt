@@ -119,7 +119,7 @@ class HouseLifeTest {
     fun aCatDoesEverythingACatDoesInTheHouse() {
         val d = run(listOf(ted, lily), 1500)
         for (clip in
-            listOf("idle_sit", "walk", "groom", "stretch", "loaf", "sleep", "eat", "leap")) {
+            listOf("idle_sit", "walk", "groom", "stretch", "loaf", "sleep", "eat", "jump_air")) {
             assertTrue("never showed $clip: ${d.clips}", clip in d.clips)
         }
         val moves = d.moves.flatten().toSet()
@@ -179,5 +179,56 @@ class HouseLifeTest {
             assertTrue("seed $seed: ${a.x} and ${b.x}", Math.abs(a.x - b.x) >= 50f)
             assertEquals(SurfaceId.FLOOR, a.surface)
         }
+    }
+
+    // ---------------------------------------------------------------- parkour
+
+    /** Surfaces two cats must not share: every raised one but the sofa. */
+    private val single = SurfaceId.entries.filter { it != SurfaceId.FLOOR && it != SurfaceId.COUCH }
+
+    @Test
+    fun twoCatsNeverStandOnTheSameSinglePerchEvenWithParkourGoals() {
+        val perched = HashSet<SurfaceId>()
+        for (seed in 1..8) {
+            val house = HouseLife(listOf(HouseCat(seed, false), HouseCat(seed * 31 + 7, false)))
+            repeat(60 * 1500) {
+                house.step(1f / 60f)
+                val a = house.bodies[0].pose.surface
+                val b = house.bodies[1].pose.surface
+                if (a in single) perched.add(a)
+                if (b in single) perched.add(b)
+                if (a == b && a in single) {
+                    error("seed $seed: both cats on $a at frame $it")
+                }
+            }
+        }
+        // the parkour places were used by someone
+        for (up in listOf(SurfaceId.FRIDGE, SurfaceId.BOOKCASE, SurfaceId.COUNTER)) {
+            assertTrue("no cat ever stood on $up: $perched", up in perched)
+        }
+    }
+
+    @Test
+    fun aSmallKittenNeverReachesTheFridgeAndAWeakCatStaysLow() {
+        val seen = HashSet<SurfaceId>()
+        val weakSeen = HashSet<SurfaceId>()
+        for (seed in 1..6) {
+            val kitten = HouseLife(listOf(HouseCat(seed, false, growthScale = 0.6f)))
+            val weak = HouseLife(listOf(HouseCat(seed, true)))
+            repeat(60 * 1200) {
+                kitten.step(1f / 60f)
+                weak.step(1f / 60f)
+                seen.add(kitten.bodies[0].pose.surface)
+                weakSeen.add(weak.bodies[0].pose.surface)
+            }
+        }
+        for (never in listOf(SurfaceId.FRIDGE)) {
+            assertTrue("a small kitten reached $never", never !in seen)
+        }
+        for (never in
+            listOf(SurfaceId.FRIDGE, SurfaceId.SILL, SurfaceId.COUNTER, SurfaceId.KSILL)) {
+            assertTrue("a weak cat reached $never", never !in weakSeen)
+        }
+        assertTrue("a weak cat stays low but is not frozen: $weakSeen", weakSeen.size >= 3)
     }
 }

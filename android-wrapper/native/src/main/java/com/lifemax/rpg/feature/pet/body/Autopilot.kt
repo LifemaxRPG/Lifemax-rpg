@@ -62,6 +62,15 @@ internal constructor(
 
         /** House only: watch from the window sill. */
         SILL,
+
+        /** House only, parkour: the counter and then the fridge top. */
+        FRIDGE,
+
+        /** House only, parkour: the top of the bookcase. */
+        BOOKCASE,
+
+        /** House only, parkour: the living room or kitchen window sill. */
+        WINDOW,
     }
 
     private val rng = Rng.derive(seed, SALT)
@@ -176,6 +185,9 @@ internal constructor(
         weights[Move.COUCH.ordinal] = Tuning.Autopilot.W_COUCH
         weights[Move.TREE.ordinal] = Tuning.Autopilot.W_TREE / lazy
         weights[Move.SILL.ordinal] = Tuning.Autopilot.W_SILL / lazy
+        weights[Move.FRIDGE.ordinal] = Tuning.Autopilot.W_FRIDGE / lazy
+        weights[Move.BOOKCASE.ordinal] = Tuning.Autopilot.W_BOOKCASE / lazy
+        weights[Move.WINDOW.ordinal] = Tuning.Autopilot.W_WINDOW / lazy
     }
 
     // ---------------------------------------------------------------- doing
@@ -209,14 +221,20 @@ internal constructor(
     private fun excursion(body: CatBody, move: Move): List<PlanStep> {
         val p = places ?: return emptyList()
         val x = body.pose.x
+        // A cat left up on something (an interrupted plan) climbs down before anything else.
+        if (body.pose.surface != SurfaceId.FLOOR) return body.routeTo(SurfaceId.FLOOR, x)
         val mate = house?.mate?.claim
+        val cap = body.capability
         return when (move) {
             Move.TRAVEL -> p.travel(x, mate, claim)
             Move.EAT -> p.eat(x, mate, claim)
-            Move.BED -> p.bed(x, mate, claim).also { if (it.isNotEmpty()) awake = 0f }
-            Move.COUCH -> p.couch(x, mate, claim)
-            Move.TREE -> p.tree(x, mate, claim)
-            Move.SILL -> p.sill(x, mate, claim)
+            Move.BED -> p.bed(x, mate, claim, cap).also { if (it.isNotEmpty()) awake = 0f }
+            Move.COUCH -> p.couch(x, mate, claim, cap)
+            Move.TREE -> p.tree(x, mate, claim, cap)
+            Move.SILL -> p.sill(x, mate, claim, cap)
+            Move.FRIDGE -> p.fridge(x, mate, claim, cap)
+            Move.BOOKCASE -> p.bookcase(x, mate, claim, cap)
+            Move.WINDOW -> p.window(x, mate, claim, cap)
             else -> emptyList()
         }
     }

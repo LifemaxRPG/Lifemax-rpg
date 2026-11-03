@@ -1,0 +1,407 @@
+== adult: apex 68.0 (+3.0 run), reach 60.0 (+86.4 run), max drop 84.0, max rise 67.0
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > sill
+  floor -> counter: floor > counter
+  floor -> fridge: floor > counter > fridge
+  floor -> bookcase: floor > sill > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.17
+    floor -> sill  LEAP rise 58  off 76  on 73  run 0  apex 62  0.61s  effort 0.87
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.51
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.38
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.63
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.25
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.28
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.20
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.44
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.11
+    bed -> sill  LEAP rise 54  off 36  on 41  run 0  apex 58  0.60s  effort 0.82
+    sill -> floor  DROP rise -58  off 57  on 57  run 0  apex 6  0.65s  effort 0.69
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.64
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.63
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.38
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.56
+    top -> floor  DROP rise -68  off 156  on 192  run 0  apex 6  0.69s  effort 0.81
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.43
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.49
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.27
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.56
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 6  0.46s  effort 0.36
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.25
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 0  apex 43  0.80s  effort 0.61
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.49
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.30
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.45
+    counter -> fridge  LEAP rise 60  off 288  on 235  run 10  apex 64  0.62s  effort 0.90
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.43
+    lsill -> sidetable  DROP rise -32  off -74  on -19  run 0  apex 52  1.02s  effort 0.74
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.20
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.11
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 23  0.44s  effort 0.37
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.19
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.35
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.11
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.59
+    fridge -> counter  DROP rise -60  off 236  on 289  run 0  apex 36  0.98s  effort 0.71
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 13  0.69s  effort 0.49
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.37
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.32
+    sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 39  0.80s  effort 0.55
+== kitten0: apex 40.8 (+1.8 run), reach 46.5 (+86.4 run), max drop 50.4, max rise 38.6
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > mid > top > bookcase > sill
+  floor -> counter: floor > box > counter
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > box > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.28
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.85
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.63
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.41
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.46
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.33
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.73
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.19
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.63
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.94
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.71
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.82
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.46
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.94
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 13  0.57s  effort 0.36
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.42
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 10  apex 15  0.45s  effort 0.72
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.81
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.49
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.75
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.71
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.34
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.19
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 10  apex 22  0.41s  effort 0.52
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.31
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.59
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.19
+    box -> counter  LEAP rise 38  off 290  on 290  run 10  apex 42  0.53s  effort 0.99
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 32  0.88s  effort 0.81
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.62
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.54
+== kitten1: apex 45.3 (+2.0 run), reach 49.0 (+86.4 run), max drop 56.0, max rise 43.3
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > mid > top > bookcase > sill
+  floor -> counter: floor > counter
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.25
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.76
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.57
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.95
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.37
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.41
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.30
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.65
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.17
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.96
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.95
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.57
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.85
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.64
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.74
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.41
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.85
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 11  0.54s  effort 0.33
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.37
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 10  apex 15  0.44s  effort 0.72
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.73
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.44
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.68
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.64
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.30
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.17
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 29  0.54s  effort 0.62
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.28
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.53
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.17
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.89
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 28  0.84s  effort 0.73
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.55
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.48
+== kitten2: apex 49.9 (+2.2 run), reach 51.4 (+86.4 run), max drop 61.6, max rise 48.1
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > mid > top > bookcase > sill
+  floor -> counter: floor > counter
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.23
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.69
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.52
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.86
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.33
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.38
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.27
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.60
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.15
+    sill -> floor  DROP rise -58  off 57  on 57  run 0  apex 6  0.65s  effort 0.94
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.88
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.86
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.52
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.77
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.58
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.67
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.37
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.77
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 10  0.52s  effort 0.34
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.34
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 10  apex 14  0.43s  effort 0.73
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.67
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.40
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.62
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.58
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.28
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.15
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 28  0.52s  effort 0.53
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.25
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.48
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.15
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.81
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 24  0.80s  effort 0.67
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.50
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.44
+    sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 44  0.84s  effort 0.84
+== kitten3: apex 54.4 (+2.4 run), reach 53.7 (+86.4 run), max drop 67.2, max rise 52.8
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > mid > top > bookcase > sill
+  floor -> counter: floor > counter
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.21
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.63
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.48
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.79
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.31
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.35
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.25
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.55
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.14
+    sill -> floor  DROP rise -58  off 57  on 57  run 0  apex 6  0.65s  effort 0.86
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.80
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.79
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.48
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.70
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.54
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.62
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.34
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.70
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 8  0.50s  effort 0.34
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.31
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 10  apex 14  0.42s  effort 0.73
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.61
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.37
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.57
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.54
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.25
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.14
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 26  0.50s  effort 0.46
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.23
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.44
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.14
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.74
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 20  0.77s  effort 0.61
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.46
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.40
+    sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 50  0.89s  effort 0.87
+== kitten4: apex 58.9 (+2.6 run), reach 55.9 (+86.4 run), max drop 72.8, max rise 57.5
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > bed > sill
+  floor -> counter: floor > counter
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.20
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.59
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.44
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.73
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.28
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.32
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.23
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.50
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.13
+    bed -> sill  LEAP rise 54  off 36  on 41  run 0  apex 58  0.60s  effort 0.94
+    sill -> floor  DROP rise -58  off 57  on 57  run 0  apex 6  0.65s  effort 0.80
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.74
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.73
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.44
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.65
+    top -> floor  DROP rise -68  off 156  on 192  run 0  apex 8  0.72s  effort 0.93
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.49
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.57
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.32
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.65
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 7  0.48s  effort 0.35
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.29
+    couch -> sidetable  LEAP rise 4  off -62  on -17  run 10  apex 14  0.43s  effort 0.73
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.56
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.34
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.52
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.49
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.23
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.13
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 25  0.48s  effort 0.41
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.21
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.41
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.13
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.68
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 18  0.74s  effort 0.56
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.43
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.37
+    sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 46  0.86s  effort 0.74
+== kitten5: apex 63.5 (+2.8 run), reach 58.0 (+86.4 run), max drop 78.4, max rise 62.3
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: floor > sill
+  floor -> counter: floor > counter
+  floor -> fridge: floor > counter > fridge
+  floor -> bookcase: floor > sill > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: floor > counter > ksill
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.18
+    floor -> sill  LEAP rise 58  off 76  on 73  run 0  apex 62  0.61s  effort 0.94
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.54
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.41
+    floor -> counter  LEAP rise 41  off 286  on 289  run 0  apex 45  0.54s  effort 0.68
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.26
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.30
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.21
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.47
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.12
+    bed -> sill  LEAP rise 54  off 36  on 41  run 0  apex 58  0.60s  effort 0.88
+    sill -> floor  DROP rise -58  off 57  on 57  run 0  apex 6  0.65s  effort 0.74
+    sill -> bed  DROP rise -54  off 40  on 36  run 0  apex 6  0.63s  effort 0.69
+    sill -> bookcase  LEAP rise 41  off 74  on 111  run 10  apex 45  0.54s  effort 0.68
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.41
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.60
+    top -> floor  DROP rise -68  off 156  on 192  run 0  apex 6  0.69s  effort 0.87
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.46
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 35  0.49s  effort 0.53
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.29
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.60
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 6  0.46s  effort 0.36
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.27
+    couch -> sidetable  LEAP rise 4  off -62  on -19  run 0  apex 46  0.82s  effort 0.70
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.52
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.32
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.48
+    counter -> fridge  LEAP rise 60  off 288  on 235  run 10  apex 64  0.62s  effort 0.97
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.46
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.22
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.12
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 24  0.46s  effort 0.37
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.20
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.38
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.12
+    box -> counter  LEAP rise 38  off 290  on 290  run 0  apex 42  0.53s  effort 0.63
+    fridge -> counter  DROP rise -60  off 236  on 289  run 0  apex 40  1.02s  effort 0.77
+    bookcase -> sill  DROP rise -41  off 110  on 73  run 0  apex 15  0.71s  effort 0.52
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 6  0.53s  effort 0.40
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.34
+    sidetable -> couch  LEAP rise -4  off -20  on -63  run 0  apex 42  0.82s  effort 0.64
+== weak adult: apex 40.8 (+1.8 run), reach 36.0 (+0.0 run), max drop 50.4, max rise 36.8
+  floor -> bed: floor > bed
+  floor -> couch: floor > couch
+  floor -> mid: floor > mid
+  floor -> top: floor > mid > top
+  floor -> sill: cannot
+  floor -> counter: cannot
+  floor -> fridge: cannot
+  floor -> bookcase: floor > mid > top > bookcase
+  floor -> lsill: floor > couch > lsill
+  floor -> ksill: cannot
+  floor -> sidetable: floor > sidetable
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.28
+    floor -> mid  LEAP rise 32  off 146  on 149  run 0  apex 36  0.50s  effort 0.85
+    floor -> couch  LEAP rise 23  off -60  on -63  run 0  apex 27  0.45s  effort 0.63
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.41
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.46
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.33
+    floor -> sidetable  LEAP rise 27  off -12  on -15  run 0  apex 31  0.47s  effort 0.73
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.19
+    mid -> floor  DROP rise -32  off 152  on 152  run 0  apex 6  0.53s  effort 0.63
+    mid -> top  LEAP rise 36  off 152  on 153  run 0  apex 40  0.52s  effort 0.94
+    top -> mid  DROP rise -36  off 154  on 154  run 0  apex 6  0.55s  effort 0.71
+    top -> bookcase  LEAP rise 31  off 152  on 133  run 0  apex 41  0.59s  effort 0.95
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.46
+    couch -> lsill  LEAP rise 36  off -98  on -98  run 0  apex 40  0.52s  effort 0.94
+    couch -> pouf  DROP rise -18  off -62  on -38  run 0  apex 27  0.74s  effort 0.90
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.42
+    counter -> floor  DROP rise -41  off 313  on 313  run 0  apex 6  0.58s  effort 0.81
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.49
+    counter -> box  DROP rise -38  off 302  on 299  run 0  apex 6  0.56s  effort 0.75
+    lsill -> couch  DROP rise -36  off -98  on -98  run 0  apex 6  0.55s  effort 0.71
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.34
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.19
+    pouf -> couch  LEAP rise 18  off -39  on -63  run 0  apex 39  0.67s  effort 1.00
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.31
+    cushion -> couch  LEAP rise 21  off -120  on -120  run 0  apex 25  0.43s  effort 0.59
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.19
+    bookcase -> top  DROP rise -31  off 134  on 153  run 0  apex 10  0.59s  effort 0.90
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.54
+== weak kitten0: apex 24.5 (+1.1 run), reach 27.9 (+0.0 run), max drop 30.2, max rise 20.5
+  floor -> bed: floor > bed
+  floor -> couch: cannot
+  floor -> mid: cannot
+  floor -> top: cannot
+  floor -> sill: cannot
+  floor -> counter: cannot
+  floor -> fridge: cannot
+  floor -> bookcase: cannot
+  floor -> lsill: cannot
+  floor -> ksill: cannot
+  floor -> sidetable: cannot
+    floor -> bed  STEP rise 4  off 36  on 36  run 0  apex 12  0.39s  effort 0.47
+    floor -> pouf  STEP rise 9  off -27  on -30  run 0  apex 17  0.43s  effort 0.68
+    floor -> cushion  LEAP rise 16  off -106  on -109  run 0  apex 20  0.40s  effort 0.77
+    floor -> box  STEP rise 6  off 278  on 281  run 0  apex 14  0.41s  effort 0.55
+    bed -> floor  STEP rise -4  off 36  on 36  run 0  apex 8  0.39s  effort 0.31
+    couch -> floor  DROP rise -23  off -98  on -98  run 0  apex 6  0.49s  effort 0.76
+    couch -> cushion  DROP rise -21  off -106  on -109  run 0  apex 6  0.47s  effort 0.69
+    counter -> ksill  LEAP rise 17  off 313  on 313  run 0  apex 21  0.41s  effort 0.82
+    ksill -> counter  DROP rise -17  off 321  on 321  run 0  apex 6  0.45s  effort 0.56
+    pouf -> floor  STEP rise -9  off -34  on -34  run 0  apex 8  0.43s  effort 0.31
+    cushion -> floor  DROP rise -16  off -120  on -120  run 0  apex 6  0.44s  effort 0.52
+    box -> floor  STEP rise -6  off 290  on 290  run 0  apex 8  0.41s  effort 0.31
+    sidetable -> floor  DROP rise -27  off -17  on -17  run 0  apex 6  0.51s  effort 0.89

@@ -16,6 +16,11 @@ enum class SurfaceId(val key: String) {
     POUF("pouf"),
     CUSHION("cushion"),
     BOX("box"),
+
+    /** Parkour surfaces (not in the web room): the fridge top, the bookcase top, the side table. */
+    FRIDGE("fridge"),
+    BOOKCASE("bookcase"),
+    TABLE("sidetable"),
 }
 
 /**
@@ -55,6 +60,8 @@ object World {
     /** The box is entered and left this much nearer the viewer than its own depth. */
     const val BOX_FRONT_Z = 9f
 
+    private const val LIVING_END = -4f
+    private const val KITCHEN_START = 196f
     private const val SCALE_AT_BACK_PCT = 55
     private const val SCALE_RANGE_PCT = 130f
     private const val WALK_SPEED_BASE_PCT = 70
@@ -93,6 +100,9 @@ object World {
             prop(SurfaceId.POUF, -34f, 45f, 5f, 12f),
             prop(SurfaceId.CUSHION, -120f, 66f, 7f, 18f),
             prop(SurfaceId.BOX, 290f, 42f, 3.6f, 20f),
+            flat(SurfaceId.FRIDGE, 31f, 214f, 238f),
+            flat(SurfaceId.BOOKCASE, 33f, 108f, 136f),
+            flat(SurfaceId.TABLE, 105f, -22f, -12f),
         )
 
     /** The surface record for [id]. */
@@ -112,6 +122,11 @@ object World {
     fun walkSpeedPct(z: Float): Int =
         WALK_SPEED_BASE_PCT +
             floor(Mathx.clamp(z, 0f, MAX_Z) * WALK_SPEED_Z_GAIN_PCT / 100f).toInt()
+
+    /**
+     * The room an x is in: 0 living (x < -4), 1 bedroom (to 196), 2 kitchen (the web room split).
+     */
+    fun roomOf(x: Float): Int = if (x < LIVING_END) 0 else if (x < KITCHEN_START) 1 else 2
 
     /** Keep an x inside the walkable house (petClampHouse). */
     fun clampHouse(x: Float): Float = Mathx.clamp(x, HOUSE_MIN_X, HOUSE_MAX_X)

@@ -11,6 +11,22 @@ sealed class PlanStep {
     /** Jump to [surface], landing at [x]. The cat turns to face the jump first. */
     data class Hop(val surface: SurfaceId, val x: Float) : PlanStep()
 
+    /**
+     * A planned leap (see [ParkourPlanner]): jump to [surface], landing at [x], taking off from
+     * [takeOffX]. A cat standing at the take-off point jumps from rest; one that stands further
+     * back (the planner's Walk put it there) runs up to it and jumps at speed. [apex] is the height
+     * of the flight above the take-off feet (0 lets the body pick an easy one) and [effort] (0..1)
+     * how much of the cat's best the jump takes: a hard one is met with a pause, a look and a
+     * measuring wiggle. Only the planner makes these: the page's plans use [Hop].
+     */
+    data class Leap(
+        val surface: SurfaceId,
+        val x: Float,
+        val takeOffX: Float = x,
+        val apex: Float = 0f,
+        val effort: Float = 0f,
+    ) : PlanStep()
+
     /** Play the animation row named [anim] for [seconds]. */
     data class Act(val anim: String, val seconds: Float) : PlanStep()
 
@@ -113,6 +129,10 @@ internal class PlanQueue {
     /** True when [current] is the last step queued so far. */
     val isOnLast: Boolean
         get() = index == steps.size - 1
+
+    /** True when the step after [current] is a leap: the current leap lands into it. */
+    val nextIsLeap: Boolean
+        get() = index + 1 < steps.size && steps[index + 1] is PlanStep.Leap
 
     val hasWork: Boolean
         get() = index < steps.size

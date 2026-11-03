@@ -108,6 +108,183 @@ object Tuning {
         const val APEX_FRAME_SWITCH = 0.45f
     }
 
+    /**
+     * Parkour: what a cat can jump (see [JumpCapability]), how the planner weighs a route
+     * ([ParkourPlanner]) and how a leap is acted out ([LeapDirector]). Heights and reaches are art
+     * pixels at the art depth. The room's real rungs, for scale (feet rows, floor 132): bed 128,
+     * cat tree mid 100 and top 64, sofa seat 109, counter 91, window sills 73 and 74, fridge top
+     * 31, bookcase top 33, side table 105. A bed, pouf or box is a step; the sofa is 23 up, the
+     * counter 41, a window sill 58, the tree top 68 and the fridge top 101.
+     */
+    object Parkour {
+        /**
+         * Downward acceleration of a flight, px/s^2: snappy but floaty enough to read as a leap.
+         */
+        const val GRAVITY = 520f
+
+        // ---- the adult cat
+
+        /**
+         * Highest apex above the take-off feet from a standing start (sill 58 fits, tree top 68
+         * not).
+         */
+        const val APEX_STAND = 68f
+
+        /**
+         * Extra apex a full-speed run-up adds: small on purpose, 68 + 3 stays under 68 + CLEARANCE.
+         */
+        const val APEX_RUN_BONUS = 3f
+
+        /** Fastest sideways speed of a standing take-off, px/s. */
+        const val VX_STAND = 60f
+
+        /** Share of the ground speed at take-off that carries into the flight. */
+        const val RUN_CARRY = 0.9f
+
+        /**
+         * Furthest sideways distance of any flight, take-off to landing: a gap of two body lengths.
+         */
+        const val REACH_MAX = 56f
+
+        /**
+         * Furthest drop landed safely: counter from the fridge (60) yes, floor from it (101) no.
+         */
+        const val MAX_DROP = 84f
+
+        // ---- growing up and being weak
+
+        /** Kitten stage 0..5 body scale (growth.json `scale`; a test pins them to Growth). */
+        val STAGE_SCALE = floatArrayOf(0.6f, 0.6667f, 0.7333f, 0.8f, 0.8667f, 0.9333f)
+
+        /** Apex and drop scale with body size to this power: a small kitten jumps lower. */
+        const val SIZE_APEX_EXPONENT = 1f
+
+        /** Reach speed scales with size to this power (similar bodies: speed goes as the root). */
+        const val SIZE_VX_EXPONENT = 0.5f
+
+        /** A weak (hungry) cat's share of apex, reach and drop. */
+        const val WEAK_SHARE = 0.6f
+
+        /** A weak cat does not run up to a jump. */
+        const val WEAK_RUN_CARRY = 0f
+
+        /** Rig morph multipliers (`lg` leg length, `bl` body length) act with these exponents. */
+        const val LEG_APEX_EXPONENT = 0.8f
+        const val BODY_VX_EXPONENT = 0.4f
+        const val MORPH_MIN = 0.7f
+        const val MORPH_MAX = 1.4f
+
+        /**
+         * Tiredness (0..1) takes up to this share off apex and reach; mood (-1..1) moves it a
+         * little.
+         */
+        const val FATIGUE_LOSS = 0.25f
+        const val MOOD_GAIN = 0.05f
+
+        // ---- running start
+
+        /** Top ground speed of a run-up (the gallop's) and how fast the cat gets there. */
+        const val RUN_SPEED = 96f
+        const val RUN_ACCEL = 220f
+
+        /**
+         * A run-up shorter than the minimum is not taken (the cat stands); the maximum is the
+         * longest.
+         */
+        const val RUN_UP_MIN_PX = 10f
+        const val RUN_UP_MAX_PX = 40f
+
+        /**
+         * The planner adds a minimum run-up to a jump that takes more than this share of the
+         * best...
+         */
+        const val RUN_WHEN_EFFORT = 0.7f
+
+        /** ...when that makes it at least this much easier. */
+        const val RUN_GAIN = 0.1f
+
+        // ---- shapes of a leap
+
+        /** Feet clearance over the target surface at the top of the arc. */
+        const val CLEARANCE = 4f
+
+        /** Apex above the take-off of a drop, and of a step. */
+        const val DROP_APEX = 6f
+        const val STEP_APEX = 8f
+
+        /** A step is at most this far across and this high in the air. */
+        const val STEP_DX_MAX = 18f
+        const val STEP_APEX_MAX = 22f
+
+        /** A rise or fall up to this is a step, not a leap or a drop. */
+        const val STEP_MAX = 10f
+
+        /** Planned flights use this share of the speed limit, so a leap has airtime and an apex. */
+        const val COMFORT = 0.9f
+
+        /** Distances from take-off to landing the planner tries, nearest first. */
+        val TRY_DX = floatArrayOf(14f, 24f, 36f, 52f, 70f)
+
+        /** A landing is this far in from a surface's ends (when it is wide enough). */
+        const val LANDING_INSET = 3f
+
+        /** Arc samples checked against solids, and the margin round a solid. */
+        const val ARC_SAMPLES = 24
+        const val SOLID_MARGIN = 2f
+
+        // ---- planner costs (seconds, or seconds-equivalent)
+
+        const val HOP_COST_S = 0.7f
+
+        /**
+         * A walk between two leaps costs this many times a walk at the end: chains want no walk.
+         */
+        const val CHAIN_WALK_MUL = 4f
+        const val EFFORT_COST_S = 3f
+        const val WEAK_EFFORT_MUL = 3f
+        const val FIXED_LEAP_S = 0.9f
+        const val TIE_BREAK = 0.0007f
+
+        // ---- acting a leap out
+
+        /** A leap that uses this share of the cat's best is taken after a pause and a look up. */
+        const val HESITATE_FROM = 0.55f
+        const val HESITATE_BASE_S = 0.25f
+        const val HESITATE_PER_EFFORT_S = 0.7f
+
+        /** Near the limit the cat also measures the jump: a wiggle of the hindquarters. */
+        const val MEASURE_FROM = 0.85f
+        const val MEASURE_S = 0.4f
+        const val MEASURE_HZ = 7f
+        const val MEASURE_ROTATION = 0.05f
+        const val LOOK_UP = -0.7f
+        const val LOOK_FORWARD = 0.7f
+
+        /** The crouch before the push: standing, in a chain, and off a running start. */
+        const val CROUCH_S = 0.28f
+        const val CROUCH_CHAIN_S = 0.14f
+        const val CROUCH_RUNNING_S = 0.1f
+
+        /**
+         * Landing squash, the same in a chain, the settle on the new surface, and a step's landing.
+         */
+        const val LAND_S = 0.25f
+        const val LAND_CHAIN_S = 0.1f
+        const val SETTLE_S = 0.12f
+        const val STEP_LAND_S = 0.12f
+
+        /** Body tilt along an arc: the lab art already leans, so only a little. */
+        const val TILT = 0.06f
+
+        /** Flight progress after which the falling frame shows (a rising frame before). */
+        const val FALL_FRAME_AT = 0.5f
+
+        const val IMPACT_BASE = 0.7f
+        const val IMPACT_PER_PX_S = 0.0035f
+        const val IMPACT_MAX = 1.7f
+        const val LAUNCH_STRETCH = 0.9f
+    }
+
     /** Squash and stretch of the whole body. */
     object Squash {
         /** The most a scale may stray from 1, however many kicks pile up. */
@@ -299,6 +476,14 @@ object Tuning {
         const val W_COUCH = 0.7f
         const val W_TREE = 0.6f
         const val W_SILL = 0.4f
+
+        /**
+         * Parkour goals: the fridge top (via the counter), the bookcase top, a kitchen or
+         * living-room window sill.
+         */
+        const val W_FRIDGE = 0.35f
+        const val W_BOOKCASE = 0.3f
+        const val W_WINDOW = 0.35f
 
         /** After this long awake the pull toward a nap is at its full [NAP_GAIN]. */
         const val SLEEPY_AFTER_S = 120f

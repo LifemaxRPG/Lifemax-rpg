@@ -35,6 +35,21 @@ class CatBody(
             loco.weak = value
         }
 
+    /**
+     * Body scale for jumping: 1 grown, a kitten's `Growth.scale` (0.6 to 0.93) while it grows. With
+     * [bodyLength] and [legLength] (the rig's `bl` and `lg` morphs), [fatigue] and [mood] it sets
+     * [capability]; set them before asking for a route.
+     */
+    var growthScale = 1f
+    var bodyLength = 1f
+    var legLength = 1f
+    var fatigue = 0f
+    var mood = 0f
+
+    /** What this cat can jump right now (see [JumpCapability]). */
+    val capability: JumpCapability
+        get() = JumpCapability.of(growthScale, weak, bodyLength, legLength, fatigue, mood)
+
     /** Id of the plan being followed, or [PlanQueue.NO_PLAN]. */
     val planId: Int
         get() = queue.planId
@@ -43,9 +58,9 @@ class CatBody(
     val isIdle: Boolean
         get() = mode == Mode.IDLE && !hasPending
 
-    /** True while the cat is walking or hopping somewhere: what a camera follows. */
+    /** True while the cat is walking, hopping or leaping somewhere: what a camera follows. */
     val isTravelling: Boolean
-        get() = mode == Mode.WALK || mode == Mode.HOP
+        get() = mode == Mode.WALK || mode == Mode.HOP || mode == Mode.LEAP
 
     /** True while the cat gallops (the camera then leads further and follows faster). */
     val isRunning: Boolean
@@ -56,6 +71,7 @@ class CatBody(
         SETTLE,
         WALK,
         HOP,
+        LEAP,
         ACT,
         FACE,
     }
@@ -71,6 +87,20 @@ class CatBody(
     private val tail = Tail(Rng.derive(seed, SALT_TAIL))
     private val breathing = Breathing()
     private val attention = Attention()
+    private val leap =
+        LeapDirector(
+            kin,
+            turn,
+            loco,
+            player,
+            springs,
+            attention,
+            object : LeapHost {
+                override fun play(clip: Clip, phase: Float) = playClip(clip, phase)
+
+                override fun stride(dt: Float): Boolean = animateStride(dt)
+            },
+        )
     private val reactions = Reactions(springs, ears, tail, whiskers, attention)
     private val idleLife = IdleLife(Rng.derive(seed, SALT_IDLE), springs, ears, attention)
     private val queue = PlanQueue()
@@ -107,6 +137,7 @@ class CatBody(
         loco.reset()
         turn.snapTo(facing)
         jump.cancel()
+        leap.cancel()
         springs.reset()
         queue.clear()
         hasPending = false
@@ -151,10 +182,16 @@ class CatBody(
     }
 
     /**
-     * The steps that carry the cat from where it stands to [surface] at [x] (see [RoutePlanner]).
+     * The steps that carry the cat from where it stands to [surface] at [x] with the jumps it can
+     * make (see [ParkourPlanner] and [capability]). Empty when it is already there on the bed or
+     * cannot get there at all; use [parkourRoute] to tell the two apart.
      */
     fun routeTo(surface: SurfaceId, x: Float): List<PlanStep> =
-        RoutePlanner.route(kin.surface, kin.x, surface, x)
+        parkourRoute(surface, x)?.steps ?: emptyList()
+
+    /** The planned route to [surface] at [x] for this cat, or null when it cannot get there. */
+    fun parkourRoute(surface: SurfaceId, x: Float): Route? =
+        ParkourPlanner.plan(capability, kin.surface, kin.x, surface, x, seed)
 
     /** The brain's ear and tail states: targets for the springs, not poses. */
     fun setAffect(ear: EarState, tail: TailState) {
@@ -212,6 +249,7 @@ class CatBody(
             Mode.SETTLE -> settleTick(dt)
             Mode.WALK -> walkTick(dt)
             Mode.HOP -> hopTick(dt)
+            Mode.LEAP -> leapTick(dt)
             Mode.ACT -> actTick(dt)
             Mode.FACE -> faceTick(dt)
         }
@@ -276,6 +314,14 @@ class CatBody(
         if (done) finishStep()
     }
 
+    private fun leapTick(dt: Float) {
+        val done = leap.update(dt)
+        if (leap.landedNow) {
+            pose.events.add(CatEventType.Arrived, queue.planId, queue.currentIndex, queue.isOnLast)
+        }
+        if (done) finishStep()
+    }
+
     // ---------------------------------------------------------------- stepping through the plan
 
     private fun beginCurrentStep() {
@@ -301,6 +347,10 @@ class CatBody(
             is PlanStep.Hop -> {
                 jump.begin(step.surface, step.x)
                 mode = Mode.HOP
+            }
+            is PlanStep.Leap -> {
+                leap.begin(step, queue.nextIsLeap)
+                mode = Mode.LEAP
             }
             is PlanStep.Act -> startAct(step)
             is PlanStep.Face -> mode = Mode.FACE
@@ -333,6 +383,7 @@ class CatBody(
 
     private fun applyPending() {
         if (mode == Mode.HOP) jump.cancel()
+        if (mode == Mode.LEAP) leap.cancel()
         queue.load(pendingId, pending)
         hasPending = false
         pending.clear()
@@ -342,7 +393,8 @@ class CatBody(
     private fun resolveInterrupt(dt: Float) {
         if (!hasPending) return
         beatAge += dt
-        val mustWait = mode == Mode.HOP && !jump.canCancel
+        val mustWait =
+            (mode == Mode.HOP && !jump.canCancel) || (mode == Mode.LEAP && !leap.canCancel)
         if (canCutNow() || (beatAge >= Tuning.Interrupt.BEAT_MAX_S && !mustWait)) applyPending()
     }
 
@@ -355,6 +407,7 @@ class CatBody(
             Mode.ACT -> !player.blinking && !(player.clip.cheapBeat && !player.finished)
             Mode.WALK -> player.footfall || loco.gait == Gait.STAND
             Mode.HOP -> jump.canCancel
+            Mode.LEAP -> leap.canCancel
         }
 
     // ---------------------------------------------------------------- animation
@@ -392,11 +445,11 @@ class CatBody(
     private fun restingClip(): Clip = if (weak) Clips.IDLE_SIT_W else Clips.IDLE_SIT
 
     /** Start [clip]; stride clips keep the stride phase, a change of posture squashes the body. */
-    private fun playClip(clip: Clip) {
+    private fun playClip(clip: Clip, phase: Float = 0f) {
         val from = player.clip
         val stride = from.isLocomotion && clip.isLocomotion
         if (!stride) springs.kickPosture(from.height, clip.height)
-        player.play(clip, if (stride) player.phase else 0f)
+        player.play(clip, if (stride) player.phase else phase)
     }
 
     private fun animateJump(dt: Float) {
@@ -482,7 +535,7 @@ class CatBody(
         p.framePhase = player.framePhase
         p.scaleX = springs.scaleX * turn.scaleX
         p.scaleY = springs.scaleY * turn.scaleY
-        p.rotation = springs.rotation.pos + jump.arcRotation
+        p.rotation = springs.rotation.pos + jump.arcRotation + leap.arcRotation
         p.bob = springs.bob.pos
         p.ear[0] = ears.leftAngle
         p.ear[1] = ears.rightAngle
@@ -500,10 +553,11 @@ class CatBody(
     }
 
     private fun composeShadow(p: CatPose) {
-        val lift = jump.height
+        val lift = maxOf(jump.height, leap.height)
         val units = lift * Tuning.Shadow.UNITS_PER_PX
         p.shadowX = kin.x
-        p.shadowY = if (jump.active) jump.shadowY else kin.groundY
+        p.shadowY =
+            if (jump.active) jump.shadowY else if (leap.active) leap.shadowY else kin.groundY
         p.shadowScale =
             maxOf(Tuning.Shadow.MIN_SCALE, p.depthScale - units * Tuning.Shadow.SCALE_LOSS_PER_UNIT)
         val fade =
