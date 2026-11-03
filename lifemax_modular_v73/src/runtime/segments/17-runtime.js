@@ -71,7 +71,9 @@ function petMoodText(rt,p){
 }
 function petAgo(ms){const h=ms/PET_H;if(h<1)return Math.max(1,Math.round(h*60))+' min ago';if(h<48)return (Math.round(h*10)/10)+' h ago';return Math.round(h/24)+' days ago'}
 function petHeartsHtml(L){let r='';for(let i=1;i<=5;i++)r+='<span class="'+(i<=L?'on':'')+'">'+px('heart',16)+'</span>';return r}
-function petWantRun(){const p=petData();if(!p||!p.alive||document.hidden)return false;const v=document.getElementById('view-pet'),d=document.getElementById('view-dashboard');return !!((v&&v.classList.contains('active')&&document.getElementById('petCanvas')&&!(window.NativePet&&NativePet.covering()))||(d&&d.classList.contains('active')&&document.getElementById('petPeekCanvas')&&!(window.NativeOverviewCards&&NativeOverviewCards.covering())))}
+/* the native cat brain owns a view while its screen shows it with pet.world.v1 (CAT_BRAIN_PLAN 2.7): the web brain and room loop never run for it */
+function petNativeOwns(view){return !!(window.NativeCatWorld&&NativeCatWorld.owns(view))}
+function petWantRun(){const p=petData();if(!p||!p.alive||document.hidden)return false;const v=document.getElementById('view-pet'),d=document.getElementById('view-dashboard');return !!((v&&v.classList.contains('active')&&document.getElementById('petCanvas')&&!(window.NativePet&&NativePet.covering())&&!petNativeOwns('pet'))||(d&&d.classList.contains('active')&&document.getElementById('petPeekCanvas')&&!(window.NativeOverviewCards&&NativeOverviewCards.covering())&&!petNativeOwns('dashboard')))}
 function petSync(){const want=petWantRun();if(want&&!PET_LOOP.raf){petInit().then(function(rt){PET_LOOP.last=performance.now();if(petWantRun()&&!PET_LOOP.raf){petMaybeGreet(rt);petBrainSession(rt);PET_LOOP.raf=requestAnimationFrame(petFrame)}})}else if(!want&&PET_LOOP.raf){cancelAnimationFrame(PET_LOOP.raf);PET_LOOP.raf=0;petSfxStopAll()}}
 function petFrame(now){
   PET_LOOP.raf=0;if(!petWantRun())return;PET_LOOP.raf=requestAnimationFrame(petFrame);

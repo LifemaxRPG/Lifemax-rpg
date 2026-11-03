@@ -67,7 +67,10 @@
    The fake lists pet.panels.v1 too, so the panels (CT6) are built for every Cat screen the hops open; their commands (focus, buyToy, expand)
    are put among hops, a closing screen and a level-up by tests/native-pet-panels.test.js (PANELMUT=twice|focus must fail).
    It lists pet.world.v1 (CAT_BRAIN_PLAN.md CB0) as well, so the cats' world block rides every Cat and Overview cards projection of
-   every hop; its command is tested by tests/native-cat-world.test.js (no hop: CB0 sends nothing from native).
+   every hop; its command is tested by tests/native-cat-world.test.js, and the hop "world-write" (CB2) sends the cat world host's
+   write among the tab hops, only to the Cat screen while it shows: it must run on the page once, store exactly its revision and
+   operation when ok and changed (leave the stored world as it was otherwise), and be answered unless the screen closed since.
+   PETMUT=noworld runs a mutation that must fail: the command set without `world`.
    Touch (CT2, pet.touch.v1) adds a hop, "touch-cat": a stroke
    of 1.5 s on the first cat (and the purr's sound) sent to the Cat screen only while it shows, whose run against the page is checked
    (once per operation id, counted exactly when ok and changed, answered unless the screen was closed since). PETMUT=twice runs a mutation
@@ -101,7 +104,9 @@ if (PRIME_MUTATIONS[process.env.PMUT]) { const [a, b2] = PRIME_MUTATIONS[process
    thought the cat's intro was showing would, so the last tab's screen is missing once everything has settled */
 const PET_MUTATIONS = { blocked: ['blocked: () => handedOver ||', 'blocked: () => true || handedOver ||'],
   /* PETMUT=twice: a stroke the page counts two pets for (its day's count moves by two) */
-  twice: ['const r = petPetDone();', 'const r = (petPetDone(), petPetDone());'] };
+  twice: ['const r = petPetDone();', 'const r = (petPetDone(), petPetDone());'],
+  /* PETMUT=noworld: the command set without the `world` command, so the host's writes are all refused as unknown (the world-write hop must fail) */
+  noworld: ['if (window.NativePet) NativePet.commands.world = command((c) => NativePet.has(c));', ''] };
 if (PET_MUTATIONS[process.env.PETMUT]) { const [a, b2] = PET_MUTATIONS[process.env.PETMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.PETMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 if (MUTATIONS[process.env.JMUT]) { const [a, b2] = MUTATIONS[process.env.JMUT], html = fs.readFileSync(out, 'utf8'); if (!html.includes(a)) throw Error('mutation ' + process.env.JMUT + ' not found'); fs.writeFileSync(out, html.replace(a, b2)) }
 const SEEDS = Number(process.argv[2]) || 80;
@@ -113,7 +118,9 @@ const TAPS = { 'tap-meals': { plugin: 'NativeRecipes', screen: 'recipes', from: 
 // a native tab swipe toward the next or previous tab, and the tab you are on moved one place along the bar
 const SWIPES = { 'swipe-next': 1, 'swipe-prev': -1 }, BAR = { 'bar-earlier': -1, 'bar-later': 1 }, WEB_SWIPES = { 'web-swipe-next': 1, 'web-swipe-prev': -1 };
 // commands sent from a native screen, which never leave its view: Life Director's bedtime moved between 10:30 and 11 PM
-const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'director', view: 'life-director' }, 'touch-cat': { plugin: 'NativePet', screen: 'pet', view: 'pet', command: 'touch' } };
+const COMMANDS = { 'drag-director': { plugin: 'NativeLifeDirector', screen: 'director', view: 'life-director' }, 'touch-cat': { plugin: 'NativePet', screen: 'pet', view: 'pet', command: 'touch' },
+  /* the cat world host's save (CB2): a `world` write of the living cats' blob, with the host's operation id */
+  'world-write': { plugin: 'NativePet', screen: 'pet', view: 'pet', command: 'world' } };
 // the Overview cards' taps: the glance's plan command (to Life Director) and a move's {view} action (to Log)
 const CARDS = { 'tap-plan': { command: 'plan', payload: { act: '', id: '' }, to: 'life-director' }, 'tap-move': { action: { view: 'log' }, to: 'log' } };
 const HOPS = [...Object.keys(WANT), 'food', ...Object.keys(TAPS), ...Object.keys(SWIPES), ...Object.keys(WEB_SWIPES), ...Object.keys(BAR), ...Object.keys(COMMANDS)]; // the Food tab lands on Meals or Recipes, whichever was visited last
@@ -268,6 +275,18 @@ async function run(b, mode) {
       window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.pet, closes: window.__closes.pet || 0, screen: 'pet' };
       const was = day === state.pet.day ? before : 0, delta = state.pet.petsToday - was;
       if (delta !== (r.ok && r.changed ? 1 : 0)) window.__faults.push('the stroke ' + id + ': ok=' + r.ok + ' changed=' + r.changed + ', the day\'s count moved by ' + delta);
+      return r;
+    };
+    /* every world write the cat world host sends: ok and changed stored exactly its revision and operation, anything else left the
+       stored world as it was; one command ran once; whether the screen showed as it ran. Not wrapped (no such command) it never ran. */
+    const world = T.world;
+    if (world) T.world = async function (x, meta) {
+      const id = meta && meta.requestId, w = state.petWorld, before = w ? w.rev + '|' + w.op : '', r = await world.apply(this, arguments);
+      if (!/^sim-/.test(id || '')) return r;
+      if (window.__runs[id]) window.__faults.push('the world write ' + id + ' ran twice');
+      window.__runs[id] = { ok: !!r.ok, message: r.message || '', shown: window.__vis.pet, closes: window.__closes.pet || 0, screen: 'pet' };
+      const now = state.petWorld, after = now ? now.rev + '|' + now.op : '';
+      if (r.ok && r.changed ? !(now && now.rev === x.rev && now.op === x.op && before !== after) : after !== before) window.__faults.push('the world write ' + id + ': ok=' + r.ok + ' changed=' + r.changed + ' why=' + r.why + ', stored ' + before + ' -> ' + after);
       return r;
     };
   });
@@ -500,6 +519,15 @@ async function run(b, mode) {
               window.__sentNow.push(id);
               Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'touch', payload: { kind: 'stroke', op: id, cat: 0, heldMs: 1500, left: '', ignored: false, spam: false, keepSleep: false, sim: id }, requestId: id });
               Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'touch', payload: { kind: 'purr', cat: 0, on: Math.random() < 0.5, level: 0.5 }, requestId: 'purr' + (window.__rid = (window.__rid || 0) + 1) });
+              return;
+            }
+            if (cmd.command === 'world') {
+              // the host's write: the living cats' blob at the page's epoch and the next revision, an operation of its own
+              const id = 'sim-' + (++window.__cmds.sent), epoch = NativeCatWorld.block(Date.now()).epoch, rev = (state.petWorld ? state.petWorld.rev : 0) + 1, cats = {};
+              [state.pet, state.pet2].filter(c => c && c.alive).forEach(c => (cats[petAlbumCatId(c)] = { act: 'loaf' }));
+              window.__log.push(window.__t() + ' >> world write in ' + cmd.screen + ' ' + id + ' rev ' + rev);
+              window.__sentNow.push(id);
+              Capacitor.Plugins[cmd.plugin].__emit('command', { command: 'world', payload: { op: 'world:' + epoch + ':' + rev + ':' + id, epoch, rev, blob: { v: 1, cats, outbox: [] } }, requestId: id });
               return;
             }
             const bed = LifeDirector.native.today(0).dial.handles.find(h => h.rule === 'sleep' && h.end === 'start');

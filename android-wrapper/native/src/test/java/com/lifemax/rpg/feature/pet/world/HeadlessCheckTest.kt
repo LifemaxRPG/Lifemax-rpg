@@ -20,7 +20,7 @@ class HeadlessCheckTest {
         val v =
             HeadlessScanner.scan(
                 HeadlessScanner.mainSources(),
-                listOf("$app.feature.pet.brain", "$app.feature.pet.world"),
+                listOf("$app.feature.pet.brain", "$app.feature.pet.world", "$app.feature.pet.host"),
                 app,
             )
         assertEquals("Android or AndroidX in the headless cat brain: $v", emptyList<String>(), v)

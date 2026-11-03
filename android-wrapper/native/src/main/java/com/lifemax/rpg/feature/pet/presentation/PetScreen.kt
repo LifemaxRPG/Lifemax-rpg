@@ -44,6 +44,7 @@ import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.core.designsystem.components.tapTarget
 import com.lifemax.rpg.feature.pet.domain.PetNotice
 import com.lifemax.rpg.feature.pet.domain.PetProjection
+import com.lifemax.rpg.feature.pet.host.CatWorldHost
 
 /**
  * What the screen is showing on top of the page's projection: the command being answered and a
@@ -197,7 +198,9 @@ private fun CatCard(p: PetProjection, ui: PetUi, actions: PetActions, modifier: 
                 fontWeight = FontWeight(650),
                 lineHeight = 21.75.sp,
             )
-        p.panels?.mind?.let { PetMindRow(it, Modifier.padding(top = 10.dp)) }
+        PanelSource.mind(p.panels?.mind, p.focus, CatWorldHost.shared)?.let {
+            PetMindRow(it, Modifier.padding(top = 10.dp))
+        }
         PetBondBar(p.bond.pct, p.bond.text, Modifier.padding(start = 2.dp, top = 11.dp, end = 2.dp))
         p.growth?.let { PetGrowthLine(it, Modifier.padding(top = 12.dp)) }
         Buttons(p, ui, actions)
