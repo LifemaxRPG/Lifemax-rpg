@@ -104,7 +104,14 @@ jobs:
 
       - name: Build debug APK
         working-directory: android-wrapper/android
-        run: ./gradlew assembleDebug verifyPaparazziDebug
+        # --stacktrace prints the real cause of a failure (the packaging step has twice died with a generic
+        # "IncrementalSplitterRunnable" message). A second attempt runs only after a first failure, so a real
+        # break still fails the build, while a one-off runner hiccup does not cost a manual re-run.
+        run: |
+          ./gradlew assembleDebug verifyPaparazziDebug --stacktrace || {
+            echo "::warning::The first build attempt failed; trying once more."
+            ./gradlew assembleDebug verifyPaparazziDebug --stacktrace
+          }
 
       - name: Keep the screenshot report when a native screen changed
         if: failure()

@@ -166,7 +166,8 @@ async function start(b, { caps = CAPS, pet = CAT('Miso'), pet2 = '' } = {}) {
 
     /* 7. the full-screen room */
     p = await start(b);
-    r = await p.evaluate(async () => { await action({ action: 'room', id: '' }); await wait(300); return { page: document.body.classList.contains('pet-full-open'), showing: showing() } });
+    /* the action closes and reopens the screen: under load the reopen can outlast a fixed pause, so wait for the screen itself (up to 5 s), then let the page settle */
+    r = await p.evaluate(async () => { await action({ action: 'room', id: '' }); for (let i = 0; i < 50 && !showing(); i++) await wait(100); await wait(200); return { page: document.body.classList.contains('pet-full-open'), showing: showing() } });
     ok('View room with pet.touch.v1: the room is the screen\'s own, the page\'s full-screen room stays shut and the screen stays', !r.page && r.showing, r);
     await p.context().close();
     p = await start(b, { caps: ['pet.projection.v1', 'pet.coat.v1'] });
