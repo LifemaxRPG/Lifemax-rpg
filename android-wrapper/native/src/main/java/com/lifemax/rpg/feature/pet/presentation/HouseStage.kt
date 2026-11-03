@@ -1,13 +1,20 @@
 package com.lifemax.rpg.feature.pet.presentation
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.HouseLife
+import com.lifemax.rpg.feature.pet.body.Tuning
 import com.lifemax.rpg.feature.pet.room.CameraDirector
 import com.lifemax.rpg.feature.pet.room.CatLayer
+import com.lifemax.rpg.feature.pet.room.ContactShadow
+import com.lifemax.rpg.feature.pet.room.RimLight
+import com.lifemax.rpg.feature.pet.room.RimSpec
+import com.lifemax.rpg.feature.pet.room.RoomCanvas
 import com.lifemax.rpg.feature.pet.room.RoomLayout
 import com.lifemax.rpg.feature.pet.room.RoomLight
 import com.lifemax.rpg.feature.pet.room.RoomScene
+import com.lifemax.rpg.feature.pet.room.RoomStyle
 import java.util.TimeZone
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -34,9 +41,10 @@ import kotlin.math.roundToInt
 internal class HouseStage(
     kit: RoomKit,
     val house: HouseLife,
+    style: RoomStyle = RoomStyle.CLASSIC,
     private val hourNow: () -> Double = ::localHour,
 ) : CatLayer {
-    private val scene = RoomScene(kit.art)
+    private val scene = RoomScene(kit.art, style)
     private val canvas = ComposeRoomCanvas(kit.bitmaps)
     private val director = CameraDirector()
     private val sprites = arrayOfNulls<CatSprites>(HouseLife.MAX_CATS)
@@ -51,6 +59,7 @@ internal class HouseStage(
     private var scale = 1
     private var originX = 0
     private var originY = 0
+    private val rim = RimSpec()
 
     /** Hand over the sprites for cat [i] (null while they load or if they cannot be had). */
     fun setSprites(i: Int, value: CatSprites?) {
@@ -83,9 +92,28 @@ internal class HouseStage(
     /** The owner slow blinks at cat [cat]; true if the cat blinked back. */
     fun slowBlink(cat: Int): Boolean = house.slowBlink(cat)
 
+    /**
+     * The tilt of the phone, -1 to 1 (0 when there is no sensor), which the 2.5D room's camera
+     * sways with; ignored by the classic room and with reduced motion.
+     */
+    fun setTilt(tilt: Float) {
+        scene.depth?.sway?.tilt = tilt
+    }
+
+    /** Put the 2.5D room's camera at rest at [at], -1 to 1 (screenshots and tests). */
+    fun holdSway(at: Float) {
+        scene.depth?.sway?.restAt(at)
+    }
+
+    /**
+     * Put the camera on world x [x] at once (screenshots and tests; the director follows the cats).
+     */
+    fun lookAt(x: Float) = director.camera.cutTo(x)
+
     /** Advance the cats, the camera and the room's clock by [dt] seconds. */
     fun step(dt: Float) {
         house.step(dt)
+        scene.depth?.step(dt)
         followCats(dt)
         if (bowlFullFor > 0f) {
             bowlFullFor -= dt
@@ -148,6 +176,42 @@ internal class HouseStage(
 
     override fun feet(i: Int): Float = house.bodies[visible[i]].pose.y
 
+    override fun surface(i: Int): String? = house.bodies[visible[i]].pose.surface.key
+
+    /**
+     * Cat [i] in the 2.5D room: [shift] pixels over for the parallax, the soft contact shadow in
+     * place of the two-row blob, and a rim of window light under the cat on the window's side.
+     */
+    override fun draw(i: Int, shift: Int, style: RoomStyle, canvas: RoomCanvas) {
+        val k = visible[i]
+        val pose = house.bodies[k].pose
+        val houseX = RoomLayout.HOUSE_X0.toFloat()
+        val footX = (originX + (pose.x - houseX + shift) * scale).roundToInt().toFloat()
+        val footY = (originY + (pose.y + pose.bob) * scale).roundToInt().toFloat()
+        if (style.softShadows) {
+            val halfW = (pose.shadowHalfWidth * pose.shadowScale).roundToInt()
+            ContactShadow.paint(
+                canvas,
+                (pose.shadowX - houseX + shift).roundToInt(),
+                pose.shadowY.roundToInt(),
+                halfW,
+                ContactShadow.halfHeightFor(halfW),
+                pose.shadowAlpha / Tuning.Shadow.ALPHA,
+            )
+        } else {
+            val shadowX = originX + (pose.shadowX - houseX + shift) * scale
+            scope.drawShadowAt(pose, scale, shadowX, originY + pose.shadowY * scale)
+        }
+        if (style.rimLight) {
+            RimLight.of(hour, pose.x, rim)
+            if (rim.side != 0) {
+                val tint = Color(rim.colour or OPAQUE).copy(alpha = rim.strength)
+                scope.drawSpriteAt(pose, sprites[k]!!, scale, footX + rim.side * scale, footY, tint)
+            }
+        }
+        scope.drawSpriteAt(pose, sprites[k]!!, scale, footX, footY)
+    }
+
     override fun draw(i: Int) {
         val k = visible[i]
         val pose = house.bodies[k].pose
@@ -162,6 +226,7 @@ internal class HouseStage(
 
     private companion object {
         const val HOUR_REFRESH_S = 1f
+        const val OPAQUE = 0xFF000000.toInt()
 
         /** How long the bowl shows food after a meal (the page empties it after 14 s). */
         const val BOWL_FULL_S = 14f

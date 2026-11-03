@@ -237,6 +237,9 @@ jobs:
       - name: Native cat art current with the page's data
         run: node lifemax_modular_v73/tools/gen_pet_native_assets.js --check
 
+      - name: Native cat room layers current and reassemble the backdrops exactly
+        run: node lifemax_modular_v73/tools/gen_pet_room_layers.js --check
+
       - name: Web tests (everything not listed in tests/SKIP_IN_CI.txt), part ${{ matrix.part }}
         if: matrix.part != 'sim'
         run: SHARD=${{ matrix.part }} lifemax_modular_v73/tools/run_tests.sh

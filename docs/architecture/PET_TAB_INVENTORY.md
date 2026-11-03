@@ -65,6 +65,8 @@ What the owner's care does in the room (`HouseStage.feed`, `visitBowl`, `slowBli
 
 A genetic coat's sheets are asked of the page: `CatArt.coats` is one source for every screen with a room, so the screen that opens (`accept` with an explicit open) binds its own requester; replies to `coat` are handled by whichever plugin receives them.
 
+The room has one more switch, `RoomStyle` (CT9, off): `rememberRoomState(looks, style = ...)` and `HouseStage(kit, house, style)` take it, and the default `RoomStyle.CLASSIC` draws the room as above; `RoomStyle.DEPTH25` draws the 2.5D room (furniture as layers, parallax, thickness, soft shadows, window light, rim light; `PET_ENGINE_PLAN.md` section 5.1). No screen passes it yet.
+
 ## 6. Tests
 
 - Web: `tests/native-pet.test.js` (44 checks: the switch and its words, the intro and the memorial, the projection against the page's card for ten states and writing nothing, the stopped loop, every command with its refusals, repeats and failed saves, two cats, the voice's feed cue, the coat command and the capabilities, Play, the room, more, a level-up); `native-handover-sim.test.js` (the Cat tab is a fake `NativePet` in every mode, with a living cat in the starting save; `PETMUT=blocked` fails it); `native-settings.test.js` (the switch runs `setNativePetEnabled`); fixtures `tools/gen_pet_fixtures.js`.

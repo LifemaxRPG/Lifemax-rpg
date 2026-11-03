@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.pet.art
 
 import com.lifemax.rpg.feature.pet.room.RoomArt
 import com.lifemax.rpg.feature.pet.room.RoomImage
+import com.lifemax.rpg.feature.pet.room.RoomLayerArt
 
 /**
  * The thin loader: reads the shipped art from the app's Java resources
@@ -52,6 +53,9 @@ object PetArtResources {
                 RoomImage.BOX_BACK to png("props/box_back"),
                 RoomImage.BOX_FRONT to png("props/box_front"),
             ),
+            RoomLayerArt.parse(text("room/layers.json")) {
+                png("layers/${it.removeSuffix(".png")}")
+            },
         )
     }
 

@@ -11,6 +11,10 @@
      room/items.png      the room item atlas, RGBA, byte-for-byte pixels of the page's
      room/living.png, room/bedroom.png, room/kitchen.png
                          the three painted backdrops, RGBA 192 x 144: the living room (house x 0), the bedroom (192), the kitchen (384)
+     room/layers.json, room/layers/<room>_base.png, room/layers/<piece>.png
+                         the furniture cut out of the three backdrops (tools/pet_room_cut.js, spec pet_room_cut_spec.js): each room's
+                         backdrop with the furniture removed and the wall and floor rebuilt, one sprite per piece, and the manifest
+                         (place, depth, flags). The pieces drawn over the base give the backdrop back exactly; the build checks it.
      room/props/<name>.png  the free-standing depth props the room draws between the backdrop and the cats: pouf, cushion, and the
                          two halves of the box (box_back, box_front)
    Out of scope (later phases): HD art (petHd.html), the rig (petRig.html), toys other than the box, DNA coats.
@@ -18,6 +22,7 @@
           node tools/gen_pet_native_assets.js --check   fails if the committed files differ from what the page data gives (CI) */
 const fs = require('fs'), path = require('path');
 const png = require('./pet_png.js');
+const { layerFiles } = require('./pet_room_cut.js');
 
 const root = path.resolve(__dirname, '..');
 const target = path.resolve(root, '../android-wrapper/native/src/main/resources/pet');
@@ -88,6 +93,9 @@ function build() {
     if (img.channels !== 4 || img.width !== ROOM_W || img.height !== ROOM_H) throw new Error(`backdrop ${file}: ${img.width}x${img.height}x${img.channels}, expected ${ROOM_W}x${ROOM_H} RGBA`);
     files.set(`room/${file}.png`, png.encode(img));
   }
+  const backdrops = {};
+  for (const name of ['living', 'bedroom', 'kitchen']) backdrops[name] = png.decode(files.get(`room/${name}.png`));
+  for (const [name, buf] of layerFiles(backdrops, png)) files.set(name, buf);
   const props = Object.assign({}, D.props, { box_back: D.toys.box_back, box_front: D.toys.box_front });
   for (const name of PROPS) {
     const p = props[name]; if (!p) throw new Error('missing depth prop ' + name);

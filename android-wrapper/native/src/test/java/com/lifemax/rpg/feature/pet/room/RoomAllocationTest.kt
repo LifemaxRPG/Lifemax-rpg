@@ -193,6 +193,47 @@ class RoomAllocationTest {
         assertTrue("the cats did not eat", house.bodies.all { it.pose.x in 80f..130f })
     }
 
+    /**
+     * The 2.5D room costs nothing per frame either: the sway stepped, the layers sorted with two
+     * cats between them, shifted, shadowed and given their side faces, at night with every effect
+     * on.
+     */
+    @Test
+    fun aFrameOfTheDepthRoomAllocatesNothing() {
+        assumeTrue("thread allocation counting needs a HotSpot JVM", supported())
+        val scene = RoomScene(PetArtResources.loadRoom(), RoomStyle.DEPTH25)
+        val canvas = CountingCanvas()
+        val house = HouseLife(listOf(HouseCat(3, false), HouseCat(8, false)), autopilot = false)
+        val cats = TwoCats(house.bodies)
+        val director = CameraDirector()
+        for ((i, body) in house.bodies.withIndex()) {
+            val steps = ArrayList<PlanStep>()
+            repeat(40) {
+                steps.add(PlanStep.Walk(if (i == 0) -120f else 300f))
+                steps.add(PlanStep.Act("groom", 1f))
+                steps.add(PlanStep.Walk(if (i == 0) 20f else 190f))
+                steps.add(PlanStep.Act("loaf", 1f))
+            }
+            body.replacePlan(1, steps)
+        }
+        val dt = 1f / 60f
+        val depth = scene.depth!!
+        fun frame() {
+            house.step(dt)
+            director.update(house.bodies[0], house.bodies[1], dt)
+            depth.step(dt)
+            scene.paintBackdrop(canvas, 20.0, 12.0, 6)
+            scene.paintScene(canvas, cats)
+            scene.paintOverlay(canvas, 20.0, 6)
+        }
+        repeat(2_000) { frame() }
+        val before = allocatedBytes()
+        repeat(20_000) { frame() }
+        val used = allocatedBytes() - before
+        assertTrue("allocated $used bytes over 20000 frames", used <= TOLERANCE_BYTES)
+        assertTrue("nothing was drawn", canvas.calls > 20_000 && cats.drawn >= 40_000)
+    }
+
     private companion object {
         const val TOLERANCE_BYTES = 4_096L
 
