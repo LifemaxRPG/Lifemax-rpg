@@ -47,7 +47,7 @@ const ROOMS = {
         entries: [{ rect: [124, 100, 139, 123] }] },
       { name: 'floor_lamp', plane: 'front', base: 129, occludes: false, thick: false, surfaces: [],
         entries: [{ rect: [9, 24, 29, 129], only: hex('6e5a3c f6e2b0 dcbe82 ceb078 544028') }] },
-      { name: 'side_table_plant', plane: 'front', base: 126, occludes: false, thick: false, surfaces: [],
+      { name: 'side_table_plant', plane: 'front', base: 126, occludes: false, thick: false, surfaces: ['sidetable'],
         entries: [{ rect: [164, 66, 186, 128], only: [...PLANT_GREENS, ...PLANT_POT, ...TABLE_WOOD] }, { rect: [167, 105, 180, 106], only: ['946238'] }] },
     ],
     fills: [
@@ -64,7 +64,7 @@ const ROOMS = {
     pieces: [
       { name: 'rug_bedroom', plane: 'floor', base: null, occludes: false, thick: false, surfaces: [],
         entries: [{ rect: [40, 126, 150, 142], only: hex('e9a3a0 c7566b f6dcb8') }], box: [40, 126, 150, 142] },
-      { name: 'bookcase_plant', plane: 'back', base: 112, occludes: false, thick: false, surfaces: [],
+      { name: 'bookcase_plant', plane: 'back', base: 112, occludes: false, thick: false, surfaces: ['bookcase'],
         entries: [{ rect: [106, 32, 137, 111] }, { rect: [109, 0, 133, 31], only: hex('4fa36a 2f7a4a 8fd28a c8683a 8f4325 d89575') }],
         box: [106, 32, 137, 111] },
       { name: 'cat_tree_post', plane: 'mid', base: 137, occludes: true, thick: true, surfaces: [],
@@ -94,7 +94,7 @@ const ROOMS = {
         entries: [{ rect: [58, 90, 186, 128], not: [...KITCHEN_BG, ...TILE_WALL] },
           { rect: [66, 76, 182, 89], only: hex('d65252 1e162d dc3c3c faaa3c 8cc85a bec4c8 aab2b4 788084 969ca0') },
           { rect: [164, 84, 177, 89], only: ['ece2ce'] }] },
-      { name: 'fridge', plane: 'back', base: 128, occludes: true, thick: true, surfaces: [],
+      { name: 'fridge', plane: 'back', base: 128, occludes: true, thick: true, surfaces: ['fridge'],
         entries: [{ rect: [14, 30, 53, 127], not: KITCHEN_BG }] },
     ],
     fills: [

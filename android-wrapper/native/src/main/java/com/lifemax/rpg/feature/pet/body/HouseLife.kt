@@ -4,7 +4,15 @@ package com.lifemax.rpg.feature.pet.body
  * What a house needs to know about one of its cats: its seed (see [Autopilot.seedFor]) and its
  * hunger.
  */
-class HouseCat(val seed: Int, val weak: Boolean)
+class HouseCat(
+    val seed: Int,
+    val weak: Boolean,
+    /** Body scale for jumping: 1 grown, a kitten's `Growth.scale` (see [JumpCapability.of]). */
+    val growthScale: Float = 1f,
+    /** The rig's `bl` and `lg` morph multipliers; 1 when unknown. */
+    val bodyLength: Float = 1f,
+    val legLength: Float = 1f,
+)
 
 /**
  * One or two cats living in the whole house: each a [CatBody] kept busy by its own [Autopilot] in
@@ -50,6 +58,9 @@ class HouseLife(cats: List<HouseCat>, private val autopilot: Boolean = true) {
                 val pilot = pilots[it]
                 CatBody(cats[it].seed, pilot.startX).also { body ->
                     body.weak = cats[it].weak
+                    body.growthScale = cats[it].growthScale
+                    body.bodyLength = cats[it].bodyLength
+                    body.legLength = cats[it].legLength
                     body.placeAt(pilot.startX, World.ART_Z, SurfaceId.FLOOR, pilot.startFacing)
                 }
             }

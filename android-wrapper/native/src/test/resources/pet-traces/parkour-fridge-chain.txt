@@ -1,0 +1,169 @@
+ 0.000 x= 262.00 y=132.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000
+ 0.100 x= 262.54 y=132.00 z= 35.0 walk       f0 sx=1.000 sy=1.000 rot=+0.041
+ 0.200 x= 264.08 y=132.00 z= 35.0 walk       f0 sx=1.000 sy=1.000 rot=+0.042
+ 0.300 x= 266.59 y=132.00 z= 35.0 walk       f1 sx=1.000 sy=1.000 rot=+0.031
+ 0.400 x= 268.94 y=132.00 z= 35.0 walk       f2 sx=1.000 sy=1.000 rot=-0.032
+ 0.500 x= 270.61 y=132.00 z= 35.0 walk       f3 sx=1.000 sy=1.000 rot=-0.028
+ 0.600 x= 271.63 y=132.00 z= 35.0 walk       f3 sx=1.000 sy=1.000 rot=-0.024
+ 0.683   ! Arrived plan=1 step=0
+ 0.683   ! StepDone plan=1 step=0
+ 0.700 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.014 sy=0.972 rot=-0.025
+ 0.800 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=0.999 sy=1.003 rot=+0.003
+ 0.900 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.000
+ 1.000 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=-0.000
+ 1.100 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.000
+ 1.200 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.000
+ 1.300 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=-0.000
+ 1.400 x= 272.00 y=132.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.002
+ 1.500 x= 272.00 y=132.00 z= 35.0 jump_up    f1 sx=1.000 sy=1.000 rot=+0.005
+ 1.600 x= 272.00 y=132.00 z= 35.0 jump_up    f2 sx=1.000 sy=1.000 rot=-0.008
+ 1.700 x= 273.60 y=125.08 z= 35.0 jump_up    f3 sx=0.990 sy=1.021 rot=-0.059
+ 1.800 x= 278.42 y=107.78 z= 35.0 jump_air   f0 sx=0.989 sy=1.021 rot=-0.043
+ 1.900 x= 283.23 y= 95.68 z= 35.0 jump_air   f0 sx=1.000 sy=0.999 rot=-0.013
+ 2.000 x= 288.05 y= 88.78 z= 35.0 jump_air   f0 sx=1.000 sy=1.000 rot=+0.022
+ 2.100 x= 292.86 y= 87.08 z= 35.0 jump_air   f1 sx=1.000 sy=1.000 rot=+0.049
+ 2.200 x= 297.68 y= 90.58 z= 35.0 jump_air   f1 sx=1.000 sy=1.000 rot=+0.060
+ 2.217   ! Arrived plan=1 step=1
+ 2.300 x= 298.00 y= 91.00 z= 35.0 jump_land  f1 sx=0.989 sy=1.022 rot=+0.000
+ 2.317   ! StepDone plan=1 step=1
+ 2.400 x= 298.00 y= 91.00 z= 35.0 turn       f0 sx=1.001 sy=0.997 rot=-0.000
+ 2.500 x= 298.00 y= 91.00 z= 35.0 turn       f1 sx=1.000 sy=1.000 rot=-0.000
+ 2.600 x= 298.00 y= 91.00 z= 35.0 turn       f2 sx=1.000 sy=1.000 rot=+0.000
+ 2.700 x= 298.00 y= 91.00 z= 35.0 turn       f3 sx=1.000 sy=1.000 rot=-0.000
+ 2.800 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=0.999 sy=1.001 rot=+0.000 flip
+ 2.900 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.000 flip
+ 3.000 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=-0.000 flip
+ 3.100 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.000 flip
+ 3.200 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.015 flip
+ 3.300 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.017 flip
+ 3.400 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=-0.046 flip
+ 3.500 x= 298.00 y= 91.00 z= 35.0 jump_up    f0 sx=1.000 sy=1.000 rot=+0.005 flip
+ 3.600 x= 297.68 y= 91.00 z= 35.0 walk       f0 sx=0.986 sy=1.027 rot=+0.048 flip
+ 3.700 x= 295.39 y= 91.00 z= 35.0 walk       f0 sx=1.001 sy=0.998 rot=+0.097 flip
+ 3.800 x= 290.90 y= 91.00 z= 35.0 walk       f2 sx=1.000 sy=1.000 rot=+0.088 flip
+ 3.900 x= 283.57 y= 78.75 z= 35.0 jump_up    f3 sx=1.008 sy=0.984 rot=+0.088 flip
+ 4.000 x= 275.05 y= 58.15 z= 35.0 jump_air   f0 sx=0.996 sy=1.007 rot=+0.035 flip
+ 4.100 x= 266.53 y= 42.75 z= 35.0 jump_air   f0 sx=1.000 sy=1.000 rot=+0.019 flip
+ 4.200 x= 258.01 y= 32.55 z= 35.0 jump_air   f0 sx=1.000 sy=1.000 rot=-0.012 flip
+ 4.300 x= 249.50 y= 27.55 z= 35.0 jump_air   f0 sx=1.000 sy=1.000 rot=-0.039 flip
+ 4.400 x= 240.98 y= 27.75 z= 35.0 jump_air   f1 sx=1.000 sy=1.000 rot=-0.056 flip
+ 4.483   ! Arrived plan=1 step=2
+ 4.500 x= 235.00 y= 31.00 z= 35.0 jump_land  f0 sx=1.052 sy=0.896 rot=+0.000 flip
+ 4.600 x= 235.00 y= 31.00 z= 35.0 jump_land  f1 sx=0.998 sy=1.004 rot=-0.000 flip
+ 4.700 x= 235.00 y= 31.00 z= 35.0 jump_land  f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 4.800 x= 235.00 y= 31.00 z= 35.0 jump_land  f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 4.850   ! StepDone plan=1 step=2
+ 4.900 x= 234.85 y= 31.00 z= 35.0 walk       f0 sx=0.987 sy=1.025 rot=+0.022 flip
+ 5.000 x= 233.81 y= 31.00 z= 35.0 walk       f0 sx=1.002 sy=0.997 rot=+0.044 flip
+ 5.100 x= 231.77 y= 31.00 z= 35.0 walk       f1 sx=1.000 sy=1.000 rot=+0.040 flip
+ 5.200 x= 229.35 y= 31.00 z= 35.0 walk       f2 sx=1.000 sy=1.000 rot=-0.020 flip
+ 5.300 x= 227.58 y= 31.00 z= 35.0 walk       f2 sx=1.000 sy=1.000 rot=-0.031 flip
+ 5.400 x= 226.47 y= 31.00 z= 35.0 walk       f3 sx=1.000 sy=1.000 rot=-0.026 flip
+ 5.500 x= 226.05 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.030 flip
+ 5.517   ! Arrived plan=1 step=3 last
+ 5.517   ! StepDone plan=1 step=3 last
+ 5.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.001 flip
+ 5.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.001 flip
+ 5.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+ 5.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+ 6.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+ 6.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+ 6.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+ 6.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+ 7.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+ 7.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 7.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+ 7.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+ 8.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+ 8.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+ 8.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+ 8.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+ 8.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 9.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+ 9.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+ 9.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+ 9.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+ 9.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+ 9.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+ 9.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+ 9.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+ 9.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+ 9.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+10.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+10.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+10.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+10.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+10.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+10.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+10.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+10.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+10.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+10.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+11.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f3 sx=1.000 sy=1.000 rot=-0.000 flip
+11.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f4 sx=1.000 sy=1.000 rot=+0.000 flip
+11.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f4 sx=1.000 sy=1.001 rot=-0.003 flip
+11.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f5 sx=1.000 sy=1.000 rot=+0.001 flip
+11.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+11.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+11.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+11.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+11.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+11.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+12.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+12.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+12.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+12.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+12.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+12.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+12.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+12.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+12.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+12.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+13.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+13.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+13.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+13.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+13.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+13.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+13.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+13.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+13.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+13.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+14.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+14.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+14.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+14.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+14.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+14.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip
+14.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+14.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=-0.000 flip
+14.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+14.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=-0.000 flip
+15.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f1 sx=1.000 sy=1.000 rot=+0.000 flip
+15.100 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+15.200 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=-0.000 flip
+15.300 x= 226.00 y= 31.00 z= 35.0 idle_sit   f2 sx=1.000 sy=1.000 rot=+0.000 flip
+15.400 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+15.500 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=-0.000 flip
+15.600 x= 226.00 y= 31.00 z= 35.0 idle_sit   f6 sx=1.000 sy=1.000 rot=+0.000 flip
+15.700 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+15.800 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=-0.000 flip
+15.900 x= 226.00 y= 31.00 z= 35.0 idle_sit   f7 sx=1.000 sy=1.000 rot=+0.000 flip
+16.000 x= 226.00 y= 31.00 z= 35.0 idle_sit   f0 sx=1.000 sy=1.000 rot=+0.000 flip

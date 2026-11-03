@@ -28,6 +28,14 @@ internal class Claim {
     var perchX = 0f
         private set
 
+    /**
+     * Every raised surface the plan lands on, on the way up and on the way down, as a bit mask of
+     * [SurfaceId.ordinal]: the counter and the fridge for a cat going to the fridge top. Two cats
+     * never plan to land on the same single-occupancy surface (see [Claim.clashes]).
+     */
+    var passes = 0
+        private set
+
     /** The cat stands still at [x] on [surface]. */
     fun standAt(surface: SurfaceId, x: Float) {
         if (surface == SurfaceId.FLOOR) {
@@ -35,20 +43,38 @@ internal class Claim {
             lo = x
             hi = x
             perch = SurfaceId.FLOOR
+            passes = 0
         } else {
             onFloor = false
             perch = surface
             perchX = x
+            passes = Solid.bit(surface)
         }
     }
 
-    /** The cat will use the floor from [from] to [to] and then rest on [perch] at [perchX]. */
-    fun reserve(from: Float, to: Float, perch: SurfaceId, perchX: Float) {
+    /**
+     * The cat will use the floor from [from] to [to] and then rest on [perch] at [perchX], having
+     * landed on every surface in [passes] on the way.
+     */
+    fun reserve(from: Float, to: Float, perch: SurfaceId, perchX: Float, passes: Int = 0) {
         onFloor = true
         lo = from
         hi = to
         this.perch = perch
         this.perchX = perchX
+        this.passes = if (perch == SurfaceId.FLOOR) passes else passes or Solid.bit(perch)
+    }
+
+    /**
+     * True when a plan landing on [mine] (a mask like [passes]) would land where this cat is or
+     * will be: any surface both use except the sofa, which two cats may share a metre apart (a
+     * position rule the sofa's planner applies on its own).
+     */
+    fun clashes(mine: Int): Boolean = (passes and mine and SHARED.inv()) != 0
+
+    private companion object {
+        /** Surfaces wide enough for two cats. */
+        val SHARED = Solid.bit(SurfaceId.COUCH)
     }
 
     /** True when the cat lies on the bed, or is going to. */
@@ -63,8 +89,8 @@ internal class Claim {
 /**
  * What a cat in the house may do in it, as plans for the body: walk to another room, eat at the
  * bowls, sleep on the bed, sit on the sofa, climb the cat tree, watch from the window sill. Every
- * place is a spot on the web room's own surface graph ([RoutePlanner]); every plan begins on the
- * floor and ends on the floor, so a cat that goes up comes down again.
+ * place is a spot on the room's surfaces, reached by the parkour planner ([ParkourPlanner]); every
+ * plan begins on the floor and ends on the floor, so a cat that goes up comes down again.
  *
  * Each planner returns an empty list when the spot is not free (the other cat is there, or in the
  * way) and the cat simply rests instead; otherwise it writes the plan's [Claim].
@@ -79,6 +105,9 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
 
     private var reachLo = 0f
     private var reachHi = 0f
+
+    /** The raised surfaces the plan being made lands on (a [Claim.passes] mask). */
+    private var landed = 0
 
     /**
      * Work out how far a cat standing at [x] may walk either way without coming within [GAP] of
@@ -136,6 +165,7 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
     private fun begin(x: Float) {
         reachLo = x
         reachHi = x
+        landed = 0
     }
 
     private fun reach(x: Float) {
@@ -143,15 +173,69 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         if (x > reachHi) reachHi = x
     }
 
-    /** Claim what the plan reaches if it keeps clear of [mate]; false (and no claim) if not. */
+    /**
+     * Take what [steps] use into the plan's reach: the floor it walks, takes off from and lands on,
+     * and every raised surface it lands on. [start] is where the steps begin.
+     */
+    private fun trace(steps: List<PlanStep>, start: SurfaceId) {
+        var on = start
+        for (s in steps) {
+            when (s) {
+                is PlanStep.Walk -> if (on == SurfaceId.FLOOR) reach(s.x)
+                is PlanStep.Leap -> {
+                    if (on == SurfaceId.FLOOR) reach(s.takeOffX)
+                    on = s.surface
+                    if (on == SurfaceId.FLOOR) reach(s.x) else landed = landed or Solid.bit(on)
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    /**
+     * Claim what the plan reaches if it keeps clear of [mate]; false (and no claim) if not. Two
+     * cats never land on the same single-occupancy surface, on the way or at the top.
+     */
     private fun commit(claim: Claim, mate: Claim?, perch: SurfaceId, perchX: Float): Boolean {
         if (mate != null) {
             if (mate.onFloor && !(reachHi + GAP <= mate.lo || reachLo >= mate.hi + GAP))
                 return false
             if (mate.onBed && reachHi > BED_X - GAP && reachLo < BED_X + GAP) return false
+            if (mate.clashes(landed)) return false
         }
-        claim.reserve(reachLo, reachHi, perch, perchX)
+        claim.reserve(reachLo, reachHi, perch, perchX, landed)
         return true
+    }
+
+    /**
+     * Up to [perch] at [at], [dwell] there, and down to the floor at [landing], every jump of it
+     * the planner's for this [cap]. Empty (the cat rests instead) when the cat cannot get up or
+     * cannot get down again, or when the other cat has a hand on the route.
+     */
+    private fun excursion(
+        x: Float,
+        mate: Claim?,
+        claim: Claim,
+        cap: JumpCapability,
+        perch: SurfaceId,
+        at: Float,
+        landing: Float,
+        dwell: List<PlanStep>,
+    ): List<PlanStep> {
+        val up = ParkourPlanner.plan(cap, SurfaceId.FLOOR, x, perch, at, slot) ?: return emptyList()
+        val standX = World.clampTo(perch, at)
+        val down =
+            ParkourPlanner.plan(cap, perch, standX, SurfaceId.FLOOR, landing, slot)
+                ?: return emptyList()
+        begin(x)
+        trace(up.steps, SurfaceId.FLOOR)
+        trace(down.steps, perch)
+        if (!commit(claim, mate, perch, standX)) return emptyList()
+        val steps = ArrayList<PlanStep>(up.steps.size + dwell.size + down.steps.size)
+        steps.addAll(up.steps)
+        steps.addAll(dwell)
+        steps.addAll(down.steps)
+        return steps
     }
 
     // ---------------------------------------------------------------- the places
@@ -187,26 +271,20 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
     }
 
     /** Hop on the bed, curl up and sleep, stretch on waking and step down. */
-    fun bed(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
+    fun bed(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
         if (mate != null && mate.onBed) return emptyList()
-        val down = BED_X + BED_STEP_DOWN
-        begin(x)
-        reach(BED_RUN_UP_X)
-        reach(BED_X)
-        reach(down)
-        if (!commit(claim, mate, SurfaceId.BED, BED_X)) return emptyList()
         val nap = if (weak) Tuning.Autopilot.WEAK_NAP_FACTOR else 1f
-        val steps = ArrayList<PlanStep>(MAX_STEPS)
-        steps.addAll(RoutePlanner.route(SurfaceId.FLOOR, x, SurfaceId.BED, BED_X))
-        steps.add(act("loaf", BED_LOAF_MIN_S, BED_LOAF_MAX_S))
-        steps.add(act("sleep", Tuning.Autopilot.NAP_MIN_S * nap, Tuning.Autopilot.NAP_MAX_S * nap))
-        steps.add(act("stretch", STRETCH_S, STRETCH_S + STRETCH_SLACK_S))
-        steps.addAll(RoutePlanner.route(SurfaceId.BED, BED_X, SurfaceId.FLOOR, down))
-        return steps
+        val sleep =
+            listOf(
+                act("loaf", BED_LOAF_MIN_S, BED_LOAF_MAX_S),
+                act("sleep", Tuning.Autopilot.NAP_MIN_S * nap, Tuning.Autopilot.NAP_MAX_S * nap),
+                act("stretch", STRETCH_S, STRETCH_S + STRETCH_SLACK_S),
+            )
+        return excursion(x, mate, claim, cap, SurfaceId.BED, BED_X, BED_X + BED_STEP_DOWN, sleep)
     }
 
     /** Hop on the sofa, sit, loaf or wash for a while, and step down. */
-    fun couch(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
+    fun couch(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
         val at = rng.range(COUCH_LO, COUCH_HI)
         val landing =
             clearOfFurniture(
@@ -215,51 +293,85 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         if (mate != null && mate.perch == SurfaceId.COUCH && abs(mate.perchX - at) < GAP) {
             return emptyList()
         }
-        begin(x)
-        reach(at + COUCH_RUN_UP)
-        reach(at)
-        reach(landing)
-        if (!commit(claim, mate, SurfaceId.COUCH, at)) return emptyList()
-        val steps = ArrayList<PlanStep>(MAX_STEPS)
-        steps.addAll(RoutePlanner.route(SurfaceId.FLOOR, x, SurfaceId.COUCH, at))
-        steps.add(dwell())
-        steps.addAll(RoutePlanner.route(SurfaceId.COUCH, at, SurfaceId.FLOOR, landing))
-        return steps
+        return excursion(x, mate, claim, cap, SurfaceId.COUCH, at, landing, listOf(dwell()))
     }
 
-    /** Climb the cat tree, sit up there, and come down. */
-    fun tree(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
+    /** Climb the cat tree (the top 40 percent of the time), sit up there, and come down. */
+    fun tree(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
         if (mate != null && mate.onTree) return emptyList()
         val top = rng.chance(TREE_TOP_CHANCE)
         val perch = if (top) SurfaceId.TOP else SurfaceId.MID
         val at = if (top) TREE_TOP_X else TREE_MID_X
         val landing = TREE_BASE_X + TREE_STEP_DOWN
-        begin(x)
-        reach(TREE_BASE_X)
-        reach(landing)
-        if (!commit(claim, mate, perch, at)) return emptyList()
-        val steps = ArrayList<PlanStep>(MAX_STEPS)
-        steps.addAll(RoutePlanner.route(SurfaceId.FLOOR, x, perch, at))
-        steps.add(dwell())
-        if (top) steps.add(PlanStep.Hop(SurfaceId.MID, TREE_MID_X))
-        steps.addAll(RoutePlanner.route(SurfaceId.MID, TREE_MID_X, SurfaceId.FLOOR, landing))
-        return steps
+        return excursion(x, mate, claim, cap, perch, at, landing, listOf(dwell()))
     }
 
     /** Hop on the bedroom window sill, watch the garden, and come down. */
-    fun sill(x: Float, mate: Claim?, claim: Claim): List<PlanStep> {
+    fun sill(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
         if (mate != null && mate.perch == SurfaceId.SILL) return emptyList()
-        val landing = SILL_X + SILL_STEP_DOWN
-        begin(x)
-        reach(SILL_RUN_UP_X)
-        reach(landing)
-        if (!commit(claim, mate, SurfaceId.SILL, SILL_X)) return emptyList()
-        val steps = ArrayList<PlanStep>(MAX_STEPS)
-        steps.addAll(RoutePlanner.route(SurfaceId.FLOOR, x, SurfaceId.SILL, SILL_X))
-        steps.add(act("lookup", LOOK_MIN_S, LOOK_MAX_S))
-        steps.add(act("idle_sit", DWELL_SIT_MIN_S, DWELL_SIT_MAX_S))
-        steps.addAll(RoutePlanner.route(SurfaceId.SILL, SILL_X, SurfaceId.FLOOR, landing))
-        return steps
+        val watch =
+            listOf(
+                act("lookup", LOOK_MIN_S, LOOK_MAX_S),
+                act("idle_sit", DWELL_SIT_MIN_S, DWELL_SIT_MAX_S),
+            )
+        return excursion(
+            x,
+            mate,
+            claim,
+            cap,
+            SurfaceId.SILL,
+            SILL_X,
+            SILL_X + SILL_STEP_DOWN,
+            watch,
+        )
+    }
+
+    /**
+     * Parkour: up on the counter and from there onto the fridge, sit up there in the corner, and
+     * back the way it came (counter, floor). A cat that cannot make the counter, or the fridge from
+     * it, rests instead.
+     */
+    fun fridge(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
+        val at = rng.range(FRIDGE_LO, FRIDGE_HI)
+        val landing = clearOfFurniture(rng.range(FRIDGE_FLOOR_LO, FRIDGE_FLOOR_HI))
+        return excursion(x, mate, claim, cap, SurfaceId.FRIDGE, at, landing, perchDwell())
+    }
+
+    /** Parkour: up to the top of the bookcase (by the tree, or the window sill) and back down. */
+    fun bookcase(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
+        val at = rng.range(BOOKCASE_LO, BOOKCASE_HI)
+        val landing = clearOfFurniture(rng.range(BOOKCASE_FLOOR_LO, BOOKCASE_FLOOR_HI))
+        return excursion(x, mate, claim, cap, SurfaceId.BOOKCASE, at, landing, perchDwell())
+    }
+
+    /**
+     * Parkour: a window sill that needs a stepping stone, the living room's (over the sofa) or the
+     * kitchen's (over the counter), to watch from and come down.
+     */
+    fun window(x: Float, mate: Claim?, claim: Claim, cap: JumpCapability): List<PlanStep> {
+        val living = rng.chance(HALF)
+        val perch = if (living) SurfaceId.LSILL else SurfaceId.KSILL
+        val s = World.surface(perch)
+        val at = rng.range(s.x0 + WINDOW_INSET, s.x1 - WINDOW_INSET)
+        val landing =
+            if (living) clearOfFurniture(rng.range(WINDOW_LIVING_LO, WINDOW_LIVING_HI))
+            else clearOfFurniture(rng.range(WINDOW_KITCHEN_LO, WINDOW_KITCHEN_HI))
+        return excursion(x, mate, claim, cap, perch, at, landing, perchDwell())
+    }
+
+    /** What a cat does on a high perch: sit and watch, loaf, wash, or look about. */
+    private fun perchDwell(): List<PlanStep> {
+        val roll = rng.nextFloat()
+        return when {
+            roll < PERCH_LOAF -> listOf(act("loaf", LOAF_MIN_S, LOAF_MAX_S))
+            roll < PERCH_GROOM -> listOf(act("groom", Tuning.Autopilot.GROOM_MIN_S, GROOM_MAX_S))
+            roll < PERCH_WATCH ->
+                listOf(
+                    act("lookup", LOOK_MIN_S, LOOK_MAX_S),
+                    act("idle_sit", DWELL_SIT_MIN_S, DWELL_SIT_MAX_S),
+                )
+            else -> listOf(act("idle_sit", DWELL_SIT_MIN_S, DWELL_SIT_MAX_S))
+        }
     }
 
     /** What a cat does while it is up on something. */
@@ -311,13 +423,11 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         private const val EAT_MAX_S = 7f
 
         private const val BED_X = 36f
-        private const val BED_RUN_UP_X = 50f
         private const val BED_STEP_DOWN = 44f
         private const val BED_LOAF_MIN_S = 2f
         private const val BED_LOAF_MAX_S = 3.5f
         private const val COUCH_LO = -128f
         private const val COUCH_HI = -76f
-        private const val COUCH_RUN_UP = 20f
         private const val COUCH_STEP_DOWN = 44f
         private const val TREE_BASE_X = 138f
         private const val TREE_MID_X = 150f
@@ -325,7 +435,22 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         private const val TREE_STEP_DOWN = -34f
         private const val TREE_TOP_CHANCE = 0.4f
         private const val SILL_X = 54f
-        private const val SILL_RUN_UP_X = 54f
+        private const val FRIDGE_LO = 218f
+        private const val FRIDGE_HI = 234f
+        private const val FRIDGE_FLOOR_LO = 226f
+        private const val FRIDGE_FLOOR_HI = 330f
+        private const val BOOKCASE_LO = 112f
+        private const val BOOKCASE_HI = 132f
+        private const val BOOKCASE_FLOOR_LO = 80f
+        private const val BOOKCASE_FLOOR_HI = 120f
+        private const val WINDOW_INSET = 6f
+        private const val WINDOW_LIVING_LO = -140f
+        private const val WINDOW_LIVING_HI = -70f
+        private const val WINDOW_KITCHEN_LO = 250f
+        private const val WINDOW_KITCHEN_HI = 330f
+        private const val PERCH_LOAF = 0.3f
+        private const val PERCH_GROOM = 0.55f
+        private const val PERCH_WATCH = 0.8f
         private const val SILL_STEP_DOWN = 30f
 
         private const val SIT_MIN_S = 1.2f
@@ -341,6 +466,5 @@ internal class HousePlans(private val rng: Rng, private val slot: Int, private v
         private const val STRETCH_SLACK_S = 0.4f
         private const val DWELL_LOAF = 0.4f
         private const val DWELL_GROOM = 0.7f
-        private const val MAX_STEPS = 10
     }
 }
