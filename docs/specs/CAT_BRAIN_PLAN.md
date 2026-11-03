@@ -1,6 +1,6 @@
 # Native cat brain: plan
 
-Status: CB0 (contract and harness) built, Native API 58: `pet.world.v1`, the `world` block, blob and command, the strict decoders, FakePage, WorldClock, the headless check and the day viewer skeleton; nothing behaves differently yet. Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
+Status: CB0 (contract and harness) built, Native API 58: `pet.world.v1`, the `world` block, blob and command, the strict decoders, FakePage, WorldClock, the headless check and the day viewer skeleton. CB1 (brain core) built, Native API 60: `feature/pet/brain` (drives, mood, persona, scheduler, selector, runner, SpotBook, explain ring, the activities sleep + waking routine, loaf, groom, wander, window watch, parkour visit, eat, beg, scratch, knead, an `Activity` registry for the later phases, a fast executor for long runs) and `CatBody.tone(v, a)`; it runs headless in the day viewer and the tests (docs/specs/CAT_BRAIN_DAYS.md), and no screen draws it yet (CB2). Owner decision (3 Nov 2026): **"Native brain from scratch."** This plan replaces `CAT_TAB_PLAN.md` CT3 (the
 live `mind` stream that lets the page's brain steer the native body), the page halves of CT4 and CT5 (game plan builders, pair director
 through the stream) and the behaviour part of CT-L. The page keeps the cat's **identity and care economics**; **behaviour** (what a
 cat does minute by minute) moves to a new, smaller brain in pure Kotlin, built for the new body. Citations are `segment:line` under
