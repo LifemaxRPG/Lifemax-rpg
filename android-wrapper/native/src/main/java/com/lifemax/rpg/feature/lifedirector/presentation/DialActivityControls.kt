@@ -37,7 +37,6 @@ internal fun DialActivityControls(
     Crossfade(
         targetState = model,
         animationSpec = tween(if (reducedMotion) 0 else 220),
-        contentKey = { it.kind + it.id },
         label = "dial activity",
     ) { current ->
         Column(
@@ -69,9 +68,9 @@ internal fun DialActivityControls(
                             textAlign = TextAlign.Center,
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            DialControl("−", ready) { actions.session.step(-1) }
+                            DialControl("−", ready) { actions.session.step(-5) }
                             Text(draft, color = DirectorPalette.ink, fontSize = 18.sp)
-                            DialControl("+", ready) { actions.session.step(1) }
+                            DialControl("+", ready) { actions.session.step(5) }
                         }
                         DialControl(current.complete.label, ready, actions.session.complete)
                     }
