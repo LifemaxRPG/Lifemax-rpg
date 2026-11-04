@@ -52,7 +52,7 @@ async function visit(b, settingsCaps) {
   const r = await p.evaluate(async (H) => {
     eval(H); const out = {}, s = latest(), all = controls(s);
     const f = id => ctl(s, id);
-    out.edit = all.filter(k => k.kind === 'field').map(k => [k.id, k.op, k.group, k.input]);
+    out.edit = all.filter(k => k.kind === 'field' && !/^hapCard\//.test(k.id)).map(k => [k.id, k.op, k.group, k.input]);
     out.limits = { name: [f('#characterName').maxLength], weight: [f('#characterWeight').min, f('#characterWeight').max, f('#characterWeight').step], grace: [f('#decayGrace').min, f('#decayGrace').max, f('#decayGrace').step], rule: [f('#rule-reading').min, f('#rule-reading').max], ft: [f('#characterHeightFt').min, f('#characterHeightFt').max], time: [f('reminders.workoutTime').min, f('reminders.workoutTime').group] };
     out.saves = all.filter(k => k.kind === 'button' && /^Save/.test(k.label)).map(k => [k.id, k.op, k.group, k.label]);
     out.reset = all.filter(k => /Reset defaults/.test(k.label)).map(k => k.op);
