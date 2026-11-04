@@ -198,7 +198,7 @@
   wouldOpen:()=>cardsWanted()?cards().coverable():NativeTabs.covered('dashboard'), // native tab swipe's kind()
  });
  /* whichever drawing opens closes a stray other at once: the repair heal() cannot make, since it sees one entry for the view */
- window.NativeOverviewShell={isOpen:()=>N.open,close:closeShell};
+ window.NativeOverviewShell={isOpen:()=>N.open,close:closeShell,refresh:()=>{if(N.open)send()}};
  window.openNativeOverview=()=>open(true);
  // The first-install tab-thumbnail pass navigates through every web page. It must
  // not navigate the shared host behind a visible native Overview. Settings can
