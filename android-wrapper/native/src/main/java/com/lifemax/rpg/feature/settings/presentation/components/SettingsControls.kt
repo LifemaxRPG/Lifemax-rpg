@@ -349,7 +349,9 @@ private fun ChoiceGroup(
     }
 }
 
-/** Native Compose slider; commits once on release rather than flooding the WebView with commands. */
+/**
+ * Native Compose slider; commits once on release rather than flooding the WebView with commands.
+ */
 @Composable
 private fun NativeScrubSlider(
     control: SettingsControl.Select,
