@@ -389,9 +389,7 @@ private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, g
             val layout = glyphs.line(word, hourWordMain)
             val w = layout.size.width.toFloat()
             val h = layout.size.height.toFloat()
-            val centre =
-                if (hour == 6) Offset(359f - w / 2, CENTRE)
-                else Offset(1f + w / 2, CENTRE)
+            val centre = if (hour == 6) Offset(359f - w / 2, CENTRE) else Offset(1f + w / 2, CENTRE)
             val topLeft = centre - Offset(w / 2, h / 2)
             add { drawText(layout, P.hourWordMain, topLeft) }
         } else {
