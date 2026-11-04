@@ -34,6 +34,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # Diagnostic rerun: print the canonical ktfmt diff for the native slider.
       - name: Check native Kotlin formatting
         run: |
           curl --fail --silent --show-error --location --connect-timeout 10 --max-time 60 https://repo.maven.apache.org/maven2/com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -o "$RUNNER_TEMP/ktfmt.jar"
