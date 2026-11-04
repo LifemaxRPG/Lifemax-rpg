@@ -50,6 +50,7 @@
     ["diagnostics3d", "#g3DbgSel", "lma_g3dbg"],
     ["haptics", "#hapBody .settingsline input.check", CORE],
     ["haptics.strength", "#hapBody [role=group]", CORE],
+    ["haptics.nativeScrubStrength", '#hapBody input[type="range"][aria-label="Native navigation scrub strength"]', CORE],
     ["hdCat", "#hdToggle", CORE],
     ["voice", "#lmvToggle", "lifemax_voice_enabled"],
     ["calendar", '#lmaCalBody input[aria-label="Import from my calendar"]', "lifemax_calsync_v1", true],
@@ -159,6 +160,10 @@
       const op = b && !(b.asks && !el.checked) ? "toggle" : "reveal";
       return { kind: "switch", id, label: name, on: el.checked, enabled, op };
     }
+    if (el.matches('input[type="range"]') && b && b.id === "haptics.nativeScrubStrength")
+      return { kind: "select", id, label: name, value: el.value,
+        options: Array.from({length:101}, (_,n)=>({value:String(n),label:n+"%"})),
+        enabled, op:"choose" };
     if (el.matches("select"))
       return {
         kind: "select",
@@ -390,9 +395,16 @@
     },
     /** a select or the haptic strength: {id, value}, one of the values the projection listed */
     async choose({ id, value }) {
-      const b = control(id, "select, [role=group]");
+      const b = control(id, "select, [role=group], input[type=range]");
       value = String(value ?? "");
       if (!b) return refuse("That choice is not on the page. Nothing was changed.");
+      if (b.el.matches('input[type="range"]')) {
+        const n=Number(value);
+        if (!Number.isInteger(n) || n<0 || n>100) return refuse("Strength must be between 0 and 100%.");
+        if (b.el.disabled) return refuse("Haptics are turned off.");
+        if (b.el.value === value) return {ok:true,changed:false,message:""};
+        return operate(b,()=>{b.el.value=value;b.el.dispatchEvent(new Event("input",{bubbles:true}));b.el.dispatchEvent(new Event("change",{bubbles:true}));},el=>el.value===value);
+      }
       if (b.el.matches("select")) {
         if (![...b.el.options].some((o) => o.value === value)) return refuse("That is not one of the choices. Nothing was changed.");
         if (b.el.disabled) return refuse("This choice cannot be changed right now.");
