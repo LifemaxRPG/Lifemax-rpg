@@ -3,12 +3,11 @@ package com.lifemax.rpg.app.shell.bar
 import android.content.Context
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.os.Looper
-import android.os.SystemClock
-import android.content.Context
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -104,19 +103,27 @@ internal class ScrubBar(
     override fun buzz(kind: ScrubBuzz) {
         val strength = scene?.hapticStrength ?: 50
         if (strength <= 0) return
-        val motor = if (Build.VERSION.SDK_INT >= 31) {
-            (this.context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            (this.context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
-        }
-        if (Build.VERSION.SDK_INT >= 26 && motor?.hasVibrator() == true && motor.hasAmplitudeControl()) {
-            val amplitude = (strength * 254 / 100 + 1).coerceIn(1, 255)
-            val duration = when (kind) {
-                ScrubBuzz.Tick -> 7L
-                ScrubBuzz.Start -> 12L
-                ScrubBuzz.End -> 15L
+        val motor =
+            if (Build.VERSION.SDK_INT >= 31) {
+                (this.context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
+                        as? VibratorManager)
+                    ?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                (this.context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
             }
+        if (
+            Build.VERSION.SDK_INT >= 26 &&
+                motor?.hasVibrator() == true &&
+                motor.hasAmplitudeControl()
+        ) {
+            val amplitude = (strength * 254 / 100 + 1).coerceIn(1, 255)
+            val duration =
+                when (kind) {
+                    ScrubBuzz.Tick -> 7L
+                    ScrubBuzz.Start -> 12L
+                    ScrubBuzz.End -> 15L
+                }
             motor.vibrate(VibrationEffect.createOneShot(duration, amplitude))
             return
         }
