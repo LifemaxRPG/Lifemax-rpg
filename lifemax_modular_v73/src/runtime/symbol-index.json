@@ -413,6 +413,9 @@
  "LMA_IN": [
   "src/runtime/segments/33-android.js"
  ],
+ "LMA_NATIVE_TAB_TOGGLES": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
  "LMA_PREF_KEY": [
   "src/runtime/segments/33-android.js"
  ],
@@ -3836,6 +3839,9 @@
  "lmaSetHtml": [
   "src/runtime/segments/35-android-upkeep.js"
  ],
+ "lmaSetNativeMode": [
+  "src/runtime/segments/50-settings-tabs.js"
+ ],
  "lmaSetScrubSpeed": [
   "src/runtime/segments/42-scrubnav.js"
  ],
@@ -3877,6 +3883,9 @@
  ],
  "lmaSyncBusy": [
   "src/runtime/segments/33-android.js"
+ ],
+ "lmaSyncNativeMode": [
+  "src/runtime/segments/50-settings-tabs.js"
  ],
  "lmaSyncTimer": [
   "src/runtime/segments/33-android.js"
