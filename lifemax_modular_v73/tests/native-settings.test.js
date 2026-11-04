@@ -400,6 +400,27 @@ const HELPERS = `
   ok('a native tab\'s gear: Settings opens before that tab closes', h.character && h.handover, h);
   ok('turned off from the screen: it closes, the classic page stays', h.off && h.offStays, h);
 
+  /* ---------- one native-mode switch, with independent per-tab choices ---------- */
+  const mode = await p.evaluate(async () => {
+    const ids = LMA_NATIVE_TAB_TOGGLES;
+    const boxes = () => ids.map(id => document.getElementById(id));
+    const master = document.getElementById('nativeModeToggle');
+    const original = master.checked === boxes().some(box => box.checked);
+    lmaSetNativeMode(false); await new Promise(r => setTimeout(r, 100));
+    const off = !master.checked && boxes().every(box => !box.checked);
+    lmaSetNativeMode(true); await new Promise(r => setTimeout(r, 100));
+    const on = master.checked && boxes().every(box => box.checked);
+    document.getElementById('nativeCharacterToggle').click();
+    await new Promise(r => setTimeout(r, 100));
+    const custom = master.checked && !document.getElementById('nativeCharacterToggle').checked
+      && boxes().filter(box => box.id !== 'nativeCharacterToggle').every(box => box.checked);
+    document.getElementById('nativeModeCustomize').click();
+    const submenu = setCat === 'native' && document.getElementById('nativeTabsCard').classList.contains('set-hide') === false;
+    return { original, off, on, custom, submenu };
+  });
+  ok('native mode controls all tabs, preserves individual overrides and opens its submenu',
+    Object.values(mode).every(Boolean), mode);
+
   /* ---------- in a browser: nothing to open, the switch is disabled ---------- */
   const p2 = await ctx.newPage(); p2.on('pageerror', e => errs.push('browser: ' + String(e)));
   await p2.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,tipsSeen:{}})); localStorage.setItem('lma_set_cat', 'sound');");
@@ -415,7 +436,7 @@ const HELPERS = `
     return { disabled: t.disabled && !t.checked, notes: notif.rows.length === 1 && notif.rows[0].type === 'note' && /Android app/.test(notif.rows[0].text), cards: s.cards.length, broken, forced };
   });
   ok('a category the chips do not have: the page shows its first chip, and the projection always names a chip', w.broken && w.forced === 'look', w);
-  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 24, w);
+  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 25, w);
 
   ok('no script errors', errs.length === 0, errs.slice(0, 5));
   await b.close();
