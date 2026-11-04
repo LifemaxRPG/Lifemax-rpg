@@ -116,7 +116,7 @@
   for(const root of roots)if(root)await walk(root);return{nodes,hits,height:maxY,width:nav?roots[0].scrollWidth:viewportWidth()};
  }
  function mask(on){for(const el of [document.querySelector('.topbar'),document.querySelector('.sidebar')])if(el){if(on){if(!el.dataset.nativeOverviewMasked){el.dataset.nativeOverviewOpacity=el.style.opacity;el.dataset.nativeOverviewMasked='1';el.style.opacity='0'}}else if(el.dataset.nativeOverviewMasked){el.style.opacity=el.dataset.nativeOverviewOpacity||'';delete el.dataset.nativeOverviewMasked;delete el.dataset.nativeOverviewOpacity}}}
- function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0,[...(bar?.querySelectorAll('.navbtn[data-view]')||[])].map(b=>b.dataset.view+(b.offsetWidth?'':'-')).join('/')].join('|')}
+ function chromeKey(){const top=document.querySelector('.topbar'),bar=document.querySelector('.sidebar'),root=document.documentElement;return [lmaView(),document.querySelector('.sidebar .navbtn.active')?.dataset.view||'',viewportWidth(),root.className,document.body.className,fxOpt().nativeScrubStrength,top?.textContent||'',[...(top?.querySelectorAll('.top-actions > *')||[])].filter(e=>e.offsetParent!==null).map(e=>e.className).join(','),getComputedStyle(root).getPropertyValue('--accent'),bar?.scrollWidth||0,[...(bar?.querySelectorAll('.navbtn[data-view]')||[])].map(b=>b.dataset.view+(b.offsetWidth?'':'-')).join('/')].join('|')}
  /* What native needs to let a finger scrub along the bar (scene.scrub, v1): the tabs in the order the bar shows them with the id of each
    button, the tab the page is on, the owner's scrub speed and haptics switch, and the look of the selected pill and of the bar itself
    (read while the capture holds the transitions, so it is the final colour). The bar is native's drawing of the page's; it moves the pill
@@ -133,7 +133,7 @@
    const bar=document.querySelector('.sidebar');if(!bar||!look)return undefined;
    const tabs=[];for(const[id,el]of actions)if(el.matches&&el.matches('.sidebar > .navbtn[data-view]'))tabs.push({key:el.dataset.view,id});
    const on=bar.querySelector('.navbtn.active');
-   return{v:1,tabs,active:on?.dataset.view||'',speed:lmaScrubSpeedKey(),haptics:!!fxOpt().haptics,pill:look.pill,surface:look.surface};
+   return{v:1,tabs,active:on?.dataset.view||'',speed:lmaScrubSpeedKey(),haptics:!!fxOpt().haptics,hapticStrength:Math.max(0,Math.min(100,Number(fxOpt().nativeScrubStrength??50)||0)),pill:look.pill,surface:look.surface};
   }catch(e){return undefined}
  }
  function publishChrome(scene,actions){N.actions=actions;N.maps.set(++N.seq,actions);while(N.maps.size>4)N.maps.delete(N.maps.keys().next().value);return{...scene,sequence:N.seq,navScroll:document.querySelector('.sidebar')?.scrollLeft||0,swipe:window.NativeSwipe?.state(),scrub:scrubState(scene.look,actions)}}
