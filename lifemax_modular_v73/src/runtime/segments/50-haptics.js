@@ -48,7 +48,7 @@ function hapPlay(name){
  const pats={tap:[12],double:[14,50,14],success:[18,30,18],big:[40,40,40,60,160]};
  haptic(pats[name]||[12]);
 }
-function hapSet(patch){state.fx=Object.assign({},fxOpt(),patch);try{save()}catch(e){}hapRender()}
+function hapSet(patch){state.fx=Object.assign({},fxOpt(),patch);try{save()}catch(e){}hapRender();try{window.NativeOverview?.invalidate?.()}catch(e){}}
 function hapRender(){
  const el=document.getElementById('hapBody');if(!el)return;
  const o=fxOpt(),k=hapLevelKey();el.textContent='';
@@ -58,6 +58,10 @@ function hapRender(){
  const seg=document.createElement('div');seg.style.cssText='display:flex;gap:6px;margin:10px 0 8px;flex-wrap:wrap';seg.setAttribute('role','group');seg.setAttribute('aria-label','Haptic strength');
  Object.keys(HAP_LEVELS).forEach(function(key){const b=document.createElement('button');b.type='button';b.className='btn small'+(key===k?'':' secondary');b.textContent=HAP_LEVELS[key].label;b.dataset.level=key;b.setAttribute('aria-pressed',key===k?'true':'false');b.disabled=!o.haptics;b.addEventListener('click',function(){hapSet({hapticLevel:key});hapPlay('double')});seg.appendChild(b)});
  el.appendChild(seg);
+ const navLabel=document.createElement('label');navLabel.style.cssText='display:block;margin:14px 0 6px';navLabel.textContent='Native navigation scrub strength';el.appendChild(navLabel);
+ const navSlider=document.createElement('input');navSlider.type='range';navSlider.min='0';navSlider.max='100';navSlider.step='5';navSlider.value=String(Math.max(0,Math.min(100,Number(fxOpt().nativeScrubStrength??50)||0)));navSlider.disabled=!o.haptics;navSlider.setAttribute('aria-label','Native navigation scrub strength');navSlider.style.width='100%';el.appendChild(navSlider);
+ const navValue=document.createElement('div');navValue.className='muted';navValue.style.cssText='font-size:12px;margin-bottom:10px';navValue.textContent=navSlider.value==='0'?'Off':navSlider.value+'%';el.appendChild(navValue);
+ navSlider.addEventListener('input',function(){navValue.textContent=navSlider.value==='0'?'Off':navSlider.value+'%';state.fx=Object.assign({},fxOpt(),{nativeScrubStrength:Number(navSlider.value)});try{save()}catch(e){};try{window.NativeOverview?.invalidate?.()}catch(e){}});
  const t=document.createElement('div');t.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
  [['tap','Tap'],['double','Double tap'],['success','XP gain'],['big','Level up']].forEach(function(x){const b=document.createElement('button');b.type='button';b.className='btn small secondary';b.textContent='Try: '+x[1];b.dataset.try=x[0];b.disabled=!o.haptics;b.addEventListener('click',function(){hapPlay(x[0])});t.appendChild(b)});
  el.appendChild(t);
