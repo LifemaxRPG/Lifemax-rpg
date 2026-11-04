@@ -110,6 +110,8 @@ internal object CatchUpRun {
             "scratch" to "scratched",
             "eat" to "ate",
             "beg" to "waited for food",
+            "play" to "played",
+            "make way" to "moved over",
         )
 }
 

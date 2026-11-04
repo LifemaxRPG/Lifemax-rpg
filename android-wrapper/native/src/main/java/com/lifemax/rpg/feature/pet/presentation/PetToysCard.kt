@@ -32,7 +32,7 @@ import com.lifemax.rpg.feature.pet.domain.PetToys
  * The toy list: every toy with the page's word for it ("Favorite", "Loves it", or what it waits
  * for: "Unlocks at Friend"), and for a toy still locked the Rewards shop's early unlock for
  * Sparks. The unlock is a command; the price, the balance and the save are the page's. Playing
- * with a toy is the page's toy tray (Play), a later phase.
+ * with a toy is the tray under Play (PetToyTray, `pet.play.v1`).
  */
 
 /** `.pet-toy.locked`: a toy the cat cannot play with yet is shown fainter. */

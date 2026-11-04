@@ -41,6 +41,8 @@ fun PetRoute(
                 buyToy = vm::buyToy,
                 expandGenome = vm::expandGenome,
                 handOver = { onAction(it, "") },
+                play = { if (!vm.playPressed()) onAction(PetHandOver.PLAY, "") },
+                playToy = vm::playToy,
                 noticeShown = vm::noticeShown,
                 openRoom = vm::openRoom,
             )
@@ -72,7 +74,8 @@ fun PetRoute(
     }
     val touchable = p.touch != null
     val touch = if (touchable) RoomTouch(onBowl = vm::feed) else null
-    PetScreen(p, PetUi(vm.waiting, vm.notice), actions, topInsetDp, bottomInsetDp) { modifier ->
+    PetScreen(p, PetUi(vm.waiting, vm.notice, vm.toyTray), actions, topInsetDp, bottomInsetDp) {
+        modifier ->
         PetRoom(p, room, visible && !vm.fullRoom, modifier, touch, still)
     }
     if (touchable && vm.fullRoom && room is RoomState.Ready) {

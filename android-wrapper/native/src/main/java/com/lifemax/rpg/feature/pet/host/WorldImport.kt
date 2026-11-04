@@ -68,6 +68,7 @@ object WorldImport {
             }
             cats[cat.id] = kept ?: build(cat, day, hour, nowMs)
         }
+        apart(cats)
         val began =
             if (stored != null) stored.imported else if (fromBrain) FROM_LEGACY else FROM_FRESH
         return WorldBlob(
@@ -135,15 +136,51 @@ object WorldImport {
 
     private const val PERCENT = 100.0
 
-    /** Where a cat with no saved place stands at [hour]: in bed at night, else by the bowls. */
+    /**
+     * Where a cat with no saved place stands at [hour]: at night the first cat in the bed and the
+     * second on the floor cushion (two cats never start on one spot), by day on the floor by its
+     * own bowl.
+     */
     fun scheduled(slot: Int, hour: Double): BlobPos {
         val night = hour >= HostTuning.BED_NIGHT_FROM_H || hour < HostTuning.BED_NIGHT_TO_H
-        if (night) return BlobPos(SurfaceId.BED.key, BED_X, World.ART_Z.toDouble(), 1)
+        if (night) {
+            val id = if (slot == 0) SurfaceId.BED else SurfaceId.CUSHION
+            val x = if (slot == 0) HostTuning.BED_X else HostTuning.CUSHION_X
+            return BlobPos(id.key, x, World.surface(id).z.toDouble(), 1)
+        }
         val x = if (slot == 0) HostTuning.BOWL_X else HostTuning.BOWL_X_SECOND
         return BlobPos(SurfaceId.FLOOR.key, x, World.ART_Z.toDouble(), 1)
     }
 
-    private const val BED_X = 36.0
+    /**
+     * The cats of [cats] (in slot order) with none on top of another: a later cat that would start
+     * where an earlier one is (closer than [HostTuning.APART_PX]: both web cats saved at one place,
+     * both stored on the bed) is put on the floor [HostTuning.APART_STEP_PX] along, toward the
+     * middle of the house, and picks afresh what to do there (a declared cut, as every start is).
+     */
+    fun apart(cats: LinkedHashMap<String, BlobCat>) {
+        val ids = cats.keys.toList()
+        for (i in 1 until ids.size) {
+            val c = cats.getValue(ids[i])
+            val clash = (0 until i).any { on(cats.getValue(ids[it]).pos, c.pos) }
+            if (!clash) continue
+            val p = c.pos
+            val mid = (World.HOUSE_MIN_X + World.HOUSE_MAX_X) / 2.0
+            val dir = if (p.x < mid) 1 else -1
+            val x = World.clampHouse((p.x + dir * HostTuning.APART_STEP_PX).toFloat()).toDouble()
+            val z = if (p.s == SurfaceId.FLOOR.key) p.z else World.ART_Z.toDouble()
+            cats[ids[i]] = c.copy(pos = BlobPos(SurfaceId.FLOOR.key, x, z, -dir), act = IDLE)
+        }
+    }
+
+    /** True when [a] and [b] are one place: one surface, closer than the gap. */
+    private fun on(a: BlobPos, b: BlobPos): Boolean =
+        a.s == b.s &&
+            abs(a.x - b.x) < HostTuning.APART_PX &&
+            (a.s != SurfaceId.FLOOR.key || abs(a.z - b.z) < HostTuning.APART_Z)
+
+    /** The blob's word for "nothing yet": the brain picks afresh. */
+    private const val IDLE = "idle"
 
     /**
      * The web room's saved place (house x, depth, elevation above the floor) as a place in the

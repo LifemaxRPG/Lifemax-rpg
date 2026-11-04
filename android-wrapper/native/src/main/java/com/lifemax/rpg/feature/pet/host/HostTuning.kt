@@ -56,6 +56,19 @@ object HostTuning {
     const val BED_NIGHT_FROM_H = 22.0
     const val BED_NIGHT_TO_H = 7.0
 
+    /** At night the first cat is put in the bed, the second on the floor cushion (never both). */
+    const val BED_X = 36.0
+    const val CUSHION_X = -120.0
+
+    /**
+     * Two cats a world starts closer than [APART_PX] (on one surface, within [APART_Z] on the
+     * floor; the sofa's two ends are further apart) are put apart: the second goes [APART_STEP_PX]
+     * along the floor.
+     */
+    const val APART_PX = 30.0
+    const val APART_Z = 14.0
+    const val APART_STEP_PX = 48.0
+
     /** A fresh world's schedule (hours), before the brain draws its own. */
     const val WAKE_H = 6.7
     const val BED_H = 22.75

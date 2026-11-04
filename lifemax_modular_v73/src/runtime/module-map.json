@@ -3613,7 +3613,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 21453,
+   "bytes": 21929,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3654,6 +3654,21 @@
     "window.petWorldBlock",
     "window.petWorldLegacy",
     "window.NativeCatWorld"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-play.js",
+   "bytes": 5932,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "play"
+   ],
+   "symbols": [
+    "window.writeSave",
+    "window.haptic",
+    "window.NativePetPlay"
    ]
   },
   {
@@ -3838,7 +3853,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 24050,
+   "bytes": 24288,
    "statement_count": 1,
    "tags": [
     "native",

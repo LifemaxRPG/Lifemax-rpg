@@ -15,6 +15,8 @@
      pet-touched.json        a shy cat petted twice and played with once today: the touch fields (pet.touch.v1) and the counts line
      pet-petted.json         after a pet through the touch command: the day's count and the brain's saturation
      pet-no-touch.json       the first release's app (no pet.touch.v1): none of the touch fields
+     pet-play.json           the touched cat for a screen with pet.play.v1: the toy tray (unlocked toys only, the page's words)
+     pet-play-tired.json     a very hungry cat with pet.play.v1: the tray with the page's "too tired to play" refusal
      pet-replies.json        every command answered, in the envelope NativeTabKit sends a reply in
    pet-panels-<state>.json the same projection for a screen that also draws the panels (pet.panels.v1): the mind row, likes,
                            inner life, genetics, Together card and toys for the cat states of tests/native-pet-panels.scenarios.js
@@ -95,6 +97,13 @@ module.exports = async function pet({ b, out, write }) {
     const p = await visit(STATES.alive, CAPS_CT1);
     await p.evaluate(() => navigate('pet'));
     write('fixtures/pet-no-touch.json', await open(p));
+    await p.context().close();
+  }
+  /* native Play (pet.play.v1): the toy tray for a cat that may play, and for one too hungry to */
+  for (const [name, setup] of Object.entries({ play: STATES.touched, 'play-tired': STATES['very-hungry'] })) {
+    const p = await visit(setup, [...CAPS, 'pet.play.v1']);
+    await p.evaluate(() => navigate('pet'));
+    write('fixtures/pet-' + name + '.json', await open(p));
     await p.context().close();
   }
 

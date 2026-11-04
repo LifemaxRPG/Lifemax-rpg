@@ -106,6 +106,9 @@ object Catalogue {
                 Beg,
                 Scratch,
                 Knead,
+                // reflexes only (the selector passes them by): the owner's game, making way
+                OwnerPlay,
+                MakeWay,
             )
         )
 }

@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.host
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
 import com.lifemax.rpg.feature.pet.world.BlobCat
+import com.lifemax.rpg.feature.pet.world.BlobPos
 import com.lifemax.rpg.feature.pet.world.LegacyPos
 import com.lifemax.rpg.feature.pet.world.WorldBlobJson
 import com.lifemax.rpg.feature.pet.world.WorldBlockJson
@@ -104,9 +105,32 @@ class WorldImportTest {
     @Test
     fun aCatWithNoSavedPlaceSleepsOnTheBedAtNightAndStandsByTheBowlByDay() {
         assertEquals("bed", WorldImport.scheduled(0, 23.5).s)
-        assertEquals("bed", WorldImport.scheduled(1, 3.0).s)
+        // the second cat of a house never starts on the first one's bed (the layered cats)
+        assertEquals("cushion", WorldImport.scheduled(1, 3.0).s)
+        assertEquals("cushion", WorldImport.scheduled(1, 23.5).s)
         assertEquals("floor", WorldImport.scheduled(0, 12.0).s)
         assertEquals(HostTuning.BOWL_X_SECOND, WorldImport.scheduled(1, 12.0).x, 0.0)
+    }
+
+    @Test
+    fun twoCatsThatWouldStartOnOnePlaceAreSetApart() {
+        val bed = WorldFixtures.cat()
+        val cats =
+            linkedMapOf(
+                WorldFixtures.TED to bed,
+                WorldFixtures.LILY to bed.copy(pos = bed.pos.copy(x = bed.pos.x + 4)),
+            )
+        WorldImport.apart(cats)
+        assertEquals(bed, cats[WorldFixtures.TED])
+        val lily = cats.getValue(WorldFixtures.LILY)
+        assertEquals("floor", lily.pos.s)
+        assertTrue(Math.abs(lily.pos.x - bed.pos.x) >= HostTuning.APART_STEP_PX - 4)
+        assertEquals("idle", lily.act)
+        // the sofa's two ends are two places: left as they are
+        val sofa = bed.copy(pos = BlobPos("couch", -122.0, 40.0, 1))
+        val ends = linkedMapOf("a" to sofa, "b" to sofa.copy(pos = sofa.pos.copy(x = -76.0)))
+        WorldImport.apart(ends)
+        assertEquals("couch", ends.getValue("b").pos.s)
     }
 
     @Test

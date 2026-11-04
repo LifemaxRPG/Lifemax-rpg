@@ -3,6 +3,10 @@ package com.lifemax.rpg.feature.pet.brain
 import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.ToyBody
+import com.lifemax.rpg.feature.pet.body.ToyField
+import com.lifemax.rpg.feature.pet.world.PlayDone
+import com.lifemax.rpg.feature.pet.world.WorldCommand
 
 /** What the house tells each of its cats: the owner, the day, how many cats live here. */
 interface House {
@@ -14,6 +18,18 @@ interface House {
 
     /** One or two. */
     val catCount: Int
+
+    /** The house's toys, once the host has given them (null in a headless or fast world). */
+    val toys: ToyField?
+
+    /** Another cat stands on top of cat [slot] (see [BrainTuning.Apart]). */
+    fun crowded(slot: Int): Boolean
+
+    /** A floor x at least [BrainTuning.Apart.ASIDE_PX] from the other cat, near cat [slot]. */
+    fun asideX(slot: Int): Float
+
+    /** Queues [c] for the page. */
+    fun report(c: WorldCommand)
 }
 
 /**
@@ -147,6 +163,58 @@ class CatMind(
         persona.vacation = vacation
     }
 
+    /** Another cat stands on top of this one. */
+    fun crowded(): Boolean = house.crowded(slot)
+
+    /** Where to step aside to, on the floor, clear of the other cat. */
+    fun asideX(): Float = house.asideX(slot)
+
+    /** Gets off the other cat (the overlap guard): walks aside first. */
+    fun makeWay() = runner.makeWay(rng)
+
+    override var toy: ToyBody? = null
+        private set
+
+    private var playOp = ""
+
+    /** The game being played (its toy and report op), from its start: a second toss ends it. */
+    private var gameToy: ToyBody? = null
+    private var gameOp = ""
+
+    /**
+     * Why this cat will not come and play now, in a short line with [PlayWords.NAME] for its name
+     * (hungry, eating, fast asleep, too sleepy), or null when it will.
+     */
+    fun refusesPlay(): String? = OwnerPlay.refusal(this, runner.activity, runner.atPlaceS)
+
+    /**
+     * The owner offered [toy] (the page's toy [key]): the game starts now, reported with [op] when
+     * it ends.
+     */
+    fun play(toy: ToyBody, key: String, op: String) {
+        this.toy = toy
+        playKey = key
+        playOp = op
+        runner.interrupt(OwnerPlay, null, OwnerPlay.REASON, rng)
+    }
+
+    private var playKey = ""
+    private var gameKey = ""
+
+    /** Called by the runner when [a] ends (by itself or cut short) after [atPlaceS] at it. */
+    internal fun ended(a: Activity, atPlaceS: Double) {
+        if (a !== OwnerPlay) return
+        val t = gameToy ?: return
+        val played = atPlaceS >= BrainTuning.Play.PLAYED_MIN_S
+        if (gameOp.isNotEmpty()) house.report(PlayDone(gameOp, profile.id, gameKey, played))
+        if (toy === t && playOp == gameOp) {
+            toy = null
+            playOp = ""
+        }
+        gameToy = null
+        gameOp = ""
+    }
+
     /** Called by the runner when [a] begins: the mood answers the moment. */
     internal fun began(a: Activity) {
         val t = BrainTuning.Mood
@@ -159,6 +227,12 @@ class CatMind(
                 }
             }
             Beg.id -> mood.bump(t.BEG_VALENCE, 0.0)
+            OwnerPlay.id -> {
+                gameToy = toy
+                gameOp = playOp
+                gameKey = playKey
+                mood.bump(BrainTuning.Play.VALENCE, BrainTuning.Play.AROUSAL)
+            }
             ParkourVisit.id -> mood.bump(0.0, t.LAND_AROUSAL)
         }
     }

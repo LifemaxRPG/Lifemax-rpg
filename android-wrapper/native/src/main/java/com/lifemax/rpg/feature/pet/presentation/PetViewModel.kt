@@ -5,13 +5,16 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.lifemax.rpg.feature.pet.brain.PlayAnswer
 import com.lifemax.rpg.feature.pet.domain.NoPetCommands
 import com.lifemax.rpg.feature.pet.domain.PetCommands
 import com.lifemax.rpg.feature.pet.domain.PetNotice
+import com.lifemax.rpg.feature.pet.domain.PetPlay
 import com.lifemax.rpg.feature.pet.domain.PetProjection
 import com.lifemax.rpg.feature.pet.domain.PetReply
 import com.lifemax.rpg.feature.pet.domain.PetRepository
 import com.lifemax.rpg.feature.pet.domain.PetStroke
+import com.lifemax.rpg.feature.pet.host.CatWorldHost
 import java.util.UUID
 
 /** What a cat in the room does because of something the owner or the page did. */
@@ -51,6 +54,8 @@ sealed interface PetReaction {
 class PetViewModel(
     private val repository: PetRepository,
     private val commands: PetCommands = NoPetCommands,
+    /** Tosses the page's toy into the shared room (the cat world host); null: no world runs. */
+    private val offer: (String) -> PlayAnswer? = { CatWorldHost.shared.offerToy(it) },
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
     var pet by mutableStateOf<PetProjection?>(null)
@@ -70,6 +75,48 @@ class PetViewModel(
     /** Whether the full-screen room is open. */
     var fullRoom by mutableStateOf(false)
         private set
+
+    /** Whether the toy tray under Play is open (`pet.play.v1`). */
+    var toyTray by mutableStateOf(false)
+        private set
+
+    /**
+     * Play: with a page that sends the tray the screen's own tray opens (or closes); a page without
+     * it still takes Play to its own view ([handOver]). Answers true when the screen handled it.
+     */
+    fun playPressed(): Boolean {
+        val tray = pet?.play ?: return false
+        if (tray.tired.isNotEmpty()) {
+            toyTray = false
+            say(tray.tired)
+        } else toyTray = !toyTray
+        return true
+    }
+
+    /**
+     * The owner picked toy [id] from the tray (null: "Let the cat pick", its favourite): the toy
+     * lands in the shared room near the cats and one that wants to plays with it; when none does,
+     * the brain's short line says why. The page counts a game when it ends (the world's `play`).
+     */
+    fun playToy(id: String?) {
+        val tray = pet?.play ?: return
+        toyTray = false
+        if (tray.tired.isNotEmpty()) return say(tray.tired)
+        val toy = id?.takeIf { want -> tray.toys.any { it.id == want } } ?: favourite(tray)
+        toy ?: return
+        val answer = offer(toy)
+        when {
+            answer == null -> say(NOT_READY)
+            answer.message.isNotEmpty() -> say(answer.message)
+        }
+    }
+
+    /** The cat's own pick: its favourite, else one it loves, else the first. */
+    private fun favourite(tray: PetPlay): String? =
+        (tray.toys.firstOrNull { it.word == FAVOURITE }
+                ?: tray.toys.firstOrNull { it.word == LOVES }
+                ?: tray.toys.firstOrNull())
+            ?.id
 
     private val reactions = ArrayDeque<PetReaction>()
     private val strokes = HashMap<String, Int>()
@@ -96,6 +143,7 @@ class PetViewModel(
     /** The screen went behind the page: it draws no message and plays no reaction. */
     fun hidden() {
         showing = false
+        toyTray = false
         notice = null
         waiting = null
         fullRoom = false
@@ -253,6 +301,13 @@ class PetViewModel(
         const val PET_FOCUS = "focus"
         const val PET_BUY_TOY = "buyToy"
         const val PET_EXPAND = "expand"
+
+        /** The page's words for a toy: the favourite, and one the cat loves. */
+        const val FAVOURITE = "Favorite"
+        const val LOVES = "Loves it"
+
+        /** Play with no shared room running (it is starting, or the native brain is not there). */
+        const val NOT_READY = "The cats are not ready to play yet. Try again in a moment."
 
         /** Strokes sent and not yet answered; a page that is far behind hears no more of them. */
         const val MAX_STROKES_IN_FLIGHT = 12

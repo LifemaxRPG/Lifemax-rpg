@@ -71,6 +71,7 @@ internal object Sleep : Activity {
     override val cooldownMin = BrainTuning.Cooldowns.SLEEP_MIN
     override val next = WakingRoutine.id
     override val placeFlags = Spots.SLEEP
+    override val maxMinutes = BrainTuning.Limits.SLEEP_MAX_MIN
 
     /** A sleeping cat on any spot slowly stops wanting comfort. */
     override fun satisfies(d: Drive) = if (d == Drive.COMFORT) COMFORT_TAU else 0.0
@@ -157,6 +158,7 @@ internal object WakingRoutine : Activity {
     override val mainDrive = Drive.ENERGY
     override val reflexOnly = true
     override val arousal = 0.1
+    override val maxMinutes = BrainTuning.Limits.SHORT_MAX_MIN
 
     private const val GROOM_CHANCE = 0.5f
     private const val GROOM_LO = 2.0

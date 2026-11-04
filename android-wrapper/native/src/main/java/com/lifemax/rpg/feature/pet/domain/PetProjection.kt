@@ -107,7 +107,27 @@ data class PetProjection(
     val panels: PetPanels? = null,
     /** How the cats take touch, from a page that said `pet.touch.v1`; null from an older page. */
     val touch: PetTouch? = null,
+    /**
+     * The toy tray (`pet.play.v1`): Play opens it on the screen and the cats play natively; null
+     * from an older page, whose Play is still the page's own tray.
+     */
+    val play: PetPlay? = null,
 )
+
+/**
+ * The toy tray under Play, in the page's words: its [title], the [pick] tile ("Let Ted pick"),
+ * [tired] (the page's refusal while the cat is too hungry to play, else empty) and the [toys] the
+ * cat may play with (the page's unlocked and bought ones only), each with the page's word for it.
+ */
+data class PetPlay(
+    val title: String,
+    val pick: String,
+    val tired: String,
+    val toys: List<PetPlayToy>,
+)
+
+/** One toy of the tray: the page's toy [id], its [name] and [word] ("Favorite", "New"...). */
+data class PetPlayToy(val id: String, val name: String, val word: String)
 
 /**
  * How a cat takes touch, in the page's numbers: [level] is the trust level (0 to 5), [satMul] its

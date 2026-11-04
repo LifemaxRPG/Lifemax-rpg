@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.brain
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.TailState
+import com.lifemax.rpg.feature.pet.body.ToyBody
 
 /**
  * What an activity may read about its cat when it is scored and scripted: the drives, character,
@@ -35,6 +36,9 @@ interface MindView {
     /** Valence and arousal, -1..1. */
     val valence: Double
     val arousal: Double
+
+    /** The toy the owner offered for the game being played, or null. */
+    val toy: ToyBody?
 }
 
 /**
@@ -77,6 +81,24 @@ interface Activity {
     /** Minutes before it may be chosen again after it ended. */
     val cooldownMin: Double
         get() = 0.0
+
+    /**
+     * The longest it may last, minutes, the way there included; the runner's watchdog ends it after
+     * that (see [BrainTuning.Limits]).
+     */
+    val maxMinutes: Double
+        get() = BrainTuning.Limits.DEFAULT_MAX_MIN
+
+    /**
+     * Taken up again where it was when the world is restored (false for a moment that does not
+     * outlive the app: an owner's game, making way).
+     */
+    val resumesAfterRestart: Boolean
+        get() = true
+
+    /** Played on the floor: a cat up on a perch first gets down (an owner's game with a toy). */
+    val onFloor: Boolean
+        get() = false
 
     /** The activity that follows it when it ends by itself (sleep → waking routine), or null. */
     val next: String?

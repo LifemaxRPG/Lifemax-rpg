@@ -50,7 +50,12 @@ import com.lifemax.rpg.feature.pet.host.CatWorldHost
  * What the screen is showing on top of the page's projection: the command being answered and a
  * message.
  */
-class PetUi(val waiting: String? = null, val notice: PetNotice? = null)
+class PetUi(
+    val waiting: String? = null,
+    val notice: PetNotice? = null,
+    /** The toy tray under Play is open (`pet.play.v1`). */
+    val toyTray: Boolean = false,
+)
 
 /** Everything the screen can ask for, so the screen itself holds no state of the page's. */
 class PetActions(
@@ -66,6 +71,10 @@ class PetActions(
     val noticeShown: (PetNotice) -> Unit = {},
     /** The full-screen room, the screen's own with a page that has touch. */
     val openRoom: () -> Unit = {},
+    /** Play: the screen's toy tray with a page that sends one, else the page's own (handOver). */
+    val play: () -> Unit = {},
+    /** A toy picked from the tray (null: the cat picks): tossed to the cats in the room. */
+    val playToy: (String?) -> Unit = {},
 )
 
 /** The page's actions that stay on the page in this release, as the screen names them to it. */
@@ -244,13 +253,10 @@ private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
                 Modifier.weight(1.5f)
                     .alpha(if (p.feed.wait || ui.waiting == "feed") WAIT_ALPHA else 1f),
             )
-            PetSecondaryButton(
-                p.words.play,
-                p.words.play,
-                { actions.handOver(PetHandOver.PLAY) },
-                Modifier.weight(1f),
-            )
+            PetSecondaryButton(p.words.play, p.words.play, actions.play, Modifier.weight(1f))
         }
+        val tray = p.play
+        if (ui.toyTray && tray != null) PetToyTray(tray, actions.playToy)
         PetSecondaryButton(
             p.words.blink,
             p.words.blinkHint,

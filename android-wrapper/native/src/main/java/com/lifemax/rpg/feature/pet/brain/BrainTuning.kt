@@ -215,6 +215,85 @@ object BrainTuning {
         const val FLOOR_GAP = 40.0
     }
 
+    /**
+     * Two cats never lie on top of each other. Cats closer than [OVERLAP_PX] on one surface (and,
+     * on the floor, within [OVERLAP_Z] of depth) for [OVERLAP_QUANTA] think quanta in a row are
+     * overlapping: one of them makes way, walking at least [ASIDE_PX] from the other first (a cat
+     * passing another on its way is not held up: that takes less than the quanta). The bowls stand
+     * further apart than [OVERLAP_PX], so two cats eat side by side. A deliberate pose together
+     * (the pair's curl-up, a later phase) is side by side at least [OVERLAP_PX] apart, each in its
+     * own pose.
+     */
+    object Apart {
+        const val OVERLAP_PX = 20f
+        const val OVERLAP_Z = 14f
+        const val OVERLAP_QUANTA = 20
+        const val ASIDE_PX = 48f
+        const val ASIDE_SIT_S = 2.5
+        const val ASIDE_GROOM_S = 3.0
+    }
+
+    /**
+     * The longest each kind of activity may last, minutes, the way there included: the runner's
+     * watchdog ends anything older (it never fires in a healthy brain; [ActivityRunner.watchdogs]
+     * counts it). A night's sleep bout is at most 4.5 h plus its jitter; a day nap is 120 minutes
+     * at most, stretched by a lazy, steady cat's persona.
+     */
+    object Limits {
+        const val DEFAULT_MAX_MIN = 60.0
+        const val SLEEP_MAX_MIN = 300.0
+        const val SHORT_MAX_MIN = 10.0
+    }
+
+    /**
+     * The owner's game (plan 1.8 "owner play"): who comes, how long it lasts, how it feels. A cat
+     * asleep longer than [BrainTuning.Care.DEEP_SLEEP_S] does not stir; one dozing wakes only with
+     * [WAKE_ENERGY] left; one awake plays from [TIRED_ENERGY]. Rounds (pick up, carry, toss, chase,
+     * pounce, bat) are 1 to [ROUNDS_MAX], more for a rested, playful, happy cat.
+     */
+    object Play {
+        const val WAKE_ENERGY = 0.45
+        const val TIRED_ENERGY = 0.15
+        const val ROUNDS_MAX = 3
+        const val RESTED = 0.45
+        const val PLAYFUL = 0.5
+        const val GLUM = -0.3
+
+        /** An offered toy lands this far in front of the cat. */
+        const val DROP_AHEAD_PX = 30f
+
+        /** A game this long at the toy is play the page counts (less: a sniff and a pat). */
+        const val PLAYED_MIN_S = 6.0
+
+        /** How far a cat carries the toy before it tosses it, and where it leaves it. */
+        const val CARRY_PX = 46f
+        const val SETTLE_PX = 24f
+
+        /** Toss power: a calm cat's flick to an excited one's. */
+        const val TOSS_LO = 0.35f
+        const val TOSS_HI = 0.8f
+        const val BAT_POWER = 0.5f
+        const val CHASE_S = 5.0
+
+        /** Rough seconds of each toy beat (they bound the watchdog, the body decides). */
+        const val PICK_S = 3.0
+        const val CARRY_S = 3.0
+        const val TOSS_S = 1.2
+        const val POUNCE_S = 2.5
+        const val BAT_S = 1.2
+        const val SET_S = 1.5
+        const val GROOM_AFTER_S = 3.0
+
+        /** What the game does to the mood when it starts. */
+        const val VALENCE = 0.25
+        const val AROUSAL = 0.35
+
+        /** Play pulls the boredom drive down with this time constant (s). */
+        const val SATISFY_TAU = 40.0
+        const val EXERTION = 1.8
+        const val MAX_MIN = 10.0
+    }
+
     /** Durations, minutes (plan 1.8 table), before the persona's duration multiplier. */
     object Durations {
         const val NAP_LO_MIN = 30.0

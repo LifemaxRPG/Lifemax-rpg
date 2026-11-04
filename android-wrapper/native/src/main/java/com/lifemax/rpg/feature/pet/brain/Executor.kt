@@ -52,6 +52,16 @@ class Script {
         beatSeconds += seconds
     }
 
+    /**
+     * A toy beat (pick up, carry, toss, chase, pounce, bat, set down), which takes about [seconds]
+     * (the body ends it when the toy says so; the estimate only bounds the watchdog).
+     */
+    fun toy(step: PlanStep, seconds: Double) {
+        steps.add(step)
+        cues.add(Cue.NONE)
+        beatSeconds += seconds
+    }
+
     /** Turns to face [dir]. */
     fun face(dir: Int) {
         if (dir == 0) return

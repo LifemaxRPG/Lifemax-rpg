@@ -73,15 +73,35 @@ class ActivityRunner(
      * Takes the world up again where the cat now stands (a restored world, a catch-up's end, the
      * house's bodies handed over): [id] when the catalogue has it, at the place the cat is at, else
      * a fresh pick, with its way there walked from here. Never a cut: the cat is already placed.
+     * The place is the cat's again only when no other cat holds it: a cat put back on a place the
+     * other one has (both saved on the bed, say) does something else somewhere free, and a cat put
+     * down on top of the other first makes way.
      */
     fun resume(id: String?, rng: Rng) {
         waiting = null
         suspended = null
         val here = m.here
         m.book.release(m.slot)
-        if (here != null) m.book.place(m.slot, here, exec.x)
-        val a = id?.let(registry::find)
+        val free = here == null || m.book.free(m.slot, here, exec.x, 0)
+        if (here != null && free) m.book.place(m.slot, here, exec.x)
+        // the later cat makes way (the first has taken up its own activity already)
+        if (m.slot > 0 && m.crowded()) {
+            makeWay(rng)
+            return
+        }
+        val a = id?.let(registry::find)?.takeIf { free && it.resumesAfterRestart }
         begin(if (a != null) Choice(a, here, 0.0, RESUME) else pick(rng), rng)
+    }
+
+    /**
+     * The cat is on top of the other one: it gets up (properly, if it slept), walks at least
+     * [BrainTuning.Apart.ASIDE_PX] from it and sits and washes a moment before it picks anew.
+     */
+    fun makeWay(rng: Rng) {
+        val was = activity
+        end(natural = false)
+        waiting = null
+        begin(Choice(MakeWay, null, 0.0, MAKES_WAY), rng, wakeFirst = was.asleep, lead = Lead.ASIDE)
     }
 
     /** One think quantum: progress, the end of the activity, and what follows. */
@@ -93,7 +113,9 @@ class ActivityRunner(
             if (place != null) m.book.arrived(m.slot)
         }
         if (arrived) atPlaceS += q
-        val overran = elapsedS > seconds + routeAllowance() + BrainTuning.Select.WATCHDOG_SLACK_S
+        val overran =
+            elapsedS > seconds + routeAllowance() + BrainTuning.Select.WATCHDOG_SLACK_S ||
+                elapsedS > activity.maxMinutes * BrainTuning.Time.MINUTE + ROUTE_MAX_S
         if (exec.done || overran) {
             if (overran) watchdogs++
             val held = waiting
@@ -152,6 +174,26 @@ class ActivityRunner(
         recent[0] = i
         val p = place ?: m.here
         if (p != null && arrived) m.book.learn(m.slot, p, atPlaceS / BrainTuning.Time.HOUR)
+        m.ended(a, if (arrived) atPlaceS else 0.0)
+    }
+
+    /** [a]'s way stayed taken: it is not tried again for a while (at least its own cooldown). */
+    private fun giveUp(a: Activity) {
+        val i = registry.indexOf(a)
+        val minutes = maxOf(a.cooldownMin, GIVE_UP_COOL_MIN)
+        coolUntilMs[i] = m.nowMs + (minutes * BrainTuning.Time.MINUTE * MS).toLong()
+    }
+
+    /** A walk to a floor place at least [BrainTuning.Apart.ASIDE_PX] from the other cat. */
+    private fun aside(script: Script) {
+        val x = m.asideX()
+        if (exec.surface == SurfaceId.FLOOR) script.approach(x, exec.z) else down(script, x)
+    }
+
+    /** The way down to the floor at [x] (nothing when the cat cannot get there from here). */
+    private fun down(script: Script, x: Float) {
+        val r = exec.route(SurfaceId.FLOOR, x) ?: return
+        script.route(r.steps)
     }
 
     private fun following(rng: Rng): Choice {
@@ -177,18 +219,40 @@ class ActivityRunner(
     private var waiting: Choice? = null
     private var waits = 0
 
-    private fun begin(choice: Choice, rng: Rng, cut: Boolean = false, wakeFirst: Boolean = false) {
+    /** What the runner walks before an activity's own way: nothing, aside, down to the floor. */
+    private enum class Lead {
+        NONE,
+        ASIDE,
+        FLOOR,
+    }
+
+    private fun begin(
+        choice: Choice,
+        rng: Rng,
+        cut: Boolean = false,
+        wakeFirst: Boolean = false,
+        lead: Lead = if (choice.activity.onFloor) Lead.FLOOR else Lead.NONE,
+    ) {
         val a = choice.activity
         var spot = choice.spot
         val script = Script()
         if (wakeFirst) wakeBeats(script)
+        when (lead) {
+            Lead.ASIDE -> aside(script)
+            Lead.FLOOR -> if (exec.surface != SurfaceId.FLOOR) down(script, m.toy?.x ?: exec.x)
+            Lead.NONE -> Unit
+        }
         if (spot != null && !cut && !standsAt(spot)) {
             when (routeTo(spot, script)) {
                 Way.NONE -> spot = null
                 Way.TAKEN -> {
-                    // gives up after a while and rests where it is (in place: no way to be taken)
+                    // gives up after a while: that activity cools down and another is picked (at
+                    // worst a loaf in place, which never stays on top of the other cat: makeWay)
                     if (waits++ < MAX_WAITS) waitFor(choice, script)
-                    else begin(Choice(loaf, null, 0.0, WAITS), rng)
+                    else {
+                        giveUp(a)
+                        begin(pick(rng), rng)
+                    }
                     return
                 }
                 Way.CLEAR -> Unit
@@ -275,5 +339,9 @@ class ActivityRunner(
         const val WAITS = "waits: the way is taken"
         const val WAIT_S = 5.0
         const val MAX_WAITS = 6
+        const val MAKES_WAY = "makes way: the other cat is there"
+
+        /** An activity given up on (its way stayed taken) is not tried again for this long. */
+        const val GIVE_UP_COOL_MIN = 5.0
     }
 }

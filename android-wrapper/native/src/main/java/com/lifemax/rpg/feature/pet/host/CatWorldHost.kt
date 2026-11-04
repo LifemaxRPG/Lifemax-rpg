@@ -11,6 +11,7 @@ import com.lifemax.rpg.feature.pet.brain.BrainFactory
 import com.lifemax.rpg.feature.pet.brain.BrainState
 import com.lifemax.rpg.feature.pet.brain.CatchPlace
 import com.lifemax.rpg.feature.pet.brain.OwnerAct
+import com.lifemax.rpg.feature.pet.brain.PlayAnswer
 import com.lifemax.rpg.feature.pet.world.Away
 import com.lifemax.rpg.feature.pet.world.BlobCat
 import com.lifemax.rpg.feature.pet.world.BlobPos
@@ -134,6 +135,19 @@ class CatWorldHost(
             if (!active) return false
             b.owner(OwnerAct(clock?.simMs ?: 0L, kind))
             return b.drivesBodies
+        }
+    }
+
+    /**
+     * The owner tossed the page's toy [key] into the room (the Cat tab's toy tray): the brain drops
+     * it near the cats and sends one to play, or says why none will. Null when no world is running
+     * that the brain moves (the caller then has nothing to offer the toy to).
+     */
+    fun offerToy(key: String): PlayAnswer? {
+        synchronized(lock) {
+            val b = brain?.takeIf { active && it.drivesBodies } ?: return null
+            val c = clock ?: return null
+            return b.offerToy(key, c.epochMs()).also { sync.markDirty() }
         }
     }
 
@@ -364,8 +378,11 @@ class CatWorldHost(
             )
         val field = WorldToys.field(b, blob)
         WorldToys.attach(life, field, b.cats)
-        if (made.drivesBodies) made.bind(life.bodies.toList())
-        else b.cats.forEachIndexed { i, cat -> blob.cats[cat.id]?.pos?.let { place(life, i, it) } }
+        if (made.drivesBodies) {
+            made.bind(life.bodies.toList())
+            made.bindToys(field)
+        } else
+            b.cats.forEachIndexed { i, cat -> blob.cats[cat.id]?.pos?.let { place(life, i, it) } }
         clock = c
         brain = made
         current = blob

@@ -2,12 +2,17 @@ package com.lifemax.rpg.feature.pet.brain
 
 import com.lifemax.rpg.feature.pet.body.CatBody
 import com.lifemax.rpg.feature.pet.body.Rng
+import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.ToyField
+import com.lifemax.rpg.feature.pet.body.World
 import com.lifemax.rpg.feature.pet.world.BlobCat
 import com.lifemax.rpg.feature.pet.world.BlobGift
 import com.lifemax.rpg.feature.pet.world.BlobPair
 import com.lifemax.rpg.feature.pet.world.BlobToy
+import com.lifemax.rpg.feature.pet.world.OpIds
 import com.lifemax.rpg.feature.pet.world.WorldBlock
 import com.lifemax.rpg.feature.pet.world.WorldClock
+import com.lifemax.rpg.feature.pet.world.WorldCommand
 
 /**
  * The cats of one house and the brain that runs them (plan 1.1 `CatWorld`, the [Brain] the day
@@ -90,6 +95,7 @@ class CatWorld(
         val now = clock.simMs
         val hour = clock.hourOfDay()
         for (i in minds.indices) minds[i].think(now, hour, localDay, dayKeyOf)
+        keepApart()
     }
 
     override fun now(slot: Int): Doing = minds[slot].runner.doing
@@ -109,12 +115,105 @@ class CatWorld(
      */
     override fun bind(bodies: List<CatBody>) {
         if (fidelity != Fidelity.LIVE) return
-        for (m in minds) {
-            val body = bodies.getOrNull(m.slot) ?: continue
-            (m.exec as BodyExecutor).adopt(body)
-            m.resume(m.runner.activity.id)
-        }
+        val bound = minds.filter { bodies.getOrNull(it.slot) != null }
+        for (m in bound) (m.exec as BodyExecutor).adopt(bodies[m.slot])
+        for (m in bound) m.resume(m.runner.activity.id)
     }
+
+    /**
+     * The house's toys (the world host's field, which the bodies were given too): what an owner's
+     * game is played with ([offerToy]).
+     */
+    override fun bindToys(toys: ToyField) {
+        this.toys = toys
+    }
+
+    override var toys: ToyField? = null
+        private set
+
+    /**
+     * The owner tossed the page's toy [key] into the room: it lands on the floor in front of the
+     * cat that will play (an awake one first, else the first), which goes to it (notices it, picks
+     * it up, carries and tosses it, chases, pounces on it and bats it, sets it down), unless every
+     * cat would rather not: then the toy lies by the first cat and the answer says why, in a short
+     * line, and nobody pretends. [atMs] (the world's epoch) names the game's report.
+     */
+    override fun offerToy(key: String, atMs: Long): PlayAnswer {
+        val field = toys ?: return PlayAnswer(-1, PlayWords.NOT_HERE)
+        val willing = minds.filter { it.refusesPlay() == null }
+        val player = willing.firstOrNull { !it.runner.activity.asleep } ?: willing.firstOrNull()
+        val near = player ?: minds.first()
+        val toy = ToyDrop.near(field, key, near.exec) ?: return PlayAnswer(-1, PlayWords.NO_TOY)
+        if (player == null) {
+            val line = near.refusesPlay() ?: PlayWords.TIRED
+            return PlayAnswer(-1, line.replace(PlayWords.NAME, near.profile.name))
+        }
+        player.play(toy, key, OpIds.of(player.profile.id, PLAY_COMMAND, atMs))
+        return PlayAnswer(player.slot, "")
+    }
+
+    private val reports = ArrayList<WorldCommand>()
+
+    /** Queues [c] for the page (an owner's game that ended). */
+    override fun report(c: WorldCommand) {
+        reports += c
+    }
+
+    override fun takeReports(): List<WorldCommand> {
+        if (reports.isEmpty()) return emptyList()
+        return ArrayList(reports).also { reports.clear() }
+    }
+
+    override fun crowded(slot: Int): Boolean {
+        val a = minds[slot].exec
+        for (o in minds) {
+            if (o.slot == slot) continue
+            val b = o.exec
+            if (a.surface != b.surface) continue
+            if (Math.abs(a.x - b.x) >= BrainTuning.Apart.OVERLAP_PX) continue
+            if (a.surface == SurfaceId.FLOOR && Math.abs(a.z - b.z) >= BrainTuning.Apart.OVERLAP_Z)
+                continue
+            return true
+        }
+        return false
+    }
+
+    override fun asideX(slot: Int): Float {
+        val me = minds[slot].exec.x
+        val other = minds.firstOrNull { it.slot != slot }?.exec?.x ?: return me
+        val gap = BrainTuning.Apart.ASIDE_PX
+        val lo = World.HOUSE_MIN_X + gap / 2
+        val hi = World.HOUSE_MAX_X - gap / 2
+        val left = other - gap
+        val right = other + gap
+        val dl = Math.abs(me - left)
+        val dr = Math.abs(me - right)
+        // on the very same point the first cat steps left, the second right
+        val near = if (dl < dr || (dl == dr && slot == 0)) left else right
+        val far = if (near == left) right else left
+        return if (near in lo..hi) near else far.coerceIn(lo, hi)
+    }
+
+    /**
+     * The overlap guard (plan 1.5, [BrainTuning.Apart]): two cats that stay on top of each other
+     * for a few seconds are parted; the one awake (or the second) makes way.
+     */
+    private fun keepApart() {
+        if (minds.size < 2 || !crowded(0)) {
+            together = 0
+            return
+        }
+        if (++together < BrainTuning.Apart.OVERLAP_QUANTA) return
+        together = 0
+        val a = minds[0]
+        val b = minds[1]
+        val first = if (b.runner.activity.asleep && !a.runner.activity.asleep) a else b
+        // one already making way that could not get clear: the other one goes instead
+        val mover = if (first.runner.activity === MakeWay) (if (first === a) b else a) else first
+        if (mover.runner.activity !== MakeWay) mover.makeWay()
+    }
+
+    private var together = 0
 
     /** The page's newest block: each cat's hunger stage and vacation, and the rest day. */
     override fun update(block: WorldBlock) {
@@ -135,11 +234,15 @@ class CatWorld(
 
     /** Takes back [state]: each cat it has is put where it stood and takes up its activity. */
     override fun restore(state: BrainState) {
-        for (m in minds) {
-            val saved = state.cats[m.profile.id] ?: continue
+        // every cat is put back first, then each takes up what it did, so the second sees the
+        // first where it really is (and neither holds a place from before the restore)
+        val back = minds.filter { state.cats[it.profile.id] != null }
+        for (m in back) {
+            val saved = state.cats.getValue(m.profile.id)
             kept[m.profile.id] = saved
             MindState.restore(m, saved)
         }
+        for (m in back) m.resume(MindState.activityOf(state.cats.getValue(m.profile.id).act))
         keptPair = state.pair
         keptToys = state.toys
         keptGift = state.gift
@@ -220,5 +323,8 @@ class CatWorld(
         const val MS_PER_MINUTE = 60_000L
         const val MS_PER_DAY = 86_400_000L
         const val MAX_HUNGER = 5
+
+        /** The page's command an owner's game is reported with. */
+        const val PLAY_COMMAND = "play"
     }
 }

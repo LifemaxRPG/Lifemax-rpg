@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.brain
 
 import com.lifemax.rpg.feature.pet.body.CatBody
+import com.lifemax.rpg.feature.pet.body.ToyField
 import com.lifemax.rpg.feature.pet.world.WorldBlock
 import com.lifemax.rpg.feature.pet.world.WorldCommand
 
@@ -57,6 +58,26 @@ interface Brain {
 
     /** The house's bodies, once, when [drivesBodies]; the brain keeps them. */
     fun bind(bodies: List<CatBody>) {}
+
+    /** The house's toys (the field the bodies were given), once, when [drivesBodies]. */
+    fun bindToys(toys: ToyField) {}
+
+    /**
+     * The owner tossed the page's toy [key] into the room at world epoch [atMs] (the Cat tab's toy
+     * tray): it lands in the field given to [bindToys], near the cats, and a cat that wants to
+     * plays with it. Answers which, or why none would.
+     */
+    fun offerToy(key: String, atMs: Long): PlayAnswer = PlayAnswer(-1, PlayWords.NOT_HERE)
+}
+
+/**
+ * What became of a toy the owner offered: cat [slot] went to play (-1: none did), and [message],
+ * the short line that says why no cat would (empty when one plays).
+ */
+data class PlayAnswer(val slot: Int, val message: String) {
+    /** True when a cat went to play. */
+    val played: Boolean
+        get() = slot >= 0
 }
 
 /**

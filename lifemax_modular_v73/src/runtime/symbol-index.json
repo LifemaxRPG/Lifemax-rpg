@@ -7870,6 +7870,9 @@
  "window.NativePetPanels": [
   "src/runtime/segments/50-native-pet-panels.js"
  ],
+ "window.NativePetPlay": [
+  "src/runtime/segments/50-native-pet-play.js"
+ ],
  "window.NativePlanRunner": [
   "src/runtime/segments/50-native-plan-runner.js"
  ],
@@ -7967,7 +7970,8 @@
   "src/runtime/segments/50-quests-table.js"
  ],
  "window.haptic": [
-  "src/runtime/segments/50-native-pet.js"
+  "src/runtime/segments/50-native-pet.js",
+  "src/runtime/segments/50-native-pet-play.js"
  ],
  "window.lmDemoAskReturn": [
   "src/runtime/segments/50-demo-mode.js"
@@ -8034,7 +8038,8 @@
  ],
  "window.writeSave": [
   "src/runtime/segments/50-native-pet.js",
-  "src/runtime/segments/50-native-pet-panels.js"
+  "src/runtime/segments/50-native-pet-panels.js",
+  "src/runtime/segments/50-native-pet-play.js"
  ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"

@@ -147,7 +147,8 @@
       words: WORDS,
       cue: { fed: fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) },
     }, touch);
-    const full = window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
+    const panels = window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
+    const full = window.NativePetPlay ? NativePetPlay.extend(panels, cat, tab) : panels; // the toy tray, for a screen with pet.play.v1
     return window.NativeCatWorld ? NativeCatWorld.extend(full, tab) : full; // the world block, for a screen with pet.world.v1
   }
 
@@ -366,7 +367,7 @@
   }
   const focusOf = () => (house().length > 1 && petPairOn() ? PET_PAIR.focus : 0);
 
-  /** What the screen hands to the page: the full-screen room, the Play button's tray, or the page's own Cat view for the rest. */
+  /** What the screen hands to the page: the full-screen room, the Play button's tray (an older screen), or the page's own Cat view for the rest. */
   async function onAction(e) {
     // the full-screen room is the screen's own when it can touch; an older screen still hands it to the page's
     if (e.action === "room" && tab.has(TOUCH)) return;
@@ -374,6 +375,9 @@
       petRoomFullscreenOpen();
       return;
     }
+    // a screen with pet.play.v1 plays with the toys itself (it never sends Play): the visit is never handed to the page's tray,
+    // and a Play that arrives all the same only brings the screen back (the kit closed it for the action)
+    if (e.action === "play" && tab.has("pet.play.v1")) return void openNativePet();
     handedOver = true;
     if (e.action === "play") petPlayClick();
   }

@@ -24,11 +24,12 @@ import org.json.JSONObject
  * day of their own, and asks the page to feed, to blink, to pause the clock and to rename with
  * commands (and, with `pet.panels.v1`, to switch cats, to unlock a toy and to open the genome). The
  * cats answer a finger on the room themselves and tell the page what a touch came to (`touch`,
- * `pet.touch.v1`), and the room opens full screen on the screen's own. Play and the rest of the Cat
- * page are handed to the page. A genetic coat's sheets are asked of the page with `coat`
- * (`pet.coat.v1`). Each cat's proportions come with the projection (`pet.rig.v1`). The cats' world
- * block (`pet.world.v1`, the native brain's contract) is kept in [WorldFeed]. Everything that is
- * not specific to it lives in [ComposeTabPlugin].
+ * `pet.touch.v1`), and the room opens full screen on the screen's own. With `pet.play.v1` Play
+ * opens the screen's own toy tray and the native cats play (the page counts the game with `play`);
+ * an older page still takes Play, and the rest of the Cat page, to its own view. A genetic coat's
+ * sheets are asked of the page with `coat` (`pet.coat.v1`). Each cat's proportions come with the
+ * projection (`pet.rig.v1`). The cats' world block (`pet.world.v1`, the native brain's contract) is
+ * kept in [WorldFeed]. Everything that is not specific to it lives in [ComposeTabPlugin].
  */
 @CapacitorPlugin(name = "NativePet")
 class NativePetPlugin : ComposeTabPlugin() {
@@ -52,6 +53,7 @@ class NativePetPlugin : ComposeTabPlugin() {
             "pet.touch.v1",
             "pet.rig.v1",
             WorldContract.CAPABILITY,
+            "pet.play.v1",
         )
 
     /**

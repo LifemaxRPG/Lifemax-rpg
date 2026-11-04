@@ -53,8 +53,10 @@ internal object MindState {
     }
 
     /**
-     * Puts [saved] into cat [m]: drives, mood, trust and places, the cat where it stood (a declared
-     * cut), and its activity taken up again from there.
+     * Puts [saved] into cat [m]: drives, mood, trust and places, and the cat where it stood (a
+     * declared cut), holding no place yet. Its activity is taken up afterwards, once every cat of
+     * the house is back where it stood ([CatMind.resume] with [activityOf] the saved word), so
+     * neither takes a place the other one is on.
      */
     fun restore(m: CatMind, saved: BlobCat) {
         val levels = saved.drives.toList()
@@ -62,8 +64,8 @@ internal object MindState {
         m.mood.set(saved.mood.v, saved.mood.a)
         m.trust = saved.trust.tru
         m.book.seedLikes(m.slot, saved.spots)
+        m.book.release(m.slot)
         put(m, saved.pos)
-        m.resume(activityOf(saved.act))
     }
 
     /** Puts cat [m] at [pos] at once, on its surface (a floor depth only on the floor). */

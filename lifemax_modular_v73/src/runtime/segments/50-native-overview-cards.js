@@ -457,5 +457,7 @@
       blocked: tab.blocked(), veiled, arrival, petLoop: typeof petWantRun === "function" ? petWantRun() : false, celebrations: held.length }),
   };
   if (window.NativeCatWorld) commands.world = NativeCatWorld.command((c) => tab.has(c)); // the cats' world blob (pet.world.v1)
+  // a game the native cats played (pet.play.v1, which the Cat tab's screen said): its report may come while the cards show
+  if (window.NativePetPlay) commands.play = NativePetPlay.command((c) => !!window.NativePet && NativePet.has(c));
   window.NativeOverviewCardsProjection.commands = commands;
 })();
