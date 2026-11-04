@@ -377,7 +377,13 @@ private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, g
     for ((hour, word) in words) {
         if (hour == 0 || hour == 12) {
             val centreAngle = if (hour == 0) 0f else 180f
-            glyphRun(167f, centreAngle - 17f, centreAngle + 17f, glyphs.of(word, hourWordMain), hour == 12)
+            glyphRun(
+                    167f,
+                    centreAngle - 17f,
+                    centreAngle + 17f,
+                    glyphs.of(word, hourWordMain),
+                    hour == 12,
+                )
                 ?.let { run -> add { run.draw(this, P.hourWordMain) } }
         } else if (hour % 6 == 0) {
             val layout = glyphs.line(word, hourWordMain)
