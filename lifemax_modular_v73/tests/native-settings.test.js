@@ -255,11 +255,11 @@ const HELPERS = `
     // Log is the kit's tab on by default (NativeTabKit defaultOn): with no key stored the screen shows its switch on, as the page's box
     out.logDefault = lmaLoad().nativeLog === undefined && document.getElementById('nativeLogToggle').checked && ctl(latest(), 'nativeLog').on === true;
     // the Overview cards' switch (beta): a bound switch, off by default, enabled because the plugin exists (the kit's sync)
-    const cardsRow = card(latest(), 'appearance') && card(latest(), 'appearance').rows.find(x => x.title === 'Native Overview cards (beta)');
+    const cardsRow = card(latest(), 'nativeTabsCard') && card(latest(), 'nativeTabsCard').rows.find(x => x.title === 'Native Overview cards (beta)');
     out.cardsRow = !!cardsRow && cardsRow.controls[0].kind === 'switch' && cardsRow.controls[0].id === 'nativeOverviewCards' && cardsRow.controls[0].op === 'toggle'
       && cardsRow.controls[0].on === false && cardsRow.controls[0].enabled === true && lmaLoad().nativeOverviewCards === undefined;
     // the live cat's switch (beta): a bound switch under Appearance, off by default
-    const catsRow = card(latest(), 'appearance') && card(latest(), 'appearance').rows.find(x => x.title === 'Native cats (beta)');
+    const catsRow = card(latest(), 'nativeTabsCard') && card(latest(), 'nativeTabsCard').rows.find(x => x.title === 'Native cats (beta)');
     out.catsRow = !!catsRow && catsRow.controls[0].kind === 'switch' && catsRow.controls[0].id === 'nativeCats' && catsRow.controls[0].op === 'toggle'
       && catsRow.controls[0].on === false && lmaLoad().nativeCats === undefined;
     await setNativeLogEnabled(false); // so every tab starts off (Overview since the start), and each switch below turns on, then off
@@ -409,11 +409,11 @@ const HELPERS = `
     lmaSetNativeMode(false); await new Promise(r => setTimeout(r, 100));
     const off = !master.checked && boxes().every(box => !box.checked);
     lmaSetNativeMode(true); await new Promise(r => setTimeout(r, 100));
-    const on = master.checked && boxes().every(box => box.checked);
+    const on = master.checked && boxes().filter(box => !box.disabled).every(box => box.checked);
     document.getElementById('nativeCharacterToggle').click();
     await new Promise(r => setTimeout(r, 100));
     const custom = master.checked && !document.getElementById('nativeCharacterToggle').checked
-      && boxes().filter(box => box.id !== 'nativeCharacterToggle').every(box => box.checked);
+      && boxes().filter(box => box.id !== 'nativeCharacterToggle' && !box.disabled).every(box => box.checked);
     document.getElementById('nativeModeCustomize').click();
     const submenu = setCat === 'native' && document.getElementById('nativeTabsCard').classList.contains('set-hide') === false;
     return { original, off, on, custom, submenu };
