@@ -50,7 +50,6 @@
     ["diagnostics3d", "#g3DbgSel", "lma_g3dbg"],
     ["haptics", "#hapBody .settingsline input.check", CORE],
     ["haptics.strength", "#hapBody [role=group]", CORE],
-    ["haptics.nativeScrubStrength", '#hapBody select[aria-label="Native navigation scrub strength"]', CORE],
     ["hdCat", "#hdToggle", CORE],
     ["voice", "#lmvToggle", "lifemax_voice_enabled"],
     ["calendar", '#lmaCalBody input[aria-label="Import from my calendar"]', "lifemax_calsync_v1", true],
