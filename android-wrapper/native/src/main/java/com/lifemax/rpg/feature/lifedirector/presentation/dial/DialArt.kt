@@ -82,7 +82,7 @@ internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextM
             engrave(radii, hourWords, Glyphs(text))
             outline(radii.outer, radii.outerWidth, P.outerTrack)
             outline(radii.inner, radii.innerWidth, P.innerTrack)
-            sunAndMoon(hourWords)
+            sunAndMoon(hourWords, Glyphs(text))
         }
     )
 
@@ -370,22 +370,26 @@ internal fun DrawScope.flashTick(radii: DialRadii, k: Int, alpha: Float) {
 }
 
 /**
- * Midnight, 6 AM, Noon and 6 PM sit straight at the edges; the hours between are engraved along the
- * bezel, turned upright on the lower half.
+ * The cardinal hour labels follow the bezel. The side labels remain horizontal for readability,
+ * while Midnight and Noon use the same curved glyph layout as the other engraved hours.
  */
 private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, glyphs: Glyphs) {
     for ((hour, word) in words) {
-        if (hour % 6 == 0) {
+        if (hour == 0 || hour == 12) {
+            val centreAngle = if (hour == 0) 0f else 180f
+            glyphRun(
+                    167f,
+                    centreAngle - 17f,
+                    centreAngle + 17f,
+                    glyphs.of(word, hourWordMain),
+                    hour == 12,
+                )
+                ?.let { run -> add { run.draw(this, P.hourWordMain) } }
+        } else if (hour % 6 == 0) {
             val layout = glyphs.line(word, hourWordMain)
             val w = layout.size.width.toFloat()
             val h = layout.size.height.toFloat()
-            val centre =
-                when (hour) {
-                    0 -> Offset(CENTRE, 13f)
-                    6 -> Offset(359f - w / 2, CENTRE)
-                    12 -> Offset(CENTRE, 347f)
-                    else -> Offset(1f + w / 2, CENTRE)
-                }
+            val centre = if (hour == 6) Offset(359f - w / 2, CENTRE) else Offset(1f + w / 2, CENTRE)
             val topLeft = centre - Offset(w / 2, h / 2)
             add { drawText(layout, P.hourWordMain, topLeft) }
         } else {
@@ -397,29 +401,34 @@ private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, g
     }
 }
 
-/** A small moon beside Midnight and sun beside Noon, placed by the length of the words. */
-private fun MutableList<Step>.sunAndMoon(words: List<HourWord>) {
-    fun beside(hour: Int) =
-        CENTRE - ((words.firstOrNull { it.hour == hour }?.word?.length ?: 0) * 3.3f + 10f) - 2f
-    val mx = beside(0)
+/** The moon and sun follow the same bezel arc, just before their respective curved labels. */
+private fun MutableList<Step>.sunAndMoon(words: List<HourWord>, glyphs: Glyphs) {
+    fun iconAngle(hour: Int): Float {
+        val word = words.firstOrNull { it.hour == hour }?.word.orEmpty()
+        val width = glyphs.of(word, hourWordMain).advances.sum()
+        val halfAngle = Math.toDegrees((width / (2f * 167f)).toDouble()).toFloat()
+        val gapAngle = Math.toDegrees((11f / 167f).toDouble()).toFloat()
+        return if (hour == 0) -halfAngle - gapAngle else 180f + halfAngle + gapAngle
+    }
+    val moonAt = point(167f, iconAngle(0))
     val moon =
         Path.combine(
             PathOperation.Difference,
-            Path().apply { addOval(Rect(Offset(mx + 1.6f, 13f), 5f)) },
-            Path().apply { addOval(Rect(Offset(mx + 3.3f, 12.3f), 4.66f)) },
+            Path().apply { addOval(Rect(moonAt + Offset(-2.4f, -2.5f), 5f)) },
+            Path().apply { addOval(Rect(moonAt + Offset(-0.7f, -3.2f), 4.66f)) },
         )
     add { drawPath(moon, P.moon) }
-    val sx = beside(12)
+    val sunAt = point(167f, iconAngle(12))
     val rays = Path()
     for (k in 0 until 8) {
         val (x0, y0) = point(4.3f, k * 45f) - Offset(CENTRE, CENTRE)
         val (x1, y1) = point(6f, k * 45f) - Offset(CENTRE, CENTRE)
-        rays.moveTo(sx + x0, 347f + y0)
-        rays.lineTo(sx + x1, 347f + y1)
+        rays.moveTo(sunAt.x + x0, sunAt.y + y0)
+        rays.lineTo(sunAt.x + x1, sunAt.y + y1)
     }
     val rayStroke = Stroke(1.3f, cap = StrokeCap.Round)
     add {
-        drawCircle(P.sun, 2.6f, Offset(sx, 347f))
+        drawCircle(P.sun, 2.6f, sunAt)
         drawPath(rays, P.sun, style = rayStroke)
     }
 }
