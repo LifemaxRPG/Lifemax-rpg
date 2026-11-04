@@ -56,6 +56,9 @@ import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
+import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.TimerSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.answers
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ConfirmChangeSheet
@@ -233,6 +236,12 @@ fun LifeDirectorScreen(
                     settings != null ||
                     time != null ||
                     firstRun != null
+            val activity =
+                p.sheet?.takeIf { model ->
+                    today != null &&
+                        (model is SessionSheetModel || model is TimerSheetModel) &&
+                        ui.sheet?.let { model.answers(it) } == true
+                }
             val list = rememberLazyListState()
             val anchors = remember { GuideAnchors() }
             val guideRun = ui.guide?.takeIf { g -> p.guide?.key == g.key }
@@ -307,6 +316,8 @@ fun LifeDirectorScreen(
                             if (today != null)
                                 TodayTop(
                                     today,
+                                    activity,
+                                    p.reducedMotion,
                                     ui,
                                     actions,
                                     animate,
@@ -356,7 +367,7 @@ fun LifeDirectorScreen(
                     actions.submitRestore,
                     actions.closeRestore,
                 )
-            sessionSheet(p, ui)?.let { s ->
+            sessionSheet(p, ui)?.takeIf { activity == null }?.let { s ->
                 val typed = ui.minutesDraft?.takeIf { it.id == s.id }?.text
                 SessionSheet(
                     s,
@@ -366,7 +377,8 @@ fun LifeDirectorScreen(
                     actions.session,
                 )
             }
-            TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
+            if (activity == null)
+                TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
             MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
             FormSheets(p, ui, bottomInsetDp.dp, actions.forms, animate)
             val guide = p.guide
@@ -410,6 +422,8 @@ private fun DirectorTheme(p: LifeDirectorProjection, content: @Composable () -> 
 @Composable
 private fun TodayTop(
     today: DirectorToday,
+    activity: SheetModel?,
+    reducedMotion: Boolean,
     ui: DirectorUi,
     actions: DirectorActions,
     animate: Boolean,
@@ -434,6 +448,12 @@ private fun TodayTop(
         tour = tour,
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
+        centreContent =
+            activity?.let { model ->
+                {
+                    DialActivityControls(model, ui, actions, animate, reducedMotion)
+                }
+            },
     )
     DialHint(today.hint)
     DayMix(today.mix)
