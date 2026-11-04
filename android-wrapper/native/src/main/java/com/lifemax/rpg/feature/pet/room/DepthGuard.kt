@@ -2,9 +2,9 @@ package com.lifemax.rpg.feature.pet.room
 
 /**
  * The numbers of the performance guard: when a phone cannot keep up with the 2.5D room it steps
- * down MEDIUM, SUBTLE, off (the classic flat room), and it steps back up only after a long calm.
- * All costs are shares of the display's frame budget (16.7 ms at 60 Hz, 8.3 ms at 120 Hz), so the
- * same numbers serve every refresh rate.
+ * down RICH, MEDIUM, SUBTLE, off (the classic flat room), and it steps back up only after a long
+ * calm. All costs are shares of the display's frame budget (16.7 ms at 60 Hz, 8.3 ms at 120 Hz), so
+ * the same numbers serve every refresh rate.
  */
 internal object GuardTuning {
     /** The frames averaged: a moving average over this many. 1.5 s at 60 Hz. */
@@ -43,8 +43,8 @@ internal object GuardTuning {
 /**
  * Keeps the 2.5D room's depth within what the phone can draw. It is fed the cost of each frame
  * ([record]: the milliseconds the room took on the main thread, and how long the frame lasted) and
- * answers with the [level] to draw at: [DepthLevel.MEDIUM] (the owner's choice), then
- * [DepthLevel.SUBTLE], then null (the classic flat room).
+ * answers with the [level] to draw at: [best] (the live rooms use [DepthLevel.RICH]), then each
+ * level below it down to [DepthLevel.SUBTLE], then null (the classic flat room).
  * - **Down.** A frame's cost is the larger of its own work and how far the frame ran past the
  *   budget. When the average of the last [GuardTuning.WINDOW] frames is above
  *   [GuardTuning.DOWN_ABOVE] of the budget, the level drops one step.

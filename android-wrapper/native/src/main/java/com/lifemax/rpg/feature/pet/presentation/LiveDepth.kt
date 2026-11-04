@@ -13,17 +13,17 @@ import com.lifemax.rpg.feature.pet.room.RoomStyle
 
 /**
  * The depth the live rooms (the Overview card, the Cat tab, the full-screen room) are drawn at, for
- * the whole app: the 2.5D room at [DepthLevel.MEDIUM] wherever native cats are shown (no switch of
+ * the whole app: the 2.5D room at [DepthLevel.RICH] wherever native cats are shown (no switch of
  * its own: it rides "Native Cats (beta)" and "Native Cat (beta)"), stepped down by the performance
- * guard ([DepthGuard]) when a phone cannot keep up, MEDIUM then SUBTLE then the classic flat room,
- * and back up after a long calm. The level is in memory only: it is never saved or logged, and it
- * starts at MEDIUM on every launch.
+ * guard ([DepthGuard]) when a phone cannot keep up, RICH then MEDIUM then SUBTLE then the classic
+ * flat room, and back up after a long calm. The level is in memory only: it is never saved or
+ * logged, and it starts at RICH on every launch.
  *
  * Read [level] in composition (it is snapshot state, so the rooms redraw in the new style); feed it
  * with [record] once a frame from the room that is running.
  */
 internal object LiveDepth {
-    private val guard = DepthGuard(DepthLevel.MEDIUM) { System.nanoTime() / NANOS_PER_MS }
+    private val guard = DepthGuard(DepthLevel.RICH) { System.nanoTime() / NANOS_PER_MS }
 
     /** The level to draw at; null is the classic flat room. */
     var level: DepthLevel? by mutableStateOf(guard.level)
