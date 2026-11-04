@@ -68,6 +68,7 @@ const HELPERS = `
     // every control the page shows, in order: checkboxes, selects with their options, buttons with their words
     const pageControls = c => [...c.querySelectorAll('input:not([type=file]):not([type=password]), select, button')].filter(visible)
       .filter(e => !e.closest('[role=group]')).map(e => e.matches('input[type=checkbox]') ? 'switch:' + e.checked + ':' + !e.disabled
+        : e.matches('input[type=range][aria-label="Native navigation scrub strength"]') ? 'select:' + e.value + ':' + Array.from({ length: 101 }, (_, n) => n + '=' + n + '%').join(',')
         : e.matches('select') ? 'select:' + e.value + ':' + [...e.options].map(o => o.value + '=' + o.textContent.trim()).join(',')
         : e.matches('button') ? 'button:' + text(e) + ':' + !e.disabled : 'field:' + e.value);
     const projControls = c => c.rows.flatMap(x => x.type === 'tab' ? [x.earlier, x.later, x.show].filter(Boolean) : x.controls || [])
