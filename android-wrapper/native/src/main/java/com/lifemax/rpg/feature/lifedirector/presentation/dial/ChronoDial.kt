@@ -84,6 +84,7 @@ fun ChronoDial(
     centreAnchor: Modifier = Modifier,
     intro: DialIntroRun? = null,
     removal: DragRemoveController? = null,
+    centreContent: (@Composable () -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -211,6 +212,9 @@ fun ChronoDial(
                         },
                     )
                     BuildHud(run, centreBox.width(side * .44f))
+                }
+                centreContent != null && hold == null -> {
+                    Box(centreBox.size(side * .48f)) { centreContent() }
                 }
                 hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->
