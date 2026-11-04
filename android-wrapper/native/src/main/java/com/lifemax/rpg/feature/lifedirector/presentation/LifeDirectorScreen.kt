@@ -56,10 +56,10 @@ import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
+import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.TimerSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.answers
-import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ConfirmChangeSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayMix
@@ -367,16 +367,18 @@ fun LifeDirectorScreen(
                     actions.submitRestore,
                     actions.closeRestore,
                 )
-            sessionSheet(p, ui)?.takeIf { activity == null }?.let { s ->
-                val typed = ui.minutesDraft?.takeIf { it.id == s.id }?.text
-                SessionSheet(
-                    s,
-                    typed ?: s.minutes?.value?.toString().orEmpty(),
-                    ui.pendingToday,
-                    bottomInsetDp.dp,
-                    actions.session,
-                )
-            }
+            sessionSheet(p, ui)
+                ?.takeIf { activity == null }
+                ?.let { s ->
+                    val typed = ui.minutesDraft?.takeIf { it.id == s.id }?.text
+                    SessionSheet(
+                        s,
+                        typed ?: s.minutes?.value?.toString().orEmpty(),
+                        ui.pendingToday,
+                        bottomInsetDp.dp,
+                        actions.session,
+                    )
+                }
             if (activity == null)
                 TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
             MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
@@ -450,9 +452,7 @@ private fun TodayTop(
         removal = removal,
         centreContent =
             activity?.let { model ->
-                {
-                    DialActivityControls(model, ui, actions, animate, reducedMotion)
-                }
+                { DialActivityControls(model, ui, actions, animate, reducedMotion) }
             },
     )
     DialHint(today.hint)
