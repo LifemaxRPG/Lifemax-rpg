@@ -75,6 +75,7 @@ class BarScrubberTest {
                     active,
                     speed,
                     haptics,
+                    50,
                     0x33223344,
                     12f,
                     0xFF0E1117.toInt(),
