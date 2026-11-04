@@ -384,8 +384,7 @@ fun LifeDirectorScreen(
                 }
             if (activity == null)
                 TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
-            if (activity == null)
-                MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
+            if (activity == null) MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
             FormSheets(p, ui, bottomInsetDp.dp, actions.forms, animate)
             val guide = p.guide
             if (guideRun != null && guide != null)
