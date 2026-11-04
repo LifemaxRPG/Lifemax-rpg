@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -195,6 +196,10 @@ private fun SelectBox(
     place: Place,
     modifier: Modifier,
 ) {
+    if (control.id == "haptics.nativeScrubStrength") {
+        NativeScrubSlider(control, ui, taps, modifier)
+        return
+    }
     val c = LocalPageColors.current
     val ink = SettingsInk(c)
     val pending = ui.pending(control)
@@ -341,6 +346,44 @@ private fun ChoiceGroup(
                 selected = on,
             )
         }
+    }
+}
+
+/** Native Compose slider; commits once on release rather than flooding the WebView with commands. */
+@Composable
+private fun NativeScrubSlider(
+    control: SettingsControl.Select,
+    ui: SettingsUi,
+    taps: ControlTaps,
+    modifier: Modifier,
+) {
+    val c = LocalPageColors.current
+    val saved = (ui.value(control).toFloatOrNull() ?: 50f).coerceIn(0f, 100f)
+    var dragging by remember(control.id) { mutableStateOf(false) }
+    var draft by remember(control.id) { mutableStateOf(saved) }
+    LaunchedEffect(saved, dragging) { if (!dragging) draft = saved }
+    val pending = ui.pending(control)
+    val enabled = control.enabled && !pending && control.op == ControlOp.Choose
+    Row(modifier.fillMaxWidth().alpha(if (enabled) 1f else .45f), verticalAlignment = Alignment.CenterVertically) {
+        Slider(
+            value = if (dragging) draft else saved,
+            onValueChange = { draft = it; dragging = true },
+            onValueChangeFinished = {
+                dragging = false
+                val chosen = draft.toInt().coerceIn(0, 100).toString()
+                if (chosen != saved.toInt().toString()) taps.choose(control, chosen)
+            },
+            valueRange = 0f..100f,
+            steps = 99,
+            enabled = enabled,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "${(if (dragging) draft else saved).toInt()}%",
+            modifier = Modifier.padding(start = 10.dp),
+            color = c.text,
+            fontSize = 14.sp,
+        )
     }
 }
 
