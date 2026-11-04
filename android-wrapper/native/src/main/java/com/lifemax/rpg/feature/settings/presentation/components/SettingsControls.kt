@@ -364,10 +364,16 @@ private fun NativeScrubSlider(
     LaunchedEffect(saved, dragging) { if (!dragging) draft = saved }
     val pending = ui.pending(control)
     val enabled = control.enabled && !pending && control.op == ControlOp.Choose
-    Row(modifier.fillMaxWidth().alpha(if (enabled) 1f else .45f), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier.fillMaxWidth().alpha(if (enabled) 1f else .45f),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Slider(
             value = if (dragging) draft else saved,
-            onValueChange = { draft = it; dragging = true },
+            onValueChange = {
+                draft = it
+                dragging = true
+            },
             onValueChangeFinished = {
                 dragging = false
                 val chosen = draft.toInt().coerceIn(0, 100).toString()
