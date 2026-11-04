@@ -1,0 +1,65 @@
+ 0.000 cat x=  40.00 idle_sit f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  54.00,108.00
+ 0.100 cat x=  41.19 walk    f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  61.90,113.78
+ 0.200 cat x=  44.58 walk    f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  65.33,113.82
+ 0.300 cat x=  50.18 run     f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  72.84,113.90
+ 0.400 cat x=  57.97 run     f3 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  80.64,113.90
+ 0.500 cat x=  67.45 run     f5 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  88.94,112.52
+ 0.600 cat x=  77.05 run     f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth  97.90,111.86
+ 0.700 cat x=  85.97 run     f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 104.99,110.02
+ 0.800 cat x=  91.64 walk    f4 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 108.42,110.11
+ 0.900 cat x=  93.62 walk    f4 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 110.55,110.21
+ 1.000 cat x=  93.63 walk    f4 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 112.53,111.90
+ 1.100 cat x=  93.63 crouch  f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.82,122.26
+ 1.200 cat x=  93.63 crouch  f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.61,121.98
+ 1.300 cat x=  93.63 crouch  f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.63,122.00
+ 1.400 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.63,122.00
+ 1.500 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.63,122.00
+ 1.600 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.63,122.00
+ 1.700 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.63,122.00
+ 1.800 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.50,121.78
+ 1.900 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.59,121.93
+ 2.000 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.74,122.20
+ 2.100 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.45,121.69
+ 2.200 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.82,122.36
+ 2.300 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.65,122.05
+ 2.400 cat x=  93.63 crouch  f2 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.68,122.09
+ 2.500 cat x=  93.63 leap    f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 111.97,108.69
+ 2.600 cat x= 100.75 leap    f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 117.07,101.15
+ 2.700 cat x= 105.26 leap    f0 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 123.70,100.69
+ 2.800 cat x= 108.00 leap    f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 129.13,103.28
+ 2.900 cat x= 112.16 leap    f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 135.25,107.31
+ 3.000 cat x= 119.05 leap    f1 | toy REST  x= 130.00 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 142.92,115.44
+ 3.017   ! Arrived plan=1 step=0
+ 3.017   ! ToyHit plan=1 step=0
+ 3.100 cat x= 120.00 crouch  f2 | toy FREE  x= 133.38 y=125.37 v=   36.4,  -15.1 a=+0.00 sq=1.01,0.98 air | mouth 137.75,121.72
+ 3.200   ! StepDone plan=1 step=0
+ 3.200 cat x= 120.02 crouch  f2 | toy FREE  x= 136.97 y=125.59 v=   35.4,   16.8 a=+0.00 sq=1.00,1.00 air | mouth 138.08,122.09
+ 3.300 cat x= 121.37 walk    f0 | toy FREE  x= 140.18 y=128.00 v=   17.6,    0.0 a=+0.00 sq=1.02,0.96 | mouth 142.05,113.78
+ 3.400 cat x= 123.72 walk    f1 | toy FREE  x= 141.56 y=128.00 v=   11.1,    0.0 a=+0.00 sq=1.00,0.99 | mouth 142.66,111.93
+ 3.483   ! StepDone plan=1 step=1 last
+ 3.500 cat x= 125.77 walk    f2 | toy FREE  x= 142.43 y=128.00 v=    7.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 144.30,111.57
+ 3.600 cat x= 127.15 walk    f2 | toy FREE  x= 142.98 y=128.00 v=    4.4,    0.0 a=+0.00 sq=1.00,1.00 | mouth 145.49,111.39
+ 3.700 cat x= 127.73 idle_sit f0 | toy FREE  x= 143.33 y=128.00 v=    2.8,    0.0 a=+0.00 sq=1.00,1.00 | mouth 140.95,107.56
+ 3.800 cat x= 127.75 idle_sit f0 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.61,107.92
+ 3.900 cat x= 127.75 idle_sit f0 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.80,108.03
+ 4.000 cat x= 127.75 idle_sit f1 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.74,108.00
+ 4.100 cat x= 127.75 idle_sit f1 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.200 cat x= 127.75 idle_sit f1 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.300 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.400 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.500 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.600 cat x= 127.75 idle_sit f6 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.700 cat x= 127.75 idle_sit f6 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.800 cat x= 127.75 idle_sit f6 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 4.900 cat x= 127.75 idle_sit f7 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.000 cat x= 127.75 idle_sit f7 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.100 cat x= 127.75 idle_sit f7 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.200 cat x= 127.75 idle_sit f0 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.300 cat x= 127.75 idle_sit f0 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.400 cat x= 127.75 idle_sit f0 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.500 cat x= 127.75 idle_sit f1 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.600 cat x= 127.75 idle_sit f1 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.700 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.800 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 5.900 cat x= 127.75 idle_sit f2 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00
+ 6.000 cat x= 127.75 idle_sit f6 | toy REST  x= 143.49 y=128.00 v=    0.0,    0.0 a=+0.00 sq=1.00,1.00 | mouth 141.75,108.00

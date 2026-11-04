@@ -1,5 +1,9 @@
 package com.lifemax.rpg.feature.pet.brain
 
+import com.lifemax.rpg.feature.pet.body.CatBody
+import com.lifemax.rpg.feature.pet.world.WorldBlock
+import com.lifemax.rpg.feature.pet.world.WorldCommand
+
 /**
  * The native cat brain as the tools outside it see it (docs/specs/CAT_BRAIN_PLAN.md 1.1): a world
  * of one or two cats driven by a [com.lifemax.rpg.feature.pet.world.WorldClock], asked what each
@@ -21,6 +25,38 @@ interface Brain {
      * The owner's acts in a simulated day (open the view, feed, pet...), which a brain may answer.
      */
     fun owner(act: OwnerAct) {}
+
+    /**
+     * Fast-forwards a [gapMs] gap the app was not watching (plan 2.6): coarse, deterministic for
+     * the same state and gap, at most 24 h (the host caps it) and under 5 ms. Answers where the
+     * cats ended up and up to three lines of what they did; the default does nothing.
+     */
+    fun catchUp(gapMs: Long): CatchUp = CatchUp.NONE
+
+    /** The brain's state for the world blob, or null for a brain with none to keep. */
+    fun export(): BrainState? = null
+
+    /** Takes back a state saved by [export] (the host calls it once, before the first step). */
+    fun restore(state: BrainState) {}
+
+    /** The page's newest world block (care caps, hunger stage, cues, context), by `seq`. */
+    fun update(block: WorldBlock) {}
+
+    /**
+     * The commands the brain wants sent to the page since the last call (moments, social, dwell).
+     * Answers a shared empty list when there are none, so asking every think quantum costs nothing.
+     */
+    fun takeReports(): List<WorldCommand> = emptyList()
+
+    /**
+     * Whether this brain moves the bodies itself ([bind] hands them over) rather than the autopilot
+     * of the shipped house.
+     */
+    val drivesBodies: Boolean
+        get() = false
+
+    /** The house's bodies, once, when [drivesBodies]; the brain keeps them. */
+    fun bind(bodies: List<CatBody>) {}
 }
 
 /**

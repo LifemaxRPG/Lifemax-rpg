@@ -6,17 +6,25 @@ import java.util.Locale
 
 /**
  * The day viewer (plan 4.1): runs a [Brain] through a simulated day on a fake clock, at the world's
- * own sub-steps, and prints what each cat did: one line per activity change (`07:12 Ted
- * sleep→waking routine bed (energy .91, why: wake hour)`), a strip of 24 columns per cat (each
- * hour's main activity as a letter, [LETTERS]), and an SVG timeline. Humans judge believability
- * from it before phone time. Test scope only; CatDayViewerTest runs it.
+ * own sub-steps, and prints what each cat did: one line per activity begun (`07:12 Ted sleep→waking
+ * routine bed (level .91, why: woke)`), a strip of 24 columns per cat (each hour's main activity as
+ * a letter, [LETTERS]), the hours each activity took, and an SVG timeline. Humans judge
+ * believability from it before phone time. Test scope only; CatDayViewerTest runs it.
  */
 object CatDayViewer {
-    /** A simulated day: the change [lines], one [strips] row per cat, and the [svg] timeline. */
-    data class Day(val lines: List<String>, val strips: List<String>, val svg: String) {
+    /**
+     * A simulated day: the change [lines], one [strips] row per cat, the [totals] (hours per
+     * activity, per cat) and the [svg] timeline.
+     */
+    data class Day(
+        val lines: List<String>,
+        val strips: List<String>,
+        val svg: String,
+        val totals: List<String> = emptyList(),
+    ) {
         /** Everything as text, as the viewer prints it. */
         val text: String
-            get() = (lines + "" + strips).joinToString("\n") + "\n"
+            get() = (lines + "" + strips + "" + totals).joinToString("\n") + "\n"
     }
 
     /** Hour-strip letters per activity; anything else is '.', a cat that changed a lot '*'. */
@@ -36,6 +44,11 @@ object CatDayViewer {
             "pair: curl up" to '=',
             "pair: groom" to '=',
             "pair: chase" to '=',
+            "wander" to 'R',
+            "beg" to 'B',
+            "scratch" to 'X',
+            "knead" to 'N',
+            "waking routine" to 'Y',
         )
 
     private const val MINUTES = 60
@@ -71,15 +84,18 @@ object CatDayViewer {
         val endNanos = hours * MINUTES * MS_PER_MINUTE * NANOS_PER_MS
         var mono = 0L
         fun sample(m: Int) {
+            for (slot in 0 until n) samples[slot][m] = brain.now(slot)
+        }
+        // a line for every activity begun, as it begins (a short one between two minute samples
+        // shows too); a brain that keeps its Doing until it changes costs one comparison here
+        fun changes(nowMs: Long) {
             for (slot in 0 until n) {
                 val d = brain.now(slot)
-                samples[slot][m] = d
-                if (d.activity != last[slot]?.activity) {
-                    val from = last[slot]?.activity?.let { "$it→" } ?: ""
-                    lines +=
-                        "${hhmm(m * MS_PER_MINUTE)} ${brain.names[slot].padEnd(5)} $from${d.activity}  ${d.place}  " +
-                            "(${level(d.level)}, why: ${d.why})"
-                }
+                if (d === last[slot]) continue
+                val from = last[slot]?.activity?.let { "$it→" } ?: ""
+                lines +=
+                    "${hhmm(nowMs)} ${brain.names[slot].padEnd(5)} $from${d.activity}  ${d.place}  " +
+                        "(${level(d.level)}, why: ${d.why})"
                 last[slot] = d
             }
         }
@@ -95,6 +111,7 @@ object CatDayViewer {
                     pending = pending.drop(1)
                 }
                 brain.step(step, think)
+                if (think) changes(now)
                 if (minute < minutes && minute.toLong() * MS_PER_MINUTE <= now) sample(minute++)
             }
         while (minute < minutes && mono < endNanos) {
@@ -105,8 +122,21 @@ object CatDayViewer {
             (0 until n).map { slot ->
                 brain.names[slot].padEnd(5) + " |" + strip(samples[slot], hours) + "|"
             }
-        return Day(lines, strips, svg(brain.names, samples, hours))
+        val totals =
+            (0 until n).map { slot -> brain.names[slot].padEnd(5) + " " + totals(samples[slot]) }
+        return Day(lines, strips, svg(brain.names, samples, hours), totals)
     }
+
+    /** Hours per activity, most first: `sleep 13.5h, loaf 4.2h, ...`. */
+    private fun totals(s: Array<Doing?>): String =
+        s.filterNotNull()
+            .groupingBy { it.activity }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .joinToString(", ") {
+                it.key + " " + String.format(Locale.ROOT, "%.1fh", it.value / MINUTES.toDouble())
+            }
 
     private fun hhmm(ms: Long): String {
         val m = ms / MS_PER_MINUTE

@@ -38,6 +38,9 @@ internal class Locomotion(private val k: Kinematics, private val turn: Turn) {
     var run = false
     var weak = false
 
+    /** Speed multiplier from the mood ([BodyTone.pace]); 1 leaves the walk as it was. */
+    var pace = 1f
+
     var gait = Gait.STAND
         private set
 
@@ -121,7 +124,8 @@ internal class Locomotion(private val k: Kinematics, private val turn: Turn) {
         val base =
             if (run) Tuning.Walk.RUN_SPEED
             else if (weak) Tuning.Walk.WEAK_SPEED else Tuning.Walk.WALK_SPEED
-        return base * World.depthScale(k.z)
+        val v = base * World.depthScale(k.z)
+        return if (pace == 1f) v else v * pace
     }
 
     private fun vMaxZ(): Float {

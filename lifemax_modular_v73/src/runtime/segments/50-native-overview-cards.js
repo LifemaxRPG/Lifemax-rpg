@@ -452,6 +452,7 @@
     open,
     close: () => tab.close(),
     covering: () => tab.active(),
+    has: (c) => tab.has(c),
     diagnostics: () => ({ enabled: tab.enabled(), wanted: wanted(), gaveUp, failReason, active: tab.active(), opening: tab.opening(),
       blocked: tab.blocked(), veiled, arrival, petLoop: typeof petWantRun === "function" ? petWantRun() : false, celebrations: held.length }),
   };

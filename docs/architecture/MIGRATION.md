@@ -407,6 +407,20 @@ Native presentation, web authority for data and for the one saved field. The Sho
 - **Rollout.** Behind Food's existing native switch; with it off, or on an older app or page, nothing changes. Rollback is the same switch.
 - **Hybrid dependency.** Saving stays on the page until a logic-phase cutover; the screen's quantities, "already own" choices, removed rows and picked recipes are this screen's own and not saved.
 - **Evidence.** `native-shopping.test.js` (29 checks), `native-handover-sim.test.js 10`, unit tests `WalmartCartLinkBuilderTest`, `WalmartProductMatchingTest`, `GroceryListBuilderTest`, `WalmartCartLauncherTest`, `ShoppingProjectionDecoderTest`, `ShoppingStateTest`, screenshots `ShoppingScreenshotTest` and `ShoppingLargeTextScreenshotTest` (new images only). On the phone: `docs/specs/WALMART_CART_TEST_CHECKLIST.md`.
+## Cat brain, phase CB1: the brain core (Native API 60)
+
+Web authority, nothing new on screen. The native cat brain's core (docs/specs/CAT_BRAIN_PLAN.md section 1) in `feature/pet/brain`, pure Kotlin and headless, behind the CB0 `Brain` interface: drives, mood, persona, scheduler, selector, runner, place book, explain ring and the activities sleep, waking routine, loaf, groom, wander, window watch, parkour visit, eat, beg, scratch and knead, plus `CatBody.tone(v, a)` (neutral leaves the body bitwise as it was). It runs in the day viewer and the tests only; CB2 connects it to the screens and the page. No bridge shape, page code, setting or saved field changes.
+
+| Part | Where | What |
+|---|---|---|
+| Brain | `feature/pet/brain` | `CatWorld` (the `Brain`), `CatMind`, `ActivityRunner`, `Selector`, `Drives`, `Mood`, `Persona`, `Schedule`, `Spots`/`SpotBook`, `ExplainRing`, `Executor` (live body or fast), `BrainTuning`, the activity files and `ActivityRegistry` |
+| Body | `feature/pet/body/BodyTone.kt`, `CatBody.tone`, `Locomotion.pace` | the mood as ear lean, tail lift, walk pace and breath depth on the existing springs |
+| Days | `docs/specs/CAT_BRAIN_DAYS.md` | six simulated days (lazy, playful, shy, kitten, weak, two cats) and the assessment and knobs |
+
+- **Rollout.** Nothing to switch: no screen creates the world yet.
+- **Evidence.** Unit tests `BrainCoreTest`, `BrainDayTest`, `BrainReplayTest`, `PersonaMixTest`, `BrainSoakTest`, `BrainGoldenTest` (three new traces under `pet-traces/brain-*`), `CatDayViewerTest`, `BodyToneTest`; `HeadlessCheckTest` and every body golden unchanged. No screenshot changed.
+- **Rollback.** Nothing to roll back on screen; the package can be left unused.
+
 ## Cat brain, phase CB0: the world contract and its harness (Native API 58)
 
 Web authority, nothing new on screen. The contract the native cat brain (docs/specs/CAT_BRAIN_PLAN.md) is built on: the page keeps the cats' identity and care economics and stays the only writer of the save; native will own behaviour and hand the page an opaque, versioned world blob to store.
@@ -423,3 +437,35 @@ Web authority, nothing new on screen. The contract the native cat brain (docs/sp
 - **Rollout.** Nothing to switch: no screen draws the block yet (CB2's world host will). The web brain runs exactly as before.
 - **Evidence.** `tests/native-cat-world.test.js` (through the real page: gating on both screens, the block against the page's data for six cat states, the world command, the backup round-trip, the import from four brains, goldens in `tests/fixtures/cat-world-golden.json` that the native decoders read); `native-pet`, `native-pet-touch`, `native-pet-panels`, `native-overview-cards`, `backup-restore` and the handover simulation unchanged; unit tests `WorldBlockJsonTest`, `WorldBlobJsonTest`, `WorldCommandJsonTest` (40 or more malformed variants each), `FakePageTest`, `WorldClockTest`, `HeadlessCheckTest`, `CatDayViewerTest`. No screenshot changed.
 - **Rollback.** Remove the capability from the two plugins: the page then sends nothing and stores nothing.
+
+## Cat brain, phase CB2: the world service and its persistence (Native API 60)
+
+Native, behind the existing switches ("Native Cat (beta)", the Overview cards): nothing new on the page's side except a one-line owner guard. One process-wide cat world, `feature/pet/host/CatWorldHost`, which the Overview card and the Cat tab both draw (one house of bodies, one stage, one camera), saved to the page through the `world` command and restored on the next open.
+
+| Part | Where | What |
+|---|---|---|
+| World host | `host/CatWorldHost.kt` | inactive until a brain is set (`brainFactory`, default `AutopilotBrain` until the native brain is merged), the page sends a good `world` block and keeps sending it; then it restores the page's stored world (or imports each cat from its web brain once, `WorldImport`), places the bodies, catches up the gap, and runs while any view is attached. Frames from every view go to `advance(frameNanos)`, idempotent per frame time. Older page, no block, three projections without one, or no factory: the screens keep their shipped autopilot rooms |
+| Persistence | `host/WorldSync.kt` | `world {op 'world:<epoch>:<rev>', epoch, rev, blob}`: debounced (one write a minute), change-detected (behaviour, not positions), urgent after a moment or pair event (not closer than 5 s), flushed when the last view leaves and when the app stops; the blob's `outbox` (16 at most) holds the commands not yet answered and is replayed after a restart; stale epoch holds writing until the page's world is adopted, stale revision catches up, `size` trims level by level, `unsaved` retries in 30 s, no answer sends the same op again; nothing runs on a thread of its own and nothing blocks a frame |
+| Catch-up | `Brain.catchUp(gapMs)` (default none) | after a gap over 5 min (from the blob's `at`, or the clock's resume), at most 24 h, deterministic, under 5 ms: places the cats and gives up to three "while you were away" lines, shown in the mind row (`PanelSource` (`presentation/`)) |
+| Panels | `presentation/PanelSource.kt` | the mind row's mood word and away story, and the inner-life threads and comfort place, come from the world when it is active; everything else stays the page's |
+| Owner guard | `17-runtime.js` `petNativeOwns`, `NativeCatWorld.owns/owner` | the web room loop never runs for a view whose native screen shows with `pet.world.v1`; with the switch off, an older app or a visit handed to the page (Play) the web room is as it always was |
+| Blob | `WorldBlob.at` | when the world was last written (optional on read, so older blobs load) |
+
+- **Rollout.** Rides the existing switches. With a page or app without `pet.world.v1` nothing changes. The shipped autopilot still moves the bodies until the native brain is merged (`Brain.drivesBodies`).
+- **Evidence.** `host/*Test` (the loop against FakePage on a fake clock: start, run, persist, kill and replay of the outbox, stale epoch, backup restore, refused saves, import, catch-up determinism and bounds, two views one world, detach/attach, fallback, the frame path allocating nothing), `tests/native-cat-world.test.js` (the host's writes against the real page, the owner guard), the handover simulation's `world-write` hop (`PETMUT=noworld` must fail it).
+
+## Cat brain, CB1 + CB2 + CB4 part A integrated: the real brain drives the shared world (Native API 61)
+
+Native, behind the existing switches ("Native Cat (beta)", the Overview cards; no new switch). With a page that sends the `world` block, the process's one cat world (`CatWorldHost`) is now run by the native brain (`CatWorld`, live) on the house's own bodies, so the Overview card and the Cat tab show the cats the brain moves; the page stays the only writer of the save.
+
+| Part | Where | What |
+|---|---|---|
+| Wiring | `app/CatWorldSetup.kt` | `CatWorldHost.shared.brainFactory` set once, from the first of `NativePetPlugin` / `NativeOverviewCardsPlugin` to be created: a live `CatWorld` for the block's cats (`CatProfile.of(WorldCat)`), the `AutopilotBrain` if it cannot be built; no block or capability keeps every screen on its shipped autopilot room |
+| Brain seam | `brain/CatWorld.kt`, `MindState.kt`, `CatchUpRun.kt` | `drivesBodies` (live) and `bind` (the house's bodies adopted where the cats stand), `update` (hunger stage, vacation, rest day from the block), `export`/`restore` (position, activity, drives, mood, trust, places, schedule; quirks, rhythm, first moments, voice and cheers carried through), `catchUp` (the last hour of a gap played in fast mode, the cats put where it ends, up to three lines) |
+| Owner acts | `HouseStage.feed/visitBowl/slowBlink`, `CatWorldHost.attach/detach` | a landed meal (the page's fed cue) is `feed:<slot>` for the brain, a full bowl `bowl:<slot>`, a returned blink `blink:<slot>` (the body blinks back; no autopilot plan over the brain's), the first view `open`, the last `close`; with the autopilot the shipped reflexes as before |
+| Toys | `host/WorldToys.kt`, `presentation/ToyPainter.kt` | one `ToyField` per house from the stored world's toys (else two of the unlocked ones on the rugs), every cat `attachToys(field, MouthAnchors.of(lab, stage))`, saved back in the blob; drawn in the shared room only (classic and 2.5D), free toys sorted with the cats, a held one after its cat |
+| Body | `body/JumpAnimation.kt` | the hop's clips moved out of `CatBody` (kept under 600 lines with both the tone and the toy hooks) |
+
+- **Rollout.** Rides the existing switches; an older page or app, or a page that stops sending the block, keeps today's rooms. Rollback: remove `CatWorldSetup.install()` from the two plugins (the host then runs the autopilot brain again).
+- **Evidence.** `host/LiveBrainEndToEndTest` (FakePage + host + the app's own factory: a legacy import, six simulated hours with feed, vacation, rest day, close and open, a kill in the middle with the cats resuming in place doing the same, the outbox replayed once, a two-hour gap caught up, no teleport on any frame; toys lying about, batted, saved), `brain/BrainStateTest` (blob round trip, catch-up purity and cost, bind keeps every cat in place), every CB1/CB2/CB4 test, `HeadlessCheckTest`; no screenshot changed (the screens' own stages draw no toys).
+
