@@ -108,16 +108,44 @@ jobs:
             fi
           fi
 
-      - name: Build debug APK
+      - name: Compile and package debug APK
         working-directory: android-wrapper/android
-        # --stacktrace prints the real cause of a failure (the packaging step has twice died with a generic
-        # "IncrementalSplitterRunnable" message). A second attempt runs only after a first failure, so a real
-        # break still fails the build, while a one-off runner hiccup does not cost a manual re-run.
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Verify native tests and screenshots
+        working-directory: android-wrapper/android
+        run: ./gradlew verifyPaparazziDebug --stacktrace
+
+      - name: Show exact native test failures
+        if: failure()
         run: |
-          ./gradlew assembleDebug verifyPaparazziDebug --stacktrace || {
-            echo "::warning::The first build attempt failed; trying once more."
-            ./gradlew assembleDebug verifyPaparazziDebug --stacktrace
-          }
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          root = Path("android-wrapper/android/app/build/test-results")
+          count = 0
+          for report in sorted(root.rglob("TEST-*.xml")):
+              try:
+                  suite = ET.parse(report).getroot()
+              except ET.ParseError:
+                  continue
+              for case in suite.iter("testcase"):
+                  failures = list(case.findall("failure")) + list(case.findall("error"))
+                  for failure in failures:
+                      count += 1
+                      print(f"FAILED: {case.get('classname')}.{case.get('name')}")
+                      print((failure.get("message") or failure.text or "").strip()[:2500])
+          print(f"Native test failures in XML reports: {count}")
+          PY
+
+      - name: Keep native test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Native-test-results
+          path: android-wrapper/android/app/build/test-results/
+          if-no-files-found: ignore
 
       - name: Keep the screenshot report when a native screen changed
         if: failure()
