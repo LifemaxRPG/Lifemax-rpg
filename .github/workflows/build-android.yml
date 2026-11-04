@@ -122,6 +122,32 @@ jobs:
         working-directory: android-wrapper/android
         run: ./gradlew assembleDebug --stacktrace
 
+      # Explicit, single-use visual baseline maintenance on the development branch.
+      # Ordinary pushes still verify references without changing them.
+      - name: Refresh affected Life Director visual references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        working-directory: android-wrapper/android
+        run: |
+          ./gradlew recordPaparazziDebug --tests '*Director*ScreenshotTest' --tests '*MiniSleepDialScreenshotTest' --tests '*OverviewArrivalScreenshotTest' --tests '*OverviewScreenScreenshotTest' --stacktrace
+
+      - name: Preserve refreshed dial visual report
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Life-Director-visual-review
+          path: android-wrapper/android/app/build/reports/paparazzi/
+
+      - name: Commit refreshed development references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        run: |
+          find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f \( -name '*Director*' -o -name '*MiniSleepDial*' -o -name '*OverviewArrival*' -o -name '*OverviewScreen*' \) -print0 | xargs -0 -r git add --
+          git diff --cached --stat
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refresh intended Life Director visual references'
+          git push origin HEAD:codex/director-dial-controls
+
       - name: Verify native tests and screenshots
         working-directory: android-wrapper/android
         run: ./gradlew verifyPaparazziDebug --stacktrace
