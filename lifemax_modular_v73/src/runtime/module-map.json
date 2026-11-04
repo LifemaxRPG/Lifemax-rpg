@@ -3250,13 +3250,16 @@
   },
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
-   "bytes": 2602,
-   "statement_count": 6,
+   "bytes": 3725,
+   "statement_count": 9,
    "tags": [
     "settings"
    ],
    "symbols": [
     "SET_CATS",
+    "LMA_NATIVE_TAB_TOGGLES",
+    "lmaSyncNativeMode",
+    "lmaSetNativeMode",
     "setCat",
     "setCatOf",
     "setApplyCats",
@@ -3866,7 +3869,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 31531,
+   "bytes": 31629,
    "statement_count": 1,
    "tags": [
     "native",
