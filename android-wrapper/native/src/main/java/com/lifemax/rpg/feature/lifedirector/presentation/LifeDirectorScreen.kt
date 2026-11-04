@@ -55,6 +55,7 @@ import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
@@ -239,7 +240,9 @@ fun LifeDirectorScreen(
             val activity =
                 p.sheet?.takeIf { model ->
                     today != null &&
-                        (model is SessionSheetModel || model is TimerSheetModel) &&
+                        (model is SessionSheetModel ||
+                            model is TimerSheetModel ||
+                            model is MoveSheetModel) &&
                         ui.sheet?.let { model.answers(it) } == true
                 }
             val list = rememberLazyListState()
@@ -381,7 +384,8 @@ fun LifeDirectorScreen(
                 }
             if (activity == null)
                 TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
-            MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
+            if (activity == null)
+                MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
             FormSheets(p, ui, bottomInsetDp.dp, actions.forms, animate)
             val guide = p.guide
             if (guideRun != null && guide != null)
