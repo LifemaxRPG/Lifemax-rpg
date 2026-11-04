@@ -112,7 +112,7 @@ const READY = () => new Promise(done => { const until = performance.now() + 1500
   }));
   ok('the second cat\'s portrait is its own; a cat that is not one of the two has none', two.differs && two.first && two.stranger, two);
   /* a genetic coat with an extreme body shape: the colour genes, the eyes and the shape all come through */
-  await p.evaluate(() => { for (let t = 0; t < 300; t++) { petDevDnaReroll(); const r = petDnaRecipe(petData().coat); if (r && r.tab && r.white > 0) break } petDevMorphSet({ em: 1, ew: 1, tl: 1, lg: 1, bl: 1, wk: 1, bob: 0 }) });
+  await p.evaluate(() => { for (let t = 0; t < 300; t++) { petDevDnaReroll(); const r = petDnaRecipe(petData().coat); if (/^dna_/.test(petData().coat) && r && r.tab && r.white > 0) break } petDevMorphSet({ em: 1, ew: 1, tl: 1, lg: 1, bl: 1, wk: 1, bob: 0 }) });
   const key = await p.evaluate(() => petPortraitKey(petData()));
   ok('the cache key carries the genetic coat and the body shape', /^dna_/.test(key) && !/\|n$/.test(key), key);
   await check('genetic coat, extreme shape, HD');
