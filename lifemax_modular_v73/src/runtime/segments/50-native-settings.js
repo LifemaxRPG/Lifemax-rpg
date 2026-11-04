@@ -22,6 +22,8 @@
      those are turned on on the page (a delegation) and off by command. Every other control on the page is a delegation. */
   const BOUND = [
     ["lightMode", "#lightModeToggle", "lifeMaxTheme"],
+    ["nativeMode", "#nativeModeToggle", PREFS],
+    ["nativeMode.customize", "#nativeModeCustomize", "lma_set_cat"],
     ["nativeNutrition", "#nativeNutritionToggle", PREFS],
     ["tabTiming", "#tabTimingToggle", PREFS],
     ["nativeOverview", "#nativeOverviewToggle", PREFS],
@@ -74,7 +76,7 @@
   // words for the one row the page does not have: the way back to the classic page, always on the screen (inventory 7.5, 1)
   const CLASSIC = {
     label: "Classic Settings",
-    hint: "The page this screen is drawn from. To stay there, turn off Native Settings (beta) under Look & feel, Appearance.",
+    hint: "The page this screen is drawn from. To stay there, turn off Native Settings under Native mode.",
   };
 
   let classic = false; // the owner asked for the classic page: it stays until they leave Settings or turn the screen on again
