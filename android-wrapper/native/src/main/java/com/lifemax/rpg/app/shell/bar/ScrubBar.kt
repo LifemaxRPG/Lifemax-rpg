@@ -105,10 +105,10 @@ internal class ScrubBar(
         val strength = scene?.hapticStrength ?: 50
         if (strength <= 0) return
         val motor = if (Build.VERSION.SDK_INT >= 31) {
-            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+            (this.context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            (context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
+            (this.context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
         }
         if (Build.VERSION.SDK_INT >= 26 && motor?.hasVibrator() == true && motor.hasAmplitudeControl()) {
             val amplitude = (strength * 254 / 100 + 1).coerceIn(1, 255)
