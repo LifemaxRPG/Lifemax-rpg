@@ -2888,7 +2888,7 @@
   },
   {
    "file": "src/runtime/segments/50-haptics.js",
-   "bytes": 6318,
+   "bytes": 6595,
    "statement_count": 14,
    "tags": [
     "haptics"
@@ -3577,7 +3577,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview.js",
-   "bytes": 28712,
+   "bytes": 28743,
    "statement_count": 1,
    "tags": [
     "android",
@@ -3866,7 +3866,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 30600,
+   "bytes": 30709,
    "statement_count": 1,
    "tags": [
     "native",
