@@ -120,11 +120,12 @@ jobs:
 
       - name: Compile and package debug APK
         working-directory: android-wrapper/android
-        run: ./gradlew assembleDebug --stacktrace
+        # Packaging needs heap headroom for compressing bundled web assets.
+        run: ./gradlew assembleDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
 
       - name: Verify native tests and screenshots
         working-directory: android-wrapper/android
-        run: ./gradlew verifyPaparazziDebug --stacktrace
+        run: ./gradlew verifyPaparazziDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
 
       - name: Show exact native test failures
         if: failure()
