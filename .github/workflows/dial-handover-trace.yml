@@ -38,12 +38,19 @@ jobs:
           fixed = """const closeStray=()=>{const current=tabs.get(typeof lmaView==='function'?lmaView():'');for(const t of stray){try{if(t!==current&&t.isOpen())t.close()}catch(e){console.warn('NativeTabs heal',e)}}};"""
           assert old in s
           p.write_text(s.replace(old, fixed))
+          p = Path('lifemax_modular_v73/src/runtime/segments/50-native-tabkit.js')
+          s = p.read_text()
+          needle = '    async function close() {'
+          assert needle in s
+          detail = '      if (window.__log) window.__log.push(window.__t() + " KIT close " + cfg.id + " view=" + lmaView() + " blocked=" + blocked() + " wanted=" + wanted() + " overlay=" + lmaTopOverlay() + " " + new Error().stack);'
+          p.write_text(s.replace(needle, needle + '\n' + detail))
+
 
           PY
       - name: Replay the complete reload sequence with failure tracing
         run: |
           set -o pipefail
-          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 40 2>&1 | tee handover-trace.log
+          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE=1 TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 40 2>&1 | tee handover-trace.log
       - name: Keep trace and exact input
         if: always()
         uses: actions/upload-artifact@v4
