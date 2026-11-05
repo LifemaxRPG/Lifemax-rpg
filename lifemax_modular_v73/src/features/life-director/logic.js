@@ -1224,7 +1224,7 @@ const LifeDirectorApp = (function () {
     const tasks = blocks.filter(b => b.inst);
     const now = nowEpoch(), isToday = ui.dayIdx === 0;
     const next = isToday ? nextUp(now) : null;
-    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(r.title)).join(', ') + '</p></div>' : '';
+    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(reminderText(r))).join(', ') + '</p></div>' : '';
     let upnext = '';
     const f = ST.ui.focus, fi = f && findInst(f.id);
     if (isToday && fi) {
@@ -2988,10 +2988,7 @@ const LifeDirectorApp = (function () {
       core: nativeCore(day, blocks, isToday, now, st),
       mix: nativeMix(blocks),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
-      reminders: isToday ? (s.passiveReminders || []).map(r => {
-        const description = Host.activityDescription ? Host.activityDescription({ linkedQuestRequirementIds: [{ questId: r.questId }] }) : '';
-        return r.title + (description ? '\n' + description : '');
-      }) : [],
+      reminders: isToday ? (s.passiveReminders || []).map(reminderText) : [],
       sessions: blocks.filter(b => b.inst).length,
       rows: nativeRows(blocks, isToday, now, !!(opts && opts.removal)),
     };
@@ -3234,6 +3231,10 @@ const LifeDirectorApp = (function () {
      The session sheet as data: instSheet's branches (now, later, past) in the page's words. A session that has left the plan
      answers {kind, gone: true}; the screen closes the sheet and says so. */
   const MINUTES_MAX = 480;
+  function reminderText(reminder) {
+    const description = Host.activityDescription ? Host.activityDescription({ linkedQuestRequirementIds: [{ questId: reminder.questId }] }) : '';
+    return reminder.title + (description ? '\n' + description : '');
+  }
   function nativeSessionSheet(id) {
     const inst = findInst(id) || ((ST.schedule && ST.schedule.historyInstances) || []).find(h => h.instanceId === id);
     if (!inst) return { kind: 'session', id: String(id), gone: true };
@@ -3779,4 +3780,5 @@ if (window.LifeMaxFeatures && typeof window.LifeMaxFeatures.register === 'functi
   /* Standalone harness: no Forge registry, mount directly */
   document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('view-life-director'); if (v) LifeDirectorApp.mount(v); });
 }
+
 

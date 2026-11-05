@@ -2434,7 +2434,7 @@ const LifeMaxHost = (function () {
   /* Read LifeMax quests as Life Director QuestRecords. overlay = LD's session counts per questKey. */
   /* Self-confirmed daily cards without a duration are tasks, not timed practice. */
   H.isUntimedQuest = function (q) {
-    if (!q || q.hand !== true || q.verify !== 'self') return false;
+    if (!q || q.hand !== true || q.cadence !== 'daily' || q.verify !== 'self') return false;
     const text = String(q.name || '') + ' ' + String(q.desc || '');
     return !parseMinutes(text) && !/\b(?:minutes?|mins?|hours?|hrs?|seconds?|secs?)\b/i.test(text);
   };
@@ -2586,4 +2586,5 @@ const LifeMaxHost = (function () {
   H._test = { parseCount, parseMinutes, weekBounds };
   return H;
 })();
+
 
