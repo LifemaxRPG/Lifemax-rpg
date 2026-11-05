@@ -5,15 +5,15 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -112,7 +112,17 @@ fun ChronoDial(
     val ghost = rememberGhost(removal)
     val input by
         rememberUpdatedState(
-            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift, centreDismiss, DialGeometry.SIDE * .31f)
+            DialInput(
+                dial,
+                hold,
+                asking || (hold != null && !hold.held),
+                run,
+                handles,
+                onArc,
+                lift,
+                centreDismiss,
+                DialGeometry.SIDE * .31f,
+            )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
@@ -372,4 +382,3 @@ private const val INNER_HELD = .45f
 
 private const val DIAL_DESCRIPTION =
     "24-hour plan. Outer ring: your fixed time. Inner ring: planned sessions."
-

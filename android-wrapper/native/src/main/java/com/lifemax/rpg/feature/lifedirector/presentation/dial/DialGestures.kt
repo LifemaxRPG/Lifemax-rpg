@@ -79,8 +79,10 @@ internal class DialGestures(
                 ?: return
         val now = input()
         val unit = unitPx(size.width.toFloat())
-        if (now.dismiss != null &&
-            (down.position / unit - androidx.compose.ui.geometry.Offset(180f, 180f)).getDistance() > now.centreRadius
+        if (
+            now.dismiss != null &&
+                (down.position / unit - androidx.compose.ui.geometry.Offset(180f, 180f))
+                    .getDistance() > now.centreRadius
         ) {
             val up = waitForUpOrCancellation() ?: return
             up.consume()
@@ -253,4 +255,3 @@ internal fun HandleTargets(
 
 internal const val LATER = "Move 15 minutes later"
 internal const val EARLIER = "Move 15 minutes earlier"
-

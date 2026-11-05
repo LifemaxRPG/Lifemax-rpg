@@ -146,9 +146,7 @@ class DirectorActions(
                 build = vm.time::build,
             ),
         forms = FormSheetActions(vm.forms),
-        editActivity = { id ->
-            if (vm.handOverFromSheet()) emit("activityOpen", id)
-        },
+        editActivity = { id -> if (vm.handOverFromSheet()) emit("activityOpen", id) },
         undo = vm.removal::undo,
         flick = { dir ->
             val p = vm.projection.value
@@ -182,4 +180,3 @@ class DirectorActions(
         }
     }
 }
-

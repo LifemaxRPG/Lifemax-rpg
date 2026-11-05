@@ -1,23 +1,18 @@
 package com.lifemax.rpg.feature.lifedirector.presentation
 
 import android.text.Html
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,16 +54,22 @@ internal fun DialActivityControls(
     val ready = ui.pendingToday == null
     AnimatedContent(
         targetState = model,
-        modifier = Modifier.fillMaxSize().combinedClickable(
-            onClick = {},
-            onLongClickLabel = "Open workout or quest",
-            onLongClick = { actions.editActivity(model.id) },
-        ).semantics {
-            customActions = listOf(CustomAccessibilityAction("Close activity") {
-                actions.session.close()
-                true
-            })
-        },
+        modifier =
+            Modifier.fillMaxSize()
+                .combinedClickable(
+                    onClick = {},
+                    onLongClickLabel = "Open workout or quest",
+                    onLongClick = { actions.editActivity(model.id) },
+                )
+                .semantics {
+                    customActions =
+                        listOf(
+                            CustomAccessibilityAction("Close activity") {
+                                actions.session.close()
+                                true
+                            }
+                        )
+                },
         contentKey = { it.kind to it.id },
         transitionSpec = {
             fadeIn(tween(if (reducedMotion) 0 else 180)) togetherWith
@@ -73,10 +77,7 @@ internal fun DialActivityControls(
         },
         label = "dial controls",
     ) { current ->
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -174,4 +175,3 @@ private fun DialLink(label: String, enabled: Boolean, onClick: () -> Unit) {
         Text(label, style = DirectorText, fontSize = 11.sp, textAlign = TextAlign.Center)
     }
 }
-

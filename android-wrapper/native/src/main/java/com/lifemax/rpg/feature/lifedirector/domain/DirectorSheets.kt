@@ -98,4 +98,3 @@ data class SessionSheetModel(
 
 /** The sheet the screen has open: what it asked the page for. */
 data class OpenSheet(val kind: String, val id: String)
-

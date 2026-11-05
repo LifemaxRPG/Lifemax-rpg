@@ -191,4 +191,3 @@ private fun points(v: Any): String {
 
 private fun JSONObject.str(key: String): String =
     get(key) as? String ?: throw IllegalArgumentException("$key is not text")
-
