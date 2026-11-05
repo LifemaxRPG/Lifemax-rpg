@@ -1,5 +1,11 @@
 package com.lifemax.rpg.feature.lifedirector.presentation
 
+import android.text.Html
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -38,6 +44,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberTickingClock
 
 /** One continuous activity face: full title and schedule first, with no intermediate menus. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun DialActivityControls(
     model: SheetModel,
@@ -49,7 +56,16 @@ internal fun DialActivityControls(
     val ready = ui.pendingToday == null
     AnimatedContent(
         targetState = model,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().combinedClickable(
+            onClick = {},
+            onLongClickLabel = "Open workout or quest",
+            onLongClick = { actions.editActivity(model.id) },
+        ).semantics {
+            customActions = listOf(CustomAccessibilityAction("Close activity") {
+                actions.session.close()
+                true
+            })
+        },
         contentKey = { it.kind to it.id },
         transitionSpec = {
             fadeIn(tween(if (reducedMotion) 0 else 180)) togetherWith
@@ -58,7 +74,7 @@ internal fun DialActivityControls(
         label = "dial controls",
     ) { current ->
         Column(
-            Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 20.dp),
+            Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(
@@ -74,7 +90,7 @@ internal fun DialActivityControls(
                         else -> ""
                     }
                 Text(
-                    title,
+                    Html.fromHtml(title, Html.FROM_HTML_MODE_LEGACY).toString(),
                     style = DirectorText,
                     color = P.ink,
                     fontSize = 13.sp,
@@ -88,30 +104,8 @@ internal fun DialActivityControls(
                         current.primary?.let {
                             DialPrimary(it.label, ready, actions.session.primary)
                         }
-                        val draft =
-                            ui.minutesDraft?.takeIf { it.id == current.id }?.text
-                                ?: current.minutes?.value?.toString().orEmpty()
-                        if (current.minutes != null && current.complete != null) {
-                            DialCaption(current.minutes.label)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                DialLink("−5", ready) { actions.session.step(-5) }
-                                Text(
-                                    draft,
-                                    color = P.ink,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                DialLink("+5", ready) { actions.session.step(5) }
-                            }
-                            DialPrimary(current.complete.label, ready, actions.session.complete)
-                        }
-                        current.row.forEach { button ->
-                            DialLink(button.label, ready) { actions.session.row(button) }
-                        }
-                        DialCaption(current.note.joinToString("") { it.t })
+                        DialCaption(current.description)
                         DialCaption(current.orphan)
-                        DialCaption(current.why.summary)
                     }
                     is MoveSheetModel -> {
                         DialCaption(current.note)
@@ -132,16 +126,13 @@ internal fun DialActivityControls(
                             fontWeight = FontWeight.Bold,
                         )
                         DialCaption(current.planned)
-                        DialPrimary(current.finish, ready, actions.timerMeal.finish)
                         DialLink(current.pause, ready, actions.timerMeal.pause)
-                        DialLink(current.stop, ready, actions.timerMeal.stop)
                         current.xp?.let { spans -> DialCaption(spans.joinToString("") { it.t }) }
                     }
                     else -> {}
                 }
                 if (!ready) DialCaption("Saving…")
             }
-            DialLink("‹ Back to dial", true, actions.session.close)
         }
     }
 }
@@ -150,7 +141,7 @@ internal fun DialActivityControls(
 private fun DialCaption(text: String) {
     if (text.isNotBlank())
         Text(
-            text,
+            Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString(),
             style = DirectorText,
             color = P.ink3,
             fontSize = 11.sp,
@@ -183,3 +174,4 @@ private fun DialLink(label: String, enabled: Boolean, onClick: () -> Unit) {
         Text(label, style = DirectorText, fontSize = 11.sp, textAlign = TextAlign.Center)
     }
 }
+

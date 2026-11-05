@@ -2547,7 +2547,37 @@ const LifeMaxHost = (function () {
   };
   H.activityExists = id => H.connected() && state.activities.some(a => a.id === id);
   H.isPlanDayDone = key => { try { return typeof dayDone === 'function' && !!dayDone(key); } catch (e) { return false; } };
+  /* Display the source activity's instructions, never the scheduler's placement explanation. */
+  H.activityDescription = function (inst) {
+    if (!H.connected() || !inst) return '';
+    const refs = inst.linkedQuestRequirementIds || [];
+    for (const ref of refs) {
+      const id = String(ref.questId || '').replace(/@next$/, '');
+      if (id.startsWith('plan:') && typeof planDay === 'function') {
+        let day = null;
+        try { day = planDay(id.slice(5)); } catch (e) { /* an unavailable plan has no instructions */ }
+        if (day) {
+          if (typeof day.description === 'string' && day.description.trim()) return day.description.trim();
+          const names = (day.items || []).map(item => typeof item === 'string' ? item : item.name || item.title || '').filter(Boolean);
+          if (names.length) return names.join(' · ');
+        }
+      }
+      const quest = state.quests.find(q => q && String(q.id) === id);
+      if (quest && typeof quest.desc === 'string' && quest.desc.trim()) return quest.desc.trim();
+    }
+    return '';
+  };
+  H.openActivity = function (inst) {
+    if (!H.connected() || !inst) return false;
+    for (const ref of inst.linkedQuestRequirementIds || []) {
+      const id = String(ref.questId || '').replace(/@next$/, '');
+      if (id.startsWith('plan:')) { H.openPlanDay(id.slice(5)); return true; }
+      if (state.quests.some(q => q && String(q.id) === id)) { H.openView('quests'); return true; }
+    }
+    return false;
+  };
   H.openPlanDay = key => { H.openView('plan'); try { if (typeof selectDay === 'function') selectDay(key); } catch (e) { /* ignore */ } };
   H._test = { parseCount, parseMinutes, weekBounds };
   return H;
 })();
+

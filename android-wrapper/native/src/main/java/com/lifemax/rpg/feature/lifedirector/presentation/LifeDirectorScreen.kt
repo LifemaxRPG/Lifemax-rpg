@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -213,7 +214,10 @@ fun LifeDirectorScreen(
     val confirm = ui.ask?.confirm
     DirectorTheme(p) {
         Box(
-            Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).pointerInput(actions) {
+            Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).pointerInput(ui.sheet) {
+                if (ui.sheet != null && p.tab == Sections.TODAY)
+                    detectTapGestures(onTap = { actions.session.close() })
+            }.pointerInput(actions) {
                 observeTouches(actions.touch)
             }
         ) {
@@ -453,6 +457,7 @@ private fun TodayTop(
         tour = tour,
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
+        centreDismiss = if (activity != null) actions.session.close else null,
         centreContent =
             activity?.let { model ->
                 { DialActivityControls(model, ui, actions, animate, reducedMotion) }
@@ -597,3 +602,4 @@ private const val UNDO_MS = 7000L
  * shadow blur of 4 px has ([cssBlurRadius]; Android's radius r blurs with 0.57735 r + 0.5 pixels).
  */
 private fun sheetBlur(density: Density) = with(density) { cssBlurRadius(4.dp.toPx()).toDp() }
+

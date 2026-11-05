@@ -5,6 +5,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -90,6 +92,7 @@ fun ChronoDial(
     intro: DialIntroRun? = null,
     removal: DragRemoveController? = null,
     centreContent: (@Composable () -> Unit)? = null,
+    centreDismiss: (() -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -109,7 +112,7 @@ fun ChronoDial(
     val ghost = rememberGhost(removal)
     val input by
         rememberUpdatedState(
-            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift)
+            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift, centreDismiss, DialGeometry.SIDE * .31f)
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
@@ -231,6 +234,8 @@ fun ChronoDial(
                             .clip(CircleShape)
                             .background(DirectorPalette.bg0)
                             .border(1.dp, DirectorPalette.line, CircleShape)
+                            .pointerInput(centreDismiss) { detectTapGestures(onTap = {}) }
+                            .padding(side * activityScale * .15f)
                     ) {
                         centreContent()
                     }
@@ -367,3 +372,4 @@ private const val INNER_HELD = .45f
 
 private const val DIAL_DESCRIPTION =
     "24-hour plan. Outer ring: your fixed time. Inner ring: planned sessions."
+

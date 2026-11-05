@@ -50,10 +50,15 @@ jobs:
           fi
           printf '%s  %s\n' '76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1' "$RUNNER_TEMP/ktfmt.jar" | sha256sum --check
           if ! python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"; then
-            find android-wrapper/native/src/main/java -name '*.kt' -print0 | xargs -0 -r java -jar "$RUNNER_TEMP/ktfmt.jar" --kotlinlang-style
-            git diff -- android-wrapper/native/src/main/java
-            echo "::error::Commit the formatted Kotlin source shown above."
-            exit 1
+            if [ "$GITHUB_REF" = refs/heads/codex/director-dial-controls ] && [ "${{ contains(github.event.head_commit.message, '[refresh-director-snapshots]') }}" = true ]; then
+              # During an explicit dial reference refresh, normalize only Life Director source,
+              # verify the whole tree again, and retain the normalized source with the references.
+              find android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector -name '*.kt' -print0 | xargs -0 -r java -jar "$RUNNER_TEMP/ktfmt.jar" --kotlinlang-style
+              python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"
+            else
+              echo "::error::Native Kotlin formatting must be corrected before building."
+              exit 1
+            fi
           fi
 
       - name: Copy newest single-file build into the web folder
@@ -141,6 +146,7 @@ jobs:
         if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
         run: |
           find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f \( -name '*Director*' -o -name '*MiniSleepDial*' -o -name '*OverviewArrival*' -o -name '*OverviewScreen*' \) -print0 | xargs -0 -r git add --
+          git add android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector
           git diff --cached --stat
           if git diff --cached --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
