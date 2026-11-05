@@ -32,6 +32,13 @@ jobs:
           s = p.read_text()
           assert 'fs.unlinkSync(out);' in s
           p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
+          p = Path('lifemax_modular_v73/src/runtime/segments/50-native-overview.js')
+          s = p.read_text()
+          old = """const closeStray=()=>{for(const t of stray){try{t.close()}catch(e){console.warn('NativeTabs heal',e)}}};"""
+          fixed = """const closeStray=()=>{const current=tabs.get(typeof lmaView==='function'?lmaView():'');for(const t of stray){try{if(t!==current&&t.isOpen())t.close()}catch(e){console.warn('NativeTabs heal',e)}}};"""
+          assert old in s
+          p.write_text(s.replace(old, fixed))
+
           PY
       - name: Replay the complete reload sequence with failure tracing
         run: |
