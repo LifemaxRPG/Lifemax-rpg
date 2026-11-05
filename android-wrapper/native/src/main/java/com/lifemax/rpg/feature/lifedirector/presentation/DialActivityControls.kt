@@ -135,9 +135,7 @@ internal fun DialActivityControls(
                         DialPrimary(current.finish, ready, actions.timerMeal.finish)
                         DialLink(current.pause, ready, actions.timerMeal.pause)
                         DialLink(current.stop, ready, actions.timerMeal.stop)
-                        current.xp?.let { spans ->
-                            DialCaption(spans.joinToString("") { it.t })
-                        }
+                        current.xp?.let { spans -> DialCaption(spans.joinToString("") { it.t }) }
                     }
                     else -> {}
                 }

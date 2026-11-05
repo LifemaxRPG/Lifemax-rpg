@@ -226,7 +226,8 @@ fun ChronoDial(
                 }
                 centreContent != null && hold == null -> {
                     Box(
-                        centreBox.size(side * activityScale)
+                        centreBox
+                            .size(side * activityScale)
                             .clip(CircleShape)
                             .background(DirectorPalette.bg0)
                             .border(1.dp, DirectorPalette.line, CircleShape)
