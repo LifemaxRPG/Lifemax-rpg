@@ -72,42 +72,40 @@ internal fun DialActivityControls(
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             val title =
-                    when (current) {
-                        is MoveSheetModel -> current.title
-                        is SessionSheetModel -> current.title
-                        is TimerSheetModel -> current.title
-                        else -> ""
-                    }
-                Row(
-                    Modifier.fillMaxWidth().heightIn(min = 40.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextButton(
-                        onClick = {
-                            if (face == "main") actions.session.close() else page = "main"
-                        },
-                        modifier = Modifier.size(40.dp).semantics { contentDescription = "Back" },
-                        contentPadding = PaddingValues(0.dp),
-                    ) {
-                        Text("‹", color = P.ink2, fontSize = 22.sp)
-                    }
-                    Text(
-                        title,
-                        Modifier.weight(1f),
-                        style = DirectorText,
-                        color = P.ink,
-                        fontSize = 12.sp,
-                        lineHeight = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                when (current) {
+                    is MoveSheetModel -> current.title
+                    is SessionSheetModel -> current.title
+                    is TimerSheetModel -> current.title
+                    else -> ""
                 }
-                Column(
-                    Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(
+                    onClick = { if (face == "main") actions.session.close() else page = "main" },
+                    modifier = Modifier.size(40.dp).semantics { contentDescription = "Back" },
+                    contentPadding = PaddingValues(0.dp),
                 ) {
+                    Text("‹", color = P.ink2, fontSize = 22.sp)
+                }
+                Text(
+                    title,
+                    Modifier.weight(1f),
+                    style = DirectorText,
+                    color = P.ink,
+                    fontSize = 12.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Column(
+                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
                 when (current) {
                     is SessionSheetModel -> {
                         val draft =
@@ -176,7 +174,9 @@ internal fun DialActivityControls(
                         DialCaption(current.planned)
                         if (face == "more") {
                             DialLink(current.stop, ready, actions.timerMeal.stop)
-                            current.xp?.let { spans -> DialCaption(spans.joinToString("") { it.t }) }
+                            current.xp?.let { spans ->
+                                DialCaption(spans.joinToString("") { it.t })
+                            }
                         } else {
                             DialPrimary(current.finish, ready, actions.timerMeal.finish)
                             Row {
