@@ -31,23 +31,24 @@ jobs:
           p = Path('lifemax_modular_v73/tests/native-handover-sim.test.js')
           s = p.read_text()
           assert 'fs.unlinkSync(out);' in s
-          line = next(line for line in s.splitlines() if "id: 'canary1'" in line)
-          assert line.count('xp: 40') == 2
-          s = s.replace(line, line.replace('xp: 40', 'xp: 0'))
+          needle = '    await settle(4500);'
+          assert s.count(needle) == 1
+          fixed = """    await settle(4500);
+              let waitedForCelebration = false;
+              for (let elapsed = 0; elapsed < 20000 && await p.evaluate(() => celebrating()); elapsed += 250) {
+                waitedForCelebration = true;
+                await settle(250);
+              }
+              if (await p.evaluate(() => celebrating())) await p.evaluate(() => window.__fault('global celebration did not settle within 20 seconds'));
+              if (waitedForCelebration) await settle(1500);"""
+          # Strip YAML-only indentation from the added JavaScript lines.
+          fixed = fixed.splitlines()[0] + '\n' + '\n'.join(line[10:] for line in fixed.splitlines()[1:])
+          s = s.replace(needle, fixed)
           p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
-          p = Path('lifemax_modular_v73/src/runtime/segments/50-native-tabkit.js')
-          s = p.read_text()
-          needle = '    async function close() {'
-          assert needle in s
-          detail = '      if (window.__log) window.__log.push(window.__t() + " KIT close " + cfg.id + " view=" + lmaView() + " blocked=" + blocked() + " wanted=" + wanted() + " overlay=" + lmaTopOverlay() + " body=" + document.body.className + " ownBlock=" + !!(cfg.blocked && cfg.blocked()) + " levelOverlay=" + !!document.querySelector(".luov") + " onboarding=" + !!state.onboardingComplete + " " + new Error().stack);'
-          p.write_text(s.replace(needle, needle + '\n' + detail))
-
-
-          PY
       - name: Replay the exact failing four-seed prefix with failure tracing
         run: |
           set -o pipefail
-          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE=1 TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 4 2>&1 | tee handover-trace.log
+          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 4 2>&1 | tee handover-trace.log
       - name: Keep trace and exact input
         if: always()
         uses: actions/upload-artifact@v4
