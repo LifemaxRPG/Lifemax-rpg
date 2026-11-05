@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
@@ -214,7 +216,7 @@ fun ChronoDial(
                     BuildHud(run, centreBox.width(side * .44f))
                 }
                 centreContent != null && hold == null -> {
-                    Box(centreBox.size(side * .48f)) { centreContent() }
+                    Box(centreBox.size(side * .48f).clip(CircleShape)) { centreContent() }
                 }
                 hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->
