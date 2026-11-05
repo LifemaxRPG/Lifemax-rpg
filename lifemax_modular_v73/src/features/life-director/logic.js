@@ -731,7 +731,7 @@ const LifeDirectorApp = (function () {
       handles += '<g class="ld-hd ld-c-' + h.kind + '" data-rule="' + esc(ri.rule.id) + '" data-end="' + end + '" data-ymd="' + U.ymdKey(ri.ymd) + '" data-s="' + ri.startEpoch + '" data-e="' + ri.endEpoch + '" data-ep="' + ep + '" role="slider" tabindex="0" aria-label="' + esc(handleLabel(ri.rule, end) + ' ' + fTime(ep)) + '">' +
         '<circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10.5"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5"/></g>';
     }
-    const live = isToday && !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
+    const live = !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
     /* the part of today that has already gone, greyed out */
     let past = '';
     if (live && an > 1) {
@@ -2975,7 +2975,7 @@ const LifeDirectorApp = (function () {
           label: (next ? 'Next: ' : '') + b.inst.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch) });
       }
     }
-    const live = isToday && now >= d0 && now < d1, st = isToday ? nowState(now) : null;
+    const live = now >= d0 && now < d1, st = isToday ? nowState(now) : null;
     const ring = live && st.cur ? { r: 84, frac: Math.min(1, Math.max(0, (now - st.cur.startEpoch) / Math.max(60, st.cur.endEpoch - st.cur.startEpoch))), kind: st.cur.inst ? 'task' : blockClass(st.cur), warn: !!st.kick } : null;
     return {
       now,

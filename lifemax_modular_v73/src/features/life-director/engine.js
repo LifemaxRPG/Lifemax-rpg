@@ -2570,6 +2570,12 @@ const LifeMaxHost = (function () {
       }
       const quest = state.quests.find(q => q && String(q.id) === id);
       if (quest && typeof quest.desc === 'string' && quest.desc.trim()) return quest.desc.trim();
+      // Daily-hand IDs expire on rotation; recover only an unambiguous authored template.
+      if (/^dh_/.test(id) && typeof QUEST_LIBRARY !== 'undefined') {
+        const title = ref.questTitle || inst.title;
+        const matches = QUEST_LIBRARY.filter(q => q.name === title && typeof q.desc === 'string' && q.desc.trim());
+        if (matches.length === 1) return matches[0].desc.trim();
+      }
     }
     return '';
   };
