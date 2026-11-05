@@ -241,18 +241,18 @@ jobs:
       # Before a release: the APK must launch on an emulator and keep running (blocking). The tab-switch timing check after it
       # never fails the build; read its result in the Native-Overview-review artifact (nav-perf.json).
       - name: Release build daemon before the emulator
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         run: ./android-wrapper/android/gradlew -p android-wrapper/android --stop
 
       - name: Enable emulator acceleration for the launch check
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
       - name: Launch check, then the optional tab-switch timing
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         timeout-minutes: 14
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -330,7 +330,7 @@ jobs:
   # Only a build whose APK compiled, passed its unit and screenshot tests and whose web tests passed reaches the phone.
   publish:
     needs: [apk, web-tests]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls') && needs.apk.outputs.stable == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
