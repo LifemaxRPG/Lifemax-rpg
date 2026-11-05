@@ -1,0 +1,130 @@
+name: Verify and publish cached dial build 407
+on:
+  push:
+    branches: [codex/publish-dial-407]
+    paths: ['.github/workflows/publish-dial-407.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0a49046be68a63ac295d7a5c3744a376edc75303
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify cached APK and application source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/LifemaxRPG/Lifemax-rpg/actions/runs/41977547244 > source-run.json
+          gh api 'repos/LifemaxRPG/Lifemax-rpg/actions/runs/41977547244/jobs?filter=latest&per_page=100' > source-jobs.json
+          python3 - <<'PY'
+          import json, subprocess
+          run = json.load(open('source-run.json'))
+          assert run['head_sha'] == '97d301c40f5e9c4774b327c63790f01d55a2a541'
+          assert run['run_number'] == 407
+          jobs = {j['name']: j['conclusion'] for j in json.load(open('source-jobs.json'))['jobs']}
+          for name in ['apk', 'web-tests (1/3)', 'web-tests (2/3)', 'web-tests (3/3)']:
+              assert jobs.get(name) == 'success', (name, jobs.get(name))
+          paths = subprocess.check_output(['git', 'diff', '--name-only', run['head_sha'], 'HEAD'], text=True).splitlines()
+          assert paths == ['lifemax_modular_v73/tests/native-handover-sim.test.js'], paths
+          print('Cached APK and every regular web test passed. Application source is identical; only simulator settling changed.')
+          PY
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium
+      - name: Prepare the CI browser
+        run: |
+          npm install -g playwright@1.63.0
+          npx playwright@1.63.0 install --with-deps chromium
+      - name: Verify every handover mode with the fixed settling check
+        run: |
+          set -o pipefail
+          NODE_PATH="$(npm root -g)" SEED_BASE=777 node lifemax_modular_v73/tests/native-handover-sim.test.js 40 2>&1 | tee handover-verification.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: handover-verification
+          path: handover-verification.log
+          if-no-files-found: ignore
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 97d301c40f5e9c4774b327c63790f01d55a2a541
+      - uses: actions/download-artifact@v4
+        with:
+          name: LifeMax-RPG-apk
+          path: apk
+          run-id: 41977547244
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify the existing APK's permanent signature
+        run: |
+          APK_SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$APK_SIGNER" verify --print-certs apk/app-debug.apk > signing.txt
+          grep -F 'certificate SHA-256 digest: 57e5a5fc568e172814845c8c3bdf9457d9061d2d16a981e2d48f4fa3ccc971c1' signing.txt
+      - name: Publish to a GitHub Release (easy phone download)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp apk/app-debug.apk LifeMax-RPG.apk
+          # the web app on its own, so a phone can take web-only changes without installing an APK
+          NATIVE_API=$(grep -o 'VALUE = [0-9]*' android-wrapper/native/NativeApi.java | grep -o '[0-9]*')
+          python3 lifemax_modular_v73/build.py >/dev/null
+          python3 lifemax_modular_v73/forge_features.py lifemax_modular_v73/dist/Life_Max_RPG_v73_modular_build.html app.html
+          WEB_SHA=$(sha256sum app.html | cut -d' ' -f1)
+          WEB_SIZE=$(stat -c %s app.html)
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/latest"
+          printf '{"build": %s, "sha": "%s", "stable": %s, "nativeApi": %s, "apk": "%s/LifeMax-RPG.apk", "web": {"build": %s, "url": "%s/app.html", "sha256": "%s", "size": %s, "minNativeApi": %s}}\n' \
+            "407" "97d301c40f5e9c4774b327c63790f01d55a2a541" "true" "$NATIVE_API" "$BASE" \
+            "407" "$BASE" "$WEB_SHA" "$WEB_SIZE" "$NATIVE_API" > version.json
+          cat version.json
+          R="$GITHUB_REPOSITORY"
+          NOTES="Build 407 from commit 97d301c40f5e9c4774b327c63790f01d55a2a541"
+          # Plain REST calls throughout: in runs 280-285 the token could read the release and upload, rename and delete its
+          # files, while gh's release commands reported it missing, and creating a release or a tag was refused (HTTP 403).
+          asset() { # release id, name: that file's asset id, if any
+            gh api "repos/$R/releases/$1/assets" --jq ".[] | select(.name == \"$2\") | .id"
+          }
+          upload() { # release id, file, name[, name to keep the replaced file under]: replace that file of the release.
+                     # The new file goes up under a temporary name first, so a failed upload changes nothing; the old one
+                     # is then kept under the fourth name (best effort) or deleted, and the new one renamed.
+            local old new prev
+            old=$(asset "$1" "$3.new"); if [ -n "$old" ]; then gh api -X DELETE "repos/$R/releases/assets/$old" --silent; fi
+            new=$(curl -sS --fail-with-body -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/octet-stream" \
+              --data-binary @"$2" "https://uploads.github.com/repos/$R/releases/$1/assets?name=$3.new" | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+            old=$(asset "$1" "$3")
+            if [ -n "$old" ] && [ -n "${4:-}" ]; then
+              prev=$(asset "$1" "$4"); if [ -n "$prev" ]; then gh api -X DELETE "repos/$R/releases/assets/$prev" --silent || true; fi
+              if gh api -X PATCH "repos/$R/releases/assets/$old" -f name="$4" --silent; then old=""; fi
+            fi
+            if [ -n "$old" ]; then gh api -X DELETE "repos/$R/releases/assets/$old" --silent; fi
+            gh api -X PATCH "repos/$R/releases/assets/$new" -f name="$3" --jq '"uploaded " + .name'
+          }
+          ID=$(gh api "repos/$R/releases/tags/latest" --jq .id 2>/dev/null || true)
+          if [ -n "$ID" ]; then
+            # replace the files in place, never deleting the release; version.json goes last, so a phone checking part-way
+            # through sees an older or a matching set (an older version.json with a newer app.html fails its hash check and is
+            # retried). The replaced APK and its version.json stay downloadable as LifeMax-RPG-previous.apk / version-previous.json.
+            upload "$ID" LifeMax-RPG.apk LifeMax-RPG.apk LifeMax-RPG-previous.apk
+            upload "$ID" app.html app.html
+            upload "$ID" version.json version.json version-previous.json
+            gh api -X PATCH "repos/$R/releases/$ID" -f body="$NOTES" --silent
+          else
+            # first publish: no latest release yet
+            gh release create latest LifeMax-RPG.apk app.html version.json --repo "$R" \
+              --title "LifeMax (latest build)" --notes "$NOTES" --target "97d301c40f5e9c4774b327c63790f01d55a2a541"
+          fi
