@@ -44,7 +44,7 @@ function lmaThumbSchedule(v){
  clearTimeout(lmaThumbTimer);
  lmaThumbTimer=setTimeout(async()=>{
   const S=lmaScrub;
-  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||document.documentElement.classList.contains('native-boot')||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
+  if(!lmaNative()||lmaThumbBusy||lmaThumbWarmBusy||document.documentElement.classList.contains('native-boot')||window.lmaNativeBarScrubbing||S.veilOn||S.drag||document.visibilityState!=='visible'||lmaTabKey(lmaView())!==v)return;
   lmaThumbBusy=true;
   try{await lmaThumbSnapNow(v)}catch(e){}
   lmaThumbBusy=false;try{lmaThumbRender()}catch(e){}

@@ -16,6 +16,7 @@ import com.lifemax.rpg.app.shell.bar.BarScrubScene
 import com.lifemax.rpg.app.shell.bar.BarTab
 import com.lifemax.rpg.app.shell.bar.ScrubBar
 import com.lifemax.rpg.app.shell.bar.ScrubPill
+import com.lifemax.rpg.app.shell.bar.ScrubPreview
 import com.lifemax.rpg.app.shell.swipe.TabSwipe
 import kotlin.math.roundToInt
 import org.json.JSONObject
@@ -49,6 +50,9 @@ internal class LiveOverviewShell(
             TabTiming.tap(id)
             activate(id)
         }
+    private val preview = ScrubPreview(activity, web)
+    private var pillMotion: ValueAnimator? = null
+    private var drawnTab: BarTab? = null
     private val nav =
         ScrubBar(
             activity,
@@ -114,6 +118,7 @@ internal class LiveOverviewShell(
                 true
             }
         nav.addView(bar)
+        frame.addView(preview, FrameLayout.LayoutParams(-1, -1))
         frame.addView(header, FrameLayout.LayoutParams(-1, 1))
         frame.addView(nav, FrameLayout.LayoutParams(-1, 1, Gravity.BOTTOM))
         parent.addView(frame, FrameLayout.LayoutParams(-1, -1))
@@ -154,6 +159,11 @@ internal class LiveOverviewShell(
             (n.getDouble("height") * web.resources.displayMetrics.density)
                 .roundToInt()
                 .coerceAtLeast(1)
+        preview.layoutParams =
+            FrameLayout.LayoutParams(-1, -1).apply {
+                topMargin = header.layoutParams.height
+                bottomMargin = barPx + bleed
+            }
         val scrub = BarScrubScene.parse(scene.optJSONObject("scrub"), n.optJSONArray("hits"))
         nav.scene = scrub
         nav.setBackgroundColor(
@@ -236,20 +246,56 @@ internal class LiveOverviewShell(
 
     /** A scrub shows the tab under the finger as selected before the page has switched to it. */
     private fun showPill(tab: BarTab?) {
+        val previous = drawnTab
+        val changed = pillKey != tab?.key
         pillKey = tab?.key
-        val scrub = nav.scene
-        bar.scrubPill =
-            if (tab == null || scrub == null) null
-            else
-                ScrubPill(
-                    tab,
-                    scrub.tabs.firstOrNull { it.key == scrub.active },
-                    scrub.pillColor,
-                    scrub.pillRadius,
-                )
+        preview.show(tab)
+        if (changed) web.evaluateJavascript("window.lmaNativeBarScrubbing=" + (tab != null), null)
+        fun draw(at: BarTab?) {
+            val scrub = nav.scene
+            drawnTab = at
+            bar.scrubPill =
+                if (at == null || scrub == null) null
+                else
+                    ScrubPill(
+                        at,
+                        scrub.tabs.firstOrNull { it.key == scrub.active },
+                        scrub.pillColor,
+                        scrub.pillRadius,
+                    )
+        }
+        if (!changed && pillMotion?.isRunning == true) return
+        pillMotion?.cancel()
+        if (tab == null || previous == null || !changed) {
+            draw(tab)
+            return
+        }
+        pillMotion =
+            ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 110L
+                interpolator = DecelerateInterpolator()
+                addUpdateListener {
+                    val t = it.animatedValue as Float
+                    fun mix(a: Float, b: Float) = a + (b - a) * t
+                    draw(
+                        BarTab(
+                            tab.key,
+                            tab.id,
+                            mix(previous.left, tab.left),
+                            mix(previous.right, tab.right),
+                            mix(previous.top, tab.top),
+                            mix(previous.bottom, tab.bottom),
+                        )
+                    )
+                }
+                start()
+            }
     }
 
     fun close() {
+        pillMotion?.cancel()
+        preview.show(null)
+        web.evaluateJavascript("window.lmaNativeBarScrubbing=false", null)
         ImeState.forget(keyboard)
         parent.removeOnLayoutChangeListener(bleedWatch)
         glide?.cancel()

@@ -121,14 +121,14 @@ fun ChronoDial(
                 onArc,
                 lift,
                 centreDismiss,
-                DialGeometry.SIDE * .31f,
+                DialGeometry.SIDE * .33f,
             )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
         val activityScale by
             animateFloatAsState(
-                if (centreContent != null) .62f else .48f,
+                if (centreContent != null) .66f else .48f,
                 tween(if (animate) 220 else 0),
                 label = "activity face",
             )
