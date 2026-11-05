@@ -41,10 +41,9 @@ jobs:
               }
               if (await p.evaluate(() => celebrating())) await p.evaluate(() => window.__fault('global celebration did not settle within 20 seconds'));
               if (waitedForCelebration) await settle(1500);"""
-          # Strip YAML-only indentation from the added JavaScript lines.
-          fixed = fixed.splitlines()[0] + '\n' + '\n'.join(line[10:] for line in fixed.splitlines()[1:])
           s = s.replace(needle, fixed)
           p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
+          PY
       - name: Replay the exact failing four-seed prefix with failure tracing
         run: |
           set -o pipefail
