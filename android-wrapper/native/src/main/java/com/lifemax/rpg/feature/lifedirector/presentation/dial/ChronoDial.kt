@@ -2,8 +2,11 @@ package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -110,6 +113,12 @@ fun ChronoDial(
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
+        val activityScale by
+            animateFloatAsState(
+                if (centreContent != null) .62f else .48f,
+                tween(if (animate) 220 else 0),
+                label = "activity face",
+            )
         Box(
             Modifier.size(side)
                 .onGloballyPositioned {
@@ -216,7 +225,14 @@ fun ChronoDial(
                     BuildHud(run, centreBox.width(side * .44f))
                 }
                 centreContent != null && hold == null -> {
-                    Box(centreBox.size(side * .48f).clip(CircleShape)) { centreContent() }
+                    Box(
+                        centreBox.size(side * activityScale)
+                            .clip(CircleShape)
+                            .background(DirectorPalette.bg0)
+                            .border(1.dp, DirectorPalette.line, CircleShape)
+                    ) {
+                        centreContent()
+                    }
                 }
                 hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->

@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,17 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
@@ -45,7 +37,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberTickingClock
 
-/** A focused control face; secondary actions never crowd the timer or primary action. */
+/** One continuous activity face: full title and schedule first, with no intermediate menus. */
 @Composable
 internal fun DialActivityControls(
     model: SheetModel,
@@ -54,104 +46,72 @@ internal fun DialActivityControls(
     ticking: Boolean,
     reducedMotion: Boolean,
 ) {
-    var page by rememberSaveable(model.kind, model.id) { mutableStateOf("main") }
     val ready = ui.pendingToday == null
     AnimatedContent(
-        targetState = model to page,
+        targetState = model,
         modifier = Modifier.fillMaxSize(),
-        contentKey = { (m, p) -> Triple(m.kind, m.id, p) },
+        contentKey = { it.kind to it.id },
         transitionSpec = {
             fadeIn(tween(if (reducedMotion) 0 else 180)) togetherWith
                 fadeOut(tween(if (reducedMotion) 0 else 120))
         },
         label = "dial controls",
-    ) { (current, face) ->
+    ) { current ->
         Column(
             Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            val title =
-                when (current) {
-                    is MoveSheetModel -> current.title
-                    is SessionSheetModel -> current.title
-                    is TimerSheetModel -> current.title
-                    else -> ""
-                }
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 40.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(
-                    onClick = { if (face == "main") actions.session.close() else page = "main" },
-                    modifier = Modifier.size(40.dp).semantics { contentDescription = "Back" },
-                    contentPadding = PaddingValues(0.dp),
-                ) {
-                    Text("‹", color = P.ink2, fontSize = 22.sp)
-                }
-                Text(
-                    title,
-                    Modifier.weight(1f),
-                    style = DirectorText,
-                    color = P.ink,
-                    fontSize = 12.sp,
-                    lineHeight = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
+                val title =
+                    when (current) {
+                        is MoveSheetModel -> current.title
+                        is SessionSheetModel -> current.title
+                        is TimerSheetModel -> current.title
+                        else -> ""
+                    }
+                Text(
+                    title,
+                    style = DirectorText,
+                    color = P.ink,
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
                 when (current) {
                     is SessionSheetModel -> {
+                        DialCaption(current.`when`)
+                        current.primary?.let {
+                            DialPrimary(it.label, ready, actions.session.primary)
+                        }
                         val draft =
                             ui.minutesDraft?.takeIf { it.id == current.id }?.text
                                 ?: current.minutes?.value?.toString().orEmpty()
-                        when (face) {
-                            "log" -> {
-                                DialCaption(current.minutes?.label.orEmpty())
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    DialLink("−5", ready) { actions.session.step(-5) }
-                                    Text(
-                                        draft,
-                                        color = P.ink,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    DialLink("+5", ready) { actions.session.step(5) }
-                                }
-                                current.complete?.let {
-                                    DialPrimary(it.label, ready, actions.session.complete)
-                                }
+                        if (current.minutes != null && current.complete != null) {
+                            DialCaption(current.minutes.label)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                DialLink("−5", ready) { actions.session.step(-5) }
+                                Text(
+                                    draft,
+                                    color = P.ink,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                DialLink("+5", ready) { actions.session.step(5) }
                             }
-                            "more" -> {
-                                DialCaption(current.`when`)
-                                current.row.forEach { button ->
-                                    DialLink(button.label, ready) { actions.session.row(button) }
-                                }
-                                DialCaption(current.note.joinToString("") { it.t })
-                                DialLink("Why this time?", true) { page = "why" }
-                                DialCaption(current.orphan)
-                            }
-                            "why" -> {
-                                DialCaption(current.why.summary)
-                            }
-                            else -> {
-                                current.primary?.let {
-                                    DialPrimary(it.label, ready, actions.session.primary)
-                                }
-                                Row {
-                                    if (current.complete != null)
-                                        DialLink("Log time", ready) { page = "log" }
-                                    DialLink("More", ready) { page = "more" }
-                                }
-                            }
+                            DialPrimary(current.complete.label, ready, actions.session.complete)
                         }
+                        current.row.forEach { button ->
+                            DialLink(button.label, ready) { actions.session.row(button) }
+                        }
+                        DialCaption(current.note.joinToString("") { it.t })
+                        DialCaption(current.orphan)
+                        DialCaption(current.why.summary)
                     }
                     is MoveSheetModel -> {
                         DialCaption(current.note)
@@ -168,27 +128,22 @@ internal fun DialActivityControls(
                             style = DirectorText,
                             color = if (current.paused) P.work else P.ink,
                             fontFamily = FontFamily.Monospace,
-                            fontSize = 30.sp,
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                         )
                         DialCaption(current.planned)
-                        if (face == "more") {
-                            DialLink(current.stop, ready, actions.timerMeal.stop)
-                            current.xp?.let { spans ->
-                                DialCaption(spans.joinToString("") { it.t })
-                            }
-                        } else {
-                            DialPrimary(current.finish, ready, actions.timerMeal.finish)
-                            Row {
-                                DialLink(current.pause, ready, actions.timerMeal.pause)
-                                DialLink("More", ready) { page = "more" }
-                            }
+                        DialPrimary(current.finish, ready, actions.timerMeal.finish)
+                        DialLink(current.pause, ready, actions.timerMeal.pause)
+                        DialLink(current.stop, ready, actions.timerMeal.stop)
+                        current.xp?.let { spans ->
+                            DialCaption(spans.joinToString("") { it.t })
                         }
                     }
                     else -> {}
                 }
                 if (!ready) DialCaption("Saving…")
             }
+            DialLink("‹ Back to dial", true, actions.session.close)
         }
     }
 }
