@@ -47,10 +47,10 @@ jobs:
 
 
           PY
-      - name: Replay the complete reload sequence with failure tracing
+      - name: Replay the exact failing four-seed prefix with failure tracing
         run: |
           set -o pipefail
-          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE=1 TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 40 2>&1 | tee handover-trace.log
+          NODE_PATH="$(npm root -g)" SEED_BASE=777 MODES=reload TRACE=1 TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 4 2>&1 | tee handover-trace.log
       - name: Keep trace and exact input
         if: always()
         uses: actions/upload-artifact@v4
