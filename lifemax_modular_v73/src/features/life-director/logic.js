@@ -205,6 +205,14 @@ const LifeDirectorApp = (function () {
     // Retire only automatic, unstarted blocks that consist entirely of untimed cards.
     // Pinned blocks, mixed goals, history and the active timer are preserved.
     const untimed = new Map(qs.filter(q => q.schedulingMode === 'NONE').map(q => [q.id, q]));
+    // Old schedule links can outlive the daily hand that created them.
+    if (Host.retiredUntimedQuest) for (const inst of ST.schedule.scheduledInstances) {
+      for (const ref of inst.linkedQuestRequirementIds || []) {
+        if (untimed.has(ref.questId)) continue;
+        const q = Host.retiredUntimedQuest(Object.assign({}, ref, { questTitle: ref.questTitle || inst.title }));
+        if (q) untimed.set(q.id, q);
+      }
+    }
     const retired = ST.schedule.scheduledInstances.filter(i =>
       i.lifecycleState === 'PLANNED' && !i.isUserLocked &&
       !(ST.ui.focus && ST.ui.focus.id === i.instanceId) &&
@@ -3240,7 +3248,7 @@ const LifeDirectorApp = (function () {
      answers {kind, gone: true}; the screen closes the sheet and says so. */
   const MINUTES_MAX = 480;
   function reminderText(reminder) {
-    const description = Host.activityDescription ? Host.activityDescription({ linkedQuestRequirementIds: [{ questId: reminder.questId }] }) : '';
+    const description = Host.activityDescription ? Host.activityDescription({ title: reminder.title, linkedQuestRequirementIds: [{ questId: reminder.questId, questTitle: reminder.title }] }) : '';
     return reminder.title + (description ? '\n' + description : '');
   }
   function nativeSessionSheet(id) {

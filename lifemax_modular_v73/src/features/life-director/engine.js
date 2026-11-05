@@ -2438,6 +2438,15 @@ const LifeMaxHost = (function () {
     const text = String(q.name || '') + ' ' + String(q.desc || '');
     return !parseMinutes(text) && !/\b(?:minutes?|mins?|hours?|hrs?|seconds?|secs?)\b/i.test(text);
   };
+  // Resolve retired daily cards by an exact, unique authored template, never by guesswork.
+  H.retiredUntimedQuest = function (ref) {
+    const id = String(ref && ref.questId || '');
+    if (!/^dh_/.test(id) || typeof QUEST_LIBRARY === 'undefined' ||
+        state.quests.some(q => q && String(q.id) === id)) return null;
+    const matches = QUEST_LIBRARY.filter(q => q.name === ref.questTitle);
+    if (matches.length !== 1 || !H.isUntimedQuest(Object.assign({}, matches[0], { hand: true, cadence: 'daily' }))) return null;
+    return { id, title: matches[0].name, schedulingMode: 'NONE', anchor: 'WAKE' };
+  };
   H.readQuests = function (nowEpoch, tz, overlay, revoked) {
     if (!H.connected()) return [];
     const out = [], wb = weekBounds(nowEpoch, tz);

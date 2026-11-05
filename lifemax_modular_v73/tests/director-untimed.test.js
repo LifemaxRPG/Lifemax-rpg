@@ -10,7 +10,7 @@ const parse = engine.split('\n').find(l => l.includes('function parseMinutes(tex
 const from = engine.indexOf('  H.isUntimedQuest = function');
 const to = engine.indexOf('  H.readQuests = function', from);
 assert(parse && from >= 0 && to > from, 'read the actual host classifier');
-const host = vm.runInNewContext('const H = {};\n' + parse + '\n' + engine.slice(from, to) + '\nH;');
+const host = vm.runInNewContext('const H = {};\n' + parse + '\n' + engine.slice(from, to) + '\nH;', { state: { quests: [] }, QUEST_LIBRARY: [{ name: 'Listen first', desc: 'Ask two questions.', verify: 'self' }, { name: 'Read', desc: 'Read for 15 minutes.', verify: 'self' }] });
 const base = { hand: true, cadence: 'daily', verify: 'self', name: 'Listen first', desc: 'In your next conversation, ask two questions before talking about yourself.' };
 assert.equal(host.isUntimedQuest(base), true);
 assert.equal(host.isUntimedQuest({ ...base, desc: 'Read for 15 minutes.' }), false);
@@ -20,6 +20,10 @@ assert.equal(host.isUntimedQuest({ ...base, desc: 'Hold for 30 seconds.' }), fal
 assert.equal(host.isUntimedQuest({ ...base, cadence: 'weekly' }), false, 'only daily cards become all-day tasks');
 assert.equal(host.isUntimedQuest({ ...base, hand: false }), false, 'custom quests retain scheduling');
 assert.equal(host.isUntimedQuest({ ...base, verify: 'activity' }), false, 'activity-verified quests retain sessions');
+assert.equal(host.retiredUntimedQuest({ questId: 'dh_old', questTitle: 'Listen first' }).schedulingMode, 'NONE');
+assert.equal(host.retiredUntimedQuest({ questId: 'custom', questTitle: 'Listen first' }), null);
+assert.equal(host.retiredUntimedQuest({ questId: 'dh_old', questTitle: 'Read' }), null);
+assert.equal(host.retiredUntimedQuest({ questId: 'dh_old', questTitle: 'Unknown' }), null);
 const start = logic.indexOf('  function syncHost() {');
 const end = logic.indexOf('\n  }', start) + 4;
 const make = (id, extra = {}) => ({ instanceId: id, lifecycleState: 'PLANNED', linkedQuestRequirementIds: [{ questId: 'listen' }], linkedGoalIds: [], ...extra });
@@ -29,17 +33,17 @@ const active = make('active');
 const mixed = make('mixed', { linkedQuestRequirementIds: [{ questId: 'listen' }, { questId: 'workout' }] });
 const goal = make('goal', { linkedGoalIds: ['goal-1'] });
 const context = {
-  Host: { connected: () => true, activitiesSince: () => [], milestones: () => [] },
-  ST: { ui: { focus: { id: 'active' } }, hostSync: { seen: {} }, ledger: { revoked: {} }, schedule: { scheduledInstances: [retire, pinned, active, mixed, goal], historyInstances: [], passiveReminders: [] } },
+  Host: { connected: () => true, activitiesSince: () => [], milestones: () => [], retiredUntimedQuest: host.retiredUntimedQuest },
+  ST: { ui: { focus: { id: 'active' } }, hostSync: { seen: {} }, ledger: { revoked: {} }, schedule: { scheduledInstances: [retire, pinned, active, mixed, goal, make('expired', { linkedQuestRequirementIds: [{ questId: 'dh_old', questTitle: 'Listen first' }] })], historyInstances: [], passiveReminders: [] } },
   nowEpoch: () => 0,
   hostQuests: () => [{ id: 'listen', title: 'Listen first', schedulingMode: 'NONE' }, { id: 'workout', schedulingMode: 'SESSIONS' }],
 };
 const sync = vm.runInNewContext('(' + logic.slice(start, end).trim() + ')', context);
 assert.equal(sync(), true);
 assert.deepEqual(context.ST.schedule.scheduledInstances.map(i => i.instanceId), ['pinned', 'active', 'mixed', 'goal']);
-assert.equal(context.ST.schedule.passiveReminders.length, 1);
+assert.equal(context.ST.schedule.passiveReminders.length, 2);
 assert.equal(context.ST.schedule.passiveReminders[0].title, 'Listen first');
 assert.equal(sync(), false, 'migration is idempotent');
-assert.equal(context.ST.schedule.passiveReminders.length, 1);
+assert.equal(context.ST.schedule.passiveReminders.length, 2);
 assert.equal(context.ST.schedule.historyInstances.length, 0, 'no penalty or history event');
 console.log('PASS untimed task classification, explicit durations, conservative migration, reminders, and idempotence');
