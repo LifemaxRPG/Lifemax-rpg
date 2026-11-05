@@ -131,7 +131,7 @@ private fun Timing(clock: String?, timing: String) {
 
 /** The quests that run all day, in one line (the web's .ld-remind); nothing here is a button. */
 @Composable
-fun RemindersCard(reminders: List<String>) {
+fun RemindersCard(reminders: List<String>, onOpen: (() -> Unit)? = null) {
     val shape = RoundedCornerShape(18.dp)
     Column(
         Modifier.fillMaxWidth()
@@ -153,7 +153,26 @@ fun RemindersCard(reminders: List<String>) {
                 fontWeight = FontWeight(750),
             )
         }
-        Text(reminders.joinToString(", "), Modifier.padding(vertical = 5.dp), style = DirectorText)
+        reminders.forEach { reminder ->
+            Column(Modifier.padding(vertical = 7.dp)) {
+                Text(
+                    reminder.substringBefore('\n'),
+                    style = DirectorText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                val description = reminder.substringAfter('\n', "")
+                if (description.isNotBlank())
+                    Text(
+                        description,
+                        Modifier.padding(top = 3.dp),
+                        style = DirectorText,
+                        color = P.ink2,
+                        fontSize = 12.sp,
+                    )
+            }
+        }
+        onOpen?.let { DirectorButton("Open Quest Board", ButtonLook.PLAIN, it, small = true) }
     }
 }
 

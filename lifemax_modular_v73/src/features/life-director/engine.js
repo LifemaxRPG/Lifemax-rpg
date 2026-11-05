@@ -2432,6 +2432,12 @@ const LifeMaxHost = (function () {
     return state.quests.filter(H.isMilestone).map(q => { let done = false, locked = false; try { done = isQuestDone(q); } catch (e) { /* ignore */ } try { locked = typeof questLocked === 'function' && questLocked(q); } catch (e) { /* ignore */ } return { id: q.id, title: q.name, desc: q.desc || '', done, locked }; });
   };
   /* Read LifeMax quests as Life Director QuestRecords. overlay = LD's session counts per questKey. */
+  /* Self-confirmed daily cards without a duration are tasks, not timed practice. */
+  H.isUntimedQuest = function (q) {
+    if (!q || q.hand !== true || q.cadence !== 'daily' || q.verify !== 'self') return false;
+    const text = String(q.name || '') + ' ' + String(q.desc || '');
+    return !parseMinutes(text) && !/\b(?:minutes?|mins?|hours?|hrs?|seconds?|secs?)\b/i.test(text);
+  };
   H.readQuests = function (nowEpoch, tz, overlay, revoked) {
     if (!H.connected()) return [];
     const out = [], wb = weekBounds(nowEpoch, tz);
@@ -2442,7 +2448,7 @@ const LifeMaxHost = (function () {
       let done = false; try { done = isQuestDone(q); } catch (e) { /* ignore */ }
       const key = questKey(q);
       const text = q.name + ' ' + (q.desc || '');
-      const passive = PASSIVE_KINDS.has(q.kind) || q.kind === 'nutrition';
+      const passive = PASSIVE_KINDS.has(q.kind) || q.kind === 'nutrition' || H.isUntimedQuest(q);
       const mins = parseMinutes(text);
       const target = q.cadence === 'daily' ? 1 : parseCount(text);
       const base = { title: q.name, tier: q.kind === 'milestone' ? 'OPTIONAL' : 'CORE', tag: H.mapQuestTag(q), schedulingMode: passive ? 'NONE' : 'SESSIONS',
@@ -2547,7 +2553,38 @@ const LifeMaxHost = (function () {
   };
   H.activityExists = id => H.connected() && state.activities.some(a => a.id === id);
   H.isPlanDayDone = key => { try { return typeof dayDone === 'function' && !!dayDone(key); } catch (e) { return false; } };
+  /* Display the source activity's instructions, never the scheduler's placement explanation. */
+  H.activityDescription = function (inst) {
+    if (!H.connected() || !inst) return '';
+    const refs = inst.linkedQuestRequirementIds || [];
+    for (const ref of refs) {
+      const id = String(ref.questId || '').replace(/@next$/, '');
+      if (id.startsWith('plan:') && typeof planDay === 'function') {
+        let day = null;
+        try { day = planDay(id.slice(5)); } catch (e) { /* an unavailable plan has no instructions */ }
+        if (day) {
+          if (typeof day.description === 'string' && day.description.trim()) return day.description.trim();
+          const names = (day.items || []).map(item => typeof item === 'string' ? item : item.name || item.title || '').filter(Boolean);
+          if (names.length) return names.join(' · ');
+        }
+      }
+      const quest = state.quests.find(q => q && String(q.id) === id);
+      if (quest && typeof quest.desc === 'string' && quest.desc.trim()) return quest.desc.trim();
+    }
+    return '';
+  };
+  H.openActivity = function (inst) {
+    if (!H.connected() || !inst) return false;
+    for (const ref of inst.linkedQuestRequirementIds || []) {
+      const id = String(ref.questId || '').replace(/@next$/, '');
+      if (id.startsWith('plan:')) { H.openPlanDay(id.slice(5)); return true; }
+      if (state.quests.some(q => q && String(q.id) === id)) { H.openView('quests'); return true; }
+    }
+    return false;
+  };
   H.openPlanDay = key => { H.openView('plan'); try { if (typeof selectDay === 'function') selectDay(key); } catch (e) { /* ignore */ } };
   H._test = { parseCount, parseMinutes, weekBounds };
   return H;
 })();
+
+

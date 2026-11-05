@@ -202,6 +202,25 @@ const LifeDirectorApp = (function () {
     }
     /* 3. quests checked off by hand → drop their now-unneeded future blocks */
     const qs = hostQuests(now), done = new Set(qs.filter(q => q.status === 'COMPLETED').map(q => q.id).concat(Host.milestones().map(m => m.id)));
+    // Retire only automatic, unstarted blocks that consist entirely of untimed cards.
+    // Pinned blocks, mixed goals, history and the active timer are preserved.
+    const untimed = new Map(qs.filter(q => q.schedulingMode === 'NONE').map(q => [q.id, q]));
+    const retired = ST.schedule.scheduledInstances.filter(i =>
+      i.lifecycleState === 'PLANNED' && !i.isUserLocked &&
+      !(ST.ui.focus && ST.ui.focus.id === i.instanceId) &&
+      !(i.linkedGoalIds || []).length &&
+      (i.linkedQuestRequirementIds || []).length &&
+      i.linkedQuestRequirementIds.every(ref => untimed.has(ref.questId)));
+    if (retired.length) {
+      const ids = new Set(retired.map(i => i.instanceId));
+      ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => !ids.has(i.instanceId));
+      const reminders = ST.schedule.passiveReminders || (ST.schedule.passiveReminders = []);
+      for (const inst of retired) for (const ref of inst.linkedQuestRequirementIds) {
+        const q = untimed.get(ref.questId);
+        if (!reminders.some(r => r.questId === q.id)) reminders.push({ questId: q.id, title: q.title, anchor: q.anchor || 'WAKE' });
+      }
+      changed = true;
+    }
     for (const i of ST.schedule.scheduledInstances.slice()) {
       const links = i.linkedQuestRequirementIds.filter(l => !done.has(l.questId));
       if (links.length === i.linkedQuestRequirementIds.length || i.lifecycleState !== 'PLANNED') continue;
@@ -1205,7 +1224,7 @@ const LifeDirectorApp = (function () {
     const tasks = blocks.filter(b => b.inst);
     const now = nowEpoch(), isToday = ui.dayIdx === 0;
     const next = isToday ? nextUp(now) : null;
-    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(r.title)).join(', ') + '</p></div>' : '';
+    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(reminderText(r))).join(', ') + '</p></div>' : '';
     let upnext = '';
     const f = ST.ui.focus, fi = f && findInst(f.id);
     if (isToday && fi) {
@@ -1871,7 +1890,7 @@ const LifeDirectorApp = (function () {
   /* The running timer of session i in the page's words, with the times it runs from (ms), for the page's sheet and a native
      screen's; xp is the estimate now, as spans (the page bolds the XP) */
   function focusModel(f, i) {
-    const plannedMs = Math.max(60, i.endEpoch - i.startEpoch) * 1000, x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
+    const plannedMs = f.plannedMs || Math.max(60, i.endEpoch - i.startEpoch) * 1000, x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
     return { id: i.instanceId, title: i.title, label: f.paused ? 'Paused' : 'In progress', paused: !!f.paused, startedAt: f.start, pausedMs: f.pausedMs || 0, pausedAt: f.paused || null,
       plannedMs, planned: 'of ' + mins(Math.round(plannedMs / 60000)) + ' planned',
       xp: x ? [{ t: 'Logging now earns about ', b: false }, { t: '+' + x.xp + ' XP', b: true }, { t: ' in ' + attrName(x.rule.primary) + '.', b: false }] : null,
@@ -1892,6 +1911,12 @@ const LifeDirectorApp = (function () {
   function focusTick() {
     const f = ST && ST.ui && ST.ui.focus; if (!f) return;
     const ms = focusMs(f);
+    const inst = findInst(f.id);
+    const target = f.plannedMs || (inst && Math.max(60, inst.endEpoch - inst.startEpoch) * 1000);
+    if (!f.paused && target && ms >= target) {
+      Today.timer({ act: 'autoFinish', id: f.id, start: f.start });
+      return;
+    }
     // the Overview's glance shows the running clock too: it ticks with Life Director's own
     document.querySelectorAll('.ld-glance [data-fclock]').forEach(el => { el.textContent = clockText(ms); });
     if (!root || !root.isConnected) return;
@@ -2446,7 +2471,7 @@ const LifeDirectorApp = (function () {
         if (!doable(i, now)) { instSheet(i); break; }
         const f = ST.ui.focus;
         if (f && f.id !== id && findInst(f.id)) { say('Another timer is running. Finish or stop it first.'); focusSheet(); break; }
-        if (!f || f.id !== id) ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0 };
+        if (!f || f.id !== id) ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, i.endEpoch - i.startEpoch) * 1000 };
         persist(); render(); focusSheet(); break;
       }
       case 'focusOpen': focusSheet(); break;
@@ -2473,6 +2498,7 @@ const LifeDirectorApp = (function () {
       case 'lock': { const i = findInst(id); if (i) { i.isUserLocked = !i.isUserLocked; if (i.explanation) i.explanation = Object.assign({}, i.explanation, { summary: i.isUserLocked ? 'You pinned this time, so Life Director never moves it automatically.' : i.explanation.summary }); persist(); closeSheet(); render(); say(i.isUserLocked ? 'Pinned' : 'Unpinned'); } break; }
       case 'movePick': { const i = findInst(id); if (i) moveSheet(i); break; }
       case 'moveTo': { const r = reschedule({ type: 'MOVE', instanceId: id, newStartEpoch: +v }); if (r) { persist(); closeSheet(); render(); say('Moved and pinned · ' + summarize(r)); } break; }
+      case 'activityOpen': { const inst = findInst(id); if (inst && Host.openActivity) { closeSheet(); if (!Host.openActivity(inst)) say('No linked workout or quest is available.'); } break; }
       case 'openPlan': closeSheet(); Host.openPlanDay(v); break;
       case 'openQuests': Host.openView('quests'); break;
       case 'disrupt': disruptSheet(); break;
@@ -2962,7 +2988,7 @@ const LifeDirectorApp = (function () {
       core: nativeCore(day, blocks, isToday, now, st),
       mix: nativeMix(blocks),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
-      reminders: isToday ? (s.passiveReminders || []).map(r => r.title) : [],
+      reminders: isToday ? (s.passiveReminders || []).map(reminderText) : [],
       sessions: blocks.filter(b => b.inst).length,
       rows: nativeRows(blocks, isToday, now, !!(opts && opts.removal)),
     };
@@ -3091,7 +3117,7 @@ const LifeDirectorApp = (function () {
      as its arc and row do. Returns false for an act Today does not have, and, saying so, for a session or meal that has
      left the plan since the screen drew it. */
   const ACT_ID = new Map([['inst', 'id'], ['focusStart', 'id'], ['doneQuick', 'id'], ['tab', 'tab'], ['regroup', 'v'], ['movePick', 'id'], ['openPlan', 'v'],
-    ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', ''], ['openQuests', ''], ['addGoal', '']]);
+    ['activityOpen', 'id'], ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', ''], ['openQuests', ''], ['addGoal', '']]);
   function nativeAct(act, id) {
     if (!root || !root.isConnected) return false;
     const gone = () => { say('That is no longer on the plan.'); return false; };
@@ -3205,6 +3231,10 @@ const LifeDirectorApp = (function () {
      The session sheet as data: instSheet's branches (now, later, past) in the page's words. A session that has left the plan
      answers {kind, gone: true}; the screen closes the sheet and says so. */
   const MINUTES_MAX = 480;
+  function reminderText(reminder) {
+    const description = Host.activityDescription ? Host.activityDescription({ linkedQuestRequirementIds: [{ questId: reminder.questId }] }) : '';
+    return reminder.title + (description ? '\n' + description : '');
+  }
   function nativeSessionSheet(id) {
     const inst = findInst(id) || ((ST.schedule && ST.schedule.historyInstances) || []).find(h => h.instanceId === id);
     if (!inst) return { kind: 'session', id: String(id), gone: true };
@@ -3217,6 +3247,7 @@ const LifeDirectorApp = (function () {
     if (planned) row.push({ label: 'Move', sheet: 'move' }, { label: inst.isUserLocked ? 'Unpin' : 'Pin here', command: 'pin', on: !inst.isUserLocked }, { label: 'Skip', command: 'skip' });
     return {
       kind: 'session', id: inst.instanceId, state: sesState(inst.lifecycleState), icon: tagIcon(inst.tag), title: inst.title,
+      description: Host.activityDescription ? Host.activityDescription(inst) : '',
       when: fDay(inst.startEpoch) + ' · ' + fTime(inst.startEpoch) + '–' + fTime(inst.endEpoch) + ' · ' + mins(inst.durationSlots * 15) + (inst.compressed ? ' (shortened)' : ''),
       chips: (inst.linkedQuestRequirementIds || []).map(l => ({ kind: 'quest', text: l.questTitle }))
         .concat(inst.goalTitle ? [{ kind: 'goal', text: 'Goal: ' + inst.goalTitle }] : [], xp ? [{ kind: 'xp', text: '+' + xp.xp + ' XP · ' + attrName(xp.rule.primary) }] : []),
@@ -3353,13 +3384,24 @@ const LifeDirectorApp = (function () {
        they mean, so a repeat after one landed is not taken for a new timer */
     timer({ act, id, start }) {
       const f = ST.ui.focus;
+      const automatic = act === 'autoFinish';
+      let automaticMinutes = null;
+      if (automatic) {
+        if (!f || f.start !== Number(start) || f.id !== id || f.paused) return recorded('');
+        const inst = plannedInst(f.id);
+        if (!inst) return gone;
+        const target = f.plannedMs || Math.max(60, inst.endEpoch - inst.startEpoch) * 1000;
+        if (focusMs(f) < target) return recorded('');
+        automaticMinutes = Math.max(1, Math.round(target / 60000));
+        act = 'finish';
+      }
       if (act === 'start') {
         const inst = plannedInst(id);
         if (!inst || inst.lifecycleState !== 'PLANNED') return gone;
         if (!doable(inst, nowEpoch())) return { ok: false, message: 'You can start it on the day, or from 6 hours before.' };
         if (f && f.id === id) return recorded('');
         if (f && plannedInst(f.id)) return { ok: false, message: 'Another timer is running. Finish or stop it first.' };
-        ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0 }; persist(); render(); return saved('');
+        ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, inst.endEpoch - inst.startEpoch) * 1000 }; persist(); render(); return saved('');
       }
       if (act === 'pause') { if (!f || f.paused) return recorded(''); f.paused = Date.now(); persist(); render(); return saved(''); }
       if (act === 'resume') { if (!f || !f.paused) return recorded(''); f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); render(); return saved(''); }
@@ -3369,11 +3411,12 @@ const LifeDirectorApp = (function () {
           return done ? recorded('Already recorded.') : !f ? recorded('') : { ok: false, message: 'That timer is not running.' };
         }
         if (act === 'cancel') { ST.ui.focus = null; persist(); render(); say('Timer stopped. Nothing was logged.'); return saved(''); }
-        const inst = plannedInst(f.id), minutes = Math.max(1, Math.round(focusMs(f) / 60000));
+        const inst = plannedInst(f.id), minutes = automatic ? automaticMinutes : Math.max(1, Math.round(focusMs(f) / 60000));
         ST.ui.focus = null;
         if (!inst || inst.lifecycleState !== 'PLANNED') { persist(); render(); say('That session is no longer on the plan. Log it from the Log page.'); return saved(''); }
         ui.fx.justDone = inst.instanceId;
         const r = finishInstance(inst, minutes, { startEpoch: Math.floor(f.start / 1000), quietRefusal: true });
+        if (!r && automatic) { ST.ui.focus = f; persist(); }
         render(); return r ? saved('') : refusedFinish();
       }
       return { ok: false, message: 'Life Director cannot do that.' };
@@ -3737,3 +3780,5 @@ if (window.LifeMaxFeatures && typeof window.LifeMaxFeatures.register === 'functi
   /* Standalone harness: no Forge registry, mount directly */
   document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('view-life-director'); if (v) LifeDirectorApp.mount(v); });
 }
+
+

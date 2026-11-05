@@ -41,6 +41,7 @@ class DirectorActions(
     val time: TimeActions = TimeActions(),
     val forms: FormSheetActions = FormSheetActions(),
     /** Undo on the message after a session is taken off the day (director.remove.v1) */
+    val editActivity: (String) -> Unit = {},
     val undo: () -> Unit = {},
 ) {
     constructor(
@@ -145,6 +146,7 @@ class DirectorActions(
                 build = vm.time::build,
             ),
         forms = FormSheetActions(vm.forms),
+        editActivity = { id -> if (vm.handOverFromSheet()) emit("activityOpen", id) },
         undo = vm.removal::undo,
         flick = { dir ->
             val p = vm.projection.value

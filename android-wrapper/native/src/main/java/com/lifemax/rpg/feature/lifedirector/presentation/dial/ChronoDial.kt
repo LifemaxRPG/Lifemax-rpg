@@ -2,14 +2,20 @@ package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
@@ -85,6 +92,7 @@ fun ChronoDial(
     intro: DialIntroRun? = null,
     removal: DragRemoveController? = null,
     centreContent: (@Composable () -> Unit)? = null,
+    centreDismiss: (() -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
     val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
@@ -104,10 +112,26 @@ fun ChronoDial(
     val ghost = rememberGhost(removal)
     val input by
         rememberUpdatedState(
-            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift)
+            DialInput(
+                dial,
+                hold,
+                asking || (hold != null && !hold.held),
+                run,
+                handles,
+                onArc,
+                lift,
+                centreDismiss,
+                DialGeometry.SIDE * .31f,
+            )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
+        val activityScale by
+            animateFloatAsState(
+                if (centreContent != null) .62f else .48f,
+                tween(if (animate) 220 else 0),
+                label = "activity face",
+            )
         Box(
             Modifier.size(side)
                 .onGloballyPositioned {
@@ -214,7 +238,17 @@ fun ChronoDial(
                     BuildHud(run, centreBox.width(side * .44f))
                 }
                 centreContent != null && hold == null -> {
-                    Box(centreBox.size(side * .48f)) { centreContent() }
+                    Box(
+                        centreBox
+                            .size(side * activityScale)
+                            .clip(CircleShape)
+                            .background(DirectorPalette.bg0)
+                            .border(1.dp, DirectorPalette.line, CircleShape)
+                            .pointerInput(centreDismiss) { detectTapGestures(onTap = {}) }
+                            .padding(side * activityScale * .15f)
+                    ) {
+                        centreContent()
+                    }
                 }
                 hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->

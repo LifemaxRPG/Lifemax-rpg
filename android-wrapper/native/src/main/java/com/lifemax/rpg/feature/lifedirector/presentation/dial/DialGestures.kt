@@ -44,6 +44,8 @@ internal class DialInput(
     val onArc: (DialArc) -> Unit,
     /** lifts a session off the day when its segment is held; null where the dial cannot */
     val lift: DialLift? = null,
+    val dismiss: (() -> Unit)? = null,
+    val centreRadius: Float = 0f,
 )
 
 /**
@@ -77,6 +79,16 @@ internal class DialGestures(
                 ?: return
         val now = input()
         val unit = unitPx(size.width.toFloat())
+        if (
+            now.dismiss != null &&
+                (down.position / unit - androidx.compose.ui.geometry.Offset(180f, 180f))
+                    .getDistance() > now.centreRadius
+        ) {
+            val up = waitForUpOrCancellation() ?: return
+            up.consume()
+            now.dismiss.invoke()
+            return
+        }
         now.run?.let { run ->
             down.consume()
             run.skip()

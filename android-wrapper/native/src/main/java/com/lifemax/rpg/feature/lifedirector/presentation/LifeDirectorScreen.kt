@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -59,6 +60,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.domain.TimerSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.answers
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
@@ -213,9 +215,13 @@ fun LifeDirectorScreen(
     val confirm = ui.ask?.confirm
     DirectorTheme(p) {
         Box(
-            Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).pointerInput(actions) {
-                observeTouches(actions.touch)
-            }
+            Modifier.fillMaxSize()
+                .background(tokenColor(p.tokens, "bg"))
+                .pointerInput(ui.sheet) {
+                    if (ui.sheet != null && p.tab == Sections.TODAY)
+                        detectTapGestures(onTap = { actions.session.close() })
+                }
+                .pointerInput(actions) { observeTouches(actions.touch) }
         ) {
             val today = p.today?.takeIf { p.tab == Sections.TODAY }
             val week = p.week?.takeIf { p.tab == Sections.WEEK }
@@ -453,6 +459,7 @@ private fun TodayTop(
         tour = tour,
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
+        centreDismiss = if (activity != null) actions.session.close else null,
         centreContent =
             activity?.let { model ->
                 { DialActivityControls(model, ui, actions, animate, reducedMotion) }
@@ -520,7 +527,11 @@ private fun LazyListScope.todayBelow(
         }
     }
     if (today.reminders.isNotEmpty())
-        item("reminders") { Panel(Slice.MIDDLE) { RemindersCard(today.reminders) } }
+        item("reminders") {
+            Panel(Slice.MIDDLE) {
+                RemindersCard(today.reminders) { actions.tap(Tap("openQuests", "")) }
+            }
+        }
     item("heading") { Panel(Slice.MIDDLE) { OrderHeading(today.isToday, today.sessions) } }
     today.earlier?.let { earlier ->
         val open = ui.earlierOpen && earlier.rows.isNotEmpty()
