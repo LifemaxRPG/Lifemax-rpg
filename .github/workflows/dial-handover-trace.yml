@@ -1,0 +1,48 @@
+name: Trace dial release handover blocker
+on:
+  push:
+    branches: [codex/dial-handover-trace]
+    paths: ['.github/workflows/dial-handover-trace.yml']
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 97d301c40f5e9c4774b327c63790f01d55a2a541
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.63.0-chromium
+      - name: Prepare the exact CI browser
+        run: |
+          npm install -g playwright@1.63.0
+          npx playwright@1.63.0 install --with-deps chromium
+      - name: Preserve the diagnostic input page
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('lifemax_modular_v73/tests/native-handover-sim.test.js')
+          s = p.read_text()
+          assert 'fs.unlinkSync(out);' in s
+          p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
+          PY
+      - name: Replay the complete reload sequence with failure tracing
+        run: |
+          set -o pipefail
+          NODE_PATH="$(npm root -g)" MODES=reload TRACE_FAIL=1 node lifemax_modular_v73/tests/native-handover-sim.test.js 40 2>&1 | tee handover-trace.log
+      - name: Keep trace and exact input
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dial-handover-trace
+          path: |
+            handover-trace.log
+            /tmp/lm_handover_sim_*.html
+          if-no-files-found: warn
