@@ -31,6 +31,9 @@ jobs:
           p = Path('lifemax_modular_v73/tests/native-handover-sim.test.js')
           s = p.read_text()
           assert 'fs.unlinkSync(out);' in s
+          line = next(line for line in s.splitlines() if "id: 'canary1'" in line)
+          assert line.count('xp: 40') == 2
+          s = s.replace(line, line.replace('xp: 40', 'xp: 0'))
           p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
           p = Path('lifemax_modular_v73/src/runtime/segments/50-native-tabkit.js')
           s = p.read_text()
