@@ -32,17 +32,11 @@ jobs:
           s = p.read_text()
           assert 'fs.unlinkSync(out);' in s
           p.write_text(s.replace('fs.unlinkSync(out);', "console.log('TRACE_PAGE ' + out);"))
-          p = Path('lifemax_modular_v73/src/runtime/segments/50-native-overview.js')
-          s = p.read_text()
-          old = """const closeStray=()=>{for(const t of stray){try{t.close()}catch(e){console.warn('NativeTabs heal',e)}}};"""
-          fixed = """const closeStray=()=>{const current=tabs.get(typeof lmaView==='function'?lmaView():'');for(const t of stray){try{if(t!==current&&t.isOpen())t.close()}catch(e){console.warn('NativeTabs heal',e)}}};"""
-          assert old in s
-          p.write_text(s.replace(old, fixed))
           p = Path('lifemax_modular_v73/src/runtime/segments/50-native-tabkit.js')
           s = p.read_text()
           needle = '    async function close() {'
           assert needle in s
-          detail = '      if (window.__log) window.__log.push(window.__t() + " KIT close " + cfg.id + " view=" + lmaView() + " blocked=" + blocked() + " wanted=" + wanted() + " overlay=" + lmaTopOverlay() + " " + new Error().stack);'
+          detail = '      if (window.__log) window.__log.push(window.__t() + " KIT close " + cfg.id + " view=" + lmaView() + " blocked=" + blocked() + " wanted=" + wanted() + " overlay=" + lmaTopOverlay() + " body=" + document.body.className + " ownBlock=" + !!(cfg.blocked && cfg.blocked()) + " levelOverlay=" + !!document.querySelector(".luov") + " onboarding=" + !!state.onboardingComplete + " " + new Error().stack);'
           p.write_text(s.replace(needle, needle + '\n' + detail))
 
 
