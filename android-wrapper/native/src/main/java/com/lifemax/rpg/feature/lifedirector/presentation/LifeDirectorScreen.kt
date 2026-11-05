@@ -61,6 +61,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.TimerSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.domain.answers
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ConfirmChangeSheet
@@ -526,7 +527,11 @@ private fun LazyListScope.todayBelow(
         }
     }
     if (today.reminders.isNotEmpty())
-        item("reminders") { Panel(Slice.MIDDLE) { RemindersCard(today.reminders) } }
+        item("reminders") {
+            Panel(Slice.MIDDLE) {
+                RemindersCard(today.reminders) { actions.tap(Tap("openQuests", "")) }
+            }
+        }
     item("heading") { Panel(Slice.MIDDLE) { OrderHeading(today.isToday, today.sessions) } }
     today.earlier?.let { earlier ->
         val open = ui.earlierOpen && earlier.rows.isNotEmpty()

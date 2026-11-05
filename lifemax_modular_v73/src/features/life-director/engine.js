@@ -2432,6 +2432,12 @@ const LifeMaxHost = (function () {
     return state.quests.filter(H.isMilestone).map(q => { let done = false, locked = false; try { done = isQuestDone(q); } catch (e) { /* ignore */ } try { locked = typeof questLocked === 'function' && questLocked(q); } catch (e) { /* ignore */ } return { id: q.id, title: q.name, desc: q.desc || '', done, locked }; });
   };
   /* Read LifeMax quests as Life Director QuestRecords. overlay = LD's session counts per questKey. */
+  /* Self-confirmed daily cards without a duration are tasks, not timed practice. */
+  H.isUntimedQuest = function (q) {
+    if (!q || q.hand !== true || q.verify !== 'self') return false;
+    const text = String(q.name || '') + ' ' + String(q.desc || '');
+    return !parseMinutes(text) && !/\b(?:minutes?|mins?|hours?|hrs?|seconds?|secs?)\b/i.test(text);
+  };
   H.readQuests = function (nowEpoch, tz, overlay, revoked) {
     if (!H.connected()) return [];
     const out = [], wb = weekBounds(nowEpoch, tz);
@@ -2442,7 +2448,7 @@ const LifeMaxHost = (function () {
       let done = false; try { done = isQuestDone(q); } catch (e) { /* ignore */ }
       const key = questKey(q);
       const text = q.name + ' ' + (q.desc || '');
-      const passive = PASSIVE_KINDS.has(q.kind) || q.kind === 'nutrition';
+      const passive = PASSIVE_KINDS.has(q.kind) || q.kind === 'nutrition' || H.isUntimedQuest(q);
       const mins = parseMinutes(text);
       const target = q.cadence === 'daily' ? 1 : parseCount(text);
       const base = { title: q.name, tier: q.kind === 'milestone' ? 'OPTIONAL' : 'CORE', tag: H.mapQuestTag(q), schedulingMode: passive ? 'NONE' : 'SESSIONS',

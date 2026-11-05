@@ -202,6 +202,25 @@ const LifeDirectorApp = (function () {
     }
     /* 3. quests checked off by hand → drop their now-unneeded future blocks */
     const qs = hostQuests(now), done = new Set(qs.filter(q => q.status === 'COMPLETED').map(q => q.id).concat(Host.milestones().map(m => m.id)));
+    // Retire only automatic, unstarted blocks that consist entirely of untimed cards.
+    // Pinned blocks, mixed goals, history and the active timer are preserved.
+    const untimed = new Map(qs.filter(q => q.schedulingMode === 'NONE').map(q => [q.id, q]));
+    const retired = ST.schedule.scheduledInstances.filter(i =>
+      i.lifecycleState === 'PLANNED' && !i.isUserLocked &&
+      !(ST.ui.focus && ST.ui.focus.id === i.instanceId) &&
+      !(i.linkedGoalIds || []).length &&
+      (i.linkedQuestRequirementIds || []).length &&
+      i.linkedQuestRequirementIds.every(ref => untimed.has(ref.questId)));
+    if (retired.length) {
+      const ids = new Set(retired.map(i => i.instanceId));
+      ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => !ids.has(i.instanceId));
+      const reminders = ST.schedule.passiveReminders || (ST.schedule.passiveReminders = []);
+      for (const inst of retired) for (const ref of inst.linkedQuestRequirementIds) {
+        const q = untimed.get(ref.questId);
+        if (!reminders.some(r => r.questId === q.id)) reminders.push({ questId: q.id, title: q.title, anchor: q.anchor || 'WAKE' });
+      }
+      changed = true;
+    }
     for (const i of ST.schedule.scheduledInstances.slice()) {
       const links = i.linkedQuestRequirementIds.filter(l => !done.has(l.questId));
       if (links.length === i.linkedQuestRequirementIds.length || i.lifecycleState !== 'PLANNED') continue;
@@ -2969,7 +2988,10 @@ const LifeDirectorApp = (function () {
       core: nativeCore(day, blocks, isToday, now, st),
       mix: nativeMix(blocks),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
-      reminders: isToday ? (s.passiveReminders || []).map(r => r.title) : [],
+      reminders: isToday ? (s.passiveReminders || []).map(r => {
+        const description = Host.activityDescription ? Host.activityDescription({ linkedQuestRequirementIds: [{ questId: r.questId }] }) : '';
+        return r.title + (description ? '\n' + description : '');
+      }) : [],
       sessions: blocks.filter(b => b.inst).length,
       rows: nativeRows(blocks, isToday, now, !!(opts && opts.removal)),
     };
