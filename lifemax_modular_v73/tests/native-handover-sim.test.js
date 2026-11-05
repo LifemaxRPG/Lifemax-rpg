@@ -579,6 +579,15 @@ async function run(b, mode) {
       hops++;
     }
     await settle(4500);
+    // Level-up overlays can last longer than the normal settling window. Native tabs
+    // correctly step aside for them: assess the final tab after real global calm.
+    let waitedForCelebration = false;
+    for (let elapsed = 0; elapsed < 20000 && await p.evaluate(() => celebrating()); elapsed += 250) {
+      waitedForCelebration = true;
+      await settle(250);
+    }
+    if (await p.evaluate(() => celebrating())) await p.evaluate(() => window.__fault('global celebration did not settle within 20 seconds'));
+    if (waitedForCelebration) await settle(1500);
     view = (await p.evaluate(() => window.__endView)) || view;
     if (journal) await p.evaluate(async () => {
       const st = await window.__jnModel('get'), locked = LifeMaxJournalLock.blocksNative();
