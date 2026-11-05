@@ -383,7 +383,15 @@ const LifeDirectorApp = (function () {
   }
 
   /* ── day model for the timeline ── */
-  function horizonDays(sched, z) { return U.buildHorizon(sched.horizonStartEpoch, Math.round((sched.horizonEndEpoch - sched.horizonStartEpoch) / 86400), z); }
+  function horizonDays(sched, z) {
+    const days = U.buildHorizon(sched.horizonStartEpoch, Math.round((sched.horizonEndEpoch - sched.horizonStartEpoch) / 86400), z);
+    // A saved plan can span several dates. Its first date is not permanently "Today".
+    // Slide only the live calendar; retain historical instances and fixed lab scenarios.
+    if (!ST || sched !== ST.schedule) return days;
+    const now = nowEpoch();
+    const current = days.filter(day => day.endEpoch > now);
+    return current.length ? current : U.buildHorizon(now, 1, z);
+  }
   function dayBlocks(sched, day, z) {
     const s = day.startEpoch, e = day.endEpoch, out = [];
     for (const g of sched.segments || []) {
