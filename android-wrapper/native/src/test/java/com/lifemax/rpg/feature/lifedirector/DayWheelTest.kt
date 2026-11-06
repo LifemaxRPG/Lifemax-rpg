@@ -6,29 +6,31 @@ import org.junit.Test
 
 class DayWheelTest {
     @Test
-    fun crossesMidnightInBothDirectionsWithoutJumping() {
+    fun crossesMidnightWithoutJumping() {
         val wheel = DayWheel(3, 7, 350f)
         wheel.move(10f)
-        assertEquals(3f + 20f / (360f / 7), wheel.position, .001f)
+        assertEquals(20f, wheel.rotation, .001f)
         wheel.move(350f)
-        assertEquals(3f, wheel.position, .001f)
+        assertEquals(0f, wheel.rotation, .001f)
+        assertEquals(3, wheel.selected)
     }
 
     @Test
-    fun reachesLastDayAndReversesWithoutOverscrollDebt() {
+    fun keepsTurningPastTheWeekAndReversesImmediately() {
         val wheel = DayWheel(0, 7, 0f)
-        for (angle in listOf(60f, 120f, 180f, 240f, 300f, 350f, 50f)) wheel.move(angle)
-        assertEquals(6, wheel.selected)
-        wheel.move(350f)
-        assertEquals(5, wheel.selected)
+        repeat(10) { for (a in listOf(90f, 180f, 270f, 0f)) wheel.move(a) }
+        assertEquals(80, wheel.selected)
+        wheel.move(315f)
+        assertEquals(79, wheel.selected)
+        assertEquals(3555f, wheel.rotation, .001f)
     }
 
     @Test
-    fun clampsAtFirstDayAndWorksWithShortHorizons() {
-        val wheel = DayWheel(0, 2, 90f)
+    fun canBrowseEarlierDatesEvenWithOneDayOnTheStrip() {
+        val wheel = DayWheel(0, 1, 90f)
         wheel.move(0f)
+        assertEquals(-2, wheel.selected)
+        wheel.move(90f)
         assertEquals(0, wheel.selected)
-        wheel.move(100f)
-        assertEquals(1, wheel.selected)
     }
 }

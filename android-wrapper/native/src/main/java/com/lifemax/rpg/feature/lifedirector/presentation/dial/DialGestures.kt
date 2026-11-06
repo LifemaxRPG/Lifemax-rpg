@@ -178,8 +178,8 @@ internal class DialGestures(
                 if (moved) {
                     val previous = travel.selected
                     val selected = travel.move(DialGeometry.angleAt(change.position / unit))
+                    wheel.preview(selected, travel.rotation)
                     if (selected != previous) {
-                        wheel.preview(selected)
                         buzz?.buzz(BUZZ_MS)
                     }
                 }

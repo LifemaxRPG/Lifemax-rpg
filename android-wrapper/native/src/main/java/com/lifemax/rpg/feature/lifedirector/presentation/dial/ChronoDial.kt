@@ -2,6 +2,7 @@ package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -63,8 +65,12 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberPuls
 import com.lifemax.rpg.feature.lifedirector.presentation.components.spoken
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.removeFromToday
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.math.abs
-import kotlinx.coroutines.delay
+import kotlin.math.round
 
 /**
  * The 24-hour dial (the web's dialHtml): its 360-unit square scaled to the width, at most 370 dp,
@@ -103,9 +109,14 @@ fun ChronoDial(
     selectedDay: Int = 0,
     onDay: ((Int) -> Unit)? = null,
     dayWheelEnabled: Boolean = true,
+    calendarDate: String = "",
 ) {
     val text = rememberTextMeasurer()
-    val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
+    val face =
+        remember(dial.radii, dial.hourWords) {
+            DialFace(dial.radii, dial.hourWords, text, includeBezel = false)
+        }
+    val bezel = remember(dial.radii, dial.hourWords) { DialBezel(dial.radii, dial.hourWords, text) }
     val plan = remember(dial.radii, dial.arcs, dial.words) { DialPlan(dial, text) }
     val now =
         remember(dial.radii, dial.hand, dial.ring) { DialNow(dial.radii, dial.hand, dial.ring) }
@@ -143,20 +154,29 @@ fun ChronoDial(
     }
     var scrubbingDays by remember { mutableStateOf(false) }
     var previewDay by remember { mutableStateOf(selectedDay) }
-    var showDayRing by remember { mutableStateOf(false) }
-    LaunchedEffect(scrubbingDays) {
+    var bezelDrag by remember { mutableFloatStateOf(0f) }
+    var bezelStart by remember { mutableFloatStateOf(0f) }
+    val bezelRest = remember { Animatable(0f) }
+    val dateBase =
+        remember(calendarDate, dial.start) {
+            runCatching { LocalDate.parse(calendarDate) }
+                .getOrElse {
+                    Instant.ofEpochSecond(dial.start).atZone(ZoneId.systemDefault()).toLocalDate()
+                }
+        }
+    LaunchedEffect(scrubbingDays, animate) {
         if (!scrubbingDays) {
-            delay(if (animate) 650 else 0)
-            showDayRing = false
+            bezelRest.snapTo(bezelDrag)
+            val aligned = round(bezelDrag / 360f) * 360f
+            if (animate) bezelRest.animateTo(aligned, spring(dampingRatio = .68f, stiffness = 240f))
+            else bezelRest.snapTo(aligned)
         }
     }
-    LaunchedEffect(selectedDay, days) {
-        if (!scrubbingDays) previewDay = selectedDay.coerceIn(0, (days.size - 1).coerceAtLeast(0))
-    }
+    LaunchedEffect(selectedDay, days) { if (!scrubbingDays) previewDay = selectedDay }
     val wheel =
         if (
             dayWheelEnabled &&
-                days.size > 1 &&
+                days.isNotEmpty() &&
                 onDay != null &&
                 centreContent == null &&
                 tour == null &&
@@ -168,9 +188,13 @@ fun ChronoDial(
                 begin = {
                     previewDay = selectedDay
                     scrubbingDays = true
-                    showDayRing = true
+                    bezelStart = bezelRest.value % 360f
+                    bezelDrag = bezelStart
                 },
-                preview = { previewDay = it },
+                preview = { day, rotation ->
+                    previewDay = day
+                    bezelDrag = bezelStart + rotation
+                },
                 end = { chosen ->
                     scrubbingDays = false
                     if (chosen != null && chosen != selectedDay) onDay(chosen)
@@ -240,6 +264,13 @@ fun ChronoDial(
                         else if (intro != null) drawIntro(plan, introOrder, intro.ms)
                         else plan.draw(this, look.outer, look.words, look.inner, ghost)
                     }
+                }
+                Canvas(
+                    Modifier.fillMaxSize().graphicsLayer {
+                        rotationZ = if (scrubbingDays) bezelDrag else bezelRest.value
+                    }
+                ) {
+                    inUnits { bezel.draw(this) }
                 }
                 Canvas(
                     Modifier.fillMaxSize().graphicsLayer {
@@ -344,8 +375,8 @@ fun ChronoDial(
                         centreBox.width(side * .42f).dimmed(look.centre),
                     )
             }
-            if (scrubbingDays && previewDay in days.indices) {
-                val date = days[previewDay]
+            if (scrubbingDays) {
+                val date = dateBase.plusDays((previewDay - selectedDay).toLong())
                 Box(
                     Modifier.align(Alignment.Center)
                         .size(side * .48f)
@@ -354,19 +385,13 @@ fun ChronoDial(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "${date.label}\n${date.date}",
+                        date.format(DateTimeFormatter.ofPattern("EEE\nd MMM yyyy")),
                         color = DirectorPalette.ink,
                         fontSize = 24.sp,
                         textAlign = TextAlign.Center,
                     )
                 }
             }
-            DayWheelOverlay(
-                days,
-                previewDay.coerceIn(0, (days.size - 1).coerceAtLeast(0)),
-                showDayRing,
-                animate,
-            )
         }
     }
 }

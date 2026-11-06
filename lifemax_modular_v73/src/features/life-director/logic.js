@@ -2965,9 +2965,12 @@ const LifeDirectorApp = (function () {
   function nativeToday(dayIdx, opts) {
     if (!ST) boot();
     if (!ST.setupComplete || !ST.schedule) return null;
-    const s = ST.schedule, z = tz(), days = horizonDays(s, z), now = nowEpoch();
-    const idx = Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
-    const day = days[idx], blocks = dayBlocks(s, day, z), isToday = idx === 0, d0 = day.startEpoch, d1 = day.endEpoch;
+    const s = ST.schedule, z = tz(), now = nowEpoch();
+    const calendar = opts && Number.isInteger(opts.calendarOffset) ? calendarDays(opts.calendarOffset, z) : null;
+    const days = calendar || horizonDays(s, z);
+    const idx = calendar ? 0 : Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
+    const day = days[idx], blocks = dayBlocks(s, day, z), isToday = now >= day.startEpoch && now < day.endEpoch, d0 = day.startEpoch, d1 = day.endEpoch;
+    const outsidePlan = d1 <= s.horizonStartEpoch || d0 >= s.horizonEndEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     const voiceIds = new Set((ST.fixedCommitments || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
     const handles = dialHandles(day);
@@ -2992,7 +2995,7 @@ const LifeDirectorApp = (function () {
       } else if (k === 'rest') {
         arc('inner', 'thin', 'rest');
         if (m >= 60) word(DIAL.RI + 9, a0, a1, ['Downtime · ' + mins(m), 'Downtime', 'Rest'], 'rest', true);
-      } else if (k === 'free' && m >= 90 && !(isToday && b.endEpoch <= now)) {
+      } else if (k === 'free' && !outsidePlan && m >= 90 && !(isToday && b.endEpoch <= now)) {
         word(DIAL.RI, a0, a1, ['Free · ' + mins(m), 'Free'], 'free', true);
       } else if (k === 'task') {
         [a0, a1] = gap(a0, a1, 1.4);
@@ -3006,13 +3009,15 @@ const LifeDirectorApp = (function () {
     return {
       now,
       dayIndex: idx,
+      calendarDate: U.ymdKey(day.ymd),
+      calendarOffset: calendar ? opts.calendarOffset : 0,
       isToday,
-      strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
+      strip: days.map((d, k) => ({ label: now >= d.startEpoch && now < d.endEpoch ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
       dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: nativeHourWords(), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
         nativeHandles(handles, d0, d1), { build: nativeBuild(d0, d1, arcs, isToday) }),
       hint: DIAL_HINT,
-      core: nativeCore(day, blocks, isToday, now, st),
-      mix: nativeMix(blocks),
+      core: Object.assign(nativeCore(day, blocks, isToday, now, st), outsidePlan && !isToday ? { sub: 'Outside generated plan · saved activities only' } : {}),
+      mix: nativeMix(blocks).map(share => outsidePlan && share.kind === 'free' ? Object.assign({}, share, { label: 'Unplanned' }) : share),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
       reminders: isToday ? (s.passiveReminders || []).map(reminderText) : [],
       sessions: blocks.filter(b => b.inst).length,
@@ -3244,10 +3249,31 @@ const LifeDirectorApp = (function () {
     return { ok: true };
   }
   /* the strip's day (day) or a day from Week or up next (gotoDay, which also goes to Today), as the page's own handlers do */
+  // Read-only browsing: never extend/rewrite the generated schedule merely by turning the bezel.
+  let nativeCalendarOffset = null;
+  function calendarDays(offset, zone) {
+    if (!Number.isSafeInteger(offset)) return null;
+    const p = U.localParts(nowEpoch(), zone);
+    const date = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, offset);
+    const start = U.zonedToEpoch(date.y, date.mo, date.d, 0, zone);
+    if (!Number.isFinite(start)) return null;
+    return U.buildHorizon(start, 7, zone);
+  }
   function nativeDay(i, toToday) {
     if (!ST) boot();
     const days = ST.setupComplete && ST.schedule ? horizonDays(ST.schedule, tz()) : [];
-    if (!Number.isInteger(i) || i < 0 || i >= days.length) return { ok: false, message: 'That day is not on the plan.' };
+    if (!Number.isInteger(i) || !days.length) return { ok: false, message: 'That day is not on the plan.' };
+    if (toToday) nativeCalendarOffset = null;
+    if (nativeCalendarOffset !== null || i < 0 || i >= days.length) {
+      const offset = i;
+      try {
+        if (!calendarDays(offset, tz())) return { ok: false, message: 'That date cannot be displayed.' };
+      } catch (e) { return { ok: false, message: 'That date cannot be displayed.' }; }
+      nativeCalendarOffset = offset;
+      if (toToday) ui.tab = 'today';
+      changed();
+      return { ok: true };
+    }
     ui.dayIdx = i;
     if (toToday) ui.tab = 'today';
     if (root && root.isConnected) render();
@@ -3644,11 +3670,11 @@ const LifeDirectorApp = (function () {
   /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
      and cover() stops one already playing (the screen has just come over it) */
   let nativeCovers = () => false;
-  const nativeApi = Object.freeze({ frame: nativeFrame, today: (i, o) => nativeToday(i === undefined ? ui.dayIdx : i, o), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: (i, o) => nativeToday(i === undefined ? ui.dayIdx : i, i === undefined && nativeCalendarOffset !== null ? Object.assign({}, o, { calendarOffset: nativeCalendarOffset }) : o), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
     week: nativeWeek, quests: nativeQuests, section: nativeSection, day: i => nativeDay(i, false), gotoDay: i => nativeDay(i, true),
     dayIndex: () => ui.dayIdx,
     /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */
-    arrive() { ui.dayIdx = 0; intent = null; },
+    arrive() { ui.dayIdx = 0; nativeCalendarOffset = null; intent = null; },
     /* fn() is true when a native screen draws Today's sheets: a glance tap then asks for its sheet (intent) instead */
     intendedBy(fn) { nativeIntends = typeof fn === 'function' ? fn : () => false; }, intent: nativeIntent,
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },

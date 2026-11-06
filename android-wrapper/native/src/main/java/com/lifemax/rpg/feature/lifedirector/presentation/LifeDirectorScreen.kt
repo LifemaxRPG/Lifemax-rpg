@@ -445,7 +445,11 @@ private fun TodayTop(
     tour: DialTourRun?,
     removal: DragRemoveController?,
 ) {
-    DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
+    DayStrip(
+        today.strip,
+        ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        { actions.day(today.calendarOffset + it) },
+    )
     Spacer(Modifier.height(8.dp))
     ChronoDial(
         today.dial,
@@ -463,8 +467,9 @@ private fun TodayTop(
         removal = removal,
         centreDismiss = if (activity != null) actions.session.close else null,
         days = today.strip,
-        selectedDay = ui.pendingDay ?: today.dayIndex,
-        onDay = actions.day,
+        calendarDate = today.calendarDate,
+        selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        onDay = { actions.day(today.calendarOffset + it) },
         dayWheelEnabled =
             ui.pendingDay == null &&
                 ui.pendingToday == null &&

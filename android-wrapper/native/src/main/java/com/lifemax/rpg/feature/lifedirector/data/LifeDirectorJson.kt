@@ -82,6 +82,8 @@ internal fun JSONObject.today(): DirectorToday? {
     return DirectorToday(
         now = t.getLong("now"),
         dayIndex = dayIndex,
+        calendarDate = t.optString("calendarDate", ""),
+        calendarOffset = t.optInt("calendarOffset", 0),
         isToday = t.getBoolean("isToday"),
         strip = strip,
         dial = dial(t.getJSONObject("dial")),

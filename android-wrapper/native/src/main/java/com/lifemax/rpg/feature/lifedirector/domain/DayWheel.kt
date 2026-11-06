@@ -2,25 +2,26 @@ package com.lifemax.rpg.feature.lifedirector.domain
 
 import kotlin.math.roundToInt
 
-/** Relative scroll-wheel travel; crossing midnight never jumps to the other end of the week. */
-class DayWheel(startIndex: Int, private val count: Int, initialAngle: Float) {
+/** Continuous bezel travel. A 45-degree detent advances one date, independent of strip length. */
+class DayWheel(private val startIndex: Int, count: Int, initialAngle: Float) {
     init {
-        require(count > 1 && startIndex in 0 until count)
-        require(initialAngle.isFinite())
+        require(count > 0 && initialAngle.isFinite())
     }
 
     private var previous = initialAngle
-    var position = startIndex.toFloat()
+    var rotation = 0f
         private set
 
+    val position: Float
+        get() = startIndex + rotation / 45f
+
     val selected: Int
-        get() = position.roundToInt().coerceIn(0, count - 1)
+        get() = startIndex + (rotation / 45f).roundToInt()
 
     fun move(angle: Float): Int {
         require(angle.isFinite())
-        val delta = ((angle - previous + 540f) % 360f) - 180f
+        rotation += ((angle - previous + 540f) % 360f) - 180f
         previous = angle
-        position = (position + delta / (360f / count)).coerceIn(0f, (count - 1).toFloat())
         return selected
     }
 }
