@@ -1921,7 +1921,7 @@ const LifeDirectorApp = (function () {
       '<div><b data-fclock>' + clockText(focusMs(f)) + '</b><small>' + m.planned + '</small></div></div>' +
       (m.xp ? '<p class="ld-muted ld-center">' + m.xp[0].t + '<b data-fxp>' + m.xp[1].t + '</b>' + esc(m.xp[2].t) + '</p>' : '') +
       '<div class="ld-row ld-center"><button class="ld-btn ld-primary" data-act="focusFinish">' + m.finish + '</button><button class="ld-btn" data-act="' + (m.paused ? 'focusResume' : 'focusPause') + '">' + m.pause + '</button></div>' +
-      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">' + m.stop + '</button></div>' +
+      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusReset" aria-label="Reset timer" title="Reset timer">↺</button><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">' + m.stop + '</button></div>' +
       '<p class="ld-muted ld-center ld-small-print">' + m.note + '</p></div>');
   }
   function focusTick() {
@@ -2491,6 +2491,11 @@ const LifeDirectorApp = (function () {
         persist(); render(); focusSheet(); break;
       }
       case 'focusOpen': focusSheet(); break;
+      case 'focusReset': {
+        const f = ST.ui.focus;
+        if (f) { Today.timer({ act: 'reset', id: f.id, start: f.start }); focusSheet(); }
+        break;
+      }
       case 'focusPause': { const f = ST.ui.focus; if (f && !f.paused) { f.paused = Date.now(); persist(); focusSheet(); } break; }
       case 'focusResume': { const f = ST.ui.focus; if (f && f.paused) { f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); focusSheet(); } break; }
       case 'focusFinish': {
@@ -3418,6 +3423,13 @@ const LifeDirectorApp = (function () {
         if (f && f.id === id) return recorded('');
         if (f && plannedInst(f.id)) return { ok: false, message: 'Another timer is running. Finish or stop it first.' };
         ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, inst.endEpoch - inst.startEpoch) * 1000 }; persist(); render(); return saved('');
+      }
+      if (act === 'reset') {
+        if (!f || f.id !== id || f.start !== Number(start)) return recorded('');
+        const at = Math.max(Date.now(), f.start + 1);
+        ST.ui.focus = Object.assign({}, f, { start: at, paused: at, pausedMs: 0 });
+        if (!persist()) { ST.ui.focus = f; return { ok: false, message: 'Timer could not be reset. Please try again.' }; }
+        render(); return saved('');
       }
       if (act === 'pause') { if (!f || f.paused) return recorded(''); f.paused = Date.now(); persist(); render(); return saved(''); }
       if (act === 'resume') { if (!f || !f.paused) return recorded(''); f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); render(); return saved(''); }

@@ -66,6 +66,12 @@ internal class TimerMealController(
         act(t.id, "finish", mapOf("start" to t.startedAt), fromSheet = true)
     }
 
+    /** Reset elapsed time without logging; keep the timer paused and available to resume. */
+    fun reset() {
+        val t = timer ?: return
+        act(t.id, "reset", mapOf("start" to t.startedAt), fromSheet = false)
+    }
+
     /** Stop without logging: the page clears the timer and says nothing was logged. */
     fun stop() {
         val t = timer ?: return

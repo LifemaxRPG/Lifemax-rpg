@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -77,6 +78,7 @@ class TimerMealActions(
     val finish: () -> Unit = {},
     val stop: () -> Unit = {},
     val openMeal: () -> Unit = {},
+    val reset: () -> Unit = {},
 )
 
 /**
@@ -177,6 +179,7 @@ fun BoxScope.TimerSheet(
                     )
                 }
             }
+            TimerResetButton(pending == null, actions.reset)
             t.xp?.let { Muted(it, 13.76f) }
             val wait = Modifier.alpha(if (pending != null) .45f else 1f)
             Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -318,3 +321,15 @@ private const val VIEW = 220f
 private const val RADIUS = 92f
 private const val STROKE = 12f
 private val TRACK = Color.White.copy(alpha = .06f)
+
+/** Small reset glyph with a full touch target and an explicit accessibility label. */
+@Composable
+internal fun TimerResetButton(enabled: Boolean, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(48.dp).semantics { contentDescription = "Reset timer" },
+    ) {
+        Text("↺", color = P.ink3, fontSize = 22.sp)
+    }
+}

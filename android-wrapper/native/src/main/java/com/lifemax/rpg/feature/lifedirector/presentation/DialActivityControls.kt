@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +43,7 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPale
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.clockText
 import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberTickingClock
+import com.lifemax.rpg.feature.lifedirector.presentation.sheets.TimerResetButton
 
 /** One continuous activity face: full title and schedule first, with no intermediate menus. */
 @OptIn(ExperimentalFoundationApi::class)
@@ -131,7 +133,10 @@ internal fun DialActivityControls(
                             fontWeight = FontWeight.Bold,
                         )
                         DialCaption(current.planned)
-                        DialLink(current.pause, ready, actions.timerMeal.pause)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            DialLink(current.pause, ready, actions.timerMeal.pause)
+                            TimerResetButton(ready, actions.timerMeal.reset)
+                        }
                         current.xp?.let { spans -> DialCaption(spans.joinToString("") { it.t }) }
                     }
                     else -> {}

@@ -126,6 +126,7 @@ class DirectorActions(
             TimerMealActions(
                 close = vm::closeSheet,
                 pause = vm.timerMeal::pauseOrResume,
+                reset = vm.timerMeal::reset,
                 finish = vm.timerMeal::finish,
                 stop = vm.timerMeal::stop,
                 openMeal = {
