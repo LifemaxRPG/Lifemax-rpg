@@ -208,7 +208,14 @@ class LifeDirectorViewModel(
     fun confirmChange() {
         val c = ui.value.confirm ?: return
         mutableUi.update { it.copy(confirm = null) }
-        change(c.name, c.args)
+        if (c.name == "replaceTimer") {
+            today(
+                "timer",
+                c.args["id"] as String,
+                mapOf("act" to "replace", "start" to (c.args["start"] as Long)),
+                fromSheet = c.args["fromSheet"] as Boolean,
+            )
+        } else change(c.name, c.args)
     }
 
     fun cancelChange() = mutableUi.update { it.copy(confirm = null) }
@@ -382,7 +389,29 @@ class LifeDirectorViewModel(
     fun operation(command: String, target: String) = sheets.operation(command, target)
 
     /** Start a session's timer (up next's Start, the centre's Start). */
-    fun startTimer(id: String) = today("timer", id, mapOf("act" to "start"), fromSheet = false)
+    fun startTimer(id: String) = requestTimer(id, fromSheet = false)
+
+    private fun requestTimer(id: String, fromSheet: Boolean) {
+        if (blocked || !sheets.available || ui.value.pendingToday != null) return
+        val running = projection.value?.today?.upNext?.timer
+        if (running == null) {
+            today("timer", id, mapOf("act" to "start"), fromSheet)
+            return
+        }
+        val current = projection.value?.today?.upNext?.title.orEmpty()
+        mutableUi.update {
+            it.copy(
+                confirm =
+                    ChangeConfirm(
+                        "Switch timers?",
+                        "Stop $current without logging its elapsed time and start the selected activity?",
+                        "End & start",
+                        "replaceTimer",
+                        mapOf("id" to id, "start" to running.startedAt, "fromSheet" to fromSheet),
+                    )
+            )
+        }
+    }
 
     /** Mark a session done as planned (up next's Done). */
     fun doneQuick(id: String) = today("done", id, emptyMap(), fromSheet = false)
@@ -391,8 +420,10 @@ class LifeDirectorViewModel(
     fun sessionPrimary(): Tap? {
         val s = sheets.session ?: return null
         val p = s.primary ?: return null
-        if (p.command == "timer" && p.act != null)
-            today("timer", s.id, mapOf("act" to p.act), fromSheet = true)
+        if (p.command == "timer" && p.act != null) {
+            if (p.act == "start") requestTimer(s.id, fromSheet = true)
+            else today("timer", s.id, mapOf("act" to p.act), fromSheet = true)
+        }
         if (p.sheet == SheetKinds.TIMER) sheets.open(SheetKinds.TIMER, s.id) // the native one
         return null
     }

@@ -2486,7 +2486,12 @@ const LifeDirectorApp = (function () {
         const i = findInst(id); if (!i || i.lifecycleState !== 'PLANNED') break;
         if (!doable(i, now)) { instSheet(i); break; }
         const f = ST.ui.focus;
-        if (f && f.id !== id && findInst(f.id)) { say('Another timer is running. Finish or stop it first.'); focusSheet(); break; }
+        if (f && f.id !== id && findInst(f.id)) {
+          if (!window.confirm('Stop the current timer without logging its elapsed time and start ' + i.title + '?')) break;
+          const result = Today.timer({ act: 'replace', id, start: f.start });
+          if (!result.ok) { say(result.message); break; }
+          focusSheet(); break;
+        }
         if (!f || f.id !== id) ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, i.endEpoch - i.startEpoch) * 1000 };
         persist(); render(); focusSheet(); break;
       }
@@ -3415,6 +3420,19 @@ const LifeDirectorApp = (function () {
         if (focusMs(f) < target) return recorded('');
         automaticMinutes = Math.max(1, Math.round(target / 60000));
         act = 'finish';
+      }
+      if (act === 'replace') {
+        const inst = plannedInst(id);
+        if (!inst || inst.lifecycleState !== 'PLANNED') return gone;
+        if (!doable(inst, nowEpoch())) return { ok: false, message: 'This session is not available to start yet.' };
+        if (!f || f.start !== Number(start)) {
+          return f && f.id === id ? recorded('') : { ok: false, message: 'The timer changed. Please choose Start again.' };
+        }
+        if (f.id === id) return recorded('');
+        const at = Math.max(Date.now(), f.start + 1);
+        ST.ui.focus = { id, start: at, paused: null, pausedMs: 0, plannedMs: Math.max(60, inst.endEpoch - inst.startEpoch) * 1000 };
+        if (!persist()) { ST.ui.focus = f; return { ok: false, message: 'The new timer could not be saved. Your previous timer is unchanged.' }; }
+        render(); return saved('');
       }
       if (act === 'start') {
         const inst = plannedInst(id);
