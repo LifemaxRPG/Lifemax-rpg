@@ -1100,7 +1100,7 @@ const LifeDirectorApp = (function () {
     const next = tl.find(b => b !== cur && b.startEpoch >= after - 60 && blockClass(b) !== 'free' && live(b) && !(b.inst && sesState(b.inst.lifecycleState) === 'done')) || null;
     const nextTask = tl.find(b => b.inst && b !== cur && b.startEpoch > now && b.inst.lifecycleState === 'PLANNED') || null;
     const isSes = cur && cur.inst && cur.inst.lifecycleState === 'PLANNED';
-    const f = ST.ui.focus, running = f && cur && cur.inst && f.id === cur.inst.instanceId;
+    const f = ST.ui.focus, running = f && !f.paused && cur && cur.inst && f.id === cur.inst.instanceId;
     /* two separate warnings: one about now (top line), one about what's coming (next line) */
     let kick = null;
     if (isSes && !running && !f && now - cur.startEpoch >= LATE) kick = { kind: 'late', sec: now - cur.startEpoch };
@@ -1116,7 +1116,7 @@ const LifeDirectorApp = (function () {
     return '<circle class="ld-cur-trk" cx="180" cy="180" r="' + R + '"/>' + (frac < 0.997 ? '<path class="ld-cur-arc ld-c-' + k + (st.kick ? ' ld-warn' : '') + '" d="' + arcD(R, frac * 360, 360) + '"/>' : '');
   }
   function coreToday(day, blocks, now) {
-    const f = ST.ui.focus, fi = f && findInst(f.id);
+    const f = ST.ui.focus, fi = f && !f.paused && findInst(f.id);
     const st = nowState(now);
     let k = '', title = '', big = '', sub = '', btn = '', cls = '';
     if (fi) {
@@ -1244,7 +1244,7 @@ const LifeDirectorApp = (function () {
     let upnext = '';
     const f = ST.ui.focus, fi = f && findInst(f.id);
     if (isToday && fi) {
-      upnext = '<section class="ld-up ld-up-go"><div class="ld-up-h"><span class="ld-cue"></span>Timer running</div><h3>' + esc(fi.title) + '</h3><p class="ld-up-when"><b data-fclock>' + clockText(focusMs(f)) + '</b> of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned</p>' +
+      upnext = '<section class="ld-up ld-up-go"><div class="ld-up-h"><span class="ld-cue"></span>' + (f.paused ? 'Timer paused' : 'Timer running') + '</div><h3>' + esc(fi.title) + '</h3><p class="ld-up-when"><b data-fclock>' + clockText(focusMs(f)) + '</b> of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned</p>' +
         '<div class="ld-row"><button class="ld-btn ld-primary" data-act="focusOpen">Open timer</button><button class="ld-btn" data-act="focusFinish">Finish and log</button></div></section>';
     } else if (next && !doable(next, now)) {
       const di = days.findIndex(d => next.startEpoch >= d.startEpoch && next.startEpoch < d.endEpoch);
@@ -2146,7 +2146,7 @@ const LifeDirectorApp = (function () {
     /* a block started or ended: redraw so "now" and the running order move on */
     const stale = ui.boundary && now >= ui.boundary;
     if (stale && !sheetOpen) { render(); return; }
-    if (!ST.ui.focus && ST.schedule) {
+    if ((!ST.ui.focus || ST.ui.focus.paused) && ST.schedule) {
       const days = horizonDays(ST.schedule, tz()), day = days[0];
       if (day && ui.dayIdx === 0) {
         dial.querySelector('.ld-core').innerHTML = coreHtml(day, dayBlocks(ST.schedule, day, tz()), true, now);
@@ -3047,7 +3047,7 @@ const LifeDirectorApp = (function () {
       return { kick: fmt({ weekday: 'long' }).format(new Date(day.startEpoch * 1000)), kickKind: '', warn: false, title: fmt({ month: 'short', day: 'numeric' }).format(new Date(day.startEpoch * 1000)), date: true, big: null, timer: null,
         sub: tasks.length ? tasks.length + ' session' + (tasks.length === 1 ? '' : 's') + ' · ' + mins(taskMin) : 'No sessions planned', next: first ? { label: 'First · ' + fC(first.startEpoch), title: first.inst.title, live: false, act: '', id: '' } : null, button: null };
     }
-    const f = ST.ui.focus, fi = f && findInst(f.id);
+    const f = ST.ui.focus, fi = f && !f.paused && findInst(f.id);
     const out = { kick: 'Now', kickKind: '', warn: false, title: 'Free time', date: false, big: null, timer: null, sub: '', next: null, button: null };
     if (fi) {
       Object.assign(out, { kick: 'Timer running', kickKind: 'go', title: fi.title.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/&amp;/gi, '&').trim(),
@@ -3082,7 +3082,7 @@ const LifeDirectorApp = (function () {
   }
   function nativeUpNext(day, days, now) {
     const next = nextUp(now), f = ST.ui.focus, fi = f && findInst(f.id);
-    if (fi) return { kind: 'go', cue: 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: focusTimer(f), chips: [],
+    if (fi) return { kind: 'go', cue: f.paused ? 'Timer paused' : 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: focusTimer(f), chips: [],
       actions: [{ label: 'Open timer', act: 'focusOpen', primary: true }, { label: 'Finish and log', act: 'focusFinish' }] };
     if (!next) return null;
     if (!doable(next, now)) {
