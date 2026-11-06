@@ -1,0 +1,274 @@
+[
+  {
+    "act": "start",
+    "now": 1800000000000,
+    "id": "walk",
+    "before": null,
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "pause",
+    "now": 1800000060000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": 1800000060000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "pause",
+    "now": 1800000120000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": 1800000060000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": 1800000060000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "resume",
+    "now": 1800000600000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": 1800000060000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "resume",
+    "now": 1800000660000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "autoFinish",
+    "now": 1800000700000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "reset",
+    "now": 1800000700000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000000000,
+      "paused": null,
+      "pausedMs": 540000,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": 1800000700000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "autoFinish",
+    "now": 1800010000000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": 1800000700000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": 1800000700000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "resume",
+    "now": 1800010000000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": 1800000700000,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": null,
+      "pausedMs": 9300000,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "autoFinish",
+    "now": 1800020000000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800000700000,
+      "paused": null,
+      "pausedMs": 9300000,
+      "plannedMs": 900000
+    },
+    "after": null,
+    "completion": {
+      "activityId": "walk",
+      "actualStartEpoch": 1800000700,
+      "minutes": 15
+    }
+  },
+  {
+    "act": "start",
+    "now": 1800021000000,
+    "id": "walk",
+    "before": null,
+    "after": {
+      "id": "walk",
+      "start": 1800021000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "replace",
+    "now": 1800021010000,
+    "id": "read",
+    "before": {
+      "id": "walk",
+      "start": 1800021000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": {
+      "id": "read",
+      "start": 1800021010000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "finish",
+    "now": 1800021100000,
+    "id": "read",
+    "before": {
+      "id": "read",
+      "start": 1800021010000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": null,
+    "completion": {
+      "activityId": "read",
+      "actualStartEpoch": 1800021010,
+      "minutes": 2
+    }
+  },
+  {
+    "act": "start",
+    "now": 1800022000000,
+    "id": "walk",
+    "before": null,
+    "after": {
+      "id": "walk",
+      "start": 1800022000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "completion": null
+  },
+  {
+    "act": "cancel",
+    "now": 1800022001000,
+    "id": "walk",
+    "before": {
+      "id": "walk",
+      "start": 1800022000000,
+      "paused": null,
+      "pausedMs": 0,
+      "plannedMs": 900000
+    },
+    "after": null,
+    "completion": null
+  }
+]
