@@ -2,7 +2,6 @@ package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,8 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,6 +111,27 @@ fun ChronoDial(
     val view = LocalView.current
     val lift = remember(removal, view) { removal?.let { DialLift(it, view) } }
     val ghost = rememberGhost(removal)
+    // Keep the selected segment's location while its asynchronous sheet is loading.
+    // Touch and accessibility actions share this entry point.
+    var activityOrigin by remember { mutableStateOf<Offset?>(null) }
+    val openArc: (DialArc) -> Unit = { arc ->
+        val radius = if (arc.outer) dial.radii.outer else dial.radii.inner
+        activityOrigin =
+            DialGeometry.point(radius, (arc.a0 + arc.a1) / 2) -
+                Offset(DialGeometry.SIDE / 2, DialGeometry.SIDE / 2)
+        onArc(arc)
+    }
+    val activityArrival = remember { Animatable(if (centreContent != null) 1f else 0f) }
+    LaunchedEffect(centreContent != null, animate) {
+        if (centreContent == null) {
+            activityArrival.snapTo(0f)
+            activityOrigin = null
+        } else if (!animate) {
+            activityArrival.snapTo(1f)
+        } else {
+            activityArrival.animateTo(1f, tween(360, easing = EaseOut))
+        }
+    }
     val input by
         rememberUpdatedState(
             DialInput(
@@ -118,7 +140,7 @@ fun ChronoDial(
                 asking || (hold != null && !hold.held),
                 run,
                 handles,
-                onArc,
+                openArc,
                 lift,
                 centreDismiss,
                 DialGeometry.SIDE * .33f,
@@ -126,12 +148,6 @@ fun ChronoDial(
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
-        val activityScale by
-            animateFloatAsState(
-                if (centreContent != null) .66f else .48f,
-                tween(if (animate) 220 else 0),
-                label = "activity face",
-            )
         Box(
             Modifier.size(side)
                 .onGloballyPositioned {
@@ -218,7 +234,7 @@ fun ChronoDial(
                     }
                 tour?.let { TourTags(it.step.tags, it.still, animate) }
             }
-            ArcTargets(dial.arcs, dial.radii, onArc, removal)
+            ArcTargets(dial.arcs, dial.radii, openArc, removal)
             HandleTargets(dial, hold, asking || run != null, handles)
             val centreBox = Modifier.align(Alignment.Center).then(centreAnchor)
             when {
@@ -240,12 +256,23 @@ fun ChronoDial(
                 centreContent != null && hold == null -> {
                     Box(
                         centreBox
-                            .size(side * activityScale)
+                            .size(side * .66f)
+                            .graphicsLayer {
+                                val progress = if (animate) activityArrival.value else 1f
+                                val origin = activityOrigin ?: Offset.Zero
+                                val units = side.toPx() / DialGeometry.SIDE
+                                translationX = origin.x * units * (1f - progress)
+                                translationY = origin.y * units * (1f - progress)
+                                val initialScale = if (activityOrigin != null) .08f else .92f
+                                scaleX = lerp(initialScale, 1f, progress)
+                                scaleY = scaleX
+                                alpha = progress
+                            }
                             .clip(CircleShape)
                             .background(DirectorPalette.bg0)
                             .border(1.dp, DirectorPalette.line, CircleShape)
                             .pointerInput(centreDismiss) { detectTapGestures(onTap = {}) }
-                            .padding(side * activityScale * .15f)
+                            .padding(side * .66f * .15f)
                     ) {
                         centreContent()
                     }
