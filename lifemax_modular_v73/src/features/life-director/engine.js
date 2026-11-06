@@ -2330,7 +2330,10 @@ return Object.freeze(api);
       const err = validate(s); if (err) throw new Error('Backup is not valid: ' + err);
       return s;
     }
-    function clear() { try { const prev = storage.getItem(KEY); if (prev) storage.setItem(BAK, prev); storage.removeItem(KEY); } catch (e) { /* ignore */ } }
+    /* A reset is a durable fresh state, not a missing primary key: load() would
+       otherwise interpret the missing key as damage and resurrect BAK. Keep the
+       previous state as the ordinary recovery copy; never delete before saving. */
+    function clear(opts) { return save(defaultState(opts)); }
     return { load, save, exportJson, importJson, clear, get available() { return available; } };
   }
   return { create, defaultState, migrate, validate, KEY, BAK, CURRENT };

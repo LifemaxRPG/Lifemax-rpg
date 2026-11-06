@@ -2364,7 +2364,22 @@ const LifeDirectorApp = (function () {
       if (!persist()) { ST = was; render(); return { ok: false, message: 'Not saved: ' + lastSave.error + ' Nothing was restored.' }; }
       render(); say('Backup restored'); return { ok: true, message: 'Backup restored' };
     },
-    reset() { store.clear(); boot(); render(); return { ok: true, message: '' }; },
+    reset() {
+      const result = store.clear({ playerId: Host.playerId(), timezone: deviceTz(), nowEpoch: nowEpoch() });
+      lastSave = result;
+      if (!result.ok) {
+        const message = 'Life Director was not reset: ' + result.error;
+        ui.banner = { kind: 'bad', text: message };
+        render();
+        return { ok: false, message };
+      }
+      ui.banner = null; ui.notice = null; ui.sheet = null; ui.dayIdx = 0;
+      ui.prevPlan = null; ui.animate = false;
+      ui.fx = { prevTab: null, prevDay: null, nextId: null, justDone: null, glide: {}, daysScroll: null, take: null };
+      nativeCalendarOffset = null;
+      boot(); render();
+      return { ok: true, message: 'Life Director reset' };
+    },
     /* ── My time (phase 4B). Each answers {ok, changed, message}: a refusal changes nothing and its words are the message; a change
        is ok only when saved, and the page's notice says what happened; the same values again change nothing (changed: false). ── */
     /* bed and wake: minutes after midnight; weekend: Friday and Saturday nights' {bed, wake}, or null for every night the same */
