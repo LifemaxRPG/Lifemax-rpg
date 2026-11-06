@@ -2597,7 +2597,21 @@ const LifeMaxHost = (function () {
     }
     return false;
   };
-  H.openPlanDay = key => { H.openView('plan'); try { if (typeof selectDay === 'function') selectDay(key); } catch (e) { /* ignore */ } };
+  H.openPlanDay = key => {
+    H.openView('plan');
+    if (typeof selectDay !== 'function' || typeof planDay !== 'function' || !planDay(key)) return;
+    selectDay(key);
+    // Selection renders the right workout below the calendar; reveal it after layout.
+    requestAnimationFrame(() => {
+      const view = document.getElementById('view-plan');
+      if (!view || !view.classList.contains('active') || planSel !== key) return;
+      const details = view.querySelector('.plan-calendar-card + .card');
+      if (!details) return;
+      details.scrollIntoView({ block: 'start', behavior: typeof fxReduced === 'function' && fxReduced() ? 'auto' : 'smooth' });
+      const heading = details.querySelector('h3');
+      if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
+    });
+  };
   H._test = { parseCount, parseMinutes, weekBounds };
   return H;
 })();
