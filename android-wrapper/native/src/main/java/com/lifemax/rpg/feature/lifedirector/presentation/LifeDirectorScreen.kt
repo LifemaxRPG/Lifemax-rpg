@@ -450,7 +450,7 @@ private fun TodayTop(
     ChronoDial(
         today.dial,
         today.centre,
-        animate,
+        animate && !reducedMotion,
         actions::arc,
         actions.tap,
         Modifier.guideAnchor(anchors, "dial"),
@@ -462,6 +462,15 @@ private fun TodayTop(
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
         centreDismiss = if (activity != null) actions.session.close else null,
+        days = today.strip,
+        selectedDay = ui.pendingDay ?: today.dayIndex,
+        onDay = actions.day,
+        dayWheelEnabled =
+            ui.pendingDay == null &&
+                ui.pendingToday == null &&
+                ui.ask == null &&
+                ui.confirm == null &&
+                ui.guide == null,
         centreContent =
             activity?.let { model ->
                 { DialActivityControls(model, ui, actions, animate, reducedMotion) }
