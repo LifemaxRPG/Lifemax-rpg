@@ -130,23 +130,31 @@ jobs:
       # Explicit, single-use visual baseline maintenance on the development branch.
       # Ordinary pushes still verify references without changing them.
       - name: Refresh affected Life Director visual references
-        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
         working-directory: android-wrapper/android
         run: |
-          ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests '*Director*ScreenshotTest' --tests '*MiniSleepDialScreenshotTest' --tests '*OverviewArrivalScreenshotTest' --tests '*OverviewScreenScreenshotTest' --stacktrace
+          if [ "${{ contains(github.event.head_commit.message, '[refresh-meal-snapshot]') }}" = true ]; then
+            ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests 'com.lifemax.rpg.screenshots.LifeDirectorTimerMealScreenshotTest.meal' --stacktrace
+          else
+            ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests '*Director*ScreenshotTest' --tests '*MiniSleepDialScreenshotTest' --tests '*OverviewArrivalScreenshotTest' --tests '*OverviewScreenScreenshotTest' --stacktrace
+          fi
 
       - name: Preserve refreshed dial visual report
-        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
         uses: actions/upload-artifact@v4
         with:
           name: Life-Director-visual-review
           path: android-wrapper/android/app/build/reports/paparazzi/
 
       - name: Commit refreshed development references
-        if: github.ref == 'refs/heads/codex/director-dial-controls' && contains(github.event.head_commit.message, '[refresh-director-snapshots]')
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
         run: |
-          find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f \( -name '*Director*' -o -name '*MiniSleepDial*' -o -name '*OverviewArrival*' -o -name '*OverviewScreen*' \) -print0 | xargs -0 -r git add --
-          git add android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector
+          if [ "${{ contains(github.event.head_commit.message, '[refresh-meal-snapshot]') }}" = true ]; then
+            git add android-wrapper/native/src/test/snapshots/images/com.lifemax.rpg.screenshots_LifeDirectorTimerMealScreenshotTest_meal.png
+          else
+            find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f \( -name '*Director*' -o -name '*MiniSleepDial*' -o -name '*OverviewArrival*' -o -name '*OverviewScreen*' \) -print0 | xargs -0 -r git add --
+            git add android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector
+          fi
           git diff --cached --stat
           if git diff --cached --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
