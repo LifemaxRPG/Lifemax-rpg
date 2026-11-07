@@ -13,3 +13,9 @@ Tell the owner, in one line, before starting any of these, that switching to Opu
 - designing a new piece with no plan yet.
 
 Then carry on with whatever model the owner chooses.
+
+## User-facing update history
+
+Follow `docs/UPDATE_HISTORY.md` for every user-visible release change. Update
+`lifemax_modular_v73/src/data/update-history.json` with short user-facing bullets.
+The history is shown in Settings; keep earlier published entries and exclude unfinished work.

@@ -1,0 +1,17 @@
+{
+ "entries": [
+  {
+   "build": "current",
+   "date": "2026-11-07",
+   "title": "Life Director polish & update history",
+   "changes": [
+    "Read what changed in Settings → Phone & sync → App updates → What’s new.",
+    "Unplanned dates show your sleep and work hours, with a message that the day hasn’t been planned yet.",
+    "Double-tap an empty corner outside the Life Director dial to return to today with a winding animation.",
+    "The date fades into your current activity while its colored ring draws around the dial center.",
+    "Dial rotation keeps following your thumb after it drifts away from the outer rim.",
+    "Switch Life Director sections by tapping their buttons; accidental sideways swipes no longer change sections."
+   ]
+  }
+ ]
+}

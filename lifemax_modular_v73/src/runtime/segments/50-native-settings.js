@@ -21,6 +21,7 @@
      the handler ran, so a write that failed is reported) and, for a switch, whether turning it on asks Android for a permission:
      those are turned on on the page (a delegation) and off by command. Every other control on the page is a delegation. */
   const BOUND = [
+    ["updateHistory", "#whatsNewToggle", null],
     ["lightMode", "#lightModeToggle", "lifeMaxTheme"],
     ["nativeNutrition", "#nativeNutritionToggle", PREFS],
     ["tabTiming", "#tabTimingToggle", PREFS],
