@@ -56,6 +56,7 @@ import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
 import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
 import com.lifemax.rpg.feature.lifedirector.domain.DialRadii
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
+import com.lifemax.rpg.feature.lifedirector.domain.ReturnToTodayMotion
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
 import com.lifemax.rpg.feature.lifedirector.domain.StripDay
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
@@ -197,13 +198,9 @@ fun ChronoDial(
                         revealingHome = false
                         returningHome = true
                         val start = bezelRest.value
-                        // Rewind future dates; wind forward when returning from a past date.
-                        // Bound the travel so browsing months ahead still returns promptly.
-                        val direction = if (todayOffset > 0) -1f else 1f
-                        val turns =
-                            (1L + kotlin.math.abs(todayOffset.toLong()) / 7)
-                                .coerceAtMost(3)
-                                .toFloat()
+                        val travel = ReturnToTodayMotion.forDays(todayOffset)
+                        val direction = travel.direction
+                        val turns = travel.turns
                         val target = round(start / 360f) * 360f + direction * turns * 360f
                         returnScope.launch {
                             try {
@@ -212,7 +209,7 @@ fun ChronoDial(
                                 returnRotation.animateTo(
                                     target + direction * 12f,
                                     tween(
-                                        650 + (turns.toInt() - 1) * 140,
+                                        travel.durationMs,
                                         easing = CubicBezierEasing(.32f, 0f, .12f, 1f),
                                     ),
                                 ) {
