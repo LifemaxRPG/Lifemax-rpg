@@ -195,8 +195,8 @@ fun OverviewScreen(
                 val edge =
                     reorder.scrollStep(
                         (topInsetDp + 56) * density,
-                        list.layoutInfo.viewportEndOffset.toFloat() -
-                            (bottomInsetDp + 56) * density,
+                        (list.layoutInfo.viewportEndOffset - list.layoutInfo.viewportStartOffset)
+                            .toFloat() - (bottomInsetDp + 56) * density,
                         12 * density,
                     )
                 if (edge != 0f) list.scrollBy(edge)
