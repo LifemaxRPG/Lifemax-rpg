@@ -60,6 +60,7 @@ class TimerRepository(private val journal: Journal, initialEpoch: String) {
 
     private var state: Snapshot = journal.read() ?: Snapshot(initialEpoch).also(journal::write)
     private var uncertain = false
+    private var possibleEpochs = setOf(state.epoch)
 
     init {
         require(state.epoch == initialEpoch) { "Explicit epoch migration required" }
@@ -75,8 +76,9 @@ class TimerRepository(private val journal: Journal, initialEpoch: String) {
     @Synchronized
     fun reconcile() {
         val recovered = requireNotNull(journal.read()) { "Timer journal disappeared" }
-        check(recovered.epoch == state.epoch) { "Timer epoch changed" }
+        check(recovered.epoch in possibleEpochs) { "Unexpected timer epoch change" }
         state = recovered
+        possibleEpochs = setOf(recovered.epoch)
         uncertain = false
     }
 
@@ -129,10 +131,25 @@ class TimerRepository(private val journal: Journal, initialEpoch: String) {
         return commit(state.copy(outbox = state.outbox.filterNot { it.id == completionId }))
     }
 
+    /** Restore/reset barrier: pending rewards must be reconciled before replacing the epoch. */
+    @Synchronized
+    fun rotateEpoch(expectedEpoch: String, replacement: Snapshot): Boolean {
+        if (uncertain || state.epoch != expectedEpoch || state.outbox.isNotEmpty()) return false
+        require(replacement.epoch != expectedEpoch)
+        require(
+            replacement.lastSequence == 0L &&
+                replacement.outbox.isEmpty() &&
+                replacement.receipts.isEmpty()
+        )
+        return commit(replacement)
+    }
+
     private fun commit(next: Snapshot): Boolean {
+        possibleEpochs = setOf(state.epoch, next.epoch)
         return try {
             journal.write(next)
             state = next
+            possibleEpochs = setOf(next.epoch)
             true
         } catch (_: Exception) {
             // A failure may have occurred after the durable write. Do not guess or retry a new ID.
