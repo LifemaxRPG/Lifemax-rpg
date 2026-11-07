@@ -85,14 +85,14 @@ internal object OverviewLaunch {
         val destination: String,
         private val originX: Float,
         private val originY: Float,
-        private val top: Float,
-        private val bottom: Float,
+        private val contentTop: Float,
+        private val contentBottom: Float,
     ) : View(source.context) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private val mask = Path()
         private val bounds = RectF()
         private var progress = 0f
-        private var animation: ValueAnimator? = null
+        private var revealAnimator: ValueAnimator? = null
         private var finished = false
         val fallback = Runnable { if (pending === this) start() }
         val expiry = Runnable { finish() }
@@ -103,7 +103,7 @@ internal object OverviewLaunch {
         }
 
         fun start() {
-            if (finished || animation != null || !isAttachedToWindow) return
+            if (finished || revealAnimator != null || !isAttachedToWindow) return
             removeCallbacks(fallback)
             animation =
                 ValueAnimator.ofFloat(0f, 1f).apply {
@@ -127,20 +127,28 @@ internal object OverviewLaunch {
         @Suppress("DEPRECATION")
         override fun onDraw(canvas: Canvas) {
             val save = canvas.save()
-            canvas.clipRect(0f, top, width.toFloat(), (height - bottom).coerceAtLeast(top))
+            canvas.clipRect(
+                0f,
+                contentTop,
+                width.toFloat(),
+                (height - contentBottom).coerceAtLeast(contentTop),
+            )
             val reach =
                 max(
-                    max(hypot(originX, originY - top), hypot(width - originX, originY - top)),
                     max(
-                        hypot(originX, height - bottom - originY),
-                        hypot(width - originX, height - bottom - originY),
+                        hypot(originX, originY - contentTop),
+                        hypot(width - originX, originY - contentTop),
+                    ),
+                    max(
+                        hypot(originX, height - contentBottom - originY),
+                        hypot(width - originX, height - contentBottom - originY),
                     ),
                 )
             if (progress > 0f) {
                 mask.reset()
                 mask.addCircle(
                     originX,
-                    originY.coerceIn(top, max(top, height - bottom)),
+                    originY.coerceIn(contentTop, max(contentTop, height - contentBottom)),
                     reach * progress,
                     Path.Direction.CW,
                 )
@@ -157,7 +165,7 @@ internal object OverviewLaunch {
             finished = true
             removeCallbacks(fallback)
             removeCallbacks(expiry)
-            animation?.cancel()
+            revealAnimator?.cancel()
             (parent as? ViewGroup)?.removeView(this)
             if (pending === this) pending = null
             // Let the detached display list release its bitmap; recycling here could race the
