@@ -400,9 +400,34 @@ const LifeDirectorApp = (function () {
     const current = days.filter(day => day.endEpoch > now);
     return current.length ? current : U.buildHorizon(now, 1, z);
   }
+  /* Availability preview only: no tasks are scheduled and no save is changed. */
+  function unplannedSegments(day, z) {
+    const previous = U.ymdAdd(day.ymd, -1);
+    const start = U.zonedToEpoch(previous.y, previous.mo, previous.d, 0, z);
+    const derived = E.deriveAvailability({
+      timezone: z, horizonStartEpoch: start, horizonDays: 3,
+      playerAvailability: Object.assign({}, ST.availability, { timezone: z }),
+      fixedCommitments: ST.fixedCommitments || [], playerPreferences: ST.prefs
+    });
+    const g = derived.grid, result = [];
+    const visible = new Set(['SLEEP', 'WORK', 'CLASS', 'APPOINTMENT', 'COMMUTE', 'DECOMPRESS', 'BLACKOUT', 'SICK', 'EMERGENCY', 'UNAVAILABLE']);
+    for (let i = 0; i < g.n;) {
+      const tag = g.tag[i]; let end = i + 1;
+      while (end < g.n && g.tag[end] === tag) end++;
+      const block = tag >= 0 ? g.blocks[tag] : null;
+      if (block && visible.has(block.kind)) {
+        const a = Math.max(day.startEpoch, g.H0 + i * 900), b = Math.min(day.endEpoch, g.H0 + end * 900);
+        if (b > a) result.push(Object.assign({}, block, { startEpoch: a, endEpoch: b }));
+      }
+      i = end;
+    }
+    return result;
+  }
   function dayBlocks(sched, day, z) {
     const s = day.startEpoch, e = day.endEpoch, out = [];
-    for (const g of sched.segments || []) {
+    const preview = ST && sched === ST.schedule && (e <= sched.horizonStartEpoch || s >= sched.horizonEndEpoch);
+    const segments = preview ? unplannedSegments(day, z) : (sched.segments || []);
+    for (const g of segments) {
       if (g.endEpoch <= s || g.startEpoch >= e) continue;
       if (['FREE', 'SCHEDULED_TASK', 'USER_LOCKED_ACTIVITY'].includes(g.code)) continue;
       out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, mealStartEpoch: g.kind === 'MEAL' ? g.startEpoch : undefined, clipped: g.startEpoch < s || g.endEpoch > e });
@@ -3018,7 +3043,7 @@ const LifeDirectorApp = (function () {
       dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: nativeHourWords(), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
         nativeHandles(handles, d0, d1), { build: nativeBuild(d0, d1, arcs, isToday) }),
       hint: DIAL_HINT,
-      core: Object.assign(nativeCore(day, blocks, isToday, now, st), outsidePlan && !isToday ? { sub: 'Outside generated plan · saved activities only' } : {}),
+      core: Object.assign(nativeCore(day, blocks, isToday, now, st), outsidePlan && !(isToday && ST.ui.focus && !ST.ui.focus.paused && findInst(ST.ui.focus.id)) ? { sub: "This day hasn't been planned yet" } : {}),
       mix: nativeMix(blocks).map(share => outsidePlan && share.kind === 'free' ? Object.assign({}, share, { label: 'Unplanned' }) : share),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
       reminders: isToday ? (s.passiveReminders || []).map(reminderText) : [],
