@@ -66,3 +66,33 @@ jobs:
         with:
           name: native-timer-test-results
           path: ${{ runner.temp }}/timer-tests/build/reports/tests/test
+
+  android-timer-compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Prepare Android compilation
+        working-directory: android-wrapper
+        run: |
+          mkdir -p www
+          printf '%s' '<!doctype html><title>Timer compile check</title>' > www/index.html
+          npm install
+          npx cap add android
+          python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
+          cp native/*.java android/app/src/main/java/com/lifemax/rpg/
+          python3 patch_project.py android
+          cp -r res/. android/app/src/main/res/
+          python3 patch_gradle.py android/app/build.gradle 1 0
+          python3 patch_styles.py android/app/src/main/res/values/styles.xml
+          npx cap sync android
+      - name: Compile Android plugin and app sources
+        working-directory: android-wrapper/android
+        run: ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' :app:assembleDebug --stacktrace

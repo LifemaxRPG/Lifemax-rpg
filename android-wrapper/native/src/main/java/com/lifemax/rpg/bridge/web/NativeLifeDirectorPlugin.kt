@@ -1,10 +1,15 @@
 package com.lifemax.rpg.bridge.web
 
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModelProvider
+import com.getcapacitor.JSObject
+import com.getcapacitor.PluginCall
+import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.LifeDirectorContainer
 import com.lifemax.rpg.feature.lifedirector.data.directorReply
+import com.lifemax.rpg.feature.lifedirector.data.timer.TimerBridgeOwner
 import com.lifemax.rpg.feature.lifedirector.domain.DialPlace
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorCommands
 import com.lifemax.rpg.feature.lifedirector.presentation.LifeDirectorRoute
@@ -21,6 +26,47 @@ import org.json.JSONObject
 @CapacitorPlugin(name = "NativeLifeDirector")
 class NativeLifeDirectorPlugin : ComposeTabPlugin() {
     private var nextRequest = 0L
+    private var timerOwner: TimerBridgeOwner? = null
+    @Volatile private var timerDestroyed = false
+
+    /** Staging IPC only. Mutations remain disabled until the authority handshake is wired. */
+    @PluginMethod
+    @Synchronized
+    fun timer(call: PluginCall) {
+        if (timerDestroyed) {
+            call.reject("Timer bridge is closed")
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            call.resolve(JSObject().put("protocol", 1).put("status", "UNSUPPORTED"))
+            return
+        }
+        val request = call.getObject("request")
+        if (request == null) {
+            call.reject("Missing timer request")
+            return
+        }
+        val owner =
+            timerOwner
+                ?: TimerBridgeOwner(
+                        context.applicationContext.filesDir
+                            .toPath()
+                            .resolve("life-director-timer.bin")
+                    )
+                    .also { timerOwner = it }
+        owner.submit(request) { reply ->
+            if (!timerDestroyed) call.resolve(JSObject.fromJSONObject(reply))
+        }
+    }
+
+    @Synchronized
+    override fun handleOnDestroy() {
+        timerDestroyed = true
+        timerOwner?.close()
+        timerOwner = null
+        super.handleOnDestroy()
+    }
+
     private val container =
         LifeDirectorContainer(
             object : LifeDirectorCommands {
