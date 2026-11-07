@@ -9,7 +9,8 @@
     "The winding date count, spring settle, and activity-ring reveal stay connected throughout the return.",
     "Overview cards now reveal their destination with a smooth expanding transition from the tap, while the shared bars stay in place.",
     "Press and hold an Overview card, then drag it to rearrange your dashboard. Cards lift, neighbors slide aside, and the layout saves when you drop.",
-    "The Edit button still manages hidden cards. Dragging near the screen edges scrolls the dashboard."
+    "The Edit button still manages hidden cards. Dragging near the screen edges scrolls the dashboard.",
+    "Life Director activity centers use compact, non-scrolling summaries and keep the main action visible. Dragging inside the center no longer scrolls the dashboard or top bar."
    ]
   },
   {

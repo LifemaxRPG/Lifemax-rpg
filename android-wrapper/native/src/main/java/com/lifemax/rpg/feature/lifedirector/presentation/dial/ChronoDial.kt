@@ -446,7 +446,7 @@ fun ChronoDial(
                             .background(DirectorPalette.bg0)
                             .border(1.dp, DirectorPalette.line, CircleShape)
                             .pointerInput(centreDismiss) { detectTapGestures(onTap = {}) }
-                            .padding(side * .66f * .15f)
+                            .padding(side * .66f * .10f)
                     ) {
                         centreContent()
                     }
