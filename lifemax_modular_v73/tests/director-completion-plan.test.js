@@ -1,0 +1,40 @@
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert/strict');
+const base = process.env.DIRECTOR_SOURCE || path.join(__dirname, '../src/features/life-director');
+const { planTimerCompletion } = require(process.env.COMPLETION_PLAN || path.join(base, 'timer-completion-plan.js'));
+const source = fs.readFileSync(path.join(base, 'engine.js'), 'utf8');
+const sandbox = { module: { exports: {} } };
+vm.runInNewContext(source.slice(0, source.indexOf('/* ── Life Director Store')), sandbox);
+const E = sandbox.module.exports;
+const req = { epoch: 'e', sequence: 2, id: 'e/2', activityId: 'walk', generation: 1000000, actualStartEpoch: 1000, minutes: 15 };
+const instance = { instanceId: 'walk', lifecycleState: 'PLANNED', title: 'Brisk walk', tag: 'fitness',
+  startEpoch: 1000, endEpoch: 1900, IP: 2, IC: 1, tier: 2, linkedGoalIds: ['g'], linkedQuestRequirementIds: [{ questId: 'q', reqId: 'r' }] };
+const state = () => ({ playerId: 'p', ledger: E.emptyLedger('p'), prefs: {}, goals: [{ id: 'g' }], questOverlay: {},
+  ui: { focus: { id: 'walk', start: 1000000 } }, schedule: { scheduledInstances: [instance], historyInstances: [] } });
+const context = { nowEpoch: 1900, dayKey: '2026-11-07', quests: [{ id: 'q', title: 'Walk once', status: 'ACTIVE',
+  requirements: [{ id: 'r', tag: 'fitness', targetCount: 1, currentCount: 0 }], hostRef: { key: 'q-today', questId: 'q' } }] };
+const original = state(), before = JSON.stringify(original);
+const plan = planTimerCompletion(E, original, req, context);
+assert(plan);
+assert.equal(JSON.stringify(original), before, 'preparation never mutates current state');
+assert.equal(plan.director.ledger.order.length, 1);
+assert.equal(plan.director.schedule.scheduledInstances.length, 0);
+assert.equal(plan.director.schedule.historyInstances.length, 1);
+assert.equal(plan.director.ui.focus, null);
+assert.equal(plan.director.goals[0].sessionsCompleted, 1);
+assert.equal(plan.effects[0].kind, 'activity');
+assert.equal(plan.effects[0].event.actualDurationMinutes, 15);
+assert.equal(plan.effects[1].kind, 'quest');
+assert.equal(plan.director.questOverlay['q-today'].eventIds.length, 1);
+const duplicate = state(); duplicate.ledger = plan.director.ledger;
+assert.equal(planTimerCompletion(E, duplicate, req, context), null);
+const archived = state(); archived.ledger.archivedIds = [plan.effects[0].event.eventId];
+assert.equal(planTimerCompletion(E, archived, req, context), null, 'archived IDs remain burned');
+const partialState = state(); partialState.schedule.scheduledInstances = [{ ...instance, linkedQuestRequirementIds: [] }];
+const partial = planTimerCompletion(E, partialState, { ...req, minutes: 2 }, { ...context, quests: [] });
+assert.equal(partial.director.schedule.historyInstances[0].lifecycleState, 'PARTIALLY_COMPLETED');
+assert.equal(partial.director.goals[0].minutesCompleted, 2);
+assert.equal(partial.director.goals[0].sessionsCompleted, 0);
+const residualState = state(); residualState.schedule.scheduledInstances = [{ ...instance, tier: 3, source: { id: 'task' } }];
+assert.equal(planTimerCompletion(E, residualState, { ...req, minutes: 2 }, context), null, 'cannot silently omit required residual planning');
+console.log('PASS real engine completion planning, quest and goal progress, partial completion, immutable input, duplicate/archived receipts, residual guard');

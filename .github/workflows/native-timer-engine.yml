@@ -26,6 +26,10 @@ jobs:
           gradle-version: '8.10.2'
       - name: Verify fixtures against the existing JavaScript timer
         run: node lifemax_modular_v73/tests/director-timer-parity.test.js
+      - name: Verify completion delivery interruption recovery
+        run: |
+          node lifemax_modular_v73/tests/director-completion-protocol.test.js
+          node lifemax_modular_v73/tests/director-completion-plan.test.js
       - name: Compile and test the pure Kotlin timer rules
         run: |
           mkdir -p "$RUNNER_TEMP/timer-tests"
