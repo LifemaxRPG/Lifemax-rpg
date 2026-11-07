@@ -2308,6 +2308,18 @@ return Object.freeze(api);
     }
     function save(state) {
       if (!available) return { ok: false, error: 'Browser storage is unavailable here; changes last only until this page closes.' };
+      // Standalone hosts without the shared fence must fail closed for native-owned saves.
+      let blocked;
+      try {
+        if (typeof timerWriteFence === 'function') blocked = timerWriteFence(storage, 'director', state);
+        else {
+          const current = JSON.parse(storage.getItem(KEY) || 'null');
+          const game = JSON.parse(storage.getItem('lifemax_rpg_prototype_v1') || 'null');
+          if ([state, current, game].some(s => s && s.timerAuthority && s.timerAuthority.owner === 'NATIVE'))
+            blocked = 'Native timer save guard is unavailable.';
+        }
+      } catch (_) { blocked = 'Timer save state could not be verified.'; }
+      if (blocked) return { ok: false, error: blocked };
       const err = validate(state);
       if (err) return { ok: false, error: 'Refusing to save invalid state: ' + err };
       let json;

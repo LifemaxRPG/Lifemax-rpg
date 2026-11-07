@@ -37,7 +37,27 @@ function load(){
    rework (xpSchemaV2), the reading list (mediaSeededV1) and the class quests (classContent). */
 function migrateSave(){ecoMigrate();seedReadingList();applyClassContent();state.schema=SAVE_SCHEMA}
 /* The one writer of the core save; answers whether it was stored. */
+/* Ordinary saves may not overwrite an in-flight native completion or old receipts. */
+function timerWriteFence(storage,scope,candidate){
+ try{
+  const keys=['lifemax_rpg_prototype_v1','lifemax_director_state_v1'];
+  const raw=keys.map(k=>storage.getItem(k));
+  const marked=raw.some(v=>v&&v.includes('"NATIVE"'));
+  if(!marked&&!(candidate&&candidate.timerAuthority&&candidate.timerAuthority.owner==='NATIVE'))return null;
+  const values=raw.map(v=>v==null?null:JSON.parse(v));
+  const owners=values.map(v=>v&&v.timerAuthority);
+  if(!owners.some(m=>m&&m.owner==='NATIVE'))return null;
+  if(owners.some(m=>!m||m.owner!=='NATIVE'||typeof m.epoch!=='string'||!m.epoch)||owners[0].epoch!==owners[1].epoch)
+   return 'Timer ownership is being reconciled. Please try again shortly.';
+  if(owners.some(m=>m.pending!=null))return 'A timer completion is still saving. Please try again shortly.';
+  const expected=owners[scope==='game'?0:1];
+  if(JSON.stringify(candidate&&candidate.timerAuthority)!==JSON.stringify(expected))
+   return 'Timer receipts changed. Reload the saved state before trying again.';
+  return null;
+ }catch(e){return 'Timer save state could not be verified. Nothing was overwritten.'}
+}
 function writeSave(){
+ const timerBlock=timerWriteFence(localStorage,'game',state);if(timerBlock){console.warn('[save]',timerBlock);return false}
  if(saveReadOnly){if(!saveReadOnlyTold){saveReadOnlyTold=true;const why=saveReadOnly;setTimeout(()=>alert(why),2500)}return false}
  try{localStorage.setItem(STORE,JSON.stringify(state));return true}catch(e){console.warn('[save] not stored',e);return false}
 }
