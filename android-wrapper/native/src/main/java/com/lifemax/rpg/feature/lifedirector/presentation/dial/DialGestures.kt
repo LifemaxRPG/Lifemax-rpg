@@ -48,6 +48,7 @@ internal class DialInput(
     val dismiss: (() -> Unit)? = null,
     val centreRadius: Float = 0f,
     val dayWheel: DayWheelInput? = null,
+    val onToday: (() -> Unit)? = null,
 )
 
 /**
@@ -72,6 +73,8 @@ internal class DialGestures(
     private val buzz: DirectorBuzz?,
 ) {
     private var dragEnd = Long.MIN_VALUE / 2
+    private var outsideTapAt = Long.MIN_VALUE / 2
+    private var outsideTapPosition = androidx.compose.ui.geometry.Offset.Zero
 
     suspend fun run() = scope.awaitEachGesture { gesture() }
 
@@ -81,6 +84,35 @@ internal class DialGestures(
                 ?: return
         val now = input()
         val unit = unitPx(size.width.toFloat())
+        // Blank corners outside the rotating hour track. Never claim a scroll or rim drag.
+        val previousTap = outsideTapAt
+        outsideTapAt = Long.MIN_VALUE / 2
+        if (now.onToday != null && DialGeometry.radiusAt(down.position / unit) > 184f) {
+            val up = waitForUpOrCancellation() ?: return
+            if (
+                (up.position - down.position).getDistance() > viewConfiguration.touchSlop ||
+                    up.uptimeMillis - down.uptimeMillis >=
+                        viewConfiguration.longPressTimeoutMillis ||
+                    DialGeometry.radiusAt(up.position / unit) <= 184f
+            )
+                return
+            val gap = down.uptimeMillis - previousTap
+            val nearby = (down.position - outsideTapPosition).getDistance() <= 48.dp.toPx()
+            up.consume()
+            if (
+                gap in
+                    viewConfiguration.doubleTapMinTimeMillis..viewConfiguration
+                            .doubleTapTimeoutMillis && nearby
+            ) {
+                input().onToday?.invoke()
+            } else {
+                outsideTapAt = up.uptimeMillis
+                outsideTapPosition = up.position
+                input().dismiss?.invoke()
+            }
+            return
+        }
+
         if (
             now.dismiss != null &&
                 (down.position / unit - androidx.compose.ui.geometry.Offset(180f, 180f))

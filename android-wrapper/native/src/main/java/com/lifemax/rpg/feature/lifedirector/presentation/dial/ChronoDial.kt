@@ -110,6 +110,7 @@ fun ChronoDial(
     onDay: ((Int) -> Unit)? = null,
     dayWheelEnabled: Boolean = true,
     calendarDate: String = "",
+    onToday: (() -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
     val face =
@@ -224,6 +225,7 @@ fun ChronoDial(
                 centreDismiss,
                 DialGeometry.SIDE * .33f,
                 wheel,
+                if (dayWheelEnabled && tour == null && run == null) onToday else null,
             )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {

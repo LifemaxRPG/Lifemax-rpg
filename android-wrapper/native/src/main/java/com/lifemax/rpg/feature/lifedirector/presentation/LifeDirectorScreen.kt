@@ -470,6 +470,10 @@ private fun TodayTop(
         calendarDate = today.calendarDate,
         selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
         onDay = { actions.day(today.calendarOffset + it) },
+        onToday = {
+            actions.session.close()
+            actions.day(0)
+        },
         dayWheelEnabled =
             ui.pendingDay == null &&
                 ui.pendingToday == null &&
