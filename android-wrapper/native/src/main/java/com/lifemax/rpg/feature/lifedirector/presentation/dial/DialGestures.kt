@@ -199,8 +199,8 @@ internal class DialGestures(
                     change.consume()
                     break
                 }
-                val radius = DialGeometry.radiusAt(change.position / unit)
-                if (radius < 140f || radius > 205f) break
+                // The initial rim hit owns this pointer until release or cancellation.
+                // Radial drift must not cancel an already captured rotation.
                 if (
                     !moved &&
                         (change.position - down.position).getDistance() >
