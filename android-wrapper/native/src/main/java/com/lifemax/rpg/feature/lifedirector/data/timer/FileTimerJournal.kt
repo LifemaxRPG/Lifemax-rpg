@@ -35,8 +35,13 @@ class FileTimerJournal(private val file: Path) : R.Journal, AutoCloseable {
 
     override fun read(): R.Snapshot? {
         check(lock.isValid)
-        if (!Files.exists(file)) return null
-        require(Files.size(file) <= MAX_BYTES) { "Timer journal too large" }
+        val length =
+            try {
+                Files.size(file)
+            } catch (_: java.nio.file.NoSuchFileException) {
+                return null
+            }
+        require(length <= MAX_BYTES) { "Timer journal too large" }
         val input = DataInputStream(ByteArrayInputStream(Files.readAllBytes(file)))
         require(input.readInt() == MAGIC && input.readInt() == 1) { "Unsupported timer journal" }
         val checksum = input.readLong()

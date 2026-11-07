@@ -6,6 +6,53 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class TimerRepositoryTest {
+    @Test
+    fun journalRoundTripsEveryCommandAndPausedTime() {
+        val path = Files.createTempDirectory("timer-controls").resolve("timer.bin")
+        val key = TimerEngine.Key("walk", 1000)
+        val requests =
+            listOf(
+                start(),
+                TimerRepository.Request("epoch", 2, 21_000, TimerEngine.Command.Pause(key)),
+                TimerRepository.Request("epoch", 3, 41_000, TimerEngine.Command.Resume(key)),
+                TimerRepository.Request("epoch", 4, 51_000, TimerEngine.Command.Reset(key)),
+                TimerRepository.Request(
+                    "epoch",
+                    5,
+                    61_000,
+                    TimerEngine.Command.Replace(
+                        TimerEngine.Key("walk", 51_000),
+                        TimerEngine.Target("run", 90_000),
+                    ),
+                ),
+                TimerRepository.Request(
+                    "epoch",
+                    6,
+                    71_000,
+                    TimerEngine.Command.Stop(TimerEngine.Key("run", 61_000)),
+                ),
+                start(7, 81_000),
+                finish(8, 81_000),
+            )
+        for (request in requests) {
+            var expected: TimerRepository.Snapshot? = null
+            FileTimerJournal(path).use { disk ->
+                val repo = TimerRepository(disk, "epoch")
+                assertEquals(TimerRepository.Delivery.COMMITTED, repo.dispatch(request).delivery)
+                expected = repo.snapshot()
+                if (request.sequence == 2L)
+                    assertEquals(20_000L, expected!!.timer!!.elapsedMs(500_000))
+                if (request.sequence == 3L)
+                    assertEquals(30_000L, expected!!.timer!!.elapsedMs(51_000))
+            }
+            FileTimerJournal(path).use { disk ->
+                val repo = TimerRepository(disk, "epoch")
+                assertEquals(expected, repo.snapshot())
+                assertEquals(TimerRepository.Delivery.REPLAYED, repo.dispatch(request).delivery)
+            }
+        }
+    }
+
     private class Memory : TimerRepository.Journal {
         var durable: TimerRepository.Snapshot? = null
         var fault = 0
