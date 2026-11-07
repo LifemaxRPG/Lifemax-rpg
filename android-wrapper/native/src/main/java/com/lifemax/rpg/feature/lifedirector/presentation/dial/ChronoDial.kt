@@ -164,7 +164,9 @@ fun ChronoDial(
     val bezelRest = remember { Animatable(0f) }
     val returnScope = rememberCoroutineScope()
     val returnRotation = remember { Animatable(0f) }
+    val homeReveal = remember { Animatable(1f) }
     var returningHome by remember { mutableStateOf(false) }
+    var revealingHome by remember { mutableStateOf(false) }
     var returnProgress by remember { mutableFloatStateOf(0f) }
     var returnDate by remember { mutableStateOf(LocalDate.of(1970, 1, 1)) }
     var returnDays by remember { mutableStateOf(0) }
@@ -192,6 +194,7 @@ fun ChronoDial(
                         returnDate = dateBase
                         returnDays = todayOffset
                         returnProgress = 0f
+                        revealingHome = false
                         returningHome = true
                         val start = bezelRest.value
                         // Rewind future dates; wind forward when returning from a past date.
@@ -204,6 +207,7 @@ fun ChronoDial(
                         val target = round(start / 360f) * 360f + direction * turns * 360f
                         returnScope.launch {
                             try {
+                                homeReveal.snapTo(0f)
                                 returnRotation.snapTo(start)
                                 returnRotation.animateTo(
                                     target + direction * 12f,
@@ -221,6 +225,8 @@ fun ChronoDial(
                                     spring(dampingRatio = .65f, stiffness = 420f),
                                 )
                                 bezelRest.snapTo(0f)
+                                revealingHome = true
+                                homeReveal.animateTo(1f, tween(560, easing = EaseOut))
                             } finally {
                                 bezelDrag = 0f
                                 returningHome = false
@@ -343,7 +349,14 @@ fun ChronoDial(
                         alpha = run?.let { BuildTimeline.faceShown(it.build, it.ms) } ?: 1f
                     }
                 ) {
-                    inUnits { now.draw(this) }
+                    inUnits {
+                        now.draw(
+                            this,
+                            if (returningHome) {
+                                if (revealingHome) homeReveal.value else 0f
+                            } else 1f,
+                        )
+                    }
                 }
                 if (halo != null && next != null) {
                     val pulse = rememberPulse(animate, 2400)
@@ -390,7 +403,17 @@ fun ChronoDial(
             }
             ArcTargets(dial.arcs, dial.radii, openArc, removal)
             HandleTargets(dial, hold, asking || run != null, handles)
-            val centreBox = Modifier.align(Alignment.Center).then(centreAnchor)
+            val centreBox =
+                Modifier.align(Alignment.Center).then(centreAnchor).graphicsLayer {
+                    val shown =
+                        if (returningHome) {
+                            if (revealingHome) homeReveal.value else 0f
+                        } else 1f
+                    alpha = shown
+                    scaleX = lerp(.94f, 1f, shown)
+                    scaleY = scaleX
+                    translationY = (1f - shown) * 10.dp.toPx()
+                }
             when {
                 run != null -> {
                     DialCentreView(
@@ -448,6 +471,14 @@ fun ChronoDial(
                     else dateBase.plusDays((previewDay - selectedDay).toLong())
                 Box(
                     Modifier.align(Alignment.Center)
+                        .graphicsLayer {
+                            val leaving =
+                                if (returningHome && revealingHome) homeReveal.value else 0f
+                            alpha = 1f - leaving
+                            scaleX = 1f - .04f * leaving
+                            scaleY = scaleX
+                            translationY = -8.dp.toPx() * leaving
+                        }
                         .size(side * .48f)
                         .clip(CircleShape)
                         .background(DirectorPalette.bg0),

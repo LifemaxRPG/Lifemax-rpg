@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.TextLayoutResult
@@ -162,38 +163,60 @@ internal inline fun DrawScope.faded(alpha: Float, block: DrawScope.() -> Unit) {
 }
 
 /** The part of today already gone, greyed out, and how much of the current block is left. */
-internal class DialNow(radii: DialRadii, hand: Float?, ring: CurrentRing?) :
-    DialLayer(
-        buildList<Step> {
-            if (hand != null && hand > 1f) {
-                val outer = radii.outer + radii.outerWidth / 2 + 2
-                val inner = radii.inner - radii.innerWidth / 2 - 2
-                val (x, y) = point(inner, hand)
-                val sector =
-                    Path().apply {
-                        arcTo(box(outer), -90f, hand, true)
-                        lineTo(x, y)
-                        arcTo(box(inner), hand - 90f, -hand, false)
-                        close()
-                    }
-                add { drawPath(sector, P.past) }
-            }
-            if (ring != null) {
-                outline(ring.radius, 3f, P.ringTrack)
-                if (ring.frac < .997f) {
-                    val color =
-                        when {
-                            ring.warn -> P.warn
-                            ring.kind == BlockKind.FREE -> P.ringFree
-                            else -> P.of(ring.kind)
+internal class DialNow(radii: DialRadii, hand: Float?, ring: CurrentRing?) {
+    private val past =
+        DialLayer(
+            buildList<Step> {
+                if (hand != null && hand > 1f) {
+                    val outer = radii.outer + radii.outerWidth / 2 + 2
+                    val inner = radii.inner - radii.innerWidth / 2 - 2
+                    val (x, y) = point(inner, hand)
+                    val sector =
+                        Path().apply {
+                            arcTo(box(outer), -90f, hand, true)
+                            lineTo(x, y)
+                            arcTo(box(inner), hand - 90f, -hand, false)
+                            close()
                         }
-                    val arc = arcPath(ring.radius, ring.frac * 360f, 360f)
-                    glow(arc, 3.5f, color, if (ring.warn) 5f else 4f, StrokeCap.Round)
-                    stroke(arc, Stroke(3.5f, cap = StrokeCap.Round), color, .9f)
+                    add { drawPath(sector, P.past) }
                 }
             }
+        )
+    private val current =
+        DialLayer(
+            buildList<Step> {
+                if (ring != null) {
+                    outline(ring.radius, 3f, P.ringTrack)
+                    if (ring.frac < .997f) {
+                        val color =
+                            when {
+                                ring.warn -> P.warn
+                                ring.kind == BlockKind.FREE -> P.ringFree
+                                else -> P.of(ring.kind)
+                            }
+                        val arc = arcPath(ring.radius, ring.frac * 360f, 360f)
+                        glow(arc, 3.5f, color, if (ring.warn) 5f else 4f, StrokeCap.Round)
+                        stroke(arc, Stroke(3.5f, cap = StrokeCap.Round), color, .9f)
+                    }
+                }
+            }
+        )
+    private val revealRadius = (ring?.radius ?: 84f) + 12f
+
+    fun draw(scope: DrawScope, ringReveal: Float = 1f) {
+        past.draw(scope)
+        if (ringReveal >= 1f) current.draw(scope)
+        else if (ringReveal > 0f) {
+            val mask =
+                Path().apply {
+                    moveTo(180f, 180f)
+                    arcTo(box(revealRadius), -90f, 360f * ringReveal, false)
+                    close()
+                }
+            with(scope) { clipPath(mask) { current.draw(this) } }
         }
-    )
+    }
+}
 
 /** The hand, drawn pointing at midnight; its layer turns it to the time. */
 internal val handLayer =
