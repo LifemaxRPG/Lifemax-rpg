@@ -256,6 +256,8 @@ data class DirectorToday(
     val ahead: List<OrderRow>,
     val earlier: EarlierToday?,
     val hint: Pair<String, String> = "" to "",
+    val calendarDate: String = "",
+    val calendarOffset: Int = 0,
 )
 
 /**

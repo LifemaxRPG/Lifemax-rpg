@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lifemax.rpg.feature.lifedirector.domain.MealSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
@@ -64,8 +65,12 @@ internal fun DialActivityControls(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {},
-                    onLongClickLabel = "Open workout or quest",
-                    onLongClick = { actions.editActivity(model.id) },
+                    onLongClickLabel =
+                        if (model is MealSheetModel) "Open meal menu" else "Open workout or quest",
+                    onLongClick = {
+                        if (model is MealSheetModel) actions.timerMeal.openMeal()
+                        else actions.editActivity(model.id)
+                    },
                 )
                 .semantics {
                     customActions =
@@ -91,6 +96,7 @@ internal fun DialActivityControls(
             ) {
                 val title =
                     when (current) {
+                        is MealSheetModel -> current.title
                         is MoveSheetModel -> current.title
                         is SessionSheetModel -> current.title
                         is TimerSheetModel -> current.title
@@ -106,6 +112,11 @@ internal fun DialActivityControls(
                     textAlign = TextAlign.Center,
                 )
                 when (current) {
+                    is MealSheetModel -> {
+                        DialCaption(current.`when`)
+                        DialCaption(current.chips.joinToString(" · ") { it.text })
+                        DialPrimary(current.open, ready, actions.timerMeal.openMeal)
+                    }
                     is SessionSheetModel -> {
                         DialCaption(current.`when`)
                         current.primary?.let {

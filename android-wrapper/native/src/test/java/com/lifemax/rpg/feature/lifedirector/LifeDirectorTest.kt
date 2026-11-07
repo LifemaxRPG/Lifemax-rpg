@@ -408,7 +408,8 @@ class LifeDirectorTest {
         assertNull(vm.ui.value.toast)
         vm.showDay(1)
         vm.showDay(9)
-        assertEquals(listOf(1), commands.days)
+        assertEquals(listOf(1, 9), commands.days)
+        assertEquals(9, vm.ui.value.pendingDay)
     }
 
     @Test

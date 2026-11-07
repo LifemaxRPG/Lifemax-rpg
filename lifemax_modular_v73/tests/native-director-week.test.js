@@ -159,8 +159,21 @@ async function command(p, command, payload) {
     r = await command(p, 'day', { index: 1 });
     ok('day: another day of the strip, the page\'s strip follows', r.reply && r.reply.ok && r.snapshot.today.dayIndex === 1 &&
       await p.evaluate(() => document.querySelector('#view-life-director .ld-chipday.on, #view-life-director .ld-chipday[aria-selected="true"]') !== null), r.reply);
+    const beforeBrowse = await p.evaluate(() => localStorage.getItem('lifemax_director_state_v1'));
     r = await command(p, 'day', { index: 99 });
-    ok('day: a day off the plan is refused and changes nothing', r.reply && r.reply.ok === false && r.snapshot.today.dayIndex === 1, r.reply);
+    ok('day: browse beyond the generated plan without changing the saved schedule', r.reply && r.reply.ok &&
+      r.snapshot.today.calendarOffset === 99 && r.snapshot.today.dayIndex === 0 &&
+      await p.evaluate(() => localStorage.getItem('lifemax_director_state_v1')) === beforeBrowse, r.reply);
+    const distantDate = r.snapshot.today.calendarDate;
+    r = await command(p, 'day', { index: 99 });
+    ok('day: replay keeps the same distant calendar date', r.reply && r.reply.ok &&
+      r.snapshot.today.calendarOffset === 99 && r.snapshot.today.calendarDate === distantDate, r.reply);
+    r = await command(p, 'day', { index: 'invalid' });
+    ok('day: invalid input is refused without moving the calendar', r.reply && r.reply.ok === false &&
+      r.snapshot.today.calendarDate === distantDate, r.reply);
+    r = await command(p, 'gotoDay', { index: 1 });
+    ok('gotoDay: returns from distant browsing to the planned strip', r.reply && r.reply.ok &&
+      r.snapshot.today.calendarOffset === 0 && r.snapshot.today.dayIndex === 1, r.reply);
     r = await command(p, 'section', { id: 'nowhere' });
     ok('section: an unknown section is refused', r.reply && r.reply.ok === false, r.reply);
 

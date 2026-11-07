@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import com.lifemax.rpg.feature.lifedirector.domain.DayWheel
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
@@ -46,6 +47,8 @@ internal class DialInput(
     val lift: DialLift? = null,
     val dismiss: (() -> Unit)? = null,
     val centreRadius: Float = 0f,
+    val dayWheel: DayWheelInput? = null,
+    val onToday: (() -> Unit)? = null,
 )
 
 /**
@@ -70,6 +73,8 @@ internal class DialGestures(
     private val buzz: DirectorBuzz?,
 ) {
     private var dragEnd = Long.MIN_VALUE / 2
+    private var outsideTapAt = Long.MIN_VALUE / 2
+    private var outsideTapPosition = androidx.compose.ui.geometry.Offset.Zero
 
     suspend fun run() = scope.awaitEachGesture { gesture() }
 
@@ -79,6 +84,35 @@ internal class DialGestures(
                 ?: return
         val now = input()
         val unit = unitPx(size.width.toFloat())
+        // Blank corners outside the rotating hour track. Never claim a scroll or rim drag.
+        val previousTap = outsideTapAt
+        outsideTapAt = Long.MIN_VALUE / 2
+        if (now.onToday != null && DialGeometry.radiusAt(down.position / unit) > 184f) {
+            val up = waitForUpOrCancellation() ?: return
+            if (
+                (up.position - down.position).getDistance() > viewConfiguration.touchSlop ||
+                    up.uptimeMillis - down.uptimeMillis >=
+                        viewConfiguration.longPressTimeoutMillis ||
+                    DialGeometry.radiusAt(up.position / unit) <= 184f
+            )
+                return
+            val gap = down.uptimeMillis - previousTap
+            val nearby = (down.position - outsideTapPosition).getDistance() <= 48.dp.toPx()
+            up.consume()
+            if (
+                gap in
+                    viewConfiguration.doubleTapMinTimeMillis..viewConfiguration
+                            .doubleTapTimeoutMillis && nearby
+            ) {
+                input().onToday?.invoke()
+            } else {
+                outsideTapAt = up.uptimeMillis
+                outsideTapPosition = up.position
+                input().dismiss?.invoke()
+            }
+            return
+        }
+
         if (
             now.dismiss != null &&
                 (down.position / unit - androidx.compose.ui.geometry.Offset(180f, 180f))
@@ -92,6 +126,18 @@ internal class DialGestures(
         now.run?.let { run ->
             down.consume()
             run.skip()
+            return
+        }
+        // The hour track sits beyond the sleep/work bands. Own only gestures begun there.
+        val wheel = now.dayWheel
+        if (
+            wheel != null &&
+                !now.inert &&
+                now.hold == null &&
+                DialGeometry.radiusAt(down.position / unit) in 166f..184f
+        ) {
+            down.consume()
+            scrubDays(wheel, down, unit)
             return
         }
         val radius = maxOf(DragGeometry.HIT_RADIUS, HIT_DP.toPx() / unit)
@@ -128,6 +174,52 @@ internal class DialGestures(
         DialGeometry.arcAt(dial.arcs, dial.radii, up.position / unit)?.let {
             up.consume()
             input().onArc(it)
+        }
+    }
+
+    private suspend fun AwaitPointerEventScope.scrubDays(
+        wheel: DayWheelInput,
+        down: PointerInputChange,
+        unit: Float,
+    ) {
+        val travel =
+            DayWheel(wheel.selected, wheel.count, DialGeometry.angleAt(down.position / unit))
+        var moved = false
+        var cancelled = true
+        var last = down.uptimeMillis
+        wheel.begin()
+        try {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                last = change.uptimeMillis
+                if (event.changes.count { it.pressed } > 1 || change.isConsumed) break
+                if (!change.pressed) {
+                    cancelled = false
+                    change.consume()
+                    break
+                }
+                // The initial rim hit owns this pointer until release or cancellation.
+                // Radial drift must not cancel an already captured rotation.
+                if (
+                    !moved &&
+                        (change.position - down.position).getDistance() >
+                            viewConfiguration.touchSlop
+                )
+                    moved = true
+                if (moved) {
+                    val previous = travel.selected
+                    val selected = travel.move(DialGeometry.angleAt(change.position / unit))
+                    wheel.preview(selected, travel.rotation)
+                    if (selected != previous) {
+                        buzz?.buzz(BUZZ_MS)
+                    }
+                }
+                change.consume()
+            }
+        } finally {
+            dragEnd = last
+            wheel.end(if (moved && !cancelled) travel.selected else null)
         }
     }
 

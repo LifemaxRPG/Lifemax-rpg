@@ -109,7 +109,12 @@ const mark = p => p.evaluate(() => window.__calls.length);
   for (const [id, index] of [['d2', 7], ['d3', -1], ['d4', 'x']]) await emit('command', { command: 'day', payload: { index }, requestId: id });
   await settle(p, 300);
   const bad = await Promise.all(['d2', 'd3', 'd4'].map(id => reply(n, id)));
-  ok('a day that is not on the strip is refused and the day stays', bad.every(r => r && r.reply.ok === false && /not on the plan/.test(r.reply.message) && r.today.dayIndex === 1), bad.map(r => r && r.reply));
+  ok('calendar browsing passes either end of the strip; invalid dates are refused',
+    bad[0] && bad[0].reply.ok && bad[0].today.calendarOffset === 7 &&
+    bad[1] && bad[1].reply.ok && bad[1].today.calendarOffset === -1 &&
+    bad[2] && !bad[2].reply.ok && bad[2].today.calendarOffset === -1, bad.map(r => r && r.reply));
+  await emit('command', { command: 'gotoDay', payload: { index: 1 }, requestId: 'calendar-return' });
+  await settle(p, 300);
 
   const state = (n) => p.evaluate(n => {
     const calls = __since(n), open = calls.filter(c => c[1] === 'open').pop(), body = document.querySelector('#view-life-director .ld-sheet.open .ld-sheet-body');

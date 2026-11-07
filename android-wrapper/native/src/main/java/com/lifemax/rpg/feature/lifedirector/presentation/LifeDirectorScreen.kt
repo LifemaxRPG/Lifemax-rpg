@@ -56,6 +56,7 @@ import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.domain.MealSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
@@ -246,7 +247,8 @@ fun LifeDirectorScreen(
             val activity =
                 p.sheet?.takeIf { model ->
                     today != null &&
-                        (model is SessionSheetModel ||
+                        (model is MealSheetModel ||
+                            model is SessionSheetModel ||
                             model is TimerSheetModel ||
                             model is MoveSheetModel) &&
                         ui.sheet?.let { model.answers(it) } == true
@@ -443,12 +445,16 @@ private fun TodayTop(
     tour: DialTourRun?,
     removal: DragRemoveController?,
 ) {
-    DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
+    DayStrip(
+        today.strip,
+        ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        { actions.day(today.calendarOffset + it) },
+    )
     Spacer(Modifier.height(8.dp))
     ChronoDial(
         today.dial,
         today.centre,
-        animate,
+        animate && !reducedMotion,
         actions::arc,
         actions.tap,
         Modifier.guideAnchor(anchors, "dial"),
@@ -460,6 +466,20 @@ private fun TodayTop(
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
         centreDismiss = if (activity != null) actions.session.close else null,
+        days = today.strip,
+        calendarDate = today.calendarDate,
+        selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        onDay = { actions.day(today.calendarOffset + it) },
+        onToday = {
+            actions.session.close()
+            actions.day(0)
+        },
+        dayWheelEnabled =
+            ui.pendingDay == null &&
+                ui.pendingToday == null &&
+                ui.ask == null &&
+                ui.confirm == null &&
+                ui.guide == null,
         centreContent =
             activity?.let { model ->
                 { DialActivityControls(model, ui, actions, animate, reducedMotion) }

@@ -44,6 +44,7 @@ jobs:
           sourceSets {
               main {
                   kotlin.srcDir("$repo/android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector/domain/timer")
+                  kotlin.srcDir("$repo/android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector/data/timer")
               }
               test {
                   kotlin.srcDir("$repo/android-wrapper/native/src/test/java/com/lifemax/rpg/feature/lifedirector/domain/timer")

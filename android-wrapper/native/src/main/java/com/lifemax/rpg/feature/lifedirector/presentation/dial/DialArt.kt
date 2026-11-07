@@ -60,7 +60,12 @@ internal open class DialLayer(private val steps: List<Step>) {
 }
 
 /** Bezel, face, depth rings, ticks, hour words, sun and moon, ring tracks. */
-internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextMeasurer) :
+internal class DialFace(
+    radii: DialRadii,
+    hourWords: List<HourWord>,
+    text: TextMeasurer,
+    includeBezel: Boolean = true,
+) :
     DialLayer(
         buildList<Step> {
             disc(176f, P.bezel)
@@ -78,10 +83,22 @@ internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextM
             disc(86.5f, P.hub)
             edge(87.5f)
             outline(82f, 1f, P.lip)
-            ticks(radii)
-            engrave(radii, hourWords, Glyphs(text))
+            if (includeBezel) {
+                ticks(radii)
+                engrave(radii, hourWords, Glyphs(text))
+            }
             outline(radii.outer, radii.outerWidth, P.outerTrack)
             outline(radii.inner, radii.innerWidth, P.innerTrack)
+            if (includeBezel) sunAndMoon(hourWords, Glyphs(text))
+        }
+    )
+
+/** The engraved watch bezel rotates independently of the schedule and current-time hand. */
+internal class DialBezel(radii: DialRadii, hourWords: List<HourWord>, text: TextMeasurer) :
+    DialLayer(
+        buildList<Step> {
+            ticks(radii)
+            engrave(radii, hourWords, Glyphs(text))
             sunAndMoon(hourWords, Glyphs(text))
         }
     )
@@ -386,12 +403,9 @@ private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, g
                 )
                 ?.let { run -> add { run.draw(this, P.hourWordMain) } }
         } else if (hour % 6 == 0) {
-            val layout = glyphs.line(word, hourWordMain)
-            val w = layout.size.width.toFloat()
-            val h = layout.size.height.toFloat()
-            val centre = if (hour == 6) Offset(359f - w / 2, CENTRE) else Offset(1f + w / 2, CENTRE)
-            val topLeft = centre - Offset(w / 2, h / 2)
-            add { drawText(layout, P.hourWordMain, topLeft) }
+            val angle = hour * 15f
+            glyphRun(167f, angle - 17f, angle + 17f, glyphs.of(word, hourWordMain), hour == 18)
+                ?.let { run -> add { run.draw(this, P.hourWordMain) } }
         } else {
             val angle = hour * 15f
             val flip = angle > 90f && angle < 270f

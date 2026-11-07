@@ -137,8 +137,8 @@ class LifeDirectorViewModel(
 
     fun showDay(index: Int) {
         val today = projection.value?.today ?: return
-        if (busy || index !in today.strip.indices) return
-        if (index == (ui.value.pendingDay ?: today.dayIndex)) return
+        if (busy) return
+        if (index == (ui.value.pendingDay ?: (today.calendarOffset + today.dayIndex))) return
         mutableUi.update { it.copy(pendingDay = index) }
         dayRequest = commands.showDay(index)
     }
