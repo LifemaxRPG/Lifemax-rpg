@@ -105,7 +105,7 @@ internal object OverviewLaunch {
         fun start() {
             if (finished || revealAnimator != null || !isAttachedToWindow) return
             removeCallbacks(fallback)
-            animation =
+            revealAnimator =
                 ValueAnimator.ofFloat(0f, 1f).apply {
                     duration = 560
                     interpolator = PathInterpolator(.22f, .8f, .15f, 1f)
