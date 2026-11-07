@@ -467,6 +467,7 @@ private fun TodayTop(
         centreDismiss = if (activity != null) actions.session.close else null,
         days = today.strip,
         calendarDate = today.calendarDate,
+        todayOffset = today.calendarOffset + today.dayIndex,
         selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
         onDay = { actions.day(today.calendarOffset + it) },
         onToday = {

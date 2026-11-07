@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +72,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import kotlin.math.round
+import kotlin.math.roundToLong
+import kotlinx.coroutines.launch
 
 /**
  * The 24-hour dial (the web's dialHtml): its 360-unit square scaled to the width, at most 370 dp,
@@ -111,6 +114,7 @@ fun ChronoDial(
     dayWheelEnabled: Boolean = true,
     calendarDate: String = "",
     onToday: (() -> Unit)? = null,
+    todayOffset: Int = 0,
 ) {
     val text = rememberTextMeasurer()
     val face =
@@ -158,6 +162,12 @@ fun ChronoDial(
     var bezelDrag by remember { mutableFloatStateOf(0f) }
     var bezelStart by remember { mutableFloatStateOf(0f) }
     val bezelRest = remember { Animatable(0f) }
+    val returnScope = rememberCoroutineScope()
+    val returnRotation = remember { Animatable(0f) }
+    var returningHome by remember { mutableStateOf(false) }
+    var returnProgress by remember { mutableFloatStateOf(0f) }
+    var returnDate by remember { mutableStateOf(LocalDate.of(1970, 1, 1)) }
+    var returnDays by remember { mutableStateOf(0) }
     val dateBase =
         remember(calendarDate, dial.start) {
             runCatching { LocalDate.parse(calendarDate) }
@@ -165,8 +175,8 @@ fun ChronoDial(
                     Instant.ofEpochSecond(dial.start).atZone(ZoneId.systemDefault()).toLocalDate()
                 }
         }
-    LaunchedEffect(scrubbingDays, animate) {
-        if (!scrubbingDays) {
+    LaunchedEffect(scrubbingDays, animate, returningHome) {
+        if (!scrubbingDays && !returningHome) {
             bezelRest.snapTo(bezelDrag)
             val aligned = round(bezelDrag / 360f) * 360f
             if (animate) bezelRest.animateTo(aligned, spring(dampingRatio = .68f, stiffness = 240f))
@@ -174,9 +184,57 @@ fun ChronoDial(
         }
     }
     LaunchedEffect(selectedDay, days) { if (!scrubbingDays) previewDay = selectedDay }
+    val returnToday: (() -> Unit)? =
+        onToday?.let { navigate ->
+            {
+                if (!returningHome) {
+                    if (animate && todayOffset != 0) {
+                        returnDate = dateBase
+                        returnDays = todayOffset
+                        returnProgress = 0f
+                        returningHome = true
+                        val start = bezelRest.value
+                        // Rewind future dates; wind forward when returning from a past date.
+                        // Bound the travel so browsing months ahead still returns promptly.
+                        val direction = if (todayOffset > 0) -1f else 1f
+                        val turns =
+                            (1L + kotlin.math.abs(todayOffset.toLong()) / 7)
+                                .coerceAtMost(3)
+                                .toFloat()
+                        val target = round(start / 360f) * 360f + direction * turns * 360f
+                        returnScope.launch {
+                            try {
+                                returnRotation.snapTo(start)
+                                returnRotation.animateTo(
+                                    target + direction * 12f,
+                                    tween(
+                                        650 + (turns.toInt() - 1) * 140,
+                                        easing = CubicBezierEasing(.32f, 0f, .12f, 1f),
+                                    ),
+                                ) {
+                                    returnProgress =
+                                        ((value - start) / (target - start)).coerceIn(0f, 1f)
+                                }
+                                returnProgress = 1f
+                                returnRotation.animateTo(
+                                    target,
+                                    spring(dampingRatio = .65f, stiffness = 420f),
+                                )
+                                bezelRest.snapTo(0f)
+                            } finally {
+                                bezelDrag = 0f
+                                returningHome = false
+                            }
+                        }
+                    }
+                    navigate()
+                }
+            }
+        }
     val wheel =
         if (
             dayWheelEnabled &&
+                !returningHome &&
                 days.isNotEmpty() &&
                 onDay != null &&
                 centreContent == null &&
@@ -225,7 +283,8 @@ fun ChronoDial(
                 centreDismiss,
                 DialGeometry.SIDE * .33f,
                 wheel,
-                if (dayWheelEnabled && tour == null && run == null) onToday else null,
+                if (dayWheelEnabled && tour == null && run == null && !returningHome) returnToday
+                else null,
             )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
@@ -269,7 +328,12 @@ fun ChronoDial(
                 }
                 Canvas(
                     Modifier.fillMaxSize().graphicsLayer {
-                        rotationZ = if (scrubbingDays) bezelDrag else bezelRest.value
+                        rotationZ =
+                            when {
+                                returningHome -> returnRotation.value
+                                scrubbingDays -> bezelDrag
+                                else -> bezelRest.value
+                            }
                     }
                 ) {
                     inUnits { bezel.draw(this) }
@@ -377,8 +441,11 @@ fun ChronoDial(
                         centreBox.width(side * .42f).dimmed(look.centre),
                     )
             }
-            if (scrubbingDays) {
-                val date = dateBase.plusDays((previewDay - selectedDay).toLong())
+            if (scrubbingDays || returningHome) {
+                val date =
+                    if (returningHome)
+                        returnDate.minusDays((returnDays.toDouble() * returnProgress).roundToLong())
+                    else dateBase.plusDays((previewDay - selectedDay).toLong())
                 Box(
                     Modifier.align(Alignment.Center)
                         .size(side * .48f)
