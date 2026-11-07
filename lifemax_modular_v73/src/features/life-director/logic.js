@@ -2869,19 +2869,6 @@ const LifeDirectorApp = (function () {
       if (!ST) boot();
       else { ui.tab = ST.setupComplete ? (ST.ui && ST.ui.tab || 'today') : 'setup'; }
       if (!timer) { timer = setInterval(tick, 5 * 60 * 1000); setInterval(liveTick, 15 * 1000); tickClocks(); }
-      /* swipe the stage left or right to swing to the neighbouring section */
-      const main = root.querySelector('.ld-main');
-      let sw = null;
-      main.addEventListener('touchstart', e => {
-        const t = e.touches[0], el = e.target;
-        sw = (e.touches.length === 1 && !el.closest('.ld-strip, .ld-dial, .ld-mini, input, select, textarea, .ld-seg, .ld-dchips, .ld-table, .ld-times, .ld-stepper')) ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
-      }, { passive: true });
-      main.addEventListener('touchend', e => {
-        if (!sw) return; const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y, dt = Date.now() - sw.at; sw = null;
-        if (dt > 700 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-        const list = tabList().map(x => x[0]), i = list.indexOf(ui.tab), j = i + (dx < 0 ? 1 : -1);
-        if (i >= 0 && j >= 0 && j < list.length && ST.setupComplete) goTab(list[j]);
-      }, { passive: true });
       if (ST.setupComplete && ST.schedule) ui.animate = 'intro';
     }
     tick(); render();

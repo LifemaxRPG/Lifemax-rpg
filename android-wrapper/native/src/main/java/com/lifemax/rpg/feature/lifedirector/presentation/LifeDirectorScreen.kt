@@ -296,7 +296,6 @@ fun LifeDirectorScreen(
             LazyColumn(
                 Modifier.fillMaxSize()
                     .dragToRemove(removal, list)
-                    .pointerInput(actions) { detectSectionFlick(actions.flick) }
                     .then(
                         // behind a confirmation the screen is blurred as .ld-sheet-bg blurs the
                         // page, on Android 12 and later
