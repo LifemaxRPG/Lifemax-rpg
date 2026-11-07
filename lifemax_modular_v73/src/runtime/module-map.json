@@ -111,8 +111,8 @@
   },
   {
    "file": "src/runtime/segments/04-runtime.js",
-   "bytes": 45017,
-   "statement_count": 94,
+   "bytes": 46344,
+   "statement_count": 95,
    "tags": [
     "training",
     "quests",
@@ -130,6 +130,7 @@
     "initTheme",
     "load",
     "migrateSave",
+    "timerWriteFence",
     "writeSave",
     "save",
     "unsavedMessage",

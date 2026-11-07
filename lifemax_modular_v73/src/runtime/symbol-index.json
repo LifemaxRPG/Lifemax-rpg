@@ -7723,6 +7723,9 @@
  "takeBack": [
   "src/runtime/segments/04-runtime.js"
  ],
+ "timerWriteFence": [
+  "src/runtime/segments/04-runtime.js"
+ ],
  "titleFor": [
   "src/runtime/segments/05-runtime.js"
  ],

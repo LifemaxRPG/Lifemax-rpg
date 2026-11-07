@@ -24,6 +24,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Verify runtime source index
+        run: python3 lifemax_modular_v73/check_source.py
       - name: Verify fixtures against the existing JavaScript timer
         run: node lifemax_modular_v73/tests/director-timer-parity.test.js
       - name: Verify completion delivery interruption recovery
