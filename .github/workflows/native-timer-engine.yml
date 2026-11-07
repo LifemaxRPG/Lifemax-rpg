@@ -30,6 +30,7 @@ jobs:
         run: |
           node lifemax_modular_v73/tests/director-completion-protocol.test.js
           node lifemax_modular_v73/tests/director-completion-plan.test.js
+          node lifemax_modular_v73/tests/director-reward-adapter.test.js
       - name: Compile and test the pure Kotlin timer rules
         run: |
           mkdir -p "$RUNNER_TEMP/timer-tests"

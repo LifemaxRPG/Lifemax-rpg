@@ -2557,6 +2557,96 @@ const LifeMaxHost = (function () {
     toggleQuest(q.id, true);
     return { completed: isQuestDone(q), xp: Number(q.xp) || 0, name: q.name };
   };
+  /* Native timer migration adapter. Dormant until BOTH saves have an explicit NATIVE
+     authority epoch. Reuses the existing award functions in a synchronous sandbox:
+     candidate globals are restored in finally; no real save or toast is allowed while
+     preparing. No callback, await, render, or plugin may be added to these helpers. */
+  let preparingTimerReward = false;
+  H.prepareTimerEffect = function (input, effect) {
+    if (preparingTimerReward) throw new Error('Timer reward preparation is already running');
+    if (!input || !input.timerAuthority || input.timerAuthority.owner !== 'NATIVE' || !input.timerAuthority.epoch || !input.xpSchemaV2) throw new Error('Timer reward authority is not ready');
+    if (!effect || !['activity', 'quest'].includes(effect.kind)) throw new Error('Unknown timer reward');
+    const previous = state, previousRules = rules, previousSave = save, previousToast = toast;
+    const candidate = JSON.parse(JSON.stringify(input));
+    preparingTimerReward = true;
+    try {
+      state = candidate;
+      rules = JSON.parse(JSON.stringify(candidate.customRules || previousRules));
+      save = () => true;
+      toast = () => {};
+      if (effect.kind === 'activity') {
+        const event = effect.event;
+        if (!event || typeof event.eventId !== 'string' || !event.eventId || !Number.isSafeInteger(event.actualStartEpoch) || event.actualStartEpoch < 0 ||
+            !Number.isSafeInteger(event.actualDurationMinutes) || event.actualDurationMinutes < 1) throw new Error('Invalid timer event');
+        const result = H.awardActivity(event, { title: effect.title });
+        if (!result.awarded && result.reason !== 'ALREADY_IN_LIFEMAX') throw new Error(result.reason || 'Activity reward refused');
+      } else {
+        const ref = effect.hostRef;
+        if (!ref || !ref.questId || !ref.key || ref.future) throw new Error('Invalid quest reference');
+        const quest = state.quests.find(q => q.id === ref.questId);
+        // A delayed completion must not award a different day/week's quest.
+        if (!quest || questKey(quest) !== ref.key) throw new Error('Quest period changed; reconciliation required');
+        if (!isQuestDone(quest) && questLocked(quest)) throw new Error('Quest is locked');
+        const result = H.completeQuest(ref);
+        if (!result.completed && result.reason !== 'ALREADY_DONE') throw new Error(result.reason || 'Quest reward refused');
+      }
+      return candidate;
+    } finally {
+      state = previous; rules = previousRules; save = previousSave; toast = previousToast;
+      preparingTimerReward = false;
+    }
+  };
+
+  /* A game effect and its protocol receipt are normalized and written together. This
+     avoids save()'s renderAll()/Daily Hand re-entry before the receipt has committed.
+     The caller publishes UI effects only after the whole completion is acknowledged. */
+  H.createTimerGameStore = function () {
+    let observed = null, uncertain = false;
+    const owned = value => value && value.xpSchemaV2 && value.timerAuthority && value.timerAuthority.owner === 'NATIVE' && typeof value.timerAuthority.epoch === 'string' && value.timerAuthority.epoch;
+    return {
+      readGame() {
+        if (uncertain) throw new Error('Reconcile uncertain timer game write first');
+        const raw = localStorage.getItem(STORE), value = raw && JSON.parse(raw);
+        if (!owned(value) || JSON.stringify(state) !== raw) throw new Error('Game state is not a clean native-timer snapshot');
+        observed = raw;
+        return value;
+      },
+      writeGame(input) {
+        if (uncertain || observed === null || saveReadOnly || !owned(input)) return false;
+        if (localStorage.getItem(STORE) !== observed || JSON.stringify(state) !== observed) return false;
+        const old = state, oldRules = rules;
+        if (input.timerAuthority.epoch !== old.timerAuthority.epoch) return false;
+        let committed = false, attempted = false;
+        try {
+          state = JSON.parse(JSON.stringify(input));
+          rules = JSON.parse(JSON.stringify(state.customRules || oldRules));
+          rebuildAttrXP(); rebuildSkillXP();
+          // Migration must already be complete before ownership changes.
+          ecoSparksSync(); state.customRules = rules; checkBadges(true);
+          const serialized = JSON.stringify(state);
+          attempted = true;
+          localStorage.setItem(STORE, serialized);
+          if (localStorage.getItem(STORE) !== serialized) throw new Error('Timer game write verification failed');
+          observed = serialized;
+          committed = true;
+          return true;
+        } catch (_) {
+          uncertain = attempted;
+          return false;
+        } finally {
+          if (!committed) { state = old; rules = oldRules; }
+        }
+      },
+      reconcile() {
+        if (!uncertain) return;
+        const raw = localStorage.getItem(STORE), value = raw && JSON.parse(raw);
+        if (!owned(value) || value.timerAuthority.epoch !== state.timerAuthority.epoch) throw new Error('Game epoch changed during timer commit');
+        state = value; rules = JSON.parse(JSON.stringify(value.customRules || rules));
+        observed = raw; uncertain = false;
+      }
+    };
+  };
+
   /* Activities logged anywhere in LifeMax (Log page, Plan page, quests) since a cursor. */
   H.activitiesSince = function (sinceIso) {
     if (!H.connected()) return [];
