@@ -43,7 +43,7 @@ jobs:
           repositories { mavenCentral() }
           dependencies {
               testImplementation("junit:junit:4.13.2")
-              testImplementation("org.json:json:20240303")
+              implementation("org.json:json:20240303")
           }
           val repo = System.getenv("GITHUB_WORKSPACE")
           kotlin { jvmToolchain(21) }
