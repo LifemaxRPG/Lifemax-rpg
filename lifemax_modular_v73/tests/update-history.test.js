@@ -8,7 +8,7 @@ const file=require('./current-page')(process.argv[2]);
   await page.goto('file://'+file,{timeout:120000});
   const result=await page.evaluate(()=>{
    const button=document.getElementById('whatsNewToggle'),panel=document.getElementById('updateHistory');
-   const getCard=()=>NativeSettingsTabProjection().cards.find(c=>c.title==='App updates');
+   const getCard=()=>NativeSettingsTabProjection.snapshot().cards.find(c=>c.title==='App updates');
    const before=getCard();const initiallyHidden=panel.hidden;
    button.click();const opened=getCard();const text=panel.textContent;const expanded=button.getAttribute('aria-expanded');
    button.click();const closed=getCard();
