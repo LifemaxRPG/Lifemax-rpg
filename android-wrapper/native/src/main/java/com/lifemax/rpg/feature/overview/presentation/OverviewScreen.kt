@@ -1,7 +1,11 @@
 package com.lifemax.rpg.feature.overview.presentation
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,14 +15,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LocalPinnableContainer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.lifemax.rpg.core.designsystem.components.PageToast
 import com.lifemax.rpg.core.designsystem.components.playToast
 import com.lifemax.rpg.core.designsystem.feedback.LocalPageBuzz
@@ -27,6 +44,7 @@ import com.lifemax.rpg.core.designsystem.feedback.play
 import com.lifemax.rpg.feature.lifedirector.domain.ArcStyle
 import com.lifemax.rpg.feature.lifedirector.presentation.glance.DirectorGlance
 import com.lifemax.rpg.feature.overview.data.OverviewViews
+import com.lifemax.rpg.feature.overview.domain.EditorBuzz
 import com.lifemax.rpg.feature.overview.domain.MoveGo
 import com.lifemax.rpg.feature.overview.domain.OverviewCards
 import com.lifemax.rpg.feature.overview.domain.OverviewNotice
@@ -43,6 +61,8 @@ import com.lifemax.rpg.feature.overview.presentation.cards.OverviewTipCard
 import com.lifemax.rpg.feature.overview.presentation.cards.RecentCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.RewardsCardView
 import com.lifemax.rpg.feature.overview.presentation.cards.WeekCardView
+import com.lifemax.rpg.feature.overview.presentation.editor.CardReorderState
+import com.lifemax.rpg.feature.overview.presentation.editor.mergeCardOrder
 
 /**
  * The cards' screen as the plugin shows it: [visible] is the plugin's, [emit] its action sender
@@ -133,6 +153,7 @@ class OverviewActions(
  * the glance's dial arrives off the same clock; null draws everything still. While [editing] is
  * open its editor stands in place of the tiles, as the page's #ovEdit does.
  */
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun OverviewScreen(
     cards: OverviewCards,
@@ -149,6 +170,40 @@ fun OverviewScreen(
 ) {
     val images = remember { OverviewImages() }
     val editFocus = rememberEditFocus(editing.open, visible)
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current.density
+    val window = LocalView.current
+    val pageBuzz = LocalPageBuzz.current
+    val reorder = remember(list) { CardReorderState(cards.shown, list, scope) }
+    val currentEditing by rememberUpdatedState(editing)
+    val currentCards by rememberUpdatedState(cards)
+    val expected = editing.rows.map { it.id }.filter { it in cards.shown }.ifEmpty { cards.shown }
+    LaunchedEffect(expected, reorder.raised) { reorder.sync(expected) }
+    fun saveOrder(order: List<String>) {
+        val full = currentEditing.rows.map { it.id }
+        if (full.isNotEmpty()) currentEditing.reorder(mergeCardOrder(full, order), EditorBuzz.Drop)
+    }
+    fun endDrag(cancelled: Boolean) {
+        window.parent?.requestDisallowInterceptTouchEvent(false)
+        reorder.end(cancelled, currentCards.reducedMotion, ::saveOrder)
+    }
+    LaunchedEffect(visible, editing.open) { if (!visible || editing.open) endDrag(true) }
+    LaunchedEffect(reorder.dragging, visible) {
+        if (reorder.dragging != null && visible) {
+            while (reorder.dragging != null) {
+                withFrameNanos {}
+                val edge =
+                    reorder.scrollStep(
+                        (topInsetDp + 56) * density,
+                        list.layoutInfo.viewportEndOffset.toFloat() -
+                            (bottomInsetDp + 56) * density,
+                        12 * density,
+                    )
+                if (edge != 0f) list.scrollBy(edge)
+                if (reorder.cross()) pageBuzz?.play(currentCards.haptics, *EditorBuzz.Cross.timings)
+            }
+        }
+    }
     OverviewTheme(cards.tokens, cards.light) {
         val c = LocalOverviewColors.current
         Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -178,12 +233,74 @@ fun OverviewScreen(
                 else {
                     val first = if (cards.tip != null) 2 else 1
                     itemsIndexed(
-                        cards.shown,
+                        reorder.order,
                         key = { _, id -> "tile/$id" },
                         contentType = { _, id -> id },
                     ) { i, id ->
-                        Rise(arrival, first + i) {
-                            Tile(id, cards, actions, visible, weekDay, images, arrival)
+                        val raised = reorder.raised == id
+                        val pinnable = LocalPinnableContainer.current
+                        DisposableEffect(raised, pinnable) {
+                            val pin = if (raised) pinnable?.pin() else null
+                            onDispose { pin?.release() }
+                        }
+                        Box(
+                            Modifier.fillMaxWidth()
+                                .animateItem(
+                                    fadeInSpec = null,
+                                    fadeOutSpec = null,
+                                    placementSpec =
+                                        if (raised || cards.reducedMotion) null
+                                        else spring(dampingRatio = .9f, stiffness = 450f),
+                                )
+                                .zIndex(if (raised) 2f else 0f)
+                                .graphicsLayer {
+                                    translationY = reorder.offset(id)
+                                    val lift =
+                                        if (raised && !cards.reducedMotion) reorder.lift.value
+                                        else 0f
+                                    scaleX = 1f + .025f * lift
+                                    scaleY = scaleX
+                                    shadowElevation = 18.dp.toPx() * lift
+                                    shape = RoundedCornerShape(24.dp)
+                                    clip = false
+                                }
+                                .pointerInput(id, visible) {
+                                    if (visible)
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = { point ->
+                                                if (
+                                                    reorder.start(
+                                                        id,
+                                                        point.y,
+                                                        currentCards.reducedMotion,
+                                                    )
+                                                ) {
+                                                    window.parent
+                                                        ?.requestDisallowInterceptTouchEvent(true)
+                                                    pageBuzz?.play(
+                                                        currentCards.haptics,
+                                                        *EditorBuzz.Lift.timings,
+                                                    )
+                                                }
+                                            },
+                                            onDrag = { change, amount ->
+                                                if (reorder.dragging == id) {
+                                                    change.consume()
+                                                    if (reorder.move(amount.y))
+                                                        pageBuzz?.play(
+                                                            currentCards.haptics,
+                                                            *EditorBuzz.Cross.timings,
+                                                        )
+                                                }
+                                            },
+                                            onDragEnd = { endDrag(false) },
+                                            onDragCancel = { endDrag(true) },
+                                        )
+                                }
+                        ) {
+                            Rise(if (raised) null else arrival, first + i) {
+                                Tile(id, cards, actions, visible, weekDay, images, arrival)
+                            }
                         }
                     }
                 }

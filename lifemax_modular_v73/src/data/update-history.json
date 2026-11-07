@@ -3,11 +3,13 @@
   {
    "build": "current",
    "date": "2026-11-07",
-   "title": "Dial rewind & Overview transitions",
+   "title": "Overview drag-and-drop & navigation polish",
    "changes": [
     "Returning to today now winds farther and takes longer based on how many days you travelled. A year away has a much longer rewind than a week away.",
     "The winding date count, spring settle, and activity-ring reveal stay connected throughout the return.",
-    "Overview cards now reveal their destination with a smooth expanding transition from the tap, while the shared bars stay in place."
+    "Overview cards now reveal their destination with a smooth expanding transition from the tap, while the shared bars stay in place.",
+    "Press and hold an Overview card, then drag it to rearrange your dashboard. Cards lift, neighbors slide aside, and the layout saves when you drop.",
+    "The Edit button still manages hidden cards. Dragging near the screen edges scrolls the dashboard."
    ]
   },
   {
