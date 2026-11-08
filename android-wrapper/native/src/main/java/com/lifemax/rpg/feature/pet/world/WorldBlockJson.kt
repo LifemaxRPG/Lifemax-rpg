@@ -105,7 +105,11 @@ object WorldBlockJson {
                 if (j.isNullAt("pair")) null
                 else
                     pair(
-                        j.child("pair", setOf("rel", "level", "lead", "settled", "gainLeft")),
+                        j.child(
+                            "pair",
+                            setOf("rel", "level", "lead", "settled", "gainLeft"),
+                            setOf("met"),
+                        ),
                         cats.size,
                     ),
             context =
@@ -283,6 +287,7 @@ object WorldBlockJson {
             p.int("lead", -1, 1),
             p.flag("settled"),
             p.real("gainLeft", 0.0, 1.0),
+            if (p.has("met")) p.flag("met") else null,
         )
     }
 

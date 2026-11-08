@@ -1,0 +1,206 @@
+{
+ "v": 1,
+ "steps": [
+  {
+   "name": "first meeting, a hiss",
+   "start": {
+    "rel": 0.1,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "hiss"
+   ],
+   "rel": 0.115,
+   "gain": 0.015,
+   "n": {
+    "greet": 0,
+    "hiss": 1,
+    "chase": 0,
+    "groom": 0,
+    "nap": 0
+   },
+   "met": true,
+   "last": "hiss"
+  },
+  {
+   "name": "a nose touch",
+   "start": {
+    "rel": 0.3,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "greet"
+   ],
+   "rel": 0.33,
+   "gain": 0.03,
+   "n": {
+    "greet": 1,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 0,
+    "nap": 0
+   },
+   "met": true,
+   "last": "greet"
+  },
+  {
+   "name": "a cheek rub",
+   "start": {
+    "rel": 0.62,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "greet"
+   ],
+   "rel": 0.65,
+   "gain": 0.03,
+   "n": {
+    "greet": 1,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 0,
+    "nap": 0
+   },
+   "met": true,
+   "last": "greet"
+  },
+  {
+   "name": "a chase",
+   "start": {
+    "rel": 0.4,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "chase"
+   ],
+   "rel": 0.435,
+   "gain": 0.035,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 1,
+    "groom": 0,
+    "nap": 0
+   },
+   "met": true,
+   "last": "chase"
+  },
+  {
+   "name": "grooming",
+   "start": {
+    "rel": 0.5,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "groom"
+   ],
+   "rel": 0.545,
+   "gain": 0.045,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 1,
+    "nap": 0
+   },
+   "met": true,
+   "last": "groom"
+  },
+  {
+   "name": "grooming, then a nap together",
+   "start": {
+    "rel": 0.7,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "groom",
+    "nap"
+   ],
+   "rel": 0.775,
+   "gain": 0.075,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 1,
+    "nap": 1
+   },
+   "met": true,
+   "last": "nap"
+  },
+  {
+   "name": "the daily cap",
+   "start": {
+    "rel": 0.5,
+    "gain": 0.15,
+    "sameDay": true
+   },
+   "kinds": [
+    "groom"
+   ],
+   "rel": 0.51,
+   "gain": 0.16,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 1,
+    "nap": 0
+   },
+   "met": true,
+   "last": "groom"
+  },
+  {
+   "name": "a standoff won by cat 0",
+   "start": {
+    "rel": 0.5,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "standoff"
+   ],
+   "rel": 0.5,
+   "gain": 0,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 0,
+    "nap": 0,
+    "standoff": 1
+   },
+   "met": true,
+   "last": "standoff"
+  },
+  {
+   "name": "a standoff won by cat 1",
+   "start": {
+    "rel": 0.5,
+    "gain": 0,
+    "sameDay": false
+   },
+   "kinds": [
+    "standoff"
+   ],
+   "rel": 0.5,
+   "gain": 0,
+   "n": {
+    "greet": 0,
+    "hiss": 0,
+    "chase": 0,
+    "groom": 0,
+    "nap": 0,
+    "standoff": 1
+   },
+   "met": true,
+   "last": "standoff"
+  }
+ ]
+}

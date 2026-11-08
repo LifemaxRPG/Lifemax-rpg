@@ -137,7 +137,9 @@ data class QuirkCounters(val n: Int, val t: Int, val g: Int, val k: Int)
 
 /**
  * The pair's friendship: [rel] 0..1, [level] 0..4, rank [lead] (-1 unsettled, else the slot),
- * [settled], and [gainLeft], the day's friendship gain still open (the page keeps the cap).
+ * [settled], and [gainLeft], the day's friendship gain still open (the page keeps the cap). [met]
+ * (whether the two have met) comes only from a page that records the moments native reports
+ * (`social`, `pet.social.v1`); null from an older page, which has no `social` command.
  */
 data class WorldPair(
     val rel: Double,
@@ -145,6 +147,7 @@ data class WorldPair(
     val lead: Int,
     val settled: Boolean,
     val gainLeft: Double,
+    val met: Boolean? = null,
 )
 
 /** What the owner is doing that the cats may answer: a [timer] running, today a [restDay]. */

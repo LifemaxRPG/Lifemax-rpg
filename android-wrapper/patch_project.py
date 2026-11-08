@@ -109,6 +109,20 @@ android.sourceSets {
     p.write_text(s, encoding='utf-8')
 
 
+# The unit-test worker keeps the recorded golden files (several MB each) and renders Paparazzi screens; the default 512 MB
+# heap ran out in the Overview screenshot tests once the golden fixtures grew.
+p = root / 'app' / 'build.gradle'
+s = p.read_text(encoding='utf-8')
+if 'lifemax-test-heap' not in s:
+    s += """
+// lifemax-test-heap
+tasks.withType(Test).configureEach {
+    maxHeapSize = '1536m'
+}
+"""
+    p.write_text(s, encoding='utf-8')
+
+
 # Compose: the projections' read-only types count as stable (native/compose-stability.conf).
 p = root / 'app' / 'build.gradle'
 s = p.read_text(encoding='utf-8')

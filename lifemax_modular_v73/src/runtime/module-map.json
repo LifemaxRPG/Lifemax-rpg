@@ -1653,7 +1653,7 @@
   },
   {
    "file": "src/runtime/segments/29-pet-rank.js",
-   "bytes": 7397,
+   "bytes": 7581,
    "statement_count": 21,
    "tags": [
     "pet",
@@ -3642,7 +3642,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-cat-world.js",
-   "bytes": 17912,
+   "bytes": 18247,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3669,6 +3669,22 @@
     "window.writeSave",
     "window.haptic",
     "window.NativePetPlay"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-social.js",
+   "bytes": 7827,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "social"
+   ],
+   "symbols": [
+    "window.writeSave",
+    "window.toast",
+    "window.setTimeout",
+    "window.NativePetSocial"
    ]
   },
   {
@@ -3853,7 +3869,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-overview-cards.js",
-   "bytes": 24288,
+   "bytes": 24519,
    "statement_count": 1,
    "tags": [
     "native",

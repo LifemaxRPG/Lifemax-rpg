@@ -41,10 +41,11 @@ function petRankUpdate(r,winner){
   if(before>=0&&lead>=0&&lead!==before){r.flips++;setTimeout(function(){toast(nm[lead]+' has the upper hand now.')},700)}
   else if(!was&&r.settled)setTimeout(function(){toast(nm[lead]+' and '+nm[1-lead]+' have settled who is in charge.')},700);
 }
-/* one contest; chal is the cat that starts it. Returns {w,l,p,upset} */
-function petRankContest(chal){
+/* one contest; chal is the cat that starts it, won (optional) the winner when the contest was already decided (the native cats'
+   standoff, 50-native-pet-social.js), else the weighted coin decides. Returns {w,l,p,upset} */
+function petRankContest(chal,won){
   const r=petRankData(),C=PET_RANK_CFG;if(!r)return null;
-  const p=petRankProb(chal),chalWins=Math.random()<p,w=chalWins?chal:1-chal,l=1-w,pw=chalWins?p:1-p,sur=1-pw,upset=pw<0.4;
+  const p=petRankProb(chal),chalWins=won===0||won===1?won===chal:Math.random()<p,w=chalWins?chal:1-chal,l=1-w,pw=chalWins?p:1-p,sur=1-pw,upset=pw<0.4;
   r.cf[w]=Math.round(petRankClamp(r.cf[w]+C.WIN[0]+C.WIN[1]*sur,0.05,0.95)*1000)/1000;
   r.cf[l]=Math.round(petRankClamp(r.cf[l]-(C.LOSE[0]+C.LOSE[1]*sur),0.05,0.95)*1000)/1000;
   r.n++;r.w[w]++;if(upset)r.ups++;petRankUpdate(r,w);
