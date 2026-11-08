@@ -144,9 +144,6 @@ object SocialTuning {
     const val GROOM_BACK_HI_S = 15.0
     const val GROOM_BACK_P = 0.45f
 
-    /** After grooming, close friends may curl up together then and there. */
-    const val NAP_AFTER_GROOM_P = 0.3f
-
     /** Curl up: the nap's length (minutes), the second cat's offset in it, the settling knead. */
     const val NAP_LO_MIN = 20.0
     const val NAP_HI_MIN = 90.0

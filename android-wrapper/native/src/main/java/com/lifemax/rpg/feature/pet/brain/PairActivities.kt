@@ -25,6 +25,10 @@ object Social {
         listOf(PairGreet, PairChase, PairGroom, SettleIn, CurlUp, PairStandoff, Shadow)
     }
 
+    /** The blob's word for two cats curled up together (the one moment a restart keeps). */
+    val CURLED_ACT: String
+        get() = MindState.actKey(CurlUp.id)
+
     /** True for the activities of a moment together (and a kitten's shadowing). */
     fun isPair(a: Activity): Boolean = a is PairActivity
 

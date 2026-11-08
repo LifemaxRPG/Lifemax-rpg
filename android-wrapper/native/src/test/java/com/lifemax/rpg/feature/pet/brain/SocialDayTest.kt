@@ -215,6 +215,27 @@ class SocialDayTest {
             )
         for (m in after.minds) assertEquals(0, m.runner.watchdogs)
 
+        if (curled == null) {
+            // no nap together that day: two curled up on the sofa on purpose
+            CatDays.run(
+                cats(),
+                hours = CURL_H,
+                start = CatDays.MIDNIGHT + 14 * CatDays.HOUR,
+                fidelity = CatWorld.Fidelity.FAST,
+                setup = {
+                    it.pair(PairInfo(rel = 0.8, records = true))
+                    assertTrue(it.social.force(Social.NAP, 0, Spots.COUCH_L))
+                },
+            ) { w, _, think ->
+                if (
+                    think &&
+                        curled == null &&
+                        w.sharing() &&
+                        w.minds.all { it.runner.activity === CurlUp }
+                )
+                    curled = w.export()
+            }
+        }
         val nap = requireNotNull(curled) { "the friends never curled up" }
         val again = CatDays.run(cats(), hours = 0.0, fidelity = CatWorld.Fidelity.FAST)
         again.restore(nap)
@@ -312,5 +333,6 @@ class SocialDayTest {
         const val STUCK_STEPS = 20 * 120
         const val CHECK_QUANTA = 60
         const val RESTED = 0.95
+        const val CURL_H = 0.2
     }
 }

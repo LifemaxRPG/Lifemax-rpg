@@ -8036,8 +8036,14 @@
  "window.setTabTimingToast": [
   "src/runtime/segments/50-native-overview.js"
  ],
+ "window.setTimeout": [
+  "src/runtime/segments/50-native-pet-social.js"
+ ],
  "window.syncNativeOverviewSetting": [
   "src/runtime/segments/50-native-overview.js"
+ ],
+ "window.toast": [
+  "src/runtime/segments/50-native-pet-social.js"
  ],
  "window.writeSave": [
   "src/runtime/segments/50-native-pet.js",

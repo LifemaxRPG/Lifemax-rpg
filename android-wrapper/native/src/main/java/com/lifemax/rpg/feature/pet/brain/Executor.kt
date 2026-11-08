@@ -370,6 +370,7 @@ class FastExecutor(
             }
             is PlanStep.Leap -> land(s.surface, s.x)
             is PlanStep.Hop -> land(s.surface, s.x)
+            is PlanStep.Face -> facing = if (s.dir < 0) -1 else 1
             is PlanStep.Carry -> {
                 x =
                     if (surface == SurfaceId.FLOOR) World.clampHouse(s.x)

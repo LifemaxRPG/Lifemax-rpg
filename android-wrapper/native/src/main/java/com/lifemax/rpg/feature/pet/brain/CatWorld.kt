@@ -121,7 +121,10 @@ class CatWorld(
         if (fidelity != Fidelity.LIVE) return
         val bound = minds.filter { bodies.getOrNull(it.slot) != null }
         for (m in bound) (m.exec as BodyExecutor).adopt(bodies[m.slot])
+        // two cats curled up together go on lying together on the new bodies
+        social.rebinding()
         for (m in bound) m.resume(m.runner.activity.id, left = m.runner.left, at = m.runner.place)
+        social.restored()
     }
 
     /**

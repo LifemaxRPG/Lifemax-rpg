@@ -3673,7 +3673,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet-social.js",
-   "bytes": 7082,
+   "bytes": 7827,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3682,6 +3682,8 @@
    ],
    "symbols": [
     "window.writeSave",
+    "window.toast",
+    "window.setTimeout",
     "window.NativePetSocial"
    ]
   },

@@ -11,7 +11,8 @@
      lastGreet) for a nose touch or a hiss, and for a standoff the pecking order through petRankContest with the native winner
      (confidence, wins, upsets, petRankUpdate's leader and settling). ok only once the save stored it, a refused save is taken back;
      repeat-safe by op id, the last 40 kept in the save (state.petSocialOps), so a moment replayed after a reload is answered
-     "Already recorded." and never counted twice. The web brain's own feelings (petPairFeel) are not touched: the native brain owns
+     "Already recorded." and never counted twice. What the page would say about the moment (its toasts) is said only once the
+     save stored it. The web brain's own feelings (petPairFeel) are not touched: the native brain owns
      the mood while it runs the cats.
    Registered on the Cat tab and the Overview cards (the native world sends its reports through whichever shows).
    Loaded after 50-native-pet-play.js and before 50-native-overview-cards.js. */
@@ -96,13 +97,24 @@
         if (!r) stored = false;
         return r;
       };
+      // what the page would say about it (a first meeting, a new friendship level, the pecking order, some said a moment later)
+      // is held until the save stored it: a moment taken back says nothing, and its retry says it once
+      const said = [], toastOf = window.toast, later = window.setTimeout;
       try {
-        record(p.kind, a, b, w, Math.min(p.at, Date.now()));
+        window.toast = function () { said.push(() => toastOf.apply(window, arguments)) };
+        window.setTimeout = function (f, ms) { said.push(() => later(f, ms)); return 0 };
+        try {
+          record(p.kind, a, b, w, Math.min(p.at, Date.now()));
+        } finally {
+          window.toast = toastOf;
+          window.setTimeout = later;
+        }
         state.petSocialOps = ops().concat([p.op]).slice(-OPS_KEPT);
         save();
       } finally {
         window.writeSave = write;
       }
+      if (stored) said.forEach((f) => f());
       if (!stored) {
         const [pair, kept] = JSON.parse(before);
         if (pair === undefined) delete state.petPair;

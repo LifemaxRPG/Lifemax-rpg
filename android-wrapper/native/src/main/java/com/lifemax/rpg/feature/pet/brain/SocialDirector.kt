@@ -55,6 +55,7 @@ internal class Moment(val kind: String, var a: Int, var b: Int, val token: Int, 
     var friends = false
     var back = false
     var prize = false
+    var winner = -1
     var surface = SurfaceId.FLOOR
     var spot: Spot? = null
     var perch: Spot? = null
@@ -98,6 +99,13 @@ internal class SocialDirector(
 
     /** The two met here: a block written before the page stored that meeting does not undo it. */
     private var metHere = false
+
+    /** The two met in [other] (the catch-up's story): this director knows it too. */
+    fun adoptMet(other: SocialDirector) {
+        if (!other.metHere || metHere) return
+        metHere = true
+        info = info.copy(met = true)
+    }
 
     /** The page's newest friendship. */
     fun pair(p: PairInfo) {
@@ -157,6 +165,15 @@ internal class SocialDirector(
     /** True while two cats being restored lie curled up together. */
     fun pairedOnRestore(): Boolean = reforming
 
+    /**
+     * Before the cats take up what they do on other bodies ([CatWorld.bind]): two curled up
+     * together keep lying together, as after a restore. Call [restored] after.
+     */
+    fun rebinding() {
+        if (!two) return
+        reforming = sharing() && minds.all { it.runner.activity === CurlUp }
+    }
+
     // ---------------------------------------------------------------- each quantum
 
     /** One think quantum, after both cats thought; [hour] is the local hour. */
@@ -206,9 +223,14 @@ internal class SocialDirector(
     private fun finish(o: Moment) {
         if (moment === o) moment = null
         val now = epochMs()
-        quietUntil =
-            now +
-                (rng.range(t.QUIET_LO_MIN.toFloat(), t.QUIET_HI_MIN.toFloat()) * MINUTE_MS).toLong()
+        // a kitten following the grown cat is not a moment the two shared: no quiet after it
+        if (o.kind != Social.SHADOW)
+            quietUntil =
+                now +
+                    (rng.range(t.QUIET_LO_MIN.toFloat(), t.QUIET_HI_MIN.toFloat()) * MINUTE_MS)
+                        .toLong()
+        // a challenger that won a perch: the holder, who left it, holds it no more
+        if (o.perch != null && o.winner == o.a) minds[o.b].book.release(o.b)
         if (o.prize) o.perch?.let { minds[o.a].book.claim(o.a, it, it.x, 0) }
     }
 
@@ -289,6 +311,8 @@ internal class SocialDirector(
     private fun maybeStart(now: Long, hour: Double) {
         val a = minds[0]
         val b = minds[1]
+        // a moment given up keeps its quiet, the first meeting's too (no nap broken every 26 s)
+        if (now < quietUntil) return
         if (!info.met) {
             // the very first meeting: as soon as both can, a light nap broken for it
             if (
@@ -298,7 +322,6 @@ internal class SocialDirector(
                 start(greet(rng.chance(HALF).let { if (it) 0 else 1 }), now)
             return
         }
-        if (now < quietUntil) return
         val urge = SocialChoice.urge(a, b, info)
         val p = 1.0 - Math.exp(-t.RATE_PER_H * urge * t.CHECK_S / BrainTuning.Time.HOUR)
         if (rng.nextFloat() >= p) {
@@ -315,6 +338,29 @@ internal class SocialDirector(
         }
         start(o, now)
     }
+
+    /**
+     * Starts the moment [kind] now, begun by cat [a] (at [spot] for a curl-up or a standoff), with
+     * none of the chance or the gates: scenes in tests and a dev overlay. False when it cannot be
+     * played from where the cats are.
+     */
+    internal fun force(kind: String, a: Int, spot: Spot? = null, seconds: Double = 60.0): Boolean {
+        if (!two) return false
+        moment?.let(::abort)
+        val now = epochMs()
+        val o =
+            if (kind == Social.SHADOW)
+                Moment(Social.SHADOW, a, 1 - a, nextToken++, now).also { m ->
+                    m.queue += { plays.shadow(it, seconds) }
+                }
+            else build(SocialChoice.Option(kind, a, spot, 1.0), now) ?: return false
+        start(o, now)
+        return moment === o || o.inIt.any { it }
+    }
+
+    /** The end of the quiet after the last moment, epoch ms (tests). */
+    internal val quietEndsAt: Long
+        get() = quietUntil
 
     /** A kitten trots after the grown cat now and then (not a moment the page counts). */
     private fun maybeShadow(now: Long) {
@@ -338,11 +384,16 @@ internal class SocialDirector(
         o.stageMs = now
         o.inIt[o.a] = false
         o.inIt[o.b] = false
-        // the cats leave their places for the moment (a sleeper being joined keeps its own)
-        // (a sleeper being joined keeps its own, and so does the grown cat a kitten follows)
+        // the cats that leave their places for the moment give them up; one that stays where it is
+        // keeps its own, so the other never picks it: a sleeper being joined, a cat being groomed
+        // where it lies, the holder of a perch being challenged, the grown cat a kitten follows
         val joined = o.kind == Social.NAP && o.spot == null
         if (!joined) minds[o.a].book.release(o.a)
-        if (o.kind != Social.SHADOW) minds[o.b].book.release(o.b)
+        val stays =
+            o.kind == Social.SHADOW ||
+                o.kind == Social.GROOM ||
+                (o.kind == Social.STANDOFF && o.perch != null)
+        if (!stays) minds[o.b].book.release(o.b)
         next(o, now)
     }
 
@@ -414,20 +465,20 @@ internal class SocialDirector(
         val sleepy = SocialChoice.sleepy(a) && SocialChoice.sleepy(b)
         val soft = o.surface == SurfaceId.COUCH || o.surface == SurfaceId.FLOOR
         val now = epochMs()
-        val nap =
-            info.rel >= t.NAP_REL &&
-                soft &&
-                !cooling(Social.NAP, now) &&
-                (sleepy || rng.chance(t.NAP_AFTER_GROOM_P))
-        val end = plays.groomEnd(o)
-        if (!nap) return end
-        // the grooming is told, then they settle into the spoon pose where they are
+        val nap = info.rel >= t.NAP_REL && soft && !cooling(Social.NAP, now) && sleepy
+        if (!nap) return plays.groomEnd(o)
+        // they settle into the spoon pose where they are, if it fits; the grooming is told once,
+        // here or by the ordinary end
+        o.firstLeftS = Double.NaN
+        val join = joinAfterGroom(o) ?: return plays.groomEnd(o)
         record(o, Social.GROOM, -1, now)
         o.napS = CurlUp.duration(a, rng)
-        o.firstLeftS = Double.NaN
         o.queue.addFirst { m -> plays.curlSleep(m, m.napS, m.firstLeftS) }
-        return plays.curlJoin(o) ?: end
+        return join
     }
+
+    /** How two cats settle together after grooming (a seam for tests). */
+    internal var joinAfterGroom: (Moment) -> Stage? = { plays.curlJoin(it) }
 
     // ---------------------------------------------------------------- the blob
 

@@ -41,6 +41,12 @@ private fun PairPlays.spoon(o: Moment): Pair<Float, Float>? {
 /** Both walk to one soft spot ([o].spot) and settle side by side. */
 internal fun PairPlays.curlCome(o: Moment): Stage? {
     val spot = o.spot ?: return null
+    // on furniture both lie at one depth and the room draws one slot over the other: that one is
+    // the front cat (a), so the cat meant to lie behind is drawn behind
+    if (!spot.onFloor && o.a != PairPose.DRAWN_FRONT_SLOT) {
+        o.b = o.a
+        o.a = PairPose.DRAWN_FRONT_SLOT
+    }
     o.surface = spot.surface
     o.mz = if (spot.onFloor) spot.z else World.surface(spot.surface).z
     o.f = if (minds[o.a].exec.x <= spot.x) 1 else -1
@@ -76,8 +82,13 @@ internal fun PairPlays.curlJoin(o: Moment): Stage? {
     o.mx = s.exec.x
     o.mz = if (o.surface == SurfaceId.FLOOR) s.exec.z else World.surface(o.surface).z
     o.f = s.exec.facing
-    var place = spoon(o)
+    // on the floor the joiner lies behind (further back), or in front when there is no room; on
+    // furniture it lies where the room draws it: in front when it is the slot drawn in front
+    val raised = o.surface != SurfaceId.FLOOR
+    val inFront = raised && o.b == PairPose.DRAWN_FRONT_SLOT
+    var place = if (inFront) null else spoon(o)
     if (place == null) {
+        if (raised && !inFront) return null
         // in front of it instead: the joiner is the front cat, facing the same way
         val gap = PairPose.SNUGGLE.gap(stage(minds[o.b]), stage(s), o.mz)
         val x = fit(o.surface, o.mx - o.f * gap) ?: return null
@@ -169,6 +180,7 @@ internal fun PairPlays.standoffEnd(o: Moment, winner: Int): Stage {
     val st = Stage(final = true)
     st.report = Social.STANDOFF
     st.winner = winner
+    o.winner = winner
     val loser = if (winner == o.a) o.b else o.a
     val w = minds[winner]
     val l = minds[loser]
@@ -195,13 +207,14 @@ internal fun PairPlays.standoffEnd(o: Moment, winner: Int): Stage {
     sl.act(Rows.GROOM, seconds(GROOM_LO_S, GROOM_HI_S))
     o.prize = false
     if (perch != null && winner == o.a && vacated) {
-        o.prize = true
         // the prize: the challenger goes up once the holder is off, and rests there
         sw.act(Rows.SIT, PRIZE_WAIT_S)
-        w.exec.route(perch.surface, perch.x)?.let { r ->
+        val r = w.exec.route(perch.surface, perch.x)
+        if (r != null) {
+            o.prize = true
             sw.route(r.steps)
             sw.act(Rows.LOAF, seconds(LOAF_LO_S * 2, LOAF_HI_S * 2))
-        }
+        } else sw.act(Rows.LOAF, seconds(LOAF_LO_S, LOAF_HI_S))
     } else sw.act(Rows.LOAF, seconds(LOAF_LO_S, LOAF_HI_S))
     st.parts[winner] = part(PairStandoff, sw)
     st.parts[loser] = part(PairStandoff, sl)

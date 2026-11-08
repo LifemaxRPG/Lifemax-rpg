@@ -3,6 +3,7 @@ package com.lifemax.rpg.feature.pet.host
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
+import com.lifemax.rpg.feature.pet.brain.Social
 import com.lifemax.rpg.feature.pet.world.BlobCat
 import com.lifemax.rpg.feature.pet.world.BlobPos
 import com.lifemax.rpg.feature.pet.world.BlobToy
@@ -157,12 +158,18 @@ object WorldImport {
      * where an earlier one is (closer than [HostTuning.APART_PX]: both web cats saved at one place,
      * both stored on the bed) is put on the floor [HostTuning.APART_STEP_PX] along, toward the
      * middle of the house, and picks afresh what to do there (a declared cut, as every start is).
+     * Two cats stored curled up together lie side by side on purpose and stay
+     * ([Social.CURLED_ACT]).
      */
     fun apart(cats: LinkedHashMap<String, BlobCat>) {
         val ids = cats.keys.toList()
         for (i in 1 until ids.size) {
             val c = cats.getValue(ids[i])
-            val clash = (0 until i).any { on(cats.getValue(ids[it]).pos, c.pos) }
+            val clash =
+                (0 until i).any {
+                    val o = cats.getValue(ids[it])
+                    on(o.pos, c.pos) && !(c.act == Social.CURLED_ACT && o.act == Social.CURLED_ACT)
+                }
             if (!clash) continue
             val p = c.pos
             val mid = (World.HOUSE_MIN_X + World.HOUSE_MAX_X) / 2.0

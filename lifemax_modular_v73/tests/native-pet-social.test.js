@@ -148,6 +148,18 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
       return { a, same: JSON.stringify([state.petPair, state.petSocialOps]) === before };
     });
     ok('a moment the browser could not store: not ok, taken back', r.a && !r.a.ok && r.a.why === 'unsaved' && r.same, r);
+    r = await p.evaluate(async () => {
+      pairAt(0.299); save(); await wait(50);
+      const shown = [], orig = window.toast; window.toast = function (m) { shown.push(String(m)); return orig.apply(this, arguments) };
+      const m = moment({ kind: 'chase' }), level = () => shown.filter((t) => /getting along/i.test(t)).length;
+      const write = writeSave; writeSave = () => false; let a; try { a = await command('NativePet', 'social', m) } finally { writeSave = write }
+      await wait(900); const whileRefused = level();
+      const b = await command('NativePet', 'social', m); await wait(900);
+      window.toast = orig;
+      return { a, b, whileRefused, once: level(), shown };
+    });
+    ok('a moment taken back says nothing (no new friendship level toast)', r.a && !r.a.ok && r.whileRefused === 0, r);
+    ok('its retry, stored, says it once', r.b && r.b.ok && r.once === 1, r);
     const op = await p.evaluate(async () => { const m = moment({ op: 'c:social:kept', kind: 'nap' }); await command('NativePet', 'social', m); return m.op });
     await p.reload(); await p.evaluate(HELPERS);
     r = await p.evaluate(async (op) => { lmaThumbWarm = async () => { }; await petInit(); navigate('pet'); await until(() => showing('NativePet'), 6000);

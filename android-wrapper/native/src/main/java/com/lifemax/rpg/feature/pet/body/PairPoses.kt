@@ -75,6 +75,15 @@ enum class PairPose(
         ),
     );
 
+    companion object {
+        /**
+         * Two cats on one raised piece (the sofa) stand at the same depth, and the room then draws
+         * the second cat (slot 1) over the first (DepthOrder). So on furniture the cat that lies in
+         * front in a pose is this slot, and the one behind the other.
+         */
+        const val DRAWN_FRONT_SLOT = 1
+    }
+
     /** The lab's name of the pose (`lab.json` `pairs` key). */
     val key: String
         get() = name.lowercase()

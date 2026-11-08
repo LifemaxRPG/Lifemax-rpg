@@ -96,11 +96,11 @@ class PairPosesScreenshotTest {
         val pose = PairPose.SNUGGLE
         val z = World.surface(SurfaceId.COUCH).z
         val gap = pose.gap(ADULT, ADULT, z)
-        shot(
-            LiveSpot(SOFA_X, 1, SurfaceId.COUCH, plan = act(pose.a)),
-            LiveSpot(SOFA_X + gap, 1, SurfaceId.COUCH, plan = act(pose.b)),
-            LOOP_S,
-        )
+        // on one piece the room draws slot 1 over slot 0, so slot 1 is the cat in front (the
+        // brain lays them so: PairPose.DRAWN_FRONT_SLOT)
+        val front = LiveSpot(SOFA_X, 1, SurfaceId.COUCH, plan = act(pose.a))
+        val behind = LiveSpot(SOFA_X + gap, 1, SurfaceId.COUCH, plan = act(pose.b))
+        shot(behind, front, LOOP_S)
     }
 
     private companion object {

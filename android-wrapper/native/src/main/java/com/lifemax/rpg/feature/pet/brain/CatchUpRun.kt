@@ -45,6 +45,7 @@ internal object CatchUpRun {
         world.restore(end)
         // what the two did together in the story is told to the page as it happened
         fast.takeReports().forEach(world::report)
+        world.social.adoptMet(fast.social) // a first meeting in the story is not offered again
         val places =
             world.minds.map { m ->
                 CatchPlace(
