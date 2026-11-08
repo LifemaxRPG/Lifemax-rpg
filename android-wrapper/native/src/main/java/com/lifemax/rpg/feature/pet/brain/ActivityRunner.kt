@@ -55,6 +55,17 @@ class ActivityRunner(
     var watchdogs = 0
         private set
 
+    /**
+     * The moment together this cat is playing a part of ([SocialDirector]), or 0: set by
+     * [playPart], cleared by anything else the cat begins.
+     */
+    var pairToken = 0
+        internal set
+
+    /** True while the cat sits waiting for a way the other cat holds. */
+    val waitingForWay: Boolean
+        get() = waiting != null
+
     private var arrived = false
     private var suspended: Activity? = null
     private var suspendedPlace: Spot? = null
@@ -90,7 +101,8 @@ class ActivityRunner(
         suspended = null
         val here = m.here
         m.book.release(m.slot)
-        val free = here == null || m.book.free(m.slot, here, exec.x, 0)
+        // two cats restored curled up together share their spot (see SocialDirector.restored)
+        val free = here == null || m.book.free(m.slot, here, exec.x, 0) || m.pairedOnRestore()
         if (here != null && free) m.book.place(m.slot, here, exec.x)
         // the later cat makes way (the first has taken up its own activity already)
         if (m.slot > 0 && m.crowded()) {
@@ -101,6 +113,10 @@ class ActivityRunner(
         // where it stands, when that suits it (a cat restored on its way to bed does not sleep by
         // the bowl: it picks anew)
         val place = at ?: here
+        val a0 = id?.let(registry::find)
+        // a moment together is taken up where the cat lies, never walked to a nearby spot
+        if (a0 != null && Social.isPair(a0) && at == null)
+            return resumeInPlace(a0, rng, sinceS, left, free)
         val a =
             id?.let(registry::find)?.takeIf {
                 free &&
@@ -115,6 +131,17 @@ class ActivityRunner(
             return begin(next?.let { Choice(it, null, 0.0, "after ${a.id}") } ?: pick(rng), rng)
         }
         begin(Choice(a, place, 0.0, RESUME, rest), rng)
+    }
+
+    /** [a] (a moment together, curled up) taken up where the cat lies, or a fresh pick. */
+    private fun resumeInPlace(a: Activity, rng: Rng, sinceS: Double, left: Double, free: Boolean) {
+        if (!free || !a.resumesAfterRestart) return begin(pick(rng), rng)
+        val rest = if (left.isNaN()) remaining(a, sinceS, rng) else left
+        if (rest <= 0.0) {
+            val next = a.next?.let(registry::find)
+            return begin(next?.let { Choice(it, null, 0.0, "after ${a.id}") } ?: pick(rng), rng)
+        }
+        begin(Choice(a, null, 0.0, RESUME, rest), rng)
     }
 
     /**
@@ -195,6 +222,44 @@ class ActivityRunner(
     internal fun force(activity: Activity, spot: Spot?, seconds: Double, rng: Rng) {
         end(natural = false)
         begin(Choice(activity, spot, 0.0, FORCED, seconds), rng)
+    }
+
+    /**
+     * Plays [a], a part of the moment together [token], as [script] (the social director wrote it)
+     * in place of what the cat was doing. An ordinary activity ends here and is not taken up again
+     * after the moment; one part of the moment follows another without ending it (no cooldown, no
+     * novelty, one explain line per moment).
+     */
+    internal fun playPart(a: Activity, script: Script, reason: String, token: Int) {
+        val fresh = token != pairToken || !Social.isPair(activity)
+        if (!Social.isPair(activity)) end(natural = false)
+        waiting = null
+        suspended = null
+        activity = a
+        place = null
+        seconds = script.beatSeconds
+        atPlaceS = 0.0
+        elapsedS = 0.0
+        arrived = false
+        exec.start(script)
+        val where = m.here?.id ?: if (exec.surface == SurfaceId.FLOOR) "floor" else exec.surface.key
+        doing = Doing(a.id, where, m.drives[a.mainDrive], reason)
+        if (fresh) {
+            explain.add(Why(m.nowMs, a.id, where, reason, emptyList()))
+            m.began(a)
+        }
+        pairToken = token
+    }
+
+    /**
+     * The moment together ended before its time (the other cat was called away, a stage timed out):
+     * a cat still in it gets up from it and picks anew.
+     */
+    internal fun leavePair(rng: Rng) {
+        if (!Social.isPair(activity)) return
+        end(natural = false)
+        waiting = null
+        begin(pick(rng), rng)
     }
 
     /** A fresh pick for the cat as it is now. */
@@ -298,6 +363,7 @@ class ActivityRunner(
         val a = choice.activity
         var spot = choice.spot
         val script = Script()
+        pairToken = 0
         if (wakeFirst) wakeBeats(script)
         when (lead) {
             Lead.ASIDE -> aside(script)
@@ -386,11 +452,7 @@ class ActivityRunner(
     }
 
     /** A cat woken by a reflex gets up properly first: a yawn, a stretch, a shake. */
-    private fun wakeBeats(script: Script) {
-        script.act(Rows.YAWN, Rows.once(Rows.YAWN))
-        script.act(Rows.STRETCH, Rows.once(Rows.STRETCH))
-        script.act(Rows.SHAKE, Rows.once(Rows.SHAKE))
-    }
+    private fun wakeBeats(script: Script) = script.wake()
 
     private companion object {
         const val MS = 1000.0
