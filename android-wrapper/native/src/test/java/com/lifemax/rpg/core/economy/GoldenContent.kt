@@ -1,8 +1,13 @@
 package com.lifemax.rpg.core.economy
 
+import com.lifemax.rpg.core.quests.ContentQuest
+import com.lifemax.rpg.core.quests.QuestContentLoader
+import com.lifemax.rpg.core.quests.QuestContentRead
+
 /**
  * Page content outside the economy that some golden cases depend on (spec section 1.3: content, not
- * rules). Each entry is what the recorded cases show of it; nothing here is a rule.
+ * rules). The default quests come from the page's content file; the rest are what the recorded
+ * cases show of it. Nothing here is a rule.
  */
 internal object GoldenContent {
     /**
@@ -10,74 +15,33 @@ internal object GoldenContent {
      */
     const val SCHEMA = 1.0
 
-    private val defaultQuests =
-        listOf(
-            quest(
-                "q1",
-                "Learn for 20 minutes",
-                "Focused study or reading. Show up or the attribute stalls.",
-                "daily",
-                15,
-                "learning",
-            ),
-            quest(
-                "q2",
-                "Move with intention",
-                "Train or move with intent. Recovery only counts if you actually recover.",
-                "daily",
-                15,
-                "movement",
-            ),
-            quest(
-                "q3",
-                "Advance a priority",
-                "Take one concrete step on an important project.",
-                "daily",
-                20,
-                "business",
-            ),
-            quest(
-                "q4",
-                "Three meaningful sessions",
-                "Complete three workouts or planned movement sessions this week.",
-                "weekly",
-                35,
-                "fitness",
-            ),
-            quest(
-                "q5",
-                "Weekly reset",
-                "Review your progress and choose next week’s priorities.",
-                "weekly",
-                25,
-                "review",
-            ),
-            quest(
-                "q6",
-                "First proof of progress",
-                "Complete a personal milestone and record the result.",
-                "epic",
-                75,
-                "milestone",
-            ),
-        )
+    /**
+     * `freshState().quests`, read from the page's own content file through the production loader
+     * ([QuestContentLoader]); a file that does not load fails every case that starts from a fresh
+     * save, loudly.
+     */
+    private val defaultQuests: List<Map<String, Any?>> =
+        when (val read = QuestContentLoader.packaged) {
+            is QuestContentRead.Loaded -> read.content.defaultQuests.map(::questMap)
+            is QuestContentRead.Refused ->
+                error("quest content refused: ${read.path}: ${read.reason}")
+        }
 
-    private fun quest(
-        id: String,
-        name: String,
-        desc: String,
-        cadence: String,
-        xp: Int,
-        kind: String,
-    ) =
-        linkedMapOf(
-            "id" to id,
-            "name" to name,
-            "desc" to desc,
-            "cadence" to cadence,
-            "xp" to xp.toDouble(),
-            "kind" to kind,
-        )
+    /** A quest as the page stores it: its keys in the page's order, only those the page has. */
+    private fun questMap(q: ContentQuest): Map<String, Any?> =
+        linkedMapOf<String, Any?>(
+                "id" to q.id,
+                "name" to q.name,
+                "desc" to q.desc,
+                "cadence" to q.cadence,
+                "xp" to q.xp.toDouble(),
+                "kind" to q.kind,
+            )
+            .apply {
+                q.attribute?.let { put("attribute", it) }
+                q.day?.let { put("day", it) }
+                q.stage?.let { put("stage", it.toDouble()) }
+            }
 
     /** The attribute-sheet entries the cases use (`ACTS`); icons are their attribute's. */
     private val catalogEntries =

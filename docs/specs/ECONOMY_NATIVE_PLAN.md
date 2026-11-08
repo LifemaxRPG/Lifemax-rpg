@@ -124,7 +124,7 @@ Needed and missing:
 |---|---|---|
 | Daily hand draw: `dhSeed`, `dhRng` (32-bit `Math.imul` hash and generator), `dhLuckScore`, `dhPick` weights, `dhDraw`, `dhWeakestAttr`, `dhRecentAttrXP`, rest-day rule, three slots (maintenance, class, wildcard) | `50-quests-hand.js:63-92` | missing |
 | `dhEnsure` (today's three cards, drop yesterday's, `dhMig` migration, `dailyDraw` state) and the replacement draw inside `dhReroll` (nonce, taken templates) | `50-quests-hand.js:93-125` | missing; Kotlin `reroll` takes the card's quest id and leaves drawing to the caller ("outside the economy") |
-| Quest library (`QUEST_LIBRARY`), `DH_CLASS_ATTR`, `defaultQuests`, `CLASS_CONTENT`, class packs and `applyClassContent` | `50-quests-hand.js:8`, `00-runtime.js:31` | missing in main; a hand-copied `defaultQuests` and a subset exist only in test `GoldenContent.kt` |
+| Quest library (`QUEST_LIBRARY`), `DH_CLASS_ATTR`, `defaultQuests`, `CLASS_CONTENT`, class packs and `applyClassContent` | `50-quests-hand.js:8`, `00-runtime.js:31` | data exists in `core/quests` (WP2: `QuestContent`, read from the page's export); the rules that use it (draw, `applyClassContent`) are missing |
 | `luckToday` score (the hand's luck input), 5500 fallback | `18-runtime.js:128` | missing (native Character has a luck screen, not shared with this module) |
 | Weekday filter and period keys for a day, quest board projection (which quests show, "available XP", nutrition epic, unknown cadence QD11) | QUESTS_SPEC 3.3, 6 | missing (key per period exists) |
 | Claim: there is no separate claim step. Checking a card is `toggle(checked = true)`; auto-verify claims it. "Claim" in the economy sense (coach chips) is `Coach.claim`, which exists | - | exists |
@@ -194,6 +194,25 @@ writes them to `tests/fixtures/quest-content.json` from the page, and Kotlin loa
 time or checked in with a test that fails when it differs from the page. Replaces `GoldenContent.kt`.
 Tests: a page test that regenerates the file and compares; a Kotlin test that parses it and checks counts and ids.
 Decision: none.
+
+**Status: done** (not wired to anything). What exists:
+
+- Page side: `tools/gen_quest_content.js` loads the built page in Chromium and writes `tests/fixtures/quest-content.json`
+  (schemaVersion 1, a SHA-256 content hash, counts, one entry per line): `ATTRS` order, `DH_FREE_REROLLS`, `DH_REROLL_COST`,
+  `DH_CLASS_ATTR`, the 53 `QUEST_LIBRARY` templates, `defaultQuests`, `stageLvl(0..5)`, `CLASSES` ids and readiness, and the 131
+  `CLASS_CONTENT` quests of the four ready classes (as the page has them after all its segments ran). It also writes the same
+  bytes to `android-wrapper/native/src/main/resources/quests/quest-content.json`, the copy the app reads.
+  `tests/quest-content.test.js` records the content again from the page and fails on any difference from the fixture, and fails
+  when the packaged copy is not the same bytes.
+- Kotlin (`core/quests`): `QuestContent` (typed content) and `QuestContentLoader` (strict decoder, no exceptions: unknown or
+  missing key, wrong kind, tier outside 1 to 3, fractional or negative XP, unknown attribute, duplicate template, quest or class
+  id, count or hash mismatch, other schema version all give `Refused(path, reason)`). `QuestContentTest` checks the packaged
+  resource equals the fixture byte for byte, counts, ids, verify kinds, class attribute coverage, agreement with `Attribute` and
+  `Sparks.REROLL_PRICE`, and one refusal per kind of damage. `GoldenContent.kt` now takes the default quests from the loader.
+- Not in the file, because the page keeps them in code: the tier odds and luck constants inside `dhPick`, the slot order, and the
+  migration patterns (`q1`-`q3` and `cc_*` in `dhEnsure`, `q1`-`q6` and `cc_*` in `applyClassContent`). WP3 and WP4 accept them
+  by golden cases. `GoldenContent.kt` still holds the attribute-sheet catalog entries, plan links and plan days (not quest
+  content) and the save schema number.
 
 ### WP3. Daily Hand draw in Kotlin (M, risk medium)
 
