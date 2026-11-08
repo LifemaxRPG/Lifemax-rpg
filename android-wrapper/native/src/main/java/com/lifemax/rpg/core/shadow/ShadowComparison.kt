@@ -78,6 +78,8 @@ class ShadowComparison(redactor: ShadowRedactor, private val runner: ShadowRunne
         found += diff.value(RETURNS, envelope.returns, prediction.returns)
         val toastAllowed = toasts(envelope.toasts, prediction.toasts, found)
         if (envelope.env.saves.size != prediction.saves) found += Difference(SAVES, SAVES)
+        // the journal coach's own plain writes are page state outside the economy (A-06)
+        if (envelope.env.journal.isNotEmpty()) found += Difference(JOURNAL, JOURNAL)
         if (prediction.extraIds > 0) found += Difference(IDS_EXTRA, IDS_EXTRA)
         if (found.isEmpty() && !toastAllowed) return Verdict.Same
         val unexplained =
@@ -119,6 +121,7 @@ class ShadowComparison(redactor: ShadowRedactor, private val runner: ShadowRunne
         const val RETURNS = "returns"
         const val TOASTS = "toasts"
         const val SAVES = "saves.count"
+        const val JOURNAL = "saves.journal"
         const val IDS_EXTRA = "ids.extra"
         const val CODEC_ENCODE = "codec.encode"
     }

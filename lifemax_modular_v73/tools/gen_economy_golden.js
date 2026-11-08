@@ -34,7 +34,11 @@
    (00000000-0000-4000-8000-000000000001, ...); Math.random restarts its sequence at every call; toasts, confirm and prompt are
    captured. The Daily Hand is switched off (its auto-verify inside save() and its drawing of cards), because it is outside
    the economy (spec 1.2) and pays only through toggleQuest, which has its own cases; a case marked hand: true has its cards
-   (the reroll price cases), and one marked verify: true also has the auto-verify inside save() (SAVE-2).
+   (the reroll price cases), and one marked verify: true also has the auto-verify inside save() (SAVE-2); input says hand: true and
+   verify: true for those (with fields and omit: the extra fields it records and the ones it leaves out). A verify case's output also has trace: what the composition did, in order (ECONOMY_SHADOW_PLAN WP6c):
+   'write:<stored>' for each writeSave() ('journal:<stored>' for the journal coach's own plain write, jcWrite, which its redraw
+   makes outside the economy) and 'check' each time the Daily Hand's dhAutoVerify actually checks (outside its own
+   saves), so the order of the page's save, the redraw's check inside it and the save wrapper's check is recorded.
    health.snap (the sync's display data) is left out. */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -777,6 +781,7 @@ function saveAndMigrate() {
   add('save/daily-hand-pays-inside-save', 'SAVE-2 QUEST-5 SPARK-5', { hand: true, verify: true, fields: ['dailyDraw', 'dhMig'],
     state: { dhMig: 1, quests: hand, dailyDraw: { date: TODAY, nonce: 0, rerollsUsed: 0, cards: hand.map(q => ({ tpl: q.tpl, id: q.id, n: 0 })) } },
     calls: [C('recordActivity', draft('strength', 20)), C('recordActivity', draft('strength', 25)), C('dhReroll', 0)] });
+  compose(card);
   scase('save/fails', 'SAVE-1 SAVE-3', { activities: [rec('reading', 24, { sp: false })] }, withEnv({ failSave: 'storage' }, C('save')));
   scase('save/read-only', 'SAVE-3', { activities: [rec('reading', 24, { sp: false })] }, withEnv({ failSave: 'readonly' }, C('save')));
   const staleAttr = { physique: 7, endurance: 7, intelligence: 7, business: 7, social: 7, discipline: 7, adventure: 7, wellbeing: 7, chess: 7 };
@@ -838,6 +843,38 @@ function boundaries() {
     nyRec('reading', 24, '2026-11-01T14:00:00.000Z'), nyRec('reading', 24, '2026-10-31T14:00:00.000Z')] }, calls: [C('streak')] });
 }
 
+/* save/compose-*: the Daily Hand composed with the save, as the real page runs it (ECONOMY_SHADOW_PLAN WP6c): the save writes, the
+   redraw inside it deals and verifies (renderQuests), then the save's wrapper deals and verifies again; recorded with the trace */
+function compose(card) {
+  const H = { hand: true, verify: true, fields: ['dailyDraw', 'dhMig', 'waterLog'] };
+  const draw = (cards, date = TODAY) => ({ date, nonce: 0, rerollsUsed: 0, cards: cards.map(q => ({ tpl: q.tpl, id: q.id, n: 0 })) });
+  const lift = card(0, 't2', 'Proper strength session', '25 minutes of resistance training.', 'physique', 2, 'act:strength:25');
+  const move = card(1, 't9', 'Move for twenty', 'Any activity of 20 minutes.', 'endurance', 1, 'any:20');
+  const water = card(2, 't30', 'Hydrate', 'Drink your water goal.', 'wellbeing', 1, 'water:100');
+  const both = [lift, move, water];
+  const daily = quest('d1', 'daily', 15);
+  const glasses = [{ date: TODAY, ml: 1200 }, { date: TODAY, ml: 900 }];
+  add('save/compose-log-pays-two-cards', 'SAVE-2 QUEST-5', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both) }, calls: [C('recordActivity', draft('strength', 30))] });
+  add('save/compose-toggle-pays-another', 'SAVE-2 QUEST-2', { ...H, state: { dhMig: 1, quests: [daily, ...both], dailyDraw: draw(both), waterLog: glasses }, calls: [C('toggleQuest', 'd1', true)] });
+  add('save/compose-locked-toggle-redraw-pays', 'SAVE-2 QUEST-2', { ...H, state: { dhMig: 1, quests: [quest('st3', 'daily', 20, { stage: 3 }), ...both], dailyDraw: draw(both), waterLog: glasses },
+    calls: [C('toggleQuest', 'st3', true)] });
+  add('save/compose-bare-save-pays-water', 'SAVE-2', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both), waterLog: glasses }, calls: [C('save')] });
+  add('save/compose-deal-inside-save', 'SAVE-2', { ...H, state: { dhMig: 1, quests: [daily], activities: [rec('strength', 30, { primary: 'physique', day: dayKey(-1) })] }, calls: [C('save')] });
+  const old = [lift, move, water].map(q => ({ ...q, id: q.id.replace(TODAY, dayKey(-1)) }));
+  add('save/compose-deal-at-midnight', 'SAVE-2 SAVE-1', { ...H, now: hoursBefore(0.5, TODAY + 'T00:00:00.000Z'), state: { dhMig: 1, quests: old, dailyDraw: draw(old, dayKey(-1)) },
+    calls: [at(hoursBefore(-0.6, TODAY + 'T00:00:00.000Z'), C('recordActivity', draft('strength', 30)))] });
+  add('save/compose-migration-on-first-check', 'SAVE-2', { ...H, state: { quests: [quest('q1', 'daily', 15), quest('q4', 'daily', 15), quest('w1', 'weekly', 35)] }, calls: [C('save')] });
+  add('save/compose-failed-save-with-cards', 'SAVE-2 SAVE-4 D13', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both), waterLog: glasses },
+    calls: [withEnv({ failSave: 'storage' }, C('recordActivity', draft('strength', 30)))] });
+  add('save/compose-read-only-with-cards', 'SAVE-2 SAVE-3', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both) },
+    calls: [withEnv({ failSave: 'readonly' }, C('recordActivity', draft('strength', 30)))] });
+  add('save/compose-reroll-then-checks', 'SAVE-2 SPARK-5', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both), sparks: 80, waterLog: glasses }, calls: [C('dhReroll', 0), C('dhReroll', 1)] });
+  add('save/compose-create-quest-checks', 'SAVE-2 QUEST-4', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both), waterLog: glasses },
+    calls: [withEnv({ dom: { newQuestName: 'Stretch', newQuestCadence: 'daily', newQuestXP: '30' } }, C('createQuest'))] });
+  add('save/compose-verify-alone', 'SAVE-2', { ...H, state: { dhMig: 1, quests: both, dailyDraw: draw(both), waterLog: glasses, activities: [rec('running', 20, { dur: 25, primary: 'endurance' })] }, calls: [C('dhAutoVerify')] });
+  add('save/compose-ensure-alone', 'SAVE-2', { ...H, state: { dhMig: 1, quests: old, dailyDraw: draw(old, dayKey(-1)) }, calls: [C('dhEnsure')] });
+}
+
 function defineCases() {
   if (CASES.length) return CASES;
   add('fresh/save', 'SAVE-5', { fresh: true });
@@ -849,7 +886,12 @@ function defineCases() {
 function pageRunner(fieldsAll) {
   const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
   const realSetItem = Storage.prototype.setItem, realPlugin = window.lmaPlugin, library = window.QUEST_LIBRARY;
-  let uuid = 0, seed = 1, toasts = [], before = null, fields = [], answer = true, typed = null;
+  let uuid = 0, seed = 1, toasts = [], before = null, fields = [], answer = true, typed = null, trace = null;
+  const realWrite = writeSave, realVerify = dhAutoVerify, realJournal = jcWrite;
+  let journal = 0; // inside the journal coach's own plain write (jcWrite), which is outside the economy
+  writeSave = function () { const ok = realWrite.apply(this, arguments); if (trace) trace.push((journal ? 'journal:' : 'write:') + !!ok); return ok };
+  jcWrite = function () { journal++; try { return realJournal.apply(this, arguments) } finally { journal-- } };
+  dhAutoVerify = function () { if (trace && !dhBusy) trace.push('check'); return realVerify.apply(this, arguments) };
   window.toast = m => { toasts.push(String(m)) };
   window.confirm = () => answer;
   window.prompt = () => typed;
@@ -914,15 +956,21 @@ function pageRunner(fieldsAll) {
       if (s.customRules) { rules = Object.assign(structuredClone(DEFAULT_RULES), s.customRules); delete s.customRules }
       Object.assign(state, s); state.customRules = rules;
       if (!spec.stale && Array.isArray(state.activities) && state.activities.length) { rebuildAttrXP(); rebuildSkillXP() }
-      draw();
-      uuid = 0; toasts = []; fields = spec.fields; before = pick(fields);
+      /* a verify case's Daily Hand neither deals nor checks while the page is drawn before it begins: what it does is the case */
+      const lib = window.QUEST_LIBRARY;
+      if (spec.verify) { window.QUEST_LIBRARY = undefined; dhBusy = true }
+      try { draw() } finally { window.QUEST_LIBRARY = lib; dhBusy = !spec.verify }
+      uuid = 0; toasts = []; fields = spec.fields; before = pick(fields); trace = spec.verify ? [] : null;
       return before;
     },
     call,
     finish() {
       const after = pick(fields), changed = {}, deleted = [];
       for (const k of fields) if (JSON.stringify(after[k]) !== JSON.stringify(before[k])) { if (after[k] === undefined) deleted.push(k); else changed[k] = after[k] }
-      return { state: changed, deleted, toasts };
+      const out = { state: changed, deleted, toasts };
+      if (trace) out.trace = trace;
+      trace = null;
+      return out;
     },
     async run(spec) { const b = eco.setup(spec), returns = []; for (const c of spec.calls) returns.push(await call(c)); return { before: b, returns, ...eco.finish() } },
     async pure(calls) { fresh(false); toasts = []; const returns = []; for (const c of calls) returns.push(await call(c)); return { returns, toasts } },
@@ -965,7 +1013,10 @@ async function record(p, c, base) {
   const output = { returns: r.returns, state: r.state };
   if (r.deleted.length) output.deleted = r.deleted;
   if (r.toasts.length) output.toasts = r.toasts;
-  return { id: c.id, rule: c.rule, input: { now, zone: c.zone, ...(c.stale ? { stale: true } : {}), state, calls: c.calls }, output };
+  if (r.trace) output.trace = r.trace;
+  const flags = { ...(c.stale ? { stale: true } : {}), ...(c.hand ? { hand: true } : {}), ...(c.verify ? { verify: true } : {}),
+    ...(c.hand && c.fields ? { fields: c.fields } : {}), ...(c.hand && c.omit ? { omit: c.omit } : {}) };
+  return { id: c.id, rule: c.rule, input: { now, zone: c.zone, ...flags, state, calls: c.calls }, output };
 }
 
 /* Records every case in the built page `file`; resolves to the list of cases. */

@@ -22,8 +22,9 @@ class InputRefused(val at: String) : Exception(at) {
 /**
  * The `env` parts one kind may carry beside `saves` (ECONOMY_SHADOW_PLAN 2.3): at most [confirms]
  * answers to `confirm()`, at most [prompts] answers to `prompt()`, the input values [dom] by
- * element id (or any id starting [domPrefix]) and, with [plan], the plan facts. Anything else
- * refuses.
+ * element id (or any id starting [domPrefix]) and the plan facts ([plan]: the kind records the full
+ * window of 2.3; every other kind may record today's alone, `economy.shadow.quests.v1`). Anything
+ * else refuses.
  */
 data class EnvShape(
     val confirms: Int = 0,
@@ -144,7 +145,9 @@ class EntryInput(envelope: ShadowEnvelope, shape: EnvShape) {
             "confirm" -> shape.confirms > 0
             "prompt" -> shape.prompts > 0
             "dom" -> shape.dom.isNotEmpty() || shape.domPrefix != null
-            "plan" -> shape.plan
+            // from WP6c every kind may carry today's plan facts: any save can deal and verify
+            // the Daily Hand, which asks whether today is a rest day and whether it is done
+            "plan" -> true
             else -> false
         }
 

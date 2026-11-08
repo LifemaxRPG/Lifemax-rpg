@@ -36,7 +36,10 @@ class ShadowSessionTest {
     fun offUntilTheSwitchSaysOnAndOffAgainWhenItSaysOff() {
         val s = session()
         assertEquals(ShadowState.OFF, s.handshake().state)
-        assertEquals(listOf(ShadowLimits.CAPABILITY), s.handshake().capabilities)
+        assertEquals(
+            listOf(ShadowLimits.CAPABILITY, ShadowLimits.CAPABILITY_QUESTS),
+            s.handshake().capabilities,
+        )
         assertEquals(FP, s.handshake().fingerprint)
         assertEquals(ShadowAccept(false, false, "off"), s.accept(10, false))
         assertEquals(ShadowState.ON, s.configure(configure(FP), false).state)

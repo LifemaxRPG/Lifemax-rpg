@@ -89,12 +89,32 @@ object SavePipeline {
         val core =
             if (ctx.storage == Storage.Full) prepared.result(written, SAVE_FULL)
             else prepared.result(written)
-        return if (verifyHand) core.then { DailyHand.verify(it, ctx) }.map { written } else core
+        if (!verifyHand) return core
+        val hand = ctx.handCheck ?: return core.then { DailyHand.verify(it, ctx) }.map { written }
+        // the page's order: the redraw inside the save (renderQuests) deals and verifies, then the
+        // SAVE-2 wrapper around the save deals and verifies again
+        return core.then { check(it, hand, ctx) }.then { check(it, hand, ctx) }.map { written }
     }
 
-    /** SAVE-4: put the save back as it was before a failed attempt, and say why. */
+    /**
+     * The quest board's redraw outside a save (`renderQuests()` after a refused toggle): one Daily
+     * Hand check when the context composes it ([EconomyContext.handCheck]); nothing otherwise.
+     */
+    fun redraw(save: EconomySave, ctx: EconomyContext): Outcome<Unit> =
+        ctx.handCheck?.let { check(save, it, ctx) } ?: save.unchanged()
+
+    private fun check(save: EconomySave, hand: HandCheck, ctx: EconomyContext): Outcome<Unit> {
+        val dealt = hand.deal(save)
+        return if (dealt.verify) DailyHand.verify(dealt.save, ctx) else dealt.save.unchanged()
+    }
+
+    /**
+     * SAVE-4: put the save back as it was before a failed attempt, and say why. The page redraws in
+     * between (`takeBack` calls `renderAll()`), so a composed Daily Hand checks once more on the
+     * restored save ([redraw]) before the message.
+     */
     fun <T> takeBack(was: EconomySave, value: T, ctx: EconomyContext): Outcome<T> =
-        was.result(value, unsavedMessage(ctx))
+        redraw(was, ctx).then { it.result(value, unsavedMessage(ctx)) }
 
     /** What [load] hands back: the save, and whether it may be written. */
     data class Loaded(val save: EconomySave, val readOnly: Boolean)

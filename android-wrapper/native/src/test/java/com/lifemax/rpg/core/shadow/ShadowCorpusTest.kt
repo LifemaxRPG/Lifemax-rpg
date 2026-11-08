@@ -20,10 +20,45 @@ import org.junit.Test
 class ShadowCorpusTest {
     @Test
     fun everyEconomyActionThePageSentMatches() {
-        val messages =
-            (FakeShadowPage.fixture("shadow-corpus.json") as JsonArray).items.map {
-                it as JsonObject
-            }
+        val (l, outcomes, envelopes) = replay("shadow-corpus.json")
+        assertEquals(outcomes.joinToString("\n"), envelopes - LATER_IN_CORPUS, l.compared)
+        assertEquals(outcomes.joinToString("\n"), 0, l.different)
+        assertEquals(l.compared, l.same + l.allowed)
+        assertEquals(mapOf("later" to 1), l.kind("boot.decay").skipped)
+        assertTrue(l.refused.isEmpty() && l.errors.isEmpty())
+        assertTrue("every compared kind in the corpus", l.kinds.keys.containsAll(KINDS))
+        println(
+            "shadow corpus: $envelopes envelopes, ${l.compared} compared, ${l.same} same, " +
+                "${l.allowed} allowed; codec ${l.codec}"
+        )
+    }
+
+    /**
+     * WP6c's corpus (`tests/fixtures/shadow-quests-corpus.json`, `gen_shadow_corpus.js --quests`):
+     * the real page with an app that says `economy.shadow.quests.v1`, driven through the Daily Hand
+     * and the quest board (the board drawn, free and paid rerolls, a Log that fulfils a card, a
+     * card claimed, a quest ticked with a note and unticked, a quest made and one refused, a class
+     * switch, the day rolling over with the app open, a reroll and a Log on the new day). Every
+     * action but the boot's decay is compared and the same: the real page's composition of save and
+     * Daily Hand, write for write.
+     */
+    @Test
+    fun everyQuestAndDailyHandActionThePageSentMatches() {
+        val (l, outcomes, envelopes) = replay("shadow-quests-corpus.json")
+        assertEquals(outcomes.joinToString("\n"), envelopes - LATER_IN_CORPUS, l.compared)
+        assertEquals(outcomes.joinToString("\n"), 0, l.different)
+        assertEquals(l.compared, l.same + l.allowed)
+        assertTrue(l.refused.isEmpty() && l.errors.isEmpty())
+        assertTrue("every quest kind in the corpus", l.kinds.keys.containsAll(QUEST_KINDS))
+        println(
+            "shadow quests corpus: $envelopes envelopes, ${l.compared} compared, ${l.same} same, " +
+                "${l.allowed} allowed"
+        )
+    }
+
+    /** Replays a corpus file as the app receives it: the ledger, a line per envelope, the count. */
+    private fun replay(file: String): Triple<ShadowLedger, List<String>, Int> {
+        val messages = (FakeShadowPage.fixture(file) as JsonArray).items.map { it as JsonObject }
         val texts =
             messages.map { (it["m"] as JsonString).value to (it["text"] as JsonString).value }
         val sid = Regex("\"sid\":\"([^\"]+)\"").find(texts.first().second)!!.groupValues[1]
@@ -32,7 +67,7 @@ class ShadowCorpusTest {
                 ShadowSessionTest.FP,
                 ShadowLedger(0, ByteArray(ShadowLimits.SALT_BYTES)),
                 1,
-                109,
+                110,
             )
         s.configure(ShadowSessionTest.configure(ShadowSessionTest.FP, sid = sid), false)
         val outcomes = ArrayList<String>()
@@ -51,20 +86,21 @@ class ShadowCorpusTest {
                     if (l.same + l.allowed > was) ""
                     else " " + l.kind(kind).skipped + l.mismatches().lastOrNull()?.paths
         }
-        val l = s.ledger
-        val envelopes = texts.count { it.first == "observe" }
-        assertEquals(outcomes.joinToString("\n"), envelopes - LATER_IN_CORPUS, l.compared)
-        assertEquals(outcomes.joinToString("\n"), 0, l.different)
-        assertEquals(l.compared, l.same + l.allowed)
-        assertEquals(mapOf("later" to 1), l.kind("boot.decay").skipped)
-        assertTrue(l.refused.isEmpty() && l.errors.isEmpty())
-        assertTrue("every compared kind in the corpus", l.kinds.keys.containsAll(KINDS))
-        println(
-            "shadow corpus: $envelopes envelopes, ${l.compared} compared, ${l.same} same, ${l.allowed} allowed; codec ${l.codec}"
-        )
+        return Triple(s.ledger, outcomes, texts.count { it.first == "observe" })
     }
 
     private companion object {
+        val QUEST_KINDS =
+            setOf(
+                "hand.verify",
+                "hand.reroll",
+                "log.record",
+                "quest.toggle",
+                "quest.create",
+                "quest.pack",
+                "save.other",
+            )
+
         /** The boot's decay, compared from WP6d on. */
         const val LATER_IN_CORPUS = 1
 

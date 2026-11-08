@@ -57,6 +57,8 @@ data class ShadowSummary(
  * @param deviceZone the device's zone id now, for `info.zoneLag` (N4); null leaves it uncounted.
  * @param mutation the mutation tests' change to native's results ([EntryMutation]); none in the
  *   app.
+ * @param quests native's quest content and numbers ([QuestNative.PACKAGED] in the app; the mutation
+ *   tests change one).
  */
 class ShadowSession(
     private val nativeFingerprint: String,
@@ -66,12 +68,13 @@ class ShadowSession(
     content: ShadowContent = ShadowContent.NONE,
     private val deviceZone: () -> String? = { null },
     mutation: EntryMutation = EntryMutation.NONE,
+    quests: QuestNative = QuestNative.PACKAGED,
 ) {
     private val redactor = ShadowRedactor(ledger.salt)
     private val mirror = ShadowMirror(redactor)
     private var pageSchema = 1
     private val comparison =
-        ShadowComparison(redactor, ShadowRunner(content, { pageSchema }, mutation))
+        ShadowComparison(redactor, ShadowRunner(content, { pageSchema }, mutation, quests))
     private val costs = ArrayDeque<Long>()
     private var pageBuild = ""
     private var basesThisSession = 0
@@ -103,7 +106,7 @@ class ShadowSession(
     fun handshake(): ShadowHandshake =
         ShadowHandshake(
             ShadowLimits.PROTOCOL,
-            listOf(ShadowLimits.CAPABILITY),
+            listOf(ShadowLimits.CAPABILITY, ShadowLimits.CAPABILITY_QUESTS),
             nativeFingerprint,
             ledger.state,
             ledger.reason,

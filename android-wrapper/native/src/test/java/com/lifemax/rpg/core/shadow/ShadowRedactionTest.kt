@@ -28,10 +28,13 @@ class ShadowRedactionTest {
         val session = ShadowGoldenCompareTest.session()
         val page = FakeShadowPage()
         for (part in page.base(built.first().action.before)) assertTrue(session.base(part, 0).ok)
-        for (b in built) session.observe(
-            page.send(b.action.copy(after = lie(b.action.after))),
-            FakeShadowPage.T0,
-        )
+        for (b in built) {
+            GoldenActions.CONTENT.setup = b.setup
+            session.observe(
+                page.send(b.action.copy(after = lie(b.action.after))),
+                FakeShadowPage.T0,
+            )
+        }
         val ring = session.ringText()
         assertTrue("the lies are recorded", session.ledger.different > built.size / 2)
         assertTrue(
@@ -121,6 +124,9 @@ class ShadowRedactionTest {
             ShadowKeys.FIXED_MEMBERS +
                 ShadowKeys.SHADOW +
                 ShadowKeys.KINDS.flatMap { it.split('.') } +
-                setOf("true", "false")
+                setOf("true", "false") +
+                // a quest record's field names, which the cadence words share (WP6c compares
+                // quests)
+                setOf("epic", "daily", "weekly", "hand", "slot", "tier", "verify", "kind")
     }
 }

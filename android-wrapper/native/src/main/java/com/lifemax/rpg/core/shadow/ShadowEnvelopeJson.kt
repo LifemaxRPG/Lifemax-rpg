@@ -71,7 +71,7 @@ object ShadowEnvelopeJson {
     private val PAGE = setOf("build", "schema", "fingerprint", "faults")
     private val DELTA = setOf("set", "del", "rec")
     private val REC = setOf("len", "at")
-    private val ENV_PARTS = setOf("saves", "plan", "health", "confirm", "prompt", "dom")
+    private val ENV_PARTS = setOf("saves", "journal", "plan", "health", "confirm", "prompt", "dom")
     private val SAVE = setOf("ok")
     private val COST = setOf("ms")
     private val SID = Regex("[A-Za-z0-9_-]{1,${ShadowLimits.MAX_SID_CHARS}}")
@@ -204,17 +204,21 @@ object ShadowEnvelopeJson {
         for (k in o.members.keys) if (k !in ENV_PARTS) fail(ShadowRefusal.UNKNOWN_KEY, "env")
         if (JsonWriter.write(o).length > ShadowLimits.MAX_ENV_CHARS)
             fail(ShadowRefusal.TOO_LARGE, "env")
-        val saves = o["saves"]?.let { items(it, "env.saves") } ?: emptyList()
-        if (saves.size > ShadowLimits.MAX_SAVES) fail(ShadowRefusal.TOO_LARGE, "env.saves")
         return ShadowEnv(
-            saves =
-                saves.map {
-                    val s = Fields(it, "env.saves[]", SAVE)
-                    (s.get("ok") as? JsonBool ?: fail(ShadowRefusal.WRONG_TYPE, "env.saves[].ok"))
-                        .value
-                },
-            rest = JsonObject(o.members - "saves"),
+            saves = writes(o["saves"], "env.saves"),
+            journal = writes(o["journal"], "env.journal"),
+            rest = JsonObject(o.members - "saves" - "journal"),
         )
+    }
+
+    /** A list of write outcomes, `[{ok}]`, at most [ShadowLimits.MAX_SAVES]. */
+    private fun writes(value: JsonValue?, at: String): List<Boolean> {
+        val items = value?.let { items(it, at) } ?: return emptyList()
+        if (items.size > ShadowLimits.MAX_SAVES) fail(ShadowRefusal.TOO_LARGE, at)
+        return items.map {
+            val s = Fields(it, "$at[]", SAVE)
+            (s.get("ok") as? JsonBool ?: fail(ShadowRefusal.WRONG_TYPE, "$at[].ok")).value
+        }
     }
 
     private fun delta(value: JsonValue, at: String): ShadowDelta {

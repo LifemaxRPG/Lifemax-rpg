@@ -544,6 +544,31 @@ ring. Nothing computed is shown, written or sent.
   `ShadowComparisonTest`, `ShadowRedactionTest`, `ShadowMismatchRingTest`, `ShadowPerfTest`; `tests/native-shadow.test.js`.
 
 
+## Economy shadow mode, WP6c: quests, the Daily Hand and the save composition (Native API 110)
+
+Native logic, web authority, behind the same switch. Native now also runs the quest and Daily Hand actions itself and composes every
+save as the page does: the save writes, the redraw inside it deals and checks today's cards, the save's wrapper checks again, a
+take-back's redraw checks once more. Nothing computed is shown, written or sent.
+
+| Part | Where | What |
+|---|---|---|
+| Native | `core/shadow` `QuestEntries`, `PageState` (`PageState`, `PageHand`, `PageSetup`), `ShadowRunner`, `ShadowDiff`, `KnownDifferences` | `quest.toggle`, `quest.create`, `quest.pack`, `hand.ensure`, `hand.reroll`, `hand.verify` compared (the hand's throws too); the Daily Hand's deal (`core/quests` `HandDealer` on the page's JSON) composed into every save; `dailyDraw`, `classContent` and `dhMig` compared whole; the old `skipped.hand` is gone; A-06 (proposed) |
+| Economy | `EconomyContext.handCheck`, `SavePipeline.save`, `redraw`, `takeBack`, `Quests.toggle` | an optional Daily Hand check the shadow passes; with none (every app action) the economy runs exactly as before |
+| Bridge | `ShadowLimits.CAPABILITY_QUESTS` | the handshake also says `economy.shadow.quests.v1`; `env.journal` is a new env part |
+| Page | `50-native-shadow-points.js`, `50-native-shadow.js` | with that capability: today's `env.plan` on every kind, the journal coach's plain writes apart as `env.journal`; always: `quest.toggle` reads its note field (`dom:qnote-{0}`), a new `quest.pack` point (`applyClassContent`), the hand's redraws that change nothing sent one in 50 |
+| Goldens | `tools/gen_economy_golden.js` | the `save/compose-*` family (13 cases, the Daily Hand on, a `trace` of every write and check in order); `input.hand`, `verify`, `fields`, `omit` recorded |
+
+- **Rollout.** Rides the switch. An older app lacks `economy.shadow.quests.v1`, so this page sends it the WP6b shapes (no plan facts
+  on every kind, no `env.journal`); the new `quest.pack` kind is `skipped.unknownKind` there, and the quest kinds stay `skipped.later`.
+  A WP6b page with this app sends no plan facts with most kinds: an action whose save deals a new day's hand is then
+  `skipped.planWindow`, and the journal's own writes count as the economy's (`saves.count` differences): ship page and app together.
+- **Evidence.** Kotlin `ShadowQuestsGoldenTest` (938 Daily Hand and board golden cases, 2,183 envelopes, all the same, 67 of them
+  throws), `ShadowGoldenCompareTest` (259 economy golden cases, 298 envelopes, 0 unexplained), `SaveComposeGoldenTest` (the
+  composition's order, write for write and check for check, on 14 recorded cases; five wrong compositions caught),
+  `ShadowHandMutationTest` (14 wrong hand, pack and board rules, each caught at its field), `ShadowCorpusTest` (the real page's 15
+  quest and Daily Hand actions, the day rolling over included, all the same), `ShadowHandSessionTest`; `tests/native-shadow.test.js`.
+
+
 ## Cat brain, developer parkour demo (Native API 107)
 
 Native presentation and behaviour, web authority, behind "Native Cat (beta)" AND the page's developer mode. A DEVELOPER DEMO: the owner can watch the cats do their parkour on demand; it happens rarely on its own.

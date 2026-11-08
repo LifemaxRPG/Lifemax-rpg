@@ -53,6 +53,7 @@ class ShadowComparisonTest {
         vararg actions: FakeShadowPage.Action,
         content: ShadowContent = GoldenActions.CONTENT,
     ): ShadowSession {
+        GoldenActions.CONTENT.setup = GoldenActions.ECONOMY
         val s = session(content)
         val page = FakeShadowPage()
         for (part in page.base(actions.first().before)) assertTrue(s.base(part, 0).ok)
@@ -169,6 +170,12 @@ class ShadowComparisonTest {
                 withoutMoney to "A-03",
                 failed.action.copy(toasts = failed.action.toasts + unsaved) to "A-04",
                 withoutFood to "A-05",
+                log.action.copy(
+                    env =
+                        log.action.env +
+                            ("journal" to
+                                JsonArray(listOf(FakeShadowPage.obj("ok" to JsonBool.TRUE))))
+                ) to "A-06",
             )
         val seen = sortedSetOf<String>()
         for ((action, id) in cases) {
@@ -249,7 +256,7 @@ class ShadowComparisonTest {
                 log.action.copy(flags = listOf(ShadowFlags.INTERLEAVED)) to "interleaved",
                 log.action.copy(flags = listOf(ShadowFlags.THREW)) to "threw",
                 log.action.copy(saves = listOf(true, false)) to "mixedStorage",
-                log.action.copy(kind = "quest.toggle") to "later",
+                log.action.copy(kind = "health.sync") to "later",
                 log.action.copy(kind = "coach.reflect") to "notNative",
                 log.action.copy(kind = "some.future.kind") to "unknownKind",
                 log.action.copy(args = listOf(JsonNumber(5.0))) to "input",
@@ -264,10 +271,6 @@ class ShadowComparisonTest {
                             )
                         )
                 ) to "input",
-                log.action.afterWith(
-                    "dailyDraw",
-                    JsonObject(mapOf("rerollsUsed" to JsonNumber(1.0))),
-                ) to "hand",
                 rest.copy(env = rest.env - "plan") to "planWindow",
             )
         for ((action, why) in skips) {

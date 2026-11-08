@@ -55,10 +55,9 @@ object Quests {
         val quest = save.quests.firstOrNull { it.id == id } ?: return save.unchanged()
         val attr = quest.attribute?.takeIf { it.isNotEmpty() } ?: "discipline"
         if (checked && save.isLocked(quest))
-            return save.result(
-                Unit,
-                "Locked until you reach level ${Levels.stageLevel(quest.stage)}",
-            )
+            return save
+                .result(Unit, "Locked until you reach level ${Levels.stageLevel(quest.stage)}")
+                .then { SavePipeline.redraw(it, ctx) }
         val key = key(quest, ctx.clock)
         val done = save.questDone[key]
         val toggled: Outcome<Unit> =

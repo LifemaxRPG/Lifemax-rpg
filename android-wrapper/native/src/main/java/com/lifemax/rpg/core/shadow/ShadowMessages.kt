@@ -36,6 +36,12 @@ data class ShadowDelta(
 data class ShadowEnv(
     /** Each `writeSave()` outcome, in order: whether it stored. */
     val saves: List<Boolean>,
+    /**
+     * The journal coach's own plain writes during the action (`jcWrite`, its redraw's day memory,
+     * outside the economy: A-06), sent apart from [saves] by a page that knows
+     * `economy.shadow.quests.v1`; whether each stored.
+     */
+    val journal: List<Boolean> = emptyList(),
     /** The other parts as sent (`plan`, `health`, `confirm`, `prompt`, `dom`), not yet read. */
     val rest: JsonObject,
 )

@@ -5,6 +5,9 @@
    boot.load and boot.decay actions; one envelope per outermost action with its toasts and save answers; nested points; a resync;
    a new epoch after an import and a reset; an async Health sync, alone and interleaved; a too-large envelope; a page queue that
    overflows; turning the switch off; the fingerprint equal to quest-content.json's contentHash; and the cost on a 3 MB save.
+   WP6c, with an app that says economy.shadow.quests.v1: today's plan facts with every kind, the toggled quest's note field,
+   the journal coach's own plain writes apart from the economy's, a class switch's quest pack, the Daily Hand's redraws that
+   change nothing sent one in fifty; and none of that for an app without the capability.
    Run: NODE_PATH=$(npm root -g) node tests/native-shadow.test.js [built-page.html] */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -193,6 +196,47 @@ const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kin
       const row = await q.evaluate(async () => { navigate('settings'); await LmaShadow.refresh(); return document.getElementById('nativeShadowStatus').textContent });
       ok('the row counts the actions checked and the differences, with the last one\'s day and kind', /^Checked 1,150 actions since 1 Nov · 3 different · last 18 Nov \d\d:\d\d \(quest\)$/.test(row), row);
       await q.context().close();
+    }
+
+    /* ---------- WP6c: an app that compares quests and the Daily Hand ---------- */
+    for (const quests of [true, false]) {
+      const p = await open(browser, { quests });
+      const r = await p.evaluate(async () => {
+        const settle = () => new Promise(r => setTimeout(r, 60));
+        const m = window.__shadowMock, at = () => m.envelopes.length;
+        const q = state.quests.find(x => !x.hand && !isQuestDone(x));
+        const note = document.getElementById('qnote-' + q.id) || Object.assign(document.body.appendChild(document.createElement('input')), { id: 'qnote-' + q.id });
+        note.value = 'my note';
+        let n = at(); toggleQuest(q.id, true); await settle(); const toggle = m.envelopes.slice(n).find(e => e.kind === 'quest.toggle');
+        n = at(); recordActivity({ type: 'reading', customName: '', duration: '30', quality: '1', skill: '', primary: '', secondary: '', notes: '' }); await settle();
+        const log = m.envelopes.slice(n).find(e => e.kind === 'log.record');
+        /* the journal's redraw inside the save decides its day and writes it with its own plain write, as on a new day */
+        const draw = renderHistory;
+        renderHistory = function () { jcWrite(); return draw.apply(this, arguments) };
+        n = at(); try { save() } finally { renderHistory = draw }
+        await settle(); const bare = m.envelopes.slice(n).find(e => e.kind === 'save.other');
+        n = at(); switchClassTo('scholar'); await settle(); const sw = m.envelopes.slice(n).map(e => e.kind);
+        n = at(); const skipped = (LmaShadow.status().stats.skipped.noop || 0);
+        for (let i = 0; i < 60; i++) { dhEnsure(); dhAutoVerify() }
+        await settle();
+        const noop = m.envelopes.slice(n).map(e => e.kind), st = LmaShadow.status();
+        return { quests: st.quests, toggle: toggle && toggle.env, log: log && log.env, bare: bare && bare.env, sw, noop, skipped: (st.stats.skipped.noop || 0) - skipped, today: getToday(), id: q.id };
+      });
+      const s = await same(p);
+      const word = quests ? 'an app that compares quests' : 'an app without economy.shadow.quests.v1';
+      if (quests) {
+        ok('WP6c: the page sees the capability', r.quests === true, r);
+        ok('WP6c: a toggle sends its quest\'s note field and today\'s plan facts', r.toggle && r.toggle.dom && r.toggle.dom['qnote-' + r.id] === 'my note' && r.toggle.plan && r.toggle.plan.from === r.today, r.toggle);
+        ok('WP6c: a Log sends today\'s plan facts (its save may deal and check the Daily Hand)', r.log && r.log.plan && r.log.plan.from === r.today && Array.isArray(r.log.plan.rest), r.log);
+        ok('WP6c: the journal coach\'s own plain write is sent apart from the economy\'s writes', r.bare && Array.isArray(r.bare.journal) && r.bare.journal.length >= 1 && r.bare.saves.length === 1, r.bare);
+        ok('WP6c: a class switch is its quest pack, then its save', r.sw[0] === 'quest.pack' && r.sw.includes('save.other'), r.sw);
+        ok('WP6c: the Daily Hand\'s redraws that change nothing go one in fifty, the rest counted', r.noop.length >= 2 && r.noop.length <= 4 && r.skipped >= 100, { n: r.noop.length, skipped: r.skipped });
+      } else {
+        ok('WP6c: ' + word + ': no plan facts on a Log, no journal part', r.quests === false && r.log && !r.log.plan && r.bare && !r.bare.journal && r.bare.saves.length >= 2, { log: r.log, bare: r.bare });
+      }
+      ok('WP6c: ' + word + ': the copy equals the page', s.equal, s.diff);
+      ok('WP6c: ' + word + ': the page threw nothing', !p.errors.length, p.errors);
+      await p.context().close();
     }
 
     /* ---------- the cost on a 3 MB save ---------- */

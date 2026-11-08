@@ -43,7 +43,19 @@ class EconomyGoldenTest(private val id: String, private val case: Map<String, An
 
         @JvmStatic
         @Parameters(name = "{0}")
-        fun parameters(): List<Array<Any>> = cases.map { arrayOf(it["id"] as String, it) }
+        fun parameters(): List<Array<Any>> =
+            cases.filterNot(::composed).map { arrayOf(it["id"] as String, it) }
+
+        /**
+         * The `save/compose-*` family (WP6c): the Daily Hand's deal and checks composed with the
+         * save as the page runs them. The economy alone does not deal; the economy shadow's
+         * composition replays them (`core/shadow` SaveComposeGoldenTest and
+         * ShadowGoldenCompareTest).
+         */
+        fun composed(case: Map<String, Any?>): Boolean =
+            (case["id"] as String).startsWith(COMPOSE_FAMILY)
+
+        const val COMPOSE_FAMILY = "save/compose-"
 
         /** Runs one case and lists what differs from the recording; empty when it reproduces. */
         internal fun differences(
@@ -128,7 +140,8 @@ class EconomyGoldenCountTest {
                 it.trimStart('[', ',').startsWith("{\"id\"")
             }
         val ids = EconomyGoldenTest.parameters().map { it[0] }
-        assertEquals(lines, ids.size)
+        val composed = EconomyGoldenTest.cases.count(EconomyGoldenTest::composed)
+        assertEquals(lines, ids.size + composed)
         assertEquals("case ids are unique", ids.size, ids.toSet().size)
     }
 }

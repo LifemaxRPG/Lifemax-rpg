@@ -6,7 +6,8 @@
    window.__shadowMock: calls, envelopes, mirror, refusals.
    Modes: record (answers like native), reject (every call's promise rejects), throw (every method throws at once), stale
    (native's fingerprint differs), nocap (the handshake lacks economy.shadow.v1), absent (no plugin at all). compares:
-   {compared, different} makes summary() answer as an app that compares (WP6b), the last difference a quest toggle. */
+   {compared, different} makes summary() answer as an app that compares (WP6b), the last difference a quest toggle. quests: true
+   also says economy.shadow.quests.v1 (an app that compares the quest and Daily Hand kinds, WP6c). */
 'use strict';
 
 function mock(opts) {
@@ -34,7 +35,7 @@ function mock(opts) {
   }
   const answer = v => Promise.resolve(v);
   const methods = {
-    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'], fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
+    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'].concat(o.quests ? ['economy.shadow.quests.v1'] : []), fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
     configure: ({ text }) => {
       const c = JSON.parse(text);
       m.config = c;

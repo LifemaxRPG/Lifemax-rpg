@@ -13,6 +13,13 @@ object ShadowLimits {
     const val CAPABILITY = "economy.shadow.v1"
 
     /**
+     * The capability of WP6c: the quest and Daily Hand kinds are compared, so the page may send
+     * today's plan facts with every kind and the new quest points; an older app lacks it and the
+     * page then sends the WP6a shapes only.
+     */
+    const val CAPABILITY_QUESTS = "economy.shadow.quests.v1"
+
+    /**
      * Largest envelope text accepted (2.4); a larger one is refused as [ShadowRefusal.TOO_LARGE].
      */
     const val MAX_ENVELOPE_CHARS = 256 * 1024

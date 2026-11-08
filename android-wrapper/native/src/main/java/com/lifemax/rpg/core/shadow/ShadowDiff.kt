@@ -21,8 +21,10 @@ data class Difference(val shown: String, val pattern: String)
 /**
  * The comparison of one action's after-states (ECONOMY_SHADOW_PLAN 1.3, 1.4): every owned path of
  * the tracked keys ([SaveFields.TRACKED], inside [SaveFields.PARTIAL] keys only the listed
- * sub-paths), compared by the golden rule (JSON-value equality, key order ignored, array order
- * kept, numbers as binary64), with the two normalisations a value may need:
+ * sub-paths) and the Daily Hand's own keys whole (`dailyDraw`, `classContent`, `dhMig`: the hand's
+ * deal and class packs are native's from WP6c), compared by the golden rule (JSON-value equality,
+ * key order ignored, array order kept, numbers as binary64), with the two normalisations a value
+ * may need:
  * - N1 clock ids: `quest_1793700000123` (and `act_<ms>_<token>`) are equal when the prefix and
  *   token agree, native's milliseconds are `t0` and the page's lie in `[t0, t1]`;
  * - N2 instants at the declared paths ([INSTANTS]): equal when native's is `t0` and the page's lies
@@ -41,7 +43,7 @@ class ShadowDiff(private val redactor: ShadowRedactor) {
         t1: Long,
     ): List<Difference> {
         val walk = Walk(t0, t1)
-        for (key in SaveFields.TRACKED) {
+        for (key in KEYS) {
             val tree = OWNED[key]
             val p = page[key]?.let { owned(it, tree) }
             val n = native[key]?.let { owned(it, tree) }
@@ -189,9 +191,16 @@ class ShadowDiff(private val redactor: ShadowRedactor) {
         /** A schema word: a short identifier the app's code wrote, never free text. */
         private val IDENTIFIER = Regex("[A-Za-z][A-Za-z0-9]{0,30}")
 
-        /** [SaveFields.PARTIAL] as trees, by key. */
+        /** Every key compared: the tracked keys, then the Daily Hand's keys outside them. */
+        val KEYS: List<String> = SaveFields.TRACKED + ShadowRunner.HAND_KEYS
+
+        /** Keys compared whole although the economy owns only part of them (the Daily Hand's). */
+        private val WHOLE = setOf("dailyDraw")
+
+        /** [SaveFields.PARTIAL] as trees, by key ([WHOLE] keys excepted). */
         val OWNED: Map<String, Tree> =
-            SaveFields.PARTIAL.mapValues { (_, paths) -> tree(paths.map { split(it) }) }
+            SaveFields.PARTIAL.filterKeys { it !in WHOLE }
+                .mapValues { (_, paths) -> tree(paths.map { split(it) }) }
 
         private fun split(path: String): List<String> =
             path.replace("[].", "[]\u0000").split('.', '\u0000').filter { it.isNotEmpty() }

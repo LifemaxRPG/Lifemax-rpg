@@ -11,6 +11,7 @@ import com.lifemax.rpg.core.economy.LifeDirector
 import com.lifemax.rpg.core.economy.LogActivity
 import com.lifemax.rpg.core.economy.LogDraft
 import com.lifemax.rpg.core.economy.Outcome
+import com.lifemax.rpg.core.economy.Quests
 import com.lifemax.rpg.core.economy.SavePipeline
 import com.lifemax.rpg.core.economy.Sparks
 import com.lifemax.rpg.core.economy.Voice
@@ -47,9 +48,9 @@ class ContentMissing : Exception("content") {
 }
 
 /**
- * One shadow point that WP6b compares (ECONOMY_SHADOW_PLAN 1.2): the env parts it may carry and the
- * native call that stands for the page's entry, glue included (an early return the page makes
- * before asking, the answer it turns into its return value).
+ * One shadow point that WP6b and WP6c compare on the economy's model (ECONOMY_SHADOW_PLAN 1.2): the
+ * env parts it may carry and the native call that stands for the page's entry, glue included (an
+ * early return the page makes before asking, the answer it turns into its return value).
  */
 class ShadowEntry(
     val kind: String,
@@ -58,25 +59,15 @@ class ShadowEntry(
 )
 
 /**
- * The economy kinds WP6b compares, the kinds later packages compare ([LATER]: quests and the Daily
- * Hand in WP6c, Health and decay in WP6d) and the page entries that have no native counterpart
- * ([NOT_NATIVE]: the journal's own text saves around the coach's rewards, and `removeAct`, a cache
- * edit the save always follows). `boot.load` is the runner's own (its before-state is the stored
- * save).
+ * The economy kinds WP6b and WP6c compare (the Daily Hand's own kinds are [QuestEntries]), the
+ * kinds WP6d compares ([LATER]: Health and decay) and the page entries that have no native
+ * counterpart ([NOT_NATIVE]: the journal's own text saves around the coach's rewards, and
+ * `removeAct`, a cache edit the save always follows). `boot.load` is the runner's own (its
+ * before-state is the stored save).
  */
 object ShadowEntries {
-    /** Kinds compared from WP6c and WP6d on. */
-    val LATER: Set<String> =
-        setOf(
-            "quest.toggle",
-            "quest.create",
-            "hand.ensure",
-            "hand.reroll",
-            "hand.verify",
-            "health.sync",
-            "decay.apply",
-            "boot.decay",
-        )
+    /** Kinds compared from WP6d on. */
+    val LATER: Set<String> = setOf("health.sync", "decay.apply", "boot.decay")
 
     /** Page entries native does not model as one action. */
     val NOT_NATIVE: Set<String> = setOf("log.remove", "coach.reflect", "coach.review")
@@ -303,6 +294,17 @@ object ShadowEntries {
                     )
                 EntryRun.nothing(saved)
             },
+            ShadowEntry("quest.toggle", EnvShape(domPrefix = NOTE_PREFIX)) { input, s, ctx, _ ->
+                input.count(1, 2)
+                // `state.quests.find(q => q.id === id)`: an id that is not text finds nothing
+                val id = (input.arg(0) as? JsonString)?.value
+                if (id == null) EntryRun(s, JsonNull, emptyList())
+                else {
+                    val note =
+                        input.dom["$NOTE_PREFIX$id"]?.let { input.domText("$NOTE_PREFIX$id") }
+                    EntryRun.nothing(Quests.toggle(s, id, input.truthy(1), ctx, note.orEmpty()))
+                }
+            },
             ShadowEntry("save.other", EnvShape.SAVES) { input, s, ctx, _ ->
                 input.count(0, MAX_IGNORED_ARGS)
                 EntryRun.of(SavePipeline.save(s, ctx)) { JsonBool.of(it) }
@@ -311,8 +313,8 @@ object ShadowEntries {
 
     private val byKind: Map<String, ShadowEntry> = all.associateBy { it.kind }
 
-    /** Every kind WP6b compares, `boot.load` included. */
-    val COMPARED: Set<String> = byKind.keys + BOOT_LOAD
+    /** Every kind compared, the Daily Hand's own and `boot.load` included. */
+    val COMPARED: Set<String> = byKind.keys + QuestEntries.KINDS + BOOT_LOAD
 
     /** The entry of [kind], or null when it is not compared here. */
     fun of(kind: String): ShadowEntry? = byKind[kind]
@@ -371,6 +373,9 @@ object ShadowEntries {
             "opId",
         )
     private const val RULE_PREFIX = "rule-"
+
+    /** The quest card's note field, `qnote-<id>`, which `toggleQuest` reads. */
+    private const val NOTE_PREFIX = "qnote-"
     private const val PARTIAL = "PARTIALLY_COMPLETED"
 
     /** Entries the page calls from a timer or a listener may be given an event; it is ignored. */

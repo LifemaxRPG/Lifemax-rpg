@@ -11,6 +11,11 @@
    five actions in a row over the time budget, turn the page side off until the page loads again. */
 (function () {
   const CAPABILITY = "economy.shadow.v1", SETTING = "nativeShadow", PROTOCOL = 1, SCOPE = "economy";
+  /* an app that compares the quest and Daily Hand kinds (WP6c): every kind carries today's plan facts (its save may deal and
+     check the hand), and the journal coach's own plain writes are told apart from the economy's */
+  const CAPABILITY_QUESTS = "economy.shadow.quests.v1";
+  /* the Daily Hand's redraw-time points that changed nothing are sent one in this many, and otherwise counted (WP6c) */
+  const NOOP_KINDS = ["hand.ensure", "hand.verify"], NOOP_EVERY = 50;
   const B = LMA_SHADOW_BOOT, P = LMA_SHADOW_POINTS;
   const LIMIT = { envelope: 256 * 1024, args: 16 * 1024, env: 64 * 1024, toasts: 20, toast: 300, saves: 8, rec: 256, part: 256 * 1024, parts: 32, base: 8 * 1024 * 1024, queue: 16, faults: 3, slowMs: 50, slowRun: 5, slice: 200000 };
   const WORDS = {
@@ -24,7 +29,7 @@
   };
   const FAULTS_KEY = "lma_shadow_faults"; // sessionStorage: page faults of an earlier page in this WebView, told at the next configure
   let plugin = null, hello = null, asked = null, live = false, stopped = "", sid = "", epoch = 0, seq = 0, head = 0, cache = null, needBase = true;
-  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null;
+  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, journal = 0, noops = 0;
   const pending = [], outbox = [], installed = [];
   const stats = { sent: 0, bases: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
 
@@ -103,12 +108,13 @@
   function begin(kind, args, reads) {
     const t = performance.now();
     for (const r of pending) r.flags.add("interleaved");
-    const r = { kind, args: "[" + [...args].map(normal).join(",") + "]", t0: Date.now(), texts: B.capture(state), toasts: [], saves: [], confirm: [], prompt: [], env: {}, flags: new Set(), cost: 0 };
+    const r = { kind, args: "[" + [...args].map(normal).join(",") + "]", t0: Date.now(), texts: B.capture(state), toasts: [], saves: [], journal: [], confirm: [], prompt: [], env: {}, flags: new Set(), cost: 0 };
     for (const read of reads) {
       if (read === "plan") r.env.plan = P.plan(kind);
-      else if (read.indexOf("dom:") === 0) r.env.dom = P.dom(read.slice(4).split(","));
+      else if (read.indexOf("dom:") === 0) r.env.dom = P.dom(read.slice(4).split(","), args);
       else if (read === "health") r.health = {};
     }
+    if (quests && !r.env.plan) r.env.plan = P.plan(kind, true);
     if (r.health) {
       const real = window.lmaPlugin;
       r.unhook = () => { if (window.lmaPlugin === hooked) window.lmaPlugin = real; };
@@ -133,9 +139,20 @@
     if (saveReadOnly) r.flags.add("readOnly");
     r.cost += performance.now() - t;
     budget(r.cost);
+    if (NOOP_KINDS.includes(r.kind) && unchanged(r) && noops++ % NOOP_EVERY !== 0) { skip("noop"); return; }
     if (outbox.length >= LIMIT.queue) { outbox.length = 0; cache = null; needBase = true; skip("queue"); }
     outbox.push(r);
     if (!timer) timer = setTimeout(flush, 0);
+  }
+  /* an action that changed no shadow key, wrote nothing and said nothing */
+  function unchanged(r) {
+    if (r.saves.length || r.journal.length || r.toasts.length || r.flags.has("threw")) return false;
+    for (const k of B.KEYS) {
+      const a = r.texts[k], b = r.after[k];
+      if (typeof a === "object" && typeof b === "object") { if (a.items.length !== b.items.length || a.items.some((x, i) => x !== b.items[i])) return false; }
+      else if (a !== b) return false;
+    }
+    return true;
   }
   function settle(r, promise) {
     if (current === r) current = null;
@@ -215,7 +232,13 @@
       if (owner && typeof owner[name] === "function" && !owner[name].__lmaShadow) put(owner, name, replacement(owner[name]));
     }
     put(window, "toast", capturing("toast", (r, _o, a) => r.toasts.push(String(a[0]))));
-    put(window, "writeSave", capturing("writeSave", (r, ok) => r.saves.push(!!ok)));
+    put(window, "writeSave", capturing("writeSave", (r, ok) => (journal ? r.journal : r.saves).push(!!ok)));
+    /* the journal coach's own plain write (its redraw's day memory, outside the economy) */
+    if (quests && typeof window.jcWrite === "function") put(window, "jcWrite", (function (orig) {
+      const wrapped = function () { journal++; try { return orig.apply(this, arguments); } finally { journal--; } };
+      wrapped.__lmaShadow = orig;
+      return wrapped;
+    })(window.jcWrite));
     put(window, "confirm", capturing("confirm", (r, ok) => r.confirm.push(!!ok)));
     put(window, "prompt", capturing("prompt", (r, v) => r.prompt.push(v === null || v === undefined ? null : String(v))));
   }
@@ -232,6 +255,7 @@
     const after = deltaText(r.texts, r.after);
     const env = {};
     if (r.saves.length) env.saves = r.saves.map((ok) => ({ ok }));
+    if (r.journal.length) env.journal = r.journal.map((ok) => ({ ok }));
     if (r.confirm.length) env.confirm = r.confirm;
     if (r.prompt.length) env.prompt = r.prompt;
     Object.assign(env, r.env);
@@ -309,7 +333,7 @@
     let stored = null;
     try { stored = B.stored ? JSON.parse(B.stored) : null; } catch (_) { stored = null; }
     const base = B.capture(stored && typeof stored === "object" ? stored : {});
-    const rec = (kind, texts, after, times, saves) => ({ kind, args: "[]", t0: times[0], t1: times[1], texts, after, returns: "null", toasts: [], saves: saves.map((s) => s.ok), confirm: [], prompt: [], env: {}, flags: new Set(), cost: 0 });
+    const rec = (kind, texts, after, times, saves) => ({ kind, args: "[]", t0: times[0], t1: times[1], texts, after, returns: "null", toasts: [], saves: saves.map((s) => s.ok), journal: [], confirm: [], prompt: [], env: {}, flags: new Set(), cost: 0 });
     if (!sendBase(base)) return;
     cache = base;
     outbox.push(rec("boot.load", base, B.loaded, B.times.load, B.saves.load));
@@ -337,6 +361,7 @@
       asked = asked || plugin.handshake().then((h) => (hello = h), (e) => ((asked = null), Promise.reject(e)));
       await asked;
       if (!hello || hello.protocol !== PROTOCOL || !Array.isArray(hello.capabilities) || !hello.capabilities.includes(CAPABILITY)) return sync();
+      quests = hello.capabilities.includes(CAPABILITY_QUESTS);
       const mine = await fingerprint().catch(() => "");
       sid = sid || "p-" + Math.random().toString(36).slice(2, 10);
       let told = 0;
@@ -404,7 +429,7 @@
 
   window.LmaShadow = {
     /** for tests and the Settings row: what the page side is doing, counts only */
-    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
+    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, quests, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
     fingerprint,
     words: WORDS,
     refresh,

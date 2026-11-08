@@ -5,9 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * WP6b's evidence on the recorded page (ECONOMY_SHADOW_PLAN WP6b): every economy golden case whose
- * calls are entry points of the kinds compared here goes through the real transport (the fake
- * page's base and envelopes, the strict decoder, the mirror) and the comparison, as one page
+ * WP6b's and WP6c's evidence on the recorded page (ECONOMY_SHADOW_PLAN WP6b): every economy golden
+ * case whose calls are entry points of the kinds compared here goes through the real transport (the
+ * fake page's base and envelopes, the strict decoder, the mirror) and the comparison, as one page
  * session, and every one of them must be compared and come out matched: the same as the page, or
  * different only where an allowlist entry says the page's state is outside the economy. None is
  * unexplained and none is skipped.
@@ -29,6 +29,7 @@ class ShadowGoldenCompareTest {
                     ledger.kinds.values.sumOf { it.skipped.values.sum() },
                 )
             val text = page.send(b.action)
+            GoldenActions.CONTENT.setup = b.setup
             assertTrue("${b.caseId} accepted", session.accept(text.length, false).accepted)
             session.observe(text, FakeShadowPage.T0)
             val skipped = ledger.kinds.values.sumOf { it.skipped.values.sum() } - before.third
@@ -74,13 +75,19 @@ class ShadowGoldenCompareTest {
     }
 
     companion object {
-        const val EXPECTED_CASES = 193
-        const val EXPECTED_ENVELOPES = 217
+        const val EXPECTED_CASES = 259
+        const val EXPECTED_ENVELOPES = 298
 
-        /** Compared kinds no golden case calls as an entry point (none: every kind has cases). */
-        val UNRECORDED_KINDS = emptySet<String>()
+        /**
+         * Compared kinds no economy golden case calls as an entry point: the class pack is the
+         * board golden's ([ShadowQuestsGoldenTest]) and the real-page corpus's.
+         */
+        val UNRECORDED_KINDS = setOf("quest.pack")
 
-        fun session(mutation: EntryMutation = EntryMutation.NONE) =
+        fun session(
+            mutation: EntryMutation = EntryMutation.NONE,
+            quests: QuestNative = QuestNative.PACKAGED,
+        ) =
             ShadowSession(
                     ShadowSessionTest.FP,
                     ShadowLedger(
@@ -91,6 +98,7 @@ class ShadowGoldenCompareTest {
                     109,
                     GoldenActions.CONTENT,
                     mutation = mutation,
+                    quests = quests,
                 )
                 .also { it.configure(ShadowSessionTest.configure(ShadowSessionTest.FP), false) }
     }

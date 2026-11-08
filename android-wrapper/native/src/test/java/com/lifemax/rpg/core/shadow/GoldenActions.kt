@@ -7,6 +7,7 @@ import com.lifemax.rpg.core.economy.GoldenRun
 import com.lifemax.rpg.core.economy.SaveCodec
 import com.lifemax.rpg.core.save.JsonArray
 import com.lifemax.rpg.core.save.JsonBool
+import com.lifemax.rpg.core.save.JsonNull
 import com.lifemax.rpg.core.save.JsonObject
 import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
@@ -28,7 +29,14 @@ import java.time.ZoneId
  * native's own count for the action (the goldens hold no `writeSave()` calls; the corpus of WP6f
  * will), each stored unless the case fails its save; a `confirm` the case answers no to; a
  * `prompt`'s text; the form values; the plan's rest days in the default plan (Sundays from its
- * start, as [GoldenRun] reads them).
+ * start, as [GoldenRun] reads them), and from WP6c today's plan facts with every other kind, as the
+ * page sends them to an app that compares quests.
+ *
+ * WP6c: the cases run as the recorder ran them ([PageSetup]): without the Daily Hand's library and
+ * its checks, unless the case says `hand` (the library) or `verify` (its checks inside every save,
+ * the `save/compose-*` family). In a hand case the page's state between two entry calls, and the
+ * fields the case leaves out (`omit`, and `dailyDraw` unless it records it), are native's own
+ * prediction for the action (the runner's composition), not the economy replay's.
  */
 internal object GoldenActions {
     /** The page entry each golden call names, by kind. */
@@ -57,6 +65,11 @@ internal object GoldenActions {
             "saveDecay" to "rules.decay",
             "save" to "save.other",
             "load" to "boot.load",
+            "toggleQuest" to "quest.toggle",
+            "createQuest" to "quest.create",
+            "dhReroll" to "hand.reroll",
+            "dhAutoVerify" to "hand.verify",
+            "dhEnsure" to "hand.ensure",
         )
 
     /** Calls that read and change nothing; a case may have them around its entry calls. */
@@ -93,20 +106,41 @@ internal object GoldenActions {
         )
 
     /** One envelope of a case: [recorded] when its after-state is the page's own recording. */
-    class Built(val caseId: String, val action: FakeShadowPage.Action, val recorded: Boolean)
+    class Built(
+        val caseId: String,
+        val action: FakeShadowPage.Action,
+        val recorded: Boolean,
+        val setup: PageSetup = ECONOMY,
+    )
+
+    /** How `gen_economy_golden.js` runs a case that says neither `hand` nor `verify`. */
+    val ECONOMY = PageSetup(library = false, verify = false)
 
     /** The page content the plan and catalog cases need, as the golden cases show it. */
-    val CONTENT: ShadowContent =
-        object : ShadowContent {
-            override fun planDay(date: String): FixedAwards.PlanDay? =
-                runCatching { GoldenContent.planDay(date) }.getOrNull()
+    val CONTENT: GoldenContentNow = GoldenContentNow()
 
-            override fun planLinks(kind: String): List<String> =
-                GoldenContent.planLinks[kind].orEmpty()
+    /** [ShadowContent] for the golden cases, run under the [setup] of the case being sent. */
+    class GoldenContentNow : ShadowContent {
+        /** The setup of the envelope being compared; set before each one is sent. */
+        var setup: PageSetup = ECONOMY
 
-            override fun catalog(id: String): FixedAwards.CatalogEntry? =
-                runCatching { GoldenContent.catalog(id) }.getOrNull()
-        }
+        override fun setup(): PageSetup = setup
+
+        override fun planDay(date: String): FixedAwards.PlanDay? =
+            runCatching { GoldenContent.planDay(date) }.getOrNull()
+
+        override fun planLinks(kind: String): List<String> = GoldenContent.planLinks[kind].orEmpty()
+
+        override fun catalog(id: String): FixedAwards.CatalogEntry? =
+            runCatching { GoldenContent.catalog(id) }.getOrNull()
+    }
+
+    /** The setup a case was recorded under (its `hand` and `verify` flags). */
+    fun setupOf(input: Map<String, Any?>): PageSetup =
+        PageSetup(
+            library = input["hand"] == true || input["verify"] == true,
+            verify = input["verify"] == true,
+        )
 
     private val DEFAULT_NOW = Instant.parse("2026-10-28T12:00:00.000Z").toEpochMilli()
 
@@ -134,6 +168,12 @@ internal object GoldenActions {
         val now = (input["now"] as? String)?.let { Instant.parse(it).toEpochMilli() } ?: DEFAULT_NOW
         val zone = (input["zone"] as? String) ?: "UTC"
         val run = GoldenRun(fresh, start, now, ZoneId.of(zone))
+        val setup = setupOf(input)
+        val hand = setup.library
+        val unrecorded =
+            (input["omit"] as? List<*>).orEmpty().map { it as String }.toSet() +
+                (HAND_FIELDS - (input["fields"] as? List<*>).orEmpty().map { it as String }.toSet())
+        val minted = intArrayOf(0)
         val calls = (input["calls"] as List<*>).map(::plain)
         val last = calls.indexOfLast { it["fn"] in ENTRIES }
         val recordedAfter = recordedAfter(start, output)
@@ -145,7 +185,7 @@ internal object GoldenActions {
         for ((i, call) in calls.withIndex()) {
             val fn = call["fn"] as String
             if (fn !in ENTRIES) {
-                run.call(call)
+                if (fn !in HAND_ONLY) run.call(call)
                 continue
             }
             val kind = ENTRIES.getValue(fn)
@@ -156,7 +196,7 @@ internal object GoldenActions {
                     json(plain(env["stored"])).filterKeys { it in ShadowKeys.SHADOW_SET }
                 else page
             val readOnly = run.readOnly || env["failSave"] == "readonly"
-            val nativeReturn = run.call(call)
+            val nativeReturn = if (hand) null else run.call(call)
             val recorded = i == last
             val after: Map<String, JsonValue>
             val toasts: List<String>
@@ -165,13 +205,17 @@ internal object GoldenActions {
                 after = loaded(kind, recordedAfter, before, output)
                 toasts = goldenToasts.drop(toastsSoFar)
                 returns = SaveCodec.json(goldenReturns[i])
-            } else {
+            } else if (!hand) {
                 after = loaded(kind, nativeState(page, run), before, null)
                 toasts = run.toasts.drop(toastsSoFar)
                 returns = SaveCodec.json(nativeReturn)
+            } else {
+                after = page
+                toasts = emptyList()
+                returns = JsonNull
             }
-            toastsSoFar = run.toasts.size
-            val action =
+            if (!hand) toastsSoFar = run.toasts.size
+            val drafted =
                 FakeShadowPage.Action(
                     kind = kind,
                     args = (call["args"] as? List<*>).orEmpty().map(SaveCodec::json),
@@ -185,8 +229,23 @@ internal object GoldenActions {
                     t1 = t0,
                     zone = zone,
                 )
-            out += Built(id, withWrites(action, readOnly || env["failSave"] != null), recorded)
-            page = after
+            val failing = readOnly || env["failSave"] != null
+            val filled =
+                if (hand)
+                    nativeFilled(drafted, failing, setup, unrecorded.takeIf { recorded }, minted)
+                else withWrites(drafted, failing, setup)
+            // a composed case of one action recorded the page's own writes, in order (its trace)
+            val trace = (output["trace"] as? List<*>)?.map { it as String }
+            val action =
+                if (trace == null || calls.count { it["fn"] in ENTRIES } != 1) filled
+                else
+                    filled.copy(
+                        saves = writes(trace, "write:"),
+                        env = filled.env + journal(writes(trace, "journal:")),
+                    )
+            if (hand) toastsSoFar += action.toasts.size
+            out += Built(id, action, recorded, setup)
+            page = action.after
         }
         return out
     }
@@ -253,14 +312,23 @@ internal object GoldenActions {
         if (env["confirm"] == false) out["confirm"] = JsonArray(listOf(JsonBool.FALSE))
         (env["prompt"] as? String)?.let { out["prompt"] = JsonArray(listOf(JsonString(it))) }
         (env["dom"] as? Map<*, *>)?.let { out["dom"] = SaveCodec.json(it) }
-        if (kind == "fixed.plan" || kind == "rest.take") out["plan"] = plan(state, t0, zone)
+        val window = kind == "fixed.plan" || kind == "rest.take"
+        out["plan"] = plan(state, t0, zone, if (window) PLAN_DAYS else 0)
         return out
     }
 
-    /** `env.plan` for the default plan: rest on Sundays from its start, nothing done today. */
-    private fun plan(state: Map<String, JsonValue>, t0: Long, zone: String): JsonObject {
+    /**
+     * `env.plan` for the default plan: rest on Sundays from its start, nothing done today; the plan
+     * kinds' window of [days] before today, every other kind today alone (WP6c).
+     */
+    private fun plan(
+        state: Map<String, JsonValue>,
+        t0: Long,
+        zone: String,
+        days: Long,
+    ): JsonObject {
         val today = Instant.ofEpochMilli(t0).atZone(ZoneId.of(zone)).toLocalDate()
-        val from = today.minusDays(PLAN_DAYS)
+        val from = today.minusDays(days)
         val start = ((state["plan"] as? JsonObject)?.get("start") as? JsonString)?.value
         val rest =
             generateSequence(from) { it.plusDays(1) }
@@ -281,20 +349,111 @@ internal object GoldenActions {
      * The action with as many writes as native makes for it (the goldens hold none), each refused
      * when the case fails its save.
      */
-    private fun withWrites(action: FakeShadowPage.Action, failing: Boolean): FakeShadowPage.Action {
+    private fun withWrites(
+        action: FakeShadowPage.Action,
+        failing: Boolean,
+        setup: PageSetup,
+    ): FakeShadowPage.Action {
+        val writes = predict(action, failing, setup)?.saves ?: 1
+        return action.copy(saves = List(writes) { !failing })
+    }
+
+    /**
+     * A hand case's action as the page sent it, where the recording does not say: native's own
+     * writes, and, for an action whose after-state is not the page's ([fill] null: between two
+     * entry calls), native's state, return value and toasts; for the recorded last action only the
+     * fields in [fill] the case leaves out.
+     */
+    private fun nativeFilled(
+        action: FakeShadowPage.Action,
+        failing: Boolean,
+        setup: PageSetup,
+        fill: Set<String>?,
+        minted: IntArray,
+    ): FakeShadowPage.Action {
+        // between two entry calls the page's ids are the case's counting UUIDs, handed out in turn
+        val ids = if (fill == null) List(SPARE_IDS) { uuid(minted[0] + it + 1) } else emptyList()
+        val p = predict(action, failing, setup, ids) ?: return action.copy(saves = listOf(!failing))
+        minted[0] += newIds(action.before, p.after.orEmpty(), recorded = false)
+        if (fill != null) minted[0] += newIds(action.before, action.after, recorded = true)
+        val saves = List(p.saves) { !failing }
+        val native = p.after ?: return action.copy(saves = saves)
+        if (fill == null)
+            return action.copy(
+                saves = saves,
+                after = action.before.filterKeys { it !in native } + native,
+                returns = p.returns,
+                toasts = p.toasts,
+            )
+        val after = LinkedHashMap(action.after)
+        for (key in fill) native[key]?.let { after[key] = it } ?: after.remove(key)
+        return action.copy(saves = saves, after = after)
+    }
+
+    /** The outcomes of the trace's writes named [prefix] (`write:` or `journal:`). */
+    private fun writes(trace: List<String>, prefix: String): List<Boolean> =
+        trace.filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) == "true" }
+
+    /** `env.journal` for [writes]; nothing when there were none. */
+    private fun journal(writes: List<Boolean>): Map<String, JsonValue> =
+        if (writes.isEmpty()) emptyMap()
+        else
+            mapOf(
+                "journal" to JsonArray(writes.map { FakeShadowPage.obj("ok" to JsonBool.of(it)) })
+            )
+
+    /** The case's [n]th `crypto.randomUUID()`, as the recorder counts them. */
+    private fun uuid(n: Int) = "00000000-0000-4000-8000-%012d".format(n)
+
+    /** How many counting UUIDs [after]'s new activity records hold. */
+    private fun newIds(
+        before: Map<String, JsonValue>,
+        after: Map<String, JsonValue>,
+        recorded: Boolean,
+    ): Int {
+        if (recorded) return 0
+        val had = (before["activities"] as? JsonArray)?.items?.size ?: 0
+        return (after["activities"] as? JsonArray)?.items.orEmpty().drop(had).count {
+            ((it as? JsonObject)?.get("id") as? JsonString)?.value?.startsWith(UUID_PREFIX) == true
+        }
+    }
+
+    /**
+     * Native's prediction for [action] under [setup] (its write count decides the envelope's), with
+     * [ids] as the UUIDs the page would mint.
+     */
+    private fun predict(
+        action: FakeShadowPage.Action,
+        failing: Boolean,
+        setup: PageSetup,
+        ids: List<String> = emptyList(),
+    ): Prediction? {
         val probe = action.copy(saves = if (failing) listOf(false) else emptyList())
         val envelope =
             (ShadowEnvelopeJson.envelope(FakeShadowPage().send(probe)) as ShadowDecode.Ok).value
+        CONTENT.setup = setup
+        val after =
+            if (ids.isEmpty()) action.after
+            else {
+                val had = (action.before["activities"] as? JsonArray)?.items.orEmpty()
+                val spare = ids.map { JsonObject(linkedMapOf("id" to JsonString(it))) }
+                action.before + ("activities" to JsonArray(had + spare))
+            }
         val ran =
             ShadowRunner(CONTENT)
-                .run(
-                    envelope,
-                    FakeShadowPage.shadow(action.before),
-                    FakeShadowPage.shadow(action.after),
-                )
-        val writes = (ran as? RunOutcome.Ran)?.prediction?.saves ?: 1
-        return action.copy(saves = List(writes) { !failing })
+                .run(envelope, FakeShadowPage.shadow(action.before), FakeShadowPage.shadow(after))
+        return (ran as? RunOutcome.Ran)?.prediction
     }
+
+    /** Daily Hand reads the economy replay does not know. */
+    private val HAND_ONLY = setOf("dhCards")
+
+    /** The Daily Hand's fields a hand case records only when it lists them. */
+    private val HAND_FIELDS = setOf("dailyDraw", "dhMig", "classContent")
+
+    /** UUIDs offered to native for an action between two entry calls (more than any one mints). */
+    private const val SPARE_IDS = 8
+    private const val UUID_PREFIX = "00000000-0000-4000-8000-"
 
     @Suppress("UNCHECKED_CAST")
     private fun plain(v: Any?): Map<String, Any?> = v as? Map<String, Any?> ?: emptyMap()

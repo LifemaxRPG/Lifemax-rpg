@@ -24,8 +24,9 @@ object ShadowKeys {
     /**
      * The action kinds of table 1.2, with the kinds WP6b split so that one kind is one page entry
      * (`log.delete` / `log.remove` / `fixed.undo`, `director.award` / `director.quest`, the four
-     * `coach.*`, the four `rules.*`). The set is open (a newer page may shadow more); a kind not
-     * here is accepted and counted `skipped.unknownKind`.
+     * `coach.*`, the four `rules.*`) and the quest point of WP6c (`quest.pack`, a class switch's
+     * quest pack). The set is open (a newer page may shadow more); a kind not here is accepted and
+     * counted `skipped.unknownKind`.
      */
     val KINDS: Set<String> =
         setOf(
@@ -36,6 +37,7 @@ object ShadowKeys {
             "voice.log",
             "quest.toggle",
             "quest.create",
+            "quest.pack",
             "hand.ensure",
             "hand.reroll",
             "hand.verify",
@@ -91,5 +93,7 @@ object ShadowKeys {
             SaveFields.PARTIAL.values.flatten().map {
                 it.removePrefix("[].").substringBefore('.')
             } +
-            setOf("on", "grace", "rate", "id", "date", "level", "pats", "shields", "rerollsUsed")
+            setOf("on", "grace", "rate", "id", "date", "level", "pats", "shields", "rerollsUsed") +
+            // the Daily Hand's draw (WP6c compares it whole): its own members, the app's words
+            setOf("nonce", "cards", "up", "turned", "dealt")
 }

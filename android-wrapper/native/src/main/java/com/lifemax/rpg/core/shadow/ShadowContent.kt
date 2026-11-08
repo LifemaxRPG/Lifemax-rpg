@@ -28,6 +28,9 @@ interface ShadowContent {
     /** `actById(id)`, or null when unknown. */
     fun catalog(id: String): FixedAwards.CatalogEntry?
 
+    /** How the page that recorded the action ran; the app's page is [PageSetup.APP]. */
+    fun setup(): PageSetup = PageSetup.APP
+
     companion object {
         /** No page content: the plan and catalog actions are skipped. */
         val NONE: ShadowContent =

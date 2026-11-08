@@ -22,6 +22,7 @@
     "Native Cat (beta): cats now turn round step by step, through a three-quarter and a front view, instead of just flipping. It takes about a third of a second.",
     "Native economy check (beta): a new switch in Settings, Data & advanced. When it is on, the phone follows each XP and Sparks change the app makes, without saving or showing anything, and counts them under the switch. Nothing leaves the phone. Off by default.",
     "Native economy check (beta): the phone now works out Logs, rewards, the shop, rest days and settings itself and compares them with the app; the line under the switch says how many actions it checked and how many came out different.",
+    "Native economy check (beta): the phone now also works out quests and the Daily Hand itself (ticking a quest, making one, a class's quests, dealing, rerolling and fulfilling cards, the new day's hand) and compares them with the app.",
     "Developer: with developer mode on (Settings), the native Cat tab has a Demo parkour button that sends one cat on a climbing tour of the room; it changes nothing in your save."
    ]
   },

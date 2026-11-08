@@ -72,6 +72,16 @@ object KnownDifferences {
                 "proposed in WP6b, awaiting the owner's sign-off (O-6)",
                 onlyNew = true,
             ),
+            KnownDifference(
+                "A-06",
+                null,
+                Regex("saves\\.journal"),
+                "the journal coach's redraw inside a save (or a take-back) writes A-01's day memory " +
+                    "with a plain write of its own (jcWrite), which the page sends apart as " +
+                    "env.journal; native does not draw the journal, so it makes no such write",
+                "SAVE-1 COACH-1",
+                "proposed in WP6c, awaiting the owner's sign-off (O-6)",
+            ),
         )
 
     /**

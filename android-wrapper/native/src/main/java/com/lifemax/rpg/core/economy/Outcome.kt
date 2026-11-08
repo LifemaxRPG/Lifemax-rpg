@@ -70,6 +70,13 @@ data class EconomyContext(
      * Production actions pass none.
      */
     val attempts: SaveAttempts? = null,
+    /**
+     * The page's Daily Hand check around SAVE-2 as the economy shadow composes it (WP6c): the deal
+     * the page runs before it verifies the cards, and whether it verifies at all. With one, a save
+     * checks twice, in the page's order: the redraw inside the save, then the save's wrapper.
+     * Production actions pass none, and a save then verifies once with no deal.
+     */
+    val handCheck: HandCheck? = null,
 ) {
     val now: Long
         get() = clock.now
@@ -89,3 +96,16 @@ data class DailyHandFacts(
     val petCounts: Map<String, Int> = emptyMap(),
     val planDone: Boolean = false,
 )
+
+/**
+ * The Daily Hand's own step before each SAVE-2 verification, as the page runs it: `dhAutoVerify`
+ * first calls `dhEnsure()` (QUESTS_SPEC QST-41 to QST-43), which may deal a new day's cards, and
+ * does not verify at all while the hand is busy or when that deal throws.
+ */
+fun interface HandCheck {
+    /** The save after the page's deal, and whether its cards are verified next. */
+    fun deal(save: EconomySave): Dealt
+}
+
+/** What [HandCheck.deal] leaves: the [save] and whether the cards are then verified ([verify]). */
+data class Dealt(val save: EconomySave, val verify: Boolean)

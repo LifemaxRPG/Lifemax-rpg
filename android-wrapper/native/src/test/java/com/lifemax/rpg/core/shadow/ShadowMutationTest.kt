@@ -25,7 +25,7 @@ class ShadowMutationTest {
 
     private val mutants =
         listOf(
-            Mutant("the cap table pays one more", Regex("activities\\[\\+1]\\.xp")) {
+            Mutant("the cap table pays one more", Regex("activities\\[\\+?1?]\\.xp")) {
                 _,
                 before,
                 run,
@@ -114,7 +114,7 @@ class ShadowMutationTest {
                 ctx.attempts?.attempted(true)
                 run
             },
-            Mutant("a new record is dated a day later", Regex("activities\\[\\+1]\\.date")) {
+            Mutant("a new record is dated a day later", Regex("activities\\[\\+?1?]\\.date")) {
                 _,
                 before,
                 run,
@@ -190,7 +190,10 @@ class ShadowMutationTest {
             for (part in page.base(built.first().action.before)) assertTrue(
                 session.base(part, 0).ok
             )
-            for (b in built) session.observe(page.send(b.action), FakeShadowPage.T0)
+            for (b in built) {
+                GoldenActions.CONTENT.setup = b.setup
+                session.observe(page.send(b.action), FakeShadowPage.T0)
+            }
             val l = session.ledger
             val unexplained = l.mismatches().filter { it.unexplained }
             if (changed == 0) missed += "${m.name}: changed nothing"
@@ -212,7 +215,10 @@ class ShadowMutationTest {
             )
         val page = FakeShadowPage()
         for (part in page.base(built.first().action.before)) session.base(part, 0)
-        for (b in built) session.observe(page.send(b.action), FakeShadowPage.T0)
+        for (b in built) {
+            GoldenActions.CONTENT.setup = b.setup
+            session.observe(page.send(b.action), FakeShadowPage.T0)
+        }
         assertEquals(0, session.ledger.different)
         assertEquals(built.size, session.ledger.compared)
     }

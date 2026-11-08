@@ -1,7 +1,7 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. WP6a and WP6b are built (their status is under each, section 6); the rest is
-design. It covers WP6 of
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a, WP6b and WP6c are built (their status is under each, section 6); the
+rest is design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
 Inputs: `ECONOMY_SPEC.md` (sections 2, 11, 15-17, 20, 21), `QUESTS_SPEC.md`, `ECONOMY_NATIVE_PLAN.md` (WP1-WP8, defects),
@@ -403,6 +403,9 @@ port may ignore) and so pre-approved:
 | A-02 | any | `plan.checks.*.s` | plan ticks, specified but outside the economy (PLAN-1, spec 21) |
 | A-03 | `money.*`, `save.other` | `money` paycheck settings | dated by the day, outside the economy (spec 21) |
 
+Entries proposed since, awaiting the owner's sign-off: A-05 (WP6b, the redraw's empty food log, meal settings and reflections) and
+A-06 (WP6c, `saves.journal`: the journal coach's own plain write inside a save, which native does not draw).
+
 Anything else needs an entry written in a PR and signed off by the owner; native fixing a defect early is not allowed during
 shadow (native must equal the page; a fix lands on the page first with a golden, as LIFE_DIRECTOR_NATIVE_PLAN 5.1 says).
 
@@ -554,6 +557,57 @@ Tests: a new page golden family `save/compose-*` (recorded by extending `gen_eco
 fulfils a card, a toggle whose save fulfils another, a deal at midnight inside a save, a failed save with cards), replayed by
 Kotlin directly and through the corpus; quests golden (842) and board golden (1011) cases that are entry points, as envelopes.
 Bridge: none. Decision: none beyond QD rulings already defaulted to "keep".
+
+**Status: built** (Native API 110 on this branch; the integrator renumbers at merge; capability `economy.shadow.quests.v1`). What exists:
+- Compared kinds (29 with the boot's load): WP6b's 23 and `quest.toggle` (`toggleQuest`, with its note field), `quest.create`
+  (`createQuest`), `quest.pack` (`applyClassContent`, a new point: a class switch's quest pack; the boot's own is inside `boot.load`),
+  `hand.ensure` (`dhEnsure`), `hand.reroll` (`dhReroll`), `hand.verify` (`dhAutoVerify`). Left for 6d, `skipped.later`: `health.sync`,
+  `decay.apply`, `boot.decay`. Still `skipped.notNative`: `log.remove`, `coach.reflect`, `coach.review`.
+- The composition (`PageSaveComposition` of 2.6): `EconomyContext.handCheck`, a `HandCheck` the shadow passes (production passes none
+  and runs as before). With one, `SavePipeline.save` checks twice in the page's order (the redraw inside the save, then the SAVE-2
+  wrapper), `SavePipeline.redraw` checks once where the page redraws without saving (a refused toggle's `renderQuests`, a
+  take-back's `renderAll`). `core/shadow` `PageHand` is the check: `dhEnsure` through `core/quests` `HandDealer` on the page's JSON
+  (luck from the save, rest days through `ecoRestDay` at that moment, the deal skipped without a merge when today's hand is
+  settled), then `DailyHand.verify`; a deal that throws verifies nothing; the recorders' `dhBusy` runs nothing. `PageState` holds the
+  action's state as the page's JSON and, when an economy rule needs it, as the economy's model, handing over through the codec's
+  merge and a page-tolerant reading, so a dealt card keeps every field the page gives it. `QuestEntries` are the JSON kinds.
+- Compared state: the tracked keys as before, plus `dailyDraw` whole (not only `rerollsUsed`), `classContent` and `dhMig`, for every
+  kind (any save can deal). 6b's `skipped.hand` is gone. A hand kind the page threw out of is compared (native stops at the same
+  place, partial changes kept); other kinds' throws stay `skipped.threw`.
+- Page (only with `economy.shadow.quests.v1`, so an older app gets the 6b shapes): today's `env.plan` (`from` = today) with every kind
+  that records none of its own (a save may deal and check); the journal coach's own plain writes (`jcWrite`, its redraw's day memory)
+  sent apart as `env.journal`. Always: `quest.toggle` reads `qnote-<id>` (`dom:qnote-{0}`); `hand.ensure` and `hand.verify` that
+  changed nothing, wrote nothing and said nothing are sent one in 50 and otherwise counted `noop` on the page.
+- The golden family `save/compose-*` (13 cases, `gen_economy_golden.js` with the Daily Hand on): a Log paying two cards, a toggle whose
+  save pays another card, a refused toggle's redraw paying one, a bare save, a deal inside a save, a deal at midnight inside a Log, the
+  one-time migration on the first check, a refused and a read-only save with cards (the take-back's redraw pays again), rerolls, a
+  quest made, a check alone, a deal alone. Each records `trace`: every `writeSave()` (`write:`, or `journal:` for `jcWrite`'s) and
+  every check, in order. The input of a hand case now records `hand`, `verify`, `fields` and `omit`.
+- Allowlist: **A-06, proposed here and awaiting the owner's sign-off (O-6)**: `saves.journal`, the journal coach's own plain write
+  inside a save (or a take-back), which native makes no count of because it does not draw the journal (A-01's day memory; spec 21,
+  COACH-1). Pre-approved entries are unchanged.
+- Tests (Kotlin, compiled with kotlinc and run with JUnit directly, not under gradle: the machine had under 2 GB of disk):
+  `ShadowQuestsGoldenTest` (every in-scope case of `quests-golden.json` and `quests-board-golden.json`: 558 + 380 cases, 2,183 envelopes
+  through the fake page's transport and the comparison, 2,183 same, 0 allowed, 0 unexplained, none skipped, 67 of them the page's own
+  throws; counts per kind pinned), `ShadowGoldenCompareTest` (now 259 economy cases, 298 envelopes: 289 same, 9 allowed, 0
+  unexplained), `SaveComposeGoldenTest` (the 14 composed cases' traces equal native's, write for write and check for check; five
+  wrongly composed checks are caught), `ShadowHandMutationTest` (14 wrong hand odds, prices, templates, packs, board XP bounds and
+  steps of behaviour, each caught at its field and never allowed), `ShadowCorpusTest` (the real page's quest corpus,
+  `gen_shadow_corpus.js --quests` into `tests/fixtures/shadow-quests-corpus.json`: 15 actions compared, 15 same, the day rolling over
+  with the app open included), `ShadowHandSessionTest` (page lies at eight hand paths, the skips with the copy in step, a seq gap, no
+  quest name or note in the ring, a card-paying Log on a 10,000-record save: about 200 ms p50 and under 0.5 s p95 on an idle JVM,
+  under the 2 s slow limit); page: `tests/native-shadow.test.js` (the capability's shapes and their absence for an older app).
+- Differences from the text above, with reasons:
+  - The golden family is in `gen_economy_golden.js` (it already records saves); the economy's own replay (`EconomyGoldenTest`) leaves
+    it to the shadow's composition, which is the only native code that deals. The order of saves is recorded as a trace and compared
+    directly; the transport carries the page's own writes for each one-action composed case.
+  - The quests and board goldens count `save()` and hold `dhBusy`; their envelopes are compared under that setup (`PageSetup`), so
+    each carries only the page's own recording. The composition with a real save is the compose family's and the corpus's.
+  - The board's and the ledger's projections (`renderQuests`, `renderLedger` in the board golden) are reads, not compared (1.2).
+  - The page has no custom-quest edit or delete; the 3D table's create stays `save.other` (6a); the boot's first deal runs before the
+    wrappers exist, so it reaches native as an edit between actions; the day roll with the app open is compared (`hand.verify`).
+  - The heaviest composed action on a very large ledger (a Log paying two cards on 10,000 records) costs about four times a plain
+    Log natively: three rebuilds of the ledger and the cards' scans, as the page does. The common action stays inside 200 ms p95.
 
 ### WP6d. Health, decay and the day roll (M, risk medium)
 

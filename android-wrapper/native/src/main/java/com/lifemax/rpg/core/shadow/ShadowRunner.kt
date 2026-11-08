@@ -10,6 +10,8 @@ import com.lifemax.rpg.core.economy.EconomySave
 import com.lifemax.rpg.core.economy.IdSource
 import com.lifemax.rpg.core.economy.SavePipeline
 import com.lifemax.rpg.core.economy.Storage
+import com.lifemax.rpg.core.quests.ClassPacks
+import com.lifemax.rpg.core.quests.HandStep
 import com.lifemax.rpg.core.save.EconomySaveCodec
 import com.lifemax.rpg.core.save.JsonArray
 import com.lifemax.rpg.core.save.JsonNull
@@ -18,12 +20,10 @@ import com.lifemax.rpg.core.save.JsonObject
 import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
 import com.lifemax.rpg.core.save.SaveDecoding
-import com.lifemax.rpg.core.save.SaveDocument
 import com.lifemax.rpg.core.save.SaveEncoding
 import com.lifemax.rpg.core.save.SaveFields
 import com.lifemax.rpg.core.save.SaveReading
 import com.lifemax.rpg.core.save.SaveRefusalReason
-import com.lifemax.rpg.core.save.sameStoredValue
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
@@ -57,6 +57,8 @@ class Prediction(
     val strictRefusal: String?,
     /** Whether the storage refused the action's writes (the D13 evidence). */
     val unsaved: Boolean,
+    /** The composition's writes and Daily Hand checks, in order ([PageHand.trace]). */
+    val trace: List<String> = emptyList(),
 )
 
 /** What running one action natively gave. */
@@ -69,23 +71,28 @@ sealed interface RunOutcome {
 }
 
 /**
- * Runs one page action natively on the page's before-state (ECONOMY_SHADOW_PLAN 2.6, WP6b): the
- * kind's entry ([ShadowEntries]) through the WP5 adapters ([ContextFactory] over the before-state,
- * a clock fixed at `t0` in the page's zone, the page's locale), with the ids the page minted
- * ([ReplayIds]), the storage outcome the page met and the plan facts it recorded. Decides first
- * whether the action can be compared at all: its kind, a throw, a day that changed during it (N3),
- * a zone the device's tz data reads differently (N4), a mixed storage outcome, an input that does
- * not read, the Daily Hand's own fields changed (WP6c). Pure and read-only: nothing is written.
+ * Runs one page action natively on the page's before-state (ECONOMY_SHADOW_PLAN 2.6, WP6b, WP6c):
+ * the kind's entry ([ShadowEntries] on the economy's model, [QuestEntries] on the page's JSON)
+ * through the WP5 adapters ([ContextFactory] over the before-state, a clock fixed at `t0` in the
+ * page's zone, the page's locale), with the ids the page minted ([ReplayIds]), the storage outcome
+ * the page met and the plan facts it recorded, and every save composed as the page composes it: the
+ * save, the Daily Hand's check in the redraw inside it, then the check of the save's wrapper
+ * ([PageHand]). Decides first whether the action can be compared at all: its kind, a throw, a day
+ * that changed during it (N3), a zone the device's tz data reads differently (N4), a mixed storage
+ * outcome, an input that does not read. Pure and read-only: nothing is written.
  *
- * @param content page content the plan and catalog actions need.
+ * @param content page content the plan and catalog actions need, and how the recording page ran
+ *   ([ShadowContent.setup]).
  * @param pageSchema the page's `SAVE_SCHEMA` (from `configure`), for a save from a newer build.
  * @param mutation changes native's result before it is compared: the mutation tests' way to make
  *   native wrong on purpose and see the comparison notice. The app passes none.
+ * @param quests native's quest content and numbers ([QuestNative.PACKAGED] in the app).
  */
 class ShadowRunner(
     private val content: ShadowContent = ShadowContent.NONE,
     private val pageSchema: () -> Int = { 1 },
     private val mutation: EntryMutation = EntryMutation.NONE,
+    private val quests: QuestNative = QuestNative.PACKAGED,
 ) {
     /** Native's prediction for [envelope], given the page's [before] and [after] shadow keys. */
     fun run(
@@ -96,11 +103,13 @@ class ShadowRunner(
         val kind = envelope.kind
         val load = kind == ShadowEntries.BOOT_LOAD
         val entry = ShadowEntries.of(kind)
+        val handEntry = QuestEntries.of(kind)
         when {
             kind in ShadowEntries.LATER -> return skip(LATER)
             kind in ShadowEntries.NOT_NATIVE -> return skip(NOT_NATIVE)
-            entry == null && !load -> return skip(UNKNOWN_KIND)
-            ShadowFlags.THREW in envelope.flags -> return skip(THREW)
+            entry == null && handEntry == null && !load -> return skip(UNKNOWN_KIND)
+            ShadowFlags.THREW in envelope.flags && handEntry?.comparesThrow != true ->
+                return skip(THREW)
         }
         val zone = ZoneId.of(envelope.zone)
         if (day(envelope.t0, zone) != day(envelope.t1, zone)) return skip(MIDNIGHT)
@@ -109,22 +118,32 @@ class ShadowRunner(
                 SECONDS_PER_MINUTE
         if (offset != envelope.offsetMinutes) return skip(TZ_DATA)
         val storage = storage(envelope) ?: return skip(MIXED_STORAGE)
-        if (HAND_KEYS.any { !same(before[it], after[it]) }) return skip(HAND)
         val input =
             try {
-                EntryInput(envelope, entry?.shape ?: EnvShape.SAVES)
+                EntryInput(envelope, entry?.shape ?: handEntry?.shape ?: EnvShape.SAVES)
             } catch (_: InputRefused) {
                 return skip(INPUT)
             }
-        val state = if (load) PageFresh.under(before) ?: return skip(CONTENT) else before
-        val decoded = decode(state) ?: return skip(CODEC)
+        val start = if (load) PageFresh.under(before) ?: return skip(CONTENT) else before
+        val stored = JsonObject(start)
+        val state = PageState(stored)
+        // an economy entry needs the model of the save; a hand entry reads it only when it asks
+        val view =
+            try {
+                state.economy()
+            } catch (_: CodecRefused) {
+                if (entry != null || load) return skip(CODEC) else null
+            }
         val ids = ReplayIds.of(before, after)
         val plan = EnvPlanFacts(input.plan, day(envelope.t0, zone))
+        val setup = content.setup()
         var saves = 0
-        val ctx =
+        lateinit var ctx: EconomyContext
+        val hand = PageHand(state, quests.dealer(setup), setup) { ctx }
+        ctx =
             ContextFactory(
                     FixedClock(envelope.t0, zone),
-                    { SaveView(decoded.save, JsonObject(state)) },
+                    { view?.let { SaveView(it, stored) } },
                     plan,
                     NoHealthReads,
                     ids,
@@ -132,57 +151,98 @@ class ShadowRunner(
                 )
                 .begin(storage)
                 .economy
-                .copy(attempts = { saves++ })
-        val ran =
+                .copy(
+                    attempts = {
+                        saves++
+                        hand.wrote(it)
+                    },
+                    handCheck = quests.check(hand),
+                )
+        val run =
             try {
-                if (load) load(decoded.save, ctx, state).also { saves += it.second }.first
-                else entry!!.run(input, decoded.save, ctx, EntryWorld(before, content))
+                when {
+                    load -> load(state, ctx).also { saves += it.second }.first
+                    entry != null -> {
+                        val ran =
+                            entry.run(input, state.economy(), ctx, EntryWorld(before, content))
+                        state.update(ran.save)
+                        ran.returns to ran.toasts
+                    }
+                    else ->
+                        handEntry!!.run(input, ctx, HandWorld(state, hand, quests, setup)).let {
+                            it.returns to it.toasts
+                        }
+                }
             } catch (_: InputRefused) {
                 return skip(INPUT)
             } catch (_: ContentMissing) {
                 return skip(CONTENT)
+            } catch (_: CodecRefused) {
+                return skip(CODEC)
             }
         if (plan.outside) return skip(PLAN_WINDOW)
-        val result = mutation.apply(kind, decoded.save, ran, ctx)
-        val merged = EconomySaveCodec.merged(decoded.document, result.save)
+        val (returns, toasts) = mutated(kind, view, state, run, ctx)
+        val merged =
+            try {
+                state.json()
+            } catch (_: CodecRefused) {
+                null
+            }
         val check =
-            if (checkDue(decoded.save.activities.size)) faithful(decoded, state, result.save)
+            if (state.usedEconomy && merged != null && checkDue(state.records)) faithful(state)
             else null
         val prediction =
             Prediction(
-                after = merged?.members?.filterKeys { it in SaveFields.TRACKED },
-                returns = result.returns,
-                toasts = result.toasts,
+                after = merged?.members?.filterKeys { it in COMPARED_KEYS },
+                returns = returns,
+                toasts = toasts,
                 saves = saves,
                 extraIds = if (storage == Storage.Writable) ids.extra else 0,
                 encodeRefusal = check?.refusal ?: if (merged == null) MERGE_FAILED else null,
                 nonFinite = check?.nonFinite == true,
                 encodeChecked = check != null,
-                strictRefusal = decoded.strictRefusal,
+                strictRefusal = state.strictRefusal,
                 unsaved = storage != Storage.Writable,
+                trace = hand.trace.toList(),
             )
         return RunOutcome.Ran(prediction)
     }
 
-    /**
-     * The boot's `load()` (SAVE-5): the stored save spread over the fresh state, rules merged,
-     * migrated, then written once unless it came from a newer build (shown read-only).
-     */
-    private fun load(
-        save: EconomySave,
+    /** [mutation] applied to native's result (the tests' seam; the app's is none). */
+    private fun mutated(
+        kind: String,
+        before: EconomySave?,
+        state: PageState,
+        run: Pair<JsonValue, List<String>>,
         ctx: EconomyContext,
-        state: Map<String, JsonValue>,
-    ): Pair<EntryRun, Int> {
-        val schema = (state["schema"] as? JsonNumber)?.value ?: 0.0
-        val loaded = SavePipeline.load(save, ctx, fromNewerBuild = schema > pageSchema())
-        return EntryRun(loaded.save, JsonNull, emptyList()) to if (loaded.readOnly) 0 else 1
+    ): Pair<JsonValue, List<String>> {
+        if (mutation === EntryMutation.NONE || before == null) return run
+        val ran = EntryRun(state.economy(), run.first, run.second)
+        val changed = mutation.apply(kind, before, ran, ctx)
+        state.update(changed.save)
+        return changed.returns to changed.toasts
     }
 
-    private class Decoded(
-        val save: EconomySave,
-        val document: SaveDocument,
-        val strictRefusal: String?,
-    )
+    /**
+     * The boot's `load()` (SAVE-5): the stored save spread over the fresh state, rules merged,
+     * migrated, the class's quest pack applied (`migrateSave`), then written once; a save from a
+     * newer build is shown read-only, and a migration that throws leaves the save read-only too,
+     * with nothing written.
+     */
+    private fun load(
+        state: PageState,
+        ctx: EconomyContext,
+    ): Pair<Pair<JsonValue, List<String>>, Int> {
+        val schema = (state.json()["schema"] as? JsonNumber)?.value ?: 0.0
+        val loaded = SavePipeline.load(state.economy(), ctx, fromNewerBuild = schema > pageSchema())
+        state.update(loaded.save)
+        val nothing = JsonNull to emptyList<String>()
+        if (loaded.readOnly) return nothing to 0
+        val content = quests.content ?: throw ContentMissing()
+        val pack = ClassPacks(content).apply(state.json())
+        state.adopt(pack.save)
+        return nothing to if (pack is HandStep.Threw) 0 else 1
+    }
 
     /** What the codec's own write of native's save says (the encode check, plan 1.3 point 5). */
     private class Faithful(val refusal: String?, val nonFinite: Boolean)
@@ -199,43 +259,26 @@ class ShadowRunner(
         records <= FULL_CHECK_RECORDS || actions++ % CHECK_EVERY == 0
 
     /**
-     * Writes native's save with the codec. A NaN where the page stores null (JSON.stringify) is
-     * counted, not a difference (a strict native writer would refuse it: each needs a WP8 ruling),
-     * and the write is checked again as the page reads; any other refusal is the difference
-     * `codec.encode`.
+     * Writes native's save with the codec, over the document it was last read from. A NaN where the
+     * page stores null (JSON.stringify) is counted, not a difference (a strict native writer would
+     * refuse it: each needs a WP8 ruling), and the write is checked again as the page reads; any
+     * other refusal is the difference `codec.encode`.
      */
-    private fun faithful(
-        decoded: Decoded,
-        state: Map<String, JsonValue>,
-        save: EconomySave,
-    ): Faithful {
-        val first = EconomySaveCodec.encode(decoded.document, save)
+    private fun faithful(state: PageState): Faithful? {
+        val (document, save) =
+            try {
+                state.encodable()
+            } catch (_: CodecRefused) {
+                null
+            } ?: return null
+        val first = EconomySaveCodec.encode(document, save)
         if (first !is SaveEncoding.Refused) return Faithful(null, false)
         if (first.refusal.reason != SaveRefusalReason.NON_FINITE_NUMBER)
             return Faithful(first.refusal.reason.name, false)
         val page =
-            EconomySaveCodec.decode(JsonObject(state), SaveReading.AS_PAGE) as? SaveDecoding.Decoded
+            EconomySaveCodec.decode(document.stored, SaveReading.AS_PAGE) as? SaveDecoding.Decoded
         val again = page?.let { EconomySaveCodec.encode(it.document, save) }
         return Faithful((again as? SaveEncoding.Refused)?.refusal?.reason?.name, true)
-    }
-
-    /**
-     * The before-state as the codec reads it: strictly when it can (a native writer could store
-     * it), else as the page does, noting the tracked field the strict reading refused.
-     */
-    private fun decode(state: Map<String, JsonValue>): Decoded? {
-        val json = JsonObject(state)
-        val strict = EconomySaveCodec.decode(json, SaveReading.STRICT)
-        if (strict is SaveDecoding.Decoded) return Decoded(strict.save, strict.document, null)
-        val field = (strict as SaveDecoding.Refused).refusal.problems.firstOrNull()?.field.orEmpty()
-        val page =
-            EconomySaveCodec.decode(json, SaveReading.AS_PAGE) as? SaveDecoding.Decoded
-                ?: return null
-        return Decoded(
-            page.save,
-            page.document,
-            field.takeIf { it in SaveFields.TRACKED } ?: "save",
-        )
     }
 
     /**
@@ -243,7 +286,7 @@ class ShadowRunner(
      * (or none attempted) is writable, every write refused is full; a mix is not compared.
      */
     private fun storage(envelope: ShadowEnvelope): Storage? {
-        val saves = envelope.env.saves
+        val saves = envelope.env.saves + envelope.env.journal
         return when {
             ShadowFlags.READ_ONLY in envelope.flags -> Storage.ReadOnly
             saves.all { it } -> Storage.Writable
@@ -251,9 +294,6 @@ class ShadowRunner(
             else -> null
         }
     }
-
-    private fun same(a: JsonValue?, b: JsonValue?) =
-        a == b || (a != null && b != null && a.sameStoredValue(b))
 
     private fun day(millis: Long, zone: ZoneId) = EconomyClock(millis, zone).today
 
@@ -267,8 +307,11 @@ class ShadowRunner(
     }
 
     companion object {
-        /** The Daily Hand's own keys: an action that changed one is the hand's (WP6c). */
-        val HAND_KEYS: List<String> = listOf("dailyDraw", "classContent", "dhMig")
+        /** The Daily Hand's keys outside the tracked ones, compared whole (plan 1.3 point 2). */
+        val HAND_KEYS: List<String> = listOf("classContent", "dhMig")
+
+        /** Every key a prediction holds: the tracked ones and the Daily Hand's own. */
+        val COMPARED_KEYS: Set<String> = SaveFields.TRACKED.toSet() + HAND_KEYS
 
         const val LATER = "later"
         const val NOT_NATIVE = "notNative"
@@ -277,7 +320,6 @@ class ShadowRunner(
         const val MIDNIGHT = "midnight"
         const val TZ_DATA = "tzdata"
         const val MIXED_STORAGE = "mixedStorage"
-        const val HAND = "hand"
         const val INPUT = "input"
         const val CONTENT = "content"
         const val CODEC = "codec"
