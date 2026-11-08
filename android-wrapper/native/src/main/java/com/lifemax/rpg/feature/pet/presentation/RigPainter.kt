@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.lifemax.rpg.feature.pet.art.RigFrames
 import com.lifemax.rpg.feature.pet.art.RigGrid
-import com.lifemax.rpg.feature.pet.art.RigSet
 import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.Tuning
 
@@ -26,8 +25,20 @@ internal object RigMotion {
     /** Whisker length change per unit of whisker sweep from rest (-1 back, 1 forward). */
     const val WHISKER_GAIN = 0.35
 
+    /** The axes of [values], in order. */
+    const val EAR_LEFT = 0
+    const val EAR_RIGHT = 1
+    const val FLAT = 2
+    const val TAIL = 3
+    const val CURL = 4
+    const val WHISKER = 5
+
+    /** How many axes [values] fills. */
+    const val AXES = 6
+
     /**
-     * Read [pose] onto [grid]; [kitten] ears and a pose held still (reduced [motion]) are neutral.
+     * Read [pose] onto [grid] (each axis rounded to its nearest grid step); [kitten] ears and a
+     * pose held still (reduced [motion]) are neutral.
      */
     fun read(pose: CatPose, kitten: Boolean, motion: Boolean, grid: RigGrid) {
         if (!motion) {
@@ -47,38 +58,50 @@ internal object RigMotion {
             whiskerScale = 1.0 + (pose.whisker - Tuning.Whiskers.REST) * WHISKER_GAIN,
         )
     }
+
+    /**
+     * The same reading as [read], before rounding: each axis in grid steps (a value of 1.4 is 1.4
+     * steps of [RigGrid]), into [out] at the indices above. [SpriteSteady] holds them steady.
+     */
+    fun values(pose: CatPose, kitten: Boolean, out: DoubleArray) {
+        val earsMove = !kitten
+        var tip = 0f
+        for (i in 1 until pose.tail.size) tip += pose.tail[i]
+        out[EAR_LEFT] =
+            if (earsMove) Math.toDegrees(pose.ear[0].toDouble()) / RigGrid.EAR_STEP_DEG else 0.0
+        out[EAR_RIGHT] =
+            if (earsMove) Math.toDegrees(pose.ear[1].toDouble()) / RigGrid.EAR_STEP_DEG else 0.0
+        out[FLAT] = if (earsMove) pose.earFlat.toDouble() * RigGrid.FLAT_STEPS else 0.0
+        out[TAIL] =
+            Math.toDegrees((pose.tail[0] - Tuning.Tail.BASE_NEUTRAL).toDouble()) * TAIL_GAIN /
+                RigGrid.TAIL_STEP_DEG
+        out[CURL] =
+            Math.toDegrees((tip - Tuning.Tail.CURL_NEUTRAL).toDouble()) * CURL_GAIN /
+                RigGrid.CURL_STEP_DEG
+        out[WHISKER] = (pose.whisker - Tuning.Whiskers.REST) * WHISKER_GAIN / RigGrid.WHISKER_STEP
+    }
 }
 
 /**
- * Draws composed rig frames: asks [RigFrames] for the picture of a pose and keeps the pixels in
- * bitmaps, one per cache slot, uploaded only when the slot is filled. The same few poses come round
- * again, so after a short while nothing is composed, uploaded or allocated; the bitmaps are made as
- * the cache fills and then re-used. Used from the main thread only.
+ * Keeps the composed rig frames of [RigFrames] as bitmaps, one per cache slot, uploaded only when
+ * the slot is filled. The same few poses come round again, so after a short while nothing is
+ * composed, uploaded or allocated; the bitmaps are made as the cache fills and then re-used. Which
+ * slot a cat draws is [SpritePlan]'s decision. Used from the main thread only.
  */
 internal object RigPainter {
-    private val frames = RigFrames()
-    private val grid = RigGrid()
+    /** The composed frames every cat on screen shares. */
+    val frames = RigFrames()
+
     private val bitmaps = arrayOfNulls<Bitmap>(RigFrames.DEFAULT_CAPACITY)
     private val images = arrayOfNulls<ImageBitmap>(RigFrames.DEFAULT_CAPACITY)
 
-    /** The composed picture's size: it is the sheet frame plus the margins (see [RigFrames]). */
-    val width: Int
-        get() = frames.width
-
-    val height: Int
-        get() = frames.height
-
     /**
-     * The picture to draw for [pose] of [rig], or null to draw the sheet's own frame (a cat that is
-     * the art as drawn, standing in the art's pose). With [motion] false the ears, tail and
-     * whiskers stay as drawn and only the cat's proportions apply.
+     * The picture of [slot] of [frames]; [fresh] when the slot was just composed (its bitmap is out
+     * of date).
      */
-    fun picture(rig: RigSet, pose: CatPose, motion: Boolean): ImageBitmap? {
-        RigMotion.read(pose, rig.kitten, motion, grid)
-        val slot = frames.slotFor(rig, pose.clip, pose.frame, grid)
-        if (slot < 0) return null
-        if (frames.wasComposed || images[slot] == null) upload(slot)
-        return images[slot]
+    fun image(slot: Int, fresh: Boolean): ImageBitmap {
+        if (fresh || images[slot] == null) upload(slot)
+        return images[slot]!!
     }
 
     private fun upload(slot: Int) {
