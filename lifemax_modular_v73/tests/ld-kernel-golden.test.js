@@ -12,18 +12,18 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const gen = require('../tools/gen_ld_kernel_golden.js');
-const { CHANGES, TZ_FRAGILE, TZ_CHANGED_IN, zoneOf } = require('../tools/ld_kernel_cases.js');
+const { CHANGES, TZ_FRAGILE, zoneOf } = require('../tools/ld_kernel_cases.js');
 const engineVm = require('../tools/ld_engine_vm.js');
 const SPEC = path.join(__dirname, '..', '..', 'docs', 'specs', 'LIFE_DIRECTOR_ENGINE_SPEC.md');
 
 /* Node is a second runner with its own ICU build. When its ICU and tz versions are the ones the file's header records for node, it
    must agree with the file on every case except these (recorded at generation: that node's ICU has no "Factory" zone, Chromium's
    has). When its versions differ (another node on another machine), it may also disagree on the zones of TZ_FRAGILE
-   (tools/ld_kernel_cases.js, each listed from a run that showed it); a disagreement in any other zone fails either way. */
+   (tools/ld_kernel_cases.js, each listed with its evidence); a disagreement in any other zone fails either way. */
 const NODE_DIFFERS = {
-  'zone/isValidTimeZone/505:Factory': 'node ICU has no Factory zone',
-  'alias/tzOffsetSec/505:Factory@jan': 'node ICU has no Factory zone',
-  'alias/tzOffsetSec/505:Factory@jul': 'node ICU has no Factory zone',
+  'tzfragile/zone/isValidTimeZone/505:Factory': 'node ICU has no Factory zone',
+  'tzfragile/alias/tzOffsetSec/505:Factory@jan': 'node ICU has no Factory zone',
+  'tzfragile/alias/tzOffsetSec/505:Factory@jul': 'node ICU has no Factory zone',
 };
 const nodeData = v => 'ICU ' + v.icu + ' tz ' + v.tz;
 /* A JavaScript engine feature, not data: Intl's offset time zones ('+05:30'). Node 20 (V8 11.3) and node 21 (V8 11.8) refuse them;
@@ -40,11 +40,9 @@ function nodeVerdict(differ, recorded, versions) {
     const unlisted = differ.filter(d => !(d.id in NODE_DIFFERS)).map(d => d.id), stale = Object.keys(NODE_DIFFERS).filter(id => !differ.some(d => d.id === id));
     return { pass: !unlisted.length && !stale.length, why: 'same node data as the recording (' + nodeData(versions) + ')', zones, unlisted, noLongerDiffer: stale };
   }
-  const older = Object.keys(TZ_CHANGED_IN).filter(z => String(versions.tz) < TZ_CHANGED_IN[z]);
-  const outside = differ.filter(d => !TZ_FRAGILE.includes(d.zone) && !older.includes(d.zone)).map(d => d.id);
+  const outside = differ.filter(d => !TZ_FRAGILE.includes(d.zone)).map(d => d.id);
   return { pass: !outside.length, zones, unlisted: outside,
-    why: 'node data ' + nodeData(versions) + ' differs from the recording\'s (' + recorded + '): only the tz-fragile zones ' + TZ_FRAGILE.join(', ') +
-      (older.length ? ' and the zones changed in a later tz release, ' + older.join(', ') + ',' : '') + ' may differ' };
+    why: 'node data ' + nodeData(versions) + ' differs from the recording\'s (' + recorded + '): only the tz-fragile zones (' + TZ_FRAGILE.join(', ') + ') may differ' };
 }
 
 let pass = 0, fail = 0;
@@ -60,7 +58,7 @@ const differing = (fresh, stored) => fresh.map((c, i) => (sameText(c, stored[i])
   ok('the file holds ' + stored.length + ' cases (several thousand), each with a unique id', stored.length >= 5000 && !dupes.length, dupes.slice(0, 10));
   ok('the file is written exactly as the generator writes it (one case per line)', gen.serialize(file.header, stored) === raw);
   const families = [...new Set(stored.map(c => c.family))];
-  ok('every family has cases, and no other family exists', sameText(families, gen.FAMILIES), families);
+  ok('every family has cases, and no other family exists', sameText([...families].sort(), [...gen.FAMILIES].sort()), families);
   const spec = fs.existsSync(SPEC) ? fs.readFileSync(SPEC, 'utf8') : '';
   const defined = new Set([...spec.matchAll(/\*\*(LD[THN]-\d+)\*\*/g)].map(m => m[1]));
   const unknown = [...new Set(stored.flatMap(c => c.rule.split(' ')))].filter(r => !defined.has(r));
@@ -88,12 +86,16 @@ const differing = (fresh, stored) => fresh.map((c, i) => (sameText(c, stored[i])
   }
   /* the verdict itself, on made-up disagreements, so both branches are known to work on any machine */
   const v = process.versions, here = 'node x ' + nodeData(v), other = 'node x ICU 0 tz 1999a';
-  const fx = [{ id: 'zone/isValidTimeZone/505:Factory', zone: 'Factory' }, { id: 'alias/tzOffsetSec/505:Factory@jan', zone: 'Factory' }, { id: 'alias/tzOffsetSec/505:Factory@jul', zone: 'Factory' }];
-  const morocco = { id: 'fuzz/dayEndAfter/66:Africa/Casablanca', zone: 'Africa/Casablanca' }, ny = { id: 'wall/x', zone: 'America/New_York' }, py = { id: 'fuzz/x', zone: 'America/Asuncion' };
-  ok('the node verdict: same data allows only the listed cases; other data also the tz-fragile zones and zones changed after it; never any other zone',
+  const fx = Object.keys(NODE_DIFFERS).map(id => ({ id, zone: 'Factory' }));
+  const morocco = { id: 'tzfragile/fuzz/dayEndAfter/66:Africa/Casablanca', zone: 'Africa/Casablanca' }, ny = { id: 'wall/x', zone: 'America/New_York' };
+  const py = { id: 'tzfragile/fuzz/x', zone: 'America/Asuncion' };
+  ok('the node verdict: same data allows only the listed cases; other data also the tz-fragile zones; never any other zone',
     nodeVerdict(fx, here, v).pass && !nodeVerdict(fx.concat([morocco]), here, v).pass && nodeVerdict(fx.concat([morocco]), other, v).pass
     && nodeVerdict([morocco], other, v).pass && !nodeVerdict(fx.concat([ny]), other, v).pass && !nodeVerdict(fx.concat([ny]), here, v).pass
-    && nodeVerdict([py], other, { icu: '74.2', tz: '2024a' }).pass && !nodeVerdict([py], other, { icu: '78.1', tz: '2026a' }).pass);
+    && nodeVerdict([py], other, v).pass && !nodeVerdict([py], here, v).pass);
+  const fragileZones = new Set(stored.filter(c => c.family === 'tzfragile').map(zoneOf)), leaked = stored.filter(c => c.family !== 'tzfragile' && TZ_FRAGILE.includes(zoneOf(c)));
+  ok('every case in a tz-fragile zone is in the tzfragile family (' + stored.filter(c => c.family === 'tzfragile').length + ' cases, zones ' + [...fragileZones].sort().join(', ') + ')',
+    !leaked.length && [...fragileZones].every(z => TZ_FRAGILE.includes(z)), leaked.slice(0, 5).map(c => c.id));
 
   const node = gen.recordInNode(defs), byId = new Map(stored.map(c => [c.id, c]));
   const nodeById = new Map(node.map(c => [c.id, c]));

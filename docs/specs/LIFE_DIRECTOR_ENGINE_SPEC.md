@@ -185,7 +185,7 @@ read models compute about days and times rests on this layer.
 
 ### 4.2 Zones
 
-- **LDT-2** (**Executed**: family `zone`, 693 names: 659 valid, 34 not) `isValidTimeZone(tz)` is whether
+- **LDT-2** (**Executed**: families `zone` and `tzfragile/zone`, 693 names: 659 valid, 34 not) `isValidTimeZone(tz)` is whether
   `new Intl.DateTimeFormat('en-US', {timeZone: tz})` can format a date. It accepts:
   1. every IANA zone name and link the JavaScript engine's ICU data holds, and ICU's legacy names (`EST`, `MST`, `HST`, `PST`, `IST`,
      `ACT` ... the three-letter ids, the `SystemV/*` ids, `US/Pacific-New`, `Canada/East-Saskatchewan`, `ROC`, `Factory`), each
@@ -400,11 +400,44 @@ states the page's rules itself. This section is the mapping, and every place the
    Chromium 153 and node 22 accept (LDT-2). An Android WebView old enough to refuse them would throw for such a zone where the
    corpus says it works. The page only stores names that its own `Intl` produced (`resolvedOptions().timeZone`, an IANA name), so
    this matters only for a hand-made zone; the device pass should confirm the WebView version.
+8. **Zones whose offsets depend on the tz release: native follows the phone's data there.** The CI runner's JDK (Java 21.0.13)
+   disagreed with Chromium on 13 Casablanca cases, so a strict replay of such zones would make CI depend on whichever tz release the
+   runner's JDK ships. The offset transitions of all 604 zone ids from 2024 to 2029 were compared across five tz data sets (node 21:
+   tz 2024a; node 22: 2025b; Chromium 153; the JVM: 2026b; the system's zoneinfo: 2026e). The zones that differ in any of them,
+   and two whose rules are revised in most releases, are **tz-fragile** (`TZ_FRAGILE` in `tools/ld_kernel_cases.js`, each with
+   its evidence):
+
+   | Zone | Evidence |
+   |---|---|
+   | `Africa/Casablanca`, `Africa/El_Aaiun` | Morocco's Ramadan suspensions, predicted afresh by every release; 2026e ends +01 in September 2026; the CI JDK differs |
+   | `America/Asuncion` | permanent -03 from 2024b (2024a differs) |
+   | `America/Coyhaique` | a zone of its own from 2025a (2024a lacks it) |
+   | `America/Vancouver`, `Canada/Pacific` | permanent daylight time in 2026b and 2026e, not in Chromium's data |
+   | `Europe/Chisinau`, `Europe/Tiraspol` | change instants an hour apart between releases |
+   | `Asia/Gaza`, `Asia/Hebron` | not seen to differ; rules follow Ramadan and are revised in most releases |
+   | `Factory` | present in some ICU builds only |
+
+   Their 79 cases are the family `tzfragile`: the web test still requires them byte for byte from Chromium, node may differ on them
+   when its tz version differs from the recording's, and the native replay reports them (matches and mismatches) and checks only
+   that the kernel applies its rules (LDT-7 to LDT-9, LDT-15, LDT-18, LDT-19) to the JVM's own transitions
+   (`KernelTzFragileTest`). Every other zone of the corpus is replayed strictly, with exact equality (`KernelGoldenTest`): its
+   transitions were identical in all five data sets, including all 15 zones of the matrix, which have had no rule change for years
+   (Brazil, `America/Sao_Paulo`, ended daylight saving in 2019; Samoa, `Pacific/Apia`, in 2021). A future tz release that changes a
+   strict zone breaks the strict replay on a runner that has it; the fix is to move that zone to `TZ_FRAGILE` with the evidence.
+
+   **On the phone** native reads Android's tz data and the page the WebView's ICU, so near a tz-fragile zone (and any zone whose
+   rules changed between the two copies) they can disagree about where a local day or a clock change falls. Recommended policy
+   (OQ-3): native always uses the phone's own data and never patches it; the page sends, with each comparison, its UTC offset at
+   the instants involved (the day starts, `now`), as the economy shadow already does (`ECONOMY_SHADOW_PLAN.md` N4); where native's
+   offset for the same zone and instant differs, the comparison is skipped and counted as `tzdata`, not reported as a mismatch.
+   In addition every comparison in a tz-fragile zone that disagrees on a day boundary is counted `tzdata`. The count of `tzdata`
+   skips is itself the evidence for when the two copies drift.
 
 ### 6.3 What was measured
 
 - The 15,231 golden cases: identical in Chromium 153 (the file) and in node 22 except the three of 6.2(6); the native kernel on the
-  JVM (tz 2026b) reproduces all 15,231 exactly.
+  JVM (tz 2026b) reproduces all 15,231 exactly, the 15,152 strict ones as a test and the 79 `tzfragile` ones as a report. On the CI
+  runner's JDK 13 Casablanca cases differ (6.2(8)).
 - The transition scan of 6.2(5) (a scratch measurement, not committed): hourly offsets with the change instant found to the second,
   for 604 zone ids, 2024 to 2029, in node, Chromium and the JVM; and 1970 to 2037 for the 15 matrix and plan zones.
 
@@ -430,7 +463,8 @@ File `lifemax_modular_v73/tests/fixtures/ld-kernel-golden.json` (15,231 cases, a
 `lifemax_modular_v73/tools/gen_ld_kernel_golden.js` (Chromium, the real built page; node as a second runner), definitions
 `tools/ld_kernel_cases.js` (no `Intl`: every instant comes from `Date.UTC` and a table of the 28 clock changes of 2026-2027 in the
 zones that have them, which the web test checks against the recorded offsets), loader `tools/ld_engine_vm.js`. Web test
-`tests/ld-kernel-golden.test.js`; native tests `KernelGoldenTest` (exact replay, family counts) and `KernelMutationTest` under
+`tests/ld-kernel-golden.test.js`; native tests `KernelGoldenTest` (exact replay of every family but `tzfragile`, family counts), `KernelTzFragileTest` (report and
+rules, 6.2(8)) and `KernelMutationTest` under
 `android-wrapper/native/src/test/java/com/lifemax/rpg/core/lifedirector`.
 
 Zones: the matrix `UTC`, `America/New_York`, `America/Phoenix`, `America/Los_Angeles`, `America/Santiago`, `Europe/London`,
@@ -445,8 +479,8 @@ change, Casablanca, Chatham, Eucla, Nuuk, Asuncion, links and legacy names).
 | `event` | 74 | `completionEventId` | players, instances, revisions 0/1/2/10/none, ad-hoc ids, refusals | LDH-5 |
 | `rng` | 22 | `mulberry32` | 20 seeds (negative, fractional, 2^32 edges) x 8 outputs; 2 x 200 | LDH-7 |
 | `num` | 41 | `ceilTo15` | boundaries, fractions, negatives, NaN, infinities, -0 | LDT-20 |
-| `zone` | 693 | `isValidTimeZone` | every JVM and ICU zone id and link, legacy names, case variants, offsets, junk | LDT-2, LDT-3 |
-| `alias` | 1386 | `tzOffsetSec` | every name of `zone` in January and July 2026 | LDT-3, LDT-5 |
+| `zone` | 682 | `isValidTimeZone` | every JVM and ICU zone id and link, legacy names, case variants, offsets, junk | LDT-2, LDT-3 |
+| `alias` | 1364 | `tzOffsetSec` | every name of `zone` in January and July 2026 | LDT-3, LDT-5 |
 | `parts` | 2248 | `localParts` | every 2026 change: 30-minute steps over a day, each minute for 10 minutes, the second either side; 2027 hourly; midnights of month, year and leap-day boundaries in 15 zones; 1970, 2038, 2100, fractions | LDT-4, LDT-21 |
 | `offset` | 2023 | `tzOffsetSec` | the same instants | LDT-5 |
 | `wall` | 4900 | `zonedToEpoch` | the dates around every change: each 15 minutes, each minute of every gap (488) and fold (422), overnight minutes to 2880; boundaries; roll-over, negative, fractional, two-digit years | LDT-6 to LDT-9, LDN-3 |
@@ -455,7 +489,8 @@ change, Casablanca, Chatham, Eucla, Nuuk, Asuncion, links and legacy names).
 | `grid` | 22 | `createGrid` | each 2026 change; plain days | LDT-16 |
 | `slot` | 102 | `slotOf`, `slotCeil`, `epochOf`, constants | before, on and after slot edges, fractions | LDT-17, LDT-1 |
 | `week` | 1071 | `dayEndAfter`, `weekKey`, `weekBounds` | Sundays, Mondays, midnights -1 s, year end, each 2026 change -1 s, at, +3 days | LDT-18, LDT-19 |
-| `fuzz` | 1900 | the time functions; `cyrb53`, `stableId` | 1600 seeded instants, wall times and zones (40% within two hours of a change), 300 seeded texts of every UTF-16 shape | all |
+| `fuzz` | 1854 | the time functions; `cyrb53`, `stableId` | 1600 seeded instants, wall times and zones (40% within two hours of a change), 300 seeded texts of every UTF-16 shape | all |
+| `tzfragile` | 79 | as the family in its id (`tzfragile/<family>/...`) | every case above whose zone is tz-fragile (6.2(8)) | as the original family |
 
 Mutation checks (`KernelMutationTest`, committed; and source mutations of the native kernel, run by hand for WP-LD1): each of
 these makes the replay fail: `java.time`'s fold default (227 cases), the gap resolved with the later offset (494), a hash constant
@@ -473,8 +508,9 @@ time offsets with seconds), zones with two changes within hours.
 - **OQ-1** The zone matrix: are these the zones that matter (the ones the owner lives in or travels to)? Adding one is a line in
   `tools/ld_kernel_cases.js` and a regenerated file.
 - **OQ-2** Travel: is a zone change in the middle of a horizon in scope (today it forces a full re-plan at `maybeRollover`)?
-- **OQ-3** Which tz data wins on the phone when the WebView's ICU and Android's tz data disagree (6.2(5): today Vancouver and Chisinau
-  would)? Options: native follows its own data and the shadow comparison ignores those zones; or the page sends the offsets it used.
+- **OQ-3** Which tz data wins on the phone when the WebView's ICU and Android's tz data disagree (6.2(5), 6.2(8): today Vancouver,
+  Chisinau and, with newer data, Morocco would)? Recommended (6.2(8)): native uses the phone's data, the page sends its offsets,
+  and a disagreement is skipped as `tzdata` (as the economy shadow's N4) rather than reported.
 - **OQ-4** LD01: keep the second occurrence in a fold east of Greenwich (port as is), or move both page and native to the first?
   A change moves sessions on the autumn change day in those zones, so it needs a new golden file.
 - **OQ-5** Plan D12 (`inputHash`): drop from the contract, or keep byte-equal (LDH-6)?

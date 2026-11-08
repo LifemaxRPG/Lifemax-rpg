@@ -165,8 +165,11 @@ const WALL_RULE = { plain: 'LDT-6 LDT-7', gap: 'LDT-6 LDT-8', fold: 'LDT-6 LDT-9
 
 function defineCases() {
   const cases = [], ids = new Set();
-  const add = (family, rule, fn, args, tag) => {
-    let id = family + '/' + fn + '/' + tag;
+  const add = (given, rule, fn, args, tag) => {
+    // a case whose answer rests on a tz-fragile zone's data goes to its own family (see TZ_FRAGILE), its id keeping where it came from
+    const fragile = !ZONE_FREE.includes(given) && TZ_FRAGILE.includes([...args].reverse().find(a => typeof a === 'string'));
+    const family = fragile ? 'tzfragile' : given;
+    let id = (fragile ? 'tzfragile/' + given : given) + '/' + fn + '/' + tag;
     for (let k = 2; ids.has(id); k++) id = family + '/' + fn + '/' + tag + '#' + k;
     ids.add(id);
     cases.push({ id, family, rule, fn, args });
@@ -361,25 +364,30 @@ function defineCases() {
   return cases;
 }
 
-/* Zones whose answers depend on the tz database release, not on a rule: a JavaScript engine with other tz data may disagree with the
-   recording on them, and the web test allows that only when the runner's ICU or tz version differs from the one the file records for
-   node. Each entry is here because a run showed it (CI, 2026-11: node's tz data differed from Chromium's for Morocco).
-     Africa/Casablanca, Africa/El_Aaiun  Morocco's daylight saving is suspended around Ramadan, and every tz release predicts those
-                                         dates afresh, so two releases often place them differently.
-     Factory                             the tz database's placeholder zone; some ICU builds carry it, some do not.
-   Zones whose rules changed in a recent release are in TZ_CHANGED_IN instead, allowed to differ only on a runner whose data is older
-   than that release; any other disagreement fails. America/Vancouver and Europe/Chisinau, whose rules changed after the page's data,
-   are left out of the corpus. */
-const TZ_FRAGILE = ['Africa/Casablanca', 'Africa/El_Aaiun', 'Factory'];
-/* Zones whose rules changed in a tz release, with that release: a runner whose tz data is older than it disagrees there, and only
-   there, by design. Each is listed because a run showed it (node 21, ICU 74.2, tz 2024a): Paraguay moved to permanent -03 in 2024b,
-   and America/Coyhaique (Aysen, Chile) became a zone of its own in 2025a. */
-const TZ_CHANGED_IN = { 'America/Asuncion': '2024b', 'America/Coyhaique': '2025a' };
+/* Zones whose answers depend on the tz database release rather than on a rule. Their cases form the family `tzfragile`: the web test
+   still requires them byte for byte from Chromium, but a runner with other tz data (another node, the CI runner's JDK, a phone) may
+   answer differently there, so node's check allows it when its tz version differs from the recording's, and the native replay only
+   reports them and checks its own rules on them (KernelTzFragileTest). Evidence: offset transitions 2024-2029 of all 604 zone ids
+   compared across five tz data sets (node 21: tz 2024a; node 22: 2025b; Chromium 153; the JVM: 2026b; the system's zoneinfo: 2026e),
+   plus the CI runner's JDK (Java 21.0.13), which disagreed with Chromium on Casablanca. Every zone not listed had identical
+   transitions in all five.
+     Africa/Casablanca, Africa/El_Aaiun  Morocco: daylight saving suspended around Ramadan and predicted afresh by every release; 2026e
+                                         ends the +01 offset in September 2026; the CI JDK differs too.
+     America/Asuncion                    Paraguay's permanent -03 from tz 2024b (node 21 differs).
+     America/Coyhaique                   a zone of its own from tz 2025a (node 21 lacks it).
+     America/Vancouver, Canada/Pacific   British Columbia's permanent daylight time in the JVM's 2026b and 2026e, not in Chromium's data.
+     Europe/Chisinau, Europe/Tiraspol    Moldova's change instants one hour apart between releases.
+     Asia/Gaza, Asia/Hebron              not seen to differ, but their rules follow Ramadan and are revised in most releases.
+     Factory                             the placeholder zone; some ICU builds carry it, some do not. */
+const TZ_FRAGILE = ['Africa/Casablanca', 'Africa/El_Aaiun', 'America/Asuncion', 'America/Coyhaique', 'America/Vancouver', 'Canada/Pacific',
+  'Europe/Chisinau', 'Europe/Tiraspol', 'Asia/Gaza', 'Asia/Hebron', 'Factory'];
+/* Families whose answers need no zone. */
+const ZONE_FREE = ['hash', 'stable', 'event', 'rng', 'num', 'cal', 'slot'];
 
 /* The zone a case's answer depends on, or null for the zone-free families. */
-const zoneOf = c => (['hash', 'stable', 'event', 'rng', 'num', 'cal', 'slot'].includes(c.family) ? null
+const zoneOf = c => (ZONE_FREE.includes(c.family) ? null
   : [...c.args].reverse().find(a => typeof a === 'string') || null);
 
-const FAMILIES = ['hash', 'stable', 'event', 'rng', 'num', 'zone', 'alias', 'parts', 'offset', 'wall', 'cal', 'horizon', 'grid', 'slot', 'week', 'fuzz'];
+const FAMILIES = ['hash', 'stable', 'event', 'rng', 'num', 'zone', 'alias', 'parts', 'offset', 'wall', 'cal', 'horizon', 'grid', 'slot', 'week', 'fuzz', 'tzfragile'];
 
-module.exports = { defineCases, FAMILIES, MATRIX, EXTRA, ZONES, FIXED, CHANGES, NAMES, TZ_FRAGILE, TZ_CHANGED_IN, zoneOf };
+module.exports = { defineCases, FAMILIES, MATRIX, EXTRA, ZONES, FIXED, CHANGES, NAMES, TZ_FRAGILE, zoneOf };

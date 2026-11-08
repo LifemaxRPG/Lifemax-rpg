@@ -7,17 +7,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Replays every case of `ld-kernel-golden.json` through the kernel and requires the page's answer
- * exactly: strings and booleans equal, numbers equal as doubles bit for bit (no tolerance), objects
- * member for member. The case count of each family is fixed, so a lost or added case fails here as
- * well as in the web test that regenerates the file.
+ * Replays every case of `ld-kernel-golden.json` outside the `tzfragile` family (zones whose offsets
+ * depend on the tz database release; [KernelTzFragileTest] checks those) and requires the page's
+ * answer exactly: strings and booleans equal, numbers equal as doubles bit for bit (no tolerance),
+ * objects member for member. The case count of each family is fixed, so a lost or added case fails
+ * here as well as in the web test that regenerates the file.
  */
 class KernelGoldenTest {
     @Test
     fun everyCaseGivesThePagesAnswer() {
-        val wrong = cases.mapNotNull { KernelReplay.difference(it) }
+        val strict = cases.filter { it.family != "tzfragile" }
+        val wrong = strict.mapNotNull { KernelReplay.difference(it) }
         assertTrue(
-            "${wrong.size} of ${cases.size} cases differ (${zoneData()}):\n" +
+            "${wrong.size} of ${strict.size} strict cases differ (${zoneData()}):\n" +
                 wrong.take(SHOWN).joinToString("\n"),
             wrong.isEmpty(),
         )
@@ -93,8 +95,8 @@ class KernelGoldenTest {
                 "event" to 74,
                 "rng" to 22,
                 "num" to 41,
-                "zone" to 693,
-                "alias" to 1386,
+                "zone" to 682,
+                "alias" to 1364,
                 "parts" to 2248,
                 "offset" to 2023,
                 "wall" to 4900,
@@ -103,7 +105,8 @@ class KernelGoldenTest {
                 "grid" to 22,
                 "slot" to 102,
                 "week" to 1071,
-                "fuzz" to 1900,
+                "fuzz" to 1854,
+                "tzfragile" to 79,
             )
     }
 }
