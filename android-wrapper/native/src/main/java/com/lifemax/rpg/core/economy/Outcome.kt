@@ -36,6 +36,11 @@ interface IdSource {
     fun token(): String
 }
 
+/** Hears each write an action attempts (see [EconomyContext.attempts]). */
+fun interface SaveAttempts {
+    fun attempted(stored: Boolean)
+}
+
 /** How a save attempt ends (SAVE-3). */
 enum class Storage {
     Writable,
@@ -59,6 +64,12 @@ data class EconomyContext(
      * economy).
      */
     val isPlanRestDay: (String) -> Boolean = { false },
+    /**
+     * Told of every write the action attempts (SAVE-3: `writeSave()`, inside a save or a plain
+     * write), with whether it stored; the economy shadow compares their number with the page's.
+     * Production actions pass none.
+     */
+    val attempts: SaveAttempts? = null,
 ) {
     val now: Long
         get() = clock.now

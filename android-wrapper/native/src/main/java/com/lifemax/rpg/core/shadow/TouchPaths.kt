@@ -7,8 +7,9 @@ import com.lifemax.rpg.core.save.sameStoredValue
 
 /**
  * Names the save fields a delta changes, for the touch map (ECONOMY_SHADOW_PLAN WP6a): a top-level
- * key, one level of its members (`attrXP.physique`, `skillXP.*#3f09aa`), and for record keys the
- * position relative to the action (`activities[+1]`, the first new record; `activities[]`, an
+ * key, one level of its members (`attrXP.physique`, `skillXP.*#3f09aa`: a member that is not one of
+ * the app's fixed words is always hashed, as an unknown attribute id may be), and for record keys
+ * the position relative to the action (`activities[+1]`, the first new record; `activities[]`, an
  * existing record, with the member it changed: `activities[].xp`; `activities[-]`, records
  * removed). Names pass through [ShadowRedactor]: no value and no owner-chosen key is ever shown.
  */
@@ -21,8 +22,8 @@ class TouchPaths(private val redactor: ShadowRedactor) {
             when {
                 old == null -> out += key
                 old.sameStoredValue(value) -> Unit
-                old is JsonObject && value is JsonObject ->
-                    members(key, old, value, owned(key), out)
+                // a top-level object's members are shown only when they are the app's fixed words
+                old is JsonObject && value is JsonObject -> members(key, old, value, true, out)
                 else -> out += key
             }
         }
@@ -81,12 +82,11 @@ class TouchPaths(private val redactor: ShadowRedactor) {
             else -> redactor.member(member)
         }
 
-    private fun owned(key: String) = key in OWNER_KEYED
-
     companion object {
         /**
          * Top-level objects whose member names the owner or the calendar chose (skills, quest keys,
-         * days, custom activity types): their members are always hashed unless fixed.
+         * days, custom activity types). Every top-level object's members are hashed unless fixed;
+         * the list says where an owner's word is expected (the redaction tests search there).
          */
         val OWNER_KEYED: Set<String> =
             setOf(

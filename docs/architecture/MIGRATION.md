@@ -521,3 +521,24 @@ just before and just after, and native keeps a copy in memory and records which 
   goldens unchanged with the check on and native answering, rejecting or throwing), Kotlin `core/shadow` and `app/shadow` tests
   (39: decoder strictness with 55 malformed envelopes, mirror ordering, the golden cases replayed through the transport, ring bounds and
   no fixture save's words in the ring file, the worker's thread, queue, faults and write interval, a 3 MB save).
+
+## Economy shadow mode, WP6b: the economy actions compared (Native API 109)
+
+Native logic, web authority, behind the same switch. For each economy action the page performs, native runs the same action on its
+copy of the before-state with its own Kotlin and compares what it predicts with what the page did; it counts the outcome in the
+ring. Nothing computed is shown, written or sent.
+
+| Part | Where | What |
+|---|---|---|
+| Native | `core/shadow` `ShadowEntries`, `ShadowInput`, `ShadowRunner`, `ShadowDiff`, `ShadowComparison`, `KnownDifferences`, `ShadowContent` | per-kind strict readers, the native call through the WP5 adapters with the page's clock, zone, locale, minted ids and storage outcome; the comparison of state (owned paths), return value, toasts, number of writes and the codec's encode check; the allowlist A-01..A-05 |
+| Ring and summary | `ShadowLedger`, `ShadowLedgerJson`, `NativeShadowPlugin.summary` | `compared, same, allowed, different` per kind, codec counts, redacted difference entries; `summary.counts` gains `compared, same, allowed, different` and `summary.different` the last unexplained one's time and kind (additive keys) |
+| Page | `50-native-shadow-points.js`, `50-native-shadow.js` | one kind per entry (new kinds `log.remove`, `fixed.undo`, `director.quest`, `coach.claim/reflect/review/catchup`, `rules.reset/base/decay`), `env.plan` for `rest.take`, the forms of `confirmAct` and `saveRules`; the Settings row "Checked N actions since D · M different" from an app that compares (an older app keeps the 6a row) |
+| Economy and codec | `EconomyContext.attempts`, `EconomySaveCodec.merged` | a write counter for the comparison (none in the app's actions) and the codec's merge without the text round trip |
+
+- **Rollout.** Ships with the switch as it is, together with WP6a (never released alone). An older app counts the new kinds
+  `skipped.unknownKind`. A WP6a page with this app would send `removeAct`, `undoCat`, `resetRules`, `saveBase` and `saveDecay` under
+  the merged kinds `log.delete` and `rules.save`, which this app reads as `deleteActivity` and `saveRules` (wrong differences, or
+  `skipped.input`) and `coach.pay` as an unknown kind: the two pages must not be mixed, which shipping 6a and 6b together ensures.
+- **Evidence.** Kotlin `ShadowGoldenCompareTest` (193 golden cases, 217 envelopes, 0 unexplained), `ShadowCorpusTest` (the real
+  page's 20 economy envelopes, all the same), `ShadowMutationTest` (13 wrong rules, each caught at its field),
+  `ShadowComparisonTest`, `ShadowRedactionTest`, `ShadowMismatchRingTest`, `ShadowPerfTest`; `tests/native-shadow.test.js`.

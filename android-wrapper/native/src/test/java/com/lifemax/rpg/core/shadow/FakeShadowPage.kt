@@ -63,10 +63,46 @@ class FakeShadowPage(val sid: String = "p-test", var epoch: Long = 0) {
         toasts: List<String> = emptyList(),
         flags: List<String> = emptyList(),
         t0: Long = T0,
-    ): String {
-        val b = shadow(before)
-        val a = shadow(after)
+    ): String =
+        send(Action(kind, before = before, after = after, toasts = toasts, flags = flags, t0 = t0))
+
+    /**
+     * One page action as `50-native-shadow.js` records it (ECONOMY_SHADOW_PLAN 2.3): its arguments,
+     * outside answers ([env] beside `saves`), return value, toasts and writes.
+     */
+    data class Action(
+        val kind: String,
+        val args: List<JsonValue> = emptyList(),
+        val before: Map<String, JsonValue>,
+        val after: Map<String, JsonValue>,
+        val returns: JsonValue = JsonNull,
+        val toasts: List<String> = emptyList(),
+        val saves: List<Boolean> = listOf(true),
+        val env: Map<String, JsonValue> = emptyMap(),
+        val flags: List<String> = emptyList(),
+        val t0: Long = T0,
+        val t1: Long = t0 + 5,
+        val zone: String = "UTC",
+        /** Minutes east of UTC at [t0]; null computes it from [zone]. */
+        val offset: Int? = null,
+        val locale: String = "en-US",
+    )
+
+    /** The envelope of [a], moving the page's cache to its after-state. */
+    fun send(a: Action): String {
+        val b = shadow(a.before)
+        val after = shadow(a.after)
         val s = ++seq
+        val env = LinkedHashMap<String, JsonValue>()
+        if (a.saves.isNotEmpty())
+            env["saves"] = JsonArray(a.saves.map { obj("ok" to JsonBool.of(it)) })
+        env.putAll(a.env)
+        val offset =
+            a.offset
+                ?: (java.time.ZoneId.of(a.zone)
+                    .rules
+                    .getOffset(java.time.Instant.ofEpochMilli(a.t0))
+                    .totalSeconds / 60)
         val text =
             JsonWriter.write(
                 obj(
@@ -76,24 +112,24 @@ class FakeShadowPage(val sid: String = "p-test", var epoch: Long = 0) {
                     "epoch" to num(epoch),
                     "seq" to num(s),
                     "base" to num(head),
-                    "kind" to JsonString(kind),
-                    "args" to JsonArray.EMPTY,
-                    "t0" to num(t0),
-                    "t1" to num(t0 + 5),
-                    "zone" to JsonString("UTC"),
-                    "offset" to num(0),
-                    "locale" to JsonString("en-US"),
-                    "env" to obj("saves" to JsonArray(listOf(obj("ok" to JsonBool.TRUE)))),
+                    "kind" to JsonString(a.kind),
+                    "args" to JsonArray(a.args),
+                    "t0" to num(a.t0),
+                    "t1" to num(a.t1),
+                    "zone" to JsonString(a.zone),
+                    "offset" to num(offset),
+                    "locale" to JsonString(a.locale),
+                    "env" to JsonObject(env),
                     "before" to delta(cache ?: emptyMap(), b),
-                    "after" to delta(b, a),
-                    "returns" to JsonNull,
-                    "toasts" to JsonArray(toasts.map { JsonString(it) }),
+                    "after" to delta(b, after),
+                    "returns" to a.returns,
+                    "toasts" to JsonArray(a.toasts.map { JsonString(it) }),
                     "cost" to obj("ms" to num(1.5)),
-                    "flags" to JsonArray(flags.map { JsonString(it) }),
+                    "flags" to JsonArray(a.flags.map { JsonString(it) }),
                 )
             )
         head = s
-        cache = a
+        cache = after
         return text
     }
 

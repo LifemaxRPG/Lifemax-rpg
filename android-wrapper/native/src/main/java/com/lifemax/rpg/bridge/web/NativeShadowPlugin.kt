@@ -109,8 +109,15 @@ class NativeShadowPlugin : Plugin() {
                         JSObject()
                             .put("seen", s.seen)
                             .put("applied", s.applied)
-                            .put("skipped", s.skipped),
+                            .put("skipped", s.skipped)
+                            .put("compared", s.compared)
+                            .put("same", s.same)
+                            .put("allowed", s.allowed)
+                            .put("different", s.different),
                     )
+            s.lastDifferent?.let {
+                out.put("different", JSObject().put("at", it.last).put("kind", it.kind))
+            }
             s.last?.let {
                 out.put(
                     "last",

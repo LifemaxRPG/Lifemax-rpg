@@ -5,7 +5,8 @@
    A point is [kind, owner, name, reads]: owner() is the object the function lives on (window, or LifeMaxHost), name its
    property. reads lists the env parts beyond what every action records (its writeSave() answers, its confirm and prompt
    answers): 'plan' (the plan's rest days and whether today is done), 'health' (every Health Connect answer, through a
-   recording proxy while the sync runs), 'dom:<ids>' (the input values the entry reads). Not shadowed, on purpose: imports,
+   recording proxy while the sync runs), 'dom:<ids>' (the input values the entry reads; an id ending in * is every element whose
+   id starts so). One kind is one entry (WP6b: native runs each kind as one call). Not shadowed, on purpose: imports,
    restores, resets and the demo (REPLACES: they start a new base), dev boosts and pure reads (plan 1.2). The 3D table's
    dhRest.create is made while the table is open, so its save() is recorded as save.other. */
 const LMA_SHADOW_POINTS=(function(){
@@ -13,8 +14,8 @@ const LMA_SHADOW_POINTS=(function(){
  const points=[
   ['log.record',W,'recordActivity',[]],
   ['log.delete',W,'deleteActivity',[]],
-  ['log.delete',W,'removeAct',[]],
-  ['log.delete',W,'undoCat',[]],
+  ['log.remove',W,'removeAct',[]],
+  ['fixed.undo',W,'undoCat',[]],
   ['voice.log',W,'lmvLogNow',[]],
   ['quest.toggle',W,'toggleQuest',[]],
   ['quest.create',W,'createQuest',['dom:newQuestName,newQuestCadence,newQuestXP']],
@@ -23,24 +24,24 @@ const LMA_SHADOW_POINTS=(function(){
   ['hand.verify',W,'dhAutoVerify',['plan']],
   ['health.sync',W,'lmaHealthSync',['health']],
   ['director.award',HOST,'awardActivity',[]],
-  ['director.award',HOST,'completeQuest',[]],
+  ['director.quest',HOST,'completeQuest',[]],
   ['bonus.care',W,'ecoCare',[]],
   ['bonus.nutrition',W,'ecoNutritionCheck',[]],
   ['money.record',W,'recordMoneyTransaction',[]],
   ['money.remove',W,'removeMoneyTransaction',[]],
   ['fixed.plan',W,'planToggle',['plan']],
-  ['fixed.catalog',W,'confirmAct',[]],
-  ['coach.pay',W,'jcClaim',[]],
-  ['coach.pay',W,'journalSaveReflection',[]],
-  ['coach.pay',W,'journalSaveReview',[]],
-  ['coach.pay',W,'jcCatchUp',[]],
+  ['fixed.catalog',W,'confirmAct',['dom:actDur,actRes,actNote']],
+  ['coach.claim',W,'jcClaim',[]],
+  ['coach.reflect',W,'journalSaveReflection',[]],
+  ['coach.review',W,'journalSaveReview',[]],
+  ['coach.catchup',W,'jcCatchUp',[]],
   ['spark.buy',W,'ecoBuy',[]],
   ['ascend',W,'ecoAscend',[]],
-  ['rest.take',W,'ecoTakeRest',[]],
-  ['rules.save',W,'saveRules',[]],
-  ['rules.save',W,'resetRules',[]],
-  ['rules.save',W,'saveBase',['dom:actBase']],
-  ['rules.save',W,'saveDecay',['dom:decayOn,decayGrace,decayRate']],
+  ['rest.take',W,'ecoTakeRest',['plan']],
+  ['rules.save',W,'saveRules',['dom:rule-*']],
+  ['rules.reset',W,'resetRules',[]],
+  ['rules.base',W,'saveBase',['dom:actBase']],
+  ['rules.decay',W,'saveDecay',['dom:decayOn,decayGrace,decayRate']],
   ['decay.apply',W,'applyDecay',['plan']],
   ['save.other',W,'save',[]],
  ];
@@ -60,10 +61,14 @@ const LMA_SHADOW_POINTS=(function(){
   for(let d=from;d<=today;d=addDays(d,1)){const p=planDay(d);if(p&&p.kind==='rest')rest.push(d)}
   return {done:!!dayDone(today),rest,from};
  }
- /* the input values the entry reads, by element id; an element that is not there is left out */
+ /* the input values the entry reads, by element id (id* for every element whose id starts so); an element that is not there is
+    left out */
  function dom(ids){
-  const out={};
-  for(const id of ids){const el=document.getElementById(id);if(el)out[id]=el.type==='checkbox'?!!el.checked:String(el.value)}
+  const out={},put=el=>{if(el&&el.id)out[el.id]=el.type==='checkbox'?!!el.checked:String(el.value)};
+  for(const id of ids){
+   if(id.endsWith('*'))document.querySelectorAll('[id^="'+id.slice(0,-1)+'"]').forEach(put);
+   else put(document.getElementById(id));
+  }
   return out;
  }
  /* a HealthSync stand-in that answers as the real one and keeps every answer, in the golden cases' env.health form */

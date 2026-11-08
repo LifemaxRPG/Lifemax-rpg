@@ -1,6 +1,7 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. WP6a is built (its status is under WP6a, section 6); the rest is design. It covers WP6 of
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a and WP6b are built (their status is under each, section 6); the rest is
+design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
 Inputs: `ECONOMY_SPEC.md` (sections 2, 11, 15-17, 20, 21), `QUESTS_SPEC.md`, `ECONOMY_NATIVE_PLAN.md` (WP1-WP8, defects),
@@ -479,6 +480,69 @@ diff and expects zero differences and the expected skips; `ShadowMutationTest` a
 rate, Sparks rounding, a toast word, D05 "fixed") and expects each to produce a difference at the expected path (the comparison is
 not vacuous).
 Bridge: none. Decision: O-3.
+
+**Status: built** (Native API 109 on this branch; the integrator renumbers at merge). What exists:
+- Native, `core/shadow`: `ShadowEntries` (one entry per compared kind: the native call, glue included, and the env parts it may
+  carry), `ShadowInput` (strict per-kind readers of `args` and `env`, typed refusals `skipped.input`; `EnvPlanFacts` over `env.plan`),
+  `ShadowRunner` (the skips, then the entry through the WP5 `ContextFactory` over the before-state, a clock fixed at `t0` in the
+  page's zone, the page's locale, `ReplayIds` (N1), the storage outcome of `env.saves`; the codec's merge for the prediction and
+  its full encode check), `ShadowDiff` (owned paths, PARTIAL sub-paths only, N1 clock ids and N2 instants in `[t0, t1]`, redacted
+  leaf paths), `ShadowComparison` (state, return value, toasts, number of writes, ids asked for, encode check; the verdict),
+  `KnownDifferences` (the allowlist), `ShadowContent` (page content: none in the app), `PageFresh` (`freshState()` for `boot.load`).
+  `ShadowSession` compares every applied envelope of a compared kind after recording its touch map; `ShadowLedger` counts
+  `compared, same, allowed, different` per kind, `codec{strict, strict.<field>, encode, nonFinite, checked}`, `info.d13Kept.<kind>`,
+  `info.zoneLag`, and keeps difference entries (`m-N`: kind, paths, allowlist ids, both sides' XP, Sparks and rested changes),
+  coalesced, at most 200, unexplained ones kept longest when the ring is fitted to 128 KB. `core/economy`: an optional
+  `EconomyContext.attempts` hears each write a save attempts (the number of saves compared). `core/save`:
+  `EconomySaveCodec.merged` (the merge `encode` lays, without the text round trip). `NativeShadowPlugin.summary` adds the
+  comparison's counts and the last unexplained difference's time and kind.
+- Compared kinds (22 and the boot's load): `log.record`, `log.delete`, `fixed.undo`, `voice.log`, `director.award`,
+  `director.quest`, `bonus.care`, `bonus.nutrition`, `money.record`, `money.remove`, `fixed.plan`, `fixed.catalog`, `coach.claim`,
+  `coach.catchup`, `spark.buy`, `ascend`, `rest.take`, `rules.save`, `rules.reset`, `rules.base`, `rules.decay`, `save.other`,
+  `boot.load`. Left for later, counted `skipped.later`: `quest.*`, `hand.*` (6c), `health.sync`, `decay.apply`, `boot.decay` (6d).
+  Not native as one action, `skipped.notNative`: `log.remove` (`removeAct`, a cache edit a save always follows), `coach.reflect` and
+  `coach.review` (the journal's own text saves around the coach's reward). Without page content in the app, `fixed.plan` and
+  `fixed.catalog` are `skipped.content` on the phone (the tests give the goldens' content).
+- Skips, each counted by reason: `later`, `notNative`, `unknownKind`, `threw`, `interleaved`, `midnight` (N3), `tzdata` (N4),
+  `mixedStorage`, `input`, `hand` (the action changed `dailyDraw`, `classContent` or `dhMig`: the Daily Hand's composition is 6c's),
+  `content`, `codec` (the page's own reading refuses the before-state), `planWindow`, `error` (an internal error, five in a day
+  disable the check).
+- Allowlist: A-01 (`journalCoach.days.*`, `.pats`, COACH-1), A-02 (`plan.checks.*.s`, PLAN-1), A-03 (`money` put in by the money
+  screen's redraw where the save had none, `money.*` and `save.other`), A-04 (a "not saved" toast said twice by a failed save and its
+  take-back, SAVE-4), all four from spec 21; and **A-05, proposed here and awaiting the owner's sign-off (O-6)**: the redraw inside a
+  save puts back an empty `foodLog`, `mealsMeta` or `dayReflections` when the save has none (the golden generator's header names
+  it; reached by `load/newer-save-read-only`, a stored save without those keys followed by a save).
+- Tests (Kotlin, compiled with kotlinc and run with JUnit directly, not under gradle: the build machine had under 2 GB of disk): `ShadowGoldenCompareTest` (the 193
+  economy golden cases whose calls are entry points of these kinds, 217 envelopes through the fake page's transport and the
+  comparison: 216 same, 1 allowed (A-03, A-05), 0 unexplained, none skipped; counts pinned), `ShadowCorpusTest` (the real page's
+  envelopes for the boot and 19 actions on the established save, `tools/gen_shadow_corpus.js` into
+  `tests/fixtures/shadow-corpus.json`: 20 compared, 20 same), `ShadowMutationTest` (13 wrong rules, from the cap table to D05
+  "fixed" and an extra write: every action a mutation changes is reported unexplained at the rule's field, none absorbed),
+  `ShadowComparisonTest` (page lies at eight paths, each allowlist entry live and only for what it names, N1/N2 windows, every
+  skip reason with the copy still in step, five errors disable, a strict refusal counted), `ShadowRedactionTest` (every string of
+  every golden save and injected owner words absent from the ring), `ShadowMismatchRingTest`, `ShadowPerfTest` (3 MB save, 11,000
+  records: observe and compare p50 about 52 ms, p95 about 135 ms on the JVM). Page: `tests/native-shadow.test.js` gains the split
+  kinds, `env.plan` for `rest.take`, `rule-*` inputs for `saveRules`, and the Settings row of an app that compares.
+- Differences from the text above, with reasons:
+  - The corpus is two parts: the goldens go through the transport in Kotlin (`GoldenActions`, the fake page), because the
+    golden generator replaces `toast`, `confirm` and `prompt` after the shadow wraps them, so a page-recorded golden corpus would carry
+    no toasts or answers; and a real-page corpus of the boot and 19 actions (`gen_shadow_corpus.js`), whose clock runs (the
+    transport posts on a timer), so it is regenerated on purpose rather than recorded again and compared by a page test. The goldens
+    hold no `writeSave()` calls, so the golden envelopes carry native's own count; the real-page corpus proves the count. The `sim`
+    seeds through the check are left to 6f.
+  - One kind is one entry: `log.delete` became `log.delete`, `log.remove`, `fixed.undo`; `director.award` and `director.quest`;
+    `coach.pay` became `coach.claim`, `coach.reflect`, `coach.review`, `coach.catchup`; `rules.save` became `rules.save`,
+    `rules.reset`, `rules.base`, `rules.decay` (an envelope does not name its entry, and `saveRules` and `resetRules` send the same
+    one). `rest.take` records `env.plan`, `confirmAct` its form (`dom:actDur,actRes,actNote`), `saveRules` its inputs (`dom:rule-*`).
+  - `ids.extra` is a difference only when the action's writes stored: a take-back drops the record whose id the page minted.
+  - A NaN where the page stores null (D24's quality) is counted `codec.nonFinite`, not a difference; the state is compared as the
+    page writes it. Each such count needs a ruling before WP8's writer.
+  - The prediction uses the codec's merge (`EconomySaveCodec.merged`); the full encode check (write, read back, faithfulness) runs on
+    every action of a save of up to 2,000 records and on one in 16 above (the native budget: it costs about five decodings).
+  - New records are named by id (`activities[+1]` is a record whose id the before-state lacks), so a record added after one is
+    removed (the Daily Hand's auto-verify re-completing a quest after an undo) is still a new record for N1 and N2.
+  - A top-level object's members are shown in the ring only when they are the app's fixed words (an unknown attribute id is
+    hashed); the touch map follows the same rule.
 
 ### WP6c. Quests, Daily Hand and the save composition (M, risk medium-high)
 

@@ -22,9 +22,15 @@ sealed interface BaseStep {
 sealed interface MirrorStep {
     /**
      * Applied: [between] names the fields that changed since the last action (edits outside any
-     * shadow point), [touched] the fields the action itself changed.
+     * shadow point), [touched] the fields the action itself changed; [before] and [after] are the
+     * page's shadow keys just before and just after the action (what the comparison reads).
      */
-    data class Applied(val between: List<String>, val touched: List<String>) : MirrorStep
+    data class Applied(
+        val between: List<String>,
+        val touched: List<String>,
+        val before: Map<String, JsonValue>,
+        val after: Map<String, JsonValue>,
+    ) : MirrorStep
 
     /** A repeated `(sid, seq)`: answered as accepted, ignored. */
     data object Duplicate : MirrorStep
@@ -134,10 +140,11 @@ class ShadowMirror(redactor: ShadowRedactor) {
         if (envelope.base != seq) return resync("gap")
         val between = paths.of(envelope.before, keys)
         if (!lay(envelope.before)) return refused()
+        val before = HashMap(keys)
         val touched = paths.of(envelope.after, keys)
         if (!lay(envelope.after)) return refused()
         seq = envelope.seq
-        return MirrorStep.Applied(between, touched)
+        return MirrorStep.Applied(between, touched, before, HashMap(keys))
     }
 
     private fun resync(reason: String): MirrorStep {

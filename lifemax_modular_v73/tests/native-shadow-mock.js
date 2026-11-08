@@ -5,7 +5,8 @@
    parts joined, then each envelope's before-delta and after-delta laid over it, applied only on base === seq. The test reads
    window.__shadowMock: calls, envelopes, mirror, refusals.
    Modes: record (answers like native), reject (every call's promise rejects), throw (every method throws at once), stale
-   (native's fingerprint differs), nocap (the handshake lacks economy.shadow.v1), absent (no plugin at all). */
+   (native's fingerprint differs), nocap (the handshake lacks economy.shadow.v1), absent (no plugin at all). compares:
+   {compared, different} makes summary() answer as an app that compares (WP6b), the last difference a quest toggle. */
 'use strict';
 
 function mock(opts) {
@@ -65,7 +66,9 @@ function mock(opts) {
       try { r.keys = lay(lay(r.keys, e.before), e.after); r.seq = e.seq } catch (err) { m.refused.push(String(err.message)); m.mirror = null; return answer({ accepted: false, resync: true, reason: 'badDelta' }) }
       return answer({ accepted: true });
     },
-    summary: () => answer({ v: 1, state: m.state || 'off', since: Date.UTC(2026, 10, 1), counts: { seen: m.envelopes.length, applied: m.envelopes.length, skipped: 0 } }),
+    summary: () => answer(Object.assign({ v: 1, state: m.state || 'off', since: Date.UTC(2026, 10, 1), counts: Object.assign({ seen: m.envelopes.length, applied: m.envelopes.length, skipped: 0 },
+      o.compares ? { compared: o.compares.compared, same: o.compares.compared - o.compares.different, allowed: 0, different: o.compares.different } : {}) },
+      o.compares && o.compares.different ? { different: { at: Date.UTC(2026, 10, 18, 9, 31), kind: 'quest.toggle' } } : {})),
     clear: () => answer({ ok: true }),
   };
   const plugin = {};

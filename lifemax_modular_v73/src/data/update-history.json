@@ -20,7 +20,8 @@
     "Native Cat (beta): a resting cat no longer shimmers. Its breathing is now a clean one-pixel lift, so the coat stays steady instead of popping and flickering.",
     "Scrubbing along the bottom bar now keeps going when your finger passes over or ends on Quest. A scrub that starts on Quest still uses the older scrubber until Quest is native.",
     "Native Cat (beta): cats now turn round step by step, through a three-quarter and a front view, instead of just flipping. It takes about a third of a second.",
-    "Native economy check (beta): a new switch in Settings, Data & advanced. When it is on, the phone follows each XP and Sparks change the app makes, without saving or showing anything, and counts them under the switch. Nothing leaves the phone. Off by default."
+    "Native economy check (beta): a new switch in Settings, Data & advanced. When it is on, the phone follows each XP and Sparks change the app makes, without saving or showing anything, and counts them under the switch. Nothing leaves the phone. Off by default.",
+    "Native economy check (beta): the phone now works out Logs, rewards, the shop, rest days and settings itself and compares them with the app; the line under the switch says how many actions it checked and how many came out different."
    ]
   },
   {

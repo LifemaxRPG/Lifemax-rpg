@@ -2,8 +2,9 @@
    only writer and the only thing the owner sees. While the switch (nativeShadow, Settings, Data & advanced) is on, the app says
    economy.shadow.v1 and its rules are the page's (the content fingerprint), each outermost economy action (the points of
    50-native-shadow-points.js) is sent to NativeShadow as one envelope: the shadow keys' delta since the last envelope, the
-   delta the action made, its return value, toasts, save answers and env. Native keeps a copy in memory only and, in WP6a,
-   records which fields each action touched; nothing comes back to the page but counts.
+   delta the action made, its return value, toasts, save answers and env. Native keeps a copy in memory only, records which
+   fields each action touched and, from WP6b, runs the economy actions itself and compares; nothing comes back to the page but
+   counts (the Settings row: actions checked, how many differed and the last one's day and kind).
    A wrapper is transparent by construction: the original runs exactly once with its own this, arguments, return value and
    exception; every step of the shadow is caught; envelopes are posted with setTimeout(0) after the action and not awaited.
    Switch off, no plugin, no capability, a demo, a fingerprint that differs: no wrapper is installed at all. Three faults, or
@@ -19,6 +20,7 @@
     tooLarge: "Your save is too large for the check",
     paused: "Paused while Battery Saver is on",
     watching: (n, since) => "Following " + n.toLocaleString("en-GB") + " actions since " + since + " (comparing comes in a later update)",
+    checked: (n, since, different, last) => "Checked " + n.toLocaleString("en-GB") + " actions since " + since + " \u00b7 " + different.toLocaleString("en-GB") + " different" + (last ? " \u00b7 last " + last : ""),
   };
   const FAULTS_KEY = "lma_shadow_faults"; // sessionStorage: page faults of an earlier page in this WebView, told at the next configure
   let plugin = null, hello = null, asked = null, live = false, stopped = "", sid = "", epoch = 0, seq = 0, head = 0, cache = null, needBase = true;
@@ -367,8 +369,11 @@
     if (s === "disabled") return why === "tooLarge" ? WORDS.tooLarge : WORDS.disabled;
     if (stopped === "tooLarge") return WORDS.tooLarge;
     if (s === "on" && summary.counts) {
-      const since = new Date(summary.since).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-      return WORDS.watching(Number(summary.counts.seen) || 0, since);
+      const day = (t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }), since = day(summary.since), c = summary.counts;
+      /* an app that compares (WP6b) counts compared actions and differences; an older one only follows them */
+      if (typeof c.compared !== "number") return WORDS.watching(Number(c.seen) || 0, since);
+      const d = summary.different, last = d && d.at ? day(d.at) + " " + new Date(d.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " (" + String(d.kind || "").split(".")[0] + ")" : "";
+      return WORDS.checked(c.compared, since, Number(c.different) || 0, Number(c.different) ? last : "");
     }
     return "";
   }

@@ -45,6 +45,7 @@ object Coach {
      */
     private fun keepWords(save: EconomySave, ctx: EconomyContext): Outcome<Boolean> {
         val kept = save.copy(customRules = save.rules.byType)
+        ctx.attempts?.attempted(ctx.storage == Storage.Writable)
         return if (ctx.storage == Storage.Writable) kept.result(true)
         else kept.result(false, SavePipeline.unsavedMessage(ctx))
     }

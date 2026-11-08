@@ -21,4 +21,8 @@ economy's save keys just before and just after (docs/specs/ECONOMY_SHADOW_PLAN.m
   version). Battery Saver pauses it (O-5).
 - **No native-only fixes during shadow** (O-6): a difference is fixed on the page first, with a golden case, or ruled.
 
-WP6a builds the transport and records only which fields each action touches; comparing starts in WP6b.
+WP6a builds the transport and records only which fields each action touches. WP6b compares the economy actions: native runs
+each on its copy of the before-state and counts, in the ring, whether it got the page's outcome; what native computed is never
+shown, written or sent anywhere, and a difference is kept as field paths and economy numbers only. The allowlist of accepted
+differences is explicit (`core/shadow/KnownDifferences.kt`); an entry beyond spec 21's is proposed in a pull request and signed
+off by the owner.

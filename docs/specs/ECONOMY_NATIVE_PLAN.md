@@ -371,7 +371,9 @@ Tests: differential replay of at least the 40 sim seeds the page already runs, p
 Decision: yes, a human decides what mismatch rate blocks cutover (target zero).
 
 **Status:** designed in `ECONOMY_SHADOW_PLAN.md`; WP6a (transport, decoder, the touch map, the switch "Native economy check (beta)") is
-built (Native API 106); comparison is WP6b-WP6d.
+built (Native API 106); WP6b (the economy actions compared: Log, undo, voice, Life Director, bonuses, money, plan and catalogue,
+coach chips, shop, ascension, rest, rules, bare saves and the boot's load) is built; quests, the Daily Hand, Health and decay are
+WP6c and WP6d.
 
 ### WP7. Life Director logic (L, outside this plan's scope)
 

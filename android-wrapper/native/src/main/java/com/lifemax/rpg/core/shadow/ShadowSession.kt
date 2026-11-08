@@ -1,5 +1,7 @@
 package com.lifemax.rpg.core.shadow
 
+import com.lifemax.rpg.core.save.SaveFields
+
 /** The answer to `handshake()` (2.3). */
 data class ShadowHandshake(
     val protocol: Int,
@@ -28,6 +30,13 @@ data class ShadowSummary(
     val applied: Int,
     val skipped: Int,
     val last: TouchEntry?,
+    /** Applied envelopes native compared, and how they came out (WP6b). */
+    val compared: Int = 0,
+    val same: Int = 0,
+    val allowed: Int = 0,
+    val different: Int = 0,
+    /** The latest unexplained difference, if any. */
+    val lastDifferent: MismatchEntry? = null,
 )
 
 /**
@@ -37,16 +46,32 @@ data class ShadowSummary(
  * (the ring) whenever [dirty]. One worker thread calls every method except [accept], which reads
  * only the two volatile fields and may run on the bridge's thread.
  *
- * In WP6a nothing is compared: an applied envelope records which fields the action changed.
+ * An applied envelope records which fields the action changed (the touch map, WP6a) and, for the
+ * kinds WP6b compares, native's own run of the action against the page's outcome
+ * ([ShadowComparison]): the verdict is counted per kind and a difference kept as a redacted ring
+ * entry. An exception in the comparison is counted by class name as an internal error (five a day
+ * disable the check) and never reaches the page; the mirror stays, as it does not depend on the
+ * comparison.
+ *
+ * @param content page content the plan and catalog actions need ([ShadowContent.NONE] in the app).
+ * @param deviceZone the device's zone id now, for `info.zoneLag` (N4); null leaves it uncounted.
+ * @param mutation the mutation tests' change to native's results ([EntryMutation]); none in the
+ *   app.
  */
 class ShadowSession(
     private val nativeFingerprint: String,
     val ledger: ShadowLedger,
     private val versionCode: Long,
     private val nativeApi: Int,
+    content: ShadowContent = ShadowContent.NONE,
+    private val deviceZone: () -> String? = { null },
+    mutation: EntryMutation = EntryMutation.NONE,
 ) {
     private val redactor = ShadowRedactor(ledger.salt)
     private val mirror = ShadowMirror(redactor)
+    private var pageSchema = 1
+    private val comparison =
+        ShadowComparison(redactor, ShadowRunner(content, { pageSchema }, mutation))
     private val costs = ArrayDeque<Long>()
     private var pageBuild = ""
     private var basesThisSession = 0
@@ -99,6 +124,7 @@ class ShadowSession(
         needBase = true
         basesThisSession = 0
         pageBuild = config.page.build
+        pageSchema = config.page.schema
         ledger.pageFaults += config.page.faults
         when {
             !config.enabled -> set(ShadowState.OFF, null)
@@ -166,7 +192,7 @@ class ShadowSession(
         changed()
     }
 
-    /** Takes one accepted envelope: decode, apply to the mirror, record its touch map. */
+    /** Takes one accepted envelope: decode, apply to the mirror, record its touch map, compare. */
     fun observe(text: String, now: Long) {
         if (ledger.state != ShadowState.ON) return
         val envelope =
@@ -198,10 +224,50 @@ class ShadowSession(
                     envelope.kind !in ShadowKeys.KINDS -> ledger.skip(envelope.kind, "unknownKind")
                     ShadowFlags.INTERLEAVED in envelope.flags ->
                         ledger.skip(envelope.kind, "interleaved")
-                    else -> ledger.touched(envelope.kind, step.touched, pageBuild, now)
+                    else -> {
+                        ledger.touched(envelope.kind, step.touched, pageBuild, now)
+                        compare(envelope, step, now)
+                    }
                 }
             }
         }
+    }
+
+    /** Runs native on the action and counts the verdict; never throws. */
+    private fun compare(envelope: ShadowEnvelope, step: MirrorStep.Applied, now: Long) {
+        val kind = envelope.kind
+        deviceZone()?.let { if (it != envelope.zone) ledger.note(ZONE_LAG) }
+        val verdict =
+            try {
+                comparison.compare(envelope, step.before, step.after) { p ->
+                    evidence(kind, p, step)
+                }
+            } catch (e: Exception) {
+                return internal(kind, e, now)
+            } catch (e: StackOverflowError) {
+                return internal(kind, e, now)
+            }
+        ledger.compared(kind, verdict, pageBuild, now)
+        changed()
+    }
+
+    /** What a run shows beside the verdict: the codec's refusals and kept failed attempts (D13). */
+    private fun evidence(kind: String, p: Prediction, step: MirrorStep.Applied) {
+        p.strictRefusal?.let {
+            ledger.codec.merge(STRICT, 1, Int::plus)
+            ledger.codec.merge("$STRICT.$it", 1, Int::plus)
+        }
+        if (p.encodeChecked) ledger.codec.merge(CHECKED, 1, Int::plus)
+        p.encodeRefusal?.let { ledger.codec.merge(ENCODE, 1, Int::plus) }
+        if (p.nonFinite) ledger.codec.merge(NON_FINITE, 1, Int::plus)
+        if (p.unsaved && SaveFields.TRACKED.any { step.before[it] != step.after[it] })
+            ledger.note("$D13_KEPT.$kind")
+    }
+
+    private fun internal(kind: String, error: Throwable, now: Long) {
+        ledger.skip(kind, ERROR)
+        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now)) disable("errors")
+        changed()
     }
 
     /**
@@ -231,6 +297,11 @@ class ShadowSession(
             applied = ledger.applied,
             skipped = ledger.kinds.values.sumOf { it.skipped.values.sum() },
             last = ledger.entries().lastOrNull { it.kind != ShadowKeys.BETWEEN },
+            compared = ledger.compared,
+            same = ledger.same,
+            allowed = ledger.allowed,
+            different = ledger.different,
+            lastDifferent = ledger.mismatches().lastOrNull { it.unexplained },
         )
 
     /** Clear (6e's button): the counts and entries go; ok once the ring is stored empty. */
@@ -275,6 +346,13 @@ class ShadowSession(
     companion object {
         /** The pseudo-kind for drops counted before an envelope is read. */
         const val ANY = "any"
+        private const val ZONE_LAG = "zoneLag"
+        private const val STRICT = "strict"
+        private const val ENCODE = "encode"
+        private const val CHECKED = "checked"
+        private const val NON_FINITE = "nonFinite"
+        private const val D13_KEPT = "d13Kept"
+        private const val ERROR = "error"
         private const val SLOW_WINDOW = ShadowLimits.SLOW_WINDOW
         private const val SLOW_P95_MS = ShadowLimits.SLOW_P95_MS
         private const val SLOW_INDEX = SLOW_WINDOW * ShadowLimits.SLOW_PERCENTILE / 100 - 1

@@ -22,13 +22,17 @@ object ShadowKeys {
     val REC_KEYS: Set<String> = setOf("activities", "quests", "decayLog")
 
     /**
-     * The action kinds of table 1.2. The set is open (a newer page may shadow more); a kind not
+     * The action kinds of table 1.2, with the kinds WP6b split so that one kind is one page entry
+     * (`log.delete` / `log.remove` / `fixed.undo`, `director.award` / `director.quest`, the four
+     * `coach.*`, the four `rules.*`). The set is open (a newer page may shadow more); a kind not
      * here is accepted and counted `skipped.unknownKind`.
      */
     val KINDS: Set<String> =
         setOf(
             "log.record",
             "log.delete",
+            "log.remove",
+            "fixed.undo",
             "voice.log",
             "quest.toggle",
             "quest.create",
@@ -37,17 +41,24 @@ object ShadowKeys {
             "hand.verify",
             "health.sync",
             "director.award",
+            "director.quest",
             "bonus.care",
             "bonus.nutrition",
             "money.record",
             "money.remove",
             "fixed.plan",
             "fixed.catalog",
-            "coach.pay",
+            "coach.claim",
+            "coach.reflect",
+            "coach.review",
+            "coach.catchup",
             "spark.buy",
             "ascend",
             "rest.take",
             "rules.save",
+            "rules.reset",
+            "rules.base",
+            "rules.decay",
             "decay.apply",
             "boot.load",
             "boot.decay",

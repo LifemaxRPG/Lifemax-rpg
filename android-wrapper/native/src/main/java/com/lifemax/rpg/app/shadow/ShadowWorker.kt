@@ -2,10 +2,12 @@ package com.lifemax.rpg.app.shadow
 
 import com.lifemax.rpg.core.shadow.ShadowAccept
 import com.lifemax.rpg.core.shadow.ShadowAnswer
+import com.lifemax.rpg.core.shadow.ShadowContent
 import com.lifemax.rpg.core.shadow.ShadowHandshake
 import com.lifemax.rpg.core.shadow.ShadowLimits
 import com.lifemax.rpg.core.shadow.ShadowSession
 import com.lifemax.rpg.core.shadow.ShadowSummary
+import java.time.ZoneId
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -135,17 +137,28 @@ class ShadowWorker(
                     .apply { isDaemon = true }
             }
 
-        /** The session for an install: the ring's ledger, or a fresh one. */
+        /**
+         * The session for an install: the ring's ledger, or a fresh one. It compares with no page
+         * content (the plan and catalog actions are counted `skipped.content`) and reads the
+         * device's zone for `info.zoneLag`.
+         */
         fun opener(
             fingerprint: () -> String,
             versionCode: Long,
             nativeApi: Int,
+            deviceZone: () -> String? = { ZoneId.systemDefault().id },
         ): (ShadowRing, Long) -> ShadowSession = { ring, t ->
             val stored = ring.load()
             val ledger = stored ?: ring.fresh(t)
-            ShadowSession(fingerprint(), ledger, versionCode, nativeApi).also {
-                if (stored == null && ring.file.exists()) ledger.note("ringReset")
-            }
+            ShadowSession(
+                    fingerprint(),
+                    ledger,
+                    versionCode,
+                    nativeApi,
+                    ShadowContent.NONE,
+                    deviceZone,
+                )
+                .also { if (stored == null && ring.file.exists()) ledger.note("ringReset") }
         }
     }
 }

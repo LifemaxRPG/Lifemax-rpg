@@ -83,6 +83,23 @@ object EconomySaveCodec {
     fun encode(document: SaveDocument, save: EconomySave): SaveEncoding =
         guarded({ SaveEncoding.Refused(it) }) { encodeChecked(document, save) }
 
+    /**
+     * The stored save with [save]'s changes merged in, exactly as [encode] lays them before it
+     * writes the text and reads it back: nothing is written, nothing is checked, and every value
+     * native did not change is the very [SaveDocument.stored] instance it was. For a comparison
+     * that needs the outcome quickly (the economy shadow); a writer must use [encode]. Null when
+     * the merge fails.
+     */
+    fun merged(document: SaveDocument, save: EconomySave): JsonObject? =
+        try {
+            JsonMerge().merge(document.stored, document.written, EconomySaveWriter.write(save), "")
+                as? JsonObject
+        } catch (_: RuntimeException) {
+            null
+        } catch (_: StackOverflowError) {
+            null
+        }
+
     private fun decodeValue(json: JsonValue, text: String?, reading: SaveReading): SaveDecoding {
         if (json !is JsonObject)
             return decodingRefused(

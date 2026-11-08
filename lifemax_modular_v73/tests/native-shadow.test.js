@@ -93,6 +93,22 @@ const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kin
       await p.evaluate(() => { ecoTakeRest(); recordMoneyTransaction && 0; });
       const s2 = await same(p);
       ok('rest.take and the copy after it', (await kinds(p)).slice(-1)[0] === 'rest.take' && s2.equal, s2.diff);
+      const rest = await p.evaluate(() => window.__shadowMock.envelopes.slice(-1)[0]);
+      ok('rest.take records the plan facts native reads (WP6b): today done, rest days, from', rest.env.plan && typeof rest.env.plan.done === 'boolean' && Array.isArray(rest.env.plan.rest) && /^\d{4}-\d\d-\d\d$/.test(rest.env.plan.from), rest.env);
+      const one = await p.evaluate(() => {
+        const out = {}, last = () => window.__shadowMock.envelopes.slice(-1)[0];
+        const rule = document.createElement('input'); rule.id = 'rule-reading'; rule.value = '31'; document.body.appendChild(rule);
+        saveRules(); out.rules = last(); rule.remove();
+        resetRules(); out.reset = last();
+        removeAct('no-such-record'); out.remove = last();
+        try { undoCat('no-such-entry') } catch (e) { /* the page's own throw for an unknown entry: still one action */ }
+        out.undo = last();
+        return out;
+      });
+      await p.waitForTimeout(60);
+      const sent = await p.evaluate(() => window.__shadowMock.envelopes.slice(-4).map(e => ({ kind: e.kind, dom: e.env.dom })));
+      ok('one kind is one entry (WP6b): saveRules, resetRules, removeAct and undoCat are rules.save, rules.reset, log.remove, fixed.undo', sent.map(e => e.kind).join() === 'rules.save,rules.reset,log.remove,fixed.undo', sent);
+      ok('saveRules records every rule-* input it reads', sent[0].dom && sent[0].dom['rule-reading'] === '31', sent[0]);
     }
     {
       // native asks for a resync: the next action is preceded by a base, and the copy is whole again
@@ -170,6 +186,14 @@ const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kin
       ok('the page threw nothing while the check ran', !p.errors.length, p.errors.slice(0, 3));
     }
     await p.context().close();
+
+    /* ---------- the Settings row of an app that compares (WP6b) ---------- */
+    {
+      const q = await open(browser, { compares: { compared: 1150, different: 3 } }, SAVE);
+      const row = await q.evaluate(async () => { navigate('settings'); await LmaShadow.refresh(); return document.getElementById('nativeShadowStatus').textContent });
+      ok('the row counts the actions checked and the differences, with the last one\'s day and kind', /^Checked 1,150 actions since 1 Nov · 3 different · last 18 Nov \d\d:\d\d \(quest\)$/.test(row), row);
+      await q.context().close();
+    }
 
     /* ---------- the cost on a 3 MB save ---------- */
     {

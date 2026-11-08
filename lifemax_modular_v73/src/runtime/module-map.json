@@ -3950,7 +3950,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow-points.js",
-   "bytes": 4489,
+   "bytes": 4841,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3963,7 +3963,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow.js",
-   "bytes": 20338,
+   "bytes": 21184,
    "statement_count": 1,
    "tags": [
     "native",

@@ -288,7 +288,7 @@
     "log": "{id}: where native Food is on and says it can open on a sheet (NativeNutrition capabilities().sheetSeed), the page sets Food's add-food sheet up on the recipe's portion view (NativeNutritionBeta.seedPortion) and answers {ok:true, navigate:'meals'}: Food opens with the sheet in its first frame and logs through sheetLog (answered, Undo); classic Meals never shows. Otherwise (Food off, an older app) the page runs addRecipeToMeal(id) while the screen still covers it, which goes to Meals and opens the page's add-food sheet in its portion view; the hand-over then closes the screen. Nothing is written by the command itself. Answers ok:false for an id the page does not know, and the screen stays"
    },
    "actions": {
-    "navigate": "the view 'meals' (Meals pill, \"\uff0b Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
+    "navigate": "the view 'meals' (Meals pill, \"＋ Log a meal\"): NativeTabKit goes there without closing first, so native Food opens before Recipes closes; classic Meals closes it at once",
     "link": "nothing is sent: the screen opens the projected https link itself (Android ACTION_VIEW)"
    },
    "writes": [],
@@ -646,11 +646,11 @@
    "refusals": {
     "off": "the swipe is not on: the switch or Swipe to switch tabs off, onboarding not done, the thumbnail pass running, or a view a swipe never starts from (Life Director)",
     "overlay": "a popup or sheet over the page (lmaTopOverlay), a body that must not scroll, or a lock cover",
-    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir \u00b11, on the bar as it is now",
+    "stale": "not from the open screen of the view the page is on (a Food screen session that has ended included), or to is not the tab next to it, dir ±1, on the bar as it is now",
     "kind": "Money (a stop), or a tab the page draws when the swipe does not carry reveal: true (an APK from phase 1)",
     "error": "the decision threw; nothing else is done"
    },
-   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05\u20130.35, breakAt knee + 0.10\u20130.70, heavy 0.05\u20131, hyst 0\u20130.15, popDamping 0.4\u20131, popStiffness 400\u20133000, wallMax 0\u20130.15, wallSlope 0\u20130.6, flingDp 500\u20133000, flingMin 0.05\u20130.35, backFlingDp 200\u20132000, commitK and cancelK 300\u20134000, slopFactor 1\u20132 (never under the platform's slop, where a child scroller claims), lockRatio 1\u20133, edgeDp 16\u201348, haptic threshold | tick | click | off",
+   "tune": "defaults in SwipeTune.kt, mirrored by LMA_TABSWIPE and held equal by SwipeTuneTest (fixtures/swipe-tune.json, written from the page); the owner's changes (Developer mode, Swipe feel (testing); lmaLoad().swipeTune) ride swipe.tune and native clamps each key: knee 0.05–0.35, breakAt knee + 0.10–0.70, heavy 0.05–1, hyst 0–0.15, popDamping 0.4–1, popStiffness 400–3000, wallMax 0–0.15, wallSlope 0–0.6, flingDp 500–3000, flingMin 0.05–0.35, backFlingDp 200–2000, commitK and cancelK 300–4000, slopFactor 1–2 (never under the platform's slop, where a child scroller claims), lockRatio 1–3, edgeDp 16–48, haptic threshold | tick | click | off",
    "sourceRule": "NativeLifeDirector is never a source (swipeSource = false; its section swipe and dial handles are its own); it can be a destination",
    "rollout": "Settings, Navigation: Native tab swipe (beta), off by default",
    "writes": [],
@@ -700,20 +700,20 @@
    "protocol": 1,
    "nativePlugin": "NativeShadow",
    "owner": "web-core-gameplay",
-   "pluginSource": "bridge/web/NativeShadowPlugin.kt (a plain Plugin, not a tab); app/shadow/ShadowWorker.kt (one background thread), app/shadow/ShadowRing.kt (the only file); core/shadow (pure Kotlin: decoder, mirror, touch map, ledger, session)",
+   "pluginSource": "bridge/web/NativeShadowPlugin.kt (a plain Plugin, not a tab); app/shadow/ShadowWorker.kt (one background thread), app/shadow/ShadowRing.kt (the only file); core/shadow (pure Kotlin: decoder, mirror, touch map, ledger, session; WP6b: ShadowEntries, ShadowInput, ShadowRunner, ShadowDiff, ShadowComparison, KnownDifferences)",
    "screenSource": "none: native draws nothing; the Settings row is the page's own card (views/settings.html #nativeShadowCard), which native Settings draws like every page card",
-   "webModule": "05-shadow-boot.js (the boot's base and boot.load/boot.decay), 50-native-shadow-points.js (the shadow points of ECONOMY_SHADOW_PLAN 1.2), 50-native-shadow.js (transport, deltas, switch nativeShadow: Native economy check (beta), Settings, Data & advanced, off by default)",
-   "plan": "docs/specs/ECONOMY_SHADOW_PLAN.md (WP6a built; 6b-6f to come)",
+   "webModule": "05-shadow-boot.js (the boot's base and boot.load/boot.decay), 50-native-shadow-points.js (the shadow points of ECONOMY_SHADOW_PLAN 1.2, one kind per entry), 50-native-shadow.js (transport, deltas, switch nativeShadow: Native economy check (beta), Settings, Data & advanced, off by default)",
+   "plan": "docs/specs/ECONOMY_SHADOW_PLAN.md (WP6a and WP6b built; 6c-6f to come)",
    "capabilities": [
     "economy.shadow.v1"
    ],
-   "covers": "every outermost economy action of the page (log, voice, quests, Daily Hand, Health sync, Life Director awards, bonuses, money, plan and catalogue awards, coach, shop, ascension, rest, rules, decay, boot load and decay, bare saves) while the switch is on, the app says economy.shadow.v1 and the page's content fingerprint equals native's. In WP6a native compares nothing: it keeps the copy and records which fields each action changed (the touch map)",
+   "covers": "every outermost economy action of the page (log, voice, quests, Daily Hand, Health sync, Life Director awards, bonuses, money, plan and catalogue awards, coach, shop, ascension, rest, rules, decay, boot load and decay, bare saves) while the switch is on, the app says economy.shadow.v1 and the page's content fingerprint equals native's. Native keeps the copy, records which fields each action changed (the touch map) and, for the economy kinds of WP6b, runs the action itself and compares state, return value, toasts, writes and the codec's encode check; quests, the Daily Hand, Health and decay are compared from WP6c and WP6d",
    "commands": {
     "handshake": "-> {protocol: 1, capabilities: [economy.shadow.v1], fingerprint (the packaged quest-content.json contentHash, which covers economyHash), state: off|on|disabled|stale|paused, reason?}",
     "configure": "{text: {v:1, enabled, sid, page:{build, schema, fingerprint, faults}}} -> {ok, state, reason?}; ok only once the switch state is in the ring; a page fingerprint unlike native's answers state stale; Battery Saver answers paused",
     "base": "{text: {v:1, scope:'economy', sid, epoch, seq, part, parts, text}} -> {ok, state, reason?}; parts joined in order are {keys:{...}}; at most 32 messages of 256 KB; a base over 4 MB stops the check (disabled, tooLarge)",
     "observe": "{text: envelope} -> {accepted:true} | {accepted:false, resync, reason}; answered before any work (state, size, a base still owed); the worker then decodes strictly and applies the before- and after-delta to the copy",
-    "summary": "-> {v:1, state, reason?, since, counts:{seen, applied, skipped}, last?:{at, kind, paths}}: counts only",
+    "summary": "-> {v:1, state, reason?, since, counts:{seen, applied, skipped, compared, same, allowed, different}, last?:{at, kind, paths}, different?:{at, kind}}: counts only; compared and its outcomes from Native API 109 (an older app lacks them and the page shows the 6a row)",
     "clear": "-> {ok}: ok only once the emptied ring is on disk (the button is WP6e's)"
    },
    "writes": [],
@@ -723,10 +723,10 @@
     "decoder": "core/shadow/ShadowEnvelopeJson.kt on core/save's JsonReader (the page's JSON.parse), strict: exact key sets, shadow keys only (core/shadow/ShadowKeys.kt, the same lists as 05-shadow-boot.js), whole numbers, t1 >= t0, a known zone, rec indexes inside the new length; a refusal is typed (ShadowRefusal) and names no value",
     "ordering": "one sid per page session; one seq per message; an envelope applies only when its base equals the copy's seq, with the same sid and epoch; a repeated (sid, seq) is ignored; anything else discards the copy and the page sends a base before its next envelope. epoch rises on import, reset and delete-all",
     "limits": "envelope 256 KB (args 16 KB, env 64 KB, 20 toasts of 300 characters, 8 saves, 256 changed records per key); queue of 16 envelopes on the worker; page side off after 3 faults or 5 actions in a row over 50 ms",
-    "persistence": "the copy of the save is in memory only; the ring (noBackupFilesDir/economy-shadow/ring.json, at most 200 entries and 128 KB, written atomically at most every 30 s and when the app stops) holds counts, kinds and redacted field paths only: owner-chosen keys as salted hashes, never a value"
+    "persistence": "the copy of the save is in memory only; the ring (noBackupFilesDir/economy-shadow/ring.json, at most 200 touch and 200 difference entries and 128 KB, written atomically at most every 30 s and when the app stops) holds counts, kinds, redacted field paths and economy numbers (XP, Sparks, rested XP changes) only: owner-chosen keys as salted hashes, never a value"
    },
    "mutationsGate": "no native writes: native never writes the save, sends no command, notifies nothing and uses no network (CONTRACT A10: shadow outputs award nothing and persist no second save)",
-   "rollout": "opt-in under Settings, Data & advanced: Native economy check (beta), off by default. Needs economy.shadow.v1 (Native API 106); an older app or page simply lacks it. Off in the demo (NativeShadow is in 50-demo-mode.js OFF). Self-disables after 5 internal errors in 24 h, more than 4 resyncs an hour, or a worker p95 over 2 s; Battery Saver pauses it"
+   "rollout": "opt-in under Settings, Data & advanced: Native economy check (beta), off by default. Needs economy.shadow.v1 (Native API 106; the comparison from 109); an older app or page simply lacks it. Off in the demo (NativeShadow is in 50-demo-mode.js OFF). Self-disables after 5 internal errors in 24 h, more than 4 resyncs an hour, or a worker p95 over 2 s; Battery Saver pauses it"
   }
  ]
 }

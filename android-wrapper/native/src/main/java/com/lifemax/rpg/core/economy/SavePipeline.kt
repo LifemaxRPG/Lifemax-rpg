@@ -85,6 +85,7 @@ object SavePipeline {
                 it.copy(customRules = it.rules.byType)
             }
         val written = ctx.storage == Storage.Writable
+        ctx.attempts?.attempted(written)
         val core =
             if (ctx.storage == Storage.Full) prepared.result(written, SAVE_FULL)
             else prepared.result(written)

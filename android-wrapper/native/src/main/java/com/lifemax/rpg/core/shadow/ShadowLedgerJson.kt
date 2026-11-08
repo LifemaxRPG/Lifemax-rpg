@@ -1,6 +1,7 @@
 package com.lifemax.rpg.core.shadow
 
 import com.lifemax.rpg.core.save.JsonArray
+import com.lifemax.rpg.core.save.JsonBool
 import com.lifemax.rpg.core.save.JsonNull
 import com.lifemax.rpg.core.save.JsonNumber
 import com.lifemax.rpg.core.save.JsonObject
@@ -12,11 +13,13 @@ import com.lifemax.rpg.core.save.JsonWriter
 
 /**
  * The ring file's text (ECONOMY_SHADOW_PLAN 3.1): `{v, since, salt, state, reason,
- * app:{versionCode, nativeApi}, faults:{native, page}, counts:{kind:{seen, applied,
- * skipped:{why:n}}}, refused:{why:n}, info:{word:n}, errors:{class:n}, errorTimes, resyncTimes,
- * nextId, entries:[{id, first, last, count, kind, pageBuild, paths}]}`. Reading is strict about the
- * shape and never throws; a file that does not read is replaced by a fresh ledger (the caller
- * counts `info.ringReset`).
+ * app:{versionCode, nativeApi}, faults:{native, page}, counts:{kind:{seen, applied, compared, same,
+ * allowed, different, skipped:{why:n}}}, refused:{why:n}, info:{word:n}, errors:{class:n},
+ * codec:{word:n}, errorTimes, resyncTimes, nextId, entries:[{id, first, last, count, kind,
+ * pageBuild, paths}], nextMismatch, mismatches:[{id, first, last, count, kind, pageBuild, paths,
+ * allow, unexplained, page?:{xp, sparks, rested}, native?:{...}}]}`. Reading is strict about the
+ * shape and never throws (a WP6a ring without the comparison's keys reads with them empty); a file
+ * that does not read is replaced by a fresh ledger (the caller counts `info.ringReset`).
  */
 object ShadowLedgerJson {
     private const val VERSION = 1
@@ -39,6 +42,10 @@ object ShadowLedgerJson {
                         obj(
                             "seen" to num(k.seen),
                             "applied" to num(k.applied),
+                            "compared" to num(k.compared),
+                            "same" to num(k.same),
+                            "allowed" to num(k.allowed),
+                            "different" to num(k.different),
                             "skipped" to counts(k.skipped),
                         )
                     }
@@ -46,6 +53,7 @@ object ShadowLedgerJson {
             "refused" to counts(l.refused),
             "info" to counts(l.info),
             "errors" to counts(l.errors),
+            "codec" to counts(l.codec),
             "errorTimes" to JsonArray(l.errorTimes.map { num(it) }),
             "resyncTimes" to JsonArray(l.resyncTimes.map { num(it) }),
             "nextId" to num(l.nextId),
@@ -63,7 +71,40 @@ object ShadowLedgerJson {
                         )
                     }
                 ),
+            "nextMismatch" to num(l.nextMismatch),
+            "mismatches" to JsonArray(l.mismatches.map(::mismatch)),
         )
+
+    private fun mismatch(m: MismatchEntry): JsonObject =
+        JsonObject(
+            LinkedHashMap<String, JsonValue>().apply {
+                put("id", JsonString(m.id))
+                put("first", num(m.first))
+                put("last", num(m.last))
+                put("count", num(m.count))
+                put("kind", JsonString(m.kind))
+                put("pageBuild", JsonString(m.pageBuild))
+                put("paths", JsonArray(m.paths.map { JsonString(it) }))
+                put("allow", JsonArray(m.allow.map { JsonString(it) }))
+                put("unexplained", JsonBool.of(m.unexplained))
+                m.page?.let { put("page", change(it)) }
+                m.native?.let { put("native", change(it)) }
+            }
+        )
+
+    private fun change(c: EconomyChange) =
+        obj("xp" to num(c.xp), "sparks" to num(c.sparks), "rested" to num(c.rested))
+
+    private fun changeOf(v: JsonValue?): EconomyChange? {
+        val o = (v ?: return null) as? JsonObject ?: bad()
+        return EconomyChange(double(o["xp"]), double(o["sparks"]), double(o["rested"]))
+    }
+
+    private fun double(v: JsonValue?): Double {
+        val n = (v as? JsonNumber ?: bad()).value
+        if (!n.isFinite()) bad()
+        return n
+    }
 
     /** Reads a ring text back, or null when it is not one this build wrote. */
     fun read(text: String): ShadowLedger? {
@@ -94,12 +135,17 @@ object ShadowLedgerJson {
                 KindCounts().apply {
                     seen = long(k, "seen").toInt()
                     applied = long(k, "applied").toInt()
+                    compared = optional(k, "compared")
+                    same = optional(k, "same")
+                    allowed = optional(k, "allowed")
+                    different = optional(k, "different")
                     skipped.putAll(countsOf(k["skipped"]))
                 }
         }
         l.refused.putAll(countsOf(o["refused"]))
         l.info.putAll(countsOf(o["info"]))
         l.errors.putAll(countsOf(o["errors"]))
+        o["codec"]?.let { l.codec.putAll(countsOf(it)) }
         l.errorTimes += longs(o["errorTimes"])
         l.resyncTimes += longs(o["resyncTimes"])
         l.nextId = long(o, "nextId").toInt()
@@ -116,8 +162,29 @@ object ShadowLedgerJson {
                     paths = (x["paths"] as? JsonArray ?: bad()).items.map { str(it) },
                 )
         }
+        l.nextMismatch = optional(o, "nextMismatch").coerceAtLeast(1)
+        for (e in (o["mismatches"] as? JsonArray)?.items.orEmpty()) {
+            val x = e as? JsonObject ?: bad()
+            l.mismatches +=
+                MismatchEntry(
+                    id = str(x, "id"),
+                    first = long(x, "first"),
+                    last = long(x, "last"),
+                    count = long(x, "count").toInt(),
+                    kind = str(x, "kind"),
+                    pageBuild = str(x, "pageBuild"),
+                    paths = (x["paths"] as? JsonArray ?: bad()).items.map { str(it) },
+                    allow = (x["allow"] as? JsonArray ?: bad()).items.map { str(it) },
+                    unexplained = (x["unexplained"] as? JsonBool ?: bad()).value,
+                    page = changeOf(x["page"]),
+                    native = changeOf(x["native"]),
+                )
+        }
         return l
     }
+
+    /** A count a WP6a ring does not have: 0 when absent. */
+    private fun optional(o: JsonObject, key: String): Int = o[key]?.let { longOf(it).toInt() } ?: 0
 
     private fun obj(vararg members: Pair<String, JsonValue>) = JsonObject(linkedMapOf(*members))
 
