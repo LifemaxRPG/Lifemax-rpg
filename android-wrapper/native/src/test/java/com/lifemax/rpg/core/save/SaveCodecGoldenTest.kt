@@ -84,7 +84,7 @@ class SaveCodecGoldenCountTest {
     @Test
     fun everyCaseRuns() {
         val ids = SaveCodecGoldenTest.parameters().map { it[0] }
-        assertEquals(EconomyGoldenTest.parameters().map { it[0] }, ids)
+        assertEquals(EconomyGoldenTest.cases.map { it["id"] }, ids)
         assertTrue(SaveTestData.goldenCases.all { it.at("input") is JsonObject })
     }
 }

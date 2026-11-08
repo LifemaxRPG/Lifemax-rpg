@@ -178,6 +178,8 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
     p = await start(b);
     await toPet(p);
     r = await p.evaluate(async () => {
+      /* the page's cat may be in its sleep activity (random): the blink test needs it awake */
+      if (typeof PET_RT !== 'undefined' && PET_RT && PET_RT.c) PET_RT.c.step = null;
       const out = {}; out.blink = await command('blink', {}); out.blink2 = await command('blink', {}); out.squint = await command('blink', {});
       out.toast = document.getElementById('toast').textContent; out.notice = latest().notice;
       out.vacOn = await command('vacation', { on: true }); out.vacOnSaved = JSON.parse(localStorage.getItem('lifemax_rpg_prototype_v1')).pet.vacation.on; out.snap = latest().care.vacation + '|' + latest().feed.label;
