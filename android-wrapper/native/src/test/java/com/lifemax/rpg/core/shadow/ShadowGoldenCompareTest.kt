@@ -75,8 +75,8 @@ class ShadowGoldenCompareTest {
     }
 
     companion object {
-        const val EXPECTED_CASES = 350
-        const val EXPECTED_ENVELOPES = 402
+        const val EXPECTED_CASES = 354
+        const val EXPECTED_ENVELOPES = 406
 
         /**
          * Compared kinds no economy golden case calls as an entry point: the class pack is the

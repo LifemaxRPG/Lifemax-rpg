@@ -1,7 +1,7 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. WP6a to WP6e are built (their status is under each, section 6);
-the rest is design. It covers WP6 of
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a to WP6f are built (their status is under each, section 6; how to read
+the check's verdict and where the exit criteria stand is section 5.4); the rest is design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
 Inputs: `ECONOMY_SPEC.md` (sections 2, 11, 15-17, 20, 21), `QUESTS_SPEC.md`, `ECONOMY_NATIVE_PLAN.md` (WP1-WP8, defects),
@@ -403,8 +403,10 @@ port may ignore) and so pre-approved:
 | A-02 | any | `plan.checks.*.s` | plan ticks, specified but outside the economy (PLAN-1, spec 21) |
 | A-03 | `money.*`, `save.other` | `money` paycheck settings | dated by the day, outside the economy (spec 21) |
 
-Entries proposed since, awaiting the owner's sign-off: A-05 (WP6b, the redraw's empty food log, meal settings and reflections) and
-A-06 (WP6c, `saves.journal`: the journal coach's own plain write inside a save, which native does not draw). WP6d proposes none.
+Entries proposed since, awaiting the owner's sign-off: A-05 (WP6b, the redraw's empty food log, meal settings and reflections),
+A-06 (WP6c, `saves.journal`: the journal coach's own plain write inside a save, which native does not draw) and A-07 (WP6f,
+`journalCoach.welcome.*`: a whole new day's welcome card that the journal's redraw inside a save writes after a gap; a chip claimed on
+a card stays compared). WP6d and WP6e propose none.
 
 Anything else needs an entry written in a PR and signed off by the owner; native fixing a defect early is not allowed during
 shadow (native must equal the page; a fix lands on the page first with a golden, as LIFE_DIRECTOR_NATIVE_PLAN 5.1 says).
@@ -414,6 +416,41 @@ shadow (native must equal the page; a fix lands on the page first with a golden,
 Install the app version that has it, turn on Settings, Data & advanced, Native economy check (beta), and use the app as usual. Once
 a week, glance at the line under the switch. If it says something is different, tap Copy report and paste it to the assistant.
 After about a month with nothing different, the cutover (WP8) can be planned.
+
+### 5.4 How to read a shadow verdict, and where the exit criteria stand (WP6f)
+
+**Reading a verdict.** Every action the page sends ends as exactly one of:
+- *same*: native, run on the page's before-state with the page's own inputs (clock, zone, storage answers, Health Connect answers,
+  minted ids), left every economy field, the return value, the toasts and the number of writes exactly as the page did. This is the
+  evidence.
+- *allowed*: every difference is a field outside the economy that an allowlist id names (5.2: A-01 to A-04 pre-approved, A-05 to
+  A-07 proposed). Counts as matched; the report names the ids so the owner can see which rulings carry weight.
+- *different* (unexplained): native would have written something else. The report shows the kind, the redacted paths and both
+  sides' XP, Sparks and rested changes; Save case (O-4) gives the full action. Each one is either a native bug (fix native to the
+  page, with a golden case: the WP6f rest-day fix is the pattern), a page change shipped over the air without the app (that reads
+  `stale`, never `different`), or a new allowlist entry the owner signs off.
+- *skipped* with a reason (`midnight`, `interleaved`, `tzdata`, `planWindow`, `input`, `content`, `notNative`, `queue`, `battery`,
+  ...): not compared, counted; plan 5.1 point 5 caps them at 5% and never `size`.
+- *refused* (a message that does not decode) and *errors* (an exception in native's run): never expected; both are counted, five
+  errors in a day stop the check.
+
+Why a "same" can be trusted (what 6f proved): the comparison finds wrong native rules (the mutation sweep: 26 of 26 economy and 24 of 26 quest-rule
+mutants that change what a shadow point shows, and every hand-made kill test of 6b-6d), it does not invent differences (400 random saves up to 12,000
+records, native against its own outcome: all the same; 698 forced resyncs: never a difference blamed on native), it reproduces every
+reachable page defect rather than flagging it (32 of 32), and it holds on the real page's own envelopes (40 seeds and four fixture
+days: 1,613 envelopes, 0 unexplained).
+
+**Exit criteria (5.1) today:**
+
+| | Criterion | Status after 6f |
+|---|---|---|
+| 1 | 30 days, 1,500 compared actions on the owner's phone, last 30 days free of unexplained differences | Not started: needs the switch on (it ships with this app) |
+| 2 | Coverage on the device | Not started; every kind the owner may never use (ascend, shop, money, catalog, plan, care, rest) is covered by the seeds and goldens (plan and catalog by the goldens only: the app has no page content for them, `skipped.content` on the phone) |
+| 3 | Every reachable defect reproduced through the transport | **Met**: 32 of 32, `ShadowDefectTest` |
+| 4 | A day roll with the app open and at boot, a refused save, a zone or DST change | **Met in the corpus** (seeds, fixture days, the day corpus' zone matrix); on the phone if they happen |
+| 5 | Health of the check | **Met in the lab**: no self-disable, zero errors, page capture under the 50 ms hard limit up to 1 MB at 4x CPU; a 3 MB save would stop it on a mid-range phone (6f proposal); to be read from the owner's report |
+
+Open rulings before WP8: A-05, A-06, A-07 (O-6); `codec.nonFinite` (one in the 6b corpus: D24's NaN quality); and the page budget on large saves (the WP6f proposal under its status).
 
 ## 6. Work packages
 
@@ -741,6 +778,105 @@ crash, always a counted reason); failure injection (worker exceptions until self
 never; the queue full); the perf test (`tests/native-shadow-perf.test.js` with Chromium CPU throttling 4x on 1 MB and 3 MB ledgers for
 the page budget; `ShadowPerfTest` on the JVM for the worker, with the device numbers then taken from the owner's report).
 Bridge: none. Decision: none.
+
+**Status: built** (Native API 117 on this branch, for the one native fix below; the integrator renumbers at merge; no capability, no
+bridge change, no page change). One command runs it all: `tools/shadow_proof.sh [--record] [--mutants] [--gradle]` (section 5.4).
+What exists:
+- **The seeds** (`tools/gen_shadow_sim_corpus.js`, `tests/fixtures/shadow-sim-corpus.json.gz`; `ShadowSimCorpusTest`). The `sim` of the
+  handover test drives tab hops, not economy actions, so 6f has its own seeded generator: a seed is a pure function of its number
+  (`--plan N` prints it): a fixture save (Health on or off, Sparks given or not), a zone and locale, two to four page sessions each
+  booted after up to 11 closed days (sometimes in another zone), and 6 to 15 random taps over every kind a tap reaches (Logs, some
+  refused by the storage; spoken Logs; undos confirmed and declined; quests ticked and unticked; cards claimed and rerolled; rest days;
+  the shop; ascensions; care; money; Health syncs with injected Health Connect data, some failing partway; the day rolling over with
+  the app open; the clock moved back or on; bare saves; the nutrition check; welcome chips; Life Director sessions; quests made; class
+  switches; decay settings; the rules reset). The real page records, native replays one session per seed, one page session per `sid`.
+  **40 seeds, 114 page sessions, 1,509 envelopes: 1,509 compared, 1,491 same, 18 allowed (A-06 x18, A-07 x3), 0 unexplained, none
+  skipped**; 16 refused saves, 45 clock jumps; all 23 kinds a tap reaches compared. One seed again: `--seed N --out FILE`, then the
+  test with `-Dshadow.sim.file=FILE` (or `-Dshadow.sim.seed=N` on the committed corpus).
+- **Every fixture save** (`--fixtures`, `shadow-fixture-days.json.gz`): `new`, `extras`, `legacy` and `established` with Health on,
+  through one scripted day (a sync, Logs one of them refused, a quest, a card claimed and rerolled, the three cares, the shop, money,
+  an undo, Life Director, a bare save, a rest day, the day rolling over with the app open, the next day's card and Log) and a boot two
+  days later: **104 envelopes, 104 compared, 103 same, 1 allowed (A-06), 0 unexplained.**
+- **The defects of 5.1 point 3** (`ShadowDefectTest`): each of the 32 has envelopes the page recorded: the golden cases naming it in
+  their rule, through the fake page's transport, and for the six whose golden cases call only pure rules (D11, D29, D33, D34, QD15,
+  QD20) the real page's `--defects` corpus (`shadow-defect-corpus.json.gz`), each run's page check proving the page showed the defect.
+  **All 32 compared and the same as the page** (D13 and D29 also allowed by A-06 for the journal's write in a refused save, as the
+  plan's allowlist says); D13 counted `info.d13Kept` 3 times. The 6d status's "D11 and D34 already are, through the goldens" was not
+  so (their cases call `lmaHealthAward` and the steps rule directly); they are now.
+- **Fuzz** (`ShadowFuzzTest`, seeded): 3,000 broken messages (cut, characters dropped, inserted, reversed, numbers and strings
+  replaced, keys doubled or renamed, 2,000-deep nesting, random text, other versions) read 9,000 times by the three readers: never a
+  throw, every refusal typed (12 reasons), every message counted by the session, which stays on; 40 seeds of 60 golden actions with
+  envelopes lost, repeated, of a new epoch, reloads, base parts lost, cut, reversed and doubled: 698 resyncs and **never a difference
+  blamed on native**, the copy back in step and a clean action matched after each; 3,000 actions with random unknown kinds and lies:
+  at most 64 kinds kept, the ring under 128 KB, the report under 16 KB, five cases. `ShadowRandomSaveTest`: 400 random but valid saves
+  (ledgers grown to 12,000 records dated over 300 days, Sparks and rested XP moved) through a golden action of 27 kinds, the page
+  doing exactly what native did: all 400 compared and the same, no internal error, observe p95 under 30 ms, worst about 330 ms.
+- **The page under a slow CPU** (`tests/native-shadow-perf.test.js`): the established save grown to 1 MB and 3 MB, the same 24 taps with the check on and off,
+  Chromium's CPU slowed with `Emulation.setCPUThrottlingRate` once the page is up (desktop Chromium on the 4-core build machine; 4x is
+  the usual stand-in for a mid-range phone). *Capture* is what the page's budget counts (two passes over the shadow keys inside the
+  tap); *send* is the envelope built after the tap (in its `setTimeout(0)`), less the same gap with the check off:
+
+  | save | CPU | capture p50 / p95 / max | send p50 / p95 | five in a row over 50 ms |
+  |---|---|---|---|---|
+  | 1 MB | 1x | 4.6 / 6.8 / 7.5 ms | (not separated at 1x) | no, stays on |
+  | 1 MB | 4x | 18.0-20.9 / 25.0-29.4 / 35 ms | 3.6 / 47.6 ms | no, stays on |
+  | 1 MB | 6x | 30.8 / 44.0 / 87 ms | | no (one tap over 50 ms) |
+  | 3 MB | 1x | 11.7 / 21.0 / 24.6 ms | | no, stays on |
+  | 3 MB | 4x | 55.0-59.0 / 95-115 ms | 4.5 / 121 ms | **yes: stops itself (`slow`) on the fifth tap** |
+  | 3 MB | 6x | 80.6 / 82.7 ms | | **yes, on the fifth tap** |
+
+  The self-disable triggers only when it should: four slow taps and a quick one keep it on, five in a row stop it; two page faults
+  keep it on, the third stops it; once stopped the page sends nothing and its taps still run; a plugin that answers in 2 s or never
+  makes the page wait for nothing (no queue, no fault). The targets of section 4 (p50 under 5 ms, p95 under 15 ms at 1 MB) hold at 1x
+  only; at 4x the 1 MB capture is about 18-21 ms p50, under the 50 ms hard limit. **Proposed, not changed (owner's decision):** on
+  a mid-range phone a save of about 3 MB (some 9,000 records, years of daily use; the established fixture is 239 KB) would stop the
+  check after five taps in every page session. Capture costs about 20 ms per MB at 4x and is linear in the save; the fix is to make
+  the capture incremental (keep each record's text and stringify only what changed, a page change for a later package); until
+  then, the slow rule could scale with the save (over 30 ms per MB of shadow text, at least 50 ms: 90 ms at 3 MB), and section 4's
+  targets restated for a 4x CPU at 1 MB (p50 under 25 ms, p95 under 40 ms). The send step is not in the page's budget today (its p95
+  reaches 120 ms at 3 MB, 4x): counting it is part of the same proposal.
+- **Mutation sweep** (`tools/shadow_mutation_sweep.py`): 105 small mutants drawn with a fixed seed (35 a package
+  from every comparison flip, `&&`/`||` swap, integer moved by one, `+`/`-` swap, `true`/`false` swap and dropped branch in
+  `core/economy`, `core/quests` and `core/shadow`, leaving out six files no shadow point runs or that only word, store or report the
+  outcome: the board projection, the report, the ring file, Save case, the redactor), each compiled and run against the kill suite:
+  the replays of the goldens and the real-page corpora and the tests that make native wrong on purpose. 8 did not compile; of 97,
+  **62 caught by the comparison at first (64%), 63 after the cases added below**. Survivors, with a verdict each:
+  - *equivalent or out of the shadow's reach* (19): defaults every caller overrides (`devMode`, `connected`, `fromNewerBuild`), a
+    branch whose value nothing reads (`Item.Unknown`'s result), `isLocked`'s `stage ?: 1` (`stageLevel(null)` is 1 either way), a
+    blank date already unreadable, the preview's "Rested +N" words (no shadow point shows them; `EconomyGoldenTest`'s peek cases
+    catch it), `CharacterLevel` (only the board projection reads it), the packaged content's validation (the shipped file is valid;
+    `QuestContentTest`), a weighted pick's exact-boundary roll, the seed's finite and 2^32 guards (inputs never reach them), and in
+    `core/shadow` six of session plumbing that change nothing the page or the verdict sees (the `resync` flag of an accepted answer,
+    which the page ignores; observe's own state check behind `accept`; the new-version reset before `configure`; the status-read
+    counter's sign; `boot.decay`'s plan flag, as every kind may carry the plan; the return-value walk's instant window);
+  - *real, cases added, now caught* (2): a spoken Log under five minutes paying 1 XP (golden `voice/log-too-short`) and the page's
+    real configure (an empty build label) refused (`ShadowFuzzTest.theConfigureTheRealPageSendsIsAccepted`). A first, partial sweep
+    on the same draw had found three more, fixed by cases before this one ran: the steps threshold (`< 2000` to `< 2001` and
+    `<= 2000`: golden `health/steps-threshold`), the night-and-workout overlap boundary (`health/sleep-edge-workout-end`) and a card
+    and a quest with equal array ids (quests golden `odd/cardAndQuestArrayId`);
+  - *real, caught only outside the comparison* (10): two quest JavaScript-semantics edges of odd saves (`"length"` as a key, the
+    index `"0"`; `HandGoldenTest` catches them) and eight of `core/shadow`'s own bookkeeping (touch entries, the slow window, resyncs,
+    the state gate, held size, duplicate bases, the new-version retry), each caught by its own unit test;
+  - *real, no test catches them yet* (4, proposed for a follow-up, not blocking): the touch map of a deleted key, the slow rule's
+    95th percentile against the 96th, the resync hour's exact length, and A-04's "not saved" filter when the message follows another
+    toast.
+  Of the mutants that change behaviour the comparison can see, the economy rules are caught 26 of 26, the quest and hand rules 24 of
+  26; over all three packages, counting the unit tests, 74 of 78 non-equivalent mutants are caught (95%). Rerun one:
+  `python3 tools/shadow_mutation_sweep.py --mutant economy:9` (ids are stable while the main sources do not change).
+- **A real bug the proof found and fixed** (native only; the page was right): `Decay.takeRest` refused a rest day with "Today is
+  already a rest day" whenever REST-DAY-1's wider rest day held (a recovery session of 20 minutes today, or the plan's rest day),
+  while `ecoTakeRest` checks only `state.restDays[today]`. Two seeds showed it (`rest.take` at `restDays`, `saves.count`,
+  `toasts[0]`). Fixed to the page's rule, with a new economy golden `rest/take-after-recovery` (the page recorded: rest taken). Pins
+  moved: 351 economy cases, 403 envelopes, the rest family 6.
+- **Proposed allowlist entry A-07** (awaiting the owner's sign-off, O-6): three seeds came back from days away, and the journal's
+  redraw inside the Log's (or undo's) save wrote that day's welcome card (`journalCoach.welcome.<day>`: tier, gap, nothing claimed),
+  which native does not draw. A-07 explains only a whole new day's card; a chip claimed on a card stays compared
+  (`ShadowComparisonTest` has both).
+- Not done, with reasons: the seeds are not rerun with the check off to compare the saves byte for byte (the page's clock runs and
+  mints ids, so two runs differ anyway; transparency stays the goldens' `native-shadow-transparent`); the WebView on a phone was not
+  measured (the slow-CPU numbers stand in, the owner's report gives the real ones). Pins moved by the new golden cases: economy 897
+  cases (`ShadowGoldenCompareTest` 354 cases, 406 envelopes; health family 65; rest 6; `health.sync` 54), quests 843 (559 hand cases,
+  2,184 envelopes, `hand.ensure` 686).
 
 Order: 6a, then 6e's ring and counts, then 6b, 6c, 6d (6f grows with each). The switch can ship from 6a: the owner's phone starts
 producing the touch map and counts while 6b-6d land, and each later package only turns more kinds from `skipped.unknownKind` into

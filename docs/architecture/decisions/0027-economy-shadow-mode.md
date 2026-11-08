@@ -35,3 +35,7 @@ the action as the page sent it and both outcomes where they differ, unredacted; 
 warning in the card, writes it, and only to the document they pick in Android's picker. It is never in the ring or the report,
 never written on its own, never sent over a network, and is gone with Clear or the app process. This keeps A10: it is neither a
 reward nor a save, and the owner decides whether the file goes anywhere.
+WP6f proves the check before the owner relies on it: the real page's seeded runs and every fixture save's day replayed through the
+comparison, every reachable page defect reproduced as an envelope, fuzzed messages and transports, random large saves, the page's
+cost under a slow CPU and a mutation sweep of native's rules (`tools/shadow_proof.sh`). It adds no capability and changes nothing the
+page or the owner sees; its one native change makes native follow the page where the proof found it did not (taking a rest day).

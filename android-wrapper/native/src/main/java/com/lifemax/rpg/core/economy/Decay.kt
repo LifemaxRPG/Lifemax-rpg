@@ -59,9 +59,15 @@ object Decay {
         return save.restDays.keys.count { it >= since }
     }
 
-    /** REST-DAY-2, taking a rest day: two free rest days a week, then rest tokens. */
+    /**
+     * REST-DAY-2, taking a rest day: two free rest days a week, then rest tokens. "Already a rest
+     * day" is only a rest day taken today (`state.restDays[today]`, `ecoTakeRest`), not
+     * REST-DAY-1's wider [isRestDay]: a recovery session or the plan's rest day still lets the
+     * owner take one.
+     */
     fun takeRest(save: EconomySave, ctx: EconomyContext): Outcome<Unit> {
-        if (isRestDay(save, ctx.today, ctx)) return save.result(Unit, "Today is already a rest day")
+        if (save.restDays[ctx.today] == true)
+            return save.result(Unit, "Today is already a rest day")
         var next = save
         val toasts = mutableListOf<String>()
         if (restDaysUsed(save, ctx.clock) >= Eco.REST_PER_WEEK) {
