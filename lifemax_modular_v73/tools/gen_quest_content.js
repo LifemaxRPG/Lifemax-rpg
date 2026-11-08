@@ -6,7 +6,7 @@
    (the file the app reads). tests/quest-content.test.js records it again from the page and fails on any difference, in either file.
 
    The file is one JSON object, keys in this order:
-     schemaVersion  1. Bump it (and the Kotlin decoder) when the shape changes.
+     schemaVersion  2. Bump it (and the Kotlin decoder) when the shape changes. 2 added economyHash.
      contentHash    SHA-256 (hex) of the compact JSON text of the object made of every other key except counts, in file order. The Kotlin
                     loader recomputes it, so a file edited by hand, or half written, is refused.
      counts         {templates, defaultQuests, classes, contentClasses, classQuests}, for a readable diff and a quick sanity check.
@@ -18,6 +18,10 @@
      classes        CLASSES as {id, ready}: every class the player can pick, ready or not.
      classQuests    CLASS_CONTENT[class].quests for every class that has content, as the page has them after all of its segments ran
                     (the key order of each quest is the page's; day and stage are present only when the page has them).
+     economyHash    SHA-256 (hex) of the compact JSON text of {eco: ECO, rules: DEFAULT_RULES, durations: ECO_DURATION_RULES}: the economy's
+                    constants. Part of the content, so contentHash is the fingerprint of what native's rules were built from; the native
+                    economy check (50-native-shadow.js, ECONOMY_SHADOW_PLAN 2.4) computes the same in the page and pauses while they differ
+                    (a page updated over the air without the app).
    Not here, because the page keeps them in code and not in data: the tier odds and luck constants inside dhPick, the slot order, the
    migration patterns (q1 to q3 and cc_* in dhEnsure, q1 to q6 and cc_* in applyClassContent). The native draw is accepted against golden
    cases for those, not against this file.
@@ -28,7 +32,7 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const FILE = path.join(ROOT, 'tests', 'fixtures', 'quest-content.json');
 const PACKAGED = path.join(ROOT, '..', 'android-wrapper', 'native', 'src', 'main', 'resources', 'quests', 'quest-content.json');
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /* Runs in the page: reads the content globals. Fails loudly when one is missing, so a renamed constant is never exported as empty. */
 function readContent() {
@@ -45,6 +49,7 @@ function readContent() {
   out.classes = need('CLASSES', CLASSES).map(c => ({ id: c.id, ready: !!c.ready }));
   out.classQuests = {};
   for (const id of Object.keys(content)) out.classQuests[id] = clone(content[id].quests);
+  out.economy = JSON.stringify({ eco: clone(need('ECO', ECO)), rules: clone(need('DEFAULT_RULES', DEFAULT_RULES)), durations: need('ECO_DURATION_RULES', ECO_DURATION_RULES) });
   return out;
 }
 
@@ -53,6 +58,7 @@ function assemble(c) {
   const body = {
     schemaVersion: SCHEMA_VERSION, attributes: c.attributes, hand: c.hand, defaultQuests: c.defaultQuests,
     stageLevels: c.stageLevels, classes: c.classes, classQuests: c.classQuests,
+    economyHash: crypto.createHash('sha256').update(c.economy, 'utf8').digest('hex'),
   };
   const contentHash = crypto.createHash('sha256').update(JSON.stringify(body), 'utf8').digest('hex');
   const counts = {

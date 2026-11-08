@@ -77,6 +77,7 @@ object QuestContentLoader {
                         list(top.getValue("stageLevels"), "stageLevels") { v, p -> int(v, p) },
                     classes = list(top.getValue("classes"), "classes", ::classInfo),
                     classQuests = classQuests(top.getValue("classQuests"), attributes),
+                    economyHash = hash(top.getValue("economyHash"), "economyHash"),
                 )
             checkCounts(top.getValue("counts"), content)
             checkHash(top, content.contentHash)
@@ -249,6 +250,13 @@ object QuestContentLoader {
         private fun text(value: JsonValue, path: String): String =
             (value as? JsonString ?: fail(path, "must be text")).value
 
+        /** 64 lower-case hex digits: a SHA-256 written by the generator. */
+        private fun hash(value: JsonValue, path: String): String =
+            text(value, path).also {
+                if (it.length != SHA256_HEX || !it.all { c -> c in '0'..'9' || c in 'a'..'f' })
+                    fail(path, "must be a SHA-256 in hex")
+            }
+
         private fun int(value: JsonValue, path: String): Int {
             val d = (value as? JsonNumber ?: fail(path, "must be a number")).value
             if (d != Math.floor(d) || d < Int.MIN_VALUE || d > Int.MAX_VALUE)
@@ -265,6 +273,7 @@ object QuestContentLoader {
     }
 
     private const val MAX_TIER = 3
+    private const val SHA256_HEX = 64
     private val TOP =
         setOf(
             "schemaVersion",
@@ -276,6 +285,7 @@ object QuestContentLoader {
             "stageLevels",
             "classes",
             "classQuests",
+            "economyHash",
         )
     private val HAND = setOf("freeRerolls", "rerollCost", "classAttrs", "templates")
     private val TEMPLATE = setOf("id", "attr", "tier", "name", "desc", "verify", "xp")

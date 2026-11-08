@@ -1,6 +1,6 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. Design only: nothing here is built yet. It covers WP6 of
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a is built (its status is under WP6a, section 6); the rest is design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
 Inputs: `ECONOMY_SPEC.md` (sections 2, 11, 15-17, 20, 21), `QUESTS_SPEC.md`, `ECONOMY_NATIVE_PLAN.md` (WP1-WP8, defects),
@@ -436,6 +436,35 @@ Bridge: new plugin and capability `economy.shadow.v1`; NativeApi bump (the owner
 (`writes: []`, `mutationsGate: "no native writes"`); `DEMO_MODE.md` and the demo `OFF` list; an ADR "Economy shadow mode"
 recording A10 compliance; MIGRATION.md entry. Page change: yes (three new segments, one Settings card).
 Decisions: O-2, O-5.
+
+**Status: built** (Native API 106, owner decisions O-1 to O-6 at their recommended defaults). What exists:
+- Page: `05-shadow-boot.js`, `50-native-shadow-points.js` (32 entry points of table 1.2 and three whole-save replacements),
+  `50-native-shadow.js`; the switch "Native economy check (beta)" (`nativeShadow`, Settings, Data & advanced, off by default, bound in
+  native Settings) with a status line from `summary()`; `NativeShadow` in the demo's `OFF` list; module map regenerated.
+- Native: `core/shadow` (`ShadowLimits`, `ShadowKeys`, `ShadowMessages`, `ShadowEnvelopeJson`, `ShadowMirror`, `TouchPaths`,
+  `ShadowRedactor`, `ShadowLedger`, `ShadowLedgerJson`, `ShadowSession`), `app/shadow/ShadowWorker` and `ShadowRing`,
+  `bridge/web/NativeShadowPlugin.kt` (handshake, configure, base, observe, summary, clear). Compares nothing: each applied envelope
+  records its kind's touched fields (and, under `between`, what changed since the last action) in the ring, coalesced by kind and paths.
+- Fingerprint: `quest-content.json` schema 2 carries `economyHash` (SHA-256 of `{eco: ECO, rules: DEFAULT_RULES, durations:
+  ECO_DURATION_RULES}`) inside the hashed content, so `contentHash` alone is the fingerprint; the page computes it with `crypto.subtle`.
+- Tests: `tests/native-shadow.test.js` (31 checks), `tests/native-shadow-transparent.test.js` (economy 880 cases with native answering,
+  rejecting and throwing; quests 842 answering; board 1011 answering and throwing), Kotlin `ShadowEnvelopeJsonTest` (55 malformed
+  envelopes and the base and configure variants), `ShadowMirrorTest`, `ShadowSessionTest`, `ShadowReplayTest` (every stateful case of
+  the economy, quests, board and device-context goldens and a real save replayed through the transport, the copy equal after each),
+  `ShadowKeysTest` (page and native lists equal), `ShadowRingTest` (200 entries, 128 KB, atomic write, no word of any fixture save in the
+  ring file), `ShadowWorkerTest` (own thread, queue of 16, faults, write interval, Battery Saver), `ShadowPerfTest` (3 MB save).
+- Measured: a 3 MB save crosses in 16 base parts; envelopes stay under 3 KB; the page's main-thread cost per action at 3 MB is about
+  12 ms p50 and 15 ms p95 in desktop Chromium (a phone is slower: the 50 ms slow rule may turn the page side off on a very large save;
+  the owner's report will tell); native applies an envelope in under 4 ms p95 on the JVM.
+- Differences from the text above, with reasons: the boot hook is `05-shadow-boot.js`, not `12-`, because segments 06 to 12 are cut in
+  the middle of statements and 05 is the last place a statement can stand before the boot; every plugin method takes one `text` (the
+  message's JSON) so native reads it with `core/save`'s `JsonReader` and not through the bridge's `org.json`; a bare `save()` while an
+  async action waits and nothing else runs counts as that action's own (the Health sync saves in its `finally`), any other point marks
+  it interleaved; Battery Saver answers state `paused` and the page sends nothing until it configures again on the next return to the
+  app (no envelope is built for nothing); `env` is checked strictly only for `saves` in 6a, the other parts are kept for the kinds'
+  decoders of 6b-6d; `dhRest.create` (an object that exists only while the 3D table is open) is recorded as `save.other`, dev boosts as
+  edits between actions; the ring keeps the touch map entries already (6e adds the mismatch entries, the report, Copy report and
+  Clear's button); the page has no build label, so `page.build` is empty. Not run with the check on: the 40 `sim` seeds (6f).
 
 ### WP6b. Economy actions compared (L, risk medium)
 

@@ -1,0 +1,198 @@
+/* Native economy check (beta), the page's half of WP6a (docs/specs/ECONOMY_SHADOW_PLAN.md 2.3-2.5, 3.3, 4). A stand-in for
+   NativeShadow (tests/native-shadow-mock.js) keeps a copy built exactly as native's mirror is, and after every action the copy must
+   equal the page's own economy keys. Covered: the switch (off by default, Data & advanced, "(beta)"), nothing at all while it is
+   off, without the plugin, without the capability, in a demo or with a different content fingerprint; the boot's base and its
+   boot.load and boot.decay actions; one envelope per outermost action with its toasts and save answers; nested points; a resync;
+   a new epoch after an import and a reset; an async Health sync, alone and interleaved; a too-large envelope; a page queue that
+   overflows; turning the switch off; the fingerprint equal to quest-content.json's contentHash; and the cost on a 3 MB save.
+   Run: NODE_PATH=$(npm root -g) node tests/native-shadow.test.js [built-page.html] */
+'use strict';
+const fs = require('fs'), path = require('path');
+const { chromium } = require('playwright');
+const mock = require('./native-shadow-mock.js');
+const file = require('./current-page')(process.argv[2]);
+const CONTENT = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'quest-content.json'), 'utf8'));
+const SAVE = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'established.json'), 'utf8')).state;
+let pass = 0, fail = 0;
+const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
+const PAGE_KEYS = '(' + mock.pageKeys.toString() + ')';
+
+async function open(browser, opts, save) {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 860 }, locale: 'en-GB', timezoneId: 'Europe/London' });
+  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(String(e)));
+  const s = save || { onboardingComplete: true, name: 'N', tutorialDone: true, classId: 'athlete', tipsSeen: {} };
+  await p.addInitScript('localStorage.setItem("lifemax_rpg_prototype_v1", ' + JSON.stringify(JSON.stringify(s)) + ');' + (opts && opts.demo ? 'localStorage.setItem("lm_demo_active","1");' : ''));
+  if (opts) await p.addInitScript(mock.script(Object.assign({ fingerprint: CONTENT.contentHash }, opts)));
+  await p.goto('file://' + file);
+  await p.waitForFunction(() => typeof window.LmaShadow === 'object' && typeof recordActivity === 'function', null, { timeout: 60000 });
+  await p.waitForTimeout(1200);
+  return p;
+}
+/* in the page: waits for the flush, then whether the mock's copy equals the page's keys (and which keys differ) */
+const same = p => p.evaluate(async pk => {
+  await new Promise(r => setTimeout(r, 60));
+  const page = eval(pk)(), m = window.__shadowMock.mirror, mir = m && m.keys;
+  const diff = mir ? [...new Set([...Object.keys(page), ...Object.keys(mir)])].filter(k => JSON.stringify(page[k]) !== JSON.stringify(mir[k])) : ['(no copy)'];
+  return { equal: !diff.length, diff };
+}, PAGE_KEYS);
+const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kind));
+
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    /* ---------- off: by default, and every way the check cannot run ---------- */
+    {
+      const p = await open(browser, { on: false });
+      const r = await p.evaluate(() => {
+        navigate('settings');
+        const t = document.getElementById('nativeShadowToggle'), card = document.getElementById('nativeShadowCard');
+        return { calls: window.__shadowMock.calls, wrapped: !!(save.__lmaShadow || toggleQuest.__lmaShadow || recordActivity.__lmaShadow), off: t && !t.checked && !t.disabled,
+          label: t && t.closest('.settingsline').textContent, cat: card && setCatOf(card), status: LmaShadow.status() };
+      });
+      ok('off by default: no call to native, no wrapper', r.calls.length === 0 && !r.wrapped && r.status.installed === 0, r);
+      ok('the switch is "Native economy check (beta)", off, in Data & advanced, with its help line', r.off && /Native economy check \(beta\)/.test(r.label) && /Nothing leaves the phone/.test(r.label) && r.cat === 'data', r);
+      await p.context().close();
+    }
+    for (const [name, opts] of [['without the plugin', { mode: 'absent' }], ['without the capability', { mode: 'nocap' }], ['when native was built from other rules (an OTA page)', { mode: 'stale' }], ['in a demo', { demo: true }]]) {
+      const p = await open(browser, opts);
+      const r = await p.evaluate(() => { toggleQuest(state.quests[0].id, true); return { wrapped: !!save.__lmaShadow, calls: window.__shadowMock.calls, env: window.__shadowMock.envelopes.length, status: LmaShadow.status() } });
+      ok('nothing is wrapped or sent ' + name, !r.wrapped && r.env === 0 && r.status.installed === 0 && !r.status.live && !r.calls.includes('base'), r);
+      await p.context().close();
+    }
+
+    /* ---------- on: the boot, the actions, the copy ---------- */
+    const p = await open(browser, {}, SAVE);
+    {
+      const r = await p.evaluate(async () => ({ fp: await LmaShadow.fingerprint(), status: LmaShadow.status(), calls: window.__shadowMock.calls.slice(), bases: window.__shadowMock.bases, config: window.__shadowMock.config,
+        order: save.__lmaShadow && save.__lmaShadow !== save.__lmaShadow.__lmaShadow }));
+      ok('the page computes the same fingerprint as quest-content.json (contentHash)', r.fp === CONTENT.contentHash, r.fp);
+      ok('handshake, configure, then one base before anything else', r.calls.slice(0, 3).join() === 'handshake,configure,base' && r.bases.length === 1 && r.config.enabled === true && r.config.page.fingerprint === CONTENT.contentHash, r.calls);
+      ok('the boot is two actions: boot.load then boot.decay', (await kinds(p)).slice(0, 2).join() === 'boot.load,boot.decay', await kinds(p));
+      ok('the save wrapper is outermost, around the page\'s own save wrappers', r.order && r.status.installed > 30);
+    }
+    {
+      const r = await p.evaluate(() => {
+        const n = window.__shadowMock.envelopes.length;
+        const q = state.quests.find(x => !isQuestDone(x));
+        toggleQuest(q.id, true);
+        return { n, q: q.id };
+      });
+      const s = await same(p), e = await p.evaluate(() => window.__shadowMock.envelopes.slice(-1)[0]);
+      ok('what the boot\'s drawing changed after decay arrives as the first action\'s before-delta (the touch map\'s "between")', Object.keys(e.before.set).length + Object.keys(e.before.rec).length > 0, e.before);
+      ok('a quest toggle is one envelope, quest.toggle, with its toast and its save answer', e.kind === 'quest.toggle' && e.toasts.some(t => /Quest complete/.test(t)) && e.env.saves.length >= 1 && e.env.saves.every(x => x.ok === true) && e.args[0] === r.q, e);
+      ok('the copy still equals the page', s.equal, s.diff);
+    }
+    {
+      const before = (await kinds(p)).length;
+      await p.evaluate(() => recordActivity({ type: Object.keys(rules)[0], duration: 30, quality: 3, notes: 'A private note about my morning', date: new Date().toISOString() }));
+      const k = (await kinds(p)).slice(before), s = await same(p);
+      ok('a Log is one envelope (log.record): its inner save() is part of it', k.join() === 'log.record', k);
+      ok('the copy still equals the page after a Log', s.equal, s.diff);
+      await p.evaluate(() => { save(); });
+      ok('a bare save() is save.other', (await kinds(p)).slice(-1)[0] === 'save.other');
+      await p.evaluate(() => { ecoTakeRest(); recordMoneyTransaction && 0; });
+      const s2 = await same(p);
+      ok('rest.take and the copy after it', (await kinds(p)).slice(-1)[0] === 'rest.take' && s2.equal, s2.diff);
+    }
+    {
+      // native asks for a resync: the next action is preceded by a base, and the copy is whole again
+      await p.evaluate(() => { window.__shadowMock.opts.resyncAt = [window.__shadowMock.envelopes.length + 1] });
+      await p.evaluate(() => toggleQuest(state.quests[1].id, true));
+      await p.waitForTimeout(80);
+      const bases = await p.evaluate(() => window.__shadowMock.bases.length);
+      await p.evaluate(() => toggleQuest(state.quests[1].id, false));
+      const r = await p.evaluate(() => ({ bases: window.__shadowMock.bases.length, refused: window.__shadowMock.refused }));
+      const s = await same(p);
+      ok('after a resync the page sends a base before its next envelope, and the copy is equal', r.bases === bases + 1 && s.equal, { r, s });
+    }
+    {
+      // an import (applyBackup) and a reset: a new epoch, a new base
+      const e0 = await p.evaluate(() => LmaShadow.status().epoch);
+      await p.evaluate(async () => { window.confirm = () => true; window.lmaLeaveNative = async () => { }; backupBeforeReplacing = async () => true;
+        await applyBackup({ app: 'LifeMax', state: Object.assign(freshState(), { name: 'Imported', onboardingComplete: true }) }); });
+      await p.evaluate(() => toggleQuest(state.quests[0].id, true));
+      const r = await p.evaluate(() => ({ epoch: LmaShadow.status().epoch, last: window.__shadowMock.bases.slice(-1)[0], kinds: window.__shadowMock.envelopes.slice(-2).map(e => e.kind) }));
+      const s = await same(p);
+      ok('an import raises the epoch, its own saves are not actions, and a base follows', r.epoch === e0 + 1 && r.last.epoch === e0 + 1 && !r.kinds.includes('save.other') && s.equal, { r, s });
+      await p.evaluate(async () => { await resetDemo(); });
+      await p.evaluate(() => toggleQuest(state.quests[0].id, true));
+      const r2 = await p.evaluate(() => LmaShadow.status().epoch), s2 = await same(p);
+      ok('a reset raises it again', r2 === e0 + 2 && s2.equal, s2.diff);
+    }
+    {
+      // Health sync: async, its plugin answers recorded; then one with a Log in the middle (interleaved)
+      await p.evaluate(() => {
+        let slow = null;
+        window.__health = { status: async () => ({ sdk: 'available', granted: ['exercise', 'steps', 'sleep', 'weight'] }), readExercise: async () => { if (slow) await slow; return { sessions: [] } },
+          readSteps: async () => ({ days: [{ day: getToday(), count: 9000 }] }), readSleep: async () => ({ sessions: [] }), readWeight: async () => ({}) };
+        window.__slow = on => { slow = on ? new Promise(r => (window.__release = r)) : null };
+        const real = lmaPlugin; lmaPlugin = function (n) { return n === 'HealthSync' ? window.__health : real.apply(this, arguments) };
+        const H = lmaHealthCfg(); H.on = true; H.ex = H.steps = H.sleep = H.wt = true;
+      });
+      await p.evaluate(() => lmaHealthSync(true));
+      await p.waitForTimeout(80);
+      const e = await p.evaluate(() => window.__shadowMock.envelopes.filter(x => x.kind === 'health.sync').slice(-1)[0]);
+      ok('a Health sync is one health.sync envelope with the plugin\'s answers in env.health, its own save inside it', !!e && e.env.health && e.env.health.status && e.env.health.status.sdk === 'available' && Array.isArray(e.env.health.steps) && Array.isArray(e.env.health.exercise) && e.env.health.now >= e.t0 && !e.flags.includes('interleaved') && e.env.saves.length >= 1, e);
+      await p.evaluate(async () => { __slow(true); const sync = lmaHealthSync(true); await new Promise(r => setTimeout(r, 20)); toggleQuest(state.quests[2].id, true); __release(); await sync; });
+      await p.waitForTimeout(80);
+      const last = await p.evaluate(() => window.__shadowMock.envelopes.slice(-2).map(x => [x.kind, x.flags]));
+      const s = await same(p);
+      ok('an action inside a pending sync marks the sync interleaved, and the copy stays equal', last.some(([k, f]) => k === 'health.sync' && f.includes('interleaved')) && last.some(([k]) => k === 'quest.toggle') && s.equal, { last, s });
+    }
+    {
+      // too large: a 300 KB note makes the envelope too large to send; the next action brings a base
+      const b0 = await p.evaluate(() => window.__shadowMock.bases.length);
+      await p.evaluate(() => recordActivity({ type: Object.keys(rules)[0], duration: 20, quality: 3, notes: 'x'.repeat(300 * 1024), date: new Date().toISOString() }));
+      await p.waitForTimeout(60);
+      const st = await p.evaluate(() => LmaShadow.status().stats.skipped);
+      await p.evaluate(() => save()); // an action that leaves the big record where it is
+      const s = await same(p), b1 = await p.evaluate(() => window.__shadowMock.bases.length);
+      ok('an envelope over 256 KB is not sent (skipped.size); a base comes next and the copy is equal', st.size === 1 && b1 === b0 + 1 && s.equal, { st, b0, b1, s });
+    }
+    {
+      // twenty actions in one task: the page's queue holds sixteen, then starts again from a base
+      await p.evaluate(() => { for (let i = 0; i < 20; i++) save(); });
+      const s = await same(p), st = await p.evaluate(() => LmaShadow.status().stats.skipped);
+      ok('a queue overflow drops what waits, counts skipped.queue and resyncs', st.queue >= 1 && s.equal, { st, s });
+    }
+    {
+      // throws are the page's, untouched
+      const r = await p.evaluate(() => { try { toggleQuest('no-such-quest', true); return 'no throw' } catch (e) { return 'threw ' + e.message } });
+      const direct = await p.evaluate(() => { try { toggleQuest.__lmaShadow('no-such-quest', true); return 'no throw' } catch (e) { return 'threw ' + e.message } });
+      ok('a wrapped function answers or throws exactly as the original', r === direct, { r, direct });
+    }
+    {
+      // the switch off: wrappers go, native is told
+      await p.evaluate(async () => { await setNativeShadowEnabled(false) });
+      const r = await p.evaluate(() => { const n = window.__shadowMock.envelopes.length; toggleQuest(state.quests[0].id, true); return { wrapped: !!save.__lmaShadow, n, after: window.__shadowMock.envelopes.length, config: window.__shadowMock.config, pref: lmaLoad().nativeShadow } });
+      await p.waitForTimeout(60);
+      ok('turning it off removes every wrapper, tells native and sends nothing more', !r.wrapped && r.after === r.n && r.config.enabled === false && r.pref === false, r);
+      ok('the page threw nothing while the check ran', !p.errors.length, p.errors.slice(0, 3));
+    }
+    await p.context().close();
+
+    /* ---------- the cost on a 3 MB save ---------- */
+    {
+      const big = JSON.parse(JSON.stringify(SAVE)), recs = SAVE.activities;
+      const per = JSON.stringify(recs).length / recs.length, n = Math.ceil(3 * 1024 * 1024 / per);
+      big.activities = Array.from({ length: n }, (_, i) => Object.assign({}, recs[i % recs.length], { id: 'big-' + i }));
+      const q = await open(browser, {}, big);
+      const r = await q.evaluate(async () => {
+        const costs = [];
+        for (let i = 0; i < 20; i++) { const t = performance.now(); toggleQuest(state.quests[i % state.quests.length].id, i % 2 === 0); costs.push(performance.now() - t); await new Promise(r => setTimeout(r, 0)); }
+        await new Promise(r => setTimeout(r, 100));
+        const st = LmaShadow.status(), c = st.stats.costs.slice(-20).sort((a, b) => a - b);
+        return { bytes: JSON.stringify(state).length, bases: window.__shadowMock.bases, p50: c[9], p95: c[18], sizes: window.__shadowMock.envelopes.slice(-20).map(e => e.chars), live: st.live };
+      });
+      const s = await same(q);
+      console.log('    3 MB save: ' + (r.bytes / 1048576).toFixed(2) + ' MB, base in ' + r.bases[0].parts + ' parts, shadow cost per action p50 ' + r.p50.toFixed(1) + ' ms p95 ' + r.p95.toFixed(1) + ' ms, envelopes up to ' + Math.max(...r.sizes) + ' chars');
+      ok('a 3 MB save crosses as one base in parts under the 32-part limit', r.bytes > 3 * 1024 * 1024 && r.bases.length === 1 && r.bases[0].parts <= 32 && r.live, r.bases);
+      ok('each action\'s envelope stays small on a 3 MB save (under 20 KB)', Math.max(...r.sizes) < 20 * 1024, r.sizes);
+      ok('the shadow\'s main-thread cost per action stays under the 50 ms hard limit at 3 MB (p95)', r.p95 < 50 && r.live, r);
+      ok('and the copy equals the page', s.equal, s.diff);
+      await q.context().close();
+    }
+  } finally { await browser.close() }
+  console.log(pass + ' passed, ' + fail + ' failed');
+  process.exit(fail ? 1 : 0);
+})().catch(e => { console.log('FAIL ' + String((e && e.stack) || e)); process.exit(1) });

@@ -422,6 +422,12 @@
  "LMA_SCRUB_GAINS": [
   "src/runtime/segments/42-scrubnav.js"
  ],
+ "LMA_SHADOW_BOOT": [
+  "src/runtime/segments/05-shadow-boot.js"
+ ],
+ "LMA_SHADOW_POINTS": [
+  "src/runtime/segments/50-native-shadow-points.js"
+ ],
  "LMA_SNAPSHOTS": [
   "src/runtime/segments/35-android-upkeep.js"
  ],
@@ -7834,6 +7840,9 @@
  "window.LifeMaxVoiceG5": [
   "src/runtime/segments/50-voice-gen5.js"
  ],
+ "window.LmaShadow": [
+  "src/runtime/segments/50-native-shadow.js"
+ ],
  "window.NativeAudioDock": [
   "src/runtime/segments/50-native-audio.js"
  ],
@@ -7963,6 +7972,9 @@
  "window.applyBackup": [
   "src/runtime/segments/50-native-cat-world.js"
  ],
+ "window.applyDecay": [
+  "src/runtime/segments/05-shadow-boot.js"
+ ],
  "window.closePacman": [
   "src/runtime/segments/20-runtime.js"
  ],
@@ -7985,6 +7997,9 @@
  "window.lmaBack": [
   "src/runtime/segments/34-navigation.js"
  ],
+ "window.lmaPlugin": [
+  "src/runtime/segments/50-native-shadow.js"
+ ],
  "window.lmaResetSwipeTune": [
   "src/runtime/segments/50-native-swipe.js"
  ],
@@ -7993,6 +8008,9 @@
  ],
  "window.lmaSetSwipeTune": [
   "src/runtime/segments/50-native-swipe.js"
+ ],
+ "window.load": [
+  "src/runtime/segments/05-shadow-boot.js"
  ],
  "window.openNativeCash": [
   "src/runtime/segments/50-native-cash.js"
@@ -8033,6 +8051,9 @@
  "window.setNativeSettingsEnabled": [
   "src/runtime/segments/50-native-settings.js"
  ],
+ "window.setNativeShadowEnabled": [
+  "src/runtime/segments/50-native-shadow.js"
+ ],
  "window.setTabTimingToast": [
   "src/runtime/segments/50-native-overview.js"
  ],
@@ -8046,6 +8067,7 @@
   "src/runtime/segments/50-native-pet-social.js"
  ],
  "window.writeSave": [
+  "src/runtime/segments/05-shadow-boot.js",
   "src/runtime/segments/50-native-pet.js",
   "src/runtime/segments/50-native-pet-panels.js",
   "src/runtime/segments/50-native-pet-play.js",

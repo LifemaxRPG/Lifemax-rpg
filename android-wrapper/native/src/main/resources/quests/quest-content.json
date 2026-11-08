@@ -1,6 +1,6 @@
 {
- "schemaVersion":1,
- "contentHash":"78a9d35543bc3bee966c02c3a38bdc72214ab9c0db01a0b06ce808137e0e8270",
+ "schemaVersion":2,
+ "contentHash":"1ca4fec828500af20376651cd224dd9935fe5b7582132ac7c4641626528f000a",
  "counts":{"templates":53,"defaultQuests":6,"classes":6,"contentClasses":4,"classQuests":131},
  "attributes":["physique","endurance","intelligence","business","social","discipline","adventure","wellbeing"],
  "hand":{
@@ -220,5 +220,6 @@
    {"name":"The 10k Journey","desc":"Complete a 10km effort. Plan rest stops, carry ample water, and tell a friend.","cadence":"epic","xp":150,"kind":"milestone","attribute":"endurance","stage":5,"id":"cc_explorer_34"},
    {"name":"Master Planner","desc":"Design a full-day safe itinerary including breaks and routes. Execute at least half of it.","cadence":"epic","xp":150,"kind":"milestone","attribute":"adventure","stage":5,"id":"cc_explorer_35"}
   ]
- }
+ },
+ "economyHash":"1e525459726233417f68c130038fe3bf4377f352f50f9e651ebdbca1f7b0fbd1"
 }

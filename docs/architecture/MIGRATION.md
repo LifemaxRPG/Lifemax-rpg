@@ -501,3 +501,23 @@ Native behaviour, web authority, behind "Native Cat (beta)". The owner's report:
 - **Review fixes.** See PET_TAB_INVENTORY.md section 17: places kept by a cat that stays, a curled pair kept through `bind` and a host start, the spoon's front cat is the slot drawn in front on furniture, grooming told once, no quiet after a kitten's shadowing, the page's toasts said only once a moment is stored (`brain/SocialFixesTest`, `host/CurledUpRestartTest`, `native-pet-social.test.js` 36 checks); the curled-up screenshot re-recorded.
 - **Rollout.** Rides "Native Cat (beta)". Rollback: drop `pet.social.v1` from both plugins (the page stops sending `met`; native keeps the moments in the room and tells the page nothing).
 - **Evidence.** `native-pet-social.test.js` (34 checks: gating, every malformed shape refused, a differential test of each kind against the page's own director end functions with the director's coin forced, the daily cap, a standoff's pecking order, stored once, a refused save taken back, a repeat after a reload, the Together card's counts and last line, the Overview cards); unit tests `brain/SocialDayTest` (rates by friendship, a kitten chases and shadows, a live 120 Hz day apart except in a moment with every activity within its longest and no cat idle 20 s, a restart never keeps a moment half done but keeps two cats curled up, a meal mid-chase ends it and nobody waits, hungry cats share nothing, the catch-up's moments told and dated in the gap), `host/SocialHostTest` (the real host against FakePage: a whole day of friends counted by the page within the cap, the first meeting once, an older page told nothing, a refused save retried and stored once), `world/SocialFixtureTest` (FakePage records as the real page's recorded outcomes), `body/PairPosesTest` (the table is `lab.json`'s). New screenshots `PairPosesScreenshotTest` (three); no existing screenshot changed.
+
+## Economy shadow mode, WP6a: transport and the touch map (Native API 106)
+
+Native logic, web authority, behind "Native economy check (beta)" (Settings, Data & advanced, off by default). The first step of
+docs/specs/ECONOMY_SHADOW_PLAN.md: the page tells native, for each outermost economy action, what the economy's save keys were
+just before and just after, and native keeps a copy in memory and records which fields each action touched. Nothing is compared yet.
+
+| Part | Where | What |
+|---|---|---|
+| Capability | `economy.shadow.v1` | advertised by `NativeShadow` (a plain plugin); the page installs nothing without it, without the switch, in a demo, or when its content fingerprint (`contentHash` of quest-content.json, now covering `economyHash`) differs from native's |
+| Page | `05-shadow-boot.js`, `50-native-shadow-points.js`, `50-native-shadow.js` | the boot's stored text, post-load and post-decay states (sent as the base, `boot.load` and `boot.decay`); 32 wrapped entry points, outermost only; deltas key by key and record by record; strict text encoder; size caps; a queue of 16 posted with `setTimeout(0)`; epoch on import, reset and delete-all |
+| Native | `core/shadow` (pure), `app/shadow/ShadowWorker`, `app/shadow/ShadowRing`, `bridge/web/NativeShadowPlugin.kt` | strict decoder, the copy (`ShadowMirror`), the touch map (`TouchPaths`, redacted by `ShadowRedactor`), the ledger and its ring file, self-disable, Battery Saver pause |
+| Content | `tools/gen_quest_content.js`, `core/quests/QuestContent` | quest-content.json schema 2 adds `economyHash` (ECO, DEFAULT_RULES, the duration rules) inside the hashed content |
+
+- **Rollout.** The switch can ship now: the owner's phone produces the touch map and counts while 6b-6d land. Rollback: drop
+  `economy.shadow.v1` from the handshake (the page then wraps nothing).
+- **Evidence.** `tests/native-shadow.test.js` (31 checks), `tests/native-shadow-transparent.test.js` (the economy, quests and board
+  goldens unchanged with the check on and native answering, rejecting or throwing), Kotlin `core/shadow` and `app/shadow` tests
+  (39: decoder strictness with 55 malformed envelopes, mirror ordering, the golden cases replayed through the transport, ring bounds and
+  no fixture save's words in the ring file, the worker's thread, queue, faults and write interval, a 3 MB save).

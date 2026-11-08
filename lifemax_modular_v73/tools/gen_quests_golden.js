@@ -96,11 +96,12 @@ function pageRunner({ IN, OUT }) {
 }
 
 /* ---------- recording ---------- */
-async function openPage(browser, file, zone) {
+async function openPage(browser, file, zone, init) {
   const ctx = await browser.newContext({ viewport: { width: 412, height: 860 }, timezoneId: zone, locale: 'en-US' });
   const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(String(e)));
   await p.clock.install({ time: new Date(BOOT) });
   await p.addInitScript("localStorage.setItem('lifemax_rpg_prototype_v1', JSON.stringify({onboardingComplete:true,name:'N',tutorialDone:true,classId:'athlete'}));");
+  if (init) await p.addInitScript(init); // a test's extra set-up (tests/native-shadow-transparent.test.js); the generator passes none
   await p.goto('file://' + file);
   await p.waitForFunction(() => typeof dhEnsure === 'function' && typeof dhReroll === 'function' && typeof ecoRestDay === 'function' && typeof luckToday === 'function', null, { timeout: 120000 });
   await p.clock.pauseAt(new Date('2026-10-28T12:00:00.000Z')); // the boot's own timers have run; from here time moves only when a case moves it
@@ -121,11 +122,11 @@ async function record(p, c) {
 }
 
 /* Records every case in the built page `file`; resolves to the list of cases. */
-async function generate(file, log = () => { }) {
+async function generate(file, log = () => { }, init) {
   const { chromium } = require('playwright');
   const cases = defineCases(), browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   try {
-    const pages = {}, out = [], page = async zone => pages[zone] || (pages[zone] = await openPage(browser, file, zone));
+    const pages = {}, out = [], page = async zone => pages[zone] || (pages[zone] = await openPage(browser, file, zone, init));
     for (const c of cases) {
       out.push(JSON.parse(JSON.stringify(await record(await page(c.zone), c)))); // as the file will hold it
       if (out.length % 200 === 0) log(out.length + ' of ' + cases.length + ' cases recorded');

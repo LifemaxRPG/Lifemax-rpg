@@ -250,6 +250,13 @@ One row per rule in `rules` (nine by default: reading, business, strength, runni
 
 Five rows with static text and buttons; the privacy note says data is in "this browser" and is "not a secure account system". There are no user accounts anywhere in the app; "Account settings" belongs to the Money tab (`views/money.html:6`).
 
+### 3.24.1 Native economy check (`#nativeShadowCard`, `50-native-shadow.js`)
+
+One switch, "Native economy check (beta)" (`nativeShadow` in `lifemax_android_prefs_v1`, off by default, disabled without the
+`NativeShadow` plugin and in a demo; bound in native Settings' BOUND list), its help line, and a status line filled from
+`NativeShadow.summary()`: the actions followed since a date, or paused (Battery Saver, the matching app update) or stopped (errors, a
+save too large). Copy report and Clear are WP6e (docs/specs/ECONOMY_SHADOW_PLAN.md 3.3).
+
 ### 3.25 Transient feedback
 
 Toasts from almost every action (`toast`, `04-runtime.js:48`, 2.2 s). Haptic "double" when a strength is chosen. One sound when the quest volume changes (`50-sfx.js:30`). No celebrations or animations are started from Settings directly, but `save()` can start badge toasts (`05-runtime.js:29`) and quest auto-verification.

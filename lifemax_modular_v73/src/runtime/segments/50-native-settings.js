@@ -38,6 +38,7 @@
     ["nativeJournal", "#nativeJournalToggle", PREFS],
     ["nativeAudio", "#nativeAudioToggle", PREFS],
     ["nativeSettings", "#nativeSettingsToggle", PREFS],
+    ["nativeShadow", "#nativeShadowToggle", PREFS],
     ["tabs.reset", "#tabsResetBtn", PREFS],
     ["swipe", "#lmaSwipeToggle", PREFS],
     ["nativeSwipe", "#nativeSwipeToggle", PREFS],

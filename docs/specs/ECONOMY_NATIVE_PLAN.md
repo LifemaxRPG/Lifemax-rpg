@@ -370,6 +370,9 @@ after every step.
 Tests: differential replay of at least the 40 sim seeds the page already runs, plus the real saves in `fixtures/saves`.
 Decision: yes, a human decides what mismatch rate blocks cutover (target zero).
 
+**Status:** designed in `ECONOMY_SHADOW_PLAN.md`; WP6a (transport, decoder, the touch map, the switch "Native economy check (beta)") is
+built (Native API 106); comparison is WP6b-WP6d.
+
 ### WP7. Life Director logic (L, outside this plan's scope)
 
 The award entry points are done (`LifeDirector.kt`). The engine (`engine.js`, `logic.js`, about 4,600 lines changed since the

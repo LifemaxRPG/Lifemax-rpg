@@ -11,7 +11,7 @@
   const on = D.on;
   const AMBER = "#f5a524";
   /* the native plugins a demo must not reach (they would act on the phone, or read or write outside the demo's own storage) */
-  const OFF = ["LocalNotifications", "HealthSync", "CalendarSync", "WidgetBridge", "BackupFolder", "DeviceBackup"];
+  const OFF = ["LocalNotifications", "HealthSync", "CalendarSync", "WidgetBridge", "BackupFolder", "DeviceBackup", "NativeShadow"];
   /* preferences copied INTO the demo when it starts, so it looks the way the owner's app looks (the real keys are only read) */
   const LOOK_KEYS = ["lifeMaxTheme", "lma_sfxvol", "lma_qfx", "lma_qdeal", "lma_qpack", "lma_gwr3d", "lma_g3dbg"];
   const WORDS = {

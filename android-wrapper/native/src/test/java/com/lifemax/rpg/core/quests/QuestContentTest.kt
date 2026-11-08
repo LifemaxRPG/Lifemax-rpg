@@ -243,8 +243,9 @@ class QuestContentTest {
             "classes[0].ready",
             rehash(swap("{\"id\":\"athlete\",\"ready\":true}", "{\"id\":\"athlete\",\"ready\":1}")),
         )
-        refusedAt("schemaVersion", rehash(swap("\"schemaVersion\":1", "\"schemaVersion\":2")))
-        refusedAt("schemaVersion", swap("\"schemaVersion\":1", "\"schemaVersion\":\"1\""))
+        refusedAt("schemaVersion", rehash(swap("\"schemaVersion\":2", "\"schemaVersion\":1")))
+        refusedAt("schemaVersion", swap("\"schemaVersion\":2", "\"schemaVersion\":\"2\""))
+        refusedAt("economyHash", rehash(swap("\"economyHash\":\"", "\"economyHash\":\"x")))
         refusedAt(
             "attributes",
             rehash(

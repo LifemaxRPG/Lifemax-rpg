@@ -1,0 +1,108 @@
+package com.lifemax.rpg.core.shadow
+
+/**
+ * Every number the economy shadow works within (ECONOMY_SHADOW_PLAN 2.4, 3.1 and the budgets of
+ * section 4). Each limit names what happens past it where it is enforced; nothing here is tuned by
+ * the device.
+ */
+object ShadowLimits {
+    /** The envelope protocol; a message with another `v` is answered `unsupported`. */
+    const val PROTOCOL = 1
+
+    /** The capability `NativeShadow.handshake()` advertises for this protocol. */
+    const val CAPABILITY = "economy.shadow.v1"
+
+    /**
+     * Largest envelope text accepted (2.4); a larger one is refused as [ShadowRefusal.TOO_LARGE].
+     */
+    const val MAX_ENVELOPE_CHARS = 256 * 1024
+
+    /** Largest `args` part of an envelope, as JSON text. */
+    const val MAX_ARGS_CHARS = 16 * 1024
+
+    /** Largest `env` part of an envelope, as JSON text. */
+    const val MAX_ENV_CHARS = 64 * 1024
+
+    /** Most toasts one action may report. */
+    const val MAX_TOASTS = 20
+
+    /** Longest toast text. */
+    const val MAX_TOAST_CHARS = 300
+
+    /** Most `writeSave()` outcomes one action may report. */
+    const val MAX_SAVES = 8
+
+    /** Most changed records in one `rec` delta; the page sends the whole key past it. */
+    const val MAX_REC_CHANGES = 256
+
+    /** Longest action kind name. */
+    const val MAX_KIND_CHARS = 40
+
+    /** Longest page session id. */
+    const val MAX_SID_CHARS = 40
+
+    /** Largest base part message (one slice of the base text, escaped inside its message). */
+    const val MAX_BASE_PART_CHARS = 256 * 1024
+
+    /** Most parts one base may come in (32 x 256 KB: the 8 MB transport limit). */
+    const val MAX_BASE_PARTS = 32
+
+    /**
+     * Largest base text native will hold (section 4, native memory: the tree is about six times the
+     * text). A larger save stops the check with the reason `tooLarge`; nothing is held.
+     */
+    const val MAX_HELD_CHARS = 4 * 1024 * 1024
+
+    /** Largest page build or fingerprint text in `configure`. */
+    const val MAX_LABEL_CHARS = 128
+
+    /**
+     * Internal errors within [ERROR_WINDOW_MS] that disable the check (section 4, self-disable).
+     */
+    const val ERRORS_BEFORE_DISABLE = 5
+
+    /** The window [ERRORS_BEFORE_DISABLE] is counted in: 24 hours. */
+    const val ERROR_WINDOW_MS = 24L * 60 * 60 * 1000
+
+    /** Resynchronisations within an hour past which the check disables itself (`resyncLoop`). */
+    const val RESYNCS_PER_HOUR = 4
+
+    /** One hour, the window of [RESYNCS_PER_HOUR]. */
+    const val HOUR_MS = 60L * 60 * 1000
+
+    /** Envelopes the worker's slowness is judged over (section 4: across 50 actions). */
+    const val SLOW_WINDOW = 50
+
+    /** The percentile of [SLOW_WINDOW] that must stay under [SLOW_P95_MS]. */
+    const val SLOW_PERCENTILE = 95
+
+    /** Worker time per envelope past which, at the 95th percentile, the check stops (`slow`). */
+    const val SLOW_P95_MS = 2_000L
+
+    /** Envelopes waiting for the worker; the newest past this is dropped (`skipped.queue`). */
+    const val QUEUE_CAPACITY = 16
+
+    /** Most entries the ring keeps (3.1); the oldest go first. */
+    const val RING_MAX_ENTRIES = 200
+
+    /** Largest ring file, in bytes of UTF-8 (3.1); the oldest entries go first to fit. */
+    const val RING_MAX_BYTES = 128 * 1024
+
+    /** Shortest time between two ring writes while it changes (3.1). */
+    const val RING_WRITE_INTERVAL_MS = 30_000L
+
+    /** Most field paths one ring entry names; the rest are counted as `+N more` (1.3). */
+    const val MAX_PATHS_PER_ENTRY = 12
+
+    /** Most action kinds counted apart; later new kinds are counted together as `other`. */
+    const val MAX_KINDS = 64
+
+    /** Times in the ring are kept to the minute (3.1). */
+    const val MINUTE_MS = 60_000L
+
+    /** Hex digits of a salted hash shown for a redacted name (3.2). */
+    const val HASH_DIGITS = 6
+
+    /** Bytes of the ring's per-install salt. */
+    const val SALT_BYTES = 16
+}

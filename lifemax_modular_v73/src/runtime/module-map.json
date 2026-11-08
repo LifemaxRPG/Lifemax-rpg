@@ -270,6 +270,21 @@
    ]
   },
   {
+   "file": "src/runtime/segments/05-shadow-boot.js",
+   "bytes": 4287,
+   "statement_count": 1,
+   "tags": [
+    "shadow",
+    "boot"
+   ],
+   "symbols": [
+    "LMA_SHADOW_BOOT",
+    "window.writeSave",
+    "window.load",
+    "window.applyDecay"
+   ]
+  },
+  {
    "file": "src/runtime/segments/06-runtime.js",
    "bytes": 34035,
    "statement_count": 43,
@@ -3250,7 +3265,7 @@
   },
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
-   "bytes": 2602,
+   "bytes": 2625,
    "statement_count": 6,
    "tags": [
     "settings"
@@ -3897,7 +3912,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 31579,
+   "bytes": 31631,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3921,7 +3936,7 @@
   },
   {
    "file": "src/runtime/segments/50-demo-mode.js",
-   "bytes": 9144,
+   "bytes": 9160,
    "statement_count": 1,
    "tags": [
     "demo",
@@ -3931,6 +3946,33 @@
     "window.lmDemoAskStart",
     "window.lmDemoAskReturn",
     "window.confirm"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-shadow-points.js",
+   "bytes": 4489,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "shadow",
+    "points"
+   ],
+   "symbols": [
+    "LMA_SHADOW_POINTS"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-shadow.js",
+   "bytes": 20338,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "shadow"
+   ],
+   "symbols": [
+    "window.lmaPlugin",
+    "window.setNativeShadowEnabled",
+    "window.LmaShadow"
    ]
   },
   {

@@ -22,6 +22,12 @@ data class QuestContent(
     val classes: List<ClassInfo>,
     /** `CLASS_CONTENT[class].quests`, in the page's order, for each class that has content. */
     val classQuests: Map<String, List<ContentQuest>>,
+    /**
+     * SHA-256 (hex) of the page's economy constants (`ECO`, `DEFAULT_RULES`, the duration rules),
+     * part of the hashed content: [contentHash] is therefore the fingerprint the economy check
+     * compares with the page's own (ECONOMY_SHADOW_PLAN 2.4).
+     */
+    val economyHash: String,
 ) {
     /** The templates of one attribute, in library order. */
     fun templatesOf(attribute: String): List<HandTemplate> =
@@ -32,7 +38,7 @@ data class QuestContent(
 
     companion object {
         /** The only file shape this build reads. */
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
     }
 }
 
