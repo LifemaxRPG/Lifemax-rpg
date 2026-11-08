@@ -61,6 +61,6 @@ class LifeDirectorTimerMealScreenshotTest {
     /** The same timer paused: the ring in amber without its glow, Resume. */
     @Test fun timerPaused() = snap("sheet-timer-paused", OpenSheet("timer", ""))
 
-    /** Dinner's sheet with Smart Diet's recipe, its calories and state, and Open meal menu. */
+    /** Dinner inside the dial: recipe, scheduled time, calories, state and Open meal menu. */
     @Test fun meal() = snap("sheet-meal", OpenSheet("meal", "1793210400"))
 }

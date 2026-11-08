@@ -18,6 +18,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.lifemax.rpg.app.shell.ChromeHost
 import com.lifemax.rpg.app.shell.NativeScreens
+import com.lifemax.rpg.app.shell.OverviewLaunch
 import com.lifemax.rpg.app.shell.TabTiming
 import com.lifemax.rpg.app.shell.audio.AudioDockHost
 import com.lifemax.rpg.app.shell.swipe.SettleOutcome
@@ -93,6 +94,17 @@ abstract class ComposeTabPlugin : Plugin() {
      * at a time, in the order sent.
      */
     protected fun sendCommand(command: String, payload: JSONObject, requestId: String) {
+        if (tabId == "dashboard" && command == "plan") {
+            view?.let {
+                OverviewLaunch.begin(
+                    it,
+                    "life-director",
+                    topInsetDp,
+                    bottomInsetDp,
+                    overviewReducedMotion,
+                )
+            }
+        }
         notifyListeners(
             "command",
             JSObject().put("command", command).put("payload", payload).put("requestId", requestId),
@@ -101,6 +113,7 @@ abstract class ComposeTabPlugin : Plugin() {
 
     /** Survives the view being rebuilt; cleared with the plugin. */
     protected val store = ViewModelStore()
+    private var overviewReducedMotion = false
 
     /** Whether the screen is showing. A hidden screen runs nothing continuous (A24). */
     protected var visible by mutableStateOf(false)
@@ -141,6 +154,8 @@ abstract class ComposeTabPlugin : Plugin() {
                 else ->
                     try {
                         val cost = PrimeCost.start()
+                        overviewReducedMotion =
+                            data.optJSONObject("motion")?.optBoolean("reduced", false) ?: false
                         accept(data, true)
                         val screen = createView()
                         // the window's, not the screen's: the answer comes even if the screen is
@@ -167,6 +182,8 @@ abstract class ComposeTabPlugin : Plugin() {
         activity.runOnUiThread {
             TabTiming.opened()
             try {
+                overviewReducedMotion =
+                    data.optJSONObject("motion")?.optBoolean("reduced", false) ?: false
                 accept(data, true)
                 val screen = view ?: createView()
                 // TalkBack announces the screen by name as it appears: the bar's label for the tab
@@ -178,6 +195,7 @@ abstract class ComposeTabPlugin : Plugin() {
                 screen.bringToFront()
                 visible = true
                 showChrome(call.getObject("navScene"), opening = true)
+                OverviewLaunch.arrived(screen, tabId)
                 TabTiming.attached(screen, tabId)
                 call.resolve()
             } catch (e: Exception) {
@@ -196,6 +214,8 @@ abstract class ComposeTabPlugin : Plugin() {
                 // overtook it: it would make the hidden tab the owner of the bars
                 if (visible) {
                     try {
+                        overviewReducedMotion =
+                            data.optJSONObject("motion")?.optBoolean("reduced", false) ?: false
                         accept(data, false)
                         showChrome(call.getObject("navScene"))
                     } finally {
@@ -283,6 +303,11 @@ abstract class ComposeTabPlugin : Plugin() {
         sent?.trim()?.takeIf { it.isNotEmpty() } ?: TabSwipe.label(tabId) ?: tabId
 
     private fun emit(action: String, id: String) {
+        if (tabId == "dashboard" && action == "navigate") {
+            view?.let {
+                OverviewLaunch.begin(it, id, topInsetDp, bottomInsetDp, overviewReducedMotion)
+            }
+        }
         val event = JSObject()
         if (action == "navigate") {
             event.put("view", id)

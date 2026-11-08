@@ -34,6 +34,7 @@ internal object NativeScreens : WebViewListener() {
     }
 
     override fun onPageStarted(webView: WebView?) {
+        OverviewLaunch.cancel()
         TabSwipe.pageStarted()
         hosts.values.toList().forEach { it() }
     }

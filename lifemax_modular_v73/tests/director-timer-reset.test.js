@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert/strict');
+const s=fs.readFileSync(path.join(__dirname,'../src/features/life-director/logic.js'),'utf8');
+const a=s.indexOf('    timer({ act, id, start }) {'),b=s.indexOf('    /* Something came up:',a);
+let writes=0,allow=true;
+const ctx={ST:{ui:{focus:{id:'walk',start:100,paused:null,pausedMs:90,plannedMs:900000}}},Date:{now:()=>1000},persist:()=>{writes++;return allow;},render:()=>{},saved:()=>({ok:true}),recorded:()=>({ok:true})};
+const timer=vm.runInNewContext('({'+s.slice(a,b)+'}).timer',ctx);
+timer({act:'reset',id:'walk',start:100});
+assert.equal(ctx.ST.ui.focus.start,1000);assert.equal(ctx.ST.ui.focus.paused,1000);assert.equal(ctx.ST.ui.focus.pausedMs,0);assert.equal(ctx.ST.ui.focus.plannedMs,900000);
+timer({act:'reset',id:'walk',start:100});assert.equal(writes,1);
+timer({act:'reset',id:'other',start:1000});assert.equal(writes,1);
+const old=ctx.ST.ui.focus;allow=false;assert.equal(timer({act:'reset',id:'walk',start:1000}).ok,false);assert.equal(ctx.ST.ui.focus,old);
+allow=true;timer({act:'reset',id:'walk',start:1000});assert.equal(ctx.ST.ui.focus.paused,1001);
+console.log('PASS running and paused reset, retained duration, replay protection and storage failure');

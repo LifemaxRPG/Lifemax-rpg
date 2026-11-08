@@ -73,6 +73,15 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
 
     override fun getAccessibilityClassName(): CharSequence = javaClass.name
 
+    var navigationOrigin: android.graphics.PointF? = null
+        private set
+
+    fun takeNavigationOrigin(): android.graphics.PointF? =
+        navigationOrigin.also { navigationOrigin = null }
+
+    private var tapX = 0f
+    private var tapY = 0f
+
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private val accessibility = context.getSystemService(AccessibilityManager::class.java)
     private var arbiter = SwipeArbiter(pane)
@@ -88,6 +97,19 @@ internal class TabScreenView(context: Context, val pane: String) : AbstractCompo
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val action = event.actionMasked
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                navigationOrigin = null
+                tapX = event.x
+                tapY = event.y
+            }
+            MotionEvent.ACTION_UP -> {
+                if (kotlin.math.hypot(event.x - tapX, event.y - tapY) <= touchSlop * 2)
+                    navigationOrigin = android.graphics.PointF(event.x, event.y)
+            }
+            MotionEvent.ACTION_CANCEL,
+            MotionEvent.ACTION_POINTER_DOWN -> navigationOrigin = null
+        }
         val ending = action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL
         if (action == MotionEvent.ACTION_DOWN) {
             // a screen sliding beside the one a finger may catch passes the touch to it (A34)

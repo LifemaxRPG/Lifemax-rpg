@@ -1,5 +1,6 @@
 package com.lifemax.rpg.app.shell.bar
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.os.Build
 import android.os.Handler
@@ -11,6 +12,7 @@ import android.os.VibratorManager
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 
@@ -29,6 +31,8 @@ internal class ScrubBar(
     private val density = resources.displayMetrics.density
     private val handler = Handler(Looper.getMainLooper())
     private val slots = HashMap<Int, Runnable>()
+    private var scrollMotion: ValueAnimator? = null
+    private var scrollTarget = Float.NaN
     private val scrubber = BarScrubber(this)
 
     /** The page's word on scrubbing; set with each bar scene. */
@@ -96,7 +100,18 @@ internal class ScrubBar(
     override val maxScroll: Float
         get() = ((getChildAt(0)?.width ?: 0) - width).coerceAtLeast(0) / density
 
-    override fun scrollToDp(dp: Float) = scrollTo((dp * density).toInt(), 0)
+    override fun scrollToDp(dp: Float) {
+        if (dp == scrollTarget && scrollMotion?.isRunning == true) return
+        scrollTarget = dp
+        scrollMotion?.cancel()
+        scrollMotion =
+            ValueAnimator.ofInt(scrollX, (dp * density).toInt()).apply {
+                duration = 110L
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { scrollTo(it.animatedValue as Int, 0) }
+                start()
+            }
+    }
 
     override fun open(id: String) = onOpen(id)
 
@@ -160,6 +175,7 @@ internal class ScrubBar(
     }
 
     override fun onDetachedFromWindow() {
+        scrollMotion?.cancel()
         slots.values.forEach(handler::removeCallbacks)
         slots.clear()
         super.onDetachedFromWindow()

@@ -71,6 +71,7 @@ private fun session(s: JSONObject): SessionSheetModel {
                 },
             icon = s.str("icon"),
             title = s.str("title"),
+            description = if (s.has("description")) s.str("description") else "",
             `when` = s.str("when"),
             chips =
                 s.getJSONArray("chips").objects().map {

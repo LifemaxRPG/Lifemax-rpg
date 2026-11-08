@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -368,7 +367,7 @@ private fun NativeScrubSlider(
     val pending = ui.pending(control)
     val enabled = control.enabled && !pending && control.op == ControlOp.Choose
     Row(
-        modifier.fillMaxWidth().alpha(if (enabled) 1f else .45f),
+        modifier.width(280.dp).alpha(if (enabled) 1f else .45f),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Slider(

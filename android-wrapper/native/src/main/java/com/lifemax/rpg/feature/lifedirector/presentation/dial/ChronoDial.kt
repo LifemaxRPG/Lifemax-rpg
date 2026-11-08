@@ -2,21 +2,33 @@ package com.lifemax.rpg.feature.lifedirector.presentation.dial
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
@@ -33,16 +45,20 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.lifemax.rpg.feature.lifedirector.domain.DialArc
 import com.lifemax.rpg.feature.lifedirector.domain.DialCentre
 import com.lifemax.rpg.feature.lifedirector.domain.DialHandle
 import com.lifemax.rpg.feature.lifedirector.domain.DialRadii
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorDial
+import com.lifemax.rpg.feature.lifedirector.domain.ReturnToTodayMotion
 import com.lifemax.rpg.feature.lifedirector.domain.SessionState
+import com.lifemax.rpg.feature.lifedirector.domain.StripDay
 import com.lifemax.rpg.feature.lifedirector.domain.Tap
 import com.lifemax.rpg.feature.lifedirector.presentation.DialHold
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DirectorPalette
@@ -51,7 +67,14 @@ import com.lifemax.rpg.feature.lifedirector.presentation.components.rememberPuls
 import com.lifemax.rpg.feature.lifedirector.presentation.components.spoken
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.DragRemoveController
 import com.lifemax.rpg.feature.lifedirector.presentation.drag.removeFromToday
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.math.abs
+import kotlin.math.round
+import kotlin.math.roundToLong
+import kotlinx.coroutines.launch
 
 /**
  * The 24-hour dial (the web's dialHtml): its 360-unit square scaled to the width, at most 370 dp,
@@ -84,9 +107,23 @@ fun ChronoDial(
     centreAnchor: Modifier = Modifier,
     intro: DialIntroRun? = null,
     removal: DragRemoveController? = null,
+    centreContent: (@Composable () -> Unit)? = null,
+    centreDismiss: (() -> Unit)? = null,
+    days: List<StripDay> = emptyList(),
+    selectedDay: Int = 0,
+    onDay: ((Int) -> Unit)? = null,
+    dayWheelEnabled: Boolean = true,
+    calendarDate: String = "",
+    onToday: (() -> Unit)? = null,
+    todayOffset: Int = 0,
+    onAddAt: ((Long) -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
-    val face = remember(dial.radii, dial.hourWords) { DialFace(dial.radii, dial.hourWords, text) }
+    val face =
+        remember(dial.radii, dial.hourWords) {
+            DialFace(dial.radii, dial.hourWords, text, includeBezel = false)
+        }
+    val bezel = remember(dial.radii, dial.hourWords) { DialBezel(dial.radii, dial.hourWords, text) }
     val plan = remember(dial.radii, dial.arcs, dial.words) { DialPlan(dial, text) }
     val now =
         remember(dial.radii, dial.hand, dial.ring) { DialNow(dial.radii, dial.hand, dial.ring) }
@@ -101,9 +138,166 @@ fun ChronoDial(
     val view = LocalView.current
     val lift = remember(removal, view) { removal?.let { DialLift(it, view) } }
     val ghost = rememberGhost(removal)
+    // Keep the selected segment's location while its asynchronous sheet is loading.
+    // Touch and accessibility actions share this entry point.
+    var activityOrigin by remember { mutableStateOf<Offset?>(null) }
+    val openArc: (DialArc) -> Unit = { arc ->
+        val radius = if (arc.outer) dial.radii.outer else dial.radii.inner
+        activityOrigin =
+            DialGeometry.point(radius, (arc.a0 + arc.a1) / 2) -
+                Offset(DialGeometry.SIDE / 2, DialGeometry.SIDE / 2)
+        onArc(arc)
+    }
+    val activityArrival = remember { Animatable(if (centreContent != null) 1f else 0f) }
+    LaunchedEffect(centreContent != null, animate) {
+        if (centreContent == null) {
+            activityArrival.snapTo(0f)
+            activityOrigin = null
+        } else if (!animate) {
+            activityArrival.snapTo(1f)
+        } else {
+            activityArrival.animateTo(1f, tween(360, easing = EaseOut))
+        }
+    }
+    var scrubbingDays by remember { mutableStateOf(false) }
+    var previewDay by remember { mutableStateOf(selectedDay) }
+    var bezelDrag by remember { mutableFloatStateOf(0f) }
+    var bezelStart by remember { mutableFloatStateOf(0f) }
+    val bezelRest = remember { Animatable(0f) }
+    val returnScope = rememberCoroutineScope()
+    val returnRotation = remember { Animatable(0f) }
+    val homeReveal = remember { Animatable(1f) }
+    var returningHome by remember { mutableStateOf(false) }
+    var revealingHome by remember { mutableStateOf(false) }
+    var returnProgress by remember { mutableFloatStateOf(0f) }
+    var returnDate by remember { mutableStateOf(LocalDate.of(1970, 1, 1)) }
+    var returnDays by remember { mutableStateOf(0) }
+    val dateBase =
+        remember(calendarDate, dial.start) {
+            runCatching { LocalDate.parse(calendarDate) }
+                .getOrElse {
+                    Instant.ofEpochSecond(dial.start).atZone(ZoneId.systemDefault()).toLocalDate()
+                }
+        }
+    LaunchedEffect(scrubbingDays, animate, returningHome) {
+        if (!scrubbingDays && !returningHome) {
+            bezelRest.snapTo(bezelDrag)
+            val aligned = round(bezelDrag / 360f) * 360f
+            if (animate) bezelRest.animateTo(aligned, spring(dampingRatio = .68f, stiffness = 240f))
+            else bezelRest.snapTo(aligned)
+        }
+    }
+    LaunchedEffect(selectedDay, days) { if (!scrubbingDays) previewDay = selectedDay }
+    val returnToday: (() -> Unit)? =
+        onToday?.let { navigate ->
+            {
+                if (!returningHome) {
+                    if (animate && todayOffset != 0) {
+                        returnDate = dateBase
+                        returnDays = todayOffset
+                        returnProgress = 0f
+                        revealingHome = false
+                        returningHome = true
+                        val start = bezelRest.value
+                        val travel = ReturnToTodayMotion.forDays(todayOffset)
+                        val direction = travel.direction
+                        val turns = travel.turns
+                        val target = round(start / 360f) * 360f + direction * turns * 360f
+                        returnScope.launch {
+                            try {
+                                homeReveal.snapTo(0f)
+                                returnRotation.snapTo(start)
+                                returnRotation.animateTo(
+                                    target + direction * 12f,
+                                    tween(
+                                        travel.durationMs,
+                                        easing = CubicBezierEasing(.32f, 0f, .12f, 1f),
+                                    ),
+                                ) {
+                                    returnProgress =
+                                        ((value - start) / (target - start)).coerceIn(0f, 1f)
+                                }
+                                returnProgress = 1f
+                                returnRotation.animateTo(
+                                    target,
+                                    spring(dampingRatio = .65f, stiffness = 420f),
+                                )
+                                bezelRest.snapTo(0f)
+                                revealingHome = true
+                                homeReveal.animateTo(1f, tween(560, easing = EaseOut))
+                            } finally {
+                                bezelDrag = 0f
+                                returningHome = false
+                            }
+                        }
+                    }
+                    navigate()
+                }
+            }
+        }
+    val wheel =
+        if (
+            dayWheelEnabled &&
+                !returningHome &&
+                days.isNotEmpty() &&
+                onDay != null &&
+                centreContent == null &&
+                tour == null &&
+                selectedDay in days.indices
+        ) {
+            DayWheelInput(
+                days.size,
+                selectedDay,
+                hold =
+                    onAddAt?.let { add ->
+                        { angle ->
+                            val epoch =
+                                dial.start + ((dial.end - dial.start) * angle / 360f).toLong()
+                            add(((epoch + 450) / 900 * 900).coerceIn(dial.start, dial.end - 900))
+                        }
+                    },
+                begin = {
+                    previewDay = selectedDay
+                    scrubbingDays = true
+                    bezelStart = bezelRest.value % 360f
+                    bezelDrag = bezelStart
+                },
+                preview = { day, rotation ->
+                    previewDay = day
+                    bezelDrag = bezelStart + rotation
+                },
+                end = { chosen ->
+                    scrubbingDays = false
+                    if (chosen != null && chosen != selectedDay) onDay(chosen)
+                    else previewDay = selectedDay
+                },
+            )
+        } else null
+    val dayArrival = remember { Animatable(1f) }
+    var previousDay by remember { mutableStateOf(dial.start) }
+    LaunchedEffect(dial.start, animate) {
+        if (previousDay != dial.start && animate) {
+            dayArrival.snapTo(.35f)
+            dayArrival.animateTo(1f, tween(220, easing = EaseOut))
+        } else dayArrival.snapTo(1f)
+        previousDay = dial.start
+    }
     val input by
         rememberUpdatedState(
-            DialInput(dial, hold, asking || (hold != null && !hold.held), run, handles, onArc, lift)
+            DialInput(
+                dial,
+                hold,
+                asking || (hold != null && !hold.held),
+                run,
+                handles,
+                openArc,
+                lift,
+                centreDismiss,
+                DialGeometry.SIDE * .33f,
+                wheel,
+                if (dayWheelEnabled && tour == null && run == null && !returningHome) returnToday
+                else null,
+            )
         )
     BoxWithConstraints(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         val side = min(maxWidth, 370.dp)
@@ -121,6 +315,7 @@ fun ChronoDial(
                     val s = run?.let { BuildTimeline.dialScale(it.build, it.ms) } ?: 1f
                     scaleX = s
                     scaleY = s
+                    alpha = dayArrival.value
                 }
             ) {
                 Canvas(
@@ -145,10 +340,29 @@ fun ChronoDial(
                 }
                 Canvas(
                     Modifier.fillMaxSize().graphicsLayer {
+                        rotationZ =
+                            when {
+                                returningHome -> returnRotation.value
+                                scrubbingDays -> bezelDrag
+                                else -> bezelRest.value
+                            }
+                    }
+                ) {
+                    inUnits { bezel.draw(this) }
+                }
+                Canvas(
+                    Modifier.fillMaxSize().graphicsLayer {
                         alpha = run?.let { BuildTimeline.faceShown(it.build, it.ms) } ?: 1f
                     }
                 ) {
-                    inUnits { now.draw(this) }
+                    inUnits {
+                        now.draw(
+                            this,
+                            if (returningHome) {
+                                if (revealingHome) homeReveal.value else 0f
+                            } else 1f,
+                        )
+                    }
                 }
                 if (halo != null && next != null) {
                     val pulse = rememberPulse(animate, 2400)
@@ -193,9 +407,19 @@ fun ChronoDial(
                     }
                 tour?.let { TourTags(it.step.tags, it.still, animate) }
             }
-            ArcTargets(dial.arcs, dial.radii, onArc, removal)
+            ArcTargets(dial.arcs, dial.radii, openArc, removal)
             HandleTargets(dial, hold, asking || run != null, handles)
-            val centreBox = Modifier.align(Alignment.Center).then(centreAnchor)
+            val centreBox =
+                Modifier.align(Alignment.Center).then(centreAnchor).graphicsLayer {
+                    val shown =
+                        if (returningHome) {
+                            if (revealingHome) homeReveal.value else 0f
+                        } else 1f
+                    alpha = shown
+                    scaleX = lerp(.94f, 1f, shown)
+                    scaleY = scaleX
+                    translationY = (1f - shown) * 10.dp.toPx()
+                }
             when {
                 run != null -> {
                     DialCentreView(
@@ -212,6 +436,30 @@ fun ChronoDial(
                     )
                     BuildHud(run, centreBox.width(side * .44f))
                 }
+                centreContent != null && hold == null -> {
+                    Box(
+                        centreBox
+                            .size(side * .66f)
+                            .graphicsLayer {
+                                val progress = if (animate) activityArrival.value else 1f
+                                val origin = activityOrigin ?: Offset.Zero
+                                val units = side.toPx() / DialGeometry.SIDE
+                                translationX = origin.x * units * (1f - progress)
+                                translationY = origin.y * units * (1f - progress)
+                                val initialScale = if (activityOrigin != null) .08f else .92f
+                                scaleX = lerp(initialScale, 1f, progress)
+                                scaleY = scaleX
+                                alpha = progress
+                            }
+                            .clip(CircleShape)
+                            .background(DirectorPalette.bg0)
+                            .border(1.dp, DirectorPalette.line, CircleShape)
+                            .pointerInput(centreDismiss) { detectTapGestures(onTap = {}) }
+                            .padding(side * .66f * .10f)
+                    ) {
+                        centreContent()
+                    }
+                }
                 hold != null -> DragCentre(hold.preview, centreBox.width(side * .42f))
                 else ->
                     DialCentreView(
@@ -221,6 +469,34 @@ fun ChronoDial(
                         onTap,
                         centreBox.width(side * .42f).dimmed(look.centre),
                     )
+            }
+            if (scrubbingDays || returningHome) {
+                val date =
+                    if (returningHome)
+                        returnDate.minusDays((returnDays.toDouble() * returnProgress).roundToLong())
+                    else dateBase.plusDays((previewDay - selectedDay).toLong())
+                Box(
+                    Modifier.align(Alignment.Center)
+                        .graphicsLayer {
+                            val leaving =
+                                if (returningHome && revealingHome) homeReveal.value else 0f
+                            alpha = 1f - leaving
+                            scaleX = 1f - .04f * leaving
+                            scaleY = scaleX
+                            translationY = -8.dp.toPx() * leaving
+                        }
+                        .size(side * .48f)
+                        .clip(CircleShape)
+                        .background(DirectorPalette.bg0),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        date.format(DateTimeFormatter.ofPattern("EEE\nd MMM yyyy")),
+                        color = DirectorPalette.ink,
+                        fontSize = 24.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }

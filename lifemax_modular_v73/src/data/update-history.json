@@ -1,0 +1,31 @@
+{
+ "entries": [
+  {
+   "build": "current",
+   "date": "2026-11-07",
+   "title": "Overview drag-and-drop & navigation polish",
+   "changes": [
+    "Returning to today now winds farther and takes longer based on how many days you travelled. A year away has a much longer rewind than a week away.",
+    "The winding date count, spring settle, and activity-ring reveal stay connected throughout the return.",
+    "Overview cards now reveal their destination with a smooth expanding transition from the tap, while the shared bars stay in place.",
+    "Press and hold an Overview card, then drag it to rearrange your dashboard. Cards lift, neighbors slide aside, and the layout saves when you drop.",
+    "The Edit button still manages hidden cards. Dragging near the screen edges scrolls the dashboard.",
+    "Life Director activity centers use compact, non-scrolling summaries and keep the main action visible. Dragging inside the center no longer scrolls the dashboard or top bar.",
+    "Hold a time on the Life Director’s outer track to schedule a pinned activity. The form starts at that date and time; moving your finger still rotates the calendar. Requires an already planned day and a free time slot."
+   ]
+  },
+  {
+   "build": "434",
+   "date": "2026-11-07",
+   "title": "Life Director polish & update history",
+   "changes": [
+    "Read what changed in Settings → Phone & sync → App updates → What’s new.",
+    "Unplanned dates show your sleep and work hours, with a message that the day hasn’t been planned yet.",
+    "Double-tap an empty corner outside the Life Director dial to return to today with a winding animation.",
+    "The date fades into your current activity while its colored ring draws around the dial center.",
+    "Dial rotation keeps following your thumb after it drifts away from the outer rim.",
+    "Switch Life Director sections by tapping their buttons; accidental sideways swipes no longer change sections."
+   ]
+  }
+ ]
+}

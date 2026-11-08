@@ -90,6 +90,7 @@ data class SessionSheetModel(
     val past: String,
     val why: SheetWhy,
     val orphan: String,
+    val description: String = "",
 ) : SheetModel {
     override val kind
         get() = SheetKinds.SESSION

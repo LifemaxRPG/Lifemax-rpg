@@ -22,7 +22,7 @@
    "body": "<p>Green blocks are sessions, peach ones are meals. Tap one to open it. Gaps are free time.</p>",
    "next": "Next",
    "mode": "inner",
-   "tags": "<g class=\"ld-tl-p ld-c-meal\"><rect x=\"241.6\" y=\"224.1\" width=\"44.8\" height=\"24\" rx=\"12\"></rect><text x=\"264.0\" y=\"236.6\">Meal</text></g><g class=\"ld-tl-p ld-c-task\"><rect x=\"57.0\" y=\"123.3\" width=\"64.9\" height=\"24\" rx=\"12\"></rect><text x=\"89.4\" y=\"135.8\">Session</text></g><g class=\"ld-tl-p ld-c-rest\"><rect x=\"88.1\" y=\"84.0\" width=\"71.6\" height=\"24\" rx=\"12\"></rect><text x=\"123.9\" y=\"96.5\">Downtime</text></g>"
+   "tags": "<g class=\"ld-tl-p ld-c-meal\"><rect x=\"241.6\" y=\"224.1\" width=\"44.8\" height=\"24\" rx=\"12\"></rect><text x=\"264.0\" y=\"236.6\">Meal</text></g><g class=\"ld-tl-p ld-c-task\"><rect x=\"54.2\" y=\"129.3\" width=\"64.9\" height=\"24\" rx=\"12\"></rect><text x=\"86.7\" y=\"141.8\">Session</text></g><g class=\"ld-tl-p ld-c-block\"><rect x=\"77.2\" y=\"99.0\" width=\"58.2\" height=\"24\" rx=\"12\"></rect><text x=\"106.3\" y=\"111.5\">Missed</text></g>"
   },
   {
    "n": "4 of 7",

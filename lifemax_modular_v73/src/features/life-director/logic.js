@@ -202,6 +202,33 @@ const LifeDirectorApp = (function () {
     }
     /* 3. quests checked off by hand → drop their now-unneeded future blocks */
     const qs = hostQuests(now), done = new Set(qs.filter(q => q.status === 'COMPLETED').map(q => q.id).concat(Host.milestones().map(m => m.id)));
+    // Retire only automatic, unstarted blocks that consist entirely of untimed cards.
+    // Pinned blocks, mixed goals, history and the active timer are preserved.
+    const untimed = new Map(qs.filter(q => q.schedulingMode === 'NONE').map(q => [q.id, q]));
+    // Old schedule links can outlive the daily hand that created them.
+    if (Host.retiredUntimedQuest) for (const inst of ST.schedule.scheduledInstances) {
+      for (const ref of inst.linkedQuestRequirementIds || []) {
+        if (untimed.has(ref.questId)) continue;
+        const q = Host.retiredUntimedQuest(Object.assign({}, ref, { questTitle: ref.questTitle || inst.title }));
+        if (q) untimed.set(q.id, q);
+      }
+    }
+    const retired = ST.schedule.scheduledInstances.filter(i =>
+      i.lifecycleState === 'PLANNED' && !i.isUserLocked &&
+      !(ST.ui.focus && ST.ui.focus.id === i.instanceId) &&
+      !(i.linkedGoalIds || []).length &&
+      (i.linkedQuestRequirementIds || []).length &&
+      i.linkedQuestRequirementIds.every(ref => untimed.has(ref.questId)));
+    if (retired.length) {
+      const ids = new Set(retired.map(i => i.instanceId));
+      ST.schedule.scheduledInstances = ST.schedule.scheduledInstances.filter(i => !ids.has(i.instanceId));
+      const reminders = ST.schedule.passiveReminders || (ST.schedule.passiveReminders = []);
+      for (const inst of retired) for (const ref of inst.linkedQuestRequirementIds) {
+        const q = untimed.get(ref.questId);
+        if (!reminders.some(r => r.questId === q.id)) reminders.push({ questId: q.id, title: q.title, anchor: q.anchor || 'WAKE' });
+      }
+      changed = true;
+    }
     for (const i of ST.schedule.scheduledInstances.slice()) {
       const links = i.linkedQuestRequirementIds.filter(l => !done.has(l.questId));
       if (links.length === i.linkedQuestRequirementIds.length || i.lifecycleState !== 'PLANNED') continue;
@@ -364,10 +391,43 @@ const LifeDirectorApp = (function () {
   }
 
   /* ── day model for the timeline ── */
-  function horizonDays(sched, z) { return U.buildHorizon(sched.horizonStartEpoch, Math.round((sched.horizonEndEpoch - sched.horizonStartEpoch) / 86400), z); }
+  function horizonDays(sched, z) {
+    const days = U.buildHorizon(sched.horizonStartEpoch, Math.round((sched.horizonEndEpoch - sched.horizonStartEpoch) / 86400), z);
+    // A saved plan can span several dates. Its first date is not permanently "Today".
+    // Slide only the live calendar; retain historical instances and fixed lab scenarios.
+    if (!ST || sched !== ST.schedule) return days;
+    const now = nowEpoch();
+    const current = days.filter(day => day.endEpoch > now);
+    return current.length ? current : U.buildHorizon(now, 1, z);
+  }
+  /* Availability preview only: no tasks are scheduled and no save is changed. */
+  function unplannedSegments(day, z) {
+    const previous = U.ymdAdd(day.ymd, -1);
+    const start = U.zonedToEpoch(previous.y, previous.mo, previous.d, 0, z);
+    const derived = E.deriveAvailability({
+      timezone: z, horizonStartEpoch: start, horizonDays: 3,
+      playerAvailability: Object.assign({}, ST.availability, { timezone: z }),
+      fixedCommitments: ST.fixedCommitments || [], playerPreferences: ST.prefs
+    });
+    const g = derived.grid, result = [];
+    const visible = new Set(['SLEEP', 'WORK', 'CLASS', 'APPOINTMENT', 'COMMUTE', 'DECOMPRESS', 'BLACKOUT', 'SICK', 'EMERGENCY', 'UNAVAILABLE']);
+    for (let i = 0; i < g.n;) {
+      const tag = g.tag[i]; let end = i + 1;
+      while (end < g.n && g.tag[end] === tag) end++;
+      const block = tag >= 0 ? g.blocks[tag] : null;
+      if (block && visible.has(block.kind)) {
+        const a = Math.max(day.startEpoch, g.H0 + i * 900), b = Math.min(day.endEpoch, g.H0 + end * 900);
+        if (b > a) result.push(Object.assign({}, block, { startEpoch: a, endEpoch: b }));
+      }
+      i = end;
+    }
+    return result;
+  }
   function dayBlocks(sched, day, z) {
     const s = day.startEpoch, e = day.endEpoch, out = [];
-    for (const g of sched.segments || []) {
+    const preview = ST && sched === ST.schedule && (e <= sched.horizonStartEpoch || s >= sched.horizonEndEpoch);
+    const segments = preview ? unplannedSegments(day, z) : (sched.segments || []);
+    for (const g of segments) {
       if (g.endEpoch <= s || g.startEpoch >= e) continue;
       if (['FREE', 'SCHEDULED_TASK', 'USER_LOCKED_ACTIVITY'].includes(g.code)) continue;
       out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, mealStartEpoch: g.kind === 'MEAL' ? g.startEpoch : undefined, clipped: g.startEpoch < s || g.endEpoch > e });
@@ -712,7 +772,7 @@ const LifeDirectorApp = (function () {
       handles += '<g class="ld-hd ld-c-' + h.kind + '" data-rule="' + esc(ri.rule.id) + '" data-end="' + end + '" data-ymd="' + U.ymdKey(ri.ymd) + '" data-s="' + ri.startEpoch + '" data-e="' + ri.endEpoch + '" data-ep="' + ep + '" role="slider" tabindex="0" aria-label="' + esc(handleLabel(ri.rule, end) + ' ' + fTime(ep)) + '">' +
         '<circle class="ld-hd-hit" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="24"/><circle class="ld-hd-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="10.5"/><circle class="ld-hd-pip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.5"/></g>';
     }
-    const live = isToday && !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
+    const live = !plain && now >= d0 && now < d1, an = live ? angOf(now, d0, d1) : 0;
     /* the part of today that has already gone, greyed out */
     let past = '';
     if (live && an > 1) {
@@ -1065,7 +1125,7 @@ const LifeDirectorApp = (function () {
     const next = tl.find(b => b !== cur && b.startEpoch >= after - 60 && blockClass(b) !== 'free' && live(b) && !(b.inst && sesState(b.inst.lifecycleState) === 'done')) || null;
     const nextTask = tl.find(b => b.inst && b !== cur && b.startEpoch > now && b.inst.lifecycleState === 'PLANNED') || null;
     const isSes = cur && cur.inst && cur.inst.lifecycleState === 'PLANNED';
-    const f = ST.ui.focus, running = f && cur && cur.inst && f.id === cur.inst.instanceId;
+    const f = ST.ui.focus, running = f && !f.paused && cur && cur.inst && f.id === cur.inst.instanceId;
     /* two separate warnings: one about now (top line), one about what's coming (next line) */
     let kick = null;
     if (isSes && !running && !f && now - cur.startEpoch >= LATE) kick = { kind: 'late', sec: now - cur.startEpoch };
@@ -1081,7 +1141,7 @@ const LifeDirectorApp = (function () {
     return '<circle class="ld-cur-trk" cx="180" cy="180" r="' + R + '"/>' + (frac < 0.997 ? '<path class="ld-cur-arc ld-c-' + k + (st.kick ? ' ld-warn' : '') + '" d="' + arcD(R, frac * 360, 360) + '"/>' : '');
   }
   function coreToday(day, blocks, now) {
-    const f = ST.ui.focus, fi = f && findInst(f.id);
+    const f = ST.ui.focus, fi = f && !f.paused && findInst(f.id);
     const st = nowState(now);
     let k = '', title = '', big = '', sub = '', btn = '', cls = '';
     if (fi) {
@@ -1205,11 +1265,11 @@ const LifeDirectorApp = (function () {
     const tasks = blocks.filter(b => b.inst);
     const now = nowEpoch(), isToday = ui.dayIdx === 0;
     const next = isToday ? nextUp(now) : null;
-    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(r.title)).join(', ') + '</p></div>' : '';
+    const reminders = (s.passiveReminders || []).length && isToday ? '<div class="ld-card ld-remind"><h4>' + icon('flag', 12) + ' All-day quests</h4><p>' + s.passiveReminders.map(r => esc(reminderText(r))).join(', ') + '</p></div>' : '';
     let upnext = '';
     const f = ST.ui.focus, fi = f && findInst(f.id);
     if (isToday && fi) {
-      upnext = '<section class="ld-up ld-up-go"><div class="ld-up-h"><span class="ld-cue"></span>Timer running</div><h3>' + esc(fi.title) + '</h3><p class="ld-up-when"><b data-fclock>' + clockText(focusMs(f)) + '</b> of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned</p>' +
+      upnext = '<section class="ld-up ld-up-go"><div class="ld-up-h"><span class="ld-cue"></span>' + (f.paused ? 'Timer paused' : 'Timer running') + '</div><h3>' + esc(fi.title) + '</h3><p class="ld-up-when"><b data-fclock>' + clockText(focusMs(f)) + '</b> of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned</p>' +
         '<div class="ld-row"><button class="ld-btn ld-primary" data-act="focusOpen">Open timer</button><button class="ld-btn" data-act="focusFinish">Finish and log</button></div></section>';
     } else if (next && !doable(next, now)) {
       const di = days.findIndex(d => next.startEpoch >= d.startEpoch && next.startEpoch < d.endEpoch);
@@ -1871,7 +1931,7 @@ const LifeDirectorApp = (function () {
   /* The running timer of session i in the page's words, with the times it runs from (ms), for the page's sheet and a native
      screen's; xp is the estimate now, as spans (the page bolds the XP) */
   function focusModel(f, i) {
-    const plannedMs = Math.max(60, i.endEpoch - i.startEpoch) * 1000, x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
+    const plannedMs = f.plannedMs || Math.max(60, i.endEpoch - i.startEpoch) * 1000, x = xpOf(i, Math.max(1, Math.round(focusMs(f) / 60000)));
     return { id: i.instanceId, title: i.title, label: f.paused ? 'Paused' : 'In progress', paused: !!f.paused, startedAt: f.start, pausedMs: f.pausedMs || 0, pausedAt: f.paused || null,
       plannedMs, planned: 'of ' + mins(Math.round(plannedMs / 60000)) + ' planned',
       xp: x ? [{ t: 'Logging now earns about ', b: false }, { t: '+' + x.xp + ' XP', b: true }, { t: ' in ' + attrName(x.rule.primary) + '.', b: false }] : null,
@@ -1886,12 +1946,18 @@ const LifeDirectorApp = (function () {
       '<div><b data-fclock>' + clockText(focusMs(f)) + '</b><small>' + m.planned + '</small></div></div>' +
       (m.xp ? '<p class="ld-muted ld-center">' + m.xp[0].t + '<b data-fxp>' + m.xp[1].t + '</b>' + esc(m.xp[2].t) + '</p>' : '') +
       '<div class="ld-row ld-center"><button class="ld-btn ld-primary" data-act="focusFinish">' + m.finish + '</button><button class="ld-btn" data-act="' + (m.paused ? 'focusResume' : 'focusPause') + '">' + m.pause + '</button></div>' +
-      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">' + m.stop + '</button></div>' +
+      '<div class="ld-row ld-center"><button class="ld-btn ld-ghost ld-small" data-act="focusReset" aria-label="Reset timer" title="Reset timer">↺</button><button class="ld-btn ld-ghost ld-small" data-act="focusCancel">' + m.stop + '</button></div>' +
       '<p class="ld-muted ld-center ld-small-print">' + m.note + '</p></div>');
   }
   function focusTick() {
     const f = ST && ST.ui && ST.ui.focus; if (!f) return;
     const ms = focusMs(f);
+    const inst = findInst(f.id);
+    const target = f.plannedMs || (inst && Math.max(60, inst.endEpoch - inst.startEpoch) * 1000);
+    if (!f.paused && target && ms >= target) {
+      Today.timer({ act: 'autoFinish', id: f.id, start: f.start });
+      return;
+    }
     // the Overview's glance shows the running clock too: it ticks with Life Director's own
     document.querySelectorAll('.ld-glance [data-fclock]').forEach(el => { el.textContent = clockText(ms); });
     if (!root || !root.isConnected) return;
@@ -2105,7 +2171,7 @@ const LifeDirectorApp = (function () {
     /* a block started or ended: redraw so "now" and the running order move on */
     const stale = ui.boundary && now >= ui.boundary;
     if (stale && !sheetOpen) { render(); return; }
-    if (!ST.ui.focus && ST.schedule) {
+    if ((!ST.ui.focus || ST.ui.focus.paused) && ST.schedule) {
       const days = horizonDays(ST.schedule, tz()), day = days[0];
       if (day && ui.dayIdx === 0) {
         dial.querySelector('.ld-core').innerHTML = coreHtml(day, dayBlocks(ST.schedule, day, tz()), true, now);
@@ -2323,7 +2389,22 @@ const LifeDirectorApp = (function () {
       if (!persist()) { ST = was; render(); return { ok: false, message: 'Not saved: ' + lastSave.error + ' Nothing was restored.' }; }
       render(); say('Backup restored'); return { ok: true, message: 'Backup restored' };
     },
-    reset() { store.clear(); boot(); render(); return { ok: true, message: '' }; },
+    reset() {
+      const result = store.clear({ playerId: Host.playerId(), timezone: deviceTz(), nowEpoch: nowEpoch() });
+      lastSave = result;
+      if (!result.ok) {
+        const message = 'Life Director was not reset: ' + result.error;
+        ui.banner = { kind: 'bad', text: message };
+        render();
+        return { ok: false, message };
+      }
+      ui.banner = null; ui.notice = null; ui.sheet = null; ui.dayIdx = 0;
+      ui.prevPlan = null; ui.animate = false;
+      ui.fx = { prevTab: null, prevDay: null, nextId: null, justDone: null, glide: {}, daysScroll: null, take: null };
+      nativeCalendarOffset = null;
+      boot(); render();
+      return { ok: true, message: 'Life Director reset' };
+    },
     /* ── My time (phase 4B). Each answers {ok, changed, message}: a refusal changes nothing and its words are the message; a change
        is ok only when saved, and the page's notice says what happened; the same values again change nothing (changed: false). ── */
     /* bed and wake: minutes after midnight; weekend: Friday and Saturday nights' {bed, wake}, or null for every night the same */
@@ -2387,6 +2468,33 @@ const LifeDirectorApp = (function () {
     },
     /* a new goal: the goal form's fields by key (goalFormModel), for the kind arch. Its id is named from op (its first 12 characters,
        a UUID's), so the same request again finds it ("Already added"). */
+    activityAtAdd({ op, title, tag, date, start, minutes }) {
+      if (!op || typeof op !== 'string' || op.length > 128) return refuse(NO_OP);
+      const id = 'manual-' + op, s = ST.schedule;
+      if (!s) return refuse('Make a plan for this day first.');
+      if ((s.scheduledInstances || []).concat(s.historyInstances || []).some(i => i.instanceId === id)) return recorded('Already added');
+      const name = String(title || '').trim(), minute = dayMinute(start), duration = Number(minutes);
+      if (!name || name.length > 80) return refuse('Give the activity a name (up to 80 characters).');
+      if (!CUSTOM_TAGS.some(([key]) => key === tag)) return refuse('Choose an activity type.');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date)) || minute == null || minute % 15 || !Number.isInteger(duration) || duration < 15 || duration > 180 || duration % 15) return refuse('Choose a date, a 15-minute start time and a duration from 15 to 180 minutes.');
+      const [y, mo, d] = date.split('-').map(Number), epoch = U.zonedToEpoch(y, mo, d, minute, tz());
+      const parts = U.localParts(epoch, tz()), end = epoch + duration * 60;
+      if (U.ymdKey(parts) !== date || parts.h * 60 + parts.mi !== minute) return refuse('That local time does not exist. Choose another time.');
+      if (epoch < nowEpoch()) return refuse('Choose an upcoming time. Use Log activity for something already done.');
+      if (epoch < s.horizonStartEpoch || end > s.horizonEndEpoch) return refuse('This day has not been planned yet. Make a plan for it before adding activities.');
+      const grid = E.deriveAvailability({ timezone: tz(), horizonStartEpoch: epoch, horizonDays: 2, playerAvailability: ST.availability, fixedCommitments: ST.fixedCommitments || [], playerPreferences: ST.prefs }).grid;
+      const blocked = new Set(['SLEEP', 'WORK', 'CLASS', 'APPOINTMENT', 'COMMUTE', 'DECOMPRESS', 'BLACKOUT', 'SICK', 'EMERGENCY', 'UNAVAILABLE']);
+      if (grid.blocks.some(b => blocked.has(b.kind) && b.startEpoch < end && b.endEpoch > epoch) || (s.scheduledInstances || []).some(i => i.startEpoch < end && i.endEpoch > epoch && !/CANCELLED|EXCUSED/.test(i.lifecycleState))) return refuse('That time overlaps sleep, work or another activity. Choose a free time.');
+      const was = ST, next = JSON.parse(JSON.stringify(ST));
+      next.schedule.scheduledInstances.push({ instanceId: id, taskId: id, templateId: id, title: name, tag, kind: 'CUSTOM', goalId: null, goalTitle: null,
+        linkedGoalIds: [], linkedQuestRequirementIds: [], startEpoch: epoch, endEpoch: end, durationSlots: duration / 15, minDurationSlots: duration / 15,
+        optDurationSlots: duration / 15, tier: 2, lifecycleState: 'PLANNED', isUserLocked: true, bwcId: 'manual', IP: 2, IC: 2,
+        spacingKey: id, compressed: false, origStartEpoch: epoch, explanation: { summary: 'Scheduled by you at this time.', locked: true }, moves: 0, source: null });
+      next.schedule.scheduledInstances.sort((a,b) => a.startEpoch - b.startEpoch);
+      ST = next;
+      if (!persist()) { ST = was; render(); return { ok: false, changed: false, message: 'Activity could not be saved. Nothing was added.' }; }
+      render(); say('Activity added'); return applied();
+    },
     goalAdd({ op, arch, title, subject, tag, minutes, perWeek, physical, mental, priority, level, units, unit, rate, deadline }) {
       const a = E.ARCHETYPES[arch], name = String(title || '').trim(), prio = Number(priority) || 3, lvl = level || 'NOVICE';
       if (!a && arch !== 'CUSTOM') return refuse('That is not a kind of goal.');
@@ -2445,11 +2553,21 @@ const LifeDirectorApp = (function () {
         const i = findInst(id); if (!i || i.lifecycleState !== 'PLANNED') break;
         if (!doable(i, now)) { instSheet(i); break; }
         const f = ST.ui.focus;
-        if (f && f.id !== id && findInst(f.id)) { say('Another timer is running. Finish or stop it first.'); focusSheet(); break; }
-        if (!f || f.id !== id) ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0 };
+        if (f && f.id !== id && findInst(f.id)) {
+          if (!window.confirm('Stop the current timer without logging its elapsed time and start ' + i.title + '?')) break;
+          const result = Today.timer({ act: 'replace', id, start: f.start });
+          if (!result.ok) { say(result.message); break; }
+          focusSheet(); break;
+        }
+        if (!f || f.id !== id) ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, i.endEpoch - i.startEpoch) * 1000 };
         persist(); render(); focusSheet(); break;
       }
       case 'focusOpen': focusSheet(); break;
+      case 'focusReset': {
+        const f = ST.ui.focus;
+        if (f) { Today.timer({ act: 'reset', id: f.id, start: f.start }); focusSheet(); }
+        break;
+      }
       case 'focusPause': { const f = ST.ui.focus; if (f && !f.paused) { f.paused = Date.now(); persist(); focusSheet(); } break; }
       case 'focusResume': { const f = ST.ui.focus; if (f && f.paused) { f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); focusSheet(); } break; }
       case 'focusFinish': {
@@ -2473,6 +2591,7 @@ const LifeDirectorApp = (function () {
       case 'lock': { const i = findInst(id); if (i) { i.isUserLocked = !i.isUserLocked; if (i.explanation) i.explanation = Object.assign({}, i.explanation, { summary: i.isUserLocked ? 'You pinned this time, so Life Director never moves it automatically.' : i.explanation.summary }); persist(); closeSheet(); render(); say(i.isUserLocked ? 'Pinned' : 'Unpinned'); } break; }
       case 'movePick': { const i = findInst(id); if (i) moveSheet(i); break; }
       case 'moveTo': { const r = reschedule({ type: 'MOVE', instanceId: id, newStartEpoch: +v }); if (r) { persist(); closeSheet(); render(); say('Moved and pinned · ' + summarize(r)); } break; }
+      case 'activityOpen': { const inst = findInst(id); if (inst && Host.openActivity) { closeSheet(); if (!Host.openActivity(inst)) say('No linked workout or quest is available.'); } break; }
       case 'openPlan': closeSheet(); Host.openPlanDay(v); break;
       case 'openQuests': Host.openView('quests'); break;
       case 'disrupt': disruptSheet(); break;
@@ -2802,19 +2921,6 @@ const LifeDirectorApp = (function () {
       if (!ST) boot();
       else { ui.tab = ST.setupComplete ? (ST.ui && ST.ui.tab || 'today') : 'setup'; }
       if (!timer) { timer = setInterval(tick, 5 * 60 * 1000); setInterval(liveTick, 15 * 1000); tickClocks(); }
-      /* swipe the stage left or right to swing to the neighbouring section */
-      const main = root.querySelector('.ld-main');
-      let sw = null;
-      main.addEventListener('touchstart', e => {
-        const t = e.touches[0], el = e.target;
-        sw = (e.touches.length === 1 && !el.closest('.ld-strip, .ld-dial, .ld-mini, input, select, textarea, .ld-seg, .ld-dchips, .ld-table, .ld-times, .ld-stepper')) ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
-      }, { passive: true });
-      main.addEventListener('touchend', e => {
-        if (!sw) return; const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y, dt = Date.now() - sw.at; sw = null;
-        if (dt > 700 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-        const list = tabList().map(x => x[0]), i = list.indexOf(ui.tab), j = i + (dx < 0 ? 1 : -1);
-        if (i >= 0 && j >= 0 && j < list.length && ST.setupComplete) goTab(list[j]);
-      }, { passive: true });
       if (ST.setupComplete && ST.schedule) ui.animate = 'intro';
     }
     tick(); render();
@@ -2913,9 +3019,12 @@ const LifeDirectorApp = (function () {
   function nativeToday(dayIdx, opts) {
     if (!ST) boot();
     if (!ST.setupComplete || !ST.schedule) return null;
-    const s = ST.schedule, z = tz(), days = horizonDays(s, z), now = nowEpoch();
-    const idx = Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
-    const day = days[idx], blocks = dayBlocks(s, day, z), isToday = idx === 0, d0 = day.startEpoch, d1 = day.endEpoch;
+    const s = ST.schedule, z = tz(), now = nowEpoch();
+    const calendar = opts && Number.isInteger(opts.calendarOffset) ? calendarDays(opts.calendarOffset, z) : null;
+    const days = calendar || horizonDays(s, z);
+    const idx = calendar ? 0 : Math.max(0, Math.min(days.length - 1, Math.round(Number(dayIdx) || 0)));
+    const day = days[idx], blocks = dayBlocks(s, day, z), isToday = now >= day.startEpoch && now < day.endEpoch, d0 = day.startEpoch, d1 = day.endEpoch;
+    const outsidePlan = d1 <= s.horizonStartEpoch || d0 >= s.horizonEndEpoch;
     const nextId = isToday ? (nextUp(now) || {}).instanceId : null;
     const voiceIds = new Set((ST.fixedCommitments || []).filter(c => c.voice).map(c => String(c.id || c.commitmentId)));
     const handles = dialHandles(day);
@@ -2940,7 +3049,7 @@ const LifeDirectorApp = (function () {
       } else if (k === 'rest') {
         arc('inner', 'thin', 'rest');
         if (m >= 60) word(DIAL.RI + 9, a0, a1, ['Downtime · ' + mins(m), 'Downtime', 'Rest'], 'rest', true);
-      } else if (k === 'free' && m >= 90 && !(isToday && b.endEpoch <= now)) {
+      } else if (k === 'free' && !outsidePlan && m >= 90 && !(isToday && b.endEpoch <= now)) {
         word(DIAL.RI, a0, a1, ['Free · ' + mins(m), 'Free'], 'free', true);
       } else if (k === 'task') {
         [a0, a1] = gap(a0, a1, 1.4);
@@ -2949,20 +3058,22 @@ const LifeDirectorApp = (function () {
           label: (next ? 'Next: ' : '') + b.inst.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch) });
       }
     }
-    const live = isToday && now >= d0 && now < d1, st = isToday ? nowState(now) : null;
+    const live = now >= d0 && now < d1, st = isToday ? nowState(now) : null;
     const ring = live && st.cur ? { r: 84, frac: Math.min(1, Math.max(0, (now - st.cur.startEpoch) / Math.max(60, st.cur.endEpoch - st.cur.startEpoch))), kind: st.cur.inst ? 'task' : blockClass(st.cur), warn: !!st.kick } : null;
     return {
       now,
       dayIndex: idx,
+      calendarDate: U.ymdKey(day.ymd),
+      calendarOffset: calendar ? opts.calendarOffset : 0,
       isToday,
-      strip: days.map((d, k) => ({ label: k === 0 ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
+      strip: days.map((d, k) => ({ label: now >= d.startEpoch && now < d.endEpoch ? 'Today' : DOW[d.dow], date: d.ymd.d, dots: dayBlocks(s, d, z).filter(b => b.inst).slice(0, 5).map(b => sesState(b.inst.lifecycleState)) })),
       dial: Object.assign({ startEpoch: d0, endEpoch: d1, radii: DIAL, hourWords: nativeHourWords(), arcs, words, hand: live ? angOf(now, d0, d1) : null, ring },
         nativeHandles(handles, d0, d1), { build: nativeBuild(d0, d1, arcs, isToday) }),
       hint: DIAL_HINT,
-      core: nativeCore(day, blocks, isToday, now, st),
-      mix: nativeMix(blocks),
+      core: Object.assign(nativeCore(day, blocks, isToday, now, st), outsidePlan && !(isToday && ST.ui.focus && !ST.ui.focus.paused && findInst(ST.ui.focus.id)) ? { sub: "This day hasn't been planned yet" } : {}),
+      mix: nativeMix(blocks).map(share => outsidePlan && share.kind === 'free' ? Object.assign({}, share, { label: 'Unplanned' }) : share),
       upNext: isToday ? nativeUpNext(day, days, now) : null,
-      reminders: isToday ? (s.passiveReminders || []).map(r => r.title) : [],
+      reminders: isToday ? (s.passiveReminders || []).map(reminderText) : [],
       sessions: blocks.filter(b => b.inst).length,
       rows: nativeRows(blocks, isToday, now, !!(opts && opts.removal)),
     };
@@ -3005,7 +3116,7 @@ const LifeDirectorApp = (function () {
       return { kick: fmt({ weekday: 'long' }).format(new Date(day.startEpoch * 1000)), kickKind: '', warn: false, title: fmt({ month: 'short', day: 'numeric' }).format(new Date(day.startEpoch * 1000)), date: true, big: null, timer: null,
         sub: tasks.length ? tasks.length + ' session' + (tasks.length === 1 ? '' : 's') + ' · ' + mins(taskMin) : 'No sessions planned', next: first ? { label: 'First · ' + fC(first.startEpoch), title: first.inst.title, live: false, act: '', id: '' } : null, button: null };
     }
-    const f = ST.ui.focus, fi = f && findInst(f.id);
+    const f = ST.ui.focus, fi = f && !f.paused && findInst(f.id);
     const out = { kick: 'Now', kickKind: '', warn: false, title: 'Free time', date: false, big: null, timer: null, sub: '', next: null, button: null };
     if (fi) {
       Object.assign(out, { kick: 'Timer running', kickKind: 'go', title: fi.title.replace(/^Plan:\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/&amp;/gi, '&').trim(),
@@ -3040,7 +3151,7 @@ const LifeDirectorApp = (function () {
   }
   function nativeUpNext(day, days, now) {
     const next = nextUp(now), f = ST.ui.focus, fi = f && findInst(f.id);
-    if (fi) return { kind: 'go', cue: 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: focusTimer(f), chips: [],
+    if (fi) return { kind: 'go', cue: f.paused ? 'Timer paused' : 'Timer running', title: fi.title, when: 'of ' + mins(Math.round((fi.endEpoch - fi.startEpoch) / 60)) + ' planned', timer: focusTimer(f), chips: [],
       actions: [{ label: 'Open timer', act: 'focusOpen', primary: true }, { label: 'Finish and log', act: 'focusFinish' }] };
     if (!next) return null;
     if (!doable(next, now)) {
@@ -3091,7 +3202,7 @@ const LifeDirectorApp = (function () {
      as its arc and row do. Returns false for an act Today does not have, and, saying so, for a session or meal that has
      left the plan since the screen drew it. */
   const ACT_ID = new Map([['inst', 'id'], ['focusStart', 'id'], ['doneQuick', 'id'], ['tab', 'tab'], ['regroup', 'v'], ['movePick', 'id'], ['openPlan', 'v'],
-    ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', ''], ['openQuests', ''], ['addGoal', '']]);
+    ['activityOpen', 'id'], ['focusOpen', ''], ['focusFinish', ''], ['tour', ''], ['disrupt', ''], ['replan', ''], ['dismissBanner', ''], ['openQuests', ''], ['addGoal', '']]);
   function nativeAct(act, id) {
     if (!root || !root.isConnected) return false;
     const gone = () => { say('That is no longer on the plan.'); return false; };
@@ -3192,10 +3303,31 @@ const LifeDirectorApp = (function () {
     return { ok: true };
   }
   /* the strip's day (day) or a day from Week or up next (gotoDay, which also goes to Today), as the page's own handlers do */
+  // Read-only browsing: never extend/rewrite the generated schedule merely by turning the bezel.
+  let nativeCalendarOffset = null;
+  function calendarDays(offset, zone) {
+    if (!Number.isSafeInteger(offset)) return null;
+    const p = U.localParts(nowEpoch(), zone);
+    const date = U.ymdAdd({ y: p.y, mo: p.mo, d: p.d }, offset);
+    const start = U.zonedToEpoch(date.y, date.mo, date.d, 0, zone);
+    if (!Number.isFinite(start)) return null;
+    return U.buildHorizon(start, 7, zone);
+  }
   function nativeDay(i, toToday) {
     if (!ST) boot();
     const days = ST.setupComplete && ST.schedule ? horizonDays(ST.schedule, tz()) : [];
-    if (!Number.isInteger(i) || i < 0 || i >= days.length) return { ok: false, message: 'That day is not on the plan.' };
+    if (!Number.isInteger(i) || !days.length) return { ok: false, message: 'That day is not on the plan.' };
+    if (toToday) nativeCalendarOffset = null;
+    if (nativeCalendarOffset !== null || i < 0 || i >= days.length) {
+      const offset = i;
+      try {
+        if (!calendarDays(offset, tz())) return { ok: false, message: 'That date cannot be displayed.' };
+      } catch (e) { return { ok: false, message: 'That date cannot be displayed.' }; }
+      nativeCalendarOffset = offset;
+      if (toToday) ui.tab = 'today';
+      changed();
+      return { ok: true };
+    }
     ui.dayIdx = i;
     if (toToday) ui.tab = 'today';
     if (root && root.isConnected) render();
@@ -3205,6 +3337,10 @@ const LifeDirectorApp = (function () {
      The session sheet as data: instSheet's branches (now, later, past) in the page's words. A session that has left the plan
      answers {kind, gone: true}; the screen closes the sheet and says so. */
   const MINUTES_MAX = 480;
+  function reminderText(reminder) {
+    const description = Host.activityDescription ? Host.activityDescription({ title: reminder.title, linkedQuestRequirementIds: [{ questId: reminder.questId, questTitle: reminder.title }] }) : '';
+    return reminder.title + (description ? '\n' + description : '');
+  }
   function nativeSessionSheet(id) {
     const inst = findInst(id) || ((ST.schedule && ST.schedule.historyInstances) || []).find(h => h.instanceId === id);
     if (!inst) return { kind: 'session', id: String(id), gone: true };
@@ -3217,6 +3353,7 @@ const LifeDirectorApp = (function () {
     if (planned) row.push({ label: 'Move', sheet: 'move' }, { label: inst.isUserLocked ? 'Unpin' : 'Pin here', command: 'pin', on: !inst.isUserLocked }, { label: 'Skip', command: 'skip' });
     return {
       kind: 'session', id: inst.instanceId, state: sesState(inst.lifecycleState), icon: tagIcon(inst.tag), title: inst.title,
+      description: Host.activityDescription ? Host.activityDescription(inst) : '',
       when: fDay(inst.startEpoch) + ' · ' + fTime(inst.startEpoch) + '–' + fTime(inst.endEpoch) + ' · ' + mins(inst.durationSlots * 15) + (inst.compressed ? ' (shortened)' : ''),
       chips: (inst.linkedQuestRequirementIds || []).map(l => ({ kind: 'quest', text: l.questTitle }))
         .concat(inst.goalTitle ? [{ kind: 'goal', text: 'Goal: ' + inst.goalTitle }] : [], xp ? [{ kind: 'xp', text: '+' + xp.xp + ' XP · ' + attrName(xp.rule.primary) }] : []),
@@ -3353,13 +3490,44 @@ const LifeDirectorApp = (function () {
        they mean, so a repeat after one landed is not taken for a new timer */
     timer({ act, id, start }) {
       const f = ST.ui.focus;
+      const automatic = act === 'autoFinish';
+      let automaticMinutes = null;
+      if (automatic) {
+        if (!f || f.start !== Number(start) || f.id !== id || f.paused) return recorded('');
+        const inst = plannedInst(f.id);
+        if (!inst) return gone;
+        const target = f.plannedMs || Math.max(60, inst.endEpoch - inst.startEpoch) * 1000;
+        if (focusMs(f) < target) return recorded('');
+        automaticMinutes = Math.max(1, Math.round(target / 60000));
+        act = 'finish';
+      }
+      if (act === 'replace') {
+        const inst = plannedInst(id);
+        if (!inst || inst.lifecycleState !== 'PLANNED') return gone;
+        if (!doable(inst, nowEpoch())) return { ok: false, message: 'This session is not available to start yet.' };
+        if (!f || f.start !== Number(start)) {
+          return f && f.id === id ? recorded('') : { ok: false, message: 'The timer changed. Please choose Start again.' };
+        }
+        if (f.id === id) return recorded('');
+        const at = Math.max(Date.now(), f.start + 1);
+        ST.ui.focus = { id, start: at, paused: null, pausedMs: 0, plannedMs: Math.max(60, inst.endEpoch - inst.startEpoch) * 1000 };
+        if (!persist()) { ST.ui.focus = f; return { ok: false, message: 'The new timer could not be saved. Your previous timer is unchanged.' }; }
+        render(); return saved('');
+      }
       if (act === 'start') {
         const inst = plannedInst(id);
         if (!inst || inst.lifecycleState !== 'PLANNED') return gone;
         if (!doable(inst, nowEpoch())) return { ok: false, message: 'You can start it on the day, or from 6 hours before.' };
         if (f && f.id === id) return recorded('');
         if (f && plannedInst(f.id)) return { ok: false, message: 'Another timer is running. Finish or stop it first.' };
-        ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0 }; persist(); render(); return saved('');
+        ST.ui.focus = { id, start: Date.now(), paused: null, pausedMs: 0, plannedMs: Math.max(60, inst.endEpoch - inst.startEpoch) * 1000 }; persist(); render(); return saved('');
+      }
+      if (act === 'reset') {
+        if (!f || f.id !== id || f.start !== Number(start)) return recorded('');
+        const at = Math.max(Date.now(), f.start + 1);
+        ST.ui.focus = Object.assign({}, f, { start: at, paused: at, pausedMs: 0 });
+        if (!persist()) { ST.ui.focus = f; return { ok: false, message: 'Timer could not be reset. Please try again.' }; }
+        render(); return saved('');
       }
       if (act === 'pause') { if (!f || f.paused) return recorded(''); f.paused = Date.now(); persist(); render(); return saved(''); }
       if (act === 'resume') { if (!f || !f.paused) return recorded(''); f.pausedMs = (f.pausedMs || 0) + Date.now() - f.paused; f.paused = null; persist(); render(); return saved(''); }
@@ -3369,11 +3537,12 @@ const LifeDirectorApp = (function () {
           return done ? recorded('Already recorded.') : !f ? recorded('') : { ok: false, message: 'That timer is not running.' };
         }
         if (act === 'cancel') { ST.ui.focus = null; persist(); render(); say('Timer stopped. Nothing was logged.'); return saved(''); }
-        const inst = plannedInst(f.id), minutes = Math.max(1, Math.round(focusMs(f) / 60000));
+        const inst = plannedInst(f.id), minutes = automatic ? automaticMinutes : Math.max(1, Math.round(focusMs(f) / 60000));
         ST.ui.focus = null;
         if (!inst || inst.lifecycleState !== 'PLANNED') { persist(); render(); say('That session is no longer on the plan. Log it from the Log page.'); return saved(''); }
         ui.fx.justDone = inst.instanceId;
         const r = finishInstance(inst, minutes, { startEpoch: Math.floor(f.start / 1000), quietRefusal: true });
+        if (!r && automatic) { ST.ui.focus = f; persist(); }
         render(); return r ? saved('') : refusedFinish();
       }
       return { ok: false, message: 'Life Director cannot do that.' };
@@ -3496,7 +3665,22 @@ const LifeDirectorApp = (function () {
   /* My time's sheets as data (phase 4B): the commitment sheet (id: a commitment's, or '' for a new one), the goal-kind grid, and a goal
      form (id: the kind). A commitment removed since answers gone; a kind of goal the page does not know has nothing to draw. */
   const FORM_SHEETS = new Set(['rule', 'goalType', 'goalForm']);
+  function activityAtForm(id) {
+    const epoch = Number(id.slice(3));
+    if (!Number.isSafeInteger(epoch) || epoch <= 0) return null;
+    const local = U.localParts(epoch, tz());
+    return { kind: 'goalForm', id, title: 'Add an activity', text: 'Schedule one activity at the time you held.',
+      fields: [
+        formField('title', 'text', 'Activity name', '', { required: true, maxLength: 80 }),
+        formField('tag', 'choice', 'Activity', CUSTOM_TAGS[0][0], { options: choices(CUSTOM_TAGS) }),
+        formField('date', 'date', 'Date', U.ymdKey(local), { required: true }),
+        formField('start', 'time', 'Start time', local.h * 60 + local.mi, { required: true }),
+        formField('minutes', 'number', 'Duration (minutes)', 30, { min: 15, max: 180, step: 15 })
+      ], fold: null, note: 'Adds a pinned activity to an already planned day. It does not log completion or award XP. Sleep, work and existing activities stay protected.',
+      save: { label: 'Add activity', command: 'activityAtAdd' }, cancel: 'Cancel', remove: null };
+  }
   function nativeForm(kind, id) {
+    if (kind === 'goalForm' && id.startsWith('at:')) return activityAtForm(id);
     if (kind === 'goalType') return goalTypeModel();
     if (kind === 'goalForm') return E.ARCHETYPES[id] || id === 'CUSTOM' ? goalFormModel(id) : null;
     if (!id) return ruleForm(null);
@@ -3555,11 +3739,11 @@ const LifeDirectorApp = (function () {
   /* A native screen that draws Today plays the build itself: while covers() says it is over Today, the page plays none of its own,
      and cover() stops one already playing (the screen has just come over it) */
   let nativeCovers = () => false;
-  const nativeApi = Object.freeze({ frame: nativeFrame, today: (i, o) => nativeToday(i === undefined ? ui.dayIdx : i, o), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
+  const nativeApi = Object.freeze({ frame: nativeFrame, today: (i, o) => nativeToday(i === undefined ? ui.dayIdx : i, i === undefined && nativeCalendarOffset !== null ? Object.assign({}, o, { calendarOffset: nativeCalendarOffset }) : o), showing, act: nativeAct, drop: nativeDrop, apply: nativeApply,
     week: nativeWeek, quests: nativeQuests, section: nativeSection, day: i => nativeDay(i, false), gotoDay: i => nativeDay(i, true),
     dayIndex: () => ui.dayIdx,
     /* the player comes to Life Director: today on the strip, before the page shows it (the kit's arrive) */
-    arrive() { ui.dayIdx = 0; intent = null; },
+    arrive() { ui.dayIdx = 0; nativeCalendarOffset = null; intent = null; },
     /* fn() is true when a native screen draws Today's sheets: a glance tap then asks for its sheet (intent) instead */
     intendedBy(fn) { nativeIntends = typeof fn === 'function' ? fn : () => false; }, intent: nativeIntent,
     coveredBy(fn) { nativeCovers = typeof fn === 'function' ? fn : () => false; }, cover() { if (ui.bfRun) ui.bfRun.stop(); },
@@ -3737,3 +3921,5 @@ if (window.LifeMaxFeatures && typeof window.LifeMaxFeatures.register === 'functi
   /* Standalone harness: no Forge registry, mount directly */
   document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('view-life-director'); if (v) LifeDirectorApp.mount(v); });
 }
+
+

@@ -54,7 +54,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
   ok('no script errors before setup', fresh.errors.length === 0, fresh.errors);
   await fresh.context().close(); // one page at a time: each holds a whole app
 
-  const p = await start(b, true);
+  let p = await start(b, true);
   await go(p, 'life-director', 1500);
   const m = await p.evaluate(() => {
     const open = __since(0).filter(c => c[1] === 'open'), s = open.length && open[0][2].snapshot, t = s && s.today;
@@ -109,7 +109,12 @@ const mark = p => p.evaluate(() => window.__calls.length);
   for (const [id, index] of [['d2', 7], ['d3', -1], ['d4', 'x']]) await emit('command', { command: 'day', payload: { index }, requestId: id });
   await settle(p, 300);
   const bad = await Promise.all(['d2', 'd3', 'd4'].map(id => reply(n, id)));
-  ok('a day that is not on the strip is refused and the day stays', bad.every(r => r && r.reply.ok === false && /not on the plan/.test(r.reply.message) && r.today.dayIndex === 1), bad.map(r => r && r.reply));
+  ok('calendar browsing passes either end of the strip; invalid dates are refused',
+    bad[0] && bad[0].reply.ok && bad[0].today.calendarOffset === 7 &&
+    bad[1] && bad[1].reply.ok && bad[1].today.calendarOffset === -1 &&
+    bad[2] && !bad[2].reply.ok && bad[2].today.calendarOffset === -1, bad.map(r => r && r.reply));
+  await emit('command', { command: 'gotoDay', payload: { index: 1 }, requestId: 'calendar-return' });
+  await settle(p, 300);
 
   const state = (n) => p.evaluate(n => {
     const calls = __since(n), open = calls.filter(c => c[1] === 'open').pop(), body = document.querySelector('#view-life-director .ld-sheet.open .ld-sheet-body');
@@ -161,16 +166,21 @@ const mark = p => p.evaluate(() => window.__calls.length);
   await settle(p, 3500);
   const after = await p.evaluate(() => ({ calm: __calm, shown: !!document.querySelector('.luov') }));
   ok('a level-up keeps the screen waiting until it has closed', levelUp.calm === 0 && levelUp.shown && after.calm === 1 && !after.shown, { levelUp, after });
-  // The session it completes is the day's last planned one, Focused Reading (30 minutes, reading.focused), and the Daily Hand card "Focused
+  // The session this scenario explicitly completes is Focused Reading (30 minutes, reading.focused), and the Daily Hand card "Focused
   // reading" (read for 25 minutes) is on the table. Life Director reads that card as a 25-minute reading quest and counts the session
   // toward it (its quest overlay gets the session's event), which meets it, so the session reaches the quest bounty: before the fix
   // the bounty was paid after the award had been taken back (the card done, Sparks and rested XP spent, "Quest complete" said).
+  // Keep save-refusal checks independent of whichever session earlier scenarios completed.
+  // Otherwise a previously logged reading activity can legitimately auto-verify the injected card.
+  await p.context().close();
+  p = await start(b, true);
+  await go(p, 'life-director', 1500);
   const refused = await p.evaluate((day) => {
     const card = dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'bounty');
     state.quests = state.quests.concat(card); Object.assign(state, { sparks: 100, restedXP: 40 });
     saveReadOnly = 'A newer version saved this'; saveReadOnlyTold = true;
     const before = state.activities.length; let r = null, done = null;
-    for (const s of LifeDirector.voice.sessions(day)) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) { done = s; break } }
+    for (const s of LifeDirector.voice.sessions(day).filter(s => s.title === 'Focused Reading')) { r = LifeDirector.voice.completeSession(s.id); if (r.ok) { done = s; break } }
     const ST = LifeDirectorApp._debug().ST, h = done && ST.schedule.historyInstances.find(x => x.instanceId === done.id), ov = ST.questOverlay[questKey(card)];
     const out = { ok: !!(r && r.ok), session: done && done.title, logged: state.activities.length !== before, flying: !!document.querySelector('.fx-xp'), notice: (LifeDirector.native.frame().notice || {}).text || '',
       counted: !!(h && h.completionEventId && ov && ov.eventIds.includes(h.completionEventId)), fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP };
@@ -208,7 +218,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
     const adhoc = () => (LifeDirectorApp._debug().ST.schedule.historyInstances || []).filter(x => x.adhoc), n = adhoc().length;
     const acts = state.activities.length, qd = JSON.stringify(state.questDone), btn = document.querySelector('#view-life-director .ld-sheet.open [data-act=logToday]'), real = Storage.prototype.setItem;
     Storage.prototype.setItem = function (k) { if (k === STORE) throw new Error('quota'); return real.apply(this, arguments) };
-    try { if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true })) } finally { Storage.prototype.setItem = real }
+    try { if (btn) { document.getElementById('ldDoneMin').value = '30'; btn.dispatchEvent(new MouseEvent('click', { bubbles: true })); } } finally { Storage.prototype.setItem = real }
     const h = adhoc()[n], ov = LifeDirectorApp._debug().ST.questOverlay[questKey(card)];
     const out = { button: !!btn, recorded: !!h && h.title === 'Focused Reading' && h.hostActivityId === null, counted: !!(h && ov && ov.eventIds.includes(h.completionEventId)),
       untouched: state.activities.length === acts && JSON.stringify(state.questDone) === qd, fulfilled: isQuestDone(card), sparks: state.sparks, rested: state.restedXP,
@@ -227,7 +237,7 @@ const mark = p => p.evaluate(() => window.__calls.length);
     const card = Object.assign(dhMakeQuest(QUEST_LIBRARY.find(t => t.verify === 'act:reading:25'), getToday(), 0, 'paid'), { verify: 'self' });
     state.quests = state.quests.concat(card);
     const btn = document.querySelector('#view-life-director .ld-sheet.open [data-act=logToday]');
-    if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    if (btn) { document.getElementById('ldDoneMin').value = '30'; btn.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
     const out = { button: !!btn, fulfilled: isQuestDone(card), notice: (LifeDirector.native.frame().notice || {}).text || '' };
     return out;
   });

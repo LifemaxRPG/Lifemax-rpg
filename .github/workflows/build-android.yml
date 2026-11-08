@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, claude/github-android-app-d3wlth, codex/native-overview, codex/native-character, codex/native-food-parity, codex/native-tab-switch-performance]
+    branches: [codex/director-dial-controls, main, claude/github-android-app-d3wlth, codex/native-overview, codex/native-character, codex/native-food-parity, codex/native-tab-switch-performance]
     # a push that only touches documentation builds nothing, so it cannot cancel a build in progress
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
@@ -35,15 +35,30 @@ jobs:
           java-version: 21
 
       # Native slider build retry: retain ktfmt diagnostics if formatting regresses.
+      - name: Cache Kotlin formatter
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ktfmt.jar
+          key: ktfmt-0.53-76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1
+
       - name: Check native Kotlin formatting
         run: |
-          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 60 https://repo.maven.apache.org/maven2/com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -o "$RUNNER_TEMP/ktfmt.jar"
+          FORMATTER_SHA=76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1
+          if ! printf '%s  %s\n' "$FORMATTER_SHA" "$RUNNER_TEMP/ktfmt.jar" | sha256sum --check --status 2>/dev/null; then
+            rm -f "$RUNNER_TEMP/ktfmt.jar"
+            curl --fail --silent --show-error --location --retry 5 --retry-delay 10 --retry-max-time 180 --connect-timeout 10 --max-time 60 https://repo.maven.apache.org/maven2/com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -o "$RUNNER_TEMP/ktfmt.jar"
+          fi
           printf '%s  %s\n' '76d05c614fe1864788557170fe89410f75134866a9f84011f9bd570ca12526b1' "$RUNNER_TEMP/ktfmt.jar" | sha256sum --check
           if ! python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"; then
-            java -jar "$RUNNER_TEMP/ktfmt.jar" --kotlinlang-style android-wrapper/native/src/main/java/com/lifemax/rpg/feature/settings/presentation/components/SettingsControls.kt
-            git diff -- android-wrapper/native/src/main/java/com/lifemax/rpg/feature/settings/presentation/components/SettingsControls.kt
-            echo "::error::Commit the formatted Kotlin source shown above."
-            exit 1
+            if [ "$GITHUB_REF" = refs/heads/codex/director-dial-controls ] && [ "${{ contains(github.event.head_commit.message, '[refresh-director-snapshots]') }}" = true ]; then
+              # During an explicit dial reference refresh, normalize only Life Director source,
+              # verify the whole tree again, and retain the normalized source with the references.
+              find android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector -name '*.kt' -print0 | xargs -0 -r java -jar "$RUNNER_TEMP/ktfmt.jar" --kotlinlang-style
+              python3 tools/check_native_format.py "$RUNNER_TEMP/ktfmt.jar"
+            else
+              echo "::error::Native Kotlin formatting must be corrected before building."
+              exit 1
+            fi
           fi
 
       - name: Copy newest single-file build into the web folder
@@ -108,16 +123,79 @@ jobs:
             fi
           fi
 
-      - name: Build debug APK
+      - name: Compile and package debug APK
         working-directory: android-wrapper/android
-        # --stacktrace prints the real cause of a failure (the packaging step has twice died with a generic
-        # "IncrementalSplitterRunnable" message). A second attempt runs only after a first failure, so a real
-        # break still fails the build, while a one-off runner hiccup does not cost a manual re-run.
+        run: ./gradlew assembleDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+
+      # Explicit, single-use visual baseline maintenance on the development branch.
+      # Ordinary pushes still verify references without changing them.
+      - name: Refresh affected Life Director visual references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
+        working-directory: android-wrapper/android
         run: |
-          ./gradlew assembleDebug verifyPaparazziDebug --stacktrace || {
-            echo "::warning::The first build attempt failed; trying once more."
-            ./gradlew assembleDebug verifyPaparazziDebug --stacktrace
-          }
+          if [ "${{ contains(github.event.head_commit.message, '[refresh-meal-snapshot]') }}" = true ]; then
+            ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests 'com.lifemax.rpg.screenshots.LifeDirectorTimerMealScreenshotTest.meal' --stacktrace
+          else
+            ./gradlew --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8' recordPaparazziDebug --tests '*Director*ScreenshotTest' --tests '*MiniSleepDialScreenshotTest' --tests '*OverviewArrivalScreenshotTest' --tests '*OverviewScreenScreenshotTest' --stacktrace
+          fi
+
+      - name: Preserve refreshed dial visual report
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
+        uses: actions/upload-artifact@v4
+        with:
+          name: Life-Director-visual-review
+          path: android-wrapper/android/app/build/reports/paparazzi/
+
+      - name: Commit refreshed development references
+        if: github.ref == 'refs/heads/codex/director-dial-controls' && (contains(github.event.head_commit.message, '[refresh-director-snapshots]') || contains(github.event.head_commit.message, '[refresh-meal-snapshot]'))
+        run: |
+          if [ "${{ contains(github.event.head_commit.message, '[refresh-meal-snapshot]') }}" = true ]; then
+            git add android-wrapper/native/src/test/snapshots/images/com.lifemax.rpg.screenshots_LifeDirectorTimerMealScreenshotTest_meal.png
+          else
+            find android-wrapper/native/src/test/snapshots/images -maxdepth 1 -type f \( -name '*Director*' -o -name '*MiniSleepDial*' -o -name '*OverviewArrival*' -o -name '*OverviewScreen*' \) -print0 | xargs -0 -r git add --
+            git add android-wrapper/native/src/main/java/com/lifemax/rpg/feature/lifedirector
+          fi
+          git diff --cached --stat
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refresh intended Life Director visual references'
+          git push origin HEAD:codex/director-dial-controls
+
+      - name: Verify native tests and screenshots
+        working-directory: android-wrapper/android
+        run: ./gradlew verifyPaparazziDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+
+      - name: Show exact native test failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          root = Path("android-wrapper/android/app/build/test-results")
+          count = 0
+          for report in sorted(root.rglob("TEST-*.xml")):
+              try:
+                  suite = ET.parse(report).getroot()
+              except ET.ParseError:
+                  continue
+              for case in suite.iter("testcase"):
+                  failures = list(case.findall("failure")) + list(case.findall("error"))
+                  for failure in failures:
+                      count += 1
+                      print(f"FAILED: {case.get('classname')}.{case.get('name')}")
+                      print((failure.get("message") or failure.text or "").strip()[:2500])
+          print(f"Native test failures in XML reports: {count}")
+          PY
+
+      - name: Keep native test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Native-test-results
+          path: android-wrapper/android/app/build/test-results/
+          if-no-files-found: ignore
 
       - name: Keep the screenshot report when a native screen changed
         if: failure()
@@ -177,18 +255,18 @@ jobs:
       # Before a release: the APK must launch on an emulator and keep running (blocking). The tab-switch timing check after it
       # never fails the build; read its result in the Native-Overview-review artifact (nav-perf.json).
       - name: Release build daemon before the emulator
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         run: ./android-wrapper/android/gradlew -p android-wrapper/android --stop
 
       - name: Enable emulator acceleration for the launch check
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
       - name: Launch check, then the optional tab-switch timing
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls'
         timeout-minutes: 14
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -266,7 +344,7 @@ jobs:
   # Only a build whose APK compiled, passed its unit and screenshot tests and whose web tests passed reaches the phone.
   publish:
     needs: [apk, web-tests]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/github-android-app-d3wlth' || github.ref == 'refs/heads/codex/director-dial-controls') && needs.apk.outputs.stable == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

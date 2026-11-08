@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,8 +56,14 @@ import com.lifemax.rpg.core.designsystem.components.tokenColor
 import com.lifemax.rpg.core.designsystem.cssBlurRadius
 import com.lifemax.rpg.feature.lifedirector.domain.DirectorToday
 import com.lifemax.rpg.feature.lifedirector.domain.LifeDirectorProjection
+import com.lifemax.rpg.feature.lifedirector.domain.MealSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.MoveSheetModel
 import com.lifemax.rpg.feature.lifedirector.domain.Sections
 import com.lifemax.rpg.feature.lifedirector.domain.SessionSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.SheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.Tap
+import com.lifemax.rpg.feature.lifedirector.domain.TimerSheetModel
+import com.lifemax.rpg.feature.lifedirector.domain.answers
 import com.lifemax.rpg.feature.lifedirector.presentation.components.Banner
 import com.lifemax.rpg.feature.lifedirector.presentation.components.ConfirmChangeSheet
 import com.lifemax.rpg.feature.lifedirector.presentation.components.DayMix
@@ -209,9 +216,13 @@ fun LifeDirectorScreen(
     val confirm = ui.ask?.confirm
     DirectorTheme(p) {
         Box(
-            Modifier.fillMaxSize().background(tokenColor(p.tokens, "bg")).pointerInput(actions) {
-                observeTouches(actions.touch)
-            }
+            Modifier.fillMaxSize()
+                .background(tokenColor(p.tokens, "bg"))
+                .pointerInput(ui.sheet) {
+                    if (ui.sheet != null && p.tab == Sections.TODAY)
+                        detectTapGestures(onTap = { actions.session.close() })
+                }
+                .pointerInput(actions) { observeTouches(actions.touch) }
         ) {
             val today = p.today?.takeIf { p.tab == Sections.TODAY }
             val week = p.week?.takeIf { p.tab == Sections.WEEK }
@@ -233,6 +244,15 @@ fun LifeDirectorScreen(
                     settings != null ||
                     time != null ||
                     firstRun != null
+            val activity =
+                p.sheet?.takeIf { model ->
+                    today != null &&
+                        (model is MealSheetModel ||
+                            model is SessionSheetModel ||
+                            model is TimerSheetModel ||
+                            model is MoveSheetModel) &&
+                        ui.sheet?.let { model.answers(it) } == true
+                }
             val list = rememberLazyListState()
             val anchors = remember { GuideAnchors() }
             val guideRun = ui.guide?.takeIf { g -> p.guide?.key == g.key }
@@ -276,7 +296,6 @@ fun LifeDirectorScreen(
             LazyColumn(
                 Modifier.fillMaxSize()
                     .dragToRemove(removal, list)
-                    .pointerInput(actions) { detectSectionFlick(actions.flick) }
                     .then(
                         // behind a confirmation the screen is blurred as .ld-sheet-bg blurs the
                         // page, on Android 12 and later
@@ -307,6 +326,8 @@ fun LifeDirectorScreen(
                             if (today != null)
                                 TodayTop(
                                     today,
+                                    activity,
+                                    p.reducedMotion,
                                     ui,
                                     actions,
                                     animate,
@@ -356,18 +377,21 @@ fun LifeDirectorScreen(
                     actions.submitRestore,
                     actions.closeRestore,
                 )
-            sessionSheet(p, ui)?.let { s ->
-                val typed = ui.minutesDraft?.takeIf { it.id == s.id }?.text
-                SessionSheet(
-                    s,
-                    typed ?: s.minutes?.value?.toString().orEmpty(),
-                    ui.pendingToday,
-                    bottomInsetDp.dp,
-                    actions.session,
-                )
-            }
-            TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
-            MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
+            sessionSheet(p, ui)
+                ?.takeIf { activity == null }
+                ?.let { s ->
+                    val typed = ui.minutesDraft?.takeIf { it.id == s.id }?.text
+                    SessionSheet(
+                        s,
+                        typed ?: s.minutes?.value?.toString().orEmpty(),
+                        ui.pendingToday,
+                        bottomInsetDp.dp,
+                        actions.session,
+                    )
+                }
+            if (activity == null)
+                TimerMealSheet(p, ui, bottomInsetDp.dp, actions.timerMeal, animate)
+            if (activity == null) MoveDisruptSheets(p, ui, bottomInsetDp.dp, actions.moves)
             FormSheets(p, ui, bottomInsetDp.dp, actions.forms, animate)
             val guide = p.guide
             if (guideRun != null && guide != null)
@@ -410,6 +434,8 @@ private fun DirectorTheme(p: LifeDirectorProjection, content: @Composable () -> 
 @Composable
 private fun TodayTop(
     today: DirectorToday,
+    activity: SheetModel?,
+    reducedMotion: Boolean,
     ui: DirectorUi,
     actions: DirectorActions,
     animate: Boolean,
@@ -418,12 +444,16 @@ private fun TodayTop(
     tour: DialTourRun?,
     removal: DragRemoveController?,
 ) {
-    DayStrip(today.strip, ui.pendingDay ?: today.dayIndex, actions.day)
+    DayStrip(
+        today.strip,
+        ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        { actions.day(today.calendarOffset + it) },
+    )
     Spacer(Modifier.height(8.dp))
     ChronoDial(
         today.dial,
         today.centre,
-        animate,
+        animate && !reducedMotion,
         actions::arc,
         actions.tap,
         Modifier.guideAnchor(anchors, "dial"),
@@ -434,6 +464,29 @@ private fun TodayTop(
         tour = tour,
         centreAnchor = Modifier.guideAnchor(anchors, "dial.centre"),
         removal = removal,
+        centreDismiss = if (activity != null) actions.session.close else null,
+        days = today.strip,
+        calendarDate = today.calendarDate,
+        todayOffset = today.calendarOffset + today.dayIndex,
+        selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
+        onDay = { actions.day(today.calendarOffset + it) },
+        onAddAt = {
+            actions.tap(com.lifemax.rpg.feature.lifedirector.domain.Tap("addAt", it.toString()))
+        },
+        onToday = {
+            actions.session.close()
+            actions.day(0)
+        },
+        dayWheelEnabled =
+            ui.pendingDay == null &&
+                ui.pendingToday == null &&
+                ui.ask == null &&
+                ui.confirm == null &&
+                ui.guide == null,
+        centreContent =
+            activity?.let { model ->
+                { DialActivityControls(model, ui, actions, animate, reducedMotion) }
+            },
     )
     DialHint(today.hint)
     DayMix(today.mix)
@@ -497,7 +550,11 @@ private fun LazyListScope.todayBelow(
         }
     }
     if (today.reminders.isNotEmpty())
-        item("reminders") { Panel(Slice.MIDDLE) { RemindersCard(today.reminders) } }
+        item("reminders") {
+            Panel(Slice.MIDDLE) {
+                RemindersCard(today.reminders) { actions.tap(Tap("openQuests", "")) }
+            }
+        }
     item("heading") { Panel(Slice.MIDDLE) { OrderHeading(today.isToday, today.sessions) } }
     today.earlier?.let { earlier ->
         val open = ui.earlierOpen && earlier.rows.isNotEmpty()

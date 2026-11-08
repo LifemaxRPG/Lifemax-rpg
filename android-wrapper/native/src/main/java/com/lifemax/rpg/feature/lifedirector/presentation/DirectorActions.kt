@@ -41,6 +41,7 @@ class DirectorActions(
     val time: TimeActions = TimeActions(),
     val forms: FormSheetActions = FormSheetActions(),
     /** Undo on the message after a session is taken off the day (director.remove.v1) */
+    val editActivity: (String) -> Unit = {},
     val undo: () -> Unit = {},
 ) {
     constructor(
@@ -66,6 +67,7 @@ class DirectorActions(
                 // the ? plays a guide the screen draws, from Goals or Settings in its own section
                 t.act == "tour" && vm.guideHelp.ask() -> Unit
                 // My time's sheets are the screen's own where the page draws them for it (4B)
+                t.act == "addAt" && vm.forms.available -> vm.forms.openAt(t.id)
                 t.act == "addGoal" && vm.forms.available -> vm.forms.openGoalType()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->
@@ -125,6 +127,7 @@ class DirectorActions(
             TimerMealActions(
                 close = vm::closeSheet,
                 pause = vm.timerMeal::pauseOrResume,
+                reset = vm.timerMeal::reset,
                 finish = vm.timerMeal::finish,
                 stop = vm.timerMeal::stop,
                 openMeal = {
@@ -145,6 +148,7 @@ class DirectorActions(
                 build = vm.time::build,
             ),
         forms = FormSheetActions(vm.forms),
+        editActivity = { id -> if (vm.handOverFromSheet()) emit("activityOpen", id) },
         undo = vm.removal::undo,
         flick = { dir ->
             val p = vm.projection.value

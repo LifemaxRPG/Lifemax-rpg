@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.TextLayoutResult
@@ -60,7 +61,12 @@ internal open class DialLayer(private val steps: List<Step>) {
 }
 
 /** Bezel, face, depth rings, ticks, hour words, sun and moon, ring tracks. */
-internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextMeasurer) :
+internal class DialFace(
+    radii: DialRadii,
+    hourWords: List<HourWord>,
+    text: TextMeasurer,
+    includeBezel: Boolean = true,
+) :
     DialLayer(
         buildList<Step> {
             disc(176f, P.bezel)
@@ -78,11 +84,23 @@ internal class DialFace(radii: DialRadii, hourWords: List<HourWord>, text: TextM
             disc(86.5f, P.hub)
             edge(87.5f)
             outline(82f, 1f, P.lip)
-            ticks(radii)
-            engrave(radii, hourWords, Glyphs(text))
+            if (includeBezel) {
+                ticks(radii)
+                engrave(radii, hourWords, Glyphs(text))
+            }
             outline(radii.outer, radii.outerWidth, P.outerTrack)
             outline(radii.inner, radii.innerWidth, P.innerTrack)
-            sunAndMoon(hourWords)
+            if (includeBezel) sunAndMoon(hourWords, Glyphs(text))
+        }
+    )
+
+/** The engraved watch bezel rotates independently of the schedule and current-time hand. */
+internal class DialBezel(radii: DialRadii, hourWords: List<HourWord>, text: TextMeasurer) :
+    DialLayer(
+        buildList<Step> {
+            ticks(radii)
+            engrave(radii, hourWords, Glyphs(text))
+            sunAndMoon(hourWords, Glyphs(text))
         }
     )
 
@@ -145,38 +163,60 @@ internal inline fun DrawScope.faded(alpha: Float, block: DrawScope.() -> Unit) {
 }
 
 /** The part of today already gone, greyed out, and how much of the current block is left. */
-internal class DialNow(radii: DialRadii, hand: Float?, ring: CurrentRing?) :
-    DialLayer(
-        buildList<Step> {
-            if (hand != null && hand > 1f) {
-                val outer = radii.outer + radii.outerWidth / 2 + 2
-                val inner = radii.inner - radii.innerWidth / 2 - 2
-                val (x, y) = point(inner, hand)
-                val sector =
-                    Path().apply {
-                        arcTo(box(outer), -90f, hand, true)
-                        lineTo(x, y)
-                        arcTo(box(inner), hand - 90f, -hand, false)
-                        close()
-                    }
-                add { drawPath(sector, P.past) }
-            }
-            if (ring != null) {
-                outline(ring.radius, 3f, P.ringTrack)
-                if (ring.frac < .997f) {
-                    val color =
-                        when {
-                            ring.warn -> P.warn
-                            ring.kind == BlockKind.FREE -> P.ringFree
-                            else -> P.of(ring.kind)
+internal class DialNow(radii: DialRadii, hand: Float?, ring: CurrentRing?) {
+    private val past =
+        DialLayer(
+            buildList<Step> {
+                if (hand != null && hand > 1f) {
+                    val outer = radii.outer + radii.outerWidth / 2 + 2
+                    val inner = radii.inner - radii.innerWidth / 2 - 2
+                    val (x, y) = point(inner, hand)
+                    val sector =
+                        Path().apply {
+                            arcTo(box(outer), -90f, hand, true)
+                            lineTo(x, y)
+                            arcTo(box(inner), hand - 90f, -hand, false)
+                            close()
                         }
-                    val arc = arcPath(ring.radius, ring.frac * 360f, 360f)
-                    glow(arc, 3.5f, color, if (ring.warn) 5f else 4f, StrokeCap.Round)
-                    stroke(arc, Stroke(3.5f, cap = StrokeCap.Round), color, .9f)
+                    add { drawPath(sector, P.past) }
                 }
             }
+        )
+    private val current =
+        DialLayer(
+            buildList<Step> {
+                if (ring != null) {
+                    outline(ring.radius, 3f, P.ringTrack)
+                    if (ring.frac < .997f) {
+                        val color =
+                            when {
+                                ring.warn -> P.warn
+                                ring.kind == BlockKind.FREE -> P.ringFree
+                                else -> P.of(ring.kind)
+                            }
+                        val arc = arcPath(ring.radius, ring.frac * 360f, 360f)
+                        glow(arc, 3.5f, color, if (ring.warn) 5f else 4f, StrokeCap.Round)
+                        stroke(arc, Stroke(3.5f, cap = StrokeCap.Round), color, .9f)
+                    }
+                }
+            }
+        )
+    private val revealRadius = (ring?.radius ?: 84f) + 12f
+
+    fun draw(scope: DrawScope, ringReveal: Float = 1f) {
+        past.draw(scope)
+        if (ringReveal >= 1f) current.draw(scope)
+        else if (ringReveal > 0f) {
+            val mask =
+                Path().apply {
+                    moveTo(180f, 180f)
+                    arcTo(box(revealRadius), -90f, 360f * ringReveal, false)
+                    close()
+                }
+            with(scope) { clipPath(mask) { current.draw(this) } }
         }
-    )
+    }
+}
 
 /** The hand, drawn pointing at midnight; its layer turns it to the time. */
 internal val handLayer =
@@ -370,24 +410,25 @@ internal fun DrawScope.flashTick(radii: DialRadii, k: Int, alpha: Float) {
 }
 
 /**
- * Midnight, 6 AM, Noon and 6 PM sit straight at the edges; the hours between are engraved along the
- * bezel, turned upright on the lower half.
+ * The cardinal hour labels follow the bezel. The side labels remain horizontal for readability,
+ * while Midnight and Noon use the same curved glyph layout as the other engraved hours.
  */
 private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, glyphs: Glyphs) {
     for ((hour, word) in words) {
-        if (hour % 6 == 0) {
-            val layout = glyphs.line(word, hourWordMain)
-            val w = layout.size.width.toFloat()
-            val h = layout.size.height.toFloat()
-            val centre =
-                when (hour) {
-                    0 -> Offset(CENTRE, 13f)
-                    6 -> Offset(359f - w / 2, CENTRE)
-                    12 -> Offset(CENTRE, 347f)
-                    else -> Offset(1f + w / 2, CENTRE)
-                }
-            val topLeft = centre - Offset(w / 2, h / 2)
-            add { drawText(layout, P.hourWordMain, topLeft) }
+        if (hour == 0 || hour == 12) {
+            val centreAngle = if (hour == 0) 0f else 180f
+            glyphRun(
+                    167f,
+                    centreAngle - 17f,
+                    centreAngle + 17f,
+                    glyphs.of(word, hourWordMain),
+                    hour == 12,
+                )
+                ?.let { run -> add { run.draw(this, P.hourWordMain) } }
+        } else if (hour % 6 == 0) {
+            val angle = hour * 15f
+            glyphRun(167f, angle - 17f, angle + 17f, glyphs.of(word, hourWordMain), hour == 18)
+                ?.let { run -> add { run.draw(this, P.hourWordMain) } }
         } else {
             val angle = hour * 15f
             val flip = angle > 90f && angle < 270f
@@ -397,29 +438,34 @@ private fun MutableList<Step>.engrave(radii: DialRadii, words: List<HourWord>, g
     }
 }
 
-/** A small moon beside Midnight and sun beside Noon, placed by the length of the words. */
-private fun MutableList<Step>.sunAndMoon(words: List<HourWord>) {
-    fun beside(hour: Int) =
-        CENTRE - ((words.firstOrNull { it.hour == hour }?.word?.length ?: 0) * 3.3f + 10f) - 2f
-    val mx = beside(0)
+/** The moon and sun follow the same bezel arc, just before their respective curved labels. */
+private fun MutableList<Step>.sunAndMoon(words: List<HourWord>, glyphs: Glyphs) {
+    fun iconAngle(hour: Int): Float {
+        val word = words.firstOrNull { it.hour == hour }?.word.orEmpty()
+        val width = glyphs.of(word, hourWordMain).advances.sum()
+        val halfAngle = Math.toDegrees((width / (2f * 167f)).toDouble()).toFloat()
+        val gapAngle = Math.toDegrees((11f / 167f).toDouble()).toFloat()
+        return if (hour == 0) -halfAngle - gapAngle else 180f + halfAngle + gapAngle
+    }
+    val moonAt = point(167f, iconAngle(0))
     val moon =
         Path.combine(
             PathOperation.Difference,
-            Path().apply { addOval(Rect(Offset(mx + 1.6f, 13f), 5f)) },
-            Path().apply { addOval(Rect(Offset(mx + 3.3f, 12.3f), 4.66f)) },
+            Path().apply { addOval(Rect(moonAt + Offset(-2.4f, -2.5f), 5f)) },
+            Path().apply { addOval(Rect(moonAt + Offset(-0.7f, -3.2f), 4.66f)) },
         )
     add { drawPath(moon, P.moon) }
-    val sx = beside(12)
+    val sunAt = point(167f, iconAngle(12))
     val rays = Path()
     for (k in 0 until 8) {
         val (x0, y0) = point(4.3f, k * 45f) - Offset(CENTRE, CENTRE)
         val (x1, y1) = point(6f, k * 45f) - Offset(CENTRE, CENTRE)
-        rays.moveTo(sx + x0, 347f + y0)
-        rays.lineTo(sx + x1, 347f + y1)
+        rays.moveTo(sunAt.x + x0, sunAt.y + y0)
+        rays.lineTo(sunAt.x + x1, sunAt.y + y1)
     }
     val rayStroke = Stroke(1.3f, cap = StrokeCap.Round)
     add {
-        drawCircle(P.sun, 2.6f, Offset(sx, 347f))
+        drawCircle(P.sun, 2.6f, sunAt)
         drawPath(rays, P.sun, style = rayStroke)
     }
 }

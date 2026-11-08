@@ -59,6 +59,8 @@
           <h3>App updates</h3>
           <p class="muted" style="font-size:12px;margin-top:-5px">New builds come from this app’s GitHub releases. Android asks you to confirm each install.</p>
           <div id="lmaUpdBody"></div>
+          <div class="settingsline"><div style="flex:1"><strong>What’s new</strong><div class="muted" style="font-size:12px">A short history of features and fixes included in each update. Available offline.</div></div><button type="button" class="btn secondary" id="whatsNewToggle" aria-expanded="false" aria-controls="updateHistory" onclick="const panel=document.getElementById('updateHistory');panel.hidden=!panel.hidden;this.setAttribute('aria-expanded',String(!panel.hidden));this.textContent=panel.hidden?'View changes':'Hide changes'">View changes</button></div>
+          <div id="updateHistory" hidden>@@UPDATE_HISTORY@@</div>
         </div>
         <div class="card" style="margin-bottom:14px" id="lmvCard">
           <h3>Voice (beta)</h3>
