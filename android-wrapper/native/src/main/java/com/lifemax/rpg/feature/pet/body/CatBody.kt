@@ -138,6 +138,8 @@ class CatBody(
     private var actElapsed = 0f
     private var actSeconds = 0f
     private var skidLeft = 0f
+    private val way = FloorWay()
+    private var walkRun = false
     private var earState = EarState.FORWARD
     private var tailState = TailState.NEUTRAL
     private val early = EarlyInterrupts()
@@ -317,7 +319,10 @@ class CatBody(
         val arrived = loco.update(dt, false)
         settleOnGround()
         if (!animateStride(dt)) player.advanceAtBaseRate(dt)
-        if (arrived) {
+        if (arrived && way.atCorner) { // round the furniture: on to the next corner or the end
+            way.from(kin.x, kin.z)
+            loco.setGoal(way.goalX, way.goalZ, walkRun)
+        } else if (arrived) {
             pose.events.add(CatEventType.Arrived, queue.planId, queue.currentIndex, queue.isOnLast)
             finishStep()
         }
@@ -383,7 +388,9 @@ class CatBody(
         val onFloor = kin.surface == SurfaceId.FLOOR
         val x = if (onFloor) World.clampHouse(goalX) else World.clampTo(kin.surface, goalX)
         val z = if (onFloor && goalZ != null) Mathx.clamp(goalZ, 0f, World.MAX_Z) else kin.z
-        loco.setGoal(x, z, run && !carrying)
+        if (onFloor) way.begin(kin.x, kin.z, x, z) else way.straight(x, z)
+        walkRun = run && !carrying
+        loco.setGoal(way.goalX, way.goalZ, walkRun)
         mode = Mode.WALK
     }
 
@@ -412,7 +419,8 @@ class CatBody(
 
     private fun startAct(step: PlanStep.Act) {
         val named = Clips.find(step.anim) ?: Clips.IDLE_SIT
-        val clip = if (weak) Clips.weakOf(named) else named
+        val clip =
+            Headroom.fit(if (weak) Clips.weakOf(named) else named, kin.surface, growthScale, weak)
         if (player.clip !== clip) playClip(clip)
         actElapsed = 0f
         actSeconds = step.seconds
@@ -490,7 +498,8 @@ class CatBody(
         return true
     }
 
-    private fun restingClip(): Clip = if (weak) Clips.IDLE_SIT_W else Clips.IDLE_SIT
+    private fun restingClip(): Clip =
+        Headroom.fit(if (weak) Clips.IDLE_SIT_W else Clips.IDLE_SIT, kin.surface, growthScale, weak)
 
     /** Start [clip]; stride clips keep the stride phase, a change of posture squashes the body. */
     private fun playClip(clip: Clip, phase: Float = 0f) {
