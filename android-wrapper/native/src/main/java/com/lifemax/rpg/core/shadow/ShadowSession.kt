@@ -79,6 +79,9 @@ class ShadowSession(
     private var pageBuild = ""
     private var basesThisSession = 0
 
+    /** The end of the last action of this page session, for `info.clockJump`. */
+    private var lastT1: Long? = null
+
     /** The state, for [accept] on another thread. */
     @Volatile private var current: ShadowState = ledger.state
 
@@ -106,7 +109,11 @@ class ShadowSession(
     fun handshake(): ShadowHandshake =
         ShadowHandshake(
             ShadowLimits.PROTOCOL,
-            listOf(ShadowLimits.CAPABILITY, ShadowLimits.CAPABILITY_QUESTS),
+            listOf(
+                ShadowLimits.CAPABILITY,
+                ShadowLimits.CAPABILITY_QUESTS,
+                ShadowLimits.CAPABILITY_DAY,
+            ),
             nativeFingerprint,
             ledger.state,
             ledger.reason,
@@ -126,6 +133,7 @@ class ShadowSession(
         mirror.discard()
         needBase = true
         basesThisSession = 0
+        lastT1 = null
         pageBuild = config.page.build
         pageSchema = config.page.schema
         ledger.pageFaults += config.page.faults
@@ -222,6 +230,7 @@ class ShadowSession(
             }
             is MirrorStep.Applied -> {
                 counts.applied++
+                clock(envelope)
                 ledger.touched(ShadowKeys.BETWEEN, step.between, pageBuild, now)
                 when {
                     envelope.kind !in ShadowKeys.KINDS -> ledger.skip(envelope.kind, "unknownKind")
@@ -234,6 +243,27 @@ class ShadowSession(
                 }
             }
         }
+    }
+
+    /**
+     * `info.clockJump` (section 4, clock changes): an action that starts before the last one ended,
+     * or more than a day after it without a boot. An async action (the Health sync) starts before
+     * the actions that ran while it waited, so it only moves the mark on.
+     */
+    private fun clock(envelope: ShadowEnvelope) {
+        val last = lastT1
+        if (ShadowFlags.NESTED_ASYNC in envelope.flags) {
+            lastT1 = maxOf(last ?: envelope.t1, envelope.t1)
+            return
+        }
+        val boot = envelope.kind == ShadowEntries.BOOT_LOAD
+        if (
+            last != null &&
+                !boot &&
+                (envelope.t0 < last || envelope.t0 - last > ShadowLimits.CLOCK_JUMP_MS)
+        )
+            ledger.note(CLOCK_JUMP)
+        lastT1 = envelope.t1
     }
 
     /** Runs native on the action and counts the verdict; never throws. */
@@ -350,6 +380,7 @@ class ShadowSession(
         /** The pseudo-kind for drops counted before an envelope is read. */
         const val ANY = "any"
         private const val ZONE_LAG = "zoneLag"
+        private const val CLOCK_JUMP = "clockJump"
         private const val STRICT = "strict"
         private const val ENCODE = "encode"
         private const val CHECKED = "checked"

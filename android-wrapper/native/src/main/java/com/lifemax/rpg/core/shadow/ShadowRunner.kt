@@ -59,6 +59,13 @@ class Prediction(
     val unsaved: Boolean,
     /** The composition's writes and Daily Hand checks, in order ([PageHand.trace]). */
     val trace: List<String> = emptyList(),
+    /**
+     * The instant native's clock was fixed at: `t0`, or for the Health sync the instant the page's
+     * sync read the clock (N5); N2 instants are equal when the page's lies in `[anchor, t1]`.
+     */
+    val anchor: Long = 0,
+    /** Where native asked Health Connect other than the page did (`reads.<part>`, differences). */
+    val reads: List<String> = emptyList(),
 )
 
 /** What running one action natively gave. */
@@ -71,15 +78,16 @@ sealed interface RunOutcome {
 }
 
 /**
- * Runs one page action natively on the page's before-state (ECONOMY_SHADOW_PLAN 2.6, WP6b, WP6c):
+ * Runs one page action natively on the page's before-state (ECONOMY_SHADOW_PLAN 2.6, WP6b-WP6d):
  * the kind's entry ([ShadowEntries] on the economy's model, [QuestEntries] on the page's JSON)
  * through the WP5 adapters ([ContextFactory] over the before-state, a clock fixed at `t0` in the
- * page's zone, the page's locale), with the ids the page minted ([ReplayIds]), the storage outcome
- * the page met and the plan facts it recorded, and every save composed as the page composes it: the
- * save, the Daily Hand's check in the redraw inside it, then the check of the save's wrapper
- * ([PageHand]). Decides first whether the action can be compared at all: its kind, a throw, a day
- * that changed during it (N3), a zone the device's tz data reads differently (N4), a mixed storage
- * outcome, an input that does not read. Pure and read-only: nothing is written.
+ * page's zone, or for the Health sync at the instant its page code read the clock (N5), the page's
+ * locale), with the ids the page minted ([ReplayIds]), the storage outcome the page met and the
+ * plan facts it recorded, and every save composed as the page composes it: the save, the Daily
+ * Hand's check in the redraw inside it, then the check of the save's wrapper ([PageHand]). Decides
+ * first whether the action can be compared at all: its kind, a throw, a day that changed during it
+ * (N3), a zone the device's tz data reads differently (N4), a mixed storage outcome, an input that
+ * does not read. Pure and read-only: nothing is written.
  *
  * @param content page content the plan and catalog actions need, and how the recording page ran
  *   ([ShadowContent.setup]).
@@ -105,7 +113,6 @@ class ShadowRunner(
         val entry = ShadowEntries.of(kind)
         val handEntry = QuestEntries.of(kind)
         when {
-            kind in ShadowEntries.LATER -> return skip(LATER)
             kind in ShadowEntries.NOT_NATIVE -> return skip(NOT_NATIVE)
             entry == null && handEntry == null && !load -> return skip(UNKNOWN_KIND)
             ShadowFlags.THREW in envelope.flags && handEntry?.comparesThrow != true ->
@@ -124,8 +131,16 @@ class ShadowRunner(
             } catch (_: InputRefused) {
                 return skip(INPUT)
             }
+        // N5: the Health sync's clock is the one its page code read, inside the action
+        val anchor = input.health?.env?.clock ?: envelope.t0
+        if (anchor !in envelope.t0..envelope.t1) return skip(INPUT)
         val start = if (load) PageFresh.under(before) ?: return skip(CONTENT) else before
-        val stored = JsonObject(start)
+        val stored =
+            try {
+                entry?.prepare?.invoke(JsonObject(start)) ?: JsonObject(start)
+            } catch (_: InputRefused) {
+                return skip(INPUT)
+            }
         val state = PageState(stored)
         // an economy entry needs the model of the save; a hand entry reads it only when it asks
         val view =
@@ -142,7 +157,7 @@ class ShadowRunner(
         val hand = PageHand(state, quests.dealer(setup), setup) { ctx }
         ctx =
             ContextFactory(
-                    FixedClock(envelope.t0, zone),
+                    FixedClock(anchor, zone),
                     { view?.let { SaveView(it, stored) } },
                     plan,
                     NoHealthReads,
@@ -204,6 +219,8 @@ class ShadowRunner(
                 strictRefusal = state.strictRefusal,
                 unsaved = storage != Storage.Writable,
                 trace = hand.trace.toList(),
+                anchor = anchor,
+                reads = input.health?.finish().orEmpty(),
             )
         return RunOutcome.Ran(prediction)
     }
@@ -313,7 +330,6 @@ class ShadowRunner(
         /** Every key a prediction holds: the tracked ones and the Daily Hand's own. */
         val COMPARED_KEYS: Set<String> = SaveFields.TRACKED.toSet() + HAND_KEYS
 
-        const val LATER = "later"
         const val NOT_NATIVE = "notNative"
         const val UNKNOWN_KIND = "unknownKind"
         const val THREW = "threw"

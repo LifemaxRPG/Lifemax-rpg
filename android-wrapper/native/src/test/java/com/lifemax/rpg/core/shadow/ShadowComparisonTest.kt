@@ -256,7 +256,9 @@ class ShadowComparisonTest {
                 log.action.copy(flags = listOf(ShadowFlags.INTERLEAVED)) to "interleaved",
                 log.action.copy(flags = listOf(ShadowFlags.THREW)) to "threw",
                 log.action.copy(saves = listOf(true, false)) to "mixedStorage",
-                log.action.copy(kind = "health.sync") to "later",
+                // a sync without its Health Connect answers (a page older than
+                // economy.shadow.day.v1)
+                log.action.copy(kind = "health.sync", args = emptyList()) to "input",
                 log.action.copy(kind = "coach.reflect") to "notNative",
                 log.action.copy(kind = "some.future.kind") to "unknownKind",
                 log.action.copy(args = listOf(JsonNumber(5.0))) to "input",

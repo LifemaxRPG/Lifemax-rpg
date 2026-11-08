@@ -20,6 +20,17 @@ object ShadowLimits {
     const val CAPABILITY_QUESTS = "economy.shadow.quests.v1"
 
     /**
+     * The capability of WP6d: the Health sync and the day roll's decay are compared, so the page
+     * records every Health Connect answer with its outcome (`env.health`: the plugin missing, a
+     * sync already running, a read that threw and its message) and sends the boot's decay with its
+     * toasts and the plan's rest days; an older app lacks it and gets the WP6c shapes.
+     */
+    const val CAPABILITY_DAY = "economy.shadow.day.v1"
+
+    /** More than this between two actions without a boot is an `info.clockJump` (4, clock). */
+    const val CLOCK_JUMP_MS = 24L * 60 * 60 * 1000
+
+    /**
      * Largest envelope text accepted (2.4); a larger one is refused as [ShadowRefusal.TOO_LARGE].
      */
     const val MAX_ENVELOPE_CHARS = 256 * 1024

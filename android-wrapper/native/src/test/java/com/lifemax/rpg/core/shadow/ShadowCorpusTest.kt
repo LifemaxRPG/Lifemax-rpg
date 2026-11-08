@@ -15,7 +15,7 @@ import org.junit.Test
  * Life Director, an ascension refused, a bare save). Replayed as the app would receive them, every
  * action of a kind WP6b compares must be compared and the same: real argument and env shapes, real
  * writes and toasts, the ids the page minted, the Daily Hand's auto-verify inside a save. The
- * boot's decay is WP6d's.
+ * boot's decay, recorded by a page older than WP6d's, is counted `skipped.input`.
  */
 class ShadowCorpusTest {
     @Test
@@ -24,7 +24,8 @@ class ShadowCorpusTest {
         assertEquals(outcomes.joinToString("\n"), envelopes - LATER_IN_CORPUS, l.compared)
         assertEquals(outcomes.joinToString("\n"), 0, l.different)
         assertEquals(l.compared, l.same + l.allowed)
-        assertEquals(mapOf("later" to 1), l.kind("boot.decay").skipped)
+        // recorded by a page before economy.shadow.day.v1: the boot's decay has no plan facts
+        assertEquals(mapOf("input" to 1), l.kind("boot.decay").skipped)
         assertTrue(l.refused.isEmpty() && l.errors.isEmpty())
         assertTrue("every compared kind in the corpus", l.kinds.keys.containsAll(KINDS))
         println(
@@ -101,7 +102,11 @@ class ShadowCorpusTest {
                 "save.other",
             )
 
-        /** The boot's decay, compared from WP6d on. */
+        /**
+         * The boot's decay of these two corpora, recorded before `economy.shadow.day.v1` (no plan
+         * facts), is not compared (`skipped.input`); WP6d's own corpus compares it
+         * ([ShadowDayCorpusTest]).
+         */
         const val LATER_IN_CORPUS = 1
 
         val KINDS =

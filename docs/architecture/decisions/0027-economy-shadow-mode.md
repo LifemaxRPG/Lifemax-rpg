@@ -26,3 +26,6 @@ each on its copy of the before-state and counts, in the ring, whether it got the
 shown, written or sent anywhere, and a difference is kept as field paths and economy numbers only. The allowlist of accepted
 differences is explicit (`core/shadow/KnownDifferences.kt`); an entry beyond spec 21's is proposed in a pull request and signed
 off by the owner.
+WP6c adds the quest and Daily Hand actions with the page's composition of every save. WP6d adds the Health Connect sync and the
+day roll's decay pass: native replays the sync on the plugin answers the page itself received, as the page's recording proxy kept
+them, and makes no Health Connect read of its own; workout titles and apps cross in memory only, like every other envelope.

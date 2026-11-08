@@ -70,6 +70,8 @@ internal object GoldenActions {
             "dhReroll" to "hand.reroll",
             "dhAutoVerify" to "hand.verify",
             "dhEnsure" to "hand.ensure",
+            "lmaHealthSync" to "health.sync",
+            "applyDecay" to "decay.apply",
         )
 
     /** Calls that read and change nothing; a case may have them around its entry calls. */
@@ -144,9 +146,12 @@ internal object GoldenActions {
 
     private val DEFAULT_NOW = Instant.parse("2026-10-28T12:00:00.000Z").toEpochMilli()
 
-    /** The golden cases that are entry points of WP6b's kinds. */
+    /**
+     * The golden cases that are entry points of the kinds compared (the shield tick's own cases as
+     * decay passes with decay off, [DayGoldenActions.shieldAsDecay]).
+     */
     fun inScope(): List<Map<String, Any?>> =
-        EconomyGoldenTest.cases.filter { case ->
+        EconomyGoldenTest.cases.map(DayGoldenActions::shieldAsDecay).filter { case ->
             val input = case["input"] as Map<*, *>
             val fns = (input["calls"] as List<*>).map { (it as Map<*, *>)["fn"] as String }
             "state" in input &&
@@ -223,7 +228,7 @@ internal object GoldenActions {
                     after = after,
                     returns = returns,
                     toasts = toasts,
-                    env = env(kind, env, page, t0, zone),
+                    env = env(kind, call, page, t0, zone),
                     flags = if (readOnly) listOf(ShadowFlags.READ_ONLY) else emptyList(),
                     t0 = t0,
                     t1 = t0,
@@ -303,17 +308,30 @@ internal object GoldenActions {
     /** The env parts the page records for [kind] beside its writes. */
     private fun env(
         kind: String,
-        env: Map<String, Any?>,
+        call: Map<String, Any?>,
         state: Map<String, JsonValue>,
         t0: Long,
         zone: String,
     ): Map<String, JsonValue> {
+        val env = plain(call["env"])
         val out = LinkedHashMap<String, JsonValue>()
+        if (kind == "health.sync") {
+            val manual =
+                EntryInput.truthy((call["args"] as? List<*>)?.firstOrNull()?.let(SaveCodec::json))
+            out["health"] =
+                DayGoldenActions.health(
+                    plain(env["health"]).takeIf { env["health"] != null },
+                    state,
+                    manual,
+                    t0,
+                )
+        }
         if (env["confirm"] == false) out["confirm"] = JsonArray(listOf(JsonBool.FALSE))
         (env["prompt"] as? String)?.let { out["prompt"] = JsonArray(listOf(JsonString(it))) }
         (env["dom"] as? Map<*, *>)?.let { out["dom"] = SaveCodec.json(it) }
         val window = kind == "fixed.plan" || kind == "rest.take"
-        out["plan"] = plan(state, t0, zone, if (window) PLAN_DAYS else 0)
+        val days = if (kind == "decay.apply") DECAY_DAYS else if (window) PLAN_DAYS else 0
+        out["plan"] = plan(state, t0, zone, days)
         return out
     }
 
@@ -462,4 +480,7 @@ internal object GoldenActions {
         (SaveCodec.json(state) as JsonObject).members
 
     private const val PLAN_DAYS = 60L
+
+    /** The decay pass's window: the furthest back the page's walk may look (2.3). */
+    private const val DECAY_DAYS = 400L
 }

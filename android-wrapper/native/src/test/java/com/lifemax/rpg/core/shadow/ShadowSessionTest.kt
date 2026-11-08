@@ -37,7 +37,11 @@ class ShadowSessionTest {
         val s = session()
         assertEquals(ShadowState.OFF, s.handshake().state)
         assertEquals(
-            listOf(ShadowLimits.CAPABILITY, ShadowLimits.CAPABILITY_QUESTS),
+            listOf(
+                ShadowLimits.CAPABILITY,
+                ShadowLimits.CAPABILITY_QUESTS,
+                ShadowLimits.CAPABILITY_DAY,
+            ),
             s.handshake().capabilities,
         )
         assertEquals(FP, s.handshake().fingerprint)

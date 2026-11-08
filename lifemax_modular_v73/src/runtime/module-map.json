@@ -271,7 +271,7 @@
   },
   {
    "file": "src/runtime/segments/05-shadow-boot.js",
-   "bytes": 4287,
+   "bytes": 4865,
    "statement_count": 1,
    "tags": [
     "shadow",
@@ -281,7 +281,8 @@
     "LMA_SHADOW_BOOT",
     "window.writeSave",
     "window.load",
-    "window.applyDecay"
+    "window.applyDecay",
+    "window.toast"
    ]
   },
   {
@@ -3964,7 +3965,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow-points.js",
-   "bytes": 5397,
+   "bytes": 6811,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3977,7 +3978,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow.js",
-   "bytes": 22961,
+   "bytes": 23898,
    "statement_count": 1,
    "tags": [
     "native",

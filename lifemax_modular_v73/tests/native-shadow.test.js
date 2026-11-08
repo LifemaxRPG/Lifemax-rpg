@@ -8,6 +8,9 @@
    WP6c, with an app that says economy.shadow.quests.v1: today's plan facts with every kind, the toggled quest's note field,
    the journal coach's own plain writes apart from the economy's, a class switch's quest pack, the Daily Hand's redraws that
    change nothing sent one in fifty; and none of that for an app without the capability.
+   WP6d, with an app that says economy.shadow.day.v1: the boot's decay with its plan and toasts, a sync's plugin, status, reads
+   and their ranges, a read or a status that throws, a sync started while one runs, a check-in's write during a sync, no
+   plugin, the decay pass's plan window; and the WP6c shapes for an app without it.
    Run: NODE_PATH=$(npm root -g) node tests/native-shadow.test.js [built-page.html] */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -236,6 +239,55 @@ const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kin
       }
       ok('WP6c: ' + word + ': the copy equals the page', s.equal, s.diff);
       ok('WP6c: ' + word + ': the page threw nothing', !p.errors.length, p.errors);
+      await p.context().close();
+    }
+
+    /* ---------- WP6d: an app that compares the Health sync and the day roll ---------- */
+    for (const day of [true, false]) {
+      const D = 864e5, now = Date.now(), at = n => new Date(now - n * D).toISOString(), key = n => Math.round((now - n * D) / D);
+      // three days without the app after a week of training, one shield in stock: the boot's pass ticks the shields
+      const idle = { onboardingComplete: true, name: 'N', tutorialDone: true, classId: 'athlete', tipsSeen: {}, xpSchemaV2: true,
+        activities: Array.from({ length: 8 }, (_, i) => ({ id: 'seed-' + i, type: 'reading', name: 'Seed', duration: 30, quality: 1, skill: 'Seed', primary: 'intelligence', secondary: '', xp: 120, date: at(i + 3), notes: '', xpSplit: [{ attr: 'intelligence', xp: 120 }], sp: 1 })),
+        decayApplied: { intelligence: key(30) }, shieldTick: key(4), shieldMiss: 0, streakShields: 1, shieldMilestone: 1,
+        health: { on: true, ex: true, steps: true, sleep: true, wt: true, seen: {}, last: 0, since: now - 2 * D, msg: '', sdk: '', granted: [], src: '', today: null } };
+      const p = await open(browser, { quests: true, day, health: true }, idle);
+      const r = await p.evaluate(async () => {
+        const settle = (ms) => new Promise(r => setTimeout(r, ms || 60)), m = window.__shadowMock, n0 = () => m.envelopes.length;
+        const boot = m.envelopes.find(e => e.kind === 'boot.decay');
+        __health.steps = [{ date: getToday(), count: 3000 }];
+        let n = n0(); await lmaHealthSync(true); await settle(); const paid = m.envelopes.slice(n).find(e => e.kind === 'health.sync');
+        __health.fail = 'readSteps'; n = n0(); await lmaHealthSync(true); await settle(); const failed = m.envelopes.slice(n).find(e => e.kind === 'health.sync');
+        __health.fail = 'status'; n = n0(); await lmaHealthSync(true); await settle(); const status = m.envelopes.slice(n).find(e => e.kind === 'health.sync');
+        __health.fail = null; __health.delay = 30;
+        n = n0(); const first = lmaHealthSync(true); await settle(5); markVisit(); await Promise.all([first, lmaHealthSync(true)]); await settle(120);
+        const both = m.envelopes.slice(n).filter(e => e.kind === 'health.sync');
+        __health.delay = 0;
+        const real = window.lmaPlugin; window.lmaPlugin = function (x) { return x === 'HealthSync' ? null : real.apply(this, arguments) };
+        n = n0(); try { await lmaHealthSync(true) } finally { window.lmaPlugin = real } await settle(); const none = m.envelopes.slice(n).find(e => e.kind === 'health.sync');
+        state.decayApplied = { intelligence: dayNum(getToday()) - 12 };
+        // the earliest day the pass asks about: the walk's first day, or the shield tick's
+        const t = dayNum(getToday()), bound = ecoDayKey(Math.min(Math.max(dayNum(lastTrained('intelligence')) + getDecay().grace + 1, t - 11), state.shieldTick + 1));
+        n = n0(); applyDecay(); await settle(); const pass = m.envelopes.slice(n).find(e => e.kind === 'decay.apply');
+        return { day: LmaShadow.status().day, boot, paid, failed, status, both, none, pass, bound, old: addDays(getToday(), -60), today: getToday() };
+      });
+      const s = await same(p);
+      const word = day ? 'an app that compares the day' : 'an app without economy.shadow.day.v1';
+      const ranges = e => ['exercise', 'steps', 'sleep', 'weight'].flatMap(k => (e.env.health[k] || []).map(x => x.to));
+      if (day) {
+        ok('WP6d: the page sees the capability', r.day === true, r.day);
+        ok('WP6d: the boot\'s decay sends the plan as far back as the shield tick walks, and its toasts', r.boot && r.boot.env.plan && r.boot.env.plan.from <= new Date((idle.shieldTick + 1) * D).toISOString().slice(0, 10) && r.boot.toasts.length >= 1, r.boot && { env: r.boot.env, toasts: r.boot.toasts });
+        ok('WP6d: a sync records that the plugin answered, the status and each read, every range ending at the sync\'s own clock', r.paid && r.paid.env.health.plugin === true && r.paid.env.health.status.sdk === 'available' && ranges(r.paid).length === 4 && new Set(ranges(r.paid)).size === 1 && ranges(r.paid)[0] >= r.paid.env.health.now && ranges(r.paid)[0] <= r.paid.t1, r.paid && r.paid.env.health);
+        ok('WP6d: a read that throws is named with the message the sync shows', r.failed && r.failed.env.health.fail === 'steps' && r.failed.env.health.error === 'Health Connect stopped answering' && !r.failed.env.health.steps, r.failed && r.failed.env.health);
+        ok('WP6d: a status that throws is named too', r.status && r.status.env.health.fail === 'status' && /stopped answering/.test(r.status.env.health.error) && !r.status.env.health.status, r.status && r.status.env.health);
+        ok('WP6d: a sync started while one runs says so (busy) and saves nothing; the first is interleaved', r.both.length === 2 && r.both.some(e => e.env.health.busy === true && !(e.env.saves || []).length) && r.both.some(e => e.flags.includes('interleaved')), r.both.map(e => ({ h: e.env.health.busy, f: e.flags, saves: e.env.saves })));
+        ok('WP6d: a check-in\'s write while a sync waits is not the sync\'s', r.both.every(e => (e.env.saves || []).length <= 1), r.both.map(e => e.env.saves));
+        ok('WP6d: without the plugin the sync says so', r.none && r.none.env.health.plugin === false && r.none.toasts.length === 1, r.none && { h: r.none.env.health, t: r.none.toasts });
+        ok('WP6d: the decay pass sends the plan from no later than the first day it asks about, not a fixed 60 days', r.pass && r.pass.env.plan && r.pass.env.plan.from <= r.bound && r.pass.env.plan.from > r.old, r.pass && { plan: r.pass.env.plan, bound: r.bound, old: r.old });
+      } else {
+        ok('WP6d: ' + word + ': the WP6c shapes (no plugin flag, no error, no boot plan or toasts)', r.day === false && r.paid && !('plugin' in r.paid.env.health) && r.failed && !('error' in r.failed.env.health) && r.boot && !r.boot.env.plan && !r.boot.toasts.length, { paid: r.paid && r.paid.env.health, boot: r.boot && r.boot.env });
+      }
+      ok('WP6d: ' + word + ': the copy equals the page', s.equal, s.diff);
+      ok('WP6d: ' + word + ': the page threw nothing', !p.errors.length, p.errors);
       await p.context().close();
     }
 

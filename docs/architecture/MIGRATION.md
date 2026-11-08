@@ -584,6 +584,30 @@ take-back's redraw checks once more. Nothing computed is shown, written or sent.
   quest and Daily Hand actions, the day rolling over included, all the same), `ShadowHandSessionTest`; `tests/native-shadow.test.js`.
 
 
+## Economy shadow mode, WP6d: the Health sync and the day roll (Native API 111)
+
+Native logic, web authority, behind the same switch. Native now also runs the Health Connect sync and the day roll's decay pass (with
+the streak shield tick inside it) itself, on the page's recorded plugin answers and plan facts, and compares. Nothing computed is
+shown, written or sent; native asks Health Connect nothing.
+
+| Part | Where | What |
+|---|---|---|
+| Native | `core/shadow` `DayEntries`, `EnvHealth` (`EnvHealth`, `RecordedHealth`), `ShadowRunner`, `ShadowComparison`, `ShadowSession` | `health.sync` (`lmaHealthCfg` first, the sync over the recorded answers on the clock the page's sync read, its `finally` save composed), `decay.apply` and `boot.decay` (the pass, then the boot's plain write) compared; a read native makes otherwise than the page is a difference (`reads.<part>`); `info.clockJump`; `skipped.later` is gone |
+| Bridge | `ShadowLimits.CAPABILITY_DAY` | the handshake also says `economy.shadow.day.v1`; `env.health` gains `plugin`, `busy`, `fail` for the status and `error` |
+| Page | `05-shadow-boot.js`, `50-native-shadow-points.js`, `50-native-shadow.js` | with that capability: the sync's plugin outcome and failure message, the boot's decay with its toasts and plan facts; always: the boot's decay starts from the state just before it (the check-in writes between load and decay), the decay passes' plan window from the earliest day their walk can visit (it was 60 days), a write is an action's own only inside it (a timer's check-in during a sync is not) |
+| Corpus | `tools/gen_shadow_day_corpus.js`, `tests/fixtures/shadow-day-corpus.json` | 13 page sessions: the day with the app open, a boot after ten closed days, the paused-clock zone matrix |
+
+- **Rollout.** Rides the switch. An older app lacks `economy.shadow.day.v1`, so this page sends it the WP6c shapes and the app
+  counts the three kinds `skipped.later` as before. A WP6c page with this app sends no `plugin` in `env.health` and no plan with the
+  boot's decay: those are `skipped.input`, never a false difference. Rollback: drop the capability (the kinds then read as input
+  refusals, counted).
+- **Evidence.** Kotlin `ShadowDayGoldenTest` (91 golden cases of the health, decay, shield and zone families as 103 envelopes, and the
+  51 decay passes again as the boot's: all the same), `ShadowGoldenCompareTest` (350 cases, 402 envelopes, 0 unexplained),
+  `ShadowDayCorpusTest` (92 real-page envelopes, 91 compared and the same, the interleaved sync skipped), `ShadowDayMutationTest` (16
+  wrong rules, each caught at its field), `ShadowDaySessionTest` (page lies, reads asked otherwise, every skip, a lost envelope,
+  `info.clockJump`, redaction, 10,000 records); `tests/native-shadow.test.js`.
+
+
 ## Cat brain, developer parkour demo (Native API 107)
 
 Native presentation and behaviour, web authority, behind "Native Cat (beta)" AND the page's developer mode. A DEVELOPER DEMO: the owner can watch the cats do their parkour on demand; it happens rarely on its own.

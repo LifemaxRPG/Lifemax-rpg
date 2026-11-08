@@ -1,7 +1,7 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. WP6a, WP6b and WP6c are built (their status is under each, section 6); the
-rest is design. It covers WP6 of
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a, WP6b, WP6c and WP6d are built (their status is under each, section 6);
+the rest is design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
 Inputs: `ECONOMY_SPEC.md` (sections 2, 11, 15-17, 20, 21), `QUESTS_SPEC.md`, `ECONOMY_NATIVE_PLAN.md` (WP1-WP8, defects),
@@ -404,7 +404,7 @@ port may ignore) and so pre-approved:
 | A-03 | `money.*`, `save.other` | `money` paycheck settings | dated by the day, outside the economy (spec 21) |
 
 Entries proposed since, awaiting the owner's sign-off: A-05 (WP6b, the redraw's empty food log, meal settings and reflections) and
-A-06 (WP6c, `saves.journal`: the journal coach's own plain write inside a save, which native does not draw).
+A-06 (WP6c, `saves.journal`: the journal coach's own plain write inside a save, which native does not draw). WP6d proposes none.
 
 Anything else needs an entry written in a PR and signed off by the owner; native fixing a defect early is not allowed during
 shadow (native must equal the page; a fix lands on the page first with a golden, as LIFE_DIRECTOR_NATIVE_PLAN 5.1 says).
@@ -617,7 +617,67 @@ Tests: the 63 `health` and 35 `decay` / 21 `shield` and `streak` golden cases as
 opened daily and once (D21), a DST night, Santiago's missing midnight, a clock moved back a day; failure injection of a plugin read
 that throws (HEALTH-0). Bridge: none. Decision: none.
 
+**Status: built** (Native API 111 on this branch; the integrator renumbers at merge; capability `economy.shadow.day.v1`). What exists:
+- Compared kinds (32 with the boot's load): WP6c's 29 and `health.sync` (`lmaHealthSync`), `decay.apply` (`applyDecay` on a return
+  to the app), `boot.decay` (the boot's `applyDecay`, then its plain `writeSave()` when the pass lost XP, SAVE-6, D29). `skipped.later`
+  is gone. Still `skipped.notNative`: `log.remove`, `coach.reflect`, `coach.review`. The streak shield tick (SHIELD-2), rested accrual
+  (DECAY-5) and the rest-day rules (REST-DAY-1) are compared inside the two decay kinds, where the page runs them; the day roll's other
+  behaviour is the Daily Hand's deal (6c's `hand.verify` and `hand.ensure`). No economy-owned counter resets at the day roll: the care
+  and nutrition marks are dated keys, the theme and the cat's counters are not economy state.
+- Native, `core/shadow`: `DayEntries` (the three entries; `lmaHealthCfg()` applied to the state first, a sync that finds the plugin
+  missing, switched off or already running does what the page does), `EnvHealth` (the strict reader of `env.health`: `plugin`,
+  `busy`, `now`, `status`, one read per part with its range and answer exactly as the plugin sends it, `fail` and its `error`) and
+  `RecordedHealth`, the `HealthReads` behind the economy's own `HealthAdapter`: each read native makes is answered with the page's
+  recorded answer and checked against it; a read the page did not make, another range, or a recorded read native never makes is a
+  difference (`reads.<part>`, `reads.<part>.range`); the part that threw throws again with the page's message. `ShadowRunner`: N5,
+  the sync's clock is the instant the page's sync read (every read's range ends there; without a read, the proxy's instant after the
+  status answer), which must lie in `[t0, t1]`; N2 instants are measured from that instant. `ShadowSession`: `info.clockJump` (an
+  action that starts before the previous one ended, or more than a day after it without a boot; an async sync only moves the mark).
+- Page (with `economy.shadow.day.v1`, so an older app gets the 6c shapes): `env.health.plugin` (whether `lmaPlugin('HealthSync')`
+  answered), `busy` (`lmaHealthBusy` at the start), a status that throws (`fail: 'status'`) and every failure's message (`error`);
+  the boot's decay with its toasts (the shield tick's) and `env.plan`. Always: the boot's decay starts from the state just before
+  the pass (the check-in between load and decay writes), the decay passes' plan window starts at the earliest day the walk or the
+  shield tick can visit (it read `decayApplied` as text and so was always 60 days), and a `writeSave()` is an action's own only inside
+  it (a timer's check-in while a sync waits is not the sync's).
+- The Health page's display data (`health.snap`, the step goal `health.goal`) is not produced by native and not compared: it is
+  outside `SaveFields.PARTIAL`'s `health` sub-paths (the economy owns the switches, `seen`, `last`, `since`, `msg`, `sdk`, `granted`,
+  `src`, `today`, `wtTime`, `wtHist`).
+- Tests (Kotlin, compiled with kotlinc and run with JUnit directly, not under gradle: the machine had about 1.4 GB of disk):
+  `ShadowDayGoldenTest` (every in-scope case of the health, decay, shield, streak, rested, zone, time, day, rest and passive families:
+  91 new cases, 103 envelopes (`health.sync` 52, `decay.apply` 51), and the 51 decay passes again as `boot.decay`, all compared and
+  the same; the shield tick's own cases go through `applyDecay` with decay off, which is exactly `ecoShieldTick()` then `false`; the
+  other cases of these families call only pure functions, listed, so a new entry-point case that is not compared fails),
+  `ShadowGoldenCompareTest` (now 350 cases, 402 envelopes: 393 same, 9 allowed, 0 unexplained), `ShadowDayCorpusTest` (the real page,
+  `tools/gen_shadow_day_corpus.js` into `tests/fixtures/shadow-day-corpus.json`: 13 page sessions, 92 envelopes, 91 compared and the
+  same, the first of two syncs at once interleaved; the day with the app open, a boot after ten closed days, and the paused-clock zone
+  matrix of `quests_golden_cases.js` with a boot, a sync, the next day and the clock moved back a day), `ShadowDayMutationTest` (16
+  wrong rules over the goldens and the corpus: the decay rate, the grace days, each rest-day rule, the day key in UTC, the shield
+  tick, a covered day, D28 fixed, rested rounding, the steps cap, the sleep table, the weight rounding, the seen marks' age, the sync's
+  clock, the boot's write; each caught at its field, none allowed), `ShadowDaySessionTest` (page lies at ten paths, reads asked
+  otherwise, every skip with the copy in step, a lost envelope, `info.clockJump`, no workout title or app name in the ring, a sync and
+  a pass on 10,000 records: about 200 ms and 110 ms p50, under 0.3 s p95); page: `tests/native-shadow.test.js` (the capability's
+  shapes and their absence for an older app). The two older corpora's boot decays, recorded before the capability, are
+  `skipped.input`.
+- Differences from the text above, with reasons:
+  - The 21 `shield` and `streak` cases: the 8 `streak` cases (and the `rested`, `time` and `passive` families) call only `streak()`
+    and other pure rules, which no shadow point wraps (1.2); the 13 `shield` cases are compared, 12 of them through `applyDecay` with
+    decay off. Rested accrual is compared where the page banks it, inside the decay pass.
+  - The 14 simulated days opened daily and once (D21) are the golden cases `decay/rested-opened-daily` and `decay/rested-opened-once`
+    (eight passes, and one); the corpus adds a real boot after ten closed days.
+  - Health Connect failure injection: a read that throws and a status that throws (golden `health/sync-fails-partway`, the corpus,
+    the page test).
+  - On the sync path where every type is switched off, nothing is read, so native's clock is the proxy's instant just after the
+    status answer, which may come a millisecond before the page's own `Date.now()`; `health.last` is then still equal (N2 from the
+    sync's clock), and `health.since`, set only on a first sync, could differ by that millisecond (not seen in any recording).
+
+
 ### WP6e. Mismatch ring, redaction, report and Settings (M, risk low-medium)
+
+Left for 6e after 6d: the report (`copyReport`) with its `info` lines (`clockJump`, `zoneLag`, `d13Kept`) and the `reads.*` paths,
+Clear's button and the O-4 "Save case" file, the full Settings card states, and the self-disable rules' own tests (`SelfDisableTest`).
+Left for 6f: the 40 `sim` seeds through the check, every fixture save as a base with a scripted day, the fuzz test, the page perf
+test under CPU throttling, and the defect list of 5.1 point 3 run as envelopes (the 6d defects D01, D10, D11, D21, D28, D29, D34, D35,
+D37 already are, through the goldens).
 
 Scope: `ShadowRing` (coalescing, bounds, atomic writes, header state), `Redactor`, `summary`, `copyReport`, `clear`, the full Settings
 card text and states, self-disable rules and budgets enforcement, Battery Saver pause.

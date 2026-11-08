@@ -1,8 +1,8 @@
 /* Native economy check (beta), the boot's half (docs/specs/ECONOMY_SHADOW_PLAN.md 2.5, WP6a). While the owner's switch
    (nativeShadow in lifemax_android_prefs_v1) is on, the app offers the NativeShadow plugin and no demo runs, it keeps what
-   the boot's load() read from storage and the economy's state just after load() and just after the boot's applyDecay(): the
-   transport (50-native-shadow.js) sends them as the first base and the boot.load and boot.decay actions once the plugin has
-   answered. With the switch off it reads one preference and changes nothing. Nothing here writes anything.
+   the boot's load() read from storage and the economy's state just after load(), just before the boot's applyDecay() (the
+   check-in between them writes too) and just after it, with the decay's toasts and what its walk starts from: the transport
+   (50-native-shadow.js) sends them as the first base and the boot.load and boot.decay actions once the plugin has answered. With the switch off it reads one preference and changes nothing. Nothing here writes anything.
    It runs before 13-runtime.js calls load(): the segments from 06 to 12 are cut in the middle of statements, so this is the
    last place a statement of its own can stand before the boot. The key lists are native's (core/shadow/ShadowKeys.kt). */
 const LMA_SHADOW_BOOT=(function(){
@@ -27,7 +27,7 @@ const LMA_SHADOW_BOOT=(function(){
   }
   return out;
  }
- const boot={KEYS,REC,TRACKED,INPUTS,project,capture,on:false,stored:null,loaded:null,decayed:null,saves:{load:[],decay:[]},times:{},fault:false};
+ const boot={KEYS,REC,TRACKED,INPUTS,project,capture,on:false,stored:null,loaded:null,predecay:null,decayed:null,window:null,toasts:[],saves:{load:[],decay:[]},times:{},fault:false};
  try{
   const p=JSON.parse(localStorage.getItem('lifemax_android_prefs_v1')||'null');
   const C=window.Capacitor;
@@ -52,7 +52,13 @@ const LMA_SHADOW_BOOT=(function(){
  };
  window.applyDecay=function(){
   window.applyDecay=realDecay; // only the boot's first decay, the one right after load()
-  const t0=Date.now(),r=realDecay.apply(this,arguments);
+  try{boot.predecay=capture(state);boot.window={applied:JSON.parse(JSON.stringify(state.decayApplied||{})),tick:state.shieldTick}}catch(e){boot.fault=true}
+  /* the shield tick inside it may toast */
+  const realToast=window.toast,told=function(){try{boot.toasts.push(String(arguments[0]))}catch(e){}return realToast.apply(this,arguments)};
+  window.toast=told;
+  const t0=Date.now();
+  let r;
+  try{r=realDecay.apply(this,arguments)}finally{if(window.toast===told)window.toast=realToast}
   try{
    boot.times.decay=[t0,Date.now()];boot.decayed=capture(state);
    if(r){const real=window.writeSave;window.writeSave=function(){window.writeSave=real;const ok=real.apply(this,arguments);boot.saves.decay.push({ok:!!ok});return ok}}

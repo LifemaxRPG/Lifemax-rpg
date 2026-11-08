@@ -55,20 +55,22 @@ class ContentMissing : Exception("content") {
 class ShadowEntry(
     val kind: String,
     val shape: EnvShape,
+    /**
+     * What the page's entry does to its state as JSON before any economy rule reads it
+     * (`lmaHealthCfg()`); none for most kinds.
+     */
+    val prepare: ((JsonObject) -> JsonObject)? = null,
     val run: (EntryInput, EconomySave, EconomyContext, EntryWorld) -> EntryRun,
 )
 
 /**
- * The economy kinds WP6b and WP6c compare (the Daily Hand's own kinds are [QuestEntries]), the
- * kinds WP6d compares ([LATER]: Health and decay) and the page entries that have no native
+ * The economy kinds WP6b, WP6c and WP6d compare (the Daily Hand's own kinds are [QuestEntries], the
+ * Health sync and the day roll's decay [DayEntries]) and the page entries that have no native
  * counterpart ([NOT_NATIVE]: the journal's own text saves around the coach's rewards, and
  * `removeAct`, a cache edit the save always follows). `boot.load` is the runner's own (its
  * before-state is the stored save).
  */
 object ShadowEntries {
-    /** Kinds compared from WP6d on. */
-    val LATER: Set<String> = setOf("health.sync", "decay.apply", "boot.decay")
-
     /** Page entries native does not model as one action. */
     val NOT_NATIVE: Set<String> = setOf("log.remove", "coach.reflect", "coach.review")
 
@@ -309,7 +311,7 @@ object ShadowEntries {
                 input.count(0, MAX_IGNORED_ARGS)
                 EntryRun.of(SavePipeline.save(s, ctx)) { JsonBool.of(it) }
             },
-        )
+        ) + DayEntries.ENTRIES
 
     private val byKind: Map<String, ShadowEntry> = all.associateBy { it.kind }
 

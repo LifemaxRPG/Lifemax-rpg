@@ -75,14 +75,15 @@ class ShadowGoldenCompareTest {
     }
 
     companion object {
-        const val EXPECTED_CASES = 259
-        const val EXPECTED_ENVELOPES = 298
+        const val EXPECTED_CASES = 350
+        const val EXPECTED_ENVELOPES = 402
 
         /**
          * Compared kinds no economy golden case calls as an entry point: the class pack is the
-         * board golden's ([ShadowQuestsGoldenTest]) and the real-page corpus's.
+         * board golden's ([ShadowQuestsGoldenTest]) and the real-page corpus's; the boot's decay is
+         * the day corpus's ([ShadowDayCorpusTest]) and [ShadowDayGoldenTest]'s.
          */
-        val UNRECORDED_KINDS = setOf("quest.pack")
+        val UNRECORDED_KINDS = setOf("quest.pack", "boot.decay")
 
         fun session(
             mutation: EntryMutation = EntryMutation.NONE,

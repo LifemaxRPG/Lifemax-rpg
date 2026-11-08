@@ -14,6 +14,9 @@
   /* an app that compares the quest and Daily Hand kinds (WP6c): every kind carries today's plan facts (its save may deal and
      check the hand), and the journal coach's own plain writes are told apart from the economy's */
   const CAPABILITY_QUESTS = "economy.shadow.quests.v1";
+  /* an app that compares the Health sync and the day roll's decay (WP6d): every Health Connect answer is recorded with its
+     outcome (no plugin, a sync already running, the read that threw and its message), and the boot's decay carries its plan */
+  const CAPABILITY_DAY = "economy.shadow.day.v1";
   /* the Daily Hand's redraw-time points that changed nothing are sent one in this many, and otherwise counted (WP6c) */
   const NOOP_KINDS = ["hand.ensure", "hand.verify"], NOOP_EVERY = 50;
   const B = LMA_SHADOW_BOOT, P = LMA_SHADOW_POINTS;
@@ -29,7 +32,7 @@
   };
   const FAULTS_KEY = "lma_shadow_faults"; // sessionStorage: page faults of an earlier page in this WebView, told at the next configure
   let plugin = null, hello = null, asked = null, live = false, stopped = "", sid = "", epoch = 0, seq = 0, head = 0, cache = null, needBase = true;
-  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, journal = 0, noops = 0;
+  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, day = false, journal = 0, noops = 0;
   const pending = [], outbox = [], installed = [];
   const stats = { sent: 0, bases: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
 
@@ -112,7 +115,7 @@
     for (const read of reads) {
       if (read === "plan") r.env.plan = P.plan(kind);
       else if (read.indexOf("dom:") === 0) r.env.dom = P.dom(read.slice(4).split(","), args);
-      else if (read === "health") r.health = {};
+      else if (read === "health") r.health = P.healthStart(day);
     }
     if (quests && !r.env.plan) r.env.plan = P.plan(kind, true);
     if (r.health) {
@@ -120,7 +123,9 @@
       r.unhook = () => { if (window.lmaPlugin === hooked) window.lmaPlugin = real; };
       const hooked = function (name) {
         const p = real.apply(this, arguments);
-        return name === "HealthSync" && p && r.health ? P.recordingHealth(p, r.health) : p;
+        if (name !== "HealthSync" || !r.health) return p;
+        if (day) r.health.plugin = !!p;
+        return p ? P.recordingHealth(p, r.health, day) : p;
       };
       window.lmaPlugin = hooked;
     }
@@ -232,7 +237,8 @@
       if (owner && typeof owner[name] === "function" && !owner[name].__lmaShadow) put(owner, name, replacement(owner[name]));
     }
     put(window, "toast", capturing("toast", (r, _o, a) => r.toasts.push(String(a[0]))));
-    put(window, "writeSave", capturing("writeSave", (r, ok) => (journal ? r.journal : r.saves).push(!!ok)));
+    /* a write is an action's own only inside it: a write from a timer while the Health sync waits (the check-in's) is not */
+    put(window, "writeSave", capturing("writeSave", (r, ok) => { if (depth > 0) (journal ? r.journal : r.saves).push(!!ok); }));
     /* the journal coach's own plain write (its redraw's day memory, outside the economy) */
     if (quests && typeof window.jcWrite === "function") put(window, "jcWrite", (function (orig) {
       const wrapped = function () { journal++; try { return orig.apply(this, arguments); } finally { journal--; } };
@@ -333,13 +339,17 @@
     let stored = null;
     try { stored = B.stored ? JSON.parse(B.stored) : null; } catch (_) { stored = null; }
     const base = B.capture(stored && typeof stored === "object" ? stored : {});
-    const rec = (kind, texts, after, times, saves) => ({ kind, args: "[]", t0: times[0], t1: times[1], texts, after, returns: "null", toasts: [], saves: saves.map((s) => s.ok), journal: [], confirm: [], prompt: [], env: {}, flags: new Set(), cost: 0 });
+    const rec = (kind, texts, after, times, saves, toasts, env) => ({ kind, args: "[]", t0: times[0], t1: times[1], texts, after, returns: "null", toasts, saves: saves.map((s) => s.ok), journal: [], confirm: [], prompt: [], env, flags: new Set(), cost: 0 });
     if (!sendBase(base)) return;
     cache = base;
-    outbox.push(rec("boot.load", base, B.loaded, B.times.load, B.saves.load));
-    if (B.decayed) outbox.push(rec("boot.decay", B.loaded, B.decayed, B.times.decay, B.saves.decay));
+    outbox.push(rec("boot.load", base, B.loaded, B.times.load, B.saves.load, [], {}));
+    if (B.decayed) {
+      /* WP6d: what the check-in wrote between them is the decay's before-state; the plan's rest days as far back as its walk */
+      const plan = day && B.window ? P.plan("boot.decay", false, B.window) : null;
+      outbox.push(rec("boot.decay", B.predecay || B.loaded, B.decayed, B.times.decay, B.saves.decay, day ? B.toasts.slice(0, LIMIT.toasts) : [], plan ? { plan } : {}));
+    }
     B.stored = null; // the stored text and the boot states are not kept past the base
-    B.loaded = B.decayed = null;
+    B.loaded = B.predecay = B.decayed = null;
     flush();
   }
 
@@ -362,6 +372,7 @@
       await asked;
       if (!hello || hello.protocol !== PROTOCOL || !Array.isArray(hello.capabilities) || !hello.capabilities.includes(CAPABILITY)) return sync();
       quests = hello.capabilities.includes(CAPABILITY_QUESTS);
+      day = hello.capabilities.includes(CAPABILITY_DAY);
       const mine = await fingerprint().catch(() => "");
       sid = sid || "p-" + Math.random().toString(36).slice(2, 10);
       let told = 0;
@@ -429,7 +440,7 @@
 
   window.LmaShadow = {
     /** for tests and the Settings row: what the page side is doing, counts only */
-    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, quests, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
+    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, quests, day, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
     fingerprint,
     words: WORDS,
     refresh,

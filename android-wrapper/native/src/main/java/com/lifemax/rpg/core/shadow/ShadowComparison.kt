@@ -74,7 +74,8 @@ class ShadowComparison(redactor: ShadowRedactor, private val runner: ShadowRunne
         val native = prediction.after
         if (native == null)
             found += Difference("codec.encode.${prediction.encodeRefusal}", CODEC_ENCODE)
-        else found += diff.state(before, after, native, envelope.t0, envelope.t1)
+        else found += diff.state(before, after, native, prediction.anchor, envelope.t1)
+        for (read in prediction.reads) found += Difference(read, read)
         found += diff.value(RETURNS, envelope.returns, prediction.returns)
         val toastAllowed = toasts(envelope.toasts, prediction.toasts, found)
         if (envelope.env.saves.size != prediction.saves) found += Difference(SAVES, SAVES)

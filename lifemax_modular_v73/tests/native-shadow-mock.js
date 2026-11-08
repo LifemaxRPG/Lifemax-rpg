@@ -7,7 +7,11 @@
    Modes: record (answers like native), reject (every call's promise rejects), throw (every method throws at once), stale
    (native's fingerprint differs), nocap (the handshake lacks economy.shadow.v1), absent (no plugin at all). compares:
    {compared, different} makes summary() answer as an app that compares (WP6b), the last difference a quest toggle. quests: true
-   also says economy.shadow.quests.v1 (an app that compares the quest and Daily Hand kinds, WP6c). */
+   also says economy.shadow.quests.v1 (an app that compares the quest and Daily Hand kinds, WP6c); day: true also says
+   economy.shadow.day.v1 (WP6d: the Health sync and the day roll's decay). health: true adds a HealthSync stand-in that answers
+   from window.__health ({status, exercise, steps, sleep, weight, fail}: the plugin's own answers, sessions and days as the
+   plugin sends them; fail names the method that rejects, with 'Health Connect stopped answering'; delay, in ms, holds each
+   answer back), so the page syncs. */
 'use strict';
 
 function mock(opts) {
@@ -35,7 +39,7 @@ function mock(opts) {
   }
   const answer = v => Promise.resolve(v);
   const methods = {
-    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'].concat(o.quests ? ['economy.shadow.quests.v1'] : []), fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
+    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'].concat(o.quests ? ['economy.shadow.quests.v1'] : [], o.day ? ['economy.shadow.day.v1'] : []), fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
     configure: ({ text }) => {
       const c = JSON.parse(text);
       m.config = c;
@@ -82,6 +86,23 @@ function mock(opts) {
     };
   }
   const plugins = o.mode === 'absent' ? {} : { NativeShadow: plugin };
+  if (o.health) {
+    window.__health = window.__health || { status: { sdk: 'available', granted: ['exercise', 'steps', 'sleep', 'weight'] } };
+    const answer = (method, value) => {
+      const h = window.__health;
+      if (h.fail === method) return Promise.reject(new Error('Health Connect stopped answering'));
+      const copy = JSON.parse(JSON.stringify(value));
+      return h.delay ? new Promise(r => setTimeout(() => r(copy), h.delay)) : Promise.resolve(copy);
+    };
+    plugins.HealthSync = {
+      status: () => answer('status', window.__health.status),
+      readExercise: () => answer('readExercise', { sessions: window.__health.exercise || [] }),
+      readSteps: () => answer('readSteps', { days: window.__health.steps || [] }),
+      readSleep: () => answer('readSleep', { sessions: window.__health.sleep || [] }),
+      readWeight: () => answer('readWeight', window.__health.weight || {}),
+      request: () => answer('request', { granted: window.__health.status.granted }),
+    };
+  }
   window.Capacitor = {
     isNativePlatform: () => true, getPlatform: () => 'android', isPluginAvailable: n => n in plugins, Plugins: plugins,
     registerPlugin: () => undefined, convertFileSrc: u => u,

@@ -51,16 +51,23 @@ const LMA_SHADOW_POINTS=(function(){
  /* whole-save replacements: their own saves are not actions; afterwards the shadow starts again from a new base (2.5) */
  const replaces=[[W,'applyBackup'],[W,'resetDemo'],[W,'deleteAll']];
  const PLAN_DAYS=60, DECAY_DAYS=400;
+ /* the earliest day the decay pass can ask about (WP6d): each trained attribute's walk starts after its last training day and
+    after the day it was last decayed (decayApplied holds day numbers; with decay off there is no walk), the shield tick after its
+    mark; at most DECAY_DAYS back. from is a lower bound: a walk that starts later asks nothing before it. */
+ function decayFrom(today,w){
+  const t=dayNum(today),lows=[];
+  if(getDecay().on)for(const a of ATTRS){const lt=lastTrained(a.id);if(lt)lows.push(Math.max(dayNum(lt)+1,(Number(w.applied&&w.applied[a.id])||0)+1))}
+  if(w.tick!=null)lows.push(Number(w.tick)+1);
+  return ecoDayKey(Math.max(Math.min(t,...lows.filter(Number.isFinite)),t-DECAY_DAYS));
+ }
  /* plan facts the economy reads (2.3 env.plan): today done, and the rest days in [from, today]; today alone for a kind that does
-    not read the plan itself, whose save may still deal and check the Daily Hand (WP6c) */
- function plan(kind,todayOnly){
+    not read the plan itself, whose save may still deal and check the Daily Hand (WP6c). The decay passes look back as far as
+    their walk can (decayFrom); the boot's passes its own starting point, taken before the pass moved it. */
+ function plan(kind,todayOnly,walk){
   if(typeof planDay!=='function'||typeof getToday!=='function')return null;
   const today=getToday();
   let from=todayOnly?today:addDays(today,-PLAN_DAYS);
-  if(!todayOnly&&kind.indexOf('decay.')===0){
-   const seen=Object.values(state.decayApplied||{}).filter(d=>typeof d==='string').sort()[0];
-   if(seen)from=[addDays(seen,1),addDays(today,-DECAY_DAYS)].sort()[1];
-  }
+  if(!todayOnly&&(kind==='decay.apply'||kind==='boot.decay'))from=decayFrom(today,walk||{applied:state.decayApplied,tick:state.shieldTick});
   const rest=[];
   for(let d=from;d<=today;d=addDays(d,1)){const p=planDay(d);if(p&&p.kind==='rest')rest.push(d)}
   return {done:!!dayDone(today),rest,from};
@@ -76,16 +83,30 @@ const LMA_SHADOW_POINTS=(function(){
   }
   return out;
  }
- /* a HealthSync stand-in that answers as the real one and keeps every answer, in the golden cases' env.health form */
+ /* a HealthSync stand-in that answers as the real one and keeps every answer: each read's range and answer, the instant just
+    after the status answer (N5), and with full (an app that says economy.shadow.day.v1) the part that threw and its message as
+    lmaHealthSync shows it */
  const READS={readExercise:'exercise',readSteps:'steps',readSleep:'sleep',readWeight:'weight'};
- function recordingHealth(real,h){
+ const said=e=>String((e&&e.message)||e).slice(0,300);
+ function recordingHealth(real,h,full){
   const proxy={};
-  proxy.status=async function(){const s=await real.status.apply(real,arguments);h.now=Date.now();h.status=JSON.parse(JSON.stringify(s));return s};
+  proxy.status=async function(){
+   let s;
+   try{s=await real.status.apply(real,arguments)}catch(e){if(full){h.fail='status';h.error=said(e)}throw e}
+   h.now=Date.now();h.status=JSON.parse(JSON.stringify(s));return s;
+  };
   for(const [m,part] of Object.entries(READS))proxy[m]=async function(range){
    try{const a=await real[m].apply(real,arguments);(h[part]=h[part]||[]).push({from:range&&range.from,to:range&&range.to,answer:JSON.parse(JSON.stringify(a))});return a}
-   catch(e){h.fail=part;throw e}
+   catch(e){h.fail=part;if(full)h.error=said(e);throw e}
   };
   return proxy;
  }
- return {points,replaces,plan,dom,recordingHealth};
+ /* what a sync records before it asks anything (economy.shadow.day.v1): whether another sync still runs (lmaHealthSync then
+    returns at once) */
+ function healthStart(full){
+  const h={};
+  if(full&&typeof lmaHealthBusy!=='undefined'&&lmaHealthBusy)h.busy=true;
+  return h;
+ }
+ return {points,replaces,plan,dom,recordingHealth,healthStart};
 })();

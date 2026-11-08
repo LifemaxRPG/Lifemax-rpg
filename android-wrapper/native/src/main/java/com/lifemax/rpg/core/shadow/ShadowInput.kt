@@ -22,9 +22,9 @@ class InputRefused(val at: String) : Exception(at) {
 /**
  * The `env` parts one kind may carry beside `saves` (ECONOMY_SHADOW_PLAN 2.3): at most [confirms]
  * answers to `confirm()`, at most [prompts] answers to `prompt()`, the input values [dom] by
- * element id (or any id starting [domPrefix]) and the plan facts ([plan]: the kind records the full
- * window of 2.3; every other kind may record today's alone, `economy.shadow.quests.v1`). Anything
- * else refuses.
+ * element id (or any id starting [domPrefix]), the plan facts ([plan]: the kind records the full
+ * window of 2.3; every other kind may record today's alone, `economy.shadow.quests.v1`) and the
+ * Health Connect answers ([health], `economy.shadow.day.v1`). Anything else refuses.
  */
 data class EnvShape(
     val confirms: Int = 0,
@@ -32,6 +32,7 @@ data class EnvShape(
     val dom: Set<String> = emptySet(),
     val domPrefix: String? = null,
     val plan: Boolean = false,
+    val health: Boolean = false,
 ) {
     companion object {
         /** Only `saves`. */
@@ -89,6 +90,9 @@ class EntryInput(envelope: ShadowEnvelope, shape: EnvShape) {
     /** The plan facts, when the kind records them. */
     val plan: EnvPlan?
 
+    /** The Health Connect answers as native's sync reads them, when the kind records them. */
+    val health: RecordedHealth?
+
     init {
         val rest = envelope.env.rest.members
         for (part in rest.keys) if (!allowed(part, shape)) refuse("env.$part")
@@ -106,6 +110,7 @@ class EntryInput(envelope: ShadowEnvelope, shape: EnvShape) {
             }
         dom = dom(rest["dom"], shape)
         plan = rest["plan"]?.let(::plan)
+        health = rest["health"]?.let { RecordedHealth(EnvHealth.read(it)) }
     }
 
     /** Refuses unless there are between [min] and [max] arguments. */
@@ -148,6 +153,7 @@ class EntryInput(envelope: ShadowEnvelope, shape: EnvShape) {
             // from WP6c every kind may carry today's plan facts: any save can deal and verify
             // the Daily Hand, which asks whether today is a rest day and whether it is done
             "plan" -> true
+            "health" -> shape.health
             else -> false
         }
 
