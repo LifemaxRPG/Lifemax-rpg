@@ -779,7 +779,7 @@ never; the queue full); the perf test (`tests/native-shadow-perf.test.js` with C
 the page budget; `ShadowPerfTest` on the JVM for the worker, with the device numbers then taken from the owner's report).
 Bridge: none. Decision: none.
 
-**Status: built** (Native API 113 on this branch, for the one native fix below; the integrator renumbers at merge; no capability, no
+**Status: built** (Native API 117 on this branch, for the one native fix below; the integrator renumbers at merge; no capability, no
 bridge change, no page change). One command runs it all: `tools/shadow_proof.sh [--record] [--mutants] [--gradle]` (section 5.4).
 What exists:
 - **The seeds** (`tools/gen_shadow_sim_corpus.js`, `tests/fixtures/shadow-sim-corpus.json.gz`; `ShadowSimCorpusTest`). The `sim` of the

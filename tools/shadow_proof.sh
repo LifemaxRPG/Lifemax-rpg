@@ -14,7 +14,7 @@
 #
 # One seed again: node lifemax_modular_v73/tools/gen_shadow_sim_corpus.js --seed N --out /tmp/seed.json.gz, then the Kotlin
 # test with -Dshadow.sim.file=/tmp/seed.json.gz (gradle: add it to the test JVM's arguments; kotlinc: java -D... as below).
-set -u
+set -u -o pipefail
 cd "$(dirname "$0")/.."
 RECORD=0 MUTANTS=0 GRADLE=0
 for a in "$@"; do case $a in --record) RECORD=1;; --mutants) MUTANTS=1;; --gradle) GRADLE=1;; *) echo "unknown $a"; exit 2;; esac; done
@@ -30,7 +30,7 @@ if [ $RECORD = 1 ]; then
   done
 fi
 for t in native-shadow-perf native-shadow-transparent; do
-  (cd lifemax_modular_v73 && node tests/$t.test.js "$PAGE") | grep -E '^(PERF|FAIL)|passed, ' || status=1
+  (cd lifemax_modular_v73 && RATES=1,4,6 PERF_STRICT=1 node tests/$t.test.js "$PAGE") | grep -E '^(PERF|FAIL)|passed, ' || status=1
 done
 CLASSES=ShadowSimCorpusTest,ShadowDefectTest,ShadowFuzzTest,ShadowRandomSaveTest,ShadowGoldenCompareTest,ShadowQuestsGoldenTest,ShadowDayGoldenTest,SaveComposeGoldenTest,ShadowCorpusTest,ShadowDayCorpusTest,ShadowMutationTest,ShadowHandMutationTest,ShadowDayMutationTest
 if [ $GRADLE = 1 ]; then

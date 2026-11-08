@@ -12,9 +12,11 @@
    should not trip: four slow actions and a quick one leave the check on, five in a row stop it ("slow"); two page faults leave it
    on, the third stops it ("faults"); a stopped check sends nothing more and the page's actions still run. Last, a plugin that
    answers slowly (2 s) or never: every action is still posted, none waits for it, nothing queues and nothing counts as a fault.
-   The numbers depend on this machine: the hard checks are the self-disable rules and the 1 MB budget at 1x; the slow-CPU numbers are
-   printed for the plan (PERF line per run) and fail only when the hard limit trips at 4x on 1 MB.
-   Run: NODE_PATH=$(npm root -g) node tests/native-shadow-perf.test.js [built-page.html] */
+   The numbers depend on the machine: the hard checks are the self-disable rules, the plugin that answers late or never, and that
+   the page side stops exactly when the slow rule says; the budgets (1 MB within the targets at 1x, the hard limit not tripping at
+   4x) are hard only with PERF_STRICT=1 and printed as NOTE lines otherwise. RATES picks the CPU slow-downs (default 1,4; the plan's
+   numbers are RATES=1,4,6).
+   Run: [RATES=1,4,6] [PERF_STRICT=1] NODE_PATH=$(npm root -g) node tests/native-shadow-perf.test.js [built-page.html] */
 'use strict';
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
@@ -22,7 +24,7 @@ const mock = require('./native-shadow-mock.js');
 const file = require('./current-page')(process.argv[2]);
 const CONTENT = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'quest-content.json'), 'utf8'));
 const SAVE = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'established.json'), 'utf8')).state;
-const MB = 1024 * 1024, TAPS = 24, RATES = (process.env.RATES || '1,4,6').split(',').map(Number);
+const STRICT = process.env.PERF_STRICT === '1', MB = 1024 * 1024, TAPS = 24, RATES = (process.env.RATES || '1,4').split(',').map(Number);
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
 
@@ -96,8 +98,10 @@ const f = x => x.toFixed(1);
           ' ms; longest run over 50 ms ' + worst + '; ' + (row.live ? 'still on' : 'stopped (' + row.stopped + ')'));
         ok(size + ' MB at ' + rate + 'x: the page threw nothing, check on or off', !runs.on.errors.length && !runs.off.errors.length, runs.on.errors.concat(runs.off.errors));
         ok(size + ' MB at ' + rate + 'x: the page side stops exactly when five actions in a row pass 50 ms', row.live === (worst < 5), row);
-        if (size === 1 && rate === 1) ok('1 MB at 1x: within the targets (capture p50 under 5 ms, p95 under 15 ms)', row.capture50 < 5 && row.capture95 < 15, row);
-        if (size === 1 && rate === 4) ok('1 MB at 4x: the hard limit does not trip', row.live, row);
+        /* machine-dependent: hard only with PERF_STRICT=1 (tools/shadow_proof.sh), a note otherwise (CI runners vary) */
+        const budget = (name, c) => STRICT ? ok(name, c, row) : console.log((c ? 'NOTE met: ' : 'NOTE missed: ') + name);
+        if (size === 1 && rate === 1) budget('1 MB at 1x: within the targets (capture p50 under 5 ms, p95 under 15 ms)', row.capture50 < 5 && row.capture95 < 15);
+        if (size === 1 && rate === 4) budget('1 MB at 4x: the hard limit does not trip', row.live);
       }
     }
 
