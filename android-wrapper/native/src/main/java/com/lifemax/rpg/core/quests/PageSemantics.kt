@@ -1,6 +1,7 @@
 package com.lifemax.rpg.core.quests
 
 import com.lifemax.rpg.core.economy.jsNumber
+import com.lifemax.rpg.core.economy.jsTrim
 import com.lifemax.rpg.core.save.JsonArray
 import com.lifemax.rpg.core.save.JsonBool
 import com.lifemax.rpg.core.save.JsonNull
@@ -59,6 +60,12 @@ internal object Js {
     /** `Number(v) || 0`: NaN and zero (either sign) become 0. */
     fun numberOrZero(value: JsonValue?): Double =
         number(value).let { if (it.isNaN() || it == 0.0) 0.0 else it }
+
+    /**
+     * `String.prototype.trim()`: strips JavaScript's white space and line terminators, which are
+     * not Kotlin's (no `U+001C`..`U+001F`, but `U+FEFF`).
+     */
+    fun trim(text: String): String = text.jsTrim()
 
     /** JavaScript truthiness. */
     fun truthy(value: JsonValue?): Boolean = PageReads.truthy(value)
