@@ -388,6 +388,26 @@ detail QST-35, QST-41 and QST-46 leave out; none changes a rule above.
 - **QD23** A draw without `nonce` rerolls to `NaN` (`dh_<date>_<slot>_NaN`, stored `n: null`); a draw without `rerollsUsed` is
   `NaN` in memory (every reroll paid) but stored as `null`, which reads as 0 after a reload (the next reroll free again).
 
+Found by the quest board golden cases (`tests/fixtures/quests-board-golden.json`, WP4; **Executed**, each cited by its cases). None
+changes a rule above; the native board reproduces all of them.
+
+- **QD24** A stage that is not a whole number from 1 to 5 never locks, however high. `questLocked` asks `(q.stage || 1) > 1`, then
+  looks the level up in `[0, 1, 3, 5, 8, 12][stage] || 1`, which gives 1 for `7`, `2.5` or `1000000000`: they pass the first test and
+  need level 1. A numeric string or one-item array works as the number (`'2'`, `[3]`), and `stageLvl('length')` is 6 (the array's
+  length), reachable only by calling `stageLvl` itself because `'length' > 1` is false. See `stage/oddStage_l1` (levels 1 to 40) and
+  `stage/stageLvl*`. No shipped quest has such a stage.
+- **QD25** A quest id with a quote in it breaks its own row: the id goes unescaped into `onchange="qosToggle('<id>', ...)"` on the
+  board and `onclick="dhLedgerToggle('<id>')"` in the ledger, so a `"` ends the attribute and a `'` is a script error. The ids the app
+  makes (`q1`, `cc_*`, `custom_<ms>`, `dh_*`) never have one. Found by recording a board with such an id (the page's markup then
+  has no readable handler, so the recorder's cases leave it out).
+- **QD26** "Available XP" (QD12) also leaves out every epic that is not a nutrition one (an epic is in none of the three lists it sums),
+  and counts locked dailies and weeklies and the Hand cards. See `board/onlyEpics_*` (an unlocked, undone epic worth 20 gives `0`) and
+  `board/handAndDaily_*`.
+
+Found while porting (the Kotlin side, not the page): `jsNumber` crashed on `'0b12'` and `'0o9'` (digits outside the radix) and trimmed
+with Kotlin's white space, not JavaScript's (`U+001C`..`U+001F` are not white space there, `U+00A0` and `U+FEFF` are). Fixed to the
+page's behaviour; the board cases `board/xpText_*` pin it.
+
 ---
 
 ## 13. Golden cases
@@ -411,7 +431,9 @@ cap crossed mid-loop; board, summary and ledger projections.
 - **OQ-1** `defaultQuests`: ids, cadences, attributes and stages; is any of `q4`…`q6` daily (QD01)?
 - **OQ-2** `CLASS_CONTENT`: hydration quests, weekday limits, stages on non-epics, nutrition epics (QD11)?
 - **OQ-3** `luckToday().score`: range and determinism (always 1000–9999, seeded by the date?).
-- **OQ-4** `views/quests.html`: the `#newQuestCadence` options (is `epic` offered?) and `#newQuestName`'s maxlength.
+- **OQ-4** `views/quests.html`: the `#newQuestCadence` options (is `epic` offered?) and `#newQuestName`'s maxlength. *Answered at WP4:* the
+  board's form offers Daily, Weekly and Epic / one-time, and its name field has no `maxlength`; the 3D table's form offers Daily and
+  Weekly and caps the name at 60 (QST-22). A custom epic has no `stage`, so it sorts first among the epics and is never locked.
 - **OQ-5** `petDay()`'s format; can the pet's counters move while it is not alive?
 - **OQ-6** `LifeMaxHost.readQuests`: which quests it exposes to Life Director (Hand cards, locked epics, off-day quests) and how
   `isMilestone` is decided.

@@ -123,6 +123,27 @@ jobs:
             fi
           fi
 
+      # The Gradle distribution is downloaded on first use; a slow or failing download (504, 10 s timeout) must not fail the
+      # build, so keep it cached and retry the fetch before any real build step.
+      - name: Cache Gradle distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper/dists
+          key: gradle-dist-${{ runner.os }}-${{ hashFiles('android-wrapper/android/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Fetch Gradle distribution (retried)
+        working-directory: android-wrapper/android
+        run: |
+          # the wrapper's own network timeout is 10 s: give a slow distribution server two minutes
+          sed -i 's/^networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
+          grep -n networkTimeout gradle/wrapper/gradle-wrapper.properties || true
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if ./gradlew --version; then exit 0; fi
+            echo "::warning::Gradle distribution download failed (attempt $attempt); retrying"
+            sleep $((attempt * 30))
+          done
+          exit 1
+
       - name: Compile and package debug APK
         working-directory: android-wrapper/android
         run: ./gradlew assembleDebug --stacktrace --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'

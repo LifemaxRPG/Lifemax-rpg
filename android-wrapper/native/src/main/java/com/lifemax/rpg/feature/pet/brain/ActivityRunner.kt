@@ -172,14 +172,15 @@ class ActivityRunner(
 
     /**
      * A reflex: [activity] at [spot] now, instead of what was playing; a resumable activity is kept
-     * to be resumed after it (plan 1.5).
+     * to be resumed after it (plan 1.5). [stopSeconds] fixes the seconds at the place (NaN: the
+     * activity draws); it must not be named `seconds`, which would hide the runner's own.
      */
     fun interrupt(
         activity: Activity,
         spot: Spot?,
         reason: String,
         rng: Rng,
-        seconds: Double = Double.NaN,
+        stopSeconds: Double = Double.NaN,
     ) {
         val was = this.activity
         val left = seconds - atPlaceS
@@ -191,7 +192,7 @@ class ActivityRunner(
         }
         val wake = was.asleep
         end(natural = false)
-        begin(Choice(activity, spot, 0.0, reason, seconds), rng, wakeFirst = wake)
+        begin(Choice(activity, spot, 0.0, reason, stopSeconds), rng, wakeFirst = wake)
     }
 
     /**
