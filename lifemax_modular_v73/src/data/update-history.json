@@ -11,7 +11,10 @@
     "Press and hold an Overview card, then drag it to rearrange your dashboard. Cards lift, neighbors slide aside, and the layout saves when you drop.",
     "The Edit button still manages hidden cards. Dragging near the screen edges scrolls the dashboard.",
     "Life Director activity centers use compact, non-scrolling summaries and keep the main action visible. Dragging inside the center no longer scrolls the dashboard or top bar.",
-    "Hold a time on the Life Director’s outer track to schedule a pinned activity. The form starts at that date and time; moving your finger still rotates the calendar. Requires an already planned day and a free time slot."
+    "Hold a time on the Life Director’s outer track to schedule a pinned activity. The form starts at that date and time; moving your finger still rotates the calendar. Requires an already planned day and a free time slot.",
+    "Native Cat (beta): Play opens a toy tray right on the Cat tab. Pick a toy and a cat that feels like it comes to pick it up, carry it, toss it and chase it; a sleepy or hungry cat tells you why it won’t.",
+    "Native Cat (beta): two cats no longer lie on top of each other in one bed or stay in bed for hours, and after a meal a rested cat gets up and about instead of going straight back to sleep.",
+    "Native Cat (beta): the cats no longer rest hidden behind the sofa; resting spots by the sofa keep them in view."
    ]
   },
   {

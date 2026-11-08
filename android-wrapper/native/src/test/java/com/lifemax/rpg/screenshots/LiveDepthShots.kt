@@ -62,7 +62,8 @@ internal object LiveDepthShots {
     /**
      * The room for [looks]: the cats on [spots], the live style at MEDIUM, stepped [seconds] so the
      * camera has followed and the follow has settled. With [hold] the idle drift is put at rest, so
-     * the image shows what the pan does and nothing else.
+     * the image shows what the pan does and nothing else. [style] is the recorded MEDIUM unless a
+     * test asks for another.
      */
     fun stage(
         looks: List<LiveLook>,
@@ -70,6 +71,7 @@ internal object LiveDepthShots {
         hour: Double,
         seconds: Float,
         hold: Boolean,
+        style: RoomStyle = RECORDED_STYLE,
     ): HouseStage {
         val house =
             HouseLife(
@@ -81,7 +83,7 @@ internal object LiveDepthShots {
             house.bodies[it].placeAt(s.x, s.z, s.surface, s.facing)
             if (s.plan.isNotEmpty()) house.bodies[it].replacePlan(1, s.plan)
         }
-        val stage = HouseStage(CatArt.room()!!, house, RECORDED_STYLE) { hour }
+        val stage = HouseStage(CatArt.room()!!, house, style) { hour }
         looks.forEachIndexed { i, look -> stage.setSprites(i, sprites(look)) }
         stage.setFedHouse(looks.none { it.weak })
         stage.advance(seconds)

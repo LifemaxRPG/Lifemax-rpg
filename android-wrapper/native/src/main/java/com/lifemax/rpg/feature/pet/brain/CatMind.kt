@@ -118,7 +118,8 @@ class CatMind(
      * Takes up activity [id] (or a fresh pick) where the cat now stands; see
      * [ActivityRunner.resume].
      */
-    fun resume(id: String?) = runner.resume(id, rng)
+    fun resume(id: String?, sinceS: Double = 0.0, left: Double = Double.NaN, at: Spot? = null) =
+        runner.resume(id, rng, sinceS, left, at)
 
     /** One 1/120 s sub-step: the body moves. */
     fun subStep() = exec.subStep()

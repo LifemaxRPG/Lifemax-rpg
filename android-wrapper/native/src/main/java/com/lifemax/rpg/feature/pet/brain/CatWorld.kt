@@ -117,7 +117,7 @@ class CatWorld(
         if (fidelity != Fidelity.LIVE) return
         val bound = minds.filter { bodies.getOrNull(it.slot) != null }
         for (m in bound) (m.exec as BodyExecutor).adopt(bodies[m.slot])
-        for (m in bound) m.resume(m.runner.activity.id)
+        for (m in bound) m.resume(m.runner.activity.id, left = m.runner.left, at = m.runner.place)
     }
 
     /**
@@ -242,7 +242,13 @@ class CatWorld(
             kept[m.profile.id] = saved
             MindState.restore(m, saved)
         }
-        for (m in back) m.resume(MindState.activityOf(state.cats.getValue(m.profile.id).act))
+        // each takes up what is left of it: the time since it began (actAt) is already spent
+        val now = clock.epochMs()
+        for (m in back) {
+            val saved = state.cats.getValue(m.profile.id)
+            val sinceS = (now - saved.actAt).coerceAtLeast(0L) / MS_PER_S
+            m.resume(MindState.activityOf(saved.act), sinceS)
+        }
         keptPair = state.pair
         keptToys = state.toys
         keptGift = state.gift
@@ -321,6 +327,7 @@ class CatWorld(
 
     private companion object {
         const val MS_PER_MINUTE = 60_000L
+        const val MS_PER_S = 1000.0
         const val MS_PER_DAY = 86_400_000L
         const val MAX_HUNGER = 5
 

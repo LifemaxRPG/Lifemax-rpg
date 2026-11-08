@@ -1,7 +1,9 @@
 package com.lifemax.rpg.feature.pet.brain
 
+import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
+import com.lifemax.rpg.feature.pet.body.World
 
 /**
  * Plays one activity at a time for a cat (plan 1.1 `ActivityRunner`): turns a [Choice] into a
@@ -77,7 +79,13 @@ class ActivityRunner(
      * other one has (both saved on the bed, say) does something else somewhere free, and a cat put
      * down on top of the other first makes way.
      */
-    fun resume(id: String?, rng: Rng) {
+    fun resume(
+        id: String?,
+        rng: Rng,
+        sinceS: Double = 0.0,
+        left: Double = Double.NaN,
+        at: Spot? = null,
+    ) {
         waiting = null
         suspended = null
         val here = m.here
@@ -89,9 +97,42 @@ class ActivityRunner(
             makeWay(rng)
             return
         }
-        val a = id?.let(registry::find)?.takeIf { free && it.resumesAfterRestart }
-        begin(if (a != null) Choice(a, here, 0.0, RESUME) else pick(rng), rng)
+        // where it is taken up: the place it was going to (the bodies handed over mid-way), else
+        // where it stands, when that suits it (a cat restored on its way to bed does not sleep by
+        // the bowl: it picks anew)
+        val place = at ?: here
+        val a =
+            id?.let(registry::find)?.takeIf {
+                free &&
+                    it.resumesAfterRestart &&
+                    (it.placeFlags == 0 || (place != null && (place.flags and it.placeFlags) != 0))
+            }
+        if (a == null) return begin(pick(rng), rng)
+        val rest = if (left.isNaN()) remaining(a, sinceS, rng) else left
+        if (rest <= 0.0) {
+            // what it was doing is over by now (a nap the app slept through): what follows it
+            val next = a.next?.let(registry::find)
+            return begin(next?.let { Choice(it, null, 0.0, "after ${a.id}") } ?: pick(rng), rng)
+        }
+        begin(Choice(a, place, 0.0, RESUME, rest), rng)
     }
+
+    /**
+     * How much of [a] is left for a cat that began it [sinceS] ago (the blob's `actAt`): a fresh
+     * draw of its length less the time already spent, so a nap is never begun anew at every restart
+     * or catch-up (the owner's cats "stuck in bed for hours"); NaN (the activity's own length) for
+     * one that draws none; 0 or less when it is over.
+     */
+    private fun remaining(a: Activity, sinceS: Double, rng: Rng): Double {
+        val d = a.duration(m, rng)
+        if (d <= 0.0) return Double.NaN
+        val rest = d - sinceS.coerceAtLeast(0.0)
+        return if (sinceS > 0.0 && rest < BrainTuning.Select.RESUME_MIN_LEFT_S) 0.0 else rest
+    }
+
+    /** What is left of the activity being played (the house's bodies handed over mid-way). */
+    val left: Double
+        get() = (seconds - atPlaceS).coerceAtLeast(BrainTuning.Select.RESUME_MIN_LEFT_S)
 
     /**
      * The cat is on top of the other one: it gets up (properly, if it slept), walks at least
@@ -187,7 +228,27 @@ class ActivityRunner(
     /** A walk to a floor place at least [BrainTuning.Apart.ASIDE_PX] from the other cat. */
     private fun aside(script: Script) {
         val x = m.asideX()
-        if (exec.surface == SurfaceId.FLOOR) script.approach(x, exec.z) else down(script, x)
+        if (exec.surface == SurfaceId.FLOOR) script.approach(x, Occluders.visibleZ(x, exec.z))
+        else down(script, x)
+    }
+
+    /**
+     * A cat about to stay where it stands on the floor, behind furniture that would hide most of it
+     * (it stopped there on its way), first steps forward to where it can be seen ([Occluders]).
+     */
+    private fun outOfHiding(script: Script) {
+        if (exec.surface != SurfaceId.FLOOR || !Occluders.hidden(exec.x, exec.z)) return
+        script.approach(exec.x, Occluders.visibleZ(exec.x, exec.z))
+    }
+
+    /**
+     * Where a cat up on a perch lands to play with the owner's toy: beside it on the side the cat
+     * comes from, so it walks up to it and reaches down (landing on it, it could not).
+     */
+    private fun besideToy(): Float {
+        val toy = m.toy ?: return exec.x
+        val side = if (exec.x >= toy.x) 1 else -1
+        return World.clampHouse(toy.x + side * BrainTuning.Play.APPROACH_PX)
     }
 
     /** The way down to the floor at [x] (nothing when the cat cannot get there from here). */
@@ -208,9 +269,10 @@ class ActivityRunner(
             val fresh = m.nowMs - suspendedAtMs <= BrainTuning.Select.RESUME_MAX_S * MS
             val spot = suspendedPlace
             val free = spot == null || m.book.free(m.slot, spot, spot.x, 0)
-            // a nap a meal broke into is taken up again even by a cat that would not start one now
-            if (fresh && free && (s.eligible(m) || s.asleep))
-                return Choice(s, spot, 0.0, RESUME, suspendedLeft)
+            // a nap a meal broke into is taken up again only by a cat that still wants one (tired,
+            // or bed hours): a rested cat fed by day gets up and about instead of going straight
+            // back to bed
+            if (fresh && free && s.eligible(m)) return Choice(s, spot, 0.0, RESUME, suspendedLeft)
         }
         return pick(rng)
     }
@@ -239,8 +301,8 @@ class ActivityRunner(
         if (wakeFirst) wakeBeats(script)
         when (lead) {
             Lead.ASIDE -> aside(script)
-            Lead.FLOOR -> if (exec.surface != SurfaceId.FLOOR) down(script, m.toy?.x ?: exec.x)
-            Lead.NONE -> Unit
+            Lead.FLOOR -> if (exec.surface != SurfaceId.FLOOR) down(script, besideToy())
+            Lead.NONE -> if (spot == null) outOfHiding(script)
         }
         if (spot != null && !cut && !standsAt(spot)) {
             when (routeTo(spot, script)) {

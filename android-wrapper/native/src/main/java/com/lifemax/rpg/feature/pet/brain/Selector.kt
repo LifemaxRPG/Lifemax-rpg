@@ -109,7 +109,12 @@ class Selector(private val registry: ActivityRegistry) {
                 continue
             }
             for (spot in Spots.all) {
-                if ((spot.flags and a.placeFlags) == 0 || !allowed(m, spot) || !a.suits(m, spot))
+                if (
+                    (spot.flags and a.placeFlags) == 0 ||
+                        spot.hidden ||
+                        !allowed(m, spot) ||
+                        !a.suits(m, spot)
+                )
                     continue
                 val info = travel.to(spot) ?: continue
                 if (!m.book.free(m.slot, spot, spot.x, info[2].toInt())) continue

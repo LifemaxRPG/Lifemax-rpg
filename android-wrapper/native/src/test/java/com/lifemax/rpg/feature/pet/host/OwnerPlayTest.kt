@@ -67,7 +67,11 @@ class OwnerPlayTest {
             if (body.heldToy === toy) carried = true
             if (Math.abs(toy.x - x0) > MOVED_PX) moved = true
         }
-        assertTrue("the cat carried the toy in its mouth", carried)
+        val story =
+            "frames $frames, cat ${body.pose.surface} ${body.pose.x}/${body.pose.z}, toy " +
+                "${toy.surface} ${toy.x}/${toy.z} ${toy.state}; " +
+                w.world.minds[slot].runner.explain.entries().takeLast(4).joinToString(" | ")
+        assertTrue("the cat carried the toy in its mouth: $story", carried)
         assertTrue("the toy went somewhere", moved)
         assertFalse("the game ended", w.world.now(slot).activity == "play")
         assertTrue("set down at the end", body.heldToy == null)

@@ -97,7 +97,9 @@ class PersonaMixTest {
     fun adultsSleepTwelveToSixteenHoursAndTheLazyOnesMore() {
         for ((name, m) in listOf("lazy" to lazy, "playful" to playful, "shy" to shy)) {
             println("$name: $m")
-            assertTrue("$name sleeps ${m.h("sleep")} h", m.h("sleep") in 12.0..16.0)
+            // a rested cat fed by day no longer goes straight back to its nap (the owner's "stuck
+            // in bed"), so the most playful sleeps a little under twelve hours
+            assertTrue("$name sleeps ${m.h("sleep")} h", m.h("sleep") in 11.5..16.0)
         }
         assertTrue(
             "lazy ${lazy.h("sleep")} vs playful ${playful.h("sleep")}",

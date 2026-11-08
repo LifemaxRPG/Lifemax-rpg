@@ -30,12 +30,17 @@ class CatsApartBrainTest {
         return CatWorld(clock, cats, pickFirst = false) to clock
     }
 
-    /** Both cats saved at [pos] doing [act]: the state the import wrote for two cats at night. */
-    private fun bothAt(pos: BlobPos, act: String) =
+    /**
+     * Both cats saved at [pos] doing [act], begun a minute before [at]: the state the import wrote
+     * for two cats at night.
+     */
+    private fun bothAt(pos: BlobPos, act: String, at: Long) =
         BrainState(
             mapOf(
-                WorldFixtures.TED to WorldFixtures.cat().copy(pos = pos, act = act),
-                WorldFixtures.LILY to WorldFixtures.cat().copy(pos = pos, act = act),
+                WorldFixtures.TED to
+                    WorldFixtures.cat().copy(pos = pos, act = act, actAt = at - MINUTE_MS),
+                WorldFixtures.LILY to
+                    WorldFixtures.cat().copy(pos = pos, act = act, actAt = at - MINUTE_MS),
             )
         )
 
@@ -76,7 +81,7 @@ class CatsApartBrainTest {
     fun twoCatsSavedAsleepOnTheBedAreNeverLeftLayered() {
         val night = WorldFixtures.NOW + 11 * HOUR_MS // 23:00
         val (w, c) = world(night)
-        w.restore(bothAt(BlobPos(SurfaceId.BED.key, 36.0, 35.0, 1), "sleep"))
+        w.restore(bothAt(BlobPos(SurfaceId.BED.key, 36.0, 35.0, 1), "sleep", night))
         // the first takes up its sleep on the bed; the second does not take the same bed
         assertEquals("sleep", w.now(0).activity)
         assertEquals(Spots.BED, w.book.stayOf(0))
@@ -97,7 +102,7 @@ class CatsApartBrainTest {
     @Test
     fun twoCatsPutDownOnOnePointOfTheFloorArePartedWithinSeconds() {
         val (w, c) = world(WorldFixtures.NOW)
-        w.restore(bothAt(BlobPos(SurfaceId.FLOOR.key, 180.0, 50.0, 1), "groom"))
+        w.restore(bothAt(BlobPos(SurfaceId.FLOOR.key, 180.0, 50.0, 1), "groom", WorldFixtures.NOW))
         var parted = -1
         var quanta = 0
         run(w, c, 2, each = { if (parted < 0 && !w.crowded(0)) parted = quanta else quanta++ })
@@ -112,7 +117,7 @@ class CatsApartBrainTest {
     @Test
     fun noActivityOutlivesItsLongestAndTheWatchdogEndsOneThatWould() {
         val (w, c) = world(WorldFixtures.NOW - 6 * HOUR_MS) // 06:00
-        w.restore(bothAt(BlobPos(SurfaceId.FLOOR.key, 180.0, 50.0, 1), "idle"))
+        w.restore(bothAt(BlobPos(SurfaceId.FLOOR.key, 180.0, 50.0, 1), "idle", c.epochMs()))
         // a sleep forced to last ten hours: the watchdog ends it at the longest sleep there is
         w.minds[0].force("sleep", Spots.BED, 10 * 3600.0)
         val longest = HashMap<String, Double>()
@@ -177,6 +182,7 @@ class CatsApartBrainTest {
 
     private companion object {
         const val HOUR_MS = 3_600_000L
+        const val MINUTE_MS = 60_000L
         const val STEPS_PER_MIN = 120L * 60
         const val NANOS_PER_S = 1_000_000_000L
         const val STEPS_PER_S = 120L

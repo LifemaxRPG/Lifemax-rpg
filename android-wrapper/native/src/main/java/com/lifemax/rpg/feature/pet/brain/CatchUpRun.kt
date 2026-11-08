@@ -15,7 +15,17 @@ internal object CatchUpRun {
     fun run(world: CatWorld, clock: WorldClock, gapMs: Long): CatchUp {
         val simMs = gapMs.coerceIn(0L, CatchUpTuning.SIM_MAX_MS)
         if (simMs < CatchUpTuning.MIN_MS) return CatchUp.NONE
-        val start = world.export()
+        // the world was frozen for the gap: what each cat was doing began that much earlier, so a
+        // nap the app slept through is over in the story instead of starting anew
+        val start =
+            world.export().let { s ->
+                s.copy(
+                    cats =
+                        s.cats.mapValues { (_, c) ->
+                            c.copy(actAt = (c.actAt - gapMs).coerceAtLeast(0L))
+                        }
+                )
+            }
         val time = FakeTimeSource(0L, clock.epochMs() - clock.clockOffsetMs - simMs)
         val fastClock = WorldClock(time, clock.zoneOffsetMin, clock.clockOffsetMs)
         val fast = world.fastCopy(fastClock)

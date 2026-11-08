@@ -262,6 +262,9 @@ object BrainTuning {
         /** An offered toy lands this far in front of the cat. */
         const val DROP_AHEAD_PX = 30f
 
+        /** A cat coming down from a perch to play lands this far beside the toy. */
+        const val APPROACH_PX = 28f
+
         /** A game this long at the toy is play the page counts (less: a sniff and a pat). */
         const val PLAYED_MIN_S = 6.0
 

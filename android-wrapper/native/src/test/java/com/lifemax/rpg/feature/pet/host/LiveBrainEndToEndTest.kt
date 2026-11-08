@@ -236,7 +236,8 @@ class LiveBrainEndToEndTest {
         }
         assertTrue(atClose.size == 2)
         second.minutes(29)
-        assertTrue(second.worstJump > 0f)
+        val story = (0..1).map { second.world.minds[it].runner.explain.entries().takeLast(3) }
+        assertTrue("the cats moved after the gap: $story", second.worstJump > 0f)
         assertTrue(page.saves > 0)
     }
 

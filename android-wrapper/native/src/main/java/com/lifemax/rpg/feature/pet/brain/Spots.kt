@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.brain
 
 import com.lifemax.rpg.feature.pet.body.Feeding
+import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.World
 
@@ -37,6 +38,12 @@ class Spot(
 
     /** The room the spot is in (0 living, 1 bedroom, 2 kitchen). */
     val room: Int = World.roomOf(x)
+
+    /**
+     * A floor place where nearer furniture would hide most of a resting cat (in either room): no
+     * activity is chosen there ([Occluders]).
+     */
+    val hidden: Boolean = onFloor && Occluders.hidden(x, z)
 }
 
 /**
@@ -90,10 +97,13 @@ object Spots {
     val KITCHEN =
         add("kitchen floor", "kitchen", SurfaceId.FLOOR, 250f, REST or ROOM_FLOOR, z = 52f)
     val BEHIND_BED = add("behind the bed", "rug", SurfaceId.FLOOR, 40f, REST or HIDDEN, z = 10f)
+    // tucked away at the sofa's far end behind the floor cushion, in front of the sofa itself:
+    // behind it (once at -128, depth 22) the sofa hid all of a cat in the 2.5D room
     val BEHIND_CUSHION =
-        add("behind the cushion", "lrug", SurfaceId.FLOOR, -128f, REST or HIDDEN or SLEEP, z = 22f)
+        add("behind the cushion", "lrug", SurfaceId.FLOOR, -150f, REST or HIDDEN or SLEEP, z = 30f)
     val SCRATCH_TREE = add("tree post", "tree", SurfaceId.FLOOR, 134f, SCRATCH, face = 1)
-    val SCRATCH_SOFA = add("sofa arm", "couch", SurfaceId.FLOOR, -50f, SCRATCH, face = -1)
+    // the sofa's front, clear of the pouf (at -50 the pouf hid over a third of the cat)
+    val SCRATCH_SOFA = add("sofa arm", "couch", SurfaceId.FLOOR, -60f, SCRATCH, face = -1)
     val BOWL_0 =
         add("bowl", null, SurfaceId.FLOOR, Feeding.bowlX(0), BOWL, face = Feeding.facing(0))
     val BOWL_1 =
