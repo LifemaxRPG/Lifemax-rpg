@@ -43,6 +43,8 @@ internal object CatchUpRun {
         }
         val end = fast.export()
         world.restore(end)
+        // what the two did together in the story is told to the page as it happened
+        fast.takeReports().forEach(world::report)
         val places =
             world.minds.map { m ->
                 CatchPlace(
@@ -54,7 +56,8 @@ internal object CatchUpRun {
                     m.runner.activity.id,
                 )
             }
-        return CatchUp(places, tally.lines(world.names))
+        val shared = fast.social.events.map { it.kind }
+        return CatchUp(places, tally.lines(world.names, PairLines.line(shared, world.names)))
     }
 
     /** Where each cat spent its samples: activity and place, counted. */
@@ -68,8 +71,11 @@ internal object CatchUpRun {
             totals[slot]++
         }
 
-        /** The first cat's main doing, the second's, then the first's next if it filled a share. */
-        fun lines(names: List<String>): List<String> {
+        /**
+         * The first cat's main doing, the second's, then what the two did together ([pair]), else
+         * the first's next doing if it filled a share.
+         */
+        fun lines(names: List<String>, pair: String?): List<String> {
             val ranked =
                 counts.map { m ->
                     m.entries.sortedByDescending { it.value }.map { it.key to it.value }
@@ -80,7 +86,8 @@ internal object CatchUpRun {
                 out += line(names[slot], top.first, share(slot, top.second))
             }
             val next = ranked.firstOrNull()?.getOrNull(1)
-            if (next != null && share(0, next.second) >= CatchUpTuning.SECOND_LINE_SHARE)
+            if (pair != null) out += pair
+            else if (next != null && share(0, next.second) >= CatchUpTuning.SECOND_LINE_SHARE)
                 out += line(names[0], next.first, share(0, next.second))
             return out.take(CatchUpTuning.LINES)
         }
@@ -122,7 +129,39 @@ internal object CatchUpRun {
             "beg" to "waited for food",
             "play" to "played",
             "make way" to "moved over",
+            "greet" to "touched noses",
+            "chase" to "played chase",
+            "groom each other" to "groomed the other",
+            "settle in" to "settled in",
+            "curl up" to "napped curled up",
+            "standoff" to "had a standoff",
+            "shadow" to "followed the other about",
         )
+}
+
+/** The catch-up story's line for what two cats did together while nobody watched. */
+internal object PairLines {
+    /**
+     * One line for the moments of [kinds] (the director's log, oldest first) between [names]: the
+     * warmest of them (a nap together first, a hiss last), or null when they shared none.
+     */
+    fun line(kinds: List<String>, names: List<String>): String? {
+        if (names.size < 2) return null
+        val a = names[0]
+        val b = names[1]
+        val pick = ORDER.firstOrNull { it in kinds } ?: return null
+        return when (pick) {
+            Social.NAP -> "They napped together"
+            Social.GROOM -> "$a and $b groomed each other"
+            Social.CHASE -> "$a and $b played chase"
+            Social.GREET -> "$a and $b touched noses"
+            Social.STANDOFF -> "$a and $b had a standoff"
+            else -> "$a and $b kept a polite distance"
+        }
+    }
+
+    private val ORDER =
+        listOf(Social.NAP, Social.GROOM, Social.CHASE, Social.GREET, Social.STANDOFF, Social.HISS)
 }
 
 /** How the offline catch-up is played and told. */

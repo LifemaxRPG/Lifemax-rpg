@@ -12,6 +12,12 @@ object WorldContract {
      */
     const val CAPABILITY = "pet.world.v1"
 
+    /**
+     * The pair's moments (CB5): native reports each moment two cats completed (`social`) and the
+     * page, which records it, says so with the pair's `met` in the block.
+     */
+    const val SOCIAL_CAPABILITY = "pet.social.v1"
+
     /** The `world` block's version, and the world blob versions this app reads and writes. */
     const val BLOCK_VERSION = 1
     const val BLOB_VERSION = 1

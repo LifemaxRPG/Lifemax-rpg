@@ -459,5 +459,7 @@
   if (window.NativeCatWorld) commands.world = NativeCatWorld.command((c) => tab.has(c)); // the cats' world blob (pet.world.v1)
   // a game the native cats played (pet.play.v1, which the Cat tab's screen said): its report may come while the cards show
   if (window.NativePetPlay) commands.play = NativePetPlay.command((c) => !!window.NativePet && NativePet.has(c));
+  // a moment the native cats shared (pet.social.v1): its report may come while the cards show
+  if (window.NativePetSocial) commands.social = NativePetSocial.command((c) => tab.has(c) || (!!window.NativePet && NativePet.has(c)));
   window.NativeOverviewCardsProjection.commands = commands;
 })();

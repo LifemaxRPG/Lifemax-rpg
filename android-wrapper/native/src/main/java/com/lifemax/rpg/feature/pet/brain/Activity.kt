@@ -1,5 +1,6 @@
 package com.lifemax.rpg.feature.pet.brain
 
+import com.lifemax.rpg.feature.pet.body.EarState
 import com.lifemax.rpg.feature.pet.body.Rng
 import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.TailState
@@ -76,6 +77,10 @@ interface Activity {
 
     /** A tail the activity wants (a window watcher's twitching tip), or null for the mood's. */
     val tail: TailState?
+        get() = null
+
+    /** Ears the activity wants (a standoff's flattened ones), or null for the mood's. */
+    val ears: EarState?
         get() = null
 
     /** Minutes before it may be chosen again after it ended. */

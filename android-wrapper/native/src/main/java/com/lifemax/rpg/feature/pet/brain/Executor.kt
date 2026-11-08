@@ -69,10 +69,27 @@ class Script {
         cues.add(Cue.NONE)
     }
 
+    /** A gallop on the floor to ([x], [z]) as a beat (a chase's bolt, a hasty retreat). */
+    fun dash(x: Float, z: Float?) {
+        steps.add(PlanStep.Walk(x, z, run = true))
+        cues.add(Cue.NONE)
+    }
+
+    /** How many steps the script has so far (the index the next one will take). */
+    val size: Int
+        get() = steps.size
+
     /** A walk on the current surface as a beat (a wander's second leg). */
     fun stroll(x: Float, z: Float?) {
         steps.add(PlanStep.Walk(x, z))
         cues.add(Cue.NONE)
+    }
+
+    /** Gets up properly from sleep: a yawn, a stretch, a shake. */
+    fun wake() {
+        act(Rows.YAWN, Rows.once(Rows.YAWN))
+        act(Rows.STRETCH, Rows.once(Rows.STRETCH))
+        act(Rows.SHAKE, Rows.once(Rows.SHAKE))
     }
 
     /** The cue at the start of step [i]. */
@@ -101,6 +118,12 @@ interface Executor {
 
     /** Nothing of the script is left. */
     val done: Boolean
+
+    /**
+     * The index in the script's steps of the step being played (the steps' count once it is all
+     * played): how the social director sees that a cat has reached its part's end.
+     */
+    val stepIndex: Int
 
     /** The hungry look; it changes what the cat can jump. */
     var weak: Boolean
@@ -157,6 +180,9 @@ class BodyExecutor(body: CatBody) : Executor {
 
     override val done: Boolean
         get() = body.planId == planId && body.isIdle
+
+    override val stepIndex: Int
+        get() = doneIndex + 1
 
     override var weak: Boolean
         get() = body.weak
@@ -262,6 +288,9 @@ class FastExecutor(
 
     override val done: Boolean
         get() = index >= steps.size
+
+    override val stepIndex: Int
+        get() = index
 
     override val capability: JumpCapability
         get() = JumpCapability.of(growthScale, weak, bodyLength, legLength)
@@ -383,6 +412,11 @@ internal object Rows {
     const val YAWN = "yawn"
     const val SHAKE = "shake"
     const val TURN = "turn"
+    const val RUB = "rub"
+    const val CROUCH = "crouch"
+    const val BAT = "bat"
+    const val PLAY = "play"
+    const val ROLL = "roll"
 
     /** Every row named here exists in the clip table (BrainCoreTest asserts it). */
     val ALL =
@@ -404,6 +438,11 @@ internal object Rows {
             YAWN,
             SHAKE,
             TURN,
+            RUB,
+            CROUCH,
+            BAT,
+            PLAY,
+            ROLL,
         )
 
     /** Seconds of one pass of row [name] at its base rate. */

@@ -55,7 +55,9 @@ class BrainDayTest {
             val b = bodies[1].pose
             val shared = a.surface == b.surface && a.surface != SurfaceId.FLOOR
             val apart = Math.abs(a.x - b.x) >= HALF_GAP
-            if (shared && !(a.surface == SurfaceId.COUCH && apart)) {
+            // two cats curled up together on the sofa are the one legal sharing (SocialDirector)
+            val curled = a.surface == SurfaceId.COUCH && world.sharing()
+            if (shared && !(a.surface == SurfaceId.COUCH && apart) && !curled) {
                 if (w.clashSeen.size < 6)
                     w.clashSeen +=
                         "${a.surface.key} ${a.x}/${b.x} ${world.now(0)} | ${world.now(1)}"

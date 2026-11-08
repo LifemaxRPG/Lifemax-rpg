@@ -7873,6 +7873,9 @@
  "window.NativePetPlay": [
   "src/runtime/segments/50-native-pet-play.js"
  ],
+ "window.NativePetSocial": [
+  "src/runtime/segments/50-native-pet-social.js"
+ ],
  "window.NativePlanRunner": [
   "src/runtime/segments/50-native-plan-runner.js"
  ],
@@ -8039,7 +8042,8 @@
  "window.writeSave": [
   "src/runtime/segments/50-native-pet.js",
   "src/runtime/segments/50-native-pet-panels.js",
-  "src/runtime/segments/50-native-pet-play.js"
+  "src/runtime/segments/50-native-pet-play.js",
+  "src/runtime/segments/50-native-pet-social.js"
  ],
  "wireAudioElement": [
   "src/runtime/segments/08-runtime.js"

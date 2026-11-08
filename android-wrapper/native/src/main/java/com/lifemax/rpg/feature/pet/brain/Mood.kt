@@ -79,13 +79,14 @@ class Mood {
     }
 
     private fun wantedEar(activity: Activity): EarState =
-        when {
-            activity.asleep -> EarState.RELAXED_SIDE
-            valence < t.EARS_FLAT_V && arousal > t.EARS_FLAT_A -> EarState.AIRPLANE_FLAT
-            activity.tail == TailState.TIP_TWITCH -> EarState.FORWARD
-            valence > t.EARS_RELAXED_V && arousal < t.EARS_RELAXED_A -> EarState.RELAXED_SIDE
-            else -> EarState.FORWARD
-        }
+        activity.ears
+            ?: when {
+                activity.asleep -> EarState.RELAXED_SIDE
+                valence < t.EARS_FLAT_V && arousal > t.EARS_FLAT_A -> EarState.AIRPLANE_FLAT
+                activity.tail == TailState.TIP_TWITCH -> EarState.FORWARD
+                valence > t.EARS_RELAXED_V && arousal < t.EARS_RELAXED_A -> EarState.RELAXED_SIDE
+                else -> EarState.FORWARD
+            }
 
     private fun wantedTail(): TailState =
         when {

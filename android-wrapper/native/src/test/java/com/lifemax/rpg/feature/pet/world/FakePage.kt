@@ -42,14 +42,22 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
             get() = WorldContract.catId(born)
     }
 
-    /** The pair's record (state.petPair): friendship, the day's gain, counts, standoff wins. */
+    /**
+     * The pair's record (state.petPair): friendship, the day's gain, counts, standoff wins, whether
+     * the two have [met] and the [last] moment's kind.
+     */
     data class Pair(
         var rel: Double = REL_START,
         var day: String = "",
         var gain: Double = 0.0,
         val n: MutableMap<String, Int> = sortedMapOf(),
         val wins: MutableMap<String, Int> = sortedMapOf(),
+        var met: Boolean = false,
+        var last: String? = null,
     )
+
+    /** The page records the pair's moments (`social`, pet.social.v1): its block names `met`. */
+    var social = true
 
     /** state.petWorld: the envelope the page keeps around native's blob. */
     data class Stored(val epoch: Long, val rev: Long, val op: String, val blob: JSONObject)
@@ -236,6 +244,7 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
             .put("lead", -1)
             .put("settled", false)
             .put("gainLeft", round3(DAY_CAP - gain))
+            .also { if (social) it.put("met", p.met) }
     }
 
     private fun giftOk(c: Cat) = level(c) >= GIFT_LEVEL && c.lastGiftDay != today
@@ -351,6 +360,8 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
                 p.gain += g
                 p.n.merge(c.kind, 1, Int::plus)
                 c.winner?.let { p.wins.merge(it, 1, Int::plus) }
+                if (c.kind == "greet" || c.kind == "hiss") p.met = true
+                p.last = c.kind
                 return Triple(true, "", 0)
             }
             is DwellReport -> {
