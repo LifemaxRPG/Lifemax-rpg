@@ -218,6 +218,33 @@ class CatMind(
     private var playKey = ""
     private var gameKey = ""
 
+    /** The perches still to visit on a developer parkour demo's tour ([DemoParkour]). */
+    private val demoStops = ArrayDeque<Spot>()
+
+    /** A demo stop is being played (or the tour has stops left): no second demo starts now. */
+    var touring = false
+        private set
+
+    /** Why this cat will not run the developer parkour demo now, or null when it will. */
+    fun refusesDemo(): String? = DemoParkour.refusal(this, runner.activity)
+
+    /**
+     * DEVELOPER DEMO: sends the cat on a parkour tour now (see [DemoParkour]); false when no perch
+     * can be reached. Nothing is reported to the page.
+     */
+    fun startDemo(): Boolean {
+        val stops = DemoParkour.tour(this)
+        if (stops.isEmpty()) return false
+        demoStops.clear()
+        demoStops.addAll(stops.drop(1))
+        touring = true
+        runner.interrupt(ParkourVisit, stops[0], DemoParkour.REASON, rng, BrainTuning.Demo.STOP_S)
+        return true
+    }
+
+    /** The next perch of the demo tour (the runner asks when a stop ends), or null. */
+    internal fun nextDemoStop(): Spot? = demoStops.removeFirstOrNull()
+
     /** Called by the runner when [a] ends (by itself or cut short) after [atPlaceS] at it. */
     internal fun ended(a: Activity, atPlaceS: Double) {
         if (a !== OwnerPlay) return
@@ -235,6 +262,9 @@ class CatMind(
     /** Called by the runner when [a] begins: the mood answers the moment. */
     internal fun began(a: Activity) {
         val t = BrainTuning.Mood
+        // anything but a demo stop (a meal, a game, a pick of its own) ends the tour
+        touring = a === ParkourVisit && runner.doing.why == DemoParkour.REASON
+        if (!touring) demoStops.clear()
         when (a.id) {
             Eat.id -> {
                 mood.bump(t.EAT_VALENCE, t.EAT_AROUSAL)

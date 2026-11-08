@@ -68,6 +68,12 @@ interface Brain {
      * plays with it. Answers which, or why none would.
      */
     fun offerToy(key: String, atMs: Long): PlayAnswer = PlayAnswer(-1, PlayWords.NOT_HERE)
+
+    /**
+     * DEVELOPER DEMO (the Cat tab's "Demo parkour" button, shown only in developer mode): one awake
+     * cat runs a parkour tour now. Answers which cat, or why none would; no data effects.
+     */
+    fun demoParkour(): PlayAnswer = PlayAnswer(-1, PlayWords.NOT_HERE)
 }
 
 /**

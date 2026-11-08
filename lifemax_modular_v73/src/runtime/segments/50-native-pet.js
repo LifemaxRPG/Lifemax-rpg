@@ -148,7 +148,8 @@
       cue: { fed: fed.slice(-CUES).map((c) => ({ cat: c.cat, id: c.id, ago: Math.max(0, now - c.at) })) },
     }, touch);
     const panels = window.NativePetPanels ? NativePetPanels.extend(out, cat, f, now) : out;
-    const full = window.NativePetPlay ? NativePetPlay.extend(panels, cat, tab) : panels; // the toy tray, for a screen with pet.play.v1
+    const played = window.NativePetPlay ? NativePetPlay.extend(panels, cat, tab) : panels; // the toy tray, for a screen with pet.play.v1
+    const full = window.NativePetDemo ? NativePetDemo.extend(played, tab) : played; // the developer demo button, for pet.demo.v1 with developer mode on
     return window.NativeCatWorld ? NativeCatWorld.extend(full, tab) : full; // the world block, for a screen with pet.world.v1
   }
 

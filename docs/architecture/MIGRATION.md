@@ -542,3 +542,19 @@ ring. Nothing computed is shown, written or sent.
 - **Evidence.** Kotlin `ShadowGoldenCompareTest` (193 golden cases, 217 envelopes, 0 unexplained), `ShadowCorpusTest` (the real
   page's 20 economy envelopes, all the same), `ShadowMutationTest` (13 wrong rules, each caught at its field),
   `ShadowComparisonTest`, `ShadowRedactionTest`, `ShadowMismatchRingTest`, `ShadowPerfTest`; `tests/native-shadow.test.js`.
+
+
+## Cat brain, developer parkour demo (Native API 107)
+
+Native presentation and behaviour, web authority, behind "Native Cat (beta)" AND the page's developer mode. A DEVELOPER DEMO: the owner can watch the cats do their parkour on demand; it happens rarely on its own.
+
+| Part | Where | What |
+|---|---|---|
+| Capability | `pet.demo.v1` | advertised by `NativePetPlugin`; the page sends `demo` only once the Cat tab's screen said it, so an older app shows no button and a newer app on an older page does too |
+| Projection (page to native) | `50-native-pet-demo.js` `demo` | `{label, hint}` only while `state.devMode` is on (Settings, Enable developer mode); strict decoder `PetDemoJson.kt`; absent means hidden; toggling developer mode re-projects the Cat tab |
+| Screen | `PetScreen.kt` (`PetSecondaryButton`, quiet size under Slow blink), `PetViewModel.demoPressed`, `CatWorldHost.demoParkour` | "Demo parkour" button, 48 dp target with a content description; the brain's one-line reason shows like the Play refusal |
+| Brain | `brain/DemoParkour.kt`, `CatWorld.demoParkour`, `CatMind.startDemo`, `ActivityRunner.following` | the awake cat doing least (alternating on repeated taps) runs up to three `ParkourVisit` stops, each next perch chosen for the most jumps by the planner; the usual place book, cats-apart rules and watchdog apply; no second tour while one runs |
+| Data | none | nothing is sent to the page: no command, XP, care counters, pair or likes; only normal activity persistence in the world blob |
+
+- **Rollout.** Rides "Native Cat (beta)" and developer mode. Rollback: drop `pet.demo.v1` from `NativePetPlugin` (no button; the page code is inert without it).
+- **Evidence.** `native-pet-demo.test.js` (gating, on and off, older screen, saved developer mode, nothing written), `data/PetDemoTest` (strict decoder, hidden when absent, tap handling), `brain/DemoParkourTest` (refusals by state, who is chosen, alternation, no overlap, repeat-safe, nothing reported, a headless tour of at least two jumps that ends cleanly in bounded time), `host/DemoParkourEndToEndTest` (host, house bodies and FakePage), `screenshots/PetDemoScreenshotTest` (new images only).
