@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import com.lifemax.rpg.feature.pet.art.RigCompose
 import com.lifemax.rpg.feature.pet.body.CatLife
 import com.lifemax.rpg.feature.pet.body.CatPose
 import com.lifemax.rpg.feature.pet.body.World
@@ -91,10 +90,11 @@ private fun DrawScope.drawSprite(
 
 /**
  * The cat of [pose] with its feet at device pixel ([footX], [footY]): the sheet frame of its clip,
- * mirrored when it faces left, squashed, stretched and turned about the feet as the pose says. With
- * a [tint] every opaque pixel is that colour instead (the rim light is the cat's silhouette so).
- * With a rig the frame is the composed one (ears, tail, whiskers, proportions) unless the cat is
- * the art as drawn; [motion] false keeps the parts as drawn (reduced motion).
+ * mirrored when it faces left, squashed, stretched and turned about the feet, and breathing, as the
+ * cat's steady drawing ([SpritePlan], [SpriteSteady]) says. With a [tint] every opaque pixel is
+ * that colour instead (the rim light is the cat's silhouette so). With a rig the frame is the
+ * composed one (ears, tail, whiskers, proportions) unless the cat is the art as drawn; [motion]
+ * false keeps the parts as drawn (reduced motion).
  */
 internal fun DrawScope.drawSpriteAt(
     pose: CatPose,
@@ -106,42 +106,48 @@ internal fun DrawScope.drawSpriteAt(
     motion: Boolean = true,
 ) {
     val sheet = sprites.sheet(pose.clip) ?: return
-    val flip = if (pose.flip) -1f else 1f
     val frameW = sprites.frameWidth
     val frameH = sprites.frameHeight
-    val feet = sprites.feet(pose.clip)
+    val plan = drawPlan
+    plan.plan(
+        pose,
+        sprites.rig,
+        sprites.feet(pose.clip),
+        frameW,
+        frameH,
+        SpriteSteady.of(pose),
+        RigPainter.frames,
+        s,
+        motion,
+    )
+    val image = if (plan.slot >= 0) RigPainter.image(plan.slot, plan.fresh) else sheet
+    val srcX = if (plan.slot >= 0) 0 else sprites.frame(pose.clip, pose.frame) * frameW
+    val srcY = if (plan.slot >= 0) 0 else sprites.top(pose.clip)
+    val filter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn)
+    val count = plan.bands(s, bands)
     withTransform({
         translate(footX, footY)
-        rotate(Math.toDegrees(pose.rotation.toDouble()).toFloat(), Offset.Zero)
-        scale(pose.scaleX * flip, pose.scaleY * pose.breath, Offset.Zero)
+        rotate(plan.turnDeg, Offset.Zero)
+        scale(plan.scaleX, plan.scaleY, Offset.Zero)
     }) {
-        val rigged = sprites.rig?.let { RigPainter.picture(it, pose, motion) }
-        if (rigged != null) {
+        for (b in 0 until count) {
+            val i = b * SpritePlan.BAND
             drawImage(
-                rigged,
-                dstOffset =
-                    IntOffset(
-                        -(frameW / 2 + RigCompose.MARGIN_LEFT) * s,
-                        (1 - feet - RigCompose.MARGIN_TOP) * s,
-                    ),
-                dstSize = IntSize(RigPainter.width * s, RigPainter.height * s),
-                colorFilter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn),
+                image,
+                srcOffset = IntOffset(srcX, srcY + bands[i]),
+                srcSize = IntSize(plan.width, bands[i + 1] - bands[i]),
+                dstOffset = IntOffset(plan.left * s, bands[i + 2]),
+                dstSize = IntSize(plan.width * s, bands[i + 3]),
+                colorFilter = filter,
                 filterQuality = FilterQuality.None,
             )
-            return@withTransform
         }
-        drawImage(
-            sheet,
-            srcOffset =
-                IntOffset(sprites.frame(pose.clip, pose.frame) * frameW, sprites.top(pose.clip)),
-            srcSize = IntSize(frameW, frameH),
-            dstOffset = IntOffset(-(frameW / 2) * s, (1 - feet) * s),
-            dstSize = IntSize(frameW * s, frameH * s),
-            colorFilter = if (tint == null) null else ColorFilter.tint(tint, BlendMode.SrcIn),
-            filterQuality = FilterQuality.None,
-        )
     }
 }
+
+/** The plan and bands of the cat being drawn (main thread only; nothing allocated per frame). */
+private val drawPlan = SpritePlan()
+private val bands = IntArray(SpritePlan.MAX_BANDS * SpritePlan.BAND)
 
 private fun snap(x: Float, y: Float) = Offset(x.roundToInt().toFloat(), y.roundToInt().toFloat())
 

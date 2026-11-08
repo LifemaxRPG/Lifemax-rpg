@@ -61,6 +61,19 @@ class RigGrid {
         whisker = steps((whiskerScale - 1.0) / WHISKER_STEP, WHISKER_RANGE)
     }
 
+    /**
+     * Put the grid on whole steps already decided (a caller that holds each axis steady); each is
+     * clamped to its axis's range as [set] does.
+     */
+    fun setSteps(earLeft: Int, earRight: Int, flat: Int, tail: Int, curl: Int, whisker: Int) {
+        this.earLeft = earLeft.coerceIn(-EAR_RANGE, EAR_RANGE)
+        this.earRight = earRight.coerceIn(-EAR_RANGE, EAR_RANGE)
+        this.flat = flat.coerceIn(0, FLAT_STEPS)
+        this.tail = tail.coerceIn(-TAIL_RANGE, TAIL_RANGE)
+        this.curl = curl.coerceIn(-CURL_RANGE, CURL_RANGE)
+        this.whisker = whisker.coerceIn(-WHISKER_RANGE, WHISKER_RANGE)
+    }
+
     /** Back to the middle of every axis. */
     fun clear() = set(0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
 
