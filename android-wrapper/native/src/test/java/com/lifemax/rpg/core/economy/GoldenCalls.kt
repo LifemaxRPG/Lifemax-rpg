@@ -179,7 +179,7 @@ internal object GoldenCalls {
                 fromNewerBuild = num(stored["schema"]) > GoldenContent.SCHEMA,
             )
         run.raw = merged
-        run.baseline = SaveCodec.decode(merged)
+        run.document = SaveCodec.document(merged)
         run.save = loaded.save
         run.readOnly = loaded.readOnly
         return null

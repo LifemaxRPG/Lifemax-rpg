@@ -90,13 +90,20 @@ class EconomyGoldenTest(private val id: String, private val case: Map<String, An
             val deleted = output["deleted"].list().map(::text).toSet()
             val untracked = (changed.keys + deleted).filterNot { it in SaveCodec.TRACKED }
             val after = run.encoded()
+            // The recorder lists dailyDraw only for the cases that set one up
+            // (gen_economy_golden.js
+            // header), so it is compared only there.
+            val compared =
+                SaveCodec.TRACKED.filter { it != "dailyDraw" || it in start || it in changed }
             return untracked.map { "state.$it is recorded but not compared" } +
-                SaveCodec.TRACKED.mapNotNull { key ->
+                compared.mapNotNull { key ->
                     val expected =
                         when (key) {
                             in changed -> changed[key]
                             in deleted -> SaveCodec.Absent
-                            else -> start.getOrElse(key) { SaveCodec.Absent }
+                            // A stored null stays null: missing and null are different saves.
+                            in start -> start[key]
+                            else -> SaveCodec.Absent
                         }
                     GoldenJson.firstDifference(
                         LooseFields.of(key, after[key]),

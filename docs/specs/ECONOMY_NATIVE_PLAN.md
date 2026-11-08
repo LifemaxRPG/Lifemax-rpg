@@ -16,8 +16,8 @@ Goal: a native economy that is provably identical to the page, so that saving ca
   `core/golden/GoldenFiles.kt`; it is never copied, so there is one file for the page test and the Kotlin test.
 - Drift: the spec text is stale only in places (citations and header), and no economy rule changed on the page after the
   spec. The page golden test passes at HEAD (10 of 10 checks, 880 of 880 cases).
-- Nothing outside the core module uses it yet. The module is not wired to any screen, and the save codec that turns the
-  page's save JSON into an `EconomySave` lives in `src/test`, not `src/main`.
+- Nothing outside the core module uses it yet. The module is not wired to any screen. The save codec that turns the
+  page's save JSON into an `EconomySave` and back is in `src/main` (`core/save`, WP1 done), also not wired to anything.
 - Not ported: the Daily Hand's draw (seed, generator, pick, ensure, reroll replacement), quest content (default quests,
   class packs, library), the weekday filter, `luckToday`, and every adapter that supplies the context.
 
@@ -31,7 +31,7 @@ verification of the economy. There are no hand-written Kotlin unit tests for it.
 |---|---|---|---|
 | 0 Numbers, dates, strings | complete | `Numbers.kt`, `EconomyClock.kt` | time (11), zone (7), day (4), `dayNum`/`ecoDayKey` calls |
 | 1 Boundary | n/a | - | - |
-| 2 Inputs and outputs (ledger, save fields) | partial: data model complete, codec only in tests | `EconomySave.kt`, `Activity.kt`; codec is `src/test/.../SaveCodec.kt` | load (3), save (4), derive (4); every case round-trips through the test codec |
+| 2 Inputs and outputs (ledger, save fields) | complete (WP1) | `EconomySave.kt`, `Activity.kt`; codec `core/save/EconomySaveCodec.kt` | load (3), save (4), derive (4); every case round-trips through the production codec (`SaveCodecGoldenTest`) |
 | 3 Constants | complete | `Rules.kt` (`Eco`, `Rules`) | rules (4), `ECO` case |
 | 4 Level curves | complete | `Levels.kt` | curve (63) |
 | 5 Derived XP, ledger is the truth | complete | `EconomySave.rebuilt()` | derive (4), save (4) |
@@ -132,7 +132,7 @@ Needed and missing:
 | 3-a-day cap and its refusal toast | `43-economy.js:57` | exists (`Quests.xpFor`, `complete`) |
 | Quest XP shown on completion, board celebration reports listed XP (D20) | `14-runtime.js` | the XP paid is returned; the celebration is UI |
 | Hand facts supplied to verify: water percent, pet counts, plan done | `dhVerifyMet` | `DailyHandFacts` exists; the adapter that fills it from real state does not |
-| Production save codec | - | missing in main (test-only `SaveCodec.kt`) |
+| Production save codec | - | exists (`core/save`, WP1) |
 | Hand card UI state (`turned`, `up`, reveal, deal mode) | `50-quests-hand.js:156-240` | missing; presentation, stored in `dailyDraw`, must be preserved on write |
 
 ## 5. Plan
@@ -152,6 +152,40 @@ Tests: decode then encode is the identity for the starting state of all 880 case
 (spec 19).
 Golden cases to add: none new; a `codec/roundtrip` family recorded from the page's own `JSON.stringify(state)`.
 Decision: none.
+
+**Status: done** (not wired to anything; the page is still the only writer). What exists:
+
+- `android-wrapper/native/src/main/java/com/lifemax/rpg/core/save/`: pure Kotlin, no `org.json`.
+  - `JsonValue.kt`, `JsonReader.kt`, `JsonWriter.kt`: JSON exactly as `JSON.parse` and `JSON.stringify` see it. Numbers keep
+    their text (`-0`, `1e400`, `1.0`, 20-digit integers come back byte for byte); a computed number is written as
+    `Number.prototype.toString` writes it (448 page-recorded doubles agree); strings escape as `JSON.stringify` (lone
+    surrogates as `\udxxx`); a repeated key keeps its first place and last value; nesting is capped at 512 and refused beyond.
+  - `SaveFields.kt`: `SaveFields.TRACKED` (the 43 top-level keys the economy models) and `SaveFields.PARTIAL` (the nested
+    keys it models inside `mealsMeta`, `foodLog`, `money`, `plan`, `health`, `dailyDraw`, `journalCoach`); the refusal types.
+  - `EconomySaveReader.kt`, `EconomySaveWriter.kt`: the tracked fields to and from `EconomySave`, read as the page reads them
+    (NUM-3) and written in the page's shapes.
+  - `JsonMerge.kt`: the three-way merge that writes only what the economy changed over the stored save. Records with an `id`
+    (activities, quests, money transactions) are followed by id, so a changed record keeps its own extra keys.
+  - `EconomySaveCodec.kt`: `decode(text | json, reading) -> Decoded(save, document) | Refused(refusal)` and
+    `encode(document, save) -> Encoded(text, document) | Refused(refusal)`. Never throws. Encoding unchanged returns the stored
+    text itself; every encode reads its own output back and refuses (`NOT_FAITHFUL`) unless the economy reads back exactly
+    and every untracked top-level field is identical.
+- Strictness: `SaveReading.STRICT` (default) refuses a save whose tracked field has a JSON type the page never writes there
+  (`WRONG_TYPE`, naming field and path, `*` for owner-chosen keys, never a value); `null` is accepted wherever the page can
+  write it (`JSON.stringify(NaN)`). A NaN or infinity the economy put where a stored number was is refused
+  (`NON_FINITE_NUMBER`) rather than stored as `null`. `SaveReading.AS_PAGE` reads every value as the page does and writes
+  NaN as `null`, as the page would; it exists to replay the page on the golden cases' deliberately malformed saves (and later
+  shadow mode) and must not decide what native writes.
+- Tests (`src/test/.../core/save/`): `SaveCodecGoldenTest` (all 880 starting states and every `env.stored` save: identity,
+  repeatability, a change to every kind of tracked field keeping every other value; the strict reading refuses exactly the 10
+  cases that store a malformed tracked value, at the expected paths), `SaveFixturesTest` (the four `fixtures/saves` and the
+  page-recorded family), `SaveCodecFuzzTest` (seeded random trees, number lexemes, mangled text, 300 saves sprinkled with
+  random untracked keys), `SaveCodecStrictnessTest`, `SaveCodecCoverageTest` (every `EconomySave` field written and read
+  back; a new model field fails it). `EconomyGoldenTest` now runs through the production codec; the test-side `SaveCodec`
+  is a thin adapter between plain values and `JsonValue`.
+- Page side: `tools/gen_codec_roundtrip.js` writes `tests/fixtures/codec-roundtrip.json` (doubles and strings with their
+  `JSON.stringify` text, and what the page stores for the new and extras saves and a probe save full of JSON corner cases);
+  `tests/codec-roundtrip.test.js` records it again and fails on any difference. No page code changed.
 
 ### WP2. Page-driven content export for quests (S to M, risk low)
 

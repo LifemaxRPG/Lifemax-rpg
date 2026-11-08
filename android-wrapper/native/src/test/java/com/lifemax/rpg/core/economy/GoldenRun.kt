@@ -14,8 +14,8 @@ internal class GoldenRun(
     val zone: ZoneId,
 ) {
     var raw: Map<String, Any?> = start
-    var baseline: EconomySave = SaveCodec.decode(start)
-    var save: EconomySave = baseline
+    var document = SaveCodec.document(start)
+    var save: EconomySave = SaveCodec.decode(start)
     var readOnly = false
     val toasts = mutableListOf<String>()
     private var uuids = 0
@@ -31,7 +31,7 @@ internal class GoldenRun(
             override fun token() = "000d"
         }
 
-    fun encoded(): Map<String, Any?> = SaveCodec.encode(save, baseline, raw)
+    fun encoded(): Map<String, Any?> = SaveCodec.encode(save, document)
 
     /**
      * After a save the page redraws, and the food and money screens put back their empty defaults
@@ -43,12 +43,7 @@ internal class GoldenRun(
         val defaults = missing.associateWith { fresh[it] }
         raw = raw + defaults
         val restored = SaveCodec.decode(raw)
-        baseline =
-            baseline.copy(
-                money = restored.money,
-                calorieGoal = restored.calorieGoal,
-                foodLog = restored.foodLog,
-            )
+        document = SaveCodec.document(raw)
         save =
             save.copy(
                 money = save.money ?: restored.money,
