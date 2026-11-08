@@ -26,6 +26,16 @@ let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('
   const startIdx = await p.evaluate(() => lmaScrubIndex('quests')); await touch('touchstart', 250, Y); for (let i = 1; i <= 8; i++) { await touch('touchmove', 250 - 15 * i, Y); await p.waitForTimeout(8) } const back = await p.evaluate(() => lmaScrub.sel); await touch('touchend', 130, Y); await p.waitForTimeout(500);
   ok('sliding left goes to earlier tabs', back < startIdx, [startIdx, back]);
   ok('the Settings page has the speed choice', await p.evaluate(() => { navigate('settings'); const s = document.getElementById('lmaScrubSpeed'); return !!s && [...s.options].map(o => o.value).join() === 'normal,fast,faster' }));
+  // the native bar owns the scrub while it is up: a touch on the page's own bar (Quests included) arms nothing, and a run across Quests is not cancelled by the page
+  await p.evaluate(() => { lmaNavTo('quests', { fast: true }); window.lmaNativeBarScrubbing = true }); await p.waitForTimeout(500);
+  await touch('touchstart', 250, Y); await touch('touchmove', 150, Y);
+  ok('on Quests, a touch on the page bar does not start the web scrub while the native bar scrubs', await p.evaluate(() => !lmaScrub.drag && !lmaScrub.veilOn && lmaTabKey(lmaView()) === 'quests'));
+  await touch('touchend', 150, Y);
+  await p.evaluate(() => { const i = lmaScrubIndex('quests'); const prev = lmaScrub.items[i - 1].dataset.view; lmaNavTo(prev, { fast: true }); lmaNavTo('quests', { fast: true }); lmaNavTo(prev, { fast: true }) }); await p.waitForTimeout(500);
+  ok('the page follows native opens to Quests and past it, with no leftover veil or scrub state', await p.evaluate(() => !lmaScrub.veilOn && !lmaScrub.drag && !document.documentElement.classList.contains('sv-on')));
+  await p.evaluate(() => { window.lmaNativeBarScrubbing = false; lmaNavTo('quests', { fast: true }) }); await p.waitForTimeout(500);
+  await touch('touchstart', 250, Y); await touch('touchmove', 150, Y);
+  ok('without the native bar the page scrub still starts on Quests', await p.evaluate(() => !!lmaScrub.drag && lmaScrub.drag.moved)); await touch('touchend', 150, Y); await p.waitForTimeout(600);
   ok('no page errors', errs.length === 0, errs);
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); await b.close(); process.exit(fail ? 1 : 0);
 })();

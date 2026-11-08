@@ -148,7 +148,7 @@ function lmaScrubInit(){
  };
  const settleFor=i=>{const b=S.items[i],c=b&&S.cost[b.dataset.view];return c?Math.max(LMA_SCRUB.settle,Math.min(360,Math.round(c*1.4))):LMA_SCRUB.settle};
  sb.addEventListener('touchstart',e=>{
-  if(!lmaScrubOn()||e.touches.length!==1)return;
+  if(!lmaScrubOn()||window.lmaNativeBarScrubbing||e.touches.length!==1)return;     /* the native bar owns the scrub while it is up */
   const t=e.touches[0];lmaScrubItems();
   const st=Math.max(0,lmaScrubIndex(lmaView()));
   const r=sb.getBoundingClientRect();
@@ -157,6 +157,7 @@ function lmaScrubInit(){
  },{passive:true});
  sb.addEventListener('touchmove',e=>{
   const d=S.drag;if(!d||e.touches.length!==1)return;
+  if(window.lmaNativeBarScrubbing){S.drag=null;return}
   const t=e.touches[0],dx=t.clientX-d.x0,n=S.items.length;
   if(!d.moved){
    if(Math.abs(dx)<LMA_SCRUB.slop)return;

@@ -60,9 +60,19 @@ internal object ChromeHost {
     }
 
     private val handler = Handler(Looper.getMainLooper())
+
+    /**
+     * A finger is scrubbing along the bar (or its pill has not landed yet): the bars stay up even
+     * if the page passes over a web tab, which has no native screen to own them. A release asked
+     * for meanwhile waits in [releaseWaiting] and runs once the scrub has landed.
+     */
+    private var scrubHeld = false
+    private var releaseWaiting = false
     private val holds = ChromeHold()
     private val release = Runnable {
         holds.cancel()
+        scrubHeld = false
+        releaseWaiting = false
         shell?.close()
         shell = null
         listener = null
@@ -87,6 +97,7 @@ internal object ChromeHost {
     ): LiveOverviewShell {
         handler.removeCallbacks(release)
         holds.cancel()
+        releaseWaiting = false
         val existing = shell
         val sequence = scene.optInt("sequence")
         val now = SystemClock.uptimeMillis()
@@ -145,6 +156,10 @@ internal object ChromeHost {
     fun leave(by: Any) {
         if (owner !== by) return
         handler.removeCallbacks(release)
+        if (scrubHeld) {
+            releaseWaiting = true
+            return
+        }
         if (holds.leave()) handler.postDelayed(release, 60)
     }
 
@@ -159,6 +174,18 @@ internal object ChromeHost {
         if (holds.unhold(token)) {
             handler.removeCallbacks(release)
             release.run()
+        }
+    }
+
+    /**
+     * A scrub along the shared bottom bar needs the bars to stay ([on]) until it has landed. When
+     * it lets go and a screen left for a web tab meanwhile, the bars go as they would have.
+     */
+    fun scrubHold(on: Boolean) {
+        scrubHeld = on
+        if (!on && releaseWaiting) {
+            releaseWaiting = false
+            if (holds.leave()) handler.postDelayed(release, 60)
         }
     }
 

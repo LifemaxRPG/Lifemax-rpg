@@ -21,12 +21,14 @@ import android.widget.HorizontalScrollView
  * scroll it. A slide along it is a scrub through the tabs ([BarScrubber]), which scrolls the strip
  * only as far as it takes to keep the tab under the finger in view. A tap goes to the tab's button
  * as before. [onOpen] is called with the id of a tab to open; [onHighlight] is told which tab to
- * show as selected ahead of the page (null: the page's own).
+ * show as selected ahead of the page (null: the page's own); [onHold] says whether a scrub needs
+ * the bars to stay up.
  */
 internal class ScrubBar(
     context: Context,
     private val onOpen: (String) -> Unit,
     private val onHighlight: (BarTab?) -> Unit,
+    private val onHold: (Boolean) -> Unit = {},
 ) : HorizontalScrollView(context), ScrubHost {
     private val density = resources.displayMetrics.density
     private val handler = Handler(Looper.getMainLooper())
@@ -159,6 +161,8 @@ internal class ScrubBar(
     }
 
     override fun highlight(tab: BarTab?) = onHighlight(tab)
+
+    override fun hold(on: Boolean) = onHold(on)
 
     override fun after(slot: Int, delayMs: Long, action: () -> Unit) {
         cancel(slot)
