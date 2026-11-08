@@ -101,13 +101,19 @@ class ToyCarryTest {
             s.plan(*c.plan.toTypedArray())
             var swung = 0f
             var heldSince = -1f
+            var turnedAt = -1f
             s.run(c.seconds) {
                 if (it.toy.state == ToyState.HELD && heldSince < 0f) heldSince = it.time
+                if (it.body.pose.clipName == "turn") turnedAt = it.time
                 if (it.toy.state == ToyState.HELD && it.time - heldSince > 0.4f) {
                     val dx = it.toy.x - it.toy.pivotX
                     val dy = it.toy.y - it.toy.pivotY
                     val len = Math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
-                    assertTrue("$kind rod $len", len in kind.rodLength * 0.5f..kind.rodLength * 2f)
+                    // the turn row moves the mouth across the body in whole frames: the elastic
+                    // rod gives a little more while the toy catches up
+                    val turning = turnedAt >= 0f && it.time - turnedAt < TURN_SLACK_S
+                    val shortest = kind.rodLength * if (turning) 0.4f else 0.5f
+                    assertTrue("$kind rod $len", len in shortest..kind.rodLength * 2f)
                     swung = maxOf(swung, Math.abs(dx))
                 }
             }
@@ -212,5 +218,8 @@ class ToyCarryTest {
 
     private companion object {
         const val SETTLE_S = 5f
+
+        /** How long after the turn row the toy may still be catching up with the mouth. */
+        const val TURN_SLACK_S = 0.3f
     }
 }

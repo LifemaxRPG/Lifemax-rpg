@@ -53,7 +53,7 @@ Every existing screenshot that shows a cat changed and was re-recorded (114 imag
 
 ## Regression tests
 
-`SteadyCatTest`: a resting cat (`idle_sit`, `loaf`, `sleep`; a plain coat and a genetic coat with proportions) draws byte-identical frames on every step nothing meant to change, and stays still on most frames; the old drawing is still seen to shimmer by the probe (so the probe cannot go blind); the breath is a one-pixel step that never flicks back, even with noise on it; an ear spring hovering on a step's edge holds its step; `SteadyStep` rounding and hold; and a cat that has not breathed is drawn in one piece with the old geometry. `SpriteSteadinessReportTest` writes the tables below on demand.
+`SteadyCatTest`: a resting cat (`idle_sit`, `loaf`, `sleep`; a plain coat and a genetic coat with proportions) draws byte-identical frames on every step nothing meant to change, and stays still on most frames; the old drawing is still seen to shimmer by the probe (so the probe cannot go blind); the breath is a one-pixel step that never flicks back, even with noise on it; an ear spring hovering on a step's edge holds its step; `SteadyStep` rounding and hold; and a cat that has not breathed is drawn in one piece with the old geometry. `SpriteSteadinessReportTest` writes the tables below on demand. `TurnSteadyTest` (Native API 102): a cat turning round with the `turn` row (on the spot, after a walk, after a gallop's skid; four looks) changes its drawing only on the row's frame changes, breath and rig steps, never with no cause, and nothing scales or tilts it while the row plays (the old narrowing turn is gone).
 
 ## Needs the phone
 

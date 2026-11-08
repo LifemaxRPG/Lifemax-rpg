@@ -119,15 +119,15 @@ internal class ToyRig(
     }
 
     private fun measure(t: ToyBody) {
-        val clip = player.clip
-        val frame = player.frame
+        val clip = turn.shown(player.clip)
+        val frame = turn.shownFrame(player.frame)
         MouthAnchors.locate(
             mouths.u(clip.id, frame),
             mouths.v(clip.id, frame),
             clip.bottom,
             turn.dir < 0,
-            springs.scaleX * turn.scaleX,
-            springs.scaleY * turn.scaleY,
+            springs.scaleX,
+            springs.scaleY,
             springs.rotation.pos + host.bodyRotation,
             ds,
             k.x,

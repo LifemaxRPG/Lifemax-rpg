@@ -121,7 +121,7 @@ Rows 28..39 of the side-view sheets (adult and every kitten stage), after the pa
 
 Notes for the engine:
 - **Jump**: play `jump_up` on the spot, start the arc on its frame 3, hold `jump_air` frame 0 while rising and frame 1 once falling (its frame 1 is drawn two pixels lower in its cell so the raised tail fits; the arc places it), then `jump_land` at touchdown. The existing `crouch` row (a play bow) is not part of it.
-- **Turn**: all four frames are drawn with the old facing (frame 3 is already mirrored in the sheet); flip the body's facing when the clip ends. The middle frame is the front view, with the chest band shortened for the dip.
+- **Turn**: all four frames are drawn with the old facing (frame 3 is already mirrored in the sheet); flip the body's facing when the clip ends. The middle frame is the front view, with the chest band shortened for the dip. The engine (`body/Turn.kt`, Native API 102) plays it for every turn round: frames 0, 1, 2, 3 with the old facing, then frame 0 again with the new facing (the body has arrived, the head still glances at the camera), 0.38 s on the spot, 0.32 s after a walk, 0.27 s after a gallop's skid, the paws planted (PET_TAB_INVENTORY section 12c). The four frames were enough for a walking turn too: no in-between row was added.
 - **Toy**: the toy rides the mouth anchor from `pickup`'s bite frame on, through `carry` (pendulum hangs from the anchor), until `toss`'s release frame; draw it after the cat so the muzzle overlaps it naturally. The reach ends about 3 px above a 6 px ball's top: the toy lifts the last bit along an arc into the mouth (owner's requirement 2).
 
 ### Pair poses (`lab.json` `pairs`)
@@ -169,4 +169,4 @@ What I would ask of the owner or an artist (minimum): (1) one hand-touched `toss
 - Leg segmentation as movable parts: the band operations covered every move made here without cutting legs out; cut-out legs would be needed for paw reaches the art has no source for.
 - Lab rows on the HD 2x layer (`petHd.html`): out of scope; native does not draw HD (CAT_TAB_PLAN open question 3).
 - Front/back (depth) lab rows: not meaningful for these moves (section 2.7).
-- Engine use (jump arc timing, the turn flip, toy pendulum, pair staging) is CT4/CT5 work; the clips and metadata are ready for it.
+- Engine use (jump arc timing, toy pendulum, pair staging) is CT4/CT5 work; the clips and metadata are ready for it. The turn is in use (Native API 102).
