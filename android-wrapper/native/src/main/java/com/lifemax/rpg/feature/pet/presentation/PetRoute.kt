@@ -43,6 +43,7 @@ fun PetRoute(
                 handOver = { onAction(it, "") },
                 play = { if (!vm.playPressed()) onAction(PetHandOver.PLAY, "") },
                 playToy = vm::playToy,
+                demo = vm::demoPressed,
                 noticeShown = vm::noticeShown,
                 openRoom = vm::openRoom,
             )

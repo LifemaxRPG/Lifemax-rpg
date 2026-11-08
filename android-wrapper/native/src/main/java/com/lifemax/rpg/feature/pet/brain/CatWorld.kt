@@ -159,6 +159,33 @@ class CatWorld(
         return PlayAnswer(player.slot, "")
     }
 
+    private var lastDemo = -1
+
+    /**
+     * DEVELOPER DEMO: the awake cat that is doing least (a loaf, a wander, a wash) runs a parkour
+     * tour, the other one next time; none while a tour is running, and none that is eating, asleep,
+     * in a game or too hungry or sleepy: the answer then says why, in one line ([DemoParkour]).
+     */
+    override fun demoParkour(): PlayAnswer {
+        if (minds.any { it.touring }) return PlayAnswer(-1, DemoParkour.RUNNING)
+        val willing = minds.filter { it.refusesDemo() == null }
+        if (willing.isEmpty()) {
+            val m = minds.first()
+            val line = m.refusesDemo() ?: DemoParkour.BUSY
+            return PlayAnswer(-1, line.replace(PlayWords.NAME, m.profile.name))
+        }
+        val order =
+            compareBy<CatMind>(
+                { DemoParkour.busyRank(it.runner.activity) },
+                { if (it.slot == lastDemo) 1 else 0 },
+            )
+        val pick = willing.sortedWith(order).first()
+        if (!pick.startDemo())
+            return PlayAnswer(-1, DemoParkour.NO_PERCH.replace(PlayWords.NAME, pick.profile.name))
+        lastDemo = pick.slot
+        return PlayAnswer(pick.slot, "")
+    }
+
     private val reports = ArrayList<WorldCommand>()
 
     /** Queues [c] for the page (an owner's game that ended). */

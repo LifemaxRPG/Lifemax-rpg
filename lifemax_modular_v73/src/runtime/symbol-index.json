@@ -7867,6 +7867,9 @@
  "window.NativePet": [
   "src/runtime/segments/50-native-pet.js"
  ],
+ "window.NativePetDemo": [
+  "src/runtime/segments/50-native-pet-demo.js"
+ ],
  "window.NativePetPanels": [
   "src/runtime/segments/50-native-pet-panels.js"
  ],
@@ -8044,6 +8047,9 @@
  ],
  "window.toast": [
   "src/runtime/segments/50-native-pet-social.js"
+ ],
+ "window.toggleDevMode": [
+  "src/runtime/segments/50-native-pet-demo.js"
  ],
  "window.writeSave": [
   "src/runtime/segments/50-native-pet.js",
