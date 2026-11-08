@@ -91,8 +91,17 @@ object SocialTuning {
     const val PEAK_GAIN = 1.0
     const val NAP_WINDOW_GAIN = 1.6
 
-    /** A cat is sleepy enough to curl up below this energy (or in its bed hours). */
-    const val SLEEPY_ENERGY = 0.5
+    /**
+     * A grown cat is sleepy enough to curl up below this energy (plus the lazy share): where a nap
+     * becomes eligible for it on its own ([Sleep]).
+     */
+    const val SLEEPY_ENERGY = 0.65
+
+    /** A day napper this rested may be woken by the other cat for a chase or a nose touch. */
+    const val ROUSE_ENERGY = 0.75
+
+    /** Such a wake-up call's appeal against the same moment with both cats up. */
+    const val ROUSE_WEIGHT = 1.0
 
     /** A cat chases only with this much energy. */
     const val CHASE_ENERGY = 0.3

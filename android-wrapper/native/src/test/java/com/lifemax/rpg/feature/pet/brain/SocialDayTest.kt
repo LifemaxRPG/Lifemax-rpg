@@ -327,7 +327,7 @@ class SocialDayTest {
     private companion object {
         val START_HOURS = listOf(0, 7, 19)
         val CATCH_UP_HOURS = listOf(9, 11, 13, 15, 17, 19)
-        const val MIN_AWAKE = 0.35
+        const val MIN_AWAKE = 0.38
         const val MAX_PASSING_QUANTA = 400
         const val ROUTE_S = 120.0
         const val STUCK_STEPS = 20 * 120
