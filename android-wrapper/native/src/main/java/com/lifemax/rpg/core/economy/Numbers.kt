@@ -26,7 +26,7 @@ internal fun Double.text(): String =
 
 /** `num` of a text (NUM-3): blank is 0, anything that is not a numeric literal is NaN. */
 fun jsNumber(text: String): Double {
-    val s = text.trim()
+    val s = text.jsTrim()
     if (s.isEmpty()) return 0.0
     DECIMAL.matchEntire(s)?.let {
         return s.toDouble()
@@ -35,15 +35,34 @@ fun jsNumber(text: String): Double {
         return if (s.startsWith("-")) Double.NEGATIVE_INFINITY else Double.POSITIVE_INFINITY
     }
     RADIX.matchEntire(s)?.let { match ->
-        val radix =
+        val (radix, digits) =
             when (match.groupValues[1].lowercase()) {
-                "x" -> 16
-                "o" -> 8
-                else -> 2
+                "x" -> 16 to match.groupValues[2]
+                "o" -> 8 to match.groupValues[2]
+                else -> 2 to match.groupValues[2]
             }
-        return match.groupValues[2].toBigInteger(radix).toDouble()
+        if (digits.any { Character.digit(it, radix) < 0 }) return Double.NaN
+        return digits.toBigInteger(radix).toDouble()
     }
     return Double.NaN
+}
+
+/**
+ * `String.prototype.trim()`: JavaScript's white space and line terminators, which are not Kotlin's
+ * (no `U+001C`..`U+001F`, but `U+00A0` and `U+FEFF`).
+ */
+internal fun String.jsTrim(): String = trim { c ->
+    c in '\u0009'..'\u000D' ||
+        c == ' ' ||
+        c == '\u00A0' ||
+        c == '\u1680' ||
+        c in '\u2000'..'\u200A' ||
+        c == '\u2028' ||
+        c == '\u2029' ||
+        c == '\u202F' ||
+        c == '\u205F' ||
+        c == '\u3000' ||
+        c == '\uFEFF'
 }
 
 private val DECIMAL = Regex("""[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?""")

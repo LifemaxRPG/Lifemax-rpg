@@ -163,20 +163,41 @@ object HandGoldenReplay {
         }
     }
 
-    private fun compareReturns(actual: JsonValue?, expected: JsonValue?): String? {
+    internal fun compareReturns(actual: JsonValue?, expected: JsonValue?): String? {
         val threw = expected is JsonObject && "threw" in expected
         if (threw || actual === THREW)
             return if (threw && actual === THREW) null
             else
                 "expected ${show(expected)}, got ${if (actual === THREW) "a throw" else show(actual)}"
         return if (show(actual) == show(expected)) null
-        else "expected ${show(expected)}, got ${show(actual)}"
+        else difference(show(expected), show(actual))
     }
 
-    private fun compareState(before: JsonObject, after: JsonObject, expected: JsonObject): String? {
+    /** Where two texts first differ, with some text either side of that place. */
+    internal fun difference(expected: String, actual: String): String {
+        val at =
+            expected
+                .zip(actual)
+                .indexOfFirst { it.first != it.second }
+                .let { if (it < 0) minOf(expected.length, actual.length) else it }
+        fun around(text: String) =
+            text
+                .substring(maxOf(0, at - CONTEXT), minOf(text.length, at + CONTEXT))
+                .replace(Regex("[^\\x20-\\x7e]"), "?")
+        return "differ at $at: expected ...${around(expected)}... got ...${around(actual)}..."
+    }
+
+    private const val CONTEXT = 80
+
+    internal fun compareState(
+        before: JsonObject,
+        after: JsonObject,
+        expected: JsonObject,
+        fields: List<String> = OUT,
+    ): String? {
         val changed = (expected["state"] as? JsonObject)?.members.orEmpty()
         val deleted = (expected["deleted"] as? JsonArray)?.items.orEmpty().map { text(it) }
-        for (field in OUT) {
+        for (field in fields) {
             val was = show(before[field])
             val now = show(after[field])
             when {
@@ -184,14 +205,14 @@ object HandGoldenReplay {
                     if (after[field] != null) return "$field should be gone, is $now"
                 field in changed ->
                     if (now != show(changed[field]))
-                        return "$field: expected ${show(changed[field])}, got $now"
+                        return "$field: ${difference(show(changed[field]), now)}"
                 now != was -> return "$field should not change; it became $now"
             }
         }
         return null
     }
 
-    private fun show(value: JsonValue?): String = value?.let(JsonWriter::write) ?: "(absent)"
+    internal fun show(value: JsonValue?): String = value?.let(JsonWriter::write) ?: "(absent)"
 
     private fun text(value: JsonValue?): String = (value as JsonString).value
 
@@ -201,5 +222,5 @@ object HandGoldenReplay {
         (value as JsonNumber).value.let { if (it == Math.rint(it)) it.toInt() else -1 }
 
     /** Marks a call that threw, where the page's output holds `{threw}`. */
-    private val THREW = JsonString("\u0000threw")
+    internal val THREW = JsonString("\u0000threw")
 }

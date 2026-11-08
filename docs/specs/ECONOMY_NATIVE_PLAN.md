@@ -265,6 +265,42 @@ Tests: `quests-golden.json` families for weekday filter, stage locks at each thr
 quest refusal and clamping, board projections including QD11.
 Decision: QD11 (a nutrition epic shows twice; unknown cadence shows nowhere): keep.
 
+**Status: done** (not wired to anything; the page is still the only writer and the authority). What exists:
+
+- Kotlin (`core/quests`): `BoardClock` (`getToday()`, `getDay()`, the weekly Monday as the page's `setDate` finds it, `Date.now()`, from
+  the economy's `EconomyClock`), `QuestRules` (`questToday`, `questKey`, `isQuestDone`, `stageLvl`, `questLocked`), `QuestBoard`
+  (`project`: the Daily, Weekly, Nutrition and epic lists in the page's order with their empty lines and the summary strings,
+  `toLocaleString` included; `ledger`: the 3D table's quest sections, the badges section left out because the catalogue is not in the
+  kit), `ClassPacks` (`applyClassContent`: the `q1`-`q6`/`cc_*` strip spelled out without a regex, pack and starter quests written with
+  the page's key order), `CustomQuests` (`createQuest` and `dhRest.create`: trim, refusal, XP `Number(x) || 25` clamped to 1..500 and not
+  rounded, id from `Date.now()`), `CharacterLevel` (`characterLevel().level` from the save), `BoardTuning` (the numbers a test may
+  change). Results are `HandStep.Done`/`Threw` as in WP3, so a throw keeps what the page had changed before it.
+- Page side: `tools/gen_quests_board_golden.js` (recorder; the board is read back from the page's own markup, the ledger from the page's
+  own `renderLedger` text cut out of `50-quests-table.js`, which lives inside the WebGL scene) with the cases in
+  `tools/quests_board_cases.js`, writing `tests/fixtures/quests-board-golden.json`: 1011 cases, weekday 136, key 93, stage 72, pack 164,
+  create 81, board 192, ledger 29, odd 24, fuzz 220. Clocks: every UTC weekday in eight zones, 22 wall times around week, month, year,
+  leap-day and clock-change boundaries in five zones each, and the WP3 twelve. `tests/quests-board-golden.test.js` records every case
+  again and fails on any byte of difference (tried: changing one empty-state line fails 181 cases).
+- Tests: `BoardGoldenTest` replays every call of every case (returns as JSON text, changed fields, toasts, save requests; the recorded
+  day, weekday, week, `Date.now()` and character level are checked against what the native side derives; a count test per family);
+  `BoardRulesTest` pins the constants, `toLocaleString` and white space vectors and the stage table, and checks that each of 14
+  mutations (stage levels, XP limits, weekday names, pack and default-quest content, the week's start, the day, the weekday) makes some
+  case fail. Twenty-four code mutations tried by hand (`>=` for `>`, `<=` for `<`, the `any` day, the week key, the done test, the `length` key, tie order of the
+  epic sort, hand cards in the Daily rows, the nutrition and weekly filters, QD11 "fixed", rounding the percent, the available XP, half-even
+  rounding, the ledger texts, the starter ids, the hydration exemption, the pack order, Kotlin's trim, zero XP, the week's start) were all
+  caught; one equivalent change (a no-op rewrite) survived, as it should.
+- Found and written into QUESTS_SPEC section 12: QD24 (a stage above 5 or fractional never locks), QD25 (a quote in a quest id breaks its
+  toggle), QD26 (Available XP leaves out epics). OQ-4 is answered. Not a page defect: `jsNumber` (economy, WP1) crashed on `'0b12'` and
+  trimmed with Kotlin's white space; fixed to the page's behaviour and covered by `board/xpText_*`.
+- For the wiring (WP5/WP6): `renderQuests` deals today's Hand first (`dhRenderHand` runs `dhEnsure`), and the Hand cards are counted in
+  the Daily progress (`0 / 3`) though the list hides them (QST-26, QST-29). The golden cases record the board over the save as given
+  (the recorder stubs `dhRenderHand`; the deal is `quests-golden.json`'s), so the native board must be given the save that
+  `HandDealer.ensure` returns. `level` is a plain input (`CharacterLevel.of(save)` derives it; the test cross-checks it on every call).
+  The 3D table's `dhRest.create` shares `CustomQuests`; its form offers Daily and Weekly only, the board's also Epic.
+- Not covered: the ledger's badges, `dhAutoVerify` inside `renderQuests`, `toggleQuest`/`qosToggle` (economy QUEST rules, `Quests.kt`),
+  all drawing. Gradle did not fit on the shared disk; the Kotlin tests were compiled and run directly with the Gradle-cache Kotlin 2.0.21
+  and JUnit 4.13.2 (core/economy, quests and save sources).
+
 ### WP5. Context adapters for the real app (M, risk medium)
 
 Scope: build `EconomyContext` from the real device: clock and zone, `DailyHandFacts` (water percent, pet counts, plan done) from
