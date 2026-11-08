@@ -79,6 +79,9 @@ class CatWorld(
 
     override val names: List<String> = cats.map { it.name }
 
+    /** What the two cats do together (none for one cat). */
+    internal val social = SocialDirector(minds, this, clock::epochMs)
+
     private var localDay = Long.MIN_VALUE
     private var dayKey = ""
     private val dayKeyOf = { dayKey }
@@ -95,6 +98,7 @@ class CatWorld(
         val now = clock.simMs
         val hour = clock.hourOfDay()
         for (i in minds.indices) minds[i].think(now, hour, localDay, dayKeyOf)
+        social.think(hour)
         keepApart()
     }
 
@@ -117,7 +121,10 @@ class CatWorld(
         if (fidelity != Fidelity.LIVE) return
         val bound = minds.filter { bodies.getOrNull(it.slot) != null }
         for (m in bound) (m.exec as BodyExecutor).adopt(bodies[m.slot])
+        // two cats curled up together go on lying together on the new bodies
+        social.rebinding()
         for (m in bound) m.resume(m.runner.activity.id, left = m.runner.left, at = m.runner.place)
+        social.restored()
     }
 
     /**
@@ -192,6 +199,8 @@ class CatWorld(
     }
 
     override fun crowded(slot: Int): Boolean {
+        // a moment together (curled up, a nose touch) is the one time two cats may be this close
+        if (social.sharing()) return false
         val a = minds[slot].exec
         for (o in minds) {
             if (o.slot == slot) continue
@@ -204,6 +213,14 @@ class CatWorld(
         }
         return false
     }
+
+    override fun pairedOnRestore(slot: Int): Boolean = social.pairedOnRestore()
+
+    /** True while the two cats share a moment that lets them be close (see [SocialDirector]). */
+    fun sharing(): Boolean = social.sharing()
+
+    /** The page's friendship of the two (tests and the day viewer set it without a block). */
+    fun pair(info: PairInfo) = social.pair(info)
 
     override fun asideX(slot: Int): Float {
         val me = minds[slot].exec.x
@@ -226,7 +243,7 @@ class CatWorld(
      * for a few seconds are parted; the one awake (or the second) makes way.
      */
     private fun keepApart() {
-        if (minds.size < 2 || !crowded(0)) {
+        if (minds.size < 2 || social.sharing() || !crowded(0)) {
             together = 0
             return
         }
@@ -248,6 +265,7 @@ class CatWorld(
             val m = minds.firstOrNull { it.profile.id == c.id } ?: continue
             m.hunger(c.hunger.stage.coerceIn(0, MAX_HUNGER), c.hunger.vacation)
         }
+        block.pair?.let { social.pair(PairInfo.of(it)) }
         restDay = block.context.restDay
     }
 
@@ -256,7 +274,7 @@ class CatWorld(
         val day = clock.dayKey()
         val cats = LinkedHashMap<String, BlobCat>()
         for (m in minds) cats[m.profile.id] = MindState.export(m, kept[m.profile.id], epoch, day)
-        return BrainState(cats, keptPair, keptToys, keptGift)
+        return BrainState(cats, social.export(keptPair), keptToys, keptGift)
     }
 
     /** Takes back [state]: each cat it has is put where it stood and takes up its activity. */
@@ -269,6 +287,9 @@ class CatWorld(
             kept[m.profile.id] = saved
             MindState.restore(m, saved)
         }
+        keptPair = state.pair
+        social.restore(state.pair)
+        social.restoring(minds.map { state.cats[it.profile.id]?.act })
         // each takes up what is left of it: the time since it began (actAt) is already spent
         val now = clock.epochMs()
         for (m in back) {
@@ -276,7 +297,7 @@ class CatWorld(
             val sinceS = (now - saved.actAt).coerceAtLeast(0L) / MS_PER_S
             m.resume(MindState.activityOf(saved.act), sinceS)
         }
-        keptPair = state.pair
+        social.restored()
         keptToys = state.toys
         keptGift = state.gift
     }
@@ -296,6 +317,7 @@ class CatWorld(
         val routes = minds.map { it.runner.routes }
         return CatWorld(fastClock, profiles, Fidelity.FAST, registry, routes, false).also {
             it.restDay = restDay
+            it.social.pair(social.info)
         }
     }
 
@@ -332,6 +354,7 @@ class CatWorld(
         if (d != localDay) {
             localDay = d
             dayKey = clock.dayKey()
+            social.newDay(dayKey)
         }
     }
 

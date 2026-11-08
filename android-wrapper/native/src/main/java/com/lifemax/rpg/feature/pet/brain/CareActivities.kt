@@ -109,6 +109,6 @@ object Catalogue {
                 // reflexes only (the selector passes them by): the owner's game, making way
                 OwnerPlay,
                 MakeWay,
-            )
+            ) + Social.ACTIVITIES // the moments two cats share, started by the SocialDirector
         )
 }

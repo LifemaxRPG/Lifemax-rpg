@@ -288,8 +288,10 @@ class CatBody(
                 if (toyDir.update(dt)) finishStep()
             }
         }
-        turn.update(dt)
+        turn.update(dt, loco.speed > 0f, loco.gait)
         if (turn.flippedNow) tail.swing(turn.dir)
+        // the turn row's frames carry the dip: nothing scales, tilts or bobs the drawing under it
+        if (turn.plantedNow) springs.reset()
         updateBodyAndSecondary(dt)
         toyDir.afterTick(dt)
         toyRig.field?.stepTo(++toyTicks)
@@ -392,6 +394,7 @@ class CatBody(
                 mode = Mode.HOP
             }
             is PlanStep.Leap -> {
+                if (turn.active) turn.snapTo(turn.target)
                 leap.begin(step, queue.nextIsLeap)
                 mode = Mode.LEAP
             }
@@ -450,9 +453,10 @@ class CatBody(
     /** True at a cheap beat: a footfall, a finished blink, the ground before a jump. */
     private fun canCutNow(): Boolean =
         when (mode) {
+            // a turn in progress carries on by itself (or runs back) under the next plan
             Mode.IDLE,
-            Mode.SETTLE -> !player.blinking
-            Mode.FACE -> !turn.active
+            Mode.SETTLE,
+            Mode.FACE -> !player.blinking
             Mode.ACT -> !player.blinking && !(player.clip.cheapBeat && !player.finished)
             Mode.WALK -> player.footfall || loco.gait == Gait.STAND
             Mode.HOP -> jump.canCancel
@@ -470,6 +474,8 @@ class CatBody(
     private fun animateStride(dt: Float): Boolean {
         val gait = loco.gait
         if (gait == Gait.STAND) {
+            // a walk stopped for a turn keeps its stride frame: it does not sit down in between
+            if (player.clip.isLocomotion && turn.holdsStride) return true
             if (player.clip.isLocomotion) playClip(restingClip())
             return false
         }
@@ -540,11 +546,11 @@ class CatBody(
         p.surface = kin.surface
         p.facing = turn.dir
         p.flip = turn.dir < 0
-        p.clip = player.clip.id
-        p.frame = player.frame
-        p.framePhase = player.framePhase
-        p.scaleX = springs.scaleX * turn.scaleX
-        p.scaleY = springs.scaleY * turn.scaleY
+        p.clip = turn.shown(player.clip).id
+        p.frame = turn.shownFrame(player.frame)
+        p.framePhase = if (turn.showing) 0f else player.framePhase
+        p.scaleX = springs.scaleX
+        p.scaleY = springs.scaleY
         p.rotation = springs.rotation.pos + jump.arcRotation + leap.arcRotation
         p.bob = springs.bob.pos
         p.ear[0] = ears.leftAngle
@@ -564,7 +570,8 @@ class CatBody(
 
     private fun composeShadow(p: CatPose) {
         val row = if (jump.active) jump.shadowY else if (leap.active) leap.shadowY else kin.groundY
-        p.setShadow(kin.x, row, maxOf(jump.height, leap.height), player.clip.shadowHalfWidth)
+        val halfWidth = turn.shown(player.clip).shadowHalfWidth
+        p.setShadow(kin.x, row, maxOf(jump.height, leap.height), halfWidth)
     }
 
     private companion object {

@@ -113,15 +113,18 @@
     if (withLegacy) o.legacy = petWorldLegacy(p, now);
     return o;
   }
-  /** the friendship of a house of two as the page keeps it (read only: a house without a record yet reads the page's start) */
-  function pair() {
+  /** the friendship of a house of two as the page keeps it (read only: a house without a record yet reads the page's start); for a
+      screen that records the pair's moments (pet.social.v1, 50-native-pet-social.js) also whether the two have met */
+  function pair(tab) {
     const a = state.pet, b = state.pet2;
     if (!a || !b || !a.alive || !b.alive) return null;
     const d = state.petPair && state.petPair.v === 1 && state.petPair.a === a.born && state.petPair.b === b.born ? state.petPair : null;
     const rel = r3(clamp(num(d && d.rel, PET_PAIR_CFG.REL_START), 0, 1)), rk = d && d.rk && d.rk.v === 1 ? d.rk : null;
     const gain = d && d.day === today() ? num(d.gain, 0) : 0;
-    return { rel, level: PET_PAIR_LEVELS.indexOf(petPairLevel(rel)), lead: rk && (rk.lead === 0 || rk.lead === 1) ? rk.lead : -1, settled: !!(rk && rk.settled),
+    const out = { rel, level: PET_PAIR_LEVELS.indexOf(petPairLevel(rel)), lead: rk && (rk.lead === 0 || rk.lead === 1) ? rk.lead : -1, settled: !!(rk && rk.settled),
       gainLeft: r3(clamp(PET_PAIR_CFG.DAY_CAP - gain, 0, PET_PAIR_CFG.DAY_CAP)) };
+    if (tab && typeof tab.has === "function" && window.NativePetSocial && tab.has(NativePetSocial.capability)) out.met = !!(d && d.met);
+    return out;
   }
   /** what the owner is doing that the cats may answer (plan 1.9): a guided workout's clock running, and today's rest day */
   function context() {
@@ -133,13 +136,14 @@
     return { timer, restDay: !!(state.restDays && state.restDays[today()]) };
   }
 
-  /** The `world` block (plan 2.1). seq rises whenever its content changes (with the clock, so a reloaded page never repeats one). */
-  function petWorldBlock(now) {
+  /** The `world` block (plan 2.1) for the screen `tab` (optional). seq rises whenever its content changes (with the clock, so a
+      reloaded page never repeats one). */
+  function petWorldBlock(now, tab) {
     now = now || Date.now();
     const w = stored(), storedIds = w && w.blob.cats && typeof w.blob.cats === "object" ? w.blob.cats : {};
     const cats = living().map(({ p, slot }) => cat(p, slot, now, !own(storedIds, catId(p))));
     const fed = window.NativePet && typeof NativePet.fedCues === "function" ? NativePet.fedCues(now) : [];
-    const block = { v: VERSION, seq: 0, epoch: epochNow(), clockOffsetMs: Math.round((PET_RT && PET_RT.shift) || 0), cats, pair: pair(), context: context(),
+    const block = { v: VERSION, seq: 0, epoch: epochNow(), clockOffsetMs: Math.round((PET_RT && PET_RT.shift) || 0), cats, pair: pair(tab), context: context(),
       cue: { fed, cheer: [] }, stored: w ? { epoch: w.epoch, rev: w.rev, blob: w.blob } : null };
     const key = JSON.stringify(Object.assign({}, block, { cue: { fed: fed.map((c) => c.id), cheer: [] } }));
     if (key !== seqKey) {
@@ -238,7 +242,7 @@
   function extend(out, tab) {
     if (!tab || typeof tab.has !== "function" || !tab.has(CAP)) return out;
     try {
-      out.world = petWorldBlock(Date.now());
+      out.world = petWorldBlock(Date.now(), tab);
     } catch (e) {
       console.warn("[cat world] block", e);
     }

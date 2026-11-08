@@ -50,6 +50,7 @@ class NativeOverviewCardsPlugin : ComposeTabPlugin() {
             "overview.cat.coat.v1",
             "overview.cat.rig.v1",
             WorldContract.CAPABILITY,
+            WorldContract.SOCIAL_CAPABILITY,
         )
 
     init {

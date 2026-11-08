@@ -26,7 +26,8 @@ import org.json.JSONObject
  * cats answer a finger on the room themselves and tell the page what a touch came to (`touch`,
  * `pet.touch.v1`), and the room opens full screen on the screen's own. With `pet.play.v1` Play
  * opens the screen's own toy tray and the native cats play (the page counts the game with `play`);
- * an older page still takes Play, and the rest of the Cat page, to its own view. A genetic coat's
+ * an older page still takes Play, and the rest of the Cat page, to its own view. With
+ * `pet.social.v1` the page records the moments the two cats share (`social`, CB5). A genetic coat's
  * sheets are asked of the page with `coat` (`pet.coat.v1`). Each cat's proportions come with the
  * projection (`pet.rig.v1`). The cats' world block (`pet.world.v1`, the native brain's contract) is
  * kept in [WorldFeed]. Everything that is not specific to it lives in [ComposeTabPlugin].
@@ -54,6 +55,7 @@ class NativePetPlugin : ComposeTabPlugin() {
             "pet.rig.v1",
             WorldContract.CAPABILITY,
             "pet.play.v1",
+            WorldContract.SOCIAL_CAPABILITY,
             "pet.demo.v1",
         )
 

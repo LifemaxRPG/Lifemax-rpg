@@ -69,11 +69,28 @@ object Tuning {
         const val TAIL_INERTIA = 0.0015f
     }
 
-    /** Turning: a short dip with the mirror at the middle. */
+    /**
+     * Turning round, step by step with the lab's `turn` row (see [Turn]): the time of a whole turn
+     * by how the cat was moving, and each step's share of it (the side view with the head turned,
+     * the three-quarter view, the front view, the other three-quarter view, the side view facing
+     * the new way).
+     */
     object Turn {
-        const val DURATION_S = 0.16f
-        const val MIN_SCALE_X = 0.45f
-        const val DIP_Y = 0.06f
+        const val STILL_S = 0.38f
+        const val WALK_S = 0.32f
+        const val RUN_S = 0.27f
+
+        /** The head-leading first step and the arriving last step are held a little longer. */
+        val STEP_SHARES = floatArrayOf(0.24f, 0.17f, 0.18f, 0.17f, 0.24f)
+
+        /** Braking (px/s^2) of a walking cat that stops to turn round: about two px of slowing. */
+        const val PLANT_DECEL = 200f
+
+        /** How long after a turn a stopped stride is held while the cat sets off again. */
+        const val STRIDE_HOLD_S = 0.2f
+
+        /** The longest a turn waits for the cat to stand before it turns anyway. */
+        const val PLANT_MAX_S = 0.6f
 
         /** A target closer than this sideways does not make the cat turn round. */
         const val MIN_DISTANCE_PX = 3f

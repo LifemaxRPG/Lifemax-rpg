@@ -30,6 +30,12 @@ interface House {
 
     /** Queues [c] for the page. */
     fun report(c: WorldCommand)
+
+    /**
+     * Cat [slot] is being restored lying curled up with the other cat (both saved in the nap, side
+     * by side): it keeps its spot beside the other instead of making way.
+     */
+    fun pairedOnRestore(slot: Int): Boolean = false
 }
 
 /**
@@ -172,6 +178,16 @@ class CatMind(
 
     /** Gets off the other cat (the overlap guard): walks aside first. */
     fun makeWay() = runner.makeWay(rng)
+
+    /** See [House.pairedOnRestore]. */
+    fun pairedOnRestore(): Boolean = house.pairedOnRestore(slot)
+
+    /** Plays its part [script] of the moment together [token] as [a] (the social director's). */
+    internal fun playPart(a: Activity, script: Script, reason: String, token: Int) =
+        runner.playPart(a, script, reason, token)
+
+    /** The moment together was given up: the cat picks anew. */
+    internal fun leavePair() = runner.leavePair(rng)
 
     override var toy: ToyBody? = null
         private set

@@ -112,7 +112,10 @@ internal object SteadinessProbe {
         private val plan = SpritePlan()
         private val bandOut = IntArray(SpritePlan.MAX_BANDS * SpritePlan.BAND)
         private var last: SpriteDraw? = null
-        private var lastRaster = Raster.EMPTY
+        /** The latest frame as drawn (device pixels, in room coordinates). */
+        var lastRaster = Raster.EMPTY
+            private set
+
         private val history = ArrayDeque<Pair<Raster, SpriteDraw>>()
         private var lastKeys = LongArray(KEYS) { -1 }
 
