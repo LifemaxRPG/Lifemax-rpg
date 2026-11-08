@@ -116,9 +116,9 @@ const DENIED = /^(LocalNotifications|HealthSync|CalendarSync|WidgetBridge|Backup
       setLightMode(false); petSeenNow({}); lmaSet('workout', false);
       await audioDbPut('demo-book', { demo: true });
       localStorage.setItem('lma_set_cat', 'data'); sessionStorage.setItem('x', '1');
-      return { onboarded: state.onboardingComplete === true, name: state.name, logged: rec.ok && state.activities.length, theme: localStorage.getItem('lifeMaxTheme') };
+      return { onboarded: state.onboardingComplete === true, name: state.name, logged: rec.ok && state.activities.filter(a => a.type === 'reading' && Number(a.duration) === 30).length, uniqueIds: new Set(state.activities.map(a => a.id)).size === state.activities.length, theme: localStorage.getItem('lifeMaxTheme') };
     });
-    ok('the demo can be played: onboarding finishes, an activity is logged, preferences change', played.onboarded && played.name === 'Demo Dana' && played.logged === 1 && played.theme === 'dark', played);
+    ok('the demo can be played: onboarding finishes, an activity is logged, preferences change', played.onboarded && played.name === 'Demo Dana' && played.logged === 1 && played.uniqueIds && played.theme === 'dark', played);
     await p.waitForTimeout(500);
     const S2 = await real(p);
     ok('after playing, every real key is still byte-identical, and the audio library change is in a demo database only', same(realOnly(S2), realOnly(S1)) && S2.idb.includes(PREFIX + 'lifemax_audio_v1'), S2.idb);
@@ -138,8 +138,20 @@ const DENIED = /^(LocalNotifications|HealthSync|CalendarSync|WidgetBridge|Backup
     ok('page errors during the demo: none', ph.errs.length === 0, ph.errs);
 
     /* an app kill: a new page in the same browser profile is still the demo, with the demo's progress */
-    await ph.drain(p); await p.close(); p = await ph.open(false); await waitDemo(p, true);
-    ok('after the app is killed the next launch is still the demo, with its progress', await p.evaluate(() => LM_DEMO.on && state.name === 'Demo Dana' && state.activities.length === 1 && !document.querySelector('#onboarding.show')));
+    await ph.drain(p);
+    // The save may contain automatic quest rewards as well as the user's reading log.
+    // Preserve the exact earned progress across restart instead of assuming a total count.
+    const demoProgress = await p.evaluate(() => state.activities.map(a => ({
+      id: a.id, type: a.type, duration: a.duration, xp: a.xp, name: a.name
+    })).sort((a, b) => String(a.id).localeCompare(String(b.id))));
+    await p.close(); p = await ph.open(false); await waitDemo(p, true);
+    ok('after the app is killed the next launch is still the demo, with its progress', await p.evaluate(expected => {
+      const actual = state.activities.map(a => ({ id: a.id, type: a.type, duration: a.duration, xp: a.xp, name: a.name }))
+        .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      return LM_DEMO.on && state.name === 'Demo Dana' && JSON.stringify(actual) === JSON.stringify(expected) &&
+        actual.filter(a => a.type === 'reading' && Number(a.duration) === 30).length === 1 &&
+        !document.querySelector('#onboarding.show');
+    }, demoProgress));
     ok('Settings still offers the way back after the relaunch', await p.evaluate(() => { navigate('settings'); return !document.getElementById('lmDemoOnCard').hidden }));
 
     /* reset: Delete all data and Reset to starter clear only the demo */
