@@ -1,6 +1,7 @@
 package com.lifemax.rpg.feature.pet.room
 
 import com.lifemax.rpg.feature.pet.art.ArgbImage
+import com.lifemax.rpg.feature.pet.body.Occluders
 import com.lifemax.rpg.feature.pet.body.World
 
 /** Numbers of the 2.5D painter that are about the picture, not the light or the sway. */
@@ -89,6 +90,15 @@ internal class DepthScene(
     private val catFeet = FloatArray(DepthOrder.MAX_CATS)
     private val catAnchor = IntArray(DepthOrder.MAX_CATS)
     private val catCover = IntArray(DepthOrder.MAX_CATS)
+    private val catBefore = IntArray(DepthOrder.MAX_CATS)
+    private val pieceX0 =
+        FloatArray(solids.size) { (solids[it].houseX + RoomLayout.HOUSE_X0).toFloat() }
+    private val pieceX1 = FloatArray(solids.size) { pieceX0[it] + solids[it].width }
+
+    init {
+        require(solids.size <= DepthOrder.MAX_PIECES) { "too many solid pieces for a cat's mask" }
+    }
+
     private val shadowed = BooleanArray(solids.size)
     private val shadowColour = IntArray(3) { floorShadowColour(layers.base(it)) }
 
@@ -293,7 +303,7 @@ internal class DepthScene(
         chooseSteps()
         val n = cats.count.coerceAtMost(DepthOrder.MAX_CATS)
         for (i in 0 until n) placeCat(cats, i)
-        drawOrder.build(mix, furnitureKey, n, catKey, catFeet, catAnchor, catCover)
+        drawOrder.build(mix, furnitureKey, n, catKey, catFeet, catAnchor, catCover, catBefore)
         val order = drawOrder.order
         shadowed.fill(false)
         for (k in 0 until drawOrder.size) {
@@ -350,6 +360,7 @@ internal class DepthScene(
         catFeet[i] = cats.feet(i)
         catAnchor[i] = -1
         catCover[i] = -1
+        catBefore[i] = 0
         val surface = cats.surface(i)
         var p = if (surface == null) -1 else solids.size - 1
         while (p >= 0) { // the last piece that has the surface; no iterator per frame
@@ -366,6 +377,40 @@ internal class DepthScene(
         }
         catKey[i] = World.floorY(cats.depth(i))
         catShift[i] = rowShift(catKey[i])
+        catBefore[i] = inFrontOf(cats.x(i), cats.depth(i), catFeet[i], catKey[i])
+    }
+
+    /**
+     * The pieces a cat on the floor at world [x], depth [z] (feet on row [feet], sorting at [key])
+     * is drawn in front of, a bit each: none, unless it stands inside a piece that stands clear of
+     * the floor and a cat can pass behind (a platform of the cat tree, its post; not a cushion
+     * lying on the sofa) and its head, sitting up, would be inside it ([Occluders.clipped]'s rule,
+     * either way it faces). Then it is in front of every piece it stands inside, as a cat that tall
+     * would have to be: a cat walking through under the tree's middle platform, or at the second
+     * bowl half under it, passes in front of the tree instead of having the platform across its
+     * head and its ears above it.
+     */
+    private fun inFrontOf(x: Float, z: Float, feet: Float, key: Float): Int {
+        if (x.isNaN()) return 0
+        val k = World.depthScale(z)
+        val top = feet - Occluders.CAT_UPRIGHT_H * k
+        val reach = (Occluders.HEAD_AHEAD + Occluders.HEAD_HALF) * k
+        var clipped = false
+        var mask = 0
+        for (p in solids.indices) {
+            if (!inside(p, x, reach, key)) continue
+            mask = mask or (1 shl p)
+            val piece = solids[p]
+            if (piece.occludes && !piece.onFloor && top < piece.y + piece.height) clipped = true
+        }
+        return if (clipped) mask else 0
+    }
+
+    /** Whether a cat sorting at [key], [reach] either side of [x], stands inside piece [p]. */
+    private fun inside(p: Int, x: Float, reach: Float, key: Float): Boolean {
+        val v = solids[p].volume!!
+        if (v.wall || key <= v.sortFront - v.depth || key >= v.sortFront) return false
+        return x + reach > pieceX0[p] && x - reach < pieceX1[p]
     }
 
     /**

@@ -15,7 +15,10 @@ import org.junit.Test
  * the 2.5D room, measured on the shipped pixels; the brain's own table ([Occluders]) agrees with
  * the shipped layers and never says a cat is more visible than the pixels do; no resting place
  * hides more than [Occluders.MAX_HIDDEN] of a cat (the hidden corner behind the sofa hid all of
- * one); the floor right behind the sofa is hidden, its front is not.
+ * one); the floor right behind the sofa is hidden, its front is not. And the owner's "the cat's
+ * ears are poking through the cat tree": the pieces a cat could stand under are the shipped ones, a
+ * cat sitting up under the tree's middle platform is [Occluders.clipped], and no place the brain
+ * rests a cat at is (but the second bowl, which the page puts half under the tree).
  */
 class OccludersTest {
     private val layers = PetArtResources.loadRoom().layers!!
@@ -108,7 +111,65 @@ class OccludersTest {
         assertEquals(SurfaceId.FLOOR, Spots.BEHIND_CUSHION.surface)
     }
 
+    @Test
+    fun theOverhangsAreTheShippedPiecesThatStandClearOfTheFloor() {
+        val shipped =
+            layers.pieces
+                .filter { it.volume?.wall == false && it.occludes && !it.onFloor }
+                .map { it.name }
+        assertEquals(shipped.sorted(), Occluders.overhangs.map { it.name }.sorted())
+        for (o in Occluders.overhangs) {
+            val p = layers.piece(o.name)
+            val v = p.volume!!
+            assertEquals(o.name, (p.houseX + RoomLayout.HOUSE_X0).toFloat(), o.x0, 0f)
+            assertEquals(o.name, (p.houseX + p.width + RoomLayout.HOUSE_X0).toFloat(), o.x1, 0f)
+            assertEquals(o.name, (p.y + p.height).toFloat(), o.underside, 0f)
+            assertEquals(o.name, v.sortFront - v.depth, o.back, 0f)
+            assertEquals(o.name, v.sortFront, o.front, 0f)
+        }
+    }
+
+    @Test
+    fun aCatSittingUpUnderTheMiddlePlatformIsClippedAndRestsInFrontOfTheTree() {
+        // where the brain scratched the post before: the cats' floor depth, under the platform
+        assertTrue(Occluders.clipped(OLD_SCRATCH_X, World.ART_Z, 1))
+        assertTrue(Occluders.clipped(OLD_SCRATCH_X, World.ART_Z))
+        // the room under the platform (its underside, row 109, down to the floor, row 132) is
+        // less than a kitten sitting up needs, so no cat fits
+        assertTrue(World.floorY(World.ART_Z) - MID_UNDERSIDE < KITTEN_SITTING_H)
+        val z = Occluders.visibleZ(OLD_SCRATCH_X, World.ART_Z, 1)
+        assertTrue("in front of the tree: z $z", World.floorY(z) >= TREE_FRONT)
+        assertEquals(z, Spots.SCRATCH_TREE.z, 0f)
+        assertTrue(!Occluders.clipped(Spots.SCRATCH_TREE.x, Spots.SCRATCH_TREE.z, 1))
+        // behind the tree (feet behind row 125) and beside it, nothing is in the way of its head
+        assertTrue(!Occluders.clipped(OLD_SCRATCH_X, BEHIND_Z))
+        assertTrue(!Occluders.clipped(LEFT_X, World.ART_Z))
+        assertTrue(!Occluders.clipped(RIGHT_X, World.ART_Z))
+        // left of the tree, facing away from it, a cat's head is clear; facing it, it is not
+        assertTrue(!Occluders.clipped(NEAR_X, World.ART_Z, -1))
+        assertTrue(Occluders.clipped(NEAR_X, World.ART_Z, 1))
+    }
+
+    @Test
+    fun noPlaceTheBrainRestsACatAtIsUnderThePlatformButTheSecondBowl() {
+        val clipped = Spots.all.filter { it.onFloor && Occluders.clipped(it.x, it.z, it.face) }
+        assertEquals(listOf(Spots.BOWL_1), clipped)
+        assertTrue("the bowl stays a place", !Spots.BOWL_1.hidden)
+        assertTrue(Spots.all.none { it.hidden })
+    }
+
     private companion object {
+        const val OLD_SCRATCH_X = 134f
+        const val NEAR_X = 100f
+        const val LEFT_X = 60f
+        const val RIGHT_X = 230f
+        const val BEHIND_Z = 10f
+        const val MID_UNDERSIDE = 109f
+        const val TREE_FRONT = 137f
+
+        /** A kitten sitting up, ears included, measured on the shipped sprites. */
+        const val KITTEN_SITTING_H = 34f
+
         const val SAMPLES = 16
         const val ALPHA_SHIFT = 24
         const val OPAQUE = 0x80

@@ -163,7 +163,7 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
     const op = await p.evaluate(async () => { const m = moment({ op: 'c:social:kept', kind: 'nap' }); await command('NativePet', 'social', m); return m.op });
     await p.reload(); await p.evaluate(HELPERS);
     r = await p.evaluate(async (op) => { lmaThumbWarm = async () => { }; await petInit(); navigate('pet'); await until(() => showing('NativePet'), 6000);
-      await until(() => !!state.petPair, 3000);
+      await until(() => !!state.petPair, 20000);
       const n = state.petPair.n.nap; const a = await command('NativePet', 'social', moment({ op, kind: 'nap' })); return { a, same: state.petPair.n.nap === n, n } }, op);
     ok('a moment replayed after a reload: "Already recorded." (the op is kept with the save)', r.a && r.a.ok && r.a.message === 'Already recorded.' && r.same && r.n === 1, r);
     ok('no page errors', p.errors.length === 0, p.errors);

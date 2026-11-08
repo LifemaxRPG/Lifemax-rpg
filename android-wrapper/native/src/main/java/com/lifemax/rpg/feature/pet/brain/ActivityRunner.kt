@@ -306,10 +306,12 @@ class ActivityRunner(
 
     /**
      * A cat about to stay where it stands on the floor, behind furniture that would hide most of it
-     * (it stopped there on its way), first steps forward to where it can be seen ([Occluders]).
+     * or under the cat tree's platform with no room for its head (it stopped there on its way),
+     * first steps forward to where it can be seen ([Occluders]).
      */
     private fun outOfHiding(script: Script) {
-        if (exec.surface != SurfaceId.FLOOR || !Occluders.hidden(exec.x, exec.z)) return
+        if (exec.surface != SurfaceId.FLOOR) return
+        if (!Occluders.hidden(exec.x, exec.z) && !Occluders.clipped(exec.x, exec.z)) return
         script.approach(exec.x, Occluders.visibleZ(exec.x, exec.z))
     }
 
