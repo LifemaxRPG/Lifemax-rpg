@@ -72,13 +72,15 @@ internal data class RoomStyle(
          * The style of the live rooms (the Overview card and the Cat tab): [DEPTH25] at [level]
          * with the camera's pan feeding the sway and no idle drift, or the rest picture only
          * ([DEPTH25_STILL]) with [reducedMotion]. A null [level] is the classic flat room (the
-         * performance guard's last step).
+         * performance guard's last step). The rim light is off at every live level: the pale copy
+         * of the cat one art pixel to the side read on the phone as a light outline.
          */
         fun live(level: DepthLevel?, reducedMotion: Boolean = false): RoomStyle =
             when {
                 level == null -> CLASSIC
-                reducedMotion -> depth25(level).copy(reducedMotion = true)
-                else -> depth25(level).copy(cameraFollow = true, idleDrift = false)
+                reducedMotion -> depth25(level).copy(reducedMotion = true, rimLight = false)
+                else ->
+                    depth25(level).copy(cameraFollow = true, idleDrift = false, rimLight = false)
             }
     }
 }
