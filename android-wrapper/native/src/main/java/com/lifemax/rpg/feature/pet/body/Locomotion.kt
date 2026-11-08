@@ -135,7 +135,11 @@ internal class Locomotion(private val k: Kinematics, private val turn: Turn) {
 
     private fun accelX() = if (run) Tuning.Walk.RUN_ACCEL else Tuning.Walk.ACCEL
 
-    private fun decelX() = if (run) Tuning.Walk.RUN_DECEL else Tuning.Walk.DECEL
+    /** Braking power; a cat stopping to turn round plants its feet harder than one arriving. */
+    private fun decelX(): Float {
+        val base = if (run) Tuning.Walk.RUN_DECEL else Tuning.Walk.DECEL
+        return if (turn.planting) maxOf(base, Tuning.Turn.PLANT_DECEL) else base
+    }
 
     /**
      * Ease a velocity toward the speed that still lets the cat stop at the target: at most `vMax`,
@@ -229,72 +233,4 @@ internal class Locomotion(private val k: Kinematics, private val turn: Turn) {
     private fun verticalRatio(): Float =
         if (gait == Gait.FRONT || gait == Gait.BACK) Tuning.Walk.VERTICAL_EXIT_RATIO
         else Tuning.Walk.VERTICAL_ENTER_RATIO
-}
-
-/**
- * A turn is a short dip with the mirror at its middle, not a pop: the body narrows to a sliver, the
- * sprite flips at the narrowest point, and it widens again.
- */
-internal class Turn {
-    /** The way the sprite currently faces: +1 right, -1 left. It changes mid-turn. */
-    var dir = 1
-        private set
-
-    /** Horizontal squash from the turn (1 when not turning). */
-    var scaleX = 1f
-        private set
-
-    /** Vertical dip from the turn (1 when not turning). */
-    var scaleY = 1f
-        private set
-
-    /** True on the tick the sprite flipped. */
-    var flippedNow = false
-        private set
-
-    private var next = 1
-    private var progress = NOT_TURNING
-    private var flipped = false
-
-    val active: Boolean
-        get() = progress >= 0f
-
-    /** Begin turning toward [wanted] unless already facing that way or already turning. */
-    fun request(wanted: Int) {
-        if (active || wanted == dir) return
-        next = wanted
-        progress = 0f
-        flipped = false
-    }
-
-    /** Face [wanted] at once (placing the cat). */
-    fun snapTo(wanted: Int) {
-        dir = wanted
-        progress = NOT_TURNING
-        scaleX = 1f
-        scaleY = 1f
-    }
-
-    fun update(dt: Float) {
-        flippedNow = false
-        if (!active) return
-        progress += dt / Tuning.Turn.DURATION_S
-        if (!flipped && progress >= HALF) {
-            dir = next
-            flipped = true
-            flippedNow = true
-        }
-        if (progress >= 1f) {
-            snapTo(dir)
-            return
-        }
-        val dip = Mathx.sin(Mathx.PI * progress)
-        scaleX = 1f - (1f - Tuning.Turn.MIN_SCALE_X) * dip
-        scaleY = 1f - Tuning.Turn.DIP_Y * dip
-    }
-
-    private companion object {
-        const val NOT_TURNING = -1f
-        const val HALF = 0.5f
-    }
 }

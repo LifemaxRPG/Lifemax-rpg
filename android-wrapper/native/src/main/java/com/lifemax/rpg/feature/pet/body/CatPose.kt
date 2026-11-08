@@ -26,7 +26,7 @@ class CatPose {
     /** The surface the cat stands on, or is jumping to once it has landed. */
     var surface = SurfaceId.FLOOR
 
-    /** Which way the cat faces: +1 right, -1 left. Changes at the middle of a turn. */
+    /** Which way the cat faces: +1 right, -1 left. Flips at the start of a turn's last step. */
     var facing = 1
 
     /** True when the sprite must be mirrored (facing left). */
@@ -41,7 +41,7 @@ class CatPose {
     /** How far through the frame the clip is, 0..1, for renderers that blend frames. */
     var framePhase = 0f
 
-    /** Whole-body horizontal scale: squash, stretch and the narrowing of a turn. */
+    /** Whole-body horizontal scale: squash and stretch. */
     var scaleX = 1f
 
     /** Whole-body vertical scale. */

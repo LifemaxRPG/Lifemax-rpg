@@ -48,11 +48,30 @@ internal object SocialChoice {
     }
 
     /**
-     * Drowsy enough to curl up: low on energy, or in its bed hours (a cat that would sleep anyway;
-     * a moment together never adds sleep to a day).
+     * Drowsy enough to curl up: tired enough that it would choose a nap on its own (the energy at
+     * which [Sleep] becomes eligible), so a moment together never adds sleep to a day, not even at
+     * night: a cat up in the night is not coaxed back to bed by the other.
      */
-    fun sleepy(m: CatMind): Boolean =
-        m.drives[Drive.ENERGY] < t.SLEEPY_ENERGY || m.schedule.inBed(m.hour)
+    fun sleepy(m: CatMind): Boolean {
+        val p = BrainTuning.Persona
+        val tired =
+            if (m.persona.kitten) p.KITTEN_SLEEPY
+            else t.SLEEPY_ENERGY + p.LAZY_SLEEPY * m.persona.lazy
+        return m.drives[Drive.ENERGY] < tired
+    }
+
+    /**
+     * Rested in a day nap: the other cat may wake it for a chase or a nose touch (a cat lying about
+     * well rested gets up for company, as real cats do), never at night, never one hungry, tired or
+     * at the owner's game.
+     */
+    fun rousable(m: CatMind): Boolean {
+        if (m.runner.activity !== Sleep || m.schedule.inBed(m.hour)) return false
+        if (!m.persona.vacation && m.persona.hungerStage >= BrainTuning.Persona.BEG_STAGE)
+            return false
+        if (m.toy != null || !m.exec.atPlace) return false
+        return m.drives[Drive.ENERGY] >= t.ROUSE_ENERGY
+    }
 
     /** How much of a kitten a cat still is: 1 a newborn .. 0 grown (the page's 1 − growth). */
     private fun kit(m: CatMind): Double = 1.0 - growth(m)
@@ -107,6 +126,23 @@ internal object SocialChoice {
                 out += Option(Social.GREET, coin(rng), null, t.W_GREET)
             standoff(a, b, info, rng)?.takeIf { !cooling(Social.STANDOFF, now) }?.let { out += it }
             chase(a, b, info, peak, rng)?.takeIf { !cooling(Social.CHASE, now) }?.let { out += it }
+        } else {
+            // one awake and the other rested in a day nap: the awake one wakes it to play or greet
+            val waker =
+                when {
+                    free(a, wake = false) && rousable(b) -> a
+                    free(b, wake = false) && rousable(a) -> b
+                    else -> null
+                }
+            // friends wake each other; strangers let each other sleep
+            if (waker != null && info.rel >= t.CHASE_REL) {
+                val apartMin = (now - lastTogether) / MINUTE_MS
+                if (!cooling(Social.GREET, now) && apartMin >= t.APART_MIN)
+                    out += Option(Social.GREET, waker.slot, null, t.W_GREET * t.ROUSE_WEIGHT)
+                chase(a, b, info, peak, rng)
+                    ?.takeIf { !cooling(Social.CHASE, now) }
+                    ?.let { out += Option(it.kind, waker.slot, null, it.weight * t.ROUSE_WEIGHT) }
+            }
         }
         if (info.rel >= t.GROOM_REL && !cooling(Social.GROOM, now))
             groom(a, b, info, rng)?.let { out += it }

@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Walking: eased speed, strides tied to speed, turns that mirror at the middle, skids. */
+/** Walking: eased speed, strides tied to speed, skids (turning round: [TurnTest]). */
 class LocomotionTest {
     private val dt = 1f / 120f
 
@@ -124,29 +124,6 @@ class LocomotionTest {
             maxJump < Tuning.Walk.RUN_DECEL * dt * 1.5f,
         )
         assertTrue("passed through walk and run: $clips", clips.containsAll(setOf("walk", "run")))
-    }
-
-    @Test
-    fun aTurnIsADipWithTheMirrorAtItsMiddle() {
-        val body = CatBody(seed = 3)
-        body.replacePlan(1, listOf(PlanStep.Face(-1)))
-        var minScale = 2f
-        var minAt = -1
-        var flipAt = -1
-        var tick = 0
-        repeat(40) {
-            body.step(dt)
-            tick++
-            if (body.pose.scaleX < minScale) {
-                minScale = body.pose.scaleX
-                minAt = tick
-            }
-            if (body.pose.flip && flipAt < 0) flipAt = tick
-        }
-        assertTrue("never dipped: $minScale", minScale < Tuning.Turn.MIN_SCALE_X + 0.05f)
-        assertTrue("flip at $flipAt but narrowest at $minAt", abs(flipAt - minAt) <= 2)
-        assertEquals(1f, body.pose.scaleX, 0.001f)
-        assertEquals(-1, body.pose.facing)
     }
 
     @Test
