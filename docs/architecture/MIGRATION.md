@@ -486,7 +486,7 @@ Native presentation and behaviour, web authority, behind "Native Cat (beta)". Tw
 - **Rollout.** Rides "Native Cat (beta)". Rollback: drop `pet.play.v1` from `NativePetPlugin` (Play goes back to the page's tray; the page code is inert without it). The apart fixes have no switch: they only change where the native cats go.
 - **Evidence.** `native-pet-play.test.js` (28 checks: gating, the tray's toys and words, every malformed game refused, counted by the page's rules, repeat after a reload, a refused save taken back, two cats, the Overview cards); unit tests `host/OwnerPlayTest` (a tossed toy picked up, carried, tossed and set down by the real brain on the house's bodies, then counted by FakePage; a cat fast asleep does not stir), `data/PetPlayTest`, `brain/CatsApartBrainTest`, `host/CatsApartTest` (the owner's report reproduced: before, 65 layered minutes at night; after, none, through a five-hour catch-up and a restart), `WorldImportTest`. No screenshot changed.
 
-## Cat brain, CB5: two cats together (Native API 99)
+## Cat brain, CB5: two cats together (Native API 101)
 
 Native behaviour, web authority, behind "Native Cat (beta)". The owner's report: the two native cats never interacted, and the Together card showed a five-day-old moment from the web room that nothing updated. Built natively (not a port of the web director), with the page's data rules unchanged.
 
