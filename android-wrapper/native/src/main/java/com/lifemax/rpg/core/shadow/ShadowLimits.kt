@@ -27,6 +27,44 @@ object ShadowLimits {
      */
     const val CAPABILITY_DAY = "economy.shadow.day.v1"
 
+    /**
+     * The capability of WP6e: the owner's side of the check. `copyReport()` puts the redacted
+     * report on the clipboard, `summary()` lists the differences a case can be saved for, and
+     * `saveCase()` writes one of them, unredacted, to a file the owner picks (decision O-4); an
+     * older app lacks it and the Settings card shows the switch and its line only.
+     */
+    const val CAPABILITY_REPORT = "economy.shadow.report.v1"
+
+    /** Most difference entries the copied report lists, newest first (3.4). */
+    const val REPORT_DIFFERENCES = 20
+
+    /**
+     * Longest copied report, in characters; past it the oldest listed differences are left out
+     * (3.4: typically about 6 KB).
+     */
+    const val REPORT_MAX_CHARS = 16 * 1024
+
+    /** Times the check stopped itself that the ring remembers (the report's history). */
+    const val DISABLE_HISTORY = 10
+
+    /**
+     * Unexplained differences whose whole action is kept, in memory only, for "Save case…" (O-4);
+     * the oldest goes first. Never written to the ring; gone when the app process ends.
+     */
+    const val CASES_KEPT = 5
+
+    /** Most characters all kept cases may hold together; the oldest go first past it. */
+    const val CASES_MAX_CHARS = 4 * 1024 * 1024
+
+    /**
+     * Longest record list a case copies whole; a longer one keeps only the records where the page's
+     * and native's after-states differ (with the list's length).
+     */
+    const val CASE_WHOLE_ITEMS = 50
+
+    /** Most records of one list a case keeps when it keeps only the differing ones. */
+    const val CASE_MAX_ITEMS = 64
+
     /** More than this between two actions without a boot is an `info.clockJump` (4, clock). */
     const val CLOCK_JUMP_MS = 24L * 60 * 60 * 1000
 
@@ -117,6 +155,9 @@ object ShadowLimits {
 
     /** Times in the ring are kept to the minute (3.1). */
     const val MINUTE_MS = 60_000L
+
+    /** Hex digits of a content fingerprint the report shows. */
+    const val FINGERPRINT_DIGITS = 12
 
     /** Hex digits of a salted hash shown for a redacted name (3.2). */
     const val HASH_DIGITS = 6

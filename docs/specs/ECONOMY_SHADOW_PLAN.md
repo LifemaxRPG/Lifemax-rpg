@@ -1,6 +1,6 @@
 # Economy shadow mode (WP6): design and plan
 
-Written 2026-11-08 on `codex/director-dial-controls`. WP6a, WP6b, WP6c and WP6d are built (their status is under each, section 6);
+Written 2026-11-08 on `codex/director-dial-controls`. WP6a to WP6e are built (their status is under each, section 6);
 the rest is design. It covers WP6 of
 `ECONOMY_NATIVE_PLAN.md` and fixes the transport that WP-LD12 (`LIFE_DIRECTOR_NATIVE_PLAN.md` 5.1) will reuse.
 
@@ -685,6 +685,53 @@ Tests: `RedactorTest` (every fixture save and corpus envelope: no save string ap
 (200-entry and 128 KB bounds, coalescing, crash between temp and rename, clear), `SelfDisableTest`, a page test for the card in
 classic and native Settings (`native-settings.test.js` gains the card), screenshot references for the native Settings card if it
 changes the native drawing (it should not: it is an ordinary page card). Bridge: methods already in WP6a. Decision: O-4.
+
+**Status: built** (Native API 112 on this branch; the integrator renumbers at merge; capability `economy.shadow.report.v1`). What exists:
+- The card (`views/settings.html` `#nativeShadowCard`, worded by the new `50-native-shadow-card.js`; `50-native-shadow.js` keeps the
+  transport and hands the card what it knows). The line under the switch: "Not available in this version of the app" (no plugin, or
+  no `economy.shadow.v1`), "Off. Turn it on to start checking.", "Starting…", "Checked N actions since D · M different" (or "none
+  different"; an app before WP6b: "Following N actions…"), paused ("…while Battery Saver is on", "waiting for the matching app
+  update", "during the demo"), stopped with the reason in plain words (five errors in a day, lost its place more than four times in
+  an hour, too slow on this phone, a save over 4 MB, a problem on this page, the phone's check not answering). Under it "Last
+  difference: <the kind's family in plain words>, <day time>"; no value ever. With the capability and the switch on: a Report row
+  with who does what (the owner just uses the app; the card shows the count; a report can be pasted to the assistant), Copy report
+  and Clear; Clear's question in the card (Clear now, in the danger style, or Keep them); a Save case row (the difference, by time and
+  kind, and Save case…) whose warning note says the file holds the owner's real data, unredacted, and that nothing is sent anywhere,
+  then Choose where to save or Cancel. Every answer ("Report copied…", "Cleared…", "Case saved…", or a refusal in plain words) shows
+  only once native says it is done; "One moment…" and waiting buttons meanwhile. Native Settings draws the card from the page like
+  every card and works its eight controls by command (the card's own bound list, read by `50-native-settings.js`).
+- Native: `ShadowReport` (the plain-text report of 3.4 from the ring alone: builds, both fingerprints, counts per kind, skips, `info`
+  with `d13Kept` (by kind), `zoneLag`, `clockJump` always shown, the `reads.*` differences, codec counts, refusals, errors by class,
+  page and worker cost percentiles, the self-disable history, the latest 20 differences with redacted paths, allowlist ids and both
+  sides' XP, Sparks and rested changes; at most 16 KB, the oldest listed difference dropped first); `ShadowCases` (O-4: the latest 5
+  unexplained differences' cases, in memory only, at most 4 MB together: the envelope as the page sent it, the keys where the two
+  after-states differ with the page's before and after and native's prediction, returns, toasts and writes; long record lists keep
+  only the differing records); `ShadowLedger.disables` (the times the check stopped itself, at most 10, in the ring, emptied by Clear);
+  `ShadowSession.report`, `caseText`, `summary().cases`; Clear also forgets the cases. `NativeShadowPlugin.copyReport` (the clipboard,
+  ok once set), `saveCase` (Android's create-document picker; ok once the picked document is written; `noCase`, `cancelled`,
+  `notWritten` otherwise).
+- Tests (Kotlin, compiled with kotlinc and run with JUnit directly, and the shadow classes again under gradle: 1,050 and 108 tests, all
+  passing): `SelfDisableTest` (12: five errors within 24 h and not four, errors further apart than a day, more than four resyncs in an
+  hour and not four, resyncs over hours, the slow rule through the real worker and its ring, a few slow actions, a save over 4 MB and
+  one just under, Battery Saver a counted pause and not a stop, off and on and a new version retry, the history bounded and in the
+  ring), `ShadowReportTest` (5: every line from a known ledger, an empty check, an OTA page, the latest 20 of 200 and the 16 KB bound,
+  a page build reduced to a label), `ShadowCaseTest` (6: a case only for an unexplained difference and only by its id, unredacted
+  there and in neither the ring, the report nor the summary; a repeat keeps one case; the latest five; Clear and a new process forget
+  them; the plugin's only write is to the picked document and nothing in the check uses the network), `ShadowRingTest` (a crash
+  between the temporary file and the rename; Clear on disk; no fixture save's words in the report), `ShadowRedactionTest` and
+  `ShadowCorpusTest` (no golden save's and no corpus envelope's owner words in the report or the ring). Page:
+  `tests/native-shadow-card.test.js` (54 checks), `tests/native-settings.test.js` (the card through native Settings' commands, 6
+  more checks), `tests/native-shadow.test.js` (the row's new words). Screenshots: `SettingsShadowScreenshotTest` (11 new images from
+  `tools/gen_shadow_card_fixtures.js`: off, checking, different in dark, light and twice the text size, Clear's question, the case
+  warning dark and light, copied, paused, stopped); the existing Settings references verify unchanged.
+- Differences from the text above, with reasons:
+  - The tools are offered only while the switch is on (the page asks the plugin nothing while it is off); the ring is kept while it is
+    off, so turning it on again shows Copy report and Clear for what was found before.
+  - "Save case" keeps cases for unexplained differences only, the latest five, in memory: allowed differences need no case, and a
+    case holds the owner's own words, so it must not outlive the process or reach the ring.
+  - `RedactorTest` is the existing `ShadowRedactionTest` and `ShadowRingTest` (golden and fixture saves) extended to the report, and
+    `ShadowCorpusTest` for the corpus envelopes, rather than a new class.
+  - Clear's confirmation is a row in the card, not a dialog, so native Settings draws and presses it like every other row.
 
 ### WP6f. Proof harness (M to L, risk low; runs alongside 6b-6e)
 

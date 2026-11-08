@@ -11,12 +11,22 @@
    economy.shadow.day.v1 (WP6d: the Health sync and the day roll's decay). health: true adds a HealthSync stand-in that answers
    from window.__health ({status, exercise, steps, sleep, weight, fail}: the plugin's own answers, sessions and days as the
    plugin sends them; fail names the method that rejects, with 'Health Connect stopped answering'; delay, in ms, holds each
-   answer back), so the page syncs. */
+   answer back), so the page syncs. report: true also says economy.shadow.report.v1 (WP6e: copyReport, clear and saveCase for the
+   Settings card); cases: the differences summary() lists for Save case; state and reason: what summary() says instead of the
+   configured state (a stop or a pause native decided later); answers: {copyReport, clear, saveCase} replies in place of ok; hold:
+   a method name whose reply waits until window.__shadowMock.release() (to see the card while native works). The test reads
+   window.__shadowMock.asked: [method, payload] for those three. */
 'use strict';
 
 function mock(opts) {
   const o = Object.assign({ mode: 'record', on: true, fingerprint: '', resyncAt: [], paused: false }, opts);
-  const m = window.__shadowMock = { opts: o, calls: [], envelopes: [], bases: [], refused: [], mirror: null, assembly: null, mirrors: [] };
+  const m = window.__shadowMock = { opts: o, calls: [], envelopes: [], bases: [], refused: [], mirror: null, assembly: null, mirrors: [], asked: [], release: () => {} };
+  const owner = (name, payload, ok) => {
+    m.asked.push([name, payload]);
+    const reply = Object.assign({ ok: true }, ok, (o.answers || {})[name]);
+    if (o.hold !== name) return Promise.resolve(reply);
+    return new Promise((r) => { m.release = () => r(reply); });
+  };
   if (o.on) {
     let prefs = {};
     try { prefs = JSON.parse(localStorage.getItem('lifemax_android_prefs_v1') || '{}') || {} } catch (e) { prefs = {} }
@@ -39,7 +49,7 @@ function mock(opts) {
   }
   const answer = v => Promise.resolve(v);
   const methods = {
-    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'].concat(o.quests ? ['economy.shadow.quests.v1'] : [], o.day ? ['economy.shadow.day.v1'] : []), fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
+    handshake: () => answer({ protocol: 1, capabilities: o.mode === 'nocap' ? [] : ['economy.shadow.v1'].concat(o.quests ? ['economy.shadow.quests.v1'] : [], o.day ? ['economy.shadow.day.v1'] : [], o.report ? ['economy.shadow.report.v1'] : []), fingerprint: o.mode === 'stale' ? 'not-the-page' : o.fingerprint, state: 'off' }),
     configure: ({ text }) => {
       const c = JSON.parse(text);
       m.config = c;
@@ -71,10 +81,13 @@ function mock(opts) {
       try { r.keys = lay(lay(r.keys, e.before), e.after); r.seq = e.seq } catch (err) { m.refused.push(String(err.message)); m.mirror = null; return answer({ accepted: false, resync: true, reason: 'badDelta' }) }
       return answer({ accepted: true });
     },
-    summary: () => answer(Object.assign({ v: 1, state: m.state || 'off', since: Date.UTC(2026, 10, 1), counts: Object.assign({ seen: m.envelopes.length, applied: m.envelopes.length, skipped: 0 },
+    summary: () => answer(Object.assign({ v: 1, state: o.state || m.state || 'off', since: Date.UTC(2026, 10, 1), counts: Object.assign({ seen: m.envelopes.length, applied: m.envelopes.length, skipped: 0 },
       o.compares ? { compared: o.compares.compared, same: o.compares.compared - o.compares.different, allowed: 0, different: o.compares.different } : {}) },
-      o.compares && o.compares.different ? { different: { at: Date.UTC(2026, 10, 18, 9, 31), kind: 'quest.toggle' } } : {})),
-    clear: () => answer({ ok: true }),
+      o.reason ? { reason: o.reason } : {}, o.cases ? { cases: m.cleared ? [] : o.cases } : {},
+      o.compares && o.compares.different && !m.cleared ? { different: { at: Date.UTC(2026, 10, 18, 9, 31), kind: 'quest.toggle' } } : {})),
+    clear: () => owner('clear', {}).then((a) => { if (a.ok) { m.cleared = true; if (o.compares) o.compares = { compared: 0, different: 0 }; } return a; }),
+    copyReport: (a) => owner('copyReport', a, { chars: 2345 }),
+    saveCase: (a) => owner('saveCase', a),
   };
   const plugin = {};
   for (const [name, f] of Object.entries(methods)) {

@@ -196,8 +196,8 @@ const kinds = p => p.evaluate(() => window.__shadowMock.envelopes.map(e => e.kin
     /* ---------- the Settings row of an app that compares (WP6b) ---------- */
     {
       const q = await open(browser, { compares: { compared: 1150, different: 3 } }, SAVE);
-      const row = await q.evaluate(async () => { navigate('settings'); await LmaShadow.refresh(); return document.getElementById('nativeShadowStatus').textContent });
-      ok('the row counts the actions checked and the differences, with the last one\'s day and kind', /^Checked 1,150 actions since 1 Nov · 3 different · last 18 Nov \d\d:\d\d \(quest\)$/.test(row), row);
+      const row = await q.evaluate(async () => { navigate('settings'); await LmaShadow.refresh(); return [document.getElementById('nativeShadowStatus').textContent, document.getElementById('nativeShadowLast').textContent] });
+      ok('the row counts the actions checked and the differences, the line under it the last one\'s kind and time (WP6e words)', row[0] === 'Checked 1,150 actions since 1 Nov · 3 different' && /^Last difference: a quest, 18 Nov \d\d:\d\d$/.test(row[1]), row);
       await q.context().close();
     }
 

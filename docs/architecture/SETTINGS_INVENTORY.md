@@ -250,12 +250,28 @@ One row per rule in `rules` (nine by default: reading, business, strength, runni
 
 Five rows with static text and buttons; the privacy note says data is in "this browser" and is "not a secure account system". There are no user accounts anywhere in the app; "Account settings" belongs to the Money tab (`views/money.html:6`).
 
-### 3.24.1 Native economy check (`#nativeShadowCard`, `50-native-shadow.js`)
+### 3.24.1 Native economy check (`#nativeShadowCard`, `50-native-shadow.js`, `50-native-shadow-card.js`)
 
 One switch, "Native economy check (beta)" (`nativeShadow` in `lifemax_android_prefs_v1`, off by default, disabled without the
 `NativeShadow` plugin and in a demo; bound in native Settings' BOUND list), its help line, and a status line filled from
-`NativeShadow.summary()`: the actions followed since a date, or paused (Battery Saver, the matching app update) or stopped (errors, a
-save too large). Copy report and Clear are WP6e (docs/specs/ECONOMY_SHADOW_PLAN.md 3.3).
+`NativeShadow.summary()`: "Not available in this version of the app", "Off. Turn it on to start checking.", "Starting…",
+"Checked N actions since D · M different" (or "none different"), paused (Battery Saver; the matching app update; the demo) or
+stopped, with the reason (five errors in a day, lost its place more than four times in an hour, too slow on this phone, a save over
+4 MB, a problem on this page, the phone's check not answering). Under it, "Last difference: <kind in plain words>, <day time>".
+
+With an app that says `economy.shadow.report.v1` and the switch on (WP6e, docs/specs/ECONOMY_SHADOW_PLAN.md 3.3, 3.4):
+- **Report** row: who does what ("You don't need to do anything… paste it to the assistant"), that the report holds counts and
+  field names only, an answer line, and the buttons **Copy report** (`#nativeShadowCopyBtn`, native puts the redacted report on the
+  clipboard) and **Clear** (`#nativeShadowClearBtn`).
+- Clear's question (`#nativeShadowClearAsk`, shown after Clear): "Clear what the check found?", **Clear now** (`#nativeShadowClearYes`,
+  danger) and **Keep them** (`#nativeShadowClearNo`). "Cleared" only once native says the empty ring is stored.
+- **Save case…** row (`#nativeShadowCaseRow`, only while native holds a case): the difference to save (`#nativeShadowCaseSel`, newest
+  first, by time and kind) and **Save case…** (`#nativeShadowCaseBtn`), which shows the warning note (`#nativeShadowCaseAsk`, warn
+  border): the file holds the owner's real data, unredacted; **Choose where to save** (`#nativeShadowCaseYes`, Android's picker) or
+  **Cancel** (`#nativeShadowCaseNo`).
+Native Settings draws the card from the page like every card and works these eight controls by command (`nativeShadow.copy`,
+`.clear`, `.clearNow`, `.clearKeep`, `.case` (choose), `.saveCase`, `.caseNow`, `.caseKeep`; listed by `50-native-shadow-card.js`
+and read by `50-native-settings.js`'s bindings). None writes page storage.
 
 ### 3.25 Transient feedback
 

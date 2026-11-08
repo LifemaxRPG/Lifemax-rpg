@@ -10,6 +10,7 @@ import com.lifemax.rpg.core.shadow.ShadowLedger
 import com.lifemax.rpg.core.shadow.ShadowLedgerJson
 import com.lifemax.rpg.core.shadow.ShadowLimits
 import com.lifemax.rpg.core.shadow.ShadowSessionTest
+import com.lifemax.rpg.core.shadow.ShadowState
 import java.io.File
 import java.nio.file.Files
 import org.junit.After
@@ -75,6 +76,47 @@ class ShadowRingTest {
     }
 
     @Test
+    fun aCrashBetweenTheTemporaryFileAndTheRenameLeavesTheLastRing() {
+        val ring = ShadowRing(dir)
+        val ledger = ring.fresh(ShadowSessionTest.T).apply { note("base") }
+        assertTrue(ring.store(ShadowLedgerJson.write(ledger)))
+        // the app died after writing the temporary file and before the rename: half a new ring
+        val temp = File(ring.file.parentFile, ring.file.name + ".tmp")
+        temp.writeText(ShadowLedgerJson.write(ledger.apply { note("base") }).take(40))
+        assertEquals(1, ring.load()!!.info["base"])
+        // the next store replaces the leftover and the ring
+        assertTrue(ring.store(ShadowLedgerJson.write(ledger)))
+        assertEquals(2, ring.load()!!.info["base"])
+        assertFalse(temp.exists())
+    }
+
+    @Test
+    fun clearLeavesAnEmptyRingOnDiskWithTheSaltAndState() {
+        val ring = ShadowRing(dir)
+        val session = ShadowSessionTest.session()
+        session.configure(ShadowSessionTest.configure(ShadowSessionTest.FP), false)
+        val page = FakeShadowPage()
+        val start = mapOf("sparks" to ShadowSessionTest.num(1))
+        page.base(start).forEach { session.base(it, 0) }
+        session.observe(
+            page.envelope("save.other", start, start + ("sparks" to ShadowSessionTest.num(2))),
+            ShadowSessionTest.T,
+        )
+        session.ledger.disabled("slow", ShadowSessionTest.T)
+        assertTrue(ring.store(session.ringText()))
+        assertTrue(ring.load()!!.seen > 0)
+        session.clear()
+        assertTrue(ring.store(session.ringText()))
+        val stored = ring.load()!!
+        assertEquals(0, stored.seen)
+        assertTrue(stored.kinds.isEmpty() && stored.info.isEmpty() && stored.codec.isEmpty())
+        assertTrue(stored.entries().isEmpty() && stored.mismatches().isEmpty())
+        assertTrue(stored.disables().isEmpty())
+        assertEquals(ShadowState.ON, stored.state)
+        assertTrue(session.ledger.salt.contentEquals(stored.salt))
+    }
+
+    @Test
     fun noStringFromAnyFixtureSaveReachesTheRingFile() {
         for (name in listOf("established", "extras", "legacy", "new")) {
             val save =
@@ -128,6 +170,10 @@ class ShadowRingTest {
             val file = ring.file.readText()
             val leaked = words.filter { file.contains(it) }
             assertTrue("$name leaks $leaked", leaked.isEmpty())
+            // the copied report is built from the same redacted ledger (WP6e)
+            val report = session.report(ShadowSessionTest.T, java.time.ZoneOffset.UTC)
+            val told = words.filter { report.contains(it) }
+            assertTrue("$name's report leaks $told", told.isEmpty())
             assertTrue(name, words.size > 3)
         }
     }

@@ -6,14 +6,15 @@
    mediaUpsert and attachAudioFile, Settings (NativeSettingsTabProjection.snapshot()) on a phone as Android shows it to the
    page, changed through the screen's own commands, and the native tab swipe's feel and state. Regenerate only when a projection
    changes, all of them or the ones named:
-     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe overview glance journal planrunner foodswap pet]
+     NODE_PATH=$(npm root -g) node tools/gen_native_fixtures.js [food log plan director recipes media settings swipe overview glance journal planrunner foodswap pet shadow]
    Output in android-wrapper/native/src/test/resources: food-{log,plan,shop}.json, log-{default,strength,capped,refused}.json,
    fixtures/plan-{midweek,complete,scholar}.json, fixtures/director-*.json (with director-replies.json, director-replies-today.json and
    director-replies-time.json; phase 4B's in tools/gen_director_time_fixtures.js), fixtures/recipes-*.json,
    fixtures/media-{full,search,empty,tip,sheets}.json, fixtures/media-filter-parity.json, fixtures/settings-{default,many,light,bar,fields-phone,fields,fields-light}.json
    fixtures/swipe-{tune,state}.json, the Overview cards' fixtures/overview-*.json (tools/gen_overview_fixtures.js), and more states of Life Director's glance,
    fixtures/director-glance-*.json (tools/gen_director_glance_fixtures.js), and the native Journal's fixtures/journal-*.json
-   (tools/gen_journal_fixtures.js), and the native Cat tab's fixtures/pet-*.json (tools/gen_pet_fixtures.js) */
+   (tools/gen_journal_fixtures.js), and the native Cat tab's fixtures/pet-*.json (tools/gen_pet_fixtures.js), and the economy check's
+   Settings card, fixtures/settings-shadow-*.json (tools/gen_shadow_card_fixtures.js) */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const os = require('os');
 const { execFileSync } = require('child_process');
 const directorDay = require('../tests/fixtures/director-day.js');
@@ -638,7 +639,9 @@ const planrunner = (b) => require('./gen_plan_runner_fixtures.js')({ b, out, wri
 const foodswap = (b) => require('./gen_food_swap_fixtures.js')({ b, out, write });
 /* the native Cat tab (pet.projection.v1) and the page's answer to each of its commands: tools/gen_pet_fixtures.js */
 const pet = (b) => require('./gen_pet_fixtures.js')({ b, out, write });
-const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal, planrunner, foodswap, pet };
+/* the economy check's Settings card in each of its states (WP6e): tools/gen_shadow_card_fixtures.js */
+const shadow = (b) => require('./gen_shadow_card_fixtures.js')({ b, out, write });
+const JOBS = { food, log, plan, director, recipes, media, settings, swipe, overview, glance, journal, planrunner, foodswap, pet, shadow };
 (async () => {
   const only = process.argv.slice(2);
   for (const name of only) if (!JOBS[name]) throw Error('no fixtures named ' + name + ' (' + Object.keys(JOBS).join(', ') + ')');

@@ -7801,6 +7801,9 @@
  "weekStart": [
   "src/runtime/segments/07-runtime.js"
  ],
+ "window.LMA_SHADOW_CARD": [
+  "src/runtime/segments/50-native-shadow-card.js"
+ ],
  "window.LM_DEMO": [
   "src/runtime/segments/00-demo-storage.js"
  ],
@@ -7842,6 +7845,9 @@
  ],
  "window.LmaShadow": [
   "src/runtime/segments/50-native-shadow.js"
+ ],
+ "window.LmaShadowCard": [
+  "src/runtime/segments/50-native-shadow-card.js"
  ],
  "window.NativeAudioDock": [
   "src/runtime/segments/50-native-audio.js"

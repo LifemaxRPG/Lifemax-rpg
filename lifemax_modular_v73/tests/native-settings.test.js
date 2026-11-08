@@ -3,7 +3,9 @@
    control focused, and the screen comes back once the owner's tap there has done its work), the covering rules (never over a
    sheet, a picker, the import, a field being typed in), refused saves, the native tabs' switches (the page's own
    setNativeXEnabled, and no native tab left open over Settings) and the hand-over from a native tab's gear. Fake plugins stand in
-   for Android (tests/fixtures/settings-android.js). Run: NODE_PATH=$(npm root -g) node tests/native-settings.test.js [built html] */
+   for Android (tests/fixtures/settings-android.js). The economy check's card (WP6e) is drawn from the page like every card, its
+   buttons and its one choice worked by command, each asking NativeShadow only as a tap on the page does.
+   Run: NODE_PATH=$(npm root -g) node tests/native-settings.test.js [built html] */
 const { chromium } = require('playwright'); const file = require('./current-page')(process.argv[2]);
 const android = require('./fixtures/settings-android.js');
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 1200) : '')) } };
@@ -399,6 +401,57 @@ const HELPERS = `
   }, HELPERS);
   ok('a native tab\'s gear: Settings opens before that tab closes', h.character && h.handover, h);
   ok('turned off from the screen: it closes, the classic page stays', h.off && h.offStays, h);
+
+  /* ---------- the economy check's card (WP6e): drawn like every card, its buttons pressed by command ---------- */
+  const sp = await ctx.newPage(); sp.on('pageerror', e => errs.push('shadow: ' + String(e)));
+  await sp.addInitScript(android.script({ shadow: { summary: { v: 1, state: 'on', since: Date.UTC(2026, 9, 1), counts: { seen: 1204, applied: 1204, skipped: 54, compared: 1150, same: 1141, allowed: 6, different: 3 },
+    different: { at: Date.UTC(2026, 9, 27, 9, 31), kind: 'quest.toggle' }, cases: [{ id: 'm-17', kind: 'quest.toggle', at: Date.UTC(2026, 9, 27, 9, 31), count: 2 }, { id: 'm-3', kind: 'log.record', at: Date.UTC(2026, 9, 20, 20, 5), count: 1 }] } } }));
+  await sp.goto('file://' + file); await sp.waitForTimeout(3500);
+  const sh = await sp.evaluate(async (H) => {
+    eval(H); const out = {};
+    const S = lmaLoad(); S.nativeOverview = false; S.nativeSettings = true; lmaSave();
+    navigate('settings'); await until(showing); await LmaShadow.refresh(); await wait(600);
+    const rows = () => card(latest(), 'nativeShadowCard').rows;
+    const row = (title) => rows().find(r => r.title === title);
+    const sw = row('Native economy check (beta)');
+    out.line = sw && sw.hint.split('\n');
+    out.switch = sw && sw.controls[0].id === 'nativeShadow' && sw.controls[0].op === 'toggle' && sw.controls[0].on;
+    const report = row('Report');
+    out.report = report && report.controls.map(c => [c.id, c.op, c.style, c.description]);
+    out.who = report && /You don't need to do anything/.test(report.hint) && /paste it to the assistant/.test(report.hint) && /never your activity names/.test(report.hint);
+    out.hidden = !row('Clear what the check found?') && !rows().some(r => r.type === 'note');
+    out.none = !window.__shadowAsked.length;
+    // Clear: the question first, then the danger button; native is asked only by "Clear now"
+    let q = await command('press', { id: 'nativeShadow.clear' }); await wait(150);
+    const ask = row('Clear what the check found?');
+    out.clearAsk = q.ok && ask && ask.controls.map(c => [c.id, c.style]);
+    out.clearNotYet = !window.__shadowAsked.length;
+    q = await command('press', { id: 'nativeShadow.clearNow' }); await wait(200);
+    out.cleared = q.ok && JSON.stringify(window.__shadowAsked) === JSON.stringify([['clear', {}]]) && /^Cleared\./.test(row('Report').hint.split('\n').pop());
+    // Copy report
+    q = await command('press', { id: 'nativeShadow.copy' }); await wait(200);
+    out.copied = q.ok && JSON.stringify(window.__shadowAsked.slice(-1)) === JSON.stringify([['copyReport', {}]]) && /^Report copied\./.test(row('Report').hint.split('\n').pop());
+    // Save case: the choice, the warning note, then the picker's request for that difference only
+    const caseRow = row('Save case\u2026');
+    out.caseRow = caseRow && caseRow.controls.map(c => [c.id, c.kind, c.op, (c.options || []).map(o => o.value).join(',')]);
+    q = await command('choose', { id: 'nativeShadow.case', value: 'm-3' });
+    const chose = q.ok;
+    q = await command('press', { id: 'nativeShadow.saveCase' }); await wait(150);
+    const note = rows().find(r => r.type === 'note');
+    out.warning = chose && q.ok && note && note.warn && /real data/.test(note.text) && note.controls.map(c => c.id).join(',') === 'nativeShadow.caseNow,nativeShadow.caseKeep';
+    out.caseNotYet = !window.__shadowAsked.some(a => a[0] === 'saveCase');
+    q = await command('press', { id: 'nativeShadow.caseNow' }); await wait(200);
+    out.saved = q.ok && JSON.stringify(window.__shadowAsked.slice(-1)) === JSON.stringify([['saveCase', { id: 'm-3' }]]);
+    out.storage = localStorage.getItem('lifemax_android_prefs_v1').indexOf('m-3') < 0;
+    return out;
+  }, HELPERS);
+  ok('the economy check card: the switch, the line and the last difference, as the page words them', sh.switch && sh.line && sh.line[1] === 'Checked 1,150 actions since 1 Oct · 3 different' && /^Last difference: a quest, 27 Oct \d\d:\d\d$/.test(sh.line[2]), sh);
+  ok('the economy check card: Copy report and Clear are worked by command, with their names for TalkBack, and who does what is said', JSON.stringify(sh.report) === JSON.stringify([['nativeShadow.copy', 'press', 'secondary', 'Copy the economy check report'], ['nativeShadow.clear', 'press', 'secondary', 'Clear what the economy check found']]) && sh.who, sh.report);
+  ok('the economy check card: nothing is asked of native until a press, and the questions are hidden', sh.none && sh.hidden, sh);
+  ok('the economy check card: Clear asks first (Clear now in the danger style), then native clears', JSON.stringify(sh.clearAsk) === JSON.stringify([['nativeShadow.clearNow', 'danger'], ['nativeShadow.clearKeep', 'secondary']]) && sh.clearNotYet && sh.cleared, sh);
+  ok('the economy check card: Copy report asks native and says it is on the clipboard', sh.copied, sh);
+  ok('the economy check card: Save case chooses a difference, warns in a note, and asks native for that one only', JSON.stringify(sh.caseRow) === JSON.stringify([['nativeShadow.case', 'select', 'choose', 'm-17,m-3'], ['nativeShadow.saveCase', 'button', 'press', '']]) && sh.warning && sh.caseNotYet && sh.saved && sh.storage, sh);
+  await sp.close();
 
   /* ---------- in a browser: nothing to open, the switch is disabled ---------- */
   const p2 = await ctx.newPage(); p2.on('pageerror', e => errs.push('browser: ' + String(e)));

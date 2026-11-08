@@ -17,9 +17,10 @@ import com.lifemax.rpg.core.save.JsonWriter
  * allowed, different, skipped:{why:n}}}, refused:{why:n}, info:{word:n}, errors:{class:n},
  * codec:{word:n}, errorTimes, resyncTimes, nextId, entries:[{id, first, last, count, kind,
  * pageBuild, paths}], nextMismatch, mismatches:[{id, first, last, count, kind, pageBuild, paths,
- * allow, unexplained, page?:{xp, sparks, rested}, native?:{...}}]}`. Reading is strict about the
- * shape and never throws (a WP6a ring without the comparison's keys reads with them empty); a file
- * that does not read is replaced by a fresh ledger (the caller counts `info.ringReset`).
+ * allow, unexplained, page?:{xp, sparks, rested}, native?:{...}}], disables:[{at, reason}]}`.
+ * Reading is strict about the shape and never throws (a WP6a ring without the comparison's keys, or
+ * one before WP6e without `disables`, reads with them empty); a file that does not read is replaced
+ * by a fresh ledger (the caller counts `info.ringReset`).
  */
 object ShadowLedgerJson {
     private const val VERSION = 1
@@ -73,6 +74,10 @@ object ShadowLedgerJson {
                 ),
             "nextMismatch" to num(l.nextMismatch),
             "mismatches" to JsonArray(l.mismatches.map(::mismatch)),
+            "disables" to
+                JsonArray(
+                    l.disables.map { obj("at" to num(it.at), "reason" to JsonString(it.reason)) }
+                ),
         )
 
     private fun mismatch(m: MismatchEntry): JsonObject =
@@ -179,6 +184,10 @@ object ShadowLedgerJson {
                     page = changeOf(x["page"]),
                     native = changeOf(x["native"]),
                 )
+        }
+        for (e in (o["disables"] as? JsonArray)?.items.orEmpty()) {
+            val x = e as? JsonObject ?: bad()
+            l.disables += DisableEvent(long(x, "at"), str(x, "reason"))
         }
         return l
     }

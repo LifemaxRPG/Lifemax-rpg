@@ -13,8 +13,9 @@ import org.junit.Test
  * Differences never carry the owner's words into the ring (ECONOMY_SHADOW_PLAN 3.2). Every golden
  * action is sent with a page that differs from native exactly where owner text lives (a skill's
  * name, a quest mark's key, a custom rule's id, a record's notes, a reflection's day) and the ring
- * text that results is searched for every string of every golden save and for the injected words:
- * none may appear; the differences show only fixed names and salted hashes.
+ * text that results, and the copied report (WP6e), are searched for every string of every golden
+ * save and for the injected words: none may appear; the differences show only fixed names and
+ * salted hashes.
  */
 class ShadowRedactionTest {
     private val secret = "Private: saw Dr Jamie Rivera about my knee"
@@ -36,6 +37,7 @@ class ShadowRedactionTest {
             )
         }
         val ring = session.ringText()
+        val report = session.report(FakeShadowPage.T0, java.time.ZoneOffset.UTC)
         assertTrue("the lies are recorded", session.ledger.different > built.size / 2)
         assertTrue(
             session.ledger.mismatches().any { m -> m.paths.any { it.startsWith("skillXP.*#") } }
@@ -54,6 +56,19 @@ class ShadowRedactionTest {
                 if (w.length >= LONG || w.any { !it.isLetterOrDigit() }) w in ring else w in names
             }
         assertEquals("owner text in the ring", emptyList<String>(), found)
+        val reportNames =
+            report.split('"', '.', '[', ']', ',', ':', '{', '}', '#', '*', ' ', ';', '\n').toSet()
+        // the report writes its own dates (since, written, each difference to the minute), which a
+        // save's day keys may equal; a date is not owner text
+        val told =
+            words
+                .filterNot { DATE.matches(it) }
+                .filter { w ->
+                    if (w.length >= LONG || w.any { !it.isLetterOrDigit() }) w in report
+                    else w in reportNames
+                }
+        assertEquals("owner text in the report", emptyList<String>(), told)
+        assertTrue(report, "differences: " in report && "m-1 " in report)
     }
 
     /** The page's after-state differing from native wherever owner text is a name or a value. */
@@ -120,6 +135,7 @@ class ShadowRedactionTest {
     private companion object {
         const val MIN_CHARS = 4
         const val LONG = 12
+        val DATE = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
         val APP_WORDS: Set<String> =
             ShadowKeys.FIXED_MEMBERS +
                 ShadowKeys.SHADOW +

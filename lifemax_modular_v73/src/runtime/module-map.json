@@ -3927,7 +3927,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-settings.js",
-   "bytes": 31631,
+   "bytes": 31805,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3964,6 +3964,20 @@
    ]
   },
   {
+   "file": "src/runtime/segments/50-native-shadow-card.js",
+   "bytes": 11492,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "shadow",
+    "card"
+   ],
+   "symbols": [
+    "window.LMA_SHADOW_CARD",
+    "window.LmaShadowCard"
+   ]
+  },
+  {
    "file": "src/runtime/segments/50-native-shadow-points.js",
    "bytes": 6811,
    "statement_count": 1,
@@ -3978,7 +3992,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow.js",
-   "bytes": 23898,
+   "bytes": 22563,
    "statement_count": 1,
    "tags": [
     "native",

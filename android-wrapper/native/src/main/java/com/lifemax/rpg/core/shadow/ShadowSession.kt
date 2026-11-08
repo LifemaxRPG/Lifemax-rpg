@@ -1,6 +1,7 @@
 package com.lifemax.rpg.core.shadow
 
 import com.lifemax.rpg.core.save.SaveFields
+import java.time.ZoneId
 
 /** The answer to `handshake()` (2.3). */
 data class ShadowHandshake(
@@ -37,6 +38,8 @@ data class ShadowSummary(
     val different: Int = 0,
     /** The latest unexplained difference, if any. */
     val lastDifferent: MismatchEntry? = null,
+    /** The differences "Save case…" can write, newest first (memory only, WP6e). */
+    val cases: List<CaseRef> = emptyList(),
 )
 
 /**
@@ -76,7 +79,13 @@ class ShadowSession(
     private val comparison =
         ShadowComparison(redactor, ShadowRunner(content, { pageSchema }, mutation, quests))
     private val costs = ArrayDeque<Long>()
+    private val pageCosts = ArrayDeque<Double>()
+    private val cases = ShadowCases()
     private var pageBuild = ""
+    private var pageFingerprint = ""
+
+    /** The latest moment a caller gave, for the rules that are not handed one ([timed]). */
+    private var lastNow = ledger.since
     private var basesThisSession = 0
 
     /** The end of the last action of this page session, for `info.clockJump`. */
@@ -113,6 +122,7 @@ class ShadowSession(
                 ShadowLimits.CAPABILITY,
                 ShadowLimits.CAPABILITY_QUESTS,
                 ShadowLimits.CAPABILITY_DAY,
+                ShadowLimits.CAPABILITY_REPORT,
             ),
             nativeFingerprint,
             ledger.state,
@@ -135,6 +145,7 @@ class ShadowSession(
         basesThisSession = 0
         lastT1 = null
         pageBuild = config.page.build
+        pageFingerprint = config.page.fingerprint
         pageSchema = config.page.schema
         ledger.pageFaults += config.page.faults
         when {
@@ -150,20 +161,21 @@ class ShadowSession(
 
     /** One base part (2.3); ok on the last part means the mirror holds the page's state. */
     fun base(text: String, now: Long): ShadowAnswer {
+        lastNow = now
         if (ledger.state != ShadowState.ON) return ShadowAnswer(false, ledger.state, ledger.reason)
         val part =
             when (val d = ShadowEnvelopeJson.basePart(text)) {
-                is ShadowDecode.Refused -> return refusedBase(d.reason)
+                is ShadowDecode.Refused -> return refusedBase(d.reason, now)
                 is ShadowDecode.Ok -> d.value
             }
         return when (val step = mirror.base(part)) {
             is BaseStep.Pending -> ShadowAnswer(true, ledger.state, null)
             is BaseStep.Duplicate -> ShadowAnswer(true, ledger.state, null)
-            is BaseStep.Refused -> refusedBase(step.reason)
+            is BaseStep.Refused -> refusedBase(step.reason, now)
             is BaseStep.Ready -> {
                 needBase = false
                 ledger.note("base")
-                if (basesThisSession++ > 0 && ledger.resync(now)) disable("resyncLoop")
+                if (basesThisSession++ > 0 && ledger.resync(now)) disable("resyncLoop", now)
                 changed()
                 ShadowAnswer(true, ledger.state, ledger.reason)
             }
@@ -205,6 +217,7 @@ class ShadowSession(
 
     /** Takes one accepted envelope: decode, apply to the mirror, record its touch map, compare. */
     fun observe(text: String, now: Long) {
+        lastNow = now
         if (ledger.state != ShadowState.ON) return
         val envelope =
             when (val d = ShadowEnvelopeJson.envelope(text)) {
@@ -217,6 +230,7 @@ class ShadowSession(
             }
         val counts = ledger.kind(envelope.kind)
         counts.seen++
+        recent(pageCosts, envelope.costMs)
         changed()
         when (val step = mirror.apply(envelope)) {
             is MirrorStep.Duplicate -> ledger.note("duplicate")
@@ -238,7 +252,7 @@ class ShadowSession(
                         ledger.skip(envelope.kind, "interleaved")
                     else -> {
                         ledger.touched(envelope.kind, step.touched, pageBuild, now)
-                        compare(envelope, step, now)
+                        compare(envelope, text, step, now)
                     }
                 }
             }
@@ -266,13 +280,23 @@ class ShadowSession(
         lastT1 = envelope.t1
     }
 
-    /** Runs native on the action and counts the verdict; never throws. */
-    private fun compare(envelope: ShadowEnvelope, step: MirrorStep.Applied, now: Long) {
+    /**
+     * Runs native on the action and counts the verdict; an unexplained difference also keeps its
+     * case, unredacted and in memory only, for "Save case…" (O-4). Never throws.
+     */
+    private fun compare(
+        envelope: ShadowEnvelope,
+        text: String,
+        step: MirrorStep.Applied,
+        now: Long,
+    ) {
         val kind = envelope.kind
         deviceZone()?.let { if (it != envelope.zone) ledger.note(ZONE_LAG) }
+        var run: Prediction? = null
         val verdict =
             try {
                 comparison.compare(envelope, step.before, step.after) { p ->
+                    run = p
                     evidence(kind, p, step)
                 }
             } catch (e: Exception) {
@@ -281,6 +305,8 @@ class ShadowSession(
                 return internal(kind, e, now)
             }
         ledger.compared(kind, verdict, pageBuild, now)
+        if (verdict is Verdict.Differed && !verdict.explained)
+            cases.keep(ledger.mismatches().last(), text, step.before, step.after, run)
         changed()
     }
 
@@ -299,7 +325,8 @@ class ShadowSession(
 
     private fun internal(kind: String, error: Throwable, now: Long) {
         ledger.skip(kind, ERROR)
-        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now)) disable("errors")
+        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now))
+            disable("errors", now)
         changed()
     }
 
@@ -307,17 +334,25 @@ class ShadowSession(
      * Notes how long the worker took for one envelope; disables the check when the 95th percentile
      * of the last [SLOW_WINDOW] is over [SLOW_P95_MS] (section 4 budgets).
      */
-    fun timed(millis: Long) {
-        costs.addLast(millis)
-        if (costs.size > SLOW_WINDOW) costs.removeFirst()
-        if (costs.size == SLOW_WINDOW && costs.sorted()[SLOW_INDEX] > SLOW_P95_MS) disable("slow")
+    fun timed(millis: Long, now: Long = lastNow) {
+        recent(costs, millis)
+        if (costs.size == SLOW_WINDOW && costs.sorted()[SLOW_INDEX] > SLOW_P95_MS)
+            disable("slow", now)
+    }
+
+    /** Keeps the latest [SLOW_WINDOW] of [list] (the costs the report and the slow rule read). */
+    private fun <T> recent(list: ArrayDeque<T>, value: T) {
+        list.addLast(value)
+        if (list.size > SLOW_WINDOW) list.removeFirst()
     }
 
     /** An internal error, counted by class name only; five in a day disable the check. */
     fun fault(error: Throwable, now: Long) {
+        lastNow = now
         mirror.discard()
         needBase = true
-        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now)) disable("errors")
+        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now))
+            disable("errors", now)
         changed()
     }
 
@@ -335,20 +370,54 @@ class ShadowSession(
             allowed = ledger.allowed,
             different = ledger.different,
             lastDifferent = ledger.mismatches().lastOrNull { it.unexplained },
+            cases = cases.list(),
         )
 
-    /** Clear (6e's button): the counts and entries go; ok once the ring is stored empty. */
+    /**
+     * The redacted plain-text report for the clipboard (3.4), written at [now] in [zone]; no owner
+     * text (3.2).
+     */
+    fun report(now: Long, zone: ZoneId): String =
+        ShadowReport.text(
+            ledger,
+            ReportFacts(
+                versionCode,
+                nativeApi,
+                pageBuild,
+                nativeFingerprint,
+                pageFingerprint,
+                costs.toList(),
+                pageCosts.toList(),
+                now,
+                zone,
+            ),
+        )
+
+    /**
+     * The unredacted case of difference [id] for "Save case…" (O-4), or null when none is held:
+     * only the owner's explicit choice in Settings asks for it, and it goes only to the file they
+     * picked.
+     */
+    fun caseText(id: String): String? = cases.text(id)
+
+    /**
+     * Clear (the Settings card's, after its own confirmation): the counts, entries, self-disable
+     * history and kept cases go; the state stays. The caller answers ok once the ring is stored.
+     */
     fun clear() {
         ledger.clear()
+        cases.clear()
+        costs.clear()
+        pageCosts.clear()
         changed()
     }
 
     /** The ring's text, fitted to its bounds; marks the ledger stored. */
     fun ringText(): String = ledger.fit().also { dirty = false }
 
-    private fun refusedBase(reason: ShadowRefusal): ShadowAnswer {
+    private fun refusedBase(reason: ShadowRefusal, now: Long): ShadowAnswer {
         ledger.refuse(reason)
-        if (reason == ShadowRefusal.TOO_LARGE) disable("tooLarge") else lose()
+        if (reason == ShadowRefusal.TOO_LARGE) disable("tooLarge", now) else lose()
         changed()
         return ShadowAnswer(false, ledger.state, reason.word)
     }
@@ -359,9 +428,10 @@ class ShadowSession(
         changed()
     }
 
-    private fun disable(reason: String) {
+    private fun disable(reason: String, now: Long) {
         mirror.discard()
         needBase = true
+        if (ledger.state != ShadowState.DISABLED) ledger.disabled(reason, now)
         set(ShadowState.DISABLED, reason)
     }
 

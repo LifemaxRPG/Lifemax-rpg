@@ -1,14 +1,20 @@
 package com.lifemax.rpg.bridge.web
 
+import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.os.Process
+import androidx.activity.result.ActivityResult
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.lifemax.rpg.app.shadow.ShadowRing
 import com.lifemax.rpg.app.shadow.ShadowWorker
@@ -25,6 +31,12 @@ import java.util.concurrent.ExecutorService
  * sends a command, never notifies the page, never writes the save and never uses the network; the
  * only file is the ring ([ShadowRing], in the no-backup folder). Every failure is answered, never
  * thrown into the page.
+ *
+ * The owner's side (WP6e, capability `economy.shadow.report.v1`): `copyReport` puts the redacted
+ * report on the clipboard itself (the page never sees it) and answers ok once it is there;
+ * `saveCase` writes one difference's unredacted case (decision O-4) to a file the owner picks in
+ * the system's file picker, never on its own and never anywhere else, and answers ok once the file
+ * is written; `clear` answers ok once the empty ring is on disk.
  */
 @CapacitorPlugin(name = "NativeShadow")
 class NativeShadowPlugin : Plugin() {
@@ -118,6 +130,18 @@ class NativeShadowPlugin : Plugin() {
             s.lastDifferent?.let {
                 out.put("different", JSObject().put("at", it.last).put("kind", it.kind))
             }
+            out.put(
+                "cases",
+                JSArray(
+                    s.cases.map {
+                        JSObject()
+                            .put("id", it.id)
+                            .put("kind", it.kind)
+                            .put("at", it.at)
+                            .put("count", it.count)
+                    }
+                ),
+            )
             s.last?.let {
                 out.put(
                     "last",
@@ -138,6 +162,79 @@ class NativeShadowPlugin : Plugin() {
         w.clear { stored -> call.resolve(JSObject().put("ok", stored)) }
     }
 
+    /** The redacted report, onto the clipboard; ok with its length once the clipboard holds it. */
+    @PluginMethod
+    fun copyReport(call: PluginCall) {
+        val w = worker ?: return call.reject("unavailable")
+        w.report { text ->
+            bridge.executeOnMainThread {
+                val clipboard =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                val ok =
+                    try {
+                        clipboard?.setPrimaryClip(ClipData.newPlainText(REPORT_LABEL, text))
+                        clipboard != null
+                    } catch (_: RuntimeException) {
+                        false
+                    }
+                call.resolve(JSObject().put("ok", ok).put("chars", if (ok) text.length else 0))
+            }
+        }
+    }
+
+    /**
+     * `{id}`: the owner chose one difference and confirmed the warning; the system's file picker
+     * asks where to save its case. Ok only once the file is written; `{ok:false, reason}` when no
+     * case is held for it (`noCase`), the owner closed the picker (`cancelled`) or the write failed
+     * (`notWritten`).
+     */
+    @PluginMethod
+    fun saveCase(call: PluginCall) {
+        val w = worker ?: return call.reject("unavailable")
+        val id = call.getString("id")
+        if (id == null || !CASE_ID.matches(id)) return call.resolve(refused("noCase"))
+        w.case(id) { text ->
+            if (text == null) return@case call.resolve(refused("noCase"))
+            bridge.executeOnMainThread {
+                pendingCase = text
+                val intent =
+                    Intent(Intent.ACTION_CREATE_DOCUMENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType(CASE_MIME)
+                        .putExtra(Intent.EXTRA_TITLE, "lifemax-economy-case-$id.json")
+                startActivityForResult(call, intent, "caseChosen")
+            }
+        }
+    }
+
+    @ActivityCallback
+    private fun caseChosen(call: PluginCall?, result: ActivityResult) {
+        val text = pendingCase
+        pendingCase = null
+        call ?: return
+        val uri = result.data?.data
+        if (result.resultCode != Activity.RESULT_OK || uri == null || text == null)
+            return call.resolve(refused("cancelled"))
+        val write = Runnable {
+            val ok =
+                try {
+                    context.contentResolver.openOutputStream(uri, "wt")?.use {
+                        it.write(text.toByteArray(Charsets.UTF_8))
+                        it.flush()
+                        true
+                    } ?: false
+                } catch (_: Exception) {
+                    false
+                }
+            call.resolve(if (ok) JSObject().put("ok", true) else refused("notWritten"))
+        }
+        try {
+            executor?.execute(write) ?: write.run()
+        } catch (_: RuntimeException) {
+            call.resolve(refused("notWritten"))
+        }
+    }
+
     override fun handleOnStop() {
         worker?.flush()
         super.handleOnStop()
@@ -154,11 +251,18 @@ class NativeShadowPlugin : Plugin() {
 
     private fun refused(reason: String) = JSObject().put("ok", false).put("reason", reason)
 
+    /** The case waiting for the owner's choice of file; memory only. */
+    @Volatile private var pendingCase: String? = null
+
     private fun JSObject.maybe(key: String, value: String?): JSObject = apply {
         if (value != null) put(key, value)
     }
 
     private companion object {
+        const val REPORT_LABEL = "LifeMax economy check report"
+        const val CASE_MIME = "application/json"
+        val CASE_ID = Regex("m-[0-9]{1,9}")
+
         /** What native's rules were built from: the packaged quest content's hash (2.4). */
         fun fingerprint(): String =
             (QuestContentLoader.packaged as? QuestContentRead.Loaded)?.content?.contentHash ?: ""

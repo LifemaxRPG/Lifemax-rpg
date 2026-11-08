@@ -116,7 +116,8 @@
   /** the controls a command may operate, found on the page as it is now (a renderer may have replaced them since) */
   function bindings() {
     const out = [];
-    for (const [id, selector, key, asks, tag] of fieldsOn() ? BOUND.concat(NativeSettingsFields.bound()) : BOUND) {
+    // the economy check's card names its own buttons and its one choice (50-native-shadow-card.js; they write no page storage)
+    for (const [id, selector, key, asks, tag] of (fieldsOn() ? BOUND.concat(NativeSettingsFields.bound()) : BOUND).concat(window.LMA_SHADOW_CARD?.bound || [])) {
       const el = document.querySelector(selector);
       if (el) out.push({ id, el, key, asks: !!asks, tag });
     }

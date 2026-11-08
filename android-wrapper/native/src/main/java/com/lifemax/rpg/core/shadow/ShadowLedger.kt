@@ -92,6 +92,12 @@ data class MismatchEntry(
 }
 
 /**
+ * One time the check stopped itself (section 4, self-disable): when, to the minute, and why
+ * (`errors`, `resyncLoop`, `slow`, `tooLarge`). The report lists them.
+ */
+data class DisableEvent(val at: Long, val reason: String)
+
+/**
  * Everything the shadow keeps between page sessions (the ring's content, 3.1), as a pure model: the
  * header (since, salt, state, reason, app, faults), counters per kind, decoder refusals, internal
  * errors by class name, and at most [ShadowLimits.RING_MAX_ENTRIES] touch entries, coalesced by
@@ -116,6 +122,7 @@ class ShadowLedger(val since: Long, val salt: ByteArray) {
     internal var nextId = 1
     internal val mismatches = ArrayList<MismatchEntry>()
     internal var nextMismatch = 1
+    internal val disables = ArrayList<DisableEvent>()
 
     /** The codec's own counts (2.6, 4): `strict` refusals of a before-state, `encode` refusals. */
     val codec = TreeMap<String, Int>()
@@ -125,6 +132,15 @@ class ShadowLedger(val since: Long, val salt: ByteArray) {
 
     /** The difference entries, oldest first. */
     fun mismatches(): List<MismatchEntry> = mismatches.toList()
+
+    /** The times the check stopped itself, oldest first, at most [ShadowLimits.DISABLE_HISTORY]. */
+    fun disables(): List<DisableEvent> = disables.toList()
+
+    /** Notes that the check stopped itself for [reason] at [now]. */
+    fun disabled(reason: String, now: Long) {
+        disables += DisableEvent(minute(now), reason)
+        while (disables.size > ShadowLimits.DISABLE_HISTORY) disables.removeAt(0)
+    }
 
     /** Counts one compared action of [kind] by its [verdict] and keeps a difference's entry. */
     fun compared(kind: String, verdict: Verdict, pageBuild: String, now: Long) {
@@ -260,7 +276,10 @@ class ShadowLedger(val since: Long, val salt: ByteArray) {
         return text
     }
 
-    /** Empties the counts and entries (Clear); the salt, state and app stay. */
+    /**
+     * Empties the counts, entries and the self-disable history (Clear); the salt, the state and its
+     * reason, the start date and the app stay.
+     */
     fun clear() {
         kinds.clear()
         refused.clear()
@@ -271,6 +290,7 @@ class ShadowLedger(val since: Long, val salt: ByteArray) {
         entries.clear()
         mismatches.clear()
         codec.clear()
+        disables.clear()
         nextMismatch = 1
         nativeFaults = 0
         pageFaults = 0

@@ -4,7 +4,8 @@
    50-native-shadow-points.js) is sent to NativeShadow as one envelope: the shadow keys' delta since the last envelope, the
    delta the action made, its return value, toasts, save answers and env. Native keeps a copy in memory only, records which
    fields each action touched and, from WP6b, runs the economy actions itself and compares; nothing comes back to the page but
-   counts (the Settings row: actions checked, how many differed and the last one's day and kind).
+   counts (the Settings card, 50-native-shadow-card.js: actions checked, how many differed, the last one's day and kind, and
+   the owner's Copy report, Clear and Save case buttons, WP6e).
    A wrapper is transparent by construction: the original runs exactly once with its own this, arguments, return value and
    exception; every step of the shadow is caught; envelopes are posted with setTimeout(0) after the action and not awaited.
    Switch off, no plugin, no capability, a demo, a fingerprint that differs: no wrapper is installed at all. Three faults, or
@@ -21,18 +22,9 @@
   const NOOP_KINDS = ["hand.ensure", "hand.verify"], NOOP_EVERY = 50;
   const B = LMA_SHADOW_BOOT, P = LMA_SHADOW_POINTS;
   const LIMIT = { envelope: 256 * 1024, args: 16 * 1024, env: 64 * 1024, toasts: 20, toast: 300, saves: 8, rec: 256, part: 256 * 1024, parts: 32, base: 8 * 1024 * 1024, queue: 16, faults: 3, slowMs: 50, slowRun: 5, slice: 200000 };
-  const WORDS = {
-    help: "Your phone also works out every XP and Sparks change the app makes, without saving or showing it, and counts any difference. Nothing leaves the phone.",
-    stale: "Paused: waiting for the matching app update",
-    disabled: "Stopped after errors. Turn it off and on to try again.",
-    tooLarge: "Your save is too large for the check",
-    paused: "Paused while Battery Saver is on",
-    watching: (n, since) => "Following " + n.toLocaleString("en-GB") + " actions since " + since + " (comparing comes in a later update)",
-    checked: (n, since, different, last) => "Checked " + n.toLocaleString("en-GB") + " actions since " + since + " \u00b7 " + different.toLocaleString("en-GB") + " different" + (last ? " \u00b7 last " + last : ""),
-  };
   const FAULTS_KEY = "lma_shadow_faults"; // sessionStorage: page faults of an earlier page in this WebView, told at the next configure
   let plugin = null, hello = null, asked = null, live = false, stopped = "", sid = "", epoch = 0, seq = 0, head = 0, cache = null, needBase = true;
-  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, day = false, journal = 0, noops = 0;
+  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, day = false, journal = 0, noops = 0, starting = false;
   const pending = [], outbox = [], installed = [];
   const stats = { sent: 0, bases: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
 
@@ -367,6 +359,8 @@
   async function warm() {
     plugin = available();
     if (!plugin || !wanted() || demo()) return sync();
+    starting = true;
+    sync();
     try {
       asked = asked || plugin.handshake().then((h) => (hello = h), (e) => ((asked = null), Promise.reject(e)));
       await asked;
@@ -380,16 +374,19 @@
       const page = { build: String(window.LMA_BUILD || document.documentElement.dataset.build || ""), schema: SAVE_SCHEMA, fingerprint: mine, faults: told };
       const a = await plugin.configure({ text: JSON.stringify({ v: PROTOCOL, enabled: true, sid, page }) });
       summary = a || null;
-      if (!a || !a.ok || a.state !== "on" || mine !== hello.fingerprint || stopped === "faults" || stopped === "slow") { live = false; return refresh(); }
+      if (!a || !a.ok || a.state !== "on" || mine !== hello.fingerprint || stopped === "faults" || stopped === "slow") { live = false; starting = false; return refresh(); }
       stopped = "";
       cache = null;
       needBase = true;
       install();
       live = true;
       bootActions();
+      starting = false;
       refresh();
     } catch (_) {
       live = false;
+      starting = false;
+      stopped = stopped || "noAnswer"; // the plugin refused or threw: the card says so; the next return to the app asks again
       sync();
     }
   }
@@ -397,29 +394,17 @@
     try { if (plugin && hello) summary = await plugin.summary(); } catch (_) { /* the row keeps its last words */ }
     sync();
   }
-  function statusWords() {
-    if (!wanted() || !summary) return "";
-    const s = summary.state, why = summary.reason;
-    if (s === "stale") return WORDS.stale;
-    if (s === "paused") return WORDS.paused;
-    if (s === "disabled") return why === "tooLarge" ? WORDS.tooLarge : WORDS.disabled;
-    if (stopped === "tooLarge") return WORDS.tooLarge;
-    if (s === "on" && summary.counts) {
-      const day = (t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }), since = day(summary.since), c = summary.counts;
-      /* an app that compares (WP6b) counts compared actions and differences; an older one only follows them */
-      if (typeof c.compared !== "number") return WORDS.watching(Number(c.seen) || 0, since);
-      const d = summary.different, last = d && d.at ? day(d.at) + " " + new Date(d.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " (" + String(d.kind || "").split(".")[0] + ")" : "";
-      return WORDS.checked(c.compared, since, Number(c.different) || 0, Number(c.different) ? last : "");
-    }
-    return "";
-  }
+  /* the Settings card (50-native-shadow-card.js) reads what the transport knows and asks the plugin only on the owner's tap */
+  const card = LMA_SHADOW_CARD.create({
+    available: () => !!available(),
+    demo,
+    wanted,
+    state: () => ({ live, stopped, starting, hello, summary }),
+    plugin: () => plugin,
+    refresh: () => refresh(),
+  });
   function sync() {
-    const input = document.getElementById("nativeShadowToggle"), line = document.getElementById("nativeShadowStatus");
-    if (input) {
-      input.disabled = !available() || demo();
-      input.checked = wanted();
-    }
-    if (line) line.textContent = statusWords();
+    try { card.sync(); } catch (_) { /* the card never stops the check */ }
   }
   window.setNativeShadowEnabled = async (on) => {
     lmaLoad()[SETTING] = !!on;
@@ -432,7 +417,7 @@
   };
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible" || !wanted() || demo()) return;
-    if (!live && (stopped === "paused" || stopped === "")) warm(); else refresh();
+    if (!live && (stopped === "paused" || stopped === "noAnswer" || stopped === "")) warm(); else refresh();
   });
   document.addEventListener("DOMContentLoaded", sync);
   sync();
@@ -442,7 +427,7 @@
     /** for tests and the Settings row: what the page side is doing, counts only */
     status: () => ({ live, stopped, sid, epoch, seq, head, needBase, quests, day, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
     fingerprint,
-    words: WORDS,
+    words: card.words,
     refresh,
   };
 })();

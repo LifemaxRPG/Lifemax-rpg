@@ -29,3 +29,9 @@ off by the owner.
 WP6c adds the quest and Daily Hand actions with the page's composition of every save. WP6d adds the Health Connect sync and the
 day roll's decay pass: native replays the sync on the plugin answers the page itself received, as the page's recording proxy kept
 them, and makes no Health Connect read of its own; workout titles and apps cross in memory only, like every other envelope.
+WP6e gives the owner the card's states, Copy report (the redacted report, built from the ring alone, onto the clipboard by native)
+and Clear (asked in the card). Decision O-4, Save case: for the latest five unexplained differences native keeps, in memory only,
+the action as the page sent it and both outcomes where they differ, unredacted; only the owner's choice of one difference, after a
+warning in the card, writes it, and only to the document they pick in Android's picker. It is never in the ring or the report,
+never written on its own, never sent over a network, and is gone with Clear or the app process. This keeps A10: it is neither a
+reward nor a save, and the owner decides whether the file goes anywhere.

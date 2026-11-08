@@ -15,7 +15,8 @@ import org.junit.Test
  * Life Director, an ascension refused, a bare save). Replayed as the app would receive them, every
  * action of a kind WP6b compares must be compared and the same: real argument and env shapes, real
  * writes and toasts, the ids the page minted, the Daily Hand's auto-verify inside a save. The
- * boot's decay, recorded by a page older than WP6d's, is counted `skipped.input`.
+ * boot's decay, recorded by a page older than WP6d's, is counted `skipped.input`. The copied report
+ * (WP6e) and the ring hold none of the owner's words the page sent (names, notes, titles).
  */
 class ShadowCorpusTest {
     @Test
@@ -87,10 +88,26 @@ class ShadowCorpusTest {
                     if (l.same + l.allowed > was) ""
                     else " " + l.kind(kind).skipped + l.mismatches().lastOrNull()?.paths
         }
+        // the owner's words the page sent, in the envelopes and the base (escaped inside its parts)
+        val words =
+            texts
+                .flatMap { (_, t) ->
+                    OWNER_WORDS.findAll(t.replace("\\\"", "\"")).map { it.groupValues[2] }
+                }
+                .filter { it.length >= MIN_WORD }
+                .toSet()
+        assertTrue(file, words.size > 3)
+        val report = s.report(0, java.time.ZoneOffset.UTC)
+        val ring = s.ringText()
+        assertEquals(file, emptyList<String>(), words.filter { it in report || it in ring })
         return Triple(s.ledger, outcomes, texts.count { it.first == "observe" })
     }
 
     private companion object {
+        /** A record's fields that hold the owner's words. */
+        val OWNER_WORDS = Regex("\"(name|notes|note|title|customName|desc|text)\":\"([^\"\\\\]+)\"")
+        const val MIN_WORD = 5
+
         val QUEST_KINDS =
             setOf(
                 "hand.verify",

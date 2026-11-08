@@ -69,14 +69,32 @@ class ShadowWorker(
         run(after = { waiting.decrementAndGet() }) {
             val start = now()
             it.observe(text, start)
-            it.timed(now() - start)
+            val end = now()
+            it.timed(end - start, end)
         }
         return quick
     }
 
     fun summary(answer: (ShadowSummary) -> Unit) = run { answer(it.summary()) }
 
-    /** Clear: [answer] says whether the empty ring reached the disk. */
+    /**
+     * The redacted report (ECONOMY_SHADOW_PLAN 3.4), built on the worker in the device's [zone];
+     * the caller puts it on the clipboard.
+     */
+    fun report(zone: () -> ZoneId = { ZoneId.systemDefault() }, answer: (String) -> Unit) = run {
+        answer(it.report(now(), zone()))
+    }
+
+    /**
+     * The unredacted case of difference [id] (decision O-4), or null when none is held; the caller
+     * writes it only to the file the owner picked.
+     */
+    fun case(id: String, answer: (String?) -> Unit) = run { answer(it.caseText(id)) }
+
+    /**
+     * Clear: [answer] says whether the empty ring reached the disk (the kept cases are gone from
+     * memory either way).
+     */
     fun clear(answer: (stored: Boolean) -> Unit) = run {
         it.clear()
         answer(persist(it, force = true))

@@ -607,6 +607,33 @@ shown, written or sent; native asks Health Connect nothing.
   wrong rules, each caught at its field), `ShadowDaySessionTest` (page lies, reads asked otherwise, every skip, a lost envelope,
   `info.clockJump`, redaction, 10,000 records); `tests/native-shadow.test.js`.
 
+## Economy shadow mode, WP6e: the owner's card, the report and Save case (Native API 112)
+
+Native logic, web authority, behind the same switch. The owner's side of the check: the Settings card says in plain words what the
+check is doing, and its buttons ask native for the redacted report (on the clipboard), to clear what it found, or to save one
+difference's unredacted case to a file the owner picks (decision O-4). Nothing new is shown from native's computation; the page
+still writes every save.
+
+| Part | Where | What |
+|---|---|---|
+| Native | `core/shadow` `ShadowReport`, `ShadowCases`, `ShadowLedger` (`DisableEvent`), `ShadowSession`; `app/shadow/ShadowWorker` | the plain-text report (3.4) from the ring alone; the last 5 unexplained differences' cases held in memory only; the times the check stopped itself kept in the ring (at most 10); Clear also empties the history and the cases |
+| Bridge | `NativeShadowPlugin` `copyReport`, `saveCase` (Android's create-document picker), `summary.cases`; `ShadowLimits.CAPABILITY_REPORT` | the handshake also says `economy.shadow.report.v1` |
+| Page | `50-native-shadow-card.js` (new), `50-native-shadow.js`, `views/settings.html` `#nativeShadowCard`, `50-native-settings.js` | the card's states and words; Copy report, Clear (asked in the card), Save case (a chosen difference, warned in the card); native Settings presses them through the card's own bound list |
+| Fixtures | `tools/gen_shadow_card_fixtures.js` (job `shadow`), `fixtures/settings-shadow-*.json` | the card in nine states, for `SettingsShadowScreenshotTest` |
+
+- **Rollout.** Rides the switch. An older app lacks `economy.shadow.report.v1`: the card shows the switch and its line only (its
+  words are this page's). An older page with this app shows its own row; the new plugin methods are never called. Rollback: drop
+  the capability.
+- **Evidence.** Kotlin `ShadowReportTest` (every line from a known ledger, the latest 20 differences, the 16 KB bound, a page build
+  reduced to a label), `ShadowCaseTest` (a case only for an unexplained difference and only by its id, unredacted in the case and in
+  neither the ring, the report nor the summary; at most 5; gone with Clear and with the process; the plugin's only write is to the
+  picked document and nothing uses the network), `SelfDisableTest` (each rule at and under its threshold, the slow rule through the
+  real worker, Battery Saver a pause, the history in the ring and the report, off and on and a new version retry),
+  `ShadowRingTest` (a crash between the temporary file and the rename; Clear on disk; no fixture save's words in the report),
+  `ShadowRedactionTest` (no golden save's words in the report); page `tests/native-shadow-card.test.js` (54 checks: every state,
+  every button, refusals, names), `tests/native-settings.test.js` (the card through native Settings' commands),
+  `tests/native-shadow.test.js`; screenshots `SettingsShadowScreenshotTest`.
+
 
 ## Cat brain, developer parkour demo (Native API 107)
 

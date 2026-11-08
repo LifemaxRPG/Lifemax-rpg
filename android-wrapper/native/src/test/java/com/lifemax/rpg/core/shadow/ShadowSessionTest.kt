@@ -41,6 +41,7 @@ class ShadowSessionTest {
                 ShadowLimits.CAPABILITY,
                 ShadowLimits.CAPABILITY_QUESTS,
                 ShadowLimits.CAPABILITY_DAY,
+                ShadowLimits.CAPABILITY_REPORT,
             ),
             s.handshake().capabilities,
         )
