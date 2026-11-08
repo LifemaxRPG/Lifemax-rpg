@@ -16,6 +16,14 @@ package com.lifemax.rpg.feature.pet.body
  * A cat is a box too: [CAT_W] by [CAT_H] art pixels at full scale (a cat lying or loafing), scaled
  * by its depth, centred on its x, feet on its floor row. [hiddenShare] is the part of that box
  * under nearer furniture; above [MAX_HIDDEN] the cat is hidden. Nothing here allocates.
+ *
+ * The cat tree also stands over the floor the cats walk on: its footprint reaches from row 125 to
+ * row 137, and the cats' own floor depth ([World.ART_Z], row 132) runs through it, under the middle
+ * platform. A cat sitting up there is taller than the room under the platform, so its ears came out
+ * above the platform's front (the owner's "the cat's ears are poking through the cat tree").
+ * [overhangs] are the pieces that stand clear of the floor, and [clipped] says when a cat's head
+ * would be inside one: the brain never rests a cat there (its places and [visibleZ]), and the 2.5D
+ * room draws a cat that gets there anyway (walking through, at a bowl) in front of the tree.
  */
 object Occluders {
     /**
@@ -31,12 +39,36 @@ object Occluders {
         val layered: Boolean,
     )
 
+    /**
+     * A piece that stands clear of the floor (a platform, the post on the tree's base): world x
+     * [x0]..[x1], its lowest pixel on row [underside] (exclusive), and the floor rows its solid
+     * reaches over, from [back] to [front].
+     */
+    class Overhang(
+        val name: String,
+        val x0: Float,
+        val x1: Float,
+        val underside: Float,
+        val back: Float,
+        val front: Float,
+    )
+
     /** The most of a resting cat furniture may hide. */
     const val MAX_HIDDEN = 0.35f
 
     /** A resting cat's box at full scale, art pixels. */
     const val CAT_W = 36f
     const val CAT_H = 22f
+
+    /**
+     * A grown cat sitting up, ears included, at full scale (art pixels; a kitten is smaller): the
+     * room a cat needs under a platform. Measured on the shipped sprites (a sitting kitten is 34).
+     */
+    const val CAT_UPRIGHT_H = 44f
+
+    /** How far ahead of its feet a cat's head is, and half its width, at full scale. */
+    const val HEAD_AHEAD = 9f
+    const val HEAD_HALF = 15f
 
     private const val SAMPLES = 8
     private const val Z_STEP = 1f
@@ -84,6 +116,35 @@ object Occluders {
             solid("fridge", 206f, 246f, 30f, 128f, 128f, 0f),
         )
 
+    /** The pieces a cat on the floor could stand under (`room/layers.json`; OccludersTest). */
+    val overhangs: List<Overhang> =
+        listOf(
+            Overhang("cat_tree_post", 147f, 180f, 129f, 127f, 137f),
+            Overhang("cat_tree_cubby", 164f, 184f, 100f, 127f, 137f),
+            Overhang("cat_tree_slab_mid", 122f, 182f, 109f, 125f, 137f),
+            Overhang("cat_tree_slab_top", 124f, 188f, 76f, 125f, 137f),
+        )
+
+    /**
+     * Whether a cat sitting up on the floor at [x], depth [z], facing [face] (1 right, -1 left, 0
+     * either way: its head may be on either side) would have its head inside a piece it stands
+     * under: its feet inside the piece's footprint, its head under the piece's x and higher than
+     * the piece's underside.
+     */
+    fun clipped(x: Float, z: Float, face: Int = 0): Boolean {
+        val k = World.depthScale(z)
+        val feet = World.floorY(z)
+        val top = feet - CAT_UPRIGHT_H * k
+        val lo = x + (if (face > 0) -HEAD_HALF else -HEAD_AHEAD - HEAD_HALF) * k
+        val hi = x + (if (face < 0) HEAD_HALF else HEAD_AHEAD + HEAD_HALF) * k
+        for (i in overhangs.indices) {
+            val o = overhangs[i]
+            if (feet <= o.back || feet >= o.front) continue
+            if (hi > o.x0 && lo < o.x1 && top < o.underside) return true
+        }
+        return false
+    }
+
     /**
      * The share (0..1) of a resting cat on the floor at [x], depth [z] that nearer furniture hides,
      * in the 2.5D room ([layered]) or the classic room.
@@ -109,12 +170,12 @@ object Occluders {
         hiddenShare(x, z, true) > MAX_HIDDEN || hiddenShare(x, z, false) > MAX_HIDDEN
 
     /**
-     * The nearest depth at or in front of [z] where a cat at [x] is not hidden (toward the glass),
-     * or [z] itself when it is not hidden there.
+     * The nearest depth at or in front of [z] where a cat at [x] (facing [face]) is neither hidden
+     * nor [clipped] (toward the glass), or [z] itself when it is clear there.
      */
-    fun visibleZ(x: Float, z: Float): Float {
+    fun visibleZ(x: Float, z: Float, face: Int = 0): Float {
         var d = z
-        while (d < World.MAX_Z && hidden(x, d)) d += Z_STEP
+        while (d < World.MAX_Z && (hidden(x, d) || clipped(x, d, face))) d += Z_STEP
         return d.coerceAtMost(World.MAX_Z)
     }
 

@@ -63,7 +63,7 @@ internal object LiveDepthShots {
      * The room for [looks]: the cats on [spots], the live style at MEDIUM, stepped [seconds] so the
      * camera has followed and the follow has settled. With [hold] the idle drift is put at rest, so
      * the image shows what the pan does and nothing else. [style] is the recorded MEDIUM unless a
-     * test asks for another.
+     * test asks for another; [swayAt] is where a held camera rests (-1 to 1, 0 the middle).
      */
     fun stage(
         looks: List<LiveLook>,
@@ -72,6 +72,7 @@ internal object LiveDepthShots {
         seconds: Float,
         hold: Boolean,
         style: RoomStyle = RECORDED_STYLE,
+        swayAt: Float = 0f,
     ): HouseStage {
         val house =
             HouseLife(
@@ -87,7 +88,7 @@ internal object LiveDepthShots {
         looks.forEachIndexed { i, look -> stage.setSprites(i, sprites(look)) }
         stage.setFedHouse(looks.none { it.weak })
         stage.advance(seconds)
-        if (hold) stage.holdSway(0f)
+        if (hold) stage.holdSway(swayAt)
         return stage
     }
 }

@@ -97,6 +97,12 @@ internal interface CatLayer {
     /** Row of cat [i]'s feet, to order two cats at the same depth. */
     fun feet(i: Int): Float
 
+    /**
+     * World x of cat [i]'s feet, or NaN when the layer does not say: the 2.5D room then cannot tell
+     * a cat standing under a piece it does not fit under ([DepthOrder]).
+     */
+    fun x(i: Int): Float = Float.NaN
+
     /** Draw cat [i] and its shadow. */
     fun draw(i: Int)
 
