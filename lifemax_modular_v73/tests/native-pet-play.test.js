@@ -11,6 +11,9 @@
    Run: NODE_PATH=$(npm root -g) node tests/native-pet-play.test.js [built html] */
 const { chromium } = require('playwright');
 const file = require('./current-page')(process.argv[2]);
+/* Served over http, not file://: a reload of a file:// page in this Chromium sometimes comes back without the page's last
+   localStorage writes (tests/current-page.js), which is what made the after-a-reload step fail now and then. */
+let site = null;
 let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) { pass++; console.log('PASS ' + n) } else { fail++; console.log('FAIL ' + n + (x !== undefined ? '  ' + JSON.stringify(x).slice(0, 900) : '')) } };
 const golden = require('./fixtures/saves/established.json');
 const PLAY = 'pet.play.v1';
@@ -48,7 +51,7 @@ async function start(b, { petCaps = [...PET_CAPS, PLAY], cardCaps = ['overview.c
   }, [JSON.stringify(Object.assign({}, golden.state, { tutorialDone: true, tipsSeen: { dashboard: true } })), golden.extras || {}, JSON.stringify({ nativePet: true, nativeOverview: false, nativeOverviewCards: cards, apps: [] })]);
   await p.addInitScript(FAKE);
   await p.addInitScript(([a, c]) => { window.__caps.NativePet = a; window.__caps.NativeOverviewCards = c }, [petCaps, cardCaps]);
-  await p.goto('file://' + file, { timeout: 120000 });
+  await p.goto(site.url, { timeout: 120000 });
   await p.evaluate(HELPERS);
   await p.evaluate(async ([pet, pet2]) => { lmaThumbWarm = async () => { }; try { lmaThumbWarmBusy = false } catch (e) { } if (pet) await setCats('state.pet=' + pet + (pet2 ? ';state.pet2=' + pet2 : '')); await petInit() }, [pet, pet2]);
   return p;
@@ -56,6 +59,7 @@ async function start(b, { petCaps = [...PET_CAPS, PLAY], cardCaps = ['overview.c
 const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() => showing('NativePet'), 6000); return showing('NativePet') });
 
 (async () => {
+  site = await require('./current-page').serve(file);
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   try {
     /* 1. gating: an older screen is as it was; Play still hands over to the page's tray */
@@ -131,9 +135,13 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
     ok('a game the browser could not store: not ok, taken back (no count, no op kept)', r.a && !r.a.ok && r.a.why === 'unsaved' && r.same && !r.opKept, r);
     const op = await p.evaluate(async () => { const g = game({ op: 'c:play:kept' }); await command('NativePet', 'play', g); return g.op });
     await p.reload(); await p.evaluate(HELPERS);
-    r = await p.evaluate(async (op) => { lmaThumbWarm = async () => { }; await petInit(); navigate('pet'); await until(() => showing('NativePet'), 6000);
+    // after a reload the save and the cat come back asynchronously; a loaded build machine can take many seconds
+    r = await p.evaluate(async (op) => { await until(() => typeof petInit === 'function' && typeof state === 'object' && !!state, 20000);
+      lmaThumbWarm = async () => { }; await petInit(); await until(() => !!(state.pet && typeof state.pet.playsToday === 'number'), 20000);
+      if (!state.pet) return { missing: 'state.pet is still not there 20 s after the reload' };
+      navigate('pet'); await until(() => showing('NativePet'), 20000);
       const plays = state.pet.playsToday; const a = await command('NativePet', 'play', game({ op })); return { a, same: state.pet.playsToday === plays } }, op);
-    ok('a game replayed after a reload is answered "Already recorded." (the op is kept with the save)', r.a && r.a.ok && r.a.message === 'Already recorded.' && r.same, r);
+    ok('a game replayed after a reload is answered "Already recorded." (the op is kept with the save)', !r.missing && r.a && r.a.ok && r.a.message === 'Already recorded.' && r.same, r);
     await p.context().close();
 
     /* 4. two cats: the second cat's game is the second cat's; the Overview cards take it too */
@@ -152,7 +160,7 @@ const toPet = (p) => p.evaluate(async () => { navigate('pet'); await until(() =>
   } catch (e) {
     fail++; console.log('FAIL threw ' + (e && e.stack || e));
   } finally {
-    await b.close();
+    await b.close(); site.close();
   }
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

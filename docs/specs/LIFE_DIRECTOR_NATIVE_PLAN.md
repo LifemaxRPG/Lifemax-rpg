@@ -12,7 +12,8 @@ Goal: a native Life Director whose decisions are provably identical to the page'
 page to native (the "logic phase"). Same method as the economy and quests: spec, golden cases recorded from the page, fresh
 Kotlin that must reproduce every case.
 
-The scheduler spec (`docs/specs/LIFE_DIRECTOR_ENGINE_SPEC.md`, for `engine.js`) is being written separately by an outside agent. This plan
+The scheduler spec (`docs/specs/LIFE_DIRECTOR_ENGINE_SPEC.md`, for `engine.js`) is written by us, part by part as each work package
+starts (owner decision: no outside agent writes it; the brief `docs/briefs/GEMINI_LIFE_DIRECTOR_ENGINE_SPEC.md` is unused). This plan
 covers the rest (the host in `logic.js`, the store, the projection) and how the engine port is proven and sequenced.
 
 ## 1. Summary
@@ -346,6 +347,17 @@ Sizes: S under 3 days, M 3 to 8, L over 8 (of focused work). Packages marked "en
 noted; each one starts by reading its part of that spec and recording the cases.
 
 ### WP-LD1. Recorder harness and the time and hash kernel (M, risk medium) - recommended first
+
+**Status: done** (branch `logic/ld1-kernel`, NativeApi 114). Recorder `tools/gen_ld_kernel_golden.js` (the real page in Chromium,
+node as a second runner; loader `tools/ld_engine_vm.js`, cases `tools/ld_kernel_cases.js`), 15,231 cases in
+`tests/fixtures/ld-kernel-golden.json` (header records the versions), web test `tests/ld-kernel-golden.test.js`; Kotlin kernel in
+`core/lifedirector` (`WallClock`, `ZoneNames`, `PageZone`, `CalendarMath`, `EcmaTime`, `PlanHorizon`, `SlotGrid`, `QuarterHours`,
+`EngineHash`, `DirectorClock`) reproduces every case, with mutation checks; spec sections 0-2, 4 (time, LDT-0 to LDT-22) and 5
+(hashing, LDH-1 to LDH-7) written. Findings: in an autumn fold the page takes the **second** occurrence at and east of Greenwich
+(LD01; `java.time`'s default differs), `java.time` needed its own handling for case-insensitive and legacy zone names and offsets
+past 18:00, and the tz data of the page's ICU and the JVM differ for Vancouver and Chisinau (spec 6.2). Everything in the scope list
+below is covered, plus `createGrid`'s time fields, `dayEndAfter`, `weekKey` and `weekBounds`; `mulberry32` reuses the Daily Hand's
+generator. Open: spec section 9 (OQ-1 to OQ-5), and the device pass.
 
 Scope: `tools/ld_record.js` (vm loader, pinned zone, JSONL writer, canonical form, fixture header with ICU/tzdata version);
 Kotlin: `Clock` interface (seconds and milliseconds), `cyrb53`, `stableId`, `mulberry32`, `localParts`, `tzOffsetSec`,
