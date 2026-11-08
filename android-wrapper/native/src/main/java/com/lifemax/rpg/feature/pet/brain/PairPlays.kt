@@ -44,6 +44,14 @@ internal class PairPlays(internal val minds: List<CatMind>, internal val rng: ()
     internal fun meetZ(x: Float, z: Float): Float =
         Occluders.visibleZ(x, z.coerceIn(t.MEET_Z_LO, t.MEET_Z_HI))
 
+    /**
+     * [z], or nearer where a cat standing at [a] or [b] would be hidden or have its head under the
+     * cat tree's platform ([Occluders.visibleZ]): the two cats of a moment stand either side of
+     * where they meet, and each must be in plain view.
+     */
+    internal fun clearZ(z: Float, a: Float, b: Float): Float =
+        maxOf(Occluders.visibleZ(a, z), Occluders.visibleZ(b, z))
+
     internal fun inHouse(x: Float): Float =
         x.coerceIn(World.HOUSE_MIN_X + t.EDGE_PX, World.HOUSE_MAX_X - t.EDGE_PX)
 
@@ -87,7 +95,9 @@ internal class PairPlays(internal val minds: List<CatMind>, internal val rng: ()
         val dir = if (m.exec.x >= from) 1f else -1f
         var x = World.clampHouse(m.exec.x + dir * range(lo, hi))
         if (Math.abs(x - from) < lo) x = World.clampHouse(m.exec.x - dir * range(lo, hi))
-        if (run) dash(x, m.exec.z) else stroll(x, m.exec.z)
+        // it stops there (to sit and wash): in view, not under the cat tree's platform
+        val z = if (Occluders.clipped(x, m.exec.z)) Occluders.visibleZ(x, m.exec.z) else m.exec.z
+        if (run) dash(x, z) else stroll(x, z)
     }
 
     // ---------------------------------------------------------------- nose touch
@@ -102,9 +112,11 @@ internal class PairPlays(internal val minds: List<CatMind>, internal val rng: ()
         val bx = b.exec.x
         val far = Math.abs(ax - bx) > t.MEET_FAR_PX
         val mid = inHouse(if (far) bx + Math.signum(ax - bx) * t.MEET_NEAR_PX else (ax + bx) / 2f)
-        val z = meetZ(mid, (floorZ(a) + floorZ(b)) / 2f)
-        val gap = PairPose.GREET.gap(stage(a), stage(b), z)
         val side = if (ax <= bx) -1 else 1
+        val near = meetZ(mid, (floorZ(a) + floorZ(b)) / 2f)
+        val half = PairPose.GREET.gap(stage(a), stage(b), near) / 2f
+        val z = clearZ(near, mid + side * half, mid - side * half)
+        val gap = PairPose.GREET.gap(stage(a), stage(b), z)
         o.mx = mid
         o.mz = z
         val st = Stage(final = false)
@@ -217,7 +229,7 @@ internal class PairPlays(internal val minds: List<CatMind>, internal val rng: ()
         )
             f = -f
         val xc = inHouse(rx - f * t.CHASE_LINE_PX)
-        val z = meetZ(rx, floorZ(r))
+        val z = clearZ(meetZ(rx, floorZ(r)), rx, xc)
         o.f = f
         o.mz = z
         val st = Stage(final = false)
@@ -257,8 +269,10 @@ internal class PairPlays(internal val minds: List<CatMind>, internal val rng: ()
         val r = minds[o.b]
         val f = o.f
         val target = inHouse(r.exec.x + f * range(t.CHASE_RUN_LO, t.CHASE_RUN_HI))
-        val z = meetZ(target, o.mz + range(-DEPTH_WOBBLE, DEPTH_WOBBLE))
+        val near = meetZ(target, o.mz + range(-DEPTH_WOBBLE, DEPTH_WOBBLE))
         val size = (c.persona.growthScale + r.persona.growthScale) / 2f
+        val reach = t.CHASE_CATCH_PX * World.depthScale(near) * size
+        val z = clearZ(near, target, World.clampHouse(target - f * reach))
         val gap = t.CHASE_CATCH_PX * World.depthScale(z) * size
         o.tx = target
         val st = Stage(final = false)

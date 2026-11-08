@@ -3628,7 +3628,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-pet.js",
-   "bytes": 21929,
+   "bytes": 22084,
    "statement_count": 1,
    "tags": [
     "native",
@@ -3684,6 +3684,20 @@
     "window.writeSave",
     "window.haptic",
     "window.NativePetPlay"
+   ]
+  },
+  {
+   "file": "src/runtime/segments/50-native-pet-demo.js",
+   "bytes": 1920,
+   "statement_count": 1,
+   "tags": [
+    "native",
+    "pet",
+    "demo"
+   ],
+   "symbols": [
+    "window.toggleDevMode",
+    "window.NativePetDemo"
    ]
   },
   {

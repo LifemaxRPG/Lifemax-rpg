@@ -56,6 +56,7 @@ class NativePetPlugin : ComposeTabPlugin() {
             WorldContract.CAPABILITY,
             "pet.play.v1",
             WorldContract.SOCIAL_CAPABILITY,
+            "pet.demo.v1",
         )
 
     /**

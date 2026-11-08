@@ -370,6 +370,8 @@ internal class HouseStage(
 
     override fun feet(i: Int): Float = house.bodies[visible[i]].pose.y
 
+    override fun x(i: Int): Float = house.bodies[visible[i]].pose.x
+
     override fun surface(i: Int): String? = house.bodies[visible[i]].pose.surface.key
 
     /**

@@ -13,6 +13,10 @@ package com.lifemax.rpg.feature.pet.room
  *   nearer ones: those are pulled back to just before the cat, since a cat on a seat is on top of
  *   the seat's front, not behind it. Other pieces still sort by their own depth, so the cushion
  *   standing in front of the seat stays in front of the cat and the platform above covers its ears;
+ * - a cat on the floor standing inside a piece it does not fit under (under the cat tree's middle
+ *   platform, sitting up, at the cats' own floor depth) is drawn after every band of the pieces it
+ *   stands inside ([build]'s `catBefore`): in front of the tree, as a cat that tall would have to
+ *   be, not with the platform's front across its head and its ears above it;
  * - two cats go by how near they reach (a cat on a piece reaches its front), then lower first if
  *   both are on pieces (the cat on the middle platform, the top platform's front, the cat on top),
  *   else by the row of their feet; a cat is never drawn before the one ordered ahead of it.
@@ -35,7 +39,8 @@ internal class DepthOrder(capacity: Int) {
     /**
      * Work out the order of [step] with [count] cats at floor rows [catKey] (feet rows [catFeet])
      * standing on the pieces [catAnchor] (an index into the step's pieces, or -1 for none), each
-     * under the piece [catCover] (drawn wholly after the cat; -1 for none).
+     * under the piece [catCover] (drawn wholly after the cat; -1 for none) and in front of the
+     * pieces [catBefore] (a bit per piece, drawn wholly before the cat; 0 for none).
      */
     fun build(
         step: BandSet,
@@ -45,13 +50,16 @@ internal class DepthOrder(capacity: Int) {
         catFeet: FloatArray,
         catAnchor: IntArray,
         catCover: IntArray = NO_COVER,
+        catBefore: IntArray = NO_BEFORE,
     ) {
         cover = catCover
+        before = catBefore
         val n = count.coerceAtMost(MAX_CATS)
         for (i in 0 until n) {
             catOrder[i] = i
             val a = catAnchor[i]
             reach[i] = if (a >= 0) maxOf(catKey[i], step.key[step.end[a] - 1]) else catKey[i]
+            reach[i] = nearest(step, catBefore[i], reach[i])
         }
         if (n == 2 && behind(1, 0, catFeet, catAnchor)) {
             catOrder[0] = 1
@@ -82,8 +90,20 @@ internal class DepthOrder(capacity: Int) {
             emitCat(step, catOrder[k], catKey, catAnchor)
     }
 
-    /** Cat [cat], after the nearer bands of the piece it stands on. */
+    /** Cat [cat], after the nearer bands of the piece it stands on and those it is in front of. */
     private fun emitCat(step: BandSet, cat: Int, catKey: FloatArray, catAnchor: IntArray) {
+        val mask = before[cat]
+        if (mask != 0) {
+            for (p in step.first.indices) {
+                if (mask and (1 shl p) == 0) continue
+                for (b in step.first[p] until step.end[p]) {
+                    if (!drawn[b]) {
+                        drawn[b] = true
+                        order[size++] = b
+                    }
+                }
+            }
+        }
         val anchor = catAnchor[cat]
         if (anchor >= 0) {
             for (b in step.first[anchor] until step.end[anchor]) {
@@ -112,7 +132,19 @@ internal class DepthOrder(capacity: Int) {
         return false
     }
 
+    /** The nearest of [from] and the rows of every band of the pieces in [mask]. */
+    private fun nearest(step: BandSet, mask: Int, from: Float): Float {
+        var reach = from
+        if (mask == 0) return reach
+        for (p in step.first.indices) {
+            if (mask and (1 shl p) == 0) continue
+            for (b in step.first[p] until step.end[p]) reach = maxOf(reach, step.key[b])
+        }
+        return reach
+    }
+
     private var cover = NO_COVER
+    private var before = NO_BEFORE
 
     /**
      * Whether cat [a] goes before cat [b]: the one that reaches less near first (a cat on a piece
@@ -139,5 +171,9 @@ internal class DepthOrder(capacity: Int) {
         const val CAT_AFTER = 0.001f
 
         private val NO_COVER = intArrayOf(-1, -1)
+        private val NO_BEFORE = intArrayOf(0, 0)
+
+        /** The most pieces a [build] `catBefore` mask can name (a bit each). */
+        const val MAX_PIECES = 31
     }
 }

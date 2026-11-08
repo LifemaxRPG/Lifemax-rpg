@@ -151,6 +151,17 @@ class CatWorldHost(
         }
     }
 
+    /**
+     * DEVELOPER DEMO: one cat runs a parkour tour now (the Cat tab's "Demo parkour" button). Null
+     * when no world is running that the brain moves. No data effects (nothing goes to the page).
+     */
+    fun demoParkour(): PlayAnswer? {
+        synchronized(lock) {
+            val b = brain?.takeIf { active && it.drivesBodies } ?: return null
+            return b.demoParkour()
+        }
+    }
+
     /** The living cats of the world as the page last described them. */
     @Volatile
     var cats: List<WorldCat> = emptyList()

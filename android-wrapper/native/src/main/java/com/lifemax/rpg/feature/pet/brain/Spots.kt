@@ -40,10 +40,13 @@ class Spot(
     val room: Int = World.roomOf(x)
 
     /**
-     * A floor place where nearer furniture would hide most of a resting cat (in either room): no
-     * activity is chosen there ([Occluders]).
+     * A floor place where nearer furniture would hide most of a resting cat (in either room), or
+     * where a cat sitting up would have its head inside the cat tree's platform: no activity is
+     * chosen there ([Occluders]). A bowl stays where the page put it; the room draws a cat at the
+     * second bowl, half under the tree, in front of the tree.
      */
-    val hidden: Boolean = onFloor && Occluders.hidden(x, z)
+    val hidden: Boolean =
+        onFloor && (Occluders.hidden(x, z) || (!has(Spots.BOWL) && Occluders.clipped(x, z, face)))
 }
 
 /**
@@ -101,7 +104,10 @@ object Spots {
     // behind it (once at -128, depth 22) the sofa hid all of a cat in the 2.5D room
     val BEHIND_CUSHION =
         add("behind the cushion", "lrug", SurfaceId.FLOOR, -150f, REST or HIDDEN or SLEEP, z = 30f)
-    val SCRATCH_TREE = add("tree post", "tree", SurfaceId.FLOOR, 134f, SCRATCH, face = 1)
+    // in front of the tree: at the cats' own floor depth the cat stood under the middle platform,
+    // and its ears came out above the platform's front ("poking through the cat tree")
+    val SCRATCH_TREE =
+        add("tree post", "tree", SurfaceId.FLOOR, 134f, SCRATCH, z = TREE_FRONT_Z, face = 1)
     // the sofa's front, clear of the pouf (at -50 the pouf hid over a third of the cat)
     val SCRATCH_SOFA = add("sofa arm", "couch", SurfaceId.FLOOR, -60f, SCRATCH, face = -1)
     val BOWL_0 =
@@ -135,4 +141,7 @@ object Spots {
     }
 
     private const val NEAR_FLOOR_PX = 24f
+
+    /** The nearest floor depth in front of the cat tree's footprint (row 137.4; it ends at 137). */
+    private const val TREE_FRONT_Z = 47f
 }

@@ -112,7 +112,15 @@ data class PetProjection(
      * from an older page, whose Play is still the page's own tray.
      */
     val play: PetPlay? = null,
+    /**
+     * The developer demo button (`pet.demo.v1`): present only while the page's developer mode is
+     * on, for a screen that said the capability; null otherwise (the button is hidden).
+     */
+    val demo: PetDemo? = null,
 )
+
+/** The developer demo button, in the page's words: its [label] and the spoken [hint]. */
+data class PetDemo(val label: String, val hint: String)
 
 /**
  * The toy tray under Play, in the page's words: its [title], the [pick] tile ("Let Ted pick"),
