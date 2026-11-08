@@ -1,5 +1,7 @@
 package com.lifemax.rpg.core.quests
 
+import com.lifemax.rpg.core.adapters.FixedDeviceClock
+import com.lifemax.rpg.core.adapters.boardReading
 import com.lifemax.rpg.core.economy.EconomyClock
 import com.lifemax.rpg.core.golden.GoldenFiles
 import com.lifemax.rpg.core.quests.HandGoldenReplay.THREW
@@ -41,7 +43,9 @@ object BoardGoldenReplay {
         case: JsonObject,
         content: QuestContent,
         tuning: BoardTuning = BoardTuning.PAGE,
-        clockFor: (EconomyClock) -> BoardClock = BoardClock::of,
+        clockFor: (EconomyClock) -> BoardClock = {
+            FixedDeviceClock(it.now, it.zone).boardReading()
+        },
         checkClock: Boolean = true,
     ): String? {
         val adapters =

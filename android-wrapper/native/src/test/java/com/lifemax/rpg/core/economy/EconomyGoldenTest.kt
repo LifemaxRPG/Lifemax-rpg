@@ -46,7 +46,10 @@ class EconomyGoldenTest(private val id: String, private val case: Map<String, An
         fun parameters(): List<Array<Any>> = cases.map { arrayOf(it["id"] as String, it) }
 
         /** Runs one case and lists what differs from the recording; empty when it reproduces. */
-        fun differences(case: Map<String, Any?>): List<String> {
+        internal fun differences(
+            case: Map<String, Any?>,
+            mutate: (GoldenRun) -> Unit = {},
+        ): List<String> {
             val input = case["input"].obj()
             val output = case["output"].obj()
             val start = fresh + input["state"].obj()
@@ -59,6 +62,7 @@ class EconomyGoldenTest(private val id: String, private val case: Map<String, An
                             ?: DEFAULT_NOW,
                     zone = ZoneId.of((input["zone"] as? String) ?: "UTC"),
                 )
+            mutate(run)
             val returns = input["calls"].list().map { run.call(it.obj()) }
             val problems = mutableListOf<String>()
             val expectedReturns = output["returns"].list()

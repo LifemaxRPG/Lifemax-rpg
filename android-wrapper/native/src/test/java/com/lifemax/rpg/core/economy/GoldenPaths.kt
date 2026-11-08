@@ -1,5 +1,7 @@
 package com.lifemax.rpg.core.economy
 
+import com.lifemax.rpg.core.adapters.HealthReads
+
 /** The award paths beyond Log and quests (section 11.3 onward), as the golden cases call them. */
 internal object GoldenPaths {
     fun dispatch(
@@ -8,6 +10,7 @@ internal object GoldenPaths {
         args: List<Any?>,
         env: Map<String, Any?>,
         ctx: EconomyContext,
+        health: HealthConnect?,
     ): Any? {
         val s = run.save
         fun arg(i: Int) = args.getOrNull(i)
@@ -78,16 +81,7 @@ internal object GoldenPaths {
                 }
             }
             "lmaHealthAward" -> run.apply(Health.award(s, healthImport(arg(0).obj()), ctx))
-            "lmaHealthSync" ->
-                run.apply(
-                        Health.sync(
-                            s,
-                            env["health"]?.obj()?.let(::FakeHealthConnect),
-                            truthy(arg(0)),
-                            ctx,
-                        )
-                    )
-                    .let { null }
+            "lmaHealthSync" -> run.apply(Health.sync(s, health, truthy(arg(0)), ctx)).let { null }
             "lmvActType" ->
                 Voice.activityType(text(arg(0))).let {
                     mapOf("type" to it.type, "name" to it.name, "noun" to it.noun)
@@ -261,7 +255,7 @@ internal object GoldenPaths {
      * The Health Connect plugin as a golden case fakes it: fixed answers, and [FAIL] for the read
      * named `fail`.
      */
-    private class FakeHealthConnect(private val fake: Map<String, Any?>) : HealthConnect {
+    internal class GoldenHealthReads(private val fake: Map<String, Any?>) : HealthReads {
         private fun read(name: String) {
             if (fake["fail"] == name) throw IllegalStateException(FAIL)
         }
@@ -288,7 +282,7 @@ internal object GoldenPaths {
             }
         }
 
-        override fun steps(days: Int): List<HealthConnect.StepDay> {
+        override fun steps(from: Long, to: Long): List<HealthConnect.StepDay> {
             read("steps")
             return fake["steps"].list().map { d ->
                 d.obj().let { HealthConnect.StepDay(text(it["date"]), it.num("count")) }
@@ -308,7 +302,7 @@ internal object GoldenPaths {
             }
         }
 
-        override fun weight(days: Int): HealthConnect.Weight? {
+        override fun weight(from: Long, to: Long): HealthConnect.Weight? {
             read("weight")
             return fake["weight"]?.obj()?.let {
                 HealthConnect.Weight(it["kg"]?.let { kg -> num(kg) }, it.num("time"))

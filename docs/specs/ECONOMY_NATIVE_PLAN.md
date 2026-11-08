@@ -42,7 +42,7 @@ verification of the economy. There are no hand-written Kotlin unit tests for it.
 | 10 Attribute split, ascension stars | complete | `Scoring.kt` (`starXp`) | stars (38) |
 | 11.1 Log | complete | `LogActivity.kt` | log (50), log-clean (9) |
 | 11.2 Quests (toggle, create, xp, locks) | complete as economy; no quest content | `Quests.kt` | quest (60) |
-| 11.3 Health sync | complete behind an interface; Android adapter not wired to core | `Health.kt`, `HealthState.kt`; `bridge/web/HealthSyncPlugin.kt` exists separately | health (63) |
+| 11.3 Health sync | complete behind an interface; read-only Android adapter `bridge/health/HealthConnectReads.kt` (WP5), not wired | `Health.kt`, `HealthState.kt`, `core/adapters/HealthAdapter.kt`; `bridge/web/HealthSyncPlugin.kt` stays the page's route | health (63) |
 | 11.4 Voice past-log | complete | `Voice.kt` | voice (21) |
 | 11.5 Life Director awards | complete for the two award entry points (`xpFor`, `awardActivity`, `completeQuest`); the Life Director engine itself is not in this module | `LifeDirector.kt` | director (59) |
 | 11.6 Nutrition, cat care, money | complete | `Bonuses.kt` | nutrition (11), care (6), money (26) |
@@ -309,6 +309,56 @@ journal coach store. No writes.
 Tests: fake adapters run the existing golden `health` and `quest` cases through the adapter layer (not only the pure
 functions); a clock-change and time-zone case family (`zone`, `time`) through the adapter.
 Decision: none.
+
+**Status: done** (read-only; nothing is wired to a screen, no page, bridge or economy rule changed; NativeApi 104). What exists, in
+`core/adapters/` unless said (pure Kotlin, no Android types; each file under 130 lines):
+- `DeviceClock` (injectable: `nowMillis()`, `zone()`; `SystemDeviceClock`), `reading()` (an `EconomyClock`) and `boardReading()` (a
+  `BoardClock`). Behaviour, pinned by the golden family and `AdaptersTest`: one reading per action (`ContextFactory.begin()`), nothing
+  cached; the day key is a pure function of instant and zone, so daylight saving, Santiago's missing midnight, UTC+14/-11, Apia's skipped
+  day, leap days and month ends need no special case; a manual clock change (back or forward) is followed at once and never repaired; a
+  zone change applies from the next reading. `PageDays.dayOf` is `activityDate` for a stored value.
+- `SaveView`/`SaveSource`/`SaveHolder` (the latest decoded save, last good one kept on a refusal; `SaveHolder.load` is called by nobody
+  yet: how the saved text reaches native is WP6's wiring) and `HandFacts.kt`: `SaveFacts` (water percent, cat counts, luck score) and
+  `HandFactsAdapter` (`DailyHandFacts`). `ContextFactory.begin()` returns `ActionInputs`: the `EconomyContext` (clock, hand facts, plan rest
+  days, locale, storage mode), the `HealthConnect` port and the `HandContext` of the Daily Hand (today, `luckToday().score`, `ecoRestDay`
+  composed from rest days taken, recovery sessions and the plan, `activityDate`). `CoachStore`/`SaveCoachStore`: the journal coach's marks
+  and reflections, read side. `RandomIdSource`.
+- `HealthAdapter` over `HealthReads` (the plugin's reads with explicit ranges; steps 30 days and weight 60 count back from the action's
+  own instant; `NoHealthReads` = unavailable). Production: `bridge/health/HealthConnectReads.kt` (same reads, ranges and error wording as
+  `HealthSyncPlugin`, steps cut into days in the device zone; type-checked against the Health Connect client and the Android SDK jars,
+  not run on a phone). Plan: `feature/plan/data/ProjectionPlanFacts.kt`.
+- **One source of truth per fact.** now, zone, today, week: the device clock. Water percent (`waterLog` of today over `mealsMeta.waterGoalMl`),
+  cat counts (`state.pet`: alive, `day` is today, `fedToday`/`petsToday`/`playsToday` > 0), luck (`state.luck`: today, version 2, four dice,
+  numeric score), rest days taken, records, coach memory: the decoded save while the page is the writer. Plan done and plan rest days: the
+  plan screen's projection (`DayStatus.DONE` is `dayDone`, kind `rest` is `planDay(...).kind`), because the plan's content is page code, not
+  save data. Workouts, steps, sleep, weight: Health Connect.
+- Fixture `tests/fixtures/device-context-golden.json` (98 cases, 228 KB; generator `tools/gen_device_context_golden.js` with cases in
+  `tools/device_context_cases.js`, page test `tests/device-context-golden.test.js` records every case again and fails on any byte): clock 21
+  (twenty-one frozen clocks, seven instants each, 18 record-date forms each), clockmove 6 (clock set back and forward by hand), zonemove 3
+  (the browser's own zone override changes between calls), exotic 4, facts 61 (`dhVerifyMet` for water, cat, plan, `luckToday`, `ecoRestDay`,
+  `dayDone`), factsodd 3.
+- Tests: `DeviceContextGoldenTest` (every faithful case replays exactly; the exotic and factsodd differences are pinned exactly; the
+  economy's `weekMonday` equals the page's `weekStart()` everywhere), `DeviceContextMutationTest` (8 wrong adapters, each caught),
+  `AdapterGoldenTest` (the economy golden families health 63, quest 60, zone 7, time 11 pass through the adapters, and so does every other
+  family: `GoldenRun` builds its context only through `ContextFactory`; 4 mutations caught), `AdaptersTest` (14 checks incl. the water
+  comparison against the page's formula over 10,000+ points), and the Daily Hand and board goldens now take their `HandContext` and
+  `BoardClock` from the adapters (`quests-golden` 842 cases and `quests-board-golden` 1011 cases still pass). Gradle did not fit on the shared
+  disk; the Kotlin tests were compiled and run directly with the Gradle-cache Kotlin 2.0.21 and JUnit 4.13.2 (2,727 tests, all green).
+- **What the adapters cannot reproduce, with a recommendation** (all pinned in `DeviceContextGoldenTest`):
+  1. Record dates the page's legacy `Date` parser reads but the economy (ISO only, TIME-4) calls `Invalid Date`: `2026-02-30T...` (the page
+     rolls it to 2 March), `2026-10-28 10:00` and `10/28/2026`. No record the app writes has such a date; if imports can carry them,
+     normalise on import, or widen `EconomyClock.parseInstant`.
+  2. `DailyHand.isMet` (economy `Quests.kt`) reads `water:` with no or a zero number as 0% (passes), where the page needs 100%
+     (`Number(v[1]) || 100`); and an unknown `pet:` care name never passes where the page reads it as play. No template uses either; fix
+     `isMet` before WP6 shadows it.
+  3. A `null` entry in `waterLog` makes the page's check throw (the auto-verify catches it and the card does not pay); the adapter skips the
+     entry. Corrupt data only.
+  4. The page's Health sync also writes a display snapshot (`H.snap`: today's and recent workouts, 30 days of steps, nights, weight in lb)
+     that `Health.kt`/`HealthState` do not produce; it is not economy state, but a native Health screen needs it from `HealthReads`.
+  5. Plan done and plan rest days exist natively only as the plan screen's projection (fresh as of the page's last push); a native-only
+     writer (WP8) needs the plan's content (`planDay`) ported first.
+  6. `H.since`/`sinceDay` and the sync's `now` come from the action's single reading, where the page calls `Date.now()` several times in one
+     sync; they differ only across midnight or a clock change in the middle of a sync.
 
 ### WP6. Shadow mode: native computes, page still writes (L, risk medium)
 

@@ -1,7 +1,17 @@
 package com.lifemax.rpg.core.economy
 
+import com.lifemax.rpg.core.adapters.ActionInputs
+import com.lifemax.rpg.core.adapters.ContextFactory
+import com.lifemax.rpg.core.adapters.DeviceClock
+import com.lifemax.rpg.core.adapters.FakePlanFacts
+import com.lifemax.rpg.core.adapters.FixedDeviceClock
+import com.lifemax.rpg.core.adapters.HealthReads
+import com.lifemax.rpg.core.adapters.NoHealthReads
+import com.lifemax.rpg.core.adapters.SaveSource
+import com.lifemax.rpg.core.adapters.SaveView
 import java.time.Instant
 import java.time.ZoneId
+import java.util.Locale
 
 /**
  * One golden case being replayed: the save, the clock, the id source and the toasts so far. [call]
@@ -10,9 +20,18 @@ import java.time.ZoneId
 internal class GoldenRun(
     private val fresh: Map<String, Any?>,
     start: Map<String, Any?>,
-    var now: Long,
+    now: Long,
     val zone: ZoneId,
 ) {
+    /** The device clock the adapters read; the cases move it with `at`. */
+    val device = FixedDeviceClock(now, zone)
+
+    var now: Long
+        get() = device.now
+        set(value) {
+            device.now = value
+        }
+
     var raw: Map<String, Any?> = start
     var document = SaveCodec.document(start)
     var save: EconomySave = SaveCodec.decode(start)
@@ -52,18 +71,30 @@ internal class GoldenRun(
             )
     }
 
-    fun context(env: Map<String, Any?> = emptyMap()) =
-        EconomyContext(
-            clock = EconomyClock(now, zone),
-            ids = ids,
-            storage =
-                when {
-                    readOnly || env["failSave"] == "readonly" -> Storage.ReadOnly
-                    env["failSave"] != null -> Storage.Full
-                    else -> Storage.Writable
-                },
-            isPlanRestDay = ::isPlanRestDay,
-        )
+    /**
+     * Every case runs through the adapter layer: the clock, the Daily Hand facts, the plan's rest
+     * days and Health Connect reach the pure code only as the production adapters build them from
+     * the recorded save, clock and zone.
+     */
+    /** Mutation checks wrap the adapters' sources here; a replay must then notice. */
+    var wrapReads: (HealthReads) -> HealthReads = { it }
+    var wrapDevice: (DeviceClock) -> DeviceClock = { it }
+
+    fun inputs(env: Map<String, Any?> = emptyMap()): ActionInputs {
+        val storage =
+            when {
+                readOnly || env["failSave"] == "readonly" -> Storage.ReadOnly
+                env["failSave"] != null -> Storage.Full
+                else -> Storage.Writable
+            }
+        val reads = env["health"]?.obj()?.let { GoldenPaths.GoldenHealthReads(it) } ?: NoHealthReads
+        val clock = wrapDevice(device)
+        val source = SaveSource { SaveView(save, document.stored) }
+        val plan = FakePlanFacts(rest = ::isPlanRestDay)
+        return ContextFactory(clock, source, plan, wrapReads(reads), ids, Locale.US).begin(storage)
+    }
+
+    fun context(env: Map<String, Any?> = emptyMap()) = inputs(env).economy
 
     /**
      * The default plan rests on Sundays from the day it starts (`planDay`, outside the economy).

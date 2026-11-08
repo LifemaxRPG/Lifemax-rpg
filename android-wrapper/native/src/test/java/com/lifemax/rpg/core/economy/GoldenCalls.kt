@@ -3,7 +3,8 @@ package com.lifemax.rpg.core.economy
 /** The page's functions, as the golden cases call them, mapped onto this module. */
 internal object GoldenCalls {
     fun dispatch(run: GoldenRun, fn: String, args: List<Any?>, env: Map<String, Any?>): Any? {
-        val ctx = run.context(env)
+        val inputs = run.inputs(env)
+        val ctx = inputs.economy
         val s = run.save
         fun arg(i: Int) = args.getOrNull(i)
         fun quest(i: Int) = s.quests.first { it.id == text(arg(i)) }
@@ -157,7 +158,15 @@ internal object GoldenCalls {
                         SavePipeline.deleteActivity(s, text(arg(0)), ctx, env["confirm"] != false)
                     )
                     .let { null }
-            else -> GoldenPaths.dispatch(run, fn, args, env, ctx)
+            else ->
+                GoldenPaths.dispatch(
+                    run,
+                    fn,
+                    args,
+                    env,
+                    ctx,
+                    inputs.health.takeIf { env["health"] != null },
+                )
         }.let { if (it is Unit) null else it }
     }
 

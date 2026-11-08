@@ -1,8 +1,13 @@
 package com.lifemax.rpg.core.quests
 
+import com.lifemax.rpg.core.adapters.ContextFactory
+import com.lifemax.rpg.core.adapters.FakePlanFacts
+import com.lifemax.rpg.core.adapters.FixedDeviceClock
+import com.lifemax.rpg.core.adapters.SaveView
 import com.lifemax.rpg.core.economy.EconomyClock
 import com.lifemax.rpg.core.golden.GoldenFiles
 import com.lifemax.rpg.core.quests.Js.with
+import com.lifemax.rpg.core.save.EconomySaveCodec
 import com.lifemax.rpg.core.save.JsonArray
 import com.lifemax.rpg.core.save.JsonBool
 import com.lifemax.rpg.core.save.JsonNull
@@ -13,6 +18,8 @@ import com.lifemax.rpg.core.save.JsonReader
 import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
 import com.lifemax.rpg.core.save.JsonWriter
+import com.lifemax.rpg.core.save.SaveDecoding
+import com.lifemax.rpg.core.save.SaveReading
 import java.time.Instant
 import java.time.ZoneId
 
@@ -51,8 +58,12 @@ object HandGoldenReplay {
             (call["at"] as? JsonString)?.let { now = it.value }
             val clock = EconomyClock(Instant.parse(now).toEpochMilli(), zone)
             val ctx =
-                context(call["ctx"] as JsonObject, clock)
-                    ?: return "call $i: the clock adapter gives another day"
+                try {
+                    context(call["ctx"] as JsonObject, clock, save)
+                        ?: return "call $i: the clock adapter gives another day"
+                } catch (e: IllegalStateException) {
+                    return "call $i: ${e.message}"
+                }
             val fn = text(call["fn"])
             val args = (call["args"] as? JsonArray)?.items.orEmpty()
             val (returns, after) = dispatch(fn, args, save, ctx, dealer, content)
@@ -77,36 +88,41 @@ object HandGoldenReplay {
     }
 
     /**
-     * The recorded outside inputs, as a [HandContext]. The day of a record is read with the
-     * economy's clock (TIME-4), which must give the same today as the page did, or the case is
-     * refused.
+     * The Daily Hand's outside inputs, built by the production adapters ([ContextFactory]) from the
+     * recorded save and clock, with a plan that says what the page's `ecoRestDay` said for the
+     * plan's part. The recorded inputs are then only checked: today, the luck roll and every rest
+     * day the page recorded must come out of the adapters as the page had them.
      */
-    private fun context(ctx: JsonObject, clock: EconomyClock): HandContext? {
+    private fun context(ctx: JsonObject, clock: EconomyClock, save: JsonObject): HandContext? {
         val today = text(ctx["today"])
         if (clock.today != today) return null
         val rest = (ctx["rest"] as JsonObject).members
-        return HandContext(
-            today = today,
-            luckScore = (ctx["luck"] as? JsonNumber)?.value,
-            isRestDay = { day ->
-                (rest[day] as? JsonBool)?.value
-                    ?: error(
-                        "the draw asked whether $day is a rest day; the page did not record it"
-                    )
-            },
-            dayOf = { date -> dayOf(date, clock) },
-        )
-    }
-
-    /** `new Date(v).toLocaleDateString('en-CA')` for the record dates the cases hold. */
-    private fun dayOf(date: JsonValue?, clock: EconomyClock): String =
-        when (date) {
-            null -> EconomyClock.INVALID_DAY
-            JsonNull -> clock.localDate(0)
-            is JsonString -> clock.dayOf(date.value)
-            is JsonNumber -> clock.localDate(date.value.toLong())
-            else -> EconomyClock.INVALID_DAY
+        val decoded =
+            EconomySaveCodec.decode(save, SaveReading.AS_PAGE) as? SaveDecoding.Decoded
+                ?: error("the recorded save does not decode")
+        val view = SaveView.of(decoded)
+        val plan =
+            FakePlanFacts(
+                rest = { day ->
+                    (rest[day] as? JsonBool)?.value
+                        ?: error(
+                            "the draw asked whether $day is a rest day; the page did not record it"
+                        )
+                }
+            )
+        val hand =
+            ContextFactory(FixedDeviceClock(clock.now, clock.zone), { view }, plan).begin().hand!!
+        check(hand.luckScore == (ctx["luck"] as? JsonNumber)?.value) {
+            "the luck adapter gives ${hand.luckScore}, the page had ${show(ctx["luck"])}"
         }
+        for ((day, recorded) in rest) {
+            val page = (recorded as? JsonBool)?.value ?: continue
+            check(hand.isRestDay(day) == page) {
+                "the rest-day adapters say ${hand.isRestDay(day)} for $day, the page said $page"
+            }
+        }
+        return hand
+    }
 
     /** The adapter table: the page's function name to the native call. */
     private fun dispatch(
