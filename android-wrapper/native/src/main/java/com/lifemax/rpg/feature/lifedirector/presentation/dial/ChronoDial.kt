@@ -116,6 +116,7 @@ fun ChronoDial(
     calendarDate: String = "",
     onToday: (() -> Unit)? = null,
     todayOffset: Int = 0,
+    onAddAt: ((Long) -> Unit)? = null,
 ) {
     val text = rememberTextMeasurer()
     val face =
@@ -247,6 +248,14 @@ fun ChronoDial(
             DayWheelInput(
                 days.size,
                 selectedDay,
+                hold =
+                    onAddAt?.let { add ->
+                        { angle ->
+                            val epoch =
+                                dial.start + ((dial.end - dial.start) * angle / 360f).toLong()
+                            add(((epoch + 450) / 900 * 900).coerceIn(dial.start, dial.end - 900))
+                        }
+                    },
                 begin = {
                     previewDay = selectedDay
                     scrubbingDays = true

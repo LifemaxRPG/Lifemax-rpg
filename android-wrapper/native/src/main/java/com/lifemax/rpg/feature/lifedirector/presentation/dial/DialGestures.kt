@@ -182,12 +182,57 @@ internal class DialGestures(
         down: PointerInputChange,
         unit: Float,
     ) {
+        if (wheel.hold != null) {
+            val rotating =
+                withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                    var decision: Boolean? = null
+                    while (decision == null) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val pointer = event.changes.firstOrNull { it.id == down.id }
+                        if (
+                            pointer == null ||
+                                !pointer.pressed ||
+                                pointer.isConsumed ||
+                                event.changes.count { it.pressed } > 1
+                        )
+                            decision = false
+                        else if (
+                            (pointer.position - down.position).getDistance() >
+                                viewConfiguration.touchSlop
+                        )
+                            decision = true
+                        event.changes.forEach { it.consume() }
+                    }
+                    decision
+                }
+            if (rotating == false) return
+            if (rotating == null) {
+                buzz?.buzz(24)
+                wheel.hold.invoke(DialGeometry.angleAt(down.position / unit))
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    event.changes.forEach { it.consume() }
+                } while (event.changes.any { it.pressed })
+                return
+            }
+        }
         val travel =
             DayWheel(wheel.selected, wheel.count, DialGeometry.angleAt(down.position / unit))
         var moved = false
         var cancelled = true
         var last = down.uptimeMillis
         wheel.begin()
+        currentEvent.changes
+            .firstOrNull { it.id == down.id && it.pressed }
+            ?.let { first ->
+                if ((first.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    moved = true
+                    wheel.preview(
+                        travel.move(DialGeometry.angleAt(first.position / unit)),
+                        travel.rotation,
+                    )
+                }
+            }
         try {
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)

@@ -470,6 +470,9 @@ private fun TodayTop(
         todayOffset = today.calendarOffset + today.dayIndex,
         selectedDay = ui.pendingDay?.minus(today.calendarOffset) ?: today.dayIndex,
         onDay = { actions.day(today.calendarOffset + it) },
+        onAddAt = {
+            actions.tap(com.lifemax.rpg.feature.lifedirector.domain.Tap("addAt", it.toString()))
+        },
         onToday = {
             actions.session.close()
             actions.day(0)

@@ -2468,6 +2468,33 @@ const LifeDirectorApp = (function () {
     },
     /* a new goal: the goal form's fields by key (goalFormModel), for the kind arch. Its id is named from op (its first 12 characters,
        a UUID's), so the same request again finds it ("Already added"). */
+    activityAtAdd({ op, title, tag, date, start, minutes }) {
+      if (!op || typeof op !== 'string' || op.length > 128) return refuse(NO_OP);
+      const id = 'manual-' + op, s = ST.schedule;
+      if (!s) return refuse('Make a plan for this day first.');
+      if ((s.scheduledInstances || []).concat(s.historyInstances || []).some(i => i.instanceId === id)) return recorded('Already added');
+      const name = String(title || '').trim(), minute = dayMinute(start), duration = Number(minutes);
+      if (!name || name.length > 80) return refuse('Give the activity a name (up to 80 characters).');
+      if (!CUSTOM_TAGS.some(([key]) => key === tag)) return refuse('Choose an activity type.');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date)) || minute == null || minute % 15 || !Number.isInteger(duration) || duration < 15 || duration > 180 || duration % 15) return refuse('Choose a date, a 15-minute start time and a duration from 15 to 180 minutes.');
+      const [y, mo, d] = date.split('-').map(Number), epoch = U.zonedToEpoch(y, mo, d, minute, tz());
+      const parts = U.localParts(epoch, tz()), end = epoch + duration * 60;
+      if (U.ymdKey(parts) !== date || parts.h * 60 + parts.mi !== minute) return refuse('That local time does not exist. Choose another time.');
+      if (epoch < nowEpoch()) return refuse('Choose an upcoming time. Use Log activity for something already done.');
+      if (epoch < s.horizonStartEpoch || end > s.horizonEndEpoch) return refuse('This day has not been planned yet. Make a plan for it before adding activities.');
+      const grid = E.deriveAvailability({ timezone: tz(), horizonStartEpoch: epoch, horizonDays: 2, playerAvailability: ST.availability, fixedCommitments: ST.fixedCommitments || [], playerPreferences: ST.prefs }).grid;
+      const blocked = new Set(['SLEEP', 'WORK', 'CLASS', 'APPOINTMENT', 'COMMUTE', 'DECOMPRESS', 'BLACKOUT', 'SICK', 'EMERGENCY', 'UNAVAILABLE']);
+      if (grid.blocks.some(b => blocked.has(b.kind) && b.startEpoch < end && b.endEpoch > epoch) || (s.scheduledInstances || []).some(i => i.startEpoch < end && i.endEpoch > epoch && !/CANCELLED|EXCUSED/.test(i.lifecycleState))) return refuse('That time overlaps sleep, work or another activity. Choose a free time.');
+      const was = ST, next = JSON.parse(JSON.stringify(ST));
+      next.schedule.scheduledInstances.push({ instanceId: id, taskId: id, templateId: id, title: name, tag, kind: 'CUSTOM', goalId: null, goalTitle: null,
+        linkedGoalIds: [], linkedQuestRequirementIds: [], startEpoch: epoch, endEpoch: end, durationSlots: duration / 15, minDurationSlots: duration / 15,
+        optDurationSlots: duration / 15, tier: 2, lifecycleState: 'PLANNED', isUserLocked: true, bwcId: 'manual', IP: 2, IC: 2,
+        spacingKey: id, compressed: false, origStartEpoch: epoch, explanation: { summary: 'Scheduled by you at this time.', locked: true }, moves: 0, source: null });
+      next.schedule.scheduledInstances.sort((a,b) => a.startEpoch - b.startEpoch);
+      ST = next;
+      if (!persist()) { ST = was; render(); return { ok: false, changed: false, message: 'Activity could not be saved. Nothing was added.' }; }
+      render(); say('Activity added'); return applied();
+    },
     goalAdd({ op, arch, title, subject, tag, minutes, perWeek, physical, mental, priority, level, units, unit, rate, deadline }) {
       const a = E.ARCHETYPES[arch], name = String(title || '').trim(), prio = Number(priority) || 3, lvl = level || 'NOVICE';
       if (!a && arch !== 'CUSTOM') return refuse('That is not a kind of goal.');
@@ -3638,7 +3665,22 @@ const LifeDirectorApp = (function () {
   /* My time's sheets as data (phase 4B): the commitment sheet (id: a commitment's, or '' for a new one), the goal-kind grid, and a goal
      form (id: the kind). A commitment removed since answers gone; a kind of goal the page does not know has nothing to draw. */
   const FORM_SHEETS = new Set(['rule', 'goalType', 'goalForm']);
+  function activityAtForm(id) {
+    const epoch = Number(id.slice(3));
+    if (!Number.isSafeInteger(epoch) || epoch <= 0) return null;
+    const local = U.localParts(epoch, tz());
+    return { kind: 'goalForm', id, title: 'Add an activity', text: 'Schedule one activity at the time you held.',
+      fields: [
+        formField('title', 'text', 'Activity name', '', { required: true, maxLength: 80 }),
+        formField('tag', 'choice', 'Activity', CUSTOM_TAGS[0][0], { options: choices(CUSTOM_TAGS) }),
+        formField('date', 'date', 'Date', U.ymdKey(local), { required: true }),
+        formField('start', 'time', 'Start time', local.h * 60 + local.mi, { required: true }),
+        formField('minutes', 'number', 'Duration (minutes)', 30, { min: 15, max: 180, step: 15 })
+      ], fold: null, note: 'Adds a pinned activity to an already planned day. It does not log completion or award XP. Sleep, work and existing activities stay protected.',
+      save: { label: 'Add activity', command: 'activityAtAdd' }, cancel: 'Cancel', remove: null };
+  }
   function nativeForm(kind, id) {
+    if (kind === 'goalForm' && id.startsWith('at:')) return activityAtForm(id);
     if (kind === 'goalType') return goalTypeModel();
     if (kind === 'goalForm') return E.ARCHETYPES[id] || id === 'CUSTOM' ? goalFormModel(id) : null;
     if (!id) return ruleForm(null);

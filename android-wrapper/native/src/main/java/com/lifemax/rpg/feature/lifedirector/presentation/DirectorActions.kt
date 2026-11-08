@@ -67,6 +67,7 @@ class DirectorActions(
                 // the ? plays a guide the screen draws, from Goals or Settings in its own section
                 t.act == "tour" && vm.guideHelp.ask() -> Unit
                 // My time's sheets are the screen's own where the page draws them for it (4B)
+                t.act == "addAt" && vm.forms.available -> vm.forms.openAt(t.id)
                 t.act == "addGoal" && vm.forms.available -> vm.forms.openGoalType()
                 t.act == "tab" && vm.draws(t.id) -> vm.showSection(t.id)
                 t.act == "gotoDay" && vm.draws(Sections.TODAY) ->

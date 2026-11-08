@@ -100,6 +100,10 @@ internal class FormSheetController(
     }
 
     /** "Add a goal": the grid of kinds. */
+    fun openAt(epoch: String) {
+        if (free && epoch.toLongOrNull() != null) sheets.open(FormSheetKinds.GOAL_FORM, "at:$epoch")
+    }
+
     fun openGoalType() {
         if (free) sheets.open(FormSheetKinds.GOAL_TYPE, "")
     }

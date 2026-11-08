@@ -7,4 +7,5 @@ internal class DayWheelInput(
     val begin: () -> Unit,
     val preview: (Int, Float) -> Unit,
     val end: (Int?) -> Unit,
+    val hold: ((Float) -> Unit)? = null,
 )

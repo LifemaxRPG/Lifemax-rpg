@@ -56,9 +56,13 @@ internal fun goalFormSheet(s: JSONObject): GoalFormSheetModel {
     return GoalFormSheetModel(
         arch = s.txt("id").also { require(it.isNotEmpty()) { "A goal form without its kind" } },
         title = s.txt("title"),
-        schema = s.formSchema(FormWords.GOAL),
+        schema =
+            s.formSchema(
+                if (s.txt("id").startsWith("at:")) mapOf("title" to "Give the activity a name")
+                else FormWords.GOAL
+            ),
         note = s.txt("note"),
-        save = s.button("save", "goalAdd"),
+        save = s.button("save", if (s.txt("id").startsWith("at:")) "activityAtAdd" else "goalAdd"),
         cancel = s.txt("cancel"),
     )
 }
