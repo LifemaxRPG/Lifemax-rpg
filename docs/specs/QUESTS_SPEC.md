@@ -370,6 +370,24 @@ Besides the economy defects of `ECONOMY_SPEC.md` (D09, D13–D17, D20, D35):
 - **QD17** `act:` and `any:` need one long enough session; shorter ones do not add up.
 - **QD18** Auto-verify runs even when the save failed.
 
+Found by the Daily Hand golden cases (`tests/fixtures/quests-golden.json`, WP3; **Executed**, each cited by its cases). They add
+detail QST-35, QST-41 and QST-46 leave out; none changes a rule above.
+
+- **QD19** `dhEnsure` checks a card's quest by the card's `id` but builds a missing one from `c.n`
+  (`'dh_' + date + '_' + slot + '_' + c.n`). A card whose `n` disagrees with its `id` (or has none: `_undefined`) gets another
+  copy of its quest on every `dhEnsure`. A card whose `tpl` is not a library id never gets a quest.
+- **QD20** A record with a missing or unreadable `date` counts in `dhRecentAttrXP` for ever: its day is `'Invalid Date'`, which
+  sorts after every day key (TIME-4, TIME-5). A record dated with a bare `YYYY-MM-DD` is read as UTC midnight, so west of UTC it
+  falls on the day before.
+- **QD21** One malformed quest makes every `dhEnsure` throw until the save is mended, so no card is dealt, rerolled or
+  auto-verified: a `null` entry in `quests`, a `hand` quest whose `id` is not a string (or an array), a `quests` that is not an
+  array, a draw whose `cards` is a three-character string or an object with `length: 3`, a `null` card, or a `classId` that names
+  an `Object.prototype` member (`toString`, `__proto__`). A quest flagged `hand` whose id is not today's `dh_<date>_` is removed,
+  whatever it is.
+- **QD22** A reroll on 49.5 Sparks is paid (`ecoSparks()` rounds to 50, SPARK-3) and leaves −0.5 Sparks.
+- **QD23** A draw without `nonce` rerolls to `NaN` (`dh_<date>_<slot>_NaN`, stored `n: null`); a draw without `rerollsUsed` is
+  `NaN` in memory (every reroll paid) but stored as `null`, which reads as 0 after a reload (the next reroll free again).
+
 ---
 
 ## 13. Golden cases

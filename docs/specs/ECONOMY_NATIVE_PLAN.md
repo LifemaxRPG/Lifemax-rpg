@@ -124,7 +124,7 @@ Needed and missing:
 |---|---|---|
 | Daily hand draw: `dhSeed`, `dhRng` (32-bit `Math.imul` hash and generator), `dhLuckScore`, `dhPick` weights, `dhDraw`, `dhWeakestAttr`, `dhRecentAttrXP`, rest-day rule, three slots (maintenance, class, wildcard) | `50-quests-hand.js:63-92` | missing |
 | `dhEnsure` (today's three cards, drop yesterday's, `dhMig` migration, `dailyDraw` state) and the replacement draw inside `dhReroll` (nonce, taken templates) | `50-quests-hand.js:93-125` | missing; Kotlin `reroll` takes the card's quest id and leaves drawing to the caller ("outside the economy") |
-| Quest library (`QUEST_LIBRARY`), `DH_CLASS_ATTR`, `defaultQuests`, `CLASS_CONTENT`, class packs and `applyClassContent` | `50-quests-hand.js:8`, `00-runtime.js:31` | data exists in `core/quests` (WP2: `QuestContent`, read from the page's export); the rules that use it (draw, `applyClassContent`) are missing |
+| Quest library (`QUEST_LIBRARY`), `DH_CLASS_ATTR`, `defaultQuests`, `CLASS_CONTENT`, class packs and `applyClassContent` | `50-quests-hand.js:8`, `00-runtime.js:31` | data exists in `core/quests` (WP2: `QuestContent`, read from the page's export); the Daily Hand draw uses it (WP3: `HandDealer`); `applyClassContent` is missing |
 | `luckToday` score (the hand's luck input), 5500 fallback | `18-runtime.js:128` | missing (native Character has a luck screen, not shared with this module) |
 | Weekday filter and period keys for a day, quest board projection (which quests show, "available XP", nutrition epic, unknown cadence QD11) | QUESTS_SPEC 3.3, 6 | missing (key per period exists) |
 | Claim: there is no separate claim step. Checking a card is `toggle(checked = true)`; auto-verify claims it. "Claim" in the economy sense (coach chips) is `Coach.claim`, which exists | - | exists |
@@ -225,6 +225,37 @@ following QUESTS_SPEC section 13: seed and first five `dhRng` outputs; `dhDraw` 
 active day, each class and none, luck 1000, 5500 fallback and 9999; reroll free, 50 Sparks, 49 Sparks, done card, three-template
 exclusion, instant auto-verify, stale turn; `dhEnsure` across local midnight, class switch (QD02), migration `dhMig`.
 Decision: whether to keep QD02, QD15, QD16 (OQ-8 in QUESTS_SPEC). Default: keep page behaviour.
+
+**Status: done** (not wired to anything; the page is still the only writer and the authority). What exists:
+
+- Kotlin (`core/quests`): `HandDealer` (`ensure`, `cards`, `rerollCost`, `reroll`, `draw`, `recentAttrXp`, `weakestAttr`,
+  `makeQuest`) works on the save as a `JsonObject` (every field and key order kept) and returns `HandStep.Done(save, value,
+  toasts, saveRequests)` or `HandStep.Threw(save, reason)` where the page throws, keeping what the page changed before the
+  throw. `HandContext` takes `today`, `luckScore` (`luckToday()?.score`), `isRestDay` and `dayOf` (`activityDate`) as plain
+  inputs. `HandRandom`/`HandRng` (FNV-1a and Mulberry32 on `Int`), `HandOdds` (the tier odds and luck constants, a data class
+  so tests can mutate them), `HandSlot`, `HandIds`, `HandMigration` (the `q1`-`q3`/`cc_*` pattern spelled out, because a
+  Java regex differs from JavaScript's on U+0085 and a final line break), `PageSemantics.kt` (`String()`, `Number()`, `===`,
+  property reads that throw on null, JavaScript's key order for array-index keys). Content comes from `QuestContentLoader`.
+  `save()` is a counted request: what saving does, auto-verify included, stays the economy's (`SavePipeline`, `DailyHand`).
+- Page side: `tools/gen_quests_golden.js` (recorder: Playwright, the built page, a paused clock per time zone, toasts captured,
+  `save()` counted and not run) with the cases in `tools/quests_golden_cases.js`, writing `tests/fixtures/quests-golden.json`:
+  842 cases, seed 27, rng 32, quest 8, recent 77, draw 120, ensure 48, reroll 64, odd 46 (malformed saves, where the page
+  throws), fuzz 420 (seeded random saves and call sequences). Twelve clocks: DST start and end (New York, London, Sydney), a day
+  without local midnight (Santiago), UTC+14 and UTC-11 across the new year, a leap day, month ends. `tests/quests-golden.test.js`
+  records every case again and fails on any byte of difference.
+- Tests: `HandGoldenTest` replays every call of every case (returns, changed and removed fields as JSON text, toasts, save
+  requests; a count test fails if a case is skipped or a family shrinks). `HandRulesTest` pins the constants and vectors and
+  checks that each of 14 mutations (each odds number, free rerolls, price, `ATTRS` order, template order, class attributes)
+  makes some case fail. Code mutations tried by hand (comparison operators, the fallback pool, the migration pattern, the `up`
+  reset, the reroll exclusion, Sparks rounding, the `length === 3` check, UTF-16 versus code points) were all caught except
+  `r <= 0` versus `r < 0`, which differs only on an exact hit (about 2^-32 a draw).
+- Found and written into QUESTS_SPEC section 12: QD19 (a card's quest built from `n`, checked by `id`: duplicates), QD20 (records
+  without a readable date count as recent for ever), QD21 (one malformed quest stops the Hand), QD22 (49.5 Sparks pays 50,
+  leaving -0.5), QD23 (missing `nonce` or `rerollsUsed`). All reproduced; rulings optional (default: keep).
+- Not covered here: the auto-verify that the reroll's `save()` triggers (economy SAVE-2, its own golden cases; composing the two
+  belongs to WP6), and `questToday` (WP4). For WP1: `JsonReader` keeps object keys in text order, while JavaScript puts
+  array-index keys (`"0"`, `"12"`) first; harmless for saves the page wrote, but native code that adds such a key must order it
+  as `Js.withIndexKey` does.
 
 ### WP4. Quest board, period keys and weekday filter (S to M, risk low)
 
