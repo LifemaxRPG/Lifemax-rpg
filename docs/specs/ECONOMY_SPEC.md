@@ -973,7 +973,8 @@ restarts at 0 XP (level 1) while the character level is unchanged (CURVE-5). Eac
 - **REST-DAY-1** `restDay(key)` (`ecoRestDay`, `43-economy.js:63-67`): `restDays[key]` is truthy, or `planDay(key).kind` is
   `rest` (errors ignored), or some record that day has `type === 'recovery'`, is not passive and `num0(duration) >= 20`.
 - **REST-DAY-2** `ecoRestUsed()` (`43-economy.js:68`) = number of `restDays` keys `>= daysAgo(6)`.
-  `ecoTakeRest()` (`43-economy.js:69-74`): already a rest day today: `'Today is already a rest day'`; if
+  `ecoTakeRest()` (`43-economy.js:69-74`): already a rest day today (`restDays[today]` only, not REST-DAY-1's recovery session
+  or plan rest day: those still let the owner take one; golden `rest/take-after-recovery`): `'Today is already a rest day'`; if
   `ecoRestUsed() >= 2`: spend a rest token if any (`'Rest token used'`), else refuse (`'Two rest days per week are used'`); then
   `restDays[today] = true`, `save()`, `'Rest day taken. No decay today.'`.
 

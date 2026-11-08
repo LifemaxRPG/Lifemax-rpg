@@ -101,13 +101,13 @@ class ShadowDayGoldenTest {
             sortedMapOf(
                 "day" to 3,
                 "decay" to 33,
-                "health" to 46,
-                "rest" to 5,
+                "health" to 48,
+                "rest" to 6,
                 "shield" to 13,
                 "zone" to 4,
             )
 
-        val EXPECTED_ENVELOPES = mapOf("health.sync" to 52, "decay.apply" to 51, "boot.decay" to 51)
+        val EXPECTED_ENVELOPES = mapOf("health.sync" to 54, "decay.apply" to 51, "boot.decay" to 51)
 
         /** What the out-of-scope cases of these families call: reads and pure rules only. */
         val PURE =

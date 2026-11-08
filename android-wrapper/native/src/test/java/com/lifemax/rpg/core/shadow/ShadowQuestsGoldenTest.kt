@@ -60,13 +60,13 @@ class ShadowQuestsGoldenTest {
     }
 
     companion object {
-        const val EXPECTED_HAND_CASES = 558
+        const val EXPECTED_HAND_CASES = 559
         const val EXPECTED_BOARD_CASES = 380
-        const val EXPECTED_ENVELOPES = 2183
+        const val EXPECTED_ENVELOPES = 2184
         const val EXPECTED_THREW = 67
         val EXPECTED_BY_KIND =
             mapOf(
-                "hand.ensure" to 685,
+                "hand.ensure" to 686,
                 "hand.reroll" to 851,
                 "quest.pack" to 442,
                 "quest.create" to 205,

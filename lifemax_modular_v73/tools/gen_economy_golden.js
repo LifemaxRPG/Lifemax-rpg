@@ -437,6 +437,8 @@ function health() {
   scase('health/steps', 'HEALTH-4', { health: H({ since: ms(T0) - 20 * 864e5 }) }, sync({ steps: [
     { ...day(-9), count: 10000 }, { ...day(-8), count: 1999 }, { ...day(-7), count: 6000 }, { ...day(-6), count: 5999 }, { ...day(-5), count: 3999 },
     { ...day(-4), count: 30000 }, { ...day(-3), count: 40000 }, { ...day(-2), count: 4000 }, { ...day(-1), count: 9000 }, { date: TODAY, count: 3000 }] }, true));
+  /* the steps threshold itself: 1,999 pays nothing, 2,000 pays (WP6f mutation sweep) */
+  scase('health/steps-threshold', 'HEALTH-4', { health: H() }, sync({ steps: [{ ...day(-2), count: 1999 }, { ...day(-1), count: 2000 }] }));
   scase('health/steps-before-since', 'HEALTH-4 HEALTH-2', { health: H() }, sync({ steps: [{ ...day(-5), count: 10000 }, { ...day(-2), count: 10000 }, { ...day(-1), count: 10000 }] }));
   scase('health/steps-minus-cardio', 'HEALTH-4', { health: H() }, sync({ exercise: [sess('c', 'running', iso(dayKey(-1), '07:00:00'), 30), sess('k', 'yoga', iso(dayKey(-1), '18:00:00'), 30)],
     steps: [{ ...day(-1), count: 9000 }] }));
@@ -459,6 +461,8 @@ function health() {
   scase('health/sleep-name-rounding', 'HEALTH-5 NUM-1 NUM-2', { health: H() }, sync({ sleep: [nightS('n', iso(TODAY, '07:00:00'), 6 * 3600 + 8 * 60 + 30)] }));
   scase('health/sleep-busy-workout', 'HEALTH-5', { health: H() }, sync({ exercise: [sess('n', 'running', iso(TODAY, '03:00:00'), 40)], sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
   scase('health/sleep-busy-logged', 'HEALTH-5', { health: H(), activities: [rec('reading', 24, { date: iso(TODAY, '02:00:00') })] }, sync({ sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
+  /* a workout ending exactly 30 minutes into the night does not make the night busy: the overlap must pass 30 minutes (WP6f) */
+  scase('health/sleep-edge-workout-end', 'HEALTH-5', { health: H() }, sync({ exercise: [sess('w', 'running', iso(dayKey(-1), '22:50:00'), 40)], sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
   scase('health/sleep-edge-not-busy', 'HEALTH-5', { health: H(), activities: [rec('reading', 24, { date: iso(TODAY, '06:30:00') })] },
     sync({ exercise: [sess('e', 'running', iso(TODAY, '06:30:00'), 40)], sleep: [night('z', iso(TODAY, '07:00:00'), 8)] }));
   scase('health/seen-pruned', 'HEALTH-6', { health: H({ seen: { xold: ms(T0) - 22 * 864e5, xnew: ms(T0) - 20 * 864e5, pold: ms(T0) - 21 * 864e5 - 1 } }) }, sync({}));
@@ -479,6 +483,8 @@ function voice() {
   const now = (o) => ({ type: 'running', name: 'Run', duration: 30, day: TODAY, atMs: ms(hoursBefore(1)), ...o });
   scase('voice/log-now', 'VOICE-2 SPLIT-1', {}, C('lmvLogNow', now()));
   scase('voice/log-yesterday', 'VOICE-2 AWARD-3', { activities: [rec('business', 230)] }, C('lmvLogNow', now({ day: y, atMs: ms(iso(y, '12:00:00')) })));
+  /* under five minutes a spoken Log earns nothing: the award refuses a total of 0 (WP6f mutation sweep) */
+  scase('voice/log-too-short', 'VOICE-2 AWARD-1', { restedXP: 20 }, C('lmvLogNow', now({ duration: 3 })));
   scase('voice/log-refused', 'VOICE-2', { activities: [rec('running', 26), rec('running', 26), rec('running', 13)] }, C('lmvLogNow', now()));
   scase('voice/log-stars', 'VOICE-2 STAR-1', { attrStars: { endurance: 1, wellbeing: 3 } }, C('lmvLogNow', now({ duration: 60 })));
   scase('voice/log-custom', 'VOICE-2', {}, C('lmvLogNow', now({ type: 'custom', name: 'Chess', duration: 40 })));
@@ -730,6 +736,8 @@ function decay() {
   R('used', 'REST-DAY-2 TIME-7', { restDays: { [dayKey(-7)]: true, [dayKey(-6)]: true, [TODAY]: true } }, C('ecoRestUsed'));
   R('take', 'REST-DAY-2', {}, C('ecoTakeRest'));
   R('take-already', 'REST-DAY-2', { restDays: { [TODAY]: true } }, C('ecoTakeRest'));
+  /* a recovery session today makes it a rest day for decay (REST-DAY-1) but does not count as one taken: the owner can still take it */
+  R('take-after-recovery', 'REST-DAY-2 REST-DAY-1', { activities: [rec('recovery', 16, { day: TODAY, dur: 30 })] }, C('ecoTakeRest'));
   R('take-two-used', 'REST-DAY-2', { restDays: { [dayKey(-5)]: true, [dayKey(-2)]: true } }, C('ecoTakeRest'));
   R('take-two-used-token', 'REST-DAY-2', { restDays: { [dayKey(-5)]: true, [dayKey(-2)]: true }, restTokens: 1 }, C('ecoTakeRest'));
   R('take-week-old-free', 'REST-DAY-2', { restDays: { [dayKey(-7)]: true, [dayKey(-2)]: true } }, C('ecoTakeRest'));

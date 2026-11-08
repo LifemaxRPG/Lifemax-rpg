@@ -261,6 +261,9 @@ function odd() {
   O('cardTrue_reroll', 'QST-46', primCard2, [C('dhReroll', [1]), C('dhReroll', [1]), CARDS]);
   const noId = base(dealt('{D0}', T)); delete noId.dailyDraw.cards[0].id; noId.quests.push({ name: 'no id either', cadence: 'daily' });
   O('cardNoId_questNoId', 'QST-41', noId, [ENSURE, C('dhReroll', [0])]);
+  /* a card and a quest whose ids are equal arrays: === is identity, so the deal still makes the card's quest (WP6f mutation sweep) */
+  const arrIds = base(dealt('{D0}', T)); arrIds.dailyDraw.cards[0].id = ['same']; arrIds.quests[0].id = ['same'];
+  O('cardAndQuestArrayId', 'QST-43', arrIds, [ENSURE, CARDS]);
   const numTpl = base(dealt('{D0}', T)); numTpl.dailyDraw.cards[2].tpl = 47; numTpl.quests.pop();
   O('cardNumericTpl', 'QST-41', numTpl, [ENSURE, C('dhReroll', [1])]);
   const dateNum = base({ dailyDraw: { date: 20261108, nonce: 0, rerollsUsed: 0, cards: [{}, {}, {}] } });

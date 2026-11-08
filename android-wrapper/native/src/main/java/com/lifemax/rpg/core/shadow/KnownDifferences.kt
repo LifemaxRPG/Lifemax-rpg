@@ -82,6 +82,17 @@ object KnownDifferences {
                 "SAVE-1 COACH-1",
                 "proposed in WP6c, awaiting the owner's sign-off (O-6)",
             ),
+            KnownDifference(
+                "A-07",
+                null,
+                Regex("journalCoach\\.welcome\\.\\*"),
+                "the journal coach's redraw inside a save writes a new day's welcome card (its tier, " +
+                    "the days away and no chip claimed: jcWelcomeRecord) after a gap; native does " +
+                    "not draw the journal, so it makes no card. Only a whole new day's card: a chip " +
+                    "claimed on a card (coach.claim) is compared",
+                "COACH-1",
+                "proposed in WP6f, awaiting the owner's sign-off (O-6)",
+            ),
         )
 
     /**

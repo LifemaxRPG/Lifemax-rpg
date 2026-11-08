@@ -26,7 +26,7 @@ class AdapterGoldenTest {
 
     @Test
     fun theFamiliesAreAllThere() {
-        assertEquals(63, family("health").size)
+        assertEquals(65, family("health").size)
         assertEquals(60, family("quest").size)
         assertEquals(7, family("zone").size)
         assertEquals(11, family("time").size)

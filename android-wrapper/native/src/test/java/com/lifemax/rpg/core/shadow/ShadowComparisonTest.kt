@@ -176,6 +176,10 @@ class ShadowComparisonTest {
                             ("journal" to
                                 JsonArray(listOf(FakeShadowPage.obj("ok" to JsonBool.TRUE))))
                 ) to "A-06",
+                log.action.copy(
+                    before = log.action.before + ("journalCoach" to welcome(null)),
+                    after = log.action.after + ("journalCoach" to welcome(today)),
+                ) to "A-07",
             )
         val seen = sortedSetOf<String>()
         for ((action, id) in cases) {
@@ -203,6 +207,18 @@ class ShadowComparisonTest {
                 .ledger
                 .different,
         )
+        // a chip claimed on a day's welcome card is the coach's, compared, never A-07's
+        assertEquals(
+            1,
+            run(
+                    log.action.copy(
+                        before = log.action.before + ("journalCoach" to welcome(today)),
+                        after = log.action.after + ("journalCoach" to welcome(today, "pet")),
+                    )
+                )
+                .ledger
+                .different,
+        )
         // a "not saved" said twice where native said it once is not the only difference allowed
         assertEquals(
             1,
@@ -211,6 +227,31 @@ class ShadowComparisonTest {
                 .different,
         )
     }
+
+    /** The journal coach's welcome cards: none, or [day]'s with [claimed] chips (A-07). */
+    private fun welcome(day: String?, vararg claimed: String) =
+        JsonObject(
+            mapOf(
+                "welcome" to
+                    JsonObject(
+                        if (day == null) emptyMap()
+                        else
+                            mapOf(
+                                day to
+                                    JsonObject(
+                                        mapOf(
+                                            "tier" to JsonNumber(2.0),
+                                            "gap" to JsonNumber(8.0),
+                                            "claimed" to
+                                                JsonObject(
+                                                    claimed.associateWith { JsonNumber(1.0) }
+                                                ),
+                                        )
+                                    )
+                            )
+                    )
+            )
+        )
 
     private fun plan(day: String, ticks: JsonObject) =
         JsonObject(
@@ -248,7 +289,10 @@ class ShadowComparisonTest {
     @Test
     fun anActionThatCannotBeComparedIsCountedAndTheMirrorStaysInStep() {
         val midnight = java.time.Instant.parse("2026-10-28T23:59:59.999Z").toEpochMilli()
-        val rest = built.first { it.action.kind == "rest.take" }.action
+        // a decay pass walks idle days and asks the plan whether each was a rest day (a rest day
+        // taken
+        // asks only the save, REST-DAY-2)
+        val pass = built.first { it.caseId == "decay/rested-opened-once" }.action
         val skips =
             listOf(
                 log.action.copy(t0 = midnight, t1 = midnight + 2) to "midnight",
@@ -273,7 +317,16 @@ class ShadowComparisonTest {
                             )
                         )
                 ) to "input",
-                rest.copy(env = rest.env - "plan") to "planWindow",
+                // the pass's plan facts begin today: the days its walk asks about are outside them
+                pass.copy(
+                    env =
+                        pass.env +
+                            ("plan" to
+                                JsonObject(
+                                    (pass.env["plan"] as JsonObject).members +
+                                        ("from" to JsonString("2026-10-28"))
+                                ))
+                ) to "planWindow",
             )
         for ((action, why) in skips) {
             val s =
@@ -286,7 +339,11 @@ class ShadowComparisonTest {
                     ),
                 )
             val counts = s.ledger.kind(action.kind)
-            assertEquals(why, 1, counts.skipped[why])
+            assertEquals(
+                "$why ${counts.skipped} compared ${counts.compared}",
+                1,
+                counts.skipped[why],
+            )
             assertEquals(
                 "$why: the next action is compared on the page's state",
                 2,
