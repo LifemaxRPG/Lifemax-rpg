@@ -37,6 +37,12 @@ internal interface ScrubHost {
     fun after(slot: Int, delayMs: Long, action: () -> Unit)
 
     fun cancel(slot: Int)
+
+    /**
+     * A scrub needs the bar to stay put ([on]) until it has landed: the page may pass over a tab
+     * that has no native screen, whose bars would otherwise be released under the finger.
+     */
+    fun hold(on: Boolean) {}
 }
 
 /**
@@ -78,6 +84,9 @@ internal class BarScrubber(private val host: ScrubHost) {
 
     private var drag: Drag? = null
 
+    /** The host was asked to keep the bar for a scrub, and has not been told to let go. */
+    private var holding = false
+
     /** The tab a finished scrub ended on, still shown as selected until the page's scene agrees. */
     private var landing: BarTab? = null
 
@@ -102,6 +111,8 @@ internal class BarScrubber(private val host: ScrubHost) {
                 return false
             }
             d.moved = true
+            holding = true
+            host.hold(true)
             buzz(d, ScrubBuzz.Start)
             host.highlight(d.tabs[d.selected])
         }
@@ -142,6 +153,10 @@ internal class BarScrubber(private val host: ScrubHost) {
         landing = null
         host.cancel(RELEASE)
         host.highlight(null)
+        if (holding && drag?.moved != true) {
+            holding = false
+            host.hold(false)
+        }
     }
 
     private fun pass(d: Drag, i: Int) {

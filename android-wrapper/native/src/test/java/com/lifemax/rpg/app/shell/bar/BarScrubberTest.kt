@@ -15,6 +15,7 @@ private class FakeBar(val tabs: List<BarTab> = bar(14), override val viewport: F
     val opened = mutableListOf<String>()
     val buzzes = mutableListOf<ScrubBuzz>()
     var shown: BarTab? = null
+    val holds = mutableListOf<Boolean>()
     private val waiting = HashMap<Int, Pair<Long, () -> Unit>>()
 
     override fun scrollToDp(dp: Float) {
@@ -31,6 +32,10 @@ private class FakeBar(val tabs: List<BarTab> = bar(14), override val viewport: F
 
     override fun highlight(tab: BarTab?) {
         shown = tab
+    }
+
+    override fun hold(on: Boolean) {
+        holds += on
     }
 
     override fun after(slot: Int, delayMs: Long, action: () -> Unit) {
@@ -98,6 +103,41 @@ class BarScrubberTest {
             taken = move(from + (to - from) * k / steps, 30f, host.clock) || taken
         }
         return taken
+    }
+
+    @Test
+    fun aScrubKeepsTheBarUntilItHasLanded() {
+        val host = FakeBar()
+        val s = scrubber(host)
+        s.down(40f, 30f)
+        s.slide(host, 40f, 380f, 20, 8)
+        assertEquals(listOf(true), host.holds) // asked once, at the start, not on every move
+        s.up()
+        assertEquals(listOf(true), host.holds) // the pill has not landed yet
+        host.advance(BarScrubber.RELEASE_MS + 1)
+        assertEquals(listOf(true, false), host.holds)
+    }
+
+    @Test
+    fun aSceneThatArrivesAfterTheScrubLetsTheBarGo() {
+        val host = FakeBar()
+        val s = scrubber(host)
+        s.down(40f, 30f)
+        s.slide(host, 40f, 380f, 20, 8)
+        s.up()
+        s.sceneArrived(host.shown!!.key)
+        assertEquals(listOf(true, false), host.holds)
+    }
+
+    @Test
+    fun aTapNeverHoldsTheBar() {
+        val host = FakeBar()
+        val s = scrubber(host)
+        s.down(100f, 30f)
+        s.move(102f, 31f, 10)
+        s.up()
+        host.advance(BarScrubber.RELEASE_MS + 1)
+        assertTrue(host.holds.isEmpty())
     }
 
     @Test

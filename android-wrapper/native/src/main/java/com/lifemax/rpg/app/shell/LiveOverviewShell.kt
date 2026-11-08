@@ -61,6 +61,7 @@ internal class LiveOverviewShell(
                 activate(id)
             },
             onHighlight = ::showPill,
+            onHold = { if (chromeOnly) ChromeHost.scrubHold(it) },
         )
     private val scroll =
         ViewTreeObserver.OnScrollChangedListener { header.translationY = -web.scrollY.toFloat() }
