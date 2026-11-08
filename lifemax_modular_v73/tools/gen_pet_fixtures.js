@@ -17,6 +17,7 @@
      pet-no-touch.json       the first release's app (no pet.touch.v1): none of the touch fields
      pet-play.json           the touched cat for a screen with pet.play.v1: the toy tray (unlocked toys only, the page's words)
      pet-play-tired.json     a very hungry cat with pet.play.v1: the tray with the page's "too tired to play" refusal
+     pet-demo.json           the touched cat for a screen with pet.play.v1 and pet.demo.v1 while developer mode is on: the Demo parkour button
      pet-replies.json        every command answered, in the envelope NativeTabKit sends a reply in
    pet-panels-<state>.json the same projection for a screen that also draws the panels (pet.panels.v1): the mind row, likes,
                            inner life, genetics, Together card and toys for the cat states of tests/native-pet-panels.scenarios.js
@@ -104,6 +105,13 @@ module.exports = async function pet({ b, out, write }) {
     const p = await visit(setup, [...CAPS, 'pet.play.v1']);
     await p.evaluate(() => navigate('pet'));
     write('fixtures/pet-' + name + '.json', await open(p));
+    await p.context().close();
+  }
+  /* the developer demo (pet.demo.v1): the button, projected only while developer mode is on */
+  {
+    const p = await visit(STATES.touched + ';state.devMode=true', [...CAPS, 'pet.play.v1', 'pet.demo.v1']);
+    await p.evaluate(() => navigate('pet'));
+    write('fixtures/pet-demo.json', await open(p));
     await p.context().close();
   }
 

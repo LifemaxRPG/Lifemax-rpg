@@ -174,7 +174,13 @@ class ActivityRunner(
      * A reflex: [activity] at [spot] now, instead of what was playing; a resumable activity is kept
      * to be resumed after it (plan 1.5).
      */
-    fun interrupt(activity: Activity, spot: Spot?, reason: String, rng: Rng) {
+    fun interrupt(
+        activity: Activity,
+        spot: Spot?,
+        reason: String,
+        rng: Rng,
+        seconds: Double = Double.NaN,
+    ) {
         val was = this.activity
         val left = seconds - atPlaceS
         if (was.resumable && left > BrainTuning.Select.RESUME_MIN_LEFT_S) {
@@ -185,7 +191,7 @@ class ActivityRunner(
         }
         val wake = was.asleep
         end(natural = false)
-        begin(Choice(activity, spot, 0.0, reason), rng, wakeFirst = wake)
+        begin(Choice(activity, spot, 0.0, reason, seconds), rng, wakeFirst = wake)
     }
 
     /**
@@ -258,6 +264,12 @@ class ActivityRunner(
     }
 
     private fun following(rng: Rng): Choice {
+        // a developer parkour demo goes on to its next perch (DemoParkour)
+        if (activity === ParkourVisit) {
+            m.nextDemoStop()?.let {
+                return Choice(ParkourVisit, it, 0.0, DemoParkour.REASON, BrainTuning.Demo.STOP_S)
+            }
+        }
         activity.next?.let { id ->
             registry.find(id)?.let {
                 return Choice(it, null, 0.0, "after ${activity.id}")

@@ -75,6 +75,8 @@ class PetActions(
     val play: () -> Unit = {},
     /** A toy picked from the tray (null: the cat picks): tossed to the cats in the room. */
     val playToy: (String?) -> Unit = {},
+    /** DEVELOPER DEMO: the "Demo parkour" button (developer mode only, `pet.demo.v1`). */
+    val demo: () -> Unit = {},
 )
 
 /** The page's actions that stay on the page in this release, as the screen names them to it. */
@@ -264,6 +266,15 @@ private fun Buttons(p: PetProjection, ui: PetUi, actions: PetActions) {
             Modifier.fillMaxWidth(),
             small = true,
         )
+        p.demo?.let {
+            PetSecondaryButton(
+                it.label,
+                it.hint,
+                actions.demo,
+                Modifier.fillMaxWidth(),
+                small = true,
+            )
+        }
     }
 }
 

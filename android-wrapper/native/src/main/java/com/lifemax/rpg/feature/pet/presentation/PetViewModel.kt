@@ -56,6 +56,8 @@ class PetViewModel(
     private val commands: PetCommands = NoPetCommands,
     /** Tosses the page's toy into the shared room (the cat world host); null: no world runs. */
     private val offer: (String) -> PlayAnswer? = { CatWorldHost.shared.offerToy(it) },
+    /** DEVELOPER DEMO: sends one cat on a parkour tour; null: no world runs. */
+    private val demo: () -> PlayAnswer? = { CatWorldHost.shared.demoParkour() },
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
     var pet by mutableStateOf<PetProjection?>(null)
@@ -105,6 +107,20 @@ class PetViewModel(
         val toy = id?.takeIf { want -> tray.toys.any { it.id == want } } ?: favourite(tray)
         toy ?: return
         val answer = offer(toy)
+        when {
+            answer == null -> say(NOT_READY)
+            answer.message.isNotEmpty() -> say(answer.message)
+        }
+    }
+
+    /**
+     * DEVELOPER DEMO ("Demo parkour", shown only in developer mode, `pet.demo.v1`): one awake cat
+     * runs a parkour tour in the shared room now; when none can, the brain's one line says why.
+     * Never sent to the page: no XP, care counters or likes change.
+     */
+    fun demoPressed() {
+        pet?.demo ?: return
+        val answer = demo()
         when {
             answer == null -> say(NOT_READY)
             answer.message.isNotEmpty() -> say(answer.message)

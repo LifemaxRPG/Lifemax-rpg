@@ -246,6 +246,15 @@ object BrainTuning {
     }
 
     /**
+     * The developer's parkour demo ([DemoParkour]): a tour of up to [STOPS] perches, [STOP_S]
+     * seconds at each (a survey and a look, then on), the next one chosen for the most jumps.
+     */
+    object Demo {
+        const val STOPS = 3
+        const val STOP_S = 6.0
+    }
+
+    /**
      * The owner's game (plan 1.8 "owner play"): who comes, how long it lasts, how it feels. A cat
      * asleep longer than [BrainTuning.Care.DEEP_SLEEP_S] does not stir; one dozing wakes only with
      * [WAKE_ENERGY] left; one awake plays from [TIRED_ENERGY]. Rounds (pick up, carry, toss, chase,

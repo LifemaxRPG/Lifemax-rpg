@@ -485,3 +485,19 @@ Native presentation and behaviour, web authority, behind "Native Cat (beta)". Tw
 - **Later in the same pass.** Stuck in bed: a restored, caught-up or handed-over activity keeps only what is left of it (`actAt`), a broken nap resumes only for a cat that still wants one, a cat restored on its way picks anew (`host/WholeDayTest`). Hidden behind the sofa: `body/Occluders.kt` and `Spot.hidden` keep resting cats where furniture hides at most 35 % of them in both rooms; the hidden corner and the sofa-arm place moved into view (`room/OccludersTest`, `SofaVisibilityScreenshotTest`, three new images).
 - **Rollout.** Rides "Native Cat (beta)". Rollback: drop `pet.play.v1` from `NativePetPlugin` (Play goes back to the page's tray; the page code is inert without it). The apart fixes have no switch: they only change where the native cats go.
 - **Evidence.** `native-pet-play.test.js` (28 checks: gating, the tray's toys and words, every malformed game refused, counted by the page's rules, repeat after a reload, a refused save taken back, two cats, the Overview cards); unit tests `host/OwnerPlayTest` (a tossed toy picked up, carried, tossed and set down by the real brain on the house's bodies, then counted by FakePage; a cat fast asleep does not stir), `data/PetPlayTest`, `brain/CatsApartBrainTest`, `host/CatsApartTest` (the owner's report reproduced: before, 65 layered minutes at night; after, none, through a five-hour catch-up and a restart), `WorldImportTest`. No screenshot changed.
+
+
+## Cat brain, developer parkour demo (Native API 103)
+
+Native presentation and behaviour, web authority, behind "Native Cat (beta)" AND the page's developer mode. A DEVELOPER DEMO: the owner can watch the cats do their parkour on demand; it happens rarely on its own.
+
+| Part | Where | What |
+|---|---|---|
+| Capability | `pet.demo.v1` | advertised by `NativePetPlugin`; the page sends `demo` only once the Cat tab's screen said it, so an older app shows no button and a newer app on an older page does too |
+| Projection (page to native) | `50-native-pet-demo.js` `demo` | `{label, hint}` only while `state.devMode` is on (Settings, Enable developer mode); strict decoder `PetDemoJson.kt`; absent means hidden; toggling developer mode re-projects the Cat tab |
+| Screen | `PetScreen.kt` (`PetSecondaryButton`, quiet size under Slow blink), `PetViewModel.demoPressed`, `CatWorldHost.demoParkour` | "Demo parkour" button, 48 dp target with a content description; the brain's one-line reason shows like the Play refusal |
+| Brain | `brain/DemoParkour.kt`, `CatWorld.demoParkour`, `CatMind.startDemo`, `ActivityRunner.following` | the awake cat doing least (alternating on repeated taps) runs up to three `ParkourVisit` stops, each next perch chosen for the most jumps by the planner; the usual place book, cats-apart rules and watchdog apply; no second tour while one runs |
+| Data | none | nothing is sent to the page: no command, XP, care counters, pair or likes; only normal activity persistence in the world blob |
+
+- **Rollout.** Rides "Native Cat (beta)" and developer mode. Rollback: drop `pet.demo.v1` from `NativePetPlugin` (no button; the page code is inert without it).
+- **Evidence.** `native-pet-demo.test.js` (gating, on and off, older screen, saved developer mode, nothing written), `data/PetDemoTest` (strict decoder, hidden when absent, tap handling), `brain/DemoParkourTest` (refusals by state, who is chosen, alternation, no overlap, repeat-safe, nothing reported, a headless tour of at least two jumps that ends cleanly in bounded time), `host/DemoParkourEndToEndTest` (host, house bodies and FakePage), `screenshots/PetDemoScreenshotTest` (new images only).
