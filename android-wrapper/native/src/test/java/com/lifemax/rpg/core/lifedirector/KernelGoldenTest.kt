@@ -1,7 +1,7 @@
 package com.lifemax.rpg.core.lifedirector
 
 import com.lifemax.rpg.core.lifedirector.KernelGolden.cases
-import java.time.zone.ZoneRulesProvider
+import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +17,7 @@ class KernelGoldenTest {
     fun everyCaseGivesThePagesAnswer() {
         val wrong = cases.mapNotNull { KernelReplay.difference(it) }
         assertTrue(
-            "${wrong.size} of ${cases.size} cases differ (tz database ${tzdb()}):\n" +
+            "${wrong.size} of ${cases.size} cases differ (${zoneData()}):\n" +
                 wrong.take(SHOWN).joinToString("\n"),
             wrong.isEmpty(),
         )
@@ -56,7 +56,12 @@ class KernelGoldenTest {
         assertTrue("$gaps gap and $folds fold wall times", gaps >= GAP_CASES && folds >= FOLD_CASES)
     }
 
-    private fun tzdb(): String = ZoneRulesProvider.getVersions("UTC").lastKey()
+    /**
+     * What the zone data is, for the failure message, from APIs android.jar also has (the tz
+     * database version itself is only reachable through JDK-only classes).
+     */
+    private fun zoneData(): String =
+        "${ZoneId.getAvailableZoneIds().size} zone ids, Java ${System.getProperty("java.version")}"
 
     companion object {
         private const val SHOWN = 25

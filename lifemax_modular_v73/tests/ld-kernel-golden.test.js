@@ -12,17 +12,40 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const gen = require('../tools/gen_ld_kernel_golden.js');
-const { CHANGES } = require('../tools/ld_kernel_cases.js');
+const { CHANGES, TZ_FRAGILE, TZ_CHANGED_IN, zoneOf } = require('../tools/ld_kernel_cases.js');
 const engineVm = require('../tools/ld_engine_vm.js');
 const SPEC = path.join(__dirname, '..', '..', 'docs', 'specs', 'LIFE_DIRECTOR_ENGINE_SPEC.md');
 
-/* Cases where node's ICU (77.1, tz 2025b at the time of writing) answers differently from Chromium's: Chromium's ICU knows the tz
-   database's "Factory" zone, node's does not. The file holds Chromium's answer, which is the WebView's. */
+/* Node is a second runner with its own ICU build. When its ICU and tz versions are the ones the file's header records for node, it
+   must agree with the file on every case except these (recorded at generation: that node's ICU has no "Factory" zone, Chromium's
+   has). When its versions differ (another node on another machine), it may also disagree on the zones of TZ_FRAGILE
+   (tools/ld_kernel_cases.js, each listed from a run that showed it); a disagreement in any other zone fails either way. */
 const NODE_DIFFERS = {
   'zone/isValidTimeZone/505:Factory': 'node ICU has no Factory zone',
   'alias/tzOffsetSec/505:Factory@jan': 'node ICU has no Factory zone',
   'alias/tzOffsetSec/505:Factory@jul': 'node ICU has no Factory zone',
 };
+const nodeData = v => 'ICU ' + v.icu + ' tz ' + v.tz;
+/* A JavaScript engine feature, not data: Intl's offset time zones ('+05:30'). Node 20 (V8 11.3) and node 21 (V8 11.8) refuse them;
+   node 22 (V8 12.4) and the recording's Chromium accept them. On a node without them, its disagreement on offset names is set aside
+   below, provided it is exactly a refusal. (An Android WebView that old would refuse them too: LIFE_DIRECTOR_ENGINE_SPEC.md 6.2(7).) */
+const OFFSET_NAME = /^[+\-\u2212]\d\d(:?\d\d)?$/;
+const offsetZonesSupported = () => { try { new Intl.DateTimeFormat('en-US', { timeZone: '+01:00' }); return true } catch (e) { return false } };
+
+/* The verdict on node's disagreements: {pass, why, zones}. differ is [{id, zone}]; recorded is the header's nodeCheck text. */
+function nodeVerdict(differ, recorded, versions) {
+  const zones = [...new Set(differ.map(d => d.zone))].sort();
+  const same = recorded.endsWith(nodeData(versions));
+  if (same) {
+    const unlisted = differ.filter(d => !(d.id in NODE_DIFFERS)).map(d => d.id), stale = Object.keys(NODE_DIFFERS).filter(id => !differ.some(d => d.id === id));
+    return { pass: !unlisted.length && !stale.length, why: 'same node data as the recording (' + nodeData(versions) + ')', zones, unlisted, noLongerDiffer: stale };
+  }
+  const older = Object.keys(TZ_CHANGED_IN).filter(z => String(versions.tz) < TZ_CHANGED_IN[z]);
+  const outside = differ.filter(d => !TZ_FRAGILE.includes(d.zone) && !older.includes(d.zone)).map(d => d.id);
+  return { pass: !outside.length, zones, unlisted: outside,
+    why: 'node data ' + nodeData(versions) + ' differs from the recording\'s (' + recorded + '): only the tz-fragile zones ' + TZ_FRAGILE.join(', ') +
+      (older.length ? ' and the zones changed in a later tz release, ' + older.join(', ') + ',' : '') + ' may differ' };
+}
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => {
@@ -63,10 +86,26 @@ const differing = (fresh, stored) => fresh.map((c, i) => (sameText(c, stored[i])
       !changed.length && chromium.cases.length === stored.length,
       { changed: changed.length, first: changed.slice(0, 8), hint: 'regenerate with node tools/gen_ld_kernel_golden.js if the change is intended' });
   }
-  const node = gen.recordInNode(defs), nodeChanged = differing(node, stored);
-  const unlisted = nodeChanged.filter(id => !(id in NODE_DIFFERS)), stale = Object.keys(NODE_DIFFERS).filter(id => !nodeChanged.includes(id));
-  ok('node (its own ICU) agrees with the file on every case except the ' + Object.keys(NODE_DIFFERS).length + ' listed ones (' + nodeChanged.length + ' differ)',
-    !unlisted.length && !stale.length, { unlisted: unlisted.slice(0, 8), noLongerDiffer: stale, node: process.versions.icu + ' tz ' + process.versions.tz });
+  /* the verdict itself, on made-up disagreements, so both branches are known to work on any machine */
+  const v = process.versions, here = 'node x ' + nodeData(v), other = 'node x ICU 0 tz 1999a';
+  const fx = [{ id: 'zone/isValidTimeZone/505:Factory', zone: 'Factory' }, { id: 'alias/tzOffsetSec/505:Factory@jan', zone: 'Factory' }, { id: 'alias/tzOffsetSec/505:Factory@jul', zone: 'Factory' }];
+  const morocco = { id: 'fuzz/dayEndAfter/66:Africa/Casablanca', zone: 'Africa/Casablanca' }, ny = { id: 'wall/x', zone: 'America/New_York' }, py = { id: 'fuzz/x', zone: 'America/Asuncion' };
+  ok('the node verdict: same data allows only the listed cases; other data also the tz-fragile zones and zones changed after it; never any other zone',
+    nodeVerdict(fx, here, v).pass && !nodeVerdict(fx.concat([morocco]), here, v).pass && nodeVerdict(fx.concat([morocco]), other, v).pass
+    && nodeVerdict([morocco], other, v).pass && !nodeVerdict(fx.concat([ny]), other, v).pass && !nodeVerdict(fx.concat([ny]), here, v).pass
+    && nodeVerdict([py], other, { icu: '74.2', tz: '2024a' }).pass && !nodeVerdict([py], other, { icu: '78.1', tz: '2026a' }).pass);
+
+  const node = gen.recordInNode(defs), byId = new Map(stored.map(c => [c.id, c]));
+  const nodeById = new Map(node.map(c => [c.id, c]));
+  const refusal = out => out === false || (out && typeof out === 'object' && out.threw === 'RangeError');
+  const all = differing(node, stored).map(id => ({ id, zone: zoneOf(byId.get(id)) }));
+  const setAside = offsetZonesSupported() ? [] : all.filter(d => OFFSET_NAME.test(d.zone || '') && refusal(nodeById.get(d.id).out));
+  const differ = all.filter(d => !setAside.includes(d));
+  if (setAside.length) console.log('note: this node (V8 ' + process.versions.v8 + ') has no offset time zones; ' + setAside.length + ' cases on offset names set aside');
+  const verdict = nodeVerdict(differ, file.header.nodeCheck, process.versions);
+  console.log('node ' + process.versions.node + ' ' + nodeData(process.versions) + ': ' + differ.length + ' cases differ from Chromium, in zones ' + JSON.stringify(verdict.zones) + '; ' + verdict.why);
+  ok('node (its own ICU) agrees with the file on every case it must (' + differ.length + ' differ, in ' + verdict.zones.length + ' zones)', verdict.pass,
+    { unlisted: verdict.unlisted.slice(0, 8), noLongerDiffer: verdict.noLongerDiffer, zones: verdict.zones });
   if (chromium && chromium.browser + '' !== file.header.recordedIn.replace('Chromium ', '')) console.log('note: recorded in ' + file.header.recordedIn + ', checked in Chromium ' + chromium.browser);
   console.log(pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

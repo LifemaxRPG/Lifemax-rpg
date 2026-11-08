@@ -361,6 +361,25 @@ function defineCases() {
   return cases;
 }
 
+/* Zones whose answers depend on the tz database release, not on a rule: a JavaScript engine with other tz data may disagree with the
+   recording on them, and the web test allows that only when the runner's ICU or tz version differs from the one the file records for
+   node. Each entry is here because a run showed it (CI, 2026-11: node's tz data differed from Chromium's for Morocco).
+     Africa/Casablanca, Africa/El_Aaiun  Morocco's daylight saving is suspended around Ramadan, and every tz release predicts those
+                                         dates afresh, so two releases often place them differently.
+     Factory                             the tz database's placeholder zone; some ICU builds carry it, some do not.
+   Zones whose rules changed in a recent release are in TZ_CHANGED_IN instead, allowed to differ only on a runner whose data is older
+   than that release; any other disagreement fails. America/Vancouver and Europe/Chisinau, whose rules changed after the page's data,
+   are left out of the corpus. */
+const TZ_FRAGILE = ['Africa/Casablanca', 'Africa/El_Aaiun', 'Factory'];
+/* Zones whose rules changed in a tz release, with that release: a runner whose tz data is older than it disagrees there, and only
+   there, by design. Each is listed because a run showed it (node 21, ICU 74.2, tz 2024a): Paraguay moved to permanent -03 in 2024b,
+   and America/Coyhaique (Aysen, Chile) became a zone of its own in 2025a. */
+const TZ_CHANGED_IN = { 'America/Asuncion': '2024b', 'America/Coyhaique': '2025a' };
+
+/* The zone a case's answer depends on, or null for the zone-free families. */
+const zoneOf = c => (['hash', 'stable', 'event', 'rng', 'num', 'cal', 'slot'].includes(c.family) ? null
+  : [...c.args].reverse().find(a => typeof a === 'string') || null);
+
 const FAMILIES = ['hash', 'stable', 'event', 'rng', 'num', 'zone', 'alias', 'parts', 'offset', 'wall', 'cal', 'horizon', 'grid', 'slot', 'week', 'fuzz'];
 
-module.exports = { defineCases, FAMILIES, MATRIX, EXTRA, ZONES, FIXED, CHANGES, NAMES };
+module.exports = { defineCases, FAMILIES, MATRIX, EXTRA, ZONES, FIXED, CHANGES, NAMES, TZ_FRAGILE, TZ_CHANGED_IN, zoneOf };

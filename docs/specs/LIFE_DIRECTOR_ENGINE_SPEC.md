@@ -388,8 +388,18 @@ states the page's rules itself. This section is the mapping, and every place the
    Vancouver or Chisinau would see native and page disagree. On the phone the two copies are the WebView's ICU and Android's tz
    data module, updated independently; the corpus must be run there once (plan 4.3(6)), and the owner must decide which copy wins
    (section 9).
-6. **Node and Chromium.** Chromium's ICU knows the tz database's `Factory` zone, node's does not; the file holds Chromium's answer and
-   the web test lists the three cases. No other case differs between the two JavaScript engines.
+6. **Node and Chromium.** Chromium's ICU knows the tz database's `Factory` zone, node 22's does not; the file holds Chromium's answer and
+   the web test lists the three cases. With the same node data as the recording no other case differs. Another node's tz data may
+   differ (the web test then compares node's ICU and tz versions with the header's): on the CI runner, Morocco's Ramadan suspensions
+   (`Africa/Casablanca`, 16 fuzz cases; `Africa/El_Aaiun` follows the same rules), which every tz release predicts afresh; on node 21
+   (tz 2024a), `America/Asuncion` (permanent -03 from tz 2024b) and `America/Coyhaique` (a zone of its own from 2025a). These are
+   listed, with that evidence, in `tools/ld_kernel_cases.js` (`TZ_FRAGILE`, `TZ_CHANGED_IN`); a disagreement in any other zone fails.
+   The Morocco cases also make the corpus sensitive to Chromium's own tz updates: when Chromium's data changes, the byte-exact
+   re-record fails there first, and the file is regenerated.
+7. **Offset zones need a recent JavaScript engine.** Node 20 (V8 11.3) and node 21 (V8 11.8) refuse `+05:30`-style zone names, which
+   Chromium 153 and node 22 accept (LDT-2). An Android WebView old enough to refuse them would throw for such a zone where the
+   corpus says it works. The page only stores names that its own `Intl` produced (`resolvedOptions().timeZone`, an IANA name), so
+   this matters only for a hand-made zone; the device pass should confirm the WebView version.
 
 ### 6.3 What was measured
 
