@@ -167,7 +167,7 @@ const f = x => x.toFixed(1);
       const p = await open(browser, grown(3 * MB), true);
       const r = await p.evaluate(async () => {
         const B = LMA_SHADOW_BOOT, real = B.capture, wait = ms => { const t = performance.now(); while (performance.now() - t < ms) { } };
-        B.capture = function () { wait(20); return real.apply(this, arguments) };
+        B.capture = function () { wait(45); return real.apply(this, arguments) };
         const q = state.quests.filter(x => !x.hand), tick = () => new Promise(r => setTimeout(r, 30));
         for (let i = 0; i < 6; i++) { toggleQuest(q[i % q.length].id, i % 2 === 0); await tick() }
         B.capture = real;
