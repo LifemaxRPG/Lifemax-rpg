@@ -43,6 +43,9 @@ internal object PageValues {
             else -> true
         }
 
+    /** Whether the page counts the number [value] as true: not 0 and not NaN. */
+    fun truthy(value: Double): Boolean = !(value == 0.0 || value.isNaN())
+
     /** `first || second`. */
     fun or(first: JsonValue?, second: JsonValue?): JsonValue? = if (truthy(first)) first else second
 
@@ -147,6 +150,52 @@ internal object PageValues {
     /** The order of a JavaScript comparator `a - b` read by a sort: NaN and 0 alike are "equal". */
     fun byDifference(difference: Double): Int =
         if (difference < 0) -1 else if (difference > 0) 1 else 0
+
+    /**
+     * The order JavaScript's `<`, `<=`, `>` and `>=` see between two stored values (LDG-6): by
+     * UTF-16 units when both are text (an array or object counts as its text), else by number; null
+     * when either number is NaN, where every one of the four comparisons is false. `-0` equals `0`.
+     */
+    fun order(left: JsonValue?, right: JsonValue?): Int? {
+        val a = primitive(left)
+        val b = primitive(right)
+        if (a is JsonString && b is JsonString) return a.value.compareTo(b.value).coerceIn(-1, 1)
+        val x = number(a)
+        val y = number(b)
+        return if (x.isNaN() || y.isNaN()) null else if (x < y) -1 else if (x > y) 1 else 0
+    }
+
+    /** `left <= right` for stored values (false for NaN). */
+    fun lessOrEqual(left: JsonValue?, right: JsonValue?): Boolean =
+        order(left, right)?.let { it <= 0 } ?: false
+
+    /** `left >= right` for stored values (false for NaN). */
+    fun atLeast(left: JsonValue?, right: JsonValue?): Boolean =
+        order(left, right)?.let { it >= 0 } ?: false
+
+    /**
+     * `left === right` for stored values: the same type and value, `-0` equal to `0`, NaN never
+     * equal; two lists or objects are never the same value (they are different stored objects).
+     */
+    fun same(left: JsonValue?, right: JsonValue?): Boolean =
+        when {
+            left == null || right == null -> left == null && right == null
+            left is JsonNumber && right is JsonNumber -> left.value == right.value
+            left is JsonArray || left is JsonObject -> false
+            else -> left == right
+        }
+
+    /**
+     * `value[index]`: a list's item, a text's UTF-16 unit as one-unit text, an object's member
+     * named by the index's digits; absent for anything else or past the end.
+     */
+    fun index(value: JsonValue?, index: Int): JsonValue? =
+        when (value) {
+            is JsonArray -> value.items.getOrNull(index)
+            is JsonString -> value.value.getOrNull(index)?.let { JsonString(it.toString()) }
+            is JsonObject -> value[index.toString()]
+            else -> null
+        }
 
     /** An array or object counts as its text; anything else as itself. */
     private fun primitive(value: JsonValue?): JsonValue? =

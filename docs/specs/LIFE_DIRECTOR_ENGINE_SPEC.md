@@ -1,8 +1,8 @@
 # Life Director engine specification: the scheduler in `engine.js`
 
-Status: **parts 1 and 2 of several** (WP-LD1, WP-LD2). Sections 0 to 2 and the rules for time and hashing (sections 4 and 5) are
-part 1; availability (rules, preferences, sleep, the painted grid) is part 2, section 10. The scheduler's other parts (demand,
-placement, rescheduling, ledger, store) follow as their work packages start (`LIFE_DIRECTOR_NATIVE_PLAN.md` section 5). It describes the engine as it behaves at branch `codex/director-dial-controls`,
+Status: **parts 1 to 3 of several** (WP-LD1 to WP-LD3). Sections 0 to 2 and the rules for time and hashing (sections 4 and 5) are
+part 1; availability (rules, preferences, sleep, the painted grid) is part 2, section 10; demand (tags, goals, quests, candidate tasks,
+the per-task numbers, exp and pow) is part 3, section 11. The scheduler's other parts (placement, rescheduling, ledger, store) follow as their work packages start (`LIFE_DIRECTOR_NATIVE_PLAN.md` section 5). It describes the engine as it behaves at branch `codex/director-dial-controls`,
 commit `14a6908`. The page (`lifemax_modular_v73`) is the authority: this document describes it and changes nothing. Where today's
 behaviour looks like a bug or an accident it is marked `[LDnn]` and explained in section 7; the rule as written is still what the
 engine does.
@@ -22,20 +22,23 @@ Contents
 5. Hashing and identities
 6. The page's `Intl` and `java.time`: the mapping and every difference
 7. Defects and accidents
-8. Golden cases: the index (8.1 the kernel, 8.2 availability)
+8. Golden cases: the index (8.1 the kernel, 8.2 availability, 8.3 demand)
 9. Open questions for the owner
 10. Availability: rules, preferences, sleep and the painted grid (part 2)
+11. Demand: tags, goals, quests and candidate tasks (part 3)
 
 ---
 
 ## 0. How to read this
 
 Rules carry IDs and labels. IDs: `LDN-n` numbers and semantics, `LDT-n` time, `LDH-n` hashing and identities (part 1); `LDG-n` the
-grid and value rules, `LDA-n` availability, `LDP-n` preferences, `LDS-n` sleep (part 2, section 10). Later parts will add their own
-prefixes. Each rule is labelled:
+grid and value rules, `LDA-n` availability, `LDP-n` preferences, `LDS-n` sleep (part 2, section 10); `LDD-n` tags, goals and templates,
+`LDQ-n` quests, `LDC-n` candidate tasks, `LDE-n` per-task and per-cycle numbers, `LDF-n` floating point (part 3, section 11). Later parts
+will add their own prefixes. Each rule is labelled:
 
 - **Executed**: a golden file holds cases recorded from the real page that show it; the case ids or families are given. Part 1's
-  file is `lifemax_modular_v73/tests/fixtures/ld-kernel-golden.json`, part 2's `ld-availability-golden.json`. The native code replays
+  file is `lifemax_modular_v73/tests/fixtures/ld-kernel-golden.json`, part 2's `ld-availability-golden.json`, part 3's
+  `ld-demand-golden.json.gz`. The native code replays
   every one of them (section 8).
 - **Read**: derived from reading the code only; no case pins it yet.
 
@@ -103,11 +106,12 @@ These use the kernel and are the next parts of this spec; the plan section names
 | `engine.js` lines | Part | Package |
 |---|---|---|
 | 59-62 `clamp`, `cmpStr` | specified in part 2 (LDG-1, LDG-2) | LD2, done |
-| 60, 62 `byId`, `deepClone` | small helpers; specified with their first caller | LD3, LD4 |
+| 60 `byId` | the sorts by id of part 3 (LDC-4, LDC-10) | LD3, done |
+| 62 `deepClone` | small helper; specified with its first caller | LD4 |
 | 151-179 `createGrid` (the typed arrays other than `localMin` and `dayOf`), 184-198 `paint` | part 2 (LDG-3, LDG-4) | LD2, done |
 | 200-428 rules, preferences, sleep, `deriveAvailability`, maintenance, meals; `logic.js:577-588` `ruleOn` | part 2, section 10 | LD2, done |
-| 468-800 tags, archetypes, templates, goals, quests, candidates, `freshIds` 768-776 | demand | LD3 |
-| 804-1160 energy, state, scoring, commit and removal | placement | LD4 |
+| 431-789 tags, archetypes, templates, goals, quests, candidates, `freshIds` 768-776; `weeksOf` 1152-1159, `goalInfoMap` 1190-1203, `prepTask` 899-908, the shares 1225-1227, `questCoverage` 1496-1503, `recomputeBwc` 820-836, `Math.exp`/`Math.pow` | part 3, section 11 | LD3, done |
+| 804-1160 energy (but `recomputeBwc`), state, scoring, commit and removal | placement | LD4 |
 | 1163-1535 `generateSchedule`, repair, fill, output, `inputHash` 1529-1532 | generation | LD4 |
 | 1537-1618 validation | validation | LD4 |
 | 1619-1905 `rescheduleActivity`, hold placement (`dayEndAfter` 1791-1795 is in this part) | rescheduling | LD5 |
@@ -506,6 +510,55 @@ Part 2 (availability, section 10):
   none), so the engine's default 30 minutes of decompression after a shift of 3 hours or more (LDA-12) never applies to a rule the
   player made: only to rules without the member (the built-in scenarios, older stores). Probably not intended (OQ-8). Ported as is.
 
+Part 3 (demand, section 11):
+
+- **LD15** (`engine.js:568-586`, `657`; LDQ-1, LDC-4) `normalizeQuest` does not keep a quest's `anchor`, so every passive reminder's anchor
+  is `WAKE` whatever the quest says (`candidates/compileCandidates/passive`: a quest with `anchor: 'SLEEP'`). Today the host's quests never
+  set one, so nothing visible changes; a later passive quest meant for the evening would be reminded at waking. Ported as is.
+- **LD16** (`engine.js:738-749`; LDC-6, LDC-10) A goal session that takes on the requirements of a quest **and** of its prerequisite (both
+  of one activity, as a two-stage questline usually is) gets its own id, and its siblings', in `dependsOn`
+  (`candidates/compileCandidates/prereq-same-tag`: both merged sessions carry A and B and depend on themselves). Placement (WP-LD4,
+  `taskEarliestLatest`, `engine.js:912-916`) refuses a task whose dependency is not yet placed, so such a session can never be placed:
+  the goal loses those sessions and the questline its coverage, silently. Looks accidental; ruling needed (OQ-10).
+- **LD17** (`engine.js:667-676`; LDC-4) A daily quest measured in minutes (`requiredMinutes`, no count) asks for `ceil(minutes / length)`
+  sessions today but **one** session on each later day: there `targetCount || 1` makes the count 1 before the minutes are looked at
+  (`candidates/compileCandidates/daily-minutes`: 60 minutes a day gives four 15-minute sessions today, one on each later day). Looks
+  accidental (OQ-11).
+- **LD18** (`engine.js:711`, `733`, `760-762`; LDC-7, **Read**) `standaloneQuestTask`'s last parameter is meant to give a quest's own
+  sessions the recovery spacing of a goal session of the same kind (its comment says so), but the non-daily call passes `null` and the
+  daily call is then ignored by the `recurrence !== 'DAILY'` test: the inheritance never happens. With a compatible goal session a
+  non-daily quest makes no own sessions at all (LDC-6 makes copies instead), so no output shows it; noted because a port that "fixes"
+  it changes plans.
+- **LD19** (`engine.js:486`, `525`; LDD-4) A stored goal without `id` and `goalId` is the goal `"undefined"`; two of them share every
+  template id, spacing key and task id base, so their sessions collide (`expand/expandGoalActivities/set5@*`: two plans with goal
+  `undefined`), and `goalInfoMap` keeps only the last. The page's `Do.goalAdd` always sets an id; only an old or hand-edited store.
+- **LD20** (`engine.js:844`, `906`, `993`, `1006`; LDF-1, LDF-2) The page's plan depends on the JavaScript engine of the WebView. The
+  recording Chromium 153 computes `Math.exp` and `Math.pow` correctly rounded; node 22's engine (V8 12.4), and so presumably WebViews of
+  that generation, use fdlibm; on the recorded arguments they differ in the last bit on 222 of 2,121 `exp` and 115 of 720 `pow` values,
+  and in `_urgBase` of 176 of the 510 `prep`, `scenario` and `fuzz` cases. In LD4's scores these last bits are mostly removed by `q6`
+  (`engine.js:802`, rounding to 1e-6), but a score that lands on a rounding boundary, or an energy check at its 0.45 threshold
+  (`engine.js:944`), can still flip, and with it a placement. Native follows the recorder (`PageMath`). Ruling needed (OQ-12): which
+  WebView is the reference, and the device pass must show which kind the phone's WebView is.
+- **LD21** (`engine.js:488`, `504`; LDD-4, LDD-6) A language subject keeps only ASCII letters, digits and `_` after lower-casing:
+  `Español` becomes `espaol` (so a quest tagged `language.español.*` never matches the goal's sessions), and a subject in another script
+  (`日本語`, `ΣΑΣ`) becomes empty, so the templates keep the plain `language.vocab` tags and a quest naming the language matches nothing
+  (`template/goalTemplates/subject:*`, `goal/normalizeGoal/legacy*`). The page's form passes the player's text as typed
+  (`logic.js:2508`). Looks accidental for non-English players (OQ-13).
+- **LD22** (`engine.js:489`, `1225-1227`; LDD-4, LDE-2, LDE-4) A stored priority that is no number (`"abc"`, `{}`) normalises to NaN
+  (`goal/normalizeGoal/priority=17`). `prepTask` reads it as 3 (`NaN || 3`), but the fairness shares do not: the priority sum is NaN,
+  read as 1, so every goal's share becomes its bare priority (and that goal's NaN) instead of a fraction. The page's forms store 1 to 5.
+- **LD23** (`engine.js:468`, `501`, `569`, `903`, `1497`; **Read**) As LD13: the demand layer looks up stored text in plain objects
+  (`ARCHETYPES`, `TAG_PROFILE`, the tier map, `goalInfo`, the status map), so `constructor`, `toString` or `__proto__` as an archetype,
+  a tag root, a tier, a goal id or a quest id reads an inherited member (and `goalInfoMap` writing `m['__proto__']` changes the map's
+  prototype). Nothing writes such values; the native maps hold only their own entries, and the corpus has none.
+- **LD24** (`engine.js:768-776`; LDC-9, LDC-4) `freshIds` tries at most `count + 200` ids, so when more than 200 of one base's ids are
+  already used it returns fewer than asked, without a word (`ids/freshIds/used-first201#2`); and it rounds a fractional count up, so a
+  stored `requiredCount` of 2.5 makes three sessions (`candidates/compileCandidates/fractional-count`). Neither happens with the page's
+  own data (instance ids of one base number at most a week's sessions; counts are whole).
+- **LD25** (`engine.js:1498-1501`; LDQ-4) `questCoverage` counts only sessions, not minutes: a quest asking for minutes with no count has
+  `remainingCount` 0 and shows as covered with no session at all (`coverage/questCoverage/case7`). The quests section's coverage rows
+  (plan 3.6) read it. Looks accidental (OQ-11).
+
 ---
 
 ## 8. Golden cases: the index
@@ -594,6 +647,58 @@ Not recorded in part 2: inputs whose epochs are not numbers (a commitment start 
 sleep rules or a sleep need that give NaN sleep windows (their sort then compares NaN, where V8's and Kotlin's sorts may order
 differently), the prototype names of LD13.
 
+### 8.3 Demand (part 3)
+
+File `lifemax_modular_v73/tests/fixtures/ld-demand-golden.json.gz` (10,556 cases; about 19.5 MB of text, 1.1 MB gzipped; the test
+loaders unzip it). Recorder `lifemax_modular_v73/tools/gen_ld_demand_golden.js` (the real built page in Chromium, node as a second runner;
+format in its header; it also writes the demand tables to `android-wrapper/native/src/main/resources/lifedirector/demand-tables.json`),
+definitions `tools/ld_demand_cases.js` (no `Intl`), loader `tools/ld_engine_vm.js` (helper list `DEMAND`). Web test
+`tests/ld-demand-golden.test.js` (re-records every case in Chromium, byte for byte, and the tables; node agrees except in the last bit of
+exp and pow values, LD20; every cited rule defined here; strict zones only). Native tests `DemandGoldenTest` (exact replay of every case,
+family counts, the exp and pow record) and `DemandMutationTest`, adapters in `DemandReplay` and `DemandJson`, under
+`android-wrapper/native/src/test/java/com/lifemax/rpg/core/lifedirector`.
+
+Zones: the 11 strict zones of the matrix (section 8.1).
+
+| Family | Cases | Function | What it covers | Rules |
+|---|---|---|---|---|
+| `tag` | 3,008 | `tagMatches`, `tagDepth`, `tagProfile` | every pair of 52 tags (wildcards at the end, in the middle and alone, empty parts, case, ligatures, accents, CJK, emoji), odd requirement and template values; the depth of 51 tags against four templates; the profile of each tag and of odd values | LDD-1 to LDD-3 |
+| `goal` | 739 | `normalizeGoal`, `suggestTemplates` | 21 members x 30 odd values and left out; 22 legacy shapes (old member names, subjects in other scripts and cases, priorities at and past the ends); whole values that are not objects; 60 titles | LDD-4, LDD-5 |
+| `template` | 310 | `goalTemplates` | each archetype plain, with its first template disabled, with a subject; 11 subjects; 6 disabled lists; 6 odd archetype ids; custom templates with each of 13 members odd; frequencies and minutes at every rounding edge; 11 lists | LDD-6, LDD-7 |
+| `expand` | 288 | `expandGoalActivities` | every archetype x level x intensity; 162 pacing cases (18 targets, two of them with weekly minutes just past a rounding step, x 3 volume archetypes x 3 intensities); 8 odd targets; 10 goal sets (clarifications, statuses, order, missing ids, custom templates) under two intensities; odd lists | LDD-8 to LDD-10 |
+| `goalinfo` | 23 | `goalInfoMap` | elapsed against achieved at 11 points; 9 odd goals; duplicates; none | LDE-1 |
+| `quest` | 1,246 | `normalizeQuest` | 30 members x 30 odd values and left out; 10 requirement members x 30; 11 odd shapes; 5 whole values | LDQ-1, LDQ-2 |
+| `cycle` | 236 | `findQuestCycles` | 16 hand graphs (self loops, two and three cycles, diamonds, nested, unknown and repeated ids, UTF-16 order, a 60-quest ring, legacy ids, numbers); 220 seeded graphs | LDQ-3 |
+| `ids` | 173 | `freshIds`, `weeksOf` | 6 bases x 10 counts (fractions, negative, NaN); used ids around the 200-skip limit; the plan's weeks for 9 lengths in 11 zones and across a clock change | LDC-9, LDC-1 |
+| `candidates` | 121 | `compileCandidates` | one behaviour per case: horizons, levels x intensities, history and kept counts, used ids, quest tiers, deadlines either side of the critical boundary, windows, statuses, passive quests, minutes, fractional counts, session lengths, minimum sessions and intensity, exclusivity, check-in tags, depth and tie ranking, daily quests (tags, minutes, progress, `onlyDays`, midday, optional, deadline, kept), two requirements, prerequisites (chains, same tag, done, paused, without tasks, unknown, cycles, two), legacy quests, other zones | LDC-2 to LDC-10 |
+| `coverage` | 24 | `questCoverage` | 11 quests x planned sessions, with and without a status | LDQ-4 |
+| `prep` | 366 | `prepTask` | lengths, priorities x weights, intensities, goal lag, 61 urgency steps from before now to past the horizon, 25 horizon lengths, 220 seeded tasks | LDE-2 |
+| `drain` | 271 | `recomputeBwc` | 260 seeded one- and two-day grids (every slot code, loads, intensities, restorative and plain blocks, cycles and now anywhere); every load class; tasks then recovery; restorative maintenance; the two `TypeError`s; an empty cycle | LDE-3 |
+| `float` | 3,241 | `exp`, `pow`, `square` | the arguments of the urgency, check-in, spacing and movement formulas (stepped and seeded), 400 random arguments, and the edges (overflow, underflow, subnormal, signed zero, NaN, infinities) | LDF-1, LDF-2 |
+| `scenario` | 110 | demand (LDE-4) | the ten scenarios in the 11 strict zones | LDC-2 to LDC-10, LDE-1, LDE-2, LDE-4 |
+| `fuzz` | 400 | demand (LDE-4) | seeded goals, quests, history, kept sessions and used ids (section 11.9) | LDC-2 to LDC-10, LDE-2, LDE-4 |
+
+Mutation checks: `DemandMutationTest` (committed) puts porting mistakes in place of an adapter: fdlibm's `exp` and `pow` for the page's,
+tags compared without case, fresh ids that ignore the used ones, cycle members sorted. And 42 source mutations of the native code, run by
+hand for WP-LD3, each make the replay fail: a wildcard prefix without its dot (64 cases), the depth keeping the wildcard (33), a default
+goal priority of 2 (301), the subject not lower-cased (15), four suggestions (2), custom daily spacing from 6 a week (1), the advanced
+base `fTarget + 2` (140), `BALANCED` keeping the stretch (290), pacing minutes rounded down (12), a lag gain of 1.5 (182), SIDE quests as
+CORE (115), negative counts kept (10), the legacy exclusive flag ignored (26), a self-prerequisite not a cycle (112), daily coverage needing
+every session (2), a skip limit of 100 (3), weeks of six days (471), the weekly minimum one higher (365), goal windows from the week's start
+(455), a prerequisite lag of 10 minutes (84), blocking without the "still needs" test (13), the critical boundary strict (1), later daily
+days using the minutes (39), kept sessions not counted (45), no session length check (1), check-in tags claimable (2), the fewest in-window
+sessions ranked first (18), the daily cover spacing at 23 hours (2), an equal tier relabelled (114), merged indexes from 99 (69), own
+sessions 30 minutes longer (343), own spacing of 4 hours (305), an urgency rate of 2.9 (620), priority over 5 steps (787), fdlibm's
+exponential in `prepTask` (176), a relief of 0.05 (171), restorative commutes ignored (71), free runs counted before now (183), a drain
+not rounded to single precision (22), shares over the goal count (376), the reduction without the low part of ln 2 (1,974), underflow from
+-740 (1). Cases were added for the first run's three survivors (four suggestions, pacing rounds down, the critical boundary). Three
+mutations proved equivalent and were replaced: the history filter's 7 days made 6 (LDE-4's filter cannot change the candidates, since
+history before the plan's first day never counts, LDC-2), and in `PageMath` dropping the rounding margin or using 6 Taylor terms instead of
+12 (the double-double result stays correctly rounded on every recorded argument, and an undecided rounding falls back to 60 digits).
+
+Not recorded in part 3: a template `d` with fewer than three items in a plan (LDD-9), the prototype names of LD23, a quest list or goal
+list that is a text (iterated by character), goals or quests whose ids hash to the same `cyrb53` value.
+
 ---
 
 ## 9. Open questions for the owner
@@ -618,6 +723,18 @@ differently), the prototype names of LD13.
 - **OQ-9** LD12: should load `NONE` mean no drain (it reads as moderate today)? It is not offered by the forms; informational unless a
   later form adds it.
 
+- **OQ-10** LD16: a session merged into a quest and its prerequisite depends on itself and is never placed. Should a task never depend on
+  itself (drop its own id, and its siblings', from `dependsOn`), or should the coalescing refuse to attach a quest whose prerequisite the
+  session already carries? Either is a page change first, with new cases. Port as is until ruled.
+- **OQ-11** LD17, LD25: minutes-based quests. Should a daily quest's later days ask for the same minutes as today, and should coverage
+  count minutes? Port as is until ruled.
+- **OQ-12** LD20: the reference for `Math.exp` and `Math.pow`. The recorder's Chromium is correctly rounded and native reproduces it
+  (`PageMath`); a phone whose WebView still uses fdlibm would compute a few urgencies one bit differently from native. Recommended: make
+  the correctly rounded value the contract (it is the mathematically exact one, and what current Chromium does), confirm the phone's
+  WebView in the device pass, and in shadow mode report a difference that is only in the last bit of an exp or pow input as `float`
+  rather than a divergence, until the page runs on a WebView of the same kind everywhere.
+- **OQ-13** LD21: should a language subject keep its letters (Unicode letters and digits, lower-cased), so that `Español` and `日本語`
+  make their own tags? A change renames the tags of existing goals' sessions, which matters to quests that name them.
 ---
 
 ## 10. Availability: rules, preferences, sleep and the painted grid (part 2, WP-LD2)
@@ -885,3 +1002,268 @@ any JSON type, and several rules below say what an unusual type does. Where that
   in the gap or fold and either side of it, a sleep across it and one ending in it, quarter-hour rules at its edges, a default bedtime
   inside it, a commitment across it; Santiago's skipped midnight (LDT-8) included.
 - Source mutations of the native code, each of which makes the replay fail (section 8.2).
+
+---
+
+## 11. Demand: tags, goals, quests and candidate tasks (part 3, WP-LD3)
+
+This part covers `engine.js:431-789` (the archetype and tag tables, tags, goals and their templates, the goal plans, quests, prerequisite
+cycles, `compileCandidates`, `standaloneQuestTask`, `freshIds`, `makeTask`, `diag`), and from the placement part the pieces the plan's
+demand half needs before anything is placed: `weeksOf` (`1152-1159`), `goalInfoMap` (`1190-1203`), `prepTask` (`899-908`), the fairness
+shares (`1225-1227`), `questCoverage` (`1496-1503`), and `recomputeBwc` (`820-836`, the wake cycle's drain arrays), plus the two
+floating-point functions the energy model and the scores use, `Math.exp` and `Math.pow` (`844`, `906`, `993`, `1006`). New prefixes:
+`LDD-n` tags, goals and templates, `LDQ-n` quests, `LDC-n` candidate tasks, `LDE-n` the per-task and per-cycle numbers, `LDF-n`
+floating point. **Executed** rules cite families of `lifemax_modular_v73/tests/fixtures/ld-demand-golden.json.gz` (section 8.3); the native
+code in `android-wrapper/native/src/main/java/com/lifemax/rpg/core/lifedirector` (`DemandTables`, `ActivityTags`, `PlayerGoals`,
+`GoalPlans`, `PlayerQuests`, `CandidateTask`, `Candidates`, `QuestDemand`, `TaskPreparation`, `WakeCycleDrain`, `PlanDemand`, `PageMath`)
+replays every case.
+
+Inputs are the stored goals (`ST.goals`, written by `Do.goalAdd`, `logic.js:2498-2518`, and the clarify and priority commands) and the
+quests the host reads (`Host.readQuests`, `engine.js:2453`), as JSON values; LDG-6's value rules apply throughout. The tables are never
+retyped: the recorder exports `ARCHETYPES`, `TAG_PROFILE`, `QUEST_WEIGHT` and `LOAD_DRAIN` from the page to
+`android-wrapper/native/src/main/resources/lifedirector/demand-tables.json`, the web test fails when the export drifts, and the native
+code reads that file (strictly: an unknown or missing member refuses it).
+
+### 11.1 Tables
+
+| Table | Source | Content |
+|---|---|---|
+| `ARCHETYPES` | `engine.js:435-460` | 8 goal kinds, each `{title, keywords, templates}`; a template is `{key, title, tag, d: [min, opt, max] minutes, f: [MED, target, MRV] per week, IP, IC (1-5), spacingMinH, spacingIdealH}` and optionally `spacingMinHNovice`, `avoidBeforeSleepMin`, `phases`, `volumeDriver`, `preferRestDay`, `maxPerBwc`, `requiresPrior: {keys, count}` |
+| `TAG_PROFILE` | `462-467` | 11 tag roots `{IP, IC, d}`: the default demand of a quest's own session |
+| `QUEST_WEIGHT` | `587` | MANDATORY 5, CORE 4, OPTIONAL 2 |
+| `LOAD_DRAIN` | `31` | shift load class 1 to 4: `[physical, cognitive]` drain per hour |
+
+### 11.2 Tags
+
+- **LDD-1** (**Executed**: family `tag`, `tagMatches`, 2,704 pairs of 52 tags plus 40 odd values; `engine.js:470-474`) `tagMatches(req, tpl)`:
+  false when either is falsy. A requirement ending in `.*` with base `b` (the text before it) matches `tpl === b` or `tpl` starting with
+  `b + '.'`; any other requirement matches itself and anything starting with `req + '.'`. Exact UTF-16 text: no case folding (`Fitness`
+  is not `fitness`), no normalisation (`ﬁtness` with the ligature is not `fitness`). Consequences of the plain prefix test, all recorded:
+  `.*` alone matches only tags starting with a dot (there is no "match everything"); `*` is no wildcard; `fitness.` matches only
+  `fitness.` itself; `a.*.b` matches only itself (a wildcard in the middle is literal); `""` never matches. A requirement that is truthy
+  and not text (a number, a list, `true`) throws `TypeError`, and so does a template tag that is not text once it is compared by prefix
+  (`tag/tagMatches/odd:*`).
+- **LDD-2** (**Executed**: `tag/tagDepth/*`, 204 cases; `engine.js:475`) `tagDepth(req, tpl)` ranks a match: 1000 when the two are the same
+  text, else the number of `.`-separated parts of `req` after its **first** `.*` is removed, wherever it is (`a.*.b` counts as `a.b`, 2;
+  `fitness.*` 1; `""` 1).
+- **LDD-3** (**Executed**: `tag/tagProfile/*`, 60 cases; `engine.js:468`) `tagProfile(tag)`: the `TAG_PROFILE` entry of the text before the
+  first dot of `String(tag || 'general')`, else `general` `{IP 2, IC 2, d 30}` (`["study", "x"]` is the text `study,x`: general). (**Read**)
+  The lookup is a plain object: a root naming an inherited member (`constructor`) gives a function; no input in the corpus does (LD23).
+
+### 11.3 Goals and templates
+
+- **LDD-4** (**Executed**: family `goal`, `normalizeGoal`, 679 cases: 21 members x 30 odd values and left out, 22 legacy shapes, 6 whole
+  values; `engine.js:484-497`) `normalizeGoal(g)` (`null` throws `TypeError`; any other non-object has no members):
+  - `id`: `String(g.id || g.goalId)`: a goal with neither is `"undefined"` (LD19); `title`: `String(g.title || 'Goal')`.
+  - `archetypeId`: `g.archetypeId || (g.domainArchetype && g.domainArchetype !== 'CUSTOM' ? g.domainArchetype : null)`, as stored.
+  - `subject`: when truthy, `String(subject).toLowerCase()` with everything but `a-z`, `0-9` and `_` removed, else null. Lower-casing is
+    Unicode's (`İSTANBUL` is `istanbul`, the dotted capital becoming `i` plus a combining dot that is then removed; `ΣΑΣ` lower-cases with
+    a final sigma and then vanishes); every other letter is dropped (`Español` is `espaol`, `日本語` is `""`) (LD21).
+  - `priority`: `clamp(round(Number(g.priority || 3)), 1, 5)`: `0` is 3, `4.5` is 5, `5.5` is 5, `"2"` 2, and a value that is no number is
+    NaN, kept (`goal/normalizeGoal/priority=17`, LD22).
+  - `level`: `g.level || g.experienceLevel` when it is exactly `NOVICE`, `INTERMEDIATE` or `ADVANCED`, else `NOVICE`.
+  - `customTemplates`, `disabledTemplates`: the stored list, or `[]` for anything that is not a list.
+  - `target`: `g.target` when truthy (as stored, any value), else, when `targetMetricValue` is truthy, `{units: targetMetricValue,
+    completed: currentMetricValue || 0, unit: metricUnit, deadlineEpoch, unitsPerHour: unitsPerHour || null}` (absent members left out),
+    else null.
+  - `createdEpoch`: `g.createdEpoch || g.startEpoch || null`; `status`: `g.status || g.schedulingState || 'ACTIVE'`, as stored. Only the
+    exact text `ACTIVE` is planned.
+- **LDD-5** (**Executed**: `goal/suggestTemplates/*`, 60 titles; `engine.js:477-482`) `suggestTemplates(title)`: in `String(title ||
+  '').toLowerCase()`, count each archetype's keywords that occur as text (`fit` occurs in `fitness`, `read` in `bread`, `save` in
+  `sauvegarder`); keep the archetypes with a count above 0, most first, then by id (UTF-16); the first three ids.
+- **LDD-6** (**Executed**: family `template`, the archetype cases; `engine.js:499-506`) `goalTemplates(goal)`: first the archetype's
+  templates (`ARCHETYPES[String(archetypeId)]` when `archetypeId` is truthy: `["MINDFULNESS"]` works through its text), in table order,
+  leaving out those whose `key` is in `disabledTemplates` (strict equality: `"VOCAB"` does not disable `vocab`); each is the table's
+  object with `templateId` and `spacingKey` `goal.id + ':' + key`, `goalId`, and, when the subject is non-empty and the tag starts with
+  `language.`, the tag with its first `language.` replaced by `language.<subject>.` (`language.spanish.vocab`).
+- **LDD-7** (**Executed**: `template/goalTemplates/custom:*`, `perWeek:*`, `minutes:*`, `list*`; `engine.js:507-518`) then each custom template
+  `c` of the list that is truthy with a truthy `tag` and a truthy `minutes` or `d` (others are skipped): `dOpt = ceilTo15(c.minutes ||
+  c.d[1] || 30)` (LDT-20; `c.d[1]` is a list's second item, a text's second character, an object's member `"1"`); `freq =
+  clamp(round(Number(c.perWeek || c.f[1] || 3)), 1, 14)`; `key = String(c.key || c.tag)` keeping only ASCII letters, digits, `_`, `.`,
+  `-`; `{key, title: c.title || goal.title, tag: c.tag, templateId, goalId, spacingKey, d: c.d || [max(15, dOpt - 15), dOpt, dOpt + 15],
+  f: c.f || [max(1, freq - 1), freq, min(14, freq + 1)], IP: clamp(c.IP || profile.IP, 1, 5), IC likewise (LDG-1: an in-range text stays
+  text), spacingMinH: c.spacingMinH != null ? c.spacingMinH : (freq >= 7 ? 8 : 16), spacingIdealH: c.spacingIdealH || max(12,
+  round(168 / freq)), maxPerBwc: c.maxPerBwc || 1, phases: c.phases || ['ANY'], volumeDriver: !!c.volumeDriver}` with `profile` LDD-3's
+  of `c.tag`. The page's form always stores numeric `minutes`, `perWeek`, `IP` and `IC` (`logic.js:2507`).
+
+### 11.4 Goal plans
+
+- **LDD-8** (**Executed**: family `expand`, 270 cases; `engine.js:523-533`, `561-566`) `expandGoalActivities(goals, prefs, now)`: `goals`
+  must be a list (anything else throws `TypeError`; so does a `null` goal); sorted by `String(id || goalId)` (UTF-16, stable); each goal
+  through LDD-4; a goal whose status is not `ACTIVE` is skipped; a goal without templates gives `{goalId, title, reasonCode:
+  'MISSING_ACTIVITY_PARAMETERS', missingParameters: ['activityTypeTag', 'weeklyFrequency', 'sessionDurationMinutes'],
+  suggestedTemplateIds: LDD-5 of its title}`; otherwise one plan per template (LDD-9). Returns `{plans, clarificationPrompts,
+  trajectoryWarnings}`. The caller passes LDP-2's preferences; only `intensityLevel` is read.
+- **LDD-9** (**Executed**: `expand/*@<archetype>@<level>@<intensity>`, 96 cases; `engine.js:534-541`, `561-562`) For a template with `f =
+  [fMED, fTarget, fMRV]` (its first three items; `f` must be iterable) and `[dMin, dOpt, dMax] = d.map(ceilTo15)`: `base` is `fMED` for a
+  novice, `fTarget` intermediate, `min(fMRV, fTarget + 1)` advanced; `stretch` is `fMRV`; then under `LIGHT` both are `fMED`, under
+  `BALANCED` `stretch = base`, under `AGGRESSIVE` and `HARDCORE` unchanged. After LDD-10, the plan is `{goal, template, fMED (as stored),
+  base: max(fMED, base), stretch: max(base, stretch), dMin, dOpt, dMax, status, projection, spacingMinH}` with `spacingMinH` the template's
+  `spacingMinHNovice` for a novice when that is truthy, else its `spacingMinH`. (**Read**) A `d` with fewer than three items gives
+  undefined lengths; the corpus does not hold one beyond LDD-7.
+- **LDD-10** (**Executed**: `expand/*pace:*`, 162 cases, `target*`; `engine.js:543-560`) Pacing for a volume driver: when the template's
+  `volumeDriver` is truthy and the goal's target has `units > 0`, a truthy `deadlineEpoch` and `unitsPerHour > 0`: `left = max(0, units -
+  (completed || 0))`, `weeks = max(1, (deadline - now) / 604800)`, `need = ceil((left / unitsPerHour) * 60 / weeks)` minutes a week,
+  `least = fMED * dMin`, `most = fMRV * dMax`. When `need > most`: status `DEADLINE_UNSUSTAINABLE`, `minutes = most`, `projection =
+  round(now + (left / unitsPerHour) * 60 / most * 604800)` and a warning `{goalId, code: 'DEADLINE_UNSUSTAINABLE',
+  projectedCompletionEpoch: projection, message: 'At a safe maximum of ' + most + ' min/week, ' + title + ' finishes later than your
+  deadline.'}`; else `minutes = max(least, need)`. Then `k = clamp(ceil(minutes / dOpt), fMED, fMRV)`, `dOpt = clamp(ceilTo15(minutes /
+  k), dMin, dMax)`, `base = max(base, k)`, `stretch = max(stretch, base)`. Stored target values are read through `Number` (`"100"` works).
+
+### 11.5 Goal information and the per-task numbers
+
+- **LDE-1** (**Executed**: family `goalinfo`, 23 cases; every `scenario` and `fuzz` case; `engine.js:1190-1203`) `goalInfoMap(goals, now)`:
+  for each goal (LDD-4) by id, a later one with the same id replacing an earlier one, `{lag, priority, title}`; `lag` is 0.5 unless the
+  target is truthy with `units > 0`, a truthy `deadlineEpoch`, a truthy `createdEpoch` and `deadlineEpoch > createdEpoch` (LDG-6's
+  comparison: as text when both are text), then `clamp(0.5 + 2 * (clamp((now - created) / (deadline - created), 0, 1) -
+  clamp((completed || 0) / units, 0, 1)), 0, 1)`.
+- **LDE-2** (**Executed**: family `prep`, 366 cases, and every task of `scenario` and `fuzz`; `engine.js:899-908`) `prepTask(S, t, goalInfo)`
+  sets, in this order: `dOptSlots = ceil(dOpt / 15)`; `dMinSlots = min(dOptSlots, ceil(dMin / 15))`; `_prio = 0.60 * ((p - 1) / 4) +
+  0.40 * ((questWeight || 0) / 5)` with `p = priority || 3`; `_lag` the goal's lag (LDE-1) when `goalId` is truthy and known, else 0.5;
+  `_urgBase = exp(-3 * max(0, (deadlineEpoch - now - dOpt * 60) / (HN - H0)))` when `deadlineEpoch` is truthy (LDF-1), else 0.25;
+  `_high = IP >= 4 || IC >= 4` (LDG-6's comparison: `"4"` is high). `H0` and `HN` are the plan's bounds (LDT-16), `now` the plan's clock.
+- **LDE-3** (**Executed**: family `drain`, 271 cases; `engine.js:820-836`, `164-165`) `recomputeBwc(S, bw)`, for the slots `i` from the wake
+  cycle's `startSlot` up to its `endSlot`: `drainP[i]` and `drainC[i]` take the drain so far, **stored in a `Float32Array`** (rounded to
+  the nearest single-precision value; the running sums stay doubles); then the sums grow, per slot, by `LOAD_DRAIN[load] / 4` for a HARD
+  slot with a load (a load class missing from the table throws `TypeError`), by `0.015 * taskIP / 4` and `0.015 * taskIC / 4` for a TASK
+  or LOCKED slot, or fall by `0.06 / 4` (never below 0) for a RECOVERY slot or a MAINT or COMMUTE slot whose painting block (LDG-3) is
+  restorative (a tag naming no block throws `TypeError`). Then `runLen[i]` (from the end backwards) and `runBack[i]` (from the start) count
+  consecutive FREE slots at or after `nowSlot`, in an `Int16Array`. Slots outside the cycle are untouched.
+- **LDE-4** (**Executed**: families `scenario`, 110 cases, and `fuzz`, 400; `engine.js:1205-1228`) The demand half of `generateSchedule`, in
+  order: availability (LDA-10) gives the days, `H0`, `HN` and the preferences; weeks (LDC-1); goal plans (LDD-8) of `input.goals || []` at
+  `now = currentTimeEpoch`; the completion history items with `startEpoch >= H0 - 7 days` (a filter that changes no candidate:
+  only history inside the plan's weeks counts, LDC-2); candidate tasks (LDC-2 to LDC-10) with the
+  kept sessions and used instance ids `prepareState` finds (placement, WP-LD4; a case gives them); goal info (LDE-1) of `input.goals`;
+  LDE-2 on every task; the fairness share of each goal id that has a task, in UTF-16 order: its priority (3 when it has no info) over the
+  sum, a sum of 0 or NaN counting as 1.
+
+### 11.6 Quests
+
+- **LDQ-1** (**Executed**: family `quest`, 1,246 cases: 30 members x 30 odd values and left out, 10 requirement members x 30, 11 odd
+  shapes, 5 whole values; `engine.js:568-586`) `normalizeQuest(q)` (`null` throws `TypeError`): `id: String(q.id || q.questId)`, `title: String(q.title ||
+  'Quest')`, `tier`: `MAIN_STORY` and `MANDATORY` MANDATORY, `CORE` CORE, `SIDE`, `BOUNTY` and `OPTIONAL` OPTIONAL by the text of
+  `q.tier || q.questTier`, anything else CORE; `status: q.status || 'ACTIVE'`, `deadlineEpoch: q.deadlineEpoch || null`,
+  `prerequisiteQuestIds`: each item of the stored list through `String` (a truthy value that is not a list throws `TypeError`), `exclusive:
+  !!(exclusive || requiresDedicatedExclusiveTime)`, `schedulingMode: q.schedulingMode || 'SESSIONS'`, `recurrence: q.recurrence ||
+  null`, `minSessionMinutes`, `sessionMinutes`, `minIntensity` each `|| 0`, `appliedEventIds || []`, `bounty || null`, `source ||
+  'host'`, `onlyDays`: a copy of a non-empty stored list, else null, `windowStartEpoch || null`, `hostRef || null`, all as stored; and
+  `requirements` (LDQ-2). Note what it leaves out: `anchor` (LD15).
+- **LDQ-2** (**Executed**: `quest/normalizeQuest/req.*`, 300 cases; `odd*`) The requirements: the stored list when it is a non-empty list,
+  else one built from the quest: `{requirementId: 'r0', activityTypeTag: tag || activityTypeTag, targetCount: requiredCount ||
+  targetCount || 0, currentCount: progressCount || currentCount || 0, targetMinutes: requiredMinutes || 0, currentMinutes:
+  progressMinutes || 0}`. Each (index `i`; a `null` item throws `TypeError`) becomes `{id: String(requirementId || id || 'r' + i), tag:
+  activityTypeTag || tag || 'general' (as stored), targetCount, currentCount, targetMinutes, currentMinutes: each max(0, Number(x || 0))
+  (NaN stays NaN), minSessionMinutes: its own || the quest's || 0, sessionMinutes likewise}`.
+- **LDQ-3** (**Executed**: family `cycle`, 236 cases: 16 hand graphs, 220 seeded; `engine.js:590-608`) `findQuestCycles(quests)`: Tarjan's
+  strongly connected components over each quest's prerequisites that name a quest of the list (others ignored; with two quests of one id,
+  the later one's prerequisites), visited from each id in UTF-16 order, a prerequisite's list in stored order; a component of two or more,
+  or one quest naming itself, is a cycle; the result is the set of their ids, in the order the components close (each component in the
+  order it is popped).
+- **LDQ-4** (**Executed**: family `coverage`, 24 cases; `engine.js:1496-1503`) `questCoverage(quests, planned, status)`: for each active
+  quest (status exactly `ACTIVE`), `{questId, title, tier, status: status[id] || quest status, deadlineEpoch, scheduledSessions: the planned
+  sessions carrying one of its requirements, remainingCount: the sum of max(0, targetCount - currentCount), recurrence, covered}` with
+  `covered` null when the scheduling mode is `NONE`, else, daily, at least one session, else at least `remainingCount` sessions. Minutes
+  are not counted: a quest asking only for minutes is covered with no session at all (LD25).
+
+### 11.7 Candidate tasks
+
+- **LDC-1** (**Executed**: `ids/weeksOf/*`, 102 cases; `engine.js:1152-1159`) `weeksOf(days)`: the plan's days in runs of seven from the
+  first: `{index, key: the first day's key, startEpoch: its start, endEpoch: the last day's end, days: how many}` (the last run may be
+  shorter). Weeks start on the plan's first day, not on a Monday.
+- **LDC-2** (**Executed**: families `candidates`, `scenario`, `fuzz`; `engine.js:614-622`, `624-632`) Counting: every history item and every
+  kept session whose `startEpoch` falls in week `w` (`start <= epoch < end`, the first such week) and has a truthy `templateId` counts one
+  for `templateId|w`. A `null` item throws `TypeError`. Then, for each plan (LDD-8 order) and each week: `scale = days / 7`, `total =
+  max(0, round(stretch * scale))`, and `freshIds(used, templateId + '|' + week key + '|', max(0, total - counted))` (LDC-9) new sessions
+  numbered `k = counted + j`.
+- **LDC-3** (**Executed**: `candidates/*tiers@*`, `horizon*`, `history-*`, `kept-counts`; `engine.js:633-646`, `777-785`) Each goal session
+  is `makeTask`'s defaults (`linkedQuestRequirementIds []`, `dependsOn []`, `minLagMin 0`, `exclusive false`, `requiresPrior null`,
+  `blockedReason null`, `origStartEpoch null`, `isPlaced false`) with: `kind 'GOAL'`, the template's `title`, `templateId`, `tag`, `IP`,
+  `IC`, `spacingKey` and `spacingIdealH` as stored, `goalId`, `goalTitle`, `linkedGoalIds [goalId]`, `priority` (LDD-4), `questWeight 0`,
+  `tier` 3 (`WEEKLY_MINIMUM`) for `k < round(fMED * scale)`, else 2 (`WEEKLY_TARGET`) for `k < round(base * scale)`, else 1
+  (`STRETCH_VOLUME`); the plan's `dOpt`, `dMin`, `dMax`, `spacingMinH`; `maxPerBwc || 1`, `avoidBeforeSleepMin || 0`, `phases ||
+  ['ANY']`, `preferRestDay: !!`; `windowStart: max(week start, now)`, `windowEnd: week end`, `deadlineEpoch null`, `week`, `sessionIndex
+  k`, `requiresPrior`: for a template with one, `{templateIds: goalId + ':' + each key, count}`; `goalStatus`: the plan's status.
+- **LDC-4** (**Executed**: `candidates/*` quest cases; `engine.js:649-663`, `786-789`) The quests, through LDQ-1 and sorted by id
+  (stable), each given a status in this order: not `ACTIVE`: its stored status; in a cycle (LDQ-3): `DEPENDENCY_CYCLE` and a rejection
+  `'<title> is part of a circular prerequisite chain, so it cannot be scheduled.'`; a prerequisite that is a known quest neither
+  `COMPLETED` nor `ACTIVE`: `BLOCKED_BY_PREREQUISITE` and `'<title> waits for a prerequisite quest that is not active.'` (an unknown
+  prerequisite does not block); scheduling mode `NONE`: `PASSIVE` and a reminder `{questId, title, anchor: 'WAKE'}` (always `WAKE`, LD15);
+  a truthy deadline at or before now: `DEADLINE_PASSED`; else `SCHEDULING`. A rejection is `diag` with no task: `{taskId: questId, title:
+  null, tier: null, reasonCode, humanExplanation, linkedQuestIds: [], goalId: null}`. A scheduling quest's windows: daily (`recurrence ===
+  'DAILY'`), one per plan day whose weekday is in `onlyDays` (strict: `"1"` is no weekday) or every day, `{start: max(day start, now),
+  end: day end, key: day key, isToday}`; otherwise one `{start: max(now, windowStartEpoch || 0), end: min(deadline || Infinity, last week's
+  end), key: 'once'}`. For each requirement and each window not empty (`end <= start` skips it): the count still needed is `max(0, target -
+  current)`, but on a daily quest's later days `max(0, targetCount || 1)` from zero (LD17), and the minutes likewise; each kept session that
+  carries this quest and requirement (a stored link, strict equality) and starts inside the window takes one off the count (while above
+  0) and its rounded minutes off the minutes; the session length is `ceilTo15(sessionMinutes || minSessionMinutes || profile.d)` (LDD-3);
+  a count of 0 with minutes left becomes `ceil(minutes / length)`; with a count of 0, nothing more (a fractional count stays fractional:
+  LDC-9 gives its ceiling).
+- **LDC-5** (**Executed**: `candidates/*deadline-in-*`, `tier-*`, `daily*`; `engine.js:678-680`) The requirement's tier: 4 when the deadline is
+  truthy, the quest is not OPTIONAL and `deadline - now <= 86400 + length * 60`, or when the quest is daily, not OPTIONAL and the window
+  ends within a day of now (today); else 2 for OPTIONAL, else 3. Its link is `{questId, reqId, questTitle, deadlineEpoch}` with the
+  window's end for a daily quest, else the stored deadline.
+- **LDC-6** (**Executed**: `candidates/*quest-merged*`, `assessment-*`, `checkpoint`, `depth-ranking`, `ranking-ties`, `min-*`, `two-quests-same-tag`,
+  `custom-goal-quest`; `engine.js:681-701`, `716-730`) Coalescing: unless the quest is exclusive, the compatible tasks are those already
+  made (goal sessions and earlier quests' sessions, in creation order) with a non-empty `goalId`, not exclusive, not `QUEST`, without a
+  truthy `coverable`, whose tag LDD-1 matches the requirement's, that is not a check-in tag (ending `.assessment` or `.checkpoint`) unless
+  equal to the requirement's, with `dMax >= (minSessionMinutes || 0)` and `max(IP, IC) >= minIntensity`. They are grouped by template (in
+  order of first appearance) and ranked by LDD-2 depth of the group's first task (deeper first), then by how many of the group's tasks lie
+  in the window (`windowStart < end && windowEnd > start`, more first), then by template id; the best group's first task is `best`. For a
+  non-daily quest: the best group's tasks in the window not yet carrying this quest, by week then session index, take the requirement on
+  in place until the count is reached: the link is added, `kind` becomes `MERGED`, the window narrows to the intersection, the deadline
+  becomes the link's (when truthy), a truthy `minSessionMinutes` raises `dMin` to its `ceilTo15` and `dOpt`, `dMax` to at least that, the
+  tier rises to the requirement's when higher (reason `CRITICAL_DEADLINE` for 4, else `ACTIVE_QUEST`), and `questWeight` to at least
+  `QUEST_WEIGHT[tier]`. Then the rest is made of copies of `best` (`extraFrom`): its members, with `id` from `freshIds(used, 'qx|' + quest
+  + '|' + req + '|' + window key + '|', rest)`, `kind 'MERGED'`, `sessionIndex 100 + k`, the link alone, the requirement's tier and
+  reason, `questWeight`, the window, the link's deadline, `dependsOn []`, `requiresPrior null`, `coverable null`, and `dOpt`, `dMin` each
+  at least `ceilTo15(minSessionMinutes || 15)` (`dMax` unchanged).
+- **LDC-7** (**Executed**: `candidates/*quest-alone`, `session*`, `exclusive`, `legacy-quest`; `engine.js:731-733`, `753-766`) Whatever the
+  coalescing did not cover becomes the quest's own sessions, ids from `'q|' + quest + '|' + req + '|' + key + '|'`: `kind 'QUEST'`, title
+  the quest's, `templateId` and `spacingKey` `'quest:' + quest + ':' + req`, the requirement's tag, `goalId null`, `priority 3`, the
+  weight, tier and reason (`CRITICAL_DEADLINE`, `ACTIVE_QUEST` for 3, `SIDE_QUEST` for 2), `dMin = ceilTo15(minSessionMinutes || max(15,
+  length - 15))`, `dOpt = max(length, dMin)`, `dMax = dOpt + 15`, `IP` and `IC` the profile's, `spacingMinH` 0 for an exclusive quest
+  else 3, `spacingIdealH 24`, `maxPerBwc` 1 exclusive else 2, `avoidBeforeSleepMin` 120 when the profile's IP is 4 or more, `phases
+  ['ANY']`, the window, the link's deadline, `week: max(0, week of the window's start)`, `sessionIndex k`, `exclusive`, `questId`. (**Read**)
+  The parameter meant to give these sessions a goal session's spacing (`sameKindTpl`) never takes effect (LD18).
+- **LDC-8** (**Executed**: `candidates/*daily*`, `exclusive-daily`; `scenario` office; `engine.js:702-715`) A daily quest is not merged in
+  place: with `cover = {reqTag, start, end, link, exactOnly: exclusive}`, when there is a `best` whose `spacingMinH || 0` is at most 24,
+  the whole count is made of copies of `best` (LDC-6's `extraFrom`, ids from `'qx|...'`) with `coverable: cover`; otherwise of the quest's
+  own sessions (LDC-7) with `coverable: cover`. Either way nothing is left for LDC-7's last step.
+- **LDC-9** (**Executed**: `ids/freshIds/*`, 71 cases, and every task id; `engine.js:768-776`) `freshIds(used, base, count)`: for `k = 0, 1,
+  2, ...` while fewer than `count` ids are found and `k < count + 200`: `id = stableId('t', base + k)` (LDH-3), skipped when `used` holds
+  `'i' + id.slice(1)` (the instance id of that task: `i_` and the same digits). So an id is a function of the base and `k` only (no
+  randomness, no order dependence), at most 200 used ids are skipped (`used-first201#2` gives one id where two were asked, LD24), a
+  fractional count gives its ceiling (`#2.5` gives three ids), and NaN, 0 or less give none. Two different bases never collide unless
+  `cyrb53` does (106 bits); the same base and `k` always give the same id, which is what keeps a re-plan's task ids stable.
+- **LDC-10** (**Executed**: `candidates/*prereq-*`; `engine.js:737-751`) Last, for each `SCHEDULING` quest and each prerequisite that is a
+  known quest not `COMPLETED`: every task carrying the quest gets the ids of every task carrying the prerequisite appended to `dependsOn`
+  (once per prerequisite listed: a repeated prerequisite appends twice) and `minLagMin` at least 15; when there are no such tasks while the
+  prerequisite still needs sessions (a count or minutes target above what is done), `blockedReason` `BLOCKED_BY_PREREQUISITE`. A task
+  carrying both a quest and its prerequisite depends on itself (LD16). The result is `{tasks sorted by id (stable), passiveReminders,
+  rejected, questStatus, quests}`.
+
+### 11.8 Floating point
+
+- **LDF-1** (**Executed**: family `float`, `exp`, 2,121 cases, and every `_urgBase`; `engine.js:906`, `993`, `1006`) `Math.exp` as the
+  recording Chromium (153) computes it is **correctly rounded**: the double nearest the exact value, for each of the 2,103 finite recorded
+  arguments (checked against 60-digit decimal arithmetic), across the arguments the engine's formulas give (urgency `-3x`, the spacing
+  Gaussians, the movement decay) and 400 random ones. It is not fdlibm: Java's `StrictMath.exp` (fdlibm) differs in the last bit on
+  about one value in ten, and node 22's JavaScript engine, which is fdlibm too, gives the same values as `StrictMath` (LD20). Native uses
+  `PageMath.exp`: double-double evaluation (Dekker products, no fused multiply-add) rounded once, with a 60-digit fallback whenever the
+  rounding cannot be decided, and for subnormal or near-overflow results.
+- **LDF-2** (**Executed**: `float/pow/*`, 720 cases, `float/square/*`, 400) `Math.pow(0.5, x)` (the check-in decay, `engine.js:844`) is
+  correctly rounded likewise, including the tie at `0.5^1075` (exactly half the smallest subnormal), which rounds to even, 0; `x ** 2` is
+  `x * x` exactly. JavaScript's special values: `pow(x, NaN)` NaN, `pow(NaN, 0)` 1, `pow(1, ±Infinity)` NaN.
+
+### 11.9 What was measured
+
+- 10,556 cases in Chromium 153 (the file, about 19.5 MB of text, 1.1 MB gzipped); the native code on the JVM reproduces all of them
+  exactly (`DemandGoldenTest`). Node 22 agrees on every case except 337 `float` values and the `_urgBase` of 176 `prep`, `scenario` and
+  `fuzz` cases, in the last bit (LD20); the web test requires exactly that.
+- `StrictMath` misses 343 of the 2,841 recorded `exp` and `pow` values, the JVM's `Math` 7; `PageMath` none.
+- The ten scenarios at seed 1 in all 11 strict zones, started on Monday 2026-10-26 06:00 local (their deadlines and goal dates moved
+  with the start); 400 seeded inputs (0 to 5 goals of every archetype and custom ones, levels, statuses, targets; 0 to 5 quests of every
+  tier, daily and once, `onlyDays`, exclusivity, session minutes, minimum intensity, prerequisites, two-requirement quests, passive and
+  paused ones; history, kept sessions and used ids; horizons of 1 to 28 days starting at any quarter hour in March, October, November
+  and December 2026; every intensity).
+- Source mutations of the native code, each of which makes the replay fail (section 8.3).

@@ -11,7 +11,7 @@
    inside the real page in Chromium (tools/gen_ld_kernel_golden.js), so both runners execute identical code under their own Intl.
 
    Use: const { load, kernelSource } = require('./ld_engine_vm.js'); const E = load(); E.util.localParts(0, 'UTC'); E.__kernel.cyrb53('a', 1)
-   A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2). */
+   A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2, DEMAND for WP-LD3). */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
@@ -23,6 +23,10 @@ const KERNEL = ['SLOT_SEC', 'SLOTS_PER_HOUR', 'cyrb53', 'stableId', 'mulberry32'
   'zonedToEpoch', 'ymdAdd', 'ymdKey', 'parseYmd', 'daysBetween', 'buildHorizon', 'createGrid', 'slotOf', 'slotCeil', 'epochOf', 'dayEndAfter'];
 /* The private helpers the availability layer needs (WP-LD2, tools/gen_ld_availability_golden.js). */
 const AVAILABILITY = ['SLOT', 'clamp', 'cmpStr', 'buildHorizon', 'createGrid', 'paint', 'normalizeRule', 'ruleAppliesOn', 'materializeRule', 'deriveSleep'];
+
+/* The private helpers and tables the demand layer needs (WP-LD3, tools/gen_ld_demand_golden.js). */
+const DEMAND = ['buildHorizon', 'createGrid', 'tagProfile', 'tagDepth', 'goalTemplates', 'findQuestCycles', 'freshIds', 'weeksOf', 'goalInfoMap', 'prepTask',
+  'recomputeBwc', 'questCoverage', 'TAG_PROFILE', 'QUEST_WEIGHT', 'LOAD_DRAIN'];
 
 /* The engine module's text exactly as the file has it (the first of the three modules). */
 function engineSource() {
@@ -46,4 +50,4 @@ function load(names) {
   return ctx.LifeDirectorEngine;
 }
 
-module.exports = { load, engineSource, kernelSource, KERNEL, AVAILABILITY, ENGINE };
+module.exports = { load, engineSource, kernelSource, KERNEL, AVAILABILITY, DEMAND, ENGINE };

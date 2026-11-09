@@ -1,0 +1,31 @@
+{"about":"The Life Director engine's demand tables (engine.js ARCHETYPES, TAG_PROFILE, QUEST_WEIGHT, LOAD_DRAIN), written by lifemax_modular_v73/tools/gen_ld_demand_golden.js from the page; never edit by hand.",
+"archetypes":{
+"FITNESS_HYPERTROPHY":{"title":"Build Muscle","keywords":["muscle","strength","strong","gym","lift","workout","fit","health"],"templates":[{"key":"strength","title":"Resistance Training","tag":"fitness.strength","d":[45,60,75],"f":[2,3,5],"IP":4,"IC":1,"spacingMinH":24,"spacingMinHNovice":48,"spacingIdealH":48,"avoidBeforeSleepMin":120,"phases":["SECONDARY","PEAK"],"volumeDriver":false},{"key":"mealprep","title":"Meal Prep Batch","tag":"nutrition.mealprep","d":[60,90,120],"f":[1,1,2],"IP":2,"IC":1,"spacingMinH":72,"spacingIdealH":96,"phases":["PEAK","SECONDARY"],"preferRestDay":true},{"key":"assess","title":"Progress Check-in","tag":"fitness.assessment","d":[15,15,15],"f":[1,1,1],"IP":1,"IC":2,"spacingMinH":120,"spacingIdealH":168,"phases":["PEAK"]}]},
+"SKILL_LANGUAGE":{"title":"Learn a Language","keywords":["language","spanish","french","japanese","german","vocab","speak"],"templates":[{"key":"vocab","title":"Vocab Review","tag":"language.vocab","d":[15,15,30],"f":[4,6,7],"IP":1,"IC":2,"spacingMinH":12,"spacingIdealH":24,"phases":["PEAK","WAKE","ANY"]},{"key":"grammar","title":"Grammar & Drills","tag":"language.grammar","d":[30,45,60],"f":[2,3,4],"IP":1,"IC":4,"spacingMinH":20,"spacingIdealH":48,"phases":["PEAK","SECONDARY"]},{"key":"speaking","title":"Speaking & Listening","tag":"language.speaking","d":[30,30,45],"f":[1,2,3],"IP":1,"IC":3,"spacingMinH":20,"spacingIdealH":72,"phases":["SECONDARY","PEAK"]},{"key":"check","title":"Weekly Skill Check","tag":"language.assessment","d":[15,30,30],"f":[1,1,1],"IP":1,"IC":3,"spacingMinH":120,"spacingIdealH":168,"phases":["PEAK"],"requiresPrior":{"keys":["vocab","grammar","speaking"],"count":3}}]},
+"HABIT_READING":{"title":"Read More","keywords":["read","book","novel","pages"],"templates":[{"key":"reading","title":"Focused Reading","tag":"reading.focused","d":[15,30,60],"f":[3,5,7],"IP":1,"IC":2,"spacingMinH":4,"spacingIdealH":24,"maxPerBwc":2,"phases":["WIND","SECONDARY","ANY"],"volumeDriver":true},{"key":"checkpoint","title":"Reading Checkpoint","tag":"reading.checkpoint","d":[15,15,15],"f":[0,1,1],"IP":1,"IC":2,"spacingMinH":120,"spacingIdealH":168,"phases":["ANY"]}]},
+"ADMIN_FINANCE":{"title":"Improve Finances","keywords":["money","finance","budget","save","debt","invest"],"templates":[{"key":"audit","title":"Budget Audit","tag":"admin.finance.audit","d":[15,30,45],"f":[1,1,2],"IP":1,"IC":4,"spacingMinH":48,"spacingIdealH":96,"phases":["PEAK"]},{"key":"planning","title":"Financial Planning","tag":"admin.finance.planning","d":[30,45,60],"f":[1,1,2],"IP":1,"IC":4,"spacingMinH":48,"spacingIdealH":96,"phases":["PEAK"]}]},
+"FITNESS_CARDIO":{"title":"Cardio Endurance","keywords":["run","cardio","cycle","swim","endurance","walk","health","weight"],"templates":[{"key":"cardio","title":"Cardio Session","tag":"fitness.cardio","d":[20,30,60],"f":[2,3,5],"IP":3,"IC":1,"spacingMinH":20,"spacingIdealH":48,"avoidBeforeSleepMin":90,"phases":["SECONDARY","PEAK"]}]},
+"STUDY_GENERAL":{"title":"Study / Course","keywords":["study","course","exam","learn","class","cert"],"templates":[{"key":"study","title":"Deep Study Block","tag":"study.deep","d":[30,45,90],"f":[2,4,6],"IP":1,"IC":4,"spacingMinH":6,"spacingIdealH":24,"maxPerBwc":2,"phases":["PEAK","SECONDARY"],"volumeDriver":true},{"key":"review","title":"Review & Flashcards","tag":"study.review","d":[15,20,30],"f":[2,4,7],"IP":1,"IC":2,"spacingMinH":8,"spacingIdealH":24,"phases":["ANY"]}]},
+"CREATIVE_PRACTICE":{"title":"Creative Practice","keywords":["draw","paint","music","guitar","piano","write","art","create"],"templates":[{"key":"practice","title":"Creative Practice","tag":"creative.practice","d":[20,45,90],"f":[2,4,6],"IP":1,"IC":3,"spacingMinH":12,"spacingIdealH":24,"phases":["SECONDARY","PEAK","WIND"],"volumeDriver":true}]},
+"MINDFULNESS":{"title":"Mindfulness","keywords":["meditat","mindful","journal","calm","stress"],"templates":[{"key":"meditate","title":"Meditation / Journal","tag":"wellbeing.mindfulness","d":[10,15,30],"f":[3,5,7],"IP":1,"IC":1,"spacingMinH":12,"spacingIdealH":24,"phases":["WAKE","WIND","ANY"]}]}},
+"tagProfile":{
+"fitness":{"IP":3,"IC":1,"d":30},
+"nutrition":{"IP":2,"IC":1,"d":60},
+"language":{"IP":1,"IC":3,"d":30},
+"reading":{"IP":1,"IC":2,"d":30},
+"study":{"IP":1,"IC":4,"d":45},
+"admin":{"IP":1,"IC":3,"d":30},
+"creative":{"IP":1,"IC":3,"d":45},
+"wellbeing":{"IP":1,"IC":1,"d":15},
+"chores":{"IP":2,"IC":1,"d":30},
+"social":{"IP":1,"IC":2,"d":60},
+"general":{"IP":2,"IC":2,"d":30}},
+"questWeight":{
+"MANDATORY":5,
+"CORE":4,
+"OPTIONAL":2},
+"loadDrain":{
+"1":[0.055,0.02],
+"2":[0.015,0.05],
+"3":[0.035,0.03],
+"4":[0.01,0.01]}}

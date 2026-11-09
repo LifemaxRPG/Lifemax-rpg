@@ -390,6 +390,25 @@ needed: D3 (one rule-applicability function for page and native).
 
 ### WP-LD3. Demand: tags, goals, quests, candidates (M, risk medium; engine)
 
+**Status: done** (branch `logic/ld3-demand`, NativeApi 120). Recorder `tools/gen_ld_demand_golden.js` (LD1's method: the engine text with
+its private helpers hooked, `tools/ld_engine_vm.js` `DEMAND`, run in the built page in Chromium and in node; cases `tools/ld_demand_cases.js`),
+10,527 cases in `tests/fixtures/ld-demand-golden.json.gz` (15 families: tags, goals, templates, goal plans, goal info, quests, cycles, ids
+and weeks, candidates, coverage, the per-task constants, the wake cycle's drain arrays, exp and pow, the ten scenarios in the 11 strict
+zones, seeded fuzz of the whole demand half), web test `tests/ld-demand-golden.test.js`. The tables (`ARCHETYPES`, `TAG_PROFILE`,
+`QUEST_WEIGHT`, `LOAD_DRAIN`) are exported from the page to `android-wrapper/native/src/main/resources/lifedirector/demand-tables.json` and
+read from there; the web test fails when the export drifts. Kotlin in `core/lifedirector` (`DemandTables`, `ActivityTags`, `PlayerGoals`,
+`GoalPlans`, `PlayerQuests`, `CandidateTask`, `Candidates`, `QuestDemand`, `TaskPreparation`, `WakeCycleDrain`, `PlanDemand`, `PageMath`)
+reproduces every case (`DemandGoldenTest`, `DemandMutationTest`; source mutations each caught, spec 8.3). Beyond the scope list, as the
+demand half of `generateSchedule` needs them: `weeksOf`, `goalInfoMap`, `prepTask`, the fairness shares, `questCoverage`, `recomputeBwc`.
+Spec part 3 (`LIFE_DIRECTOR_ENGINE_SPEC.md` section 11: LDD-1 to 10, LDQ-1 to 4, LDC-1 to 10, LDE-1 to 4, LDF-1, 2; defects LD15 to LD25;
+index 8.3; OQ-10 to 13). Findings: the recording Chromium's `Math.exp` and `Math.pow` are **correctly rounded**, not fdlibm: `StrictMath`
+misses 343 of 2,835 recorded values, so native computes them itself (`PageMath`), and node 22 (fdlibm) differs from the page in the
+last bit there, so the page's plan depends on the WebView's JavaScript engine (LD20, OQ-12; device pass needed); a session merged into a
+quest and its prerequisite depends on itself and can never be placed (LD16); daily minute quests ask for one session on later days
+(LD17); passive reminders always anchor at waking (LD15); non-ASCII language subjects are stripped (LD21). For LD4: `baseP`, `baseC`,
+`drainP`, `drainC` are `Float32Array`s (LDE-3), and `PageMath`'s speed (double-double, a 60-digit fallback only when the rounding is
+undecided) should be measured under placement's call counts.
+
 Scope: `tagMatches`, `tagDepth`, `suggestTemplates`, `normalizeGoal`, `goalTemplates`, `expandGoalActivities`,
 `normalizeQuest`, `findQuestCycles`, `compileCandidates`, `standaloneQuestTask`, `makeTask`, `freshIds`. The archetype and
 tag tables (`ARCHETYPES`, `TAG_PROFILE`) are exported from the page as a JSON file (like ECONOMY WP2), never retyped; a test

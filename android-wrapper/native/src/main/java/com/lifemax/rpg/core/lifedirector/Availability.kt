@@ -42,11 +42,12 @@ class WakeCycle(
 
 /**
  * The result of [Availability.derive]: the zone value as given ([zoneValue]), the checked
- * preferences, the rules sorted by id, the painted [grid], the waking days and the warnings in the
- * page's order.
+ * preferences, the plan's [days], the rules sorted by id, the painted [grid], the waking days and
+ * the warnings in the page's order.
  */
 class AvailabilityPlan(
     val zoneValue: JsonValue,
+    val days: List<PlanDay>,
     val prefs: PlanPreferences,
     val rules: List<AvailabilityRule>,
     val grid: AvailabilityGrid,
@@ -170,7 +171,7 @@ object Availability {
                     i += 1
                 }
             }
-        return AvailabilityPlan(zoneValue, prefs, rules, grid, cycles, warnings)
+        return AvailabilityPlan(zoneValue, days, prefs, rules, grid, cycles, warnings)
     }
 
     /**
