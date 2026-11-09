@@ -125,6 +125,17 @@ interface Executor {
      */
     val stepIndex: Int
 
+    /**
+     * In the air past the point its jump can be dropped: a script started now would begin where the
+     * cat lands, not where it took off (the fast executor never is; its leaps are cuts).
+     */
+    val inFlight: Boolean
+        get() = false
+
+    /** On its way (walking, hopping or leaping): where it stands now is not where it will stop. */
+    val moving: Boolean
+        get() = false
+
     /** The hungry look; it changes what the cat can jump. */
     var weak: Boolean
 
@@ -183,6 +194,12 @@ class BodyExecutor(body: CatBody) : Executor {
 
     override val stepIndex: Int
         get() = doneIndex + 1
+
+    override val inFlight: Boolean
+        get() = body.inFlight
+
+    override val moving: Boolean
+        get() = body.isTravelling
 
     override var weak: Boolean
         get() = body.weak

@@ -201,6 +201,8 @@ class CatWorld(
     override fun crowded(slot: Int): Boolean {
         // a moment together (curled up, a nose touch) is the one time two cats may be this close
         if (social.sharing()) return false
+        // two cats fed together walk the same way to their bowls and eat side by side
+        if (minds.size > 1 && minds.all { goingToEat(it) }) return false
         val a = minds[slot].exec
         for (o in minds) {
             if (o.slot == slot) continue
@@ -240,7 +242,8 @@ class CatWorld(
 
     /**
      * The overlap guard (plan 1.5, [BrainTuning.Apart]): two cats that stay on top of each other
-     * for a few seconds are parted; the one awake (or the second) makes way.
+     * for a few seconds are parted; the one awake (or the second) makes way, never one going to its
+     * meal: two fed together walk the same way to bowls side by side and are not parted.
      */
     private fun keepApart() {
         if (minds.size < 2 || social.sharing() || !crowded(0)) {
@@ -251,13 +254,24 @@ class CatWorld(
         together = 0
         val a = minds[0]
         val b = minds[1]
-        val first = if (b.runner.activity.asleep && !a.runner.activity.asleep) a else b
+        // a cat on its way to its meal (or eating) is never the one sent away from it
+        val first =
+            when {
+                goingToEat(a) -> b
+                goingToEat(b) -> a
+                b.runner.activity.asleep && !a.runner.activity.asleep -> a
+                else -> b
+            }
         // one already making way that could not get clear: the other one goes instead
         val mover = if (first.runner.activity === MakeWay) (if (first === a) b else a) else first
-        if (mover.runner.activity !== MakeWay) mover.makeWay()
+        if (mover.runner.activity !== MakeWay && !goingToEat(mover)) mover.makeWay()
     }
 
     private var together = 0
+
+    /** Cat [m] is eating, or on its way to its bowl to eat (or about to, once it lands). */
+    private fun goingToEat(m: CatMind): Boolean =
+        m.runner.activity === Eat || m.runner.nextReflex === Eat
 
     /** The page's newest block: each cat's hunger stage and vacation, and the rest day. */
     override fun update(block: WorldBlock) {

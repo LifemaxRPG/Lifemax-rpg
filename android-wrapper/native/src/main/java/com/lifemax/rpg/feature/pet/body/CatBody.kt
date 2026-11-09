@@ -65,6 +65,10 @@ class CatBody(
     val isIdle: Boolean
         get() = mode == Mode.IDLE && !hasPending
 
+    /** In the air past the point a hop or leap can be dropped: a new plan starts where it lands. */
+    val inFlight: Boolean
+        get() = (mode == Mode.HOP && !jump.canCancel) || (mode == Mode.LEAP && !leap.canCancel)
+
     /** True while the cat is walking, hopping or leaping somewhere: what a camera follows. */
     val isTravelling: Boolean
         get() = mode == Mode.WALK || mode == Mode.HOP || mode == Mode.LEAP
