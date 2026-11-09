@@ -67,6 +67,18 @@ class ActivityRunner(
         get() = waiting != null
 
     private var arrived = false
+
+    /** A reflex that came while the cat was in the air, begun when it lands ([interrupt]). */
+    private var landing: Choice? = null
+
+    /** The reflex waiting for the cat to land (what it does next), or null. */
+    val nextReflex: Activity?
+        get() = landing?.activity
+
+    /** True while a reflex waits for the cat to land. */
+    val reflexWaiting: Boolean
+        get() = landing != null
+
     private var suspended: Activity? = null
     private var suspendedPlace: Spot? = null
     private var suspendedLeft = 0.0
@@ -174,6 +186,13 @@ class ActivityRunner(
 
     /** One think quantum: progress, the end of the activity, and what follows. */
     fun quantum(rng: Rng) {
+        val held = landing
+        if (held != null) {
+            // a reflex that came while the cat was in the air begins once it has landed
+            if (exec.inFlight) return
+            landing = null
+            return interrupt(held.activity, held.spot, held.reason, rng, held.seconds)
+        }
         val q = BrainTuning.Time.QUANTUM_S
         elapsedS += q
         if (!arrived && exec.atPlace) {
@@ -209,6 +228,13 @@ class ActivityRunner(
         rng: Rng,
         stopSeconds: Double = Double.NaN,
     ) {
+        // in the air the body cannot take a new plan before it lands, and a way planned from the
+        // take-off would be walked on the perch it lands on (a meal eaten on the sofa): it waits
+        if (exec.inFlight) {
+            landing = Choice(activity, spot, 0.0, reason, stopSeconds)
+            return
+        }
+        landing = null
         val was = this.activity
         val left = seconds - atPlaceS
         if (was.resumable && left > BrainTuning.Select.RESUME_MIN_LEFT_S) {
@@ -238,10 +264,14 @@ class ActivityRunner(
      * novelty, one explain line per moment).
      */
     internal fun playPart(a: Activity, script: Script, reason: String, token: Int) {
+        // a meal (or another reflex) waiting for the cat to land comes first: the moment is given
+        // up once it begins (its token is not this one)
+        if (landing != null) return
         val fresh = token != pairToken || !Social.isPair(activity)
         if (!Social.isPair(activity)) end(natural = false)
         waiting = null
         suspended = null
+        landing = null
         activity = a
         place = null
         seconds = script.beatSeconds
@@ -263,7 +293,7 @@ class ActivityRunner(
      * a cat still in it gets up from it and picks anew.
      */
     internal fun leavePair(rng: Rng) {
-        if (!Social.isPair(activity)) return
+        if (!Social.isPair(activity) || landing != null) return
         end(natural = false)
         waiting = null
         begin(pick(rng), rng)
@@ -379,6 +409,7 @@ class ActivityRunner(
         var spot = choice.spot
         val script = Script()
         pairToken = 0
+        landing = null
         if (wakeFirst) wakeBeats(script)
         when (lead) {
             Lead.ASIDE -> aside(script)
@@ -421,8 +452,10 @@ class ActivityRunner(
         m.began(a)
     }
 
+    /** At [spot] and staying there (a cat walking past it would stop beyond it). */
     private fun standsAt(spot: Spot): Boolean =
-        exec.surface == spot.surface &&
+        !exec.moving &&
+            exec.surface == spot.surface &&
             Math.abs(exec.x - spot.x) < AT_SPOT_PX &&
             (!spot.onFloor || Math.abs(exec.z - spot.z) < AT_SPOT_PX)
 

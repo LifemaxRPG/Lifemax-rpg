@@ -37,6 +37,8 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
         val toyCredit: MutableMap<String, Double> = sortedMapOf(),
         /** The web brain the page reads for the import (petWorldLegacy); null: a fresh one. */
         var legacy: JSONObject? = null,
+        /** The growth stage the page sends (-1 grown, 0..5 a kitten). */
+        var stage: Int = -1,
     ) {
         val id: String
             get() = WorldContract.catId(born)
@@ -80,6 +82,34 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
         private set
 
     private val landed = ArrayDeque<String>()
+
+    /**
+     * The meals served lately, as the page keeps them for its `fed` cues (NativePet.fedCues): each
+     * cat's slot, an id rising per meal (from 1 again after [reload]) and when.
+     */
+    val meals = ArrayList<Triple<Int, Long, Long>>()
+    private var mealSeq = 0L
+
+    /** The page reloaded: its meal ids start again from one (the meals it listed are gone). */
+    fun reload() {
+        meals.clear()
+        mealSeq = 0L
+    }
+
+    /** A meal for living cat [c], served now by any of the page's routes (petFeed). */
+    fun served(c: Cat) {
+        meals += Triple(living().indexOf(c).coerceAtMost(1), ++mealSeq, now)
+        while (meals.size > WorldContract.MAX_FED_CUES) meals.removeAt(0)
+    }
+
+    private fun fedJson(): JSONArray {
+        val list = JSONArray()
+        for ((cat, id, at) in meals) list.put(
+            JSONObject().put("cat", cat).put("id", id).put("ago", (now - at).coerceAtLeast(0))
+        )
+        return list
+    }
+
     private var seq = 0L
     private var seqKey = ""
 
@@ -129,7 +159,12 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
                 .put("cats", list)
                 .put("pair", pairJson() ?: JSONObject.NULL)
                 .put("context", JSONObject().put("timer", false).put("restDay", restDay))
-                .put("cue", JSONObject().put("fed", JSONArray()).put("cheer", JSONArray()))
+                .put(
+                    "cue",
+                    JSONObject()
+                        .put("fed", JSONArray(meals.map { it.second }))
+                        .put("cheer", JSONArray()),
+                )
                 .put(
                     "stored",
                     keep?.let {
@@ -139,7 +174,9 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
                             .put("blob", JSONObject(it.blob.toString()))
                     } ?: JSONObject.NULL,
                 )
+        // as petWorldBlock: a cue's age alone is no change, only which meals it lists
         val key = b.toString()
+        b.getJSONObject("cue").put("fed", fedJson())
         if (key != seqKey) {
             seqKey = key
             seq = maxOf(seq + 1, now)
@@ -159,7 +196,7 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
             .put("born", c.born)
             .put("sex", "m")
             .put("coat", "ginger")
-            .put("stage", -1)
+            .put("stage", c.stage)
             .put("grownAt", c.born + GROW_MS)
             .put("ps", persona)
             .put("morph", JSONObject().put("lg", 1).put("bl", 1))
@@ -392,6 +429,7 @@ class FakePage(var now: Long = WorldFixtures.NOW) {
                     hungry.forEach {
                         roll(it)
                         it.lastFed = now
+                        served(it)
                         it.fedToday++
                         if (it.fedToday <= 2) gain(it, FEED_BOND)
                     }

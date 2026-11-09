@@ -19,8 +19,9 @@ internal object SocialChoice {
 
     /**
      * Whether cat [m] may be asked for a moment now: not hungry, not eating, begging, at the
-     * owner's game, making way or already together, not on its way somewhere or just settled, and
-     * awake (or, when [wake], in a light sleep). A [firstMeeting] tolerates more hunger.
+     * owner's game, making way or already together, not about to answer a meal or a call (a reflex
+     * waiting for it to land), not on its way somewhere or just settled, and awake (or, when
+     * [wake], in a light sleep). A [firstMeeting] tolerates more hunger.
      */
     fun free(m: CatMind, wake: Boolean, firstMeeting: Boolean = false): Boolean {
         val p = m.persona
@@ -30,8 +31,9 @@ internal object SocialChoice {
         val a = m.runner.activity
         if (a === Eat || a === Beg || a === OwnerPlay || a === MakeWay || a === WakingRoutine)
             return false
-        if (Social.isPair(a) || m.toy != null || m.runner.waitingForWay || !m.exec.atPlace)
+        if (Social.isPair(a) || m.toy != null || m.runner.waitingForWay || m.runner.reflexWaiting)
             return false
+        if (!m.exec.atPlace) return false
         if (m.runner.elapsedS < t.SETTLED_S) return false
         // only a light nap by day is broken (for the very first meeting); never a night's sleep
         if (a.asleep)

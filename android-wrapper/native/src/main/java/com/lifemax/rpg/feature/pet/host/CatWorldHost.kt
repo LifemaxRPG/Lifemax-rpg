@@ -3,18 +3,14 @@ package com.lifemax.rpg.feature.pet.host
 import com.lifemax.rpg.feature.pet.body.HouseCat
 import com.lifemax.rpg.feature.pet.body.HouseLife
 import com.lifemax.rpg.feature.pet.body.Rng
-import com.lifemax.rpg.feature.pet.body.SurfaceId
 import com.lifemax.rpg.feature.pet.body.ToyField
-import com.lifemax.rpg.feature.pet.body.World
 import com.lifemax.rpg.feature.pet.brain.Brain
 import com.lifemax.rpg.feature.pet.brain.BrainFactory
 import com.lifemax.rpg.feature.pet.brain.BrainState
-import com.lifemax.rpg.feature.pet.brain.CatchPlace
 import com.lifemax.rpg.feature.pet.brain.OwnerAct
 import com.lifemax.rpg.feature.pet.brain.PlayAnswer
 import com.lifemax.rpg.feature.pet.world.Away
 import com.lifemax.rpg.feature.pet.world.BlobCat
-import com.lifemax.rpg.feature.pet.world.BlobPos
 import com.lifemax.rpg.feature.pet.world.SystemTimeSource
 import com.lifemax.rpg.feature.pet.world.TimeSource
 import com.lifemax.rpg.feature.pet.world.WorldBlob
@@ -23,7 +19,6 @@ import com.lifemax.rpg.feature.pet.world.WorldCat
 import com.lifemax.rpg.feature.pet.world.WorldClock
 import com.lifemax.rpg.feature.pet.world.WorldCommand
 import com.lifemax.rpg.feature.pet.world.WorldCommandJson
-import com.lifemax.rpg.feature.pet.world.WorldContract
 import com.lifemax.rpg.feature.pet.world.WorldFeed
 import java.util.TimeZone
 import org.json.JSONObject
@@ -72,6 +67,8 @@ class CatWorldHost(
     private val listeners = java.util.concurrent.CopyOnWriteArrayList<Runnable>()
 
     private var seen: WorldBlock? = null
+    private var seenAt = 0L
+    private val cues = WorldCues()
     private var misses = 0
     private var errorsSeen = 0
     private var lastPumpAt = 0L
@@ -240,6 +237,7 @@ class CatWorldHost(
             views += view
             take()
             if (views.size == 1) ownerAct(OWNER_OPEN)
+            playCues() // a meal served just before the room appeared (the Cat tab opened for it)
         }
         return view
     }
@@ -249,6 +247,7 @@ class CatWorldHost(
         synchronized(lock) {
             if (views.remove(view) && views.isEmpty()) {
                 ownerAct(OWNER_CLOSE)
+                cues.hidden()
                 markIfChanged(true)
                 pump(true)
             }
@@ -338,6 +337,7 @@ class CatWorldHost(
         val b = feed.latest ?: return
         if (b === seen) return
         seen = b
+        seenAt = time.epochMs()
         misses = 0
         if (brainFactory == null || b.cats.isEmpty()) {
             if (active) retire()
@@ -353,7 +353,18 @@ class CatWorldHost(
             applyHunger(b)
             sync.onBlock(b.stored?.rev ?: 0L)
         }
+        playCues()
         pump(false)
+    }
+
+    /** The meals the page served (its block's `fed` cues), each played once while a view shows. */
+    private fun playCues() {
+        val b = block ?: return
+        val br = brain ?: return
+        if (!active || !br.drivesBodies || views.isEmpty()) return
+        cues.take(b.fedCues, seenAt, time.epochMs()) { slot ->
+            br.owner(OwnerAct(clock?.simMs ?: 0L, "feed:$slot"))
+        }
     }
 
     private fun applyHunger(b: WorldBlock) {
@@ -393,7 +404,9 @@ class CatWorldHost(
             made.bind(life.bodies.toList())
             made.bindToys(field)
         } else
-            b.cats.forEachIndexed { i, cat -> blob.cats[cat.id]?.pos?.let { place(life, i, it) } }
+            b.cats.forEachIndexed { i, cat ->
+                blob.cats[cat.id]?.pos?.let { HousePlaces.place(life, i, it) }
+            }
         clock = c
         brain = made
         current = blob
@@ -449,7 +462,7 @@ class CatWorldHost(
         val result = b.catchUp(covered)
         // a brain that moves the bodies has put them where its story ends; else the host does
         if (!b.drivesBodies)
-            result.places.forEach { p -> if (p.slot in 0 until h.count) placeAt(h, p) }
+            result.places.forEach { p -> if (p.slot in 0 until h.count) HousePlaces.placeAt(h, p) }
         val lines =
             result.lines
                 .map { it.trim().take(HostTuning.AWAY_LINE_MAX) }
@@ -472,7 +485,8 @@ class CatWorldHost(
         val placed = LinkedHashMap<String, BlobCat>()
         cats.forEachIndexed { i, cat ->
             val saved = state.cats[cat.id] ?: base.cats[cat.id] ?: return@forEachIndexed
-            placed[cat.id] = if (i < h.count) saved.copy(pos = positionOf(h, i)) else saved
+            placed[cat.id] =
+                if (i < h.count) saved.copy(pos = HousePlaces.positionOf(h, i)) else saved
         }
         val blob =
             base.copy(
@@ -534,36 +548,6 @@ class CatWorldHost(
                 ?: if (flush) ports.values.firstOrNull() else null
         port ?: return false
         return port.send(command.name, WorldCommandJson.encode(command), id)
-    }
-
-    // ------------------------------------------------------------------ bodies
-
-    private fun place(h: HouseLife, slot: Int, p: BlobPos) {
-        if (slot !in 0 until h.count) return
-        val id = SurfaceId.entries.firstOrNull { it.key == p.s } ?: SurfaceId.FLOOR
-        val surface = World.surface(id)
-        val z = if (id == SurfaceId.FLOOR) p.z.toFloat() else surface.z
-        val x =
-            if (id == SurfaceId.FLOOR) World.clampHouse(p.x.toFloat())
-            else World.clampTo(id, p.x.toFloat())
-        h.bodies[slot].placeAt(x, z, id, if (p.dir < 0) -1 else 1)
-    }
-
-    private fun placeAt(h: HouseLife, p: CatchPlace) {
-        val id = SurfaceId.entries.firstOrNull { it.key == p.surface } ?: SurfaceId.FLOOR
-        val surface = World.surface(id)
-        val x = p.x?.toFloat() ?: (surface.x0 + surface.x1) / 2f
-        place(h, p.slot, BlobPos(id.key, x.toDouble(), p.z ?: surface.z.toDouble(), p.dir))
-    }
-
-    private fun positionOf(h: HouseLife, slot: Int): BlobPos {
-        val pose = h.bodies[slot].pose
-        return BlobPos(
-            pose.surface.key,
-            pose.x.toDouble().coerceIn(WorldContract.HOUSE_X_MIN, WorldContract.HOUSE_X_MAX),
-            pose.z.toDouble().coerceIn(0.0, WorldContract.Z_MAX),
-            if (pose.facing < 0) -1 else 1,
-        )
     }
 
     companion object {

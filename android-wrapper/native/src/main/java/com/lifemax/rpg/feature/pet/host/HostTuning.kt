@@ -29,6 +29,13 @@ object HostTuning {
     /** A command the page refused this many times (other than `unsaved`) is dropped. */
     const val MAX_ATTEMPTS = 5
 
+    /**
+     * A meal the page served this recently, found when a view first shows the world, is why the
+     * owner is here (a deep link, the Cat tab opened for it): the cat goes to eat. Older ones the
+     * page still lists have been eaten already.
+     */
+    const val FRESH_MEAL_MS = 10_000L
+
     /** A gap shorter than this is simply the app being away for a moment: no catch-up. */
     const val CATCH_UP_MIN_MS = 5 * 60_000L
 
