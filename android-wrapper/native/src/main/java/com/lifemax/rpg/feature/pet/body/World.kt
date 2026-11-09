@@ -68,6 +68,8 @@ object World {
     private const val WALK_SPEED_Z_GAIN_PCT = 60f
     private const val PROP_TOP_LIFT = 1.6f
     private const val PROP_FOOT_SPAN = 0.55f
+    private const val PERCENT = 100f
+    private const val DEPTH_SEARCH_STEP = 0.01f
 
     /** Built from the same formulas the web uses for its props, so the numbers match exactly. */
     private fun prop(id: SurfaceId, x: Float, z: Float, top: Float, half: Float): Surface {
@@ -117,6 +119,14 @@ object World {
 
     /** Screen row of the floor under a cat at depth [z] (petFloorY). */
     fun floorY(z: Float): Float = HORIZON_Y + (FLOOR_Y_ART - HORIZON_Y) * depthScalePct(z) / 100f
+
+    /** The nearest-the-back depth whose floor row is at least [row] (0 to [MAX_Z]). */
+    fun depthAtRow(row: Float): Float {
+        val pct = (row - HORIZON_Y) * PERCENT / (FLOOR_Y_ART - HORIZON_Y)
+        var z = Mathx.clamp((pct - SCALE_AT_BACK_PCT) * PERCENT / SCALE_RANGE_PCT, 0f, MAX_Z)
+        while (z < MAX_Z && floorY(z) < row) z = minOf(MAX_Z, z + DEPTH_SEARCH_STEP)
+        return z
+    }
 
     /** Walk speed multiplier at depth [z], in percent (petWalkSpeedPct). */
     fun walkSpeedPct(z: Float): Int =
