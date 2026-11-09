@@ -101,6 +101,35 @@ class SelfDisableTest {
     }
 
     @Test
+    fun theResyncWindowIsExactlyAnHour() {
+        for ((late, stops) in listOf(HOUR to false, HOUR - 1 to true)) {
+            val s = ShadowSessionTest.session()
+            s.configure(ShadowSessionTest.configure(ShadowSessionTest.FP), false)
+            val page = FakeShadowPage()
+            // the first base, then four resyncs a minute apart: the most an hour allows
+            repeat(1 + ShadowLimits.RESYNCS_PER_HOUR) { i ->
+                page.base(start).forEach { s.base(it, t + i * MINUTE) }
+            }
+            // a fifth resync exactly an hour after the first has left that one behind
+            page.base(start).forEach { s.base(it, t + MINUTE + late) }
+            if (stops) stoppedFor(s, "resyncLoop")
+            else assertEquals("$late", ShadowState.ON, s.ledger.state)
+        }
+    }
+
+    @Test
+    fun theSlowRuleReadsThe95thPercentile() {
+        val (s, _) = on()
+        // 3 slow of 50 are above the 95th percentile: still on
+        repeat(ShadowLimits.SLOW_WINDOW - 3) { s.timed(40) }
+        repeat(3) { s.timed(SLOW_MS) }
+        assertEquals(ShadowState.ON, s.ledger.state)
+        // a fourth reaches it
+        s.timed(SLOW_MS)
+        stoppedFor(s, "slow")
+    }
+
+    @Test
     fun resyncsSpreadOverHoursNeverStopIt() {
         val s = ShadowSessionTest.session()
         s.configure(ShadowSessionTest.configure(ShadowSessionTest.FP), false)

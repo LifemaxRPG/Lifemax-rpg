@@ -6,15 +6,19 @@
    - capture: what the page's budget counts (the two passes over the shadow keys inside the action, LmaShadow's stats.costs);
    - send: the envelope built and posted after the action (its delta and text, in the setTimeout(0) after it), measured as the time
      from the action's end to a timer queued after the check's own, less the same with the check off (the page's own deferred work);
-   - overhead: the whole action with the check on, less the same action with the check off.
-   The budgets: p50 under 5 ms and p95 under 15 ms at 1 MB (targets), five actions in a row over 50 ms turn the page side off (the
-   hard limit, counted on capture). Every run says whether that limit tripped. The self-disable is then checked where it should and
-   should not trip: four slow actions and a quick one leave the check on, five in a row stop it ("slow"); two page faults leave it
+   - overhead: the whole action with the check on, less the same action with the check off;
+   - counted: what the page's slow rule counts since WP6g, the capture and the envelope built and posted after the action
+     (LmaShadow's stats.counted: capture plus the transport's own time for that envelope, stats.sends).
+   The budgets (WP6g): five actions in a row over the limit turn the page side off, the limit being 30 ms for each MB of the shadow
+   keys' text and never under 50 ms (LmaShadow.status().slowMs: 50 ms at 1 MB, about 90 ms at 3 MB); the targets for a 4x CPU at
+   1 MB are p50 under 25 ms and p95 under 40 ms, counted. Every run says whether the limit tripped. The self-disable is then checked where it should and
+   should not trip: four slow actions and a quick one leave the check on, five in a row stop it ("slow"); the limit scales with the
+   save and counts the envelope's own time after the action; two page faults leave it
    on, the third stops it ("faults"); a stopped check sends nothing more and the page's actions still run. Last, a plugin that
    answers slowly (2 s) or never: every action is still posted, none waits for it, nothing queues and nothing counts as a fault.
    The numbers depend on the machine: the hard checks are the self-disable rules, the plugin that answers late or never, and that
-   the page side stops exactly when the slow rule says; the budgets (1 MB within the targets at 1x, the hard limit not tripping at
-   4x) are hard only with PERF_STRICT=1 and printed as NOTE lines otherwise. RATES picks the CPU slow-downs (default 1,4; the plan's
+   the page side stops exactly when the slow rule says; the budgets (1 MB within the 4x targets, the limit not tripping at 4x on
+   1 MB and 3 MB) are hard only with PERF_STRICT=1 and printed as NOTE lines otherwise. RATES picks the CPU slow-downs (default 1,4; the plan's
    numbers are RATES=1,4,6).
    Run: [RATES=1,4,6] [PERF_STRICT=1] NODE_PATH=$(npm root -g) node tests/native-shadow-perf.test.js [built-page.html] */
 'use strict';
@@ -86,22 +90,24 @@ const f = x => x.toFixed(1);
           runs[on ? 'on' : 'off'] = Object.assign(r, { errors: p.errors.slice() });
           await p.context().close();
         }
-        const capture = runs.on.status.stats.costs.slice(-TAPS);
+        const st = runs.on.status, capture = st.stats.costs.slice(-TAPS), counted = st.stats.counted.slice(-TAPS), limit = st.slowMs;
         const send = runs.on.out.map((x, i) => x.send - runs.off.out[i].send), overhead = runs.on.out.map((x, i) => x.action - runs.off.out[i].action);
         let streak = 0, worst = 0;
-        for (const c of capture) { streak = c > 50 ? streak + 1 : 0; worst = Math.max(worst, streak) }
+        for (const c of counted) { streak = c > limit ? streak + 1 : 0; worst = Math.max(worst, streak) }
         const row = { size, rate, capture50: pct(capture, 0.5), capture95: pct(capture, 0.95), captureMax: Math.max(...capture), send50: pct(send, 0.5), send95: pct(send, 0.95),
-          overhead50: pct(overhead, 0.5), overhead95: pct(overhead, 0.95), slowStreak: worst, live: runs.on.status.live, stopped: runs.on.status.stopped };
+          counted50: pct(counted, 0.5), counted95: pct(counted, 0.95), limit, overhead50: pct(overhead, 0.5), overhead95: pct(overhead, 0.95), slowStreak: worst, live: st.live, stopped: st.stopped };
         results.push(row);
         console.log('PERF ' + size + ' MB at ' + rate + 'x: capture p50 ' + f(row.capture50) + ' ms p95 ' + f(row.capture95) + ' ms max ' + f(row.captureMax) +
-          ' ms; send p50 ' + f(row.send50) + ' ms p95 ' + f(row.send95) + ' ms; overhead p50 ' + f(row.overhead50) + ' ms p95 ' + f(row.overhead95) +
-          ' ms; longest run over 50 ms ' + worst + '; ' + (row.live ? 'still on' : 'stopped (' + row.stopped + ')'));
+          ' ms; send p50 ' + f(row.send50) + ' ms p95 ' + f(row.send95) + ' ms; counted p50 ' + f(row.counted50) + ' ms p95 ' + f(row.counted95) +
+          ' ms; overhead p50 ' + f(row.overhead50) + ' ms p95 ' + f(row.overhead95) +
+          ' ms; longest run over the ' + limit + ' ms limit ' + worst + '; ' + (row.live ? 'still on' : 'stopped (' + row.stopped + ')'));
         ok(size + ' MB at ' + rate + 'x: the page threw nothing, check on or off', !runs.on.errors.length && !runs.off.errors.length, runs.on.errors.concat(runs.off.errors));
-        ok(size + ' MB at ' + rate + 'x: the page side stops exactly when five actions in a row pass 50 ms', row.live === (worst < 5), row);
+        ok(size + ' MB at ' + rate + 'x: the limit is 30 ms a MB of shadow text, at least 50 ms', limit >= 50 && (size === 1 ? limit <= 50 : limit >= 30 * size - 15 && limit <= 30 * size + 15), row);
+        ok(size + ' MB at ' + rate + 'x: the page side stops exactly when five actions in a row pass the limit', row.live === (worst < 5), row);
         /* machine-dependent: hard only with PERF_STRICT=1 (tools/shadow_proof.sh), a note otherwise (CI runners vary) */
         const budget = (name, c) => STRICT ? ok(name, c, row) : console.log((c ? 'NOTE met: ' : 'NOTE missed: ') + name);
-        if (size === 1 && rate === 1) budget('1 MB at 1x: within the targets (capture p50 under 5 ms, p95 under 15 ms)', row.capture50 < 5 && row.capture95 < 15);
-        if (size === 1 && rate === 4) budget('1 MB at 4x: the hard limit does not trip', row.live);
+        if (size === 1 && rate === 4) budget('1 MB at 4x: within the targets (counted p50 under 25 ms, p95 under 40 ms)', row.counted50 < 25 && row.counted95 < 40);
+        if (rate === 4) budget(size + ' MB at 4x: the limit does not trip', row.live);
       }
     }
 
@@ -135,6 +141,40 @@ const f = x => x.toFixed(1);
       ok('four slow in a row leave it on, the fifth in a row stops it ("slow")', r.afterFourMore === true && !r.afterFive.live && r.afterFive.stopped === 'slow', r.afterFive);
       ok('once stopped the page sends nothing more, its wrappers are gone and its actions still run', r.sentAfterStop === 0 && r.pageStillRuns && r.unwrapped, r);
       ok('the slow page threw nothing', !p.errors.length, p.errors);
+      await p.context().close();
+    }
+    /* the envelope's own time after the action counts (WP6g): a plugin call that holds the page 60 ms, five times in a row */
+    {
+      const p = await open(browser, SAVE, true);
+      const r = await p.evaluate(async () => {
+        const P = window.Capacitor.Plugins.NativeShadow, real = P.observe, wait = ms => { const t = performance.now(); while (performance.now() - t < ms) { } };
+        let slow = true;
+        P.observe = function () { if (slow) wait(60); return real.apply(P, arguments) };
+        const q = state.quests.filter(x => !x.hand), tick = () => new Promise(r => setTimeout(r, 30));
+        for (let i = 0; i < 4; i++) { toggleQuest(q[i % q.length].id, i % 2 === 0); await tick() }
+        const afterFour = LmaShadow.status();
+        toggleQuest(q[4 % q.length].id, true); await tick();
+        const afterFive = LmaShadow.status();
+        slow = false; P.observe = real;
+        return { afterFour: { live: afterFour.live, limit: afterFour.slowMs, counted: afterFour.stats.counted.slice(-4), sends: afterFour.stats.sends.slice(-4) }, afterFive: { live: afterFive.live, stopped: afterFive.stopped } };
+      });
+      ok('the envelope built and posted after an action counts: four slow sends leave the check on, the fifth stops it', r.afterFour.live && r.afterFour.limit === 50 && r.afterFour.sends.every(x => x >= 60) && !r.afterFive.live && r.afterFive.stopped === 'slow', r);
+      ok('a slow send threw nothing in the page', !p.errors.length, p.errors);
+      await p.context().close();
+    }
+    /* the limit grows with the save: on 3 MB five actions in a row over 50 ms, but under 30 ms a MB, leave the check on */
+    {
+      const p = await open(browser, grown(3 * MB), true);
+      const r = await p.evaluate(async () => {
+        const B = LMA_SHADOW_BOOT, real = B.capture, wait = ms => { const t = performance.now(); while (performance.now() - t < ms) { } };
+        B.capture = function () { wait(20); return real.apply(this, arguments) };
+        const q = state.quests.filter(x => !x.hand), tick = () => new Promise(r => setTimeout(r, 30));
+        for (let i = 0; i < 6; i++) { toggleQuest(q[i % q.length].id, i % 2 === 0); await tick() }
+        B.capture = real;
+        const st = LmaShadow.status();
+        return { live: st.live, limit: st.slowMs, counted: st.stats.counted.slice(-6) };
+      });
+      ok('3 MB: the limit is about 90 ms and six actions over 50 ms in a row, under it, leave the check on', r.live && r.limit >= 80 && r.limit <= 105 && r.counted.filter(c => c > 50).length >= 5, r);
       await p.context().close();
     }
     {

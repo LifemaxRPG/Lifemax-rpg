@@ -133,6 +133,15 @@ class ShadowMirrorTest {
         assertEquals(listOf("quests[-]", "quests[].done"), again.touched)
     }
 
+    @Test
+    fun aDeletedKeyIsTouched() {
+        val (m, page) = ready()
+        val gone =
+            m.apply(env(page.envelope("save.other", s0, s0 - "sparks"))) as MirrorStep.Applied
+        assertEquals(listOf("sparks"), gone.touched)
+        assertFalse("sparks" in m.snapshot())
+    }
+
     private fun part(text: String) = (ShadowEnvelopeJson.basePart(text) as ShadowDecode.Ok).value
 
     private fun env(text: String) = (ShadowEnvelopeJson.envelope(text) as ShadowDecode.Ok).value

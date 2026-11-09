@@ -226,6 +226,23 @@ class ShadowComparisonTest {
                 .ledger
                 .different,
         )
+        // A-04 counts a "not saved" once only where it repeats itself: one that follows another
+        // toast is the page's own word, and a native that leaves it out differs
+        val said =
+            built
+                .first {
+                    it.recorded &&
+                        it.action.saves.all { ok -> ok } &&
+                        it.action.toasts.isNotEmpty() &&
+                        it.action.toasts.last() != unsaved
+                }
+                .action
+        assertEquals(1, run(said.copy(toasts = said.toasts + unsaved)).ledger.different)
+        assertEquals(
+            "said after another toast, then again: one of the two is A-04's",
+            listOf(said.toasts.last(), unsaved),
+            KnownDifferences.singleUnsaved(listOf(said.toasts.last(), unsaved, unsaved)),
+        )
     }
 
     /** The journal coach's welcome cards: none, or [day]'s with [claimed] chips (A-07). */

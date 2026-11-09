@@ -9,7 +9,9 @@
    A wrapper is transparent by construction: the original runs exactly once with its own this, arguments, return value and
    exception; every step of the shadow is caught; envelopes are posted with setTimeout(0) after the action and not awaited.
    Switch off, no plugin, no capability, a demo, a fingerprint that differs: no wrapper is installed at all. Three faults, or
-   five actions in a row over the time budget, turn the page side off until the page loads again. */
+   five actions in a row over the time budget, turn the page side off until the page loads again. The budget (WP6g) counts an
+   action's capture inside it and the envelope built and posted after it, and grows with the save: 30 ms for each MB of the
+   shadow keys' text, never under 50 ms (a large save is two passes of JSON over its records, linear in its size). */
 (function () {
   const CAPABILITY = "economy.shadow.v1", SETTING = "nativeShadow", PROTOCOL = 1, SCOPE = "economy";
   /* an app that compares the quest and Daily Hand kinds (WP6c): every kind carries today's plan facts (its save may deal and
@@ -21,12 +23,12 @@
   /* the Daily Hand's redraw-time points that changed nothing are sent one in this many, and otherwise counted (WP6c) */
   const NOOP_KINDS = ["hand.ensure", "hand.verify"], NOOP_EVERY = 50;
   const B = LMA_SHADOW_BOOT, P = LMA_SHADOW_POINTS;
-  const LIMIT = { envelope: 256 * 1024, args: 16 * 1024, env: 64 * 1024, toasts: 20, toast: 300, saves: 8, rec: 256, part: 256 * 1024, parts: 32, base: 8 * 1024 * 1024, queue: 16, faults: 3, slowMs: 50, slowRun: 5, slice: 200000 };
+  const LIMIT = { envelope: 256 * 1024, args: 16 * 1024, env: 64 * 1024, toasts: 20, toast: 300, saves: 8, rec: 256, part: 256 * 1024, parts: 32, base: 8 * 1024 * 1024, queue: 16, faults: 3, slowMs: 50, slowMsPerMB: 30, slowRun: 5, slice: 200000 };
   const FAULTS_KEY = "lma_shadow_faults"; // sessionStorage: page faults of an earlier page in this WebView, told at the next configure
   let plugin = null, hello = null, asked = null, live = false, stopped = "", sid = "", epoch = 0, seq = 0, head = 0, cache = null, needBase = true;
-  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, summary = null, quests = false, day = false, journal = 0, noops = 0, starting = false;
+  let depth = 0, replacing = 0, current = null, timer = 0, faults = 0, slowRun = 0, slowMs = LIMIT.slowMs, summary = null, quests = false, day = false, journal = 0, noops = 0, starting = false;
   const pending = [], outbox = [], installed = [];
-  const stats = { sent: 0, bases: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
+  const stats = { sent: 0, bases: 0, skipped: {}, faults: 0, answers: {}, costs: [], sends: [], counted: [] };
 
   const available = () => {
     try {
@@ -135,8 +137,7 @@
     if (threw) r.flags.add("threw");
     if (saveReadOnly) r.flags.add("readOnly");
     r.cost += performance.now() - t;
-    budget(r.cost);
-    if (NOOP_KINDS.includes(r.kind) && unchanged(r) && noops++ % NOOP_EVERY !== 0) { skip("noop"); return; }
+    if (NOOP_KINDS.includes(r.kind) && unchanged(r) && noops++ % NOOP_EVERY !== 0) { skip("noop"); budget(r.cost, 0); return; }
     if (outbox.length >= LIMIT.queue) { outbox.length = 0; cache = null; needBase = true; skip("queue"); }
     outbox.push(r);
     if (!timer) timer = setTimeout(flush, 0);
@@ -162,10 +163,13 @@
     };
     promise.then((v) => done(v, false), () => done(undefined, true));
   }
-  function budget(ms) {
-    stats.costs.push(ms);
-    if (stats.costs.length > 200) stats.costs.shift();
-    slowRun = ms > LIMIT.slowMs ? slowRun + 1 : 0;
+  /* one action's cost against the budget: its capture inside it, and the envelope built and posted after it */
+  function budget(capture, send) {
+    const keep = (list, v) => { list.push(v); if (list.length > 200) list.shift(); };
+    keep(stats.costs, capture);
+    keep(stats.sends, send);
+    keep(stats.counted, capture + send);
+    slowRun = capture + send > slowMs ? slowRun + 1 : 0;
     if (slowRun >= LIMIT.slowRun) { fault(); stop("slow"); }
   }
 
@@ -274,6 +278,7 @@
   function sendBase(texts) {
     const text = baseText(texts);
     if (text.length > LIMIT.base) { stop("tooLarge"); return false; }
+    slowMs = Math.max(LIMIT.slowMs, Math.round(LIMIT.slowMsPerMB * text.length / (1024 * 1024)));
     const parts = [];
     let size = LIMIT.slice;
     for (;;) {
@@ -296,8 +301,10 @@
     const list = outbox.splice(0);
     for (const r of list) {
       if (!live) return;
+      let t = performance.now();
       try {
         if (needBase && !sendBase(r.texts)) return;
+        t = performance.now(); // a base is once a page session (or after a resync), not this action's cost
         const e = envelopeText(r);
         if (!e) { skip("size"); cache = null; needBase = true; continue; }
         const s = ++seq, text = e.text(head, s);
@@ -307,6 +314,7 @@
         stats.sent++;
         call("observe", text);
       } catch (_) { fault(); cache = null; needBase = true; }
+      finally { if (live && r.cost !== undefined) budget(r.cost, performance.now() - t); }
     }
   }
   function answered(method, a) {
@@ -425,7 +433,7 @@
 
   window.LmaShadow = {
     /** for tests and the Settings row: what the page side is doing, counts only */
-    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, quests, day, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
+    status: () => ({ live, stopped, sid, epoch, seq, head, needBase, slowMs, quests, day, installed: installed.length, pending: pending.length, queued: outbox.length, stats: JSON.parse(JSON.stringify(stats)), summary }),
     fingerprint,
     words: card.words,
     refresh,

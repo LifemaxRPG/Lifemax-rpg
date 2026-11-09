@@ -3992,7 +3992,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-shadow.js",
-   "bytes": 22563,
+   "bytes": 23467,
    "statement_count": 1,
    "tags": [
     "native",

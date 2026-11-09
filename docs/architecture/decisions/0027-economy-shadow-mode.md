@@ -39,3 +39,7 @@ WP6f proves the check before the owner relies on it: the real page's seeded runs
 comparison, every reachable page defect reproduced as an envelope, fuzzed messages and transports, random large saves, the page's
 cost under a slow CPU and a mutation sweep of native's rules (`tools/shadow_proof.sh`). It adds no capability and changes nothing the
 page or the owner sees; its one native change makes native follow the page where the proof found it did not (taking a rest day).
+WP6g settles the page's budget on large saves: an action counts its capture and the envelope built after it, and the limit grows
+with the save (30 ms for each MB of the economy keys' text, never under 50 ms), so a large save on a mid-range phone keeps the check
+on while a much slower phone still stops it. An incremental capture was built and measured slower than the page's own JSON writer,
+so the capture stays whole and exact. Nothing the page saves, sends or shows changes, and no native code changes.
