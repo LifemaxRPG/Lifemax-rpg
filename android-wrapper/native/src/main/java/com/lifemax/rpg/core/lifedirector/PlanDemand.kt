@@ -24,13 +24,18 @@ class PlanDemandResult(
  * input as the page builds it: its availability (LDA-10) for the plan's days and bounds, the goal
  * plans (LDD-8), the completed sessions from a week before the plan, the candidate tasks (LDC-2 to
  * LDC-10) with [kept] sessions and [used] instance ids as placement's preparation finds them
- * (WP-LD4), the goals' info (LDE-1), each task's constants (LDE-2) and the shares.
+ * (WP-LD4), the goals' info (LDE-1), each task's constants (LDE-2) and the shares. Placement passes
+ * the availability [plan] it has already derived for the same input.
  */
 object PlanDemand {
     private const val HISTORY_REACH = 7 * 86400.0
 
-    fun of(input: JsonValue?, kept: List<JsonValue>, used: Set<String>): PlanDemandResult {
-        val plan = Availability.derive(input)
+    fun of(
+        input: JsonValue?,
+        kept: List<JsonValue>,
+        used: Set<String>,
+        plan: AvailabilityPlan = Availability.derive(input),
+    ): PlanDemandResult {
         val now = number(member(input, "currentTimeEpoch"))
         val h0 = plan.grid.slots.startEpoch
         val hn = plan.grid.slots.endEpoch

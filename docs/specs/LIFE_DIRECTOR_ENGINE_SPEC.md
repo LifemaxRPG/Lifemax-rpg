@@ -1,8 +1,9 @@
 # Life Director engine specification: the scheduler in `engine.js`
 
-Status: **parts 1 to 3 of several** (WP-LD1 to WP-LD3). Sections 0 to 2 and the rules for time and hashing (sections 4 and 5) are
+Status: **parts 1 to 4 of several** (WP-LD1 to WP-LD4). Sections 0 to 2 and the rules for time and hashing (sections 4 and 5) are
 part 1; availability (rules, preferences, sleep, the painted grid) is part 2, section 10; demand (tags, goals, quests, candidate tasks,
-the per-task numbers, exp and pow) is part 3, section 11. The scheduler's other parts (placement, rescheduling, ledger, store) follow as their work packages start (`LIFE_DIRECTOR_NATIVE_PLAN.md` section 5). It describes the engine as it behaves at branch `codex/director-dial-controls`,
+the per-task numbers, exp and pow) is part 3, section 11; placement (preparation, energy, feasibility, scoring, the construction phase of
+`generateSchedule`, rejections) is part 4, section 12. The scheduler's other parts (repair and output, rescheduling, ledger, store) follow as their work packages start (`LIFE_DIRECTOR_NATIVE_PLAN.md` section 5). It describes the engine as it behaves at branch `codex/director-dial-controls`,
 commit `14a6908`. The page (`lifemax_modular_v73`) is the authority: this document describes it and changes nothing. Where today's
 behaviour looks like a bug or an accident it is marked `[LDnn]` and explained in section 7; the rule as written is still what the
 engine does.
@@ -22,10 +23,11 @@ Contents
 5. Hashing and identities
 6. The page's `Intl` and `java.time`: the mapping and every difference
 7. Defects and accidents
-8. Golden cases: the index (8.1 the kernel, 8.2 availability, 8.3 demand)
+8. Golden cases: the index (8.1 the kernel, 8.2 availability, 8.3 demand, 8.4 placement)
 9. Open questions for the owner
 10. Availability: rules, preferences, sleep and the painted grid (part 2)
 11. Demand: tags, goals, quests and candidate tasks (part 3)
+12. Placement: preparation, energy, feasibility, scoring and the construction (part 4)
 
 ---
 
@@ -33,12 +35,13 @@ Contents
 
 Rules carry IDs and labels. IDs: `LDN-n` numbers and semantics, `LDT-n` time, `LDH-n` hashing and identities (part 1); `LDG-n` the
 grid and value rules, `LDA-n` availability, `LDP-n` preferences, `LDS-n` sleep (part 2, section 10); `LDD-n` tags, goals and templates,
-`LDQ-n` quests, `LDC-n` candidate tasks, `LDE-n` per-task and per-cycle numbers, `LDF-n` floating point (part 3, section 11). Later parts
+`LDQ-n` quests, `LDC-n` candidate tasks, `LDE-n` per-task and per-cycle numbers, `LDF-n` floating point (part 3, section 11); `LDR-n`
+preparation and energy, `LDK-n` feasibility, `LDU-n` scoring, `LDW-n` the construction, `LDJ-n` rejections (part 4, section 12). Later parts
 will add their own prefixes. Each rule is labelled:
 
 - **Executed**: a golden file holds cases recorded from the real page that show it; the case ids or families are given. Part 1's
   file is `lifemax_modular_v73/tests/fixtures/ld-kernel-golden.json`, part 2's `ld-availability-golden.json`, part 3's
-  `ld-demand-golden.json.gz`. The native code replays
+  `ld-demand-golden.json.gz`, part 4's `ld-placement-golden.json.gz`. The native code replays
   every one of them (section 8).
 - **Read**: derived from reading the code only; no case pins it yet.
 
@@ -107,13 +110,15 @@ These use the kernel and are the next parts of this spec; the plan section names
 |---|---|---|
 | 59-62 `clamp`, `cmpStr` | specified in part 2 (LDG-1, LDG-2) | LD2, done |
 | 60 `byId` | the sorts by id of part 3 (LDC-4, LDC-10) | LD3, done |
-| 62 `deepClone` | small helper; specified with its first caller | LD4 |
+| 62 `deepClone` | small helper; specified with its first caller (the snapshot, `taskSnapshot`) | LD5 |
 | 151-179 `createGrid` (the typed arrays other than `localMin` and `dayOf`), 184-198 `paint` | part 2 (LDG-3, LDG-4) | LD2, done |
 | 200-428 rules, preferences, sleep, `deriveAvailability`, maintenance, meals; `logic.js:577-588` `ruleOn` | part 2, section 10 | LD2, done |
 | 431-789 tags, archetypes, templates, goals, quests, candidates, `freshIds` 768-776; `weeksOf` 1152-1159, `goalInfoMap` 1190-1203, `prepTask` 899-908, the shares 1225-1227, `questCoverage` 1496-1503, `recomputeBwc` 820-836, `Math.exp`/`Math.pow` | part 3, section 11 | LD3, done |
-| 804-1160 energy (but `recomputeBwc`), state, scoring, commit and removal | placement | LD4 |
-| 1163-1535 `generateSchedule`, repair, fill, output, `inputHash` 1529-1532 | generation | LD4 |
-| 1537-1618 validation | validation | LD4 |
+| 791-1087 energy (but `recomputeBwc`), state, feasibility, scoring, `commit`, `occupy`; 1106-1109 `anchorsDependents`; 1160 `bwcIndexAt` | part 4, section 12 | LD4, done |
+| 1163-1288 `prepareState` and `generateSchedule` up to its repair (the construction); 1394-1431 `buildRejection` | part 4, section 12 | LD4, done |
+| 1088-1105 `removeInst`, 1110-1147 `taskSnapshot`, `snapshot`, `restore`, `stateFingerprint`, 887-898 `recoveryBlocks` | repair and output | LD5 (plan: LD4) |
+| 1289-1393 repair and fill, 1432-1535 explanations, segments, capacity, output, `inputHash` 1529-1532 | repair and output | LD5 (plan: LD4) |
+| 1537-1618 validation | validation | LD5 (plan: LD4) |
 | 1619-1905 `rescheduleActivity`, hold placement (`dayEndAfter` 1791-1795 is in this part) | rescheduling | LD5 |
 | 1908-2085 ledger, quest progress, misses (`completionEventId` is in this part) | ledger | LD6 |
 | 2234-2340 `LifeDirectorStore` | store codec | LD7 |
@@ -559,6 +564,38 @@ Part 3 (demand, section 11):
   `remainingCount` 0 and shows as covered with no session at all (`coverage/questCoverage/case7`). The quests section's coverage rows
   (plan 3.6) read it. Looks accidental (OQ-11).
 
+Part 4 (placement, section 12):
+
+- **LD26** (`engine.js:919-920`; LDK-1) A prior-volume task counts a completed session's **start** as its end, and reaches 7 days before its
+  window for completed sessions but not for sessions on the plan (`windowStart - 0`, a leftover). So an assessment may start at the very
+  instant an earlier counted session started. Harmless in practice (completed sessions are in the past, before `now`); looks accidental.
+- **LD27** (`engine.js:1084-1085`; LDR-3) A stored session without `linkedGoalIds` (or with a value that is not a list or text) stops every
+  plan with a `TypeError` (`prepare/prepare/locked-no-links`); a text is read unit by unit as goal ids. The page's own sessions always
+  carry the list, so only a hand-edited or corrupt store hits it. Port as is.
+- **LD28** (`engine.js:1176-1178`; LDR-3, **Read**) A pinned or started session's clash test starts at the first plannable slot, so the
+  part of it before the clock may lie over sleep, a commitment or the morning routine, and `occupy` then writes LOCKED over those slots
+  (their drain becomes the session's). Only the past is overwritten, so no placement changes; the painted grid read by later parts
+  (`segments`, LD5) shows the session there.
+- **LD29** (`engine.js:862`; LDR-5, **Read**) The check-in level is looked up in object literals: a level naming an inherited member
+  (`constructor`, `toString`) counts as a check-in whose value is a function, so every energy from its instant on is NaN and no
+  high-intensity session fits. As LD13 and LD23; the page's own check-in writes only the three levels.
+- **LD30** (`engine.js:930-931`, `1022-1030`; LDK-2, LDW-1) Inside `evalInBwc`, `checkHard`'s WINDOW and BUSY tests can never fail (the
+  loop bounds and the loop's own run test come first), and BUSY is tallied only at the shortest length, so LDJ-1's day attribution never
+  sees WINDOW from a tried day. Informational; ported as written.
+- **LD31** (`engine.js:1010`; LDU-2, **Read**) Fairness multiplies the whole utility, penalties included: a negative utility (a session far
+  from its old time, heavily compressed) times `F > 1` becomes more negative, so a goal behind its share has its poor placements pushed
+  further down instead of up. No recorded placement has a negative score with `F != 1`. Looks accidental.
+- **LD32** (`engine.js:1274-1275`; LDW-3) Equal selection keys go to the smaller task id, which is a `cyrb53` hash of the template, week and
+  index (LDH-2, LDC-9): which of two equally good sessions is placed first, and so where both go, is decided by a hash
+  (`rules/place/twin-goals`, `twin-custom`; mutation `equal keys to the larger id` changes many cases). Deterministic and so portable;
+  noted because renaming a template or a goal can move sessions that did not change.
+- **LD33** (`engine.js:935`, `1083`; LDK-2, LDR-3) A day's "goal minutes" count every session on it, quest sessions and kept ones too, so
+  the daily cap (`maxDailyGoalMinutes`, "Max daily effort" in Settings) limits quests as well as goals (`rules/place/daily-cap-30`). The
+  setting's name says effort, so this is probably intended; noted because the variable says goals.
+- **LD34** (`engine.js:1171-1174`; LDR-3, **Read**) With the clock before the plan's first day, a planned session wholly before the plan
+  that has not yet ended is neither history nor kept nor replannable: it disappears from the plan's output. The page always plans from
+  today, so the case does not arise.
+
 ---
 
 ## 8. Golden cases: the index
@@ -699,6 +736,62 @@ history before the plan's first day never counts, LDC-2), and in `PageMath` drop
 Not recorded in part 3: a template `d` with fewer than three items in a plan (LDD-9), the prototype names of LD23, a quest list or goal
 list that is a text (iterated by character), goals or quests whose ids hash to the same `cyrb53` value.
 
+### 8.4 Placement (part 4)
+
+File `lifemax_modular_v73/tests/fixtures/ld-placement-golden.json.gz` (2,998 cases; about 47.7 MB of text, 5.2 MB gzipped; the native
+loader reads it line by line and keeps no case). Recorder `lifemax_modular_v73/tools/gen_ld_placement_golden.js` (the real built page in
+Chromium, node as a second runner; format in its header; every prepare and place case run twice and required equal), definitions
+`tools/ld_placement_cases.js` (no `Intl`; the re-plan inputs take an earlier plan from the engine in node), loader `tools/ld_engine_vm.js`
+(helper list `PLACEMENT`, `placementSource` with the two stage calls, section 12). Web test `tests/ld-placement-golden.test.js` (re-records
+every case in Chromium, byte for byte; the stage calls change no plan; node agrees on every anchors case and on most others, LD20; every
+cited rule defined here; strict zones only; only the three cases built to throw do). Native tests `PlacementGoldenTest` (exact replay of
+every case and the family counts) and `PlacementPerfTest`, adapters in `PlacementReplay` and `PlacementJson`, under
+`android-wrapper/native/src/test/java/com/lifemax/rpg/core/lifedirector`.
+
+Zones: the 11 strict zones of the matrix (section 8.1).
+
+| Family | Cases | Function | What it covers | Rules |
+|---|---|---|---|---|
+| `prepare` | 178 | `prepareState` | the ten scenarios in five zones; 80 seeded inputs, half re-plans of the engine's own plan (sessions planned, pinned, started, done, skipped, missed, moved); 48 hand cases: existing sessions in every state and place (before and after the plan, on work, on sleep, overlapping, same start, off the slot grid, without goal links or intensities, intensities as text and past a byte, outside every waking day), check-ins (each level, late, odd level, zero and text epochs, off the grid), sleep needs (0, text, huge), recovery minutes (two of them not a multiple of 15), lead minutes (0 to 600 and negative), the clock in and past the plan, history spacing | LDR-1 to LDR-6 |
+| `anchors` | 15 | `anchorsDependents` | placed, unplaced and covered dependents, other prerequisites, missing, null, empty and text lists, self, prefixes, an undefined task id | LDW-5 |
+| `scenario` | 110 | the construction | the ten scenarios in the 11 strict zones, every active task probed | LDR, LDK, LDU, LDW, LDJ |
+| `seeds` | 220 | the construction | the ten scenarios at seeds 2 to 12 (their work hours move) in UTC and Kolkata | as `scenario` |
+| `dst` | 120 | the construction | three scenarios starting the morning before, and the morning of, each 2026-2027 clock change of the strict zones | as `scenario`, LDR-2 |
+| `rules` | 55 | the construction | one behaviour each on a two-day plan: every archetype; avoid windows (numbers and text); rest days (high work, text, meal prep); check-ins; the high-intensity, consecutive and daily caps; a heavy shift; recovery 360; lead 60; short sleep; twin goals and twin custom goals (equal keys); the share cap (and only capped candidates); quest chains (placed and blocked), daily covers (plain, exclusive, wildcard), a critical deadline, merged sessions, minutes, a long session, a deadline too close; prior volume; re-plans at four clocks and with a pin; history spacing near and far; no free time; custom templates with text numbers, an object for phases (throws), no spacing, a two-hour ideal spacing; recovery 100; a preferred window; ten advanced goals in one day; a stored session without goal links (throws) | as named in each case |
+| `fuzz` | 700 | the construction | seeded inputs (section 12.7), a third of them re-plans | LDR, LDK, LDU, LDW, LDJ |
+| `small` | 1,600 | the construction | seeded short inputs (one to three days, up to three goals and two quests), one task probed | as `fuzz` |
+
+A place case records: the first raw score table, every placement in order with its selection, the sessions, each task's state, each day's
+counts, the ledgers, the slot codes, `anchorsDependents` of every session, `buildRejection` of every unplaced task, and the probes
+(`taskEarliestLatest`, `evalAcross`, `evalInBwc` with its reason tally in every day, and `scorePlacement`'s detail at the best slot). In all:
+23,213 placements, 8,195 rejections, 899 covered tasks, 1,112 compressed sessions, 24 cap-relaxed placements, 210 sessions that anchor a
+dependent, 89 probed placements with a movement penalty, 100 kept and 7 displaced sessions in `prepare`.
+
+Mutation checks: 52 source mutations of the native placement code, run by hand for WP-LD4 (a script copies `core/lifedirector`, changes one
+place, compiles and replays the file), each make the replay fail: the sleep factor's ceiling 1.0 (632 cases), the base multiplied in single
+precision (729), a check-in half-life of 5 hours (366), fdlibm's `pow` for the check-in (26), energy not cut to 0..1 (131), an energy-fit
+shortfall of 2.5 (853), the recovery need rounded down (3), no lead before the first slot (2,834), the clash checked from the session's
+start (3), a session starting now replanned (14), the shortfall ignoring a truncated start (88), prior history from 6 days (15), the
+dependency lag ignored (143), the daily cap inclusive (938), the per-day limit one lower (2,263), spacing inclusive (692), a fatigue floor of
+0.40 (420), downstream from the same start (4), kept sessions not demanding (7), post-shift protection for any high task (109), an urgency
+floor of 0.80 (1,612), an avoided preference of 0.20 (138), fdlibm's `exp` in the spacing (1) and the movement (2), a spacing sigma floor
+of 3 (1), variety counting kept neighbours (78), fragmentation for gaps of 3 (1,292), movement "soon" under 12 hours (235), compression 6
+a slot (900), a fairness gain of 1.0 (1,106), scores to 1e-5 (2,239), rest days not checked for high tasks (83), the preferred window
+ignored (288), equal keys to the larger id (1,555), the later day winning a tie (44), the later slot winning a tie (1,288), a regret
+weight of 0.30 (2,271), scarcity 10 (2,299), the cover pass first (511), a cap share of 0.65 (5), the cap never relaxed (6), the second-best
+without fairness (1,077), re-scoring only the winner's day (1,276), first scores with fairness (1,274), dynamic rows not re-scored (364),
+coverage ignoring exclusivity (8), coverage letting check-ins cover (8), anchors counting covered tasks (13), the rejection's specific
+reason tie to the last (3), the rejection's day ranking tie to the higher code (290), recovery fitting on free slots only (555). The first
+run's two survivors (the recovery need rounded down: every stored minimum was a multiple of 15; the spacing sigma floor: no ideal spacing
+below 8 hours) got cases (`prepare/prepare/recovery-37`, `-100`, `rules/place/recovery-100`, `rules/place/custom-near-spacing`), and the
+cap mutation was rewritten after it failed to compile. Weakly covered, by few cases each: DOWNSTREAM (15 tallied refusals, no rejection
+names it), the spacing and movement exponentials' last bit (1 and 2 cases), a cap share near 0.60 (5).
+
+Not recorded in part 4: stored values of an odd type in the existing schedule beyond the intensities and links (text epochs, a text
+`spacingKey` that matches a number), a check-in level naming an inherited member (LD29), preferences of an odd type other than avoid
+windows and rest days (a text `maxHighIntensityPerDay`), a fractional prior-volume count, the clock before the plan's first day with
+sessions before it (LD34), and the 2,000-round guard of the construction (no recorded tier comes near it).
+
 ---
 
 ## 9. Open questions for the owner
@@ -735,6 +828,13 @@ list that is a text (iterated by character), goals or quests whose ids hash to t
   rather than a divergence, until the page runs on a WebView of the same kind everywhere.
 - **OQ-13** LD21: should a language subject keep its letters (Unicode letters and digits, lower-cased), so that `Español` and `日本語`
   make their own tags? A change renames the tags of existing goals' sessions, which matters to quests that name them.
+- **OQ-14** LD26, LD31: the prior-volume history that counts a session's start as its end, and fairness multiplying negative utilities.
+  Both look accidental; a fix moves sessions, so it is a page change first, with new cases. Port as is until ruled.
+- **OQ-15** LD20 reaches placement: one bit in an exp or pow can change which slot wins (node 22, fdlibm, records a different answer
+  for some prepare and place cases). Recommended as OQ-12, and in shadow mode a placement divergence whose input has a check-in or a
+  spacing or movement exponential within an ulp is reported as `float` until the device pass confirms the WebView.
+- **OQ-16** Plan WP-LD4's decision: explanation strings (`humanExplanation` here, `explainInstance` in WP-LD5) recorded as part of the
+  contract, as recommended; confirm. And D12 (`inputHash`, OQ-5) is still open for WP-LD5's output.
 ---
 
 ## 10. Availability: rules, preferences, sleep and the painted grid (part 2, WP-LD2)
@@ -1267,3 +1367,247 @@ code reads that file (strictly: an unknown or missing member refuses it).
   paused ones; history, kept sessions and used ids; horizons of 1 to 28 days starting at any quarter hour in March, October, November
   and December 2026; every intensity).
 - Source mutations of the native code, each of which makes the replay fail (section 8.3).
+
+---
+
+## 12. Placement: preparation, energy, feasibility, scoring and the construction (part 4, WP-LD4)
+
+This part covers the front of `generateSchedule` up to its repair: `buildState` (`engine.js:850-867`) and the energy model (`804-848`, but
+`recomputeBwc`, LDE-3), the spacing ledger (`868-869`), the recovery reservation (`874-886`), `prepareState` (`1163-1188`) with `occupy`
+(`1075-1087`) and `bwcIndexAt` (`1160`), `taskEarliestLatest` (`909-926`), `checkHard` (`929-962`), `fairnessMult`, `energyFit` and
+`scorePlacement` (`964-1015`), `q6` (`802`), `evalInBwc` and `evalAcross` (`1017-1047`), `commit` (`1050-1074`), `anchorsDependents`
+(`1106-1109`), the construction phase of `generateSchedule` (`1205-1288`), and `buildRejection` (`1394-1431`), which the page calls after
+the repair but which is a pure function of the state and is recorded here on the state the construction leaves. New prefixes: `LDR-n`
+preparation and energy, `LDK-n` feasibility, `LDU-n` scoring, `LDW-n` the construction, `LDJ-n` rejections. **Executed** rules cite
+families of `lifemax_modular_v73/tests/fixtures/ld-placement-golden.json.gz` (section 8.4); the native code in
+`android-wrapper/native/src/main/java/com/lifemax/rpg/core/lifedirector` (`PlanState`, `EnergyModel`, `PlanPreparation`, `Feasibility`,
+`PlacementScore`, `Placer`, `PlanConstruction`, `Rejections`) replays every case.
+
+Out of this part, for WP-LD5 and WP-LD6: `removeInst`, `snapshot`, `restore`, `stateFingerprint`, `runLocalRepair`, `fillPass`, the
+diagnostics of displaced sessions, `explainInstance`, `segments`, `capacityByDay`, `recoveryBlocks`, `assembleOutput`, `inputHash`,
+`validateSchedule`, `rescheduleActivity` and the ledger. A committed session's `title`, `tag`, `kind`, `goalTitle`, `explanation`, `moves`
+and `source` (a deep copy of its task, `taskSnapshot` `1110-1115`) are copies the output assembly reads; the recorder keeps the members
+placement decides (the session's projection in `tools/gen_ld_placement_golden.js`), and LD5 records the rest with the output.
+
+The stage boundary. The recorder runs the page's own `generateSchedule` with two calls put into its text (`tools/ld_engine_vm.js`
+`STAGES`): after the first scores (`1245`) it copies the score table, and before `/* PHASE 2` (`1289`) it records the whole state and
+throws, so nothing after the construction runs. With no stage function the calls do nothing; the web test checks that the hooked engine
+plans the ten scenarios exactly as the page's.
+
+### 12.1 Preparation and energy
+
+- **LDR-1** (**Executed**: family `prepare`, 178 cases, every `place` case; `engine.js:850-867`) `buildState(input, derived)`: the clock
+  `now = currentTimeEpoch`; the first plannable slot `nowSlot = clamp(slotCeil(now + leadMinutes * 60), 0, n)` (LDT-17; `leadMinutes`
+  as stored, LDP-1, not checked: `0`, `5`, `60`, `600` and `-30` are recorded, `prepare/prepare/lead-*`); the sleep need
+  `(playerAvailability || {}).sleepRequirementMinutes || 480`, kept as given (text `"540"` divides as 540); the check-in (LDR-5); every
+  waking day's sessions, per-key counts (an object keyed by the key's text), goal minutes and high count emptied; then each completion
+  history item with a truthy `spacingKey` adds its `startEpoch` to the spacing ledger under that key (a map keyed by the value itself, in
+  the order keys are first seen: history, then kept sessions, then placements); then LDR-2.
+- **LDR-2** (**Executed**: family `prepare` (`baseP`, `baseC`, `sleepFactors`), `dst`, every `place` case; `engine.js:804-819`) For each
+  waking day (LDA-13) its sleep factor is `clamp(sleepBeforeMin / need, 0.5, 1.05)` and for each slot `i` of the day, with `tau = (epochOf(i)
+  - wakeEpoch) / 3600` hours since waking, `baseP[i] = baselineP(tau) * factor` and `baseC[i] = baselineC(tau) * factor`, **each stored
+  in a `Float32Array`** (the product is a double, rounded once to single precision on the store; multiplying in single precision differs,
+  mutation `base multiplied in single precision`). `baselineP(t)`: `0.55 + 0.25 t` below 1, 0.90 below 5.5, 0.80 below 7.5, 0.90 below
+  11.5, `0.80 - 0.5 * (t - 11.5) / 5` up to and including 16.5, else 0.30; `baselineC(t)`: `0.50 + 0.35 t`, 0.95, 0.70, 0.80, `0.75 -
+  0.45 * (t - 11.5) / 5`, 0.30 on the same bounds; the operations in that order. Then the day's drain (LDE-3). Slots outside every waking
+  day keep base 0. A sleep need of 0 is 480 (`||`); `1e9` gives the floor 0.5 (`prepare/prepare/sleep-need-*`).
+- **LDR-3** (**Executed**: `prepare` (`existing-*`, `locked-*`, `started-*`, the re-plan seeds), `rules/place/replan-*`, every `fuzz` re-plan;
+  `engine.js:1163-1188`, `1075-1087`) `prepareState`: availability (LDA-10) for the input's own members, LDR-1, then the stored sessions
+  (`existingSchedule || []`) sorted by `startEpoch` ascending, ties (and a NaN difference) by `instanceId` with LDG-2, and taken in order:
+  a session whose `lifecycleState` is not `PLANNED` or `IN_PROGRESS` is history; one wholly outside the plan (`endEpoch <= H0` or
+  `startEpoch >= HN`) is history when it ended by the clock, else dropped; one that is pinned (`isUserLocked` truthy) or has started
+  (`startEpoch <= now`) is checked for a clash: the first slot from `max(its first slot, nowSlot)` up to its last that is not FREE (the
+  slots before `nowSlot` are never checked, so a started session may overlap sleep or a commitment there); a clash with a session that
+  has not ended displaces it (with the clashing code); otherwise, when the slot of `max(startEpoch, now)` lies in a waking day, it is
+  **kept**: a copy with that day's id and `kept: true` is placed as LOCKED (`occupy`); with no waking day there it is history. Any other
+  planned session is replannable, by `instanceId`. `occupy(session, day, code)`: its slots `clamp(slotOf(start), 0, n)` up to
+  `clamp(slotCeil(end), 0, n)` take the code, the session's index (`taskOwner`) and its `IP` and `IC` as a `Uint8Array` stores them
+  (ToUint8: `"5"` is 5, `300` is 44, missing 0; `prepare/prepare/locked-intensity-text`); the session joins the state's list (and its id
+  map) and the day's list; the day's count for its spacing key's text rises by one, its goal minutes by 15 per slot (every session counts,
+  goal or quest), its high count when `IP >= 4 || IC >= 4` (LDG-6); its start joins the spacing ledger; each id in `linkedGoalIds` gains
+  the minutes in the fairness ledger, and the ledger's total gains them once when the list is not empty; then the day's drain (LDE-3).
+  A stored session whose `linkedGoalIds` is missing stops the plan with a `TypeError` (`prepare/prepare/locked-no-links`,
+  `rules/place/throw-no-links`; LD27). Then LDR-4.
+- **LDR-4** (**Executed**: `prepare` (`recovery-*`, `lead-*`, `now-*`), every `place` case; `engine.js:874-886`) Recovery is reserved
+  before anything is placed: for each waking day, the FREE slots from `max(startSlot, nowSlot)` are counted (`freeSlots`); `left =
+  min(ceil(minDailyRecoveryMinutes / 15), free)` (`recoverySlots`); the day is short (`recoveryShortfall`) when it has fewer free slots than
+  needed, ends after `nowSlot` and did not start before the plan; then from the day's last slot backwards, down to the first counted one,
+  FREE slots become RECOVERY until `left` is spent (the latest free time of the day is the protected downtime); then its drain.
+- **LDR-5** (**Executed**: `prepare` (`checkin-*`, `energyP`, `energyC` at every slot), `rules/place/checkin-*`, `fuzz`; `engine.js:837-848`,
+  `861-862`) The check-in counts when `energyProfile` is truthy, its `checkin` truthy, `checkin.epoch` truthy and `checkin.level` names one of
+  `LOW`, `NORMAL`, `HIGH` (values 0.30, 0.65, 0.95); an epoch of 0 or a level `TIRED` leave none. `energyAt(i, axis)`: `e = base[i] -
+  drain[i]` (both single-precision values read as doubles, subtracted as doubles), `clamp(e, 0, 1)`; then, when `epochOf(i) >= epoch`
+  (LDG-6: a text epoch compares as a number, `prepare/prepare/checkin-text-epoch`), `a = Math.pow(0.5, (epochOf(i) - epoch) / 21600)`
+  (LDF-2) and `e = a * value + (1 - a) * e`. Before the check-in, or with none, the cut value.
+- **LDR-6** (**Executed**: family `prepare`) What the preparation leaves, as the golden file records it: the slot codes, owners, the two
+  intensity bytes, `baseP`, `baseC`, `drainP`, `drainC` (single precision), `runLen` and `runBack` (16-bit) at every slot; each day's counts,
+  goal minutes, high count, free and recovery slots and shortfall; the sessions kept; the spacing and fairness ledgers; history, kept,
+  displaced and replannable ids in the order found.
+
+### 12.2 Feasibility
+
+- **LDK-1** (**Executed**: every probe of every `place` case (`el`), `rules/place/quest-chain*`, `prior-volume`, `lead-60`; `engine.js:909-926`)
+  `taskEarliestLatest(t)`: `earliest = max(windowStart, now)`, `latest = min(windowEnd, deadlineEpoch || Infinity, HN)`. For each task id
+  `d` it depends on (LDC-10), the session `'i' + d.slice(1)` must be on the plan, else the window is blocked (`PREREQ`, 12); `earliest =
+  max(earliest, its end + (minLagMin || 0) * 60)`. With a prior volume (LDC-3): the ends of the plan's sessions of those templates that
+  start in `[windowStart, windowEnd)`, then the **starts** of the input's completion history items of those templates that start in
+  `[windowStart - 7 days, windowEnd)` (LD26), sorted ascending; fewer than `count` blocks the window (`PRIOR_VOLUME`, 14), else `earliest =
+  max(earliest, the count-th)`. The window in slots: `earliestSlot = max(nowSlot, slotCeil(earliest))`, `latestSlot = min(n,
+  slotOf(latest))` (the task may use slots up to, not including, `latestSlot`).
+- **LDK-2** (**Executed**: the reason tallies of every probe, where each refusal is counted: BUSY 1,423,006 times, CAP 497,575, PER_DAY
+  151,402, SPACING 85,378, HIGH_COUNT 15,664, FATIGUE 7,450, CONSECUTIVE 3,201, POST_SHIFT 2,745, BEFORE_SLEEP 160, DOWNSTREAM 15,
+  and 12,384 days outside a window; `rules/place/high-cap-*`, `consecutive-30`, `daily-cap-30`, `heavy-shift`, `custom-*`; `engine.js:929-962`)
+  `checkHard(t, day, s, n, window)`, in this order, the first failing test answering: `s < earliestSlot || s + n > latestSlot` WINDOW;
+  `runLen[s] < n` BUSY; `day.goalMin + 15 n > maxDailyGoalMinutes` CAP (4); `(day.perKey[spacingKey] || 0) >= maxPerBwc` PER_DAY (5;
+  LDG-6, so a stored `"2"` is 2); for a high task (LDE-2) `day.highCount >= maxHighIntensityPerDay` (stored, not checked: 0 refuses
+  every high task) HIGH_COUNT (13); with a truthy `avoidBeforeSleepMin`, `epochOf(s + n) > sleepEpoch - avoidBeforeSleepMin * 60`
+  BEFORE_SLEEP (7); with sessions of its key in the ledger and `spacingMinH > 0`, any of them with `|epochOf(s) - start| < spacingMinH *
+  3600` SPACING (6; only starts are compared); `IP >= 4` with the day's heavy-shift marker (LDA-16) at or before `s` POST_SHIFT (9); for
+  `IP >= 4 || IC >= 4`: for each slot `k` of the `n`, with `own = 0.015 * k / 4`, `energyAt(s + k, physical) - own * IP < 0.45` (when
+  `IP >= 4`) or the same for the cognitive axis (when `IC >= 4`) FATIGUE (8); then the run of demanding slots (TASK or LOCKED with either
+  stored intensity `>= 4`) touching `[s, s + n)` on both sides inside the day, plus `n`, times 15, over `maxConsecutiveHighLoadMinutes`
+  CONSECUTIVE (10); finally, when the day has sessions, each of them that starts at or after `epochOf(s + n)` and is high (on its stored
+  values): with `aP = 0.015 * IP * n / 4` and `aC` likewise, `energyAt(its first slot, physical) - aP < 0.45` (its `IP >= 4`) or the
+  cognitive test (its `IC >= 4`) DOWNSTREAM (11). Else OK. Inside `evalInBwc` the WINDOW and BUSY tests never fail (the loop bounds and its
+  own run test come first, LD30).
+
+### 12.3 Scoring
+
+- **LDU-1** (**Executed**: the cells of every `place` case (each active task's first raw best score in each waking day), every placement's
+  score, every probe's `detail` and `across`; `engine.js:969-1015`) `scorePlacement(t, day, s, n)` with `st = epochOf(s)`:
+  - urgency: `_urgBase` (LDE-2); with a truthy deadline, times `0.85 + 0.15 * (1 - clamp((st - now) / max(1, deadline - now), 0, 1))`;
+  - energy: `min(energyFit(energyAt(s, physical), IP), energyFit(energyAt(s, cognitive), IC))`, `energyFit(a, I)`: `d = a - 0.18 I`;
+    `1 - 0.30 d` when `d >= 0`, else `max(0, 1 - 2.8 d d)`;
+  - preference: the wake phase `phaseOf((st - wakeEpoch) / 3600)` (WAKE below 1 h, PEAK below 5.5, DIP below 7.5, SECONDARY below 11.5,
+    else WIND); 0.60, or 1.0 when the slot is in a PREFERRED window (LDA-17) or else when `phases.includes(phase)` (a list's item; a
+    text's part, `"SECONDARY"`; another value throws `TypeError`, `rules/place/custom-phases-object`; `ANY` matches no phase); then 0.15
+    for each avoid window (stored, LDG-6) with `startMin <= localMinute < endMin`, the minute being the slot's wall clock (LDT-16); on a
+    preferred rest day (`(preferredRestDays || []).includes(the slot's day's weekday)`, a list holding the number, or a text holding its
+    digit: `["1"]` holds nothing, `rules/place/rest-day-text`) a high task gets 0.15, and a task that prefers rest days gets at least 1.0;
+  - spacing: 1 with no session of its key in the ledger; else `near` the hours to the nearest one, `h = spacingIdealH`, `sig = max(4, h *
+    0.5)`, `d = near - h`: `near >= h` gives `max(0.6, exp(-(d * d) / (2 * ((2 sig) * (2 sig)))))`, else `exp(-(d * d) / ((2 sig) * sig))`
+    (LDF-1; `x ** 2` is `x * x`, LDF-2);
+  - variety: 0.5 when the slot before `s` or the slot `s + n` (inside the grid) is a TASK (not LOCKED) whose leading axis (`IP > IC` of its
+    stored bytes, else cognitive) differs from the task's (`IP > IC`, LDG-6), else 0;
+  - `wsum = 24 urgency + 18 _prio + 18 energy + 12 preference + 12 spacing + 10 _lag + 6 variety`, added left to right (an undefined
+    `_lag` makes it NaN);
+  - penalties: fragmentation `f(runBack[s] - 1) + f(runLen[s] - n)` with `f(1) = 3`, `f(2) = 1.5`, else 0; movement, when `origStartEpoch`
+    is truthy and not `st`: with `hrs = (origStartEpoch - now) / 3600`, 25 below 24 hours, else `clamp(5 + 15 * exp(-(hrs - 24) / 72), 5,
+    20)`; compression `(dOptSlots - n) * 8`;
+  - `U = q6(F * (wsum - fragmentation - movement - compression))`, `F` LDU-2. The detail form adds `F`, `wsum`, the seven weighted
+    factors, the penalties, the phase, both energies and the rest-day flag.
+- **LDU-2** (**Executed**: every placement's `F`, `rules/place/fair-cap*`, `twin-*`; `engine.js:964-968`, `802`) `fairnessMult(t)` is 1 in
+  raw mode (the construction's table, LDW-2), for a task without a goal, or while the ledger's total is 0; else `clamp(1 + 1.5 * ((share[goal]
+  || 0) - (goalMin[goal] || 0) / total), 0.75, 1.25)`. `q6(x) = Math.round(x * 1e6) / 1e6` (LDN-1's round, ties up). A negative utility
+  times `F > 1` is more negative, so fairness pushes an under-served goal's poor placements further down (LD31; no recorded placement has a
+  negative score with `F != 1`).
+
+### 12.4 The construction
+
+- **LDW-1** (**Executed**: every `place` case; `engine.js:1017-1047`) `evalInBwc(t, day, window)`: a day ending at or before
+  `earliestSlot` or starting at or after `latestSlot` has nothing (one WINDOW in a tally); else for `n` from `dOptSlots` down to
+  `dMinSlots`, for `s` from `max(startSlot, earliestSlot)` to `min(endSlot, latestSlot) - n` inclusive: `runLen[s] < n` skips (one BUSY
+  in a tally, at the shortest length only); LDK-2's refusal skips (tallied); else the score (LDU-1), and a strictly higher one replaces
+  the best: the longest length wins over a shorter one at an equal score, then the earliest start. `evalAcross(t)`: the blocked window's
+  reason, or each day in order, counting the days that fit and keeping the first strictly highest; `second` the highest score of the other
+  fitting days (0 when none); none fits is BUSY.
+- **LDW-2** (**Executed**: `cells` and `placements` of every `place` case; `engine.js:1205-1288`) The construction. The tasks are the demand
+  (LDE-4) compiled with the preparation's kept sessions plus its history sessions skipped voluntarily at tier 2 or less (`tier <= 2`, LDG-6)
+  and, as used ids, the `instanceId` of every history and kept session (LDW-7); each task's `origStartEpoch` is the replannable session
+  `'i' + id.slice(1)`'s `startEpoch` (LDR-3). The shares (LDE-4) go into the fairness ledger. The active tasks are those without a
+  `blockedReason`. A table holds, for each active task and waking day, the raw best (LDW-1 with fairness off): score, slot, length; a task
+  with no prerequisites and no prior volume keeps the window it had at the start, the others re-ask LDK-1 each time. Then for tier 4, 3,
+  2, 1, first the tasks without a daily cover and then those with one (LDC-8), up to 2,000 rounds each: every unplaced active task of that
+  tier and kind (a task with prerequisites or prior volume re-scored first) is a candidate when some day fits: its best day (the first
+  strictly highest raw score), the second-highest raw score (an equal score counts), `F` (LDU-2), `bestF = q6(best * F)`, `secondF =
+  q6(second * F)` or 0 when only one day fits, `regret = bestF - secondF`, `scarcity = 15 / max(1, days that fit)`, `key = q6(bestF + 0.35
+  * regret + scarcity)`. The candidate with the highest key wins (LDW-3), unless held back (LDW-4); it is committed (LDW-6) at its best
+  day's slot and length, recorded with its selection (`k`, the day, slot, length, `bestF`, regret, count, key, `F`), a weekly-minimum
+  goal session lowers its goal's count of minimum sessions left, and every unplaced active task is re-scored: in every day when it shares
+  the winner's spacing key, else in the winner's day only. A round with no candidate ends the kind.
+- **LDW-3** (**Executed**: `rules/place/twin-goals`, `twin-custom`, every `place` case; mutations `equal keys to the larger id`, `later day
+  wins a tie`, `later slot wins a tie`; `engine.js:1274-1275`, `1028`, `1042`) Ties and determinism. An equal key goes to the smaller task
+  id in UTF-16 order: task ids are `cyrb53` hashes of template, week and index (LDH-2, LDC-9), so which of two equally good sessions is
+  placed first is decided by a hash (LD32). Within a day the first highest start wins, across days the first highest day, in the cells the
+  first highest day. Every list is built in a fixed order (tasks by id, LDC-2; days in time order; sessions in commit order); no object's
+  key order is observed by placement (`medLeft` is only searched, `perKey` and the ledgers only read by key; LDJ-1 sorts its reason codes
+  numerically). Sorts: the stored sessions by start then id (a stable sort, LDR-3). The recorder runs every case twice on fresh state and
+  requires the same answer.
+- **LDW-4** (**Executed**: `capRelaxed` placements (24), `rules/place/fair-cap*`; `engine.js:1246-1253`, `1274`,
+  `1277`) The share cap: a candidate of a goal is held back when the plan's tasks name two goals or more, the fairness total is at least 180
+  minutes, another goal still has weekly-minimum sessions left, and `(goalMin[goal] + 15 n) / (total + 15 n) > max(0.60, share[goal] +
+  0.20)`. Held candidates compete among themselves by the same rule; when no candidate is free, the best held one is placed and marked
+  `capRelaxed`.
+- **LDW-5** (**Executed**: family `anchors`, 15 cases, and `anchors` of every `place` case; `engine.js:1106-1109`) `anchorsDependents(session)`:
+  some task is placed, not covered (`coveredBy` falsy), and its `dependsOn` (when truthy) includes the session's `taskId` (a list by item; a
+  text by part, `anchors/anchors/text-list`). Used by the repair (LD5) to keep such a session in place.
+- **LDW-6** (**Executed**: `rules/place/quest-daily-*`, the `coveredBy` of 899 tasks; mutations `coverage ignores
+  exclusivity`, `coverage lets check-ins cover`; `engine.js:1050-1074`) `commit(t, day, s, n)`: a session `'i' + t.id.slice(1)` of `[epochOf(s),
+  epochOf(s + n))`, its length, `minDurationSlots = dMinSlots`, `optDurationSlots = dOptSlots`, the task's tier, `PLANNED`, not pinned,
+  the day's id, the task's `IP`, `IC`, key, goal links and quest links (copies), `compressed = n < dOptSlots`, `origStartEpoch || null`;
+  placed with `occupy` as TASK (LDR-3), and the task is placed. Then, when the session is linked to a goal, each other task in id order with a
+  daily cover, not placed, whose cover's day `[start, end)` holds the session's start, whose tag fits (an exclusive quest's cover only its
+  exact tag; else LDD-1 and a check-in tag, `.assessment` or `.checkpoint`, only exactly) and that requirement not already on the session:
+  that task is placed, `coveredBy` the session, and the session takes a copy of the link.
+- **LDW-7** (**Executed**: every `place` case with existing sessions; `engine.js:1209-1228`) The demand half runs on the prepared state:
+  the weeks of its days, the goal plans at `now`, the history filter, the candidates with the kept and used ids of LDW-2, the goal info,
+  `prepTask` on every task, the shares (LDE-4 exactly).
+
+### 12.5 Rejections
+
+- **LDJ-1** (**Executed**: `rejections` of every `place` case, every reason code but DOWNSTREAM_FATIGUE (8,195: daily limit 2,706, recovery
+  1,880, one per day 904, no free window 885, prerequisite 609, deadline 363, spacing 322, high-intensity cap 232, fatigue 102,
+  consecutive 69, blocked 53, earlier sessions 38, post-shift 28, before sleep 4); `engine.js:1394-1431`) `buildRejection(t)` for an unplaced task, in
+  this order: a `blockedReason` gives it with `"<title>" waits on a prerequisite quest.`; a blocked window gives
+  `PREREQUISITE_NOT_SCHEDULED` or `NEEDS_EARLIER_SESSIONS` with `"<title>" could not be placed because <reason words>.`; a window shorter
+  than `dMinSlots` gives `DEADLINE_TOO_CLOSE`, `"<title>" has no time left in its window` and ` before the quest deadline` (a truthy
+  deadline) or ` this week`, and `.`; otherwise each waking day the window touches is tried with a tally (LDW-1) and given one code: the
+  most counted of CAP, SPACING, FATIGUE, POST_SHIFT, PER_DAY, HIGH_COUNT, BEFORE_SLEEP, CONSECUTIVE, DOWNSTREAM, PRIOR_VOLUME (the first in
+  that list on a tie), or with none counted RECOVERY when a run of FREE or RECOVERY slots of `dMinSlots` lies in the day's part of the
+  window, else BUSY. The days per code (`perDay`, keyed by code) are ranked by count, then code ascending; the first names the reason
+  (`NO_FREE_WINDOW`, `DAILY_EFFORT_LIMIT`, `ONE_PER_DAY_RULE`, `SPACING_RULE`, `TOO_CLOSE_TO_SLEEP`, `ESTIMATED_FATIGUE`,
+  `POST_SHIFT_PROTECTION`, `CONSECUTIVE_LOAD_CAP`, `DOWNSTREAM_FATIGUE`, `HIGH_INTENSITY_DAILY_CAP`, `RECOVERY_PROTECTED`; BUSY when no
+  day was tried), and the sentence is `"<title>"` + ` (quest: <quest titles, ", ">)` when linked + ` could not be scheduled — ` + `<n>
+  day(s): <words>; <n> day(s): <words>` for the top two when two or more codes, else the words, + `.` + the hint of the code (CAP ` Raise
+  “Max daily effort” in Settings, or choose a lighter intensity.`, SPACING ` Sessions are kept at least <spacingMinH>h apart.`, FATIGUE
+  ` Energy estimates are heuristics; an energy check-in can override them.`, POST_SHIFT ` Heavy lifting is not scheduled after a long
+  physical shift.`, RECOVERY ` Life Director keeps <minDailyRecoveryMinutes> minutes of downtime per day and will not trade it for
+  tasks.`). The diagnosis: `{taskId, title, tier, reasonCode, humanExplanation, linkedQuestIds, goalId}` plus `perDay` for the last kind.
+  The words are `R_TEXT` (`engine.js:794-801`). Explanation strings are recorded as part of the contract (plan WP-LD4's decision,
+  recommended yes): they are shown in the sheets.
+
+### 12.6 Floating point and speed
+
+- Every score, energy and key is computed in IEEE doubles in the page's operation order; `baseP`, `baseC`, `drainP` and `drainC` are single
+  precision on store (LDR-2, LDE-3) and read back as doubles; the bytes and 16-bit arrays convert as JavaScript's typed arrays do (LDR-3).
+  `Math.exp` (spacing, movement, urgency) and `Math.pow` (the check-in) are the page's correctly rounded values (LDF-1, LDF-2; native
+  `PageMath`). A placement compares scores exactly, and `q6` rounds them to millionths, so one bit in an exp can change which slot wins:
+  node 22 (fdlibm) records a different answer from Chromium for some prepare and place cases (counted in the web test), which makes LD20
+  a placement question, not only an urgency one (OQ-12).
+- Speed (`PlacementPerfTest`, a four-week plan with eight advanced goals at the hardcore intensity and five quests): see section 12.7.
+
+### 12.7 What was measured
+
+- 2,998 cases in Chromium 153 (the file, about 47.7 MB of text, 5.2 MB gzipped); the native code on the JVM reproduces all of them
+  exactly (`PlacementGoldenTest`, about 20 seconds for the whole file). Every prepare and place case gave the same answer twice in the
+  recorder. Node 22 (fdlibm) records a different answer for 136 of them (prepare and place cases with a check-in or with spacing and
+  movement exponentials one bit apart), so a bit of exp or pow moves sessions (OQ-15).
+- The seeded inputs: any strict zone; one to fourteen days starting at any quarter hour of January, March, April, June, September to
+  December 2026 or 2027; the clock at the start or up to most of the plan later, sometimes off the quarter hour; sleep rules at eight
+  bedtimes and five lengths or none (the default bedtime), naps; work at four day patterns, seven start times and six lengths with
+  commutes, every load class and none, decompression; an 8-day rotation of heavy shifts; classes; unavailable and preferred windows;
+  validity dates; one-off commitments of every kind; sick and blackout days; up to six goals of every archetype, level, status and target,
+  and custom ones; up to five quests of every tier, daily and once, `onlyDays`, minutes, exclusivity, session lengths and prerequisite
+  chains; completion history with and without spacing keys; a check-in at any level, early or late; every intensity, and the daily,
+  recovery, consecutive and high-intensity limits, rest days, avoid windows, lead minutes, meals off, a routine of 0 or 60 minutes; and
+  for a third of them (and every `prepare` seed) the engine's own plan as the existing schedule of a later clock, its sessions in
+  every lifecycle state, some pinned and some moved.
+- Speed. `PlanConstruction.construct` on `PlacementPerfTest`'s four-week plan (eight advanced goals at the hardcore intensity, five
+  quests, a check-in; 166 sessions placed) takes 107 ms on the JVM of the test machine (median of five, after two warm-up runs; the
+  page's own construction on the same input takes about 1,700 ms in node on the same machine). A phone will be several times slower.
+  The first version took 1.7 s (on the machine under load): a profile showed about 70% of the time in `PageMath.pow`, the check-in's pull worked out on every energy
+  read, and 20% in `PageMath.exp`. Both are now kept, exactly: the pull per slot (it depends on the slot alone) and each exponential per
+  argument (`PlanState.exp`, a map from the argument's double to `PageMath.exp`'s result, so every value is the one `PageMath` gives;
+  the replay proves no case changed). What remains is the search itself (`evalInBwc` over every start and length, re-run for every
+  task after each placement), map lookups of the spacing ledger and the preferences, and `PageMath` at about 5%.
+- Source mutations of the native code, each of which makes the replay fail (section 8.4).

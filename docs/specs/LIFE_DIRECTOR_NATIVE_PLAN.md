@@ -416,6 +416,25 @@ fails if the export drifts. Tests: golden candidates per scenario; quest cycles;
 
 ### WP-LD4. Placement core and generation (L, risk high; engine)
 
+**Status: done for the construction** (branch `logic/ld4-placement`, NativeApi 123). By the task's narrower boundary, LD4 stops where the
+repair starts: `prepareState`, the energy model, `taskEarliestLatest`, `checkHard`, `scorePlacement`, `fairnessMult`, `evalInBwc`,
+`evalAcross`, `commit` and its daily covers, `occupy`, `anchorsDependents`, the construction phase of `generateSchedule`, and
+`buildRejection` (recorded on the state the construction leaves). `removeInst`, snapshot and restore, `runLocalRepair`, `fillPass`,
+`explainInstance`, `segments`, `capacityByDay`, `recoveryBlocks`, `assembleOutput`, `inputHash` and `validateSchedule` move to WP-LD5.
+Recorder `tools/gen_ld_placement_golden.js` (LD1's method; loader `tools/ld_engine_vm.js` `PLACEMENT` and `placementSource`, which puts two
+stage calls into `generateSchedule` so the recorder reads the first score table and the state when the construction ends, then stops the
+plan), cases `tools/ld_placement_cases.js`, 2,998 cases in `tests/fixtures/ld-placement-golden.json.gz` (8 families: prepare, anchors, the
+ten scenarios in the 11 strict zones, scenarios at seeds 2 to 12, every 2026-2027 clock change, 55 one-behaviour plans, 700 seeded inputs
+of which a third re-plan the engine's own plan, 1,600 short seeded plans); every prepare and place case is recorded twice and must agree;
+web test `tests/ld-placement-golden.test.js`. Kotlin in `core/lifedirector` (`PlanState`, `EnergyModel`, `PlanPreparation`, `Feasibility`,
+`PlacementScore`, `Placer`, `PlanConstruction`, `Rejections`) reproduces every case (`PlacementGoldenTest`, which streams the file line by
+line; `PlacementPerfTest`); 52 source mutations each caught (spec 8.4). Spec part 4 (`LIFE_DIRECTOR_ENGINE_SPEC.md` section 12: LDR-1 to 6,
+LDK-1, 2, LDU-1, 2, LDW-1 to 7, LDJ-1; defects LD26 to LD34; index 8.4; OQ-14 to 16). Findings: one bit of an exp or pow moves sessions
+(node 22, fdlibm, answers 136 cases differently: LD20 is a placement matter, OQ-15); the check-in's `pow` per energy read was 70% of native
+time until kept per slot (exact), and the four-week perf plan now takes about 0.1 s on the JVM against 1.7 s for the page in node; equal
+selection keys go to the smaller task id, a hash (LD32); a stored session without goal links stops every plan (LD27). Explanation strings
+are recorded as part of the contract (OQ-16).
+
 Scope: energy model, `buildState`, `prepTask`, `checkHard`, `scorePlacement`, `evalInBwc`, `evalAcross`, `commit`,
 `removeInst`, snapshot/restore, `generateSchedule`, `runLocalRepair`, `fillPass`, rejection reasons, `explainInstance`,
 `segments`, `capacityByDay`, `questCoverage`, `assembleOutput`, `validateSchedule`. Tests: full generation goldens (ten

@@ -84,11 +84,16 @@ data class CandidateTask(
     val hasCoverable: Boolean = false,
     val coverable: DailyCover? = null,
 ) {
-    /** Where a re-plan found the session before (placement's, WP-LD4; none here). */
+    /**
+     * Where a re-plan found the session before, as the candidate leaves it: none (placement keeps
+     * its own on [PlanTask.origStartEpoch], LDR-3).
+     */
     val origStartEpoch: Double?
         get() = null
 
-    /** Whether placement has placed it (never, here). */
+    /**
+     * Whether it is placed, as the candidate leaves it: never (placement's is [PlanTask.isPlaced]).
+     */
     val isPlaced: Boolean
         get() = false
 

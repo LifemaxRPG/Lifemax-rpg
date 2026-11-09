@@ -11,7 +11,8 @@
    inside the real page in Chromium (tools/gen_ld_kernel_golden.js), so both runners execute identical code under their own Intl.
 
    Use: const { load, kernelSource } = require('./ld_engine_vm.js'); const E = load(); E.util.localParts(0, 'UTC'); E.__kernel.cyrb53('a', 1)
-   A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2, DEMAND for WP-LD3). */
+   A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2, DEMAND for WP-LD3);
+   placement (WP-LD4) uses load(PLACEMENT, placementSource), which also lets the recorder watch generateSchedule at its stage boundaries. */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
@@ -28,6 +29,15 @@ const AVAILABILITY = ['SLOT', 'clamp', 'cmpStr', 'buildHorizon', 'createGrid', '
 const DEMAND = ['buildHorizon', 'createGrid', 'tagProfile', 'tagDepth', 'goalTemplates', 'findQuestCycles', 'freshIds', 'weeksOf', 'goalInfoMap', 'prepTask',
   'recomputeBwc', 'questCoverage', 'TAG_PROFILE', 'QUEST_WEIGHT', 'LOAD_DRAIN'];
 
+/* The private helpers placement needs (WP-LD4, tools/gen_ld_placement_golden.js). */
+const PLACEMENT = ['prepareState', 'energyAt', 'taskEarliestLatest', 'evalInBwc', 'evalAcross', 'scorePlacement', 'anchorsDependents', 'buildRejection'];
+/* Where placement's recorder watches generateSchedule: after the first scores of every task in every waking day ('cells'), and when the
+   first phase, the construction, is over and the repair (WP-LD5) would start ('phase1'). Each is [the line it follows or precedes, the
+   call]; the call hands the stage's local state to the function set with __kernel.stage, which may throw to stop the plan there. */
+const STAGES = [
+  ['after', '  for (let k = 0; k < K; k++) evalRow(k);\n', "  if (__ldStage) __ldStage('cells', { S, active, cS, cSlot, cN, nB });\n"],
+  ['before', '  /* PHASE 2 — bounded', "  if (__ldStage) __ldStage('phase1', { S, tasks, active, placedMeta, history, kept, displaced, replannable });\n"]];
+
 /* The engine module's text exactly as the file has it (the first of the three modules). */
 function engineSource() {
   const text = fs.readFileSync(ENGINE, 'utf8'), end = text.indexOf(STORE_MARK);
@@ -42,12 +52,28 @@ function kernelSource(names) {
   return src.slice(0, at) + 'api.__kernel = Object.freeze({ ' + (names || KERNEL).join(', ') + ' });\n' + src.slice(at);
 }
 
+/* The engine module with the named helpers exported (as kernelSource) and placement's stage calls (STAGES) put in: nothing else changes,
+   and with no stage function set the calls do nothing, so every function is the engine's own. */
+function placementSource(names) {
+  let src = engineSource();
+  for (const [where, mark, call] of STAGES) {
+    const at = src.indexOf(mark);
+    if (at < 0 || src.indexOf(mark, at + 1) >= 0) throw new Error('engine.js: `' + mark.trim() + '` is not there exactly once; update tools/ld_engine_vm.js');
+    const cut = where === 'after' ? at + mark.length : at;
+    src = src.slice(0, cut) + call + src.slice(cut);
+  }
+  const at = src.indexOf(FREEZE);
+  if (at < 0 || src.indexOf(FREEZE, at + 1) >= 0) throw new Error('engine.js: `' + FREEZE + '` is not there exactly once');
+  return src.slice(0, at) + 'let __ldStage = null;\napi.__kernel = Object.freeze({ ' + (names || PLACEMENT).join(', ')
+    + ', stage: f => { __ldStage = f; } });\n' + src.slice(at);
+}
+
 /* A fresh engine in its own vm context: { ...the engine's exports, __kernel } (KERNEL's helpers unless names are given). */
-function load(names) {
+function load(names, source) {
   const ctx = vm.createContext({});
-  vm.runInContext(kernelSource(names), ctx, { filename: 'engine.js' });
+  vm.runInContext((source || kernelSource)(names), ctx, { filename: 'engine.js' });
   if (!ctx.LifeDirectorEngine || !ctx.LifeDirectorEngine.__kernel) throw new Error('engine.js did not define LifeDirectorEngine');
   return ctx.LifeDirectorEngine;
 }
 
-module.exports = { load, engineSource, kernelSource, KERNEL, AVAILABILITY, DEMAND, ENGINE };
+module.exports = { load, engineSource, kernelSource, placementSource, KERNEL, AVAILABILITY, DEMAND, PLACEMENT, ENGINE };
