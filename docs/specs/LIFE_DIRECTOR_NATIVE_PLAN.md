@@ -370,6 +370,19 @@ recorder.
 
 ### WP-LD2. Availability: rules, sleep, preferences (M, risk medium-high; engine)
 
+**Status: done** (branch `logic/ld2-availability`, NativeApi 119). Recorder `tools/gen_ld_availability_golden.js` (same method as LD1:
+the engine text with its private helpers hooked, `tools/ld_engine_vm.js` `AVAILABILITY`, run in the built page in Chromium and in node;
+cases `tools/ld_availability_cases.js`), 3,797 cases in `tests/fixtures/ld-availability-golden.json` (12 families: helpers, rules, the
+engine's and the page's rule question, materialised intervals, preferences, sleep, paint, deriveAvailability by hand, the ten scenarios
+in the 11 strict matrix zones, every 2026-2027 clock change, seeded fuzz), web test `tests/ld-availability-golden.test.js`; Kotlin in
+`core/lifedirector` (`PageValues`, `AvailabilityRule`, `PageRuleCheck`, `PlanPreferences`, `SleepWindows`, `AvailabilityGrid`,
+`Availability`) reproduces every case (`AvailabilityGoldenTest`, `AvailabilityMutationTest`; 21 source mutations each caught). Spec part 2
+(`LIFE_DIRECTOR_ENGINE_SPEC.md` section 10: LDG-1 to 6, LDA-1 to 17, LDP-1 to 3, LDS-1 to 8; defects LD04 to LD14; index 8.2; OQ-6 to 9).
+Findings: D3 measured (the page's copy differs only on stored shapes its own forms never write, LD06); a non-numeric rule time or a
+non-text rotation anchor makes every plan throw (LD04, LD05; part 1's "NaN for an Invalid Date" corrected to a `RangeError`); a routine
+stored as text joins instead of adding in the sleep lead (LD09); load `NONE` reads as moderate (LD12); rules made in the app never get the
+default post-shift decompression because the form stores 0 (LD14). `tagMatches` is WP-LD3's and is not here. Open: OQ-6 (D3) to OQ-9.
+
 Scope: `normalizeRule`, `ruleAppliesOn`, `materializeRule`, `normalizePreferences`, `defaultPreferences`, `deriveSleep`,
 `deriveAvailability` (grid, slot codes, commutes, decompress, maintenance, meals), `paint`. Tests: scenario availability
 grids (slot arrays) for the ten scenarios in the zone matrix; fuzzed rules; sleep conflicts with hard intervals. Decision
