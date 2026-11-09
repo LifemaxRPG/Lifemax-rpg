@@ -66,6 +66,13 @@ object Rejections {
     fun of(s: PlanState, t: PlanTask): Rejection {
         val task = t.task
         val title = "\"" + text(task.title) + "\""
+        if (t.displacedBy != null)
+            return reject(
+                t,
+                "DISPLACED_BY_HIGHER_PRIORITY",
+                "$title made room for higher-priority quest or minimum-dose work this week.",
+                null,
+            )
         if (task.blockedReason != null)
             return reject(t, task.blockedReason!!, "$title waits on a prerequisite quest.", null)
         val w = Feasibility.window(s, t)

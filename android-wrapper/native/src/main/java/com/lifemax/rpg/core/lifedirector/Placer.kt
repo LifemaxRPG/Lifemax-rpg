@@ -23,8 +23,13 @@ class PlanFit(
     val count: Int = 0,
 )
 
-/** The members a committed session takes from its task (`commit`, `engine.js:1053-1060`). */
+/**
+ * The members a committed session takes from its task (`commit`, `engine.js:1053-1060`), and the
+ * task itself ([task]: its snapshot, LDO-8, is taken from it when the plan is written; nothing a
+ * snapshot copies changes after the task is committed).
+ */
 class Commitment(
+    val task: PlanTask,
     val goalId: String?,
     val minSlots: Double,
     val optSlots: Double,
@@ -133,14 +138,23 @@ object Placer {
      * covers, in the tasks' order, each other unplaced task with a daily cover (LDC-8) whose day
      * holds its start, when its tag fits the cover (exactly, for an exclusive quest; else by LDD-1,
      * a check-in tag only exactly) and it does not already count toward that requirement: that task
-     * is placed, covered by this session, and the session takes the requirement.
+     * is placed, covered by this session, and the session takes the requirement. The repair keeps a
+     * moved session's id ([instanceId], when truthy); otherwise it is the task's id with `i` for
+     * its first letter.
      */
-    fun commit(s: PlanState, t: PlanTask, cycle: Int, slot: Int, n: Int): PlanSession {
+    fun commit(
+        s: PlanState,
+        t: PlanTask,
+        cycle: Int,
+        slot: Int,
+        n: Int,
+        instanceId: JsonValue? = null,
+    ): PlanSession {
         val task = t.task
         val c = s.cycles[cycle]
         val session =
             PlanSession(
-                JsonString("i" + task.id.substring(1)),
+                instanceId?.takeIf(PageValues::truthy) ?: JsonString("i" + task.id.substring(1)),
                 JsonString(task.id),
                 JsonString(task.templateId),
                 task.tag,
@@ -156,6 +170,7 @@ object Placer {
                 kept = false,
                 commitment =
                     Commitment(
+                        t,
                         task.goalId,
                         t.prepared.dMinSlots,
                         t.prepared.dOptSlots,

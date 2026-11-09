@@ -45,6 +45,12 @@ class PlanSession(
     val stored: JsonObject? = null,
     val commitment: Commitment? = null,
 ) {
+    /**
+     * LDO-2: the session's explanation once given (null: none yet, as a falsy member). A kept
+     * session starts with its stored one.
+     */
+    var explanation: JsonValue? = stored?.get("explanation")?.takeIf { PageValues.truthy(it) }
+
     /** LDK-2: a session of intensity 4 or more on either axis. */
     val high: Boolean
         get() = atLeastFour(physical) || atLeastFour(cognitive)
@@ -69,10 +75,13 @@ class PlanSession(
  * and what placement learns: whether it is placed (by its own session or by a session that covers
  * its day, [coveredBy], LDW-6) and where a re-plan found it before ([origStartEpoch], LDR-3).
  */
-class PlanTask(val task: CandidateTask, val prepared: PreparedTask) {
+class PlanTask(val task: CandidateTask, var prepared: PreparedTask) {
     var isPlaced = false
     var coveredBy: JsonValue? = null
     var origStartEpoch: JsonValue? = null
+
+    /** LDX-5: the task whose placement evicted this one's session (`displacedBy`), or null. */
+    var displacedBy: String? = null
 
     val id: String
         get() = task.id
@@ -168,7 +177,19 @@ class PlanState(
     val sessionById = HashMap<JsonValue?, PlanSession>()
     val spacing = LinkedHashMap<JsonValue?, MutableList<Double>>()
     val fair = Fairness()
+
+    /** The tasks, in the page's order, and by id (`taskById`, the last of a repeated id). */
     var tasks: List<PlanTask> = emptyList()
+        set(value) {
+            field = value
+            taskById.clear()
+            for (t in value) taskById[t.id] = t
+        }
+
+    val taskById = HashMap<String, PlanTask>()
+
+    /** LDX-3: the repair's moves so far (`S.iterations`, never rolled back). */
+    var iterations = 0
 
     /** The check-in's pull per slot once worked out (NaN not yet), see [EnergyModel.at]. */
     val checkInPull = DoubleArray(size) { Double.NaN }

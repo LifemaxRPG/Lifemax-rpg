@@ -443,6 +443,27 @@ scenarios x seeds x zones), fuzz, validateSchedule on every output. The float ru
 
 ### WP-LD5. Rescheduling and hold placement (M to L, risk high; engine)
 
+**Status: done for the rest of `generateSchedule` and `validateSchedule`** (branch `logic/ld5-repair`, NativeApi 125); `rescheduleActivity`
+and its hold placement (the scope below) are not done yet. Done: what LD4 left (`removeInst`, snapshot and restore, `runLocalRepair`,
+`fillPass`, the rejections on the final state, `explainInstance`, `segments`, `capacityByDay`, `recoveryBlocks`, the goal allocation, quest
+coverage, `assembleOutput`, `inputHash`, `validateSchedule`), so native now makes the whole plan. Recorder `tools/gen_ld_schedule_golden.js`
+(LD1's method; loader `tools/ld_engine_vm.js` `SCHEDULE` and `scheduleSource`, three stage calls that only look: each repair target, after
+the repair, after the fill pass), cases `tools/ld_schedule_cases.js` (reusing placement's input builders), 2,915 cases in
+`tests/fixtures/ld-schedule-golden.json.gz` (11 families: the ten scenarios in the 11 strict zones, seeds 2 to 8, every 2026-2027 clock
+change, 100 one-behaviour plans, 500 seeded inputs, 900 short ones, 430 plans with more urgent work than time and quest chains, 250
+re-plans of the engine's own plan with the clock moved on, sessions done, missed and moved and the availability changed, 273 watched
+repairs with the state at every target, 55 broken and malformed plans for `validateSchedule` covering every violation and warning code, 37
+`inputHash` inputs); every case recorded twice and required equal; web test `tests/ld-schedule-golden.test.js`. Kotlin in `core/lifedirector`
+(`PlanTransaction`, `LocalRepair`, `Explanations`, `PlanSegments`, `ScheduleJson`, `ScheduleValidation`, `InputHash`, `PlanSchedule`; LD4's
+`PlanState`, `Placer`, `Rejections` extended) reproduces every case (`ScheduleGoldenTest`, streaming the file; `SchedulePerfTest`: four
+weeks with a repair that spends its whole budget, 85 ms on the JVM); 46 source mutations, 44 caught and the 2 survivors explained (spec
+8.5). Spec part 5 (`LIFE_DIRECTOR_ENGINE_SPEC.md` section 13: LDX-1 to 6, LDO-1 to 9, LDV-1 to 6; defects LD35 to LD45; index 8.5; OQ-17 to
+19). D12: kept byte-equal (the owner's default); D12's premise is half true, the hash covers the whole input in its member order (LD37,
+OQ-5). Findings: a re-plan made while the player sleeps, after a pinned session passed unmarked, fails validation and is thrown away by the
+page (LD36); a quest whose prerequisite quest has a lower tier is never placed though it fits (LD40); the repair's budget is spent per day
+looked at, so long plans get little repair (LD43); `$` patterns in goal titles are interpreted in explanations (LD38). Node (fdlibm)
+differs on 18 whole plans (LD20). Next: `rescheduleActivity` (the scope below), on the same recorder.
+
 Scope: `rescheduleActivity` for every trigger (`MISSED`, `SKIPPED`, `MOVE`, `RESIDUAL`, `TIME_CHANGED`, `NEW_COMMITMENT`,
 `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`), `prepareStateWithHold`, `placeByRadius`, `dayEndAfter`, change record. Tests: for
 each trigger, goldens on the scenario plans and fuzz sequences of triggers (a plan, then ten random changes), compared after

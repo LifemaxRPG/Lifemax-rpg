@@ -12,7 +12,8 @@
 
    Use: const { load, kernelSource } = require('./ld_engine_vm.js'); const E = load(); E.util.localParts(0, 'UTC'); E.__kernel.cyrb53('a', 1)
    A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2, DEMAND for WP-LD3);
-   placement (WP-LD4) uses load(PLACEMENT, placementSource), which also lets the recorder watch generateSchedule at its stage boundaries. */
+   placement (WP-LD4) uses load(PLACEMENT, placementSource), which also lets the recorder watch generateSchedule at its stage boundaries;
+   the schedule recorder (WP-LD5) uses load(SCHEDULE, scheduleSource), whose stage calls watch the repair without stopping the plan. */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
@@ -38,6 +39,16 @@ const STAGES = [
   ['after', '  for (let k = 0; k < K; k++) evalRow(k);\n', "  if (__ldStage) __ldStage('cells', { S, active, cS, cSlot, cN, nB });\n"],
   ['before', '  /* PHASE 2 — bounded', "  if (__ldStage) __ldStage('phase1', { S, tasks, active, placedMeta, history, kept, displaced, replannable });\n"]];
 
+/* The private helpers the repair, output and validation stages need (WP-LD5, tools/gen_ld_schedule_golden.js). */
+const SCHEDULE = ['prepareState', 'evalAcross', 'inputHash', 'stateFingerprint', 'explainInstance', 'segments', 'capacityByDay', 'recoveryBlocks'];
+/* Where the schedule recorder watches generateSchedule (as STAGES; these only look, they never stop the plan): at the start of each
+   repair target ('target'), when the repair is over ('repaired') and when the fill pass is over ('filled'). */
+const SCHEDULE_STAGES = [
+  ['after', '  for (const t of targets) {\n', "    if (__ldStage) __ldStage('target', { S, t, log });\n"],
+  ['after', '  const repairLog = runLocalRepair(S, active.filter(t => !t.isPlaced && t.tier >= 3), placedMeta, 400);\n',
+    "  if (__ldStage) __ldStage('repaired', { S, repairLog, placedMeta, active });\n"],
+  ['before', '  /* PHASE 3 — diagnostics', "  if (__ldStage) __ldStage('filled', { S, placedMeta });\n"]];
+
 /* The engine module's text exactly as the file has it (the first of the three modules). */
 function engineSource() {
   const text = fs.readFileSync(ENGINE, 'utf8'), end = text.indexOf(STORE_MARK);
@@ -54,9 +65,9 @@ function kernelSource(names) {
 
 /* The engine module with the named helpers exported (as kernelSource) and placement's stage calls (STAGES) put in: nothing else changes,
    and with no stage function set the calls do nothing, so every function is the engine's own. */
-function placementSource(names) {
+function placementSource(names, stages) {
   let src = engineSource();
-  for (const [where, mark, call] of STAGES) {
+  for (const [where, mark, call] of stages || STAGES) {
     const at = src.indexOf(mark);
     if (at < 0 || src.indexOf(mark, at + 1) >= 0) throw new Error('engine.js: `' + mark.trim() + '` is not there exactly once; update tools/ld_engine_vm.js');
     const cut = where === 'after' ? at + mark.length : at;
@@ -68,6 +79,9 @@ function placementSource(names) {
     + ', stage: f => { __ldStage = f; } });\n' + src.slice(at);
 }
 
+/* placementSource with the schedule recorder's helpers and stage calls (SCHEDULE, SCHEDULE_STAGES). */
+const scheduleSource = names => placementSource(names || SCHEDULE, SCHEDULE_STAGES);
+
 /* A fresh engine in its own vm context: { ...the engine's exports, __kernel } (KERNEL's helpers unless names are given). */
 function load(names, source) {
   const ctx = vm.createContext({});
@@ -76,4 +90,4 @@ function load(names, source) {
   return ctx.LifeDirectorEngine;
 }
 
-module.exports = { load, engineSource, kernelSource, placementSource, KERNEL, AVAILABILITY, DEMAND, PLACEMENT, ENGINE };
+module.exports = { load, engineSource, kernelSource, placementSource, scheduleSource, KERNEL, AVAILABILITY, DEMAND, PLACEMENT, SCHEDULE, ENGINE };

@@ -308,4 +308,6 @@ function fuzzInput(seed, engine, replan, short) {
   return input;
 }
 
-module.exports = { defineCases, FAMILIES, ZONES, SCENARIO_NAMES };
+/* The input builders are shared with the schedule cases (tools/ld_schedule_cases.js, WP-LD5). */
+module.exports = { defineCases, FAMILIES, ZONES, SCENARIO_NAMES, ARCH_IDS, STATES, utc, localInstant, random, copy, scenarioAt, stored, small, goal,
+  handPlace, fuzzInput };
