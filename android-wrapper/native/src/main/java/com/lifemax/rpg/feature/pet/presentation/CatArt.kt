@@ -10,6 +10,7 @@ import com.lifemax.rpg.feature.pet.art.PageCoatSource
 import com.lifemax.rpg.feature.pet.art.PetArt
 import com.lifemax.rpg.feature.pet.art.PetArtResources
 import com.lifemax.rpg.feature.pet.art.Recolour
+import com.lifemax.rpg.feature.pet.art.RestingFloor
 import com.lifemax.rpg.feature.pet.art.RigLayer
 import com.lifemax.rpg.feature.pet.art.RigLibrary
 import com.lifemax.rpg.feature.pet.art.RigMorph
@@ -37,6 +38,9 @@ internal class RoomKit(val art: RoomArt) {
  *
  * The room's own art (the three painted rooms, the props and the item atlas) is loaded the same
  * way, by [room].
+ *
+ * The side view's resting rows are drawn mended ([RestingFloor]): a frame whose tail sinks a pixel
+ * through the floor shows the band of its neighbour there, in the plain sprite and the rig alike.
  */
 internal object CatArt {
     /** The page's genetic coats; the plugin connects it to the bridge ([PageCoatSource.bind]). */
@@ -70,6 +74,8 @@ internal object CatArt {
      */
     private class Entry {
         var tables: Tables? = null
+        /** The side view's index sheet as drawn: mended by [RestingFloor]. */
+        var sideSheet: IndexSheet? = null
         var side: ImageBitmap? = null
         var depth: ImageBitmap? = null
         var built: CatSprites? = null
@@ -95,6 +101,10 @@ internal object CatArt {
                     ((rows[it] + 1) * frameHeight <= sheet.height &&
                         frames[it] * frameWidth <= sheet.width)
             }
+
+        /** The side-view rows of the clips a cat rests in, for [RestingFloor]. */
+        fun resting(): List<Anim> =
+            Clips.all.filter { it.isHoldable && !onDepth[it.id] }.map { anims[it.id] }
     }
 
     /**
@@ -131,12 +141,14 @@ internal object CatArt {
         val t = entry.tables ?: tablesFor(art, stage)?.also { entry.tables = it } ?: return null
         if (entry.side == null) {
             val kind = SheetKind.of(stage, false)
-            val sheet = art.sheet(coat, kind) ?: return null
+            val raw = art.sheet(coat, kind) ?: return null
             val palette = art.palette(coat) ?: return null
-            if (!t.fits(sheet, depthRows = false)) {
+            if (!t.fits(raw, depthRows = false)) {
                 coats.reject(coat, kind)
                 return null
             }
+            val sheet = RestingFloor.mend(raw, art.anims, t.resting())
+            entry.sideSheet = sheet
             entry.side = bitmap(Recolour.sheet(sheet, palette))
         }
         if (entry.depth == null) {
@@ -188,7 +200,7 @@ internal object CatArt {
             val kind = SheetKind.of(stage, depth)
             return RigLayer(
                 library.kind(kind.key) ?: return null,
-                art.sheet(coat, kind) ?: return null,
+                (if (depth) art.sheet(coat, kind) else entry.sideSheet) ?: return null,
                 palette,
             )
         }
