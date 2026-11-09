@@ -215,6 +215,27 @@ class CatRigScreenshotTest {
             fixture = "kitten-live",
         )
 
+    /**
+     * A stage-2 kitten sitting still on its eye-open frame 2, whose tail the art sinks a pixel
+     * through the floor: drawn mended (RestingFloor), the tail lies on the floor as in the other
+     * frames. Once as the plain sheet, once through the rig.
+     */
+    @Test
+    fun kittenSittingStillKeepsItsTailOnTheFloor() =
+        strip(
+            RigMorph.NEUTRAL,
+            life(SIT_FRAME_2_S, script = sitting(EarState.FORWARD, TailState.NEUTRAL)),
+            fixture = "kitten-live",
+        )
+
+    @Test
+    fun kittenSittingStillKeepsItsTailOnTheFloorRigged() =
+        strip(
+            RigMorph(tail = 1.3, whisker = 1.2),
+            life(SIT_FRAME_2_S, script = sitting(EarState.FORWARD, TailState.NEUTRAL)),
+            fixture = "kitten-live",
+        )
+
     @Test
     fun geneticCoatWithLongEarsFlat() =
         strip(
@@ -257,5 +278,13 @@ class CatRigScreenshotTest {
                 }
             }
         }
+    }
+
+    private companion object {
+        /**
+         * Seconds into a fresh sitting clip at which the eye-open cycle (frames 0, 1, 2, 6, 7 at
+         * half of 7 fps) shows frame 2, before the first blink (at 4 s at the earliest).
+         */
+        const val SIT_FRAME_2_S = 0.7f
     }
 }
