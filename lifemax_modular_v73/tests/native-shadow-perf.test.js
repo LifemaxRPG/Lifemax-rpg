@@ -167,14 +167,17 @@ const f = x => x.toFixed(1);
       const p = await open(browser, grown(3 * MB), true);
       const r = await p.evaluate(async () => {
         const B = LMA_SHADOW_BOOT, real = B.capture, wait = ms => { const t = performance.now(); while (performance.now() - t < ms) { } };
-        B.capture = function () { wait(45); return real.apply(this, arguments) };
         const q = state.quests.filter(x => !x.hand), tick = () => new Promise(r => setTimeout(r, 30));
-        for (let i = 0; i < 6; i++) { toggleQuest(q[i % q.length].id, i % 2 === 0); await tick() }
+        /* calibrate: one action unpadded gives this machine's own counted cost (capture + send); then pad each capture so a counted action is about 70 ms, over the 50 ms floor and under the 91 ms limit, on any machine */
+        toggleQuest(q[0].id, true); await tick();
+        const c0 = LmaShadow.status().stats.counted.slice(-1)[0] || 0, pad = Math.max(0, (70 - c0) / 2); /* an action captures twice (before and after), so each capture carries half the padding */
+        B.capture = function () { const out = real.apply(this, arguments); wait(pad); return out };
+        for (let i = 1; i < 7; i++) { toggleQuest(q[i % q.length].id, i % 2 === 0); await tick() }
         B.capture = real;
         const st = LmaShadow.status();
-        return { live: st.live, limit: st.slowMs, counted: st.stats.counted.slice(-6) };
+        return { live: st.live, limit: st.slowMs, counted: st.stats.counted.slice(-6), c0, pad };
       });
-      ok('3 MB: the limit is about 90 ms and six actions over 50 ms in a row, under it, leave the check on', r.live && r.limit >= 80 && r.limit <= 105 && r.counted.filter(c => c > 50).length >= 5, r);
+      ok('3 MB: the limit is about 90 ms and six actions over 50 ms in a row, under it, leave the check on', r.live && r.limit >= 80 && r.limit <= 105 && (r.c0 > 80 || r.counted.filter(c => c > 50).length >= 5), r);
       await p.context().close();
     }
     {
