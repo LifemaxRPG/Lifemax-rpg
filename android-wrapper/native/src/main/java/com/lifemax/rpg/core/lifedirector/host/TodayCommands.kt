@@ -2,6 +2,7 @@ package com.lifemax.rpg.core.lifedirector.host
 
 import com.lifemax.rpg.core.directorstore.PageJson
 import com.lifemax.rpg.core.lifedirector.MissConsequences
+import com.lifemax.rpg.core.lifedirector.timer.TimerCommands
 import com.lifemax.rpg.core.lifedirector.host.Js.assign
 import com.lifemax.rpg.core.lifedirector.host.Js.at
 import com.lifemax.rpg.core.lifedirector.host.Js.get
@@ -20,7 +21,7 @@ import com.lifemax.rpg.core.save.JsonNull
 /**
  * Today's writes from a native screen (`logic.js:3401-3605`, `Today`): done, log for today, skip
  * and its take-back, pin, move, Something came up, energy, re-plan, regroup and the banner's
- * dismissal (HC-10 to HC-35). The timer (`Today.timer`) is WP-LD10's and is not here.
+ * dismissal (HC-10 to HC-35). The timer (`Today.timer`) is WP-LD10's: [TimerCommands] (TM-n).
  */
 object TodayCommands {
     private const val MINUTES_MAX = 480.0
@@ -45,6 +46,7 @@ object TodayCommands {
             "replan",
             "regroup",
             "dismissBanner",
+            "timer",
         )
 
     /** HC-10 `nativeTodayRun(name, payload)`: the command of that name with its payload. */
@@ -62,6 +64,7 @@ object TodayCommands {
             "replan" -> replan(p)
             "regroup" -> regroup(p, payload)
             "dismissBanner" -> dismissBanner(p, payload)
+            "timer" -> TimerCommands.timer(p, payload)
             else -> CommandReply.CANNOT
         }
     }

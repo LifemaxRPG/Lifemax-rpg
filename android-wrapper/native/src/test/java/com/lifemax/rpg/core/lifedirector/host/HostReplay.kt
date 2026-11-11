@@ -36,20 +36,21 @@ object HostReplay {
         val out: List<JsonObject>,
     )
 
-    private fun file(): File {
+    private fun file(name: String): File {
         val start = File(System.getProperty("user.dir") ?: ".").absoluteFile
         return generateSequence(start) { it.parentFile }
-            .map { File(it, "lifemax_modular_v73/tests/fixtures/$FILE") }
-            .firstOrNull { it.isFile } ?: error("$FILE not found above $start")
+            .map { File(it, "lifemax_modular_v73/tests/fixtures/$name") }
+            .firstOrNull { it.isFile } ?: error("$name not found above $start")
     }
 
-    fun forEachCase(visit: (Case) -> Unit) {
-        GZIPInputStream(file().inputStream()).bufferedReader(Charsets.UTF_8).useLines { lines ->
+    /** Every case of [name] (this file, or WP-LD10's timer golden, which has its format). */
+    fun forEachCase(name: String = FILE, visit: (Case) -> Unit) {
+        GZIPInputStream(file(name).inputStream()).bufferedReader(Charsets.UTF_8).useLines { lines ->
             for (line in lines) {
                 if (!line.startsWith("{\"id\"")) continue
                 val read = JsonReader.read(line.removeSuffix(","))
                 check(read is JsonRead.Parsed) {
-                    "a case of $FILE does not parse: ${line.take(80)}"
+                    "a case of $name does not parse: ${line.take(80)}"
                 }
                 val c = KernelGolden.decode(read.value) as JsonObject
                 visit(
@@ -107,6 +108,7 @@ object HostReplay {
             "goal" to (null to "goals"),
             "commitment" to (null to "fixedCommitments"),
             "blackout" to ("availability" to "blackouts"),
+            "focus" to ("ui" to "focus"),
         )
 
     /** The tools/ld_host_vm.js resolver: `{$ref, n, field, plus}` read from [st]. */
@@ -120,7 +122,12 @@ object HostReplay {
                     val kind = text(v["\$ref"])
                     val (outer, inner) = LISTS.getValue(kind)
                     val holder = if (outer == null) st else field(st, outer)
-                    val list = (field(holder, inner) as? JsonArray)?.items ?: emptyList()
+                    val list =
+                        when (val held = field(holder, inner)) {
+                            is JsonArray -> held.items
+                            is JsonObject -> if (kind == "focus") listOf(held) else emptyList()
+                            else -> emptyList()
+                        }
                     val n = (v["n"] as JsonNumber).value.toInt()
                     val item = list.getOrNull(if (n < 0) list.size + n else n)
                     if (item == null) JsonString("\$missing")
@@ -129,8 +136,12 @@ object HostReplay {
                             field(
                                 item,
                                 text(v["field"]).ifEmpty {
-                                    if (kind == "planned" || kind == "history") "instanceId"
-                                    else "id"
+                                    when (kind) {
+                                        "planned",
+                                        "history" -> "instanceId"
+                                        "focus" -> "start"
+                                        else -> "id"
+                                    }
                                 },
                             )
                         val plus = (v["plus"] as? JsonNumber)?.value ?: 0.0
@@ -230,8 +241,11 @@ object HostReplay {
             linkedMapOf("fn" to JsonString(c.fn), "args" to JsonArray(c.args), "out" to c.out)
         )
 
-    /** The first difference of the case, or null when every step is the page's. */
-    fun replay(c: Case): String? {
+    /**
+     * The first difference of the case, or null when every step is the page's; [observe] sees the
+     * native state after each step (the boot is step 0).
+     */
+    fun replay(c: Case, observe: (Int, HostState) -> Unit = { _, _ -> }): String? {
         var state = HostState()
         var page = JsonObject(emptyMap())
         val retires = field(field(c.start, "host"), "retired") != null
@@ -279,6 +293,7 @@ object HostReplay {
             difference(page, state.st ?: JsonNull, ".ST")?.let {
                 return "$where: $it"
             }
+            observe(i, state)
         }
         return null
     }
@@ -299,6 +314,7 @@ object HostReplay {
             "today" -> HostCommand.Today(text(s["name"]), s["payload"])
             "do" -> HostCommand.Do(text(s["name"]), s["payload"])
             "tick" -> HostCommand.Tick
+            "focusTick" -> HostCommand.FocusTick
             "syncHost" -> HostCommand.SyncHost
             "processMisses" -> HostCommand.ProcessMisses
             "maybeRollover" -> HostCommand.MaybeRollover

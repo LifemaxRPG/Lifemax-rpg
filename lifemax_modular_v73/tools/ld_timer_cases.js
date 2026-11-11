@@ -24,12 +24,14 @@ const FT = at => ({ at, op: 'focusTick' });
 const focus = (focusValue, at) => ({ at: at === undefined ? { plus: 1 } : at, op: 'focus', focus: focusValue });
 const storage = (mode, at) => ({ at: at === undefined ? { plus: 1 } : at, op: 'storage', mode });
 
-/* A session made by hand: id, local day and minute, minutes long. */
+/* A session made by hand: id, local day and minute, minutes long; with an explanation, as every session the engine places has one (the
+   native repair explains a carried session again only when it has none, and cannot for a task the plan does not hold). */
 function session(zone, id, d, min, minutes, mo, y, more) {
   const start = local(zone, d, min, mo, y);
   return Object.assign({ instanceId: id, taskId: 't-' + id, templateId: 'g-0:strength', title: 'Session ' + id, tag: 'fitness.strength', kind: 'GOAL', goalId: 'g-0',
     linkedGoalIds: ['g-0'], linkedQuestRequirementIds: [], startEpoch: start, endEpoch: start + minutes * MIN, durationSlots: minutes / 15, tier: 3, IP: 4, IC: 1,
-    spacingKey: 'g-0:strength', lifecycleState: 'PLANNED', isUserLocked: false, revision: 0 }, more || {});
+    spacingKey: 'g-0:strength', lifecycleState: 'PLANNED', isUserLocked: false, revision: 0,
+    explanation: { tier: 3, summary: 'Scheduled because it serves your goals.', factors: [] } }, more || {});
 }
 /* A plan made by hand for day d: s-a today 10:00 (45 min), s-b today 18:00 (30), s-c tomorrow 10:00 (60), s-d in three days 10:00
    (60); the horizon from today's midnight, `days` long; extra sessions appended. */
