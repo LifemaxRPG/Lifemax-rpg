@@ -4006,7 +4006,7 @@
   },
   {
    "file": "src/runtime/segments/50-native-director-shadow.js",
-   "bytes": 21781,
+   "bytes": 33360,
    "statement_count": 1,
    "tags": [
     "native",

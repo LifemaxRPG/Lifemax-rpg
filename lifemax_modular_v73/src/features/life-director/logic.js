@@ -77,6 +77,22 @@ const LifeDirectorApp = (function () {
     try { if (seen) seen(out); } catch (e) { /* never in the way */ }
     return out;
   }
+  /* a command (Do, Today, a completion, the tick and its three steps) runs through command(): while the check is on it is told of the
+     outermost one before it runs and of its answer (or throw) after; the command runs exactly as without it */
+  let shadowDepth = 0, presenting = 0;
+  function command(op, name, payload, run) {
+    let seen = null;
+    if (shadowDepth || !shadow()) return run();
+    try { seen = shadow().command(op, name, payload, shadowVars); } catch (e) { seen = null; }
+    shadowDepth++;
+    let out;
+    try { out = run(); } catch (err) { shadowDepth--; try { if (seen) seen.end(undefined, err); } catch (e) { /* never in the way */ } throw err; }
+    shadowDepth--;
+    try { if (seen) seen.end(out); } catch (e) { /* never in the way */ }
+    return out;
+  }
+  const shadowVars = () => ({ ST, ui, takeBack, takenBackOp, lastSave, lastFinishRefusal, store, presenting });
+  const commands = (op, table) => { const o = {}; for (const k of Object.keys(table)) o[k] = function (p) { return command(op, k, p, () => table[k].apply(this, arguments)); }; return o; };
   let lastSave = { ok: true }; // the last write's outcome, which a native command reports
   function persist() {
     if (ST.schedule) {
@@ -315,7 +331,8 @@ const LifeDirectorApp = (function () {
     return notes;
   }
   let lastFinishRefusal = null; // why the last finishInstance was refused, for a native screen's answer
-  function finishInstance(inst, minutes, opt) {
+  function finishInstance(inst, minutes, opt) { return command('finish', '', { id: inst.instanceId, minutes, opt }, () => finishRun(inst, minutes, opt)); }
+  function finishRun(inst, minutes, opt) {
     opt = opt || {};
     const now = nowEpoch();
     const start = opt.startEpoch || Math.min(inst.startEpoch, now - minutes * 60) || now;
@@ -383,7 +400,8 @@ const LifeDirectorApp = (function () {
   /* did it today, though it was planned for a later day: count it now, keep the plan */
   /* op: the screen's operation id, so the same request again is the same ledger event (refused as a duplicate, which the caller
      answers with "Already recorded."); the page's own button mints a new one each time */
-  function logToday(inst, minutes, op) {
+  function logToday(inst, minutes, op) { return command('logToday', '', { id: inst.instanceId, minutes, opId: op }, () => logTodayRun(inst, minutes, op)); }
+  function logTodayRun(inst, minutes, op) {
     const now = nowEpoch();
     const r = E.recordCompletion({ ledger: ST.ledger, playerId: ST.playerId, adhoc: { tag: inst.tag, title: inst.title }, clientEventId: 'ld-today:' + (op || uuid()),
       actualStartEpoch: now - minutes * 60, actualDurationMinutes: minutes, nowEpoch: now });
@@ -504,7 +522,9 @@ const LifeDirectorApp = (function () {
     return '<div class="ld-top"><div class="ld-id"><span class="ld-dot" data-s="' + p.dot + '" aria-hidden="true"></span><div><h2>Life Director</h2><small>' + esc(p.line) + '</small></div></div>' +
       '<div class="ld-top-r"><button class="ld-help" data-act="tour" aria-label="Show the guide for this screen">?</button><div class="ld-clock" aria-label="Current time"><b data-clock>' + esc(fTime(now)) + '</b><small>' + esc(fDay(now)) + '</small></div></div></div>';
   }
-  function render() {
+  /* presenting: what the screen's drawing asks the host is not part of a command the check compares */
+  function render() { presenting++; try { renderNow(); } finally { presenting--; } }
+  function renderNow() {
     if (!root) return;
     if (ui.bfRun) ui.bfRun.stop();
     const tabs = tabList();
@@ -2339,7 +2359,7 @@ const LifeDirectorApp = (function () {
   const refuse = (message) => ({ ok: false, changed: false, message }); // nothing was changed, and why
   const NO_OP = 'Nothing was added.'; // a new commitment or goal asked for without its operation id
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const Do = Object.freeze({
+  const Do = Object.freeze(commands('do', {
     goalPriority({ id, value }) {
       const g = goalById(id), v = Number(value);
       if (!g) return { ok: false, message: 'That goal is gone.' };
@@ -2531,7 +2551,7 @@ const LifeDirectorApp = (function () {
       if (!ST.availability.rules.some(r => r.kind === 'SLEEP')) return refuse('Save your sleep times first');
       ST.setupComplete = true; if (regenerate('setup')) { ui.tab = 'today'; ST.ui.tab = 'today'; ui.dayIdx = 0; } persist(); render(); return applied();
     },
-  });
+  }));
   /* the page's own My time forms: a refusal is said and the sheet stays open (false); anything else lets it close (true) */
   const told = r => { if (!r.ok && r.changed === false) { if (r.message) say(r.message); return false; } return true; };
   /* a new commitment or goal from the page's own form: its operation id is drawn only once the form is complete (asked without one,
@@ -2818,7 +2838,7 @@ const LifeDirectorApp = (function () {
     if (!el) return false;
     try {
       if (!ST) boot();
-      try { let ch = syncHost(); ch = processMisses() || ch; ch = maybeRollover() || ch; if (ch) persist(); } catch (e) { console.warn('[Life Director] glance sync', e); }
+      try { let ch = command('syncHost', '', null, syncHost); ch = command('processMisses', '', null, processMisses) || ch; ch = command('maybeRollover', '', null, maybeRollover) || ch; if (ch) persist(); } catch (e) { console.warn('[Life Director] glance sync', e); }
       if (glanceEl !== el) {
         glanceEl = el;
         el.classList.add('ld-root', 'ld-glance');
@@ -2912,9 +2932,11 @@ const LifeDirectorApp = (function () {
     if (!root || !root.isConnected) return;
     const view = root.closest('.view');
     if (view && !view.classList.contains('active')) return;
-    let changed = false;
-    try { changed = syncHost() || changed; changed = processMisses() || changed; changed = maybeRollover() || changed; } catch (err) { console.error('[Life Director]', err); ui.banner = { kind: 'bad', text: 'Life Director hit an error: ' + err.message }; changed = true; }
-    if (changed) { persist(); render(); }
+    command('tick', '', null, () => {
+      let changed = false;
+      try { changed = syncHost() || changed; changed = processMisses() || changed; changed = maybeRollover() || changed; } catch (err) { console.error('[Life Director]', err); ui.banner = { kind: 'bad', text: 'Life Director hit an error: ' + err.message }; changed = true; }
+      if (changed) { persist(); render(); }
+    });
   }
   function mount(el) {
     if (!el) return;
@@ -3428,7 +3450,7 @@ const LifeDirectorApp = (function () {
   /* Today's writes from a native screen (phase 4A). Each answers {ok, changed, message}: ok only when saved; a repeat of a write
      that already landed answers changed: false with "Already recorded." or "Already skipped."; the page's own notice (say)
      carries what happened on success. */
-  const Today = Object.freeze({
+  const Today = Object.freeze(commands('today', {
     done({ id, minutes }) {
       const inst = plannedInst(id);
       if (!inst) return resolved(id) && /COMPLETED/.test(resolved(id).lifecycleState) ? recorded('Already recorded.') : gone;
@@ -3613,7 +3635,7 @@ const LifeDirectorApp = (function () {
       if (ui.banner.regroup) return { ok: false, message: 'Choose one of the answers.' };
       ui.banner = null; render(); return { ok: true, changed: true, message: '' };
     },
-  });
+  }));
   function nativeTodayRun(name, payload) {
     if (!ST) boot();
     if (!Object.prototype.hasOwnProperty.call(Today, name)) return { ok: false, message: 'Life Director cannot do that.' };
@@ -3912,7 +3934,7 @@ const LifeDirectorApp = (function () {
   };
   return { mount, glance, widgetSnapshot, voice: voiceApi, native: nativeApi, coach: coachApi, _debug: () => ({ ST, ui }), regenerate: r => { regenerate(r || 'api'); render(); }, getSchedule: () => ST && ST.schedule, workRules, shifts, FEATURE_ID,
     /* the native Life Director check (beta) reads the page's own read models with these; they only read */
-    shadowReads: () => ({ ST, horizonDays, unplannedSegments, dayBlocks, liveTimeline, nowState, weekModel, nativeWeek, tz, nowEpoch, deviceTz }) };
+    shadowReads: () => ({ ST, horizonDays, unplannedSegments, dayBlocks, liveTimeline, nowState, weekModel, nativeWeek, tz, nowEpoch, deviceTz }), shadowVars };
 })();
 
 /* Public API for LifeMax or other features */

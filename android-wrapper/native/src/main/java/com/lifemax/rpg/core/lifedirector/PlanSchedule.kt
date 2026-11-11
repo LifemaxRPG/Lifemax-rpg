@@ -31,7 +31,7 @@ interface ScheduleWatch {
  * schedule).
  */
 object PlanSchedule {
-    const val ENGINE_VERSION = "1.0.0"
+    const val ENGINE_VERSION = "1.1.0"
     const val SCHEMA_VERSION = 1
     private const val URGENT_TIER = 3
     private const val SLOT_MINUTES = 15.0

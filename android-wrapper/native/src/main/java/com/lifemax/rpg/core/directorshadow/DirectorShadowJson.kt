@@ -50,6 +50,36 @@ data class EngineFacts(
     val output: JsonValue,
 )
 
+/**
+ * One host or store call a command made, as the page's recording noted it (SH-37): its name,
+ * arguments and answer.
+ */
+data class CallFact(val fn: String, val args: JsonValue, val out: JsonValue)
+
+/**
+ * One command or tick the page ran (SH-36 to SH-40): what ran ([op], [name], [payload]), its moment
+ * ([nowMs], to [t1] when it ended), the zones, what the page's host answered ([calls], [ids]
+ * minted, [retires] whether the host can resolve a retired card), the page's [reply], the
+ * controller's memory before and after ([before], [after]), and the changes from the state before
+ * to the state after ([afterOps]).
+ */
+data class CommandFacts(
+    val op: String,
+    val name: String,
+    val payload: JsonValue,
+    val nowMs: Long,
+    val deviceZone: String,
+    val planZone: String,
+    val planOffset: Int?,
+    val retires: Boolean,
+    val ids: List<String>,
+    val calls: List<CallFact>,
+    val reply: JsonValue,
+    val before: JsonObject,
+    val after: JsonObject,
+    val afterOps: List<TextOp>,
+)
+
 /** One `observe` message (SH-3). */
 data class DirectorEnvelope(
     val sid: String,
@@ -65,6 +95,7 @@ data class DirectorEnvelope(
     val bytes: Int?,
     val read: ReadFacts?,
     val engine: EngineFacts?,
+    val cmd: CommandFacts? = null,
 )
 
 /**
@@ -78,7 +109,16 @@ object DirectorShadowJson {
     const val READ = "director.read"
     const val PLAN = "director.plan"
     const val REPAIR = "director.repair"
-    val KINDS = setOf(SAVE, READ, PLAN, REPAIR)
+    const val CMD = "director.cmd"
+    const val TICK = "director.tick"
+    val KINDS = setOf(SAVE, READ, PLAN, REPAIR, CMD, TICK)
+
+    /**
+     * The commands (SH-36): Today's and Do's by name, a completion, a log for today; and the tick
+     * and its three steps.
+     */
+    val COMMAND_OPS = setOf("today", "do", "finish", "logToday")
+    val TICK_OPS = setOf("tick", "syncHost", "processMisses", "maybeRollover")
 
     private val COMMON =
         setOf(
@@ -100,6 +140,25 @@ object DirectorShadowJson {
     private val BASE = setOf("v", "scope", "sid", "seq", "part", "parts", "text")
     private val READ_KEYS = setOf("nowMs", "deviceZone", "planZone", "planOffset", "xp", "out")
     private val ENGINE_KEYS = setOf("planZone", "planOffset", "input", "output")
+    private val CMD_KEYS =
+        setOf(
+            "op",
+            "name",
+            "payload",
+            "nowMs",
+            "deviceZone",
+            "planZone",
+            "planOffset",
+            "retires",
+            "ids",
+            "calls",
+            "texts",
+            "reply",
+            "session",
+            "after",
+        )
+    private val OP = Regex("[a-zA-Z]{1,24}")
+    private val FN = Regex("(store\\.)?[a-zA-Z]{1,32}")
     private val SID = Regex("[A-Za-z0-9_-]{1,40}")
     private val KIND = Regex("director\\.[a-z]{1,20}")
     private val FLAG = Regex("[a-z][A-Za-z]{0,23}")
@@ -204,7 +263,7 @@ object DirectorShadowJson {
 
     fun envelope(text: String): ShadowDecode<DirectorEnvelope> =
         read(text, DirectorShadowLimits.MAX_ENVELOPE_CHARS) { root ->
-            val o = Fields(root, "", COMMON, setOf("bytes", "read", "engine"))
+            val o = Fields(root, "", COMMON, setOf("bytes", "read", "engine", "cmd"))
             o.version()
             val seq = o.whole("seq", 1)
             val base = o.whole("base", 0)
@@ -238,17 +297,20 @@ object DirectorShadowJson {
                 }
             val read = o.get("read")?.let { readFacts(it) }
             val engine = o.get("engine")?.let { engineFacts(it) }
+            val cmd = o.get("cmd")?.let { commandFacts(it) }
+            val members = listOfNotNull(bytes, read, engine, cmd).size
             when (kind) {
-                SAVE ->
-                    if (bytes == null || read != null || engine != null)
-                        fail(ShadowRefusal.MISSING_KEY, "bytes")
-                READ ->
-                    if (read == null || bytes != null || engine != null)
-                        fail(ShadowRefusal.MISSING_KEY, "read")
+                SAVE -> if (bytes == null || members != 1) fail(ShadowRefusal.MISSING_KEY, "bytes")
+                READ -> if (read == null || members != 1) fail(ShadowRefusal.MISSING_KEY, "read")
                 PLAN,
                 REPAIR ->
-                    if (engine == null || bytes != null || read != null)
-                        fail(ShadowRefusal.MISSING_KEY, "engine")
+                    if (engine == null || members != 1) fail(ShadowRefusal.MISSING_KEY, "engine")
+                CMD,
+                TICK -> {
+                    if (cmd == null || members != 1) fail(ShadowRefusal.MISSING_KEY, "cmd")
+                    if ((cmd.op in TICK_OPS) != (kind == TICK))
+                        fail(ShadowRefusal.OUT_OF_RANGE, "cmd.op")
+                }
             }
             val ops = ops(o.get("ops"))
             if ((kind == PLAN || kind == REPAIR) && ops.isNotEmpty())
@@ -267,6 +329,7 @@ object DirectorShadowJson {
                 bytes,
                 read,
                 engine,
+                cmd,
             )
         }
 
@@ -296,6 +359,71 @@ object DirectorShadowJson {
             offset(o.get("planOffset"), "engine.planOffset"),
             o.get("input")!!,
             o.get("output")!!,
+        )
+    }
+
+    private fun commandFacts(v: JsonValue): CommandFacts {
+        val o = Fields(v as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "cmd"), "cmd.", CMD_KEYS)
+        val op =
+            o.text("op", 24).also {
+                if (!OP.matches(it)) fail(ShadowRefusal.OUT_OF_RANGE, "cmd.op")
+            }
+        val texts =
+            (o.get("texts") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.texts"))
+                .items
+                .map {
+                    val t =
+                        (it as? JsonString)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.texts")
+                    (JsonReader.read(t) as? JsonRead.Parsed)?.value
+                        ?: fail(ShadowRefusal.NOT_JSON, "cmd.texts")
+                }
+        val calls =
+            (o.get("calls") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.calls"))
+                .items
+                .map { c ->
+                    val p =
+                        (c as? JsonArray)?.items?.takeIf { it.size == 3 }
+                            ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.calls")
+                    val fn =
+                        (p[0] as? JsonString)?.value?.takeIf { FN.matches(it) }
+                            ?: fail(ShadowRefusal.OUT_OF_RANGE, "cmd.calls")
+                    fun text(x: JsonValue): JsonValue {
+                        val i =
+                            (x as? JsonNumber)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.calls")
+                        if (i != Math.floor(i) || i < 0 || i >= texts.size)
+                            fail(ShadowRefusal.OUT_OF_RANGE, "cmd.calls")
+                        return texts[i.toInt()]
+                    }
+                    CallFact(fn, text(p[1]), text(p[2]))
+                }
+        val ids =
+            (o.get("ids") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.ids")).items.map {
+                (it as? JsonString)?.value?.takeIf { s -> s.length <= MAX_TEXT }
+                    ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.ids")
+            }
+        val session =
+            Fields(
+                o.get("session") as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.session"),
+                "cmd.session.",
+                setOf("before", "after"),
+            )
+        return CommandFacts(
+            op,
+            o.text("name", 64),
+            o.get("payload")!!,
+            o.whole("nowMs"),
+            zone(o.text("deviceZone"), "cmd.deviceZone"),
+            o.text("planZone"),
+            offset(o.get("planOffset"), "cmd.planOffset"),
+            (o.get("retires") as? JsonBool)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.retires"),
+            ids,
+            calls,
+            o.get("reply")!!,
+            session.get("before") as? JsonObject
+                ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.session.before"),
+            session.get("after") as? JsonObject
+                ?: fail(ShadowRefusal.WRONG_TYPE, "cmd.session.after"),
+            ops(o.get("after")),
         )
     }
 

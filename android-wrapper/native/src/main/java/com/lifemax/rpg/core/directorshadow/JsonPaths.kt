@@ -28,50 +28,57 @@ class JsonPaths(private val redactor: ShadowRedactor) {
 
     fun member(name: String): String = if (word.matches(name)) name else "*#" + redactor.hash(name)
 
-    /** At most [limit] differences of [page] and [native], under the name [at]. */
+    /**
+     * At most [limit] differences of [page] and [native], under the name [at]; members named in
+     * [skip] are not compared (a timing), and two numbers [same] calls the same are (a clock
+     * reading, SH-43).
+     */
     fun diff(
         page: JsonValue?,
         native: JsonValue?,
         at: String,
         limit: Int = DirectorShadowLimits.MAX_PATHS,
+        skip: Set<String> = emptySet(),
+        same: ((Double, Double) -> Boolean)? = null,
     ): List<PathDifference> {
         val out = ArrayList<PathDifference>()
-        walk(stored(page), stored(native), at, out, limit)
+        Walk(limit, skip, same).walk(stored(page), stored(native), at, out)
         return out
     }
 
     private fun stored(v: JsonValue?): JsonValue? =
         if (v is JsonNumber && !v.value.isFinite()) JsonNull else v
 
-    private fun walk(
-        a: JsonValue?,
-        b: JsonValue?,
-        at: String,
-        out: MutableList<PathDifference>,
-        limit: Int,
+    private inner class Walk(
+        val limit: Int,
+        val skip: Set<String>,
+        val same: ((Double, Double) -> Boolean)?,
     ) {
-        if (out.size >= limit) return
-        when {
-            a is JsonObject && b is JsonObject -> {
-                for (k in (a.members.keys + b.members.keys)) {
-                    walk(stored(a.members[k]), stored(b.members[k]), "$at.${member(k)}", out, limit)
-                    if (out.size >= limit) return
+        fun walk(a: JsonValue?, b: JsonValue?, at: String, out: MutableList<PathDifference>) {
+            if (out.size >= limit) return
+            when {
+                a is JsonObject && b is JsonObject -> {
+                    for (k in (a.members.keys + b.members.keys)) {
+                        if (k in skip) continue
+                        walk(stored(a.members[k]), stored(b.members[k]), "$at.${member(k)}", out)
+                        if (out.size >= limit) return
+                    }
                 }
-            }
-            a is JsonArray && b is JsonArray -> {
-                if (a.items.size != b.items.size) out += PathDifference("$at[#]", false)
-                for (i in 0 until minOf(a.items.size, b.items.size)) {
-                    walk(stored(a.items[i]), stored(b.items[i]), "$at[$i]", out, limit)
-                    if (out.size >= limit) return
+                a is JsonArray && b is JsonArray -> {
+                    if (a.items.size != b.items.size) out += PathDifference("$at[#]", false)
+                    for (i in 0 until minOf(a.items.size, b.items.size)) {
+                        walk(stored(a.items[i]), stored(b.items[i]), "$at[$i]", out)
+                        if (out.size >= limit) return
+                    }
                 }
+                a is JsonNumber && b is JsonNumber -> {
+                    if (a.value == b.value || same?.invoke(a.value, b.value) == true) return
+                    val ulp = max(Math.ulp(a.value), Math.ulp(b.value))
+                    out += PathDifference(at, abs(a.value - b.value) <= ulp)
+                }
+                a == b -> Unit
+                else -> out += PathDifference(at, false)
             }
-            a is JsonNumber && b is JsonNumber -> {
-                if (a.value == b.value) return
-                val ulp = max(Math.ulp(a.value), Math.ulp(b.value))
-                out += PathDifference(at, abs(a.value - b.value) <= ulp)
-            }
-            a == b -> Unit
-            else -> out += PathDifference(at, false)
         }
     }
 }

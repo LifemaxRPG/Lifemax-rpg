@@ -673,8 +673,18 @@ each `generateSchedule` and `rescheduleActivity` input and answer (WP-LD4, WP-LD
 Native (`core/directorshadow`, `app/shadow/DirectorShadowWorker.kt`, its own ring `director-shadow/ring.json`) compares, keeps redacted
 counts and paths, self-disables like the economy check, and never writes. Tests: `tests/native-director-shadow.test.js` (22 checks; the
 copy equals the stored text byte for byte after every save), Kotlin 44 (`DirectorShadowStreamTest` replays the real page's messages for a
-lived-in day: 10 saves, 6 reads, 4 plans and 3 repairs, every one the same as the page). Next stages: 5.1 C (host commands and the tick, with
-`scope: "both"` for awards) once WP-LD9's commands are wired to the adapters, and WP-LD8b's dial.
+lived-in day: 10 saves, 6 reads, 4 plans and 3 repairs, every one the same as the page).
+
+**Stage 2 built (WP-LD12b, 5.1 C)** (branch `logic/ld12b-shadow`, Native API 136, `ENGINE_VERSION` 1.1.0 on both sides as OQ-S1 is
+accepted): every `Do.*` and `Today.*` command (done, skip and take-back, log, pin, move, disrupt, energy, re-plan, regroup, goals,
+settings, My time, activity, backup, the timer), `finishInstance` and `logToday` on their own, the tick, and the glance's sync, misses and
+rollover. `logic.js` routes them through a behaviour-neutral `command()`; the page module records the state and memory before, the
+payload and moment, every `LifeMaxHost` and store call with its real answer, the reply and the state after (`director.cmd`,
+`director.tick`); native replays WP-LD9 and WP-LD10's pure commands against `PageAnswers` (the page's recorded answers, as the golden's
+fake host) and compares the reply, every host call with its arguments, the memory and the state after (SH-36 to SH-49). Over the
+lived-in day with the real LifeMax host, 22 commands and 26 ticks agree. No known LH, LT or LG defect shows as a difference (native ports
+them as they are); no allowlist entry added, DA-3 proposed for a non-text activity id. Gap: what `EconomyHost` would answer an award is
+not compared (SH-48, needs `scope: "both"`). Next: `scope: "both"` and WP-LD8b's dial.
 
 Scope and plan in 5.1.
 
@@ -698,7 +708,9 @@ owner's release build behind a switch with the economy check's redacted ring, no
 2. **B, engine shadow (after LD4 to LD6).** After each page `regenerate` and `reschedule`, send the engine input and the page's
    output; native runs the same input and diffs the output (ignoring `computeTimeMs`). Log the input of every divergence.
 3. **C, command shadow (after LD9).** For each page command, send `(ST before, payload, host replies)` and the page's
-   `(reply, ST after)`; native replays and diffs. Host calls (awards, quest completions) are compared as a list.
+   `(reply, ST after)`; native replays and diffs. Host calls (awards, quest completions) are compared as a list. As built (WP-LD12b,
+   `LIFE_DIRECTOR_SHADOW_SPEC.md` section 3b): the controller's memory is compared too, the page's host answers are replayed (the
+   economy's own answer is not yet compared, SH-48), and the tick is included.
 4. **Exit criteria:** 30 consecutive days of the owner's own use with zero divergences, covering at least one weekly rollover,
    one DST change or zone change (or a simulated one in the corpus if none occurs in the window), a skip with take-back, a
    missed block with regroup, and a timer that ran in the background. Each divergence is either fixed in native or ruled a

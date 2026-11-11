@@ -2004,7 +2004,7 @@ IDs: `LDX-n` the repair and the fill pass, `LDO-n` the output, `LDV-n` validatio
   a committed session's links (covers included), a kept session's stored list (no list throws a `TypeError` once an active quest exists,
   LD45).
 - **LDO-8** (`engine.js:1504-1528`, `1110-1115`; every `generate` case; mutation `planned ties by id descending`) The output object:
-  `engineVersion '1.0.0'`, `schemaVersion 1`, `status` (`INVARIANT_VIOLATION` when validation fails, else `CONSTRAINT_WARNING` with any
+  `engineVersion '1.1.0'` (`1.0.0` until the Life Director check began comparing the host commands, WP-LD12b), `schemaVersion 1`, `status` (`INVARIANT_VIOLATION` when validation fails, else `CONSTRAINT_WARNING` with any
   warning, else `VALID_SCHEDULE`), `generatedAtEpoch: now`, `computeTimeMs`, `timezone` (the zone value as given, LDA-10), `horizonStartEpoch`,
   `horizonEndEpoch`, `inputHash` (LDO-9), `scheduledInstances` (the sorted sessions, LDO-2), `historyInstances` (the preparation's history,
   the stored objects unchanged), `recoveryBlocks`, `passiveReminders`, `unscheduledDiagnostics` (LDO-1), `clarificationPrompts`,

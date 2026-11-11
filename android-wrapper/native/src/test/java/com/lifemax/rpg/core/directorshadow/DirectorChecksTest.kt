@@ -59,6 +59,11 @@ class DirectorChecksTest {
                     if (e.kind == DirectorShadowJson.SAVE) saves += m.stitch()!!
                     else reads += m.stitch()!! to e.read!!
                 }
+                DirectorShadowJson.CMD,
+                DirectorShadowJson.TICK -> {
+                    m.apply(e.ops, e.seq, false)
+                    m.apply(e.cmd!!.afterOps, e.seq, false)
+                }
                 else -> engines += e.kind to e.engine!!
             }
         }
