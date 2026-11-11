@@ -28,7 +28,7 @@ data class CommandResult(val verdict: Verdict, val learned: Pair<String, TakeBac
  * that answers with the page's host's answers ([PageAnswers]); then native's reply, its host and store calls with their
  * arguments, its memory after and its state after are compared with the page's. Nothing is awarded, written or shown.
  */
-internal class CommandCheck(private val paths: JsonPaths) {
+class CommandCheck(private val paths: JsonPaths) {
     fun run(before: JsonValue, after: JsonValue, f: CommandFacts, t1: Long, known: (String) -> TakeBackState?): CommandResult {
         val at = f.op + if (f.name.isNotEmpty()) "." + paths.member(f.name) else ""
         val command = command(f) ?: return CommandResult(Verdict.Skipped("unknownOp"))
