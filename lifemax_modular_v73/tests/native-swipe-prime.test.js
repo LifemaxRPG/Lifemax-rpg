@@ -68,6 +68,7 @@ const fakes = ({ prime = true, native = true } = {}) => `
   ok('Workout plan opens', await go(p, 'plan'));
   await quiet(p, 700);
   ok('with the swipe switch off nothing is primed', (await calls(p, 'prime')).length === 0, await calls(p));
+  const beforeOn = (await calls(p)).length; // what navigating here left behind is not priming's doing
   await turnOn(p);
   const first = await primes(p, 1);
   ok('switched on, the one native neighbour of Workout plan is primed after a quiet moment: Library (Media), not the Quests page', first.length === 1 && first[0].p === 'NativeMedia', first);
@@ -76,7 +77,7 @@ const fakes = ({ prime = true, native = true } = {}) => `
   ok('that projection is the Media kit\'s own, with a session, a sequence and the theme', snap.protocol === 1 && typeof snap.webSessionId === 'string' && snap.webSessionId.startsWith('media-web-') && snap.sequence > 0 && !!snap.tokens && 'light' in snap && Array.isArray(snap.items || snap.media || []), Object.keys(snap));
   await quiet(p, 900);
   ok('it is primed once: the next quiet stretch asks for nothing more', (await calls(p, 'prime')).length === 1, await calls(p, 'prime'));
-  const during = await calls(p);
+  const during = (await calls(p)).slice(beforeOn);
   ok('priming opened, closed and updated nothing, and sent no swipe answer', during.filter(c => c.m !== 'prime').every(c => c.p === 'NativePlan') && !during.some(c => c.p === 'NativeMedia' && c.m !== 'prime'), during.map(c => c.p + '.' + c.m));
   ok('the page does not take a primed screen for an open one', await p.evaluate(() => !NativeTabs.isOpen('media') && lmaView() === 'plan' && NativeTabs.isOpen('plan')));
   ok('the cost the native side measured is kept for the owner (the Media screen)', await p.evaluate(() => JSON.stringify(window.__nativePrimePerf) === JSON.stringify({ media: { javaKb: 812, nativeKb: 3400, ms: 700 } })), await p.evaluate(() => window.__nativePrimePerf));
