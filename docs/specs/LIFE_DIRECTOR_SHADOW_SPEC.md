@@ -78,7 +78,8 @@ of the saved state too (its events and order travel in the store text and round-
   native `PlanSchedule.ENGINE_VERSION` and `StoreKeys.SCHEMA_VERSION`): `1.1.0/1` (stage 1 sent `1.0.0/1`). OQ-S1 is accepted: the
   version is raised, page and native together, with any change to the engine or the host commands; stage 2 raised it to `1.1.0`. The
   version is also written into every plan (`engineVersion`), so the engine's goldens were rewritten with the substitution a re-record
-  makes (only `engineVersion`, the same length; `director-week-golden.json`'s Diagnostics line likewise). The native
+  makes (only `engineVersion`, the same length; `director-week-golden.json`'s Diagnostics line likewise), and the store golden, which
+  also keeps digests of backup texts, was re-recorded (it differs from the substitution only in those digests). The native
   `director-settings.json` fixture keeps its recorded Diagnostics line `engine 1.0.0`, so the native screenshots stay as they were. Read:
   the fingerprint still does not cover the page's words.
 - **SH-5** The state travels as the page's own JSON texts of its parts. The page splits `ST` at its top-level members, `schedule` at its
@@ -287,7 +288,7 @@ and Clear (Clear asks in the card first). The demo turns it off (the plugin is a
 
 Stage 2 (WP-LD12b):
 
-- Page: `tests/native-director-shadow.test.js` now 35 checks. Added: 21 commands a native Today, My time and Settings send, in a
+- Page: `tests/native-director-shadow.test.js` now 34 checks. Added: 21 commands a native Today, My time and Settings send, in a
   person's order (pin and its repeat, skip, take-back, skip again, done and done again, log for today and its repeat, the timer's
   start, pause and cancel, block hours, energy, re-plan, a goal's priority, a rest day, intensity, a custom goal, a backup, a gone
   goal), each one envelope with its op, name and payload, native's copy the page's state before and after it byte for byte, its reply;
