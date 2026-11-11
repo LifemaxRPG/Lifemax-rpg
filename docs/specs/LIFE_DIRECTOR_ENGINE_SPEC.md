@@ -138,6 +138,7 @@ These use the kernel and are the next parts of this spec; the plan section names
 - 2234-2340 `LifeDirectorStore` (the store, WP-LD7, done): specified in its own file, `LIFE_DIRECTOR_STORE_SPEC.md` (rules `LST-n`,
   defects `LS01` to `LS12`, its golden file `ld-store-golden.json.gz`), because it is not scheduler code.
 - 1904-2085 ledger, quest progress, misses and transitions (part 7, WP-LD6, done): in its own file, `LIFE_DIRECTOR_LEDGER_SPEC.md` (rules `LED-n`, defects `LG01` to `LG16`, golden file `ld-ledger-golden.json.gz`).
+- `logic.js`'s host commands and tick (`Do`, `Today`, completion, `syncHost`, `processMisses`, `maybeRollover`, `applyDial`; WP-LD9, done): callers of the engine, in their own file, `LIFE_DIRECTOR_HOST_SPEC.md` (rules `HC-n`, defects `LH01` to `LH14`, golden file `ld-host-golden.json.gz`).
 
 ---
 

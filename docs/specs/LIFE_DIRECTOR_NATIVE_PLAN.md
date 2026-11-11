@@ -549,6 +549,24 @@ because it only reads. Split into a (day, now, week) and b (goals, quests, setti
 
 ### WP-LD9. Host commands and tick (L, risk high)
 
+**Status: done** (branch `logic/ld9-host`, NativeApi 131); not wired to anything, the page is still the only writer. Spec:
+`LIFE_DIRECTOR_HOST_SPEC.md` (rules HC-1 to HC-90, defects LH01 to LH14, how the goldens show D2, D4, D6, D8, D10 and D11, golden index,
+how to swap in WP-LD11's adapters). Recorder `tools/gen_ld_host_golden.js` with the runner `tools/ld_host_vm.js`: logic.js itself (three
+behaviour-neutral hooks applied to the text at record time, the file unchanged: the private functions exported, the tick's on-screen guard
+skippable, `closeSheet` without a root), over the page's engine and store, a recording host, a memory storage that can fail, a clock that
+stands still, run inside the built page in Chromium and in node, every case twice; cases `tools/ld_host_cases.js`: 859 cases, 4,835 steps in
+`tests/fixtures/ld-host-golden.json.gz` (20 families: done 175, log 40, skip 59, pin 24, disrupt 53, replan 25, regroup 41, goals 26, prefs
+21, time 28, activity 23, backup 7, sync 59, misses 34, rollover 36, dial 27, output 4, early 10, boot 7, fuzz 160), in the eight strict zones
+with clock-change nights and gaps, several clocks and three ledgers; every refusal and repeat the commands can give is reached; node agrees
+but for an explanation penalty's last bit in 6 cases (LD20); web test `tests/ld-host-golden.test.js`. Kotlin in `core/lifedirector/host`
+(`HostEffects` with its typed answers, `RecordingHost`, `HostCommands` the pure entry point `(state, now, host, command) -> (state',
+reply, hostCalls)`, `HostPage`, `HostCompletion`, `HostTick`, `TodayCommands`, `DoCommands`, `TimeCommands`, `HostWords`, `JsTree`,
+`CommandReply`) reproduces every step: reply, every host and store call with its arguments and answer, the page's volatile state and `ST`
+(`HostGoldenTest`, fake `ReplayHost`; `HostHandTest`); 69 source mutations, 60 caught, the 9 survivors unreachable, equivalent or thinly covered paths (spec section 12). `Today.timer` is left to WP-LD10. Findings: importing a backup
+skips boot's repairs, so a v0 or ledger-less backup makes every later re-plan and tick fail until reset (LH01); the take-back fails after
+any save that trims history (LH02, D8); a numeric id repeated after done answers "gone" (LH05); weekend sleep is not checked for 5 hours
+(LH06); `hostSync.seen` grows for ever (LH09); a miss whose repair is refused is retried every tick (LH11). Open: OQ-H1 to OQ-H3.
+
 Scope: `Do.*` and `Today.*` as pure `(state, now, host, payload) -> (state', reply, hostCalls)`; `finishInstance`, `logToday`,
 `repairEarlyDone`, `syncHost`, `processMisses`, `maybeRollover`, `applyOutput` including the refusal path, `afterEvent`, undo
 of a skip, the dial's `applyDial`, `regroup`. Tests: the host-level goldens of 4.3(5), including every refusal message and
