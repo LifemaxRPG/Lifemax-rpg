@@ -27,47 +27,6 @@ import org.junit.Test
  * replays natively to the page's reply, host calls, memory and state, and each kind of change to what the page said is noticed.
  */
 class DirectorCommandsTest {
-    private val checks = DirectorChecks(ShadowRedactor(ByteArray(ShadowLimits.SALT_BYTES) { 1 }))
-
-    private class Ran(val kind: String, val before: String, val after: String, val facts: CommandFacts, val t1: Long)
-
-    private fun env(text: String) = (DirectorShadowJson.envelope(text) as ShadowDecode.Ok).value
-
-    /** Every command and tick of the stream, with the copy's texts before and after it (the session's own order). */
-    private val ran: List<Ran> by lazy {
-        val m = TextMirror()
-        val parts = ArrayList<String>()
-        val out = ArrayList<Ran>()
-        for ((method, text) in DirectorShadowStream.messages) {
-            if (method == "base") {
-                val p = (DirectorShadowJson.basePart(text) as ShadowDecode.Ok).value
-                parts += p.text
-                if (p.part == p.parts - 1) {
-                    m.apply((DirectorShadowJson.baseOps(parts.joinToString("")) as ShadowDecode.Ok).value, p.seq, true)
-                    parts.clear()
-                }
-            }
-            if (method != "observe") continue
-            val e = env(text)
-            if (e.kind == DirectorShadowJson.PLAN || e.kind == DirectorShadowJson.REPAIR) continue
-            m.apply(e.ops, e.seq, false)
-            val c = e.cmd ?: continue
-            val before = m.stitch()!!
-            m.apply(c.afterOps, e.seq, false)
-            out += Ran(e.kind, before, m.stitch()!!, c, e.t1)
-        }
-        out
-    }
-
-    /** The take-backs the page sent in full, by digest, as a session keeps them. */
-    private val known: Map<String, TakeBackState> by lazy {
-        val k = HashMap<String, TakeBackState>()
-        for (r in ran) check(r)?.learned?.let { k[it.first] = it.second }
-        k
-    }
-
-    private fun parse(text: String): JsonValue = (JsonReader.read(text) as JsonRead.Parsed).value
-
     private fun check(r: Ran, f: CommandFacts = r.facts, after: String = r.after, t1: Long = r.t1): CommandResult? =
         checks.command(parse(r.before), parse(after), f, t1) { known[it] }
 
@@ -83,7 +42,12 @@ class DirectorCommandsTest {
     @Test
     fun everyCommandAndTickOfTheDayReplaysToThePage() {
         assertTrue(ran.size > 30)
-        for (r in ran) assertEquals("${r.facts.op}.${r.facts.name}", Verdict.Same, check(r)!!.verdict)
+        val k = HashMap<String, TakeBackState>()
+        for (r in ran) {
+            val res = checks.command(parse(r.before), parse(r.after), r.facts, r.t1) { k[it] }
+            assertEquals("${r.facts.op}.${r.facts.name}", Verdict.Same, res.verdict)
+            res.learned?.let { k[it.first] = it.second }
+        }
         val names = ran.map { it.facts.op + "." + it.facts.name }.toSet()
         for (n in listOf("today.pin", "today.skip", "today.unskip", "today.done", "today.logToday", "today.timer", "today.disrupt", "today.energy", "today.replan",
             "do.goalPriority", "do.restDay", "do.pref", "do.goalAdd", "do.exportBackup", "finish.", "tick.", "syncHost.", "processMisses.", "maybeRollover."))
@@ -173,7 +137,8 @@ class DirectorCommandsTest {
         val r = ran.first { it.facts.op == "tick" && it.facts.calls.any { c -> c.fn == "activitiesSince" && (c.out as JsonArray).items.isNotEmpty() } }
         val empty = r.facts.calls.map { if (it.fn == "activitiesSince") it.copy(out = JsonArray(emptyList())) else it }
         val v = check(r, r.facts.copy(calls = empty))!!.verdict
-        assertTrue(paths(v).toString(), paths(v).any { it.startsWith("tick.state") })
+        // native takes nothing in, so its later calls are not the page's: the first that differs is named
+        assertTrue(paths(v).toString(), paths(v).first().matches(Regex("tick\\.calls\\[\\d+]\\.fn")))
     }
 
     @Test
@@ -214,5 +179,48 @@ class DirectorCommandsTest {
         assertEquals(ShadowRefusal.OUT_OF_RANGE, refused(text.replaceFirst(calls.value, "\"calls\":[[\"${calls.groupValues[1]}\",99999,${calls.groupValues[3]}]")).reason)
         assertEquals(ShadowRefusal.NOT_JSON, refused(text.replaceFirst("\"texts\":[", "\"texts\":[" + JsonWriter.write(JsonString("{not json")) + ",")).reason)
         assertEquals(ShadowRefusal.OUT_OF_RANGE, refused(text.replaceFirst(calls.value, "\"calls\":[[\"no such host\",${calls.groupValues[2]},${calls.groupValues[3]}]")).reason)
+    }
+
+    companion object {
+        private val checks = DirectorChecks(ShadowRedactor(ByteArray(ShadowLimits.SALT_BYTES) { 1 }))
+
+        class Ran(val kind: String, val before: String, val after: String, val facts: CommandFacts, val t1: Long)
+
+        private fun env(text: String) = (DirectorShadowJson.envelope(text) as ShadowDecode.Ok).value
+
+        /** Every command and tick of the stream, with the copy's texts before and after it (the session's own order). */
+        private val ran: List<Ran> by lazy {
+            val m = TextMirror()
+            val parts = ArrayList<String>()
+            val out = ArrayList<Ran>()
+            for ((method, text) in DirectorShadowStream.messages) {
+                if (method == "base") {
+                    val p = (DirectorShadowJson.basePart(text) as ShadowDecode.Ok).value
+                    parts += p.text
+                    if (p.part == p.parts - 1) {
+                        m.apply((DirectorShadowJson.baseOps(parts.joinToString("")) as ShadowDecode.Ok).value, p.seq, true)
+                        parts.clear()
+                    }
+                }
+                if (method != "observe") continue
+                val e = env(text)
+                if (e.kind == DirectorShadowJson.PLAN || e.kind == DirectorShadowJson.REPAIR) continue
+                m.apply(e.ops, e.seq, false)
+                val c = e.cmd ?: continue
+                val before = m.stitch()!!
+                m.apply(c.afterOps, e.seq, false)
+                out += Ran(e.kind, before, m.stitch()!!, c, e.t1)
+            }
+            out
+        }
+
+        /** The take-backs the page sent in full, by digest, as a session keeps them. */
+        private val known: Map<String, TakeBackState> by lazy {
+            val k = HashMap<String, TakeBackState>()
+            for (r in ran) checks.command(parse(r.before), parse(r.after), r.facts, r.t1) { k[it] }.learned?.let { k[it.first] = it.second }
+            k
+        }
+
+        private fun parse(text: String): JsonValue = (JsonReader.read(text) as JsonRead.Parsed).value
     }
 }
