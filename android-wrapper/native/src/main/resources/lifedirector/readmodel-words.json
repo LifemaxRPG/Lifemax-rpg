@@ -1,0 +1,113 @@
+{
+ "about": "The Life Director page words the native read models use, exported from the page by lifemax_modular_v73/tools/gen_ld_readmodels_golden.js; do not edit",
+ "dayNames": [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat"
+ ],
+ "kindClass": {
+  "SLEEP": "sleep",
+  "WORK": "work",
+  "CLASS": "work",
+  "APPOINTMENT": "work",
+  "COMMUTE": "commute",
+  "DECOMPRESS": "commute",
+  "MEAL": "meal",
+  "ROUTINE": "maint",
+  "WIND_DOWN": "maint",
+  "RECOVERY": "rest",
+  "FREE": "free",
+  "TASK": "task",
+  "BLACKOUT": "block",
+  "SICK": "block",
+  "EMERGENCY": "block",
+  "UNAVAILABLE": "block"
+ },
+ "weekLegend": [
+  {
+   "kind": "sleep",
+   "label": "Sleep"
+  },
+  {
+   "kind": "work",
+   "label": "Work & travel"
+  },
+  {
+   "kind": "maint",
+   "label": "Routines"
+  },
+  {
+   "kind": "meal",
+   "label": "Meals"
+  },
+  {
+   "kind": "task",
+   "label": "Sessions"
+  },
+  {
+   "kind": "rest",
+   "label": "Downtime"
+  }
+ ],
+ "weekTicks": [
+  "00",
+  "06",
+  "12",
+  "18",
+  "24"
+ ],
+ "yieldNote": "Estimated with LifeMax’s own XP rules. Solid is earned, outlined is still planned.",
+ "allFit": "Everything requested fits this week.",
+ "thresholds": {
+  "soon": 900,
+  "ending": 600,
+  "late": 600
+ },
+ "phrases": {
+  "freeTime": "Free time",
+  "today": "Today",
+  "ariaGap": " ",
+  "ariaColon": ": ",
+  "ariaSessions": " sessions, ",
+  "fallbackColour": "#10B981",
+  "statSessions": "sessions",
+  "statComma": ", ",
+  "statDone": " done",
+  "statPlanned": "planned",
+  "statAbout": "≈",
+  "statNone": "—",
+  "statXp": "XP on the table",
+  "fitDowntime": " of protected downtime and ",
+  "fitFree": " left completely free. ",
+  "fitCoverage": "% of must-do sessions (weekly minimums and quests) are placed.",
+  "doneMark": "✓",
+  "noMinutes": "—",
+  "yieldTitle": "Where your XP goes",
+  "fitTitle": "How the week fits",
+  "times": " ×",
+  "tier": "tier ",
+  "unfitSession": " session",
+  "unfitPlural": "s",
+  "unfitTail": " could not fit",
+  "hours": "h",
+  "gap": " ",
+  "minutes": "m"
+ },
+ "colours": {
+  "attributes": {
+   "physique": 4294929239,
+   "endurance": 4294921613,
+   "intelligence": 4284189951,
+   "business": 4294296898,
+   "social": 4294942531,
+   "discipline": 4289170426,
+   "adventure": 4282244228,
+   "wellbeing": 4283289825
+  },
+  "fallback": 4279286145
+ }
+}
