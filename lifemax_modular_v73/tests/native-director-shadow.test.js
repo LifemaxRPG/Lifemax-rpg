@@ -209,6 +209,15 @@ const COMMANDS = [
       await settle(p, 400);
       const r = await M(p);
       const last = await p.evaluate(() => { const s = window.__dsMock.texts.filter((t) => t.kind === 'director.save'); return s.length ? s[s.length - 1].text : null; });
+      const rep = await p.evaluate(() => {
+        const V = LifeDirectorApp.shadowVars, auto = { act: 'autoFinish', id: 'x', start: 1 }, real = LifeMaxHost.connected;
+        const a = LmaDirectorShadow.command('today', 'timer', auto, V);
+        const patched = LifeMaxHost.connected !== real;
+        if (a) a.end({ ok: true, changed: false, message: '' });
+        const b = LmaDirectorShadow.command('today', 'timer', auto, V);
+        return { a: !!a, b: !!b, patched, restored: LifeMaxHost.connected === real, repeat: LmaDirectorShadowStatus().stats.skipped.repeat };
+      });
+      ok('the timer\'s own finish, retried every second while refused, is sent once a minute; the host is itself again after a command', rep.a && !rep.b && rep.repeat === 1 && rep.patched && rep.restored, rep);
       ok('a resync: a new base follows and the copy is right again', r.bases >= 2 && last === (await stored(p)), { bases: r.bases, refused: r.refused });
       await p.context().close();
     }

@@ -107,7 +107,10 @@ class DirectorCommandsTest {
         val notice = obj(r.facts.after.members["notice"])
         val late = r.facts.copy(after = with(r.facts.after, "notice", with(notice, "at", JsonNumber(r.facts.nowMs + 7.0))))
         assertEquals(Verdict.Same, check(r, late, t1 = r.facts.nowMs + 10)!!.verdict)
-        assertEquals(listOf("today.replan.session.notice.at"), paths(check(r, late, t1 = r.facts.nowMs + 5)!!.verdict))
+        assertEquals(Verdict.Same, check(r, late, t1 = r.facts.nowMs + 7)!!.verdict) // read as the command ended
+        assertEquals(listOf("today.replan.session.notice.at"), paths(check(r, late, t1 = r.facts.nowMs + 6)!!.verdict))
+        val early = r.facts.copy(after = with(r.facts.after, "notice", with(notice, "at", JsonNumber(r.facts.nowMs - 1.0))))
+        assertEquals(listOf("today.replan.session.notice.at"), paths(check(r, early, t1 = r.facts.nowMs + 10)!!.verdict))
     }
 
     @Test

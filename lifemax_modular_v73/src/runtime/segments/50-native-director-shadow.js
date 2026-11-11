@@ -105,6 +105,12 @@
       const t = performance.now();
       const V = vars();
       if (!V || !V.ST || !V.ui) { skip("noState"); return null; }
+      /* the timer's own finish, which the page retries every second while it is refused (timer spec LT07): once a minute */
+      if (op === "today" && name === "timer" && payload && payload.act === "autoFinish") {
+        const key = String(payload.id) + "|" + String(payload.start), at = Date.now();
+        if (at - (quietAt["auto:" + key] || -Infinity) < LIMIT.quietMs) { skip("repeat"); return null; }
+        quietAt["auto:" + key] = at;
+      }
       const r = { kind: TICKS[op] ? "director.tick" : "director.cmd", op, name: String(name || ""), payload: JSON.stringify(payload === undefined ? null : payload) || "null",
         t0: Date.now(), zone: zone(), planZone: String((V.ST.availability && V.ST.availability.timezone) || zone()), before: capture(V.ST, SPLIT),
         sessionBefore: session(V), takeBackBefore: V.takeBack || null, calls: [], texts: [], index: new Map(), ids: [], broken: false, extra: 0 };
