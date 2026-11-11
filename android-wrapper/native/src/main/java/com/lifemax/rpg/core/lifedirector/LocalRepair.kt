@@ -7,7 +7,8 @@ import com.lifemax.rpg.core.save.JsonValue
  * LDO-2: how a session got where it is (the page's `placedMeta` entry): the construction's
  * [selection] (phase 1), or a later [phase] (2 for the repair and the fill pass) with its [move]
  * (`COMPRESSION`, `SWAP`, `RELOCATED`, `EVICT`, `FILL`), the placement's [score] and the number of
- * waking days that could take it ([count]).
+ * waking days that could take it ([count]). A rescheduling placement (LDY) names its phase by its
+ * radius instead ([label]: `R1` to `R4`).
  */
 class PlacementRecord(
     val phase: Int,
@@ -15,6 +16,7 @@ class PlacementRecord(
     val score: Double,
     val count: Int,
     val selection: Selection? = null,
+    val label: String? = null,
 ) {
     /** The margin over the second-best day (the construction's; 0 for a later move). */
     val regret: Double

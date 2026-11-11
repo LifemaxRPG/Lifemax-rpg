@@ -163,7 +163,7 @@ object ScheduleJson {
             this["origStartEpoch"] = orNull(c.origStartEpoch)
             this["explanation"] = orNull(x.explanation)
             this["moves"] = num(0)
-            this["source"] = snapshot(t)
+            this["source"] = c.task.snapshot ?: snapshot(t)
         }
     }
 

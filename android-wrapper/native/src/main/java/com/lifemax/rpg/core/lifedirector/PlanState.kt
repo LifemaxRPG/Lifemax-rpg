@@ -83,6 +83,13 @@ class PlanTask(val task: CandidateTask, var prepared: PreparedTask) {
     /** LDX-5: the task whose placement evicted this one's session (`displacedBy`), or null. */
     var displacedBy: String? = null
 
+    /**
+     * LDB-2: for a task made again from a stored snapshot (`makeTask(source)`, LDM), the snapshot
+     * its sessions carry (`taskSnapshot` of that task, LDO-8), taken from the stored members; null
+     * for a candidate task, whose snapshot is written from [task].
+     */
+    var snapshot: JsonValue? = null
+
     val id: String
         get() = task.id
 

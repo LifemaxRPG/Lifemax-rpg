@@ -178,7 +178,7 @@ object Explanations {
         this["regret"] = num(rounded(regret, TENTHS))
         this["feasibleDays"] = if (r.count != 0) num(r.count) else JsonNull
         this["key"] = r.key?.takeIf(PageValues::truthy)?.let(::num) ?: JsonNull
-        this["phase"] = num(r.phase)
+        this["phase"] = r.label?.let(::str) ?: num(r.phase)
         this["move"] = r.move?.let(::str) ?: JsonNull
     }
 }
