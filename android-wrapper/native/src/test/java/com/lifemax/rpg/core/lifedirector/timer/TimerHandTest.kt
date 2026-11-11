@@ -139,6 +139,20 @@ class TimerHandTest {
             TimerReply.Checked(FocusTick.Idle),
             run(due.state, t0 + 1, TimerCommand.Check).reply,
         )
+        // a timer left on the session after it was done: found in history, told gone, kept (TM-61)
+        val left = withFocus(due.state, focus(s))
+        val gone = run(left, t0 + 9 * 3_600_000.0 + 1000, TimerCommand.Check)
+        assertEquals(TimerReply.Checked(FocusTick.AutoFinished(CommandReply.GONE)), gone.reply)
+        assertEquals(focus(s), focus(gone.state))
+        assertTrue(gone.calls.isEmpty())
+    }
+
+    private fun withFocus(s: HostState, f: JsonValue?): HostState {
+        val st = s.st as JsonObject
+        val ui = st["ui"] as JsonObject
+        return s.copy(
+            st = JsonObject(st.members + ("ui" to JsonObject(ui.members + ("focus" to f!!))))
+        )
     }
 
     @Test
@@ -277,6 +291,18 @@ class TimerHandTest {
             )
         val q = FocusClock.follow(p, paused, resumed, ClockReading(1_720_000.0, 770_000.0, 3))!!
         assertEquals(120_000.0, q.pausedTotalMs, 0.0)
+        // a second pause adds to the first
+        val again =
+            obj(
+                """{"id":"s-a","start":1000000,"paused":1800000,"pausedMs":120000,"plannedMs":2700000}"""
+            )
+        val q2 = FocusClock.follow(q, resumed, again, ClockReading(1_800_000.0, 850_000.0, 3))!!
+        val back2 =
+            obj(
+                """{"id":"s-a","start":1000000,"paused":null,"pausedMs":180000,"plannedMs":2700000}"""
+            )
+        val q3 = FocusClock.follow(q2, again, back2, ClockReading(1_860_000.0, 910_000.0, 3))!!
+        assertEquals(180_000.0, q3.pausedTotalMs, 0.0)
         val same = FocusClock.elapsed(resumed, q, ClockReading(1_900_000.0, 950_000.0, 3))
         assertEquals(same.pageMs, same.monoMs!!, 0.0)
         assertTrue(!same.clockChanged())

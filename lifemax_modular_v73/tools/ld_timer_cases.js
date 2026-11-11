@@ -84,6 +84,8 @@ function defineCases() {
       act('autoFinish', 7, F(), { plus: 1 }), start('s-b')], { extra: [session(z, '7', 4, 600, 30)] });
     hand('start', 'TM-14', 'numeric-auto@' + z, z, [start(7), act('autoFinish', 7, F(), { plus: 1800 })], { extra: [session(z, '7', 4, 600, 30)] });
     add('start', 'TM-11', 'no-plan@' + z, { at: A(z, 60), saved: JSON.stringify(base(z)) }, [start('s-a'), act('pause'), act('finish', 's-a', 1)]);
+    /* a session with no length: the timer's target is the 60-second floor (TM-3) */
+    hand('start', 'TM-10 TM-3', 'zero-length@' + z, z, [start('s-z', { plus: 1 }), FT({ plus: 59 }), FT({ plus: 1 })], { extra: [session(z, 's-z', 4, 630, 0)] });
   });
 
   /* ---- pause and resume (TM-20 to TM-22) ---- */
@@ -97,6 +99,8 @@ function defineCases() {
   ZONES.slice(0, 4).forEach(z => {
     hand('pause', 'TM-22', 'pause-before-start@' + z, z, [start('s-a', A(z, 300)), act('pause', undefined, undefined, A(z, 180)), FT(A(z, 240)),
       act('resume', undefined, undefined, A(z, 360)), act('finish', 's-a', F(), A(z, 960))]);
+    hand('pause', 'TM-21', 'twice@' + z, z, [start('s-a', { plus: 1 }), act('pause', undefined, undefined, { plus: 300 }), act('resume'),
+      act('pause', undefined, undefined, { plus: 300 }), act('resume', undefined, undefined, { plus: 120 }), act('finish', 's-a', F(), { plus: 300 })]);
     hand('pause', 'TM-20', 'any-id@' + z, z, [start('s-a', { plus: 1 }), act('pause', 'zz', 5), act('resume', 'zz', 5)]);
     hand('pause', 'TM-20', 'not-saved@' + z, z, [start('s-a', { plus: 1 }), storage('quota'), act('pause'), act('resume'), storage('ok'), act('pause')]);
   });
@@ -121,7 +125,7 @@ function defineCases() {
   });
   ZONES.slice(0, 4).forEach(z => {
     hand('replace', 'TM-32', 'not-saved@' + z, z, [start('s-a', { plus: 1 }), storage('quota'), act('replace', 's-b', F()), storage('ok'), act('replace', 's-b', F())]);
-    hand('replace', 'TM-30', 'clock-back@' + z, z, [start('s-a', A(z, 600)), act('replace', 's-b', F(), A(z, 300))]);
+    hand('replace', 'TM-30 TM-40', 'clock-back@' + z, z, [start('s-a', A(z, 600)), act('replace', 's-b', F(), A(z, 300)), act('finish', 's-b', F(), A(z, 1500))]);
     hand('replace', 'TM-30', 'orphan@' + z, z, [focus({ id: 'ghost', start: A(z, -60), paused: null, pausedMs: 0, plannedMs: 60000 }),
       act('replace', 's-a', A(z, -60))]);
   });
@@ -173,6 +177,8 @@ function defineCases() {
     hand('auto', 'TM-51', 'planned-ms-zero@' + z, z, [focus({ id: 's-a', start: A(z, 0), paused: null, pausedMs: 0, plannedMs: 0 }), act('autoFinish', 's-a', A(z, 0), A(z, 2700))]);
     hand('auto', 'TM-51', 'stale-planned-ms@' + z, z, [focus({ id: 's-a', start: A(z, 0), paused: null, pausedMs: 30000, plannedMs: 600000 }),
       act('autoFinish', 's-a', A(z, 0), A(z, 630) - 1), act('autoFinish', 's-a', A(z, 0), A(z, 630))]);
+    hand('auto', 'TM-50', 'paused-past-target@' + z, z, [focus({ id: 's-a', start: A(z, 0), paused: A(z, 3000), pausedMs: 0, plannedMs: 2700000 }),
+      act('autoFinish', 's-a', A(z, 0), A(z, 4000)), FT({ plus: 1 })]);
     hand('auto', 'TM-53', 'duplicate@' + z, z, [start('s-a', { plus: 1 }), act('finish', 's-a', F(), { plus: 600 }), { at: { plus: 5 }, op: 'applyOutput', out: handPlan(z), label: 'again' },
       start('s-a'), act('autoFinish', 's-a', F(), { plus: 2700 }), FT({ plus: 1 })]);
     hand('auto', 'TM-51', 'early@' + z, z, [start('s-b', B(z, -5 * HOUR - 1800)), act('autoFinish', 's-b', F(), B(z, -5 * HOUR))]);
@@ -190,6 +196,7 @@ function defineCases() {
     hand('tick', 'TM-61', 'unknown@' + z, z, [focus({ id: 'ghost', start: A(z, 0), paused: null, pausedMs: 0 }), FT(A(z, 5 * HOUR)),
       focus({ id: 'ghost', start: A(z, 0), paused: null, pausedMs: 0, plannedMs: 60000 }), FT({ plus: 1 }), FT({ plus: 1 })]);
     hand('tick', 'TM-60', 'no-timer@' + z, z, [FT({ plus: 1 })]);
+    hand('tick', 'TM-60', 'no-planned-ms@' + z, z, [focus({ id: 's-a', start: A(z, 0), paused: null, pausedMs: 0 }), FT(A(z, 2700) - 1), FT(A(z, 2700))]);
     hand('tick', 'TM-60', 'not-saved@' + z, z, [focus({ id: 's-a', start: A(z, 0), paused: null, pausedMs: 0, plannedMs: 2700000 }), storage('quota'), FT(A(z, 2700))]);
   });
 

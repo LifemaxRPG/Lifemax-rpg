@@ -43,14 +43,14 @@ class TimerGoldenTest {
         /** Cases per family, as tools/ld_timer_cases.js defines them. */
         val FAMILY_COUNTS =
             mapOf(
-                "start" to 60,
-                "pause" to 36,
+                "start" to 64,
+                "pause" to 40,
                 "reset" to 24,
                 "replace" to 28,
                 "finish" to 72,
                 "cancel" to 20,
-                "auto" to 64,
-                "tick" to 36,
+                "auto" to 68,
+                "tick" to 40,
                 "clock" to 48,
                 "wake" to 40,
                 "fuzz" to 120,
