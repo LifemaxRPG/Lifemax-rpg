@@ -501,6 +501,13 @@ readout says `Too short`), else `mins` with ` of sleep` for sleep; and the angle
 `zonedToEpoch` on `d0`'s date, kept on the day). No handles: `{handles: [], stops: [], dragWords}`. The golden adds the day's start and
 end, as the projection's `dial` carries them beside these members. Families `handles`, `dst`, `seed`, `fuzz`.
 
+**RM-41** (logic.js `carriedOver`, `gap`, `crossesMidnight`; changed after RM-6): a band that goes on past the day's midnight is one arc on the
+dial. `dayBlocks` marks `clipped` true for a block of the preview (RM-5) whose availability block reaches past either end of the day, as it
+already did for a stored segment (RM-6); the page keeps that aside in a WeakSet (`carriedOver`), so the preview's own shape is unchanged.
+The dial's trim of 0.9 degrees at each end of an outer band (`gap`) is not applied at an end that is only the midnight cut (`clipped` and the
+block starts at the day's start, or ends at its end). Native: `DayBlocks.unplannedWithCarry`. Executed (director-dial-seam test, 2,599 and 1,601
+recorded cases re-recorded: 127 part a cases carry the new `clipped`).
+
 ## 13. The native API of part b, and how a shadow check uses it
 
 `DirectorPanels(models, host, loadSource, words)` takes part a's `DirectorReadModels`, a `DirectorHostView` and the load source. Its

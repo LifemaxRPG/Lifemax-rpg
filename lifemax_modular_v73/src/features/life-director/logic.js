@@ -446,12 +446,17 @@ const LifeDirectorApp = (function () {
       const block = tag >= 0 ? g.blocks[tag] : null;
       if (block && visible.has(block.kind)) {
         const a = Math.max(day.startEpoch, g.H0 + i * 900), b = Math.min(day.endEpoch, g.H0 + end * 900);
-        if (b > a) result.push(Object.assign({}, block, { startEpoch: a, endEpoch: b }));
+        if (b > a) {
+          const seg = Object.assign({}, block, { startEpoch: a, endEpoch: b });
+          if (g.H0 + i * 900 < day.startEpoch || g.H0 + end * 900 > day.endEpoch) carriedOver.add(seg); // kept aside, so the segment's own shape is unchanged
+          result.push(seg);
+        }
       }
       i = end;
     }
     return result;
   }
+  const carriedOver = new WeakSet(); // unplanned-day segments that go on past the day's midnight (dayBlocks marks them clipped for the dial)
   function dayBlocks(sched, day, z) {
     const s = day.startEpoch, e = day.endEpoch, out = [];
     const preview = ST && sched === ST.schedule && (e <= sched.horizonStartEpoch || s >= sched.horizonEndEpoch);
@@ -459,7 +464,7 @@ const LifeDirectorApp = (function () {
     for (const g of segments) {
       if (g.endEpoch <= s || g.startEpoch >= e) continue;
       if (['FREE', 'SCHEDULED_TASK', 'USER_LOCKED_ACTIVITY'].includes(g.code)) continue;
-      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, mealStartEpoch: g.kind === 'MEAL' ? g.startEpoch : undefined, clipped: g.startEpoch < s || g.endEpoch > e });
+      out.push({ startEpoch: Math.max(s, g.startEpoch), endEpoch: Math.min(e, g.endEpoch), code: g.code, kind: g.kind, title: g.title, refId: g.refId, mealStartEpoch: g.kind === 'MEAL' ? g.startEpoch : undefined, clipped: carriedOver.has(g) || g.startEpoch < s || g.endEpoch > e });
     }
     const insts = (sched.scheduledInstances || []).concat(sched.historyInstances || []).filter(i => i.endEpoch > s && i.startEpoch < e && !['EXCUSED_DISPLACED', 'CANCELLED_BY_QUEST'].includes(i.lifecycleState));
     for (const i of insts) out.push({ startEpoch: i.startEpoch, endEpoch: i.endEpoch, code: 'TASK', kind: 'TASK', title: i.title, inst: i });
@@ -598,7 +603,10 @@ const LifeDirectorApp = (function () {
     return 'M' + x0.toFixed(2) + ' ' + y0.toFixed(2) + 'A' + r + ' ' + r + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2);
   }
   const angOf = (ep, d0, d1) => (Math.max(d0, Math.min(d1, ep)) - d0) / Math.max(1, d1 - d0) * 360;
-  function gap(a0, a1, g) { return a1 - a0 > g * 2.5 ? [a0 + g / 2, a1 - g / 2] : [a0, a1]; }
+  /* a little air between neighbouring bands; the end of a band that only stops at midnight (it goes on in the next or last day) is left whole, so
+     a shift that crosses midnight reads as one solid arc */
+  function gap(a0, a1, g, keepStart, keepEnd) { return a1 - a0 > g * 2.5 ? [a0 + (keepStart ? 0 : g / 2), a1 - (keepEnd ? 0 : g / 2)] : [a0, a1]; }
+  const crossesMidnight = (b, d0, d1) => [!!b.clipped && b.startEpoch <= d0, !!b.clipped && b.endEpoch >= d1];
   const OUTER = { sleep: 1, work: 1, commute: 1, maint: 1, block: 1 };
   function blockClass(b) { return b.inst ? 'task' : (KIND_CLASS[b.kind] || (b.code === 'RECOVERY_PROTECTED' ? 'rest' : 'free')); }
   function sesState(st) { return /COMPLETED/.test(st) && !/PARTIAL/.test(st) ? 'done' : /PARTIAL/.test(st) ? 'part' : st === 'PLANNED' ? 'plan' : 'off'; }
@@ -773,7 +781,7 @@ const LifeDirectorApp = (function () {
         inner += '<g class="ld-meal ld-appt" data-act="anchor" data-k="work" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" role="button" tabindex="0" aria-label="' + esc(b.title + ', ' + fTime(b.startEpoch) + ' to ' + fTime(b.endEpoch)) + '"><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title>' +
           '<path class="ld-hit" d="' + d + '" stroke-width="40"/><path class="ld-ap" d="' + d + '" stroke-width="' + DIAL.WI + '"/>' + surfaceArc(DIAL.RI, DIAL.WI, a0, a1, paintId, b) + '</g>';
       } else if (OUTER[k]) {
-        [a0, a1] = gap(a0, a1, 0.9);
+        [a0, a1] = gap(a0, a1, 0.9, ...crossesMidnight(b, d0, d1));
         const w = arcText(DIAL.RO, a0, a1, blockWords(b, d0, d1), 'ld-c-' + k);
         outer += '<path class="ld-o ld-c-' + k + '" d="' + arcD(DIAL.RO, a0, a1) + '" stroke-width="' + DIAL.WO + '" data-act="anchor" data-t="' + esc(b.title) + '" data-s="' + b.startEpoch + '" data-e="' + b.endEpoch + '" data-k="' + k + '"' + (w ? ' data-lbl="1"' : '') + '><title>' + esc(b.title + ' ' + fTime(b.startEpoch) + '–' + fTime(b.endEpoch)) + '</title></path>' + surfaceArc(DIAL.RO, DIAL.WO, a0, a1, paintId, b);
         words += w;
@@ -3073,7 +3081,7 @@ const LifeDirectorApp = (function () {
         [a0, a1] = gap(a0, a1, 1.4);
         arc('inner', 'appt', 'work', { tip: anchorTip('work', b.title, b.startEpoch, b.endEpoch, false) });
       } else if (OUTER[k]) {
-        [a0, a1] = gap(a0, a1, 0.9);
+        [a0, a1] = gap(a0, a1, 0.9, ...crossesMidnight(b, d0, d1));
         arc('outer', 'band', k, { tip: anchorTip(k, b.title, b.startEpoch, b.endEpoch, true) }); // what the page's band says when tapped
         word(DIAL.RO, a0, a1, blockWords(b, d0, d1), k, false);
       } else if (k === 'meal') {

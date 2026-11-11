@@ -5,6 +5,7 @@
    "date": "2026-11-07",
    "title": "Overview drag-and-drop & navigation polish",
    "changes": [
+    "Life Director: a work shift or sleep that crosses midnight now draws as one solid arc on the dial, with no thin gap at midnight.",
     "Returning to today now winds farther and takes longer based on how many days you travelled. A year away has a much longer rewind than a week away.",
     "The winding date count, spring settle, and activity-ring reveal stay connected throughout the return.",
     "Overview cards now reveal their destination with a smooth expanding transition from the tap, while the shared bars stay in place.",

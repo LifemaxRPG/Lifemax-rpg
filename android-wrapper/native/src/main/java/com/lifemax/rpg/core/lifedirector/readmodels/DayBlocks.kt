@@ -44,7 +44,18 @@ internal object DayBlocks {
     private val HIDDEN = setOf("EXCUSED_DISPLACED", "CANCELLED_BY_QUEST")
 
     /** RM-5 `unplannedSegments(day, z)`. */
-    fun unplanned(m: DirectorReadModels, day: PlanDay): List<GridBlock> {
+    fun unplanned(m: DirectorReadModels, day: PlanDay): List<GridBlock> =
+        unplannedWithCarry(m, day).map { it.first }
+
+    /**
+     * RM-5, with the page's `carriedOver` set (RM-41): each block of `unplannedSegments` and
+     * whether its band goes on past the day's midnight, which `dayBlocks` reports as `clipped` for
+     * the dial.
+     */
+    private fun unplannedWithCarry(
+        m: DirectorReadModels,
+        day: PlanDay,
+    ): List<Pair<GridBlock, Boolean>> {
         val zoneValue = m.zoneValue()
         val zone = DirectorReadModels.resolve(zoneValue)
         val previous =
@@ -65,7 +76,7 @@ internal object DayBlocks {
         val g: AvailabilityGrid = Availability.derive(JsonObject(params)).grid
         val h0 = g.slots.startEpoch
         val n = g.tag.size
-        val out = ArrayList<GridBlock>()
+        val out = ArrayList<Pair<GridBlock, Boolean>>()
         var i = 0
         while (i < n) {
             val tag = g.tag[i]
@@ -76,7 +87,10 @@ internal object DayBlocks {
             if (block != null && kind is JsonString && kind.value in VISIBLE) {
                 val a = maxOf(day.startEpoch, h0 + i * SLOT)
                 val b = minOf(day.endEpoch, h0 + end * SLOT)
-                if (b > a) out += block.copy(startEpoch = a, endEpoch = b)
+                if (b > a)
+                    out +=
+                        block.copy(startEpoch = a, endEpoch = b) to
+                            (h0 + i * SLOT < day.startEpoch || h0 + end * SLOT > day.endEpoch)
             }
             i = end
         }
@@ -91,6 +105,7 @@ internal object DayBlocks {
         val kind: JsonValue?,
         val title: JsonValue?,
         val refId: JsonValue?,
+        val carried: Boolean = false,
     )
 
     private fun stored(s: JsonValue?): List<Segment> {
@@ -109,8 +124,8 @@ internal object DayBlocks {
         }
     }
 
-    private fun preview(blocks: List<GridBlock>): List<Segment> =
-        blocks.map {
+    private fun preview(blocks: List<Pair<GridBlock, Boolean>>): List<Segment> =
+        blocks.map { (it, carried) ->
             Segment(
                 it.startEpoch,
                 it.endEpoch,
@@ -118,6 +133,7 @@ internal object DayBlocks {
                 it.meta?.kind,
                 it.meta?.title,
                 it.meta?.refId?.let(::JsonString),
+                carried,
             )
         }
 
@@ -130,7 +146,7 @@ internal object DayBlocks {
             sched === m.schedule &&
                 (e <= number(member(sched, "horizonStartEpoch")) ||
                     s >= number(member(sched, "horizonEndEpoch")))
-        val segments = if (previewDay) preview(unplanned(m, day)) else stored(sched)
+        val segments = if (previewDay) preview(unplannedWithCarry(m, day)) else stored(sched)
         val out = ArrayList<DayBlock>()
         for (g in segments) {
             if (g.endEpoch <= s || g.startEpoch >= e) continue
@@ -146,7 +162,7 @@ internal object DayBlocks {
                     g.title,
                     g.refId,
                     mealStartEpoch = if (meal) g.startEpoch else null,
-                    clipped = g.startEpoch < s || g.endEpoch > e,
+                    clipped = g.carried || g.startEpoch < s || g.endEpoch > e,
                 )
         }
         for (i in m.sessionsOf(sched)) {
