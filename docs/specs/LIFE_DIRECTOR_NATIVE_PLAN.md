@@ -471,6 +471,22 @@ each step.
 
 ### WP-LD6. Ledger, completion, misses (M, risk medium; engine)
 
+**Status: done** (branch `logic/ld6-ledger`, NativeApi 128); not wired to anything, the page is still the only writer of the ledger. Spec:
+`LIFE_DIRECTOR_LEDGER_SPEC.md` (engine spec part 7 in its own file: rules LED-1 to LED-22, defects LG01 to LG16, deviations DV-L1 to DV-L3,
+golden index, OQ-L1 to OQ-L4). Recorder `tools/gen_ld_ledger_golden.js` (LD1's method: the engine text with `compactLedger` hooked, run in
+the built page in Chromium and in node, every case twice; cases `tools/ld_ledger_cases.js`), 2,217 cases in
+`tests/fixtures/ld-ledger-golden.json.gz` (14 families: empty 19, event 313, transition 257, record 274, revoke 49, has 25, compact 15,
+reconcile 98, misses 51, miss 394, stream 135, dst 86, fuzz 400, malformed 101; the streams replay the host's flows (complete, repeat,
+revoke, reopen with the next revision, ad-hoc logs, skips, misses, tokens earned, spent and refunded) on engine plans in the 11 strict zones and
+across every 2026-2027 clock change, with the ledger compared after every step and 64 player ids); node agrees on every case; web test
+`tests/ld-ledger-golden.test.js`. Kotlin in `core/lifedirector` (`LedgerValues`, `CompletionLedger`, `QuestProgress`, `MissConsequences`)
+reproduces every case but the 8 malformed shapes its strict decoder refuses (`LedgerGoldenTest`, which pins that set; `LedgerHandTest`);
+64 source mutations, all caught (spec section 10). Findings: **a second award is possible** once the ledger holds 2,000 ids, because `recordCompletion`
+checks only event bodies and compaction moves old ids to `archivedIds` (LG01); undo and redo in the LifeMax log counts the session twice
+toward rest tokens, streaks and goal progress (LG02); the partial threshold is the preference in the ledger but 0.75 in quest and goal
+progress (LG06); a voluntary skip spends a rest token or drains HP like a miss (LG08); the transition table is used by nothing and disagrees
+with what `recordCompletion` accepts (LG05). Open: OQ-L1 to OQ-L4.
+
 Scope: `emptyLedger`, `completionEventId`, `recordCompletion` (ratio, partial, rest tokens, residual task), `revokeEvent`,
 `compactLedger`, `ledgerHas`, `reconcileQuestProgress`, `detectMisses`, `applyMissConsequence`, `canTransition`. Idempotency
 keys are the thing that must not drift: a different event id means a second award. Tests: event streams (complete, repeat,
