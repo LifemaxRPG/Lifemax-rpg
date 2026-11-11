@@ -98,6 +98,42 @@ class DirectorCommandsTest {
     }
 
     @Test
+    fun theMemoryBeforeAndACompletionsOptionsAreWhatNativeRunsOn() {
+        // a refusal saves nothing: the tab and the last save native was given are still there after it, unlike the page's
+        val r = ran.first { it.facts.op == "do" && it.facts.name == "goalPriority" && (it.facts.reply as JsonObject).members["ok"] == JsonBool.FALSE }
+        val week = r.facts.copy(before = with(r.facts.before, "tab", JsonString("week")))
+        assertEquals(listOf("do.goalPriority.session.tab"), paths(check(r, week)!!.verdict))
+        val failed = r.facts.copy(before = with(r.facts.before, "lastSave", JsonObject(mapOf("ok" to JsonBool.FALSE, "error" to JsonString("x")))))
+        assertTrue(paths(check(r, failed)!!.verdict).toString(), paths(check(r, failed)!!.verdict).all { it.startsWith("do.goalPriority.session.lastSave") })
+        // the voice's completion with other options: without XP native asks no award; silent, it says nothing
+        val f = ran.first { it.facts.op == "finish" }
+        val p = obj(f.facts.payload)
+        val opt = p.members["opt"] as? JsonObject ?: JsonObject(emptyMap())
+        fun withOpt(k: String) = f.facts.copy(payload = with(p, "opt", with(opt, k, JsonBool.of(k == "silent" || k == "quietRefusal").let { if (k == "awardXp") JsonBool.FALSE else it })))
+        assertTrue(paths(check(f, withOpt("awardXp"))!!.verdict).toString(), paths(check(f, withOpt("awardXp"))!!.verdict).first().startsWith("finish.calls"))
+        assertTrue(paths(check(f, withOpt("silent"))!!.verdict).toString(), paths(check(f, withOpt("silent"))!!.verdict).isNotEmpty())
+    }
+
+    @Test
+    fun thePagesAnswersAreGivenAsTheyWere() {
+        val failed = JsonObject(mapOf("awarded" to JsonBool.FALSE, "reason" to JsonString("HOST_SAVE_FAILED")))
+        val h = PageAnswers(listOf(CallFact("awardActivity", JsonArray(emptyList()), failed), CallFact("connected", JsonArray(emptyList()), JsonBool.TRUE)), listOf("id-1", "id-2"), "Europe/London", false)
+        val a = h.awardActivity(JsonObject(emptyMap()), "t")
+        assertFalse(a.awarded)
+        assertEquals("HOST_SAVE_FAILED", a.reason)
+        assertTrue(h.connected())
+        assertEquals(listOf("id-1", "id-2"), listOf(h.newId(), h.newId()))
+        assertEquals("Europe/London", h.deviceZone())
+        assertFalse(h.resolvesRetiredQuests)
+        assertTrue(h.mismatches.isEmpty())
+        assertFalse(h.connected()) // past the page's last call: noted, answered empty
+        assertEquals(listOf(2), h.mismatches)
+        // a host without retiredUntimedQuest: native asks it nothing, so the page's calls to it are left over
+        val r = ran.firstOrNull { it.facts.calls.any { c -> c.fn == "retiredUntimedQuest" } }
+        if (r != null) assertTrue(paths(check(r, r.facts.copy(retires = false))!!.verdict).toString(), paths(check(r, r.facts.copy(retires = false))!!.verdict).first().contains(".calls["))
+    }
+
+    @Test
     fun aTimingIsNotComparedAndAClockReadingIsTheCommandsMoment() {
         val r = ran.first { it.facts.op == "today" && it.facts.name == "replan" }
         val timed = Regex("\"computeTimeMs\":[0-9.]+").replace(r.after) { "\"computeTimeMs\":987.5" }
@@ -180,6 +216,11 @@ class DirectorCommandsTest {
         assertEquals("cmd.deviceZone", refused(text.replace(Regex("\"deviceZone\":\"[^\"]*\""), "\"deviceZone\":\"Mars/Base\"")).at)
         val calls = Regex("\"calls\":\\[\\[\"([a-zA-Z.]+)\",(\\d+),(\\d+)]").find(text)!!
         assertEquals(ShadowRefusal.OUT_OF_RANGE, refused(text.replaceFirst(calls.value, "\"calls\":[[\"${calls.groupValues[1]}\",99999,${calls.groupValues[3]}]")).reason)
+        val count = env(text).cmd!!.let { c -> (c.calls.size) }
+        val texts = Regex("\"texts\":\\[(.*?)],\"reply\"").find(text)!!.groupValues[1]
+        val n = (JsonReader.read("[$texts]") as JsonRead.Parsed).value.let { (it as JsonArray).items.size }
+        assertTrue(count > 0)
+        assertEquals(ShadowRefusal.OUT_OF_RANGE, refused(text.replaceFirst(calls.value, "\"calls\":[[\"${calls.groupValues[1]}\",$n,${calls.groupValues[3]}]")).reason)
         assertEquals(ShadowRefusal.NOT_JSON, refused(text.replaceFirst("\"texts\":[", "\"texts\":[" + JsonWriter.write(JsonString("{not json")) + ",")).reason)
         assertEquals(ShadowRefusal.OUT_OF_RANGE, refused(text.replaceFirst(calls.value, "\"calls\":[[\"no such host\",${calls.groupValues[2]},${calls.groupValues[3]}]")).reason)
     }
