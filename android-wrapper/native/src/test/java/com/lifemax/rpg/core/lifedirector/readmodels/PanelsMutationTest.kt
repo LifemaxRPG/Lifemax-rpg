@@ -79,7 +79,7 @@ class PanelsMutationTest {
             Mutation(words = words("\"APPOINTMENT\": 1", "\"APPOINTMENTS\": 1")),
         )
 
-    /** Study before reading in the icon table: a reading goal shows the study icon. */
+    /** A fitness goal drawn with another icon than the page's table gives it. */
     @Test
     fun theIconTableInAnotherOrderIsNoticed() =
         assertCaught(
@@ -140,9 +140,9 @@ class PanelsMutationTest {
             ),
         )
 
-    /** Handles' lengths kept for spans under a quarter hour (no "too short"). */
+    /** The readout's "Too short" retyped. */
     @Test
-    fun tooShortSpansShownAreNoticed() =
+    fun aRetypedReadoutWordIsNoticed() =
         assertCaught(
             setOf("handles"),
             50,

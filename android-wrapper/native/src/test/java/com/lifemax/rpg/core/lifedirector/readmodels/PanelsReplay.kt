@@ -2,7 +2,6 @@ package com.lifemax.rpg.core.lifedirector.readmodels
 
 import com.lifemax.rpg.core.lifedirector.KernelGolden
 import com.lifemax.rpg.core.save.JsonArray
-import com.lifemax.rpg.core.save.JsonBool
 import com.lifemax.rpg.core.save.JsonNull
 import com.lifemax.rpg.core.save.JsonNumber
 import com.lifemax.rpg.core.save.JsonObject
@@ -144,38 +143,6 @@ object PanelsReplay {
         }
     }
 
-    /**
-     * LifeMax as the page's host answered in the case (`out.host`); it notes which questions native
-     * asked, so they are compared with the page's too.
-     */
-    class RecordedHost(private val seen: JsonObject) : DirectorHostView {
-        val asked = LinkedHashSet<String>()
-
-        override fun capabilities(): HostCapabilities {
-            asked += "capabilities"
-            val c =
-                seen["capabilities"] as? JsonObject ?: return HostCapabilities(false, listOf("?"))
-            return HostCapabilities(
-                c["connected"] == JsonBool.TRUE,
-                (c["missing"] as JsonArray).items.map(::text),
-            )
-        }
-
-        override fun milestones(): List<Milestone> {
-            asked += "milestones"
-            val m = seen["milestones"] as? JsonArray ?: return emptyList()
-            return m.items.map {
-                val o = it as JsonObject
-                Milestone(
-                    (o["title"] as? JsonString)?.value,
-                    (o["desc"] as? JsonString)?.value,
-                    o["done"] == JsonBool.TRUE,
-                    o["locked"] == JsonBool.TRUE,
-                )
-            }
-        }
-    }
-
     /** Whatever replaces part of the read models in a mutation check (null: the real one). */
     class Mutation(
         val words: PanelWords? = null,
@@ -194,7 +161,7 @@ object PanelsReplay {
     /** The case's sections computed natively, in the recorder's order and form. */
     fun replay(c: Case, mutation: Mutation = Mutation()): JsonObject {
         val st = stateOf(c)
-        val host = RecordedHost(c.out["host"] as JsonObject)
+        val host = RecordedHostView(c.out["host"] as JsonObject)
         val models = DirectorReadModels(st, c.nowMillis, c.deviceZone, { _, _, _ -> null })
         val p = DirectorPanels(models, host, c.load, mutation.words ?: PanelWords.packaged)
         val out = LinkedHashMap<String, JsonValue>()

@@ -144,6 +144,7 @@ function defineCases(seeds) {
     set.push([['prefs'], prefs]);
     if (r() < 0.2) set.push([['ui', 'lab'], true]);
     if (r() < 0.15) set.push([['lastRejected'], { at: 1790000000, violations: pick(r, [['OVERLAP'], ['SLEEP', 'CAP_DAILY'], [], [{ code: 'X', n: 1.5 }]]) }]);
+    else if (r() < 0.1) set.push([['lastRejected'], null]);
     if (r() < 0.15 && st.schedule) set.push([['schedule', 'computeTimeMs'], pick(r, [0, 12.5, 1234, 0.1])]);
     extra.load = pick(r, LOADS);
   };
@@ -156,7 +157,7 @@ function defineCases(seeds) {
     if (r() < 0.2) next.push({ id: 'sleep-we', kind: 'SLEEP', title: 'Sleep', days: [5, 6], startMin: pick(r, [0, 1410, 60]), durationMin: pick(r, [480, 540]) });
     if (r() < 0.12) for (let k = next.length - 1; k >= 0; k--) if (next[k].kind === 'SLEEP') next.splice(k, 1);
     if (r() < 0.3) next.push({ id: 'c' + Math.floor(r() * 100), kind: pick(r, ['WORK', 'CLASS', 'APPOINTMENT', 'UNAVAILABLE', 'GYM']), title: pick(r, ['Shift', 'Lectures', 'Choir', 'Busy', '']),
-      days: pick(r, [[1, 2, 3, 4, 5], [0, 6], [0, 1, 2, 3, 4, 5, 6], [6], [2, 4], [5, 6], [0, 1, 2, 3, 4]]), startMin: pick(r, [480, 540, 1320, 1410, 0, 750]),
+      days: pick(r, [[1, 2, 3, 4, 5], [0, 6], [0, 1, 2, 3, 4, 5, 6], [6], [2, 4], [5, 6], [0, 1, 2, 3, 4], [6, 0], [5, 1, 3], [3, 2, 1, 5, 4]]), startMin: pick(r, [480, 540, 1320, 1410, 0, 750]),
       durationMin: pick(r, [60, 240, 480, 600, 720]), commuteMin: pick(r, [0, 0, 15, 45]), load: pick(r, ['MIXED_MODERATE', 'LIGHT', 'PHYSICAL_HEAVY']) });
     if (r() < 0.15) next.push({ id: 'rot' + Math.floor(r() * 10), kind: 'WORK', title: 'Rota', startMin: pick(r, [420, 1140]), durationMin: 720,
       rotation: { anchorDate: pick(r, ['2026-10-01', '2026-03-29', '2027-01-15']), cycleLength: pick(r, [8, 4, 14]), activeDays: pick(r, [[0, 1, 2, 3], [0, 1], [0, 2, 4, 6]]) } });
