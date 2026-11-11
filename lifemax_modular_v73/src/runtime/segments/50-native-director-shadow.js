@@ -7,19 +7,27 @@
    - director.read, at most once a minute after a save: the page's own day, now and week read models with the state they read and the
      XP previews they asked for; native computes the same and compares (SH-12 to SH-14);
    - director.plan and director.repair: the engine's input and its answer; native plans (or repairs) from the same input and compares,
-     only when the input is small enough (SH-15 to SH-17, SH-24).
+     only when the input is small enough (SH-15 to SH-17, SH-24);
+   - director.cmd and director.tick: a command (Do.*, Today.*, a completion, logging for today) or the tick (and its three steps when
+     the Overview's glance runs them) with the state before it, its payload and moment, what the host and the store answered it, its
+     reply and the state after; native runs its own host commands on the same state against a host that gives the page's answers
+     and compares the reply, every host call with its arguments, the controller's memory and the state after (SH-36 to SH-49).
    Native never writes, answers only a state word, and keeps redacted counts; nothing native computes is shown. Every step here is
    caught; envelopes go after the action with setTimeout(0) and are not awaited. Three faults, or five actions in a row over the time
    budget (30 ms for each MB of the state's text, never under 50 ms), turn the page side off until the page loads again. */
 (function () {
   const CAPABILITY = "director.shadow.v1", SETTING = "nativeDirectorShadow", PROTOCOL = 1, SCOPE = "director";
+  const TICKS = { tick: 1, syncHost: 1, processMisses: 1, maybeRollover: 1 };
+  /* LifeMaxHost's and the store's functions Life Director's commands call (LIFE_DIRECTOR_HOST_SPEC HC-4), as native's host has them */
+  const HOST_FNS = ["connected", "toast", "playerId", "readQuests", "readPlanSessions", "awardActivity", "completeQuest", "activitiesSince", "activityExists", "milestones", "retiredUntimedQuest"];
   const LIMIT = { envelope: 512 * 1024, part: 256 * 1024, parts: 32, slice: 200000, base: 8 * 1024 * 1024, faults: 3, slowMs: 50, slowMsPerMB: 30, slowRun: 5, queue: 16, readEveryMs: 60000, engine: 384 * 1024 };
   /* where the state is split into parts (SH-5): the plan's sessions and history, the ledger's events and order, the change log */
   const SPLIT = { schedule: { scheduledInstances: 1, historyInstances: 1 }, ledger: { events: 1, order: 1 }, changeLog: 1 };
   let plugin = null, hello = null, live = false, stopped = "", sid = "", seq = 0, head = 0, cache = null, needBase = true, faults = 0, slowRun = 0, slowMs = LIMIT.slowMs;
-  let summary = null, starting = false, timer = 0, lastRead = -Infinity, readDue = false;
+  let summary = null, starting = false, timer = 0, lastRead = -Infinity, readDue = false, recording = null, copyEpoch = 0;
+  const told = new WeakMap(); // a take-back native has been sent in full, since the copy's last base (SH-41)
   const outbox = [];
-  const stats = { sent: 0, bases: 0, reads: 0, plans: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
+  const stats = { sent: 0, bases: 0, reads: 0, plans: 0, commands: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
   const skip = (why) => (stats.skipped[why] = (stats.skipped[why] || 0) + 1);
   const available = () => {
     try { return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("NativeShadow") ? lmaPlugin("NativeShadow") : null; } catch (_) { return null; }
@@ -89,8 +97,129 @@
         queue({ kind: "director." + kind, input: text, output: o, zone, now, t0, cost: cost + performance.now() - t2 });
       };
     },
+    /** a command about to run (logic.js command()): its state, payload and moment now, the host's answers while it runs, and a
+        handle whose end(out, err) takes its answer (or throw) and the state after */
+    command(op, name, payload, vars) {
+      if (!live || recording) return null;
+      const t = performance.now();
+      const V = vars();
+      if (!V || !V.ST || !V.ui) { skip("noState"); return null; }
+      const r = { kind: TICKS[op] ? "director.tick" : "director.cmd", op, name: String(name || ""), payload: JSON.stringify(payload === undefined ? null : payload) || "null",
+        t0: Date.now(), zone: zone(), planZone: String((V.ST.availability && V.ST.availability.timezone) || zone()), before: capture(V.ST, SPLIT),
+        sessionBefore: session(V), takeBackBefore: V.takeBack || null, calls: [], texts: [], index: new Map(), ids: [], broken: false, extra: 0 };
+      r.planOffset = offset(Math.floor(r.t0 / 1000), r.planZone);
+      const H = typeof LifeMaxHost !== "undefined" ? LifeMaxHost : null;
+      r.retires = !!(H && typeof H.retiredUntimedQuest === "function");
+      const undo = [];
+      recording = { r, vars, undo, depth: 0 };
+      try {
+        if (H) for (const fn of HOST_FNS) if (typeof H[fn] === "function") patch(undo, H, fn, (real) => host(fn, real));
+        if (V.store) wrapStore(undo, V.store);
+        if (typeof LifeDirectorStore !== "undefined" && typeof LifeDirectorStore.create === "function")
+          patch(undo, LifeDirectorStore, "create", (real) => function () { const s = real.apply(this, arguments); try { wrapStore(undo, s); } catch (_) { r.broken = true; } return s; });
+        const C = globalThis.crypto;
+        if (C && typeof C.randomUUID === "function") patch(undo, C, "randomUUID", (real) => function () { const v = real.apply(this, arguments); r.ids.push(v); return v; });
+      } catch (_) { restore(); return null; }
+      r.cost = performance.now() - t;
+      return {
+        end(out, err) {
+          restore();
+          if (!live) return;
+          const t2 = performance.now(), V2 = vars();
+          r.t1 = Date.now();
+          if (r.broken) { skip("host"); return; }
+          let reply = err ? { threw: (err && err.name) || "Error", message: String(err && err.message) } : out === undefined ? null : out;
+          if ((op === "finish" || op === "logToday") && reply && typeof reply === "object" && !err && "ledger" in reply) reply = Object.assign({}, reply, { ledger: undefined }); // the ledger is the state's (SH-38)
+          r.reply = JSON.stringify(reply) || "null";
+          r.after = capture(V2.ST, SPLIT);
+          r.sessionAfter = session(V2);
+          r.takeBackAfter = V2.takeBack || null;
+          r.cost += r.extra + performance.now() - t2;
+          queue(r);
+        },
+      };
+    },
   };
   window.LmaDirectorShadow = api;
+  /* ---------- a command's host and store calls (SH-37): recorded as native's recording host notes them; the answers are the real ones ---------- */
+  function patch(undo, obj, key, wrap) {
+    const own = Object.prototype.hasOwnProperty.call(obj, key), old = obj[key];
+    obj[key] = wrap(old);
+    undo.push(() => { if (own) obj[key] = old; else delete obj[key]; });
+  }
+  function restore() {
+    const c = recording;
+    recording = null;
+    if (c) for (const u of c.undo.reverse()) { try { u(); } catch (_) { /* the next one still goes back */ } }
+  }
+  /* a JSON text kept once per command; calls name it by its place */
+  function textIndex(r, v) {
+    const t = JSON.stringify(v === undefined ? null : v) || "null";
+    let k = r.index.get(t);
+    if (k === undefined) { k = r.texts.length; r.texts.push(t); r.index.set(t, k); }
+    return k;
+  }
+  function note(fn, args, out) {
+    const c = recording;
+    if (!c) return;
+    const t = performance.now();
+    try { c.r.calls.push([fn, textIndex(c.r, args), textIndex(c.r, out)]); } catch (_) { c.r.broken = true; }
+    c.r.extra += performance.now() - t;
+  }
+  /* only the command's own calls: not one the host makes of itself (H.playerId asks H.connected), nor the screen's drawing */
+  const counted = () => { const c = recording; if (!c || c.depth) return false; try { return !c.vars().presenting; } catch (_) { return false; } };
+  function host(fn, real) {
+    return function () {
+      if (!counted()) return real.apply(this, arguments);
+      const c = recording, args = Array.prototype.slice.call(arguments);
+      c.depth++;
+      let out;
+      try { out = real.apply(this, arguments); } catch (e) { c.r.broken = true; throw e; } finally { c.depth--; }
+      /* everything the page reads of activitiesSince(null) is whether there is one and the latest date (logic.js syncHost) */
+      if (fn === "activitiesSince" && args[0] == null && Array.isArray(out)) note(fn, args, out.length ? [out.reduce((m, a) => (a && m && a.iso > m.iso ? a : m), out[0])] : []);
+      else note(fn, args, out);
+      return out;
+    };
+  }
+  function wrapStore(undo, s) {
+    if (!s) return;
+    const w = (key, f) => { if (typeof s[key] === "function") patch(undo, s, key, f); };
+    const own = (real, f) => function () {
+      if (!counted()) return real.apply(this, arguments);
+      recording.depth++;
+      try { return f.apply(this, [real].concat(Array.prototype.slice.call(arguments))); } finally { if (recording) recording.depth--; }
+    };
+    w("load", (real) => own(real, function (real, o) { const r = real.call(this, o); note("store.load", [o], { state: r.state, report: r.report }); return r; }));
+    w("save", (real) => own(real, function (real, st) { const r = real.call(this, st); note("store.save", [], { ok: r.ok, error: r.error }); return r; }));
+    w("clear", (real) => own(real, function (real, o) { const r = real.call(this, o); note("store.clear", [o], { ok: r.ok, error: r.error }); return r; }));
+    w("exportJson", (real) => own(real, function (real, st) { const r = real.call(this, st); note("store.exportJson", [], r); return r; }));
+    w("importJson", (real) => own(real, function (real, text) {
+      let r;
+      try { r = real.call(this, text); } catch (e) { note("store.importJson", [text], { error: e.message }); throw e; }
+      note("store.importJson", [text], { state: r });
+      return r;
+    }));
+  }
+  /* the controller's memory between commands (LIFE_DIRECTOR_HOST_SPEC HC-2), as native's HostState holds it; a take-back as its
+     digest (SH-41) */
+  function session(V) {
+    const ui = V.ui, n = ui.notice, t = V.takeBack, s = V.lastSave || {};
+    return { banner: ui.banner || null, notice: n ? { id: n.id, text: n.text, at: n.at } : null, tab: ui.tab, dayIdx: ui.dayIdx, pendingDial: ui.pendingDial || null,
+      takeBack: t ? { id: t.id, text: t.text, at: t.at, digest: takeBackDigest(t) } : null, takenBackOp: V.takenBackOp === undefined ? null : V.takenBackOp,
+      lastSave: { ok: s.ok, error: s.error }, lastFinishRefusal: V.lastFinishRefusal === undefined ? null : V.lastFinishRefusal };
+  }
+  const digests = new WeakMap();
+  /* FNV-1a over the UTF-16 code units, with the length: the take-back's plan and ledger as JSON text and the plan it left */
+  function digest(s) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return s.length.toString(36) + "." + (h >>> 0).toString(36);
+  }
+  function takeBackDigest(t) {
+    let d = digests.get(t);
+    if (!d) { d = digest(JSON.stringify(t.before) || "") + ":" + digest(String(t.left)); digests.set(t, d); }
+    return d;
+  }
   function queue(r) {
     if (!live) return;
     if (outbox.length >= LIMIT.queue) { outbox.length = 0; cache = null; needBase = true; skip("queue"); }
@@ -173,8 +302,35 @@
     head = s;
     cache = tree;
     needBase = false;
+    copyEpoch++;
     stats.bases++;
     return true;
+  }
+  /* a command (SH-36): the changes to the state before it, then (cmd.after) from before to after; the take-back in full once per copy */
+  function sendCommand(r) {
+    if (needBase && !sendBase(r.before)) return;
+    const tb = r.takeBackBefore, full = !!tb && told.get(tb) !== copyEpoch;
+    const before = Object.assign({}, r.sessionBefore);
+    if (full) before.takeBack = Object.assign({}, before.takeBack, { before: tb.before, left: String(tb.left) });
+    const cmd = (ops) => ',"cmd":{"op":' + JSON.stringify(r.op) + ',"name":' + JSON.stringify(r.name) + ',"payload":' + r.payload + ',"nowMs":' + r.t0 +
+      ',"deviceZone":' + JSON.stringify(r.zone) + ',"planZone":' + JSON.stringify(r.planZone) + ',"planOffset":' + JSON.stringify(r.planOffset) + ',"retires":' + r.retires +
+      ',"ids":' + JSON.stringify(r.ids) + ',"calls":' + JSON.stringify(r.calls) + ',"texts":' + JSON.stringify(r.texts) + ',"reply":' + r.reply +
+      ',"session":{"before":' + JSON.stringify(before) + ',"after":' + JSON.stringify(r.sessionAfter) + '},"after":' + JSON.stringify(ops) + "}";
+    const flags = Math.floor(r.t0 / 1000) !== Math.floor(r.t1 / 1000) ? ["second"] : [];
+    const afterOps = changes(r.before, r.after, [], []);
+    let e = envelope(r, changes(cache, r.before, [], []), cmd(afterOps), flags);
+    if (e.text.length > LIMIT.envelope) {
+      seq--;
+      if (!sendBase(r.before)) return;
+      e = envelope(r, [], cmd(afterOps), flags);
+      if (e.text.length > LIMIT.envelope) { seq--; skip("size"); return; } // native holds the state before; the next change starts there
+    }
+    head = e.s;
+    cache = r.after;
+    if (full) told.set(tb, copyEpoch);
+    stats.commands++;
+    stats.sent++;
+    call("observe", e.text);
   }
   /* a state change and its envelope: a base first when native has no copy, or when the change alone is too large to send */
   function withState(r, tree, extra, flags) {
@@ -209,7 +365,8 @@
           const tree = capture(p.st, SPLIT);
           stats.reads++;
           withState(r, tree, ',"read":' + JSON.stringify(p.read), Math.floor(p.t0 / 1000) !== Math.floor(p.t1 / 1000) ? ["second"] : []);
-        } else {
+        } else if (r.kind === "director.cmd" || r.kind === "director.tick") sendCommand(r);
+        else {
           if (needBase) { skip("noCopy"); continue; } // native refuses every envelope until it has a copy; the next save sends one
           const engine = '{"planZone":' + JSON.stringify(r.zone) + ',"planOffset":' + JSON.stringify(offset(r.now, r.zone)) + ',"input":' + r.input + ',"output":' + r.output + "}";
           const e = envelope(r, [], ',"engine":' + engine);
@@ -242,6 +399,7 @@
 
   /* ---------- the switch, the handshake and the Settings card ---------- */
   function stop(why) {
+    restore();
     live = api.live = false;
     stopped = why;
     outbox.length = 0;

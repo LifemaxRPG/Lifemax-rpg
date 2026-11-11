@@ -2,7 +2,8 @@
    tests of the native Life Director check. An init script: script({...}) returns the text for page.addInitScript. It sets the owner's
    switch (lifemax_android_prefs_v1.nativeDirectorShadow) unless told not to, offers a Capacitor with NativeShadow only, and keeps a copy
    built exactly as native's TextMirror does: a base's changes from nothing, then each envelope's changes laid over it, applied only on
-   base === the copy's seq; the copy is stitched into one text after each save and read (window.__dsMock.texts). Every message is kept
+   base === the copy's seq; the copy is stitched into one text after each save and read, and before and after each command
+   (window.__dsMock.texts). Every message is kept
    as the page sent it (window.__dsMock.stream), so a test can write them to a fixture the Kotlin tests replay.
    Modes: record (answers like native), throw (every method throws at once), reject (every promise rejects), stale (native's
    fingerprint differs), nocap (no director.shadow.v1), absent (no plugin). resyncAt: envelope numbers answered resync. */
@@ -63,7 +64,11 @@ function mock(opts) {
       if (o.resyncAt.includes(m.envelopes.length)) { m.copy = null; m.refused.push('asked'); return answer({ accepted: false, resync: true, reason: 'gap' }); }
       if (e.kind === 'director.plan' || e.kind === 'director.repair') return answer(m.copy ? { accepted: true } : { accepted: false, resync: true, reason: 'noBase' });
       if (!m.copy || e.base !== m.seq) { m.refused.push(!m.copy ? 'noBase' : 'gap'); m.copy = null; return answer({ accepted: false, resync: true, reason: 'noBase' }); }
-      try { m.copy = apply(m.copy, e.ops); m.seq = e.seq; m.texts.push({ kind: e.kind, seq: e.seq, bytes: e.bytes, text: stitch(m.copy) }); }
+      try {
+        m.copy = apply(m.copy, e.ops); m.seq = e.seq;
+        if (e.cmd) { const before = stitch(m.copy); m.copy = apply(m.copy, e.cmd.after); m.texts.push({ kind: e.kind, seq: e.seq, before, text: stitch(m.copy) }); }
+        else m.texts.push({ kind: e.kind, seq: e.seq, bytes: e.bytes, text: stitch(m.copy) });
+      }
       catch (err) { m.refused.push(String(err.message)); m.copy = null; return answer({ accepted: false, resync: true, reason: 'badDelta' }); }
       return answer({ accepted: true });
     },
