@@ -541,7 +541,7 @@ owns it (the page's `localStorage` is not reachable from native without the web 
 
 ### WP-LD8. Read models from state (M, risk low-medium)
 
-**Status: part a done** (branch `logic/ld8a-readmodels`, NativeApi 129); not wired to anything, the page still computes what it shows;
+**Status: part a done** (branch `logic/ld8a-readmodels`, NativeApi 131); not wired to anything, the page still computes what it shows;
 part b (goals, quests, settings, time, forms, dial stops and handles) not started. Spec: `LIFE_DIRECTOR_READMODELS_SPEC.md` (rules RM-1
 to RM-20, defects RD01 to RD14, no native deviations, golden index, mutation checks, OQ-RM1 to OQ-RM4). Recorder
 `tools/gen_ld_readmodels_golden.js`: the controller module of `logic.js` (`tools/ld_logic_vm.js`, with one statement added in the
