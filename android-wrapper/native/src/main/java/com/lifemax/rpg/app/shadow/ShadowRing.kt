@@ -14,9 +14,11 @@ import java.security.SecureRandom
  * never past [ShadowLimits.RING_MAX_BYTES]. The mirror of the save is never here.
  *
  * @param root the no-backup folder (`Context.getNoBackupFilesDir()`); a test passes a temp folder.
+ * @param folder the check's own folder in it: the economy's, or the Life Director check's
+ *   (`director-shadow`, LIFE_DIRECTOR_SHADOW_SPEC SH-30), each with its own switch and counts.
  */
-class ShadowRing(root: File) {
-    private val dir = File(root, FOLDER)
+class ShadowRing(root: File, folder: String = FOLDER) {
+    private val dir = File(root, folder)
 
     /** The ring file. */
     val file = File(dir, NAME)
@@ -58,8 +60,8 @@ class ShadowRing(root: File) {
         }
     }
 
-    private companion object {
+    companion object {
         const val FOLDER = "economy-shadow"
-        const val NAME = "ring.json"
+        private const val NAME = "ring.json"
     }
 }

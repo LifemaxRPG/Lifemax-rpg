@@ -16,8 +16,10 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.lifemax.rpg.app.shadow.DirectorShadowWorker
 import com.lifemax.rpg.app.shadow.ShadowRing
 import com.lifemax.rpg.app.shadow.ShadowWorker
+import com.lifemax.rpg.core.directorshadow.DirectorShadowLimits
 import com.lifemax.rpg.core.quests.QuestContentLoader
 import com.lifemax.rpg.core.quests.QuestContentRead
 import com.lifemax.rpg.core.shadow.ShadowAccept
@@ -37,11 +39,16 @@ import java.util.concurrent.ExecutorService
  * `saveCase` writes one difference's unredacted case (decision O-4) to a file the owner picks in
  * the system's file picker, never on its own and never anywhere else, and answers ok once the file
  * is written; `clear` answers ok once the empty ring is on disk.
+ *
+ * The Life Director check (capability `director.shadow.v1`, LIFE_DIRECTOR_SHADOW_SPEC SH-1) joins
+ * the same plugin: a call with `scope: "director"` goes to its own [DirectorShadowWorker] (its own
+ * switch, counts and ring, on the same background thread); every other call is the economy's.
  */
 @CapacitorPlugin(name = "NativeShadow")
 class NativeShadowPlugin : Plugin() {
     private var executor: ExecutorService? = null
     private var worker: ShadowWorker? = null
+    private var director: DirectorShadowWorker? = null
 
     override fun load() {
         val context = context.applicationContext
@@ -58,7 +65,19 @@ class NativeShadowPlugin : Plugin() {
                 batterySaver = { batterySaver(context) },
                 open = ShadowWorker.opener(::fingerprint, versionCode(context), nativeApi()),
             )
+        director =
+            DirectorShadowWorker(
+                executor = pool,
+                ring = ShadowRing(context.noBackupFilesDir, DirectorShadowWorker.FOLDER),
+                now = System::currentTimeMillis,
+                batterySaver = { batterySaver(context) },
+                open = DirectorShadowWorker.opener(versionCode(context), nativeApi()),
+            )
     }
+
+    /** The Life Director check's worker when the call names its scope, else null. */
+    private fun directorOf(call: PluginCall): DirectorShadowWorker? =
+        if (call.getString("scope") == DirectorShadowLimits.SCOPE) director else null
 
     @PluginMethod
     fun handshake(call: PluginCall) {
@@ -67,7 +86,7 @@ class NativeShadowPlugin : Plugin() {
             call.resolve(
                 JSObject()
                     .put("protocol", h.protocol)
-                    .put("capabilities", JSArray(h.capabilities))
+                    .put("capabilities", JSArray(h.capabilities + DirectorShadowLimits.CAPABILITY))
                     .put("fingerprint", h.fingerprint)
                     .put("state", h.state.word)
                     .maybe("reason", h.reason)
@@ -78,25 +97,35 @@ class NativeShadowPlugin : Plugin() {
     /** `{text}`: the configure message; answered once the switch state is in the ring. */
     @PluginMethod
     fun configure(call: PluginCall) {
-        val w = worker ?: return call.reject("unavailable")
         val text = call.getString("text") ?: return call.resolve(refused("missingText"))
+        directorOf(call)?.let { d ->
+            return d.configure(text) { a, stored -> call.resolve(answer(a).put("ok", a.ok && stored)) }
+        }
+        val w = worker ?: return call.reject("unavailable")
         w.configure(text) { a, stored -> call.resolve(answer(a).put("ok", a.ok && stored)) }
     }
 
     /** `{text}`: one base part. */
     @PluginMethod
     fun base(call: PluginCall) {
-        val w = worker ?: return call.reject("unavailable")
         val text = call.getString("text") ?: return call.resolve(refused("missingText"))
+        directorOf(call)?.let { d -> return d.base(text) { call.resolve(answer(it)) } }
+        val w = worker ?: return call.reject("unavailable")
         w.base(text) { call.resolve(answer(it)) }
     }
 
     /** `{text}`: one envelope; answered at once, the work happens on the worker. */
     @PluginMethod
     fun observe(call: PluginCall) {
+        val d = directorOf(call)
         val w = worker ?: return call.reject("unavailable")
         val text = call.getString("text")
-        val a = if (text == null) ShadowAccept(false, true, "missingText") else w.observe(text)
+        val a =
+            when {
+                text == null -> ShadowAccept(false, true, "missingText")
+                d != null -> d.observe(text)
+                else -> w.observe(text)
+            }
         call.resolve(
             JSObject()
                 .put("accepted", a.accepted)
@@ -109,7 +138,9 @@ class NativeShadowPlugin : Plugin() {
     @PluginMethod
     fun summary(call: PluginCall) {
         val w = worker ?: return call.reject("unavailable")
-        w.summary { s ->
+        val ask: ((com.lifemax.rpg.core.shadow.ShadowSummary) -> Unit) -> Unit =
+            directorOf(call)?.let { d -> d::summary } ?: w::summary
+        ask { s ->
             val out =
                 JSObject()
                     .put("v", 1)
@@ -158,6 +189,7 @@ class NativeShadowPlugin : Plugin() {
     /** Empties the ring; ok only once the empty ring is on disk. */
     @PluginMethod
     fun clear(call: PluginCall) {
+        directorOf(call)?.let { d -> return d.clear { stored -> call.resolve(JSObject().put("ok", stored)) } }
         val w = worker ?: return call.reject("unavailable")
         w.clear { stored -> call.resolve(JSObject().put("ok", stored)) }
     }
@@ -166,13 +198,16 @@ class NativeShadowPlugin : Plugin() {
     @PluginMethod
     fun copyReport(call: PluginCall) {
         val w = worker ?: return call.reject("unavailable")
-        w.report { text ->
+        val d = directorOf(call)
+        val label = if (d != null) DIRECTOR_REPORT_LABEL else REPORT_LABEL
+        val build: ((String) -> Unit) -> Unit = d?.let { { a: (String) -> Unit -> it.report(answer = a) } } ?: { a -> w.report(answer = a) }
+        build { text ->
             bridge.executeOnMainThread {
                 val clipboard =
                     context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                 val ok =
                     try {
-                        clipboard?.setPrimaryClip(ClipData.newPlainText(REPORT_LABEL, text))
+                        clipboard?.setPrimaryClip(ClipData.newPlainText(label, text))
                         clipboard != null
                     } catch (_: RuntimeException) {
                         false
@@ -237,11 +272,13 @@ class NativeShadowPlugin : Plugin() {
 
     override fun handleOnStop() {
         worker?.flush()
+        director?.flush()
         super.handleOnStop()
     }
 
     override fun handleOnDestroy() {
         worker?.flush()
+        director?.flush()
         executor?.shutdown()
         super.handleOnDestroy()
     }
@@ -260,6 +297,7 @@ class NativeShadowPlugin : Plugin() {
 
     private companion object {
         const val REPORT_LABEL = "LifeMax economy check report"
+        const val DIRECTOR_REPORT_LABEL = "LifeMax Life Director check report"
         const val CASE_MIME = "application/json"
         val CASE_ID = Regex("m-[0-9]{1,9}")
 
