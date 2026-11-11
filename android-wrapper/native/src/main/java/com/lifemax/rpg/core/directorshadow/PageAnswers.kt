@@ -16,13 +16,13 @@ import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonValue
 
 /**
- * The host a command runs against in the check (SH-37): every call is answered with what the
- * page's host and store answered at the same place of the same command ([calls], in order), as the
- * host golden's fake does, so native's commands meet exactly the world the page met. Nothing here
+ * The host a command runs against in the check (SH-37): every call is answered with what the page's
+ * host and store answered at the same place of the same command ([calls], in order), as the host
+ * golden's fake does, so native's commands meet exactly the world the page met. Nothing here
  * reaches the economy, the quests, the store or the screen: native never awards, never writes and
- * never shows (SH-34). A call of another name than the page's at that place, or one past the
- * page's last, is noted in [mismatches] and answered with an empty value; [ids] are the ids the
- * page minted, in order.
+ * never shows (SH-34). A call of another name than the page's at that place, or one past the page's
+ * last, is noted in [mismatches] and answered with an empty value; [ids] are the ids the page
+ * minted, in order.
  */
 class PageAnswers(
     private val calls: List<CallFact>,
@@ -71,12 +71,22 @@ class PageAnswers(
 
     override fun awardActivity(event: JsonValue, title: String?): AwardReply {
         val o = take("awardActivity")
-        return AwardReply(bool(field(o, "awarded")), str(field(o, "reason")), str(field(o, "activityId")), num(field(o, "xp")))
+        return AwardReply(
+            bool(field(o, "awarded")),
+            str(field(o, "reason")),
+            str(field(o, "activityId")),
+            num(field(o, "xp")),
+        )
     }
 
     override fun completeQuest(hostRef: JsonValue): QuestCompletion {
         val o = take("completeQuest")
-        return QuestCompletion(bool(field(o, "completed")), str(field(o, "name")), num(field(o, "xp")), str(field(o, "reason")))
+        return QuestCompletion(
+            bool(field(o, "completed")),
+            str(field(o, "name")),
+            num(field(o, "xp")),
+            str(field(o, "reason")),
+        )
     }
 
     override fun activitiesSince(cursor: String?) =
@@ -99,7 +109,8 @@ class PageAnswers(
     override val resolvesRetiredQuests: Boolean
         get() = retires
 
-    override fun retiredUntimedQuest(ref: JsonValue): JsonValue? = take("retiredUntimedQuest")?.takeIf { it != JsonNull }
+    override fun retiredUntimedQuest(ref: JsonValue): JsonValue? =
+        take("retiredUntimedQuest")?.takeIf { it != JsonNull }
 
     /** The page's ids in order; past them a fixed text, which the comparison then shows. */
     override fun newId(): String = ids.getOrNull(minted++) ?: "native-id-$minted"
@@ -122,7 +133,8 @@ class PageAnswers(
 
     override fun saveState(state: JsonValue) = saved(take("store.save"))
 
-    override fun clearState(playerId: String, zone: String, now: Double) = saved(take("store.clear"))
+    override fun clearState(playerId: String, zone: String, now: Double) =
+        saved(take("store.clear"))
 
     override fun exportBackup(state: JsonValue) = str(take("store.exportJson")) ?: ""
 

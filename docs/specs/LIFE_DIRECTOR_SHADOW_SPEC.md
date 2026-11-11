@@ -285,14 +285,37 @@ and Clear (Clear asks in the card first). The demo turns it off (the plugin is a
   `native-director`, `director-finish`, `native-settings` (123), `native-shadow` (60), `native-shadow-card` (54),
   `native-shadow-transparent`, `demo-mode`.
 
+Stage 2 (WP-LD12b):
+
+- Page: `tests/native-director-shadow.test.js` now 35 checks. Added: 21 commands a native Today, My time and Settings send, in a
+  person's order (pin and its repeat, skip, take-back, skip again, done and done again, log for today and its repeat, the timer's
+  start, pause and cancel, block hours, energy, re-plan, a goal's priority, a rest day, intensity, a custom goal, a backup, a gone
+  goal), each one envelope with its op, name and payload, native's copy the page's state before and after it byte for byte, its reply;
+  a done's award, quest read, save and toast with the award's arguments and answer; the take-back in full once, then by digest; nothing
+  drawn counted; no command across a second; the tick on screen with an activity logged elsewhere taken in; the glance's three steps,
+  quiet ones once a minute; the timer's own finish once a minute and the host itself again after a command. The lived-in day's stream
+  (`director-shadow-stream.json.gz`, re-recorded) now holds 22 commands and 26 ticks besides the saves, reads, plans and repairs.
+- Kotlin: 58 tests in `core/directorshadow` and `DirectorShadowWorkerTest` (stage 1's 44, `DirectorChecksTest` reading commands in the
+  stream, and `DirectorCommandsTest`, 14): every command and tick of the day replays to the page (reply, calls, memory, state); a reply,
+  a missing, extra or other host call, an award's arguments, an award the economy refused (native then words and records it otherwise),
+  the state and the memory after, the memory before (a tab, a failed save), a completion's options, the clock window at both ends,
+  `computeTimeMs`, the take-back's digest and an unknown one, `tzdata`, an unknown op, the tick following LifeMax's log, a host without
+  `retiredUntimedQuest`, `PageAnswers` itself, `second`, sampling, redaction of what commands carried, and malformed `cmd` members.
+- Mutation checks: 34 source mutations of the new code (`CommandCheck`, `PageAnswers`, the `cmd` reader, the session's command path, `JsonPaths`' skip and clock rule), each compiled over the built main classes and the tests above run: all 34 compiled; 33 are caught. The survivor is equivalent: the ledger left out of every reply instead of only a completion's (no other reply has a `ledger`). The first sweep left 10 alive; the clock window's end, the memory before (a tab, a failed save), a completion's options, `PageAnswers` itself, a host without `retiredUntimedQuest` and a call index at the end were added for them.
+- Unchanged with `logic.js`'s command hooks: `ld-host-golden` and `ld-timer-golden` (re-record in Chromium and compare: the vm's hooks
+  are still found once), and the earlier list.
+
 ## 8. Deviations from the economy check's plan
 
 `ECONOMY_SHADOW_PLAN.md` section 7 sketched how this check joins; built differently, each for a reason:
 
 - **Its own ring, switch and card** instead of the same ring and a second line on the economy's card: the owner can run either check
   alone, a stop of one (slow, errors) does not stop the other, and the economy card's tests and native fixtures stay as they are.
-- **Its own `seq` per page session** instead of one across both scopes: no envelope here touches the economy's keys (commands that award,
-  `scope: "both"`, are 5.1 C), so one ordered stream is not needed yet.
+- **Its own `seq` per page session** instead of one across both scopes: no envelope here touches the economy's keys. Stage 2 compares
+  commands that award, but with the page's own award answer (SH-48), so one ordered stream is still not needed; `scope: "both"` would
+  need it.
+- **Commands as one envelope each** (`director.cmd`, `director.tick`) instead of `director.award` as an economy kind (section 7 there):
+  the award is one call among a command's host calls here.
 - **The read shadow is an envelope** (`director.read`, with the state it read) instead of a `shadowSeq` added to the projection: the
   projection only carries `week` while the native Life Director screen covers Week, and many owners will not use that screen.
 - **The state is sent as text parts** (SH-5) instead of JSON values per top-level key, so native has the page's exact saved text for the
@@ -306,6 +329,14 @@ and Clear (Clear asks in the card first). The demo turns it off (the plugin is a
   words or logic without raising the version would show as differences rather than `stale`. Recommended: raise `ENGINE_VERSION` with any
   engine change, and accept that word changes show as differences until the app matches (they are visible in the report as `read.*`).
 - **OQ-S2** Exit criteria (plan 5.1 point 4): 30 consecutive days with zero unexplained differences, covering a weekly rollover, a clock
-  change or zone change, a skip with take-back, a missed block with regroup and a background timer. The last three need 5.1 C (commands
-  and tick); recommended to count this stage's days towards the 30 for the read models, placement and the codec only.
+  change or zone change, a skip with take-back, a missed block with regroup and a background timer. Stage 2 covers the skip with
+  take-back and the missed block with regroup (commands and tick); the background timer needs WP-LD10's background work, which the page
+  does not have (it is compared when the page finishes a timer). Recommended: count days from stage 2's release for all five, the
+  timer as the page's own finish until native runs it in the background.
 - **OQ-S3** Each `strict.*` and `encode.wrongType.*` finding needs a ruling before cutover (store spec section 13).
+- **OQ-S4** The allowlist proposal of section 3b: no entry is added; **DA-3** (a LifeMax activity id that is not text) is proposed only
+  if the owner wants it tolerated before native reads such an id as the page does. Recommended: no DA-3, fix natively when one shows.
+- **OQ-S5** SH-48: compare what the native economy would answer an award (`EconomyHost`) through `scope: "both"`, one ordered stream
+  across the two checks? Recommended before cutover (D1 and D2 live in that answer).
+- **OQ-S6** The settings line still says the phone works out "Life Director's plans, its week and what it saves"; it now also replays
+  what your taps do. The words were left as they are (the screenshots stay; no update-history entry). Change them?

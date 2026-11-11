@@ -19,17 +19,27 @@ import com.lifemax.rpg.core.save.JsonValue
 import com.lifemax.rpg.core.shadow.Difference
 import com.lifemax.rpg.core.shadow.Verdict
 
-/** A command check's verdict, and a take-back the page sent in full, kept by its digest for the commands after it (SH-41). */
+/**
+ * A command check's verdict, and a take-back the page sent in full, kept by its digest for the
+ * commands after it (SH-41).
+ */
 data class CommandResult(val verdict: Verdict, val learned: Pair<String, TakeBackState>? = null)
 
 /**
- * The Life Director check of a command or the tick (SH-36 to SH-46): WP-LD9's and WP-LD10's pure host commands
- * ([HostCommands.run]) on the state and the controller's memory the page had before it, at the page's moment, against a host
- * that answers with the page's host's answers ([PageAnswers]); then native's reply, its host and store calls with their
- * arguments, its memory after and its state after are compared with the page's. Nothing is awarded, written or shown.
+ * The Life Director check of a command or the tick (SH-36 to SH-46): WP-LD9's and WP-LD10's pure
+ * host commands ([HostCommands.run]) on the state and the controller's memory the page had before
+ * it, at the page's moment, against a host that answers with the page's host's answers
+ * ([PageAnswers]); then native's reply, its host and store calls with their arguments, its memory
+ * after and its state after are compared with the page's. Nothing is awarded, written or shown.
  */
 class CommandCheck(private val paths: JsonPaths) {
-    fun run(before: JsonValue, after: JsonValue, f: CommandFacts, t1: Long, known: (String) -> TakeBackState?): CommandResult {
+    fun run(
+        before: JsonValue,
+        after: JsonValue,
+        f: CommandFacts,
+        t1: Long,
+        known: (String) -> TakeBackState?,
+    ): CommandResult {
         val at = f.op + if (f.name.isNotEmpty()) "." + paths.member(f.name) else ""
         val command = command(f) ?: return CommandResult(Verdict.Skipped("unknownOp"))
         var learned: Pair<String, TakeBackState>? = null
@@ -43,36 +53,94 @@ class CommandCheck(private val paths: JsonPaths) {
                     val left = str(t.members["left"])
                     val given = known(digest)
                     if (full != null && left != null) {
-                        val mine = TakeBackState(str(t.members["id"]) ?: "", str(t.members["text"]) ?: "", num(t.members["at"]) ?: 0.0, full, left)
-                        // native writes the take-back's plan as JSON otherwise: its own take-back would not be the page's (SH-41)
-                        if (digest(mine) != digest) return CommandResult(differed(listOf(PathDifference("$at.takeBack.digest", false))))
+                        val mine =
+                            TakeBackState(
+                                str(t.members["id"]) ?: "",
+                                str(t.members["text"]) ?: "",
+                                num(t.members["at"]) ?: 0.0,
+                                full,
+                                left,
+                            )
+                        // native writes the take-back's plan as JSON otherwise: its own take-back
+                        // would not be the page's (SH-41)
+                        if (digest(mine) != digest)
+                            return CommandResult(
+                                differed(listOf(PathDifference("$at.takeBack.digest", false)))
+                            )
                         learned = digest to mine
                         mine
                     } else
-                        given?.copy(id = str(t.members["id"]) ?: given.id, text = str(t.members["text"]) ?: given.text, at = num(t.members["at"]) ?: given.at)
-                            ?: return skipped(TAKE_BACK)
+                        given?.copy(
+                            id = str(t.members["id"]) ?: given.id,
+                            text = str(t.members["text"]) ?: given.text,
+                            at = num(t.members["at"]) ?: given.at,
+                        ) ?: return skipped(TAKE_BACK)
                 }
                 else -> return skipped(TAKE_BACK)
             }
         val state = state(before, f.before, takeBack)
         val host = PageAnswers(f.calls, f.ids, f.deviceZone, f.retires)
         val o = HostCommands.run(state, f.nowMs.toDouble(), host, command)
-        val same = { page: Double, native: Double -> native == f.nowMs.toDouble() && page >= f.nowMs && page <= t1 }
+        val same = { page: Double, native: Double ->
+            native == f.nowMs.toDouble() && page >= f.nowMs && page <= t1
+        }
         val diffs = ArrayList<PathDifference>()
         val limit = DirectorShadowLimits.MAX_PATHS
-        host.mismatches.firstOrNull()?.let { diffs += PathDifference(if (it >= f.calls.size) "$at.calls[#]" else "$at.calls[$it].fn", false) }
-        if (host.mismatches.isEmpty() && o.calls.size != f.calls.size) diffs += PathDifference("$at.calls[#]", false)
+        host.mismatches.firstOrNull()?.let {
+            diffs +=
+                PathDifference(
+                    if (it >= f.calls.size) "$at.calls[#]" else "$at.calls[$it].fn",
+                    false,
+                )
+        }
+        if (host.mismatches.isEmpty() && o.calls.size != f.calls.size)
+            diffs += PathDifference("$at.calls[#]", false)
         for (i in 0 until minOf(f.calls.size, o.calls.size)) {
             if (diffs.size >= limit) break
             val page = f.calls[i]
             val mine: HostCall = o.calls[i]
             if (page.fn != mine.fn) continue
-            diffs += paths.diff(page.args, JsonArray(mine.args), "$at.calls[$i].${page.fn.replace(".", "")}", limit - diffs.size, emptySet(), same)
+            diffs +=
+                paths.diff(
+                    page.args,
+                    JsonArray(mine.args),
+                    "$at.calls[$i].${page.fn.replace(".", "")}",
+                    limit - diffs.size,
+                    emptySet(),
+                    same,
+                )
         }
         val ledger = f.op == "finish" || f.op == "logToday"
-        if (diffs.size < limit) diffs += paths.diff(reply(f.reply, ledger), reply(HostCommands.json(o.reply), ledger), "$at.reply", limit - diffs.size, emptySet(), same)
-        if (diffs.size < limit) diffs += paths.diff(f.after, session(o.state), "$at.session", limit - diffs.size, emptySet(), same)
-        if (diffs.size < limit) diffs += paths.diff(after, o.state.st ?: JsonNull, "$at.state", limit - diffs.size, setOf(TIME), same)
+        if (diffs.size < limit)
+            diffs +=
+                paths.diff(
+                    reply(f.reply, ledger),
+                    reply(HostCommands.json(o.reply), ledger),
+                    "$at.reply",
+                    limit - diffs.size,
+                    emptySet(),
+                    same,
+                )
+        if (diffs.size < limit)
+            diffs +=
+                paths.diff(
+                    f.after,
+                    session(o.state),
+                    "$at.session",
+                    limit - diffs.size,
+                    emptySet(),
+                    same,
+                )
+        if (diffs.size < limit)
+            diffs +=
+                paths.diff(
+                    after,
+                    o.state.st ?: JsonNull,
+                    "$at.state",
+                    limit - diffs.size,
+                    setOf(TIME),
+                    same,
+                )
         return CommandResult(verdict(diffs), learned)
     }
 
@@ -85,7 +153,8 @@ class CommandCheck(private val paths: JsonPaths) {
     /** The page's command as native's (SH-36). */
     private fun command(f: CommandFacts): HostCommand? {
         val p = f.payload as? JsonObject
-        fun id(v: JsonValue?): String = (v as? JsonString)?.value ?: v?.let { PageJson.text(it) } ?: ""
+        fun id(v: JsonValue?): String =
+            (v as? JsonString)?.value ?: v?.let { PageJson.text(it) } ?: ""
         fun minutes(v: JsonValue?): Double = (v as? JsonNumber)?.value ?: Double.NaN
         return when (f.op) {
             "today" -> HostCommand.Today(f.name, f.payload)
@@ -104,7 +173,12 @@ class CommandCheck(private val paths: JsonPaths) {
                     ),
                 )
             }
-            "logToday" -> HostCommand.LogToday(id(p?.members?.get("id")), minutes(p?.members?.get("minutes")), str(p?.members?.get("opId")))
+            "logToday" ->
+                HostCommand.LogToday(
+                    id(p?.members?.get("id")),
+                    minutes(p?.members?.get("minutes")),
+                    str(p?.members?.get("opId")),
+                )
             "tick" -> HostCommand.Tick
             "syncHost" -> HostCommand.SyncHost
             "processMisses" -> HostCommand.ProcessMisses
@@ -116,7 +190,10 @@ class CommandCheck(private val paths: JsonPaths) {
     /** The controller's memory as the page had it (SH-39). */
     private fun state(st: JsonValue, s: JsonObject, takeBack: TakeBackState?): HostState {
         val m = s.members
-        val notice = (m["notice"] as? JsonObject)?.members?.let { Notice(num(it["id"]) ?: 0.0, str(it["text"]) ?: "", num(it["at"]) ?: 0.0) }
+        val notice =
+            (m["notice"] as? JsonObject)?.members?.let {
+                Notice(num(it["id"]) ?: 0.0, str(it["text"]) ?: "", num(it["at"]) ?: 0.0)
+            }
         val save = (m["lastSave"] as? JsonObject)?.members
         return HostState(
             st = st,
@@ -136,20 +213,38 @@ class CommandCheck(private val paths: JsonPaths) {
     private fun session(s: HostState): JsonObject {
         val m = LinkedHashMap<String, JsonValue>()
         m["banner"] = s.banner ?: JsonNull
-        m["notice"] = s.notice?.let { JsonObject(linkedMapOf("id" to JsonNumber(it.id), "text" to JsonString(it.text), "at" to JsonNumber(it.at))) } ?: JsonNull
+        m["notice"] =
+            s.notice?.let {
+                JsonObject(
+                    linkedMapOf(
+                        "id" to JsonNumber(it.id),
+                        "text" to JsonString(it.text),
+                        "at" to JsonNumber(it.at),
+                    )
+                )
+            } ?: JsonNull
         m["tab"] = JsonString(s.tab)
         m["dayIdx"] = JsonNumber(s.dayIdx)
         m["pendingDial"] = s.pendingDial ?: JsonNull
         m["takeBack"] =
             s.takeBack?.let {
-                JsonObject(linkedMapOf("id" to JsonString(it.id), "text" to JsonString(it.text), "at" to JsonNumber(it.at), "digest" to JsonString(digest(it))))
+                JsonObject(
+                    linkedMapOf(
+                        "id" to JsonString(it.id),
+                        "text" to JsonString(it.text),
+                        "at" to JsonNumber(it.at),
+                        "digest" to JsonString(digest(it)),
+                    )
+                )
             } ?: JsonNull
         m["takenBackOp"] = s.takenBackOp
         m["lastSave"] =
-            JsonObject(LinkedHashMap<String, JsonValue>().also { o ->
-                o["ok"] = JsonBool.of(s.lastSave.ok)
-                s.lastSave.error?.let { o["error"] = JsonString(it) }
-            })
+            JsonObject(
+                LinkedHashMap<String, JsonValue>().also { o ->
+                    o["ok"] = JsonBool.of(s.lastSave.ok)
+                    s.lastSave.error?.let { o["error"] = JsonString(it) }
+                }
+            )
         m["lastFinishRefusal"] = s.lastFinishRefusal?.let(::JsonString) ?: JsonNull
         return JsonObject(m)
     }
@@ -191,7 +286,11 @@ class CommandCheck(private val paths: JsonPaths) {
 
         private fun timeless(t: String) = TIMING.replace(t, "\"computeTimeMs\":0")
 
-        /** A take-back's digest: its plan and ledger as the page's JSON text, and the plan it left, their timings as 0. */
-        fun digest(t: TakeBackState): String = digest(timeless(PageJson.text(t.before))) + ":" + digest(timeless(t.left))
+        /**
+         * A take-back's digest: its plan and ledger as the page's JSON text, and the plan it left,
+         * their timings as 0.
+         */
+        fun digest(t: TakeBackState): String =
+            digest(timeless(PageJson.text(t.before))) + ":" + digest(timeless(t.left))
     }
 }
