@@ -51,7 +51,7 @@ const RECORDED_AT = '2026-10-28T12:00:00Z';
    table is checked. Literals not taken are codes (states, kinds, field keys, commands) the native code names as the page's API. */
 const TABLES = ['PRIO', 'GOALS_EXPLAIN', 'GOALS_EMPTY', 'GOAL_REMOVE_CONFIRM', 'CLARIFY_TEXT', 'QUEST_HEAD', 'MILESTONE_NOTE', 'KIND_LABEL', 'ROUTINES',
   'MEAL_RANGE', 'RULE_KINDS', 'RULE_LOADS', 'NEW_RULE', 'CUSTOM_TAGS', 'GOAL_LEVELS', 'INTENSITY', 'PREF_RANGES', 'GRACE', 'HORIZON', 'MISSES',
-  'SETTINGS_TEXT', 'DRAG_WORDS', 'DIAL', 'MINI_SNAP', 'MINI_GROUP', 'DISRUPT', 'TAG_ICON', 'DOW'];
+  'SETTINGS_TEXT', 'DRAG_WORDS', 'DIAL', 'MINI_SNAP', 'MINI_GROUP', 'DISRUPT', 'TAG_ICON', 'DRAG_KINDS', 'DOW'];
 const PHRASES = {
   goalCards: { count: 18, take: { custom: 1, sep: 2, level: 3, pausedTail: 4, sessions: 6, week: 7, space: 8, dash: 9, times: 11, comma: 12, projected: 14,
     period: 15, resume: 16, pause: 17 } },
@@ -89,6 +89,7 @@ const PHRASES = {
   dragPreview: { count: 6, take: { ofSleep: 4 } },
   nativeHandles: { count: 3, take: { space: 0 } },
   dialHandles: { count: 10, take: { keySep: 7 }, same: [[7, 8], [7, 9]] },
+  tagIcon: { count: 1, take: { fallback: 0 } },
 };
 
 /* In the page: makes the read models (R) from the hooked controller text and returns run(states, cases) and words(). Self-contained: it is

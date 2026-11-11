@@ -32,7 +32,7 @@ const READ_MODELS_B = ['goalShare', 'goalCards', 'nativeGoals', 'questsModel', '
   'minuteOf', 'angOf', 'stopLabels', 'tagIcon', 'horizonDays', 'calendarDays', 'dayBlocks', 'tz', 'nowEpoch', 'mins', 'DOW', 'H12',
   'PRIO', 'GOALS_EXPLAIN', 'GOALS_EMPTY', 'GOAL_REMOVE_CONFIRM', 'CLARIFY_TEXT', 'QUEST_HEAD', 'MILESTONE_NOTE', 'KIND_LABEL', 'ROUTINES',
   'MEAL_RANGE', 'RULE_KINDS', 'RULE_LOADS', 'NEW_RULE', 'CUSTOM_TAGS', 'GOAL_LEVELS', 'INTENSITY', 'PREF_RANGES', 'GRACE', 'HORIZON', 'MISSES',
-  'SETTINGS_TEXT', 'DRAG_WORDS', 'DIAL', 'MINI_SNAP', 'MINI_GROUP', 'DISRUPT', 'TAG_ICON'];
+  'SETTINGS_TEXT', 'DRAG_WORDS', 'DIAL', 'MINI_SNAP', 'MINI_GROUP', 'DISRUPT', 'TAG_ICON', 'DRAG_KINDS'];
 
 /* The controller module's text exactly as the file has it. */
 function appSource() {

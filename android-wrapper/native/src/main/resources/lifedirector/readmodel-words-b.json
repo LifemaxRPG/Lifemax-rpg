@@ -343,6 +343,13 @@
     "mountain"
    ]
   ],
+  "DRAG_KINDS": {
+   "SLEEP": 1,
+   "WORK": 1,
+   "CLASS": 1,
+   "APPOINTMENT": 1,
+   "UNAVAILABLE": 1
+  },
   "DOW": [
    "Sun",
    "Mon",
@@ -614,6 +621,9 @@
   },
   "dialHandles": {
    "keySep": "|"
+  },
+  "tagIcon": {
+   "fallback": "target"
   }
  }
 }
