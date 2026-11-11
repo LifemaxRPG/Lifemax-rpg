@@ -112,6 +112,7 @@ function defineCases(seeds) {
       if (r() < 0.15) set.push([at.concat('recurrence'), pick(r, ['DAILY', null])]);
       if (r() < 0.15) set.push([at.concat('deadlineEpoch'), pick(r, [null, s.horizonStartEpoch + Math.floor(r() * 20) * 86400 + 3600 * Math.floor(r() * 24)])]);
       if (r() < 0.08) set.push([at.concat('questId'), String(q.questId) + '@next']);
+      if (r() < 0.08) set.push([at.concat('status'), 'LOCKED'], [at.concat('covered'), false], [at.concat('questId'), 'locked-' + k]);
     });
     const cov = s.questCoverage || [];
     if (cov.length && r() < 0.5) set.push([['schedule', 'unscheduledDiagnostics'], (s.unscheduledDiagnostics || []).concat(cov.filter(() => r() < 0.4).map((q, k) => (k % 2
@@ -290,6 +291,12 @@ function defineCases(seeds) {
   plans.filter((k, i) => i % 3 === 2).slice(0, 140).forEach((id, n) => {
     const r = random(n * 8803 + 31), set = [];
     if (r() < 0.5) timeChanges(r, id, set);
+    else {
+      /* one more rule of a kind the dial has handles for (or not: a preferred window and an unknown kind have none) */
+      const rules = ((states.get(id).availability || {}).rules || []).concat([{ id: 'x' + n, kind: pick(r, ['APPOINTMENT', 'CLASS', 'UNAVAILABLE', 'WORK', 'SLEEP', 'PREFERRED', 'GYM']),
+        title: pick(r, ['Choir', '', 'Nap']), days: pick(r, [[0, 1, 2, 3, 4, 5, 6], [1, 3, 5], [6]]), startMin: pick(r, [0, 15, 600, 1380, 1435]), durationMin: pick(r, [15, 60, 90, 600, 1440]) }]);
+      if (states.get(id).availability) set.push([['availability', 'rules'], rules]);
+    }
     if (r() < 0.15) set.push([['availability', 'timezone'], pick(r, ZONES)]);
     add('handles', HANDLES + ' ' + WORDS, id, anyMoment(r, id), { set, handleDays: [0, 1 + Math.floor(r() * 5)], forms: [] }, 'h' + n);
   });

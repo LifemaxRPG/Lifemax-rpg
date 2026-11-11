@@ -85,7 +85,7 @@ class PanelsMutationTest {
     fun oneMoveTimeFewerIsNoticed() =
         assertCaught(
             setOf("move"),
-            30,
+            20,
             Mutation(
                 move = { p, id ->
                     when (val a = p.move(id)) {
