@@ -215,7 +215,9 @@
       lastSave: { ok: s.ok, error: s.error }, lastFinishRefusal: V.lastFinishRefusal === undefined ? null : V.lastFinishRefusal };
   }
   const digests = new WeakMap();
-  /* FNV-1a over the UTF-16 code units, with the length: the take-back's plan and ledger as JSON text and the plan it left */
+  /* FNV-1a over the UTF-16 code units, with the length: the take-back's plan and ledger as JSON text and the plan it left, each with
+     its plans' computeTimeMs (a timing) as 0 */
+  const timeless = (t) => t.replace(/"computeTimeMs":-?[0-9.eE+-]+/g, '"computeTimeMs":0');
   function digest(s) {
     let h = 0x811c9dc5;
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
@@ -223,7 +225,7 @@
   }
   function takeBackDigest(t) {
     let d = digests.get(t);
-    if (!d) { d = digest(JSON.stringify(t.before) || "") + ":" + digest(String(t.left)); digests.set(t, d); }
+    if (!d) { d = digest(timeless(JSON.stringify(t.before) || "")) + ":" + digest(timeless(String(t.left))); digests.set(t, d); }
     return d;
   }
   function queue(r) {

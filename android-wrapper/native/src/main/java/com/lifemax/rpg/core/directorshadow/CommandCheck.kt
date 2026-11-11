@@ -187,7 +187,11 @@ internal class CommandCheck(private val paths: JsonPaths) {
             return s.length.toString(36) + "." + (h.toLong() and 0xffffffffL).toString(36)
         }
 
-        /** A take-back's digest: its plan and ledger as the page's JSON text, and the plan it left. */
-        fun digest(t: TakeBackState): String = digest(PageJson.text(t.before)) + ":" + digest(t.left)
+        private val TIMING = Regex("\"computeTimeMs\":-?[0-9.eE+-]+")
+
+        private fun timeless(t: String) = TIMING.replace(t, "\"computeTimeMs\":0")
+
+        /** A take-back's digest: its plan and ledger as the page's JSON text, and the plan it left, their timings as 0. */
+        fun digest(t: TakeBackState): String = digest(timeless(PageJson.text(t.before))) + ":" + digest(timeless(t.left))
     }
 }
