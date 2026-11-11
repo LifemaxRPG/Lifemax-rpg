@@ -83,7 +83,8 @@ Native entry points: `TimerMachine.run(state, nowMs, host, command) -> TimerOutc
   milliseconds, frozen while paused, never below 0 (a clock set back counts nothing, LT01). Cases `pause/*`, `clock/*`.
 - **TM-3** The target is `f.plannedMs || Math.max(60, inst.endEpoch - inst.startEpoch) * 1000` (`logic.js:3499`, `1955`): the length
   stored at the start wins over the session's present length (`auto/stale-planned-ms@*`, LT14); a missing or zero `plannedMs` falls back
-  to the session's (`auto/no-planned-ms@*`, `auto/planned-ms-zero@*`). The 60-second floor is **Read** (no session is shorter).
+  to the session's (`auto/no-planned-ms@*`, `auto/planned-ms-zero@*`, `tick/no-planned-ms@*`); a session with no length gets the
+  60-second floor (`start/zero-length@*`).
 - **TM-4** `Today.timer({act, id, start})` (`logic.js:3491`): `act` is compared exactly: `start`, `replace`, `pause`, `resume`, `reset`,
   `finish`, `cancel`, `autoFinish`; anything else (`explode`, none, `Start`) answers `Life Director cannot do that.` (`cancel/unknown@*`).
   Sessions are found as WP-LD9 finds them: `plannedInst(id)` among planned sessions by `String(id)`, `findInst(id)` (`logic.js:2307`)
@@ -324,7 +325,7 @@ Native deviations: none. Every step of every case is reproduced (`TimerGoldenTes
 
 ## 15. Golden cases: the index, and the mutation checks
 
-File `lifemax_modular_v73/tests/fixtures/ld-timer-golden.json.gz` (548 cases, 2,876 steps with the boots; 12.0 MB unzipped, 0.55 MB
+File `lifemax_modular_v73/tests/fixtures/ld-timer-golden.json.gz` (564 cases, 2,956 steps with the boots; 12.2 MB unzipped, 0.56 MB
 zipped). Recorder `tools/gen_ld_timer_golden.js` with WP-LD9's runner `tools/ld_host_vm.js` (logic.js with its three behaviour-neutral
 hooks applied at record time, the file unchanged; WP-LD10 adds to the first hook's export list `focusTick` and `focusMs`, to the runner a
 `focusTick` step, a stub `document.querySelectorAll` answering none, and `{$ref: 'focus'}` for the running timer's start; none of these
@@ -343,14 +344,14 @@ clock-change nights in `clock/dst-*` (New York 2026-11-01, London 2026-10-25, Sy
 
 | Family | Cases | What | Rules |
 |---|---|---|---|
-| `start` | 60 | start, repeats, every refusal in order, the 6-hour edge across midnight, a timer on a session off the plan (running and paused), a refused save, a session in progress, a number id, no plan | TM-10 to TM-14 |
-| `pause` | 36 | pause and resume with repeats, no timer, the clock set back before a resume and before the start, any id, refused saves | TM-20 to TM-22 |
+| `start` | 64 | start, repeats, every refusal in order, the 6-hour edge across midnight, a timer on a session off the plan (running and paused), a refused save, a session in progress, a number id, no plan, a session with no length | TM-3, TM-10 to TM-14 |
+| `pause` | 40 | pause and resume with repeats, two pauses, no timer, the clock set back before a resume and before the start, any id, refused saves | TM-20 to TM-22 |
 | `reset` | 24 | reset, every mismatch, the clock set back, a refused save | TM-25, TM-26 |
 | `replace` | 28 | replace and its repeats, every refusal, a refused save, the clock set back, a timer off the plan | TM-30 to TM-32 |
 | `finish` | 72 | finish, repeats, mismatches, 20 seconds, paused, off the plan, every award answer, a duplicate, a refused save, late, the engine's plan with a quest, a re-plan while running | TM-40 to TM-43 |
 | `cancel` | 20 | cancel, repeats, mismatches, unknown acts, a refused save | TM-4, TM-45 |
-| `auto` | 64 | before and at the target, paused, wrong start or id, off the plan, nine hours later, no or zero or stale `plannedMs`, a duplicate, started early, a refused save | TM-50 to TM-53 |
-| `tick` | 36 | the check before and at the target, paused, a session in history, an unknown id with and without `plannedMs`, no timer, a refused save | TM-60, TM-61 |
+| `auto` | 68 | before and at the target, paused (also past the target), wrong start or id, off the plan, nine hours later, no or zero or stale `plannedMs`, a duplicate, started early, a refused save | TM-50 to TM-53 |
+| `tick` | 40 | the check before and at the target, paused, without `plannedMs`, a session in history, an unknown id with and without `plannedMs`, no timer, a refused save | TM-60, TM-61 |
 | `clock` | 48 | the clock set back and jumped, reopened after hours (tick first, glance first), missed while running, four clock-change nights | TM-70 to TM-72 |
 | `wake` | 40 | each kind probed a millisecond before and at its instant, in every zone, four graces | TM-80 to TM-84 |
 | `fuzz` | 120 | seeded sequences | TM-90 |
