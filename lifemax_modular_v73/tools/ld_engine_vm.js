@@ -13,12 +13,15 @@
    Use: const { load, kernelSource } = require('./ld_engine_vm.js'); const E = load(); E.util.localParts(0, 'UTC'); E.__kernel.cyrb53('a', 1)
    A recorder for a later part passes its own list of helper names to load(names) and kernelSource(names) (AVAILABILITY for WP-LD2, DEMAND for WP-LD3);
    placement (WP-LD4) uses load(PLACEMENT, placementSource), which also lets the recorder watch generateSchedule at its stage boundaries;
-   the schedule recorder (WP-LD5) uses load(SCHEDULE, scheduleSource), whose stage calls watch the repair without stopping the plan. */
+   the schedule recorder (WP-LD5) uses load(SCHEDULE, scheduleSource), whose stage calls watch the repair without stopping the plan.
+   The store recorder (WP-LD7, tools/gen_ld_store_golden.js) uses storeSource() and loadStore(): the second module, LifeDirectorStore,
+   exactly as the file has it, in a vm context of its own (it reads no clock, zone or randomness; it is given its storage). */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
 const ENGINE = path.join(__dirname, '..', 'src', 'features', 'life-director', 'engine.js');
 const STORE_MARK = '/* ── Life Director Store';
+const HOST_MARK = '/* ── Life Director ⇄';
 const FREEZE = 'return Object.freeze(api);';
 /* The private helpers the time and hash kernel needs; each name must be a function or constant of the engine module. */
 const KERNEL = ['SLOT_SEC', 'SLOTS_PER_HOUR', 'cyrb53', 'stableId', 'mulberry32', 'ceilTo15', 'isValidTimeZone', 'localParts', 'tzOffsetSec',
@@ -56,6 +59,22 @@ function engineSource() {
   return text.slice(0, end);
 }
 
+/* The store module's text exactly as the file has it (the second of the three modules, LifeDirectorStore, engine.js:2234-2340). */
+function storeSource() {
+  const text = fs.readFileSync(ENGINE, 'utf8'), start = text.indexOf(STORE_MARK), end = text.indexOf(HOST_MARK);
+  if (start < 0 || end < start || text.indexOf(STORE_MARK, start + 1) >= 0) throw new Error('engine.js: the store module markers moved; update tools/ld_engine_vm.js');
+  return text.slice(start, end);
+}
+
+/* A fresh LifeDirectorStore in its own vm context ({ create, defaultState, migrate, validate, KEY, BAK, CURRENT }). The module picks
+   `self` when it exists (as in the page) and module.exports otherwise; the context has neither, so it is given a `self` to hang on. */
+function loadStore() {
+  const ctx = vm.createContext({ self: {} });
+  vm.runInContext(storeSource(), ctx, { filename: 'engine.js#store' });
+  if (!ctx.self.LifeDirectorStore) throw new Error('engine.js did not define LifeDirectorStore');
+  return ctx.self.LifeDirectorStore;
+}
+
 /* The engine module with the named private helpers (KERNEL unless given) exported as api.__kernel (see above). */
 function kernelSource(names) {
   const src = engineSource(), at = src.indexOf(FREEZE);
@@ -90,4 +109,4 @@ function load(names, source) {
   return ctx.LifeDirectorEngine;
 }
 
-module.exports = { load, engineSource, kernelSource, placementSource, scheduleSource, KERNEL, AVAILABILITY, DEMAND, PLACEMENT, SCHEDULE, ENGINE };
+module.exports = { load, engineSource, storeSource, loadStore, kernelSource, placementSource, scheduleSource, KERNEL, AVAILABILITY, DEMAND, PLACEMENT, SCHEDULE, ENGINE };

@@ -135,6 +135,8 @@ These use the kernel and are the next parts of this spec; the plan section names
   result (LDT-10).
 - Display formatting in `logic.js` (`fTime`, `fDay`, `fDate`, `fHm`, `Intl.DateTimeFormat(undefined, ...)`): device-locale words,
   part of the read models (LD8), not of the engine.
+- 2234-2340 `LifeDirectorStore` (the store, WP-LD7, done): specified in its own file, `LIFE_DIRECTOR_STORE_SPEC.md` (rules `LST-n`,
+  defects `LS01` to `LS12`, its golden file `ld-store-golden.json.gz`), because it is not scheduler code.
 
 ---
 
