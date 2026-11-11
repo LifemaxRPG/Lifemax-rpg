@@ -577,7 +577,52 @@ to notice each.
 
 Source mutations of the native code, each compiled and replayed against the whole file:
 
-MUTATION_TABLE
+42 mutations, 40 caught, the 2 survivors equivalent. Two (13, 18) first survived and showed the cases never stored a null rejected plan or an unsorted day list; both were added and catch them. Number 33 (the plain-day test without its offset comparison) cannot differ for a day of 86400 seconds between two local midnights unless the offset changes twice in it, which no zone does in 2026-2027; number 36 (an end at the day's very start kept as a handle) cannot differ because `ruleInstances` already drops an occurrence that ends at or before the day's start, so the page's check is redundant (Read). Counts are on the file as first recorded; 13 and 18 on the final file.
+
+| # | File | Mutation | Result (cases that differ) |
+|---|---|---|---|
+| 0 | `Goals.kt` | no share repair | caught 401 |
+| 1 | `Goals.kt` | repair priority 2 | caught 60 |
+| 2 | `Goals.kt` | range when base equals med | caught 1212 |
+| 3 | `Goals.kt` | any status paused | caught 420 |
+| 4 | `Goals.kt` | three default clarifications | caught 50 |
+| 5 | `Goals.kt` | share not capped at 1 | caught 17 |
+| 6 | `Quests.kt` | next period quests kept | caught 70 |
+| 7 | `Quests.kt` | singular for 0 sessions | caught 25 |
+| 8 | `Quests.kt` | why on covered quests | caught 187 |
+| 9 | `Quests.kt` | locked milestones shown | caught 1293 |
+| 10 | `Quests.kt` | completed not ok | caught 10 |
+| 11 | `Settings.kt` | any load source unavailable | caught 110 |
+| 12 | `Settings.kt` | last stop dropped | caught 1600 |
+| 13 | `Settings.kt` | null rejected shown | caught 22 (after `lastRejected: null` was added to the cases) |
+| 14 | `MyTime.kt` | no first sleep fallback | caught 1467 |
+| 15 | `MyTime.kt` | weekend bed half hour later | caught 1511 |
+| 16 | `MyTime.kt` | zero length not a day | caught 6 |
+| 17 | `MyTime.kt` | saturday counts as weekday | caught 161 |
+| 18 | `MyTime.kt` | days not sorted | caught 28 (after unsorted day lists were added to the cases) |
+| 19 | `MyTime.kt` | zero length quarter | caught 1601 |
+| 20 | `Forms.kt` | light work unwinds | caught 7 |
+| 21 | `Forms.kt` | anchor tomorrow | caught 1461 |
+| 22 | `Forms.kt` | activity at epoch 0 | caught 12 |
+| 23 | `Forms.kt` | every goal has a target | caught 123 |
+| 24 | `Sheets.kt` | move from now | caught 243 |
+| 25 | `Sheets.kt` | move every quarter hour | caught 1225 |
+| 26 | `Sheets.kt` | move not to the end | caught 1103 |
+| 27 | `Sheets.kt` | touching gaps not merged | caught 412 |
+| 28 | `Shifts.kt` | blackout threshold | caught 16 |
+| 29 | `Shifts.kt` | shift ending at from kept | caught 2 |
+| 30 | `Shifts.kt` | no day before | caught 41 |
+| 31 | `Shifts.kt` | validTo ignored | caught 34 |
+| 32 | `Shifts.kt` | rotation not wrapped | caught 124 |
+| 33 | `Dial.kt` | offset change ignored | survived: equivalent (below) |
+| 34 | `Dial.kt` | stop asked at minute 7 | caught 1481 |
+| 35 | `Dial.kt` | midnight wraps | caught 95 |
+| 36 | `Dial.kt` | end at day start kept | survived: equivalent (below) |
+| 37 | `Dial.kt` | no day before | caught 1142 |
+| 38 | `Dial.kt` | quarter hour too short | caught 1515 |
+| 39 | `Dial.kt` | arc ends swapped | caught 1515 |
+| 40 | `PanelValues.kt` | twelve as zero | caught 1601 |
+| 41 | `PanelValues.kt` | weekday shifted | caught 1480 |
 
 ## 16. Open questions for the owner (part b)
 

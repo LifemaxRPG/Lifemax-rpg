@@ -571,7 +571,7 @@ shifts 122, handles 140, dst 60, host 60, fuzz 200); web test `tests/ld-readmode
 `readmodel-words-b.json` (29 tables, 24 functions' phrases). Kotlin in the same package (`DirectorPanels` with `ReadAnswer` (nothing
 throws) and `DirectorHostView`, `Goals`, `Quests`, `Settings`, `MyTime`, `Forms`, `Sheets`, `Shifts`, `Dial`, `PanelWords`,
 `PanelValues`), typed answers each with the page's JSON; reproduces every case (`PanelsGoldenTest`); `PanelsMutationTest` (10 checks) and
-SOURCE_MUTATIONS source mutations (spec section 15). Times are written as en-US writes them (DV-RM1, OQ-RM5). Findings: a one-off
+42 source mutations, 40 caught, the 2 survivors equivalent (spec section 15). Times are written as en-US writes them (DV-RM1, OQ-RM5). Findings: a one-off
 commitment without a kind is reported as an extra work shift unless its type says class or emergency (RD19); the grace and routine values
 reach Settings and My time unchecked (RD17); the planning window shows no choice for a stored value other than 7 or 14 (RD18); goal
 cards show the stored level code, not the form's words (RD16). Not covered by either part: the rest of `nativeToday` (arcs, ring words,
