@@ -45,8 +45,8 @@ class DirectorReadModels(
         get() = member(state, "schedule")
 
     /**
-     * RM-1 `tz()`: the stored zone `ST.availability.timezone` when it is truthy, else the
-     * device's. A state without `availability` throws, as `ST.availability.timezone` does.
+     * RM-1 `tz()`: the stored zone `ST.availability.timezone` when it is truthy, else the device's.
+     * A state without `availability` throws, as `ST.availability.timezone` does.
      */
     fun zoneValue(): JsonValue {
         val availability = member(state, "availability")
@@ -107,8 +107,8 @@ class DirectorReadModels(
     fun weekModel(): WeekModel = Week.model(this)
 
     /**
-     * RM-19 `nativeWeek()` (logic.js:3272-3288): the week as the native projection carries it;
-     * null while set-up is not finished or there is no plan.
+     * RM-19 `nativeWeek()` (logic.js:3272-3288): the week as the native projection carries it; null
+     * while set-up is not finished or there is no plan.
      */
     fun weekProjection(): WeekProjection? =
         if (!truthy(member(state, "setupComplete")) || !truthy(schedule)) null

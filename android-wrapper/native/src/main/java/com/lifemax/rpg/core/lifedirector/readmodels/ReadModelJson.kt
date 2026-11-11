@@ -97,10 +97,12 @@ object ReadModelJson {
             "cur" to b(n.current),
             "next" to b(n.next),
             "nextTask" to b(n.nextSession),
-            "kick" to (n.kick?.let { obj("kind" to str(it.kind), "sec" to num(it.seconds)) } ?: JsonNull),
+            "kick" to
+                (n.kick?.let { obj("kind" to str(it.kind), "sec" to num(it.seconds)) } ?: JsonNull),
             "soon" to
-                (n.soon?.let { obj("kind" to str(it.kind), "b" to b(it.block), "sec" to num(it.seconds)) }
-                    ?: JsonNull),
+                (n.soon?.let {
+                    obj("kind" to str(it.kind), "b" to b(it.block), "sec" to num(it.seconds))
+                } ?: JsonNull),
             "alert" to (n.alert?.let(::str) ?: JsonNull),
             "isSes" to bool(n.isSession),
             "running" to bool(n.running),
@@ -124,7 +126,9 @@ object ReadModelJson {
             "stats" to list(w.stats) { JsonArray(listOf(str(it.value), str(it.label))) },
             "attrs" to
                 list(w.attributes) {
-                    JsonArray(listOf(str(it.attr), obj("plan" to num(it.plan), "done" to num(it.done))))
+                    JsonArray(
+                        listOf(str(it.attr), obj("plan" to num(it.plan), "done" to num(it.done)))
+                    )
                 },
             "maxA" to num(w.maxAttribute),
             "fitText" to str(w.fitText),

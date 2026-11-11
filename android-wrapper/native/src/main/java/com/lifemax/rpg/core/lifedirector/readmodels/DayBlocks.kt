@@ -163,10 +163,7 @@ internal object DayBlocks {
         val cleaned = ArrayList<DayBlock>()
         for (b in sorted) {
             if (b.session == null && sorted.any { it.isOverPlanned(b) }) {
-                val ov =
-                    sorted
-                        .filter { it.session != null && it.overlaps(b) }
-                        .sortedWith(byStart)
+                val ov = sorted.filter { it.session != null && it.overlaps(b) }.sortedWith(byStart)
                 var cur = b.startEpoch
                 for (o in ov) {
                     if (o.startEpoch > cur) cleaned += b.span(cur, o.startEpoch)
@@ -179,7 +176,8 @@ internal object DayBlocks {
         val final = ArrayList<DayBlock>()
         var cur = s
         for (b in ordered) {
-            if (b.startEpoch > cur && b.startEpoch - cur >= MIN_FREE) final += free(cur, b.startEpoch, words)
+            if (b.startEpoch > cur && b.startEpoch - cur >= MIN_FREE)
+                final += free(cur, b.startEpoch, words)
             if (b.endEpoch > cur || b.session != null) final += b
             cur = maxOf(cur, b.endEpoch)
         }

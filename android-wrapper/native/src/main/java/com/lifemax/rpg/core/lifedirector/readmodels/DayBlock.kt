@@ -17,8 +17,8 @@ enum class SessionList(val prefix: String) {
 
 /**
  * A session of the saved plan exactly as stored ([value], read only), with where it is kept
- * ([list], [index]). The getters read the members the read models use the way the page does:
- * epochs as numbers (`Number(value)`), the lifecycle state as stored.
+ * ([list], [index]). The getters read the members the read models use the way the page does: epochs
+ * as numbers (`Number(value)`), the lifecycle state as stored.
  */
 class StoredSession(val list: SessionList, val index: Int, val value: JsonValue) {
     /** `s<k>` or `h<k>`: how the golden cases and a shadow comparison name the session. */
@@ -76,9 +76,9 @@ class StoredSession(val list: SessionList, val index: Int, val value: JsonValue)
 
 /**
  * One block of a day as `dayBlocks` makes it (RM-6 to RM-9): a span of the day with what fills it.
- * [code], [kind], [title] and [refId] are the stored segment's values as the page copies them
- * (null where the page's member holds undefined and so is left out of its JSON); a session's block
- * has [session] and the codes `TASK`, free time `FREE`. [mealStartEpoch] is set on a meal (the
+ * [code], [kind], [title] and [refId] are the stored segment's values as the page copies them (null
+ * where the page's member holds undefined and so is left out of its JSON); a session's block has
+ * [session] and the codes `TASK`, free time `FREE`. [mealStartEpoch] is set on a meal (the
  * segment's own start, before any clipping) and [clipped] on every block taken from a segment.
  * Blocks are compared by identity where the page compares objects (RM-12).
  */

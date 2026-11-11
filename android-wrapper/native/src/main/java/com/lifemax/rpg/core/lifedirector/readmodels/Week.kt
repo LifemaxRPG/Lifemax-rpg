@@ -21,10 +21,10 @@ import kotlin.math.floor
 data class XpPreview(val xp: Double, val primary: String, val split: List<XpShare>)
 
 /**
- * RM-14: LifeMax's XP preview, `Host.xpFor(type, minutes, 1, dateKey)` (quality 1, not
- * committed). Null when LifeMax is not connected or the preview fails, which the page treats
- * alike. The page's host computes it from the main save (LD-2); native gives it
- * `core/economy LifeDirector.xpFor` on the native save, and the golden replay the recorded answers.
+ * RM-14: LifeMax's XP preview, `Host.xpFor(type, minutes, 1, dateKey)` (quality 1, not committed).
+ * Null when LifeMax is not connected or the preview fails, which the page treats alike. The page's
+ * host computes it from the main save (LD-2); native gives it `core/economy LifeDirector.xpFor` on
+ * the native save, and the golden replay the recorded answers.
  */
 fun interface SessionXpPreview {
     fun preview(type: String, minutes: Double, dateKey: String): XpPreview?
@@ -67,9 +67,9 @@ internal object Week {
     private const val PERCENT = 100.0
 
     /**
-     * RM-14 `xpOf(inst, minutes)`: the preview for [session]'s activity type (LD-1
-     * `typeForTag`), [minutes] when truthy else its planned length in whole minutes, on its local
-     * date in the plan's zone. A date the zone cannot give (an invalid start) is a failed preview.
+     * RM-14 `xpOf(inst, minutes)`: the preview for [session]'s activity type (LD-1 `typeForTag`),
+     * [minutes] when truthy else its planned length in whole minutes, on its local date in the
+     * plan's zone. A date the zone cannot give (an invalid start) is a failed preview.
      */
     fun xpOf(m: DirectorReadModels, session: StoredSession, minutes: JsonValue?): XpPreview? {
         val type = LifeDirector.typeForTag(text(session.tag))
@@ -133,16 +133,17 @@ internal object Week {
                         mins(mins, words),
                 )
             }
-        val capacity =
-            member(s, "capacity") as? JsonArray ?: throw PageTypeError("capacity.reduce")
+        val capacity = member(s, "capacity") as? JsonArray ?: throw PageTypeError("capacity.reduce")
         var free = 0.0
         var rest = 0.0
         for (c in capacity.items) {
-            if (c == JsonNull) throw PageTypeError("Cannot read properties of null (reading 'freeMin')")
+            if (c == JsonNull)
+                throw PageTypeError("Cannot read properties of null (reading 'freeMin')")
             free += number(member(c, "freeMin"))
             rest += number(member(c, "recoveryMin"))
         }
-        val q = member(member(s, "validation") ?: throw PageTypeError("validation"), "qualityMetrics")
+        val q =
+            member(member(s, "validation") ?: throw PageTypeError("validation"), "qualityMetrics")
         val coverage = member(q ?: throw PageTypeError("qualityMetrics"), "coverageRequired")
         val attrs =
             byAttr.entries
@@ -176,8 +177,8 @@ internal object Week {
     }
 
     /**
-     * RM-20 `mins(m)`: whole hours and the minutes left (`2h 15m`, `3h`), or minutes under an
-     * hour (`45m`), numbers as JavaScript writes them.
+     * RM-20 `mins(m)`: whole hours and the minutes left (`2h 15m`, `3h`), or minutes under an hour
+     * (`45m`), numbers as JavaScript writes them.
      */
     fun mins(m: Double, words: ReadModelWords): String {
         val h = words.phrase("hours")

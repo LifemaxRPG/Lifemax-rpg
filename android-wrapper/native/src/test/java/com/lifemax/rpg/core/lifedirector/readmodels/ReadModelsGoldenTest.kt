@@ -6,11 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Replays every case of `ld-readmodels-golden.json.gz` (WP-LD8a) and requires the page's answer
- * for every section: strings and booleans equal, numbers equal as doubles bit for bit, arrays in
- * order, objects member for member (a member the page leaves out must be absent), a throw of the
- * same error name, and the same XP preview calls in the same order. Each family's case count is
- * fixed, so a lost or added case fails here as well as in the web test that regenerates the file.
+ * Replays every case of `ld-readmodels-golden.json.gz` (WP-LD8a) and requires the page's answer for
+ * every section: strings and booleans equal, numbers equal as doubles bit for bit, arrays in order,
+ * objects member for member (a member the page leaves out must be absent), a throw of the same
+ * error name, and the same XP preview calls in the same order. Each family's case count is fixed,
+ * so a lost or added case fails here as well as in the web test that regenerates the file.
  */
 class ReadModelsGoldenTest {
     @Test
@@ -21,7 +21,10 @@ class ReadModelsGoldenTest {
         for (c in ReadModelsReplay.golden.cases) {
             counts[c.family] = (counts[c.family] ?: 0) + 1
             assertTrue("repeated id ${c.id}", ids.add(c.id))
-            assertTrue("${c.id} cites a rule outside RM", c.rule.split(' ').all { RULE.matches(it) })
+            assertTrue(
+                "${c.id} cites a rule outside RM",
+                c.rule.split(' ').all { RULE.matches(it) },
+            )
             ReadModelsReplay.difference(c)?.let { wrong += it }
         }
         assertTrue(
@@ -38,7 +41,9 @@ class ReadModelsGoldenTest {
         val start = File(System.getProperty("user.dir") ?: ".").absoluteFile
         val file =
             generateSequence(start) { it.parentFile }
-                .map { File(it, "android-wrapper/native/src/main/resources/" + ReadModelWords.RESOURCE) }
+                .map {
+                    File(it, "android-wrapper/native/src/main/resources/" + ReadModelWords.RESOURCE)
+                }
                 .firstOrNull { it.isFile }
                 ?: generateSequence(start) { it.parentFile }
                     .map { File(it, "src/main/resources/" + ReadModelWords.RESOURCE) }

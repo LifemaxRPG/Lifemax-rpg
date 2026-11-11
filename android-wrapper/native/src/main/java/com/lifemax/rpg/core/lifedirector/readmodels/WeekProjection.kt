@@ -1,12 +1,12 @@
 package com.lifemax.rpg.core.lifedirector.readmodels
 
+import com.lifemax.rpg.core.lifedirector.PageTypeError
 import com.lifemax.rpg.core.lifedirector.PageValues
 import com.lifemax.rpg.core.lifedirector.PageValues.member
 import com.lifemax.rpg.core.lifedirector.PageValues.number
 import com.lifemax.rpg.core.lifedirector.PageValues.numberText
 import com.lifemax.rpg.core.lifedirector.PageValues.text
 import com.lifemax.rpg.core.lifedirector.PageValues.truthy
-import com.lifemax.rpg.core.lifedirector.PageTypeError
 import com.lifemax.rpg.core.lifedirector.PlanDay
 import com.lifemax.rpg.core.save.JsonArray
 import com.lifemax.rpg.core.save.JsonNull
@@ -44,7 +44,12 @@ data class UnfitGroup(val title: String, val tier: String, val text: JsonValue?)
 
 data class Unfit(val summary: String, val groups: List<UnfitGroup>)
 
-data class WeekFit(val title: String, val text: String, val allFit: String, val unscheduled: Unfit?)
+data class WeekFit(
+    val title: String,
+    val text: String,
+    val allFit: String,
+    val unscheduled: Unfit?,
+)
 
 /** RM-19 `nativeWeek()`: the week as the native projection carries it (logic.js:3272-3288). */
 data class WeekProjection(
@@ -99,7 +104,8 @@ internal object WeekProjections {
                         r.aria,
                         r.sessions.toString(),
                         if (r.done != 0) words.phrase("doneMark") + r.done else "",
-                        if (truthy(r.minutes)) Week.mins(r.minutes, words) else words.phrase("noMinutes"),
+                        if (truthy(r.minutes)) Week.mins(r.minutes, words)
+                        else words.phrase("noMinutes"),
                         segments(r.day, r.blocks, words).map {
                             it.copy(left = round2(it.left), width = round2(it.width))
                         },
@@ -134,7 +140,8 @@ internal object WeekProjections {
             else (v as? JsonArray)?.items ?: throw PageTypeError("filter is not a function")
         val list =
             items.filter {
-                if (it == JsonNull) throw PageTypeError("Cannot read properties of null (reading 'tier')")
+                if (it == JsonNull)
+                    throw PageTypeError("Cannot read properties of null (reading 'tier')")
                 truthy(member(it, "tier"))
             }
         if (list.isEmpty()) return null

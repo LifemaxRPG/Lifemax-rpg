@@ -159,7 +159,12 @@ object ReadModelsReplay {
             if (!connected) return null
             val args =
                 JsonArray(
-                    listOf(JsonString(type), JsonNumber(minutes), JsonNumber(1.0), JsonString(dateKey))
+                    listOf(
+                        JsonString(type),
+                        JsonNumber(minutes),
+                        JsonNumber(1.0),
+                        JsonString(dateKey),
+                    )
                 )
             val r = recorded.getOrNull(calls.size) as? JsonObject
             val out = if (r != null && r["args"] == args) r["out"] ?: JsonNull else JsonNull
@@ -189,21 +194,33 @@ object ReadModelsReplay {
         val st = stateOf(c)
         val xp = RecordedXp((c.out["xp"] as JsonArray).items, c.host != "off")
         val m =
-            DirectorReadModels(st, c.nowMillis, c.deviceZone, xp, mutation.words ?: ReadModelWords.packaged)
+            DirectorReadModels(
+                st,
+                c.nowMillis,
+                c.deviceZone,
+                xp,
+                mutation.words ?: ReadModelWords.packaged,
+            )
         val dayBlocks = mutation.blocks ?: { r, d -> r.dayBlocks(d) }
         val out = LinkedHashMap<String, JsonValue>()
         var days: List<PlanDay>? = null
         out["days"] = section { ReadModelJson.days(m.horizonDays().also { days = it }) }
         out["unplanned"] = section {
-            ReadModelJson.segments(m.unplannedSegments(days?.first() ?: throw PageTypeError("days")))
+            ReadModelJson.segments(
+                m.unplannedSegments(days?.first() ?: throw PageTypeError("days"))
+            )
         }
         out["blocks"] = section {
-            JsonArray((days ?: throw PageTypeError("days")).map { ReadModelJson.blocks(dayBlocks(m, it)) })
+            JsonArray(
+                (days ?: throw PageTypeError("days")).map { ReadModelJson.blocks(dayBlocks(m, it)) }
+            )
         }
         out["timeline"] = section { ReadModelJson.blocks(m.liveTimeline()) }
         out["now"] = section { ReadModelJson.now(mutation.now?.invoke(m) ?: m.nowState()) }
         out["week"] = section { ReadModelJson.weekModel(m.weekModel()) }
-        out["native"] = section { ReadModelJson.week(mutation.week?.invoke(m) ?: m.weekProjection()) }
+        out["native"] = section {
+            ReadModelJson.week(mutation.week?.invoke(m) ?: m.weekProjection())
+        }
         c.calendar?.let { offsets ->
             out["calendar"] =
                 JsonArray(
@@ -211,11 +228,16 @@ object ReadModelsReplay {
                         JsonObject(
                             linkedMapOf(
                                 "offset" to JsonNumber(offset.toDouble()),
-                                "days" to section { m.calendarDays(offset)?.let(ReadModelJson::days) ?: JsonNull },
+                                "days" to
+                                    section {
+                                        m.calendarDays(offset)?.let(ReadModelJson::days) ?: JsonNull
+                                    },
                                 "blocks" to
                                     section {
                                         m.calendarDays(offset)?.let { cd ->
-                                            JsonArray(cd.map { ReadModelJson.blocks(dayBlocks(m, it)) })
+                                            JsonArray(
+                                                cd.map { ReadModelJson.blocks(dayBlocks(m, it)) }
+                                            )
                                         } ?: JsonNull
                                     },
                             )
@@ -237,14 +259,14 @@ object ReadModelsReplay {
             }
         for ((k, want) in c.out.members) {
             val got = mine[k]
-            if (got != want)
-                return "${c.id} $k:\n  page   ${show(want)}\n  native ${show(got)}"
+            if (got != want) return "${c.id} $k:\n  page   ${show(want)}\n  native ${show(got)}"
         }
         if (mine.members.keys != c.out.members.keys) return "${c.id}: sections ${mine.members.keys}"
         return null
     }
 
-    private fun show(v: JsonValue?): String = if (v == null) "absent" else JsonWriter.write(v).take(SHOWN)
+    private fun show(v: JsonValue?): String =
+        if (v == null) "absent" else JsonWriter.write(v).take(SHOWN)
 
     private const val SHOWN = 900
 }

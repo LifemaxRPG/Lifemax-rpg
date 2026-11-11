@@ -40,7 +40,8 @@ class ReadModelWords(
     val fallbackColour: Double,
 ) {
     /** The phrase [key]; a key the export does not have is a programming error. */
-    fun phrase(key: String): String = phrases[key] ?: error("readmodel-words.json has no phrase $key")
+    fun phrase(key: String): String =
+        phrases[key] ?: error("readmodel-words.json has no phrase $key")
 
     companion object {
         /** The file's place among the app's resources. */
@@ -110,14 +111,17 @@ class ReadModelWords(
             val colours = objectOf(o["colours"], setOf("attributes", "fallback"))
             return ReadModelWords(
                 dayNames = textsOf(o["dayNames"]).also { check(it.size == DAYS) },
-                kindClass = (o["kindClass"] as? JsonObject ?: error("kindClass")).members.mapValues {
-                    textOf(it.value)
-                },
-                weekLegend =
-                    listOf(o["weekLegend"]).flatMap { (it as JsonArray).items }.map {
-                        val e = objectOf(it, setOf("kind", "label"))
-                        LegendEntry(textOf(e["kind"]), textOf(e["label"]))
+                kindClass =
+                    (o["kindClass"] as? JsonObject ?: error("kindClass")).members.mapValues {
+                        textOf(it.value)
                     },
+                weekLegend =
+                    listOf(o["weekLegend"])
+                        .flatMap { (it as JsonArray).items }
+                        .map {
+                            val e = objectOf(it, setOf("kind", "label"))
+                            LegendEntry(textOf(e["kind"]), textOf(e["label"]))
+                        },
                 weekTicks = textsOf(o["weekTicks"]),
                 yieldNote = textOf(o["yieldNote"]),
                 allFit = textOf(o["allFit"]),

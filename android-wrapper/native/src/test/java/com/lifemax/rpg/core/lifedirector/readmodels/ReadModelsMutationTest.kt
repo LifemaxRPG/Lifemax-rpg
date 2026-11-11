@@ -96,7 +96,8 @@ class ReadModelsMutationTest {
             Mutation(
                 blocks = { m, d ->
                     m.dayBlocks(d).filter {
-                        !(it.session == null && it.code == JsonString("FREE") &&
+                        !(it.session == null &&
+                            it.code == JsonString("FREE") &&
                             it.endEpoch - it.startEpoch < 1800)
                     }
                 }
@@ -114,8 +115,17 @@ class ReadModelsMutationTest {
                     m.dayBlocks(d).map {
                         if (it.mealStartEpoch == null) it
                         else
-                            DayBlock(it.startEpoch, it.endEpoch, it.code, it.kind, it.title, it.refId,
-                                it.startEpoch, it.clipped, it.session)
+                            DayBlock(
+                                it.startEpoch,
+                                it.endEpoch,
+                                it.code,
+                                it.kind,
+                                it.title,
+                                it.refId,
+                                it.startEpoch,
+                                it.clipped,
+                                it.session,
+                            )
                     }
                 }
             ),
@@ -134,9 +144,13 @@ class ReadModelsMutationTest {
                     n.copy(
                         running =
                             n.running ||
-                                (f != null && n.current?.session != null &&
+                                (f != null &&
+                                    n.current?.session != null &&
                                     com.lifemax.rpg.core.lifedirector.PageValues.same(
-                                        com.lifemax.rpg.core.lifedirector.PageValues.member(f, "id"),
+                                        com.lifemax.rpg.core.lifedirector.PageValues.member(
+                                            f,
+                                            "id",
+                                        ),
                                         n.current.session.instanceId,
                                     ))
                     )
@@ -154,13 +168,20 @@ class ReadModelsMutationTest {
                 now = { m ->
                     val n = m.nowState()
                     val tl = m.liveTimeline()
-                    val cur = n.current?.let { c -> tl.firstOrNull { it.startEpoch == c.startEpoch && it.endEpoch == c.endEpoch } }
+                    val cur =
+                        n.current?.let { c ->
+                            tl.firstOrNull {
+                                it.startEpoch == c.startEpoch && it.endEpoch == c.endEpoch
+                            }
+                        }
                     val after = cur?.endEpoch ?: m.nowEpoch
                     n.copy(
                         next =
                             tl.firstOrNull {
-                                it !== cur && it.startEpoch >= after - 60 &&
-                                    it.blockClass(m.words) != "free" && it.isLive
+                                it !== cur &&
+                                    it.startEpoch >= after - 60 &&
+                                    it.blockClass(m.words) != "free" &&
+                                    it.isLive
                             }
                     )
                 }

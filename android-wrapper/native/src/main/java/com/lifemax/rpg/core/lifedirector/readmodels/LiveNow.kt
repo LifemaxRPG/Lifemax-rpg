@@ -16,10 +16,10 @@ data class Soon(val block: DayBlock, val seconds: Double) {
 /**
  * RM-12, RM-13 `nowState(now)`: the block now on ([current]; a live session before anything else),
  * the next block worth naming ([next]), the next planned session ([nextSession]), the warning about
- * now ([kick]) and about what is coming ([soon]), whether a planned session is on now
- * ([isSession]) and whether the page's timer runs on it ([running]). The blocks are the timeline's
- * own ([LiveNow.timeline] made for this state); the page holds `isSes` and `running` as null,
- * undefined or false for "no", and every reader tests them for truth.
+ * now ([kick]) and about what is coming ([soon]), whether a planned session is on now ([isSession])
+ * and whether the page's timer runs on it ([running]). The blocks are the timeline's own
+ * ([LiveNow.timeline] made for this state); the page holds `isSes` and `running` as null, undefined
+ * or false for "no", and every reader tests them for truth.
  */
 data class NowState(
     val current: DayBlock?,
@@ -30,7 +30,9 @@ data class NowState(
     val isSession: Boolean,
     val running: Boolean,
 ) {
-    /** `alert: kick || soon`: which of the two warnings the page raises (`kick`, `soon`), or none. */
+    /**
+     * `alert: kick || soon`: which of the two warnings the page raises (`kick`, `soon`), or none.
+     */
     val alert: String?
         get() = if (kick != null) "kick" else if (soon != null) "soon" else null
 }
