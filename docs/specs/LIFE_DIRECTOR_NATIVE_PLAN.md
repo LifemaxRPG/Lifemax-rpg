@@ -548,13 +548,13 @@ to RM-20, defects RD01 to RD14, no native deviations, golden index, mutation che
 recorder's copy only, so the page's source is unchanged) evaluated inside the built page in Chromium with the page's own engine, host
 and a pinned `Date`, every case twice; states from the page's own saved states (`tools/ld_store_seeds.js`), engine plans in the 11
 strict zones and across every 2026-2027 clock change, and reschedule results; cases `tools/ld_readmodels_cases.js`. 432 states and
-2,563 cases in `tests/fixtures/ld-readmodels-golden.json.gz` (14 families: seed 70, scenario 330, dst 240, plan 284, reschedule 202,
-now 650, focus 150, zone 51, life 134, midnight 39, calendar 42, host 31, week 40, fuzz 300); web test
+2,599 cases in `tests/fixtures/ld-readmodels-golden.json.gz` (15 families: seed 70, scenario 330, dst 240, plan 284, reschedule 202,
+now 650, focus 150, zone 51, life 134, midnight 39, edge 36, calendar 42, host 31, week 40, fuzz 300); web test
 `tests/ld-readmodels-golden.test.js` (re-captures the seeds, re-records every state and case, fails on drift of the file or of the
 exported words). The page words are exported by the recorder to `android-wrapper/native/src/main/resources/lifedirector/readmodel-words.json`,
 never retyped. Kotlin in `core/lifedirector/readmodels` (`DirectorReadModels`, `DayBlocks`, `DayBlock`, `LiveNow`, `Week`,
 `WeekProjection`, `ReadModelWords`, `ReadModelJson`), typed outputs, no `org.json`, reproduces every case (`ReadModelsGoldenTest`);
-`ReadModelsMutationTest` and source mutations (spec section 9). The projection's `week` is reproduced exactly; Today's inputs (days,
+`ReadModelsMutationTest` (11 checks) and 42 source mutations, 41 caught, the survivor equivalent on the data (spec section 9). The projection's `week` is reproduced exactly; Today's inputs (days,
 blocks, now) are, its dial is part b. Findings: the first week row is called Today when the plan starts on a later day (RD01); any timer,
 even paused or on another session, hides the late warning (RD03); an unknown stored zone stops Life Director drawing (RD04); Week counts
 skipped and missed sessions and planned rather than actual minutes (RD07). Open: OQ-RM1 to OQ-RM4.

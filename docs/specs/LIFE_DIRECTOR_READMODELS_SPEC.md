@@ -118,7 +118,7 @@ block is free time to the day's end. Every family that draws a day.
 **RM-11** `liveTimeline(now)` (logic.js:1058-1071): `[]` without a plan; else the blocks of the first two shown days (RM-3, RM-6 to RM-9),
 copied, sorted by start, and each non-session block joined into the one before it when that is also not a session, has the same code and
 the same title, and the new one starts no later than 60 seconds after it ends (the joined block keeps the first piece's other members;
-RD09). Families `now`, `focus`, `midnight` (a meal and a commitment cut at midnight are joined again).
+RD09). Families `now`, `focus`, `midnight` (a meal and a commitment cut at midnight are joined again), `edge` (gaps of 30, 60 and 61 seconds).
 
 **RM-12** `nowState(now)`, the blocks (logic.js:1120-1127):
 - `cur`: the first session block that is live (not `off`, RM-10) and on now (`start <= now < end`), else the first non-session block on
@@ -127,7 +127,7 @@ RD09). Families `now`, `focus`, `midnight` (a meal and a commitment cut at midni
   not a done session.
 - `nextTask`: the first session block, not `cur`, that starts after `now` and is `PLANNED`.
 - `isSes`: `cur` is a `PLANNED` session.
-Families `now` (every second around the thresholds), `focus`, `seed`, `scenario`, `fuzz`.
+Families `now` (every second around the thresholds), `edge` (the 60-second slack, a session starting exactly now), `focus`, `seed`, `scenario`, `fuzz`.
 
 **RM-13** The warnings (logic.js:1128-1134), with `SOON` 900, `ENDING` 600 and `LATE` 600 seconds:
 - `running`: the timer `ST.ui.focus` exists, is not paused, and its `id` equals `cur`'s session's `instanceId`.
@@ -218,7 +218,7 @@ Recorded as the page behaves; native reproduces each. None is fixed here.
 | RD13 | logic.js:395 | The day count of a plan is `Math.round` of its length in days; a stored plan whose length is not whole days (a damaged or hand-edited save) gains or loses its last day (Read). | Informational |
 | RD14 | logic.js:400-401 | Shown days keep their index in the plan after the past days are dropped, so `days[0].index` can be 3; the rows use their own position (Executed, every family after the plan's first day). | Informational |
 
-Native deviations: none. Every one of the 2,563 cases is reproduced, including the throws.
+Native deviations: none. Every one of the 2,599 cases is reproduced, including the throws.
 
 ## 9. Golden cases: the index, and the mutation checks
 
@@ -233,7 +233,7 @@ step of reschedule cases from `ld-reschedule-golden.json.gz`. Cases: `tools/ld_r
 `lifemax_modular_v73/tests/ld-readmodels-golden.test.js` re-captures the seeds, defines and records every state and case again and fails
 on any byte of drift, and on any drift of the exported words.
 
-432 states, 2,563 cases:
+432 states, 2,599 cases:
 
 | Family | Cases | What |
 |---|---|---|
@@ -247,6 +247,7 @@ on any byte of drift, and on any drift of the exported words.
 | zone | 51 | read in another zone (travel), no zone, an empty one, lower case, an unknown one |
 | life | 134 | sessions in every lifecycle state, with actual minutes, pinned, moved over commitments and each other, history changed |
 | midnight | 39 | a meal and another commitment moved across midnight between two days |
+| edge | 36 | blocks off the quarter hour: a meal 30, 60 or 61 seconds before an identical block, a commitment starting 30, 60 or 61 seconds before a done session ends, a planned session starting exactly now under an earlier one |
 | calendar | 42 | the calendar's days off the plan, before, inside and after it |
 | host | 31 | LifeMax not connected |
 | week | 40 | unplaced work by tier and reason, coverage rounding, downtime minutes |
@@ -256,9 +257,56 @@ Native: `ReadModelsGoldenTest` replays every case (all sections equal, the XP ca
 `ReadModelsMutationTest` puts eleven plausible porting mistakes in place of one read model or one word and requires the replay to notice
 each in the families it should.
 
-Source mutations of the native code, each compiled and replayed against the whole file (MUTATION_RESULTS):
+Source mutations of the native code, each compiled and replayed against the whole file: 42, 41 caught, the survivor equivalent on every
+state the file holds. Three (20, 25, 26) first survived and showed blocks off the quarter hour were never recorded; the `edge` family was
+added for them and catches each. Number 7 (the preview derived from the day itself rather than the day before) gives the same segments
+as the page on all 1,290 days after the end of every plan of the file (compared in node with the engine text), because a three-day
+derivation from the day itself already covers it; it is kept as the page has it.
 
-MUTATION_TABLE
+| # | File | Mutation | Result (cases that differ; counted on the file before the edge family unless marked) |
+|---|---|---|---|
+| 0 | `DirectorReadModels.kt` | nowEpoch rounded, not floored | caught 166 |
+| 1 | `DirectorReadModels.kt` | a day ending now kept | caught 73 |
+| 2 | `DirectorReadModels.kt` | no fallback day, past days kept | caught 1634 |
+| 3 | `DirectorReadModels.kt` | an empty stored zone used | caught 8 |
+| 4 | `DirectorReadModels.kt` | day count floored | caught 160 |
+| 5 | `DirectorReadModels.kt` | calendar one day late | caught 78 |
+| 6 | `DayBlocks.kt` | preview over one day | caught 2539 |
+| 7 | `DayBlocks.kt` | preview from the day itself | survived: equivalent on the data (see above) |
+| 8 | `DayBlocks.kt` | DECOMPRESS not visible in preview | caught 1104 |
+| 9 | `DayBlocks.kt` | locked activity segments drawn | caught 11 |
+| 10 | `DayBlocks.kt` | cancelled sessions shown | caught 107 |
+| 11 | `DayBlocks.kt` | preview boundary | caught 22 |
+| 12 | `DayBlocks.kt` | clipped only at the start | caught 1623 |
+| 13 | `DayBlocks.kt` | sessions by start only | caught 10 |
+| 14 | `DayBlocks.kt` | sessions before segments at the same start | caught 10 |
+| 15 | `DayBlocks.kt` | any session trims segments | caught 59 |
+| 16 | `DayBlocks.kt` | short pieces dropped | caught 5 |
+| 17 | `DayBlocks.kt` | covered sessions dropped | caught 160 |
+| 18 | `DayBlocks.kt` | last free time from more than 15 min | caught 10 |
+| 19 | `DayBlocks.kt` | meal start clipped | caught 16 |
+| 20 | `LiveNow.kt` | pieces joined only when touching | caught 8 (after the edge family) |
+| 21 | `LiveNow.kt` | pieces joined by code alone | caught 1311 |
+| 22 | `LiveNow.kt` | timeline today only | caught 1898 |
+| 23 | `LiveNow.kt` | a dead session as current | caught 20 |
+| 24 | `LiveNow.kt` | a skipped session as current | caught 22 |
+| 25 | `LiveNow.kt` | no slack for next | caught 8 (after the edge family) |
+| 26 | `LiveNow.kt` | next session starting now | caught 12 (after the edge family) |
+| 27 | `LiveNow.kt` | late despite a timer | caught 96 |
+| 28 | `LiveNow.kt` | ending on free time | caught 135 |
+| 29 | `Week.kt` | zero actual minutes previewed | caught 5 |
+| 30 | `Week.kt` | done sessions give no XP | caught 151 |
+| 31 | `Week.kt` | done XP counted as planned | caught 147 |
+| 32 | `Week.kt` | attributes smallest first | caught 2280 |
+| 33 | `Week.kt` | coverage floored | caught 440 |
+| 34 | `Week.kt` | partial counted done | caught 58 |
+| 35 | `Week.kt` | an hour as 60m | caught 452 |
+| 36 | `WeekProjection.kt` | bars on a fixed 24 h | caught 495 |
+| 37 | `WeekProjection.kt` | x2 dropped | caught 715 |
+| 38 | `WeekProjection.kt` | lowest tier first | caught 715 |
+| 39 | `WeekProjection.kt` | tierless diagnostics counted | caught 40 |
+| 40 | `WeekProjection.kt` | attribute colours lost | caught 2285 |
+| 41 | `WeekProjection.kt` | attribute names not capitalised | caught 2285 |
 
 ## 10. Open questions for the owner
 
