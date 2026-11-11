@@ -63,7 +63,10 @@ class DirectorChecks(
         val written = PageJson.text(decoded.document)
         if (written != text) found += Difference("store.text" + firstMember(decoded.document, text), "store.text")
         when (val e = DirectorStoreCodec.encode(decoded.document)) {
-            is StoreEncode.Refused -> found += Difference("store.encode." + word(e.refusal), "store.encode")
+            // an owned field of a kind the page never writes there is the strict reader's finding (above), not a difference
+            is StoreEncode.Refused ->
+                if (e.refusal is StoreRefusal.WrongType) notes += "encode." + word(e.refusal)
+                else found += Difference("store.encode." + word(e.refusal), "store.encode")
             is StoreEncode.Encoded -> if (e.text != text) found += Difference("store.encode", "store.encode")
         }
         return CheckResult(if (found.isEmpty()) Verdict.Same else differed(found), notes)
@@ -74,7 +77,7 @@ class DirectorChecks(
         val page = (JsonReader.read(text) as? JsonRead.Parsed)?.value as? JsonObject ?: return ""
         for ((k, v) in page.members) {
             val mine = doc.members[k] ?: return "." + paths.member(k)
-            if (PageJson.text(mine) != PageJson.text(v)) return "." + paths.member(k)
+            if (PageJson.text(mine) != PageJson.preserving(v)) return "." + paths.member(k)
         }
         return ""
     }
