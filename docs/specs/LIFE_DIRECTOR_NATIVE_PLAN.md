@@ -443,8 +443,8 @@ scenarios x seeds x zones), fuzz, validateSchedule on every output. The float ru
 
 ### WP-LD5. Rescheduling and hold placement (M to L, risk high; engine)
 
-**Status: done for the rest of `generateSchedule` and `validateSchedule`** (branch `logic/ld5-repair`, NativeApi 125); `rescheduleActivity`
-and its hold placement (the scope below) are not done yet. Done: what LD4 left (`removeInst`, snapshot and restore, `runLocalRepair`,
+**Status: done.** Part 5 (branch `logic/ld5-repair`, NativeApi 125) did the rest of `generateSchedule` and `validateSchedule`; part 6
+(WP-LD5b, below) did `rescheduleActivity` and its hold placement. Part 5 did: what LD4 left (`removeInst`, snapshot and restore, `runLocalRepair`,
 `fillPass`, the rejections on the final state, `explainInstance`, `segments`, `capacityByDay`, `recoveryBlocks`, the goal allocation, quest
 coverage, `assembleOutput`, `inputHash`, `validateSchedule`), so native now makes the whole plan. Recorder `tools/gen_ld_schedule_golden.js`
 (LD1's method; loader `tools/ld_engine_vm.js` `SCHEDULE` and `scheduleSource`, three stage calls that only look: each repair target, after
@@ -462,7 +462,27 @@ weeks with a repair that spends its whole budget, 85 ms on the JVM); 46 source m
 OQ-5). Findings: a re-plan made while the player sleeps, after a pinned session passed unmarked, fails validation and is thrown away by the
 page (LD36); a quest whose prerequisite quest has a lower tier is never placed though it fits (LD40); the repair's budget is spent per day
 looked at, so long plans get little repair (LD43); `$` patterns in goal titles are interpreted in explanations (LD38). Node (fdlibm)
-differs on 18 whole plans (LD20). Next: `rescheduleActivity` (the scope below), on the same recorder.
+differs on 18 whole plans (LD20).
+
+WP-LD5b, rescheduling (branch `logic/ld5b-reschedule`, NativeApi 126): `rescheduleActivity` for every trigger the code has (`MISSED`,
+`SKIPPED`, `RESIDUAL`, `MOVE`, `NEW_COMMITMENT`, `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`, `QUEST_CHANGED`, `TIME_CHANGED`; there is no late,
+early, hold or insert trigger: those are a move, a completion, what every trigger does, and radius placement), `prepareStateWithHold`
+with its recovery protection, `placeByRadius` (radius 1 to 4), the three refusals of a move and the throws, the change record and the
+rebuilt output with its validation. Recorder `tools/gen_ld_reschedule_golden.js` (LD1's method, same loader), cases
+`tools/ld_reschedule_cases.js`: a plan, then steps (a trigger, optionally the input's members replaced first and the page's stored
+schedule), each step's whole result recorded and the next step started from it; 2,298 cases, 4,329 steps in
+`tests/fixtures/ld-reschedule-golden.json.gz` (13 families: the ten scenarios in the 11 strict zones, seeds, every 2026-2027 clock change,
+one family per trigger on seeded plans, sequences of ten triggers, every refusal and throw, holds, radius 3 and 4 on packed days); every
+case recorded twice and required equal; web test `tests/ld-reschedule-golden.test.js`. Kotlin in `core/lifedirector` (`Reschedule`,
+`RescheduleTriggers`, `HoldPreparation`, `SourceTask`, `RadiusPlacement`, `RescheduleOutput`; part 5's `PlanPreparation`, `PlanState`,
+`LocalRepair`, `Explanations`, `ScheduleJson`, `PlanSchedule` opened up a little) reproduces every step, member order included
+(`RescheduleGoldenTest`; `ReschedulePerfTest`: on the four-week plan a miss takes 8 ms, two sick days 36 ms, `TIME_CHANGED` 120 ms on the
+JVM, against 17, 101 and 1,114 ms for the page in node); 50 source mutations, 47 caught and the 3 survivors explained (spec 14.6). Spec part 6 (`LIFE_DIRECTOR_ENGINE_SPEC.md` section 14:
+LDM-1 to 7, LDB-1 to 4, LDY-1 to 5, LDZ-1 to 5; defects LD46 to LD56; index 8.6; OQ-20 to 23). Findings: once a session has been moved,
+the page's own next reschedule of it (moved again, missed, skipped, a commitment over it) fails `I7` and the page refuses the plan
+(LD52); a session evicted with no new place vanishes without history (LD50); rescheduled plans have no fairness shares (LD48); a
+`TIME_CHANGED` change record has no reason (LD47); the hold mark leaks into history (LD46). Node (fdlibm) differs on 2 cases (LD20).
+Nothing is wired to a screen; the page is unchanged.
 
 Scope: `rescheduleActivity` for every trigger (`MISSED`, `SKIPPED`, `MOVE`, `RESIDUAL`, `TIME_CHANGED`, `NEW_COMMITMENT`,
 `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`), `prepareStateWithHold`, `placeByRadius`, `dayEndAfter`, change record. Tests: for

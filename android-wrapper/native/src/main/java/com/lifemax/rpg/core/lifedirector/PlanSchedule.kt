@@ -98,7 +98,12 @@ object PlanSchedule {
                 s.fair,
             )
         val capacity = PlanSegments.capacity(s)
-        val allocation = allocation(s, c.demand.expansion.plans, planned)
+        val allocation =
+            allocation(
+                s,
+                c.demand.expansion.plans,
+                planned.map { it.goalLinks to it.durationSlots },
+            )
         val valid = (validation as JsonObject)["isValid"] == JsonBool.TRUE
         val warned = ((validation["warnings"] as JsonArray).items).isNotEmpty()
         val status =
@@ -172,12 +177,13 @@ object PlanSchedule {
      * LDO-6: one row per goal with a plan, in the order of goal ids: its title, priority, target
      * share, status (the first plan's, replaced by any plan's status that is not on track), the
      * projection of its first plan and each plan's template numbers; then the minutes and sessions
-     * of every planned session linked to it, and its share of all such minutes (of 1 when none).
+     * of every planned session linked to it ([planned]: each session's goal links and length in
+     * slots), and its share of all such minutes (of 1 when none).
      */
-    private fun allocation(
+    internal fun allocation(
         s: PlanState,
         plans: List<SessionPlan>,
-        planned: List<PlanSession>,
+        planned: List<Pair<List<JsonValue>, Double>>,
     ): List<JsonValue> {
         class Row(val plan: SessionPlan) {
             var status = plan.status
@@ -198,8 +204,8 @@ object PlanSchedule {
             }
             if (p.status != ON_TRACK) row.status = p.status
         }
-        for (x in planned) for (gid in x.goalLinks) rows[text(gid)]?.let {
-            it.minutes += x.durationSlots * SLOT_MINUTES
+        for ((links, slots) in planned) for (gid in links) rows[text(gid)]?.let {
+            it.minutes += slots * SLOT_MINUTES
             it.sessions++
         }
         val total =

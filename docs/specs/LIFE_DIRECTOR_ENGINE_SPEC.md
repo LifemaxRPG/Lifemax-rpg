@@ -122,7 +122,7 @@ These use the kernel and are the next parts of this spec; the plan section names
 | 1088-1105 `removeInst`, 1110-1147 `taskSnapshot`, `snapshot`, `restore` (`stateFingerprint` only by the page's tests), 887-898 `recoveryBlocks` | part 5, section 13 | LD5, done |
 | 1289-1393 repair and fill, 1432-1535 explanations, segments, capacity, output, `inputHash` 1529-1532 | part 5, section 13 | LD5, done |
 | 1537-1618 validation | part 5, section 13 | LD5, done |
-| 1619-1905 `rescheduleActivity`, hold placement (`dayEndAfter` 1791-1795 is in this part) | rescheduling | LD5 (not yet; plan WP-LD5) |
+| 1619-1905 `rescheduleActivity`, hold placement (`dayEndAfter` 1791-1795 is in part 1, LDT-18) | part 6, section 14 | LD5 (WP-LD5b), done |
 | 1908-2085 ledger, quest progress, misses (`completionEventId` is in this part) | ledger | LD6 |
 | 2234-2340 `LifeDirectorStore` | store codec | LD7 |
 | 2342-2622 `LifeMaxHost` (its `weekBounds` 2418-2423 and `playerId` 2377-2380 are in this part) | host adapters | LD11 |
@@ -647,6 +647,55 @@ Part 5 (repair, output and validation, section 13):
   `linkedQuestRequirementIds` makes every repair snapshot throw a `TypeError`, and so does quest coverage once an active quest exists. As
   LD27 (goal links): the page's own sessions always carry the list. Port as is.
 
+Part 6 (rescheduling, section 14):
+
+- **LD46** (`engine.js:1698`, `1721`, `1733`, `1835`; LDB-1, LDB-4; e.g. `scenario/reschedule/office@UTC`) The hold marks each kept session
+  with `_hold: true` and removes the mark only from the planned sessions (`engine.js:1763`). A session the hold lets go, the recovery
+  protection takes, or the cascade removes goes to `historyInstances` as the held copy, so the stored history carries `_hold: true` (the
+  cascade's entries also `kept` and `bwcId`); 1,610 recorded outputs do. Nothing reads the member today. Looks accidental; port as is
+  (native writes it too), and a fix is a page change first.
+- **LD47** (`engine.js:1782-1783`; LDZ-5; every `time` case) The trigger-to-reason table has no `TIME_CHANGED`, so its change record has no
+  `triggerReason` (the member is undefined and absent from JSON; 302 recorded steps). The page's `planTimeChange` reads only the plan
+  today, so nothing shows it; a change-log entry built from the record would read `undefined`. Looks accidental; OQ-21.
+- **LD48** (`engine.js:1798-1842`, `964-968`, `1510`, `1610`; LDZ-2; every rescheduled output with a goal) The held state never gets the
+  goals' fairness shares (`generateSchedule` sets them at `engine.js:1225-1227`, the hold does not). So every rescheduled plan reports
+  `targetShare: 0` for every goal (3,162 recorded outputs), its validation's fairness metric is 1, and every goal session this reschedule
+  places is scored with a fairness multiplier `clamp(1 + 1.5 * (0 - its goal's current share), 0.75, 1.25)`: the more time a goal already
+  has, the more its replacements are pulled down. Looks accidental; OQ-21.
+- **LD49** (`engine.js:1744`; LDY-1; `sequence/reschedule/seed57` step 8; steps count from 0) A replacement's id is `stableId('t', replaced id + ':r:' + its
+  index + ':' + clock)`. Two reschedules at the same clock that replace the same session the same way (a residual, then the session
+  missed; the page's clock is in seconds, so it takes two changes within a second, or a demo) give the second replacement the id of the
+  first: two sessions with one id on the plan (the index by id keeps the later, the earlier one is explained as the later's task, LDZ-3).
+  Rare in use; completions and misses are keyed by instance id (WP-LD6), so it would matter. OQ-22.
+- **LD50** (`engine.js:1893-1897`; LDY-4; 177 recorded steps, e.g. `scenario/reschedule/abundant@UTC` step 3) A session evicted at
+  radius 4 that finds no new place is shed: it leaves the plan with only a `SHED` action, and goes neither to the history nor to the
+  rejections (compare part 5's eviction, which rejects it as `DISPLACED_BY_HIGHER_PRIORITY`). The page's ledger never sees it (no miss,
+  no excuse). Looks accidental; OQ-22.
+- **LD51** (`engine.js:1836`, `1721-1722`; LDB-3; e.g. `miss/reschedule/seed176`, `residual/reschedule/seed7`) The recovery protection
+  records `reason: 'RECOVERY_PROTECTION'` for the sessions it takes, but the excuse uses the trigger's type (`excuseReason: 'MISSED'`,
+  `'QUEST_CHANGED'` ...), so the history and the change record say a missed session displaced a session on another day. Informational.
+- **LD52** (`engine.js:1506`, `1596-1601`; LDZ-4; `move/reschedule/again-as-the-page-does`, `then-miss-as-the-page-does`,
+  `then-commitment-as-the-page-does`; `logic.js:110-121`) The page builds every reschedule's input with the current plan as its
+  `existingSchedule`, so a session the player moved (pinned) is a pinned stored session in the next one. `assembleOutput` validates without
+  the sessions the hold let go (`displacedIds`), and a retired session is in no rejection, so when the next reschedule moves that session
+  again, misses or skips it, or puts a commitment, a block or sickness over it, the new plan is `I7` (`A pinned activity was moved`),
+  `INVARIANT_VIOLATION`, and the page refuses to publish it (the banner 'Life Director refused to publish a plan that broke a safety rule'
+  and the old plan kept). 222 of the 3,602 recorded rescheduled plans fail validation, nearly all with `I7`. On the screen: a session can
+  be moved once; moving it again, marking it missed or adding an appointment over it is refused. Accidental, and it shows; OQ-20.
+- **LD53** (`engine.js:1805`, `1812`, `1702`; LDB-1, LDM-3; `refuse/reschedule/move-onto-pinned-later`, `-earlier`) A move onto a session
+  pinned earlier: the hold places pinned sessions by start, so when the pinned one starts first the move is refused (`BLOCKED_TIME`), and
+  when the moved one starts first the earlier pin is let go (excused, and placed again unpinned). Whether the player's earlier pin or the
+  new move wins depends on which starts first. Looks accidental; OQ-23.
+- **LD54** (`engine.js:1749`, `1437`; LDZ-3) A replacement keeps its source's `tierReason` (only a source without one gets
+  `REPLACEMENT`), so its explanation says why the original was planned, and the `REPLACEMENT` wording ('it replaces a session that was
+  missed or displaced') is never reached from the engine's own sessions. Informational (wording).
+- **LD55** (`engine.js:1807-1813`; LDM-3, LDB-1; 35 recorded steps, e.g. `scenario/reschedule/night@Pacific/Kiritimati` step 1) The hold
+  checks a held session's slots only from the plannable slot on, and only when the session is not over, so a move to a time that has
+  already passed (inside the plan, in a waking day) is accepted and pinned there, painted over whatever was there. Looks accidental; OQ-23.
+- **LD56** (`engine.js:1728-1737`; LDB-4, LDZ-4; `move/reschedule/seed10`, `seed142`, `scenario/reschedule/deadlines@Asia/Kolkata` step 1)
+  The cascade follows only tasks that left the plan; a prerequisite moved (pinned) after its dependent, or a dependent moved before its
+  prerequisite, stays, and the plan fails `I5`; 26 recorded plans do (and the page refuses them, as LD52). Looks accidental; OQ-23.
+
 ---
 
 ## 8. Golden cases: the index
@@ -897,8 +946,53 @@ round, `tight` seed 64, would choose differently, and the two placements commute
 inserted instead of `Object.keys` order (the sum is only shown rounded to thousandths, and in the SQI to tenths, so a last-bit difference
 cannot show; `alloc-numeric-ids-three` holds the case where the orders differ).
 
-Not recorded in part 5: `rescheduleActivity` (not in this part), LD39 and LD41 (no input reaches them), the fill pass's 200-round guard,
+Not recorded in part 5: `rescheduleActivity` (part 6, section 8.6), LD39 and LD41 (no input reaches them), the fill pass's 200-round guard,
 a waking day id repeated, and sessions removed that are not in the list (LDX-1's `splice(-1)`).
+
+### 8.6 Rescheduling and hold placement (part 6)
+
+File `lifemax_modular_v73/tests/fixtures/ld-reschedule-golden.json.gz` (2,298 cases, 4,329 steps; about 137.7 MB of text, 12.0 MB gzipped;
+the native loader reads it line by line and keeps no case, and the web test keeps each case as its text). Recorder
+`lifemax_modular_v73/tools/gen_ld_reschedule_golden.js` (the real built page in Chromium, node as a second runner; format in its header;
+every case run twice and required equal), definitions `tools/ld_reschedule_cases.js` (no `Intl`; it reuses placement's and part 5's input
+builders; the triggers that name a session or a time are chosen by playing the steps in node), loader `tools/ld_engine_vm.js` (`SCHEDULE`,
+`scheduleSource`, its stage calls off). A case is a plan (made by the runner, not recorded: part 5 covers it) and a list of steps, each a
+trigger with, optionally, top-level input members replaced first (the clock moved on, quests or availability changed) and the input's
+`existingSchedule` set to the current plan's sessions (as the page's `buildInput` does); every step's whole result is recorded (the plan
+without `computeTimeMs`, the change record without it, the refusal, the engine input; a result member that is the very object passed in,
+or equal to it as JSON, as a marker), and the next step starts from it. Web test `tests/ld-reschedule-golden.test.js` (re-records every case
+in Chromium, byte for byte; node agrees on most, LD20; every cited rule defined here; strict zones only; only the steps built to throw do;
+every trigger, refusal, radius, kind of action and result marker is reached). Native tests `RescheduleGoldenTest` (exact replay of every
+step, member order included, and the family counts) and `ReschedulePerfTest`, runner in `RescheduleReplay`, under
+`android-wrapper/native/src/test/java/com/lifemax/rpg/core/lifedirector`. Steps count from 0 where a defect names one.
+
+Zones: the 11 strict zones of the matrix (section 8.1); the tz-fragile zones are in no family.
+
+| Family | Cases | Steps | What it covers | Rules |
+|---|---|---|---|---|
+| `scenario` | 110 | 370 | the ten scenarios in the 11 strict zones: a miss, a move (into free time, onto a session, onto hard time or recovery, into the past, outside the plan, a day on or back, off the quarter hour) and a skip, every third zone a fourth trigger of any kind; the clock moved on before some | LDM, LDB, LDY, LDZ |
+| `seeds` | 60 | 120 | the scenarios at seeds 2 to 4 in UTC and Kolkata: a miss or a move, then any trigger, some with the page's stored schedule | as `scenario` |
+| `dst` | 120 | 240 | a three-day plan from the morning before, and the morning of, each 2026-2027 clock change of the strict zones: two moves, a block of hours and a miss; a move onto the change; a block of hours over it | LDM-3, LDM-6, LDB-1, LDZ |
+| `miss` | 400 | 400 | a miss or a skip on seeded short, tight and chained plans, the clock moved on and the stored schedule in some | LDM-1, LDM-2, LDB, LDY, LDZ |
+| `move` | 458 | 602 | one or two moves of every kind on seeded plans; a move onto a session, there and back, three times, off the quarter hour, then missed, and three moves of a pinned session as the page builds its input (LD52) | LDM-3, LDB, LDY, LDZ |
+| `residual` | 159 | 161 | the rest of a session (tiers 1 to 4, no parent, no window, a snapshot holding `goalTitle: null`, then the session missed at the same clock and a minute later, LD49) | LDM-4, LDY, LDZ |
+| `disrupt` | 406 | 406 | a new commitment, a block of hours, a blackout, sickness in turn on seeded plans; the four over the first session; a sick week; a blackout of the whole plan | LDM-5, LDM-6, LDB, LDY, LDZ |
+| `quest` | 208 | 208 | quests completed, failed, archived, removed, deadlines moved earlier, to tomorrow, later, removed; a daily quest closed; nothing changed | LDM-7, LDB, LDY, LDZ |
+| `time` | 153 | 153 | work moved, removed, added hours, a blackout, then `TIME_CHANGED`; nothing changed | LDM-7, LDB, LDY, LDZ |
+| `sequence` | 160 | 1,600 | a seeded plan, then ten triggers of any kind, each on what the one before left: the clock and the horizon start moved on, the stored schedule, moves back | all |
+| `refuse` | 16 | 19 | every refusal (onto sleep, onto work, after and before the plan, into the past, onto recovery, six moves into a short day), the throws (an unknown session for a move, a miss and a skip, an unknown trigger, no trigger), a refused move then an accepted one, a move onto a pinned session that starts earlier and later (LD53) | LDM-1, LDM-3, LDB-1, LDB-3, LDZ-5 |
+| `hold` | 13 | 15 | a missed, skipped, moved and covered prerequisite and a missed dependent (the cascade), a pin then a block over it, a started session kept, an ended one carried, a shorter horizon, the stored schedule, the recovery protection three ways | LDB, LDM |
+| `radius` | 35 | 35 | packed days (10 to 13 hours of work) with urgent quests: misses, skips and blocks over each urgent session, sickness and a blackout, so that radius 3 and 4 run | LDY, LDM-6 |
+
+Reached (the web test checks each): all ten triggers, the three refusals (315 `BLOCKED_TIME`, 124 `OUTSIDE_PLAN`, 18
+`RECOVERY_PROTECTED` steps), 269 throws, radius 1 to 4, every kind of action (`MISS`, `SKIP`, `MOVE`, `INSERT`, `COMPRESS`, `EXCUSE` with
+the trigger's name, `PREREQUISITE_MOVED` and `QUEST_DEADLINE_CHANGED`, `DELETE`, `RELINK`, `SHED` for a disruption and an eviction), and
+the three result markers. Rescheduled plans: 1,620 `VALID_SCHEDULE`, 1,760 `CONSTRAINT_WARNING`, 222 `INVARIANT_VIOLATION` (LD52, LD56).
+
+Mutations (section 14.6). Not recorded in part 6: a stored source of another shape than the engine's (native refuses it,
+`UnreadableSource`, LDB-2), a carried or held movable session without an explanation (the engine always writes one), a `QUEST_CHANGED`
+session whose links are not a list, the radius-3 and radius-4 iteration bounds (600, 900; the most any recorded reschedule spends is 195), the
+20-round guards of the cascade and the recovery protection, and a `newStartEpoch` that is not a number.
 
 ---
 
@@ -954,6 +1048,19 @@ a waking day id repeated, and sessions removed that are not in the list (LDX-1's
   cases move), or should a dependent's tier be raised to its prerequisite's? A page change first. Port as is until ruled.
 - **OQ-19** LD43: the repair's budget is spent per day looked at, so on long plans most urgent tasks get no repair. Should it count
   attempts instead? A change moves sessions on long plans; a page change first.
+- **OQ-20** LD52: once a session has been moved, the page's own reschedules of it (move again, miss, skip, a commitment over it) fail `I7`
+  and are refused. Recommended: pass the hold's let-go and retired pinned ids to the validation as excused (`displacedIds`; one line in
+  `assembleOutput`'s call for a reschedule), or have the validation exempt the trigger's own session. A page change first, with new cases
+  (the three `*-as-the-page-does` cases show it). Port as is until ruled.
+- **OQ-21** LD47, LD48: give `TIME_CHANGED` a trigger reason, and give the held state the goals' shares (as `generateSchedule` does), so
+  rescheduled plans report their target shares and score replacements as a fresh plan would? Both move recorded answers (LD48 moves
+  sessions), so a page change first. Port as is until ruled.
+- **OQ-22** LD49, LD50: should a replacement's id include something unique to the reschedule (the change id, or the count of earlier
+  replacements), and should a session evicted with no new place go to history (or the rejections) as part 5's eviction does? Page changes
+  first. Port as is until ruled.
+- **OQ-23** LD53, LD55, LD56: the rules of a move. Should a move onto another pinned session always be refused, a move to a time already
+  past be refused (`OUTSIDE_PLAN` or a new reason), and a move that breaks a prerequisite order be refused or cascade? Page changes first.
+  Port as is until ruled.
 ---
 
 ## 10. Availability: rules, preferences, sleep and the painted grid (part 2, WP-LD2)
@@ -1738,7 +1845,7 @@ plans the ten scenarios exactly as the page's.
 Part 5 is everything `generateSchedule` does after the construction (section 12): the bounded local repair with its snapshots and
 roll-backs, the fill pass, the rejections, the explanations, the segments, capacity and recovery blocks, the goal allocation and quest
 coverage, the output object and its `inputHash`; and `validateSchedule`, which the output embeds and which the page also calls on its own.
-`rescheduleActivity` and its hold placement (`prepareStateWithHold`, `placeByRadius`, the change record) are not in this part (plan
+`rescheduleActivity` and its hold placement (`prepareStateWithHold`, `placeByRadius`, the change record) are part 6 (section 14, plan
 WP-LD5's original scope; section 1.2). The stored Life Director state's `validate` (`engine.js:2259-2265`, the store module) is the store
 codec's (WP-LD7). Native: `PlanTransaction` (`PlanSnapshot`, `PlanRemoval`), `LocalRepair`, `Explanations` (and `PageText`), `PlanSegments`,
 `ScheduleJson` (the page objects), `ScheduleValidation` (and `PageKeys`), `InputHash`, `PlanSchedule` (the whole plan), in `core/lifedirector`.
@@ -1984,3 +2091,194 @@ or any object a caller passes. It reads the sessions as stored values with JavaS
   construction alone, on its own four-week plan, 111 ms in the same run). The page takes about 1,000 ms for the same plan in node on the
   same machine. The repair needed no cache beyond part 4's: a snapshot copies the slot arrays (about 2,700 slots of eight arrays for four
   weeks) and the lists, and the whole file of 2,915 plans replays in about 10 seconds. A phone will be several times slower.
+
+## 14. Rescheduling and hold placement (part 6, WP-LD5b)
+
+Part 6 is `rescheduleActivity` (`engine.js:1619-1790`): the local repair of a plan after one change, for every trigger (`MISSED`,
+`SKIPPED`, `RESIDUAL`, `MOVE`, `NEW_COMMITMENT`, `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`, `QUEST_CHANGED`, `TIME_CHANGED`); its hold
+placement (`prepareStateWithHold`, `engine.js:1798-1842`), the placement by radius (`placeByRadius`, `engine.js:1843-1903`), `dayEndAfter`
+(`engine.js:1791-1795`, LDT-18), the refusals of a move, the change record and the rebuilt output. The plan's own trigger list in WP-LD5
+says `MISSED`, `SKIPPED`, `MOVE`, `RESIDUAL`, `TIME_CHANGED`, `NEW_COMMITMENT`, `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`; the code also has
+`QUEST_CHANGED` (the page's demo uses it), and no `late`, `early`, `hold` or `insert` trigger exists: a late or early session is a `MOVE`
+or a completion (WP-LD6), a hold is what every trigger does to the sessions it does not touch, and an insert is radius placement. The page
+calls it from `logic.js:145-157` (its `reschedule` and `planTimeChange`) with an engine input it builds afresh (`buildInput`,
+`logic.js:110-118`: the clock as the horizon start, and the current plan's sessions and history as `existingSchedule`). Native:
+`Reschedule` (the request and its order), `RescheduleTriggers` (`TriggerPlan`, `StoredSession`), `HoldPreparation` (`HeldPlan`,
+`HeldSessions`), `SourceTask` (`makeTask` on a stored snapshot), `RadiusPlacement` (`Replacement`, `RescheduleRecords`),
+`RescheduleOutput`, in `core/lifedirector`; it reuses part 4's and part 5's `PlanState`, `Placer`, `Feasibility`, `PlanSnapshot`,
+`PlanRemoval`, `Rejections`, `Explanations`, `PlanSegments`, `ScheduleValidation`, `InputHash`, `ScheduleJson` and `PlanSchedule`
+(for `TIME_CHANGED`'s fresh plan and the goal allocation). IDs: `LDM-n` the request and the triggers, `LDB-n` the hold, `LDY-n` the placement
+by radius, `LDZ-n` the output and the change record. Every rule is **Executed** by the families of section 8.6 unless marked **Read**.
+The output is the stored schedule (`ST.schedule`) and the change record goes to `ST.changeLog`, so every member of both is part of the
+contract except their `computeTimeMs` (measured times, plan 4.2(7)); member order is compared too (it reaches `inputHash` and the saved
+text). Nothing is wired to a screen; the page stays the only planner.
+
+### 14.1 The request and the triggers
+
+- **LDM-1** (`engine.js:1620-1633`, `1638`, `1647`, `1695`; families `refuse`, every case) The request is `{engineInput, currentOutput,
+  trigger}`; `trigger || {}`. The engine input is copied by `deepClone` (JSON: NaN and the infinities become null, -0 becomes 0) and every
+  change the trigger makes is to the copy; the clock is the copy's `currentTimeEpoch`. The current plan's `scheduledInstances` (which must
+  be a list) are copied one by one (`prevPlanned`), its `historyInstances` too (none: an empty list); the sessions to keep start as all of
+  `prevPlanned`. A session a trigger names (`instanceId`) is looked up among them; none throws `Error('Instance not found: ...')`. A type
+  outside the ten (or none) throws `Error('Unknown trigger ...')` after the copies are made. A throw changes nothing (the page shows
+  nothing and keeps its plan). Native: `Reschedule.run`, `RescheduleTriggers.plan` (`EngineRefusal`).
+- **LDM-2** (`engine.js:1636-1643`, `1632`; families `miss`, `hold`, `radius`, `sequence`) `MISSED`, `SKIPPED`: the session is retired:
+  its task id joins the gone set, it leaves the kept sessions, and a copy with `lifecycleState` `MISSED_UNEXPLAINED` (or
+  `SKIPPED_VOLUNTARY`) and `resolvedAtEpoch` the clock is appended to the history. Action `{action: 'MISS' | 'SKIP', instanceId}`. A
+  session of tier 3 or more with a source is placed again (`REPLACEMENT`, replacing it, preferring the clock's day); a skip also keeps it
+  off the skipped session's waking day (its `bwcId`). A tier-2 or lower session is simply gone.
+- **LDM-3** (`engine.js:1645-1654`, `1699-1713`; families `move`, `refuse`, `dst`, `scenario`) `MOVE`: the session leaves the kept
+  sessions and comes back as `moved`, `Object.assign({}, it, {startEpoch: newStartEpoch, endEpoch: newStartEpoch + (end - start),
+  isUserLocked: true, rescheduledAdvance: true, moves: (moves || 0) + 1, explanation: {tier, summary: 'You moved this here and it is pinned;
+  Life Director will not move it automatically.', factors: [], locked: true}})` (new members appended in that order). Action `{action:
+  'MOVE', instanceId, from: old start, to: new start}`. The moved session goes first into the hold (LDB-1). The move is refused, and the
+  result is `{rejectedMove: {reason, message}, updatedSchedule: the current plan itself, engineInput: the one passed in (not the copy),
+  changeRecord: null}`, when, in this order: the hold let it go (`BLOCKED_TIME`, 'That time overlaps sleep, work, a meal or another fixed
+  block.'); it is not on the held state at all, being wholly before the plan or starting at or after its end (`OUTSIDE_PLAN`, 'That time is
+  outside the current planning window.'); or its waking day's recovery after the hold, `recoverySlots * 15`, is below
+  `minDailyRecoveryMinutes` and the day did not start before the plan (that exemption is **Read**: no recorded move reaches such a
+  day) (`RECOVERY_PROTECTED`, 'Moving it there would cut that day below your
+  minimum downtime.'). The last check reads the day after the hold, so a day whose free time is short of the minimum anyway refuses every
+  move into it (`refuse/reschedule/move-short-day-*`). A move to a time that is already over is accepted (LD55); a move onto a session
+  pinned before it depends on which starts first (LD53).
+- **LDM-4** (`engine.js:1644`; family `residual`) `RESIDUAL`: `trigger.task` (the page's `residualTask` from `recordCompletion`,
+  `engine.js:1968-1973`: the session's source with a new id, the remaining minutes as `dOpt`, `dMin`, `dMax`, `tierReason: 'RESIDUAL'`,
+  `windowStart` the clock) is placed (`RESIDUAL`, replacing `parentInstanceId`, preferring the clock's day). Nothing is retired.
+- **LDM-5** (`engine.js:1655-1659`; family `disrupt`) `NEW_COMMITMENT`: `trigger.commitment` is pushed onto the copy's
+  `fixedCommitments` (created, as the input's last member, when it is falsy), so the hold paints it as hard time and lets go of what it
+  covers (LDB-1, LDB-4). Displaced sessions are all placed again.
+- **LDM-6** (`engine.js:1655-1662`, `1723-1725`, `1738`; families `disrupt`, `radius`, `dst`) `BLOCK_HOURS`, `BLACKOUT_DAY`, `SICK`: the
+  copy's `playerAvailability` (created when falsy) gets `blackouts` (created when falsy) with `Object.assign({kind: 'SICK' | 'BLACKOUT'},
+  commitment)` pushed (so `kind` comes first, and a commitment's own `kind` wins). A displaced session of tier 2 or lower that starts before
+  the shed limit is not placed again (action `{action: 'SHED', instanceId, reason: 'LOW_TIER_AFTER_DISRUPTION'}`): for `BLOCK_HOURS` the
+  limit is the next local midnight after the block's start (`dayEndAfter` in `timezone || playerAvailability.timezone || 'UTC'`, LDT-18),
+  for a blackout and sickness it is never reached (everything low is shed). For `SICK`, every task to place (not only the displaced) gets
+  `notBefore` the commitment's end (LDY-1).
+- **LDM-7** (`engine.js:1664-1694`; families `quest`, `time`, `sequence`) `QUEST_CHANGED` and `TIME_CHANGED` carry nothing: the change is
+  in the engine input. `QUEST_CHANGED` normalises the input's quests (LDQ-1; by id, the last of an id) and, for each kept session not
+  pinned, starting after the clock, with quest links: keeps the links whose quest is active, and sets each kept link's `deadlineEpoch` to
+  its quest's (`|| null`) when they differ (`!==`) and the quest is not daily. Nothing changed: next. No link left and no goal link: the
+  session is retired as `CANCELLED_BY_QUEST` (action `DELETE`, reason `QUEST_CLOSED`). Otherwise the session takes the kept links and a
+  source with those links and `deadlineEpoch` the earliest truthy link deadline (null for none); when that deadline is before the session
+  ends, it is retired as `EXCUSED_DISPLACED` with `excuseReason: 'QUEST_DEADLINE_CHANGED'` (action `EXCUSE`) and placed again with tier 4
+  and `tierReason: 'CRITICAL_DEADLINE'` when the deadline is at most 25 hours (90,000 s) from the clock, else tier `max(3, tier)` and its
+  reason, and `windowEnd: min(windowEnd || deadline, deadline)`; else action `RELINK`. `TIME_CHANGED` plans the input from scratch
+  (`generateSchedule`, part 5) and, unless that plan fails validation, places every planned task whose id no current session has
+  (`TIME_FREED`, preferring the clock's day); the current sessions are only held. Its change record has no `triggerReason` (LD47).
+
+### 14.2 The hold
+
+- **LDB-1** (`engine.js:1698-1700`, `1798-1821`; every family) The hold is the kept sessions, each `Object.assign({}, it, {_hold: true})`,
+  with the moved session (no mark) first. `prepareStateWithHold` builds a fresh state (LDR-1) for the input with `existingSchedule: []`
+  (so LDR-3's own sorting never runs), then puts each held session back, pinned ones first (`isUserLocked` truthy), then by start, then by
+  `cmpStr(instanceId)`: a session wholly before the plan or starting at or after its end is skipped (not displaced; LDB-4 carries the
+  former); one that overlaps a slot that is not free from the plannable slot on (and is not over) or whose start (or the clock, if later)
+  is in no waking day is let go (`displaced`, as it was held); else it is copied with `bwcId` its day's id and `kept` (its `isUserLocked`
+  when truthy, else whether it has started), and placed (LDR-3 `occupy`) as LOCKED when pinned or started, else as a TASK slot with a live
+  task (LDB-2). Pinned sessions are placed before the others so that a pinned one never yields to an auto-placed one; between two pinned
+  ones the earlier start wins (LD53). Native: `HoldPreparation.prepare`.
+- **LDB-2** (`engine.js:777-785`, `1815-1819`; every family) A movable held session with a truthy source gets its task again:
+  `makeTask(Object.assign({}, source, {id: taskId || source.id}))`: the defaults (`kind 'GOAL'`, empty links, no prerequisites, lag 0, not
+  exclusive, no prior volume, not blocked, priority 3, quest weight 0), then the snapshot's members, its three lists copied (`|| []`);
+  prepared (LDE-2, with the input's goal info), marked placed, and added to the state's tasks (`taskById`: the last of an id). The
+  session's `taskId` becomes the task's id. The task's own snapshot, when it is committed again (a compression, an eviction), is
+  `taskSnapshot` of those members (LDO-8): native keeps them as stored (`SourceTask`) and writes the snapshot from them. Native reads a
+  snapshot only of the engine's types (every snapshot the engine writes); another shape is `UnreadableSource`, never a silent difference.
+- **LDB-3** (`engine.js:1822-1840`, `1709-1712`; families `hold` (`recovery-protect-*`), `miss`, `quest`, `residual`, `sequence`) Recovery is
+  reserved on every day (LDR-4), then each day not started before the plan and not over keeps its downtime: while its recovery slots are
+  fewer than `min(need, freeSlots + the stored lengths of its movable sessions)` (movable: not kept, not pinned, starting after the clock)
+  and it has a movable session, the one of the lowest tier, then the latest start, then `cmpStr(instanceId)` is taken off (LDX-1) and let go
+  (as it was held), the day's recovery slots become free and recovery is reserved again; at most 20 times a day. Any trigger can do this
+  (a held day can be short after an availability change); the session is excused with the trigger's name (LD51).
+- **LDB-4** (`engine.js:1714-1737`; families `hold`, `disrupt`, `quest`, `time`, `sequence`) After the refusals: every held session that is
+  `PLANNED` or `IN_PROGRESS` and ends at or before the plan's start is carried to the output untouched (`carryPast`). Each session the
+  hold let go joins the gone set and the history (the held copy with `_hold`, LD46, then `lifecycleState: 'EXCUSED_DISPLACED'`,
+  `resolvedAtEpoch`, `excuseReason` the trigger's type), action `EXCUSE` with that reason, and is placed again (`REPLACEMENT`, preferring
+  its own start's day) unless shed (LDM-6). Then, up to 20 rounds while anything changes, every movable session on the state whose source's
+  `dependsOn` names a gone task leaves too (LDX-1; history with `excuseReason: 'PREREQUISITE_MOVED'`, action `EXCUSE`), its task id joins
+  the gone set, and it is placed again. Only gone tasks cascade: a prerequisite moved (pinned) after its dependent stays, and the plan fails
+  `I5` (LD56).
+
+### 14.3 Placement by radius
+
+- **LDY-1** (`engine.js:1741-1755`; every family that places) Each task to place gets its id first, in the order the tasks were listed:
+  `stableId('t', (origInstanceId || source.id) + ':r:' + index + ':' + clock)` (LD49); a source id maps to its replacement's id (the last
+  of an id). They are placed in order of prerequisite depth (how many chained prerequisites among the tasks to place, at most 20), then
+  tier (higher first, `|| 0`), then `cmpStr(source.id || '')`. Each: `makeTask(Object.assign({}, source, {id: new id, tierReason:
+  'RESIDUAL' for a residual, else source.tierReason || 'REPLACEMENT'}))`; `windowStart = max(windowStart || clock, notBefore)` when it has a
+  truthy `notBefore`, then `max(windowStart || clock, clock)`; `windowEnd` the plan's end when falsy or not after the start; each
+  prerequisite id replaced by its replacement's id when it has one (an unreplaced one stays and, being gone, blocks: LDJ-1
+  `PREREQUISITE_NOT_SCHEDULED`); prepared (LDE-2) and added to the state's tasks.
+- **LDY-2** (`engine.js:1843-1858`; every family that places) `placeByRadius`: the allowed days are all but the skipped one. The freeze
+  zone ends at the clock for a tier-4 task, else 24 hours after it. A placement commits (LDW-6, its new id with `i`), records `{phase: 'R'
+  + radius, score, count}` (and its move) for its explanation, and adds action `{action: 'INSERT', instanceId, radius, replaces:
+  origInstanceId || null, to: start}`. Radius 1: the day of `max(preferBwcEpoch || clock, clock)`, when allowed, by LDW-1 alone. Radius 2:
+  LDW-1 over the allowed days. Neither moves anything.
+- **LDY-3** (`engine.js:1860-1877`; families `radius`, `disrupt`, `sequence`, mutations `radius 3 shrinks three`, `compression without kept
+  false`) Radius 3, each allowed day in order, spending one of `S.iterations` (shared with radius 4, never reset in the reschedule) and
+  skipping the day once it is past 600: up to two of the day's sessions that are not kept, not pinned, start after the freeze zone, are
+  longer than their shortest length (stored members for a held session), have their task on the state and anchor no dependent (LDW-5),
+  lowest tier then earliest; when they can free at least one slot, a snapshot (LDX-2) is taken and each is taken off and committed again
+  where it started at its task's shortest length (keeping its id and explanation, with a `kept: false` member last), if LDK-2 allows it;
+  then LDW-1 in that day. Success: actions `{action: 'COMPRESS', instanceId, fromSlots: its stored length}` for each, then the insert
+  (`move: 'COMPRESSION'`). Otherwise the snapshot is restored.
+- **LDY-4** (`engine.js:1878-1902`; families `radius`, `scenario`, `seeds`, `sequence`) Radius 4: a task of tier 2 or lower stops (radius 4,
+  nothing placed). A tier 3 or 4 task may evict: the sessions not kept, not pinned, of a lower tier than the task and at most 3, starting
+  after the freeze zone, with their task on the state and anchoring no dependent, lowest tier then latest then id; tried one at a time,
+  then every pair in the same day; each set spends one iteration and the search stops past 900. For a set: snapshot, take them off, LDW-1
+  over the allowed days; success places the task (`move: 'EVICT'`) and then each evicted session's task goes to its best place over all
+  days (the skipped day included), keeping its id (action `{action: 'MOVE', instanceId, from, to}`, recorded `RELOCATED` for its
+  explanation), or is shed (`{action: 'SHED', instanceId, reason: 'DISPLACED_BY_HIGHER_PRIORITY'}`): it leaves the plan with no history and
+  no rejection (LD50). Otherwise restore and try the next set.
+- **LDY-5** (`engine.js:1756-1759`; families `radius`, `disrupt`, `sequence`, mutation `dropped text never added`) Each placed task adds
+  `{taskId, title, radius, origInstanceId}` to `radiusUsed` (the radius it ended at; a member that is undefined is left out); one not
+  placed gets LDJ-1's rejection, with ' It was dropped for this week to keep your other plans stable.' added for a tier 2 or lower that
+  reached radius 4 (always, for a low tier that did not fit), and the radius actions follow the trigger's in the change record.
+
+### 14.4 The output and the change record
+
+- **LDZ-1** (`engine.js:1762-1765`; every family) The planned sessions: every session on the state, copied without `_hold` (a held one as
+  held: its stored members with `bwcId` and `kept`; a placed one with `commit`'s members, LDO-8), and the carried ones (LDB-4) whose id is
+  not on the state and whose task is not gone; by start then `cmpStr(instanceId)`.
+- **LDZ-2** (`engine.js:1767-1771`, `1504-1527`; every family) The output is `assembleOutput` (LDO-8) on the held state: the input's goal
+  plans (LDD-8) for the allocation, its normalised quests for coverage with no planner status (each quest's own status), the history,
+  the rejections (this reschedule's first, then the current plan's `unscheduledDiagnostics` whose `taskId` no planned session has), the
+  current plan's `passiveReminders`, `clarificationPrompts` and `trajectoryWarnings` (`|| []`) as they are, `displacedLockedIds` the
+  sessions the hold let go, `repair: null`, `iterations` the reschedule's. The held state has no fairness shares, so every goal's
+  `targetShare` is 0 and the scores of this reschedule's placements are pulled down by each goal's current share (LD48).
+- **LDZ-3** (`engine.js:1766`, `1440-1466`; every family, `residual/reschedule/same-clock-then-miss`) A planned session is explained
+  (LDO-2) when it has no explanation or it has a radius record: a held kept or pinned one says so; a held movable one (only when a session
+  placed now took its id, LD49) is scored as the task of its id (the last) with its own length, links, goal title, compression and tier;
+  a placed one as part 5. The selection's `phase` is the record's `R1` to `R4`, its `regret` 0 and `key` null; a compression adds 'Placed by
+  shortening flexible tasks that day.', an eviction and a relocation nothing. Replacements keep their source's `tierReason`, so the
+  'it replaces a session that was missed or displaced' wording is never reached from the engine's own sessions (LD54).
+- **LDZ-4** (`engine.js:1506`, `1537-1614`; every family) The output's validation is `validateSchedule` on the changed input (part 5,
+  LDV) with no `displacedIds`: a pinned session of the input's `existingSchedule` that this reschedule retired, displaced or moved again is
+  `I7`, and the status `INVARIANT_VIOLATION`, which the page refuses to publish (LD52). A moved prerequisite can leave `I5` (LD56).
+- **LDZ-5** (`engine.js:1773-1789`; every family) The change record: `changeId` `stableId('chg', type + ':' + (trigger.instanceId || '') +
+  ':' + clock + ':' + number of actions)`, `timestampEpoch` the clock, `triggerReason` by type (`MISSED_TASK_REPAIR`, `USER_SKIP`,
+  `PARTIAL_COMPLETION`, `USER_MANUAL_MOVE`, `NEW_COMMITMENT_ADDED`, `TIME_BLOCKED`, `DAY_BLACKOUT`, `SICK_MODE_ACTIVATED`,
+  `QUEST_MODIFIED`; none for `TIME_CHANGED`, LD47), `actions` (the trigger's, the hold's, the radius actions), `radiusUsed`,
+  `affectedInstanceIds` (the actions' truthy instance ids, once each, in order), `churn` over the current plan's sessions starting after the
+  clock other than the trigger's (`futureInstances`): `collateralMoved` those not let go by the hold that are gone or start elsewhere,
+  `compressed` those with the same start and another end, `ratio` the first over the count (0 for none); `computeTimeMs` (measured; the
+  output takes the same value). The result is `{updatedSchedule, engineInput: the changed copy, changeRecord, rejectedMove: null}`.
+
+### 14.5 Floating point and speed
+
+- Nothing in part 6 computes an exp or pow of its own; the placements re-run LDW-1 and the explanations LDU-1, so LD20 reaches them: node 22
+  (fdlibm) records a different answer for 2 of the 2,298 cases, both one bit of a movement penalty in an explanation.
+- Speed: section 14.6.
+
+### 14.6 What was measured
+
+- 2,298 cases (4,329 steps) in Chromium 153 (about 137.7 MB of text, 12.0 MB gzipped); the native code reproduces every step exactly,
+  member order included (`RescheduleGoldenTest`, about 14 seconds for the whole file on the JVM, the plan of every case made natively
+  first). Every case gave the same answer twice in the recorder; node 22 (fdlibm) differs on 2 cases (LD20: one bit of a movement penalty
+  in an explanation, `miss/reschedule/seed242`, `disrupt/reschedule/seed80`). The counts of what was recorded are in section 8.6.
+- Speed. On `SchedulePerfTest`'s four-week plan (129 sessions), `Reschedule.run` takes 8 ms for a missed urgent session, 36 ms for a
+  two-day sick spell over its start and 120 ms for `TIME_CHANGED` (which plans the whole input again) on the JVM of the test machine
+  (`ReschedulePerfTest`, median of five after two warm-up runs); the page takes 17, 101 and 1,114 ms for the same three in node on the
+  same machine. Nothing needed a cache beyond parts 4 and 5: a reschedule is one hold, a few placements and one output. A phone will be
+  several times slower.
+- Mutations. 50 source mutations of the part's code (the hold, the recovery protection, the refusals, each radius, the triggers, the placement order, the output and the change record), 47 caught; the 3 survivors are explained: `a clash in the past displaces` is equivalent (a session over before the clock has no slot from the plannable one on, so it never clashes), and two bounds no input reaches: the truncated-day exemption of `RECOVERY_PROTECTED` (no recorded move lands in a day that started before the plan) and the radius-3 budget of 600 (the most any recorded reschedule spends is 195). `snapshot from the candidate` and `low tiers not shed` were first missed (a pattern that did not compile, and no snapshot holding a member a candidate never holds) and are caught since `residual/reschedule/null-goal-title` was added.

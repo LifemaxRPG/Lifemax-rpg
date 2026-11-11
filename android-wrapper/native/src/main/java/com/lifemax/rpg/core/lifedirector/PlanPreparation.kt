@@ -86,7 +86,7 @@ object PlanPreparation {
     }
 
     /** LDR-1, LDR-2 `buildState`: the state, the history's spacing, the energy model. */
-    private fun state(input: JsonValue?): PlanState {
+    internal fun state(input: JsonValue?): PlanState {
         val plan = Availability.derive(input)
         val now = number(member(input, "currentTimeEpoch"))
         val lead = number(plan.prefs["leadMinutes"]) * MINUTE
@@ -132,7 +132,7 @@ object PlanPreparation {
     }
 
     /** The first slot from the plannable slot on, inside the session, that is not free. */
-    private fun clash(s: PlanState, start: Double, end: Double): Int? {
+    internal fun clash(s: PlanState, start: Double, end: Double): Int? {
         val a = PageValues.clamp(s.slots.slotAt(start), 0.0, s.size.toDouble())
         val b = PageValues.clamp(s.slots.slotAtOrAfter(end), 0.0, s.size.toDouble())
         var i = maxOf(a, s.nowSlot)
@@ -151,7 +151,7 @@ object PlanPreparation {
     }
 
     /** A stored session as the kept copy `occupy` places (its own members, its day, kept). */
-    private fun keptSession(inst: JsonValue, cycleId: String): PlanSession =
+    internal fun keptSession(inst: JsonValue, cycleId: String, kept: Boolean = true): PlanSession =
         PlanSession(
             member(inst, "instanceId"),
             member(inst, "taskId"),
@@ -166,7 +166,7 @@ object PlanPreparation {
             ArrayList(),
             number(member(inst, "durationSlots")),
             cycleId,
-            kept = true,
+            kept = kept,
             stored = inst as? JsonObject,
         )
 
@@ -176,7 +176,7 @@ object PlanPreparation {
      * become protected recovery; a day that has fewer, is not over and did not start before the
      * plan is marked short. Then its drain is worked out again.
      */
-    private fun reserveRecovery(s: PlanState, c: CycleState) {
+    internal fun reserveRecovery(s: PlanState, c: CycleState) {
         val need = ceil(number(s.prefs["minDailyRecoveryMinutes"]) / PlanState.SLOT_MINUTES)
         val from = maxOf(c.cycle.startSlot, s.nowSlot)
         var free = 0
