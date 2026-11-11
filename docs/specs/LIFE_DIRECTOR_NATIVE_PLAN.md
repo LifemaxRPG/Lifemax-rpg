@@ -541,6 +541,24 @@ owns it (the page's `localStorage` is not reachable from native without the web 
 
 ### WP-LD8. Read models from state (M, risk low-medium)
 
+**Status: part a done** (branch `logic/ld8a-readmodels`, NativeApi 131); not wired to anything, the page still computes what it shows;
+part b (goals, quests, settings, time, forms, dial stops and handles) not started. Spec: `LIFE_DIRECTOR_READMODELS_SPEC.md` (rules RM-1
+to RM-20, defects RD01 to RD14, no native deviations, golden index, mutation checks, OQ-RM1 to OQ-RM4). Recorder
+`tools/gen_ld_readmodels_golden.js`: the controller module of `logic.js` (`tools/ld_logic_vm.js`, with one statement added in the
+recorder's copy only, so the page's source is unchanged) evaluated inside the built page in Chromium with the page's own engine, host
+and a pinned `Date`, every case twice; states from the page's own saved states (`tools/ld_store_seeds.js`), engine plans in the 11
+strict zones and across every 2026-2027 clock change, and reschedule results; cases `tools/ld_readmodels_cases.js`. 432 states and
+2,599 cases in `tests/fixtures/ld-readmodels-golden.json.gz` (15 families: seed 70, scenario 330, dst 240, plan 284, reschedule 202,
+now 650, focus 150, zone 51, life 134, midnight 39, edge 36, calendar 42, host 31, week 40, fuzz 300); web test
+`tests/ld-readmodels-golden.test.js` (re-captures the seeds, re-records every state and case, fails on drift of the file or of the
+exported words). The page words are exported by the recorder to `android-wrapper/native/src/main/resources/lifedirector/readmodel-words.json`,
+never retyped. Kotlin in `core/lifedirector/readmodels` (`DirectorReadModels`, `DayBlocks`, `DayBlock`, `LiveNow`, `Week`,
+`WeekProjection`, `ReadModelWords`, `ReadModelJson`), typed outputs, no `org.json`, reproduces every case (`ReadModelsGoldenTest`);
+`ReadModelsMutationTest` (11 checks) and 42 source mutations, 41 caught, the survivor equivalent on the data (spec section 9). The projection's `week` is reproduced exactly; Today's inputs (days,
+blocks, now) are, its dial is part b. Findings: the first week row is called Today when the plan starts on a later day (RD01); any timer,
+even paused or on another session, hides the late warning (RD03); an unknown stored zone stops Life Director drawing (RD04); Week counts
+skipped and missed sessions and planned rather than actual minutes (RD07). Open: OQ-RM1 to OQ-RM4.
+
 Scope: native computation of what the projection carries today: `horizonDays`, `unplannedSegments`, `dayBlocks`, `liveTimeline`,
 `nowState`, `weekModel`, `goalCards`, `questsModel`, settings and time models, `moveTimes`, `disruptParts`, `shifts`,
 `workRules`, dial stops and handles. Page words (the strings) are exported as data, not retyped. Tests: golden pairs
@@ -579,6 +597,23 @@ notification or an alarm), the 5-minute tick and the day rollover as a backgroun
 timer should use a monotonic clock.
 
 ### WP-LD11. Adapters to the native economy and quests (M, risk medium; depends on economy WP5 and the quests port)
+
+**Status: done for the host surface** (branch `logic/ld11-adapters`, NativeApi 132); not wired to anything, the page is still the only writer.
+Spec: `LIFE_DIRECTOR_ADAPTERS_SPEC.md` (rules HA-1 to HA-25, defects LA01 to LA11, deviations DV-A1 to DV-A3, golden index, the bridge to
+WP-LD9's host interface, open questions). Recorder `tools/gen_ld_adapters_golden.js` (the real built page in Chromium, `LifeMaxHost` called on
+saves set up as `load()` leaves them, the economy golden's method; what the page's plan and Smart Diet code answered the host is logged with
+each case; every case recorded twice and required equal; cases `tools/ld_adapters_cases.js`), 1,651 cases in
+`tests/fixtures/ld-adapters-golden.json.gz` (16 families: tags 571, week 68, player 11, xp 39, award 50, bounty 37, quests 219, plan 71, milestones 23, retired
+64, since 40, describe 38, meals 84, flow 12, verify 24, fuzz 300), web test `tests/ld-adapters-golden.test.js` (re-records every case byte
+for byte). Kotlin in `core/lifedirector/hostadapters`: `HostPort` (the interface: typed inputs, typed answers, `HostAnswer.Refused` where the
+page throws, the `PlanDays` and `MealDays` ports), `EconomyHost` (on the native economy's LD-1 to LD-4, the save codec, the quest content's
+Hand library), `HostTexts`, `BoardQuests`, `QuestReading`, `PlanReading`, `HostMeals`, `HostResults`; reproduces every case, answers, the
+economy left behind and the messages, but the 4 DV-A1 shapes its strict board reader refuses (`AdapterGoldenTest`, `AdapterHandTest`,
+`AdapterMutationTest`: 9 port mistakes each noticed); 43 source mutations, 42 caught, the survivor equivalent (spec section 9). D1 ported as the page does it: awards, bonuses and quest keys
+by the device's zone, previews, week bounds, plan sessions and meal blocks by the plan's (spec HA-11, LA01). Findings: plan session titles carry
+`&amp;` from the plan's escaped labels (LA02); a plan session never shows its exercises (LA04) and its length is eight minutes an item, not the
+plan's (LA05); two Hand cards paid by one award share a record id (LA06); a daily quest with a day word the board does not know is planned
+every day (LA09). Open: the plan's days and Smart Diet's days are ports fed by the page (DV-A3); D1 and the spec's section 12.
 
 Scope: replace `LifeMaxHost`: `xpFor`, `awardActivity`, `completeQuest` (LD-2 to LD-4, already in `core/economy`), plus
 `readQuests`, `readPlanSessions`, `milestones`, `retiredUntimedQuest`, `activitiesSince`, `activityExists`, meal lookups. Needs
