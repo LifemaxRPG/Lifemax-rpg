@@ -70,8 +70,8 @@ data class DirectorEnvelope(
 /**
  * The strict readers of the Life Director check's messages (SH-2, SH-3), on `core/save`'s
  * [JsonReader], as the economy check's are: exactly the v1 keys, `scope: "director"`, every value
- * of its kind and in range, or the whole message is refused with a reason that names a key, never
- * a value. Never throws.
+ * of its kind and in range, or the whole message is refused with a reason that names a key, never a
+ * value. Never throws.
  */
 object DirectorShadowJson {
     const val SAVE = "director.save"
@@ -81,7 +81,20 @@ object DirectorShadowJson {
     val KINDS = setOf(SAVE, READ, PLAN, REPAIR)
 
     private val COMMON =
-        setOf("v", "scope", "sid", "seq", "base", "kind", "t0", "t1", "zone", "ops", "cost", "flags")
+        setOf(
+            "v",
+            "scope",
+            "sid",
+            "seq",
+            "base",
+            "kind",
+            "t0",
+            "t1",
+            "zone",
+            "ops",
+            "cost",
+            "flags",
+        )
     private val CONFIGURE = setOf("v", "scope", "enabled", "sid", "page")
     private val PAGE = setOf("build", "fingerprint", "faults")
     private val BASE = setOf("v", "scope", "sid", "seq", "part", "parts", "text")
@@ -112,10 +125,15 @@ object DirectorShadowJson {
         }
     }
 
-    private class Fields(val o: JsonObject, val at: String, keys: Set<String>, optional: Set<String> = emptySet()) {
+    private class Fields(
+        val o: JsonObject,
+        val at: String,
+        keys: Set<String>,
+        optional: Set<String> = emptySet(),
+    ) {
         init {
-            for (k in o.members.keys)
-                if (k !in keys && k !in optional) fail(ShadowRefusal.UNKNOWN_KEY, at + k)
+            for (k in o.members.keys) if (k !in keys && k !in optional)
+                fail(ShadowRefusal.UNKNOWN_KEY, at + k)
             for (k in keys) if (k !in o.members) fail(ShadowRefusal.MISSING_KEY, at + k)
         }
 
@@ -136,19 +154,33 @@ object DirectorShadowJson {
         fun version() {
             if ((get("v") as? JsonNumber)?.value != DirectorShadowLimits.PROTOCOL.toDouble())
                 fail(ShadowRefusal.UNSUPPORTED, at + "v")
-            if (text("scope") != DirectorShadowLimits.SCOPE) fail(ShadowRefusal.OUT_OF_RANGE, at + "scope")
+            if (text("scope") != DirectorShadowLimits.SCOPE)
+                fail(ShadowRefusal.OUT_OF_RANGE, at + "scope")
         }
 
-        fun sid(): String = text("sid").also { if (!SID.matches(it)) fail(ShadowRefusal.OUT_OF_RANGE, at + "sid") }
+        fun sid(): String =
+            text("sid").also { if (!SID.matches(it)) fail(ShadowRefusal.OUT_OF_RANGE, at + "sid") }
     }
 
     fun configure(text: String): ShadowDecode<DirectorConfigure> =
         read(text, 4096) { root ->
             val o = Fields(root, "", CONFIGURE)
             o.version()
-            val enabled = (o.get("enabled") as? JsonBool)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "enabled")
-            val page = Fields(o.get("page") as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "page"), "page.", PAGE)
-            DirectorConfigure(enabled, o.sid(), page.text("build"), page.text("fingerprint"), page.whole("faults", 0, 1000).toInt())
+            val enabled =
+                (o.get("enabled") as? JsonBool)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "enabled")
+            val page =
+                Fields(
+                    o.get("page") as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "page"),
+                    "page.",
+                    PAGE,
+                )
+            DirectorConfigure(
+                enabled,
+                o.sid(),
+                page.text("build"),
+                page.text("fingerprint"),
+                page.whole("faults", 0, 1000).toInt(),
+            )
         }
 
     fun basePart(text: String): ShadowDecode<DirectorBasePart> =
@@ -157,7 +189,13 @@ object DirectorShadowJson {
             o.version()
             val parts = o.whole("parts", 1, DirectorShadowLimits.MAX_BASE_PARTS.toLong()).toInt()
             val part = o.whole("part", 0, parts - 1L).toInt()
-            DirectorBasePart(o.sid(), o.whole("seq", 1), part, parts, o.text("text", DirectorShadowLimits.MAX_BASE_PART_CHARS))
+            DirectorBasePart(
+                o.sid(),
+                o.whole("seq", 1),
+                part,
+                parts,
+                o.text("text", DirectorShadowLimits.MAX_BASE_PART_CHARS),
+            )
         }
 
     /** The changes of an assembled base (`{"ops": [...]}`). */
@@ -176,29 +214,65 @@ object DirectorShadowJson {
             val t0 = o.whole("t0")
             val t1 = o.whole("t1")
             if (t1 < t0) fail(ShadowRefusal.BAD_TIME, "t1")
-            val cost = Fields(o.get("cost") as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "cost"), "cost.", setOf("ms"))
-            val ms = (cost.get("ms") as? JsonNumber)?.value?.takeIf { it.isFinite() && it >= 0 }
-                ?: fail(ShadowRefusal.OUT_OF_RANGE, "cost.ms")
-            val flags = (o.get("flags") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "flags")).items.map {
-                ((it as? JsonString)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "flags")).also { f ->
-                    if (!FLAG.matches(f)) fail(ShadowRefusal.OUT_OF_RANGE, "flags")
+            val cost =
+                Fields(
+                    o.get("cost") as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "cost"),
+                    "cost.",
+                    setOf("ms"),
+                )
+            val ms =
+                (cost.get("ms") as? JsonNumber)?.value?.takeIf { it.isFinite() && it >= 0 }
+                    ?: fail(ShadowRefusal.OUT_OF_RANGE, "cost.ms")
+            val flags =
+                (o.get("flags") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "flags"))
+                    .items
+                    .map {
+                        ((it as? JsonString)?.value ?: fail(ShadowRefusal.WRONG_TYPE, "flags"))
+                            .also { f ->
+                                if (!FLAG.matches(f)) fail(ShadowRefusal.OUT_OF_RANGE, "flags")
+                            }
+                    }
+            val bytes =
+                o.get("bytes")?.let {
+                    o.whole("bytes", 2, DirectorShadowLimits.MAX_STATE_CHARS.toLong()).toInt()
                 }
-            }
-            val bytes = o.get("bytes")?.let { o.whole("bytes", 2, DirectorShadowLimits.MAX_STATE_CHARS.toLong()).toInt() }
             val read = o.get("read")?.let { readFacts(it) }
             val engine = o.get("engine")?.let { engineFacts(it) }
             when (kind) {
-                SAVE -> if (bytes == null || read != null || engine != null) fail(ShadowRefusal.MISSING_KEY, "bytes")
-                READ -> if (read == null || bytes != null || engine != null) fail(ShadowRefusal.MISSING_KEY, "read")
-                PLAN, REPAIR -> if (engine == null || bytes != null || read != null) fail(ShadowRefusal.MISSING_KEY, "engine")
+                SAVE ->
+                    if (bytes == null || read != null || engine != null)
+                        fail(ShadowRefusal.MISSING_KEY, "bytes")
+                READ ->
+                    if (read == null || bytes != null || engine != null)
+                        fail(ShadowRefusal.MISSING_KEY, "read")
+                PLAN,
+                REPAIR ->
+                    if (engine == null || bytes != null || read != null)
+                        fail(ShadowRefusal.MISSING_KEY, "engine")
             }
             val ops = ops(o.get("ops"))
-            if ((kind == PLAN || kind == REPAIR) && ops.isNotEmpty()) fail(ShadowRefusal.BAD_DELTA, "ops")
-            DirectorEnvelope(o.sid(), seq, base, kind, t0, t1, zone(o.text("zone"), "zone"), ops, ms, flags, bytes, read, engine)
+            if ((kind == PLAN || kind == REPAIR) && ops.isNotEmpty())
+                fail(ShadowRefusal.BAD_DELTA, "ops")
+            DirectorEnvelope(
+                o.sid(),
+                seq,
+                base,
+                kind,
+                t0,
+                t1,
+                zone(o.text("zone"), "zone"),
+                ops,
+                ms,
+                flags,
+                bytes,
+                read,
+                engine,
+            )
         }
 
     private fun readFacts(v: JsonValue): ReadFacts {
-        val o = Fields(v as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "read"), "read.", READ_KEYS)
+        val o =
+            Fields(v as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "read"), "read.", READ_KEYS)
         val xp = (o.get("xp") as? JsonArray ?: fail(ShadowRefusal.WRONG_TYPE, "read.xp")).items
         return ReadFacts(
             o.whole("nowMs"),
@@ -211,16 +285,27 @@ object DirectorShadowJson {
     }
 
     private fun engineFacts(v: JsonValue): EngineFacts {
-        val o = Fields(v as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "engine"), "engine.", ENGINE_KEYS)
-        return EngineFacts(o.text("planZone"), offset(o.get("planOffset"), "engine.planOffset"), o.get("input")!!, o.get("output")!!)
+        val o =
+            Fields(
+                v as? JsonObject ?: fail(ShadowRefusal.WRONG_TYPE, "engine"),
+                "engine.",
+                ENGINE_KEYS,
+            )
+        return EngineFacts(
+            o.text("planZone"),
+            offset(o.get("planOffset"), "engine.planOffset"),
+            o.get("input")!!,
+            o.get("output")!!,
+        )
     }
 
     private fun offset(v: JsonValue?, at: String): Int? =
         when (v) {
             JsonNull -> null
             is JsonNumber ->
-                v.value.takeIf { it == Math.floor(it) && kotlin.math.abs(it) <= MAX_OFFSET_SECONDS }?.toInt()
-                    ?: fail(ShadowRefusal.OUT_OF_RANGE, at)
+                v.value
+                    .takeIf { it == Math.floor(it) && kotlin.math.abs(it) <= MAX_OFFSET_SECONDS }
+                    ?.toInt() ?: fail(ShadowRefusal.OUT_OF_RANGE, at)
             else -> fail(ShadowRefusal.WRONG_TYPE, at)
         }
 
@@ -240,24 +325,46 @@ object DirectorShadowJson {
             val kind = (parts[0] as? JsonString)?.value ?: fail(ShadowRefusal.BAD_DELTA, "ops")
             val path = (parts[1] as? JsonArray)?.items ?: fail(ShadowRefusal.BAD_DELTA, "ops")
             if (path.size > DirectorShadowLimits.MAX_PATH) fail(ShadowRefusal.BAD_DELTA, "ops")
-            val steps = path.map { s ->
-                when (s) {
-                    is JsonString -> s.value
-                    is JsonNumber ->
-                        s.value.takeIf { it == Math.floor(it) && it >= 0 && it < Int.MAX_VALUE }?.toInt()
-                            ?: fail(ShadowRefusal.BAD_DELTA, "ops")
-                    else -> fail(ShadowRefusal.BAD_DELTA, "ops")
+            val steps =
+                path.map { s ->
+                    when (s) {
+                        is JsonString -> s.value
+                        is JsonNumber ->
+                            s.value
+                                .takeIf { it == Math.floor(it) && it >= 0 && it < Int.MAX_VALUE }
+                                ?.toInt() ?: fail(ShadowRefusal.BAD_DELTA, "ops")
+                        else -> fail(ShadowRefusal.BAD_DELTA, "ops")
+                    }
                 }
-            }
             val arg = parts[2]
             when (kind) {
-                "o" -> TextOp('o', steps, keys = (arg as? JsonArray ?: fail(ShadowRefusal.BAD_DELTA, "ops")).items.map {
-                    (it as? JsonString)?.value ?: fail(ShadowRefusal.BAD_DELTA, "ops")
-                })
-                "a" -> TextOp('a', steps, length = ((arg as? JsonNumber)?.value
-                    ?.takeIf { it == Math.floor(it) && it >= 0 && it <= DirectorShadowLimits.MAX_OPS * 100.0 }
-                    ?: fail(ShadowRefusal.BAD_DELTA, "ops")).toInt())
-                "t" -> TextOp('t', steps, text = (arg as? JsonString)?.value ?: fail(ShadowRefusal.BAD_DELTA, "ops"))
+                "o" ->
+                    TextOp(
+                        'o',
+                        steps,
+                        keys =
+                            (arg as? JsonArray ?: fail(ShadowRefusal.BAD_DELTA, "ops")).items.map {
+                                (it as? JsonString)?.value ?: fail(ShadowRefusal.BAD_DELTA, "ops")
+                            },
+                    )
+                "a" ->
+                    TextOp(
+                        'a',
+                        steps,
+                        length =
+                            ((arg as? JsonNumber)?.value?.takeIf {
+                                    it == Math.floor(it) &&
+                                        it >= 0 &&
+                                        it <= DirectorShadowLimits.MAX_OPS * 100.0
+                                } ?: fail(ShadowRefusal.BAD_DELTA, "ops"))
+                                .toInt(),
+                    )
+                "t" ->
+                    TextOp(
+                        't',
+                        steps,
+                        text = (arg as? JsonString)?.value ?: fail(ShadowRefusal.BAD_DELTA, "ops"),
+                    )
                 else -> fail(ShadowRefusal.BAD_DELTA, "ops")
             }
         }

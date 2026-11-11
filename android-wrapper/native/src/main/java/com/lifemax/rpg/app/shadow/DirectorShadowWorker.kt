@@ -108,12 +108,14 @@ class DirectorShadowWorker(
 
     companion object {
         /** The session for an install: the ring's ledger, or a fresh one. */
-        fun opener(versionCode: Long, nativeApi: Int): (ShadowRing, Long) -> DirectorShadowSession = { ring, t ->
-            val stored = ring.load()
-            val ledger = stored ?: ring.fresh(t)
-            DirectorShadowSession(ledger, versionCode, nativeApi)
-                .also { if (stored == null && ring.file.exists()) ledger.note("ringReset") }
-        }
+        fun opener(versionCode: Long, nativeApi: Int): (ShadowRing, Long) -> DirectorShadowSession =
+            { ring, t ->
+                val stored = ring.load()
+                val ledger = stored ?: ring.fresh(t)
+                DirectorShadowSession(ledger, versionCode, nativeApi).also {
+                    if (stored == null && ring.file.exists()) ledger.note("ringReset")
+                }
+            }
 
         /** The ring's folder (SH-30). */
         const val FOLDER = DirectorShadowLimits.RING_FOLDER

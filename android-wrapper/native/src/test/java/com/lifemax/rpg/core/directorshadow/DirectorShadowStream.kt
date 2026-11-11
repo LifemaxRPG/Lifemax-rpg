@@ -12,8 +12,8 @@ import java.util.zip.GZIPInputStream
 
 /**
  * The Life Director check's messages for the lived-in day, as the real page sent them to the
- * stand-in plugin (`lifemax_modular_v73/tests/native-director-shadow.test.js` RECORD=1):
- * `[method, text]` in order. [play] hands them to a session exactly as the plugin would.
+ * stand-in plugin (`lifemax_modular_v73/tests/native-director-shadow.test.js` RECORD=1): `[method,
+ * text]` in order. [play] hands them to a session exactly as the plugin would.
  */
 object DirectorShadowStream {
     const val FILE = "director-shadow-stream.json.gz"
@@ -21,9 +21,10 @@ object DirectorShadowStream {
 
     val messages: List<Pair<String, String>> by lazy {
         val start = File(System.getProperty("user.dir") ?: ".").absoluteFile
-        val f = generateSequence(start) { it.parentFile }
-            .map { File(it, "lifemax_modular_v73/tests/fixtures/$FILE") }
-            .firstOrNull { it.isFile } ?: error("$FILE not found above $start")
+        val f =
+            generateSequence(start) { it.parentFile }
+                .map { File(it, "lifemax_modular_v73/tests/fixtures/$FILE") }
+                .firstOrNull { it.isFile } ?: error("$FILE not found above $start")
         val text = GZIPInputStream(f.inputStream()).bufferedReader(Charsets.UTF_8).readText()
         val root = (JsonReader.read(text) as JsonRead.Parsed).value as JsonObject
         (root.members["stream"] as JsonArray).items.map {
@@ -34,10 +35,14 @@ object DirectorShadowStream {
 
     fun ledger(): ShadowLedger = ShadowLedger(T, ByteArray(ShadowLimits.SALT_BYTES) { 3 })
 
-    fun session(checks: ((com.lifemax.rpg.core.shadow.ShadowRedactor) -> DirectorChecks)? = null): DirectorShadowSession =
-        DirectorShadowSession(ledger(), 1, 135, checks = checks)
+    fun session(
+        checks: ((com.lifemax.rpg.core.shadow.ShadowRedactor) -> DirectorChecks)? = null
+    ): DirectorShadowSession = DirectorShadowSession(ledger(), 1, 135, checks = checks)
 
-    /** Every message to [s], as the plugin hands them over; [edit] may change an envelope's text first. */
+    /**
+     * Every message to [s], as the plugin hands them over; [edit] may change an envelope's text
+     * first.
+     */
     fun play(s: DirectorShadowSession, edit: (String) -> String = { it }) {
         var t = T
         for ((method, text) in messages) {
@@ -52,5 +57,7 @@ object DirectorShadowStream {
 
     /** The envelopes of [kind]. */
     fun envelopes(kind: String): List<String> =
-        messages.filter { it.first == "observe" && it.second.contains("\"kind\":\"$kind\"") }.map { it.second }
+        messages
+            .filter { it.first == "observe" && it.second.contains("\"kind\":\"$kind\"") }
+            .map { it.second }
 }

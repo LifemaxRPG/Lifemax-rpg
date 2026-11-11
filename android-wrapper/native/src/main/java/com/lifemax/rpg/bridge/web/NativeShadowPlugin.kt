@@ -99,7 +99,9 @@ class NativeShadowPlugin : Plugin() {
     fun configure(call: PluginCall) {
         val text = call.getString("text") ?: return call.resolve(refused("missingText"))
         directorOf(call)?.let { d ->
-            return d.configure(text) { a, stored -> call.resolve(answer(a).put("ok", a.ok && stored)) }
+            return d.configure(text) { a, stored ->
+                call.resolve(answer(a).put("ok", a.ok && stored))
+            }
         }
         val w = worker ?: return call.reject("unavailable")
         w.configure(text) { a, stored -> call.resolve(answer(a).put("ok", a.ok && stored)) }
@@ -109,7 +111,9 @@ class NativeShadowPlugin : Plugin() {
     @PluginMethod
     fun base(call: PluginCall) {
         val text = call.getString("text") ?: return call.resolve(refused("missingText"))
-        directorOf(call)?.let { d -> return d.base(text) { call.resolve(answer(it)) } }
+        directorOf(call)?.let { d ->
+            return d.base(text) { call.resolve(answer(it)) }
+        }
         val w = worker ?: return call.reject("unavailable")
         w.base(text) { call.resolve(answer(it)) }
     }
@@ -189,7 +193,9 @@ class NativeShadowPlugin : Plugin() {
     /** Empties the ring; ok only once the empty ring is on disk. */
     @PluginMethod
     fun clear(call: PluginCall) {
-        directorOf(call)?.let { d -> return d.clear { stored -> call.resolve(JSObject().put("ok", stored)) } }
+        directorOf(call)?.let { d ->
+            return d.clear { stored -> call.resolve(JSObject().put("ok", stored)) }
+        }
         val w = worker ?: return call.reject("unavailable")
         w.clear { stored -> call.resolve(JSObject().put("ok", stored)) }
     }
@@ -200,7 +206,11 @@ class NativeShadowPlugin : Plugin() {
         val w = worker ?: return call.reject("unavailable")
         val d = directorOf(call)
         val label = if (d != null) DIRECTOR_REPORT_LABEL else REPORT_LABEL
-        val build: ((String) -> Unit) -> Unit = d?.let { { a: (String) -> Unit -> it.report(answer = a) } } ?: { a -> w.report(answer = a) }
+        val build: ((String) -> Unit) -> Unit =
+            d?.let { { a: (String) -> Unit -> it.report(answer = a) } }
+                ?: { a ->
+                    w.report(answer = a)
+                }
         build { text ->
             bridge.executeOnMainThread {
                 val clipboard =

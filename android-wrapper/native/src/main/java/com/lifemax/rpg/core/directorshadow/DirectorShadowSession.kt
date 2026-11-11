@@ -11,7 +11,6 @@ import com.lifemax.rpg.core.shadow.ShadowRedactor
 import com.lifemax.rpg.core.shadow.ShadowRefusal
 import com.lifemax.rpg.core.shadow.ShadowState
 import com.lifemax.rpg.core.shadow.ShadowSummary
-import com.lifemax.rpg.core.shadow.Verdict
 import java.time.ZoneId
 
 /**
@@ -104,7 +103,8 @@ class DirectorShadowSession(
             parts.clear()
             partsSeq = p.seq
         }
-        if (p.seq != partsSeq || p.part != parts.size) return refusedBase(ShadowRefusal.BAD_DELTA, now)
+        if (p.seq != partsSeq || p.part != parts.size)
+            return refusedBase(ShadowRefusal.BAD_DELTA, now)
         parts += p.text
         if (parts.size < p.parts) return ShadowAnswer(true, ledger.state, null)
         val whole = parts.joinToString("")
@@ -133,7 +133,8 @@ class DirectorShadowSession(
         return when {
             state == ShadowState.ON && batterySaver -> ShadowAccept(false, true, "paused")
             state != ShadowState.ON -> ShadowAccept(false, false, state.word)
-            chars > DirectorShadowLimits.MAX_ENVELOPE_CHARS -> ShadowAccept(false, true, ShadowRefusal.TOO_LARGE.word)
+            chars > DirectorShadowLimits.MAX_ENVELOPE_CHARS ->
+                ShadowAccept(false, true, ShadowRefusal.TOO_LARGE.word)
             needBase && !basePending -> ShadowAccept(false, true, "noBase")
             else -> ShadowAccept.ACCEPTED
         }
@@ -151,7 +152,9 @@ class DirectorShadowSession(
         changed()
     }
 
-    /** SH-3 to SH-17: one envelope, decoded, applied to the copy where it carries changes, checked. */
+    /**
+     * SH-3 to SH-17: one envelope, decoded, applied to the copy where it carries changes, checked.
+     */
     fun observe(text: String, now: Long) {
         if (ledger.state != ShadowState.ON) return
         val e =
@@ -193,8 +196,9 @@ class DirectorShadowSession(
                     }
                     DirectorShadowJson.READ -> {
                         if (SECOND in e.flags) return ledger.skip(e.kind, SECOND)
-                        val state = (JsonReader.read(stitched!!) as? JsonRead.Parsed)?.value
-                            ?: return skipLost(e.kind, "capture")
+                        val state =
+                            (JsonReader.read(stitched!!) as? JsonRead.Parsed)?.value
+                                ?: return skipLost(e.kind, "capture")
                         checks.read(state, e.read!!)
                     }
                     else -> {
@@ -204,7 +208,10 @@ class DirectorShadowSession(
                         }
                         val start = System.nanoTime()
                         val r = checks.engine(e.kind, e.engine!!)
-                        if ((System.nanoTime() - start) / NANOS_PER_MS > DirectorShadowLimits.ENGINE_SLOW_MS)
+                        if (
+                            (System.nanoTime() - start) / NANOS_PER_MS >
+                                DirectorShadowLimits.ENGINE_SLOW_MS
+                        )
                             engineSkips = DirectorShadowLimits.ENGINE_SAMPLE - 1
                         r
                     }
@@ -226,20 +233,28 @@ class DirectorShadowSession(
 
     private fun internal(kind: String, error: Throwable, now: Long) {
         ledger.skip(kind, "error")
-        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now)) disable("errors", now)
+        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now))
+            disable("errors", now)
         changed()
     }
 
-    /** SH-25: the worker's time for one envelope; a slow 95th percentile of the last 50 stops the check. */
+    /**
+     * SH-25: the worker's time for one envelope; a slow 95th percentile of the last 50 stops the
+     * check.
+     */
     fun timed(millis: Long, now: Long) {
         recent(costs, millis)
-        if (costs.size == ShadowLimits.SLOW_WINDOW && costs.sorted()[SLOW_INDEX] > ShadowLimits.SLOW_P95_MS)
+        if (
+            costs.size == ShadowLimits.SLOW_WINDOW &&
+                costs.sorted()[SLOW_INDEX] > ShadowLimits.SLOW_P95_MS
+        )
             disable("slow", now)
     }
 
     fun fault(error: Throwable, now: Long) {
         lose()
-        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now)) disable("errors", now)
+        if (ledger.error(error.javaClass.simpleName.ifEmpty { "Throwable" }, now))
+            disable("errors", now)
         changed()
     }
 
@@ -263,7 +278,17 @@ class DirectorShadowSession(
     fun report(now: Long, zone: ZoneId): String =
         DirectorShadowReport.text(
             ledger,
-            DirectorReportFacts(versionCode, nativeApi, pageBuild, fingerprint, pageFingerprint, costs.toList(), pageCosts.toList(), now, zone),
+            DirectorReportFacts(
+                versionCode,
+                nativeApi,
+                pageBuild,
+                fingerprint,
+                pageFingerprint,
+                costs.toList(),
+                pageCosts.toList(),
+                now,
+                zone,
+            ),
         )
 
     fun clear() {
@@ -316,6 +341,7 @@ class DirectorShadowSession(
         const val ANY = "any"
         private const val SECOND = "second"
         private const val NANOS_PER_MS = 1_000_000L
-        private const val SLOW_INDEX = ShadowLimits.SLOW_WINDOW * ShadowLimits.SLOW_PERCENTILE / 100 - 1
+        private const val SLOW_INDEX =
+            ShadowLimits.SLOW_WINDOW * ShadowLimits.SLOW_PERCENTILE / 100 - 1
     }
 }

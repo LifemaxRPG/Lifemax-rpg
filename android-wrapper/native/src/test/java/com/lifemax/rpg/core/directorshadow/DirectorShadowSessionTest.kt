@@ -8,21 +8,42 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** SH-2, SH-4, SH-7, SH-8, SH-20 to SH-29: the switch, the copy's order and the self-disable rules. */
+/**
+ * SH-2, SH-4, SH-7, SH-8, SH-20 to SH-29: the switch, the copy's order and the self-disable rules.
+ */
 class DirectorShadowSessionTest {
     private val t = DirectorShadowStream.T
-    private fun configure(enabled: Boolean = true, fingerprint: String = DirectorShadowLimits.FINGERPRINT, sid: String = "d-test") =
+
+    private fun configure(
+        enabled: Boolean = true,
+        fingerprint: String = DirectorShadowLimits.FINGERPRINT,
+        sid: String = "d-test",
+    ) =
         """{"v":1,"scope":"director","enabled":$enabled,"sid":"$sid","page":{"build":"b1","fingerprint":"$fingerprint","faults":0}}"""
-    private fun base(seq: Long, text: String, part: Int = 0, parts: Int = 1, sid: String = "d-test") =
+
+    private fun base(
+        seq: Long,
+        text: String,
+        part: Int = 0,
+        parts: Int = 1,
+        sid: String = "d-test",
+    ) =
         """{"v":1,"scope":"director","sid":"$sid","seq":$seq,"part":$part,"parts":$parts,"text":${com.lifemax.rpg.core.save.JsonWriter.write(com.lifemax.rpg.core.save.JsonString(text))}}"""
-    private val ops = """{"ops":[["o",[],["schemaVersion","playerId","availability","goals"]],["t",["schemaVersion"],"1"],["t",["playerId"],"\"p\""],["t",["availability"],"{\"timezone\":\"UTC\",\"rules\":[]}"],["t",["goals"],"[]"]]}"""
-    private val stateText = """{"schemaVersion":1,"playerId":"p","availability":{"timezone":"UTC","rules":[]},"goals":[]}"""
+
+    private val ops =
+        """{"ops":[["o",[],["schemaVersion","playerId","availability","goals"]],["t",["schemaVersion"],"1"],["t",["playerId"],"\"p\""],["t",["availability"],"{\"timezone\":\"UTC\",\"rules\":[]}"],["t",["goals"],"[]"]]}"""
+    private val stateText =
+        """{"schemaVersion":1,"playerId":"p","availability":{"timezone":"UTC","rules":[]},"goals":[]}"""
+
     private fun save(seq: Long, base: Long, ops: String = "[]", bytes: Int = stateText.length) =
         """{"v":1,"scope":"director","sid":"d-test","seq":$seq,"base":$base,"kind":"director.save","t0":1,"t1":2,"zone":"UTC","ops":$ops,"bytes":$bytes,"cost":{"ms":1},"flags":[]}"""
+
     private fun plan(seq: Long, offset: Int = 0) =
         """{"v":1,"scope":"director","sid":"d-test","seq":$seq,"base":1,"kind":"director.plan","t0":1,"t1":2,"zone":"UTC","ops":[],"engine":{"planZone":"UTC","planOffset":$offset,"input":{"currentTimeEpoch":1793000000},"output":{}},"cost":{"ms":1},"flags":[]}"""
 
-    private fun on(s: DirectorShadowSession = DirectorShadowStream.session()): DirectorShadowSession {
+    private fun on(
+        s: DirectorShadowSession = DirectorShadowStream.session()
+    ): DirectorShadowSession {
         assertTrue(s.configure(configure(), false).ok)
         assertTrue(s.base(base(1, ops), t).ok)
         return s
@@ -100,7 +121,12 @@ class DirectorShadowSessionTest {
 
     @Test
     fun fiveErrorsInADayStopTheCheckAndANewAppTriesAgain() {
-        val s = on(DirectorShadowStream.session { r -> DirectorChecks(r, zoneOffset = { _, _ -> error("boom") }) })
+        val s =
+            on(
+                DirectorShadowStream.session { r ->
+                    DirectorChecks(r, zoneOffset = { _, _ -> error("boom") })
+                }
+            )
         for (i in 0 until 5) s.observe(plan(2L + i), t + i)
         assertEquals(ShadowState.DISABLED, s.ledger.state)
         assertEquals("errors", s.ledger.reason)
@@ -119,7 +145,18 @@ class DirectorShadowSessionTest {
 
     @Test
     fun aSlowPlanMakesNativeSamplePlans() {
-        val s = on(DirectorShadowStream.session { r -> DirectorChecks(r, zoneOffset = { _, _ -> Thread.sleep(DirectorShadowLimits.ENGINE_SLOW_MS + 50); 0 }) })
+        val s =
+            on(
+                DirectorShadowStream.session { r ->
+                    DirectorChecks(
+                        r,
+                        zoneOffset = { _, _ ->
+                            Thread.sleep(DirectorShadowLimits.ENGINE_SLOW_MS + 50)
+                            0
+                        },
+                    )
+                }
+            )
         for (i in 0 until 4) s.observe(plan(2L + i), t)
         val c = s.ledger.kinds[DirectorShadowJson.PLAN]!!
         assertEquals(mapOf("sampled" to DirectorShadowLimits.ENGINE_SAMPLE - 1), c.skipped)
@@ -129,7 +166,8 @@ class DirectorShadowSessionTest {
     @Test
     fun aStateTooLargeStopsTheCheck() {
         val big = "\"" + "x".repeat(DirectorShadowLimits.MAX_STATE_CHARS) + "\""
-        val text = "{\"ops\":[[\"o\",[],[\"a\"]],[\"t\",[\"a\"],${com.lifemax.rpg.core.save.JsonWriter.write(com.lifemax.rpg.core.save.JsonString(big))}]]}"
+        val text =
+            "{\"ops\":[[\"o\",[],[\"a\"]],[\"t\",[\"a\"],${com.lifemax.rpg.core.save.JsonWriter.write(com.lifemax.rpg.core.save.JsonString(big))}]]}"
         val s = DirectorShadowStream.session()
         s.configure(configure(), false)
         val size = DirectorShadowLimits.MAX_BASE_PART_CHARS - 1000
@@ -146,7 +184,11 @@ class DirectorShadowSessionTest {
         assertEquals(1, sum.compared)
         assertEquals(1, sum.same)
         val report = s.report(t, ZoneOffset.UTC)
-        assertTrue(report, report.startsWith("LifeMax Life Director check v1") && report.contains("director.save 1/1/0/0"))
+        assertTrue(
+            report,
+            report.startsWith("LifeMax Life Director check v1") &&
+                report.contains("director.save 1/1/0/0"),
+        )
         s.clear()
         assertEquals(0, s.summary().compared)
         assertEquals(ShadowState.ON, s.ledger.state)

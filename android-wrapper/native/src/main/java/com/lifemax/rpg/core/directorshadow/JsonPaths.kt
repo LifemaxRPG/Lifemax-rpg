@@ -9,7 +9,10 @@ import com.lifemax.rpg.core.shadow.ShadowRedactor
 import kotlin.math.abs
 import kotlin.math.max
 
-/** One place where the page and native differ: its redacted path, and whether it is a last-bit number (SH-32). */
+/**
+ * One place where the page and native differ: its redacted path, and whether it is a last-bit
+ * number (SH-32).
+ */
 data class PathDifference(val path: String, val lastBit: Boolean)
 
 /**
@@ -26,7 +29,12 @@ class JsonPaths(private val redactor: ShadowRedactor) {
     fun member(name: String): String = if (word.matches(name)) name else "*#" + redactor.hash(name)
 
     /** At most [limit] differences of [page] and [native], under the name [at]. */
-    fun diff(page: JsonValue?, native: JsonValue?, at: String, limit: Int = DirectorShadowLimits.MAX_PATHS): List<PathDifference> {
+    fun diff(
+        page: JsonValue?,
+        native: JsonValue?,
+        at: String,
+        limit: Int = DirectorShadowLimits.MAX_PATHS,
+    ): List<PathDifference> {
         val out = ArrayList<PathDifference>()
         walk(stored(page), stored(native), at, out, limit)
         return out
@@ -35,7 +43,13 @@ class JsonPaths(private val redactor: ShadowRedactor) {
     private fun stored(v: JsonValue?): JsonValue? =
         if (v is JsonNumber && !v.value.isFinite()) JsonNull else v
 
-    private fun walk(a: JsonValue?, b: JsonValue?, at: String, out: MutableList<PathDifference>, limit: Int) {
+    private fun walk(
+        a: JsonValue?,
+        b: JsonValue?,
+        at: String,
+        out: MutableList<PathDifference>,
+        limit: Int,
+    ) {
         if (out.size >= limit) return
         when {
             a is JsonObject && b is JsonObject -> {

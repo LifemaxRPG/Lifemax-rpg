@@ -38,7 +38,13 @@ class DirectorShadowWorkerTest {
     }
 
     private fun worker(executor: Executor) =
-        DirectorShadowWorker(executor, ShadowRing(dir, DirectorShadowWorker.FOLDER), { clock }, { false }, DirectorShadowWorker.opener(1, 135))
+        DirectorShadowWorker(
+            executor,
+            ShadowRing(dir, DirectorShadowWorker.FOLDER),
+            { clock },
+            { false },
+            DirectorShadowWorker.opener(1, 135),
+        )
 
     @Test
     fun theDayThroughTheWorkerIsCheckedAndStoredInItsOwnFolder() {
@@ -52,12 +58,18 @@ class DirectorShadowWorkerTest {
                 "base" -> w.base(text) {}
                 "observe" -> if (w.observe(text).accepted) accepted++
             }
-            assertTrue("nothing runs on the caller's thread", held.jobs.isNotEmpty() || method == "observe")
+            assertTrue(
+                "nothing runs on the caller's thread",
+                held.jobs.isNotEmpty() || method == "observe",
+            )
             held.drain()
         }
         var compared = 0
         var different = -1
-        w.summary { compared = it.compared; different = it.different }
+        w.summary {
+            compared = it.compared
+            different = it.different
+        }
         w.flush()
         held.drain()
         assertTrue(accepted > 0 && compared > 0)
@@ -68,7 +80,10 @@ class DirectorShadowWorkerTest {
         val again = worker(held)
         var state: ShadowState? = null
         var seen = 0
-        again.summary { state = it.state; seen = it.compared }
+        again.summary {
+            state = it.state
+            seen = it.compared
+        }
         held.drain()
         assertEquals(ShadowState.ON, state)
         assertEquals(compared, seen)

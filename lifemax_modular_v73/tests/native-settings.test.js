@@ -468,7 +468,7 @@ const HELPERS = `
     return { disabled: t.disabled && !t.checked, notes: notif.rows.length === 1 && notif.rows[0].type === 'note' && /Android app/.test(notif.rows[0].text), cards: s.cards.length, broken, forced };
   });
   ok('a category the chips do not have: the page shows its first chip, and the projection always names a chip', w.broken && w.forced === 'look', w);
-  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 25, w); // 25 with the Native economy check card (Data & advanced)
+  ok('in a browser the switch is disabled, and the projection still reads every card', w.disabled && w.notes && w.cards === 26, w); // 26 with the Native economy check and Native Life Director check cards (Data & advanced)
 
   ok('no script errors', errs.length === 0, errs.slice(0, 5));
   await b.close();

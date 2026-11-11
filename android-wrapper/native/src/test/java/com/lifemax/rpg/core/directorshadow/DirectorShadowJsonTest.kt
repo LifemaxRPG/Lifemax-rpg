@@ -13,7 +13,8 @@ class DirectorShadowJsonTest {
     private val plan =
         """{"v":1,"scope":"director","sid":"d-abc","seq":4,"base":3,"kind":"director.plan","t0":10,"t1":12,"zone":"UTC","ops":[],"engine":{"planZone":"UTC","planOffset":0,"input":{},"output":{}},"cost":{"ms":1},"flags":[]}"""
 
-    private fun refused(text: String): ShadowRefusal = (DirectorShadowJson.envelope(text) as ShadowDecode.Refused).reason
+    private fun refused(text: String): ShadowRefusal =
+        (DirectorShadowJson.envelope(text) as ShadowDecode.Refused).reason
 
     @Test
     fun theV1ShapesRead() {
@@ -23,7 +24,10 @@ class DirectorShadowJsonTest {
         assertEquals(40, e.bytes)
         val p = (DirectorShadowJson.envelope(plan) as ShadowDecode.Ok).value
         assertEquals(0, p.engine!!.planOffset)
-        val c = DirectorShadowJson.configure("""{"v":1,"scope":"director","enabled":true,"sid":"d-1","page":{"build":"b","fingerprint":"1.0.0/1","faults":0}}""")
+        val c =
+            DirectorShadowJson.configure(
+                """{"v":1,"scope":"director","enabled":true,"sid":"d-1","page":{"build":"b","fingerprint":"1.0.0/1","faults":0}}"""
+            )
         assertTrue(c is ShadowDecode.Ok)
     }
 
@@ -32,21 +36,34 @@ class DirectorShadowJsonTest {
         val cases =
             mapOf(
                 save.replace("\"v\":1", "\"v\":2") to ShadowRefusal.UNSUPPORTED,
-                save.replace("\"scope\":\"director\"", "\"scope\":\"economy\"") to ShadowRefusal.OUT_OF_RANGE,
-                save.replace("\"flags\":[]", "\"flags\":[],\"extra\":1") to ShadowRefusal.UNKNOWN_KEY,
+                save.replace("\"scope\":\"director\"", "\"scope\":\"economy\"") to
+                    ShadowRefusal.OUT_OF_RANGE,
+                save.replace("\"flags\":[]", "\"flags\":[],\"extra\":1") to
+                    ShadowRefusal.UNKNOWN_KEY,
                 save.replace(",\"bytes\":40", "") to ShadowRefusal.MISSING_KEY,
                 save.replace("\"base\":2", "\"base\":3") to ShadowRefusal.OUT_OF_RANGE,
                 save.replace("\"t1\":12", "\"t1\":9") to ShadowRefusal.BAD_TIME,
-                save.replace("\"zone\":\"UTC\"", "\"zone\":\"Mars/Base\"") to ShadowRefusal.BAD_ZONE,
-                save.replace("\"kind\":\"director.save\"", "\"kind\":\"quest.toggle\"") to ShadowRefusal.BAD_KIND,
-                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"t\",[\"ui\"],{}]") to ShadowRefusal.BAD_DELTA,
-                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"x\",[\"ui\"],\"{}\"]") to ShadowRefusal.BAD_DELTA,
-                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"t\",[\"a\",\"b\",\"c\",\"d\",\"e\"],\"{}\"]") to ShadowRefusal.BAD_DELTA,
-                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"a\",[\"ui\"],-1]") to ShadowRefusal.BAD_DELTA,
+                save.replace("\"zone\":\"UTC\"", "\"zone\":\"Mars/Base\"") to
+                    ShadowRefusal.BAD_ZONE,
+                save.replace("\"kind\":\"director.save\"", "\"kind\":\"quest.toggle\"") to
+                    ShadowRefusal.BAD_KIND,
+                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"t\",[\"ui\"],{}]") to
+                    ShadowRefusal.BAD_DELTA,
+                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"x\",[\"ui\"],\"{}\"]") to
+                    ShadowRefusal.BAD_DELTA,
+                save.replace(
+                    "[\"t\",[\"ui\"],\"{}\"]",
+                    "[\"t\",[\"a\",\"b\",\"c\",\"d\",\"e\"],\"{}\"]",
+                ) to ShadowRefusal.BAD_DELTA,
+                save.replace("[\"t\",[\"ui\"],\"{}\"]", "[\"a\",[\"ui\"],-1]") to
+                    ShadowRefusal.BAD_DELTA,
                 save.replace("\"sid\":\"d-abc\"", "\"sid\":\"a b\"") to ShadowRefusal.OUT_OF_RANGE,
-                save.replace("\"flags\":[]", "\"flags\":[\"Not a flag\"]") to ShadowRefusal.OUT_OF_RANGE,
-                plan.replace("\"ops\":[]", "\"ops\":[[\"t\",[\"ui\"],\"{}\"]]") to ShadowRefusal.BAD_DELTA,
-                plan.replace("\"planOffset\":0", "\"planOffset\":99999") to ShadowRefusal.OUT_OF_RANGE,
+                save.replace("\"flags\":[]", "\"flags\":[\"Not a flag\"]") to
+                    ShadowRefusal.OUT_OF_RANGE,
+                plan.replace("\"ops\":[]", "\"ops\":[[\"t\",[\"ui\"],\"{}\"]]") to
+                    ShadowRefusal.BAD_DELTA,
+                plan.replace("\"planOffset\":0", "\"planOffset\":99999") to
+                    ShadowRefusal.OUT_OF_RANGE,
                 plan.replace(",\"output\":{}", "") to ShadowRefusal.MISSING_KEY,
                 "[]" to ShadowRefusal.NOT_AN_OBJECT,
                 "{" to ShadowRefusal.NOT_JSON,
@@ -56,15 +73,30 @@ class DirectorShadowJsonTest {
 
     @Test
     fun aKindNativeDoesNotKnowIsReadForItsChanges() {
-        val e = DirectorShadowJson.envelope(save.replace("director.save", "director.later").replace(",\"bytes\":40", ""))
+        val e =
+            DirectorShadowJson.envelope(
+                save.replace("director.save", "director.later").replace(",\"bytes\":40", "")
+            )
         assertTrue(e is ShadowDecode.Ok)
     }
 
     @Test
     fun aBaseIsReadInParts() {
-        val p = DirectorShadowJson.basePart("""{"v":1,"scope":"director","sid":"d-1","seq":1,"part":0,"parts":2,"text":"{\"ops\""}""")
+        val p =
+            DirectorShadowJson.basePart(
+                """{"v":1,"scope":"director","sid":"d-1","seq":1,"part":0,"parts":2,"text":"{\"ops\""}"""
+            )
         assertTrue(p is ShadowDecode.Ok)
-        assertEquals(ShadowRefusal.OUT_OF_RANGE, (DirectorShadowJson.basePart("""{"v":1,"scope":"director","sid":"d-1","seq":1,"part":2,"parts":2,"text":""}""") as ShadowDecode.Refused).reason)
-        assertTrue(DirectorShadowJson.baseOps("""{"ops":[["o",[],["a"]],["t",["a"],"1"]]}""") is ShadowDecode.Ok)
+        assertEquals(
+            ShadowRefusal.OUT_OF_RANGE,
+            (DirectorShadowJson.basePart(
+                    """{"v":1,"scope":"director","sid":"d-1","seq":1,"part":2,"parts":2,"text":""}"""
+                ) as ShadowDecode.Refused)
+                .reason,
+        )
+        assertTrue(
+            DirectorShadowJson.baseOps("""{"ops":[["o",[],["a"]],["t",["a"],"1"]]}""")
+                is ShadowDecode.Ok
+        )
     }
 }

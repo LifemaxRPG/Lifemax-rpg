@@ -4,8 +4,8 @@ import com.lifemax.rpg.core.save.JsonString
 import com.lifemax.rpg.core.save.JsonWriter
 
 /**
- * One change the page sends (SH-6): at [path] (object member names and list indexes), [kind] is
- * `o` (an object split into members, [keys] in the page's order), `a` (a list split into items,
+ * One change the page sends (SH-6): at [path] (object member names and list indexes), [kind] is `o`
+ * (an object split into members, [keys] in the page's order), `a` (a list split into items,
  * [length] long) or `t` (a value as the page's exact JSON [text]).
  */
 data class TextOp(
@@ -17,11 +17,11 @@ data class TextOp(
 )
 
 /**
- * Native's copy of the page's Life Director state, as the page's own JSON texts (SH-5 to SH-8):
- * the state is split where it grows (the plan's sessions and history, the ledger's events and
- * order, the change log), every other value is the page's `JSON.stringify` text of it, and
- * [stitch] puts the parts together in the page's order, giving exactly the text the page's store
- * writes for the same state. Memory only; never written anywhere.
+ * Native's copy of the page's Life Director state, as the page's own JSON texts (SH-5 to SH-8): the
+ * state is split where it grows (the plan's sessions and history, the ledger's events and order,
+ * the change log), every other value is the page's `JSON.stringify` text of it, and [stitch] puts
+ * the parts together in the page's order, giving exactly the text the page's store writes for the
+ * same state. Memory only; never written anywhere.
  */
 class TextMirror {
     private sealed interface Node
@@ -66,19 +66,21 @@ class TextMirror {
         val made: (Node?) -> Node =
             when (op.kind) {
                 'o' -> { old ->
-                    if (old is Obj) {
-                        old.kids.keys.retainAll(op.keys.toSet())
-                        old.keys = op.keys
-                        old
-                    } else Obj(op.keys, HashMap())
-                }
+                        if (old is Obj) {
+                            old.kids.keys.retainAll(op.keys.toSet())
+                            old.keys = op.keys
+                            old
+                        } else Obj(op.keys, HashMap())
+                    }
                 'a' -> { old ->
-                    if (old is Arr) {
-                        while (old.items.size > op.length) old.items.removeAt(old.items.size - 1)
-                        while (old.items.size < op.length) old.items.add(null)
-                        old
-                    } else Arr(MutableList(op.length) { null })
-                }
+                        if (old is Arr) {
+                            while (old.items.size > op.length) old.items.removeAt(
+                                old.items.size - 1
+                            )
+                            while (old.items.size < op.length) old.items.add(null)
+                            old
+                        } else Arr(MutableList(op.length) { null })
+                    }
                 't' -> { _ -> Leaf(op.text) }
                 else -> return false
             }

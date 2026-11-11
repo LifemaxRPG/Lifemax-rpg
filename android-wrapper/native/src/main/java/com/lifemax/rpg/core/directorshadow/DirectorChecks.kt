@@ -27,11 +27,11 @@ data class CheckResult(val verdict: Verdict, val notes: List<String> = emptyList
 /**
  * The three Life Director checks (SH-9 to SH-17). Each runs native's own code on what the page
  * worked from and compares with what the page got; each only reads its inputs and writes nothing.
- *
  * - [save]: the store codec's round trip (WP-LD7) on the exact text the page's store just wrote.
  * - [read]: the day, now and week read models (WP-LD8a) on the page's state at the moment the page
  *   computed its own.
- * - [engine]: placement and local repair (WP-LD4, WP-LD5) on the engine input the page planned from.
+ * - [engine]: placement and local repair (WP-LD4, WP-LD5) on the engine input the page planned
+ *   from.
  *
  * @param words the page words the read models use (the packaged export in the app).
  * @param zoneOffset native's offset, in seconds, of a zone at an instant (SH-18), null when native
@@ -44,15 +44,26 @@ class DirectorChecks(
 ) {
     private val paths = JsonPaths(redactor)
 
-    /** SH-9 to SH-11. [text] is the stitched text; the page said its store wrote [bytes] characters. */
+    /**
+     * SH-9 to SH-11. [text] is the stitched text; the page said its store wrote [bytes] characters.
+     */
     fun save(text: String): CheckResult {
         val notes = ArrayList<String>()
         val decoded =
             when (val d = DirectorStoreCodec.decode(text, StoreReading.AS_PAGE)) {
                 is StoreDecode.Refused ->
                     return CheckResult(
-                        if (d.refusal == StoreRefusal.TooDeep) differed(listOf(Difference("store.decode.tooDeep", "store.decode.tooDeep")), setOf(DA_DEEP))
-                        else differed(listOf(Difference("store.decode." + word(d.refusal), "store.decode")))
+                        if (d.refusal == StoreRefusal.TooDeep)
+                            differed(
+                                listOf(Difference("store.decode.tooDeep", "store.decode.tooDeep")),
+                                setOf(DA_DEEP),
+                            )
+                        else
+                            differed(
+                                listOf(
+                                    Difference("store.decode." + word(d.refusal), "store.decode")
+                                )
+                            )
                     )
                 is StoreDecode.Decoded -> d.state
             }
@@ -61,13 +72,16 @@ class DirectorChecks(
         }
         val found = ArrayList<Difference>()
         val written = PageJson.text(decoded.document)
-        if (written != text) found += Difference("store.text" + firstMember(decoded.document, text), "store.text")
+        if (written != text)
+            found += Difference("store.text" + firstMember(decoded.document, text), "store.text")
         when (val e = DirectorStoreCodec.encode(decoded.document)) {
-            // an owned field of a kind the page never writes there is the strict reader's finding (above), not a difference
+            // an owned field of a kind the page never writes there is the strict reader's finding
+            // (above), not a difference
             is StoreEncode.Refused ->
                 if (e.refusal is StoreRefusal.WrongType) notes += "encode." + word(e.refusal)
                 else found += Difference("store.encode." + word(e.refusal), "store.encode")
-            is StoreEncode.Encoded -> if (e.text != text) found += Difference("store.encode", "store.encode")
+            is StoreEncode.Encoded ->
+                if (e.text != text) found += Difference("store.encode", "store.encode")
         }
         return CheckResult(if (found.isEmpty()) Verdict.Same else differed(found), notes)
     }
@@ -84,7 +98,9 @@ class DirectorChecks(
 
     /** SH-12 to SH-14: every read model the page computed, at the page's moment, on [state]. */
     fun read(state: JsonValue, facts: ReadFacts): CheckResult {
-        tzdata(facts.planZone, facts.nowMillis, facts.planOffset)?.let { return CheckResult(it) }
+        tzdata(facts.planZone, facts.nowMillis, facts.planOffset)?.let {
+            return CheckResult(it)
+        }
         val mine = DirectorReads.compute(state, facts, words())
         val diffs = ArrayList<PathDifference>()
         for (section in DirectorReads.SECTIONS) {
@@ -96,17 +112,26 @@ class DirectorChecks(
 
     /** SH-15 to SH-17: the plan (or repair) native makes from the page's engine input. */
     fun engine(kind: String, facts: EngineFacts): CheckResult {
-        val now = (facts.input as? JsonObject)?.let { input ->
-            val engineInput = if (kind == DirectorShadowJson.REPAIR) input.members["engineInput"] else input
-            ((engineInput as? JsonObject)?.members?.get("currentTimeEpoch") as? com.lifemax.rpg.core.save.JsonNumber)?.value
-        }
+        val now =
+            (facts.input as? JsonObject)?.let { input ->
+                val engineInput =
+                    if (kind == DirectorShadowJson.REPAIR) input.members["engineInput"] else input
+                ((engineInput as? JsonObject)?.members?.get("currentTimeEpoch")
+                        as? com.lifemax.rpg.core.save.JsonNumber)
+                    ?.value
+            }
         if (now != null && now.isFinite())
-            tzdata(facts.planZone, (now * 1000).toLong(), facts.planOffset)?.let { return CheckResult(it) }
-        val mine = DirectorReads.section {
-            if (kind == DirectorShadowJson.PLAN) withoutTime(PlanSchedule.generate(facts.input))
-            else repairJson(facts.input)
-        }
-        val page = if (kind == DirectorShadowJson.PLAN) withoutTime(facts.output) else normalRepair(facts.output)
+            tzdata(facts.planZone, (now * 1000).toLong(), facts.planOffset)?.let {
+                return CheckResult(it)
+            }
+        val mine =
+            DirectorReads.section {
+                if (kind == DirectorShadowJson.PLAN) withoutTime(PlanSchedule.generate(facts.input))
+                else repairJson(facts.input)
+            }
+        val page =
+            if (kind == DirectorShadowJson.PLAN) withoutTime(facts.output)
+            else normalRepair(facts.output)
         val at = if (kind == DirectorShadowJson.PLAN) "plan" else "repair"
         return CheckResult(verdict(paths.diff(page, mine, at)))
     }
@@ -137,7 +162,9 @@ class DirectorChecks(
     }
 
     private fun withoutTime(v: JsonValue): JsonValue =
-        (v as? JsonObject)?.let { JsonObject(LinkedHashMap(it.members).also { m -> m.remove(TIME) }) } ?: v
+        (v as? JsonObject)?.let {
+            JsonObject(LinkedHashMap(it.members).also { m -> m.remove(TIME) })
+        } ?: v
 
     /** SH-18: the plan zone's offset at the moment, page's and native's; different is `tzdata`. */
     private fun tzdata(zone: String, millis: Long, page: Int?): Verdict? {
@@ -150,7 +177,13 @@ class DirectorChecks(
         if (diffs.isEmpty()) return Verdict.Same
         val found = diffs.map { Difference(it.path, if (it.lastBit) LAST_BIT else it.path) }
         val unexplained = diffs.filter { !it.lastBit }.map { Difference(it.path, it.path) }
-        return Verdict.Differed(found, unexplained, if (diffs.any { it.lastBit }) setOf(DA_FLOAT) else emptySet(), null, null)
+        return Verdict.Differed(
+            found,
+            unexplained,
+            if (diffs.any { it.lastBit }) setOf(DA_FLOAT) else emptySet(),
+            null,
+            null,
+        )
     }
 
     private fun differed(found: List<Difference>, allowed: Set<String> = emptySet()): Verdict =
@@ -162,7 +195,8 @@ class DirectorChecks(
             StoreRefusal.TooDeep -> "tooDeep"
             is StoreRefusal.PageWouldThrow -> "pageWouldThrow"
             is StoreRefusal.Invalid -> "invalid"
-            is StoreRefusal.WrongType -> "wrongType." + r.path.split('.').joinToString(".") { paths.member(it) }
+            is StoreRefusal.WrongType ->
+                "wrongType." + r.path.split('.').joinToString(".") { paths.member(it) }
             is StoreRefusal.NonFinite -> "nonFinite"
             is StoreRefusal.NotFaithful -> "notFaithful"
         }

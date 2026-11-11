@@ -17,25 +17,51 @@ class JsonPathsTest {
 
     @Test
     fun thePagesNormalFormIsNotADifference() {
-        assertEquals(emptyList<PathDifference>(), paths.diff(JsonArray(listOf(JsonNull, JsonNumber(0.0))), JsonArray(listOf(JsonNumber(Double.NaN), JsonNumber(-0.0))), "x"))
-        assertEquals(emptyList<PathDifference>(), paths.diff(JsonNull, JsonNumber(Double.POSITIVE_INFINITY), "x"))
+        assertEquals(
+            emptyList<PathDifference>(),
+            paths.diff(
+                JsonArray(listOf(JsonNull, JsonNumber(0.0))),
+                JsonArray(listOf(JsonNumber(Double.NaN), JsonNumber(-0.0))),
+                "x",
+            ),
+        )
+        assertEquals(
+            emptyList<PathDifference>(),
+            paths.diff(JsonNull, JsonNumber(Double.POSITIVE_INFINITY), "x"),
+        )
     }
 
     @Test
     fun aListOfAnotherLengthIsNamed() {
-        val d = paths.diff(JsonArray(listOf(JsonNumber(1.0))), JsonArray(listOf(JsonNumber(1.0), JsonNumber(2.0))), "x")
+        val d =
+            paths.diff(
+                JsonArray(listOf(JsonNumber(1.0))),
+                JsonArray(listOf(JsonNumber(1.0), JsonNumber(2.0))),
+                "x",
+            )
         assertEquals(listOf(PathDifference("x[#]", false)), d)
     }
 
     @Test
     fun onlyALastBitIsALastBit() {
-        assertEquals(listOf(PathDifference("x", true)), paths.diff(JsonNumber(1.5), JsonNumber(Math.nextUp(1.5)), "x"))
-        assertEquals(listOf(PathDifference("x", false)), paths.diff(JsonNumber(1.5), JsonNumber(1.5 + 1e-9), "x"))
+        assertEquals(
+            listOf(PathDifference("x", true)),
+            paths.diff(JsonNumber(1.5), JsonNumber(Math.nextUp(1.5)), "x"),
+        )
+        assertEquals(
+            listOf(PathDifference("x", false)),
+            paths.diff(JsonNumber(1.5), JsonNumber(1.5 + 1e-9), "x"),
+        )
     }
 
     @Test
     fun aNameThatIsNotASchemaWordIsHashed() {
-        val d = paths.diff(JsonObject(mapOf("g-muscle" to JsonString("a"), "startEpoch" to JsonNumber(1.0))), JsonObject(mapOf("g-muscle" to JsonString("b"), "startEpoch" to JsonNumber(2.0))), "x")
+        val d =
+            paths.diff(
+                JsonObject(mapOf("g-muscle" to JsonString("a"), "startEpoch" to JsonNumber(1.0))),
+                JsonObject(mapOf("g-muscle" to JsonString("b"), "startEpoch" to JsonNumber(2.0))),
+                "x",
+            )
         assertEquals("x.startEpoch", d[1].path)
         assertTrue(d[0].path, d[0].path.startsWith("x.*#") && !d[0].path.contains("muscle"))
     }

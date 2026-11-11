@@ -37,7 +37,10 @@ object DirectorReads {
             else -> null
         }
 
-    /** [f]'s answer, or `{threw: name}` for a throw that stands for the page's; anything else is native's own error. */
+    /**
+     * [f]'s answer, or `{threw: name}` for a throw that stands for the page's; anything else is
+     * native's own error.
+     */
     inline fun section(f: () -> JsonValue): JsonValue =
         try {
             f()
@@ -53,10 +56,14 @@ object DirectorReads {
         var days: List<PlanDay>? = null
         out["days"] = section { ReadModelJson.days(m.horizonDays().also { days = it }) }
         out["unplanned"] = section {
-            ReadModelJson.segments(m.unplannedSegments(days?.first() ?: throw PageTypeError("days")))
+            ReadModelJson.segments(
+                m.unplannedSegments(days?.first() ?: throw PageTypeError("days"))
+            )
         }
         out["blocks"] = section {
-            JsonArray((days ?: throw PageTypeError("days")).map { ReadModelJson.blocks(m.dayBlocks(it)) })
+            JsonArray(
+                (days ?: throw PageTypeError("days")).map { ReadModelJson.blocks(m.dayBlocks(it)) }
+            )
         }
         out["timeline"] = section { ReadModelJson.blocks(m.liveTimeline()) }
         out["now"] = section { ReadModelJson.now(m.nowState()) }
@@ -75,17 +82,31 @@ object DirectorReads {
         val calls = ArrayList<JsonValue>()
 
         override fun preview(type: String, minutes: Double, dateKey: String): XpPreview? {
-            val args = JsonArray(listOf(JsonString(type), JsonNumber(minutes), JsonNumber(1.0), JsonString(dateKey)))
+            val args =
+                JsonArray(
+                    listOf(
+                        JsonString(type),
+                        JsonNumber(minutes),
+                        JsonNumber(1.0),
+                        JsonString(dateKey),
+                    )
+                )
             val r = recorded.getOrNull(calls.size) as? JsonObject
-            val out = if (r != null && r.members["args"] == args) r.members["out"] ?: JsonNull else JsonNull
+            val out =
+                if (r != null && r.members["args"] == args) r.members["out"] ?: JsonNull
+                else JsonNull
             calls += JsonObject(linkedMapOf("args" to args, "out" to out))
             val o = out as? JsonObject ?: return null
             val xp = (o.members["xp"] as? JsonNumber)?.value ?: return null
             val primary = (o.members["primary"] as? JsonString)?.value ?: return null
-            val split = (o.members["split"] as? JsonArray)?.items?.map {
-                val s = it as? JsonObject ?: return null
-                XpShare((s.members["attr"] as? JsonString)?.value ?: return null, (s.members["xp"] as? JsonNumber)?.value ?: return null)
-            } ?: return null
+            val split =
+                (o.members["split"] as? JsonArray)?.items?.map {
+                    val s = it as? JsonObject ?: return null
+                    XpShare(
+                        (s.members["attr"] as? JsonString)?.value ?: return null,
+                        (s.members["xp"] as? JsonNumber)?.value ?: return null,
+                    )
+                } ?: return null
             return XpPreview(xp, primary, split)
         }
     }

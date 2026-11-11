@@ -45,8 +45,8 @@ object DirectorShadowLimits {
     const val MAX_PATH = 4
 
     /**
-     * A plan run longer than this makes native compare only one plan in [ENGINE_SAMPLE] until a
-     * run is quick again (SH-24, the CPU budget for re-running placement).
+     * A plan run longer than this makes native compare only one plan in [ENGINE_SAMPLE] until a run
+     * is quick again (SH-24, the CPU budget for re-running placement).
      */
     const val ENGINE_SLOW_MS = 1_500L
     const val ENGINE_SAMPLE = 4
