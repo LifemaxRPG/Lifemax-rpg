@@ -621,6 +621,20 @@ the quest board native (QUESTS_SPEC) and the Plan day content. Decision: D1 (whi
 
 ### WP-LD12. Shadow mode (L, risk medium)
 
+**Status: first stage built** (branch `logic/ld12-shadow`, Native API 135, capability `director.shadow.v1`); the page is still the only
+writer. Spec: `LIFE_DIRECTOR_SHADOW_SPEC.md` (rules SH-1 to SH-35, allowlist DA-1 and DA-2, deviations from `ECONOMY_SHADOW_PLAN.md`
+section 7, OQ-S1 to OQ-S3). Behind a new switch, **Native Life Director check (beta)** (Settings, Data & advanced, in the economy check's
+card, off by default), the page module `50-native-director-shadow.js` joins the economy check's `NativeShadow` plugin with `scope:
+"director"` and sends, while `logic.js` tells it (four behaviour-neutral lines: `shadow()`, `planned()`, the save notice, `shadowReads`):
+each save's state as the page's own JSON texts of its parts (native stitches the exact stored text and runs the WP-LD7 codec's round trip
+and strict reading on it), the page's day, now and week read models with the XP previews they asked, at most once a minute (WP-LD8a), and
+each `generateSchedule` and `rescheduleActivity` input and answer (WP-LD4, WP-LD5 re-run, sampled past 1.5 s, inputs over 384 KB not sent).
+Native (`core/directorshadow`, `app/shadow/DirectorShadowWorker.kt`, its own ring `director-shadow/ring.json`) compares, keeps redacted
+counts and paths, self-disables like the economy check, and never writes. Tests: `tests/native-director-shadow.test.js` (22 checks; the
+copy equals the stored text byte for byte after every save), Kotlin 39 (`DirectorShadowStreamTest` replays the real page's messages for a
+lived-in day: 10 saves, 6 reads, 4 plans and 3 repairs, every one the same as the page). Next stages: 5.1 C (host commands and the tick, with
+`scope: "both"` for awards) once WP-LD9's commands are wired to the adapters, and WP-LD8b's dial.
+
 Scope and plan in 5.1.
 
 ### WP-LD13. Cutover (L, risk high)
@@ -633,7 +647,9 @@ engine spec has landed and been reviewed; LD1 and LD8 do not depend on it.
 
 ### 5.1 Shadow mode
 
-Native computes; the page still writes. No behaviour change on screen.
+Native computes; the page still writes. No behaviour change on screen. As built (WP-LD12, `LIFE_DIRECTOR_SHADOW_SPEC.md`), A and B run in the
+owner's release build behind a switch with the economy check's redacted ring, not in a debug build with a device file (as
+`ECONOMY_SHADOW_PLAN.md` section 7 proposed), and A sends the page's own read models with the state they read.
 
 1. **A, read shadow (after LD8).** The projection gains a debug-only `state` (a copy of `ST`, `now`, `tz`). Native recomputes
    the sections it can, diffs them against the page's own projection field by field, and logs mismatches with the state that
