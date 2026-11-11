@@ -31,6 +31,32 @@ async function open(browser, opts, demo) {
 async function settle(p, ms = 400) { for (let t = 0; t < ms; t += 50) { await p.clock.runFor(50); if (t % 200 === 0) await p.waitForTimeout(5); } await p.waitForTimeout(20); }
 const M = (p) => p.evaluate(() => { const m = window.__dsMock; return m && { calls: m.calls, kinds: m.envelopes.map((e) => e.kind), bases: m.bases, refused: m.refused, state: m.state, texts: m.texts.map((t) => ({ kind: t.kind, bytes: t.bytes, n: t.text.length })) }; });
 const stored = (p) => p.evaluate(() => localStorage.getItem('lifemax_director_state_v1'));
+/* one Today or Do command as a native screen sends it (LifeDirector.native.todayRun / run), with the state's text before and after;
+   a session named {s: k} is the k-th session still planned later today */
+async function command(p, kind, name, payload) {
+  return p.evaluate(([kind, name, payload]) => {
+    const ST = () => LifeDirectorApp._debug().ST, now = Date.now() / 1000, day = new Date(Date.now()).toISOString().slice(0, 10);
+    const later = ST().schedule.scheduledInstances.filter((i) => i.lifecycleState === 'PLANNED' && i.startEpoch >= now && new Date(i.startEpoch * 1000).toISOString().slice(0, 10) === day);
+    const pick = (v) => (v && typeof v === 'object' && 's' in v ? (later[v.s] || {}).instanceId : v && typeof v === 'object' && 'focus' in v ? (ST().ui.focus || {}).start : v);
+    const body = {};
+    for (const k of Object.keys(payload || {})) body[k] = pick(payload[k]);
+    const before = JSON.stringify(ST()), seq = window.__dsMock.envelopes.length;
+    const reply = kind === 'today' ? LifeDirector.native.todayRun(name, body) : LifeDirector.native.run(name, body);
+    return { before, after: JSON.stringify(ST()), reply: JSON.parse(JSON.stringify(reply === undefined ? null : reply)), seq, body };
+  }, [kind, name, payload]);
+}
+/* the commands a native Today, My time and Settings send, in the order a person might */
+const COMMANDS = [
+  ['today', 'pin', { id: { s: 0 }, on: true }], ['today', 'pin', { id: { s: 0 }, on: true }],
+  ['today', 'skip', { id: { s: 1 } }], ['today', 'unskip', { id: 'SKIPPED', op: 'u-1' }], ['today', 'skip', { id: { s: 1 } }],
+  ['today', 'done', { id: { s: 0 }, minutes: 25 }], ['today', 'done', { id: 'DONE' }],
+  ['today', 'logToday', { id: { s: 0 }, minutes: 20, op: 'log-1' }], ['today', 'logToday', { id: { s: 0 }, minutes: 20, op: 'log-1' }],
+  ['today', 'timer', { act: 'start', id: { s: 0 } }], ['today', 'timer', { act: 'pause', id: { s: 0 } }], ['today', 'timer', { act: 'cancel', id: { s: 0 }, start: { focus: 1 } }],
+  ['today', 'disrupt', { kind: 'block', op: 'dis-1', hours: 2 }], ['today', 'energy', { level: 'LOW' }], ['today', 'replan', {}],
+  ['do', 'goalPriority', { id: 'g-read', value: 5 }], ['do', 'restDay', { day: 0, on: true }], ['do', 'pref', { key: 'intensityLevel', value: 'LIGHT' }],
+  ['do', 'goalAdd', { op: 'goal-op-1', arch: 'CUSTOM', title: 'Practice guitar', tag: 'creative.practice', minutes: 30, perWeek: 2, priority: 3 }],
+  ['do', 'exportBackup', {}], ['do', 'goalPriority', { id: 'g-gone', value: 5 }],
+];
 
 (async () => {
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -84,9 +110,53 @@ const stored = (p) => p.evaluate(() => localStorage.getItem('lifemax_director_st
         await p.evaluate(() => LifeDirector.regenerate('test'));
         await settle(p, 400);
       }
+      /* the commands (SH-36 to SH-46): each one envelope, the copy at the page's state before it and after it, its reply, its host calls */
+      const ran = [];
+      let skipped = null, done = null;
+      for (const [kind, name, payload] of COMMANDS) {
+        const pl = Object.assign({}, payload);
+        if (pl.id === 'SKIPPED') pl.id = skipped;
+        if (pl.id === 'DONE') pl.id = done;
+        const r = await command(p, kind, name, pl);
+        if (name === 'skip') skipped = r.body.id;
+        if (name === 'done' && r.reply && r.reply.ok) done = r.body.id;
+        await settle(p, 100);
+        const e = await p.evaluate((n) => { const m = window.__dsMock, e = m.envelopes.slice(n).filter((x) => x.kind === 'director.cmd'); const t = m.texts.filter((x) => x.kind === 'director.cmd').pop(); return e.length === 1 ? { cmd: e[0].cmd, flags: e[0].flags, before: t && t.before, after: t && t.text, n: e.length } : { n: e.length }; }, r.seq);
+        ran.push({ kind, name, r, e });
+      }
+      ok('each command: one envelope with its op, name and payload', ran.every((x) => x.e.n === 1 && x.e.cmd.op === x.kind && x.e.cmd.name === x.name && JSON.stringify(x.e.cmd.payload) === JSON.stringify(x.r.body)), ran.map((x) => [x.name, x.e.n]));
+      ok('each command: native\'s copy is the page\'s state before it and after it, byte for byte', ran.every((x) => x.e.before === x.r.before && x.e.after === x.r.after), ran.filter((x) => x.e.before !== x.r.before || x.e.after !== x.r.after).map((x) => x.name));
+      ok('each command: its reply as the page answered', ran.every((x) => JSON.stringify(x.e.cmd.reply) === JSON.stringify(x.r.reply)), ran.map((x) => [x.name, x.e.cmd && x.e.cmd.reply]));
+      const fns = (x) => x.e.cmd.calls.map((c) => c[0]);
+      const doneRun = ran.find((x) => x.name === 'done' && x.r.reply.ok);
+      ok('a done: the award, the quests read again, the save and the toast, as the host was called', doneRun && ['awardActivity', 'readQuests', 'store.save', 'toast'].every((f) => fns(doneRun).includes(f)) && doneRun.e.cmd.reply.ok, doneRun && fns(doneRun));
+      const award = doneRun && doneRun.e.cmd.calls.find((c) => c[0] === 'awardActivity');
+      ok('an award\'s arguments and answer travel as JSON texts', award && JSON.parse(doneRun.e.cmd.texts[award[1]])[0].eventId && 'awarded' in JSON.parse(doneRun.e.cmd.texts[award[2]]), award);
+      const unskip = ran.find((x) => x.name === 'unskip');
+      ok('the take-back goes in full once (its plan, ledger and the plan it left), then as its digest', unskip && unskip.e.cmd.session.before.takeBack && unskip.e.cmd.session.before.takeBack.left && unskip.e.cmd.session.before.takeBack.before.schedule
+        && ran.filter((x) => x.e.cmd && x.e.cmd.session.before.takeBack && x.e.cmd.session.before.takeBack.before).length <= 2, unskip && unskip.e.cmd.session.before.takeBack && Object.keys(unskip.e.cmd.session.before.takeBack));
+      ok('the screen\'s drawing asks the host nothing the command is held to: no LifeMaxHost.connected from render among a pin\'s calls', fns(ran[0]).every((f) => f !== 'connected'), fns(ran[0]));
+      ok('no command flagged across a second under the test clock, none skipped', ran.every((x) => !x.e.flags.length), ran.map((x) => x.e.flags));
+      /* the tick: Life Director on screen, five minutes; the Overview's glance, its three steps (a quiet step at most once a minute) */
+      await p.evaluate(() => { state.activities.push({ id: 'act-elsewhere', type: 'reading', name: 'Read on the bus', duration: 20, date: new Date(Date.now() - 600000).toISOString() }); });
+      await p.evaluate(() => lmaNavTo('life-director'));
+      await settle(p, 1000);
+      await p.clock.runFor(5 * 60 * 1000 + 1000);
+      await settle(p, 400);
+      const ticks = await p.evaluate(() => window.__dsMock.envelopes.filter((e) => e.kind === 'director.tick').map((e) => ({ op: e.cmd.op, calls: e.cmd.calls.map((c) => c[0]), ops: e.cmd.after.length })));
+      ok('the tick: one envelope each time it runs, with LifeMax\'s log read and the activity logged elsewhere taken in', ticks.some((t) => t.op === 'tick' && t.calls.includes('activitiesSince') && t.ops > 0), ticks);
+      const from = await p.evaluate(() => window.__dsMock.envelopes.length);
+      await p.evaluate(() => lmaNavTo('dashboard'));
+      await settle(p, 1000);
+      await p.clock.runFor(2 * 60 * 1000);
+      await settle(p, 400);
+      const glance = await p.evaluate((n) => window.__dsMock.envelopes.slice(n).filter((e) => e.kind === 'director.tick' && e.cmd.op !== 'tick').map((e) => ({ op: e.cmd.op, t: e.t0 })), from);
+      const quiet = await p.evaluate(() => LmaDirectorShadowStatus().stats.skipped.quiet || 0);
+      ok('the glance\'s steps: sync, misses and rollover each sent, the quiet ones at most once a minute', ['syncHost', 'processMisses', 'maybeRollover'].every((op) => glance.some((g) => g.op === op)) && quiet > 0 && glance.length <= 3 * 3, { glance, quiet });
       const r = await M(p);
       const kinds = new Set(r.kinds);
       ok('the day sends saves, plans, a repair and read checks', kinds.has('director.save') && kinds.has('director.plan') && kinds.has('director.repair') && kinds.has('director.read'), r.kinds);
+      ok('the day sends commands and ticks too', kinds.has('director.cmd') && kinds.has('director.tick'), r.kinds);
       ok('nothing refused: every envelope laid on the copy', r.refused.length === 0, r.refused);
       const saves = r.texts.filter((t) => t.kind === 'director.save');
       ok('every save: the copy stitches to the length the store wrote', saves.length > 0 && saves.every((t) => t.n === t.bytes), saves.slice(0, 5));

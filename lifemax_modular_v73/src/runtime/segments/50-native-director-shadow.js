@@ -20,11 +20,12 @@
   const TICKS = { tick: 1, syncHost: 1, processMisses: 1, maybeRollover: 1 };
   /* LifeMaxHost's and the store's functions Life Director's commands call (LIFE_DIRECTOR_HOST_SPEC HC-4), as native's host has them */
   const HOST_FNS = ["connected", "toast", "playerId", "readQuests", "readPlanSessions", "awardActivity", "completeQuest", "activitiesSince", "activityExists", "milestones", "retiredUntimedQuest"];
-  const LIMIT = { envelope: 512 * 1024, part: 256 * 1024, parts: 32, slice: 200000, base: 8 * 1024 * 1024, faults: 3, slowMs: 50, slowMsPerMB: 30, slowRun: 5, queue: 16, readEveryMs: 60000, engine: 384 * 1024 };
+  const LIMIT = { envelope: 512 * 1024, part: 256 * 1024, parts: 32, slice: 200000, base: 8 * 1024 * 1024, faults: 3, slowMs: 50, slowMsPerMB: 30, slowRun: 5, queue: 16, readEveryMs: 60000, engine: 384 * 1024, quietMs: 60000 };
   /* where the state is split into parts (SH-5): the plan's sessions and history, the ledger's events and order, the change log */
   const SPLIT = { schedule: { scheduledInstances: 1, historyInstances: 1 }, ledger: { events: 1, order: 1 }, changeLog: 1 };
   let plugin = null, hello = null, live = false, stopped = "", sid = "", seq = 0, head = 0, cache = null, needBase = true, faults = 0, slowRun = 0, slowMs = LIMIT.slowMs;
   let summary = null, starting = false, timer = 0, lastRead = -Infinity, readDue = false, recording = null, copyEpoch = 0;
+  const quietAt = {}; // when each tick step that changed nothing was last sent (SH-47)
   const told = new WeakMap(); // a take-back native has been sent in full, since the copy's last base (SH-41)
   const outbox = [];
   const stats = { sent: 0, bases: 0, reads: 0, plans: 0, commands: 0, skipped: {}, faults: 0, answers: {}, costs: [] };
@@ -135,6 +136,11 @@
           r.sessionAfter = session(V2);
           r.takeBackAfter = V2.takeBack || null;
           r.cost += r.extra + performance.now() - t2;
+          /* the tick and the glance's steps run every few minutes (the glance every 30 s): one that changed nothing goes once a minute */
+          if (TICKS[op] && !err && !out && !changes(r.before, r.after, [], []).length && JSON.stringify(r.sessionBefore) === JSON.stringify(r.sessionAfter)) {
+            if (r.t1 - (quietAt[op] || -Infinity) < LIMIT.quietMs) { skip("quiet"); return; }
+            quietAt[op] = r.t1;
+          }
           queue(r);
         },
       };
