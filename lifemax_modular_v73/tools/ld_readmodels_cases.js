@@ -24,7 +24,7 @@ const engineVm = require('./ld_engine_vm.js');
 const { ZONES } = require('./ld_schedule_cases.js');
 
 const FIX = path.join(__dirname, '..', 'tests', 'fixtures');
-const FAMILIES = ['seed', 'scenario', 'dst', 'plan', 'reschedule', 'now', 'focus', 'zone', 'life', 'calendar', 'host', 'week', 'fuzz'];
+const FAMILIES = ['seed', 'scenario', 'dst', 'plan', 'reschedule', 'now', 'focus', 'zone', 'life', 'midnight', 'calendar', 'host', 'week', 'fuzz'];
 const SEEDS = ['fresh', 'planned', 'lived', 'lived-bak', 'imported', 'unfinished', 'v0'];
 const STATES = ['PLANNED', 'COMPLETED_ON_TIME', 'COMPLETED_EARLY', 'COMPLETED_LATE', 'PARTIALLY_COMPLETED', 'SKIPPED_VOLUNTARY',
   'MISSED_UNEXPLAINED', 'EXCUSED_BY_TOKEN', 'EXCUSED_DISPLACED', 'CANCELLED_BY_QUEST'];
@@ -202,6 +202,23 @@ function defineCases(seeds) {
     const hist = s.historyInstances || [];
     if (hist.length && r() < 0.5) set.push([['schedule', 'historyInstances', Math.floor(r() * hist.length), 'lifecycleState'], pick(r, STATES)]);
     add('life', BLOCKS + ' ' + LIVE + ' ' + WEEK, id, ms(r, Math.floor(s.horizonStartEpoch + r() * (s.horizonEndEpoch - s.horizonStartEpoch))), { set }, 'mix' + count);
+  });
+
+  /* midnight: a meal and another commitment moved across the midnight between two of the plan's days, so each is cut in two blocks (the
+     meal keeping its own start) and the live timeline joins the pieces again; read just before, at and after the midnight */
+  const midStates = ids_('plan/scenario/').filter((k, i) => i % 3 === 2).slice(0, 30).concat(ids_('res/').filter((k, i) => i % 5 === 1).slice(0, 10));
+  midStates.forEach((id, n) => {
+    const r = random(n * 523 + 37), s = sched(id), segs = (s.segments || []).map((g, j) => [g, j]);
+    const days = U.buildHorizon(s.horizonStartEpoch, Math.round((s.horizonEndEpoch - s.horizonStartEpoch) / 86400), zoneOf(id));
+    if (days.length < 2) return;
+    const meals = segs.filter(([g]) => g.kind === 'MEAL');
+    const others = segs.filter(([g]) => g.code !== 'FREE' && g.code !== 'SCHEDULED_TASK' && g.kind !== 'MEAL' && g.kind !== 'SLEEP');
+    const k = Math.floor(r() * (days.length - 1)), cut = days[k].endEpoch, set = [];
+    const move = ([, j], before, after) => set.push([['schedule', 'segments', j, 'startEpoch'], cut - before], [['schedule', 'segments', j, 'endEpoch'], cut + after]);
+    if (meals.length) move(pick(r, meals), 900 * (1 + Math.floor(r() * 4)), 900 * (1 + Math.floor(r() * 4)));
+    if (others.length && r() < 0.6) move(pick(r, others), 900 * (1 + Math.floor(r() * 8)), 900 * (1 + Math.floor(r() * 8)));
+    if (!set.length) return;
+    add('midnight', BLOCKS + ' ' + LIVE + ' ' + WEEK, id, ms(r, pick(r, [cut - 1200, cut - 60, cut, cut + 600])), { set }, 'cut' + k);
   });
 
   /* calendar: days off the plan (before it, after it, far ahead), which show the availability preview */

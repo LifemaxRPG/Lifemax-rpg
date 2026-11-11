@@ -64,6 +64,7 @@ class ReadModelsGoldenTest {
                 "focus" to 150,
                 "zone" to 51,
                 "life" to 134,
+                "midnight" to 39,
                 "calendar" to 42,
                 "host" to 31,
                 "week" to 40,

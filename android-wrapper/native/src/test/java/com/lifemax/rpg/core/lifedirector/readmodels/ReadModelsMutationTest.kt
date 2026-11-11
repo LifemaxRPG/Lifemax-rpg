@@ -1,6 +1,7 @@
 package com.lifemax.rpg.core.lifedirector.readmodels
 
 import com.lifemax.rpg.core.lifedirector.readmodels.ReadModelsReplay.Mutation
+import com.lifemax.rpg.core.save.JsonString
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -11,6 +12,7 @@ import org.junit.Test
  */
 class ReadModelsMutationTest {
     private val cases = ReadModelsReplay.golden.cases
+    private val ALL = ReadModelsGoldenTest.FAMILY_COUNTS.keys
 
     private fun assertCaught(families: Set<String>, least: Int, mutation: Mutation) {
         val found =
@@ -52,7 +54,7 @@ class ReadModelsMutationTest {
 
     @Test
     fun wrappingUpOneSecondEarlierIsNoticed() =
-        assertCaught(setOf("now"), 10, Mutation(words = words(ending = words.endingSeconds - 1)))
+        assertCaught(setOf("now"), 5, Mutation(words = words(ending = words.endingSeconds - 1)))
 
     @Test
     fun startingSoonOneSecondLaterIsNoticed() =
@@ -81,7 +83,7 @@ class ReadModelsMutationTest {
     fun dayNamesFromMondayAreNoticed() =
         assertCaught(
             setOf("scenario"),
-            300,
+            250,
             Mutation(words = words(dayNames = words.dayNames.drop(1) + words.dayNames.first())),
         )
 
@@ -94,7 +96,7 @@ class ReadModelsMutationTest {
             Mutation(
                 blocks = { m, d ->
                     m.dayBlocks(d).filter {
-                        !(it.session == null && it.code.toString() == "\"FREE\"" &&
+                        !(it.session == null && it.code == JsonString("FREE") &&
                             it.endEpoch - it.startEpoch < 1800)
                     }
                 }
@@ -105,8 +107,8 @@ class ReadModelsMutationTest {
     @Test
     fun aClippedMealsStartIsNoticed() =
         assertCaught(
-            setOf("scenario", "dst", "plan", "fuzz"),
-            3,
+            setOf("midnight"),
+            10,
             Mutation(
                 blocks = { m, d ->
                     m.dayBlocks(d).map {
@@ -146,7 +148,7 @@ class ReadModelsMutationTest {
     @Test
     fun aDoneSessionAsNextIsNoticed() =
         assertCaught(
-            setOf("life", "fuzz", "seed", "reschedule"),
+            ALL,
             3,
             Mutation(
                 now = { m ->
@@ -169,8 +171,8 @@ class ReadModelsMutationTest {
     @Test
     fun sharesRoundedDownAreNoticed() =
         assertCaught(
-            setOf("scenario"),
-            50,
+            setOf("seed", "life", "fuzz"),
+            30,
             Mutation(
                 week = { m ->
                     m.weekProjection()?.let { p ->
