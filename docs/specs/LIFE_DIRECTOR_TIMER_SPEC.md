@@ -356,8 +356,18 @@ clock-change nights in `clock/dst-*` (New York 2026-11-01, London 2026-10-25, Sy
 | `wake` | 40 | each kind probed a millisecond before and at its instant, in every zone, four graces | TM-80 to TM-84 |
 | `fuzz` | 120 | seeded sequences | TM-90 |
 
-Mutation checks: 43 source mutations of the native timer (`mutate.py` copies `timer/`, changes one place, compiles it against the rest
-and runs the three timer tests); see the work package's report in the plan for the count caught. The survivors are listed there with why.
+Mutation checks: 43 source mutations of the native timer (a script copies `timer/`, changes one place, compiles it against the rest and
+runs the three timer tests; the survivors of a first round got new cases, `start/zero-length`, `pause/twice`, `auto/paused-past-target`,
+`tick/no-planned-ms`, a finish after `replace/clock-back`, and hand checks, and the round was run again). 42 make a test fail: the
+clamp at 0 and the frozen time of `focusMs`, the subtraction of `pausedMs`, the 60-second floor, `plannedMs` over the session's length,
+every guard of `autoFinish` (start, id, paused, `<` against the target) and its planned minutes, replace's start after the old one and
+its restore on a refused save, the replacement already landed, the other-timer check that spares a timer off the plan (D15), both
+doable checks, reset's pause and restore, pause's repeat, resume adding to an earlier pause, the `COMPLETED` repeat, the no-timer answer,
+cancel's notice, the whole seconds of the start, the restore after a refused automatic finish, the save when the session is off the
+plan, the check's paused guard, its fallback to the session's length and to history, its `>=`, the id as text, `refusedFinish`; in
+`Wakes` the paused time, the strict `<` of misses, the grace, Monday, the horizon's and light mode's strict `<`, the two days, the paused
+timer, the 5-minute alert; in `FocusClock` the paused total and the boot check. The one that survives is equivalent: a finish's
+`Math.max(1, ...)` (the ledger takes `Math.max(1, Math.round(minutes))` again, `engine.js:1940`).
 
 ## 16. Open questions
 

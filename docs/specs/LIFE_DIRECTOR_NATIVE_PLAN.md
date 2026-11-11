@@ -592,6 +592,29 @@ every repeat ("Already recorded.", "Already skipped.", "Already added"). Decisio
 
 ### WP-LD10. Timers and background work (S to M, risk medium)
 
+**Status: done for the timer and the wake calculator** (branch `logic/ld10-timer`, NativeApi 134); not wired to anything (no service,
+alarm or screen), the page is still the only writer. Spec: `LIFE_DIRECTOR_TIMER_SPEC.md` (rules TM-1 to TM-90, defects LT01 to LT17, the
+background design and the recommendation for D4 and D7 in its section 13, golden index, open questions OQ-T1 to OQ-T4). Recorder
+`tools/gen_ld_timer_golden.js` on WP-LD9's runner `tools/ld_host_vm.js` (its first hook now also exports `focusTick` and `focusMs`; a
+`focusTick` step, a stub `document.querySelectorAll` and a `{$ref: 'focus'}` reference added; WP-LD9's 859 cases re-record unchanged),
+the built page in Chromium and node, every case twice; cases `tools/ld_timer_cases.js`, mostly on a plan made by hand so every instant is
+known: 564 cases, 2,956 steps in `tests/fixtures/ld-timer-golden.json.gz` (11 families: start 64, pause 40, reset 24, replace 28, finish
+72, cancel 20, auto 68, tick 40, clock 48, wake 40, fuzz 120) in the eight strict zones, with the clock set back and jumped, the app closed
+for hours and reopened, timers on sessions off the plan, and four clock-change nights; node agrees on every case; web test
+`tests/ld-timer-golden.test.js`. Kotlin in `core/lifedirector/timer`: `TimerCommands` (`Today.timer` and the once-a-second check, wired
+into WP-LD9's `TodayCommands` as `timer` and `HostCommand.FocusTick`), `TimerMachine` (the pure entry point `(state, now, host, command)
+-> (state', reply, hostCalls)` with typed commands and answers, over WP-LD9's `HostState` and `HostEffects`), `Wakes` (the pure "what
+should wake the app" calculator: the timer's end, the next miss, the weekly and horizon re-plans, the end of light mode, a re-plan due
+now, and the page's foreground rhythm: midnight, the 5-minute tick, the session alert), `FocusClock` (the two-clock model: wall and
+monotonic, with the boot). It reproduces every step (`TimerGoldenTest`); `WakeGoldenTest` checks the calculator against 40 page probes
+(nothing changes a millisecond before its instant, something at it); `TimerHandTest`; 43 source mutations, 42 caught, the survivor equivalent (spec section 15). Findings: the misses do not spare the
+running timer's session, so a timer running past the end plus the grace has its session missed under it (LT05), and a timer left running
+while the app is closed is missed or finished depending on which screen opens first (LT06); a refused automatic finish retries every
+second for ever, saving twice a second (LT07); a number id lets a running session be skipped (LT04); the timer reads only the wall clock
+(LT01, LT02, D7); the end of light mode without a re-plan is not saved (LT15). Recommendation (spec section 13): D7, measure with the
+monotonic clock and finish at the target in the background with an ongoing chronometer notification and an exact alarm (no foreground
+service); D4, run the tick in the background as one inexact wake at the calculator's next background instant. Open: OQ-T1 to OQ-T4.
+
 Scope: `ST.ui.focus` state machine; auto finish; what keeps the timer true when the app is closed (a foreground
 notification or an alarm), the 5-minute tick and the day rollover as a background job. Decisions: D4, D7, and whether the
 timer should use a monotonic clock.
@@ -672,10 +695,10 @@ Each is behaviour the port would otherwise copy faithfully. "Port as is" is the 
 | D1 | `engine.js:2513-2537` (host `awardActivity`, `xpFor`) versus `logic.js:1216` (`xpOf`) | The award dates the session and the execution-bonus cap by `toLocaleDateString('en-CA')`, which uses the device's zone. The preview and the schedule use `ST.availability.timezone`. If the two differ (travel, or a manually set zone) a session near midnight is previewed on one day and paid on another, and the 15 XP daily bonus cap is counted on the device's day. | Which zone dates an award? Recommended: the plan's zone, as the preview does. |
 | D2 | `logic.js:318-322`, `3421-3430` | When the economy save fails (`HOST_SAVE_FAILED`, `HOST_READ_ONLY`), the session stays recorded as done in the Life Director ledger and history, with no activity and no retry; only the toast says XP was not saved. Re-doing it is refused as a duplicate. | Roll the completion back, or keep it and retry the award later? |
 | D3 | `logic.js:578-588` (`ruleOn`) versus `engine.js:221-229` (`ruleAppliesOn`) | The same rule question is answered by two functions. They differ at the edges (the page's copy does not normalise `days`, and treats a missing list as every day; the engine drops invalid days). `shifts()` (Money) and the dial handles use the page's copy; the plan uses the engine's. | One function in native, taken from the engine? Does Money's income change if the two differ today? |
-| D4 | `logic.js:2900-2907` | `tick` (host sync, misses, rollover) runs only while the Life Director view is mounted and active, every 5 minutes or when the app returns to the foreground. A player who does not open the tab gets no miss handling, rollover or sync until they do, and then at most 12 misses per tick. | Should these run in the background natively (a job at least daily), or only on open as today? |
+| D4 | `logic.js:2900-2907` | `tick` (host sync, misses, rollover) runs only while the Life Director view is mounted and active, every 5 minutes or when the app returns to the foreground. A player who does not open the tab gets no miss handling, rollover or sync until they do, and then at most 12 misses per tick. | Should these run in the background natively (a job at least daily), or only on open as today? WP-LD10 recommends one inexact wake at the next instant `Wakes` names (`LIFE_DIRECTOR_TIMER_SPEC.md` section 13). |
 | D5 | `engine.js:8, 2240` | Three modules in one file each assign `module.exports`; `require` returns the store, not the engine. Tooling trap, not a player bug. | Split the file when the page build is touched? (No action needed for the port.) |
 | D6 | `logic.js:2413` (`sleepSave`), `2441` (`ruleSave`) | Equal bed and wake times give 8 hours of sleep (`|| 480`); equal start and end of a commitment give a 24-hour rule (`|| 1440`). Probably intended for sleep, doubtful for a commitment. | Keep both? |
-| D7 | `logic.js:1929, 1952-1975, 3491-3552` | Timers use the wall clock in milliseconds (a manual clock change corrupts the elapsed time) and auto finish runs only while the page is open, then logs the planned minutes with a start of `f.start`. A timer left running overnight finishes when the app is next opened with a session that started hours earlier. | Monotonic clock? Finish in the background? Cap or ask when the timer is far past its end? |
+| D7 | `logic.js:1929, 1952-1975, 3491-3552` | Timers use the wall clock in milliseconds (a manual clock change corrupts the elapsed time) and auto finish runs only while the page is open, then logs the planned minutes with a start of `f.start`. A timer left running overnight finishes when the app is next opened with a session that started hours earlier. | Monotonic clock? Finish in the background? Cap or ask when the timer is far past its end? WP-LD10 recommends the monotonic clock, a background finish at the target (chronometer notification and exact alarm) and asking only after a day's absence (`LIFE_DIRECTOR_TIMER_SPEC.md` section 13, LT01 to LT07). |
 | D8 | `logic.js:3402, 3440-3470` | The take-back for a Skip is held in memory only (lost on restart), lasts 2 minutes, and is valid only while the whole plan, serialised, is unchanged: it depends on JSON key order. `reschedule` also changes `fixedCommitments` and `blackouts`, which the take-back does not restore. | Persist the take-back? Use a plan version counter in native? |
 | D9 | `logic.js:73-75` | `persist` drops history older than 21 days from the schedule on every write; the ledger keeps events, but any screen showing older sessions cannot. | Is a 21-day window intended as the limit of what the Week and Today history can show? |
 | D10 | `logic.js:2506` (`goalAdd`), `2436` (`ruleSave`), `2474` (`activityAtAdd`) | Ids are formed from the operation id (`g-` plus 12 characters, `r-` plus all, `manual-` plus all). The 12-character cut gives 44 bits for a UUID but only a few for a counter or a short id. | Native must mint UUIDs; confirm that no screen builds ids from a counter. |

@@ -140,10 +140,12 @@ class TimerHandTest {
             run(due.state, t0 + 1, TimerCommand.Check).reply,
         )
         // a timer left on the session after it was done: found in history, told gone, kept (TM-61)
-        val left = withFocus(due.state, focus(s))
+        // (without plannedMs, so the target is the history entry's length)
+        val older = JsonObject((focus(s) as JsonObject).members - "plannedMs")
+        val left = withFocus(due.state, older)
         val gone = run(left, t0 + 9 * 3_600_000.0 + 1000, TimerCommand.Check)
         assertEquals(TimerReply.Checked(FocusTick.AutoFinished(CommandReply.GONE)), gone.reply)
-        assertEquals(focus(s), focus(gone.state))
+        assertEquals(older, focus(gone.state))
         assertTrue(gone.calls.isEmpty())
     }
 
