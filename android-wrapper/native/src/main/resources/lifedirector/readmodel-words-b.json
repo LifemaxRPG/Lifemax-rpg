@@ -1,0 +1,619 @@
+{
+ "about": "The Life Director page words the native read models of part b use, exported from the page by lifemax_modular_v73/tools/gen_ld_readmodels_b_golden.js; do not edit",
+ "tables": {
+  "PRIO": [
+   "",
+   "Low",
+   "Light",
+   "Medium",
+   "High",
+   "Top"
+  ],
+  "GOALS_EXPLAIN": {
+   "title": "How your time is shared",
+   "text": "Each goal gets a share of activity time in proportion to its priority. First every goal reaches its weekly minimum, then deadline quests, then weekly targets, and extra volume only if your intensity setting allows it. No single goal may take more than 60% of the time while another is below its minimum."
+  },
+  "GOALS_EMPTY": {
+   "title": "No goals yet",
+   "text": "Goals turn into regular sessions on your calendar. Quests that ask for the same kind of activity share those sessions instead of doubling up."
+  },
+  "GOAL_REMOVE_CONFIRM": "Remove this goal? Its future sessions are removed; completed ones stay in your history.",
+  "CLARIFY_TEXT": "Life Director needs to know what this goal looks like in practice. Pick the closest match:",
+  "QUEST_HEAD": {
+   "title": "Connected to your Quest Board",
+   "text": "Life Director reads your quests, schedules time for the ones that need it, and checks them off on the Quest Board when the sessions are done. Quest XP is paid by LifeMax once per period, so nothing is counted twice.",
+   "open": "Open Quest Board"
+  },
+  "MILESTONE_NOTE": "These are earned through everything else you do, so Life Director doesn’t plan time for them.",
+  "KIND_LABEL": {
+   "WORK": "Work",
+   "CLASS": "School / class",
+   "APPOINTMENT": "Regular commitment",
+   "UNAVAILABLE": "Unavailable"
+  },
+  "ROUTINES": [
+   [
+    "morningRoutineMinutes",
+    0,
+    120,
+    5,
+    "Getting ready",
+    "After you wake up"
+   ],
+   [
+    "windDownMinutes",
+    0,
+    120,
+    5,
+    "Wind-down",
+    "Before bed"
+   ]
+  ],
+  "MEAL_RANGE": [
+   "mealMinutes",
+   10,
+   90,
+   5,
+   "Meals",
+   "Breakfast, lunch and dinner blocks"
+  ],
+  "RULE_KINDS": [
+   [
+    "WORK",
+    "Work shift"
+   ],
+   [
+    "CLASS",
+    "School / class"
+   ],
+   [
+    "APPOINTMENT",
+    "Regular commitment"
+   ],
+   [
+    "UNAVAILABLE",
+    "Unavailable (personal)"
+   ]
+  ],
+  "RULE_LOADS": [
+   [
+    "MIXED_MODERATE",
+    "Mixed"
+   ],
+   [
+    "PHYSICAL_HEAVY",
+    "Physically hard"
+   ],
+   [
+    "COGNITIVE_HEAVY",
+    "Mentally hard"
+   ],
+   [
+    "LIGHT",
+    "Light"
+   ]
+  ],
+  "NEW_RULE": {
+   "title": "Work",
+   "kind": "WORK",
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "startMin": 540,
+   "durationMin": 480,
+   "commuteMin": 0,
+   "load": "MIXED_MODERATE",
+   "rotation": null,
+   "decompressMin": null
+  },
+  "CUSTOM_TAGS": [
+   [
+    "fitness.strength",
+    "Strength training"
+   ],
+   [
+    "fitness.cardio",
+    "Cardio"
+   ],
+   [
+    "fitness.mobility",
+    "Mobility / yoga"
+   ],
+   [
+    "study.deep",
+    "Study"
+   ],
+   [
+    "reading",
+    "Reading"
+   ],
+   [
+    "language",
+    "Language"
+   ],
+   [
+    "creative.practice",
+    "Creative practice"
+   ],
+   [
+    "business",
+    "Business / side project"
+   ],
+   [
+    "admin.finance",
+    "Money admin"
+   ],
+   [
+    "chores",
+    "Household"
+   ],
+   [
+    "social",
+    "Social"
+   ],
+   [
+    "wellbeing.mindfulness",
+    "Mindfulness"
+   ]
+  ],
+  "GOAL_LEVELS": [
+   [
+    "NOVICE",
+    "New to this"
+   ],
+   [
+    "INTERMEDIATE",
+    "Some experience"
+   ],
+   [
+    "ADVANCED",
+    "Experienced"
+   ]
+  ],
+  "INTENSITY": {
+   "options": [
+    [
+     "LIGHT",
+     "Light"
+    ],
+    [
+     "BALANCED",
+     "Balanced"
+    ],
+    [
+     "AGGRESSIVE",
+     "Ambitious"
+    ],
+    [
+     "HARDCORE",
+     "All in"
+    ]
+   ],
+   "note": "Light schedules only each goal’s weekly minimum. Ambitious and All in add extra sessions when time allows."
+  },
+  "PREF_RANGES": [
+   [
+    "maxDailyGoalMinutes",
+    30,
+    480,
+    15,
+    "Most activity time per day",
+    "A hard daily ceiling, even on free days."
+   ],
+   [
+    "minDailyRecoveryMinutes",
+    30,
+    360,
+    15,
+    "Protected downtime per day",
+    "Kept clear before anything else is planned."
+   ],
+   [
+    "maxConsecutiveHighLoadMinutes",
+    30,
+    240,
+    15,
+    "Longest run of demanding work",
+    "After this, Life Director inserts something lighter."
+   ]
+  ],
+  "GRACE": [
+   "missGraceMinutes",
+   15,
+   240,
+   15,
+   "Grace period before a session counts as missed"
+  ],
+  "HORIZON": [
+   [
+    7,
+    "7 days"
+   ],
+   [
+    14,
+    "14 days"
+   ]
+  ],
+  "MISSES": {
+   "options": [
+    [
+     "LENIENT",
+     "Gentle"
+    ],
+    [
+     "MODERATE",
+     "Standard"
+    ],
+    [
+     "HARDCORE_RPG",
+     "Hardcore"
+    ]
+   ],
+   "text": "Gentle: no consequences, missed sessions are just re-planned. Standard: a rest token covers a miss; without one, that activity’s streak drops by one. Hardcore: also reports an HP penalty (never below 1 HP). At most one consequence per day, and never any XP or level loss. "
+  },
+  "SETTINGS_TEXT": {
+   "intensity": "How much to schedule",
+   "restDays": "Rest days",
+   "restNote": "Hard workouts and heavy study are avoided on these days when possible.",
+   "horizon": "Planning window",
+   "misses": "When I miss something",
+   "guide": {
+    "title": "Guide",
+    "text": "A short walkthrough of how to read each screen. It shows once on its own; you can replay it here or with the ? button at the top.",
+    "button": "Show the guide again"
+   },
+   "data": {
+    "title": "Your data",
+    "text": "Saved on this device under its own key, separate from your LifeMax save. ",
+    "storageWarning": "Storage is unavailable here.",
+    "copy": "Copy backup",
+    "restore": "Restore backup",
+    "reset": "Reset Life Director",
+    "resetConfirm": "Reset Life Director? Your schedule, goals and settings here are cleared. LifeMax XP and quests are not affected.",
+    "restoreTitle": "Restore backup",
+    "restoreText": "Paste a Life Director backup. This replaces Life Director data only; your LifeMax save is not touched.",
+    "restoreButton": "Restore"
+   },
+   "diagnostics": "Diagnostics",
+   "lab": "Show Simulation Lab (developer)"
+  },
+  "DRAG_WORDS": {
+   "tooShort": "Too short",
+   "release": "Release to apply"
+  },
+  "DIAL": {
+   "C": 180,
+   "RO": 130,
+   "WO": 18,
+   "RI": 101,
+   "WI": 20,
+   "T0": 146,
+   "T1": 152,
+   "RL": 164
+  },
+  "MINI_SNAP": 15,
+  "MINI_GROUP": "Sleep window",
+  "DISRUPT": {
+   "title": "Something came up",
+   "note": "Nothing here counts against you. Life Director only moves what it has to."
+  },
+  "TAG_ICON": [
+   [
+    "fitness",
+    "dumbbell"
+   ],
+   [
+    "language",
+    "chat"
+   ],
+   [
+    "reading",
+    "book"
+   ],
+   [
+    "study",
+    "book"
+   ],
+   [
+    "admin",
+    "coin"
+   ],
+   [
+    "business",
+    "briefcase"
+   ],
+   [
+    "creative",
+    "star"
+   ],
+   [
+    "wellbeing",
+    "moon"
+   ],
+   [
+    "nutrition",
+    "flame"
+   ],
+   [
+    "practical",
+    "mountain"
+   ]
+  ],
+  "DOW": [
+   "Sun",
+   "Mon",
+   "Tue",
+   "Wed",
+   "Thu",
+   "Fri",
+   "Sat"
+  ]
+ },
+ "engineVersion": "1.0.0",
+ "h12": true,
+ "phrases": {
+  "goalCards": {
+   "custom": "Custom",
+   "sep": " · ",
+   "level": "NOVICE",
+   "pausedTail": " · paused",
+   "sessions": " sessions · ",
+   "week": " this week · ",
+   "space": " ",
+   "dash": "–",
+   "times": "×",
+   "comma": ", ",
+   "projected": " Projected finish: ",
+   "period": ".",
+   "resume": "Resume",
+   "pause": "Pause"
+  },
+  "nativeGoals": {
+   "percent": "%",
+   "remove": "Remove",
+   "add": "Add a goal"
+  },
+  "questsModel": {
+   "notDetected": "Quest Board not detected",
+   "missing": "Open Life Director inside LifeMax to connect quests. Missing: ",
+   "comma": ", ",
+   "period": ".",
+   "nextSuffix": "@next",
+   "allDayReminder": "All-day reminder",
+   "donePeriod": "Done this period",
+   "session": " session",
+   "plural": "s",
+   "scheduled": " scheduled",
+   "couldNotFit": "Could not fit",
+   "locked": "Locked",
+   "daily": "Daily",
+   "due": "Due ",
+   "noDeadline": "No deadline",
+   "toneOk": "ok",
+   "tonePassive": "pas",
+   "toneNo": "no",
+   "tracked": "Tracked on the Quest Board",
+   "allDay": "All-day",
+   "of": " of ",
+   "earnedTail": " earned",
+   "earned": "Earned",
+   "inProgress": "In progress",
+   "empty": "No active quests."
+  },
+  "nativeSettings": {
+   "restTokens": "Rest tokens: ",
+   "restTail": " of 3 (earn one every 5 completions)."
+  },
+  "graceLabel": {
+   "minuteMark": "m"
+  },
+  "diagnosticsLine": {
+   "engine": "engine ",
+   "sep": " · ",
+   "ms": " ms · quality ",
+   "planned": " planned",
+   "noPlan": "no plan",
+   "events": " · events ",
+   "host": " · host ",
+   "connected": "connected",
+   "missing": "missing ",
+   "comma": ",",
+   "rejected": " · last rejected plan: "
+  },
+  "timeModel": {
+   "off": "Off",
+   "less": "Less",
+   "more": "More",
+   "stepSleep": "Sleep",
+   "stepOk": "ok",
+   "stepCurrent": "cur",
+   "stepWork": "Work & school",
+   "stepGoals": "Goals",
+   "stepBuild": "Build",
+   "ledeFirst": "Tell Life Director what your time is already spoken for. It plans everything else.",
+   "lede": "Change anything here and your plan rebuilds around it automatically.",
+   "sleepTitle": "Sleep",
+   "sleepNote": "Drag the two handles, or type the times. Nothing is ever planned into sleep.",
+   "sleepCentre": "Sleep",
+   "weeknightBed": "Weeknight bedtime",
+   "bedtime": "Bedtime",
+   "wakeUp": "Wake up",
+   "weekendToggle": "Different on Friday and Saturday nights",
+   "weekendBed": "Weekend bedtime",
+   "weekendWake": "Weekend wake",
+   "saveSleep": "Save sleep",
+   "saveSleepFirst": "Save sleep and continue",
+   "commitTitle": "Work, school and fixed commitments",
+   "dotBlock": "block",
+   "dotWork": "work",
+   "sep": " · ",
+   "commitEmpty": "Nothing yet. Add your job, classes, or anything else that happens at the same time each week.",
+   "commitAdd": "Add a commitment",
+   "routinesTitle": "Daily routines",
+   "routinesText": "Time Life Director keeps around your day so it never books you the minute you wake up.",
+   "turnOff": "Turn off",
+   "turnOn": "Turn on",
+   "shorter": "Shorter",
+   "longer": "Longer",
+   "routinesNote": "Travel and unwind time after work are set on each commitment.",
+   "goalsTitle": "Goals",
+   "goalsEmpty": "Add at least one goal so there is something to plan. Your LifeMax quests are included automatically.",
+   "goalsAdd": "Add a goal",
+   "goalsManage": "Manage goals",
+   "buildTitle": "Build my week",
+   "zone": "Time zone: ",
+   "buildTail": ". You can change everything later.",
+   "replan": "Re-plan now"
+  },
+  "daysText": {
+   "rotating": "rotating ",
+   "onOff": " on / ",
+   "offTail": " off",
+   "everyDay": "every day",
+   "weekdays": "weekdays",
+   "weekends": "weekends",
+   "sunThu": "Sun–Thu nights",
+   "friSat": "Fri and Sat nights",
+   "space": " "
+  },
+  "ruleText": {
+   "sep": " · ",
+   "dash": "–",
+   "travel": "m travel each way"
+  },
+  "hourWord": {
+   "midnight": "Midnight",
+   "noon": "Noon",
+   "am": " AM",
+   "pm": " PM",
+   "pad": "0",
+   "oclock": ":00"
+  },
+  "ruleForm": {
+   "editPrefix": "Edit ",
+   "addTitle": "Add a commitment",
+   "name": "Name",
+   "type": "Type",
+   "rotating": "Rotating shift pattern (e.g. 4 on / 4 off)",
+   "days": "Days",
+   "daysOn": "Days on",
+   "daysOff": "Days off",
+   "firstDay": "First day on",
+   "starts": "Starts",
+   "ends": "Ends",
+   "travel": "Travel each way (min)",
+   "unwind": "Unwind after (min)",
+   "tiring": "How tiring",
+   "note": "Overnight shifts are fine: an end time earlier than the start runs into the next morning. Tiring shifts keep heavy sessions away from the hours after them.",
+   "save": "Save",
+   "add": "Add",
+   "cancel": "Cancel",
+   "remove": "Remove"
+  },
+  "goalTypeModel": {
+   "title": "Add a goal",
+   "text": "Pick the closest kind of goal. Life Director turns it into regular, sensibly spaced sessions.",
+   "comma": ", ",
+   "customIcon": "plus",
+   "customTitle": "Something else",
+   "customSub": "Describe your own activity"
+  },
+  "goalFormModel": {
+   "name": "Name",
+   "namePlaceholder": "e.g. Learn guitar",
+   "language": "Language",
+   "languageValue": "spanish",
+   "activity": "Activity",
+   "minutes": "Minutes per session",
+   "perWeek": "Times per week",
+   "physical": "Physical effort (1–5)",
+   "mental": "Mental effort (1–5)",
+   "priority": "Priority",
+   "experience": "Experience",
+   "customTitle": "Custom goal",
+   "foldSummary": "Add a measurable target (optional)",
+   "foldNote": "Life Director paces sessions to hit the date, and tells you honestly if the date is not realistic.",
+   "total": "Total",
+   "totalPlaceholder": "3600",
+   "unit": "Unit",
+   "unitPlaceholder": "pages",
+   "rate": "Per hour",
+   "ratePlaceholder": "30",
+   "by": "By",
+   "save": "Add goal",
+   "cancel": "Cancel"
+  },
+  "activityAtForm": {
+   "title": "Add an activity",
+   "text": "Schedule one activity at the time you held.",
+   "name": "Activity name",
+   "activity": "Activity",
+   "date": "Date",
+   "start": "Start time",
+   "duration": "Duration (minutes)",
+   "note": "Adds a pinned activity to an already planned day. It does not log completion or award XP. Sleep, work and existing activities stay protected.",
+   "save": "Add activity",
+   "cancel": "Cancel"
+  },
+  "disruptParts": {
+   "workTitle": "Called into work or an extra commitment",
+   "workButton": "Add and re-plan",
+   "date": "Date",
+   "travel": "Travel each way (min)",
+   "from": "From",
+   "until": "Until",
+   "blockTitle": "Lose the next few hours",
+   "hourMark": "h",
+   "dayTitle": "Today is a write-off",
+   "dayButton": "Clear the rest of today",
+   "sickTitle": "I’m sick",
+   "day": " day",
+   "plural": "s",
+   "sickNote": "Demanding sessions are cleared and only must-do work is moved to after you recover.",
+   "energyTitle": "Energy check-in",
+   "low": "Running low",
+   "normal": "Normal",
+   "high": "Full of energy",
+   "energyNote": "Adjusts estimates for the next several hours, then fades out."
+  },
+  "moveTimes": {
+   "space": " "
+  },
+  "moveModel": {
+   "titleOpen": "Move “",
+   "titleClose": "”",
+   "none": "No open time fits this week.",
+   "notePrefix": "Open times that fit ",
+   "noteTail": ". The moved session is pinned so automatic re-planning leaves it alone."
+  },
+  "workRules": {
+   "work": "Work"
+  },
+  "shifts": {
+   "keySep": "|",
+   "work": "Work",
+   "oneKey": "one|",
+   "extra": "Extra shift"
+  },
+  "handleLabel": {
+   "bedtime": "Bedtime",
+   "wakeUp": "Wake up",
+   "commitment": "Commitment",
+   "starts": " starts",
+   "ends": " ends"
+  },
+  "dragPreview": {
+   "ofSleep": " of sleep"
+  },
+  "nativeHandles": {
+   "space": " "
+  },
+  "dialHandles": {
+   "keySep": "|"
+  }
+ }
+}

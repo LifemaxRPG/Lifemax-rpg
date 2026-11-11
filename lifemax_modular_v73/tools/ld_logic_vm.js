@@ -5,9 +5,9 @@
    the Overview, the feature registry). appSource() returns the controller exactly as the file has it. readModelSource() returns the same
    text with one statement added just before the controller's final `return { mount, ...`: when a function named __ldReadModels is in
    scope it is handed the controller's own read-model functions and tables (READ_MODELS below) and a setter for the controller's state
-   ST. Nothing else changes, so every function the recorder calls is the page's own, and with no __ldReadModels in scope the statement does
-   nothing. The recorder evaluates that text inside the built page in Chromium with new Function, giving the controller three names of its
-   own: LifeDirectorEngine (the page's engine), LifeMaxHost (the page's host with connected() and xpFor() watched) and Date (the page's
+   ST (setState) and its record of how the state was loaded (setLoad, for WP-LD8b's settings). Nothing else changes, so every function
+   the recorder calls is the page's own, and with no __ldReadModels in scope the statement does nothing. The recorder evaluates that
+   text inside the built page in Chromium with new Function, giving the controller three names of its own: LifeDirectorEngine (the page's engine), LifeMaxHost (the page's host with connected() and xpFor() watched) and Date (the page's
    Date with now() and new Date() pinned to the case's moment); the page's own controller and its saved state are never touched.
 
    Use: const { readModelSource, appSource } = require('./ld_logic_vm.js'); */
@@ -23,6 +23,16 @@ const RETURN = '  return { mount, glance, widgetSnapshot,';
 const READ_MODELS = ['horizonDays', 'unplannedSegments', 'dayBlocks', 'liveTimeline', 'nowState', 'weekModel', 'weekSegs', 'nativeWeek',
   'unscheduledGroups', 'unfitSummary', 'calendarDays', 'blockClass', 'sesState', 'xpOf', 'mins', 'attrName', 'tz', 'nowEpoch',
   'DOW', 'KIND_CLASS', 'WEEK_LEGEND', 'WEEK_TICKS', 'YIELD_NOTE', 'ALL_FIT', 'SOON', 'ENDING', 'LATE'];
+/* What the hook hands out for WP-LD8b (tools/gen_ld_readmodels_b_golden.js): goals, quests, settings, My time, the forms, Something came up,
+   Move, the work shifts and the dial's handles and stops, the helpers they are made of, and the tables whose words the recorder exports. */
+const READ_MODELS_B = ['goalShare', 'goalCards', 'nativeGoals', 'questsModel', 'nativeQuests', 'nativeSettings', 'graceLabel', 'diagnosticsLine',
+  'timeModel', 'sleepContext', 'nativeTime', 'nativeHourWords', 'hourWord', 'fHm', 'fTime', 'fDay', 'daysText', 'ruleText', 'formField', 'choices',
+  'ruleForm', 'goalTypeModel', 'goalFormModel', 'activityAtForm', 'nativeForm', 'disruptParts', 'moveTimes', 'moveModel', 'nativeSheet', 'workRules',
+  'shifts', 'ruleOn', 'ruleInstances', 'handleLabel', 'dialHandles', 'dialStops', 'snapEp', 'dragPreview', 'dialChange', 'nativeHandles',
+  'minuteOf', 'angOf', 'stopLabels', 'tagIcon', 'horizonDays', 'calendarDays', 'dayBlocks', 'tz', 'nowEpoch', 'mins', 'DOW', 'H12',
+  'PRIO', 'GOALS_EXPLAIN', 'GOALS_EMPTY', 'GOAL_REMOVE_CONFIRM', 'CLARIFY_TEXT', 'QUEST_HEAD', 'MILESTONE_NOTE', 'KIND_LABEL', 'ROUTINES',
+  'MEAL_RANGE', 'RULE_KINDS', 'RULE_LOADS', 'NEW_RULE', 'CUSTOM_TAGS', 'GOAL_LEVELS', 'INTENSITY', 'PREF_RANGES', 'GRACE', 'HORIZON', 'MISSES',
+  'SETTINGS_TEXT', 'DRAG_WORDS', 'DIAL', 'MINI_SNAP', 'MINI_GROUP', 'DISRUPT', 'TAG_ICON'];
 
 /* The controller module's text exactly as the file has it. */
 function appSource() {
@@ -36,7 +46,7 @@ function readModelSource(names) {
   const src = appSource(), at = src.indexOf(RETURN);
   if (at < 0 || src.indexOf(RETURN, at + 1) >= 0) throw new Error('logic.js: `' + RETURN.trim() + '` is not there exactly once; update tools/ld_logic_vm.js');
   return src.slice(0, at) + "  if (typeof __ldReadModels === 'function') __ldReadModels({ " + (names || READ_MODELS).join(', ')
-    + ', setState: s => { ST = s; } });\n' + src.slice(at);
+    + ', setState: s => { ST = s; }, setLoad: r => { loadReport = r; } });\n' + src.slice(at);
 }
 
-module.exports = { appSource, readModelSource, READ_MODELS, LOGIC };
+module.exports = { appSource, readModelSource, READ_MODELS, READ_MODELS_B, LOGIC };
