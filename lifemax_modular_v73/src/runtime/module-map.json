@@ -3266,7 +3266,7 @@
   },
   {
    "file": "src/runtime/segments/50-settings-tabs.js",
-   "bytes": 2625,
+   "bytes": 2654,
    "statement_count": 6,
    "tags": [
     "settings"

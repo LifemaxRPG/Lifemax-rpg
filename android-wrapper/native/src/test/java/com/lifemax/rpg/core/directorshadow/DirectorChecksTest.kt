@@ -68,6 +68,9 @@ class DirectorChecksTest {
         val v = checks.save(t).verdict
         assertEquals(listOf("store.text.schemaVersion"), paths(v))
         assertTrue((v as Verdict.Differed).unexplained.isNotEmpty())
+        // a space the page never writes: native's writer and its encode both give the page's form, so both differ
+        val spaced = day.first.last().replaceFirst("{\"schemaVersion\":1", "{\"schemaVersion\": 1")
+        assertEquals(listOf("store.text", "store.encode"), paths(checks.save(spaced).verdict)) // no member differs in value
     }
 
     @Test
@@ -110,6 +113,13 @@ class DirectorChecksTest {
         val xp = f.out.members["xp"] as JsonArray
         val v2 = checks.read(st, f.copy(xp = xp.items.drop(1))).verdict
         assertTrue(paths(v2).toString(), paths(v2).any { it.startsWith("read.xp") })
+        // a preview answered for other minutes is not used for this question
+        val first = xp.items[0] as JsonObject
+        val args = first.members["args"] as JsonArray
+        val other = JsonObject(LinkedHashMap(first.members).also { it["args"] = JsonArray(args.items.toMutableList().also { a -> a[1] = JsonNumber(999.0) }) })
+        assertTrue(checks.read(st, f.copy(xp = listOf(other) + xp.items.drop(1))).verdict is Verdict.Differed)
+        // a day missing from the page's list
+        assertTrue(paths(checks.read(st, withOut(f, "days", JsonArray(days.items.drop(1)))).verdict).contains("read.days[#]"))
     }
 
     @Test
@@ -136,7 +146,9 @@ class DirectorChecksTest {
     @Test
     fun aPlanThatSaysSomethingElseIsADifferenceButNotItsTime() {
         val (kind, f) = day.third.first { it.first == DirectorShadowJson.PLAN }
-        assertEquals(listOf("plan.scheduledInstances[0].startEpoch"), paths(checks.engine(kind, f.copy(output = startMoved(f.output) { it + 900 })).verdict))
+        val moved = checks.engine(kind, f.copy(output = startMoved(f.output) { it + 900 })).verdict
+        assertEquals(listOf("plan.scheduledInstances[0].startEpoch"), paths(moved))
+        assertTrue((moved as Verdict.Differed).unexplained.isNotEmpty())
         val bit = checks.engine(kind, f.copy(output = startMoved(f.output) { Math.nextUp(it) })).verdict as Verdict.Differed
         assertTrue(bit.explained)
         assertEquals(setOf(DirectorChecks.DA_FLOAT), bit.allowed)
@@ -151,5 +163,10 @@ class DirectorChecksTest {
         val o = f.output as JsonObject
         val out = JsonObject(LinkedHashMap(o.members).also { it["updatedSchedule"] = startMoved(o.members["updatedSchedule"]!!) { x -> x + 900 } })
         assertEquals(listOf("repair.updatedSchedule.scheduledInstances[0].startEpoch"), paths(checks.engine(kind, f.copy(output = out)).verdict))
+        // the page leaves an empty member out (undefined); native's null is the same answer
+        val without = JsonObject(LinkedHashMap(o.members).also { it.remove("rejectedMove") })
+        assertEquals(Verdict.Same, checks.engine(kind, f.copy(output = without)).verdict)
+        val withNull = JsonObject(LinkedHashMap(o.members).also { it["rejectedMove"] = com.lifemax.rpg.core.save.JsonNull })
+        assertEquals(Verdict.Same, checks.engine(kind, f.copy(output = withNull)).verdict)
     }
 }

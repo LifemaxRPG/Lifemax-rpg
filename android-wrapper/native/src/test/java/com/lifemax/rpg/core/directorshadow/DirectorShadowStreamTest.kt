@@ -33,6 +33,15 @@ class DirectorShadowStreamTest {
     }
 
     @Test
+    fun aReadAcrossASecondIsSkipped() {
+        val s = DirectorShadowStream.session()
+        DirectorShadowStream.play(s) { if (it.contains("\"kind\":\"director.read\"")) it.replace("\"flags\":[]", "\"flags\":[\"second\"]") else it }
+        val c = s.ledger.kinds[DirectorShadowJson.READ]!!
+        assertEquals(0, c.compared)
+        assertEquals(mapOf("second" to c.seen), c.skipped)
+    }
+
+    @Test
     fun theStreamCoversEachKind() {
         val kinds = DirectorShadowJson.KINDS.associateWith { DirectorShadowStream.envelopes(it).size }
         assertTrue(kinds.toString(), kinds.values.all { it > 0 })

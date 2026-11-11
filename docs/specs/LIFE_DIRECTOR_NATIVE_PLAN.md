@@ -631,7 +631,7 @@ and strict reading on it), the page's day, now and week read models with the XP 
 each `generateSchedule` and `rescheduleActivity` input and answer (WP-LD4, WP-LD5 re-run, sampled past 1.5 s, inputs over 384 KB not sent).
 Native (`core/directorshadow`, `app/shadow/DirectorShadowWorker.kt`, its own ring `director-shadow/ring.json`) compares, keeps redacted
 counts and paths, self-disables like the economy check, and never writes. Tests: `tests/native-director-shadow.test.js` (22 checks; the
-copy equals the stored text byte for byte after every save), Kotlin 39 (`DirectorShadowStreamTest` replays the real page's messages for a
+copy equals the stored text byte for byte after every save), Kotlin 44 (`DirectorShadowStreamTest` replays the real page's messages for a
 lived-in day: 10 saves, 6 reads, 4 plans and 3 repairs, every one the same as the page). Next stages: 5.1 C (host commands and the tick, with
 `scope: "both"` for awards) once WP-LD9's commands are wired to the adapters, and WP-LD8b's dial.
 

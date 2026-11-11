@@ -650,7 +650,7 @@ on the page's engine input. Nothing native computes is shown or saved.
 
 - **Rollout.** Rides the new switch. An older app lacks `director.shadow.v1`: the line says it is not available and nothing is sent.
   Rollback: drop the capability from the handshake.
-- **Evidence.** `tests/native-director-shadow.test.js` (22 checks), Kotlin `core/directorshadow` and `DirectorShadowWorkerTest` (39 tests,
+- **Evidence.** `tests/native-director-shadow.test.js` (22 checks), Kotlin `core/directorshadow` and `DirectorShadowWorkerTest` (44 tests,
   among them the real page's messages for a lived-in day replayed through native's checks with no difference). No screenshot changed.
 
 ## Cat brain, developer parkour demo (Native API 107)

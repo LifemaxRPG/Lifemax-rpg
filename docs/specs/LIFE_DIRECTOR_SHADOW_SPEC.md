@@ -177,12 +177,19 @@ and Clear (Clear asks in the card first). The demo turns it off (the plugin is a
   later re-plans across midnight sending saves, plans, a repair and reads; nothing refused; every save stitched to the store's length and
   the last to the stored text byte for byte; the read's sections, moment and zones; each plan's input and answer; the page budget (p95
   under 50 ms); still live with no fault; the switch off; the same saved state with the check on as off; a resync; a throwing plugin.
-- Kotlin, 41 tests: `DirectorShadowStreamTest` (the recorded day: 23 checks, 10 saves, 6 reads, 4 plans, 3 repairs, all the same, and
-  redaction), `DirectorChecksTest` (each check on the day's real data, and each kind of change noticed: a text native writes otherwise, a
+- Kotlin, 44 tests: `DirectorShadowStreamTest` (the recorded day: 23 checks, 10 saves, 6 reads, 4 plans, 3 repairs, all the same, a read across a second skipped, and redaction), `DirectorChecksTest` (each check on the day's real data, and each kind of change noticed: a text native writes otherwise, a
   strict finding, a deep text allowed, a read model, a missing preview, a zone offset, a moved session, a last bit, `computeTimeMs`),
-  `TextMirrorTest`, `DirectorShadowJsonTest` (19 malformed messages), `DirectorShadowSessionTest` (switch, stale, Battery Saver, base on its
+  `TextMirrorTest`, `JsonPathsTest`, `DirectorShadowJsonTest` (19 malformed messages), `DirectorShadowSessionTest` (switch, stale, Battery Saver, base on its
   way, resync, repeat, capture length, bad change, errors, slow worker, sampling, too large, report), `DirectorShadowWorkerTest`.
-- Mutation checks: MUTATION_RESULT
+- Mutation checks: 28 source mutations of `core/directorshadow` (each compiled over the built main classes and the tests above run):
+  one did not compile; of the other 27, 26 are caught. The survivor is equivalent: a split object's dropped members kept in memory
+  (`TextMirror`, `retainAll` removed) are never stitched, since the member list decides what is written. The first sweep left 8 more
+  alive; `JsonPathsTest` and new cases in `DirectorChecksTest` and `DirectorShadowStreamTest` (a space the page never writes, a preview
+  for other minutes, a missing day, an absent `rejectedMove`, a moved session that must stay unexplained, a read across a second) were
+  added for them.
+- Unchanged with the four lines in `logic.js`: `ld-host-golden` and `ld-readmodels-golden` (both re-record in Chromium and compare),
+  `native-director`, `director-finish`, `native-settings` (123), `native-shadow` (60), `native-shadow-card` (54),
+  `native-shadow-transparent`, `demo-mode`.
 
 ## 8. Deviations from the economy check's plan
 
