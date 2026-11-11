@@ -15,7 +15,7 @@
    ------------------------------------------------------------------------- */
 const SLOT_SEC = 900;
 const SLOTS_PER_HOUR = 4;
-const ENGINE_VERSION = '1.0.0';
+const ENGINE_VERSION = '1.1.0';
 const SCHEMA_VERSION = 1;
 
 /* Slot codes, ordered by the precedence of spec §3.2 (lower = stronger). */

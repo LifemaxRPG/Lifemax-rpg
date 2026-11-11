@@ -23,7 +23,7 @@ class DirectorShadowJsonTest {
         assertEquals(40, e.bytes)
         val p = (DirectorShadowJson.envelope(plan) as ShadowDecode.Ok).value
         assertEquals(0, p.engine!!.planOffset)
-        val c = DirectorShadowJson.configure("""{"v":1,"scope":"director","enabled":true,"sid":"d-1","page":{"build":"b","fingerprint":"1.0.0/1","faults":0}}""")
+        val c = DirectorShadowJson.configure("""{"v":1,"scope":"director","enabled":true,"sid":"d-1","page":{"build":"b","fingerprint":"1.1.0/1","faults":0}}""")
         assertTrue(c is ShadowDecode.Ok)
     }
 

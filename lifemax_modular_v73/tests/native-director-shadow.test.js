@@ -74,7 +74,7 @@ const stored = (p) => p.evaluate(() => localStorage.getItem('lifemax_director_st
       const first = await M(p);
       ok('on: configured, one base, and the first read check carries the copy', first.state === 'on' && first.bases === 1 && first.kinds[0] === 'director.read', first);
       const fp = await p.evaluate(() => window.__dsMock.config.page.fingerprint);
-      ok('the fingerprint is the engine version and the store schema', fp === '1.0.0/1', fp);
+      ok('the fingerprint is the engine version and the store schema', fp === '1.1.0/1', fp);
       await directorDay.play(p);
       await settle(p, 800);
       onText = await stored(p);

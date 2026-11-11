@@ -9,7 +9,7 @@
 'use strict';
 
 function mock(opts) {
-  const o = Object.assign({ mode: 'record', on: true, resyncAt: [], fingerprint: '1.0.0/1' }, opts);
+  const o = Object.assign({ mode: 'record', on: true, resyncAt: [], fingerprint: '1.1.0/1' }, opts);
   const m = window.__dsMock = { opts: o, calls: [], stream: [], envelopes: [], bases: 0, refused: [], copy: null, seq: 0, texts: [], state: 'off', asked: [] };
   if (o.on) {
     let prefs = {};
