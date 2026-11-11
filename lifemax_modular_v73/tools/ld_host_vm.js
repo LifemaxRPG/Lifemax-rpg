@@ -9,12 +9,14 @@
 
    hostSource() is logic.js with three behaviour-neutral changes, each found exactly once (HOOKS):
      1. the IIFE's returned object also carries __ldHost: the private functions WP-LD9 ports (syncHost, processMisses, maybeRollover,
-        applyOutput, finishInstance, logToday, repairEarlyDone, applyDial, tick, boot, persist, Do, Today) and a reader of the
-        closure's variables (ST, ui, takeBack, takenBackOp, lastSave, lastFinishRefusal);
+        applyOutput, finishInstance, logToday, repairEarlyDone, applyDial, tick, boot, persist, Do, Today; WP-LD10 adds the timer's
+        once-a-second check focusTick and focusMs) and a reader of the closure's variables (ST, ui, takeBack, takenBackOp, lastSave,
+        lastFinishRefusal);
      2. tick(true) skips tick's two guards (the view mounted and active), which need a DOM; tick() is unchanged;
      3. closeSheet() returns when there is no root (with a root it is unchanged; without one the page's version throws, and no page path
         calls it without one: applyDial runs only from a mounted Today).
-   render() already returns without a root, and say() reaches the host's toast first, so nothing else touches a DOM. */
+   render() already returns without a root, and say() reaches the host's toast first, so nothing else touches a DOM but focusTick's
+   lookup of the glance's clocks, which the stub document answers with none. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const engineVm = require('./ld_engine_vm.js');
@@ -22,7 +24,7 @@ const engineVm = require('./ld_engine_vm.js');
 const LOGIC = path.join(__dirname, '..', 'src', 'features', 'life-director', 'logic.js');
 const HOOKS = [
   ['  return { mount, glance, widgetSnapshot, voice: voiceApi,',
-    '  return { __ldHost: { syncHost, processMisses, maybeRollover, applyOutput, regenerate, finishInstance, logToday, repairEarlyDone, afterEvent, applyDial, boot, persist, tick, Do, Today,\n'
+    '  return { __ldHost: { syncHost, processMisses, maybeRollover, applyOutput, regenerate, finishInstance, logToday, repairEarlyDone, afterEvent, applyDial, boot, persist, tick, focusTick, focusMs, Do, Today,\n'
     + '    vars: () => ({ ST, ui, takeBack, takenBackOp, lastSave, lastFinishRefusal }) }, mount, glance, widgetSnapshot, voice: voiceApi,'],
   ["  function tick() {\n    if (!root || !root.isConnected) return;\n    const view = root.closest('.view');\n    if (view && !view.classList.contains('active')) return;\n",
     "  function tick(__ldNow) {\n    if (!__ldNow) { if (!root || !root.isConnected) return;\n    const view = root.closest('.view');\n    if (view && !view.classList.contains('active')) return; }\n"],
@@ -54,7 +56,7 @@ const sources = () => ({ engine: engineVm.engineSource(), store: engineVm.storeS
      storage  'ok' | 'quota' | 'broken' | 'blocked': how the storage answers writes ('blocked': every call throws, from the probe on)
      host     the recording host's script (hostStub below)
    A step is {at, op, ...}: op 'today' and 'do' run a Today or Do command by name with its payload (the native entry points, as a native
-   screen calls them); 'tick' runs tick's body; 'syncHost', 'processMisses', 'maybeRollover', 'repairEarlyDone' (its flag cleared first)
+   screen calls them); 'tick' runs tick's body; 'focusTick' the timer's once-a-second check (WP-LD10); 'syncHost', 'processMisses', 'maybeRollover', 'repairEarlyDone' (its flag cleared first)
    run that function; 'applyDial' holds the change P and runs applyDial; 'applyOutput' runs it with the output given (or the current plan,
    copied) and label and mode; 'finish' and 'logToday' run finishInstance and logToday on the session of that id; 'banner' sets the page's
    banner (as a screen saw it); 'focus' sets the running timer (ST.ui.focus, as Today.timer leaves it); 'storage' changes how the storage answers from then on; 'host' replaces part of the host's script.
@@ -128,7 +130,7 @@ function runHostCases(src, cases) {
     };
     if (script.retired) Host.retiredUntimedQuest = ref => note('retiredUntimedQuest', [ref], copy(script.retired[ref.questId] || null));
     const noop = () => 0;
-    const doc = { getElementById: () => null, addEventListener: noop, querySelector: () => null, hidden: false };
+    const doc = { getElementById: () => null, addEventListener: noop, querySelector: () => null, querySelectorAll: () => [], hidden: false };
     const win = { localStorage: storageMode === 'blocked' ? undefined : storage, addEventListener: noop };
     if (storageMode === 'blocked') Object.defineProperty(win, 'localStorage', { get: () => { throw new Error('blocked'); } });
     let uuids = 0;
@@ -152,10 +154,11 @@ function runHostCases(src, cases) {
     };
     const planned = id => V().ST.schedule && V().ST.schedule.scheduledInstances.find(i => i.instanceId === id);
     /* {$ref: list, n, field, plus}: a value of the state when the step runs (list 'planned' | 'history' | 'rule' | 'goal' | 'commitment' |
-       'blackout'; n counts from the end when negative; field defaults to the id; plus is added to a number). Absent: '$missing'. */
+       'blackout' | 'focus', the running timer, whose field defaults to its start; n counts from the end when negative; field defaults to the id; plus is added to a number). Absent: '$missing'. */
     const LISTS = { planned: st => st.schedule && st.schedule.scheduledInstances, history: st => st.schedule && st.schedule.historyInstances,
-      rule: st => st.availability.rules, goal: st => st.goals, commitment: st => st.fixedCommitments, blackout: st => st.availability.blackouts };
-    const ID = { planned: 'instanceId', history: 'instanceId', rule: 'id', goal: 'id', commitment: 'id', blackout: 'id' };
+      rule: st => st.availability.rules, goal: st => st.goals, commitment: st => st.fixedCommitments, blackout: st => st.availability.blackouts,
+      focus: st => (st.ui && st.ui.focus ? [st.ui.focus] : []) };
+    const ID = { planned: 'instanceId', history: 'instanceId', rule: 'id', goal: 'id', commitment: 'id', blackout: 'id', focus: 'start' };
     const resolve = v => {
       if (Array.isArray(v)) return v.map(resolve);
       if (!v || typeof v !== 'object') return v;
@@ -180,6 +183,7 @@ function runHostCases(src, cases) {
           case 'today': reply = App.native.todayRun(s.name, s.payload); break;
           case 'do': reply = App.native.run(s.name, s.payload); break;
           case 'tick': L.tick(true); reply = null; break;
+          case 'focusTick': L.focusTick(); reply = null; break;
           case 'syncHost': reply = L.syncHost(); break;
           case 'processMisses': reply = L.processMisses(); break;
           case 'maybeRollover': reply = L.maybeRollover(); break;

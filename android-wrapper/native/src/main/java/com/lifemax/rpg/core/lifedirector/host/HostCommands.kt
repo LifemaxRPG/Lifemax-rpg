@@ -3,6 +3,7 @@ package com.lifemax.rpg.core.lifedirector.host
 import com.lifemax.rpg.core.lifedirector.EngineRefusal
 import com.lifemax.rpg.core.lifedirector.PageRangeError
 import com.lifemax.rpg.core.lifedirector.PageTypeError
+import com.lifemax.rpg.core.lifedirector.timer.TimerCommands
 import com.lifemax.rpg.core.save.JsonBool
 import com.lifemax.rpg.core.save.JsonNull
 import com.lifemax.rpg.core.save.JsonObject
@@ -10,7 +11,9 @@ import com.lifemax.rpg.core.save.JsonValue
 
 /** What a command is asked to do (HC-2); the page's names. */
 sealed interface HostCommand {
-    /** `Today[name](payload)` through `nativeTodayRun` (HC-10 to HC-35; not `timer`, WP-LD10's). */
+    /**
+     * `Today[name](payload)` through `nativeTodayRun` (HC-10 to HC-35; `timer` is WP-LD10's, TM-n).
+     */
     data class Today(val name: String, val payload: JsonValue?) : HostCommand
 
     /** `Do[name](payload)` through `nativeRun` (HC-50 to HC-66). */
@@ -21,6 +24,9 @@ sealed interface HostCommand {
 
     /** The tick's body (HC-79). */
     data object Tick : HostCommand
+
+    /** The timer's once-a-second check `focusTick` (WP-LD10, TM-60). */
+    data object FocusTick : HostCommand
 
     /** `syncHost()` (HC-70 to HC-74). */
     data object SyncHost : HostCommand
@@ -113,12 +119,31 @@ data class HostOutcome(val state: HostState, val reply: HostReply, val calls: Li
  * screen; the page stays the only writer.
  */
 object HostCommands {
-    fun run(state: HostState, nowMs: Double, host: HostEffects, command: HostCommand): HostOutcome {
+    fun run(state: HostState, nowMs: Double, host: HostEffects, command: HostCommand): HostOutcome =
+        answer(state, nowMs, host) { p -> execute(p, command) }
+
+    /**
+     * Runs [block] on the page's memory as [run] runs a command (the same recording host, errors as
+     * [HostReply.Threw]); its answer is [HostReply.None]. For WP-LD10's timer check.
+     */
+    fun runOn(
+        state: HostState,
+        nowMs: Double,
+        host: HostEffects,
+        block: (HostPage) -> Unit,
+    ): HostOutcome = answer(state, nowMs, host) { p -> HostReply.None.also { block(p) } }
+
+    private fun answer(
+        state: HostState,
+        nowMs: Double,
+        host: HostEffects,
+        block: (HostPage) -> HostReply,
+    ): HostOutcome {
         val recording = RecordingHost(host)
         val p = page(state, recording, nowMs)
         val reply =
             try {
-                execute(p, command)
+                block(p)
             } catch (e: JsThrow) {
                 HostReply.Threw(e.name, e.message ?: "")
             } catch (e: PageTypeError) {
@@ -151,6 +176,7 @@ object HostCommands {
             is HostCommand.Do -> HostReply.Command(DoCommands.run(p, c.name, payload(c.payload)))
             HostCommand.Boot -> HostReply.None.also { p.boot() }
             HostCommand.Tick -> HostReply.None.also { HostTick.tick(p) }
+            HostCommand.FocusTick -> HostReply.None.also { TimerCommands.focusTick(p) }
             HostCommand.SyncHost -> HostReply.Flag(HostTick.syncHost(p))
             HostCommand.ProcessMisses -> HostReply.Flag(HostTick.processMisses(p))
             HostCommand.MaybeRollover -> HostReply.Flag(HostTick.maybeRollover(p))

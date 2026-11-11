@@ -117,7 +117,7 @@ if 'lifemax-test-heap' not in s:
     s += """
 // lifemax-test-heap
 tasks.withType(Test).configureEach {
-    maxHeapSize = '1536m'
+    maxHeapSize = '3072m'
 }
 """
     p.write_text(s, encoding='utf-8')
