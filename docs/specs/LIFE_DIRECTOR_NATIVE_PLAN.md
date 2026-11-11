@@ -478,6 +478,24 @@ revoke, skip, miss, token earn and spend) with the ledger compared after every s
 
 ### WP-LD7. Life Director store codec (M, risk high)
 
+**Status: done** (branch `logic/ld7-store`, NativeApi 127); not wired to anything, the page is still the only writer. Spec:
+`LIFE_DIRECTOR_STORE_SPEC.md` (rules LST-1 to LST-29, defects LS01 to LS12, deviation DV-1, golden index, shadow design, the open
+decision on where the key lives). Recorder `tools/gen_ld_store_golden.js` (seed texts captured from what the real page writes in Chromium,
+`tools/ld_store_seeds.js`; cases `tools/ld_store_cases.js`; the store module's own text loaded by `tools/ld_engine_vm.js` `storeSource`,
+run inside the built page against a logging storage that can fail any call and caps its size as Chromium does, and on a clean origin's
+real `localStorage` for the browser family; node agrees on every other case): 3,925 cases in `tests/fixtures/ld-store-golden.json.gz`
+(14 families: seeds 74, validate 421, migrate 476, defaults 37, load 1000, save 700, sequence 400, backup 61, numbers 175, unknown 44,
+older 13, depth 14, fuzz 500, browser 10); web test `tests/ld-store-golden.test.js` (re-captures the seeds and re-records every case,
+fails on drift). Kotlin in `core/directorstore` (`StoreKeys`, `JsValues`, `PageJson`, `StoreSchema`, `KeyValueStorage` with
+`MemoryStorage`, `DirectorStore` with `BackupText`, `DirectorStoreCodec` with `OwnedFields`), on core/save's preserving JSON, no
+`org.json`: reproduces every case but the 8 known DV-1 depth cases (`StoreGoldenTest`), round trips every text in the file
+(`StoreRoundTripTest`), fuzz (`StoreFuzzTest`), strictness and faithful writes (`StoreCodecTest`); 43 source mutations, 42 caught, the survivor equivalent (spec section 11).
+Findings: a prototype-shaped state with a non-list `work` stops Life Director from starting (LS01); a text that parses but is refused is
+not quarantined and is lost after two saves (LS02); after a recovery the first save copies the damaged text over the good `.bak` (LS03);
+with storage full the probe fails and Life Director shows an empty state although the saved one is intact (LS10); device backups hold
+the main key only (LS12). The decision on where the key lives has a recommended plan (spec section 13: native files, the page's
+`localStorage` kept as a mirror for one release, rollback by switching the writer back).
+
 Scope: read and write `lifemax_director_state_v1` with unknown-field and number-text preservation, `validate`, `migrate`,
 `.bak` rotation, quarantine, read-back verification, backup text format. Uses the same preserving-JSON facility as the
 economy save codec (ECONOMY_NATIVE_PLAN WP1); build that first. Tests: the saved-state fixtures (record several real states
